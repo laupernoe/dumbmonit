@@ -12,6 +12,7 @@ mod ingest;
 mod mcp;
 mod metrics;
 mod notify_policy;
+mod observability;
 mod oidc;
 mod onboarding;
 mod opnsense;
@@ -115,6 +116,8 @@ pub fn router(state: AppState) -> Router {
         .merge(truenas::routes())
         // Matériel d'un serveur lu par son contrôleur de gestion (`redfish.rs`).
         .merge(redfish::routes())
+        // Santé d'un serveur de journaux ou de métriques (`observability.rs`).
+        .merge(observability::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).

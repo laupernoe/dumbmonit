@@ -10,6 +10,8 @@
 import type { Component } from 'svelte';
 import type { Target } from '$lib/api/types';
 import AgentPanel from './agent/AgentPanel.svelte';
+import MailServicesPanel from './mdaemon/MailServicesPanel.svelte';
+import ObservabilityPanel from './observability/ObservabilityPanel.svelte';
 import OpnsensePanel from './opnsense/OpnsensePanel.svelte';
 import PbsPanel from './pbs/PbsPanel.svelte';
 import PdmPanel from './pdm/PdmPanel.svelte';
@@ -22,7 +24,7 @@ import TruenasPanel from './truenas/TruenasPanel.svelte';
 
 export type KindPanel = Component<{ target: Target }>;
 
-export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel };
+export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel };
 
 /** The panel for a kind, or `null` when the generic charts are all there is. */
 export function kindPanel(kind: string): KindPanel | null {

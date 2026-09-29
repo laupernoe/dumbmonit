@@ -171,7 +171,7 @@
 								{device.name ?? device.sysname ?? device.address}
 							</p>
 							<p class="truncate font-mono text-[0.75rem] text-ink-2">
-								<span class="tnum">{device.address}</span>{#if device.description} · {device.description}{/if}
+								<span class="tnum">{device.address}</span>{#if device.description}{' '}· {device.description}{/if}
 							</p>
 						</div>
 						<div class="flex shrink-0 items-center gap-2">

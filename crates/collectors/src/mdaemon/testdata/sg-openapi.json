@@ -1,0 +1,12 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "SecurityGateway REST API", "version": "12.5.1" },
+  "servers": [{ "url": "/api/v1" }],
+  "paths": {
+    "/users": { "get": { "summary": "List users" }, "post": { "summary": "Create a user" } },
+    "/domains": { "get": { "summary": "List domains" } },
+    "/domains/{id}/verify": { "post": { "summary": "Verify a domain" } },
+    "/performance/counters": { "get": { "summary": "Read-only performance counters" } },
+    "/performance/counters/{name}": { "get": { "summary": "One performance counter" } }
+  }
+}

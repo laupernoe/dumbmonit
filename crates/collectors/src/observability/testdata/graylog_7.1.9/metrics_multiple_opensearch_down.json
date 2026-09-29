@@ -1,0 +1,114 @@
+{
+  "total": 11,
+  "metrics": [
+    {
+      "full_name": "org.graylog2.throughput.input",
+      "metric": {
+        "count": 1790
+      },
+      "name": "input",
+      "type": "counter"
+    },
+    {
+      "full_name": "org.graylog2.throughput.output",
+      "metric": {
+        "count": 1671
+      },
+      "name": "output",
+      "type": "counter"
+    },
+    {
+      "full_name": "org.graylog2.buffers.input.usage",
+      "metric": {
+        "value": 0
+      },
+      "name": "usage",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.buffers.input.size",
+      "metric": {
+        "value": 65536
+      },
+      "name": "size",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.buffers.process.usage",
+      "metric": {
+        "value": 0
+      },
+      "name": "usage",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.buffers.process.size",
+      "metric": {
+        "value": 65536
+      },
+      "name": "size",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.buffers.output.usage",
+      "metric": {
+        "value": 264
+      },
+      "name": "usage",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.buffers.output.size",
+      "metric": {
+        "value": 65536
+      },
+      "name": "size",
+      "type": "gauge"
+    },
+    {
+      "full_name": "org.graylog2.outputs.BatchedMessageFilterOutput.outputWriteFailures",
+      "metric": {
+        "rate": {
+          "total": 0,
+          "mean": 0.0,
+          "five_minute": 0.0,
+          "fifteen_minute": 0.0,
+          "one_minute": 0.0
+        },
+        "rate_unit": "events/second"
+      },
+      "name": "outputWriteFailures",
+      "type": "meter"
+    },
+    {
+      "full_name": "org.graylog.failure.FailureSubmissionQueue.submittedFailures",
+      "metric": {
+        "rate": {
+          "total": 0,
+          "mean": 0.0,
+          "five_minute": 0.0,
+          "fifteen_minute": 0.0,
+          "one_minute": 0.0
+        },
+        "rate_unit": "events/second"
+      },
+      "name": "submittedFailures",
+      "type": "meter"
+    },
+    {
+      "full_name": "org.graylog2.indexer.messages.Messages.invalid-timestamps",
+      "metric": {
+        "rate": {
+          "total": 0,
+          "mean": 0.0,
+          "five_minute": 0.0,
+          "fifteen_minute": 0.0,
+          "one_minute": 0.0
+        },
+        "rate_unit": "events/second"
+      },
+      "name": "invalid-timestamps",
+      "type": "meter"
+    }
+  ]
+}

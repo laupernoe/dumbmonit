@@ -67,7 +67,7 @@
 		{ id: 'page:/wall', group: 'Pages', label: 'Wall mode', detail: 'Full-screen bulletin for a wall display', keywords: 'kiosk tv screen', icon: Tv, run: go('/wall') },
 		{ id: 'page:docs', group: 'Pages', label: 'Documentation', keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
 		{ id: 'action:add', group: 'Actions', label: 'Add a device', keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
-		{ id: 'action:scan', group: 'Actions', label: 'Scan my network', keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new') },
+		{ id: 'action:scan', group: 'Actions', label: 'Scan my network', keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
 		{ id: 'action:maintenance', group: 'Actions', label: 'Schedule maintenance', keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
 		{ id: 'action:channel', group: 'Actions', label: 'Add notification channel', keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/alerts#notifications') },
 		{ id: 'action:status-page', group: 'Actions', label: 'New status page', keywords: 'public status page create', icon: Globe, run: go('/status/new') },

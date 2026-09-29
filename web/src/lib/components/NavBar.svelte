@@ -1,16 +1,20 @@
 <script lang="ts">
 	/**
 	 * Top bar on desktop, bottom tab bar on phones. The active link carries a
-	 * sliding pill that springs between items (the gooey nav, tamed).
+	 * sliding pill that springs between items (the gooey nav, tamed). The
+	 * right-hand cluster holds the command palette, the documentation (Read the
+	 * Docs, new tab), wall mode, the theme and the session.
 	 */
 	import { page } from '$app/state';
-	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv } from 'lucide-svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Plate } from '$lib/ui';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { palette } from '$lib/stores/palette.svelte';
 	import Logo from './Logo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
+
+	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 
 	const LINKS = [
 		{ href: '/', label: 'Overview', icon: Gauge, exact: true },
@@ -109,6 +113,25 @@
 				{/if}
 				<span class="tnum">{palette.shortcutLabel}</span>
 			</button>
+			<a
+				href={DOCS_URL}
+				target="_blank"
+				rel="noopener"
+				class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+				title="Documentation (opens in a new tab)"
+			>
+				<BookOpen class="size-4" aria-hidden="true" />
+				<span class="hidden lg:inline">Docs</span>
+				<span class="sr-only lg:hidden">Documentation, opens in a new tab</span>
+			</a>
+			<a
+				href="/wall"
+				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+				aria-label="Wall mode"
+				title="Wall mode: the bulletin full screen, for a monitor in the room"
+			>
+				<Tv class="size-[18px]" aria-hidden="true" />
+			</a>
 			<ThemeToggle />
 			{#if auth.user}
 				<!-- Who is signed in, and with which role: the role decides what the pages offer. -->

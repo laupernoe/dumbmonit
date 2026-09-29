@@ -280,7 +280,7 @@
 				<input
 					bind:this={searchBox}
 					type="search"
-					class="input pl-9"
+					class="input !pl-9"
 					placeholder="Search Discord, email, webhook…"
 					bind:value={search}
 					autocomplete="off"

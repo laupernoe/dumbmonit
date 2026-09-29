@@ -1,6 +1,9 @@
 /**
- * "Streaks": three small figures read off the last seven days of history —
- * how long everything has been reporting, the quietest device, the noisiest.
+ * "Last 7 days" on the Overview: three small figures read off the last seven
+ * days of alert history — how long every device has been reporting without an
+ * outage, the quietest device (fewest alert events) and the one with the most
+ * alert events. An "alert event" is one history entry: a rule starting to
+ * build up, firing, or resolving on that device.
  * Pure, like the briefing: history, devices, rules, the unreachable ones and
  * the clock come in; figures come out. Nothing when the history is empty.
  */
@@ -47,7 +50,7 @@ export function computeStreaks(input: StreaksInput): Streak[] {
   const rules = new Map(input.rules.map((rule) => [rule.uid, rule]));
   const out: Streak[] = [];
 
-  // 1. All reporting for … — since the last outage started, or broken now.
+  // 1. Everything reporting for … — since the last outage started, or not right now.
   let lastOutage: Date | null = null;
   for (const entry of history) {
     if (
@@ -62,8 +65,8 @@ export function computeStreaks(input: StreaksInput): Streak[] {
     const first = unreachable[0];
     out.push({
       key: "reporting",
-      label: "All reporting",
-      value: "Broken",
+      label: "Everything reporting",
+      value: "Not now",
       tone: "warning",
       hint:
         unreachable.length === 1
@@ -74,16 +77,18 @@ export function computeStreaks(input: StreaksInput): Streak[] {
   } else {
     out.push({
       key: "reporting",
-      label: "All reporting for",
+      label: "Everything reporting for",
       value: lastOutage
         ? formatSpan(now.getTime() - lastOutage.getTime())
         : `over ${windowDays} d`,
       tone: "signal",
-      hint: lastOutage ? "since the last outage" : "no outage in the window",
+      hint: lastOutage
+        ? "no device unreachable since the last outage"
+        : `no device went unreachable in ${windowDays} days`,
     });
   }
 
-  // 2 & 3. Transitions per device: the quietest and the noisiest.
+  // 2 & 3. Alert events per device: the quietest and the one with the most.
   const counts = new Map<TargetId, number>(
     targets.map((target) => [target.id, 0]),
   );
@@ -107,8 +112,8 @@ export function computeStreaks(input: StreaksInput): Streak[] {
       tone: "ink",
       hint:
         quiet.length === 1
-          ? `no alert in ${windowDays} d`
-          : `no alert in ${windowDays} d, like ${quiet.length - 1} other${quiet.length > 2 ? "s" : ""}`,
+          ? `no alert in ${windowDays} days`
+          : `no alert in ${windowDays} days, like ${quiet.length - 1} other${quiet.length > 2 ? "s" : ""}`,
       href: `/targets/${first.id}`,
     });
   } else {
@@ -121,7 +126,7 @@ export function computeStreaks(input: StreaksInput): Streak[] {
       label: "Quietest device",
       value: calmest.name,
       tone: "ink",
-      hint: `${n} transition${n === 1 ? "" : "s"} in ${windowDays} d`,
+      hint: `fewest alerts: ${n} alert event${n === 1 ? "" : "s"} in ${windowDays} days`,
       href: `/targets/${calmest.id}`,
     });
   }
@@ -132,10 +137,10 @@ export function computeStreaks(input: StreaksInput): Streak[] {
   if (noise > 0) {
     out.push({
       key: "noisiest",
-      label: "Noisiest device",
+      label: "Most alerts",
       value: noisiest.name,
       tone: noise >= 20 ? "advisory" : "ink",
-      hint: `${noise} transition${noise === 1 ? "" : "s"} in ${windowDays} d`,
+      hint: `${noise} alert event${noise === 1 ? "" : "s"} (started, fired or resolved) in ${windowDays} days`,
       href: `/targets/${noisiest.id}`,
     });
   }

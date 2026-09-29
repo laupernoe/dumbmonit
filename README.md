@@ -83,6 +83,12 @@ back for a paid edition.
   supplies and their redundancy, drives and their predicted failures, memory and
   processor health, and the event log counted by severity. An empty slot is
   never a failure. Read-only account, basic authentication by default.
+- **MDaemon Email Server and SecurityGateway** — the Windows mail server and
+  mail gateway from MDaemon Technologies: SMTP, IMAP, POP3 and webmail checked
+  from the outside, greeting included, with no account at all; the version
+  through MDaemon's XML API, and on SecurityGateway 12.5 and later the
+  performance counters of its REST API (delivery queue, quarantine, sessions).
+  Built from the published documentation, not yet tried on a live server.
 - **TrueNAS** — the ZFS pool that lost a disk and still serves its data (the
   failure nobody notices until the second disk), with the disk named; scrubs and
   resilvers, pool and dataset usage against quotas, snapshots and replication
@@ -310,7 +316,7 @@ and state.
 
 ```
 crates/proto     shared types: Sample, Target, Credential, trait Collector (+ ProbeError)
-crates/collectors  snmp (profiles/*.yaml), proxmox, pbs, pdm, pmg, synology, opnsense, truenas, redfish, uptime — shared by the server and the relay agent
+crates/collectors  snmp (profiles/*.yaml), proxmox, pbs, pdm, pmg, synology, opnsense, truenas, redfish, mdaemon, uptime — shared by the server and the relay agent
 crates/server    the binary
   api/           axum routes; spa.rs serves the embedded web UI
   auth/          accounts and roles, HttpOnly session cookie, TOTP, OIDC, API tokens, rate limit

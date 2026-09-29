@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "append_events_per_second": 0,
+  "read_events_per_second": 0,
+  "uncommitted_journal_entries": 0,
+  "journal_size": 173052,
+  "journal_size_limit": 5368709120,
+  "number_of_segments": 1,
+  "oldest_segment": "2026-09-29T19:40:04.115Z",
+  "journal_config": {
+    "directory": "file:///usr/share/graylog/data/journal/",
+    "segment_size": 104857600,
+    "segment_age": 3600000,
+    "max_size": 5368709120,
+    "max_age": 43200000,
+    "flush_interval": 1000000,
+    "flush_age": 60000
+  }
+}

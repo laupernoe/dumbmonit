@@ -116,6 +116,16 @@ async fn run(config: Config) -> Result<()> {
     ));
     // Matériel serveur, lu sur le contrôleur de gestion (BMC) en Redfish.
     registry.register(Arc::new(collectors::RedfishCollector::new()));
+    // Serveurs de journaux et de métriques : la santé de la pile d'observabilité
+    // elle-même (`collectors/observability`).
+    registry.register(Arc::new(collectors::VictoriaCollector::metrics()));
+    registry.register(Arc::new(collectors::VictoriaCollector::logs()));
+    registry.register(Arc::new(collectors::LokiCollector::new()));
+    registry.register(Arc::new(collectors::GraylogCollector::new()));
+    // Messagerie MDaemon : services de messagerie, API XML ou REST si un
+    // identifiant est fourni.
+    registry.register(Arc::new(collectors::MdaemonCollector::new()));
+    registry.register(Arc::new(collectors::SecurityGatewayCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

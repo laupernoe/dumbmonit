@@ -27,6 +27,8 @@ pub use dumbmonit_collectors::{
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,
     snmp, synology, truenas, uptime,
 };
+pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
+pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};
 pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
 };

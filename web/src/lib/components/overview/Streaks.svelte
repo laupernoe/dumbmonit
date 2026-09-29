@@ -1,7 +1,8 @@
 <script lang="ts">
 	/**
-	 * Three small figures on one graticule rule, like the readouts: a value in
-	 * display type over a label-tape, with a one-line hint. Not cards.
+	 * The Overview's "Last 7 days": three small figures on one graticule rule,
+	 * like the readouts — a value in display type over a label-tape, with a
+	 * one-line hint saying what the figure means. Not cards.
 	 */
 	import type { Streak } from './streaks';
 

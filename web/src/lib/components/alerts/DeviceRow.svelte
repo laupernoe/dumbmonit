@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * A device that cannot be reached, as a "Needs you" row.
+	 * A device that cannot be reached, as a tile of the "Needs you" grid.
 	 *
 	 * No rule has to fire for this: a device that stopped reporting is a
 	 * warning in itself. There is no alert to silence, so the only action is to
@@ -9,6 +9,7 @@
 	import type { SkyRow } from '$lib/components/overview/sky';
 	import { Button, Plate } from '$lib/ui';
 	import { formatRelative, formatDateTime } from '$lib/format';
+	import { TONE_BAR } from './helpers';
 
 	interface Props {
 		row: Extract<SkyRow, { kind: 'device' }>;
@@ -18,31 +19,32 @@
 	const target = $derived(row.target);
 </script>
 
-<div class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift transition">
-	<div class="flex flex-wrap items-start gap-x-4 gap-y-2">
-		<div class="min-w-0 flex-[1_1_16rem]">
-			<div class="flex flex-wrap items-center gap-2">
-				<Plate tone={row.tone} label={row.plate} pulse />
-				<span class="min-w-0 max-w-full truncate font-semibold text-ink">{target.name}</span>
-			</div>
-			<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8125rem] text-ink-2">
-				<span class="min-w-0 max-w-full truncate" title={target.address}>{target.address}</span>
-				{#if row.detail}
-					<span class="text-ink-3" aria-hidden="true">·</span>
-					<span class={`min-w-0 max-w-full break-words ${row.state === 'misconfigured' ? 'text-advisory-ink' : 'text-warning-ink'}`} title={row.detail}>{row.detail}</span>
-				{/if}
-			</div>
-		</div>
+<article
+	class="relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface py-3 pr-4 pl-5 shadow-lift transition"
+	aria-label={`${row.plate}: ${target.name}`}
+>
+	<span class={`absolute inset-y-0 left-0 w-1 ${TONE_BAR[row.tone]}`} aria-hidden="true"></span>
 
-		<div class="flex flex-[1_1_12rem] flex-wrap items-center justify-between gap-2 sm:flex-initial sm:shrink-0 sm:flex-col sm:items-end sm:justify-start">
-			<span class="tnum text-[0.8125rem] text-ink-2" title={row.since ? formatDateTime(row.since) : undefined}>
-				{#if row.since}
-					last report {formatRelative(row.since)}
-				{:else}
-					never reported
-				{/if}
-			</span>
+	<div class="flex items-start justify-between gap-2">
+		<Plate tone={row.tone} label={row.plate} pulse />
+		<span class="tnum shrink-0 pt-0.5 text-[0.75rem] whitespace-nowrap text-ink-2" title={row.since ? formatDateTime(row.since) : undefined}>
+			{#if row.since}
+				last report {formatRelative(row.since)}
+			{:else}
+				never reported
+			{/if}
+		</span>
+	</div>
+
+	<p class="mt-2 truncate font-semibold text-ink" title={target.name}>{target.name}</p>
+	<p class="mt-0.5 truncate text-[0.8125rem] text-ink-2" title={target.address}>{target.address}</p>
+	{#if row.detail}
+		<p class={`mt-1 line-clamp-3 text-[0.8125rem] break-words ${row.state === 'misconfigured' ? 'text-advisory-ink' : 'text-warning-ink'}`} title={row.detail}>{row.detail}</p>
+	{/if}
+
+	<div class="mt-auto pt-3">
+		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
 			<Button size="sm" variant="ghost" href={`/targets/${target.id}`}>Open device</Button>
 		</div>
 	</div>
-</div>
+</article>

@@ -149,7 +149,7 @@
 									<td class="py-2 pr-3">
 										{#if osd.used_percent !== null}
 											<div class="flex min-w-[8rem] flex-col gap-1">
-												<span class="tnum whitespace-nowrap text-ink">{formatPercent(osd.used_percent)}<span class="text-ink-3"> of {formatBytes(osd.total_bytes)}</span></span>
+												<span class="tnum whitespace-nowrap text-ink">{formatPercent(osd.used_percent)}<span class="text-ink-3">{' '}of {formatBytes(osd.total_bytes)}</span></span>
 												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(osd.used_percent)} aria-label={`${osd.name} usage`}>
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, osd.used_percent)}%"></div>
 												</div>
@@ -186,7 +186,7 @@
 								<tr class="border-t border-line/60">
 									<td class="py-2 pr-3 font-semibold text-ink">{pool.name}</td>
 									<td class={`tnum py-2 pr-3 ${tone === 'warning' ? 'text-warning-ink' : tone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`}>
-										{formatPercent(pool.used_percent)}<span class="text-ink-3"> · {formatBytes(pool.used_bytes)}</span>
+										{formatPercent(pool.used_percent)}<span class="text-ink-3">{' '}· {formatBytes(pool.used_bytes)}</span>
 									</td>
 									<td class="tnum py-2 pr-3 text-right text-ink-2">{pool.size === null ? '—' : `${pool.size}`}<span class="text-ink-3">{pool.min_size === null ? '' : ` (min ${pool.min_size})`}</span></td>
 									<td class="tnum py-2 pr-3 text-right text-ink-2">

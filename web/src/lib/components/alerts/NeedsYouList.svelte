@@ -4,6 +4,9 @@
 	 *
 	 * Rows come pre-ordered from the sky helper: unreachable devices and
 	 * warnings first, then advisories, building up, and the suppressed last.
+	 * They are laid out as tiles in a responsive grid (one column on phones,
+	 * two, then three on wide screens) that fills left to right, so the order
+	 * still reads top-left first.
 	 * When `grouped` is set, rows are gathered under their device (host
 	 * grouping), which is how the Alerts page reads them; the Overview leaves
 	 * them as one flat stream. Acknowledged alerts leave the stream for a
@@ -143,9 +146,9 @@
 			<p class="mb-2 text-[0.8125rem] text-ink-2">
 				Known problems: reminders are paused until the acknowledgement ends or the alert resolves.
 			</p>
-			<div class="space-y-2.5">
+			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 				{#each ackedRows as folded, i (folded.row.key)}
-					<div class="rise-in" style={`--rise-delay: ${i * 30}ms`}>
+					<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
 						{@render rowView(folded)}
 					</div>
 				{/each}
@@ -175,9 +178,9 @@
 						{group.name}
 					{/if}
 				</h3>
-				<div class="space-y-2.5">
+				<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 					{#each group.items as folded, i (folded.row.key)}
-						<div class="rise-in" style={`--rise-delay: ${i * 30}ms`}>
+						<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
 							{@render rowView(folded)}
 						</div>
 					{/each}
@@ -187,9 +190,9 @@
 	</div>
 	{@render ackedSection()}
 {:else}
-	<div class="space-y-2.5">
+	<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 		{#each rows as folded, i (folded.row.key)}
-			<div class="rise-in" style={`--rise-delay: ${i * 30}ms`}>
+			<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
 				{@render rowView(folded)}
 			</div>
 		{/each}

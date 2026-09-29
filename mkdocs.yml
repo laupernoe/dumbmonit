@@ -82,6 +82,11 @@ nav:
       - OPNsense: devices/opnsense.md
       - TrueNAS: devices/truenas.md
       - Server hardware (Redfish): devices/redfish.md
+      - VictoriaMetrics and VictoriaLogs: devices/victoriametrics.md
+      - Grafana Loki: devices/loki.md
+      - Graylog: devices/graylog.md
+      - MDaemon Email Server: devices/mdaemon.md
+      - SecurityGateway for Email Servers: devices/securitygateway.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md

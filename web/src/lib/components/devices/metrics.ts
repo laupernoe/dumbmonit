@@ -33,9 +33,9 @@ export interface DeviceMetricGroup {
  * total") are plain gauges.
  */
 const COUNTER =
-	/_(octets|packets|errors|discards)_(in|out)$|^dumbmonit_(disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples)$/;
+	/_(octets|packets|errors|discards)_(in|out)$|^dumbmonit_(disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples)$|^dumbmonit_(victoriametrics|victorialogs|loki|graylog)_\w+_total$/;
 const COUNTER_SELECTOR =
-	'dumbmonit_(.+_(octets|packets|errors|discards)_(in|out)|disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples)';
+	'dumbmonit_(.+_(octets|packets|errors|discards)_(in|out)|disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples|(victoriametrics|victorialogs|loki|graylog)_.+_total)';
 
 /** About 300 points per chart, as in `$lib/metrics`. */
 function stepFor(seconds: number): number {
@@ -44,7 +44,7 @@ function stepFor(seconds: number): number {
 
 function unitFor(name: string): string {
 	if (COUNTER.test(name)) {
-		if (/_octets_|_bytes$/.test(name)) return 'B/s';
+		if (/_octets_|_bytes$|_bytes(_ingested)?_total$/.test(name)) return 'B/s';
 		if (/_packets_/.test(name)) return 'pkt/s';
 		if (/_errors_/.test(name)) return 'err/s';
 		if (/_discards_/.test(name)) return 'pkt/s';

@@ -1,0 +1,28 @@
+{
+  "total": 2,
+  "notifications": [
+    {
+      "id": "6abc148a111f2695f9bcdcd5",
+      "type": "input_failed_to_start",
+      "key": "6abc1489111f2695f9bcdcd0",
+      "severity": "normal",
+      "timestamp": "2026-09-29T19:42:02.284Z",
+      "node_id": "5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60",
+      "details": {
+        "reason": "bind(..) failed with error(-98): Address already in use.",
+        "input_id": "[Syslog TCP/syslog-tcp/6abc1489111f2695f9bcdcd0]"
+      }
+    },
+    {
+      "id": "6abc1445111f2695f9bcdc9a",
+      "type": "es_node_disk_watermark_low",
+      "key": null,
+      "severity": "urgent",
+      "timestamp": "2026-09-29T19:40:53.568Z",
+      "node_id": "5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60",
+      "details": {
+        "nodes": "opensearch-1"
+      }
+    }
+  ]
+}

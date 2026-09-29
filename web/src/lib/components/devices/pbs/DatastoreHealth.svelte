@@ -211,7 +211,7 @@
 					<Plate tone={plate.tone} label={plate.label} />
 					<span class="tnum text-[0.8125rem] text-ink-2">
 						{formatBytes(pool.alloc_bytes)} of {formatBytes(pool.size_bytes)}{pct === null ? '' : ` (${Math.round(pct)}%)`}
-						{#if pool.fragmentation_percent !== null} · {Math.round(pool.fragmentation_percent)}% fragmented{/if}
+						{#if pool.fragmentation_percent !== null}{' '}· {Math.round(pool.fragmentation_percent)}% fragmented{/if}
 					</span>
 				</li>
 			{/each}
