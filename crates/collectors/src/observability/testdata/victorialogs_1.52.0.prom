@@ -1,0 +1,549 @@
+process_cpu_cores_available 8
+process_memory_limit_bytes 16285110272
+vl_active_force_merges 0
+vl_bytes_ingested_total{type="jsonline"} 7964
+vl_concurrent_select_capacity 8
+vl_concurrent_select_current 0
+vl_concurrent_select_limit_reached_total 0
+vl_concurrent_select_limit_timeout_total 0
+vl_errors_total{type="syslog"} 0
+vl_http_errors_total{path="/insert/journald/upload"} 0
+vl_http_errors_total{path="/insert/jsonline"} 0
+vl_http_errors_total{path="/insert/multitenant/native"} 0
+vl_http_errors_total{path="/insert/native"} 0
+vl_http_errors_total{path="/insert/opentelemetry/v1/logs",format="protobuf"} 0
+vl_http_errors_total{path="/insert/splunk"} 0
+vl_http_errors_total{path="/internal/insert"} 0
+vl_http_request_duration_seconds{path="/insert/jsonline",quantile="0.5"} 0.000603052
+vl_http_request_duration_seconds{path="/insert/jsonline",quantile="0.9"} 0.000603052
+vl_http_request_duration_seconds{path="/insert/jsonline",quantile="0.97"} 0.000603052
+vl_http_request_duration_seconds{path="/insert/jsonline",quantile="0.99"} 0.000603052
+vl_http_request_duration_seconds{path="/insert/jsonline",quantile="1"} 0.000603052
+vl_http_request_duration_seconds_sum{path="/insert/jsonline"} 0.061010278
+vl_http_request_duration_seconds_count{path="/insert/jsonline"} 14
+vl_http_request_duration_seconds_sum{path="/select/logsql/query"} 0.010017189
+vl_http_request_duration_seconds_count{path="/select/logsql/query"} 3
+vl_http_requests_total{path="/delete/active_tasks"} 0
+vl_http_requests_total{path="/delete/run_task"} 0
+vl_http_requests_total{path="/delete/stop_task"} 0
+vl_http_requests_total{path="/insert/datadog/api/v2/logs"} 0
+vl_http_requests_total{path="/insert/elasticsearch/_bulk"} 0
+vl_http_requests_total{path="/insert/journald/upload"} 0
+vl_http_requests_total{path="/insert/jsonline"} 14
+vl_http_requests_total{path="/insert/loki/api/v1/push",format="json"} 0
+vl_http_requests_total{path="/insert/loki/api/v1/push",format="protobuf"} 0
+vl_http_requests_total{path="/insert/multitenant/native"} 0
+vl_http_requests_total{path="/insert/native"} 0
+vl_http_requests_total{path="/insert/opentelemetry/v1/logs",format="protobuf"} 0
+vl_http_requests_total{path="/insert/splunk"} 0
+vl_http_requests_total{path="/internal/insert"} 0
+vl_http_requests_total{path="/select/logsql/facets"} 0
+vl_http_requests_total{path="/select/logsql/field_names"} 0
+vl_http_requests_total{path="/select/logsql/field_values"} 0
+vl_http_requests_total{path="/select/logsql/hits"} 0
+vl_http_requests_total{path="/select/logsql/query"} 3
+vl_http_requests_total{path="/select/logsql/query_time_range"} 0
+vl_http_requests_total{path="/select/logsql/stats_query"} 0
+vl_http_requests_total{path="/select/logsql/stats_query_range"} 0
+vl_http_requests_total{path="/select/logsql/stream_field_names"} 0
+vl_http_requests_total{path="/select/logsql/stream_field_values"} 0
+vl_http_requests_total{path="/select/logsql/stream_ids"} 0
+vl_http_requests_total{path="/select/logsql/streams"} 0
+vl_http_requests_total{path="/select/logsql/tail"} 0
+vl_http_requests_total{path="/select/tenant_ids"} 0
+vl_http_requests_total{path="/select/vmalert"} 0
+vl_insert_flush_duration_seconds{type="jsonline",quantile="0.5"} 3.843e-06
+vl_insert_flush_duration_seconds{type="jsonline",quantile="0.9"} 3.843e-06
+vl_insert_flush_duration_seconds{type="jsonline",quantile="0.97"} 3.843e-06
+vl_insert_flush_duration_seconds{type="jsonline",quantile="0.99"} 3.843e-06
+vl_insert_flush_duration_seconds{type="jsonline",quantile="1"} 3.843e-06
+vl_insert_flush_duration_seconds_sum{type="jsonline"} 0.041505641999999995
+vl_insert_flush_duration_seconds_count{type="jsonline"} 14
+vl_insert_processors_count 0
+vl_live_tailing_requests 0
+vl_merge_bytes_sum{type="storage/small"} 738
+vl_merge_bytes_count{type="storage/small"} 1
+vl_merge_duration_seconds_sum{type="storage/small"} 0.111759221
+vl_merge_duration_seconds_count{type="storage/small"} 1
+vl_rows_dropped_total{reason="debug"} 1
+vl_rows_dropped_total{reason="too_many_fields"} 0
+vl_rows_ingested_total{type="jsonline"} 101
+vl_slow_queries_total 0
+vl_storage_per_query_block_headers_read_bytes_bucket{vmrange="0...1.000e-09"} 2
+vl_storage_per_query_block_headers_read_bytes_bucket{vmrange="5.275e+01...5.995e+01"} 1
+vl_storage_per_query_block_headers_read_bytes_sum 59
+vl_storage_per_query_block_headers_read_bytes_count 3
+vl_storage_per_query_bloom_filters_read_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_bloom_filters_read_bytes_sum 0
+vl_storage_per_query_bloom_filters_read_bytes_count 3
+vl_storage_per_query_columns_header_indexes_read_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_columns_header_indexes_read_bytes_sum 0
+vl_storage_per_query_columns_header_indexes_read_bytes_count 3
+vl_storage_per_query_columns_headers_read_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_columns_headers_read_bytes_sum 0
+vl_storage_per_query_columns_headers_read_bytes_count 3
+vl_storage_per_query_found_rows_bucket{vmrange="0...1.000e-09"} 2
+vl_storage_per_query_found_rows_bucket{vmrange="8.799e+01...1.000e+02"} 1
+vl_storage_per_query_found_rows_sum 100
+vl_storage_per_query_found_rows_count 3
+vl_storage_per_query_processed_blocks_bucket{vmrange="0...1.000e-09"} 2
+vl_storage_per_query_processed_blocks_bucket{vmrange="8.799e-01...1.000e+00"} 1
+vl_storage_per_query_processed_blocks_sum 1
+vl_storage_per_query_processed_blocks_count 3
+vl_storage_per_query_processed_rows_bucket{vmrange="0...1.000e-09"} 2
+vl_storage_per_query_processed_rows_bucket{vmrange="8.799e+01...1.000e+02"} 1
+vl_storage_per_query_processed_rows_sum 100
+vl_storage_per_query_processed_rows_count 3
+vl_storage_per_query_read_timestamps_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_read_timestamps_sum 0
+vl_storage_per_query_read_timestamps_count 3
+vl_storage_per_query_read_values_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_read_values_sum 0
+vl_storage_per_query_read_values_count 3
+vl_storage_per_query_timestamps_read_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_timestamps_read_bytes_sum 0
+vl_storage_per_query_timestamps_read_bytes_count 3
+vl_storage_per_query_total_read_bytes_bucket{vmrange="0...1.000e-09"} 2
+vl_storage_per_query_total_read_bytes_bucket{vmrange="5.275e+01...5.995e+01"} 1
+vl_storage_per_query_total_read_bytes_sum 59
+vl_storage_per_query_total_read_bytes_count 3
+vl_storage_per_query_uncompressed_values_processed_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_uncompressed_values_processed_bytes_sum 0
+vl_storage_per_query_uncompressed_values_processed_bytes_count 3
+vl_storage_per_query_values_read_bytes_bucket{vmrange="0...1.000e-09"} 3
+vl_storage_per_query_values_read_bytes_sum 0
+vl_storage_per_query_values_read_bytes_count 3
+vl_too_long_lines_skipped_total 0
+vl_udp_errors_total{type="syslog"} 0
+vl_udp_reqests_total{type="syslog"} 0
+vm_cache_chars_current{type="promql/regexp"} 0
+vm_cache_chars_max{type="promql/regexp"} 1000000
+vm_cache_entries{type="promql/regexp"} 0
+vm_cache_misses_total{type="promql/regexp"} 0
+vm_cache_requests_total{type="promql/regexp"} 0
+vm_concurrent_insert_capacity 16
+vm_concurrent_insert_current 0
+vm_concurrent_insert_limit_reached_total 0
+vm_concurrent_insert_limit_timeout_total 0
+vm_filestream_buffered_read_bytes_total 117
+vm_filestream_buffered_read_calls_total 8
+vm_filestream_buffered_write_calls_total 19
+vm_filestream_buffered_written_bytes_total 1356
+vm_filestream_fsync_calls_total 21
+vm_filestream_fsync_duration_seconds_total 0.486469752
+vm_filestream_read_duration_seconds_total 8.3828e-05
+vm_filestream_readers 0
+vm_filestream_real_read_bytes_total 117
+vm_filestream_real_read_calls_total 8
+vm_filestream_real_write_calls_total 19
+vm_filestream_real_written_bytes_total 1356
+vm_filestream_write_duration_seconds_total 0.0017073300000000002
+vm_filestream_writers 0
+vm_fs_info{path="/vlogs", fs_type="overlayfs"} 1
+vm_fs_read_bytes_total 0
+vm_fs_read_calls_total 0
+vm_fs_readers 0
+vm_http_conn_timeout_closed_conns_total 0
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="2.154e-03...2.448e-03"} 1
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="2.448e-03...2.783e-03"} 1
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="2.783e-03...3.162e-03"} 1
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="4.084e-03...4.642e-03"} 2
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="5.275e-03...5.995e-03"} 1
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="5.995e-03...6.813e-03"} 2
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="8.799e-03...1.000e-02"} 1
+vm_http_request_duration_seconds_bucket{path="/metrics",vmrange="1.292e-02...1.468e-02"} 1
+vm_http_request_duration_seconds_sum{path="/metrics"} 0.05853580400000002
+vm_http_request_duration_seconds_count{path="/metrics"} 10
+vm_http_request_errors_total{path="*", reason="unsupported"} 0
+vm_http_request_errors_total{path="*", reason="wrong_auth_key"} 0
+vm_http_request_errors_total{path="*", reason="wrong_basic_auth"} 0
+vm_http_requests_all_total 28
+vm_http_requests_total{path="*/favicon.ico"} 0
+vm_http_requests_total{path="/debug/pprof/"} 0
+vm_http_requests_total{path="/debug/pprof/cmdline"} 0
+vm_http_requests_total{path="/debug/pprof/default"} 0
+vm_http_requests_total{path="/debug/pprof/mutex"} 0
+vm_http_requests_total{path="/debug/pprof/profile"} 0
+vm_http_requests_total{path="/debug/pprof/symbol"} 0
+vm_http_requests_total{path="/debug/pprof/trace"} 0
+vm_http_requests_total{path="/metrics"} 11
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaLogs/app/victoria-logs/main.go:44", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaLogs/app/victoria-logs/main.go:56", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaLogs/app/vlinsert/insertutil/common_params.go:273", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaLogs/app/vlstorage/main.go:145", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaLogs/app/vlstorage/main.go:152", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/httpserver/httpserver.go:152", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/httpserver/httpserver.go:154", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/logger/flag.go:12", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/logger/flag.go:13", is_printed="true"} 1
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/logger/flag.go:20", is_printed="true"} 2
+vm_log_messages_total{app_version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", level="info", location="VictoriaMetrics@v1.146.1-0.20260630165203-c82127b6d4d1/lib/memory/memory.go:45", is_printed="true"} 1
+vm_mmapped_files 0
+vm_nfs_dir_remove_failed_attempts_total 0
+vm_nfs_pending_dirs_to_remove 0
+vm_tcplistener_accepts_total{name="http", addr=":9428"} 28
+vm_tcplistener_conns{name="http", addr=":9428"} 1
+vm_tcplistener_errors_total{name="http", addr=":9428", type="accept"} 0
+vm_tcplistener_errors_total{name="http", addr=":9428", type="close"} 0
+vm_tcplistener_errors_total{name="http", addr=":9428", type="read"} 0
+vm_tcplistener_errors_total{name="http", addr=":9428", type="write"} 0
+vm_tcplistener_read_bytes_total{name="http", addr=":9428"} 25272
+vm_tcplistener_read_calls_total{name="http", addr=":9428"} 85
+vm_tcplistener_read_timeouts_total{name="http", addr=":9428"} 0
+vm_tcplistener_write_calls_total{name="http", addr=":9428"} 47
+vm_tcplistener_write_timeouts_total{name="http", addr=":9428"} 0
+vm_tcplistener_written_bytes_total{name="http", addr=":9428"} 312624
+vm_zstd_block_compress_calls_total 9
+vm_zstd_block_compressed_bytes_total 603
+vm_zstd_block_decompress_calls_total 7
+vm_zstd_block_original_bytes_total 1252
+vl_free_disk_space_bytes{path="/vlogs"} 35331710976
+vl_total_disk_space_bytes{path="/vlogs"} 247212277760
+vl_storage_is_read_only{path="/vlogs"} 0
+vl_active_merges{type="storage/inmemory"} 0
+vl_active_merges{type="storage/small"} 0
+vl_active_merges{type="storage/big"} 0
+vl_active_merges{type="indexdb/inmemory"} 0
+vl_active_merges{type="indexdb/file"} 0
+vl_merges_total{type="storage/inmemory"} 0
+vl_merges_total{type="storage/small"} 1
+vl_merges_total{type="storage/big"} 0
+vl_merges_total{type="indexdb/inmemory"} 0
+vl_merges_total{type="indexdb/file"} 0
+vl_rows_merged_total{type="storage/inmemory"} 0
+vl_rows_merged_total{type="storage/small"} 100
+vl_rows_merged_total{type="storage/big"} 0
+vl_rows_merged_total{type="indexdb/inmemory"} 0
+vl_rows_merged_total{type="indexdb/file"} 0
+vl_storage_rows{type="storage/inmemory"} 0
+vl_storage_rows{type="storage/small"} 100
+vl_storage_rows{type="storage/big"} 0
+vl_storage_parts{type="storage/inmemory"} 0
+vl_storage_parts{type="storage/small"} 1
+vl_storage_parts{type="storage/big"} 0
+vl_storage_blocks{type="storage/inmemory"} 0
+vl_storage_blocks{type="storage/small"} 1
+vl_storage_blocks{type="storage/big"} 0
+vl_pending_rows{type="storage"} 0
+vl_pending_rows{type="indexdb"} 0
+vl_partitions 1
+vl_streams_created_total 1
+vl_indexdb_rows 3
+vl_indexdb_parts 1
+vl_indexdb_blocks 1
+vl_data_size_bytes{type="indexdb"} 190
+vl_data_size_bytes{type="storage"} 738
+vl_compressed_data_size_bytes{type="storage/inmemory"} 0
+vl_compressed_data_size_bytes{type="storage/small"} 738
+vl_compressed_data_size_bytes{type="storage/big"} 0
+vl_uncompressed_data_size_bytes{type="storage/inmemory"} 0
+vl_uncompressed_data_size_bytes{type="storage/small"} 7892
+vl_uncompressed_data_size_bytes{type="storage/big"} 0
+vl_storage_log_min_timestamp_seconds 1.790710781e+09
+vl_storage_log_max_timestamp_seconds 1.790710781e+09
+vl_rows_dropped_total{reason="too_big_timestamp"} 0
+vl_rows_dropped_total{reason="too_small_timestamp"} 0
+go_sched_latencies_seconds_bucket{le="0"} 0
+go_sched_latencies_seconds_bucket{le="2.56e-07"} 28
+go_sched_latencies_seconds_bucket{le="4.48e-07"} 28
+go_sched_latencies_seconds_bucket{le="7.68e-07"} 31
+go_sched_latencies_seconds_bucket{le="1.28e-06"} 37
+go_sched_latencies_seconds_bucket{le="2.048e-06"} 40
+go_sched_latencies_seconds_bucket{le="3.584e-06"} 49
+go_sched_latencies_seconds_bucket{le="6.144e-06"} 52
+go_sched_latencies_seconds_bucket{le="1.024e-05"} 148
+go_sched_latencies_seconds_bucket{le="1.6384e-05"} 382
+go_sched_latencies_seconds_bucket{le="3.2768e-05"} 478
+go_sched_latencies_seconds_bucket{le="5.7344e-05"} 510
+go_sched_latencies_seconds_bucket{le="9.8304e-05"} 528
+go_sched_latencies_seconds_bucket{le="0.00016384"} 534
+go_sched_latencies_seconds_bucket{le="0.000262144"} 539
+go_sched_latencies_seconds_bucket{le="0.000458752"} 546
+go_sched_latencies_seconds_bucket{le="0.000786432"} 548
+go_sched_latencies_seconds_bucket{le="0.00131072"} 550
+go_sched_latencies_seconds_bucket{le="0.002097152"} 553
+go_sched_latencies_seconds_bucket{le="0.003670016"} 555
+go_sched_latencies_seconds_bucket{le="0.007340032"} 560
+go_sched_latencies_seconds_bucket{le="0.012582912"} 561
+go_sched_latencies_seconds_bucket{le="0.02097152"} 561
+go_sched_latencies_seconds_bucket{le="0.033554432"} 561
+go_sched_latencies_seconds_bucket{le="0.058720256"} 561
+go_sched_latencies_seconds_bucket{le="0.100663296"} 561
+go_sched_latencies_seconds_bucket{le="0.16777216"} 561
+go_sched_latencies_seconds_bucket{le="0.268435456"} 561
+go_sched_latencies_seconds_bucket{le="0.469762048"} 561
+go_sched_latencies_seconds_bucket{le="0.805306368"} 561
+go_sched_latencies_seconds_bucket{le="+Inf"} 561
+go_mutex_wait_seconds_total 0.000867416
+go_gc_mark_assist_cpu_seconds_total 0.009182726
+go_gc_cpu_seconds_total 0.092730778
+go_gc_pauses_seconds_bucket{le="0"} 0
+go_gc_pauses_seconds_bucket{le="2.56e-07"} 0
+go_gc_pauses_seconds_bucket{le="4.48e-07"} 0
+go_gc_pauses_seconds_bucket{le="7.68e-07"} 0
+go_gc_pauses_seconds_bucket{le="1.28e-06"} 0
+go_gc_pauses_seconds_bucket{le="2.048e-06"} 0
+go_gc_pauses_seconds_bucket{le="3.584e-06"} 0
+go_gc_pauses_seconds_bucket{le="6.144e-06"} 0
+go_gc_pauses_seconds_bucket{le="1.024e-05"} 0
+go_gc_pauses_seconds_bucket{le="1.6384e-05"} 3
+go_gc_pauses_seconds_bucket{le="3.2768e-05"} 8
+go_gc_pauses_seconds_bucket{le="5.7344e-05"} 8
+go_gc_pauses_seconds_bucket{le="9.8304e-05"} 11
+go_gc_pauses_seconds_bucket{le="0.00016384"} 12
+go_gc_pauses_seconds_bucket{le="0.000262144"} 13
+go_gc_pauses_seconds_bucket{le="0.000458752"} 13
+go_gc_pauses_seconds_bucket{le="0.000786432"} 13
+go_gc_pauses_seconds_bucket{le="0.00131072"} 13
+go_gc_pauses_seconds_bucket{le="0.002097152"} 13
+go_gc_pauses_seconds_bucket{le="0.003670016"} 14
+go_gc_pauses_seconds_bucket{le="0.007340032"} 16
+go_gc_pauses_seconds_bucket{le="0.012582912"} 16
+go_gc_pauses_seconds_bucket{le="0.02097152"} 16
+go_gc_pauses_seconds_bucket{le="0.033554432"} 16
+go_gc_pauses_seconds_bucket{le="0.058720256"} 16
+go_gc_pauses_seconds_bucket{le="0.100663296"} 16
+go_gc_pauses_seconds_bucket{le="0.16777216"} 16
+go_gc_pauses_seconds_bucket{le="0.268435456"} 16
+go_gc_pauses_seconds_bucket{le="0.469762048"} 16
+go_gc_pauses_seconds_bucket{le="0.805306368"} 16
+go_gc_pauses_seconds_bucket{le="+Inf"} 16
+go_scavenge_cpu_seconds_total 0.00168366
+go_memlimit_bytes 9223372036854775807
+go_memstats_alloc_bytes 829528
+go_memstats_alloc_bytes_total 10947368
+go_memstats_buck_hash_sys_bytes 1450966
+go_memstats_frees_total 22649
+go_memstats_gc_cpu_fraction 1.8339764479366585e-05
+go_memstats_gc_sys_bytes 3158256
+go_memstats_heap_alloc_bytes 829528
+go_memstats_heap_idle_bytes 9109504
+go_memstats_heap_inuse_bytes 2326528
+go_memstats_heap_objects 4653
+go_memstats_heap_released_bytes 8896512
+go_memstats_heap_sys_bytes 11436032
+go_memstats_last_gc_time_seconds 1.790711278656017e+09
+go_memstats_lookups_total 0
+go_memstats_mallocs_total 27302
+go_memstats_mcache_inuse_bytes 18368
+go_memstats_mcache_sys_bytes 32144
+go_memstats_mspan_inuse_bytes 129280
+go_memstats_mspan_sys_bytes 146880
+go_memstats_next_gc_bytes 4194304
+go_memstats_other_sys_bytes 1911026
+go_memstats_stack_inuse_bytes 1146880
+go_memstats_stack_sys_bytes 1146880
+go_memstats_sys_bytes 19282184
+go_cgo_calls_count 48
+go_cpu_count 8
+go_gc_duration_seconds{quantile="0"} 0
+go_gc_duration_seconds{quantile="0.25"} 0
+go_gc_duration_seconds{quantile="0.5"} 0
+go_gc_duration_seconds{quantile="0.75"} 0
+go_gc_duration_seconds{quantile="1"} 0.004054687
+go_gc_duration_seconds_sum 0.010867641
+go_gc_duration_seconds_count 8
+go_gc_forced_count 0
+go_gomaxprocs 8
+go_goroutines 37
+go_threads 22
+go_info{version="go1.26.5"} 1
+go_info_ext{compiler="gc", GOARCH="amd64", GOOS="linux", GOROOT=""} 1
+process_cpu_seconds_system_total 0.47
+process_cpu_seconds_total 1.01
+process_cpu_seconds_user_total 0.54
+process_major_pagefaults_total 163
+process_minor_pagefaults_total 4100
+process_num_threads 21
+process_resident_memory_bytes 18210816
+process_start_time_seconds 1790710689
+process_virtual_memory_bytes 2819108864
+process_virtual_memory_peak_bytes 2819108864
+process_resident_memory_peak_bytes 20926464
+process_resident_memory_anon_bytes 5906432
+process_resident_memory_file_bytes 12804096
+process_resident_memory_shared_bytes 0
+process_io_read_bytes_total 191733
+process_io_written_bytes_total 344592
+process_io_read_syscalls_total 2764
+process_io_write_syscalls_total 2360
+process_io_storage_read_bytes_total 14565376
+process_io_storage_written_bytes_total 77824
+process_pressure_cpu_waiting_seconds_total 0.853823
+process_pressure_cpu_stalled_seconds_total 0.765373
+process_pressure_io_waiting_seconds_total 0.028772
+process_pressure_io_stalled_seconds_total 0.022879
+process_pressure_memory_waiting_seconds_total 0
+process_pressure_memory_stalled_seconds_total 0
+process_max_fds 524287
+process_open_fds 10
+vm_app_version{version="victoria-logs-20260716-022232-tags-v1.52.0-0-g46a54c976f", short_version="v1.52.0"} 1
+vm_allowed_memory_bytes 9771066163
+vm_available_memory_bytes 16285110272
+vm_available_cpu_cores 8
+vm_gogc 0
+vm_app_start_timestamp 1790710689
+vm_app_uptime_seconds 677
+flag{name="blockcache.missesBeforeCaching", value="2", is_set="false"} 1
+flag{name="datadog.ignoreFields", value="", is_set="false"} 1
+flag{name="datadog.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="datadog.streamFields", value="", is_set="false"} 1
+flag{name="defaultMsgValue", value="missing _msg field; see https://docs.victoriametrics.com/victorialogs/keyconcepts/#message-field", is_set="false"} 1
+flag{name="defaultParallelReaders", value="16", is_set="false"} 1
+flag{name="delete.enable", value="false", is_set="false"} 1
+flag{name="elasticsearch.version", value="8.9.0", is_set="false"} 1
+flag{name="enableTCP6", value="false", is_set="false"} 1
+flag{name="envflag.enable", value="false", is_set="false"} 1
+flag{name="envflag.prefix", value="", is_set="false"} 1
+flag{name="filestream.disableFadvise", value="false", is_set="false"} 1
+flag{name="flagsAuthKey", value="secret", is_set="false"} 1
+flag{name="forceFlushAuthKey", value="secret", is_set="false"} 1
+flag{name="forceMergeAuthKey", value="secret", is_set="false"} 1
+flag{name="fs.disableMincore", value="false", is_set="false"} 1
+flag{name="fs.disableMmap", value="false", is_set="false"} 1
+flag{name="fs.maxConcurrency", value="128", is_set="false"} 1
+flag{name="futureRetention", value="2d", is_set="false"} 1
+flag{name="http.connTimeout", value="2m0s", is_set="false"} 1
+flag{name="http.disableCORS", value="false", is_set="false"} 1
+flag{name="http.disableKeepAlive", value="false", is_set="false"} 1
+flag{name="http.disableResponseCompression", value="false", is_set="false"} 1
+flag{name="http.header.csp", value="", is_set="false"} 1
+flag{name="http.header.disableServerHostname", value="false", is_set="false"} 1
+flag{name="http.header.frameOptions", value="", is_set="false"} 1
+flag{name="http.header.hsts", value="", is_set="false"} 1
+flag{name="http.idleConnTimeout", value="1m0s", is_set="false"} 1
+flag{name="http.maxGracefulShutdownDuration", value="7s", is_set="false"} 1
+flag{name="http.pathPrefix", value="", is_set="false"} 1
+flag{name="http.shutdownDelay", value="0s", is_set="false"} 1
+flag{name="httpAuth.password", value="secret", is_set="false"} 1
+flag{name="httpAuth.username", value="", is_set="false"} 1
+flag{name="httpListenAddr", value=":9428", is_set="true"} 1
+flag{name="httpListenAddr.useProxyProtocol", value="", is_set="false"} 1
+flag{name="inmemoryDataFlushInterval", value="5s", is_set="false"} 1
+flag{name="insert.concurrency", value="2", is_set="false"} 1
+flag{name="insert.disable", value="false", is_set="false"} 1
+flag{name="insert.disableCompression", value="false", is_set="false"} 1
+flag{name="insert.maxFieldsPerLine", value="1000", is_set="false"} 1
+flag{name="insert.maxLineSizeBytes", value="262144", is_set="false"} 1
+flag{name="insert.maxQueueDuration", value="1m0s", is_set="false"} 1
+flag{name="internStringCacheExpireDuration", value="6m0s", is_set="false"} 1
+flag{name="internStringDisableCache", value="false", is_set="false"} 1
+flag{name="internStringMaxLen", value="500", is_set="false"} 1
+flag{name="internaldelete.enable", value="false", is_set="false"} 1
+flag{name="internalinsert.disable", value="false", is_set="false"} 1
+flag{name="internalinsert.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="internalselect.disable", value="false", is_set="false"} 1
+flag{name="internalselect.maxConcurrentRequests", value="8", is_set="false"} 1
+flag{name="journald.ignoreFields", value="", is_set="false"} 1
+flag{name="journald.includeEntryMetadata", value="false", is_set="false"} 1
+flag{name="journald.streamFields", value="", is_set="false"} 1
+flag{name="journald.tenantID", value="0:0", is_set="false"} 1
+flag{name="journald.timeField", value="__REALTIME_TIMESTAMP", is_set="false"} 1
+flag{name="journald.useRemoteIP", value="false", is_set="false"} 1
+flag{name="logIngestedRows", value="false", is_set="false"} 1
+flag{name="logNewStreams", value="false", is_set="false"} 1
+flag{name="logNewStreamsAuthKey", value="secret", is_set="false"} 1
+flag{name="loggerDisableTimestamps", value="false", is_set="false"} 1
+flag{name="loggerErrorsPerSecondLimit", value="0", is_set="false"} 1
+flag{name="loggerFormat", value="default", is_set="false"} 1
+flag{name="loggerJSONFields", value="", is_set="false"} 1
+flag{name="loggerLevel", value="INFO", is_set="false"} 1
+flag{name="loggerMaxArgLen", value="5000", is_set="false"} 1
+flag{name="loggerOutput", value="stderr", is_set="false"} 1
+flag{name="loggerTimezone", value="UTC", is_set="false"} 1
+flag{name="loggerWarnsPerSecondLimit", value="0", is_set="false"} 1
+flag{name="loki.disableMessageParsing", value="false", is_set="false"} 1
+flag{name="loki.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="loki.messageFieldsPrefix", value="", is_set="false"} 1
+flag{name="maxBackfillAge", value="0", is_set="false"} 1
+flag{name="maxConcurrentInserts", value="16", is_set="false"} 1
+flag{name="memory.allowedBytes", value="0", is_set="false"} 1
+flag{name="memory.allowedPercent", value="60", is_set="false"} 1
+flag{name="metrics.exposeMetadata", value="false", is_set="false"} 1
+flag{name="metricsAuthKey", value="secret", is_set="false"} 1
+flag{name="nativeinsert.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="opentelemetry.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="partitionManageAuthKey", value="secret", is_set="false"} 1
+flag{name="pprofAuthKey", value="secret", is_set="false"} 1
+flag{name="pushmetrics.disableCompression", value="false", is_set="false"} 1
+flag{name="pushmetrics.extraLabel", value="", is_set="false"} 1
+flag{name="pushmetrics.header", value="", is_set="false"} 1
+flag{name="pushmetrics.interval", value="10s", is_set="false"} 1
+flag{name="pushmetrics.url", value="secret", is_set="false"} 1
+flag{name="retention.maxDiskSpaceUsageBytes", value="0", is_set="false"} 1
+flag{name="retention.maxDiskUsagePercent", value="0", is_set="false"} 1
+flag{name="retentionPeriod", value="7d", is_set="false"} 1
+flag{name="search.allowPartialResponse", value="false", is_set="false"} 1
+flag{name="search.logSlowQueryDuration", value="5s", is_set="false"} 1
+flag{name="search.maxConcurrentRequests", value="8", is_set="false"} 1
+flag{name="search.maxQueryDuration", value="30s", is_set="false"} 1
+flag{name="search.maxQueryLen", value="16384", is_set="false"} 1
+flag{name="search.maxQueryTimeRange", value="0", is_set="false"} 1
+flag{name="search.maxQueueDuration", value="10s", is_set="false"} 1
+flag{name="secret.flags", value="secret", is_set="false"} 1
+flag{name="select.disable", value="false", is_set="false"} 1
+flag{name="select.disableCompression", value="false", is_set="false"} 1
+flag{name="snapshotsMaxAge", value="3d", is_set="false"} 1
+flag{name="splunk.ignoreFields", value="", is_set="false"} 1
+flag{name="splunk.maxRequestSize", value="67108864", is_set="false"} 1
+flag{name="splunk.msgField", value="", is_set="false"} 1
+flag{name="splunk.preserveJSONKeys", value="secret", is_set="false"} 1
+flag{name="splunk.streamFields", value="", is_set="false"} 1
+flag{name="splunk.tenantID", value="0:0", is_set="false"} 1
+flag{name="splunk.timeField", value="time", is_set="false"} 1
+flag{name="storage.minFreeDiskSpaceBytes", value="10000000", is_set="false"} 1
+flag{name="storageDataPath", value="/vlogs", is_set="true"} 1
+flag{name="storageNode", value="", is_set="false"} 1
+flag{name="storageNode.bearerToken", value="secret", is_set="false"} 1
+flag{name="storageNode.bearerTokenFile", value="secret", is_set="false"} 1
+flag{name="storageNode.password", value="secret", is_set="false"} 1
+flag{name="storageNode.passwordFile", value="secret", is_set="false"} 1
+flag{name="storageNode.tls", value="", is_set="false"} 1
+flag{name="storageNode.tlsCAFile", value="", is_set="false"} 1
+flag{name="storageNode.tlsCertFile", value="", is_set="false"} 1
+flag{name="storageNode.tlsInsecureSkipVerify", value="", is_set="false"} 1
+flag{name="storageNode.tlsKeyFile", value="secret", is_set="false"} 1
+flag{name="storageNode.tlsServerName", value="", is_set="false"} 1
+flag{name="storageNode.username", value="", is_set="false"} 1
+flag{name="storageNode.usernameFile", value="", is_set="false"} 1
+flag{name="syslog.compressMethod.tcp", value="", is_set="false"} 1
+flag{name="syslog.compressMethod.udp", value="", is_set="false"} 1
+flag{name="syslog.compressMethod.unix", value="", is_set="false"} 1
+flag{name="syslog.decolorizeFields.tcp", value="", is_set="false"} 1
+flag{name="syslog.decolorizeFields.udp", value="", is_set="false"} 1
+flag{name="syslog.decolorizeFields.unix", value="", is_set="false"} 1
+flag{name="syslog.extraFields.tcp", value="", is_set="false"} 1
+flag{name="syslog.extraFields.udp", value="", is_set="false"} 1
+flag{name="syslog.extraFields.unix", value="", is_set="false"} 1
+flag{name="syslog.ignoreFields.tcp", value="", is_set="false"} 1
+flag{name="syslog.ignoreFields.udp", value="", is_set="false"} 1
+flag{name="syslog.ignoreFields.unix", value="", is_set="false"} 1
+flag{name="syslog.listenAddr.tcp", value="", is_set="false"} 1
+flag{name="syslog.listenAddr.udp", value="", is_set="false"} 1
+flag{name="syslog.listenAddr.unix", value="", is_set="false"} 1
+flag{name="syslog.streamFields.tcp", value="", is_set="false"} 1
+flag{name="syslog.streamFields.udp", value="", is_set="false"} 1
+flag{name="syslog.streamFields.unix", value="", is_set="false"} 1
+flag{name="syslog.tenantID.tcp", value="", is_set="false"} 1
+flag{name="syslog.tenantID.udp", value="", is_set="false"} 1
+flag{name="syslog.tenantID.unix", value="", is_set="false"} 1
+flag{name="syslog.timezone", value="Local", is_set="false"} 1
+flag{name="syslog.tls", value="", is_set="false"} 1
+flag{name="syslog.tlsCertFile", value="", is_set="false"} 1
+flag{name="syslog.tlsCipherSuites", value="", is_set="false"} 1
+flag{name="syslog.tlsKeyFile", value="secret", is_set="false"} 1
+flag{name="syslog.tlsMinVersion", value="TLS13", is_set="false"} 1
+flag{name="syslog.useLocalTimestamp.tcp", value="", is_set="false"} 1
+flag{name="syslog.useLocalTimestamp.udp", value="", is_set="false"} 1
+flag{name="syslog.useLocalTimestamp.unix", value="", is_set="false"} 1
+flag{name="syslog.useRemoteIP.tcp", value="", is_set="false"} 1
+flag{name="syslog.useRemoteIP.udp", value="", is_set="false"} 1
+flag{name="syslog.useRemoteIP.unix", value="", is_set="false"} 1
+flag{name="tls", value="", is_set="false"} 1
+flag{name="tlsCertFile", value="", is_set="false"} 1
+flag{name="tlsCipherSuites", value="", is_set="false"} 1
+flag{name="tlsKeyFile", value="secret", is_set="false"} 1
+flag{name="tlsMinVersion", value="", is_set="false"} 1
+flag{name="version", value="false", is_set="false"} 1
+flag{name="vmalert.proxyURL", value="secret", is_set="false"} 1
+vm_os_info{os="linux", release="6.8.0-45-generic"} 1

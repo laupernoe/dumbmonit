@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MDaemon>
+<API productversion="23.5.1" serviceversion="23.5.1.6">
+<Response version="23.5" et="0.525348">
+<Status id="0" value="0x81420082" message="The Email address specified is invalid" keyWord="test@invalid"/>
+</Response>
+</API>
+</MDaemon>

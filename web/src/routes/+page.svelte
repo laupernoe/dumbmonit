@@ -3,10 +3,12 @@
 	 * Overview — a briefing from the pigeon, not a dashboard.
 	 *
 	 * The sky says how things are right now; "Since you last looked" tells
-	 * what happened while you were away, in sentences; "Needs you" lists what
-	 * to act on; "The week ahead" places what is due on its day; "Streaks"
-	 * reads three figures off the week's history. The last visit lives in the
-	 * browser, so the story starts where the reader left it.
+	 * what happened while you were away, in sentences; "The week ahead" places
+	 * what is due on its day; "Needs you" lays out what to act on as tiles;
+	 * "Last 7 days" reads three figures off the week's alert history (how long
+	 * everything has been reporting, the quietest device, the one with the most
+	 * alert events). The last visit lives in the browser, so the story starts
+	 * where the reader left it.
 	 *
 	 * Alerts come from the shared store (polled app-wide); everything else is
 	 * refreshed here every 30 s. No device list: the rack lives on /targets.
@@ -157,7 +159,7 @@
 		error = null;
 		const at = new Date();
 		// The history reaches back to the last visit or seven days, whichever is
-		// older, so one read feeds both the briefing and the streaks.
+		// older, so one read feeds both the briefing and the last-7-days figures.
 		const sinceMs = Math.min(lastVisit?.getTime() ?? Infinity, at.getTime() - HISTORY_DAYS * DAY_MS);
 		// Secondary readings leave with the lists: their failure is not blocking.
 		const side = Promise.all([
@@ -254,7 +256,7 @@
 		}}
 	/>
 {:else if firstLoad}
-	<!-- Skeleton shaped like the page: the sky band, the briefing, the list, the week, the figures. -->
+	<!-- Skeleton shaped like the page: the sky band, the briefing, the week, the tiles, the figures. -->
 	<Skeleton class="h-[200px] w-full rounded-[var(--radius-card)] md:h-[260px]" />
 	<div class="mt-8 space-y-2.5">
 		<Skeleton class="h-5 w-44" />
@@ -262,15 +264,19 @@
 		<Skeleton class="h-4 w-2/3" />
 		<Skeleton class="h-4 w-1/2" />
 	</div>
-	<div class="mt-8 space-y-2.5">
-		<Skeleton class="h-5 w-24" />
-		<Skeleton class="h-20 w-full" />
-	</div>
 	<div class="mt-8">
 		<Skeleton class="mb-3 h-5 w-32" />
 		<div class="grid gap-2 md:grid-cols-7">
 			{#each { length: 7 } as _, i (i)}
 				<Skeleton class="h-24 w-full" />
+			{/each}
+		</div>
+	</div>
+	<div class="mt-8">
+		<Skeleton class="mb-3 h-5 w-24" />
+		<div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+			{#each { length: 3 } as _, i (i)}
+				<Skeleton class="h-28 w-full" />
 			{/each}
 		</div>
 	</div>
@@ -374,8 +380,14 @@
 			<Briefing sentences={briefing} />
 		</section>
 
-		<!-- Needs you -->
+		<!-- The week ahead -->
 		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
+			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">The week ahead</h2>
+			<WeekAhead {week} />
+		</section>
+
+		<!-- Needs you -->
+		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
 			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">Needs you</h2>
 			{#if silenceError}
 				<p class="mb-3 text-[0.8125rem] text-warning-ink" role="alert" aria-live="polite">
@@ -392,16 +404,13 @@
 			/>
 		</section>
 
-		<!-- The week ahead -->
-		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
-			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">The week ahead</h2>
-			<WeekAhead {week} />
-		</section>
-
-		<!-- Streaks: only once there is a history to read them from. -->
+		<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
 		{#if streaks.length > 0}
 			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 4}ms`}>
-				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">Streaks</h2>
+				<div class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+					<h2 class="text-base font-semibold tracking-tight text-ink">Last {HISTORY_DAYS} days</h2>
+					<p class="text-[0.8125rem] text-ink-2">Read from the alert history of the past week.</p>
+				</div>
 				<Streaks {streaks} />
 			</section>
 		{/if}

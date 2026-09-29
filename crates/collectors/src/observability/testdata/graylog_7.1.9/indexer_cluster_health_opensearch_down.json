@@ -1,0 +1,4 @@
+{
+  "type": "ApiError",
+  "message": "Couldn't read Elasticsearch cluster health"
+}

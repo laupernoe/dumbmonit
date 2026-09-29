@@ -2923,3 +2923,51 @@ export interface RedfishOverview {
 	/** Unix seconds of the most recent sample; `null` before the first probe. */
 	sampled_at: number | null;
 }
+
+// --- Log and metrics servers ---------------------------------------------------
+// Mirrors `crates/server/src/api/observability.rs`: VictoriaMetrics,
+// VictoriaLogs, Loki and Graylog, rebuilt from their last `dumbmonit_<kind>_*`
+// series. The server writes the verdicts; the panel only shows them.
+
+export type ObservabilityState = 'ok' | 'advisory' | 'warning';
+
+export type ObservabilityUnit = 'bytes' | 'bytes_per_second' | 'per_second' | 'percent' | 'count' | 'seconds';
+
+export interface ObservabilityCheck {
+	label: string;
+	state: ObservabilityState;
+	detail: string;
+}
+
+export interface ObservabilityFigure {
+	label: string;
+	value: number | null;
+	unit: ObservabilityUnit;
+}
+
+export interface ObservabilityRow {
+	label: string;
+	value: number | null;
+	unit: ObservabilityUnit;
+	/** `null` for a row without a verdict. */
+	state: ObservabilityState | null;
+}
+
+export interface ObservabilityBreakdown {
+	title: string;
+	/** One sentence under the title; empty when there is none. */
+	note: string;
+	rows: ObservabilityRow[];
+}
+
+export interface ObservabilityOverview {
+	kind: string;
+	version: string | null;
+	/** Unix seconds of the most recent sample; `null` before the first probe. */
+	sampled_at: number | null;
+	/** The worst of the checks. */
+	state: ObservabilityState;
+	checks: ObservabilityCheck[];
+	figures: ObservabilityFigure[];
+	breakdowns: ObservabilityBreakdown[];
+}

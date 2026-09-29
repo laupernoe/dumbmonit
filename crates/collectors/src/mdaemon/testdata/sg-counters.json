@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "data": {
+    "activeInboundSmtpSessions": 3,
+    "activeOutboundSmtpSessions": 1,
+    "deliveryQueue": 42,
+    "adminQuarantine": 7,
+    "uptimeSeconds": 86400,
+    "domainCount": 4,
+    "userCount": 120,
+    "databasePool": { "size": 10, "maxSize": 50, "active": 2 },
+    "serverName": "sg.example.com",
+    "counters": [
+      { "name": "Bad Messages", "value": 0 },
+      { "name": "Queued for Delivery", "value": "42" }
+    ]
+  }
+}
