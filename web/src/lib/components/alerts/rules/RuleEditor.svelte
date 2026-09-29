@@ -313,7 +313,7 @@
 	{#if error}
 		<p class="text-[0.8125rem] font-medium text-warning-ink" role="alert">
 			{error}
-			{#if hint}<span class="font-normal text-ink-2"> {hint}</span>{/if}
+			{#if hint}<span class="font-normal text-ink-2">{' '}{hint}</span>{/if}
 		</p>
 	{/if}
 

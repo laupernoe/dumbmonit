@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    {
+      "cluster_id": "a1d2e3f4-0b1c-4d5e-8f90-123456789abc",
+      "node_id": "5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60",
+      "transport_address": "http://10.20.0.11:9000/api/",
+      "last_seen": "2026-09-29T19:42:57.000Z",
+      "short_node_id": "5b0f1c2e",
+      "hostname": "graylog-1",
+      "is_leader": true,
+      "is_master": true
+    }
+  ],
+  "total": 1
+}

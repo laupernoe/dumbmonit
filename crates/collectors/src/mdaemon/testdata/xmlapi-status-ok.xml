@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MDaemon>
+<API productversion="23.5.1" serviceversion="23.5.1.6">
+<Response version="23.5" et="0.026282">
+<Status id="0" value="0x00000000" message="The operation completed successfully."/>
+</Response>
+</API>
+</MDaemon>

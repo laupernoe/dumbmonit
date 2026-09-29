@@ -16,6 +16,12 @@ form always matches what this version can monitor.
 | [OPNsense](opnsense.md) | `opnsense` | API key and secret | Firewall, router, multi-WAN edge |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |
+| [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | none, username/password or token | Time series database: ingestion, refused samples, disk headroom |
+| [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | none, username/password or token | Log database: ingestion, refused lines, disk headroom |
+| [Grafana Loki](loki.md) | `loki` | none, username/password or token | Log server: readiness, refused lines, flush failures |
+| [Graylog](graylog.md) | `graylog` | access token or username/password | Log server and its OpenSearch cluster: journal, buffers, throughput, inputs |
+| [MDaemon Email Server](mdaemon.md) | `mdaemon` | none, or email address/password | Mail server: SMTP, IMAP, POP3, webmail, version |
+| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | none, or API key | Mail gateway: services, delivery queue and other counters |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |

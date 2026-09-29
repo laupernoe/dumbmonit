@@ -381,6 +381,48 @@ const TRUENAS_KEY: CredentialView = CredentialView {
     )],
 };
 
+/// Compte de l'API XML de MDaemon : adresse de messagerie complète et mot de
+/// passe, envoyés en HTTP Basic. Facultatif : sans lui, seuls les services sont
+/// vérifiés.
+const MDAEMON_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "XML API account",
+    help: "Also reads the version through the XML API. Leave the credential empty to watch the mail services only.",
+    fields: &[
+        cred_text(
+            "username",
+            "Email address",
+            "The full email address of the account: MDaemon refuses a bare user name.",
+            "dumbmonit@example.com",
+        ),
+        PASSWORD_FIELD,
+    ],
+};
+
+/// Clé d'API REST de SecurityGateway (12.5 et suivants), envoyée en
+/// `Authorization: Bearer`. Facultative : sans elle, seuls les services sont
+/// vérifiés.
+const SECURITY_GATEWAY_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key (12.5 and later)",
+    help: "Also reads the version and the performance counters through the REST API. Leave the credential empty to watch the services only.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Shown once when the key is created. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+/// Pas d'identifiant : les services seuls.
+const MAIL_SERVICES_ONLY: CredentialView = CredentialView {
+    kind: "none",
+    label: "Services only",
+    help: "Nothing is sent: DumbMonit connects to the mail ports and reads their greetings.",
+    fields: &[],
+};
+
 const HTTP_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
     label: "Bearer token",
@@ -1598,6 +1640,142 @@ const SYNOLOGY_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Options lues par `collectors/mdaemon/email_server.rs`.
+const MDAEMON_OPTIONS: &[OptionView] = &[
+    text(
+        "services",
+        "Services",
+        "Comma-separated list of what to check: smtp, msa, smtps, pop3, pop3s, imap, imaps, webmail, remote_admin, remote_admin_https, xmpp. Write name:port for a port other than the default, and any other name with its port for a service of your own. none checks no port.",
+        "smtp,imap,webmail",
+        "smtp,imap,webmail",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per check (seconds)",
+        "Time allowed for each connection, greeting and API call, from 1 to 60.",
+        "10",
+        "10",
+    ),
+    number(
+        "api_port",
+        "XML API port",
+        "The Remote Administration port that serves /MdMgmtWS/. Used only with an account.",
+        "444",
+        "444",
+    ),
+    boolean(
+        "api_tls",
+        "XML API over HTTPS",
+        "Untick only for Remote Administration over plain HTTP (port 1000 by default): the password then crosses the network in clear.",
+        true,
+    ),
+    insecure_tls(
+        "Remote Administration often uses a self-signed certificate: enable this if the connection is refused for that reason.",
+    ),
+];
+
+/// Options lues par `collectors/mdaemon/security_gateway.rs`.
+const SECURITY_GATEWAY_OPTIONS: &[OptionView] = &[
+    text(
+        "services",
+        "Services",
+        "Comma-separated list of what to check: smtp, smtps, web, web_https. Write name:port for a port other than the default, and any other name with its port for a service of your own. none checks no port.",
+        "smtp,web",
+        "smtp,web",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per check (seconds)",
+        "Time allowed for each connection, greeting and API call, from 1 to 60.",
+        "10",
+        "10",
+    ),
+    number(
+        "api_port",
+        "REST API port",
+        "The web interface port that serves /api/v1. Used only with an API key.",
+        "4443",
+        "4443",
+    ),
+    boolean(
+        "api_tls",
+        "REST API over HTTPS",
+        "Untick only for the web interface over plain HTTP (port 4000 by default): the key then crosses the network in clear.",
+        true,
+    ),
+    insecure_tls(
+        "The web interface often uses a self-signed certificate on 4443: enable this if the connection is refused for that reason.",
+    ),
+    boolean(
+        "counters",
+        "Read the performance counters",
+        "Reads the read-only performance counters the REST API publishes (queues, quarantine, sessions) and keeps every numeric value as is.",
+        true,
+    ),
+];
+
+/// Jeton d'accès Graylog : envoyé en « basic », le jeton comme nom
+/// d'utilisateur et le mot `token` comme mot de passe
+/// (`collectors/observability/client.rs`).
+const GRAYLOG_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Access token (recommended)",
+    help: "A token of the dedicated Graylog user, created from its Edit tokens page.",
+    fields: &[cred_secret(
+        "token",
+        "Access token",
+        "Graylog shows it once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const GRAYLOG_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The dedicated Graylog user itself, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Protocole des serveurs de journaux et de métriques : en clair par défaut,
+/// comme ils écoutent tant qu'aucun proxy inverse n'est placé devant.
+const OBSERVABILITY_SCHEME: OptionView = select(
+    "scheme",
+    "Protocol",
+    "These servers listen over plain HTTP unless you put them behind a reverse proxy with TLS. HTTPS then.",
+    "http",
+    &["http", "https"],
+);
+
+const OBSERVABILITY_TIMEOUT: OptionView = number(
+    "request_timeout_seconds",
+    "Timeout per request (seconds)",
+    "Time allowed for each call, from 1 to 120.",
+    "10",
+    "10",
+);
+
+const fn observability_port(default: &'static str) -> OptionView {
+    number("port", "Port", "Used if the address does not give a port.", default, default)
+}
+
+const OBSERVABILITY_TLS: OptionView = insecure_tls(
+    "For a reverse proxy with a self-signed or private certificate: enable this if the connection is refused for that reason.",
+);
+
+/// Options lues par `collectors/observability/options.rs`, une liste par port.
+const VICTORIAMETRICS_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("8428"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+const VICTORIALOGS_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("9428"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+const LOKI_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("3100"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+const GRAYLOG_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("9000"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
     Json(state.collectors.kinds().into_iter().map(describe).collect())
 }
@@ -1607,7 +1785,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "snmp" => CollectorView {
             kind,
             label: "SNMP device",
-            summary: "The most universal: almost every piece of network hardware speaks SNMP.",
+            summary: "Switches, routers, UPS, printers, access points: anything that answers SNMP.",
             examples: &["Switch", "Router", "NAS", "UPS", "Printer"],
             credential_types: &["snmp_community", "snmp_v3"],
             credentials: &[SNMP_COMMUNITY, SNMP_V3],
@@ -1630,7 +1808,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "proxmox" => CollectorView {
             kind,
             label: "Proxmox VE",
-            summary: "Hypervisor: nodes, virtual machines, containers, storages and backups.",
+            summary: "Nodes, virtual machines, containers, storage and backups of a Proxmox server or cluster.",
             examples: &["Proxmox server", "Proxmox cluster"],
             credential_types: &["api_token", "username_password"],
             credentials: &[PROXMOX_TOKEN, PROXMOX_LOGIN],
@@ -1657,7 +1835,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "pbs" => CollectorView {
             kind,
             label: "Proxmox Backup Server",
-            summary: "Backup server: backup calendar per machine, failed tasks with their logs, sync/verify/prune/GC jobs, datastores, disks, services and tape.",
+            summary: "Backup freshness per machine, failed tasks, sync and verify jobs, datastore space.",
             examples: &["Proxmox Backup Server"],
             credential_types: &["api_token", "username_password"],
             credentials: &[PBS_TOKEN, PBS_LOGIN],
@@ -1683,7 +1861,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "pdm" => CollectorView {
             kind,
             label: "Proxmox Datacenter Manager",
-            summary: "The console that federates several Proxmox VE clusters and backup servers: which instances it reaches, the whole estate at a glance, failed tasks and the console's own health.",
+            summary: "The console over several clusters: which instances it reaches, their failed tasks, its health.",
             examples: &["Proxmox Datacenter Manager"],
             credential_types: &["api_token"],
             credentials: &[PDM_TOKEN],
@@ -1706,7 +1884,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "pmg" => CollectorView {
             kind,
             label: "Proxmox Mail Gateway",
-            summary: "Mail gateway: postfix queues and stuck mail, traffic filtered for spam and viruses, quarantine sizes, signature database age, services and cluster.",
+            summary: "Mail queues and stuck mail, spam and virus traffic, quarantine, signature age.",
             examples: &["Proxmox Mail Gateway"],
             credential_types: &["username_password", "api_token"],
             credentials: &[PMG_LOGIN, PMG_TOKEN],
@@ -1729,7 +1907,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "redfish" => CollectorView {
             kind,
             label: "Server hardware (Redfish)",
-            summary: "A server's own hardware, read from its management controller (BMC): fans, temperatures against their own thresholds, power supplies and their redundancy, drives, memory, processors and the event log.",
+            summary: "Fans, temperatures, power supplies, drives and memory, read from the BMC (iDRAC, iLO…).",
             examples: &[
                 "Supermicro BMC",
                 "Dell iDRAC",
@@ -1755,10 +1933,57 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: REDFISH_OPTIONS,
         },
+        "mdaemon" => CollectorView {
+            kind,
+            label: "MDaemon Email Server",
+            summary: "SMTP, IMAP, POP3 and webmail answering, version, and the XML API.",
+            examples: &["MDaemon Email Server"],
+            credential_types: &["none", "username_password"],
+            credentials: &[MAIL_SERVICES_ONLY, MDAEMON_LOGIN],
+            address_hint: "mail.example.com",
+            default_port: 25,
+            setup: Setup {
+                title: "Watch the mail services, and optionally the XML API",
+                steps: &[
+                    "Nothing to install on the server. With no credential, DumbMonit connects to the mail ports from the outside and reads each greeting: SMTP (25), IMAP (143) and Webmail (3000) by default. Add POP3, MSA, the TLS ports or Remote Administration in the Services option, as a list such as this one.\nsmtp,msa,imap,pop3,imaps,webmail",
+                    "To also read the version through the XML API, create a dedicated account in MDaemon, named for example as follows, with a long password used nowhere else. Give it the lowest level your MDaemon accepts for the XML API, and nothing more: DumbMonit only calls GetVersionInfo, which reads no mailbox and changes nothing.\ndumbmonit@example.com",
+                    "Since MDaemon 24, the XML API only answers the addresses it allows. Open Setup → XML API Service → Address Restrictions (Setup → XML API Management on MDaemon 26) and allow the address DumbMonit connects from.",
+                    "Check from the DumbMonit host that the account reaches the API. The command asks for the password and prints an answer that starts with <MDaemon><API productversion=…>.\ncurl -k -u dumbmonit@example.com -H 'Content-Type: text/xml' --data '<MDaemon><API><Request version=\"20.0.0\" echo=\"0\" verbose=\"0\"><Operation>GetVersionInfo</Operation><Parameters/></Request></API></MDaemon>' https://mail.example.com:444/MdMgmtWS/",
+                    "In DumbMonit, enter the server address, for example \"mail.example.com\", then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default.",
+                ],
+                warning: "MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options. Mail queue sizes are not read: MDaemon publishes them only as Windows performance counters.",
+                doc_url: "https://help.mdaemon.com/mdaemon/en/xml-api-service.html",
+            },
+            options: MDAEMON_OPTIONS,
+        },
+        "securitygateway" => CollectorView {
+            kind,
+            label: "SecurityGateway for Email Servers",
+            summary: "Mail gateway services answering, version, and the REST API performance counters (12.5 and later).",
+            examples: &["SecurityGateway for Email Servers"],
+            credential_types: &["none", "api_token"],
+            credentials: &[MAIL_SERVICES_ONLY, SECURITY_GATEWAY_KEY],
+            address_hint: "sg.example.com",
+            default_port: 25,
+            setup: Setup {
+                title: "Watch the gateway services, and optionally the REST API",
+                steps: &[
+                    "Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Change the list in the Services option, for example to check HTTPS instead of HTTP.\nsmtp,web_https",
+                    "To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the device page, your version keeps them for the Global Administrator role, and the account needs that role instead.\ndumbmonit",
+                    "Sign in as that account and create a key under Setup/Users → Accounts → API Keys, with an expiry date. A key carries the rights of the account that creates it, which is why it must be created from this account and not from yours.",
+                    "Restrict the account to the address DumbMonit connects from in its IP restrictions: API keys obey them too.",
+                    "Check from the DumbMonit host that the key works. The command prints the API description, which also lists the counters DumbMonit reads.\ncurl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi",
+                    "In DumbMonit, enter the gateway address, for example \"sg.example.com\", and paste the key. The API is reached on the web interface HTTPS port, 4443 by default, under /api/v1.",
+                ],
+                warning: "SecurityGateway has no read-only role and no narrower key: the key can do everything its account can. Never create it from your own account, keep it only in DumbMonit and give it an expiry date. Versions before 12.5 have no REST API: leave the credential empty and DumbMonit checks the services only. The web interface often uses a self-signed certificate on 4443: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options.",
+                doc_url: "https://help.mdaemon.com/SecurityGateway/en/api_keys.html",
+            },
+            options: SECURITY_GATEWAY_OPTIONS,
+        },
         "truenas" => CollectorView {
             kind,
             label: "TrueNAS",
-            summary: "ZFS storage server: pool health and the disk that failed, scrubs and resilvers, dataset usage against quotas, snapshots and replication, disk temperature and SMART, and the alerts TrueNAS raises itself.",
+            summary: "Pool health, the failing disk, scrubs, snapshots, replication and TrueNAS's own alerts.",
             examples: &["TrueNAS SCALE", "TrueNAS Community Edition"],
             credential_types: &["api_token"],
             credentials: &[TRUENAS_KEY],
@@ -1781,7 +2006,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "opnsense" => CollectorView {
             kind,
             label: "OPNsense",
-            summary: "Open source firewall and router: gateway state with latency and packet loss, the pf state table, interfaces, VPN tunnels, DHCP leases, services, CARP and pending updates.",
+            summary: "Gateway latency and loss, VPN tunnels, DHCP leases, services and pending updates.",
             examples: &["OPNsense firewall", "Home router", "Multi-WAN edge"],
             credential_types: &["username_password"],
             credentials: &[OPNSENSE_KEY],
@@ -1804,7 +2029,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "synology" => CollectorView {
             kind,
             label: "Synology DSM",
-            summary: "Synology NAS: volumes, storage pools, disk health, temperature, Hyper Backup and Active Backup for Business.",
+            summary: "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs.",
             examples: &["DiskStation", "RackStation"],
             credential_types: &["username_password"],
             credentials: &[SYNOLOGY_LOGIN],
@@ -1828,7 +2053,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "agent" => CollectorView {
             kind,
             label: "Server with agent",
-            summary: "Detailed view of a server: CPU, memory, disks, services, containers.",
+            summary: "Linux, Windows, macOS or FreeBSD: CPU, memory, disks, network, Docker, services, backups.",
             examples: &["Linux server", "Windows server", "Raspberry Pi"],
             credential_types: &["none"],
             credentials: &[NO_AUTH],
@@ -1856,7 +2081,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "http" => CollectorView {
             kind,
             label: "Website or web API (HTTP)",
-            summary: "Checks that a page or an API answers, with the right status code, the right content, and a valid certificate.",
+            summary: "A page or API answers with the right status and content, over a valid certificate.",
             examples: &[
                 "Website",
                 "Application health page",
@@ -1884,7 +2109,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "tcp" => CollectorView {
             kind,
             label: "Network port (TCP)",
-            summary: "Checks that a port accepts connections: SSH, database, file share…",
+            summary: "A port accepts connections: SSH, a file share, a game server, anything without its own probe.",
             examples: &["SSH", "SMB or NFS share", "Database", "Game server", "Network printer"],
             credential_types: &["none"],
             credentials: &[NO_AUTH],
@@ -1906,7 +2131,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "dns" => CollectorView {
             kind,
             label: "Domain name (DNS)",
-            summary: "Checks that a name resolves, and that it points to the right address.",
+            summary: "A name resolves, and points to the address you expect.",
             examples: &[
                 "Your domain name",
                 "An internal name served by your Pi-hole or AdGuard",
@@ -1932,7 +2157,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "ping" => CollectorView {
             kind,
             label: "Reachable host (ping)",
-            summary: "Sends a few ICMP echoes and measures response time and packet loss.",
+            summary: "A host answers ICMP: response time and packet loss.",
             examples: &[
                 "Home router or gateway",
                 "Wi-Fi access point",
@@ -1960,7 +2185,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "tls" => CollectorView {
             kind,
             label: "TLS certificate",
-            summary: "Checks that a certificate is valid and warns before it expires, on any encrypted port.",
+            summary: "A certificate is valid on any TLS port, with a warning well before it expires.",
             examples: &[
                 "Mail server (IMAPS, SMTPS)",
                 "Reverse proxy",
@@ -1989,7 +2214,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "smtp" => CollectorView {
             kind,
             label: "Mail relay (SMTP)",
-            summary: "Opens a real session on a mail server: greeting, EHLO, STARTTLS, and the login if you give one.",
+            summary: "A mail server greets, offers STARTTLS and accepts a login, like a real client.",
             examples: &[
                 "Your provider's SMTP relay",
                 "A local Postfix or msmtp",
@@ -2017,7 +2242,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "postgres" => CollectorView {
             kind,
             label: "PostgreSQL database",
-            summary: "Connects, authenticates and runs one query: the signal for a database that is up but no longer answering.",
+            summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
             examples: &[
                 "The database behind Nextcloud or Immich",
                 "A Home Assistant recorder",
@@ -2045,7 +2270,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "mysql" => CollectorView {
             kind,
             label: "MySQL or MariaDB database",
-            summary: "Connects, authenticates and runs one query: the signal for a database that is up but no longer answering.",
+            summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
             examples: &[
                 "The database behind a WordPress",
                 "A Nextcloud or a Kimai",
@@ -2073,7 +2298,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "mqtt" => CollectorView {
             kind,
             label: "MQTT broker",
-            summary: "Connects to the broker, subscribes to a topic, and can wait for a retained message.",
+            summary: "Connects, subscribes to a topic, and can wait for a retained message.",
             examples: &[
                 "Mosquitto",
                 "The broker behind Home Assistant",
@@ -2101,7 +2326,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "websocket" => CollectorView {
             kind,
             label: "WebSocket endpoint",
-            summary: "Runs the upgrade handshake, and can send a frame and wait for one: a different failure from a plain HTTP page.",
+            summary: "Completes the upgrade handshake, and can exchange a frame.",
             examples: &[
                 "The Home Assistant API",
                 "A live dashboard",
@@ -2132,7 +2357,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "push" => CollectorView {
             kind,
             label: "Heartbeat (push)",
-            summary: "A cron job, backup script or automation that must call DumbMonit regularly; if it stops calling, you are told.",
+            summary: "Your cron job or backup script calls DumbMonit; when it goes quiet, you are told.",
             examples: &[
                 "Nightly backup script",
                 "Cron job",
@@ -2161,7 +2386,7 @@ fn describe(kind: &'static str) -> CollectorView {
         "dummy" => CollectorView {
             kind,
             label: "Demo device",
-            summary: "Fictional device producing measurements, to explore the tool without hardware.",
+            summary: "Made-up measurements, to explore DumbMonit without any hardware.",
             examples: &["No hardware required"],
             credential_types: &["none"],
             credentials: &[NO_AUTH],
@@ -2177,6 +2402,95 @@ fn describe(kind: &'static str) -> CollectorView {
                 doc_url: "",
             },
             options: &[],
+        },
+        "victoriametrics" => CollectorView {
+            kind,
+            label: "VictoriaMetrics",
+            summary: "The time series database itself: ingestion, samples it refuses, disk headroom before it turns read-only, slow inserts and active series.",
+            examples: &["VictoriaMetrics single-node", "Prometheus long-term storage"],
+            credential_types: &["none", "username_password", "api_token"],
+            credentials: &[NO_AUTH, HTTP_LOGIN, HTTP_TOKEN],
+            address_hint: "victoriametrics.lan",
+            default_port: 8428,
+            setup: Setup {
+                title: "Let DumbMonit read VictoriaMetrics' own health",
+                steps: &[
+                    "Nothing to install: VictoriaMetrics publishes its own health on /health and /metrics, on the port of its API (8428 by default). Check from the DumbMonit host that both answer.\ncurl http://victoriametrics.lan:8428/health\ncurl -s http://victoriametrics.lan:8428/metrics | grep vm_app_version",
+                    "If VictoriaMetrics runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.",
+                    "In DumbMonit, enter the server address, for example \"victoriametrics.lan\" or \"http://10.0.0.5:8428\". Behind a reverse proxy, enter the full URL with its path prefix. This covers the single-node server; the components of a VictoriaMetrics cluster expose other metrics and are not covered.",
+                    "DumbMonit only reads /health and /metrics. It never runs a query against your data and never writes anything.",
+                ],
+                warning: "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics switches to read-only and refuses every new sample, while it keeps answering queries as if nothing happened. DumbMonit shows the headroom left above that limit and warns under 10%.",
+                doc_url: "https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#monitoring",
+            },
+            options: VICTORIAMETRICS_OPTIONS,
+        },
+        "victorialogs" => CollectorView {
+            kind,
+            label: "VictoriaLogs",
+            summary: "The log database itself: lines ingested, lines it refuses, disk headroom before it turns read-only, errors.",
+            examples: &["VictoriaLogs single-node"],
+            credential_types: &["none", "username_password", "api_token"],
+            credentials: &[NO_AUTH, HTTP_LOGIN, HTTP_TOKEN],
+            address_hint: "victorialogs.lan",
+            default_port: 9428,
+            setup: Setup {
+                title: "Let DumbMonit read VictoriaLogs' own health",
+                steps: &[
+                    "Nothing to install: VictoriaLogs publishes its own health on /health and /metrics, on the port of its API (9428 by default). Check from the DumbMonit host that both answer.\ncurl http://victorialogs.lan:9428/health\ncurl -s http://victorialogs.lan:9428/metrics | grep vl_rows_ingested_total",
+                    "If VictoriaLogs runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.",
+                    "In DumbMonit, enter the server address, for example \"victorialogs.lan\" or \"http://10.0.0.6:9428\". Behind a reverse proxy, enter the full URL with its path prefix.",
+                    "DumbMonit only reads /health and /metrics. It never runs a LogsQL query and never reads a log line.",
+                ],
+                warning: "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs switches to read-only and refuses every new log line. DumbMonit shows the headroom left above that limit and warns under 10%.",
+                doc_url: "https://docs.victoriametrics.com/victorialogs/#monitoring",
+            },
+            options: VICTORIALOGS_OPTIONS,
+        },
+        "loki" => CollectorView {
+            kind,
+            label: "Grafana Loki",
+            summary: "The log server itself: readiness, log lines it refuses and why, chunks that fail to reach storage, write-ahead log disk, request errors.",
+            examples: &["Loki single binary", "Loki simple scalable"],
+            credential_types: &["none", "username_password", "api_token"],
+            credentials: &[NO_AUTH, HTTP_LOGIN, HTTP_TOKEN],
+            address_hint: "loki.lan",
+            default_port: 3100,
+            setup: Setup {
+                title: "Let DumbMonit read Loki's own health",
+                steps: &[
+                    "Nothing to install: Loki publishes /ready and /metrics on its HTTP port (3100 by default). Check from the DumbMonit host that both answer.\ncurl http://loki.lan:3100/ready\ncurl -s http://loki.lan:3100/metrics | grep loki_build_info",
+                    "Loki has no login of its own. If it sits behind a reverse proxy that asks for a user name and password, pick Username / password below; for a bearer token, pick Bearer token. No tenant is needed: /ready and /metrics are not per tenant.",
+                    "In DumbMonit, enter Loki's address, for example \"loki.lan\", or \"https://logs.lan/loki\" behind a reverse proxy. With Loki split into components (simple scalable or microservices), add at least the write path, where refused lines and flush failures are counted.",
+                    "DumbMonit only reads /ready and /metrics. It never runs a LogQL query and never reads a log line.",
+                ],
+                warning: "Refused lines are the failure to watch: when Loki refuses a line (too old, over the ingestion rate or stream limit, line too long), the sender gets an error and usually drops the batch. Nothing shows in Grafana except a gap in the logs.",
+                doc_url: "https://grafana.com/docs/loki/latest/operations/meta-monitoring/",
+            },
+            options: LOKI_OPTIONS,
+        },
+        "graylog" => CollectorView {
+            kind,
+            label: "Graylog",
+            summary: "The log server and its search cluster: processing, journal backlog, buffers, throughput in and out, OpenSearch health, failed inputs and indexing failures.",
+            examples: &["Graylog Open", "Graylog with OpenSearch"],
+            credential_types: &["api_token", "username_password"],
+            credentials: &[GRAYLOG_TOKEN, GRAYLOG_LOGIN],
+            address_hint: "graylog.lan",
+            default_port: 9000,
+            setup: Setup {
+                title: "Create a read-only user and token in Graylog",
+                steps: &[
+                    "In Graylog: System → Users and Teams → Create user. Name the user as follows, give it a long random password, and assign the Reader role only. Reader can read the node status, journal, buffers, throughput, inputs and search cluster health, and no message at all as long as no stream is shared with it.\ndumbmonit",
+                    "Open that user's Edit tokens page, create a token named after DumbMonit and copy it now: Graylog shows it only once.",
+                    "Optional: Graylog's own notifications (an input that failed to start, disk watermarks, a journal almost full) need one more permission, notifications:read, which no built-in role grants on its own. With an account allowed to manage roles, create a role holding only that permission and give it to the dumbmonit user. Without it, notifications are skipped and nothing else changes.\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -H 'Content-Type: application/json' -X POST https://graylog.lan/api/roles -d '{\"name\":\"DumbMonit Notifications\",\"description\":\"Read system notifications\",\"permissions\":[\"notifications:read\"],\"read_only\":false}'\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -X PUT 'https://graylog.lan/api/roles/DumbMonit%20Notifications/members/dumbmonit'",
+                    "In DumbMonit, enter the address of the Graylog node, for example \"graylog.lan\" (port 9000) or \"https://graylog.lan\" behind a reverse proxy, and paste the token. In a Graylog cluster, add each node: journal, buffers and throughput are per node.",
+                    "DumbMonit only reads. It never searches messages, never starts or stops an input and never acknowledges a notification.",
+                ],
+                warning: "Do not reuse the account you log in with: a leaked token carries every right of its user, while the Reader role above can change nothing. Graylog serves plain HTTP unless you configured TLS, and the token travels with every request: across an untrusted network, put Graylog behind HTTPS.",
+                doc_url: "",
+            },
+            options: GRAYLOG_OPTIONS,
         },
         other => CollectorView {
             kind,
@@ -2209,6 +2523,12 @@ mod tests {
         "opnsense",
         "truenas",
         "redfish",
+        "victoriametrics",
+        "victorialogs",
+        "loki",
+        "graylog",
+        "mdaemon",
+        "securitygateway",
         "agent",
         "http",
         "tcp",
@@ -2491,6 +2811,25 @@ mod tests {
                 "redfish",
                 &["port", "insecure_tls", "request_timeout_seconds", "auth", "storage", "logs"],
             ),
+            ("victoriametrics", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("victorialogs", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("loki", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("graylog", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "mdaemon",
+                &["services", "request_timeout_seconds", "api_port", "api_tls", "insecure_tls"],
+            ),
+            (
+                "securitygateway",
+                &[
+                    "services",
+                    "request_timeout_seconds",
+                    "api_port",
+                    "api_tls",
+                    "insecure_tls",
+                    "counters",
+                ],
+            ),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -2571,6 +2910,18 @@ mod tests {
         assert_eq!(defaut("redfish", "port"), "443");
         assert_eq!(defaut("redfish", "request_timeout_seconds"), "8");
         assert_eq!(defaut("redfish", "auth"), "basic");
+        // `collectors/observability/{options,victoria,loki,graylog}.rs`.
+        assert_eq!(defaut("victoriametrics", "port"), "8428");
+        assert_eq!(defaut("victorialogs", "port"), "9428");
+        assert_eq!(defaut("loki", "port"), "3100");
+        assert_eq!(defaut("graylog", "port"), "9000");
+        for kind in ["victoriametrics", "victorialogs", "loki", "graylog"] {
+            assert_eq!(defaut(kind, "scheme"), "http", "« {kind} »");
+            assert_eq!(
+                defaut(kind, "request_timeout_seconds"),
+                dumbmonit_collectors::observability::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+            );
+        }
         assert_eq!(
             defaut("push", "expected_interval"),
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
@@ -2664,6 +3015,9 @@ mod tests {
             ("opnsense", "dumbmonit"),
             ("truenas", "dumbmonit"),
             ("redfish", "dumbmonit"),
+            ("graylog", "dumbmonit"),
+            ("mdaemon", "dumbmonit@example.com"),
+            ("securitygateway", "dumbmonit"),
             ("agent", "token"),
         ];
         for (kind, dedie) in attendus {
@@ -2676,7 +3030,9 @@ mod tests {
                 .to_lowercase()
                 .replace("administrators", "")
                 .replace("local administrator", "")
-                .replace("read-only administrator", "");
+                .replace("read-only administrator", "")
+                .replace("global administrator", "")
+                .replace("domain administrator", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
@@ -2722,6 +3078,12 @@ mod tests {
             ("opnsense", include_str!("../../../../docs/devices/opnsense.md")),
             ("truenas", include_str!("../../../../docs/devices/truenas.md")),
             ("redfish", include_str!("../../../../docs/devices/redfish.md")),
+            ("victoriametrics", include_str!("../../../../docs/devices/victoriametrics.md")),
+            ("victorialogs", include_str!("../../../../docs/devices/victoriametrics.md")),
+            ("loki", include_str!("../../../../docs/devices/loki.md")),
+            ("graylog", include_str!("../../../../docs/devices/graylog.md")),
+            ("mdaemon", include_str!("../../../../docs/devices/mdaemon.md")),
+            ("securitygateway", include_str!("../../../../docs/devices/securitygateway.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

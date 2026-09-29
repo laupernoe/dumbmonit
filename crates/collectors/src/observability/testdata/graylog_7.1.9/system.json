@@ -1,0 +1,15 @@
+{
+  "facility": "graylog-server",
+  "codename": "Noir",
+  "node_id": "5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60",
+  "cluster_id": "a1d2e3f4-0b1c-4d5e-8f90-123456789abc",
+  "version": "7.1.9+002c047",
+  "started_at": "2026-09-29T19:40:03.328Z",
+  "hostname": "graylog-1",
+  "lifecycle": "running",
+  "lb_status": "alive",
+  "timezone": "Etc/UTC",
+  "operating_system": "Linux 6.8.0-45-generic",
+  "is_leader": true,
+  "is_processing": true
+}

@@ -27,6 +27,19 @@ export function severityTone(severity: AlertSeverity): Tone {
 	return 'info';
 }
 
+/**
+ * Accent bar on the edge of a "Needs you" tile, in the row's tone. Colour is
+ * only an echo here: the plate on the tile always carries the word.
+ */
+export const TONE_BAR: Record<Tone, string> = {
+	signal: 'bg-signal',
+	info: 'bg-info',
+	advisory: 'bg-advisory',
+	warning: 'bg-warning',
+	ghost: 'bg-line-strong',
+	muted: 'bg-line-strong'
+};
+
 /** The word shown on the plate for a severity, following the ladder. */
 export function severityWord(severity: AlertSeverity): string {
 	if (severity === 'critical') return 'Warning';

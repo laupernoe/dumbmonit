@@ -415,7 +415,7 @@
 												{#if g.lock}<Plate tone="advisory" label={`locked: ${g.lock}`} bare size="sm" />{/if}
 											</span>
 											<span class="tnum text-[0.75rem] text-ink-2">
-												{g.kind === 'lxc' ? 'CT' : 'VM'} {g.vmid}{#if g.pool} · {g.pool}{/if}
+												{g.kind === 'lxc' ? 'CT' : 'VM'} {g.vmid}{#if g.pool}{` · ${g.pool}`}{/if}
 											</span>
 										</button>
 									</td>
@@ -423,13 +423,13 @@
 										{#if g.cpu_percent !== null}
 											{@const tone = fillTone(g.cpu_percent)}
 											<div class="flex flex-col gap-1">
-												<span class="tnum text-ink">{formatPercent(g.cpu_percent)}<span class="text-ink-3"> of {g.cpu_count ?? '?'}{g.cpu_count === 1 ? ' core' : ' cores'}</span></span>
+												<span class="tnum text-ink">{formatPercent(g.cpu_percent)}<span class="text-ink-3">{' '}of {g.cpu_count ?? '?'}{g.cpu_count === 1 ? ' core' : ' cores'}</span></span>
 												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.cpu_percent)} aria-label="CPU">
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.cpu_percent)}%"></div>
 												</div>
 											</div>
 										{:else}
-											<span class="text-ink-3">—{#if g.cpu_count !== null}<span class="text-[0.75rem]"> · {g.cpu_count} {g.cpu_count === 1 ? 'core' : 'cores'}</span>{/if}</span>
+											<span class="text-ink-3">—{#if g.cpu_count !== null}<span class="text-[0.75rem]">{' '}· {g.cpu_count} {g.cpu_count === 1 ? 'core' : 'cores'}</span>{/if}</span>
 										{/if}
 									</td>
 									<td class="px-3 py-2 align-middle">
@@ -437,7 +437,7 @@
 											{@const tone = fillTone(g.memory_percent)}
 											{@const overhead = hostOverhead(g)}
 											<div class="flex flex-col gap-1">
-												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.memory_used_bytes)}<span class="text-ink-3"> / {formatBytes(g.memory_total_bytes)}</span></span>
+												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.memory_used_bytes)}<span class="text-ink-3">{' '}/ {formatBytes(g.memory_total_bytes)}</span></span>
 												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.memory_percent ?? 0)} aria-label="Memory">
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.memory_percent ?? 0)}%"></div>
 												</div>
@@ -458,7 +458,7 @@
 										{#if g.disk_used_bytes !== null && g.disk_total_bytes !== null}
 											{@const tone = fillTone(g.disk_percent)}
 											<div class="flex flex-col gap-1">
-												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.disk_used_bytes)}<span class="text-ink-3"> / {formatBytes(g.disk_total_bytes)}</span> <span class="text-ink-2">{formatPercent(g.disk_percent)}</span></span>
+												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.disk_used_bytes)}<span class="text-ink-3">{' '}/ {formatBytes(g.disk_total_bytes)}</span> <span class="text-ink-2">{formatPercent(g.disk_percent)}</span></span>
 												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.disk_percent ?? 0)} aria-label="Disk">
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.disk_percent ?? 0)}%"></div>
 												</div>
@@ -495,11 +495,11 @@
 											<div class="flex flex-wrap items-baseline justify-between gap-2">
 												<p class="text-sm text-ink-2">
 													<span class="font-semibold text-ink">{g.name}</span> · {g.kind === 'lxc' ? 'container' : 'virtual machine'} {g.vmid} on {g.node}
-													{#if g.pool} · pool {g.pool}{/if}
-													{#if g.os} · {g.os}{/if}
-													{#if g.ip} · {g.ip}{/if}
-													{#if g.lock} · locked by a {g.lock} operation{/if}
-													{#if g.balloon_bytes !== null} · balloon {formatBytes(g.balloon_bytes)}{/if}
+													{#if g.pool}{` · pool ${g.pool}`}{/if}
+													{#if g.os}{' '}· {g.os}{/if}
+													{#if g.ip}{' '}· {g.ip}{/if}
+													{#if g.lock}{' '}· locked by a {g.lock} operation{/if}
+													{#if g.balloon_bytes !== null}{' '}· balloon {formatBytes(g.balloon_bytes)}{/if}
 													{#if g.memory_host_bytes !== null}
 														· {formatBytes(g.memory_host_bytes)} on the host{#if hostOverhead(g) !== null}, {formatBytes(hostOverhead(g))} more than the guest sees{/if}
 													{/if}

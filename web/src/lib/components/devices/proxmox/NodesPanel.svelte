@@ -146,7 +146,7 @@
 						<Plate tone={node.up ? 'signal' : 'warning'} label={node.up ? 'Online' : 'Offline'} bare size="sm" />
 						<span class="ml-auto tnum text-[0.75rem] text-ink-3">
 							{#if node.version}PVE {node.version}{/if}
-							{#if node.uptime_seconds !== null} · up {formatDuration(node.uptime_seconds)}{/if}
+							{#if node.uptime_seconds !== null}{' '}· up {formatDuration(node.uptime_seconds)}{/if}
 						</span>
 					</header>
 

@@ -277,7 +277,7 @@
 							</div>
 							<p class="tnum mt-1.5 text-[0.8125rem] text-ink-2">
 								{allocation(pool)}
-								{#if pool.failed_disks === 0}<span class="text-ink-3"> No disk reported failed.</span>{/if}
+								{#if pool.failed_disks === 0}<span class="text-ink-3">{' '}No disk reported failed.</span>{/if}
 							</p>
 						</li>
 					{/each}

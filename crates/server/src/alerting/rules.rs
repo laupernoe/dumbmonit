@@ -1814,6 +1814,103 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc Proxmox Mail Gateway ---
+        // --- MDaemon Email Server et SecurityGateway (`collectors/mdaemon`) ---
+        //
+        // Ce qui compte d'abord pour un serveur de messagerie : que ses ports
+        // acceptent le courrier. `service_up` vaut 0 quand le port ne répond pas
+        // ou que la bannière refuse le service (`421`, `-ERR`, `* BYE`) ; seuls
+        // les services listés sur l'équipement ont une série. Le `for` absorbe
+        // un redémarrage du service Windows.
+        Rule {
+            description: "A mail service of the MDaemon server does not answer, or refuses \
+                          service."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mdaemon_service_down",
+                "MDaemon mail service down",
+                RuleKind::Threshold,
+                "dumbmonit_mdaemon_service_up",
+            )
+        },
+        // L'API XML ne répond plus alors que la collecte, elle, réussit : les
+        // ports de messagerie répondent, c'est l'administration à distance qui
+        // est arrêtée. La série n'existe que si un compte est configuré.
+        Rule {
+            description: "The MDaemon XML API has stopped answering while the mail services \
+                          still do: Remote Administration is probably stopped."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "mdaemon_api_down",
+                "MDaemon XML API not answering",
+                RuleKind::Threshold,
+                "dumbmonit_mdaemon_api_up",
+            )
+        },
+        Rule {
+            description: "A service of the SecurityGateway mail gateway does not answer, or \
+                          refuses service."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "securitygateway_service_down",
+                "SecurityGateway service down",
+                RuleKind::Threshold,
+                "dumbmonit_securitygateway_service_up",
+            )
+        },
+        Rule {
+            description: "The SecurityGateway REST API has stopped answering while the mail \
+                          services still do."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "securitygateway_api_down",
+                "SecurityGateway API not answering",
+                RuleKind::Threshold,
+                "dumbmonit_securitygateway_api_up",
+            )
+        },
+        // La file de remise est le premier symptôme d'un serveur aval qui refuse
+        // le courrier. Les noms des compteurs viennent tels quels de l'API : la
+        // règle vise ceux qui parlent de la file de remise, sous les deux formes
+        // que prend ce nom dans l'aide (« Delivery Queue », « Queued for
+        // Delivery »). Croissance et non niveau, comme pour PMG.
+        Rule {
+            description: "The SecurityGateway delivery queue has grown by more than a hundred \
+                          messages in two hours: the mail server behind it is probably \
+                          refusing mail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 100.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "securitygateway_queue_growing",
+                "SecurityGateway delivery queue growing",
+                RuleKind::Threshold,
+                "delta(dumbmonit_securitygateway_counter{counter=~\".*(delivery_queue|queued_for_delivery).*\"}[2h])",
+            )
+        },
+        // --- fin du bloc MDaemon ---
         // --- OPNsense : passerelles, pare-feu, tunnels (`collectors/opnsense`) ---
         //
         // Un pare-feu tombe rarement d'un bloc : il perd un lien, sature sa table
@@ -2303,6 +2400,288 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc TrueNAS ---
+        // --- Serveurs de journaux et de métriques (`collectors/observability`) ---
+        //
+        // Surveiller la surveillance. Ces serveurs tombent rarement tout à fait :
+        // ils répondent, l'interface s'ouvre, et ils refusent en silence une partie
+        // de ce qu'on leur envoie. Les règles visent ces refus-là. Les compteurs
+        // passent par `increase_prometheus`, jamais `increase`, pour qu'un serveur
+        // ajouté avec un historique de rejets ne sonne pas dès la première mesure.
+        //
+        // VictoriaMetrics et VictoriaLogs passent en lecture seule sous
+        // `-storage.minFreeDiskSpaceBytes` d'espace libre : toute écriture est
+        // refusée. C'est une panne franche de l'ingestion.
+        Rule {
+            description: "The storage switched to read-only because free disk space fell below \
+                          -storage.minFreeDiskSpaceBytes: every new sample or log line is refused."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "victoria_read_only",
+                "Metrics or log storage read-only",
+                RuleKind::Threshold,
+                "dumbmonit_victoriametrics_read_only or dumbmonit_victorialogs_read_only",
+            )
+        },
+        // La marge avant la lecture seule, en pourcentage du disque : moins de
+        // 10 % laisse le temps d'agrandir le volume ou de raccourcir la rétention.
+        Rule {
+            description: "Less than 10% of the disk is left before the storage switches to \
+                          read-only and refuses new data."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 10.0,
+            clear_threshold: Some(12.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "victoria_disk_headroom_low",
+                "Metrics or log storage almost read-only",
+                RuleKind::Threshold,
+                "dumbmonit_victoriametrics_disk_headroom_percent \
+                 or dumbmonit_victorialogs_disk_headroom_percent",
+            )
+        },
+        Rule {
+            description: "The server does not answer OK on /health.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            ..base(
+                "victoria_unhealthy",
+                "Metrics or log server unhealthy",
+                RuleKind::Threshold,
+                "dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy",
+            )
+        },
+        // Lignes refusées : horodatage hors rétention ou trop loin dans le futur,
+        // étiquettes trop longues, limite de séries. Chacune est une donnée perdue.
+        Rule {
+            description: "The server refused samples or log lines in the last hour: timestamps \
+                          outside retention, labels too long, or a series limit reached."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "victoria_rows_rejected",
+                "Metrics or log data refused",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) \
+                 or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])",
+            )
+        },
+        // Le seuil que la documentation de VictoriaMetrics donne lui-même : au-delà
+        // de 5 % d'insertions lentes, le cache des séries ne tient plus en mémoire.
+        // Une demi-heure écarte la vague de séries neuves d'un déploiement.
+        Rule {
+            description: "More than 5% of new samples take the slow insert path: VictoriaMetrics \
+                          lacks memory for its active series."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            clear_threshold: Some(3.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "victoriametrics_slow_inserts",
+                "VictoriaMetrics slow inserts",
+                RuleKind::Threshold,
+                "100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) \
+                 / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])",
+            )
+        },
+        // Loki : `/ready` dit s'il accepte d'écrire et de lire. Cinq minutes
+        // couvrent le démarrage d'un ingester qui rejoue son WAL.
+        Rule {
+            description: "Loki does not answer ready on /ready: it cannot accept or serve logs."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            ..base("loki_not_ready", "Loki not ready", RuleKind::Threshold, "dumbmonit_loki_ready")
+        },
+        Rule {
+            description: "Loki refused log lines in the last hour: too old, rate or stream limit \
+                          reached, or line too long. The sender drops them."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "loki_lines_discarded",
+                "Loki refusing log lines",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])",
+            )
+        },
+        // Un bloc qui ne part pas vers le stockage reste en mémoire : il est
+        // perdu au prochain redémarrage.
+        Rule {
+            description: "Loki failed to write chunks to storage: they are held in memory and \
+                          lost if Loki restarts."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "loki_flush_failing",
+                "Loki cannot flush to storage",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_loki_flush_failures_total[30m])",
+            )
+        },
+        Rule {
+            description: "Loki could not write to its write-ahead log because the disk is full."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "loki_wal_disk_full",
+                "Loki write-ahead log disk full",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_loki_wal_disk_full_failures_total[30m])",
+            )
+        },
+        Rule {
+            description: "Loki answered more than five requests with a server error in fifteen \
+                          minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "loki_request_errors",
+                "Loki request errors",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_loki_request_errors_total[15m])",
+            )
+        },
+        // Graylog : la panne typique est OpenSearch qui ne suit plus. Graylog
+        // continue d'accepter, range dans son journal, et les recherches ne
+        // montrent plus rien de récent.
+        Rule {
+            description: "Graylog has paused message processing on this node: messages pile up \
+                          in the journal."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            ..base(
+                "graylog_not_processing",
+                "Graylog not processing",
+                RuleKind::Threshold,
+                "dumbmonit_graylog_processing",
+            )
+        },
+        // 2 rouge, 3 injoignable depuis Graylog.
+        Rule {
+            description: "Graylog's search cluster is red or unreachable: new messages cannot be \
+                          indexed."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "graylog_search_cluster_down",
+                "Graylog search cluster down",
+                RuleKind::Threshold,
+                "dumbmonit_graylog_indexer_status",
+            )
+        },
+        Rule {
+            description: "Graylog's search cluster has been yellow for half an hour: replica \
+                          shards are not assigned, one more node lost would lose data."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "graylog_search_cluster_yellow",
+                "Graylog search cluster yellow",
+                RuleKind::Threshold,
+                "dumbmonit_graylog_indexer_status == 1",
+            )
+        },
+        // Graylog prévient lui-même vers 95 % ; à moitié plein, il reste de quoi
+        // réparer la sortie avant de perdre des messages.
+        Rule {
+            description: "Graylog's journal is more than half full: the output does not keep up \
+                          and messages will be dropped once it is full."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 50.0,
+            clear_threshold: Some(40.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            escalate_after: Some(Duration::from_secs(3600)),
+            ..base(
+                "graylog_journal_filling",
+                "Graylog journal filling",
+                RuleKind::Threshold,
+                "dumbmonit_graylog_journal_used_percent",
+            )
+        },
+        Rule {
+            description: "A Graylog input failed to start: whatever sends to it is not received."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "graylog_input_failed",
+                "Graylog input failed",
+                RuleKind::Threshold,
+                "dumbmonit_graylog_inputs_failed",
+            )
+        },
+        Rule {
+            description: "Graylog failed to write messages to its search cluster in the last \
+                          hour."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "graylog_indexing_failures",
+                "Graylog indexing failures",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_graylog_output_failures_total[1h]) \
+                 + increase_prometheus(dumbmonit_graylog_processing_failures_total[1h])",
+            )
+        },
+        // --- fin du bloc serveurs de journaux et de métriques ---
         // --- Proxmox VE : invités, disques, ZFS, paquets (`collectors/proxmox`) ---
         //
         // Les séries d'invité portent `name` et `vmid` : la notification dit
@@ -2829,6 +3208,12 @@ mod tests {
             "pmg_cluster_degraded",
             "pmg_certificate_expiring",
             "pmg_updates_pending",
+            // MDaemon et SecurityGateway (`collectors/mdaemon`).
+            "mdaemon_service_down",
+            "mdaemon_api_down",
+            "securitygateway_service_down",
+            "securitygateway_api_down",
+            "securitygateway_queue_growing",
             // OPNsense (`collectors/opnsense`).
             "opnsense_gateway_down",
             "opnsense_gateway_loss",
@@ -2856,6 +3241,23 @@ mod tests {
             "truenas_snapshots_stale",
             "truenas_alert_raised",
             "truenas_service_down",
+            // Serveurs de journaux et de métriques (`collectors/observability`).
+            "victoria_read_only",
+            "victoria_disk_headroom_low",
+            "victoria_unhealthy",
+            "victoria_rows_rejected",
+            "victoriametrics_slow_inserts",
+            "loki_not_ready",
+            "loki_lines_discarded",
+            "loki_flush_failing",
+            "loki_wal_disk_full",
+            "loki_request_errors",
+            "graylog_not_processing",
+            "graylog_search_cluster_down",
+            "graylog_search_cluster_yellow",
+            "graylog_journal_filling",
+            "graylog_input_failed",
+            "graylog_indexing_failures",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -3036,6 +3438,35 @@ mod tests {
             "dumbmonit_truenas_snapshot_task_last_run_age_seconds",
             "dumbmonit_truenas_alerts",
             "dumbmonit_truenas_service_running",
+            // Serveurs de journaux et de métriques (`collectors/observability/{victoria,
+            // loki,graylog}.rs`).
+            "dumbmonit_victoriametrics_read_only",
+            "dumbmonit_victorialogs_read_only",
+            "dumbmonit_victoriametrics_disk_headroom_percent",
+            "dumbmonit_victorialogs_disk_headroom_percent",
+            "dumbmonit_victoriametrics_healthy",
+            "dumbmonit_victorialogs_healthy",
+            "dumbmonit_victoriametrics_rows_rejected_total",
+            "dumbmonit_victorialogs_rows_rejected_total",
+            "dumbmonit_victoriametrics_slow_inserts_total",
+            "dumbmonit_victoriametrics_rows_added_total",
+            "dumbmonit_loki_ready",
+            "dumbmonit_loki_discarded_lines_total",
+            "dumbmonit_loki_flush_failures_total",
+            "dumbmonit_loki_wal_disk_full_failures_total",
+            "dumbmonit_loki_request_errors_total",
+            "dumbmonit_graylog_processing",
+            "dumbmonit_graylog_indexer_status",
+            "dumbmonit_graylog_journal_used_percent",
+            "dumbmonit_graylog_inputs_failed",
+            "dumbmonit_graylog_output_failures_total",
+            "dumbmonit_graylog_processing_failures_total",
+            // MDaemon et SecurityGateway (`collectors/mdaemon`).
+            "dumbmonit_mdaemon_service_up",
+            "dumbmonit_mdaemon_api_up",
+            "dumbmonit_securitygateway_service_up",
+            "dumbmonit_securitygateway_api_up",
+            "dumbmonit_securitygateway_counter",
         ];
 
         for rule in builtin_rules() {

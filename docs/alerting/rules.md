@@ -168,6 +168,16 @@ while Plakar is not detected, so neither rule can fire on a machine without it.
 | Mail gateway certificate expiring | A certificate of the mail gateway expires in less than fourteen days (`dumbmonit_pmg_certificate_expires_in_seconds`). | < 14 d | 1 h | Advisory (`warning`) | 24 h |
 | Mail gateway updates pending | More than twenty package updates are pending on the mail gateway (`dumbmonit_pmg_node_updates_pending`). | > 20 | 1 h | Info (`info`) | 7 d |
 
+### MDaemon and SecurityGateway
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| MDaemon mail service down | A watched mail service of the MDaemon server does not answer, or greets to refuse service (`dumbmonit_mdaemon_service_up`). Only the services listed on the device have a series. The notification names the service and its port. | < 1 | 5 min | Warning (`critical`) | 6 h |
+| MDaemon XML API not answering | The XML API has stopped answering while the mail services still do (`dumbmonit_mdaemon_api_up`): Remote Administration is probably stopped. Only a device with an account has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
+| SecurityGateway service down | A watched service of the gateway does not answer, or greets to refuse service (`dumbmonit_securitygateway_service_up`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| SecurityGateway API not answering | The REST API has stopped answering while the services still do (`dumbmonit_securitygateway_api_up`). Only a device with an API key has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
+| SecurityGateway delivery queue growing | The delivery queue has grown by more than a hundred messages in two hours (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): the mail server behind the gateway is probably refusing mail. The counter names come from the API as they are; if your version names the queue differently, adjust the matcher. | > 100 | 15 min | Advisory (`warning`) | 6 h |
+
 ### OPNsense
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
@@ -221,6 +231,29 @@ while Plakar is not detected, so neither rule can fire on a machine without it.
 | Active Backup task disabled | The task has no schedule, or its continuous backup is paused (`dumbmonit_abb_task_enabled == bool 0`): it will not back up anything until someone runs it. | > 0 | 1 h | Info (`info`) | 7 d |
 | Active Backup device overdue | A device has gone longer without a successful Active Backup for Business run than its own rhythm allows, off-days excluded (`dumbmonit_abb_device_overdue`, see [Synology](../devices/synology.md#how-overdue-is-judged)). | > 0 | 30 min | Advisory (`warning`) | 24 h |
 | Active Backup device failing | The last two or more attempts of a device failed (`dumbmonit_abb_device_consecutive_failures`); a cancelled run counts as neither. | ≥ 2 | 10 min | Warning (`critical`) | 24 h |
+
+### Log and metrics servers
+
+VictoriaMetrics, VictoriaLogs, Loki and Graylog ([devices](../devices/victoriametrics.md)). Counters go through `increase_prometheus`, so a server added with a history of refused data does not fire on its first measurement.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Metrics or log storage read-only | Free disk space fell below `-storage.minFreeDiskSpaceBytes` and the storage refuses every write (`dumbmonit_victoriametrics_read_only or dumbmonit_victorialogs_read_only`). | ≥ 1 | 2 min | Warning (`critical`) | 1 h |
+| Metrics or log storage almost read-only | Less than 10% of the disk left before read-only (`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`); clears above 12 %. | < 10 % | 30 min | Advisory (`warning`) | 24 h |
+| Metrics or log server unhealthy | `/health` does not answer OK (`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`). | < 1 | 3 min | Warning (`critical`) | 6 h |
+| Metrics or log data refused | Samples or log lines refused in the last hour: timestamps outside retention, labels too long, series limit (`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| VictoriaMetrics slow inserts | More than 5% of new samples took the slow path over 15 minutes: not enough memory for the active series (`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`); clears below 3 %. | > 5 % | 30 min | Advisory (`warning`) | 24 h |
+| Loki not ready | `/ready` does not answer ready (`dumbmonit_loki_ready`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| Loki refusing log lines | Lines refused in the last hour: too old, rate or stream limit, line too long (`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Loki cannot flush to storage | Chunks failed to reach storage in the last 30 minutes; they are lost if Loki restarts (`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`). | > 0 | 10 min | Warning (`critical`) | 1 h |
+| Loki write-ahead log disk full | WAL writes lost to a full disk (`increase_prometheus(dumbmonit_loki_wal_disk_full_failures_total[30m])`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Loki request errors | More than five requests answered with a server error in 15 minutes (`increase_prometheus(dumbmonit_loki_request_errors_total[15m])`). | > 5 | 15 min | Advisory (`warning`) | 6 h |
+| Graylog not processing | Message processing paused on the node (`dumbmonit_graylog_processing`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| Graylog search cluster down | OpenSearch or Elasticsearch red, or unreachable from Graylog (`dumbmonit_graylog_indexer_status`: 2 red, 3 unreachable). | ≥ 2 | 5 min | Warning (`critical`) | 1 h |
+| Graylog search cluster yellow | Replica shards unassigned for half an hour (`dumbmonit_graylog_indexer_status == 1`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+| Graylog journal filling | The journal is more than half full: the output does not keep up (`dumbmonit_graylog_journal_used_percent`); clears below 40 %. | > 50 % | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
+| Graylog input failed | An input failed to start (`dumbmonit_graylog_inputs_failed`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Graylog indexing failures | Writes to the search cluster or message processing failed in the last hour (`increase_prometheus(dumbmonit_graylog_output_failures_total[1h]) + increase_prometheus(dumbmonit_graylog_processing_failures_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 
 ### DumbMonit itself
 
