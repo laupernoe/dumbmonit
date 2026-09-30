@@ -2,17 +2,22 @@
 	/**
 	 * Add a device — the one way to add anything.
 	 *
-	 * Step 1: choose what to watch — two front doors (install the agent, scan
-	 * the network), then every kind, searchable. Step 2: the form that type asks
-	 * for, with the setup notice beside it; the notice only appears once there is
-	 * something to prepare. Every type, notice and option comes from
-	 * `GET /api/collectors`. `?kind=` makes a choice linkable
-	 * ("/targets/new?kind=snmp"), `?via=docker` names what the agent was chosen for.
+	 * Three views, all in the URL so the browser's Back button walks them:
+	 * the picker (no parameter: two front doors, then every kind, searchable),
+	 * a kind's form (`?kind=snmp`, `?kind=agent&via=docker`), the network scan
+	 * (`?scan=1`). The setup guide (`&guide=1`) opens only on request, beside
+	 * the form on a desktop, above it on a phone. Every type, notice and option
+	 * comes from `GET /api/collectors`.
+	 *
+	 * Each step inside this page is its own history entry, counted in
+	 * `page.state.depth`: "All device types" rewinds exactly that many, so Back
+	 * from the picker still leaves for wherever the user came from. A page
+	 * opened straight on `?kind=` (depth 0) replaces its entry instead.
 	 */
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { ArrowRight, Cpu, Globe, Plug, Radar, RefreshCw } from 'lucide-svelte';
+	import { afterNavigate, goto } from '$app/navigation';
+	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '$lib/api';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
 	import CollectorPicker from '$lib/components/device-form/CollectorPicker.svelte';
@@ -28,12 +33,6 @@
 	let error = $state<unknown>(null);
 	/** True when the server predates `/api/collectors`. */
 	let unavailable = $state(false);
-	/** `?scan=1` opens the network scan straight away: the first-run guide links to it. */
-	let scanning = $state(page.url.searchParams.get('scan') === '1');
-	// The command palette can ask for the scan while this page is already open.
-	$effect(() => {
-		if (page.url.searchParams.get('scan') === '1') scanning = true;
-	});
 
 	async function load(signal?: AbortSignal) {
 		loading = true;
@@ -60,74 +59,158 @@
 		return () => controller.abort();
 	});
 
-	/** The chosen kind lives in the URL so the page is linkable and survives reloads. */
-	const requestedKind = $derived(page.url.searchParams.get('kind'));
+	// --- Where we are: read from the URL only --------------------------------
+	const params = $derived(page.url.searchParams);
+	const requestedKind = $derived(params.get('kind'));
 	const selected = $derived(collectors.find((c) => c.kind === requestedKind) ?? null);
+	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
+	const scanning = $derived(!requestedKind && params.get('scan') === '1');
 	const snmp = $derived(collectors.find((c) => c.kind === SNMP_KIND) ?? null);
 	const hasAgent = $derived(collectors.some((c) => c.kind === AGENT_KIND));
 	/** What the agent was picked for (Docker, Plakar…), when it was picked that way. */
-	const feature = $derived(selected?.kind === AGENT_KIND ? agentFeature(page.url.searchParams.get('via')) : null);
+	const feature = $derived(selected?.kind === AGENT_KIND ? agentFeature(params.get('via')) : null);
 	const selectedId = $derived(selected ? (feature ? `${AGENT_KIND}:${feature.id}` : selected.kind) : null);
 	const has = (kind: string) => collectors.some((c) => c.kind === kind);
-	/** What the right column explains: the scan is an SNMP matter. */
-	const noticeFor = $derived(selected ?? (scanning ? snmp : null));
+	/** What the setup guide explains: the scan is an SNMP matter. */
+	const noticeFor = $derived(selected ?? (scanning && snmp ? snmp : null));
+	const guideOpen = $derived(noticeFor !== null && params.get('guide') === '1');
+	/** The view the URL asks for, known before the kinds are loaded: what focus follows. */
+	const viewOf = (p: URLSearchParams) => (p.get('kind') ? 'kind' : p.get('scan') === '1' ? 'scan' : 'picker');
+	const urlView = $derived(viewOf(params));
+	/** What is shown: an unknown `?kind=` falls back to the picker once the kinds are in. */
+	const view = $derived(loading ? urlView : selected ? 'kind' : scanning ? 'scan' : 'picker');
 
-	/**
-	 * Once a kind is chosen the picker folds into one row and the form takes
-	 * its place, so step 2 is never a screen away. Landing with `?kind=` starts
-	 * folded; "Change type" unfolds the grid again.
-	 */
-	let expanded = $state(false);
-	const folded = $derived(selected !== null && !expanded);
-	let formSection = $state<HTMLElement | null>(null);
+	type Steps = { depth?: number; guide?: boolean };
+	const steps = $derived(page.state as Steps);
+	const depth = $derived(steps.depth ?? 0);
 
-	async function select(kind: string, via: string | null = null) {
-		scanning = false;
-		expanded = false;
+	/** One step inside the page: a new history entry, or the current one rewritten. */
+	function navigate(edit: (p: URLSearchParams) => void, opts: { push: boolean; guide?: boolean; scroll?: boolean }) {
 		const url = new URL(page.url);
-		url.searchParams.delete('scan');
-		url.searchParams.set('kind', kind);
-		if (via) url.searchParams.set('via', via);
-		else url.searchParams.delete('via');
-		await goto(`${url.pathname}${url.search}`, { replaceState: true, keepFocus: true, noScroll: true });
-		await tick();
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		formSection?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+		edit(url.searchParams);
+		const state: Steps = { depth: opts.push ? depth + 1 : depth, guide: opts.guide ?? false };
+		return goto(`${url.pathname}${url.search}`, {
+			replaceState: !opts.push,
+			keepFocus: true,
+			noScroll: !opts.scroll,
+			state: state as App.PageState
+		});
 	}
 
-	function changeType() {
-		expanded = true;
-		// Bring the current choice into view so the user sees where they are in the grid.
-		void tick().then(() =>
-			document.querySelector<HTMLButtonElement>(`[data-choice="${selectedId}"]`)?.focus()
+	/** The last choice, so the picker puts the focus back on it. */
+	let lastChoice = $state<string | null>(null);
+
+	function select(kind: string, via: string | null = null) {
+		void navigate(
+			(p) => {
+				p.delete('scan');
+				p.delete('guide');
+				p.set('kind', kind);
+				if (via) p.set('via', via);
+				else p.delete('via');
+			},
+			{ push: true, scroll: true }
 		);
 	}
 
 	function openScan() {
-		scanning = true;
-		const url = new URL(page.url);
-		url.searchParams.delete('kind');
-		url.searchParams.delete('via');
-		url.searchParams.set('scan', '1');
-		void goto(`${url.pathname}${url.search}`, { replaceState: true, keepFocus: true, noScroll: true });
+		void navigate(
+			(p) => {
+				p.delete('kind');
+				p.delete('via');
+				p.delete('guide');
+				p.set('scan', '1');
+			},
+			{ push: true, scroll: true }
+		);
 	}
 
-	/** Leaving the scan drops the flag, so a reload does not reopen it. */
-	function closeScan() {
-		scanning = false;
-		const url = new URL(page.url);
-		url.searchParams.delete('scan');
-		void goto(`${url.pathname}${url.search}`, { replaceState: true, keepFocus: true, noScroll: true });
+	/** Back to the picker: rewinds our own steps, or rewrites a page opened on a kind. */
+	function toPicker() {
+		lastChoice = selectedId ?? (scanning ? 'scan' : null);
+		if (depth > 0) history.go(-depth);
+		else void navigate((p) => ['kind', 'via', 'scan', 'guide'].forEach((key) => p.delete(key)), { push: false });
 	}
+
+	function openGuide() {
+		void navigate((p) => p.set('guide', '1'), { push: true, guide: true });
+	}
+
+	/** Closing the guide undoes its step, so Back never reopens it. */
+	function closeGuide() {
+		if (steps.guide) history.back();
+		else void navigate((p) => p.delete('guide'), { push: false });
+	}
+
+	// --- Focus follows the view, for keyboard and screen reader users --------
+	// Seeded from the landing URL: on first load the focus stays where the browser puts it.
+	let previousView = viewOf(page.url.searchParams);
+	let wasGuideOpen = page.url.searchParams.get('guide') === '1';
+	let previousChoice: string | null = null;
+	afterNavigate(() => {
+		const from = previousView;
+		const guideWas = wasGuideOpen;
+		const choiceWas = previousChoice;
+		previousView = urlView;
+		wasGuideOpen = guideOpen;
+		previousChoice = selectedId ?? (scanning ? 'scan' : null);
+		// Browser Back skips toPicker(): remember the choice being left all the same.
+		if (urlView === 'picker' && from !== 'picker') lastChoice = choiceWas ?? lastChoice;
+		void tick().then(() => {
+			let target: HTMLElement | null = null;
+			if (urlView !== from) {
+				if (urlView === 'picker') {
+					target =
+						(lastChoice === 'scan'
+							? document.querySelector<HTMLElement>('[data-door="scan"]')
+							: document.querySelector<HTMLElement>(`[data-choice="${lastChoice}"]`)) ??
+						document.getElementById('step-type');
+				} else {
+					target = document.getElementById('view-title');
+				}
+			} else if (guideOpen && !guideWas) {
+				target = document.getElementById('setup-guide');
+				if (target && !window.matchMedia('(min-width: 64rem)').matches) {
+					const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+					target.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+				}
+			} else if (!guideOpen && guideWas) {
+				target = document.getElementById('guide-toggle');
+			}
+			target?.focus({ preventScroll: urlView === 'picker' || (guideOpen && !guideWas) });
+		});
+	});
 
 	const SelectedIcon = $derived(feature ? feature.icon : selected ? kindIcon(selected.kind) : null);
 	const selectedLabel = $derived(feature ? feature.label : (selected?.label ?? ''));
 	const selectedSummary = $derived(feature ? 'Comes through the agent: install it on the machine.' : (selected?.summary ?? ''));
-	/** The setup notice belongs to step 2: until then the picker has the whole width. */
-	const withNotice = $derived(noticeFor !== null);
+	const crumb = $derived(view === 'kind' ? selectedLabel : view === 'scan' ? 'Scan my network' : null);
+	const description = $derived(
+		view === 'picker'
+			? 'Pick what to watch. The next step asks for the few fields it needs.'
+			: view === 'scan'
+				? 'Finds SNMP devices on a network range and adds them in one go.'
+				: selected?.kind === AGENT_KIND
+					? 'One command on the machine, and it reports on its own.'
+					: 'Tell DumbMonit where it is and how to read it.'
+	);
+
+	const doorClass =
+		'group flex items-start gap-3.5 rounded-[var(--radius-card)] px-4 py-3.5 text-left transition-[transform,box-shadow] duration-200 ease-out-expo hover:-translate-y-px hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
 </script>
 
-<svelte:head><title>Add a device · DumbMonit</title></svelte:head>
+<!-- Esc inside the open guide puts it away. -->
+<svelte:window
+	onkeydown={(event) => {
+		if (event.key !== 'Escape' || !guideOpen || event.defaultPrevented) return;
+		if (event.target instanceof Node && document.getElementById('setup-guide')?.contains(event.target)) {
+			event.preventDefault();
+			closeGuide();
+		}
+	}}
+/>
+
+<svelte:head><title>{crumb ? `${crumb} · ` : ''}Add a device · DumbMonit</title></svelte:head>
 
 {#snippet stamp()}
 	{#if selected && SelectedIcon}
@@ -138,159 +221,180 @@
 	{/if}
 {/snippet}
 
-<PageHeader
-	title="Add a device"
-	description="Pick what to watch. The next step says what to prepare and asks for the few fields it needs."
-	back={{ href: '/targets', label: 'Devices' }}
-/>
+<!-- Where am I: every level above the current one is a link. -->
+<nav aria-label="Breadcrumb" class="mb-2">
+	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2">
+		<li class="flex">
+			<a href="/targets" class="inline-flex items-center gap-1 rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
+				<ArrowLeft class="size-3.5" aria-hidden="true" />
+				Devices
+			</a>
+		</li>
+		<li aria-hidden="true"><ChevronRight class="size-3.5 text-ink-3" /></li>
+		{#if crumb}
+			<li>
+				<a
+					href="/targets/new"
+					onclick={(event) => {
+						event.preventDefault();
+						toPicker();
+					}}
+					class="rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+				>
+					Add a device
+				</a>
+			</li>
+			<li aria-hidden="true"><ChevronRight class="size-3.5 text-ink-3" /></li>
+			<li aria-current="page" class="max-w-[16rem] truncate font-semibold text-ink">{crumb}</li>
+		{:else}
+			<li aria-current="page" class="font-semibold text-ink">Add a device</li>
+		{/if}
+	</ol>
+</nav>
 
-<div class="grid items-start gap-6 lg:grid-cols-12">
-	<div class={`grid min-w-0 ${withNotice ? 'lg:col-span-7' : 'lg:col-span-12'} ${folded ? 'gap-5' : 'gap-8'}`}>
-		<!-- Step 1 ------------------------------------------------------------ -->
-		<section aria-labelledby="step-type" class="min-w-0 scroll-mt-20">
-			{#if folded && selected && SelectedIcon}
-				<!-- The choice, folded into one row: the grid is one click away. -->
-				<div class="flex items-center gap-3 rounded-[var(--radius-card)] border border-signal/40 bg-signal-soft px-4 py-3">
-					<span class="tnum hidden size-7 shrink-0 items-center justify-center rounded-full bg-surface text-sm text-signal-ink sm:flex" aria-hidden="true">1</span>
-					<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-surface text-signal-ink">
-						<SelectedIcon class="size-[1.125rem]" aria-hidden="true" />
-					</span>
-					<div class="min-w-0 flex-1">
-						<h2 id="step-type" class="leading-tight font-semibold text-ink sm:truncate">{selectedLabel}</h2>
-						<!-- The summary is a desktop luxury: on a phone the label and the button are what matter. -->
-						{#if selectedSummary}
-							<p class="hidden truncate text-sm text-ink-2 sm:block">{selectedSummary}</p>
+<PageHeader title="Add a device" {description} />
+
+{#if view === 'picker'}
+	<!-- The picker ------------------------------------------------------------ -->
+	<section aria-labelledby="step-type" class="min-w-0">
+		<h2 id="step-type" tabindex="-1" class="mb-4 text-lg font-semibold tracking-tight text-ink outline-none">What do you want to watch?</h2>
+
+		{#if loading}
+			<div class="grid gap-2 sm:grid-cols-2">
+				{#each { length: 6 } as _, i (i)}
+					<div class="rounded-[var(--radius-card)] border border-line bg-surface px-3.5 py-3">
+						<Skeleton class="h-4 w-1/2" />
+						<Skeleton class="mt-2 h-3.5 w-full" />
+						<Skeleton class="mt-1.5 h-3 w-2/3" />
+					</div>
+				{/each}
+			</div>
+		{:else if unavailable}
+			<EmptyState
+				title="This server does not list its device types"
+				description="It is older than this interface. Update the server to add devices from here."
+			/>
+		{:else if error}
+			<ErrorNotice {error} title="Could not load the device types" onretry={() => void load()} />
+		{:else if collectors.length === 0}
+			<EmptyState
+				title="No device type is enabled"
+				description="No collector is active on this instance. Check its configuration, then reload this page."
+			/>
+		{:else}
+			{#if requestedKind}
+				<p class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3.5 py-2.5 text-sm text-ink">
+					This server has no device type called <code class="font-mono">{requestedKind}</code>. Pick one below.
+				</p>
+			{/if}
+			{#if hasAgent || snmp}
+				<!-- The two front doors: most of a homelab comes in through one of them. -->
+				<div class={`mb-6 grid gap-3 ${hasAgent && snmp ? 'md:grid-cols-2' : ''}`}>
+					{#if hasAgent}
+						<button type="button" data-door="agent" onclick={() => select(AGENT_KIND)} class={`${doorClass} border border-signal/40 bg-signal-soft`}>
+							<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-surface text-signal-ink">
+								<Cpu class="size-5" aria-hidden="true" />
+							</span>
+							<span class="min-w-0 flex-1">
+								<span class="block font-semibold text-ink">Install the agent on a machine</span>
+								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
+									One command on Linux, Windows, macOS or FreeBSD: system, disks, Docker, services and backups.
+								</span>
+							</span>
+							<ArrowRight class="mt-1 size-4 shrink-0 text-signal-ink transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+						</button>
+					{/if}
+					{#if snmp}
+						<button type="button" data-door="scan" onclick={openScan} class={`${doorClass} border border-line-strong bg-surface`}>
+							<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
+								<Radar class="size-5" aria-hidden="true" />
+							</span>
+							<span class="min-w-0 flex-1">
+								<span class="block font-semibold text-ink">Scan my network</span>
+								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
+									Give a range like 192.168.1.0/24: every device answering SNMP is listed, ready to add.
+								</span>
+							</span>
+							<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+						</button>
+					{/if}
+				</div>
+			{/if}
+			<CollectorPicker {collectors} selected={lastChoice === 'scan' ? null : lastChoice} wide onselect={(kind, via) => select(kind, via)}>
+				{#snippet empty()}
+					<p class="mt-1 text-sm text-ink-2">Most things still fit one of these:</p>
+					<div class="mt-3 flex flex-wrap justify-center gap-2">
+						{#if snmp}
+							<Button size="sm" variant="secondary" onclick={openScan}>
+								<Radar class="size-4" aria-hidden="true" />
+								Scan my network
+							</Button>
+						{/if}
+						{#if has('tcp')}
+							<Button size="sm" variant="secondary" onclick={() => select('tcp')}>
+								<Plug class="size-4" aria-hidden="true" />
+								Any network port
+							</Button>
+						{/if}
+						{#if has('http')}
+							<Button size="sm" variant="secondary" onclick={() => select('http')}>
+								<Globe class="size-4" aria-hidden="true" />
+								A web page
+							</Button>
 						{/if}
 					</div>
-					<Button size="sm" variant="ghost" class="shrink-0" onclick={changeType}>
-						<RefreshCw class="size-3.5" aria-hidden="true" />
-						Change type
-					</Button>
-				</div>
-			{:else}
-<h2 id="step-type" class="mb-4 flex items-center gap-3 text-lg font-semibold tracking-tight text-ink">
-					<span class="tnum flex size-7 items-center justify-center rounded-full bg-signal-soft text-sm text-signal-ink" aria-hidden="true">1</span>
-					What do you want to watch?
-				</h2>
+				{/snippet}
+			</CollectorPicker>
+		{/if}
+	</section>
+{:else}
+	<!-- A kind's form, or the scan ------------------------------------------ -->
+	<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+		<Button size="sm" variant="secondary" onclick={toPicker}>
+			<ArrowLeft class="size-4" aria-hidden="true" />
+			All device types
+		</Button>
+		{#if noticeFor}
+			<Button
+				id="guide-toggle"
+				size="sm"
+				variant={guideOpen ? 'secondary' : 'ghost'}
+				aria-expanded={guideOpen}
+				aria-controls={guideOpen ? 'setup-guide' : undefined}
+				onclick={guideOpen ? closeGuide : openGuide}
+			>
+				<BookOpen class="size-4" aria-hidden="true" />
+				{guideOpen ? 'Hide setup guide' : 'Setup guide'}
+			</Button>
+		{/if}
+	</div>
 
-								{#if loading}
-					<div class="grid gap-2 sm:grid-cols-2">
-						{#each { length: 6 } as _, i (i)}
-							<div class="rounded-[var(--radius-card)] border border-line bg-surface px-3.5 py-3">
-								<Skeleton class="h-4 w-1/2" />
-								<Skeleton class="mt-2 h-3.5 w-full" />
-								<Skeleton class="mt-1.5 h-3 w-2/3" />
+	<div class="grid items-start gap-6 lg:grid-cols-12">
+		<section aria-labelledby="view-title" class={`min-w-0 ${guideOpen ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+			{#if view === 'scan'}
+				<Panel>
+					<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
+						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
+						Scan my network
+					</h2>
+					<Discovery />
+				</Panel>
+			{:else if selected}
+				<Panel>
+					<div class="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+						<div class="flex min-w-0 items-start gap-3">
+							{#if SelectedIcon}
+								<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-signal-soft text-signal-ink">
+									<SelectedIcon class="size-[1.125rem]" aria-hidden="true" />
+								</span>
+							{/if}
+							<div class="min-w-0">
+								<h2 id="view-title" tabindex="-1" class="text-base font-semibold tracking-tight text-ink outline-none">{selectedLabel}</h2>
+								{#if selectedSummary}<p class="mt-0.5 text-sm text-ink-2">{selectedSummary}</p>{/if}
 							</div>
-						{/each}
-					</div>
-				{:else if unavailable}
-					<EmptyState
-						title="This server does not list its device types"
-						description="It is older than this interface. Update the server to add devices from here."
-					/>
-				{:else if error}
-					<ErrorNotice {error} title="Could not load the device types" onretry={() => void load()} />
-				{:else if collectors.length === 0}
-					<EmptyState
-						title="No device type is enabled"
-						description="No collector is active on this instance. Check its configuration, then reload this page."
-					/>
-				{:else if scanning}
-					<Panel title="Scan my network" description="Finds SNMP devices on a network range and adds them in one go.">
-						{#snippet aside()}
-							<Button size="sm" variant="ghost" onclick={closeScan}>Choose a type instead</Button>
-						{/snippet}
-						<Discovery />
-					</Panel>
-				{:else}
-					{#if hasAgent || snmp}
-						<!-- The two front doors: most of a homelab comes in through one of them. -->
-						<div class={`mb-6 grid gap-3 ${hasAgent && snmp ? 'md:grid-cols-2' : ''}`}>
-							{#if hasAgent}
-								<button
-									type="button"
-									onclick={() => void select(AGENT_KIND)}
-									class="group flex items-start gap-3.5 rounded-[var(--radius-card)] border border-signal/40 bg-signal-soft px-4 py-3.5 text-left transition-[transform,box-shadow] duration-200 ease-out-expo hover:-translate-y-px hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
-								>
-									<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-surface text-signal-ink">
-										<Cpu class="size-5" aria-hidden="true" />
-									</span>
-									<span class="min-w-0 flex-1">
-										<span class="block font-semibold text-ink">Install the agent on a machine</span>
-										<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-											One command on Linux, Windows, macOS or FreeBSD: system, disks, Docker, services and backups.
-										</span>
-									</span>
-									<ArrowRight class="mt-1 size-4 shrink-0 text-signal-ink transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-								</button>
-							{/if}
-							{#if snmp}
-								<button
-									type="button"
-									onclick={openScan}
-									class="group flex items-start gap-3.5 rounded-[var(--radius-card)] border border-line-strong bg-surface px-4 py-3.5 text-left transition-[transform,box-shadow] duration-200 ease-out-expo hover:-translate-y-px hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
-								>
-									<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
-										<Radar class="size-5" aria-hidden="true" />
-									</span>
-									<span class="min-w-0 flex-1">
-										<span class="block font-semibold text-ink">Scan my network</span>
-										<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-											Give a range like 192.168.1.0/24: every device answering SNMP is listed, ready to add.
-										</span>
-									</span>
-									<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-								</button>
-							{/if}
 						</div>
-					{/if}
-					<CollectorPicker
-						{collectors}
-						selected={selectedId}
-						wide={!withNotice}
-						onselect={(kind, via) => void select(kind, via)}
-					>
-						{#snippet empty()}
-							<p class="mt-1 text-sm text-ink-2">Most things still fit one of these:</p>
-							<div class="mt-3 flex flex-wrap justify-center gap-2">
-								{#if snmp}
-									<Button size="sm" variant="secondary" onclick={openScan}>
-										<Radar class="size-4" aria-hidden="true" />
-										Scan my network
-									</Button>
-								{/if}
-								{#if has('tcp')}
-									<Button size="sm" variant="secondary" onclick={() => void select('tcp')}>
-										<Plug class="size-4" aria-hidden="true" />
-										Any network port
-									</Button>
-								{/if}
-								{#if has('http')}
-									<Button size="sm" variant="secondary" onclick={() => void select('http')}>
-										<Globe class="size-4" aria-hidden="true" />
-										A web page
-									</Button>
-								{/if}
-							</div>
-						{/snippet}
-					</CollectorPicker>
-				{/if}
-			{/if}
-		</section>
-
-		<!-- Step 2 ------------------------------------------------------------ -->
-		{#if selected}
-			<section bind:this={formSection} aria-labelledby="step-form" class="rise-in min-w-0 scroll-mt-20" style="--rise-delay: 60ms">
-				<h2 id="step-form" class="mb-4 flex items-center gap-3 text-lg font-semibold tracking-tight text-ink">
-					<span class="tnum flex size-7 items-center justify-center rounded-full bg-signal-soft text-sm text-signal-ink" aria-hidden="true">2</span>
-					{selected.kind === AGENT_KIND ? 'Install the agent' : 'Tell DumbMonit where it is'}
-				</h2>
-				<!-- Folded, the row above already names the kind: the panel header would repeat it. -->
-				<Panel
-					title={folded ? undefined : selectedLabel}
-					description={folded ? undefined : selectedSummary || undefined}
-					aside={folded ? undefined : stamp}
-				>
+						<div class="hidden shrink-0 sm:block">{@render stamp()}</div>
+					</div>
 					<!-- Re-mounted per kind: the form seeds itself once from its collector. -->
 					{#key selected.kind}
 						{#if selected.kind === AGENT_KIND}
@@ -310,13 +414,23 @@
 						{/if}
 					{/key}
 				</Panel>
-			</section>
+			{:else if loading}
+				<Panel><Skeleton class="h-40 w-full" /></Panel>
+			{:else if error}
+				<ErrorNotice {error} title="Could not load the device types" onretry={() => void load()} />
+			{/if}
+		</section>
+
+		{#if guideOpen}
+			<!-- On a phone the guide comes first: the user just asked for it. -->
+			<aside
+				id="setup-guide"
+				tabindex="-1"
+				aria-label="Setup guide"
+				class="order-first min-w-0 scroll-mt-20 outline-none lg:sticky lg:top-20 lg:order-none lg:col-span-5"
+			>
+				<SetupNotice collector={noticeFor} onclose={closeGuide} />
+			</aside>
 		{/if}
 	</div>
-
-	{#if withNotice}
-		<aside class="min-w-0 lg:sticky lg:top-20 lg:col-span-5">
-			<SetupNotice collector={noticeFor} />
-		</aside>
-	{/if}
-</div>
+{/if}

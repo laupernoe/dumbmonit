@@ -8,17 +8,22 @@
 	 *
 	 * A step is one sentence; the lines that follow it, if any, are a command
 	 * or a value to copy as is, shown in a copy block.
+	 *
+	 * With `onclose` it is the setup guide the user opened on demand, and says
+	 * how to put it away.
 	 */
-	import { ExternalLink } from 'lucide-svelte';
+	import { ExternalLink, X } from 'lucide-svelte';
 	import type { CollectorInfo } from '$lib/api';
 	import { CopyBlock, Panel, Plate } from '$lib/ui';
 	import { kindIcon } from './kinds';
 
 	interface Props {
 		collector: CollectorInfo | null;
+		/** Shows a close button in the header. */
+		onclose?: () => void;
 	}
 
-	let { collector }: Props = $props();
+	let { collector, onclose }: Props = $props();
 
 	const setup = $derived(collector?.setup ?? null);
 	const title = $derived(setup?.title || (collector ? `Prepare ${collector.label}` : 'What to prepare'));
@@ -43,11 +48,24 @@
 <div aria-live="polite">
 <Panel {title} class="rise-in">
 	{#snippet aside()}
-		{#if Icon}
-			<span class="flex size-9 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
-				<Icon class="size-[1.125rem]" aria-hidden="true" />
-			</span>
-		{/if}
+		<div class="flex items-center gap-2">
+			{#if Icon}
+				<span class="flex size-9 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
+					<Icon class="size-[1.125rem]" aria-hidden="true" />
+				</span>
+			{/if}
+			{#if onclose}
+				<button
+					type="button"
+					onclick={onclose}
+					aria-label="Close the setup guide"
+					title="Close (Esc)"
+					class="flex size-9 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+				>
+					<X class="size-[1.125rem]" aria-hidden="true" />
+				</button>
+			{/if}
+		</div>
 	{/snippet}
 
 	{#if !collector}
