@@ -284,6 +284,61 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcl
 | Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 
+### Pi-hole
+
+[Pi-hole](../devices/pihole.md) v6, read through its REST API.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Pi-hole blocking disabled | Blocking is off, paused or failed (`dumbmonit_pihole_blocking_enabled`). The hold lets a five-minute pause from the web interface go by. | < 1 | 15 min | Advisory (`warning`) | 6 h |
+| Pi-hole blocklists stale | The blocklists (gravity) have not been rebuilt for more than eight days (`dumbmonit_pihole_gravity_age_seconds`): the weekly update fails. | > 8 d | 1 h | Advisory (`warning`) | 24 h |
+| Pi-hole update available | A newer version is available (`dumbmonit_pihole_updates_available`): the image in Docker, core, web interface or FTL otherwise. Pi-hole checks once a day. | > 0 | 1 h | Info (`info`) | 7 d |
+| Pi-hole diagnosis messages | Pi-hole lists messages on its diagnosis page (`dumbmonit_pihole_messages`): a blocklist that failed to download, a rate-limited client, an overloaded host. | > 0 | 15 min | Info (`info`) | 24 h |
+
+### AdGuard Home
+
+The DNS filter ([device](../devices/adguard.md)). Query and block figures are sums over AdGuard Home's own statistics window, not counters: no rule is built on them.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| AdGuard Home protection off | Protection disabled, or paused and not back yet (`dumbmonit_adguard_protection_enabled`). | < 1 | 15 min | Advisory (`warning`) | 6 h |
+| AdGuard Home DNS not running | The web interface answers but the DNS server is stopped (`dumbmonit_adguard_running`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| AdGuard Home upstream failing | An upstream DNS server fails AdGuard Home's own test, or stays silent 4 seconds (`dumbmonit_adguard_upstream_up`, one series per upstream). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| AdGuard Home filter lists stale | The oldest update of an enabled filter list is more than three days old (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 days | 1 h | Advisory (`warning`) | 24 h |
+| AdGuard Home update available | A newer version is announced by AdGuard Home's own version check (`dumbmonit_adguard_update_available`); never fires when that check is disabled, as in the official Docker image. | > 0 | 1 h | Info (`info`) | 7 days |
+
+### UPS behind NUT
+
+UPS read from a [NUT server](../devices/nut.md). Every series carries the `ups`
+label, so an alert names the UPS when one server publishes several. The status
+flags are 0 or 1 at every read, so a rule clears by itself once mains power is
+back. UPS read over SNMP are covered by the [UPS](#ups) rules above.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| UPS on battery (NUT) | The UPS is powering the load from battery (`dumbmonit_nut_ups_on_battery`, the `OB` flag of `ups.status`). | > 0 | 30 s | Warning (`critical`) | 15 min |
+| UPS battery low (NUT) | The UPS reports a low battery, the `LB` flag (`dumbmonit_nut_ups_low_battery`): the machines it powers are about to shut down. | > 0 | 1 min | Warning (`critical`) | 30 min |
+| UPS battery needs replacing (NUT) | The UPS asks for its battery to be replaced, the `RB` flag (`dumbmonit_nut_ups_replace_battery`). | > 0 | 1 h | Advisory (`warning`) | 7 d |
+| UPS load high (NUT) | The load has stayed above 80 % (`dumbmonit_nut_ups_load_percent`); clears below 75 %. | > 80 % | 10 min | Advisory (`warning`) | 24 h |
+| UPS runtime short (NUT) | The UPS estimates less than five minutes of runtime on battery (`dumbmonit_nut_battery_runtime_seconds`); clears above six. On mains power, a worn battery or a UPS too small for its load. | < 300 s | 5 min | Advisory (`warning`) | 24 h |
+| UPS data stale (NUT) | The NUT server answers but has no fresh data from the UPS: cable, driver or UPS silent (`dumbmonit_nut_ups_data_stale`). An outage would go unseen meanwhile. | > 0 | 5 min | Advisory (`warning`), escalates after 1 h | 6 h |
+
+### MikroTik RouterOS
+
+Series carry the `interface` or `sensor` label, so a notification names the port or the sensor ([device](../devices/mikrotik.md)). Counters go through `increase_prometheus`: a router added with years of errors behind it does not fire on its first measurement.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| MikroTik CPU high | The router's CPU has stayed above 90 % (`dumbmonit_mikrotik_cpu_load_percent`): routing, the firewall or a script is saturating it. Clears below 80 %. | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| MikroTik memory high | More than 90 % of the memory is in use (`dumbmonit_mikrotik_memory_used_percent`). Clears below 85 %. | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| MikroTik storage almost full | The flash storage is more than 90 % full (`dumbmonit_mikrotik_storage_used_percent`): configuration changes and upgrades may fail. Clears below 85 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| MikroTik temperature high | A temperature sensor reads above 80 °C (`dumbmonit_mikrotik_temperature_celsius`). Clears at 75 °C. | > 80 °C | 10 min | Advisory (`warning`) | 6 h |
+| MikroTik power supply or fan failed | A `psu*-state` or `fan*-state` sensor is not `ok` (`dumbmonit_mikrotik_health_ok`). A redundant power supply that died cuts nothing, until the second one does. | < 1 | 5 min | Warning (`critical`) | 1 h |
+| MikroTik interface accumulating errors | More than fifty receive and transmit errors on an interface in the last hour (`increase_prometheus(dumbmonit_mikrotik_interface_rx_errors_total[1h]) + increase_prometheus(dumbmonit_mikrotik_interface_tx_errors_total[1h])`). | > 50 | 15 min | Advisory (`warning`) | 24 h |
+| MikroTik link flapping | An interface lost its link more than twice in thirty minutes (`increase_prometheus(dumbmonit_mikrotik_interface_link_downs_total[30m])`). A port unplugged for good counts once and does not fire. | > 2 | 5 min | Advisory (`warning`) | 1 h |
+| MikroTik RouterOS update available | A newer RouterOS is available on the router's update channel (`dumbmonit_mikrotik_update_available`). Only known when the router checks for updates itself: see the optional step of the [setup](../devices/mikrotik.md). | > 0 | 1 h | Info (`info`) | 7 d |
+| MikroTik firmware upgrade pending | RouterBOOT is older than the firmware bundled with the installed RouterOS (`dumbmonit_mikrotik_firmware_upgrade_pending`); it is upgraded only on request, then at the next reboot. | > 0 | 1 h | Info (`info`) | 7 d |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

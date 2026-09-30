@@ -3068,6 +3068,445 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc applications auto-hébergées ---
+        // --- Pi-hole (`collectors/pihole`) ---
+        //
+        // Le blocage se suspend d'un clic pour cinq minutes ou une heure :
+        // quinze minutes laissent passer la pause courte, pas l'oubli.
+        Rule {
+            description: "Pi-hole has not been blocking for fifteen minutes: ads and trackers go \
+                          through."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            ..base(
+                "pihole_blocking_disabled",
+                "Pi-hole blocking disabled",
+                RuleKind::Threshold,
+                "dumbmonit_pihole_blocking_enabled",
+            )
+        },
+        // Gravity se reconstruit chaque semaine par défaut : huit jours
+        // laissent passer une semaine normale, pas deux mises à jour manquées.
+        Rule {
+            description: "Pi-hole's blocklists have not been rebuilt for more than eight days: \
+                          the weekly gravity update fails."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 8.0 * 86_400.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "pihole_gravity_stale",
+                "Pi-hole blocklists stale",
+                RuleKind::Threshold,
+                "dumbmonit_pihole_gravity_age_seconds",
+            )
+        },
+        Rule {
+            description: "A newer Pi-hole is available (the container image, or core, web \
+                          interface or FTL outside a container)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "pihole_update_available",
+                "Pi-hole update available",
+                RuleKind::Threshold,
+                "dumbmonit_pihole_updates_available",
+            )
+        },
+        Rule {
+            description: "Pi-hole lists messages in its diagnosis page: a blocklist that failed \
+                          to download, a client rate-limited, a host overloaded."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "pihole_diagnosis_messages",
+                "Pi-hole diagnosis messages",
+                RuleKind::Threshold,
+                "dumbmonit_pihole_messages",
+            )
+        },
+        // --- AdGuard Home (`collectors/adguard`) ---
+        //
+        // La protection coupée : « désactiver pour une heure » oublié, ou
+        // désactivée tout court. Quinze minutes laissent passer la pause de
+        // dix minutes qu'on prend pour débloquer un site.
+        Rule {
+            description: "AdGuard Home's protection has been off for fifteen minutes: nothing is \
+                          filtered."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "adguard_protection_disabled",
+                "AdGuard Home protection off",
+                RuleKind::Threshold,
+                "dumbmonit_adguard_protection_enabled",
+            )
+        },
+        // Le serveur DNS arrêté alors que l'interface répond : plus aucune
+        // résolution pour les clients qui n'ont que lui.
+        Rule {
+            description: "AdGuard Home's DNS server is not running: clients that use it cannot \
+                          resolve names."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "adguard_dns_not_running",
+                "AdGuard Home DNS not running",
+                RuleKind::Threshold,
+                "dumbmonit_adguard_running",
+            )
+        },
+        // Un amont qui échoue au test d'AdGuard Home, ou reste muet quatre
+        // secondes. Dix minutes écartent une perte de paquet isolée.
+        Rule {
+            description: "An upstream DNS server of AdGuard Home fails its test: queries sent to \
+                          it fail or wait."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "adguard_upstream_down",
+                "AdGuard Home upstream failing",
+                RuleKind::Threshold,
+                "dumbmonit_adguard_upstream_up",
+            )
+        },
+        // Les listes se mettent à jour toutes les 24 h par défaut : trois
+        // jours sans mise à jour, c'est que le téléchargement échoue.
+        Rule {
+            description: "An enabled AdGuard Home filter list has not been updated for three \
+                          days: blocking falls behind."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 3.0 * 86_400.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "adguard_filters_stale",
+                "AdGuard Home filter lists stale",
+                RuleKind::Threshold,
+                "dumbmonit_adguard_filter_oldest_update_age_seconds",
+            )
+        },
+        Rule {
+            description: "A newer AdGuard Home version is available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "adguard_update_available",
+                "AdGuard Home update available",
+                RuleKind::Threshold,
+                "dumbmonit_adguard_update_available",
+            )
+        },
+        // --- Onduleurs derrière NUT (`collectors/nut`) ---
+        //
+        // Les séries portent `ups` : la notification dit quel onduleur d'un
+        // même serveur NUT. Les drapeaux de `ups.status` valent 0 ou 1 et sont
+        // émis à chaque lecture : les règles retombent d'elles-mêmes au retour
+        // du secteur. Mêmes délais et gravités que les règles SNMP de l'UPS-MIB.
+        Rule {
+            description: "The UPS is powering the load from battery.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(900)),
+            ..base(
+                "nut_on_battery",
+                "UPS on battery (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_ups_on_battery",
+            )
+        },
+        // `LB` : le seuil de l'onduleur ou de NUT (`battery.charge.low`,
+        // `battery.runtime.low`) est franchi, upsmon déclenche l'arrêt.
+        Rule {
+            description: "The UPS reports a low battery: the machines it powers are about to \
+                          shut down."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1800)),
+            ..base(
+                "nut_battery_low",
+                "UPS battery low (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_ups_low_battery",
+            )
+        },
+        // `RB` : l'onduleur a jugé la batterie usée, souvent après un autotest.
+        Rule {
+            description: "The UPS asks for its battery to be replaced: it may not hold the load \
+                          through the next outage."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "nut_replace_battery",
+                "UPS battery needs replacing (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_ups_replace_battery",
+            )
+        },
+        // Au-delà de 80 %, l'autonomie fond et un pic de démarrage peut
+        // déclencher la surcharge.
+        Rule {
+            description: "The UPS load has stayed above 80% for ten minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 80.0,
+            clear_threshold: Some(75.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "nut_load_high",
+                "UPS load high (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_ups_load_percent",
+            )
+        },
+        // L'autonomie estimée : sur secteur, moins de cinq minutes dit une
+        // batterie usée ou un onduleur trop petit pour sa charge.
+        Rule {
+            description: "The UPS estimates less than five minutes of runtime on battery."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 300.0,
+            clear_threshold: Some(360.0),
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "nut_runtime_short",
+                "UPS runtime short (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_battery_runtime_seconds",
+            )
+        },
+        // `upsd` répond mais n'a plus de nouvelles de l'onduleur : câble USB,
+        // pilote arrêté. Pendant ce temps, une coupure passerait inaperçue.
+        Rule {
+            description: "The NUT server has no fresh data from the UPS: its cable, driver or \
+                          the UPS itself stopped answering, and an outage would go unseen."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            escalate_after: Some(Duration::from_secs(3600)),
+            ..base(
+                "nut_data_stale",
+                "UPS data stale (NUT)",
+                RuleKind::Threshold,
+                "dumbmonit_nut_ups_data_stale",
+            )
+        },
+        // --- MikroTik RouterOS (`collectors/mikrotik`) ---
+        //
+        // Les séries d'interface portent `interface` et `type`, celles de
+        // capteur `sensor` : la notification dit « ether1 » ou « psu2-state ».
+        Rule {
+            description: "The router's CPU has been above 90% for fifteen minutes: routing, \
+                          the firewall or a script is saturating it."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(80.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mikrotik_cpu_high",
+                "MikroTik CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_cpu_load_percent",
+            )
+        },
+        // Une fuite (connexions suivies, listes d'adresses gonflées par un
+        // script) monte lentement : quinze minutes au-dessus de 90 %.
+        Rule {
+            description: "More than 90% of the router's memory is in use.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mikrotik_memory_high",
+                "MikroTik memory high",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_memory_used_percent",
+            )
+        },
+        // Le stockage flash d'un hAP fait 16 Mo : des fichiers de sauvegarde ou
+        // un paquet téléchargé suffisent à le remplir, et la configuration ne
+        // s'enregistre plus.
+        Rule {
+            description: "The router's storage is more than 90% full: configuration changes \
+                          and upgrades may fail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "mikrotik_storage_almost_full",
+                "MikroTik storage almost full",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_storage_used_percent",
+            )
+        },
+        // Les processeurs des CCR tournent couramment entre 50 et 70 °C ;
+        // quatre-vingts degrés tenus dix minutes, c'est un ventilateur ou une
+        // armoire qui ne refroidit plus.
+        Rule {
+            description: "A temperature sensor of the router is above 80 °C.".to_string(),
+            operator: Operator::Gt,
+            threshold: 80.0,
+            clear_threshold: Some(75.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mikrotik_temperature_high",
+                "MikroTik temperature high",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_temperature_celsius",
+            )
+        },
+        // `psu1-state`, `fan-state` : tout ce qui n'est pas « ok ». Une
+        // alimentation redondante morte ne coupe rien — jusqu'à la seconde.
+        Rule {
+            description: "The router reports a failed power supply or fan.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "mikrotik_hardware_failed",
+                "MikroTik power supply or fan failed",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_health_ok",
+            )
+        },
+        // Même seuil que la règle IF-MIB : cinquante erreurs dans l'heure.
+        Rule {
+            description: "An interface of the router logged more than fifty errors in the last \
+                          hour: usually a failing cable, a dirty fibre or a duplex mismatch."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 50.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "mikrotik_interface_errors",
+                "MikroTik interface accumulating errors",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_mikrotik_interface_rx_errors_total[1h]) \
+                 + increase_prometheus(dumbmonit_mikrotik_interface_tx_errors_total[1h])",
+            )
+        },
+        // `link-downs` compte les pertes de lien : plus de deux en trente
+        // minutes, c'est un lien qui bagote. Un port débranché pour de bon ne
+        // compte qu'une fois, et ne sonne donc pas.
+        Rule {
+            description: "An interface of the router lost its link more than twice in thirty \
+                          minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "mikrotik_link_flapping",
+                "MikroTik link flapping",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_mikrotik_interface_link_downs_total[30m])",
+            )
+        },
+        // Seulement si le routeur vérifie lui-même (planificateur de la notice) :
+        // un compte en lecture ne peut pas lancer la vérification.
+        Rule {
+            description: "A newer RouterOS version is available on the router's update channel."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "mikrotik_update_available",
+                "MikroTik RouterOS update available",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_update_available",
+            )
+        },
+        // RouterBOOT ne suit pas RouterOS tout seul : après une mise à jour, il
+        // faut `/system routerboard upgrade` puis un redémarrage.
+        Rule {
+            description: "The RouterBOOT firmware is older than the one bundled with the \
+                          installed RouterOS: it is upgraded only on request, then at the next \
+                          reboot."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "mikrotik_firmware_upgrade_pending",
+                "MikroTik firmware upgrade pending",
+                RuleKind::Threshold,
+                "dumbmonit_mikrotik_firmware_upgrade_pending",
+            )
+        },
         // --- Proxmox VE : invités, disques, ZFS, paquets (`collectors/proxmox`) ---
         //
         // Les séries d'invité portent `name` et `vmid` : la notification dit
@@ -3667,6 +4106,34 @@ mod tests {
             "jellyfin_plugin_broken",
             "jellyfin_restart_pending",
             "plex_update_available",
+            // Pi-hole (`collectors/pihole`).
+            "pihole_blocking_disabled",
+            "pihole_gravity_stale",
+            "pihole_update_available",
+            "pihole_diagnosis_messages",
+            // AdGuard Home (`collectors/adguard`).
+            "adguard_protection_disabled",
+            "adguard_dns_not_running",
+            "adguard_upstream_down",
+            "adguard_filters_stale",
+            "adguard_update_available",
+            // Onduleurs derrière NUT (`collectors/nut`).
+            "nut_on_battery",
+            "nut_battery_low",
+            "nut_replace_battery",
+            "nut_load_high",
+            "nut_runtime_short",
+            "nut_data_stale",
+            // MikroTik RouterOS (`collectors/mikrotik`).
+            "mikrotik_cpu_high",
+            "mikrotik_memory_high",
+            "mikrotik_storage_almost_full",
+            "mikrotik_temperature_high",
+            "mikrotik_hardware_failed",
+            "mikrotik_interface_errors",
+            "mikrotik_link_flapping",
+            "mikrotik_update_available",
+            "mikrotik_firmware_upgrade_pending",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -3870,6 +4337,35 @@ mod tests {
             "dumbmonit_graylog_inputs_failed",
             "dumbmonit_graylog_output_failures_total",
             "dumbmonit_graylog_processing_failures_total",
+            // Pi-hole (`collectors/pihole/metrics.rs`).
+            "dumbmonit_pihole_blocking_enabled",
+            "dumbmonit_pihole_gravity_age_seconds",
+            "dumbmonit_pihole_updates_available",
+            "dumbmonit_pihole_messages",
+            // AdGuard Home (`collectors/adguard/metrics.rs`).
+            "dumbmonit_adguard_protection_enabled",
+            "dumbmonit_adguard_running",
+            "dumbmonit_adguard_upstream_up",
+            "dumbmonit_adguard_filter_oldest_update_age_seconds",
+            "dumbmonit_adguard_update_available",
+            // Onduleurs derrière NUT (`collectors/nut/metrics.rs`).
+            "dumbmonit_nut_ups_on_battery",
+            "dumbmonit_nut_ups_low_battery",
+            "dumbmonit_nut_ups_replace_battery",
+            "dumbmonit_nut_ups_load_percent",
+            "dumbmonit_nut_battery_runtime_seconds",
+            "dumbmonit_nut_ups_data_stale",
+            // MikroTik RouterOS (`collectors/mikrotik/metrics.rs`).
+            "dumbmonit_mikrotik_cpu_load_percent",
+            "dumbmonit_mikrotik_memory_used_percent",
+            "dumbmonit_mikrotik_storage_used_percent",
+            "dumbmonit_mikrotik_temperature_celsius",
+            "dumbmonit_mikrotik_health_ok",
+            "dumbmonit_mikrotik_interface_rx_errors_total",
+            "dumbmonit_mikrotik_interface_tx_errors_total",
+            "dumbmonit_mikrotik_interface_link_downs_total",
+            "dumbmonit_mikrotik_update_available",
+            "dumbmonit_mikrotik_firmware_upgrade_pending",
             // MDaemon et SecurityGateway (`collectors/mdaemon`).
             "dumbmonit_mdaemon_service_up",
             "dumbmonit_mdaemon_api_up",

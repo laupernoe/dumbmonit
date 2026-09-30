@@ -1,0 +1,4 @@
+BEGIN LIST UPS
+UPS rack "Rack UPS"
+UPS office "Office UPS"
+END LIST UPS
