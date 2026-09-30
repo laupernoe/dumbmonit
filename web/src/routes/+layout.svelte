@@ -8,6 +8,10 @@
 	import NavBar from '$lib/components/NavBar.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
+	import DemoBanner from '$lib/components/demo/DemoBanner.svelte';
+	import DemoNotice from '$lib/components/demo/DemoNotice.svelte';
+	import Tour from '$lib/components/demo/Tour.svelte';
+	import { demo } from '$lib/stores/demo.svelte';
 
 	let { children } = $props();
 
@@ -54,6 +58,14 @@
 		}
 	});
 
+	// Public demo: refused changes explain themselves, and the tour opens once
+	// on the first visit (the banner reopens it).
+	$effect(() => {
+		if (!auth.demo || !auth.canUseApi) return;
+		demo.install();
+		if (!demo.tourSeen && !isPublicRoute(page.url.pathname)) demo.openTour();
+	});
+
 	// The alert count is shared by the whole app; it only polls once a session exists.
 	$effect(() => {
 		if (!auth.canUseApi) return;
@@ -76,10 +88,19 @@
 			</p>
 		</main>
 	{:else}
+		{#if auth.demo}
+			<DemoBanner />
+		{/if}
 		<NavBar />
 		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-24 sm:px-6 sm:pb-12">
 			{@render children()}
 		</main>
 		<CommandPalette />
+		{#if auth.demo}
+			<Tour />
+		{/if}
+	{/if}
+	{#if auth.demo}
+		<DemoNotice />
 	{/if}
 </div>

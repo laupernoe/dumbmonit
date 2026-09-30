@@ -13,7 +13,8 @@
 	import { ApiError } from '$lib/api';
 	import { auth, safeDestination } from '$lib/stores/auth.svelte';
 	import { Button, ClickSpark, DotField, ErrorNotice, Field } from '$lib/ui';
-	import { KeyRound } from 'lucide-svelte';
+	import { KeyRound, Info } from 'lucide-svelte';
+	import { tick } from 'svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
@@ -21,6 +22,15 @@
 
 	let username = $state('');
 	let password = $state('');
+	let passwordForm = $state<HTMLFormElement | null>(null);
+
+	// Public demo: the account is shared and read-only, one click signs in.
+	async function useDemoAccount() {
+		username = 'demo';
+		password = 'demo';
+		await tick();
+		passwordForm?.requestSubmit();
+	}
 	let sending = $state(false);
 	// Second step: the server accepted the password and waits for a one-time
 	// code. `pending` is the short-lived token that ties the two steps together.
@@ -252,7 +262,18 @@
 				</div>
 			{/if}
 
-			<form class={`grid gap-4 ${auth.oidc.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
+			{#if auth.demo}
+				<div class="mt-5 rounded-lg border border-advisory/40 bg-advisory-soft px-4 py-3 text-sm text-ink">
+					<p class="flex items-center gap-2 font-semibold">
+						<Info class="size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
+						Live demo — sign in with <span class="font-mono">demo</span> / <span class="font-mono">demo</span>.
+					</p>
+					<p class="mt-1 text-ink-2">Read-only, fictional data.</p>
+					<Button variant="secondary" size="sm" class="mt-3" onclick={() => void useDemoAccount()}>Sign in to the demo</Button>
+				</div>
+			{/if}
+
+			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
 				<Field label="Username" for="username" error={usernameError}>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input

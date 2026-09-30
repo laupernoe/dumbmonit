@@ -65,7 +65,7 @@ import type {
 } from './types';
 
 export * from './types';
-export { ApiError, toApiError, setUnauthorizedHandler } from './client';
+export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 
 // --- Health -----------------------------------------------------------------
 
@@ -372,12 +372,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			configured: Boolean(status?.configured),
 			authenticated: Boolean(status?.authenticated),
 			user: status?.user ?? null,
-			oidc: status?.oidc ?? NO_OIDC
+			oidc: status?.oidc ?? NO_OIDC,
+			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, demo: false };
 		}
 		throw cause;
 	}

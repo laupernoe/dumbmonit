@@ -23,6 +23,8 @@ export interface Health {
 	version: string;
 	database: ComponentHealth;
 	victoria: ComponentHealth;
+	/** Public demo mode (`DUMBMONIT_DEMO=1`): read-only, fictional data. */
+	demo: boolean;
 }
 
 // --- Credentials ------------------------------------------------------------
@@ -662,6 +664,8 @@ export interface AuthStatus {
 	/** The signed-in account, when `authenticated`. */
 	user?: User;
 	oidc?: OidcStatus;
+	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
+	demo: boolean;
 }
 
 export interface CreateUserPayload {
@@ -747,6 +751,8 @@ export interface AuthState {
 	authenticated: boolean;
 	user: User | null;
 	oidc: OidcStatus;
+	/** Public demo mode (read-only, fictional data). */
+	demo: boolean;
 }
 
 // --- Notification channels --------------------------------------------------

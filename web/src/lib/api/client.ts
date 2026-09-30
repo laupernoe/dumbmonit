@@ -12,12 +12,15 @@ export class ApiError extends Error {
 	readonly status: number;
 	/** True when the route does not exist on the server yet (404 on an anticipated endpoint). */
 	readonly missing: boolean;
+	/** True when the public demo refused a change (403 with `demo: true`). */
+	readonly demo: boolean;
 
-	constructor(message: string, status: number, missing = false) {
+	constructor(message: string, status: number, missing = false, demo = false) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
 		this.missing = missing;
+		this.demo = demo;
 	}
 
 	/** Concrete advice shown to the user below the error message. */
@@ -27,6 +30,9 @@ export class ApiError extends Error {
 		}
 		if (this.status === 401) {
 			return 'Your session has expired or the password is incorrect. Sign in again to continue.';
+		}
+		if (this.demo) {
+			return 'Install DumbMonit on your own machine to add devices, rules and channels.';
 		}
 		if (this.status === 403) {
 			return 'You do not have sufficient permissions for this action.';
@@ -106,19 +112,37 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
 	return encoded ? `${url}?${encoded}` : url;
 }
 
+/**
+ * Single reaction to a change refused by the public demo (403 with `demo: true`).
+ *
+ * Installed by the demo store: every refused action says why, even on the
+ * paths whose caller would otherwise swallow the error.
+ */
+type DemoRefusalHandler = (message: string) => void;
+
+let demoRefusalHandler: DemoRefusalHandler | null = null;
+
+/** Installs the demo refusal reaction. Called once, from the demo store. */
+export function setDemoRefusalHandler(handler: DemoRefusalHandler | null): void {
+	demoRefusalHandler = handler;
+}
+
 /** Extracts the error message from the `{ "error": "..." }` body returned by the server. */
-async function readErrorMessage(response: Response): Promise<string> {
+async function readError(response: Response): Promise<{ message: string; demo: boolean }> {
+	const fallback = { message: `The server responded with ${response.status}.`, demo: false };
 	try {
 		const text = await response.text();
-		if (!text) return `The server responded with ${response.status}.`;
+		if (!text) return fallback;
 		const parsed: unknown = JSON.parse(text);
 		if (parsed && typeof parsed === 'object' && 'error' in parsed) {
-			const message = (parsed as { error: unknown }).error;
-			if (typeof message === 'string' && message.trim()) return message;
+			const { error: message, demo } = parsed as { error: unknown; demo?: unknown };
+			if (typeof message === 'string' && message.trim()) {
+				return { message, demo: demo === true };
+			}
 		}
-		return `The server responded with ${response.status}.`;
+		return fallback;
 	} catch {
-		return `The server responded with ${response.status}.`;
+		return fallback;
 	}
 }
 
@@ -158,11 +182,13 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 	}
 
 	if (!response.ok) {
-		const message = await readErrorMessage(response);
+		const { message, demo } = await readError(response);
 		// The session has expired, or the instance has just been protected: notify
 		// once, at the client level, rather than screen by screen.
 		if (response.status === 401 && !allowUnauthorized) unauthorizedHandler?.();
-		throw new ApiError(message, response.status, anticipated && response.status === 404);
+		const refusedByDemo = demo && response.status === 403;
+		if (refusedByDemo) demoRefusalHandler?.(message);
+		throw new ApiError(message, response.status, anticipated && response.status === 404, refusedByDemo);
 	}
 
 	if (response.status === 204) return undefined as T;
