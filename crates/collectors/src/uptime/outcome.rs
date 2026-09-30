@@ -140,7 +140,7 @@ pub struct Report {
 
 impl Report {
     /// `kind` est le type de sonde (`http`, `tcp`, `dns`, `ping`, `tls`).
-    pub fn new(kind: &'static str) -> Self {
+    pub fn new(kind: &str) -> Self {
         Self {
             started: Instant::now(),
             ts_ms: chrono::Utc::now().timestamp_millis(),

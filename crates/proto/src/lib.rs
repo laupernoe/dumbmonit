@@ -7,6 +7,7 @@
 mod collector;
 mod command;
 mod credential;
+mod description;
 pub mod env;
 mod push;
 mod sample;
@@ -20,6 +21,10 @@ pub use command::{
 };
 pub use credential::{
     Credential, SnmpV3Auth, SnmpV3AuthProtocol, SnmpV3Privacy, SnmpV3PrivacyProtocol,
+};
+pub use description::{
+    CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
+    SetupDescription, Text,
 };
 pub use push::{
     AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, INGEST_PATH, MAX_BATCH_SAMPLES,
