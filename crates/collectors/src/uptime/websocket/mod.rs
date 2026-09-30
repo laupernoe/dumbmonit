@@ -36,7 +36,7 @@
 //! | `allow_private_targets` | `false` | Autorise la boucle locale (voir `guard`). |
 //! | `timeout_seconds` | `5` | Délai propre à la sonde (1 à 60). |
 
-mod frame;
+pub(crate) mod frame;
 pub(crate) mod options;
 
 use std::time::Instant;

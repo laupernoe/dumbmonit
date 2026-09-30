@@ -28,6 +28,9 @@ pub use dumbmonit_collectors::{
     snmp, synology, truenas, uptime,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
+pub use dumbmonit_collectors::{
+    HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
+};
 pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};
 pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
