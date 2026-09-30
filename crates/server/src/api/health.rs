@@ -10,6 +10,8 @@ pub struct Health {
     version: &'static str,
     database: ComponentHealth,
     victoria: ComponentHealth,
+    /// Mode démonstration publique (`DUMBMONIT_DEMO`) : lecture seule, parc fictif.
+    demo: bool,
 }
 
 #[derive(Serialize)]
@@ -54,5 +56,6 @@ pub async fn health(State(state): State<AppState>) -> Json<Health> {
         version: env!("CARGO_PKG_VERSION"),
         database: ComponentHealth::from(database),
         victoria: ComponentHealth::from(victoria).embedded(state.config.vm_embedded()),
+        demo: state.config.demo,
     })
 }

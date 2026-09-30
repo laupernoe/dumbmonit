@@ -29,6 +29,19 @@ const POOL_IDLE_TIMEOUT: Duration = Duration::from_secs(120);
 static VERIFIED: OnceLock<reqwest::Client> = OnceLock::new();
 static UNVERIFIED: OnceLock<reqwest::Client> = OnceLock::new();
 
+/// Résolutions imposées aux clients partagés : nom d'hôte → adresse locale.
+///
+/// Ne sert qu'au mode démonstration (`DUMBMONIT_DEMO`), où les équipements
+/// fictifs (`pve.home.arpa`…) sont servis par des répondeurs en mémoire sur
+/// `127.0.0.1`. À poser **avant** la première collecte : un client déjà
+/// construit ne les verrait pas.
+static RESOLVE_OVERRIDES: OnceLock<Vec<(String, std::net::SocketAddr)>> = OnceLock::new();
+
+/// Fixe les résolutions imposées ; sans effet si elles l'ont déjà été.
+pub fn set_resolve_overrides(overrides: Vec<(String, std::net::SocketAddr)>) {
+    let _ = RESOLVE_OVERRIDES.set(overrides);
+}
+
 /// Le client partagé, construit à la première demande.
 ///
 /// `insecure_tls` désactive toute vérification du certificat présenté. C'est
@@ -49,7 +62,11 @@ pub fn client(insecure_tls: bool) -> Result<reqwest::Client, ProbeError> {
 }
 
 fn build(accept_invalid_certs: bool) -> Result<reqwest::Client, ProbeError> {
-    reqwest::Client::builder()
+    let mut builder = reqwest::Client::builder();
+    for (host, address) in RESOLVE_OVERRIDES.get().into_iter().flatten() {
+        builder = builder.resolve(host, *address);
+    }
+    builder
         .danger_accept_invalid_certs(accept_invalid_certs)
         .connect_timeout(CONNECT_TIMEOUT)
         .pool_idle_timeout(POOL_IDLE_TIMEOUT)
