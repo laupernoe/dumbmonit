@@ -1,6 +1,6 @@
 # Product website
 
-The static page published at **https://noekan.github.io/dumbmonit/**. Plain
+The static page published at **https://dumbmonit.app/**. Plain
 HTML and CSS, a few lines of JavaScript for the copy buttons, no build step,
 no analytics, no third-party requests. Fonts (Bricolage Grotesque, SIL OFL)
 are self-hosted in `assets/fonts/`.
