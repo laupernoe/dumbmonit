@@ -36,7 +36,12 @@ import {
 	ShieldCheck,
 	ChartLine,
 	Logs,
-	ScrollText
+	ScrollText,
+	Cloud,
+	Images,
+	FileText,
+	Film,
+	Tv
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
@@ -68,7 +73,12 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	victoriametrics: ChartLine,
 	victorialogs: ScrollText,
 	loki: Logs,
-	graylog: ScrollText
+	graylog: ScrollText,
+	nextcloud: Cloud,
+	immich: Images,
+	paperless: FileText,
+	jellyfin: Film,
+	plex: Tv
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -76,7 +86,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'redfish', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'redfish', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -102,6 +112,11 @@ const KIND_KEYWORDS: Record<string, string> = {
 	victorialogs: 'logs log server observability monitoring syslog',
 	loki: 'logs log server grafana promtail alloy observability monitoring',
 	graylog: 'logs log server syslog gelf opensearch elasticsearch siem observability monitoring',
+	nextcloud: 'cloud files sync owncloud office calendar contacts php self-hosted app',
+	immich: 'photos pictures videos gallery google photos backup self-hosted app',
+	paperless: 'documents paperless-ngx scan ocr archive pdf self-hosted app',
+	jellyfin: 'media server movies tv shows music streaming emby transcode self-hosted app',
+	plex: 'media server movies tv shows music streaming transcode pms self-hosted app',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',

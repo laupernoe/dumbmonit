@@ -258,6 +258,32 @@ VictoriaMetrics, VictoriaLogs, Loki and Graylog ([devices](../devices/victoriame
 | Graylog input failed | An input failed to start (`dumbmonit_graylog_inputs_failed`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
 | Graylog indexing failures | Writes to the search cluster or message processing failed in the last hour (`increase_prometheus(dumbmonit_graylog_output_failures_total[1h]) + increase_prometheus(dumbmonit_graylog_processing_failures_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 
+### Self-hosted applications
+
+Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcloud.md)). They rarely fall over outright: the page opens while syncing, thumbnails, imports or library scans have stopped. These rules watch those states; an application that does not answer at all is Device unreachable.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Nextcloud stuck in maintenance | Maintenance mode is on (`dumbmonit_nextcloud_maintenance`): nobody can log in or sync. | > 0 | 30 min | Advisory (`warning`), escalates after 3 h | 6 h |
+| Nextcloud database upgrade pending | The code was updated and Nextcloud waits for `occ upgrade` (`dumbmonit_nextcloud_needs_db_upgrade`). | > 0 | 10 min | Warning (`critical`) | 1 h |
+| Nextcloud update available | Nextcloud's update check found a newer release (`dumbmonit_nextcloud_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Nextcloud OPcache full | PHP's OPcache is out of room and pages get slow (`dumbmonit_nextcloud_opcache_full`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+| Nextcloud free space low | Less than 5 GiB free for the data directory (`dumbmonit_nextcloud_free_space_bytes / 1073741824`); clears above 6 GiB. | < 5 GiB | 30 min | Advisory (`warning`) | 24 h |
+| Immich jobs stalled | Jobs wait in a queue that is not paused and runs nothing (`dumbmonit_immich_queue_waiting > 0 and on (target, queue) dumbmonit_immich_queue_active == 0 unless on (target, queue) dumbmonit_immich_queue_paused == 1`). The notification names the queue. | > 0 | 1 h | Advisory (`warning`) | 6 h |
+| Immich queue paused | A job queue has been paused for a day (`dumbmonit_immich_queue_paused`). | > 0 | 24 h | Info (`info`) | 7 d |
+| Immich storage almost full | The disk holding the library is more than 90 % full (`dumbmonit_immich_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Immich update available | Immich's version check knows a newer release (`dumbmonit_immich_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Paperless task queue down | Redis or Celery in error (`max by (target) (dumbmonit_paperless_component_status{component=~"redis\|celery"})`: 2 is an error): nothing new is imported. | ≥ 2 | 5 min | Warning (`critical`) | 1 h |
+| Paperless index or sanity check error | The search index, the classifier or the sanity check (missing or altered files) reports an error (`dumbmonit_paperless_component_status{component=~"index\|classifier\|sanity_check"}`). | ≥ 2 | 30 min | Advisory (`warning`) | 24 h |
+| Paperless migrations pending | Database migrations left to apply (`dumbmonit_paperless_unapplied_migrations`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+| Paperless task failed | A task this user can see failed within the failed task window and was not dismissed (`dumbmonit_paperless_tasks_failed_recent`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Paperless storage almost full | The disk holding the documents is more than 90 % full (`dumbmonit_paperless_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Paperless update available | Paperless-ngx's version check knows a newer release (`dumbmonit_paperless_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Jellyfin scheduled task failed | A scheduled task (a library scan, a cleanup) failed or was aborted on its last run (`dumbmonit_jellyfin_scheduled_tasks_failed`). | > 0 | 10 min | Advisory (`warning`) | 24 h |
+| Jellyfin plugin broken | A plugin failed to load or does not support this version (`dumbmonit_jellyfin_plugins_broken`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
+| Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

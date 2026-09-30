@@ -1,0 +1,315 @@
+[
+  {
+    "Name": "Audio Normalization",
+    "State": "Idle",
+    "Id": "000000000000000000000000ec2f221f",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Scans files for audio normalization data.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "AudioNormalization"
+  },
+  {
+    "Name": "Clean Activity Log",
+    "State": "Idle",
+    "Id": "000000000000000000000000b461ef91",
+    "Triggers": [],
+    "Description": "Deletes activity log entries older than the configured age.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "CleanActivityLog"
+  },
+  {
+    "Name": "Clean Cache Directory",
+    "State": "Idle",
+    "Id": "000000000000000000000000241d4fcb",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Deletes cache files no longer needed by the system.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "DeleteCacheFiles"
+  },
+  {
+    "Name": "Clean Log Directory",
+    "State": "Idle",
+    "Id": "0000000000000000000000001c8ede62",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Deletes log files that are more than 3 days old.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "CleanLogFiles"
+  },
+  {
+    "Name": "Clean Transcode Directory",
+    "State": "Idle",
+    "Id": "0000000000000000000000007d8088c1",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-09-30T07:04:52.4449157Z",
+      "EndTimeUtc": "2026-09-30T07:04:52.4629086Z",
+      "Status": "Failed",
+      "Name": "Clean Transcode Directory",
+      "Key": "DeleteTranscodeFiles",
+      "Id": "0000000000000000000000007d8088c1",
+      "ErrorMessage": "The file '/cache/transcodes' already exists.",
+      "LongErrorMessage": "   at System.IO.Directory.CreateDirectory(String path)\n   at Emby.Server.Implementations.AppBase.BaseApplicationPaths.CreateAndCheckMarker(String path, String markerName, Boolean recursive)\n   at MediaBrowser.Common.Configuration.EncodingConfigurationExtensions.GetTranscodePath(IConfigurationManager configurationManager)\n   at Emby.Server.Implementations.ScheduledTasks.Tasks.DeleteTranscodeFileTask.ExecuteAsync(IProgress`1 progress, CancellationToken cancellationToken)\n   at Emby.Server.Implementations.ScheduledTasks.ScheduledTaskWorker.ExecuteInternal(TaskOptions options)"
+    },
+    "Triggers": [
+      {
+        "Type": "StartupTrigger"
+      },
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Deletes transcode files more than one day old.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "DeleteTranscodeFiles"
+  },
+  {
+    "Name": "Download missing lyrics",
+    "State": "Idle",
+    "Id": "00000000000000000000000026649fe0",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Downloads lyrics for songs",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "DownloadLyrics"
+  },
+  {
+    "Name": "Download missing subtitles",
+    "State": "Idle",
+    "Id": "0000000000000000000000002c66a88b",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Searches the internet for missing subtitles based on metadata configuration.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "DownloadSubtitles"
+  },
+  {
+    "Name": "Extract Chapter Images",
+    "State": "Idle",
+    "Id": "0000000000000000000000004e6637c8",
+    "Triggers": [
+      {
+        "Type": "DailyTrigger",
+        "TimeOfDayTicks": 72000000000,
+        "MaxRuntimeTicks": 144000000000
+      }
+    ],
+    "Description": "Creates thumbnails for videos that have chapters.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "RefreshChapterImages"
+  },
+  {
+    "Name": "Generate Trickplay Images",
+    "State": "Idle",
+    "Id": "00000000000000000000000064f5f44c",
+    "Triggers": [
+      {
+        "Type": "DailyTrigger",
+        "TimeOfDayTicks": 108000000000
+      }
+    ],
+    "Description": "Creates trickplay previews for videos in enabled libraries.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "RefreshTrickplayImages"
+  },
+  {
+    "Name": "Keyframe Extractor",
+    "State": "Idle",
+    "Id": "000000000000000000000000f302d80f",
+    "Triggers": [],
+    "Description": "Extracts keyframes from video files to create more precise HLS playlists. This task may run for a long time.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "KeyframeExtraction"
+  },
+  {
+    "Name": "Media Segment Scan",
+    "State": "Idle",
+    "Id": "000000000000000000000000f861734d",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 432000000000
+      }
+    ],
+    "Description": "Extracts or obtains media segments from MediaSegment enabled plugins.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "TaskExtractMediaSegments"
+  },
+  {
+    "Name": "Migrate Trickplay Image Location",
+    "State": "Idle",
+    "Id": "000000000000000000000000ebb6e58c",
+    "Triggers": [],
+    "Description": "Moves existing trickplay files according to the library settings.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "MoveTrickplayImages"
+  },
+  {
+    "Name": "Optimize database",
+    "State": "Idle",
+    "Id": "00000000000000000000000031de9ce8",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 216000000000
+      }
+    ],
+    "Description": "Compacts database and truncates free space. Running this task after scanning the library or doing other changes that imply database modifications might improve performance.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "OptimizeDatabaseTask"
+  },
+  {
+    "Name": "Refresh Channels",
+    "State": "Idle",
+    "Id": "0000000000000000000000000c9ee3a8",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Refreshes internet channel information.",
+    "Category": "Internet Channels",
+    "IsHidden": true,
+    "Key": "RefreshInternetChannels"
+  },
+  {
+    "Name": "Refresh Guide",
+    "State": "Idle",
+    "Id": "000000000000000000000000bea9b218",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Downloads channel information from live tv services.",
+    "Category": "Live TV",
+    "IsHidden": true,
+    "Key": "RefreshGuide"
+  },
+  {
+    "Name": "Refresh People",
+    "State": "Idle",
+    "Id": "000000000000000000000000866456ed",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 6048000000000
+      }
+    ],
+    "Description": "Updates metadata for actors and directors in your media library.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "RefreshPeople"
+  },
+  {
+    "Name": "Refresh upcoming and missing episodes (TheMovieDb)",
+    "State": "Idle",
+    "Id": "0000000000000000000000001ee23a5d",
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 6048000000000
+      }
+    ],
+    "Description": "Checks TheMovieDb for newly announced episodes and creates virtual entries for unaired and missing episodes, according to the TMDb plugin settings. When both options are disabled, removes any virtual entries previously created.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "TmdbRefreshUpcomingEpisodes"
+  },
+  {
+    "Name": "Scan Media Library",
+    "State": "Idle",
+    "Id": "0000000000000000000000007738148f",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-09-30T07:03:16.4581221Z",
+      "EndTimeUtc": "2026-09-30T07:03:28.7729923Z",
+      "Status": "Completed",
+      "Name": "Scan Media Library",
+      "Key": "RefreshLibrary",
+      "Id": "0000000000000000000000007738148f"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 432000000000
+      }
+    ],
+    "Description": "Scans your media library for new files and refreshes metadata.",
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "RefreshLibrary"
+  },
+  {
+    "Name": "Update Plugins",
+    "State": "Idle",
+    "Id": "000000000000000000000000f9b057c0",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-09-30T06:52:43.6314353Z",
+      "EndTimeUtc": "2026-09-30T06:52:46.9971426Z",
+      "Status": "Completed",
+      "Name": "Update Plugins",
+      "Key": "PluginUpdates",
+      "Id": "000000000000000000000000f9b057c0"
+    },
+    "Triggers": [
+      {
+        "Type": "StartupTrigger"
+      },
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": "Downloads and installs updates for plugins that are configured to update automatically.",
+    "Category": "Application",
+    "IsHidden": false,
+    "Key": "PluginUpdates"
+  },
+  {
+    "Name": "User data cleanup task",
+    "State": "Idle",
+    "Id": "0000000000000000000000008240e309",
+    "Triggers": [],
+    "Description": "Cleans all user data (Watch state, favorite status etc) from media that is no longer present for at least 90 days.",
+    "Category": "Maintenance",
+    "IsHidden": false,
+    "Key": "CleanupUserDataTask"
+  }
+]

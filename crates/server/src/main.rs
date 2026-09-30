@@ -126,6 +126,13 @@ async fn run(config: Config) -> Result<()> {
     // identifiant est fourni.
     registry.register(Arc::new(collectors::MdaemonCollector::new()));
     registry.register(Arc::new(collectors::SecurityGatewayCollector::new()));
+    // Applications auto-hébergées : maintenance, dépendances, travaux et
+    // lectures en cours, par leur API d'administration (`collectors/selfhosted`).
+    registry.register(Arc::new(collectors::NextcloudCollector::new()));
+    registry.register(Arc::new(collectors::ImmichCollector::new()));
+    registry.register(Arc::new(collectors::PaperlessCollector::new()));
+    registry.register(Arc::new(collectors::JellyfinCollector::new()));
+    registry.register(Arc::new(collectors::PlexCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

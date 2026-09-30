@@ -1,0 +1,71 @@
+[
+  {
+    "Name": "AudioDB",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.AudioDb.xml",
+    "Description": "Get artist and album metadata or images from AudioDB.",
+    "Id": "000000000000000000000000a629c0da",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  },
+  {
+    "Name": "Bookshelf",
+    "Version": "13.0.0.0",
+    "Description": "Supports several different metadata providers and options for organizing your collection.\n",
+    "Id": "0000000000000000000000009c4e63f1",
+    "CanUninstall": true,
+    "HasImage": false,
+    "Status": "Restart"
+  },
+  {
+    "Name": "ListenBrainz Similarity Provider",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.ListenBrainz.xml",
+    "Description": "Get similar artist recommendations from ListenBrainz Labs.",
+    "Id": "000000000000000000000000a5b2e8c1",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  },
+  {
+    "Name": "MusicBrainz",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.MusicBrainz.xml",
+    "Description": "Get artist and album metadata from any MusicBrainz server.",
+    "Id": "0000000000000000000000008c95c4d2",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  },
+  {
+    "Name": "OMDb",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.Omdb.xml",
+    "Description": "Get metadata for movies and other video content from OMDb.",
+    "Id": "000000000000000000000000a628c0da",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  },
+  {
+    "Name": "Studio Images",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.StudioImages.xml",
+    "Description": "Get artwork for studios from any Jellyfin-compatible repository.",
+    "Id": "000000000000000000000000872a7849",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  },
+  {
+    "Name": "TMDb",
+    "Version": "12.1.0.0",
+    "ConfigurationFileName": "Jellyfin.Plugin.Tmdb.xml",
+    "Description": "Get metadata for movies and other video content from TheMovieDb.",
+    "Id": "000000000000000000000000b8715ed1",
+    "CanUninstall": false,
+    "HasImage": true,
+    "Status": "Active"
+  }
+]
