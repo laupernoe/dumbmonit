@@ -70,6 +70,22 @@ pub fn base_config(dir: &std::path::Path) -> Config {
 /// Monte l'application sur une base déjà ouverte — utile pour préparer une
 /// instance « ancienne » avant que les migrations ne la fassent avancer.
 pub async fn build(dir: tempfile::TempDir, config: Config, pool: sqlx::SqlitePool) -> TestApp {
+    let mut registry = collectors::Registry::new();
+    registry.register(Arc::new(collectors::DummyCollector));
+    // Le type `http` sert aux tests du relais : une sonde vers un serveur local ;
+    // le type `agent` y est le relais lui-même.
+    registry.register(Arc::new(collectors::HttpCollector::new()));
+    registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
+    build_with_registry(dir, config, pool, registry).await
+}
+
+/// Le même montage, avec les collecteurs choisis par le test.
+pub async fn build_with_registry(
+    dir: tempfile::TempDir,
+    config: Config,
+    pool: sqlx::SqlitePool,
+    registry: collectors::Registry,
+) -> TestApp {
     let cipher = db::init_cipher(&pool, "secret-de-test-suffisamment-long")
         .await
         .expect("initialisation du chiffrement");
@@ -79,13 +95,6 @@ pub async fn build(dir: tempfile::TempDir, config: Config, pool: sqlx::SqlitePoo
     let victoria_url = config.victoria_url.clone().unwrap_or_else(|| UNREACHABLE_VICTORIA.into());
     let victoria = tsdb::Victoria::new(victoria_url).expect("client");
     let sink = tsdb::spawn_writer(victoria.clone(), std::time::Duration::from_secs(60));
-
-    let mut registry = collectors::Registry::new();
-    registry.register(Arc::new(collectors::DummyCollector));
-    // Le type `http` sert aux tests du relais : une sonde vers un serveur local ;
-    // le type `agent` y est le relais lui-même.
-    registry.register(Arc::new(collectors::HttpCollector::new()));
-    registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
 
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
 
