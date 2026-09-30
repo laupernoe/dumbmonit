@@ -15,6 +15,8 @@ The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 [![Made for homelabs](https://img.shields.io/badge/made%20for-homelabs-6f83a3.svg)](#quick-start)
 [![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange.svg)](#status)
 
+**[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)**
+
 <img src=".github/assets/screenshots/overview-dark.png" alt="DumbMonit overview: the bulletin sentence, counters, the weather window and the list of things that need you" width="900">
 
 </div>

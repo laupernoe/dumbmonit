@@ -66,6 +66,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Live demo: https://demo.dumbmonit.app
   - Install:
       - Docker: install/docker.md
       - Add your first device: install/first-device.md
