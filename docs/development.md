@@ -82,7 +82,7 @@ at once: they wipe `.svelte-kit/output`.
 2. `cargo deny check licenses bans` — only OSI-approved licences are allowed
    by `deny.toml`; a copyleft or source-available dependency fails the build;
 3. `npm run check` and `npm run build`;
-4. the multi-arch image (`linux/amd64`, `linux/arm64`), build only.
+4. the image (`linux/amd64`), build only.
 
 `.github/workflows/release.yml` pushes the same image to
 `ghcr.io/noekan/dumbmonit`: `:edge` on every push to `main`, `:X.Y.Z`,
