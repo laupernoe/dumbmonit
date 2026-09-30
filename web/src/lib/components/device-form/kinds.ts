@@ -45,7 +45,11 @@ import {
 	ShieldBan,
 	BatteryCharging,
 	Router,
-	House
+	House,
+	DatabaseZap,
+	Leaf,
+	Inbox,
+	ShieldAlert
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
@@ -89,7 +93,11 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	mikrotik: Router,
 	unifi: Router,
 	homeassistant: House,
-	vsphere: Layers
+	vsphere: Layers,
+	redis: DatabaseZap,
+	mongodb: Leaf,
+	rabbitmq: Inbox,
+	crowdsec: ShieldAlert
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -97,7 +105,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -135,6 +143,10 @@ const KIND_KEYWORDS: Record<string, string> = {
 	unifi: 'ubiquiti wifi access point ap switch gateway udm dream machine cloud key controller network',
 	homeassistant: 'home assistant hass smart home zigbee z-wave iot automation battery sensors',
 	vsphere: 'vmware esxi vcenter hypervisor virtual machine vm datastore',
+	redis: 'redis valkey keydb cache key value in-memory database db replication',
+	mongodb: 'mongo database db nosql document replica set wiredtiger',
+	rabbitmq: 'rabbit amqp mqtt message broker queue messaging erlang',
+	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',

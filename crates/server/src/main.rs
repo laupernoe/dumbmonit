@@ -143,6 +143,12 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::UnifiCollector::new()));
     registry.register(Arc::new(collectors::HomeAssistantCollector::new()));
     registry.register(Arc::new(collectors::VsphereCollector::new()));
+    // Bases, courtier de messages et moteur de sécurité, lus avec un compte en
+    // lecture seule (`collectors/{redis,mongodb,rabbitmq,crowdsec}`).
+    registry.register(Arc::new(collectors::RedisCollector::new()));
+    registry.register(Arc::new(collectors::MongodbCollector::new()));
+    registry.register(Arc::new(collectors::RabbitmqCollector::new()));
+    registry.register(Arc::new(collectors::CrowdsecCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

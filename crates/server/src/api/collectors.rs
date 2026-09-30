@@ -2220,6 +2220,154 @@ const VSPHERE_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Utilisateur ACL de Redis 6 et suivants, ou de Valkey (`collectors/redis`).
+const REDIS_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "ACL user (recommended)",
+    help: "A Redis user allowed to run INFO and PING only. Sent as AUTH user password.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Mot de passe seul (`requirepass`), porté par un jeton : `AUTH motdepasse`.
+const REDIS_PASSWORD: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Password only",
+    help: "For Redis 5 or older, or a server with only requirepass set. Sent as AUTH password.",
+    fields: &[cred_secret(
+        "token",
+        "Password",
+        "The requirepass value. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MONGODB_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "An account with the clusterMonitor role only, logged in with SCRAM-SHA-256.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const RABBITMQ_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "A user tagged monitoring, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Métriques seules : `/metrics` de CrowdSec n'a pas d'authentification.
+const CROWDSEC_METRICS_ONLY: CredentialView = CredentialView {
+    kind: "none",
+    label: "Metrics only",
+    help: "Reads /metrics, and /health of the Local API. Nothing to create.",
+    fields: &[],
+};
+
+/// Clé de bouncer, envoyée en `X-Api-Key` à la LAPI (`collectors/crowdsec`).
+const CROWDSEC_BOUNCER_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Bouncer API key",
+    help: "Also proves the Local API answers decision queries. A bouncer key can only read decisions.",
+    fields: &[cred_secret(
+        "token",
+        "Bouncer API key",
+        "Shown once by cscli bouncers add. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+/// Délai commun aux intégrations Redis et MongoDB (`collectors/socket.rs`).
+const SOCKET_TIMEOUT: OptionView = number(
+    "request_timeout_seconds",
+    "Timeout (seconds)",
+    "Time allowed for the whole check: connection, login and commands, from 1 to 120.",
+    "10",
+    "10",
+);
+
+const fn socket_port(default: &'static str) -> OptionView {
+    number("port", "Port", "Used if the address does not give a port.", default, default)
+}
+
+const SOCKET_TLS: OptionView =
+    boolean("tls", "TLS", "Tick when the server only accepts TLS connections on that port.", false);
+
+const SOCKET_INSECURE_TLS: OptionView = insecure_tls(
+    "For a certificate from a private authority or a self-signed one: enable this if the connection is refused for that reason.",
+);
+
+/// Options lues par `collectors/redis/mod.rs` et `collectors/socket.rs`.
+const REDIS_OPTIONS: &[OptionView] =
+    &[socket_port("6379"), SOCKET_TLS, SOCKET_INSECURE_TLS, SOCKET_TIMEOUT];
+
+/// Options lues par `collectors/mongodb/mod.rs` et `collectors/socket.rs`.
+const MONGODB_OPTIONS: &[OptionView] = &[
+    socket_port("27017"),
+    text(
+        "auth_source",
+        "Authentication database",
+        "The database the account was created in.",
+        "admin",
+        "admin",
+    ),
+    SOCKET_TLS,
+    SOCKET_INSECURE_TLS,
+    SOCKET_TIMEOUT,
+];
+
+/// Options lues par `collectors/rabbitmq/mod.rs` et `observability/options.rs`.
+const RABBITMQ_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The management API listens over plain HTTP unless you configured TLS for it (usually on port 15671).",
+        "http",
+        &["http", "https"],
+    ),
+    observability_port("15672"),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+    number(
+        "max_queues",
+        "Queues watched one by one",
+        "The fullest queues are charted one by one, up to this number (0 to 500). Totals always cover every queue.",
+        "100",
+        "100",
+    ),
+];
+
+/// Options lues par `collectors/crowdsec/mod.rs` et `observability/options.rs`.
+const CROWDSEC_OPTIONS: &[OptionView] = &[
+    OBSERVABILITY_SCHEME,
+    number("port", "Metrics port", "The prometheus listen_port of CrowdSec.", "6060", "6060"),
+    boolean(
+        "lapi",
+        "Check the Local API",
+        "Checks /health of the Local API on this host. Untick for a host that only runs an agent.",
+        true,
+    ),
+    number(
+        "lapi_port",
+        "Local API port",
+        "The port of listen_uri in CrowdSec's api.server section.",
+        "8080",
+        "8080",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
     Json(state.collectors.kinds().into_iter().map(describe).collect())
 }
@@ -3213,6 +3361,104 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: VSPHERE_OPTIONS,
         },
+        "redis" => CollectorView {
+            kind,
+            label: "Redis / Valkey",
+            summary: "The in-memory store itself: memory against maxmemory, refused connections, replication link and lag, failed saves and keyspace size.",
+            examples: &["Redis", "Valkey", "The cache behind Nextcloud, Immich or Authentik"],
+            credential_types: &["username_password", "api_token", "none"],
+            credentials: &[REDIS_LOGIN, REDIS_PASSWORD, NO_AUTH],
+            address_hint: "cache.lan",
+            default_port: 6379,
+            setup: Setup {
+                title: "Create a Redis user that may only run INFO",
+                steps: &[
+                    "On Redis 6 or later, or Valkey, create a user that may run INFO and PING and nothing else, with no access to any key. In redis-cli, logged in with a user allowed to manage ACLs:\nACL SETUSER dumbmonit on >a-long-password -@all +info +ping",
+                    "Make it permanent: ACL SAVE if the server loads its users from an aclfile, CONFIG REWRITE otherwise.\nACL SAVE",
+                    "On Redis 5 or older, or with only requirepass set, pick Password only below. That password carries every right: prefer an ACL user whenever the server supports one.",
+                    "In DumbMonit, enter the server address, for example \"cache.lan\" or \"cache.lan:6380\". If the server only accepts TLS on that port (tls-port), tick TLS below.",
+                    "DumbMonit sends AUTH, then INFO. It never reads, writes or lists a key.",
+                ],
+                warning: "Redis gives no warning before maxmemory: at the limit it either evicts keys silently or refuses every write, depending on maxmemory-policy. Without maxmemory it grows until the kernel kills it. DumbMonit warns above 90% of maxmemory.",
+                doc_url: "https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/",
+            },
+            options: REDIS_OPTIONS,
+        },
+        "mongodb" => CollectorView {
+            kind,
+            label: "MongoDB",
+            summary: "The document database itself: replica set members and lag, a missing primary, connections against the limit, WiredTiger cache and assertions.",
+            examples: &[
+                "MongoDB replica set",
+                "Standalone mongod",
+                "The database behind UniFi or Rocket.Chat",
+            ],
+            credential_types: &["username_password", "none"],
+            credentials: &[MONGODB_LOGIN, NO_AUTH],
+            address_hint: "db1.lan",
+            default_port: 27017,
+            setup: Setup {
+                title: "Create a MongoDB account with the clusterMonitor role",
+                steps: &[
+                    "In mongosh, logged in with a user allowed to create users, create an account with the built-in clusterMonitor role only. It reads server and replication status, and no document of any database.\nuse admin\ndb.createUser({user: \"dumbmonit\", pwd: passwordPrompt(), roles: [{role: \"clusterMonitor\", db: \"admin\"}]})",
+                    "DumbMonit logs in with SCRAM-SHA-256, the default for accounts created on MongoDB 4.0 and later. If you created the account in another database than admin, set Authentication database below.",
+                    "In DumbMonit, enter the address of one mongod, for example \"db1.lan\" or \"db1.lan:27018\". In a replica set, add every member: each reports its own connections and cache, and any of them reports the state and lag of all members. If the server requires TLS, tick TLS below.",
+                    "DumbMonit only runs serverStatus and replSetGetStatus. It never lists a collection and never reads a document.",
+                ],
+                warning: "A mongodb+srv:// address is not resolved: enter the host of each member instead. MongoDB older than 3.6 and mongos routers are not supported.",
+                doc_url: "https://www.mongodb.com/docs/manual/reference/built-in-roles/#mongodb-authrole-clusterMonitor",
+            },
+            options: MONGODB_OPTIONS,
+        },
+        "rabbitmq" => CollectorView {
+            kind,
+            label: "RabbitMQ",
+            summary: "The message broker: memory and disk alarms that block publishers, stopped nodes and partitions, queues filling up with no consumer.",
+            examples: &["RabbitMQ single node", "RabbitMQ cluster"],
+            credential_types: &["username_password"],
+            credentials: &[RABBITMQ_LOGIN],
+            address_hint: "rabbit.lan",
+            default_port: 15672,
+            setup: Setup {
+                title: "Create a RabbitMQ user tagged monitoring",
+                steps: &[
+                    "Enable the management plugin if it is not already on (the management Docker images have it). Its API listens on port 15672.\nrabbitmq-plugins enable rabbitmq_management",
+                    "Create a user with the monitoring tag only: it can read node, alarm and queue state, and cannot change anything.\nrabbitmqctl add_user dumbmonit 'a-long-password'\nrabbitmqctl set_user_tags dumbmonit monitoring",
+                    "Give it empty permissions on each virtual host whose queues you want to see. It can then list those queues, and still cannot publish, consume or read a message. Repeat with -p for every other virtual host.\nrabbitmqctl set_permissions -p / dumbmonit '^$' '^$' '^$'",
+                    "In DumbMonit, enter the address of one node, for example \"rabbit.lan\", or \"https://rabbit.lan:15671\" when the API is served over TLS. One node reports the whole cluster: the alarms and partitions of every node, and every queue.",
+                ],
+                warning: "A memory or disk alarm blocks every publisher in the cluster, and clients get no error: applications simply hang on publish. Queues are listed fullest first, up to Queues watched one by one (100 by default); totals always cover every queue.",
+                doc_url: "https://www.rabbitmq.com/docs/management#permissions",
+            },
+            options: RABBITMQ_OPTIONS,
+        },
+        "crowdsec" => CollectorView {
+            kind,
+            label: "CrowdSec",
+            summary: "The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.",
+            examples: &[
+                "CrowdSec on a Linux host",
+                "CrowdSec in Docker",
+                "CrowdSec on OPNsense or pfSense",
+            ],
+            credential_types: &["none", "api_token"],
+            credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY],
+            address_hint: "crowdsec.lan",
+            default_port: 6060,
+            setup: Setup {
+                title: "Let DumbMonit read CrowdSec's metrics",
+                steps: &[
+                    "CrowdSec publishes its metrics on 127.0.0.1:6060 by default. Set listen_addr in the prometheus section of /etc/crowdsec/config.yaml to an address DumbMonit can reach, then restart CrowdSec. The official Docker image already listens on every interface.\nsudo sed -i 's/listen_addr: 127.0.0.1/listen_addr: 0.0.0.0/' /etc/crowdsec/config.yaml\nsudo systemctl restart crowdsec",
+                    "The metrics need no credential: they hold counts, bouncer and machine names and log file paths, never an IP address. Filter port 6060 so that only the DumbMonit host reaches it, and check that it answers.\ncurl -s http://crowdsec.lan:6060/metrics | grep cs_info",
+                    "DumbMonit also checks /health of the Local API, on port 8080 of the same host: listen_uri in the api.server section must then be reachable too. Untick Check the Local API for a host that only runs an agent.",
+                    "Optional: create a bouncer key for DumbMonit and paste it as Bouncer API key below. A bouncer key can only read decisions. DumbMonit asks for the decisions on 192.0.2.1, a documentation address, so the answer is always empty and the ban list is never downloaded.\nsudo cscli bouncers add dumbmonit",
+                    "In DumbMonit, enter the CrowdSec host, for example \"crowdsec.lan\". Where the Local API and the agents run on different hosts, add each host: decisions, alerts and bouncers are counted where the Local API runs, log lines where each agent reads them.",
+                ],
+                warning: "A bouncer that stops pulling keeps enforcing a frozen list: new attackers get through and nothing complains. DumbMonit warns when a bouncer's requests stop for 30 minutes. It only knows bouncers that pulled at least once since CrowdSec last started.",
+                doc_url: "https://docs.crowdsec.net/docs/next/observability/prometheus/",
+            },
+            options: CROWDSEC_OPTIONS,
+        },
         other => CollectorView {
             kind,
             label: other,
@@ -3262,6 +3508,10 @@ mod tests {
         "unifi",
         "homeassistant",
         "vsphere",
+        "redis",
+        "mongodb",
+        "rabbitmq",
+        "crowdsec",
         "agent",
         "http",
         "tcp",
@@ -3608,6 +3858,16 @@ mod tests {
                 ],
             ),
             ("vsphere", &["port", "insecure_tls", "request_timeout_seconds", "alarms"]),
+            ("redis", &["port", "tls", "insecure_tls", "request_timeout_seconds"]),
+            ("mongodb", &["port", "auth_source", "tls", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "rabbitmq",
+                &["scheme", "port", "insecure_tls", "request_timeout_seconds", "max_queues"],
+            ),
+            (
+                "crowdsec",
+                &["scheme", "port", "lapi", "lapi_port", "insecure_tls", "request_timeout_seconds"],
+            ),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -3723,6 +3983,39 @@ mod tests {
         use dumbmonit_collectors::{homeassistant, unifi, vsphere};
         assert_eq!(defaut("unifi", "site"), unifi::DEFAULT_SITE);
         assert_eq!(defaut("unifi", "port"), unifi::DEFAULT_PORT.to_string());
+        // `collectors/{socket,redis,mongodb,rabbitmq,crowdsec}`.
+        assert_eq!(defaut("redis", "port"), dumbmonit_collectors::redis::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("mongodb", "port"),
+            dumbmonit_collectors::mongodb::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("mongodb", "auth_source"),
+            dumbmonit_collectors::mongodb::DEFAULT_AUTH_SOURCE
+        );
+        assert_eq!(
+            defaut("rabbitmq", "port"),
+            dumbmonit_collectors::rabbitmq::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("rabbitmq", "max_queues"),
+            dumbmonit_collectors::rabbitmq::DEFAULT_MAX_QUEUES.to_string()
+        );
+        assert_eq!(
+            defaut("crowdsec", "port"),
+            dumbmonit_collectors::crowdsec::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("crowdsec", "lapi_port"),
+            dumbmonit_collectors::crowdsec::DEFAULT_LAPI_PORT.to_string()
+        );
+        for kind in ["redis", "mongodb"] {
+            assert_eq!(
+                defaut(kind, "request_timeout_seconds"),
+                dumbmonit_collectors::SOCKET_DEFAULT_TIMEOUT.as_secs().to_string()
+            );
+            assert_eq!(defaut(kind, "tls"), "false");
+        }
         assert_eq!(
             defaut("unifi", "request_timeout_seconds"),
             unifi::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
@@ -3883,6 +4176,10 @@ mod tests {
             ("graylog", "dumbmonit"),
             ("mdaemon", "dumbmonit@example.com"),
             ("securitygateway", "dumbmonit"),
+            ("redis", "dumbmonit"),
+            ("mongodb", "dumbmonit"),
+            ("rabbitmq", "dumbmonit"),
+            ("crowdsec", "dumbmonit"),
             ("nextcloud", "token"),
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
@@ -3973,6 +4270,10 @@ mod tests {
             ("unifi", include_str!("../../../../docs/devices/unifi.md")),
             ("homeassistant", include_str!("../../../../docs/devices/homeassistant.md")),
             ("vsphere", include_str!("../../../../docs/devices/vsphere.md")),
+            ("redis", include_str!("../../../../docs/devices/redis.md")),
+            ("mongodb", include_str!("../../../../docs/devices/mongodb.md")),
+            ("rabbitmq", include_str!("../../../../docs/devices/rabbitmq.md")),
+            ("crowdsec", include_str!("../../../../docs/devices/crowdsec.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

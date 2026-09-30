@@ -10,6 +10,11 @@
 pub mod adguard;
 pub(crate) mod api_options;
 pub mod homeassistant;
+pub mod crowdsec;
+pub mod mongodb;
+pub mod rabbitmq;
+pub mod redis;
+pub(crate) mod socket;
 pub mod dummy;
 pub mod http;
 pub mod mdaemon;
@@ -38,6 +43,11 @@ use std::time::Duration;
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
 pub use adguard::AdguardCollector;
+pub use crowdsec::CrowdsecCollector;
+pub use mongodb::MongodbCollector;
+pub use rabbitmq::RabbitmqCollector;
+pub use redis::RedisCollector;
+pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
 pub use dummy::DummyCollector;
 pub use homeassistant::HomeAssistantCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
@@ -106,6 +116,10 @@ impl Registry {
         registry.register(Arc::new(VsphereCollector::new()));
         registry.register(Arc::new(HomeAssistantCollector::new()));
         registry.register(Arc::new(UnifiCollector::new()));
+        registry.register(Arc::new(RedisCollector::new()));
+        registry.register(Arc::new(MongodbCollector::new()));
+        registry.register(Arc::new(RabbitmqCollector::new()));
+        registry.register(Arc::new(CrowdsecCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));
