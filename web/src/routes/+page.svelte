@@ -293,6 +293,7 @@
 		it is a fixed 260px hero.
 	-->
 	<section
+		data-tour="weather"
 		class="rise-in relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift md:h-[260px]"
 	>
 		<SkyScene {condition} frame={false} class="absolute inset-0 h-full w-full" />

@@ -12,6 +12,7 @@ pub mod collectors;
 pub mod config;
 pub mod crypto;
 pub mod db;
+pub mod demo;
 pub mod notify;
 pub mod scheduler;
 pub mod state;

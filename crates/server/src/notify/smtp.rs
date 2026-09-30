@@ -106,6 +106,10 @@ impl Smtp {
         body: String,
         unsubscribe: Option<&str>,
     ) -> Result<(), NotifyError> {
+        // Mode démonstration : rien ne part, pas même vers les abonnés d'une page.
+        if super::sending_disabled() {
+            return Ok(());
+        }
         use lettre::message::header::{HeaderName, HeaderValue};
 
         let mut builder = lettre::Message::builder()

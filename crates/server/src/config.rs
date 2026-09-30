@@ -69,6 +69,10 @@ pub struct Config {
     /// efface tous les comptes et toutes les sessions au démarrage (les réglages
     /// SSO restent), puis l'interface repropose l'écran de première configuration.
     pub reset_password: bool,
+    /// Mode démonstration publique (`DUMBMONIT_DEMO`) : base recréée à chaque
+    /// démarrage avec un parc fictif, toute écriture refusée, aucune
+    /// notification envoyée. Voir [`crate::demo`].
+    pub demo: bool,
     /// Mandataires inverses dont `X-Forwarded-For` est cru
     /// (`DUMBMONIT_TRUSTED_PROXIES`, adresses ou CIDR séparés par des virgules).
     ///
@@ -132,6 +136,7 @@ impl Config {
             db_pool_size: env_parsed::<u32>("DUMBMONIT_DB_POOL", "4")?.clamp(1, 64),
             agent_dir: PathBuf::from(env_or("DUMBMONIT_AGENT_DIR", "/agents")),
             reset_password: env_flag("DUMBMONIT_RESET_PASSWORD"),
+            demo: env_flag("DUMBMONIT_DEMO"),
             trusted_proxies: crate::auth::client_ip::parse_trusted_proxies(&env_or(
                 "DUMBMONIT_TRUSTED_PROXIES",
                 "",

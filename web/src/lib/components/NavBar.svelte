@@ -84,6 +84,7 @@
 					<li class="relative">
 						<a
 							href={link.href}
+							data-tour={`nav-${link.label.toLowerCase()}`}
 							data-active={active}
 							aria-current={active ? 'page' : undefined}
 							class={`relative flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors ${active ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
@@ -126,6 +127,7 @@
 			</a>
 			<a
 				href="/wall"
+				data-tour="nav-wall"
 				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 				aria-label="Wall mode"
 				title="Wall mode: the bulletin full screen, for a monitor in the room"
@@ -140,7 +142,7 @@
 					<Plate tone={auth.isAdmin ? 'signal' : 'ghost'} bare label={auth.isAdmin ? 'Admin' : 'Viewer'} />
 				</div>
 			{/if}
-			{#if auth.available}
+			{#if auth.canSignOut}
 				<button
 					type="button"
 					class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
@@ -163,6 +165,7 @@
 			<li>
 				<a
 					href={link.href}
+					data-tour={`nav-${link.label.toLowerCase()}`}
 					aria-current={active ? 'page' : undefined}
 					class={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-semibold ${active ? 'text-signal-ink' : 'text-ink-3'}`}
 				>
