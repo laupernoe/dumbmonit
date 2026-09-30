@@ -97,7 +97,9 @@ impl Connection {
     pub async fn open(options: &SocketOptions, product: &'static str) -> Result<Self, ProbeError> {
         let deadline = Deadline::starting_now(options.timeout);
         let endpoint = format!("{}:{}", options.host, options.port);
-        let tcp = match deadline.wait(TcpStream::connect((options.host.as_str(), options.port))).await
+        let tcp = match deadline
+            .wait(TcpStream::connect((options.host.as_str(), options.port)))
+            .await
         {
             Err(_) => return Err(ProbeError::Timeout(options.timeout)),
             Ok(Err(error)) => {

@@ -60,8 +60,9 @@ impl Info {
         self.fields
             .iter()
             .filter(move |(key, _)| {
-                key.strip_prefix(prefix)
-                    .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()))
+                key.strip_prefix(prefix).is_some_and(|rest| {
+                    !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit())
+                })
             })
             .map(|(key, value)| (key.as_str(), value.as_str()))
     }
@@ -154,8 +155,7 @@ pub fn samples(info: &Info, ts_ms: i64) -> Vec<Sample> {
         if let Some(seconds) = info.number("master_last_io_seconds_ago").filter(|s| *s >= 0.0) {
             out.push(gauge("redis_master_last_io_seconds", seconds));
         }
-        if let Some(seconds) = info.number("master_link_down_since_seconds").filter(|s| *s >= 0.0)
-        {
+        if let Some(seconds) = info.number("master_link_down_since_seconds").filter(|s| *s >= 0.0) {
             out.push(gauge("redis_master_link_down_seconds", seconds));
         }
         if let Some(sync) = info.number("master_sync_in_progress") {
@@ -175,7 +175,9 @@ pub fn samples(info: &Info, ts_ms: i64) -> Vec<Sample> {
                 .with_label("replica", replica.clone()),
         );
         if let Some(lag) = fields.get("lag").and_then(|v| v.parse::<f64>().ok()) {
-            out.push(gauge("redis_replica_lag_seconds", lag).with_label("replica", replica.clone()));
+            out.push(
+                gauge("redis_replica_lag_seconds", lag).with_label("replica", replica.clone()),
+            );
         }
         if let (Some(master), Some(offset)) =
             (master_offset, fields.get("offset").and_then(|v| v.parse::<f64>().ok()))
@@ -217,7 +219,11 @@ mod tests {
     }
 
     fn label<'a>(samples: &'a [Sample], name: &str, key: &str) -> Option<&'a str> {
-        samples.iter().find(|s| s.metric == name).and_then(|s| s.labels.get(key)).map(|v| v.as_str())
+        samples
+            .iter()
+            .find(|s| s.metric == name)
+            .and_then(|s| s.labels.get(key))
+            .map(|v| v.as_str())
     }
 
     #[test]

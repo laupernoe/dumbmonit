@@ -209,18 +209,20 @@ fn redis(view: &mut ObservabilityView, s: &Series) {
         // Valkey garde `redis_version` figé : le nom du produit lève le doute.
         let mut chars = product.chars();
         let name = chars.next().map(|c| c.to_uppercase().chain(chars).collect::<String>());
-        view.version = Some(format!("{} {}", name.unwrap_or_default(), view.version.take().unwrap_or_default()));
+        view.version = Some(format!(
+            "{} {}",
+            name.unwrap_or_default(),
+            view.version.take().unwrap_or_default()
+        ));
     }
     let role = s.label("role_info", "role").unwrap_or_default();
 
     // Réplication, vue de la réplique puis du primaire.
     if role == "replica" {
         match s.get("master_link_up") {
-            Some(up) if up >= 1.0 => view.checks.push(check(
-                "Replication",
-                "ok",
-                "Replica, linked to its primary.",
-            )),
+            Some(up) if up >= 1.0 => {
+                view.checks.push(check("Replication", "ok", "Replica, linked to its primary."))
+            }
             Some(_) => view.checks.push(check(
                 "Replication",
                 "warning",
@@ -253,7 +255,9 @@ fn redis(view: &mut ObservabilityView, s: &Series) {
             view.checks.push(check(
                 "Memory",
                 state,
-                format!("{percent:.0}% of maxmemory used; at the limit the policy {policy} applies."),
+                format!(
+                    "{percent:.0}% of maxmemory used; at the limit the policy {policy} applies."
+                ),
             ));
         }
         None if s.get("memory_used_bytes").is_some() => view.checks.push(check(
@@ -374,7 +378,13 @@ fn mongodb(view: &mut ObservabilityView, s: &Series) {
     }
     if let Some(dirty) = s.get("wiredtiger_cache_dirty_percent") {
         let used = s.get("wiredtiger_cache_used_percent").unwrap_or(0.0);
-        let state = if dirty > 20.0 { "warning" } else if used > 95.0 { "advisory" } else { "ok" };
+        let state = if dirty > 20.0 {
+            "warning"
+        } else if used > 95.0 {
+            "advisory"
+        } else {
+            "ok"
+        };
         view.checks.push(check(
             "Cache",
             state,
@@ -387,13 +397,18 @@ fn mongodb(view: &mut ObservabilityView, s: &Series) {
     let regular = s
         .day
         .iter()
-        .find(|e| e.name == "asserts_total" && e.labels.get("type").map(String::as_str) == Some("regular"))
+        .find(|e| {
+            e.name == "asserts_total" && e.labels.get("type").map(String::as_str) == Some("regular")
+        })
         .map(|e| e.value);
     if let Some(n) = regular.filter(|n| *n >= 0.5) {
         view.checks.push(check(
             "Internal errors",
             "advisory",
-            format!("{} in the last 24 hours.", plural(n, "regular assertion", "regular assertions")),
+            format!(
+                "{} in the last 24 hours.",
+                plural(n, "regular assertion", "regular assertions")
+            ),
         ));
     }
 
@@ -454,7 +469,10 @@ fn rabbitmq(view: &mut ObservabilityView, s: &Series) {
         view.checks.push(check(
             "Alarms",
             "warning",
-            format!("Resource alarm ({}): every publisher in the cluster is blocked.", names(&alarms)),
+            format!(
+                "Resource alarm ({}): every publisher in the cluster is blocked.",
+                names(&alarms)
+            ),
         ));
     }
     if let (Some(total), Some(running)) = (s.get("nodes"), s.get("nodes_running")) {
@@ -508,7 +526,11 @@ fn rabbitmq(view: &mut ObservabilityView, s: &Series) {
         .map(|e| {
             let consumers = s.sibling("queue_consumers", e, &["vhost", "queue"]).unwrap_or(0.0);
             Row {
-                label: format!("{} ({})", queue_name(e), plural(consumers, "consumer", "consumers")),
+                label: format!(
+                    "{} ({})",
+                    queue_name(e),
+                    plural(consumers, "consumer", "consumers")
+                ),
                 value: Some(e.value),
                 unit: "count",
                 state: Some(if consumers == 0.0 && e.value > 0.0 { "advisory" } else { "ok" }),
@@ -632,7 +654,11 @@ fn crowdsec(view: &mut ObservabilityView, s: &Series) {
 
     view.figures.push(figure("Active decisions", s.get("decisions"), "count"));
     view.figures.push(figure("Alerts kept", s.get("alerts"), "count"));
-    view.figures.push(figure("Scenarios triggered in 24 h", s.day("scenario_overflows_total"), "count"));
+    view.figures.push(figure(
+        "Scenarios triggered in 24 h",
+        s.day("scenario_overflows_total"),
+        "count",
+    ));
     view.figures.push(figure("Lines read", s.rate("lines_read_total"), "per_second"));
 
     if !bouncers.is_empty() {
@@ -663,7 +689,10 @@ fn crowdsec(view: &mut ObservabilityView, s: &Series) {
             let total = s
                 .day
                 .iter()
-                .find(|t| t.name == "source_lines_total" && t.labels.get("source") == e.labels.get("source"))
+                .find(|t| {
+                    t.name == "source_lines_total"
+                        && t.labels.get("source") == e.labels.get("source")
+                })
                 .map(|t| t.value);
             let share = total.filter(|t| *t > 0.0).map(|t| e.value / t * 100.0);
             row(format!("{source} not parsed"), share, "percent")
@@ -726,7 +755,12 @@ mod tests {
         let last = [
             serie(k, "replset_primary_present", 0.0, &[]),
             serie(k, "replset_info", 1.0, &[("set", "rs0")]),
-            serie(k, "replset_member_state", 2.0, &[("member", "db1:27017"), ("state", "secondary")]),
+            serie(
+                k,
+                "replset_member_state",
+                2.0,
+                &[("member", "db1:27017"), ("state", "secondary")],
+            ),
             serie(k, "replset_member_health", 1.0, &[("member", "db1:27017")]),
             serie(k, "replset_member_state", 8.0, &[("member", "db2:27017"), ("state", "down")]),
             serie(k, "replset_member_health", 0.0, &[("member", "db2:27017")]),

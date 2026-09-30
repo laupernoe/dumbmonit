@@ -22,6 +22,10 @@ pub mod synology_history;
 pub mod truenas_history;
 
 pub use dumbmonit_collectors::{
+    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
+    rabbitmq, redis,
+};
+pub use dumbmonit_collectors::{
     DnsCollector, DummyCollector, HttpCollector, OpnsenseCollector, PbsCollector, PdmCollector,
     PingCollector, PmgCollector, ProxmoxCollector, Registry, SnmpCollector, SynologyCollector,
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,
@@ -33,10 +37,6 @@ pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
 };
 pub use dumbmonit_collectors::{RedfishCollector, redfish};
-pub use dumbmonit_collectors::{
-    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
-    rabbitmq, redis,
-};
 #[allow(unused_imports)]
 pub use dumbmonit_proto::Collector;
 
