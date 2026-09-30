@@ -107,6 +107,24 @@ impl DeliveryReport {
     }
 }
 
+/// Interrupteur général des envois, coupé par le mode démonstration : une
+/// instance publique ne doit jamais rien émettre vers l'extérieur, quels que
+/// soient les canaux présents en base.
+static SENDING_DISABLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Message consigné à la place d'un envoi quand les envois sont coupés.
+pub const DISABLED_MESSAGE: &str = "Not sent: notifications are disabled in the read-only demo.";
+
+/// Coupe définitivement tout envoi pour la durée du processus.
+pub fn disable_sending() {
+    SENDING_DISABLED.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// Vrai quand les envois sont coupés (mode démonstration).
+pub fn sending_disabled() -> bool {
+    SENDING_DISABLED.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 /// Envoie un message sur un canal, sans jamais propager d'échec.
 ///
 /// Un canal en panne ne doit ni interrompre l'envoi vers les autres, ni faire
@@ -121,6 +139,10 @@ pub async fn deliver(
         channel_name: config.name.clone(),
         error,
     };
+
+    if sending_disabled() {
+        return report(Some(DISABLED_MESSAGE.to_string()));
+    }
 
     let notifier = match build(http, config) {
         Ok(notifier) => notifier,
@@ -187,6 +209,9 @@ pub async fn test_channel(
     config: &ChannelConfig,
 ) -> Result<(), NotifyError> {
     let notifier = build(http, config)?;
+    if sending_disabled() {
+        return Ok(());
+    }
     notifier.send(&message::test_message(&config.name)).await
 }
 

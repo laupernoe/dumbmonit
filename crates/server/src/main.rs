@@ -3,7 +3,9 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use dumbmonit_server::config::Config;
 use dumbmonit_server::state::{AppState, Inner};
-use dumbmonit_server::{alerting, api, auth, collectors, crypto, db, scheduler, tsdb};
+use dumbmonit_server::{
+    alerting, api, auth, collectors, crypto, db, demo, notify, scheduler, tsdb,
+};
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
@@ -34,7 +36,17 @@ async fn run(config: Config) -> Result<()> {
     ensure_data_dir_writable(&config.data_dir).await?;
 
     let secret = resolve_secret(&config).await?;
-    db::adopt_legacy_database(&config.data_dir).await?;
+    if config.demo {
+        // Démonstration publique : la base repart de zéro à chaque démarrage, et
+        // rien ne doit jamais partir vers l'extérieur (voir `demo`).
+        warn!(
+            "DUMBMONIT_DEMO is set: read-only public demo, database recreated with fictional data"
+        );
+        demo::reset_database(&config.database_path()).await?;
+        notify::disable_sending();
+    } else {
+        db::adopt_legacy_database(&config.data_dir).await?;
+    }
     let pool = db::open_with(&config.database_path(), config.db_pool_size).await?;
     let cipher = db::init_cipher(&pool, &secret).await?;
     if config.reset_password {
@@ -82,6 +94,16 @@ async fn run(config: Config) -> Result<()> {
         config.write_flush_interval,
         config.write_flush_size,
     );
+
+    // Équipements simulés de la démonstration : lancés avant le premier client
+    // HTTP partagé, qui doit connaître leurs adresses dès sa construction.
+    let estate = if config.demo {
+        let estate = demo::estate::start().await.context("starting the demo devices")?;
+        dumbmonit_collectors::http::set_resolve_overrides(estate.resolve.clone());
+        Some(estate)
+    } else {
+        None
+    };
 
     let mut registry = collectors::Registry::new();
 
@@ -153,7 +175,19 @@ async fn run(config: Config) -> Result<()> {
     // Collecteur de démonstration : il permet d'obtenir des graphes sans matériel,
     // le temps de configurer un premier équipement réel.
     registry.register(Arc::new(collectors::DummyCollector));
+    if config.demo {
+        demo::register_synthetic(&mut registry);
+    }
     info!(collectors = ?registry.kinds(), "collectors registered");
+
+    let seeded = match &estate {
+        Some(estate) => Some(
+            demo::seed::run(&pool, &cipher, &sink, &estate.devices)
+                .await
+                .context("seeding the demo estate")?,
+        ),
+        None => None,
+    };
 
     let bind = config.bind;
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
@@ -161,9 +195,12 @@ async fn run(config: Config) -> Result<()> {
     scheduler::spawn(state.clone());
     alerting::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
-    // Sauvegardes locales planifiées de la base, et la mesure qui dit qu'elles
-    // ont bien lieu (`backup::local`).
-    dumbmonit_server::backup::local::spawn(state.clone());
+    match seeded {
+        Some(seeded) => demo::spawn(state.clone(), seeded),
+        // Sauvegardes locales planifiées de la base, et la mesure qui dit qu'elles
+        // ont bien lieu (`backup::local`). Inutiles pour une base jetable.
+        None => dumbmonit_server::backup::local::spawn(state.clone()),
+    }
 
     let listener = tokio::net::TcpListener::bind(bind)
         .await

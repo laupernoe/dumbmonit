@@ -29,6 +29,7 @@ configuration file to mount.
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | Scheduled local backups of the database. `0`, `false`, `no` or `off` to stop writing them. See [Backup and restore](../install/backup.md#scheduled-local-backups). |
 | `DUMBMONIT_BACKUP_DIR` | `<data dir>/backups` | Where the scheduled backups are written. Point it at a second volume to survive losing the first. |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
+| `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | How many backups are kept, 1 to 365. The oldest are removed with their `.key`. |
 
 Baseline retention (60 days) and the 14-day learning period are not
