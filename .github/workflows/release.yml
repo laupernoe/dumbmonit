@@ -20,10 +20,17 @@ env:
   IMAGE: ghcr.io/noekan/dumbmonit
   AGENT_IMAGE: ghcr.io/noekan/dumbmonit-agent
 
+# Only the newest :edge matters: a newer push to main cancels the build in
+# progress. Tags each get their own group and are never cancelled.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
 jobs:
   image:
     name: Build and push image
     runs-on: ubuntu-latest
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v5
 
