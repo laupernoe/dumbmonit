@@ -195,7 +195,7 @@ curl -fsSLO https://raw.githubusercontent.com/noekan/dumbmonit/main/docker-compo
 docker compose up -d
 ```
 
-That pulls `ghcr.io/noekan/dumbmonit:latest` (amd64 and arm64). To run from
+That pulls `ghcr.io/noekan/dumbmonit:latest` (amd64; arm64 images are paused for now). To run from
 source instead, clone the repository and use `docker compose up -d --build`
 (about ten minutes; Docker is the only requirement).
 

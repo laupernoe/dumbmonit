@@ -7,8 +7,8 @@ database. One volume, `/data`, holds the database, the instance secret and the
 time series.
 
 !!! note "Alpha image"
-    `ghcr.io/noekan/dumbmonit:latest` is the last tagged alpha build (amd64 and
-    arm64); `:edge` follows the last commit on `main`. To run from source,
+    `ghcr.io/noekan/dumbmonit:latest` is the last tagged alpha build (amd64;
+    arm64 images are paused for now); `:edge` follows the last commit on `main`. To run from source,
     `docker compose up -d --build` builds the same image locally (about ten
     minutes the first time; only Docker is needed).
 
