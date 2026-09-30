@@ -103,6 +103,7 @@ pub fn samples(stat: &SensorsStat, now_ms: i64) -> Vec<Sample> {
 /// Deux barrettes de mémoire portent la même étiquette `DIMM`, et deux séries de
 /// même clé se recouvriraient l'une l'autre sans que rien ne le signale. Le
 /// doublon reçoit donc un rang, comme le fait `lm-sensors`.
+#[cfg_attr(windows, allow(dead_code))]
 pub fn dedupe_labels(mut names: Vec<String>) -> Vec<String> {
     let mut seen: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
     for name in &mut names {
