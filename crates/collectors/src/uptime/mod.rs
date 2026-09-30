@@ -96,7 +96,7 @@ mod sql;
 pub(crate) mod tags;
 mod tcp;
 mod tls;
-mod websocket;
+pub(crate) mod websocket;
 
 pub use dns::DnsCollector;
 pub use http::HttpCollector;

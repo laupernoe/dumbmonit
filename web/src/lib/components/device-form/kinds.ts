@@ -36,7 +36,9 @@ import {
 	ShieldCheck,
 	ChartLine,
 	Logs,
-	ScrollText
+	ScrollText,
+	Router,
+	House
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
@@ -68,7 +70,10 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	victoriametrics: ChartLine,
 	victorialogs: ScrollText,
 	loki: Logs,
-	graylog: ScrollText
+	graylog: ScrollText,
+	unifi: Router,
+	homeassistant: House,
+	vsphere: Layers
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -76,7 +81,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'redfish', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'redfish', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -102,6 +107,9 @@ const KIND_KEYWORDS: Record<string, string> = {
 	victorialogs: 'logs log server observability monitoring syslog',
 	loki: 'logs log server grafana promtail alloy observability monitoring',
 	graylog: 'logs log server syslog gelf opensearch elasticsearch siem observability monitoring',
+	unifi: 'ubiquiti wifi access point ap switch gateway udm dream machine cloud key controller network',
+	homeassistant: 'home assistant hass smart home zigbee z-wave iot automation battery sensors',
+	vsphere: 'vmware esxi vcenter hypervisor virtual machine vm datastore',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',

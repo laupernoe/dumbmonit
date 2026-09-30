@@ -1,0 +1,10 @@
+{
+ "offset": 0,
+ "limit": 200,
+ "count": 2,
+ "totalCount": 2,
+ "data": [
+  {"id": "88f7af54-98f8-306a-a1c7-c9349722b1f6", "internalReference": "default", "name": "Default"},
+  {"id": "5b1c0000-0000-3000-8000-00000000c0de", "internalReference": "k7h2x9qe", "name": "Cabin"}
+ ]
+}

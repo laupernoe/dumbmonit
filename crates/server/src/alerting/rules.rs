@@ -2749,6 +2749,322 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc serveurs de journaux et de métriques ---
+        // --- UniFi Network (`collectors/unifi`) ---
+        //
+        // Les séries d'équipement portent `device`, `model` et `type` : la
+        // notification dit « Living room AP ». Un équipement en attente
+        // d'adoption n'a pas de `device_up` : il n'est pas encore à nous.
+        Rule {
+            description: "A UniFi device adopted by the controller is offline, isolated or failed \
+                          to adopt."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            escalate_after: Some(Duration::from_secs(3600)),
+            ..base("unifi_device_offline", "UniFi device offline", RuleKind::Threshold, "dumbmonit_unifi_device_up")
+        },
+        // `www` en erreur : la passerelle ne joint plus Internet. Absent sans
+        // passerelle UniFi, la règle ne dit alors rien.
+        Rule {
+            description: "The UniFi gateway reports no Internet connection.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "unifi_internet_down",
+                "UniFi Internet down",
+                RuleKind::Threshold,
+                "dumbmonit_unifi_internet_up",
+            )
+        },
+        // Un second lien WAN tombé ne coupe rien, et c'est justement pourquoi
+        // il faut le dire : la redondance est perdue sans que personne le voie.
+        Rule {
+            description: "A WAN link of the UniFi gateway is down.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "unifi_wan_link_down",
+                "UniFi WAN link down",
+                RuleKind::Threshold,
+                "dumbmonit_unifi_wan_link_up",
+            )
+        },
+        Rule {
+            description: "The UniFi gateway's processor has been above 90% for fifteen minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(80.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            ..base(
+                "unifi_gateway_cpu_high",
+                "UniFi gateway CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_unifi_device_cpu_percent{type=\"gateway\"}",
+            )
+        },
+        Rule {
+            description: "A device appeared on the network and waits to be adopted in UniFi."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "unifi_device_pending_adoption",
+                "UniFi device waiting for adoption",
+                RuleKind::Threshold,
+                "dumbmonit_unifi_devices{state=\"pending\"}",
+            )
+        },
+        Rule {
+            description: "A firmware update is available for UniFi devices.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "unifi_firmware_update",
+                "UniFi firmware update available",
+                RuleKind::Threshold,
+                "dumbmonit_unifi_devices_upgradable",
+            )
+        },
+        Rule {
+            description: "UniFi logged critical events or raised alarms in the last 24 hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("unifi_alarms", "UniFi alarms", RuleKind::Threshold, "dumbmonit_unifi_alarms")
+        },
+        // --- Home Assistant (`collectors/homeassistant`) ---
+        Rule {
+            description: "Home Assistant started in recovery mode: its configuration could not be \
+                          loaded and automations do not run."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "homeassistant_recovery_mode",
+                "Home Assistant in recovery mode",
+                RuleKind::Threshold,
+                "dumbmonit_homeassistant_recovery_mode",
+            )
+        },
+        // Démarrage bloqué : le cœur répond mais reste en `STARTING` ou `NOT_RUNNING`.
+        Rule {
+            description: "Home Assistant answers but has not finished starting for ten minutes."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            ..base(
+                "homeassistant_not_running",
+                "Home Assistant not running",
+                RuleKind::Threshold,
+                "dumbmonit_homeassistant_running",
+            )
+        },
+        // Une intégration qui décroche fait passer d'un coup toutes ses entités
+        // `unavailable` : c'est la hausse qui compte, pas le total, qu'une
+        // installation réelle n'a jamais à zéro.
+        Rule {
+            description: "At least five more entities are unavailable than an hour ago: an \
+                          integration, a hub or a radio stopped."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "homeassistant_entities_unavailable",
+                "Home Assistant entities went unavailable",
+                RuleKind::Threshold,
+                "sum by (target) (dumbmonit_homeassistant_entities_unavailable) \
+                 - sum by (target) (dumbmonit_homeassistant_entities_unavailable offset 1h)",
+            )
+        },
+        // Une série par pile faible, valeur = niveau (0 pour un capteur binaire) :
+        // toute série présente déclenche.
+        Rule {
+            description: "A battery reported by Home Assistant is low.".to_string(),
+            operator: Operator::Ge,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(3 * 24 * 3600)),
+            unit: "%".to_string(),
+            ..base(
+                "homeassistant_battery_low",
+                "Home Assistant battery low",
+                RuleKind::Threshold,
+                "dumbmonit_homeassistant_battery_low",
+            )
+        },
+        Rule {
+            description: "Home Assistant has updates waiting: core, operating system, add-ons or \
+                          device firmware."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "homeassistant_update_available",
+                "Home Assistant update available",
+                RuleKind::Threshold,
+                "dumbmonit_homeassistant_updates_available",
+            )
+        },
+        Rule {
+            description: "Home Assistant has an open repair of error or critical severity."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "homeassistant_repair",
+                "Home Assistant repair to address",
+                RuleKind::Threshold,
+                "dumbmonit_homeassistant_repair{severity=~\"error|critical\"}",
+            )
+        },
+        // --- VMware vSphere (`collectors/vsphere`) ---
+        //
+        // `host_connection_state` : 2 « ne répond plus ». Un hôte déconnecté par
+        // un administrateur (1) est un choix, pas une panne.
+        Rule {
+            description: "A vSphere host is not responding to vCenter.".to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "vsphere_host_not_responding",
+                "vSphere host not responding",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_host_connection_state",
+            )
+        },
+        // `overallStatus` : 2 rouge. Le gris (3) dit « inconnu », pas « en panne ».
+        Rule {
+            description: "vSphere reports a host's overall health as red.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "vsphere_host_red",
+                "vSphere host health red",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_host_status == 2",
+            )
+        },
+        Rule {
+            description: "A vSphere host has been in maintenance mode for a day: its VMs were \
+                          moved away and it may have been forgotten there."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(24 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "vsphere_host_maintenance",
+                "vSphere host left in maintenance",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_host_maintenance",
+            )
+        },
+        Rule {
+            description: "A vSphere datastore is 90% full or more.".to_string(),
+            operator: Operator::Ge,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            escalate_after: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "vsphere_datastore_almost_full",
+                "vSphere datastore almost full",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_datastore_used_percent",
+            )
+        },
+        Rule {
+            description: "A vSphere datastore is inaccessible: the VMs stored on it cannot run."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "vsphere_datastore_inaccessible",
+                "vSphere datastore inaccessible",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_datastore_accessible",
+            )
+        },
+        // 2 : outils installés mais arrêtés dans une VM allumée — souvent une
+        // VM figée. Absents (3) : un choix, pas une alerte.
+        Rule {
+            description: "VMware Tools are installed but not running in a powered-on VM: the \
+                          guest may be hung."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "vsphere_vm_tools_not_running",
+                "vSphere VM tools not running",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_vm_tools_status == 2",
+            )
+        },
+        // Une série par alarme rouge non acquittée, nommée par l'alarme et l'objet.
+        Rule {
+            description: "vSphere raised a red alarm that nobody acknowledged.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "vsphere_alarm_red",
+                "vSphere red alarm",
+                RuleKind::Threshold,
+                "dumbmonit_vsphere_alarm{status=\"red\"}",
+            )
+        },
         // --- Proxmox VE : invités, disques, ZFS, paquets (`collectors/proxmox`) ---
         //
         // Les séries d'invité portent `name` et `vmid` : la notification dit
@@ -3328,6 +3644,27 @@ mod tests {
             "graylog_journal_filling",
             "graylog_input_failed",
             "graylog_indexing_failures",
+            // UniFi, Home Assistant, vSphere (`collectors/{unifi,homeassistant,vsphere}`).
+            "unifi_device_offline",
+            "unifi_internet_down",
+            "unifi_wan_link_down",
+            "unifi_gateway_cpu_high",
+            "unifi_device_pending_adoption",
+            "unifi_firmware_update",
+            "unifi_alarms",
+            "homeassistant_recovery_mode",
+            "homeassistant_not_running",
+            "homeassistant_entities_unavailable",
+            "homeassistant_battery_low",
+            "homeassistant_update_available",
+            "homeassistant_repair",
+            "vsphere_host_not_responding",
+            "vsphere_host_red",
+            "vsphere_host_maintenance",
+            "vsphere_datastore_almost_full",
+            "vsphere_datastore_inaccessible",
+            "vsphere_vm_tools_not_running",
+            "vsphere_alarm_red",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -3540,6 +3877,27 @@ mod tests {
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",
+            // UniFi, Home Assistant, vSphere (`collectors/{unifi,homeassistant,vsphere}`).
+            "dumbmonit_unifi_device_up",
+            "dumbmonit_unifi_internet_up",
+            "dumbmonit_unifi_wan_link_up",
+            "dumbmonit_unifi_device_cpu_percent",
+            "dumbmonit_unifi_devices",
+            "dumbmonit_unifi_devices_upgradable",
+            "dumbmonit_unifi_alarms",
+            "dumbmonit_homeassistant_recovery_mode",
+            "dumbmonit_homeassistant_running",
+            "dumbmonit_homeassistant_entities_unavailable",
+            "dumbmonit_homeassistant_battery_low",
+            "dumbmonit_homeassistant_updates_available",
+            "dumbmonit_homeassistant_repair",
+            "dumbmonit_vsphere_host_connection_state",
+            "dumbmonit_vsphere_host_status",
+            "dumbmonit_vsphere_host_maintenance",
+            "dumbmonit_vsphere_datastore_used_percent",
+            "dumbmonit_vsphere_datastore_accessible",
+            "dumbmonit_vsphere_vm_tools_status",
+            "dumbmonit_vsphere_alarm",
         ];
 
         for rule in builtin_rules() {

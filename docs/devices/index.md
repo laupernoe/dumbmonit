@@ -12,8 +12,11 @@ form always matches what this version can monitor.
 | [Proxmox Backup Server](pbs.md) | `pbs` | API token or username/password | Backup server |
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | API token | Console federating several PVE clusters and PBS instances |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | username/password | Mail gateway filtering spam and viruses |
+| [VMware vSphere](vsphere.md) | `vsphere` | username/password | vCenter or standalone ESXi: hosts, VMs, datastores, alarms |
 | [Synology DSM](synology.md) | `synology` | username/password | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | API key and secret | Firewall, router, multi-WAN edge |
+| [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
+| [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |
 | [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | none, username/password or token | Time series database: ingestion, refused samples, disk headroom |

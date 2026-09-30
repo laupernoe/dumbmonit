@@ -258,6 +258,47 @@ VictoriaMetrics, VictoriaLogs, Loki and Graylog ([devices](../devices/victoriame
 | Graylog input failed | An input failed to start (`dumbmonit_graylog_inputs_failed`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
 | Graylog indexing failures | Writes to the search cluster or message processing failed in the last hour (`increase_prometheus(dumbmonit_graylog_output_failures_total[1h]) + increase_prometheus(dumbmonit_graylog_processing_failures_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 
+### UniFi Network
+
+[Device page](../devices/unifi.md). Device series carry the device's name, model and type, so the notification says "Living room AP". A device waiting for adoption has no `device_up` series and never counts as offline.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| UniFi device offline | A UniFi device adopted by the controller is offline, isolated or failed to adopt (`dumbmonit_unifi_device_up`). | < 1 | 5 min | Advisory (`warning`), escalates after 1 h | 6 h |
+| UniFi Internet down | The UniFi gateway reports no Internet connection (`dumbmonit_unifi_internet_up`). Without a UniFi gateway the series does not exist and the rule stays silent. | < 1 | 3 min | Warning (`critical`) | 1 h |
+| UniFi WAN link down | A WAN link of the UniFi gateway is down (`dumbmonit_unifi_wan_link_up`): with two links, redundancy is lost while nothing seems broken. A disabled port has no series. | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| UniFi gateway CPU high | The UniFi gateway's processor has been above 90% for fifteen minutes (`dumbmonit_unifi_device_cpu_percent{type="gateway"}`); clears below 80 %. | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| UniFi device waiting for adoption | A device appeared on the network and waits to be adopted in UniFi (`dumbmonit_unifi_devices{state="pending"}`). | > 0 | 30 min | Info (`info`) | 24 h |
+| UniFi firmware update available | A firmware update is available for UniFi devices (`dumbmonit_unifi_devices_upgradable`). | > 0 | 1 h | Info (`info`) | 7 d |
+| UniFi alarms | UniFi logged critical events or raised alarms in the last 24 hours (`dumbmonit_unifi_alarms`). Only read with a View Only account. | > 0 | 5 min | Advisory (`warning`) | 24 h |
+
+### Home Assistant
+
+[Device page](../devices/homeassistant.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Home Assistant in recovery mode | Home Assistant started in recovery mode: its configuration could not be loaded and automations do not run (`dumbmonit_homeassistant_recovery_mode`). | > 0 | 2 min | Warning (`critical`) | 1 h |
+| Home Assistant not running | Home Assistant answers but has not finished starting for ten minutes (`dumbmonit_homeassistant_running`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| Home Assistant entities went unavailable | At least five more entities are unavailable than an hour ago: an integration, a hub or a radio stopped (`sum by (target) (dumbmonit_homeassistant_entities_unavailable) - sum by (target) (dumbmonit_homeassistant_entities_unavailable offset 1h)`). The rise counts, not the total, which a real installation never has at zero. | ≥ 5 | 10 min | Advisory (`warning`) | 6 h |
+| Home Assistant battery low | A battery reported by Home Assistant is low (`dumbmonit_homeassistant_battery_low`, one series per battery below the device's threshold, 20% by default; its value is the level). | ≥ 0 % | 30 min | Info (`info`) | 3 d |
+| Home Assistant update available | Home Assistant has updates waiting: core, operating system, add-ons or device firmware (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Home Assistant repair to address | Home Assistant has an open repair of error or critical severity (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+
+### VMware vSphere
+
+[Device page](../devices/vsphere.md). Host series carry `host`, VM series `vm`, datastore series `datastore`, so the notification names the object.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| vSphere host not responding | A vSphere host is not responding to vCenter (`dumbmonit_vsphere_host_connection_state`: 2 not responding). A host disconnected on purpose (1) does not fire. | ≥ 2 | 3 min | Warning (`critical`) | 1 h |
+| vSphere host health red | vSphere reports a host's overall health as red (`dumbmonit_vsphere_host_status == 2`). Gray means unknown and does not fire. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| vSphere host left in maintenance | A vSphere host has been in maintenance mode for a day: its VMs were moved away and it may have been forgotten there (`dumbmonit_vsphere_host_maintenance`). | > 0 | 24 h | Info (`info`) | 24 h |
+| vSphere datastore almost full | A vSphere datastore is 90% full or more (`dumbmonit_vsphere_datastore_used_percent`); clears below 85 %. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
+| vSphere datastore inaccessible | A vSphere datastore is inaccessible: the VMs stored on it cannot run (`dumbmonit_vsphere_datastore_accessible`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| vSphere VM tools not running | VMware Tools are installed but not running in a powered-on VM: the guest may be hung (`dumbmonit_vsphere_vm_tools_status == 2`). VMs without Tools do not fire. | > 0 | 30 min | Info (`info`) | 24 h |
+| vSphere red alarm | vSphere raised a red alarm that nobody acknowledged (`dumbmonit_vsphere_alarm{status="red"}`, one series per alarm, named after the alarm and the object). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
