@@ -1,0 +1,78 @@
+{
+ "meta": {"rc": "ok"},
+ "data": [
+  {
+   "_id": "6abc00000000000000000001",
+   "mac": "e4:38:83:00:00:01",
+   "name": "Gateway",
+   "model": "UDMPRO",
+   "type": "udm",
+   "version": "4.1.13.9913",
+   "adopted": true,
+   "state": 1,
+   "upgradable": true,
+   "upgrade_to_firmware": "4.2.8.10213",
+   "uptime": 1728035,
+   "ip": "203.0.113.24",
+   "num_sta": 31,
+   "user-num_sta": 29,
+   "guest-num_sta": 2,
+   "system-stats": {"cpu": "12.4", "mem": "61.8", "uptime": "1728035"},
+   "wan1": {"name": "wan", "up": true, "ip": "203.0.113.24", "enable": true},
+   "wan2": {"name": "wan2", "up": false, "ip": "0.0.0.0", "enable": true}
+  },
+  {
+   "_id": "6abc00000000000000000002",
+   "mac": "f4:e2:c6:00:00:02",
+   "name": "Office switch",
+   "model": "US16P150",
+   "type": "usw",
+   "version": "7.1.26.15869",
+   "adopted": true,
+   "state": 1,
+   "upgradable": false,
+   "uptime": 3024511,
+   "ip": "192.168.1.3",
+   "num_sta": 12,
+   "system-stats": {"cpu": "8.0", "mem": "44.1", "uptime": "3024511"}
+  },
+  {
+   "_id": "6abc00000000000000000003",
+   "mac": "74:83:c2:00:00:03",
+   "name": "Living room AP",
+   "model": "U6L",
+   "type": "uap",
+   "version": "6.6.77.15402",
+   "adopted": true,
+   "state": 0,
+   "upgradable": false,
+   "ip": "192.168.1.20",
+   "num_sta": 0,
+   "system-stats": {}
+  },
+  {
+   "_id": "6abc00000000000000000004",
+   "mac": "74:83:c2:00:00:04",
+   "model": "U6LR",
+   "type": "uap",
+   "version": "6.6.55.15189",
+   "adopted": false,
+   "state": 2,
+   "ip": "192.168.1.54"
+  },
+  {
+   "_id": "6abc00000000000000000005",
+   "mac": "74:83:c2:00:00:05",
+   "name": "Garden AP",
+   "model": "UAPMESH",
+   "type": "uap",
+   "version": "6.6.77.15402",
+   "adopted": true,
+   "state": 11,
+   "upgradable": false,
+   "uptime": 4200,
+   "num_sta": 0,
+   "system-stats": {"cpu": "3.2", "mem": "38.0"}
+  }
+ ]
+}

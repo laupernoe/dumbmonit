@@ -2081,6 +2081,145 @@ const MIKROTIK_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Clé d'API UniFi, envoyée en `X-API-KEY` (`collectors/unifi`).
+const UNIFI_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key (UniFi OS console)",
+    help: "Reads devices, their load and the client count through the official Integration API. Created in Settings → Control Plane → Integrations.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "UniFi shows it once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const UNIFI_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "View Only account",
+    help: "A local account with the View Only role. Also reads the WAN, Internet and alarm status, and works on a self-hosted server.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/unifi/mod.rs` et `collectors/api_options.rs`.
+const UNIFI_OPTIONS: &[OptionView] = &[
+    text(
+        "site",
+        "Site",
+        "The site's short name, shown in the address bar after /manage/ or /network/. A key also accepts the site's displayed name.",
+        "default",
+        "default",
+    ),
+    number(
+        "port",
+        "Port",
+        "443 on a UniFi OS console, 8443 on a self-hosted UniFi Network Server. Used if the address does not give a port.",
+        "443",
+        "443",
+    ),
+    insecure_tls(
+        "Consoles and self-hosted servers use a self-signed certificate by default: enable this unless you installed your own.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 120.",
+        "15",
+        "15",
+    ),
+];
+
+/// Jeton longue durée de Home Assistant, envoyé en `Authorization: Bearer`.
+const HOMEASSISTANT_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Long-lived access token",
+    help: "Created in the dedicated user's profile, under Security.",
+    fields: &[cred_secret(
+        "token",
+        "Access token",
+        "Home Assistant shows it once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+/// Options lues par `collectors/homeassistant/mod.rs`.
+const HOMEASSISTANT_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "Home Assistant listens over plain HTTP unless TLS is configured or it sits behind a reverse proxy. HTTPS then.",
+        "http",
+        &["http", "https"],
+    ),
+    number("port", "Port", "Used if the address does not give a port.", "8123", "8123"),
+    insecure_tls(
+        "For a self-signed certificate or a private certificate authority: enable this if the connection is refused for that reason.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 120.",
+        "10",
+        "10",
+    ),
+    number(
+        "battery_threshold",
+        "Low battery threshold (%)",
+        "A battery sensor below this level counts as low. Battery binary sensors count as low when they are on.",
+        "20",
+        "20",
+    ),
+    text(
+        "exclude_domains",
+        "Domains left out",
+        "Comma-separated entity domains whose unavailable or unknown entities are not counted, for example device_tracker or media_player for devices that are often off.",
+        "device_tracker, media_player",
+        "",
+    ),
+    boolean(
+        "repairs",
+        "Read the repairs",
+        "Reads the open repairs over the WebSocket API. The REST API does not list them.",
+        true,
+    ),
+];
+
+const VSPHERE_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The dedicated user with the Read-only role. On a vCenter, include the domain.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit@vsphere.local"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/vsphere/mod.rs`.
+const VSPHERE_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "Used if the address does not give a port.", "443", "443"),
+    insecure_tls(
+        "vCenter and ESXi use a self-signed certificate by default: enable this unless your DumbMonit host trusts their certificate authority.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 120. A large inventory takes longer.",
+        "20",
+        "20",
+    ),
+    boolean(
+        "alarms",
+        "Read the triggered alarms",
+        "Reads the alarms vCenter or the host raised, with the object each one is about.",
+        true,
+    ),
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
     Json(state.collectors.kinds().into_iter().map(describe).collect())
 }
@@ -3004,6 +3143,76 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: MIKROTIK_OPTIONS,
         },
+        "unifi" => CollectorView {
+            kind,
+            label: "UniFi Network",
+            summary: "The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms.",
+            examples: &[
+                "UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key)",
+                "UniFi Network Server (self-hosted)",
+            ],
+            credential_types: &["api_token", "username_password"],
+            credentials: &[UNIFI_KEY, UNIFI_LOGIN],
+            address_hint: "unifi.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only access in UniFi Network",
+                steps: &[
+                    "On a UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key), you can create an API key: in UniFi Network, Settings → Control Plane → Integrations → Create API Key. Name it after DumbMonit and copy it now: it is shown only once. The key reads devices, their load and the number of clients through the official Integration API.",
+                    "For the WAN, Internet and alarm status, and on a self-hosted UniFi Network Server, use a local account with the View Only role instead: Settings → Admins & Users → Create New. Name it as follows, give it a long random password, restrict it to local access, and set its UniFi Network role to View Only. View Only reads everything and can change nothing.\ndumbmonit",
+                    "In DumbMonit, enter the address of the console or server, for example \"unifi.lan\" (port 443 on a console) or \"unifi.lan:8443\" for a self-hosted server, and paste the key or the account. If the network is not the default site, set the Site option to the short name shown in the address bar after /manage/ or /network/.",
+                    "DumbMonit only reads. It never restarts, adopts, upgrades or provisions a device, and never acknowledges an alarm.",
+                ],
+                warning: "Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable \"Accept an unverifiable certificate\" unless you installed your own.",
+                doc_url: "",
+            },
+            options: UNIFI_OPTIONS,
+        },
+        "homeassistant" => CollectorView {
+            kind,
+            label: "Home Assistant",
+            summary: "The smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs.",
+            examples: &["Home Assistant OS", "Home Assistant Container"],
+            credential_types: &["api_token"],
+            credentials: &[HOMEASSISTANT_TOKEN],
+            address_hint: "homeassistant.local",
+            default_port: 8123,
+            setup: Setup {
+                title: "Create a dedicated user and a long-lived token in Home Assistant",
+                steps: &[
+                    "In Home Assistant: Settings → People → Users → Add user (turn on Advanced mode in your profile if the Users tab is missing). Name the user as follows, give it a long random password and leave the Administrator toggle off. A regular user can read every entity and the list of repairs, and cannot change the configuration.\ndumbmonit",
+                    "Log in to Home Assistant once as that user, open its profile (the name at the bottom of the sidebar) → Security → Long-lived access tokens → Create token. Name it after DumbMonit and copy it now: it is shown only once.",
+                    "In DumbMonit, enter the address of Home Assistant, for example \"homeassistant.local\" (port 8123) or \"https://ha.example.net\" behind a reverse proxy, and paste the token. Batteries under 20% count as low; the Low battery threshold option changes that.",
+                    "DumbMonit only reads /api/config, /api/states and, over the WebSocket API, the list of repairs. It never calls a service, never fires an event and never changes a state.",
+                ],
+                warning: "A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS.",
+                doc_url: "https://developers.home-assistant.io/docs/api/rest/",
+            },
+            options: HOMEASSISTANT_OPTIONS,
+        },
+        "vsphere" => CollectorView {
+            kind,
+            label: "VMware vSphere",
+            summary: "vCenter and ESXi hosts: hosts not responding or left in maintenance, VMs and their VMware Tools, datastores filling up, and the alarms vSphere raised.",
+            examples: &["vCenter Server", "ESXi (standalone host)"],
+            credential_types: &["username_password"],
+            credentials: &[VSPHERE_LOGIN],
+            address_hint: "vcenter.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only user in vSphere",
+                steps: &[
+                    "On a vCenter: Administration → Single Sign On → Users and Groups → Users, domain vsphere.local → Add. Name the user as follows and give it a long random password.\ndumbmonit",
+                    "Still on the vCenter: Administration → Access Control → Global Permissions → Add. Pick that user, the Read-only role, and tick Propagate to children. Read-only sees every host, VM, datastore and alarm, and can change nothing.",
+                    "On a standalone ESXi host instead: in the host client, Manage → Security & users → Users → Add user, with the same name. Then Host → Actions → Permissions → Add user: pick it, the Read-only role, and tick Propagate to all children.",
+                    "In DumbMonit, enter the address of the vCenter or of the host, for example \"vcenter.lan\" or \"esxi1.lan\", with the user name as created: dumbmonit@vsphere.local on a vCenter, dumbmonit on a host. When a vCenter manages the hosts, add only the vCenter: it reports every host, VM and datastore.",
+                    "DumbMonit only reads, through the vSphere Web Services API (/sdk). It never powers a VM on or off, never enters maintenance mode and never acknowledges an alarm.",
+                ],
+                warning: "Do not reuse the single sign-on domain account or the host's built-in account: the Read-only role above is all DumbMonit needs. vCenter and ESXi use a self-signed certificate by default: enable \"Accept an unverifiable certificate\" unless the DumbMonit host trusts their certificate authority.",
+                doc_url: "",
+            },
+            options: VSPHERE_OPTIONS,
+        },
         other => CollectorView {
             kind,
             label: other,
@@ -3050,6 +3259,9 @@ mod tests {
         "adguard",
         "nut",
         "mikrotik",
+        "unifi",
+        "homeassistant",
+        "vsphere",
         "agent",
         "http",
         "tcp",
@@ -3382,6 +3594,20 @@ mod tests {
             ),
             ("jellyfin", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("plex", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("unifi", &["site", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "homeassistant",
+                &[
+                    "scheme",
+                    "port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "battery_threshold",
+                    "exclude_domains",
+                    "repairs",
+                ],
+            ),
+            ("vsphere", &["port", "insecure_tls", "request_timeout_seconds", "alarms"]),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -3493,6 +3719,31 @@ mod tests {
         }
         // `collectors/pihole/options.rs`.
         assert_eq!(defaut("pihole", "scheme"), "http");
+        // `collectors/{unifi,homeassistant,vsphere}/mod.rs`.
+        use dumbmonit_collectors::{homeassistant, unifi, vsphere};
+        assert_eq!(defaut("unifi", "site"), unifi::DEFAULT_SITE);
+        assert_eq!(defaut("unifi", "port"), unifi::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("unifi", "request_timeout_seconds"),
+            unifi::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(defaut("homeassistant", "port"), homeassistant::DEFAULT_PORT.to_string());
+        assert_eq!(defaut("homeassistant", "scheme"), "http");
+        assert_eq!(
+            defaut("homeassistant", "request_timeout_seconds"),
+            homeassistant::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(
+            defaut("homeassistant", "battery_threshold"),
+            homeassistant::DEFAULT_BATTERY_THRESHOLD.to_string()
+        );
+        assert_eq!(defaut("homeassistant", "repairs"), "true");
+        assert_eq!(defaut("vsphere", "port"), vsphere::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("vsphere", "request_timeout_seconds"),
+            vsphere::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(defaut("vsphere", "alarms"), "true");
         assert_eq!(
             defaut("pihole", "port"),
             dumbmonit_collectors::pihole::DEFAULT_PORT.to_string()
@@ -3639,6 +3890,9 @@ mod tests {
             ("adguard", "dumbmonit"),
             ("nut", "[dumbmonit]"),
             ("mikrotik", "dumbmonit"),
+            ("unifi", "dumbmonit"),
+            ("homeassistant", "dumbmonit"),
+            ("vsphere", "dumbmonit@vsphere.local"),
             ("agent", "token"),
         ];
         for (kind, dedie) in attendus {
@@ -3653,7 +3907,9 @@ mod tests {
                 .replace("local administrator", "")
                 .replace("read-only administrator", "")
                 .replace("global administrator", "")
-                .replace("domain administrator", "");
+                .replace("domain administrator", "")
+                // L'interrupteur « Administrator » de Home Assistant, à laisser éteint.
+                .replace("administrator toggle", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
@@ -3714,6 +3970,9 @@ mod tests {
             ("adguard", include_str!("../../../../docs/devices/adguard.md")),
             ("nut", include_str!("../../../../docs/devices/nut.md")),
             ("mikrotik", include_str!("../../../../docs/devices/mikrotik.md")),
+            ("unifi", include_str!("../../../../docs/devices/unifi.md")),
+            ("homeassistant", include_str!("../../../../docs/devices/homeassistant.md")),
+            ("vsphere", include_str!("../../../../docs/devices/vsphere.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

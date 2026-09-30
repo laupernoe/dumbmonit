@@ -139,6 +139,10 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::AdguardCollector::new()));
     registry.register(Arc::new(collectors::NutCollector::new()));
     registry.register(Arc::new(collectors::MikrotikCollector::new()));
+    // Réseau UniFi, maison connectée Home Assistant, virtualisation vSphere.
+    registry.register(Arc::new(collectors::UnifiCollector::new()));
+    registry.register(Arc::new(collectors::HomeAssistantCollector::new()));
+    registry.register(Arc::new(collectors::VsphereCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.
