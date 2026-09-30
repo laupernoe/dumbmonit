@@ -76,7 +76,8 @@ pub use vsphere::VsphereCollector;
 
 #[derive(Clone, Default)]
 pub struct Registry {
-    collectors: HashMap<&'static str, Arc<dyn Collector>>,
+    /// Clé possédée : un type peut naître à l'exécution (paquet d'intégration).
+    collectors: HashMap<Arc<str>, Arc<dyn Collector>>,
 }
 
 impl Registry {
@@ -134,7 +135,7 @@ impl Registry {
     }
 
     pub fn register(&mut self, collector: Arc<dyn Collector>) -> &mut Self {
-        self.collectors.insert(collector.kind(), collector);
+        self.collectors.insert(Arc::from(collector.kind()), collector);
         self
     }
 
@@ -142,8 +143,8 @@ impl Registry {
         self.collectors.get(kind)
     }
 
-    pub fn kinds(&self) -> Vec<&'static str> {
-        let mut kinds: Vec<_> = self.collectors.keys().copied().collect();
+    pub fn kinds(&self) -> Vec<&str> {
+        let mut kinds: Vec<_> = self.collectors.keys().map(|kind| &**kind).collect();
         kinds.sort_unstable();
         kinds
     }
