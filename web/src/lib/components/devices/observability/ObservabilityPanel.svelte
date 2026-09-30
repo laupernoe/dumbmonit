@@ -1,7 +1,8 @@
 <script lang="ts">
 	/**
-	 * A log or metrics server (VictoriaMetrics, VictoriaLogs, Loki, Graylog)
-	 * as it describes itself: first what is wrong, in sentences the server
+	 * A log or metrics server (VictoriaMetrics, VictoriaLogs, Loki, Graylog),
+	 * or a backend service through `BackendPanel` (Redis, MongoDB, RabbitMQ,
+	 * CrowdSec), as it describes itself: first what is wrong, in sentences the server
 	 * wrote; then what it is doing; then the details by reason, disk, buffer
 	 * or shard. One read of what the probe stored, refreshed every minute; the
 	 * server itself is never asked, and none of its data is ever read.
@@ -16,9 +17,11 @@
 
 	interface Props {
 		target: Target;
+		/** Where the view comes from; the same view shape serves other kinds (`BackendPanel`). */
+		loader?: (id: Target['id'], signal?: AbortSignal) => Promise<ObservabilityOverview>;
 	}
 
-	let { target }: Props = $props();
+	let { target, loader = getObservabilityOverview }: Props = $props();
 
 	let view = $state<ObservabilityOverview | null>(null);
 	let loading = $state(true);
@@ -27,7 +30,7 @@
 	async function load(signal?: AbortSignal) {
 		error = null;
 		try {
-			view = await getObservabilityOverview(target.id, signal);
+			view = await loader(target.id, signal);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;

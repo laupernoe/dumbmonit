@@ -36,10 +36,10 @@
 //! | `insecure_tls` | `false` | Accepte un certificat non vérifiable. |
 //! | `request_timeout_seconds` | `10` | Délai par requête HTTP. |
 
-mod client;
+pub(crate) mod client;
 pub mod graylog;
 pub mod loki;
-mod options;
+pub(crate) mod options;
 pub mod prom;
 pub mod victoria;
 
