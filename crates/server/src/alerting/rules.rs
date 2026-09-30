@@ -1856,6 +1856,73 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_mdaemon_api_up",
             )
         },
+        // Files d'attente de MDaemon : elles ne sont publiées que comme compteurs
+        // de performance Windows, que l'agent lit sur le serveur lui-même
+        // (`crates/agent/src/collect/perf_counters.rs`). Les séries portent donc
+        // la cible de l'agent, pas celle de l'équipement `mdaemon`, et
+        // n'existent que sur une machine où tourne MDaemon.
+        //
+        // Croissance et non niveau, comme pour PMG : un serveur chargé garde en
+        // permanence quelques messages en transit. Les files entrante, locale et
+        // distante sont celles que MDaemon vide d'elle-même ; une file qui
+        // grossit de cent messages en deux heures ne se vide plus.
+        Rule {
+            description: "An MDaemon mail queue has grown by more than a hundred messages in two \
+                          hours: MDaemon has stopped delivering from it. Read from the Windows \
+                          performance counters by the agent installed on the mail server."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 100.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mdaemon_queue_growing",
+                "MDaemon mail queue growing",
+                RuleKind::Threshold,
+                "delta(dumbmonit_mdaemon_queue_messages{queue=~\"inbound|local|remote\"}[2h])",
+            )
+        },
+        // La file « Bad » reçoit ce que MDaemon n'a pas su traiter ni renvoyer :
+        // rien n'en sort sans un administrateur. Un seul message suffit à le
+        // prévenir ; l'attente absorbe un message que quelqu'un traite déjà.
+        Rule {
+            description: "Messages are waiting in the MDaemon Bad queue: MDaemon could neither \
+                          deliver nor bounce them, and nothing leaves that queue unless an \
+                          administrator releases or deletes it."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "mdaemon_bad_queue_not_empty",
+                "MDaemon Bad queue not empty",
+                RuleKind::Threshold,
+                "dumbmonit_mdaemon_queue_messages{queue=\"bad\"}",
+            )
+        },
+        // La file de nouvelle tentative garde ce que les serveurs distants ont
+        // refusé temporairement. Quelques messages y passent chaque jour ; plus
+        // de cinquante pendant une heure, c'est un voisin qui refuse tout, ou
+        // une réputation d'expéditeur à vérifier.
+        Rule {
+            description: "More than fifty messages have been waiting in the MDaemon Retry queue \
+                          for an hour: remote servers keep refusing mail temporarily."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 50.0,
+            for_duration: Duration::from_secs(60 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mdaemon_retry_queue_high",
+                "MDaemon Retry queue high",
+                RuleKind::Threshold,
+                "dumbmonit_mdaemon_queue_messages{queue=\"retry\"}",
+            )
+        },
         Rule {
             description: "A service of the SecurityGateway mail gateway does not answer, or \
                           refuses service."
@@ -3211,6 +3278,9 @@ mod tests {
             // MDaemon et SecurityGateway (`collectors/mdaemon`).
             "mdaemon_service_down",
             "mdaemon_api_down",
+            "mdaemon_queue_growing",
+            "mdaemon_bad_queue_not_empty",
+            "mdaemon_retry_queue_high",
             "securitygateway_service_down",
             "securitygateway_api_down",
             "securitygateway_queue_growing",
@@ -3464,6 +3534,9 @@ mod tests {
             // MDaemon et SecurityGateway (`collectors/mdaemon`).
             "dumbmonit_mdaemon_service_up",
             "dumbmonit_mdaemon_api_up",
+            // MDaemon, compteurs de performance lus par l'agent Windows
+            // (`crates/agent/src/collect/perf_counters.rs`).
+            "dumbmonit_mdaemon_queue_messages",
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",

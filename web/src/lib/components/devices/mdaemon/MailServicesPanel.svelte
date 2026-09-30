@@ -9,10 +9,16 @@
 	 * Read straight from the latest stored measurement — opening the page never
 	 * connects to the mail server. Stopped services come first; every state is a
 	 * word as well as a colour, and an unknown value reads "—".
+	 *
+	 * MDaemon's queues are not visible from outside: when the Windows agent runs
+	 * on the same server, it reads them from MDaemon's performance counters, and
+	 * they are shown below this panel (see `queues.ts` for how the agent is found).
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
+	import { listTargets, queryInstant, type Target } from '$lib/api';
 	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import MdaemonQueues from './MdaemonQueues.svelte';
+	import { REPORTING_QUERY, pickAgent } from './queues';
 
 	interface Props {
 		target: Target;
@@ -142,6 +148,24 @@
 		}
 	}
 
+	/** The agent on the same machine, when it reports MDaemon's queues. */
+	let linked = $state<Target | null>(null);
+
+	$effect(() => {
+		const device = target;
+		linked = null;
+		if (device.kind !== 'mdaemon') return;
+		const controller = new AbortController();
+		Promise.all([listTargets(controller.signal), queryInstant(REPORTING_QUERY, controller.signal)])
+			.then(([targets, reporting]) => {
+				const ids = new Set(reporting.map((s) => Number(s.metric.target)).filter(Number.isFinite));
+				linked = pickAgent(device, targets, ids);
+			})
+			// The queues are a bonus: failing to find them must not cover the page in errors.
+			.catch(() => (linked = null));
+		return () => controller.abort();
+	});
+
 	$effect(() => {
 		void target.id;
 		loading = true;
@@ -220,6 +244,11 @@
 					Version unknown: the greeting does not announce it{reading.apiUp === null ? ', and no credential is set for the API' : ''}.
 				{/if}
 			</p>
+			{#if prefix === 'mdaemon' && !linked}
+				<p class="text-ink-2">
+					Queue sizes are not visible from outside: install the DumbMonit agent on this server and they appear here. If they do not, make that agent the parent of this device.
+				</p>
+			{/if}
 			{#if reading.apiUp !== null}
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 					<Plate tone={reading.apiUp ? 'signal' : 'warning'} label={reading.apiUp ? `${apiName} answering` : `${apiName} not answering`} />
@@ -251,4 +280,8 @@
 		{/if}
 	{/if}
 </Panel>
+{/if}
+
+{#if linked}
+	<MdaemonQueues agent={linked.id} agentName={linked.name} />
 {/if}

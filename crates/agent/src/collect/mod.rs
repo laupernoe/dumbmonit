@@ -13,6 +13,7 @@
 
 pub mod docker;
 pub mod filter;
+pub mod perf_counters;
 pub mod plakar;
 pub mod registry;
 pub mod sensors;
@@ -30,6 +31,7 @@ use sysinfo::{
 
 use crate::collect::docker::ContainerInventory;
 use crate::collect::filter::NameFilter;
+use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
 use crate::collect::sensors::SensorsStat;
 use crate::collect::services::ServiceState;
@@ -237,6 +239,8 @@ pub struct Snapshot {
     pub smart: Option<SmartReport>,
     /// Pools ZFS. `None` : pas de ZFS sur cette machine.
     pub zfs: Option<ZfsReport>,
+    /// Compteurs de performance Windows. `None` : rien à lire ici.
+    pub perf_counters: Option<PerfReport>,
 }
 
 impl Snapshot {
@@ -271,6 +275,9 @@ impl Snapshot {
         }
         if let Some(pools) = &self.zfs {
             samples.extend(zfs::samples(pools, now_ms));
+        }
+        if let Some(counters) = &self.perf_counters {
+            samples.extend(perf_counters::samples(counters, now_ms));
         }
         samples
     }
@@ -535,6 +542,7 @@ impl SystemProbe {
             sensors: None,
             smart: None,
             zfs: None,
+            perf_counters: None,
         }
     }
 
@@ -1073,6 +1081,13 @@ mod tests {
                     status: zfs::PoolStatus { pool: "tank".into(), ..zfs::PoolStatus::default() },
                 }],
             }),
+            perf_counters: Some(perf_counters::PerfReport {
+                values: perf_counters::mdaemon_specs()
+                    .into_iter()
+                    .filter(|spec| spec.path.ends_with("Retry queue messages"))
+                    .map(|spec| (spec, 4.0))
+                    .collect(),
+            }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1097,6 +1112,7 @@ mod tests {
             "agent_sensor_temperature_celsius",
             "agent_disk_smart_ok",
             "agent_zfs_pool_health",
+            "mdaemon_queue_messages",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }
