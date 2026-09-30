@@ -15,6 +15,7 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '$lib/ui';
 	import RelayPanel from '$lib/components/devices/relay/RelayPanel.svelte';
+	import MdaemonQueues from '$lib/components/devices/mdaemon/MdaemonQueues.svelte';
 
 	interface Props {
 		target: Target;
@@ -139,3 +140,6 @@
 {/if}
 
 <RelayPanel {target} />
+
+<!-- Shown only when this machine runs MDaemon and the agent reads its counters. -->
+<MdaemonQueues agent={target.id} />

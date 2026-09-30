@@ -30,7 +30,10 @@
 //!
 //! Les files d'attente de MDaemon ne sont publiées que sous forme de compteurs
 //! de performance Windows ; aucune opération documentée de l'API XML ne les
-//! donne. Elles ne sont pas inventées ici (voir `docs/devices/mdaemon.md`).
+//! donne. Elles ne sont pas inventées ici : c'est l'agent Windows, installé sur
+//! le serveur de messagerie, qui les lit (`crates/agent/src/collect/
+//! perf_counters.rs`, séries `mdaemon_queue_messages`…), et la page de
+//! l'équipement les retrouve par la machine (voir `docs/devices/mdaemon.md`).
 //!
 //! # Principes
 //!

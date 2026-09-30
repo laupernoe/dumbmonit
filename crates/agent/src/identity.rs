@@ -145,6 +145,7 @@ mod tests {
             sensors: false,
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
+            perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 100,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
             log_level: tracing::Level::INFO,

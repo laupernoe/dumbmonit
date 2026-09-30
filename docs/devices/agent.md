@@ -28,6 +28,8 @@ cannot write into another machine's series, even by forging its labels.
 | Sensors | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (the threshold the hardware itself declares), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Disk health (SMART) | `agent_disk_smart_ok` (1 = the disk passes its own self-assessment), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 worse), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
+| Windows performance counters | `agent_perf_counter`, one series per counter listed in `perf_counters` | `counter` |
+| MDaemon (Windows) | `mdaemon_queue_messages`, `mdaemon_queue_frozen`, `mdaemon_sessions_active`, `mdaemon_sessions_total`, `mdaemon_messages_total`, `mdaemon_filtered_messages_total`, `mdaemon_server_active`, `mdaemon_running`, `mdaemon_uptime_seconds` — see [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`, `protocol`, `filter`, `verdict`, `server` |
 | Agent | `agent_collect_seconds`, `agent_buffered_samples`, `agent_dropped_samples` | |
 
 A series that cannot be measured is **absent**, never zero: no `smartctl`, no
@@ -50,6 +52,7 @@ than fans, and an empty one reads zero like a dead fan does.
 | ZFS pools | `zpool` (OpenZFS) | no | `zpool` | no |
 | OS health (updates, reboot, failed units, SELinux) | yes | no | no | no |
 | Plakar backups | yes | yes | yes | yes |
+| Performance counters, MDaemon queues | no | no | no | yes |
 | Machine identity | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`, `/etc/hostid` | host name |
 | Relay mode | yes | yes | yes | yes |
 
@@ -79,6 +82,10 @@ no setting up and cannot go off on a machine without the hardware:
 | **ZFS pool degraded** (critical) | a pool is no longer `ONLINE` for five minutes |
 | **ZFS scrub found errors** (critical) | the last scrub found errors, or the pool reports permanently corrupted files |
 | **Temperature above critical** (critical) | a sensor exceeds the critical threshold **its own hardware declares** — no value is hard-coded, 85 °C being an emergency on a disk and a normal afternoon on a laptop CPU |
+
+On a Windows server that runs MDaemon, three more watch its queues:
+**MDaemon mail queue growing**, **MDaemon Bad queue not empty** and **MDaemon
+Retry queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
 
 ## Install
 
@@ -272,6 +279,11 @@ smart_interval_secs: 300   # minimum 60: a sleeping disk is never woken to be re
 zfs: true                  # ZFS pools through zpool (default: true)
 zfs_bin: zpool
 zfs_interval_secs: 120     # minimum 30
+mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
+perf_counters:             # Windows: performance counters to publish
+  - '\Memory\Available MBytes'
+  - path: '\Processor(_Total)\% Processor Time'
+    name: cpu_total        # value of the "counter" label; the path when omitted
 max_buffered_samples: 20000
 log_level: info
 ```
@@ -317,10 +329,57 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_ZFS` | `true` / `false`: ZFS pools through `zpool` (default `true`) |
 | `DUMBMONIT_AGENT_ZFS_BIN` | Path of `zpool` |
 | `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | Period between two ZFS readings, default `120`, minimum `30` |
+| `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` or `auto`: MDaemon's performance counters (default `auto`, read when the `MDaemon` Windows service exists) |
+| `DUMBMONIT_AGENT_PERF_COUNTERS` | Windows performance counter paths, separated by **semicolons** (a comma can be part of an instance name); replaces `perf_counters` |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Size of the catch-up buffer |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` to run, for the server, the probes of the devices assigned to this agent (see [Run the agent in Docker / on another network](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Site label shown next to the agent when it is offered as a relay |
+
+## Windows performance counters
+
+On Windows, the agent reads performance counters — the values Performance
+Monitor (`perfmon`) shows — through the PDH library, and publishes them every
+sampling period. Some software publishes its state nowhere else.
+
+**MDaemon.** When the Windows service named `MDaemon` exists, the agent reads
+the MDaemon performance object: queue sizes, sessions, message and spam
+totals, the state of MDaemon's internal servers and its uptime. The series,
+the rules and the page that shows them are described on the
+[MDaemon](mdaemon.md#mail-queues-through-the-agent) page. `mdaemon: true`
+reads them even without the service (a renamed service), `mdaemon: false`
+never does. The presence of the service is checked again every ten periods,
+so an MDaemon installed after the agent is picked up without a restart.
+
+**Any other counter.** List its full path under `perf_counters`, as
+`\Object(Instance)\Counter` or `\Object\Counter` for an object with a single
+instance, and it is published as `dumbmonit_agent_perf_counter{counter="…"}`,
+with the name you give or the path itself:
+
+```yaml
+perf_counters:
+  - '\LogicalDisk(C:)\% Free Space'
+  - path: '\MSExchangeTransport Queues(_total)\Messages Queued For Delivery'
+    name: exchange_queue
+```
+
+- Write the counter names **in English**, as they appear in Performance
+  Monitor on an English Windows: the agent adds them with
+  `PdhAddEnglishCounterW`, so the same `agent.yaml` works on a French or
+  German Windows.
+- Put each path between single quotes in YAML, so that the backslashes and
+  the `%` are kept as they are.
+- A malformed path stops the agent at startup with the key and the reason. A
+  path that Windows does not know (the software is not installed, the name is
+  misspelt) is reported once in the log, `performance counter not
+  available`, and the other counters are still read; it is tried again every
+  ten periods.
+- Rates (`…/sec`) need two readings: they appear from the second period on.
+- At most 200 counters are read. On Linux, macOS and FreeBSD the setting is
+  accepted and nothing is read.
+
+To see the exact names on the machine, run `typeperf -q MDaemon` (or any
+other object name) in a command prompt.
 
 ## Run the agent in Docker / on another network
 
