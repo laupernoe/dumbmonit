@@ -1,0 +1,11 @@
+{
+  "board-name": "CCR2004-16G-2S+",
+  "current-firmware": "7.19.4",
+  "factory-firmware": "7.0.4",
+  "firmware-type": "al2",
+  "model": "CCR2004-16G-2S+",
+  "revision": "r2",
+  "routerboard": "true",
+  "serial-number": "HGX00000000",
+  "upgrade-firmware": "7.23.7"
+}
