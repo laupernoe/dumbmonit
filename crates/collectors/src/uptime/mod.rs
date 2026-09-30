@@ -140,16 +140,16 @@ mod tests {
     #[test]
     fn chaque_sonde_a_son_type_bien_a_elle() {
         let kinds = [
-            HttpCollector::new().kind(),
-            TcpCollector::new().kind(),
-            DnsCollector::new().kind(),
-            PingCollector::new().kind(),
-            TlsCollector::new().kind(),
-            SmtpCollector::new().kind(),
-            PostgresCollector::new().kind(),
-            MysqlCollector::new().kind(),
-            MqttCollector::new().kind(),
-            WebsocketCollector::new().kind(),
+            HttpCollector::new().kind().to_owned(),
+            TcpCollector::new().kind().to_owned(),
+            DnsCollector::new().kind().to_owned(),
+            PingCollector::new().kind().to_owned(),
+            TlsCollector::new().kind().to_owned(),
+            SmtpCollector::new().kind().to_owned(),
+            PostgresCollector::new().kind().to_owned(),
+            MysqlCollector::new().kind().to_owned(),
+            MqttCollector::new().kind().to_owned(),
+            WebsocketCollector::new().kind().to_owned(),
         ];
         let mut uniques = kinds.to_vec();
         uniques.sort_unstable();

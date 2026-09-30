@@ -23,7 +23,7 @@ mod session;
 mod testutil;
 mod value;
 
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -54,7 +54,7 @@ const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// Le collecteur SNMP, à enregistrer dans le registre au démarrage.
 pub struct SnmpCollector {
-    catalog: &'static Catalog,
+    catalog: Arc<Catalog>,
     request_timeout: Duration,
 }
 
@@ -67,7 +67,10 @@ impl Default for SnmpCollector {
 impl SnmpCollector {
     /// Construit le collecteur avec les profils livrés, embarqués dans le binaire.
     pub fn new() -> Self {
-        Self { catalog: profile::embedded(), request_timeout: DEFAULT_REQUEST_TIMEOUT }
+        Self {
+            catalog: profile::embedded_shared().clone(),
+            request_timeout: DEFAULT_REQUEST_TIMEOUT,
+        }
     }
 
     pub fn with_request_timeout(mut self, timeout: Duration) -> Self {
@@ -75,9 +78,16 @@ impl SnmpCollector {
         self
     }
 
+    /// Remplace les profils livrés, par exemple par ceux-ci complétés à
+    /// l'exécution ([`Catalog::add_source`]).
+    pub fn with_catalog(mut self, catalog: Arc<Catalog>) -> Self {
+        self.catalog = catalog;
+        self
+    }
+
     /// Les profils disponibles, pour peupler la liste déroulante de l'interface.
-    pub fn catalog(&self) -> &'static Catalog {
-        self.catalog
+    pub fn catalog(&self) -> &Catalog {
+        &self.catalog
     }
 
     async fn open(&self, target: &Target) -> Result<Session, ProbeError> {
@@ -224,8 +234,8 @@ mod tests {
 
     #[test]
     fn le_catalogue_livre_contient_les_profils_annonces() {
-        let catalog = SnmpCollector::new().catalog();
-        let mut ids = catalog.ids();
+        let collector = SnmpCollector::new();
+        let mut ids = collector.catalog().ids();
         ids.sort_unstable();
         assert_eq!(
             ids,

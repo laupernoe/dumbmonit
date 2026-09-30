@@ -67,7 +67,7 @@ impl RelayRunner {
     }
 
     /// Types d'équipements que ce relais sait interroger.
-    pub fn kinds(&self) -> Vec<&'static str> {
+    pub fn kinds(&self) -> Vec<&str> {
         self.registry.kinds()
     }
 
