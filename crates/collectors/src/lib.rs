@@ -7,17 +7,22 @@
 //! sur un agent relais posé dans un autre site. Le collecteur « agent » (fraîcheur
 //! des mesures poussées) reste côté serveur : il lit la base.
 
+pub mod crowdsec;
 pub mod dummy;
 pub mod http;
 pub mod mdaemon;
+pub mod mongodb;
 pub mod observability;
 pub mod opnsense;
 pub mod pbs;
 pub mod pdm;
 pub mod pmg;
 pub mod proxmox;
+pub mod rabbitmq;
 pub mod redfish;
+pub mod redis;
 pub mod snmp;
+pub(crate) mod socket;
 pub mod synology;
 pub mod truenas;
 pub mod uptime;
@@ -28,16 +33,21 @@ use std::time::Duration;
 
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
+pub use crowdsec::CrowdsecCollector;
 pub use dummy::DummyCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
+pub use mongodb::MongodbCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use opnsense::OpnsenseCollector;
 pub use pbs::PbsCollector;
 pub use pdm::PdmCollector;
 pub use pmg::PmgCollector;
 pub use proxmox::ProxmoxCollector;
+pub use rabbitmq::RabbitmqCollector;
 pub use redfish::RedfishCollector;
+pub use redis::RedisCollector;
 pub use snmp::SnmpCollector;
+pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
 pub use synology::SynologyCollector;
 pub use truenas::TruenasCollector;
 pub use uptime::{
@@ -75,6 +85,10 @@ impl Registry {
         registry.register(Arc::new(GraylogCollector::new()));
         registry.register(Arc::new(MdaemonCollector::new()));
         registry.register(Arc::new(SecurityGatewayCollector::new()));
+        registry.register(Arc::new(RedisCollector::new()));
+        registry.register(Arc::new(MongodbCollector::new()));
+        registry.register(Arc::new(RabbitmqCollector::new()));
+        registry.register(Arc::new(CrowdsecCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));

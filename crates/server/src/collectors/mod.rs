@@ -33,6 +33,10 @@ pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
 };
 pub use dumbmonit_collectors::{RedfishCollector, redfish};
+pub use dumbmonit_collectors::{
+    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
+    rabbitmq, redis,
+};
 #[allow(unused_imports)]
 pub use dumbmonit_proto::Collector;
 

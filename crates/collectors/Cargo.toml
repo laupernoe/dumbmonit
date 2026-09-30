@@ -77,6 +77,14 @@ sqlx = { version = "0.9", default-features = false, features = [
     "runtime-tokio", "postgres", "mysql", "tls-rustls-ring-native-roots",
 ] }
 
+# --- MongoDB (`mongodb/wire.rs`) ---
+#
+# SCRAM-SHA-256 sans pilote : `ring` fournit PBKDF2, HMAC et SHA-256 (il est
+# déjà là, c'est le fournisseur cryptographique de rustls), `stringprep` la
+# préparation SASLprep du mot de passe (déjà tirée par le pilote PostgreSQL).
+ring = "0.17"
+stringprep = "0.1"
+
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 # Faux services HTTP (DSM, PVE) montés dans les tests unitaires.
