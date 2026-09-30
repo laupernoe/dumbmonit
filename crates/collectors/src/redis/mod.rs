@@ -227,8 +227,10 @@ mod tests {
     #[tokio::test]
     async fn interrogation_complete() {
         let address = faux_redis().await;
-        let credential =
-            Credential::UsernamePassword { username: "dumbmonit".into(), password: "secret".into() };
+        let credential = Credential::UsernamePassword {
+            username: "dumbmonit".into(),
+            password: "secret".into(),
+        };
         let samples = RedisCollector::new().probe(&avec(&address, credential)).await.unwrap();
         assert!(samples.iter().any(|s| s.metric == "redis_keys" && s.value == 202.0));
 
@@ -238,8 +240,12 @@ mod tests {
         assert!(matches!(error, ProbeError::Auth(_)), "{error}");
         assert!(!error.means_down());
 
-        let error = RedisCollector::new().probe(&avec(&address, Credential::None)).await.unwrap_err();
-        assert!(matches!(error, ProbeError::Auth(ref m) if m.contains("authentication")), "{error}");
+        let error =
+            RedisCollector::new().probe(&avec(&address, Credential::None)).await.unwrap_err();
+        assert!(
+            matches!(error, ProbeError::Auth(ref m) if m.contains("authentication")),
+            "{error}"
+        );
     }
 
     #[tokio::test]
@@ -250,14 +256,18 @@ mod tests {
             let (mut socket, _) = listener.accept().await.unwrap();
             let _ = socket.write_all(b"SSH-2.0-OpenSSH_9.6\r\n").await;
         });
-        let error = RedisCollector::new().probe(&avec(&address, Credential::None)).await.unwrap_err();
+        let error =
+            RedisCollector::new().probe(&avec(&address, Credential::None)).await.unwrap_err();
         assert!(matches!(error, ProbeError::Protocol(_)), "{error}");
     }
 
     #[test]
     fn les_refus_sont_classes() {
         assert!(matches!(command_error("NOPERM User x has no permissions"), ProbeError::Auth(_)));
-        assert!(matches!(command_error("DENIED Redis is running in protected mode"), ProbeError::Config(_)));
+        assert!(matches!(
+            command_error("DENIED Redis is running in protected mode"),
+            ProbeError::Config(_)
+        ));
         assert!(command_error("LOADING Redis is loading the dataset in memory").means_down());
         assert!(matches!(auth_error("WRONGPASS invalid"), ProbeError::Auth(_)));
     }

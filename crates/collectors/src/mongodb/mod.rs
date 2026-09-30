@@ -198,7 +198,8 @@ mod tests {
     async fn interrogation_complete() {
         let status = include_bytes!("testdata/mongodb_8.0.13_server_status.bson").to_vec();
         let address = faux_mongod(status).await;
-        let samples = MongodbCollector::new().probe(&cible("mongodb", &address, &[])).await.unwrap();
+        let samples =
+            MongodbCollector::new().probe(&cible("mongodb", &address, &[])).await.unwrap();
         assert!(samples.iter().any(|s| s.metric == "mongodb_replset_primary_present"));
         assert!(samples.iter().any(|s| s.metric == "mongodb_wiredtiger_cache_used_percent"));
     }
@@ -214,7 +215,10 @@ mod tests {
         let address = faux_mongod(refused).await;
         let error =
             MongodbCollector::new().probe(&cible("mongodb", &address, &[])).await.unwrap_err();
-        assert!(matches!(error, ProbeError::Auth(ref m) if m.contains("clusterMonitor")), "{error}");
+        assert!(
+            matches!(error, ProbeError::Auth(ref m) if m.contains("clusterMonitor")),
+            "{error}"
+        );
         assert!(!error.means_down());
     }
 
@@ -256,8 +260,11 @@ mod tests {
             )
             .unwrap();
             if let Some(replset) = &replies.replset {
-                std::fs::write(format!("{dir}/mongodb_replset_status.bson"), clean(replset).encode())
-                    .unwrap();
+                std::fs::write(
+                    format!("{dir}/mongodb_replset_status.bson"),
+                    clean(replset).encode(),
+                )
+                .unwrap();
             }
         }
     }
@@ -266,9 +273,9 @@ mod tests {
     fn pseudonymise(doc: &Document, host: &str) -> Document {
         fn walk(value: &Bson, host: &str) -> Bson {
             match value {
-                Bson::String(text) => Bson::String(
-                    text.replace(host, "db1").replace("mongo:27017", "db1.lan:27017"),
-                ),
+                Bson::String(text) => {
+                    Bson::String(text.replace(host, "db1").replace("mongo:27017", "db1.lan:27017"))
+                }
                 Bson::Document(doc) => Bson::Document(Document(
                     doc.0.iter().map(|(k, v)| (k.clone(), walk(v, host))).collect(),
                 )),

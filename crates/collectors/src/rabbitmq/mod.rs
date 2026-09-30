@@ -169,7 +169,13 @@ pub async fn read(client: &HttpClient, max_queues: u32) -> Result<Replies, Probe
     let reply = client.get_raw("/api/health/checks/alarms").await?;
     let alarms = match reply.status.as_u16() {
         200 | 503 => serde_json::from_str(&reply.body).unwrap_or_default(),
-        _ => return Err(client.status_error(reply.status, &reply.body, "/api/health/checks/alarms")),
+        _ => {
+            return Err(client.status_error(
+                reply.status,
+                &reply.body,
+                "/api/health/checks/alarms",
+            ));
+        }
     };
 
     let queues = if max_queues == 0 {
@@ -182,11 +188,11 @@ pub async fn read(client: &HttpClient, max_queues: u32) -> Result<Replies, Probe
         match reply.status.as_u16() {
             // Aucune file visible : l'API répond « page hors limites ».
             400 if reply.body.contains("page") => Vec::new(),
-            200 => serde_json::from_str::<QueuePage>(&reply.body)
-                .map(|page| page.items)
-                .map_err(|error| {
+            200 => serde_json::from_str::<QueuePage>(&reply.body).map(|page| page.items).map_err(
+                |error| {
                     ProbeError::Protocol(format!("Unexpected response from /api/queues: {error}"))
-                })?,
+                },
+            )?,
             _ => return Err(client.status_error(reply.status, &reply.body, "/api/queues")),
         }
     };
@@ -298,11 +304,16 @@ pub fn samples(replies: &Replies, ts_ms: i64) -> Vec<Sample> {
         }
     }
     for alarm in &replies.alarms.alarms {
-        let resource = if alarm.resource.contains("disk") { "disk" } else { alarm.resource.as_str() };
+        let resource =
+            if alarm.resource.contains("disk") { "disk" } else { alarm.resource.as_str() };
         by_node.insert((alarm.node.as_str(), resource), 1.0);
     }
     for ((node, resource), value) in &by_node {
-        out.push(gauge("rabbitmq_alarm", *value).with_label("node", *node).with_label("resource", *resource));
+        out.push(
+            gauge("rabbitmq_alarm", *value)
+                .with_label("node", *node)
+                .with_label("resource", *resource),
+        );
     }
     out.push(gauge("rabbitmq_alarms", replies.alarms.alarms.len() as f64));
 
@@ -364,7 +375,8 @@ mod tests {
 
     fn find<'a>(samples: &'a [Sample], name: &str, labels: &[(&str, &str)]) -> Option<&'a Sample> {
         samples.iter().find(|s| {
-            s.metric == name && labels.iter().all(|(k, v)| s.labels.get(*k).map(String::as_str) == Some(v))
+            s.metric == name
+                && labels.iter().all(|(k, v)| s.labels.get(*k).map(String::as_str) == Some(v))
         })
     }
 
@@ -387,7 +399,10 @@ mod tests {
         let orders =
             find(&samples, "rabbitmq_queue_messages_ready", &[("vhost", "/"), ("queue", "orders")]);
         assert_eq!(orders.unwrap().value, 7.0);
-        assert!(find(&samples, "rabbitmq_queue_consumers", &[("vhost", "shop"), ("queue", "emails")]).is_some());
+        assert!(
+            find(&samples, "rabbitmq_queue_consumers", &[("vhost", "shop"), ("queue", "emails")])
+                .is_some()
+        );
         assert_eq!(find(&samples, "rabbitmq_queues_without_consumers", &[]).unwrap().value, 3.0);
         assert_eq!(find(&samples, "rabbitmq_queues_not_running", &[]).unwrap().value, 0.0);
         let published = find(&samples, "rabbitmq_messages_published_total", &[]).unwrap();
@@ -405,7 +420,9 @@ mod tests {
     #[test]
     fn un_noeud_arrete_et_une_file_quorum_sans_majorite() {
         let mut replies = replies(ALARMS_OK);
-        replies.nodes.push(serde_json::json!({"name": "rabbit@rabbit2", "running": false, "partitions": []}));
+        replies.nodes.push(
+            serde_json::json!({"name": "rabbit@rabbit2", "running": false, "partitions": []}),
+        );
         replies.queues.push(Queue {
             name: "payments".into(),
             vhost: "/".into(),
@@ -415,11 +432,20 @@ mod tests {
             consumers: Some(2.0),
         });
         let samples = samples(&replies, 0);
-        assert_eq!(find(&samples, "rabbitmq_node_running", &[("node", "rabbit@rabbit2")]).unwrap().value, 0.0);
-        assert!(find(&samples, "rabbitmq_node_memory_used_bytes", &[("node", "rabbit@rabbit2")]).is_none());
+        assert_eq!(
+            find(&samples, "rabbitmq_node_running", &[("node", "rabbit@rabbit2")]).unwrap().value,
+            0.0
+        );
+        assert!(
+            find(&samples, "rabbitmq_node_memory_used_bytes", &[("node", "rabbit@rabbit2")])
+                .is_none()
+        );
         assert_eq!(find(&samples, "rabbitmq_nodes_running", &[]).unwrap().value, 1.0);
         assert_eq!(find(&samples, "rabbitmq_queues_not_running", &[]).unwrap().value, 1.0);
-        assert_eq!(find(&samples, "rabbitmq_queue_running", &[("queue", "payments")]).unwrap().value, 0.0);
+        assert_eq!(
+            find(&samples, "rabbitmq_queue_running", &[("queue", "payments")]).unwrap().value,
+            0.0
+        );
     }
 
     async fn serve(app: Router) -> String {
@@ -441,7 +467,11 @@ mod tests {
             .route(
                 "/api/overview",
                 get(|headers: HeaderMap| async move {
-                    if authorized(&headers) { (StatusCode::OK, OVERVIEW) } else { (StatusCode::UNAUTHORIZED, "") }
+                    if authorized(&headers) {
+                        (StatusCode::OK, OVERVIEW)
+                    } else {
+                        (StatusCode::UNAUTHORIZED, "")
+                    }
                 }),
             )
             .route("/api/nodes", get(|| async { NODES }))
@@ -452,8 +482,10 @@ mod tests {
             .route("/api/queues", get(|| async { QUEUES }));
         let base = serve(app).await;
         let mut target = cible("rabbitmq", &base, &[]);
-        target.credential =
-            Credential::UsernamePassword { username: "dumbmonit".into(), password: "secret".into() };
+        target.credential = Credential::UsernamePassword {
+            username: "dumbmonit".into(),
+            password: "secret".into(),
+        };
         let samples = RabbitmqCollector::new().probe(&target).await.unwrap();
         assert_eq!(find(&samples, "rabbitmq_alarms", &[]).unwrap().value, 1.0);
         assert_eq!(find(&samples, "rabbitmq_queues_without_consumers", &[]).unwrap().value, 3.0);
@@ -472,7 +504,7 @@ mod tests {
     /// `DUMBMONIT_TEST_RABBITMQ_PASSWORD` (utilisateur `dumbmonit`).
     #[tokio::test]
     #[ignore = "demande un RabbitMQ joignable"]
-    async fn rabbitmq_reel() {
+    async fn rabbitmq_reel_joignable() {
         let address = std::env::var("DUMBMONIT_TEST_RABBITMQ").unwrap();
         let password = std::env::var("DUMBMONIT_TEST_RABBITMQ_PASSWORD").unwrap();
         let mut target = cible("rabbitmq", &address, &[]);

@@ -158,7 +158,9 @@ impl Scram {
             )));
         };
         if !nonce.starts_with(&self.client_nonce) || nonce.len() <= self.client_nonce.len() {
-            return Err(ProbeError::Protocol("SCRAM server nonce does not extend ours".to_string()));
+            return Err(ProbeError::Protocol(
+                "SCRAM server nonce does not extend ours".to_string(),
+            ));
         }
         let salt = STANDARD
             .decode(salt)
@@ -191,12 +193,8 @@ impl Scram {
             &hmac::Key::new(hmac::HMAC_SHA256, stored_key.as_ref()),
             auth_message.as_bytes(),
         );
-        let proof: Vec<u8> = client_key
-            .as_ref()
-            .iter()
-            .zip(client_signature.as_ref())
-            .map(|(a, b)| a ^ b)
-            .collect();
+        let proof: Vec<u8> =
+            client_key.as_ref().iter().zip(client_signature.as_ref()).map(|(a, b)| a ^ b).collect();
         let server_key = hmac::sign(&salted_key, b"Server Key");
         let server_signature = hmac::sign(
             &hmac::Key::new(hmac::HMAC_SHA256, server_key.as_ref()),
@@ -261,7 +259,10 @@ pub async fn authenticate(
         .with("mechanism", Bson::String("SCRAM-SHA-256".to_string()))
         .with("payload", Bson::Binary(scram.client_first().into_bytes()))
         .with("autoAuthorize", Bson::Int32(1))
-        .with("options", Bson::Document(Document::new().with("skipEmptyExchange", Bson::Bool(true))));
+        .with(
+            "options",
+            Bson::Document(Document::new().with("skipEmptyExchange", Bson::Bool(true))),
+        );
     let reply = wire.command(source, start).await?;
     let (conversation, server_first) = sasl_step(&reply, scram.username())?;
 

@@ -3139,7 +3139,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 0.0,
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("redis_rejecting_connections", "Redis refusing connections", RuleKind::Threshold, "increase_prometheus(dumbmonit_redis_rejected_connections_total[15m])")
         },
         Rule {
@@ -3149,7 +3149,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(2 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("redis_replication_broken", "Redis replication link down", RuleKind::Threshold, "dumbmonit_redis_master_link_up")
         },
         // Vu du primaire : secondes depuis le dernier acquittement d'une réplique,
@@ -3172,7 +3172,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("redis_save_failed", "Redis snapshot failed", RuleKind::Threshold, "dumbmonit_redis_rdb_last_save_ok")
         },
         Rule {
@@ -3182,7 +3182,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("redis_aof_write_failed", "Redis append-only file write failed", RuleKind::Threshold, "dumbmonit_redis_aof_last_write_ok")
         },
         // --- MongoDB (`collectors/mongodb`) ---
@@ -3193,7 +3193,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(2 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("mongodb_no_primary", "MongoDB replica set without primary", RuleKind::Threshold, "dumbmonit_mongodb_replset_primary_present")
         },
         Rule {
@@ -3203,7 +3203,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("mongodb_member_unhealthy", "MongoDB member unreachable", RuleKind::Threshold, "dumbmonit_mongodb_replset_member_health")
         },
         Rule {
@@ -3260,9 +3260,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
-            for_duration: Duration::from_secs(1 * 60),
+            for_duration: Duration::from_secs(60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("rabbitmq_resource_alarm", "RabbitMQ memory or disk alarm", RuleKind::Threshold, "dumbmonit_rabbitmq_alarm")
         },
         Rule {
@@ -3272,7 +3272,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(2 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("rabbitmq_node_down", "RabbitMQ node down", RuleKind::Threshold, "dumbmonit_rabbitmq_node_running")
         },
         Rule {
@@ -3282,7 +3282,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 0.0,
             for_duration: Duration::from_secs(2 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("rabbitmq_partition", "RabbitMQ network partition", RuleKind::Threshold, "dumbmonit_rabbitmq_node_partitions")
         },
         // Des messages en attente et personne pour les lire : le service qui
@@ -3315,7 +3315,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             threshold: 1.0,
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            repeat_interval: Some(Duration::from_secs(3600)),
             ..base("crowdsec_lapi_down", "CrowdSec Local API down", RuleKind::Threshold, "dumbmonit_crowdsec_lapi_up")
         },
         // CrowdSec ne publie pas l'heure du dernier tirage : le compteur de

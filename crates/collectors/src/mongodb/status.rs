@@ -52,7 +52,10 @@ pub fn server_samples(status: &Document, ts_ms: i64) -> Vec<Sample> {
         (status.number("connections/current"), status.number("connections/available"))
         && current + available > 0.0
     {
-        out.push(gauge("mongodb_connections_used_percent", current / (current + available) * 100.0));
+        out.push(gauge(
+            "mongodb_connections_used_percent",
+            current / (current + available) * 100.0,
+        ));
     }
 
     // `mem.resident` est en Mio.
@@ -161,7 +164,10 @@ pub fn replset_samples(status: &Document, ts_ms: i64) -> Vec<Sample> {
         .iter()
         .find(|m| m.number("state") == Some(1.0))
         .and_then(|m| date_ms(m.get("optimeDate")));
-    out.push(gauge("mongodb_replset_primary_present", f64::from(u8::from(primary_optime.is_some()))));
+    out.push(gauge(
+        "mongodb_replset_primary_present",
+        f64::from(u8::from(primary_optime.is_some())),
+    ));
     if let Some(set) = status.str("set") {
         out.push(
             gauge("mongodb_replset_info", 1.0)
@@ -270,23 +276,31 @@ mod tests {
             ]),
         );
         let samples = replset_samples(&status, 0);
-        let lag = samples.iter().find(|s| s.metric == "mongodb_replset_member_lag_seconds").unwrap();
+        let lag =
+            samples.iter().find(|s| s.metric == "mongodb_replset_member_lag_seconds").unwrap();
         assert_eq!((lag.labels["member"].as_str(), lag.value), ("db2:27017", 120.0));
         let down = samples
             .iter()
-            .find(|s| s.metric == "mongodb_replset_member_health" && s.labels["member"] == "db3:27017")
+            .find(|s| {
+                s.metric == "mongodb_replset_member_health" && s.labels["member"] == "db3:27017"
+            })
             .unwrap();
         assert_eq!(down.value, 0.0);
         let state = samples
             .iter()
-            .find(|s| s.metric == "mongodb_replset_member_state" && s.labels["member"] == "db3:27017")
+            .find(|s| {
+                s.metric == "mongodb_replset_member_state" && s.labels["member"] == "db3:27017"
+            })
             .unwrap();
         assert_eq!(state.labels["state"], "down");
 
         // Plus de primaire : l'élection a échoué, plus aucune écriture.
         let status = Document::new()
             .with("members", Bson::Array(vec![member("db2:27017", 2, 1.0, 880_000)]));
-        assert_eq!(value(&replset_samples(&status, 0), "mongodb_replset_primary_present"), Some(0.0));
+        assert_eq!(
+            value(&replset_samples(&status, 0), "mongodb_replset_primary_present"),
+            Some(0.0)
+        );
     }
 
     #[test]

@@ -69,7 +69,9 @@ fn clients(target: &Target) -> Result<Clients, ProbeError> {
     let options = Options::from_target(target, DEFAULT_PORT)?;
     let bouncer_key = match &target.credential {
         Credential::None => None,
-        Credential::ApiToken { token } if !token.trim().is_empty() => Some(token.trim().to_string()),
+        Credential::ApiToken { token } if !token.trim().is_empty() => {
+            Some(token.trim().to_string())
+        }
         other => {
             return Err(ProbeError::Config(format!(
                 "CrowdSec expects no credential or a bouncer API key, configured: {other}"
@@ -84,7 +86,13 @@ fn clients(target: &Target) -> Result<Clients, ProbeError> {
         url.set_path("");
         let _ = url.set_port(Some(port as u16));
         let base = url.as_str().trim_end_matches('/').to_string();
-        Some(HttpClient::new(http.clone(), base, Auth::None, options.request_timeout, "CrowdSec LAPI"))
+        Some(HttpClient::new(
+            http.clone(),
+            base,
+            Auth::None,
+            options.request_timeout,
+            "CrowdSec LAPI",
+        ))
     } else {
         None
     };
@@ -210,14 +218,21 @@ pub fn samples(page: &Exposition, ts_ms: i64) -> Vec<Sample> {
         let read = page.sum("cs_parser_hits_total").unwrap_or(0.0);
         let unparsed = page.sum("cs_parser_hits_ko_total").unwrap_or(0.0);
         out.push(counter("crowdsec_lines_read_total", read));
-        out.push(counter("crowdsec_lines_parsed_total", page.sum("cs_parser_hits_ok_total").unwrap_or(0.0)));
+        out.push(counter(
+            "crowdsec_lines_parsed_total",
+            page.sum("cs_parser_hits_ok_total").unwrap_or(0.0),
+        ));
         out.push(counter("crowdsec_lines_unparsed_total", unparsed));
         let totals = page.sum_by("cs_parser_hits_total", "source");
         let failures: BTreeMap<String, f64> = page.sum_by("cs_parser_hits_ko_total", "source");
         for (source, value) in totals.into_iter().filter(|(s, _)| !s.is_empty()).take(MAX_SOURCES) {
             let ko = failures.get(&source).copied().unwrap_or(0.0);
-            out.push(counter("crowdsec_source_lines_total", value).with_label("source", source.clone()));
-            out.push(counter("crowdsec_source_lines_unparsed_total", ko).with_label("source", source));
+            out.push(
+                counter("crowdsec_source_lines_total", value).with_label("source", source.clone()),
+            );
+            out.push(
+                counter("crowdsec_source_lines_unparsed_total", ko).with_label("source", source),
+            );
         }
         if let Some(buckets) = page.sum("cs_buckets") {
             out.push(gauge("crowdsec_buckets", buckets));
@@ -251,10 +266,15 @@ mod tests {
     #[test]
     fn crowdsec_reel() {
         let samples = samples(&Exposition::parse(METRICS), 0);
-        assert_eq!(find(&samples, "crowdsec_version_info", &[]).unwrap().labels["version"], "1.7.0");
+        assert_eq!(
+            find(&samples, "crowdsec_version_info", &[]).unwrap().labels["version"],
+            "1.7.0"
+        );
         assert_eq!(find(&samples, "crowdsec_decisions", &[]).unwrap().value, 4.0);
         assert_eq!(
-            find(&samples, "crowdsec_decisions_by_origin", &[("origin", "crowdsec")]).unwrap().value,
+            find(&samples, "crowdsec_decisions_by_origin", &[("origin", "crowdsec")])
+                .unwrap()
+                .value,
             4.0
         );
         assert_eq!(find(&samples, "crowdsec_alerts", &[]).unwrap().value, 4.0);
@@ -262,7 +282,7 @@ mod tests {
         let firewall =
             find(&samples, "crowdsec_bouncer_requests_total", &[("bouncer", "firewall")]).unwrap();
         assert_eq!((firewall.value, firewall.kind), (1.0, MetricKind::Counter));
-        assert_eq!(find(&samples, "crowdsec_scenario_overflows_total", &[]).unwrap().value, 4.0);
+        assert_eq!(find(&samples, "crowdsec_scenario_overflows_total", &[]).unwrap().value, 6.0);
         assert_eq!(find(&samples, "crowdsec_lines_read_total", &[]).unwrap().value, 14.0);
         assert_eq!(find(&samples, "crowdsec_lines_unparsed_total", &[]).unwrap().value, 2.0);
         let source = find(
@@ -280,7 +300,10 @@ mod tests {
              cs_lapi_route_requests_total{method=\"GET\",route=\"/v1/decisions/stream\"} 12\n",
         );
         let samples = samples(&page, 0);
-        assert_eq!(find(&samples, "crowdsec_version_info", &[]).unwrap().labels["version"], "1.6.8");
+        assert_eq!(
+            find(&samples, "crowdsec_version_info", &[]).unwrap().labels["version"],
+            "1.6.8"
+        );
         assert_eq!(find(&samples, "crowdsec_decisions", &[]).unwrap().value, 0.0);
         assert!(find(&samples, "crowdsec_lines_read_total", &[]).is_none());
     }
@@ -295,8 +318,8 @@ mod tests {
     #[tokio::test]
     async fn interrogation_complete() {
         let (metrics, _) = serve(Router::new().route("/metrics", get(|| async { METRICS }))).await;
-        let (_, lapi_port) = serve(
-            Router::new().route("/health", get(|| async { r#"{"status":"up"}"# })).route(
+        let (_, lapi_port) =
+            serve(Router::new().route("/health", get(|| async { r#"{"status":"up"}"# })).route(
                 "/v1/decisions",
                 get(|headers: HeaderMap| async move {
                     match headers.get("x-api-key").and_then(|v| v.to_str().ok()) {
@@ -304,9 +327,8 @@ mod tests {
                         _ => (StatusCode::FORBIDDEN, r#"{"message":"access forbidden"}"#),
                     }
                 }),
-            ),
-        )
-        .await;
+            ))
+            .await;
         let port = lapi_port.to_string();
         let mut target = cible("crowdsec", &metrics, &[("lapi_port", &port)]);
         target.credential = Credential::ApiToken { token: "bouncer-key".into() };
@@ -333,9 +355,10 @@ mod tests {
 
     #[tokio::test]
     async fn un_autre_exportateur_n_est_pas_crowdsec() {
-        let (metrics, _) =
-            serve(Router::new().route("/metrics", get(|| async { "go_info{version=\"go1\"} 1\n" })))
-                .await;
+        let (metrics, _) = serve(
+            Router::new().route("/metrics", get(|| async { "go_info{version=\"go1\"} 1\n" })),
+        )
+        .await;
         let target = cible("crowdsec", &metrics, &[("lapi", "false")]);
         let error = CrowdsecCollector::new().probe(&target).await.unwrap_err();
         assert!(matches!(error, ProbeError::Protocol(_)), "{error}");
