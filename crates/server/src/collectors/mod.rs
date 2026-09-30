@@ -22,12 +22,12 @@ pub mod synology_history;
 pub mod truenas_history;
 
 pub use dumbmonit_collectors::{
-    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
-    rabbitmq, redis,
-};
-pub use dumbmonit_collectors::{
     AdguardCollector, MikrotikCollector, NutCollector, PiholeCollector, adguard, mikrotik, nut,
     pihole,
+};
+pub use dumbmonit_collectors::{
+    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
+    rabbitmq, redis,
 };
 pub use dumbmonit_collectors::{
     DnsCollector, DummyCollector, HttpCollector, OpnsenseCollector, PbsCollector, PdmCollector,
@@ -37,11 +37,11 @@ pub use dumbmonit_collectors::{
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{
-    ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
-    selfhosted,
+    HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
 };
 pub use dumbmonit_collectors::{
-    HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
+    ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
+    selfhosted,
 };
 pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};
 pub use dumbmonit_collectors::{
