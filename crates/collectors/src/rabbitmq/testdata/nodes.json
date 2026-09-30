@@ -1,0 +1,21 @@
+[
+ {
+  "partitions": [],
+  "fd_total": 1024,
+  "sockets_total": 0,
+  "mem_limit": 9771066163,
+  "mem_alarm": false,
+  "disk_free_limit": 50000000,
+  "disk_free_alarm": false,
+  "proc_total": 1048576,
+  "uptime": 1550112,
+  "name": "rabbit@rabbit1",
+  "running": true,
+  "being_drained": false,
+  "mem_used": 18546688,
+  "fd_used": 42,
+  "sockets_used": 0,
+  "proc_used": 442,
+  "disk_free": 62625722368
+ }
+]

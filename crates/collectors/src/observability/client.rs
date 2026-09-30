@@ -122,6 +122,21 @@ impl HttpClient {
         Ok(Reply { status, body })
     }
 
+    /// Un `GET` avec un en-tête propre au produit (la clé `X-Api-Key` d'un
+    /// bouncer CrowdSec), code laissé à l'appelant.
+    pub async fn get_with_header(
+        &self,
+        path: &str,
+        header: &'static str,
+        value: &str,
+    ) -> Result<Reply, ProbeError> {
+        let request = self.http.get(self.url(path)).header(header, value);
+        let response = self.send(request, path).await?;
+        let status = response.status();
+        let body = response.text().await.map_err(|error| self.transport(&error, path))?;
+        Ok(Reply { status, body })
+    }
+
     /// Un `GET` qui doit réussir, rendu en texte.
     pub async fn get_text(&self, path: &str) -> Result<String, ProbeError> {
         let reply = self.get_raw(path).await?;

@@ -1,0 +1,1 @@
+{"reason":"There are alarms in effect in the cluster","status":"failed","alarms":[{"node":"rabbit@rabbit1","resource":"memory"}]}

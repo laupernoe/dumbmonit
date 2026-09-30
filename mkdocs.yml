@@ -87,6 +87,10 @@ nav:
       - Graylog: devices/graylog.md
       - MDaemon Email Server: devices/mdaemon.md
       - SecurityGateway for Email Servers: devices/securitygateway.md
+      - Redis and Valkey: devices/redis.md
+      - MongoDB: devices/mongodb.md
+      - RabbitMQ: devices/rabbitmq.md
+      - CrowdSec: devices/crowdsec.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md

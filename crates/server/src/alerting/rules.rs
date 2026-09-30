@@ -3117,6 +3117,229 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_abb_device_consecutive_failures",
             )
         },
+        // --- Redis / Valkey (`collectors/redis`) ---
+        // Au plafond, Redis évince ou refuse les écritures selon la politique ;
+        // sans `maxmemory`, la série n'existe pas et la règle se tait.
+        Rule {
+            description: "Redis uses more than 90% of maxmemory: at the limit it evicts keys or refuses every write, depending on maxmemory-policy."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("redis_memory_near_limit", "Redis memory near maxmemory", RuleKind::Threshold, "dumbmonit_redis_memory_used_percent")
+        },
+        Rule {
+            description: "Redis refused client connections in the last 15 minutes: maxclients is reached."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("redis_rejecting_connections", "Redis refusing connections", RuleKind::Threshold, "increase_prometheus(dumbmonit_redis_rejected_connections_total[15m])")
+        },
+        Rule {
+            description: "This Redis replica lost its link to the primary: it serves stale data and will not take over cleanly."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("redis_replication_broken", "Redis replication link down", RuleKind::Threshold, "dumbmonit_redis_master_link_up")
+        },
+        // Vu du primaire : secondes depuis le dernier acquittement d'une réplique,
+        // qui en envoie un par seconde.
+        Rule {
+            description: "A Redis replica has not acknowledged the replication stream for more than 30 seconds."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 30.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("redis_replica_lagging", "Redis replica lagging", RuleKind::Threshold, "dumbmonit_redis_replica_lag_seconds")
+        },
+        Rule {
+            description: "The last Redis snapshot (BGSAVE) failed: with stop-writes-on-bgsave-error, Redis now refuses every write."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("redis_save_failed", "Redis snapshot failed", RuleKind::Threshold, "dumbmonit_redis_rdb_last_save_ok")
+        },
+        Rule {
+            description: "Redis could not write its append-only file: recent writes are not on disk."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("redis_aof_write_failed", "Redis append-only file write failed", RuleKind::Threshold, "dumbmonit_redis_aof_last_write_ok")
+        },
+        // --- MongoDB (`collectors/mongodb`) ---
+        Rule {
+            description: "The MongoDB replica set has no primary: no write is accepted until one is elected."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("mongodb_no_primary", "MongoDB replica set without primary", RuleKind::Threshold, "dumbmonit_mongodb_replset_primary_present")
+        },
+        Rule {
+            description: "A member of the MongoDB replica set is unreachable from the others."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("mongodb_member_unhealthy", "MongoDB member unreachable", RuleKind::Threshold, "dumbmonit_mongodb_replset_member_health")
+        },
+        Rule {
+            description: "A MongoDB secondary is more than a minute behind the primary: if it is elected, the latest writes are missing."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 60.0,
+            clear_threshold: Some(30.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("mongodb_replication_lag", "MongoDB replication lag", RuleKind::Threshold, "dumbmonit_mongodb_replset_member_lag_seconds")
+        },
+        Rule {
+            description: "MongoDB uses more than 80% of its available connections: new clients will be refused."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 80.0,
+            clear_threshold: Some(75.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("mongodb_connections_high", "MongoDB connections near the limit", RuleKind::Threshold, "dumbmonit_mongodb_connections_used_percent")
+        },
+        // 20 % : le seuil `eviction_dirty_trigger` de WiredTiger, au-delà
+        // duquel les threads applicatifs évincent eux-mêmes.
+        Rule {
+            description: "More than 20% of the WiredTiger cache is dirty: application threads have to evict pages themselves and queries slow down."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 20.0,
+            clear_threshold: Some(15.0),
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("mongodb_cache_dirty", "MongoDB cache under pressure", RuleKind::Threshold, "dumbmonit_mongodb_wiredtiger_cache_dirty_percent")
+        },
+        Rule {
+            description: "MongoDB raised regular assertions in the last hour: internal server errors, worth a look in its log."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("mongodb_assertions", "MongoDB internal errors", RuleKind::Threshold, "increase_prometheus(dumbmonit_mongodb_asserts_total{type=\"regular\"}[1h])")
+        },
+        // --- RabbitMQ (`collectors/rabbitmq`) ---
+        Rule {
+            description: "A RabbitMQ node raised a memory or disk alarm: every publisher in the cluster is blocked."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(1 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("rabbitmq_resource_alarm", "RabbitMQ memory or disk alarm", RuleKind::Threshold, "dumbmonit_rabbitmq_alarm")
+        },
+        Rule {
+            description: "A RabbitMQ cluster node is not running."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("rabbitmq_node_down", "RabbitMQ node down", RuleKind::Threshold, "dumbmonit_rabbitmq_node_running")
+        },
+        Rule {
+            description: "RabbitMQ nodes see a network partition: the cluster is split and queues may diverge."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("rabbitmq_partition", "RabbitMQ network partition", RuleKind::Threshold, "dumbmonit_rabbitmq_node_partitions")
+        },
+        // Des messages en attente et personne pour les lire : le service qui
+        // vidait la file est tombé. La valeur est le nombre de messages.
+        Rule {
+            description: "A RabbitMQ queue holds messages and has had no consumer for 15 minutes: whatever read it has stopped."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("rabbitmq_queue_no_consumer", "RabbitMQ queue without consumer", RuleKind::Threshold, "dumbmonit_rabbitmq_queue_messages_ready and dumbmonit_rabbitmq_queue_consumers == 0")
+        },
+        Rule {
+            description: "A RabbitMQ queue is not running: a quorum queue without majority, or a queue whose node is down."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("rabbitmq_queue_not_running", "RabbitMQ queue unavailable", RuleKind::Threshold, "dumbmonit_rabbitmq_queue_running")
+        },
+        // --- CrowdSec (`collectors/crowdsec`) ---
+        Rule {
+            description: "The CrowdSec Local API does not answer: no decision is taken or handed to the bouncers."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base("crowdsec_lapi_down", "CrowdSec Local API down", RuleKind::Threshold, "dumbmonit_crowdsec_lapi_up")
+        },
+        // CrowdSec ne publie pas l'heure du dernier tirage : le compteur de
+        // requêtes du bouncer qui ne bouge plus en tient lieu.
+        Rule {
+            description: "A CrowdSec bouncer has not called the Local API for 30 minutes: it enforces a frozen list."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("crowdsec_bouncer_stale", "CrowdSec bouncer stopped pulling", RuleKind::Threshold, "changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])")
+        },
+        Rule {
+            description: "CrowdSec has not read a single log line in six hours: its acquisition is broken and it sees no attack."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])")
+        },
         // --- fin du bloc Synology DSM ---
         // La sauvegarde locale de DumbMonit lui-même.
         //
@@ -3328,6 +3551,27 @@ mod tests {
             "graylog_journal_filling",
             "graylog_input_failed",
             "graylog_indexing_failures",
+            // Redis, MongoDB, RabbitMQ, CrowdSec.
+            "redis_memory_near_limit",
+            "redis_rejecting_connections",
+            "redis_replication_broken",
+            "redis_replica_lagging",
+            "redis_save_failed",
+            "redis_aof_write_failed",
+            "mongodb_no_primary",
+            "mongodb_member_unhealthy",
+            "mongodb_replication_lag",
+            "mongodb_connections_high",
+            "mongodb_cache_dirty",
+            "mongodb_assertions",
+            "rabbitmq_resource_alarm",
+            "rabbitmq_node_down",
+            "rabbitmq_partition",
+            "rabbitmq_queue_no_consumer",
+            "rabbitmq_queue_not_running",
+            "crowdsec_lapi_down",
+            "crowdsec_bouncer_stale",
+            "crowdsec_no_logs_read",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -3540,6 +3784,29 @@ mod tests {
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",
+            // Redis, MongoDB, RabbitMQ et CrowdSec (`collectors/{redis/info,
+            // mongodb/status,rabbitmq,crowdsec}.rs`).
+            "dumbmonit_redis_memory_used_percent",
+            "dumbmonit_redis_rejected_connections_total",
+            "dumbmonit_redis_master_link_up",
+            "dumbmonit_redis_replica_lag_seconds",
+            "dumbmonit_redis_rdb_last_save_ok",
+            "dumbmonit_redis_aof_last_write_ok",
+            "dumbmonit_mongodb_replset_primary_present",
+            "dumbmonit_mongodb_replset_member_health",
+            "dumbmonit_mongodb_replset_member_lag_seconds",
+            "dumbmonit_mongodb_connections_used_percent",
+            "dumbmonit_mongodb_wiredtiger_cache_dirty_percent",
+            "dumbmonit_mongodb_asserts_total",
+            "dumbmonit_rabbitmq_alarm",
+            "dumbmonit_rabbitmq_node_running",
+            "dumbmonit_rabbitmq_node_partitions",
+            "dumbmonit_rabbitmq_queue_messages_ready",
+            "dumbmonit_rabbitmq_queue_consumers",
+            "dumbmonit_rabbitmq_queue_running",
+            "dumbmonit_crowdsec_lapi_up",
+            "dumbmonit_crowdsec_bouncer_requests_total",
+            "dumbmonit_crowdsec_lines_read_total",
         ];
 
         for rule in builtin_rules() {
