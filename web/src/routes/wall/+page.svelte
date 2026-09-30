@@ -7,6 +7,11 @@
 	 * weather window, three big readouts, then "Needs you" in two columns. No
 	 * chrome: the page covers the nav with a fixed overlay; Escape or "Exit"
 	 * goes back to the overview. Refreshes every 20 s, keeps the screen awake.
+	 *
+	 * The weather window is the hero: half the width on a desktop, its own band
+	 * on a phone. A display can also play music (Spotify, Deezer, YouTube): the
+	 * link is kept in this browser only and nothing third-party loads until
+	 * one is set.
 	 */
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -31,7 +36,10 @@
 	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
 	import { quickSilencePayload } from '$lib/components/alerts/helpers';
 	import WallReadout from '$lib/components/wall/WallReadout.svelte';
+	import MusicControl from '$lib/components/wall/MusicControl.svelte';
+	import MusicPlayer from '$lib/components/wall/MusicPlayer.svelte';
 	import { skyCondition } from '$lib/components/overview/sky';
+	import { parseMusicLink } from '$lib/wall/music';
 
 	const REFRESH_MS = 20_000;
 
@@ -45,6 +53,35 @@
 	let now = $state(new Date());
 	let silencingKey = $state<string | null>(null);
 	let silenceError = $state<string | null>(null);
+
+	/** Music for this display: the share link as pasted, per browser. */
+	const MUSIC_KEY = 'dumbmonit-wall-music';
+	let musicLink = $state<string | null>(readMusicLink());
+	let musicOpen = $state(false);
+	// Re-checked on every read: a stored value that no longer parses plays nothing.
+	const music = $derived.by(() => {
+		if (!musicLink) return null;
+		const parsed = parseMusicLink(musicLink);
+		return parsed.ok ? parsed.embed : null;
+	});
+
+	function readMusicLink(): string | null {
+		try {
+			return localStorage.getItem(MUSIC_KEY);
+		} catch {
+			return null; // Storage blocked: the wall simply has no music.
+		}
+	}
+
+	function saveMusic(link: string | null) {
+		musicLink = link;
+		try {
+			if (link) localStorage.setItem(MUSIC_KEY, link);
+			else localStorage.removeItem(MUSIC_KEY);
+		} catch {
+			// Not persisted (private window): it still plays until the tab closes.
+		}
+	}
 
 	const sky = $derived(readSky({ targets, probes, alerts, rules }));
 	const condition = $derived(skyCondition(sky));
@@ -142,7 +179,12 @@
 	}
 
 	function onKeydown(event: KeyboardEvent) {
-		// The palette owns Escape while it is open.
+		// The palette owns Escape while it is open; so does the music panel.
+		if (event.key === 'Escape' && musicOpen) {
+			event.preventDefault();
+			musicOpen = false;
+			return;
+		}
 		if (event.key === 'Escape' && !palette.isOpen) {
 			event.preventDefault();
 			exit();
@@ -169,7 +211,17 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="wall fixed inset-0 z-40 flex flex-col bg-canvas text-ink">
-	<div class="absolute top-3 right-3 z-10 sm:top-5 sm:right-6 lg:top-6 lg:right-10">
+	<!-- Tools float over the weather window's corner, on a frosted pill. -->
+	<div
+		class="wall-tools absolute top-6 right-6 z-10 flex items-center rounded-xl bg-surface/80 p-1 shadow-lift backdrop-blur sm:top-[2.125rem] sm:right-[2.625rem] lg:top-[2.625rem] lg:right-[3.625rem]"
+	>
+		<MusicControl
+			link={musicLink}
+			embed={music}
+			bind:open={musicOpen}
+			onsave={(link) => saveMusic(link)}
+			onclear={() => saveMusic(null)}
+		/>
 		<Button variant="ghost" size="sm" onclick={exit} aria-label="Exit wall mode">
 			<X class="size-4" aria-hidden="true" />
 			Exit
@@ -192,12 +244,12 @@
 				</div>
 			</div>
 		{:else if firstLoad}
-			<div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
+			<div class="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
+				<Skeleton class="h-[200px] w-full sm:h-[260px] lg:order-last lg:h-[clamp(320px,46vh,620px)]" />
 				<div>
 					<Skeleton class="h-24 w-3/4" />
 					<Skeleton class="mt-6 h-8 w-1/3" />
 				</div>
-				<Skeleton class="h-[250px] w-full lg:w-[420px]" />
 			</div>
 			<div class="mt-10 flex gap-16">
 				{#each { length: 3 } as _, i (i)}
@@ -205,15 +257,29 @@
 				{/each}
 			</div>
 		{:else}
-			<!-- Bulletin: sentence and readouts on the left, the weather window on the right. -->
-			<section class="grid gap-x-12 gap-y-6 lg:grid-cols-[minmax(0,1fr)_auto]">
-				<div class="min-w-0 pr-20 sm:pr-24 lg:pr-0">
+			<!--
+				Bulletin. Desktop: the sentence and readouts on the left, the weather
+				window as the hero on the right (music under it when set). Phone: the
+				window first, as a band, then the sentence, readouts and music.
+			-->
+			<section
+				class="hero grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] xl:gap-x-14"
+			>
+				<div class="sky-cell relative lg:col-start-2 lg:row-start-1">
+					<SkyScene
+						{condition}
+						frame={false}
+						class="h-[200px] w-full rounded-[var(--radius-card)] border border-line shadow-float sm:h-[260px] lg:h-full lg:min-h-[clamp(300px,42vh,580px)]"
+					/>
+				</div>
+
+				<div class="flex min-w-0 flex-col lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:py-2">
 					<DecryptText
 						tag="h1"
 						text={sky.sentence}
 						speed={16}
 						hold={2}
-						class="display text-[clamp(2.5rem,6.5vw,6.5rem)] text-ink"
+						class="display text-[clamp(2.5rem,4.4vw,5.5rem)] text-ink"
 					/>
 					<div class="mt-5 flex flex-wrap items-center gap-2.5 sm:gap-3">
 						{#each sky.plates as plate (plate.label)}
@@ -221,8 +287,8 @@
 						{/each}
 					</div>
 
-					<!-- Three readouts, read from across the room. -->
-					<div class="graticule mt-8 flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-16 lg:mt-12">
+					<!-- Three readouts, read from across the room; they sit on the window's baseline. -->
+					<div class="graticule mt-8 flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-14 lg:mt-auto lg:pt-10">
 						<WallReadout label="Reporting" value={sky.counts.reporting} tone="signal" />
 						<WallReadout
 							label="Needs you"
@@ -237,12 +303,9 @@
 					</div>
 				</div>
 
-				<div class="lg:pt-10">
-					<SkyScene
-						{condition}
-						class="aspect-[42/25] w-full max-w-[420px] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-lift lg:w-[420px]"
-					/>
-				</div>
+				{#if music}
+					<MusicPlayer embed={music} class="lg:col-start-2 lg:row-start-2" />
+				{/if}
 			</section>
 
 			<!-- Needs you -->
@@ -282,6 +345,41 @@
 </div>
 
 <style>
+	/*
+	 * "Music" stays out of sight on a display nobody touches: it shows when a
+	 * pointer moves over the wall, when it is reached with the keyboard, and
+	 * always on touch screens (no hover to reveal it).
+	 */
+	.wall :global(.music-toggle) {
+		max-width: 0;
+		padding-inline: 0;
+		opacity: 0;
+		overflow: hidden;
+		transition:
+			max-width 240ms var(--ease-out-expo, ease),
+			padding 240ms var(--ease-out-expo, ease),
+			opacity 200ms ease;
+	}
+	.wall:hover :global(.music-toggle),
+	.wall :global(.music-toggle:focus-visible),
+	.wall :global(.music-toggle.is-open) {
+		max-width: 8rem;
+		padding-inline: 0.75rem;
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.wall :global(.music-toggle) {
+			max-width: 8rem;
+			padding-inline: 0.75rem;
+			opacity: 1;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.wall :global(.music-toggle) {
+			transition: none;
+		}
+	}
+
 	/*
 	 * The "Needs you" rows are shared with the Overview and set their own type
 	 * sizes; on a wall they are read from further away, so the list is scaled

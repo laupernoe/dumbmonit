@@ -256,6 +256,23 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
             assert!(csp.contains(directive), "{uri} : {directive} absent de {csp}");
         }
         assert!(csp.contains("script-src 'self' 'nonce-"), "{uri} : {csp}");
+        // Le mode mur intègre un lecteur de musique : exactement ces trois
+        // origines d'intégration, rien de plus large.
+        let frames: Vec<&str> = csp
+            .split(';')
+            .map(str::trim)
+            .filter_map(|d| d.strip_prefix("frame-src "))
+            .flat_map(str::split_whitespace)
+            .collect();
+        assert_eq!(
+            frames,
+            [
+                "https://open.spotify.com",
+                "https://widget.deezer.com",
+                "https://www.youtube-nocookie.com"
+            ],
+            "{uri} : {csp}"
+        );
         assert_eq!(header(&response, "referrer-policy").as_deref(), Some("same-origin"), "{uri}");
     }
 
@@ -272,6 +289,8 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
     let csp = header(&response, "content-security-policy").expect("csp");
     assert!(csp.contains("default-src 'none'"), "{csp}");
     assert!(!csp.contains("frame-ancestors"), "{csp}");
+    // …et n'encadre rien elle-même.
+    assert!(!csp.contains("frame-src"), "{csp}");
 }
 
 #[tokio::test]
