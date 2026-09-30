@@ -1,0 +1,9 @@
+{
+  "channel": "long-term",
+  "check-certificate": "yes",
+  "installed-version": "7.23.7",
+  "ip-version": "auto",
+  "latest-version": "7.23.7",
+  "mode": "https",
+  "status": "System is already up to date"
+}

@@ -1888,6 +1888,199 @@ const PLEX_NO_TOKEN: CredentialView = CredentialView {
     fields: &[],
 };
 
+/// Mot de passe d'application Pi-hole : échangé contre une session, gardée
+/// d'une interrogation à l'autre (`collectors/pihole/mod.rs`).
+const PIHOLE_APP_PASSWORD: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "App password (recommended)",
+    help: "Generated under Settings → Web interface / API in expert mode. It cannot change Pi-hole's settings.",
+    fields: &[cred_secret(
+        "token",
+        "App password",
+        "Pi-hole shows it once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const PIHOLE_NO_PASSWORD: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "Only for a Pi-hole whose web interface has no password at all.",
+    fields: &[],
+};
+
+/// Options lues par `collectors/pihole/options.rs`.
+const PIHOLE_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "Pi-hole serves plain HTTP on port 80 and HTTPS on port 443 with a certificate it signs itself.",
+        "http",
+        &["http", "https"],
+    ),
+    number("port", "Port", "Used if the address does not give a port.", "80", "80"),
+    insecure_tls(
+        "Pi-hole's own HTTPS certificate is self-signed: enable this to use HTTPS without installing your own certificate.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 60.",
+        "10",
+        "10",
+    ),
+];
+
+/// Compte AdGuard Home : un utilisateur de `AdGuardHome.yaml`, envoyé en
+/// « basic » (`collectors/adguard/client.rs`).
+const ADGUARD_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The dedicated user added to AdGuardHome.yaml, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const ADGUARD_NO_LOGIN: CredentialView = CredentialView {
+    kind: "none",
+    label: "No authentication",
+    help: "Only for an AdGuard Home with no user at all in AdGuardHome.yaml.",
+    fields: &[],
+};
+
+/// Options lues par `collectors/adguard/options.rs`.
+const ADGUARD_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "AdGuard Home serves its web interface over plain HTTP until you give it a certificate in Settings → Encryption settings. HTTPS then.",
+        "http",
+        &["http", "https"],
+    ),
+    number(
+        "port",
+        "Port",
+        "The web interface port chosen during setup. Used if the address does not give a port.",
+        "80",
+        "80",
+    ),
+    insecure_tls(
+        "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 60.",
+        "5",
+        "5",
+    ),
+    boolean(
+        "upstream_check",
+        "Test upstream servers",
+        "Asks AdGuard Home to test each upstream DNS server at every check, as its Test upstreams button does. An upstream that fails or stays silent for 4 seconds is reported down.",
+        true,
+    ),
+];
+
+/// NUT : `upsd` laisse lire toute machine qu'il accepte, sans compte
+/// (`collectors/nut/mod.rs`).
+const NUT_NONE: CredentialView = CredentialView {
+    kind: "none",
+    label: "No authentication (recommended)",
+    help: "upsd lets any host it accepts read the UPS variables, without an account.",
+    fields: &[],
+};
+
+const NUT_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "upsd user name / password",
+    help: "Sent with USERNAME and PASSWORD before reading. upsd does not check them to read; set them only if your setup asks for them.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "A user of upsd.users with no actions and no instcmds.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/nut/mod.rs`.
+const NUT_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "The upsd port, used if the address does not give one.", "3493", "3493"),
+    text(
+        "ups",
+        "UPS",
+        "Comma-separated UPS names to watch, as upsd knows them (\"ups\" on a Synology NAS, \"qnapups\" on a QNAP). Empty watches every UPS the server publishes.",
+        "ups",
+        "",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per exchange (seconds)",
+        "Time allowed for the connection and each answer, from 1 to 60.",
+        "10",
+        "10",
+    ),
+];
+
+/// Compte RouterOS dans un groupe aux politiques `read,api,rest-api`
+/// (`collectors/mikrotik/client.rs`).
+const MIKROTIK_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Read-only user",
+    help: "The dumbmonit user created above, in the dumbmonit-read group. Sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Options lues par `collectors/mikrotik/options.rs`.
+const MIKROTIK_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "HTTPS is the www-ssl service. HTTP (the www service) also works, but the password then crosses the network in clear.",
+        "https",
+        &["https", "http"],
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. Empty: 443 for HTTPS, 80 for HTTP.",
+        "443",
+        "",
+    ),
+    insecure_tls(
+        "A certificate made on the router itself cannot be verified: enable this if the connection is refused for that reason.",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call, from 1 to 60.",
+        "10",
+        "10",
+    ),
+    boolean(
+        "interfaces",
+        "Read the interfaces",
+        "State, traffic, errors and link losses of every enabled interface. Dynamic ones (PPPoE, L2TP clients) are left out.",
+        true,
+    ),
+    number(
+        "max_interfaces",
+        "Interfaces read at most",
+        "Beyond this, the next interfaces are counted but not read. From 1 to 1000.",
+        "64",
+        "64",
+    ),
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
     Json(state.collectors.kinds().into_iter().map(describe).collect())
 }
@@ -2714,6 +2907,103 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: PLEX_OPTIONS,
         },
+        "pihole" => CollectorView {
+            kind,
+            label: "Pi-hole",
+            summary: "The DNS ad blocker: blocking on or paused, queries and share blocked, blocklist age, upstream failures, updates and its own diagnosis messages.",
+            examples: &["Pi-hole v6 on a Raspberry Pi", "Pi-hole in Docker"],
+            credential_types: &["api_token", "none"],
+            credentials: &[PIHOLE_APP_PASSWORD, PIHOLE_NO_PASSWORD],
+            address_hint: "pi.hole",
+            default_port: 80,
+            setup: Setup {
+                title: "Create an app password in Pi-hole",
+                steps: &[
+                    "Pi-hole v6 or later is required: version 5 had no REST API. Pi-hole has no read-only account; the closest is an app password, which cannot change any setting.",
+                    "In Pi-hole's web interface, open Settings → Web interface / API and switch the page from Basic to Expert. Click Configure app password, copy the password shown, then click Enable new app password. Pi-hole shows it only once, and a new one replaces the previous one.",
+                    "An app password stays read-only for settings as long as webserver.api.app_sudo is false, the default. Check it on the Pi-hole machine (in Docker, prefix the command with docker exec and the container name):\npihole-FTL --config webserver.api.app_sudo",
+                    "In DumbMonit, enter the Pi-hole address, for example \"pi.hole\" or \"192.168.1.53\", and paste the app password. For a Pi-hole whose web interface has no password, pick No password instead.",
+                    "DumbMonit only reads. It never pauses blocking and never changes a list, and it keeps one API session open between checks instead of opening one per check: Pi-hole allows 16 sessions at a time.",
+                ],
+                warning: "The app password still allows pausing blocking and editing lists through the API: keep it for DumbMonit only. Pi-hole serves plain HTTP on port 80, and the password crosses the network each time a session opens: across an untrusted network, use HTTPS on port 443.",
+                doc_url: "https://docs.pi-hole.net/api/",
+            },
+            options: PIHOLE_OPTIONS,
+        },
+        "adguard" => CollectorView {
+            kind,
+            label: "AdGuard Home",
+            summary: "The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.",
+            examples: &["AdGuard Home", "AdGuard Home on OpenWrt or a NAS"],
+            credential_types: &["username_password", "none"],
+            credentials: &[ADGUARD_LOGIN, ADGUARD_NO_LOGIN],
+            address_hint: "adguard.lan",
+            default_port: 80,
+            setup: Setup {
+                title: "Add a user for DumbMonit to AdGuard Home",
+                steps: &[
+                    "AdGuard Home has no read-only account: every user listed in AdGuardHome.yaml can change every setting. Give DumbMonit a user of its own, so it can be removed without touching yours. First make a bcrypt hash of a long random password (htpasswd comes with the apache2-utils or httpd-tools package):\nhtpasswd -B -C 10 -n -b dumbmonit 'LONG-RANDOM-PASSWORD'",
+                    "Stop AdGuard Home, open AdGuardHome.yaml (next to the AdGuardHome binary, or in the conf folder of the Docker volume) and add this line under \"users:\", at the same indentation as the \"- name:\" line already there. Replace HASH with what htpasswd printed after \"dumbmonit:\". Start AdGuard Home again.\n- { name: dumbmonit, password: \"HASH\" }",
+                    "Check from the DumbMonit host that the user is accepted:\ncurl -u dumbmonit http://adguard.lan/control/status",
+                    "In DumbMonit, enter the address of the AdGuard Home web interface, for example \"adguard.lan\" (port 80) or \"http://adguard.lan:3000\", then the user dumbmonit and its password.",
+                    "DumbMonit only reads the status, the statistics, the filter lists and the last version check. It never reads the query log. At every check it asks AdGuard Home to test each upstream DNS server, as the Test upstreams button does; untick Test upstream servers below to stop that.",
+                ],
+                warning: "The dumbmonit user can change every setting, like any AdGuard Home user: keep its password to DumbMonit alone. It travels with every request, so across an untrusted network turn on HTTPS in Settings → Encryption settings. After five wrong passwords, AdGuard Home refuses the address for 15 minutes.",
+                doc_url: "https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset",
+            },
+            options: ADGUARD_OPTIONS,
+        },
+        "nut" => CollectorView {
+            kind,
+            label: "UPS with NUT",
+            summary: "UPS served by Network UPS Tools: on battery, low or worn-out battery, charge, runtime left, load and input voltage, for every UPS the server publishes.",
+            examples: &[
+                "Synology or QNAP NAS with a USB UPS",
+                "Raspberry Pi running NUT",
+                "TrueNAS UPS service",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[NUT_NONE, NUT_LOGIN],
+            address_hint: "nas.lan",
+            default_port: 3493,
+            setup: Setup {
+                title: "Let DumbMonit read the NUT server",
+                steps: &[
+                    "Find the NUT server: the machine the UPS is plugged into (a NAS, a Raspberry Pi, a server) runs upsd on TCP port 3493. From the DumbMonit host, check that it answers and note the names of its UPS.\nprintf 'LIST UPS\\nLOGOUT\\n' | nc nas.lan 3493",
+                    "On a plain NUT install, make upsd listen on an address the DumbMonit host can reach: add this line to upsd.conf, open TCP port 3493 in the firewall for the DumbMonit host, and restart upsd. Reading needs no account: upsd lets any host it accepts read the variables, and changes nothing without a user that has the right to.\nLISTEN 0.0.0.0 3493",
+                    "On a NAS, the same switch has another name. Synology DSM: Control Panel → Hardware & Power → UPS, tick Enable network UPS server, and add the DumbMonit host under Permitted DiskStation Devices; the UPS is named ups. QNAP: the UPS page of the Control Panel, Enable network UPS master, with the DumbMonit host among the allowed addresses; the UPS is named qnapups. TrueNAS: the UPS service with Remote Monitor ticked.",
+                    "Optional: DumbMonit sends a user name and password only if you enter one, and upsd does not ask for any to read. If your policy wants every client named, add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.\n[dumbmonit]\npassword = a-long-random-password",
+                    "In DumbMonit, enter the address of the NUT server, for example \"nas.lan\". Every UPS it publishes is watched; to watch only some, list their names in the UPS option.",
+                    "DumbMonit only reads: it sends LIST UPS and LIST VAR, never LOGIN, SET, INSTCMD or FSD, so the server never counts it as a secondary to wait for before shutting down.",
+                ],
+                warning: "DumbMonit watches the UPS; it shuts nothing down. The machines the UPS powers still need their own NUT client (upsmon) to shut down cleanly when the battery runs low.",
+                doc_url: "https://networkupstools.org/docs/man/upsd.conf.html",
+            },
+            options: NUT_OPTIONS,
+        },
+        "mikrotik" => CollectorView {
+            kind,
+            label: "MikroTik RouterOS",
+            summary: "RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.",
+            examples: &["hAP", "RB5009", "CCR", "CRS switch", "Cloud Hosted Router"],
+            credential_types: &["username_password"],
+            credentials: &[MIKROTIK_LOGIN],
+            address_hint: "192.168.88.1",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only user on the router",
+                steps: &[
+                    "Open a terminal on the router (WinBox → New Terminal, or SSH with the default account) and create a group that can only read, through the REST API. RouterOS needs all three policies for a REST read: rest-api opens the API, api and read allow the read itself.\n/user group add name=dumbmonit-read policy=read,api,rest-api comment=DumbMonit",
+                    "Create the user in that group with a long random password of your own. To accept the account only from DumbMonit, add address= followed by the DumbMonit host's address.\n/user add name=dumbmonit group=dumbmonit-read password=REPLACE-WITH-A-LONG-RANDOM-PASSWORD",
+                    "Turn on the HTTPS web service, which RouterOS ships disabled and without a certificate. Skip this if www-ssl already has one. Otherwise these commands make a certificate on the router itself; then tick \"Accept an unverifiable certificate\" in the options below.\n/certificate add name=local-ca common-name=local-ca key-usage=key-cert-sign,crl-sign days-valid=3650\n/certificate sign local-ca\n/certificate add name=https-cert common-name=router.lan days-valid=825\n/certificate sign https-cert ca=local-ca\n/ip service set www-ssl certificate=https-cert disabled=no",
+                    "Optional: to be told about new RouterOS versions, let the router check for them at startup and once a day. A read-only user may not start that check, so DumbMonit only reads its result.\n/system scheduler add name=check-for-updates interval=1d start-time=startup on-event=\"/system package update check-for-updates once\"",
+                    "In DumbMonit, enter the router's address, for example \"192.168.88.1\", with the dumbmonit user and its password. DumbMonit only sends GET requests to /rest: it never changes a setting, never starts an update and never reboots the router.",
+                ],
+                warning: "RouterOS 7.1 or later is required: RouterOS 6 has no REST API. Do not use the default account: its full group can change everything, while dumbmonit-read has no write policy and every change is refused. The www service (plain HTTP) also answers the REST API, but it sends the password in clear with every request.",
+                doc_url: "https://help.mikrotik.com/docs/spaces/ROS/pages/47579162/REST+API",
+            },
+            options: MIKROTIK_OPTIONS,
+        },
         other => CollectorView {
             kind,
             label: other,
@@ -2756,6 +3046,10 @@ mod tests {
         "paperless",
         "jellyfin",
         "plex",
+        "pihole",
+        "adguard",
+        "nut",
+        "mikrotik",
         "agent",
         "http",
         "tcp",
@@ -3042,6 +3336,23 @@ mod tests {
             ("victorialogs", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("loki", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("graylog", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("pihole", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "adguard",
+                &["scheme", "port", "insecure_tls", "request_timeout_seconds", "upstream_check"],
+            ),
+            ("nut", &["port", "ups", "request_timeout_seconds"]),
+            (
+                "mikrotik",
+                &[
+                    "scheme",
+                    "port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "interfaces",
+                    "max_interfaces",
+                ],
+            ),
             (
                 "mdaemon",
                 &["services", "request_timeout_seconds", "api_port", "api_tls", "insecure_tls"],
@@ -3180,6 +3491,47 @@ mod tests {
                 selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
             );
         }
+        // `collectors/pihole/options.rs`.
+        assert_eq!(defaut("pihole", "scheme"), "http");
+        assert_eq!(
+            defaut("pihole", "port"),
+            dumbmonit_collectors::pihole::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("pihole", "request_timeout_seconds"),
+            dumbmonit_collectors::pihole::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        // `collectors/adguard/options.rs`.
+        assert_eq!(defaut("adguard", "scheme"), "http");
+        assert_eq!(
+            defaut("adguard", "port"),
+            dumbmonit_collectors::adguard::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("adguard", "request_timeout_seconds"),
+            dumbmonit_collectors::adguard::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(defaut("adguard", "upstream_check"), "true");
+        assert_eq!(describe("adguard").default_port, dumbmonit_collectors::adguard::DEFAULT_PORT);
+        // `collectors/nut/mod.rs`.
+        assert_eq!(defaut("nut", "port"), dumbmonit_collectors::nut::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("nut", "request_timeout_seconds"),
+            dumbmonit_collectors::nut::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(defaut("nut", "ups"), "");
+        // `collectors/mikrotik/options.rs` : le port dépend du protocole.
+        assert_eq!(defaut("mikrotik", "scheme"), "https");
+        assert_eq!(defaut("mikrotik", "port"), "");
+        assert_eq!(
+            defaut("mikrotik", "request_timeout_seconds"),
+            dumbmonit_collectors::mikrotik::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(
+            defaut("mikrotik", "max_interfaces"),
+            dumbmonit_collectors::mikrotik::DEFAULT_MAX_INTERFACES.to_string()
+        );
+        assert_eq!(defaut("mikrotik", "interfaces"), "true");
         assert_eq!(
             defaut("paperless", "task_lookback_hours"),
             selfhosted::paperless::DEFAULT_TASK_LOOKBACK_HOURS.to_string()
@@ -3284,6 +3636,9 @@ mod tests {
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
             ("jellyfin", "DumbMonit"),
+            ("adguard", "dumbmonit"),
+            ("nut", "[dumbmonit]"),
+            ("mikrotik", "dumbmonit"),
             ("agent", "token"),
         ];
         for (kind, dedie) in attendus {
@@ -3355,6 +3710,10 @@ mod tests {
             ("paperless", include_str!("../../../../docs/devices/paperless.md")),
             ("jellyfin", include_str!("../../../../docs/devices/jellyfin.md")),
             ("plex", include_str!("../../../../docs/devices/plex.md")),
+            ("pihole", include_str!("../../../../docs/devices/pihole.md")),
+            ("adguard", include_str!("../../../../docs/devices/adguard.md")),
+            ("nut", include_str!("../../../../docs/devices/nut.md")),
+            ("mikrotik", include_str!("../../../../docs/devices/mikrotik.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
