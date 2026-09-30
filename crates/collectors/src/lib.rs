@@ -7,13 +7,17 @@
 //! sur un agent relais posé dans un autre site. Le collecteur « agent » (fraîcheur
 //! des mesures poussées) reste côté serveur : il lit la base.
 
+pub mod adguard;
 pub mod dummy;
 pub mod http;
 pub mod mdaemon;
+pub mod mikrotik;
+pub mod nut;
 pub mod observability;
 pub mod opnsense;
 pub mod pbs;
 pub mod pdm;
+pub mod pihole;
 pub mod pmg;
 pub mod proxmox;
 pub mod redfish;
@@ -28,12 +32,16 @@ use std::time::Duration;
 
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
+pub use adguard::AdguardCollector;
 pub use dummy::DummyCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
+pub use mikrotik::MikrotikCollector;
+pub use nut::NutCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use opnsense::OpnsenseCollector;
 pub use pbs::PbsCollector;
 pub use pdm::PdmCollector;
+pub use pihole::PiholeCollector;
 pub use pmg::PmgCollector;
 pub use proxmox::ProxmoxCollector;
 pub use redfish::RedfishCollector;
@@ -75,6 +83,10 @@ impl Registry {
         registry.register(Arc::new(GraylogCollector::new()));
         registry.register(Arc::new(MdaemonCollector::new()));
         registry.register(Arc::new(SecurityGatewayCollector::new()));
+        registry.register(Arc::new(PiholeCollector::new()));
+        registry.register(Arc::new(AdguardCollector::new()));
+        registry.register(Arc::new(NutCollector::new()));
+        registry.register(Arc::new(MikrotikCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));

@@ -1,0 +1,12 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "timestamp": 1790751552,
+      "type": "LOAD",
+      "plain": "Long-term load (15min avg) larger than number of processors: 12.5 > 8",
+      "html": "Long-term load (15min avg) larger than number of processors: <strong>12.5 &gt; 8</strong><br>This may slow down DNS resolution and can cause bottlenecks."
+    }
+  ],
+  "took": 0.0020589828491210938
+}

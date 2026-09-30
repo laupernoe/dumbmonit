@@ -1,0 +1,75 @@
+{
+  "ftl": {
+    "database": {
+      "gravity": 74761,
+      "antigravity": 0,
+      "groups": 1,
+      "lists": 1,
+      "clients": 0,
+      "domains": {
+        "allowed": {
+          "total": 0,
+          "enabled": 0
+        },
+        "denied": {
+          "total": 0,
+          "enabled": 0
+        }
+      },
+      "regex": {
+        "allowed": {
+          "total": 0,
+          "enabled": 0
+        },
+        "denied": {
+          "total": 0,
+          "enabled": 0
+        }
+      }
+    },
+    "privacy_level": 0,
+    "query_frequency": 0.26666666666666666,
+    "clients": {
+      "total": 1,
+      "active": 1
+    },
+    "pid": 186,
+    "uptime": 26017.353251,
+    "%mem": 0.0703999176621437,
+    "%cpu": 0.05000000074505806,
+    "allow_destructive": true,
+    "dnsmasq": {
+      "dns_cache_inserted": 8,
+      "dns_cache_live_freed": 0,
+      "dns_queries_forwarded": 4,
+      "dns_auth_answered": 0,
+      "dns_local_answered": 5,
+      "dns_stale_answered": 0,
+      "dns_unanswered": 0,
+      "dnssec_max_crypto_use": 0,
+      "dnssec_max_sig_fail": 0,
+      "dnssec_max_work": 0,
+      "bootp": 0,
+      "pxe": 0,
+      "dhcp_ack": 0,
+      "dhcp_decline": 0,
+      "dhcp_discover": 0,
+      "dhcp_inform": 0,
+      "dhcp_nak": 0,
+      "dhcp_offer": 0,
+      "dhcp_release": 0,
+      "dhcp_request": 0,
+      "noanswer": 0,
+      "leases_allocated_4": 0,
+      "leases_pruned_4": 0,
+      "leases_allocated_6": 0,
+      "leases_pruned_6": 0,
+      "tcp_connections": 0,
+      "dhcp_leasequery": 0,
+      "dhcp_lease_unassigned": 0,
+      "dhcp_lease_actve": 0,
+      "dhcp_lease_unknown": 0
+    }
+  },
+  "took": 0.006877422332763672
+}
