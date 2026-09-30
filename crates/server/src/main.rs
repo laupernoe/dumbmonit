@@ -126,6 +126,12 @@ async fn run(config: Config) -> Result<()> {
     // identifiant est fourni.
     registry.register(Arc::new(collectors::MdaemonCollector::new()));
     registry.register(Arc::new(collectors::SecurityGatewayCollector::new()));
+    // Filtrage DNS (Pi-hole, AdGuard Home), onduleurs derrière NUT, routeurs
+    // MikroTik.
+    registry.register(Arc::new(collectors::PiholeCollector::new()));
+    registry.register(Arc::new(collectors::AdguardCollector::new()));
+    registry.register(Arc::new(collectors::NutCollector::new()));
+    registry.register(Arc::new(collectors::MikrotikCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

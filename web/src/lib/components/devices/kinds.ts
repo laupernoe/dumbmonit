@@ -9,12 +9,16 @@
  */
 import type { Component } from 'svelte';
 import type { Target } from '$lib/api/types';
+import AdguardPanel from './adguard/AdguardPanel.svelte';
 import AgentPanel from './agent/AgentPanel.svelte';
 import MailServicesPanel from './mdaemon/MailServicesPanel.svelte';
+import MikrotikPanel from './mikrotik/MikrotikPanel.svelte';
+import NutPanel from './nut/NutPanel.svelte';
 import ObservabilityPanel from './observability/ObservabilityPanel.svelte';
 import OpnsensePanel from './opnsense/OpnsensePanel.svelte';
 import PbsPanel from './pbs/PbsPanel.svelte';
 import PdmPanel from './pdm/PdmPanel.svelte';
+import PiholePanel from './pihole/PiholePanel.svelte';
 import PmgPanel from './pmg/PmgPanel.svelte';
 import ProxmoxPanel from './proxmox/ProxmoxPanel.svelte';
 import PushPanel from './push/PushPanel.svelte';
@@ -24,7 +28,7 @@ import TruenasPanel from './truenas/TruenasPanel.svelte';
 
 export type KindPanel = Component<{ target: Target }>;
 
-export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel };
+export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel, pihole: PiholePanel, adguard: AdguardPanel, nut: NutPanel, mikrotik: MikrotikPanel };
 
 /** The panel for a kind, or `null` when the generic charts are all there is. */
 export function kindPanel(kind: string): KindPanel | null {

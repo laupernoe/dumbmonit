@@ -22,6 +22,10 @@ pub mod synology_history;
 pub mod truenas_history;
 
 pub use dumbmonit_collectors::{
+    AdguardCollector, MikrotikCollector, NutCollector, PiholeCollector, adguard, mikrotik, nut,
+    pihole,
+};
+pub use dumbmonit_collectors::{
     DnsCollector, DummyCollector, HttpCollector, OpnsenseCollector, PbsCollector, PdmCollector,
     PingCollector, PmgCollector, ProxmoxCollector, Registry, SnmpCollector, SynologyCollector,
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,

@@ -15,11 +15,15 @@ form always matches what this version can monitor.
 | [Synology DSM](synology.md) | `synology` | username/password | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | API key and secret | Firewall, router, multi-WAN edge |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
+| [MikroTik RouterOS](mikrotik.md) | `mikrotik` | username/password (read-only group) | Router or switch: versions and firmware behind, CPU, memory, sensors, interface errors |
+| [UPS with NUT](nut.md) | `nut` | none, or username/password | UPS on a NAS, Raspberry Pi or server running Network UPS Tools |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |
 | [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | none, username/password or token | Time series database: ingestion, refused samples, disk headroom |
 | [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | none, username/password or token | Log database: ingestion, refused lines, disk headroom |
 | [Grafana Loki](loki.md) | `loki` | none, username/password or token | Log server: readiness, refused lines, flush failures |
 | [Graylog](graylog.md) | `graylog` | access token or username/password | Log server and its OpenSearch cluster: journal, buffers, throughput, inputs |
+| [Pi-hole](pihole.md) | `pihole` | app password, or none | DNS ad blocker: blocking state, blocked share, blocklist age, updates |
+| [AdGuard Home](adguard.md) | `adguard` | username/password | DNS filter: protection, blocks, filter lists, upstream servers, updates |
 | [MDaemon Email Server](mdaemon.md) | `mdaemon` | none, or email address/password | Mail server: SMTP, IMAP, POP3, webmail, version |
 | [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | none, or API key | Mail gateway: services, delivery queue and other counters |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi |
