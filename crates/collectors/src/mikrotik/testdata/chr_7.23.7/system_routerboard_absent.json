@@ -1,0 +1,5 @@
+{
+  "detail": "no such command or directory (routerboard)",
+  "error": 400,
+  "message": "Bad Request"
+}

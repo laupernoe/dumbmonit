@@ -1,0 +1,13 @@
+[
+  {".id": "*D", "name": "voltage", "type": "V", "value": "24.2"},
+  {".id": "*E", "name": "current", "type": "A", "value": "1.6"},
+  {".id": "*F", "name": "temperature", "type": "C", "value": "39"},
+  {".id": "*10", "name": "cpu-temperature", "type": "C", "value": "58"},
+  {".id": "*11", "name": "board-temperature1", "type": "C", "value": "41"},
+  {".id": "*12", "name": "fan1-speed", "type": "RPM", "value": "5550"},
+  {".id": "*13", "name": "fan2-speed", "type": "RPM", "value": "5460"},
+  {".id": "*14", "name": "fan-state", "type": "", "value": "ok"},
+  {".id": "*15", "name": "psu1-state", "type": "", "value": "ok"},
+  {".id": "*16", "name": "psu2-state", "type": "", "value": "fail"},
+  {".id": "*17", "name": "power-consumption", "type": "W", "value": "38.5"}
+]

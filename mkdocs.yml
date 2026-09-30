@@ -82,10 +82,14 @@ nav:
       - Synology DSM: devices/synology.md
       - OPNsense: devices/opnsense.md
       - TrueNAS: devices/truenas.md
+      - MikroTik RouterOS: devices/mikrotik.md
+      - UPS with NUT: devices/nut.md
       - Server hardware (Redfish): devices/redfish.md
       - VictoriaMetrics and VictoriaLogs: devices/victoriametrics.md
       - Grafana Loki: devices/loki.md
       - Graylog: devices/graylog.md
+      - Pi-hole: devices/pihole.md
+      - AdGuard Home: devices/adguard.md
       - MDaemon Email Server: devices/mdaemon.md
       - SecurityGateway for Email Servers: devices/securitygateway.md
       - Nextcloud: devices/nextcloud.md
