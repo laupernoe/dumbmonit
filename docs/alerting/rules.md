@@ -380,6 +380,33 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 | vSphere VM tools not running | VMware Tools are installed but not running in a powered-on VM: the guest may be hung (`dumbmonit_vsphere_vm_tools_status == 2`). VMs without Tools do not fire. | > 0 | 30 min | Info (`info`) | 24 h |
 | vSphere red alarm | vSphere raised a red alarm that nobody acknowledged (`dumbmonit_vsphere_alarm{status="red"}`, one series per alarm, named after the alarm and the object). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
+### Databases, message broker and security engine
+
+Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Counters go through `increase_prometheus` or `changes_prometheus`, so nothing fires on a device's first measurement.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Redis memory near maxmemory | Memory used above 90 % of `maxmemory` (`dumbmonit_redis_memory_used_percent`); clears below 85 %. No series without `maxmemory`. | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Redis refusing connections | Client connections refused in the last 15 minutes: `maxclients` reached (`increase_prometheus(dumbmonit_redis_rejected_connections_total[15m])`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Redis replication link down | A replica lost its link to the primary (`dumbmonit_redis_master_link_up`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Redis replica lagging | Seen from the primary, a replica has not acknowledged for more than 30 seconds (`dumbmonit_redis_replica_lag_seconds`). | > 30 s | 5 min | Advisory (`warning`) | 6 h |
+| Redis snapshot failed | The last `BGSAVE` failed; with `stop-writes-on-bgsave-error`, writes are refused (`dumbmonit_redis_rdb_last_save_ok`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| Redis append-only file write failed | The last AOF write failed (`dumbmonit_redis_aof_last_write_ok`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| MongoDB replica set without primary | No member is primary: no write is accepted (`dumbmonit_mongodb_replset_primary_present`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| MongoDB member unreachable | A replica set member is unreachable from the others (`dumbmonit_mongodb_replset_member_health`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| MongoDB replication lag | A secondary is more than a minute behind the primary (`dumbmonit_mongodb_replset_member_lag_seconds`); clears below 30 s. | > 60 s | 10 min | Advisory (`warning`) | 6 h |
+| MongoDB connections near the limit | More than 80 % of the available connections in use (`dumbmonit_mongodb_connections_used_percent`); clears below 75 %. | > 80 % | 10 min | Advisory (`warning`) | 6 h |
+| MongoDB cache under pressure | More than 20 % of the WiredTiger cache is dirty (`dumbmonit_mongodb_wiredtiger_cache_dirty_percent`); clears below 15 %. | > 20 % | 10 min | Advisory (`warning`) | 6 h |
+| MongoDB internal errors | Regular assertions in the last hour (`increase_prometheus(dumbmonit_mongodb_asserts_total{type="regular"}[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| RabbitMQ memory or disk alarm | A node raised a resource alarm: every publisher is blocked (`dumbmonit_rabbitmq_alarm`, one series per node and resource). | > 0 | 1 min | Warning (`critical`) | 1 h |
+| RabbitMQ node down | A cluster node is not running (`dumbmonit_rabbitmq_node_running`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| RabbitMQ network partition | A node sees a network partition (`dumbmonit_rabbitmq_node_partitions`). | > 0 | 2 min | Warning (`critical`) | 1 h |
+| RabbitMQ queue without consumer | A queue holds messages and has no consumer (`dumbmonit_rabbitmq_queue_messages_ready and dumbmonit_rabbitmq_queue_consumers == 0`); the value is the number of messages waiting. | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| RabbitMQ queue unavailable | A queue is not running: quorum queue without majority, or its node is down (`dumbmonit_rabbitmq_queue_running`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| CrowdSec Local API down | The Local API does not answer `/health` (`dumbmonit_crowdsec_lapi_up`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| CrowdSec bouncer stopped pulling | A bouncer's requests did not change in 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| CrowdSec reads no logs | Not a single log line read in six hours (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

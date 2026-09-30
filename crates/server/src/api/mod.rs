@@ -2,6 +2,7 @@ mod agent_commands;
 mod agent_files;
 mod alerts;
 mod auth;
+mod backends;
 mod backup;
 mod channels;
 mod collectors;
@@ -118,6 +119,8 @@ pub fn router(state: AppState) -> Router {
         .merge(redfish::routes())
         // Santé d'un serveur de journaux ou de métriques (`observability.rs`).
         .merge(observability::routes())
+        // Santé de Redis, MongoDB, RabbitMQ et CrowdSec (`backends.rs`).
+        .merge(backends::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).

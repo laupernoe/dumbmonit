@@ -22,6 +22,10 @@ pub mod synology_history;
 pub mod truenas_history;
 
 pub use dumbmonit_collectors::{
+    CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
+    rabbitmq, redis,
+};
+pub use dumbmonit_collectors::{
     AdguardCollector, MikrotikCollector, NutCollector, PiholeCollector, adguard, mikrotik, nut,
     pihole,
 };
