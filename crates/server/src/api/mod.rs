@@ -189,6 +189,9 @@ pub fn router(state: AppState) -> Router {
         // passe, elle doit donc pouvoir se charger d'abord.
         .fallback(spa::serve)
         .layer(Extension(auth_state))
+        // Mode démonstration : toute écriture refusée ici, avant l'authentification
+        // et avant tout gestionnaire — une seule porte, pas une vérification par route.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::demo::guard))
         .layer(middleware::from_fn(security_headers))
         // Le span ne porte que le chemin : la chaîne de requête d'une route peut
         // contenir un code d'autorisation OIDC ou un jeton — rien de tout cela

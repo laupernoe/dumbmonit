@@ -90,6 +90,8 @@ class AuthStore {
 	user = $state<User | null>(null);
 	/** Single sign-on availability, read without a session for the sign-in screen. */
 	oidc = $state<OidcStatus>({ enabled: false, provider_name: 'SSO', login_url: '/api/auth/oidc/start' });
+	/** Public demo mode: read-only instance, sign in with demo / demo. */
+	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
 	error = $state<unknown>(null);
 
@@ -142,6 +144,7 @@ class AuthStore {
 			this.authenticated = state.authenticated;
 			this.user = state.user;
 			this.oidc = state.oidc;
+			this.demo = state.demo;
 			this.error = null;
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
