@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{Sample, Target};
+use crate::{KindDescription, Sample, Target};
 
 /// Ce qui peut mal se passer pendant une interrogation.
 ///
@@ -42,7 +42,20 @@ impl ProbeError {
 #[async_trait]
 pub trait Collector: Send + Sync {
     /// Type de cible pris en charge, tel que stocké dans `Target::kind`.
-    fn kind(&self) -> &'static str;
+    ///
+    /// Emprunté à `self` plutôt que `'static` : un collecteur défini à l'exécution
+    /// (paquet d'intégration) porte un type qu'aucune constante ne connaît. Un
+    /// collecteur compilé continue de renvoyer un littéral.
+    fn kind(&self) -> &str;
+
+    /// Description du type pour l'interface (`GET /api/collectors`).
+    ///
+    /// Les types compilés sont décrits par les tables du serveur et gardent
+    /// `None` ; un collecteur que ces tables ignorent se décrit ici. Le serveur
+    /// y remplace `kind` par [`Collector::kind`].
+    fn description(&self) -> Option<KindDescription> {
+        None
+    }
 
     /// Interroge la cible et renvoie ses mesures.
     ///
