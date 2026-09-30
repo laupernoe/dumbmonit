@@ -79,8 +79,11 @@ nav:
       - Proxmox Backup Server: devices/pbs.md
       - Proxmox Datacenter Manager: devices/pdm.md
       - Proxmox Mail Gateway: devices/pmg.md
+      - VMware vSphere: devices/vsphere.md
       - Synology DSM: devices/synology.md
       - OPNsense: devices/opnsense.md
+      - UniFi Network: devices/unifi.md
+      - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md
       - MikroTik RouterOS: devices/mikrotik.md
       - UPS with NUT: devices/nut.md

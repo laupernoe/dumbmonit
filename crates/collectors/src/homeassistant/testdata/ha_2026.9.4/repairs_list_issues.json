@@ -1,0 +1,46 @@
+{
+ "issues": [
+  {
+   "breaks_in_ha_version": null,
+   "created": "2026-09-30T06:55:41.796898+00:00",
+   "dismissed_version": null,
+   "ignored": false,
+   "domain": "homeassistant",
+   "is_fixable": false,
+   "issue_domain": null,
+   "issue_id": "country_not_configured",
+   "learn_more_url": "homeassistant://config/general",
+   "severity": "warning",
+   "translation_key": "country_not_configured",
+   "translation_placeholders": null
+  },
+  {
+   "breaks_in_ha_version": "2026.12.0",
+   "created": "2026-09-30T07:31:02.114532+00:00",
+   "dismissed_version": null,
+   "ignored": false,
+   "domain": "zwave_js",
+   "is_fixable": true,
+   "issue_domain": null,
+   "issue_id": "invalid_server_version",
+   "learn_more_url": null,
+   "severity": "error",
+   "translation_key": "invalid_server_version",
+   "translation_placeholders": null
+  },
+  {
+   "breaks_in_ha_version": null,
+   "created": "2026-09-29T18:02:40.000000+00:00",
+   "dismissed_version": null,
+   "ignored": true,
+   "domain": "hacs",
+   "is_fixable": false,
+   "issue_domain": null,
+   "issue_id": "removed_repository",
+   "learn_more_url": null,
+   "severity": "critical",
+   "translation_key": "removed",
+   "translation_placeholders": null
+  }
+ ]
+}

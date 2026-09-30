@@ -36,6 +36,9 @@ pub use dumbmonit_collectors::{
     ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
     selfhosted,
 };
+pub use dumbmonit_collectors::{
+    HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
+};
 pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};
 pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
