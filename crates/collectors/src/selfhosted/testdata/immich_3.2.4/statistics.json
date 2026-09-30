@@ -1,0 +1,29 @@
+{
+  "photos": 6,
+  "videos": 1,
+  "usage": 113809,
+  "usagePhotos": 102920,
+  "usageVideos": 10889,
+  "usageByUser": [
+    {
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "userName": "Admin",
+      "photos": 6,
+      "videos": 1,
+      "usage": 113809,
+      "usagePhotos": 102920,
+      "usageVideos": 10889,
+      "quotaSizeInBytes": null
+    },
+    {
+      "userId": "00000000-0000-4000-8000-000000000002",
+      "userName": "dumbmonit",
+      "photos": 0,
+      "videos": 0,
+      "usage": 0,
+      "usagePhotos": 0,
+      "usageVideos": 0,
+      "quotaSizeInBytes": null
+    }
+  ]
+}

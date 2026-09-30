@@ -22,6 +22,11 @@ form always matches what this version can monitor.
 | [Graylog](graylog.md) | `graylog` | access token or username/password | Log server and its OpenSearch cluster: journal, buffers, throughput, inputs |
 | [MDaemon Email Server](mdaemon.md) | `mdaemon` | none, or email address/password | Mail server: SMTP, IMAP, POP3, webmail, version |
 | [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | none, or API key | Mail gateway: services, delivery queue and other counters |
+| [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
+| [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
+| [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |
+| [Jellyfin](jellyfin.md) | `jellyfin` | API key | Media server: failed scheduled tasks, plugins, streams and transcodes |
+| [Plex Media Server](plex.md) | `plex` | X-Plex-Token, or none from an allowed network | Media server: streams, transcodes, libraries, updates |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |

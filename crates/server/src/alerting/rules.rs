@@ -2749,6 +2749,325 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc serveurs de journaux et de métriques ---
+        // --- Applications auto-hébergées (`collectors/selfhosted`) ---
+        //
+        // Ces applications tombent de côté : la page s'ouvre, et ce qui compte
+        // (la synchronisation, les miniatures, l'import de documents, le scan
+        // de bibliothèque) ne se fait plus. Les règles visent ces états-là ;
+        // l'application qui ne répond plus du tout relève de « injoignable ».
+        Rule {
+            description: "Nextcloud has been in maintenance mode for half an hour: nobody can \
+                          log in or sync."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            escalate_after: Some(Duration::from_secs(3 * 3600)),
+            ..base(
+                "nextcloud_maintenance",
+                "Nextcloud stuck in maintenance",
+                RuleKind::Threshold,
+                "dumbmonit_nextcloud_maintenance",
+            )
+        },
+        // Après une mise à jour du code, Nextcloud refuse tout tant que
+        // `occ upgrade` n'a pas tourné.
+        Rule {
+            description: "Nextcloud waits for occ upgrade after an update and serves nothing \
+                          until someone runs it."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "nextcloud_upgrade_pending",
+                "Nextcloud database upgrade pending",
+                RuleKind::Threshold,
+                "dumbmonit_nextcloud_needs_db_upgrade",
+            )
+        },
+        Rule {
+            description: "A newer Nextcloud release is available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "nextcloud_update_available",
+                "Nextcloud update available",
+                RuleKind::Threshold,
+                "dumbmonit_nextcloud_update_available",
+            )
+        },
+        // OPcache plein : PHP recompile chaque script, tout devient lent.
+        Rule {
+            description: "PHP OPcache on the Nextcloud server is full: pages get slow. Raise \
+                          opcache.memory_consumption."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "nextcloud_opcache_full",
+                "Nextcloud OPcache full",
+                RuleKind::Threshold,
+                "dumbmonit_nextcloud_opcache_full",
+            )
+        },
+        // Nextcloud ne donne que l'espace libre du dossier de données, pas sa
+        // taille : un seuil absolu, en Gio.
+        Rule {
+            description: "Less than 5 GiB free for Nextcloud's data: uploads and syncs will \
+                          start failing."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 5.0,
+            clear_threshold: Some(6.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "GiB".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "nextcloud_free_space_low",
+                "Nextcloud free space low",
+                RuleKind::Threshold,
+                "dumbmonit_nextcloud_free_space_bytes / 1073741824",
+            )
+        },
+        // Immich : des travaux en attente dans une file qui n'est pas en
+        // pause et n'en exécute aucun. Une heure couvre les creux entre deux
+        // lots d'un gros import.
+        Rule {
+            description: "Immich jobs have waited for an hour in a queue that is not paused and \
+                          runs nothing: new photos get no thumbnail or metadata."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "immich_jobs_stalled",
+                "Immich jobs stalled",
+                RuleKind::Threshold,
+                "dumbmonit_immich_queue_waiting > 0 \
+                 and on (target, queue) dumbmonit_immich_queue_active == 0 \
+                 unless on (target, queue) dumbmonit_immich_queue_paused == 1",
+            )
+        },
+        Rule {
+            description: "An Immich job queue has been paused for a day.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(24 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "immich_queue_paused",
+                "Immich queue paused",
+                RuleKind::Threshold,
+                "dumbmonit_immich_queue_paused",
+            )
+        },
+        Rule {
+            description: "The disk holding Immich's library is more than 90% full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(88.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "immich_storage_almost_full",
+                "Immich storage almost full",
+                RuleKind::Threshold,
+                "dumbmonit_immich_storage_used_percent",
+            )
+        },
+        Rule {
+            description: "A newer Immich release is available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "immich_update_available",
+                "Immich update available",
+                RuleKind::Threshold,
+                "dumbmonit_immich_update_available",
+            )
+        },
+        // Paperless : 0 OK, 1 avertissement, 2 erreur. Sans Redis ni Celery,
+        // plus rien n'est importé.
+        Rule {
+            description: "Paperless-ngx cannot reach Redis or Celery: nothing new is imported, \
+                          from the consume folder or from mail."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "paperless_broker_down",
+                "Paperless task queue down",
+                RuleKind::Threshold,
+                "max by (target) (dumbmonit_paperless_component_status{component=~\"redis|celery\"})",
+            )
+        },
+        // Le contrôle d'intégrité en erreur, c'est un fichier manquant ou
+        // dont la somme ne correspond plus : à voir avant la prochaine sauvegarde.
+        Rule {
+            description: "Paperless-ngx reports an error in its search index, classifier or \
+                          sanity check (missing or altered files)."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paperless_component_error",
+                "Paperless index or sanity check error",
+                RuleKind::Threshold,
+                "dumbmonit_paperless_component_status{component=~\"index|classifier|sanity_check\"}",
+            )
+        },
+        Rule {
+            description: "Paperless-ngx has database migrations left to apply: run them before \
+                          it misbehaves."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paperless_migrations_pending",
+                "Paperless migrations pending",
+                RuleKind::Threshold,
+                "dumbmonit_paperless_unapplied_migrations",
+            )
+        },
+        Rule {
+            description: "A Paperless-ngx task (an import, a scheduled job) failed recently and \
+                          was not dismissed."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paperless_task_failed",
+                "Paperless task failed",
+                RuleKind::Threshold,
+                "dumbmonit_paperless_tasks_failed_recent",
+            )
+        },
+        Rule {
+            description: "The disk holding Paperless-ngx's documents is more than 90% full."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(88.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paperless_storage_almost_full",
+                "Paperless storage almost full",
+                RuleKind::Threshold,
+                "dumbmonit_paperless_storage_used_percent",
+            )
+        },
+        Rule {
+            description: "A newer Paperless-ngx release is available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "paperless_update_available",
+                "Paperless update available",
+                RuleKind::Threshold,
+                "dumbmonit_paperless_update_available",
+            )
+        },
+        // Jellyfin : le scan de bibliothèque en échec est le cas typique.
+        Rule {
+            description: "A Jellyfin scheduled task failed on its last run (a library scan, a \
+                          cleanup)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "jellyfin_task_failed",
+                "Jellyfin scheduled task failed",
+                RuleKind::Threshold,
+                "dumbmonit_jellyfin_scheduled_tasks_failed",
+            )
+        },
+        Rule {
+            description: "A Jellyfin plugin failed to load or does not support this version."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "jellyfin_plugin_broken",
+                "Jellyfin plugin broken",
+                RuleKind::Threshold,
+                "dumbmonit_jellyfin_plugins_broken",
+            )
+        },
+        Rule {
+            description: "Jellyfin has waited a day for a restart, after a plugin install or \
+                          update."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(24 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "jellyfin_restart_pending",
+                "Jellyfin restart pending",
+                RuleKind::Threshold,
+                "dumbmonit_jellyfin_pending_restart",
+            )
+        },
+        Rule {
+            description: "A newer Plex Media Server release is available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "plex_update_available",
+                "Plex update available",
+                RuleKind::Threshold,
+                "dumbmonit_plex_update_available",
+            )
+        },
+        // --- fin du bloc applications auto-hébergées ---
         // --- Proxmox VE : invités, disques, ZFS, paquets (`collectors/proxmox`) ---
         //
         // Les séries d'invité portent `name` et `vmid` : la notification dit
@@ -3328,6 +3647,26 @@ mod tests {
             "graylog_journal_filling",
             "graylog_input_failed",
             "graylog_indexing_failures",
+            // Applications auto-hébergées (`collectors/selfhosted`).
+            "nextcloud_maintenance",
+            "nextcloud_upgrade_pending",
+            "nextcloud_update_available",
+            "nextcloud_opcache_full",
+            "nextcloud_free_space_low",
+            "immich_jobs_stalled",
+            "immich_queue_paused",
+            "immich_storage_almost_full",
+            "immich_update_available",
+            "paperless_broker_down",
+            "paperless_component_error",
+            "paperless_migrations_pending",
+            "paperless_task_failed",
+            "paperless_storage_almost_full",
+            "paperless_update_available",
+            "jellyfin_task_failed",
+            "jellyfin_plugin_broken",
+            "jellyfin_restart_pending",
+            "plex_update_available",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -3540,6 +3879,27 @@ mod tests {
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",
+            // Applications auto-hébergées (`collectors/selfhosted/{nextcloud,immich,
+            // paperless,jellyfin,plex}.rs`).
+            "dumbmonit_nextcloud_maintenance",
+            "dumbmonit_nextcloud_needs_db_upgrade",
+            "dumbmonit_nextcloud_update_available",
+            "dumbmonit_nextcloud_opcache_full",
+            "dumbmonit_nextcloud_free_space_bytes",
+            "dumbmonit_immich_queue_waiting",
+            "dumbmonit_immich_queue_active",
+            "dumbmonit_immich_queue_paused",
+            "dumbmonit_immich_storage_used_percent",
+            "dumbmonit_immich_update_available",
+            "dumbmonit_paperless_component_status",
+            "dumbmonit_paperless_unapplied_migrations",
+            "dumbmonit_paperless_tasks_failed_recent",
+            "dumbmonit_paperless_storage_used_percent",
+            "dumbmonit_paperless_update_available",
+            "dumbmonit_jellyfin_scheduled_tasks_failed",
+            "dumbmonit_jellyfin_plugins_broken",
+            "dumbmonit_jellyfin_pending_restart",
+            "dumbmonit_plex_update_available",
         ];
 
         for rule in builtin_rules() {

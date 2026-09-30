@@ -1776,6 +1776,118 @@ const LOKI_OPTIONS: &[OptionView] =
 const GRAYLOG_OPTIONS: &[OptionView] =
     &[OBSERVABILITY_SCHEME, observability_port("9000"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
 
+/// Applications auto-hébergées (`collectors/selfhosted/options.rs`) : protocole
+/// et port propres à chaque produit, délai et certificat communs.
+const fn app_scheme(default: &'static str) -> OptionView {
+    select(
+        "scheme",
+        "Protocol",
+        "Used when the address does not start with http:// or https://.",
+        default,
+        &["http", "https"],
+    )
+}
+
+const fn app_port(default: &'static str) -> OptionView {
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        default,
+        default,
+    )
+}
+
+const APP_TLS: OptionView = insecure_tls(
+    "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+);
+
+const APP_TIMEOUT: OptionView = number(
+    "request_timeout_seconds",
+    "Timeout per request (seconds)",
+    "Time allowed for each call, from 1 to 120. Photo and file counts are computed on every call on a large instance.",
+    "15",
+    "15",
+);
+
+const NEXTCLOUD_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+const IMMICH_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("2283"), APP_TLS, APP_TIMEOUT];
+const PAPERLESS_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    app_port("8000"),
+    APP_TLS,
+    APP_TIMEOUT,
+    number(
+        "task_lookback_hours",
+        "Failed task window (hours)",
+        "Failed tasks newer than this, and not dismissed in Paperless, are counted and named. From 1 to 720.",
+        "24",
+        "24",
+    ),
+];
+const JELLYFIN_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8096"), APP_TLS, APP_TIMEOUT];
+const PLEX_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("32400"), APP_TLS, APP_TIMEOUT];
+
+const NEXTCLOUD_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Monitoring token (NC-Token)",
+    help: "The serverinfo token set with occ. It opens Nextcloud's statistics and nothing else.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const IMMICH_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "An Immich API key limited to the five read permissions of the setup guide.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Immich shows it once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const PAPERLESS_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token (recommended)",
+    help: "The token of the dedicated dumbmonit user, sent as \"Authorization: Token …\".",
+    fields: &[cred_secret("token", "API token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const PAPERLESS_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The dedicated dumbmonit user itself, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const JELLYFIN_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "A key created in Jellyfin's dashboard, sent in the MediaBrowser authorization header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
+const PLEX_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "X-Plex-Token",
+    help: "Needed by a server linked to a Plex account, unless this network is allowed without authentication.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const PLEX_NO_TOKEN: CredentialView = CredentialView {
+    kind: "none",
+    label: "No token (allowed network)",
+    help: "For a server that lists DumbMonit's address among the networks allowed without authentication.",
+    fields: &[],
+};
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
     Json(state.collectors.kinds().into_iter().map(describe).collect())
 }
@@ -2492,6 +2604,116 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: GRAYLOG_OPTIONS,
         },
+        "nextcloud" => CollectorView {
+            kind,
+            label: "Nextcloud",
+            summary: "Maintenance mode left on, a database upgrade waiting, Nextcloud and app updates, active users, free space, PHP OPcache.",
+            examples: &["Nextcloud Server", "Nextcloud AIO", "Nextcloud Hub"],
+            credential_types: &["api_token"],
+            credentials: &[NEXTCLOUD_TOKEN],
+            address_hint: "cloud.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Give Nextcloud a monitoring token",
+                steps: &[
+                    "Nextcloud's serverinfo app, shipped and enabled with Nextcloud, answers to a monitoring token that opens its statistics and nothing else: no file, no user, no share. On the Nextcloud server, set a long random token and print it back. Run occ as the web server user; in Docker, put docker exec -u www-data and the container name in front.\nphp occ config:app:set serverinfo token --value \"$(openssl rand -hex 32)\"\nphp occ config:app:get serverinfo token",
+                    "If occ says serverinfo is disabled, enable it first.\nphp occ app:enable serverinfo",
+                    "In DumbMonit, enter the address you open Nextcloud with, for example \"cloud.example.com\" (HTTPS on 443) or \"http://10.0.0.5:8080\", and paste the token. The host must be one of Nextcloud's trusted domains, or Nextcloud refuses the request.",
+                    "DumbMonit reads status.php and the serverinfo statistics only. It never opens a file, never lists users and never changes a setting, and the token cannot log in anywhere.",
+                ],
+                warning: "Nextcloud does not tell the token when background jobs (cron) last ran: only an account with every right on the instance can read that. To be told when cron stops, add a Heartbeat in DumbMonit and call its URL at the end of the cron line, as the documentation shows.",
+                doc_url: "https://github.com/nextcloud/serverinfo#api",
+            },
+            options: NEXTCLOUD_OPTIONS,
+        },
+        "immich" => CollectorView {
+            kind,
+            label: "Immich",
+            summary: "Job queues that stall or sit paused, updates, disk space, photo and video counts.",
+            examples: &["Immich"],
+            credential_types: &["api_token"],
+            credentials: &[IMMICH_KEY],
+            address_hint: "immich.lan",
+            default_port: 2283,
+            setup: Setup {
+                title: "Create a read-only API key in Immich",
+                steps: &[
+                    "Log in to Immich with an account that can open Administration: Immich only lets those accounts read photo counts and job queues. Open Account Settings → API Keys → New API Key, name it as follows, and tick only these five permissions.\ndumbmonit\nserver.about server.versionCheck server.storage server.statistics queue.read",
+                    "Copy the key now: Immich shows it only once. It reads those five pages and nothing else: no photo, no album, no setting. If your Immich does not offer queue.read, tick job.read instead.",
+                    "A key made by an ordinary account works too: version, updates and disk space are read, photo counts and job queues are skipped.",
+                    "In DumbMonit, enter Immich's address, for example \"immich.lan\" (port 2283) or \"https://photos.example.com\" behind a reverse proxy, and paste the key.",
+                ],
+                warning: "A paused queue is easy to forget: new photos get no thumbnail, no metadata and no face, and Immich only says so on its Jobs page. DumbMonit warns when jobs wait in a queue that is not paused and runs nothing.",
+                doc_url: "https://immich.app/docs/api/",
+            },
+            options: IMMICH_OPTIONS,
+        },
+        "paperless" => CollectorView {
+            kind,
+            label: "Paperless-ngx",
+            summary: "Redis, Celery, search index and classifier health, failed imports, updates, disk space, document count.",
+            examples: &["Paperless-ngx"],
+            credential_types: &["api_token", "username_password"],
+            credentials: &[PAPERLESS_TOKEN, PAPERLESS_LOGIN],
+            address_hint: "paperless.lan",
+            default_port: 8000,
+            setup: Setup {
+                title: "Create a read-only user in Paperless-ngx",
+                steps: &[
+                    "Create a user named as follows, with a long random password, no superuser or staff status, and three view permissions only: tasks, system monitoring and global statistics. With the API and your own account, the two commands below create it and print its token.\ndumbmonit\ncurl -u YOUR_USER -H 'Content-Type: application/json' -X POST https://paperless.example.com/api/users/ -d '{\"username\":\"dumbmonit\",\"password\":\"CHANGE-ME\",\"user_permissions\":[\"view_paperlesstask\",\"view_system_monitoring\",\"view_global_statistics\"]}'\ncurl -X POST https://paperless.example.com/api/token/ -d 'username=dumbmonit&password=CHANGE-ME'",
+                    "In the web interface instead: Users & Groups → Add user, then in its permissions tick View on the PaperlessTask, SystemMonitoring and GlobalStatistics rows only. Log in as that user once, open My Profile and generate its API token.",
+                    "This user reads no document at all: global statistics give the counts, system monitoring gives the health of the database, Redis, Celery and the index, and tasks show the failed ones. On Paperless-ngx 2.x, where the last two permissions do not exist, health and counts are skipped and the rest is read.",
+                    "In DumbMonit, enter the address, for example \"paperless.lan\" (port 8000) or \"https://paperless.example.com\" behind a reverse proxy, and paste the token.",
+                ],
+                warning: "When Redis or Celery stops, Paperless keeps serving its pages and documents, but nothing new is imported, from the consume folder or from mail, until someone looks. DumbMonit alerts on both.",
+                doc_url: "https://docs.paperless-ngx.com/api/",
+            },
+            options: PAPERLESS_OPTIONS,
+        },
+        "jellyfin" => CollectorView {
+            kind,
+            label: "Jellyfin",
+            summary: "Scheduled tasks that fail (library scans), a restart waiting, broken plugins, active streams and transcodes.",
+            examples: &["Jellyfin"],
+            credential_types: &["api_token"],
+            credentials: &[JELLYFIN_KEY],
+            address_hint: "jellyfin.lan",
+            default_port: 8096,
+            setup: Setup {
+                title: "Create an API key in Jellyfin",
+                steps: &[
+                    "In Jellyfin: Dashboard → API Keys (under Advanced) → +, and name the key as follows. Copy it.\nDumbMonit",
+                    "Jellyfin cannot limit what a key may do: every key has full rights on the server. It is still the only way to read scheduled tasks and everyone's playback; an ordinary user sees neither.",
+                    "In DumbMonit, enter Jellyfin's address, for example \"jellyfin.lan\" (port 8096) or \"https://media.example.com\" behind a reverse proxy, and paste the key.",
+                    "DumbMonit only reads /System/Info, /ScheduledTasks, /Sessions and /Plugins. It never starts a task, never stops a playback and never changes a setting.",
+                ],
+                warning: "Because the key carries every right, keep it to a network you trust and put Jellyfin behind HTTPS across the internet. If it ever leaks, revoke it on the same page: nothing else uses it.",
+                doc_url: "https://api.jellyfin.org/",
+            },
+            options: JELLYFIN_OPTIONS,
+        },
+        "plex" => CollectorView {
+            kind,
+            label: "Plex Media Server",
+            summary: "Active streams and transcodes, bandwidth, library scans, updates, read from the server itself.",
+            examples: &["Plex Media Server"],
+            credential_types: &["api_token", "none"],
+            credentials: &[PLEX_TOKEN, PLEX_NO_TOKEN],
+            address_hint: "plex.lan",
+            default_port: 32400,
+            setup: Setup {
+                title: "Give DumbMonit access to the Plex server",
+                steps: &[
+                    "DumbMonit reads the server's own API on port 32400, never plex.tv. A server linked to a Plex account asks for a token (X-Plex-Token), and Plex cannot issue a limited one: it is the owner's token.",
+                    "Either avoid the token: in Plex, Settings → Network → List of IP addresses and networks that are allowed without auth, add the DumbMonit server's address, for example as follows, and pick No token below.\n10.0.0.20/32",
+                    "Or use the token: in Plex Web, open any movie → ⋯ → Get Info → View XML. The address of the page that opens ends with X-Plex-Token= followed by the token; copy that value.",
+                    "In DumbMonit, enter the server's address, for example \"plex.lan\" (port 32400). DumbMonit only reads sessions, libraries, the updater and the activity list; it never stops a stream and never changes a setting.",
+                ],
+                warning: "The token is your Plex account's: whoever holds it can manage the server and every library. Prefer the allowed network above when DumbMonit sits on your own network.",
+                doc_url: "https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/",
+            },
+            options: PLEX_OPTIONS,
+        },
         other => CollectorView {
             kind,
             label: other,
@@ -2529,6 +2751,11 @@ mod tests {
         "graylog",
         "mdaemon",
         "securitygateway",
+        "nextcloud",
+        "immich",
+        "paperless",
+        "jellyfin",
+        "plex",
         "agent",
         "http",
         "tcp",
@@ -2830,6 +3057,20 @@ mod tests {
                     "counters",
                 ],
             ),
+            ("nextcloud", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("immich", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "paperless",
+                &[
+                    "scheme",
+                    "port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "task_lookback_hours",
+                ],
+            ),
+            ("jellyfin", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("plex", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -2922,6 +3163,27 @@ mod tests {
                 dumbmonit_collectors::observability::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
             );
         }
+        // `collectors/selfhosted/{options,nextcloud,immich,paperless,jellyfin,plex}.rs`.
+        use dumbmonit_collectors::selfhosted;
+        for (kind, scheme, port) in [
+            ("nextcloud", "https", selfhosted::nextcloud::DEFAULT_PORT),
+            ("immich", "http", selfhosted::immich::DEFAULT_PORT),
+            ("paperless", "http", selfhosted::paperless::DEFAULT_PORT),
+            ("jellyfin", "http", selfhosted::jellyfin::DEFAULT_PORT),
+            ("plex", "http", selfhosted::plex::DEFAULT_PORT),
+        ] {
+            assert_eq!(defaut(kind, "scheme"), scheme, "« {kind} »");
+            assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
+            assert_eq!(describe(kind).default_port, port, "« {kind} »");
+            assert_eq!(
+                defaut(kind, "request_timeout_seconds"),
+                selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+            );
+        }
+        assert_eq!(
+            defaut("paperless", "task_lookback_hours"),
+            selfhosted::paperless::DEFAULT_TASK_LOOKBACK_HOURS.to_string()
+        );
         assert_eq!(
             defaut("push", "expected_interval"),
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
@@ -3018,6 +3280,10 @@ mod tests {
             ("graylog", "dumbmonit"),
             ("mdaemon", "dumbmonit@example.com"),
             ("securitygateway", "dumbmonit"),
+            ("nextcloud", "token"),
+            ("immich", "dumbmonit"),
+            ("paperless", "dumbmonit"),
+            ("jellyfin", "DumbMonit"),
             ("agent", "token"),
         ];
         for (kind, dedie) in attendus {
@@ -3084,6 +3350,11 @@ mod tests {
             ("graylog", include_str!("../../../../docs/devices/graylog.md")),
             ("mdaemon", include_str!("../../../../docs/devices/mdaemon.md")),
             ("securitygateway", include_str!("../../../../docs/devices/securitygateway.md")),
+            ("nextcloud", include_str!("../../../../docs/devices/nextcloud.md")),
+            ("immich", include_str!("../../../../docs/devices/immich.md")),
+            ("paperless", include_str!("../../../../docs/devices/paperless.md")),
+            ("jellyfin", include_str!("../../../../docs/devices/jellyfin.md")),
+            ("plex", include_str!("../../../../docs/devices/plex.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

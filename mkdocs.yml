@@ -88,6 +88,11 @@ nav:
       - Graylog: devices/graylog.md
       - MDaemon Email Server: devices/mdaemon.md
       - SecurityGateway for Email Servers: devices/securitygateway.md
+      - Nextcloud: devices/nextcloud.md
+      - Immich: devices/immich.md
+      - Paperless-ngx: devices/paperless.md
+      - Jellyfin: devices/jellyfin.md
+      - Plex Media Server: devices/plex.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md

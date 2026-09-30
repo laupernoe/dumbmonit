@@ -1,0 +1,19 @@
+{
+  "version": "v3.2.4",
+  "versionUrl": "https://github.com/immich-app/immich/releases/tag/v3.2.4",
+  "licensed": false,
+  "build": "36454199834",
+  "buildUrl": "https://github.com/immich-app/immich/actions/runs/36454199834",
+  "buildImage": "v3.2.4",
+  "buildImageUrl": "https://github.com/immich-app/immich/pkgs/container/immich-server",
+  "repository": "immich-app/immich",
+  "repositoryUrl": "https://github.com/immich-app/immich",
+  "sourceRef": "v3.2.4",
+  "sourceCommit": "db355f79d910bbfc6378117ed10868493c97b922",
+  "sourceUrl": "https://github.com/immich-app/immich/commit/db355f79d910bbfc6378117ed10868493c97b922",
+  "nodejs": "v24.21.0",
+  "exiftool": "13.59",
+  "ffmpeg": "7.1.4-3",
+  "libvips": "8.18.5",
+  "imagemagick": "7.1.2-21"
+}

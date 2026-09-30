@@ -1,0 +1,67 @@
+{
+  "OperatingSystemDisplayName": "",
+  "HasPendingRestart": true,
+  "IsShuttingDown": false,
+  "SupportsLibraryMonitor": true,
+  "WebSocketPortNumber": 8096,
+  "CompletedInstallations": [
+    {
+      "Guid": "0000000000000000000000009c4e63f1",
+      "Name": "Bookshelf",
+      "Version": "13.0.0.0",
+      "Changelog": "- Jellyfin 10.11 support (#130) @crobibero",
+      "SourceUrl": "https://repo.jellyfin.org/files/plugin/bookshelf/bookshelf_13.0.0.0.zip",
+      "Checksum": "0000000000000000000000006e29bb9b",
+      "PackageInfo": {
+        "name": "Bookshelf",
+        "description": "Supports several different metadata providers and options for organizing your collection.\n",
+        "overview": "Manage your books",
+        "owner": "jellyfin",
+        "category": "Books",
+        "guid": "0000000000000000000000009c4e63f1",
+        "versions": [
+          {
+            "version": "13.0.0.0",
+            "VersionNumber": "13.0.0.0",
+            "changelog": "- Jellyfin 10.11 support (#130) @crobibero",
+            "targetAbi": "10.11.0.0",
+            "sourceUrl": "https://repo.jellyfin.org/files/plugin/bookshelf/bookshelf_13.0.0.0.zip",
+            "checksum": "0000000000000000000000006e29bb9b",
+            "timestamp": "2025-10-20T01:25:49Z",
+            "repositoryName": "Jellyfin Stable",
+            "repositoryUrl": "https://repo.jellyfin.org/files/plugin/manifest.json"
+          }
+        ]
+      }
+    }
+  ],
+  "CanSelfRestart": true,
+  "CanLaunchWebBrowser": false,
+  "ProgramDataPath": "/config",
+  "WebPath": "/jellyfin/jellyfin-web",
+  "ItemsByNamePath": "/config/metadata",
+  "CachePath": "/cache",
+  "LogPath": "/config/log",
+  "InternalMetadataPath": "/config/metadata",
+  "TranscodingTempPath": "/cache/transcodes",
+  "CastReceiverApplications": [
+    {
+      "Id": "F007D354",
+      "Name": "Stable"
+    },
+    {
+      "Id": "6F511C87",
+      "Name": "Unstable"
+    }
+  ],
+  "HasUpdateAvailable": false,
+  "EncoderLocation": "System",
+  "SystemArchitecture": "X64",
+  "LocalAddress": "http://192.0.2.10:8096",
+  "ServerName": "media",
+  "Version": "12.1.0",
+  "ProductName": "Jellyfin Server",
+  "OperatingSystem": "",
+  "Id": "0000000000000000000000003e69ff97",
+  "StartupWizardCompleted": true
+}

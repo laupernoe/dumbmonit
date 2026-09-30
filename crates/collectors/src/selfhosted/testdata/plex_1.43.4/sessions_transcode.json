@@ -1,0 +1,143 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "Metadata": [
+      {
+        "addedAt": 1790751776,
+        "audienceRating": 8.3,
+        "audienceRatingImage": "imdb://image.rating",
+        "duration": 120023,
+        "guid": "plex://movie/000000000000000000000001",
+        "key": "/library/metadata/1",
+        "librarySectionID": "1",
+        "librarySectionKey": "/library/sections/1",
+        "librarySectionTitle": "Movies",
+        "originallyAvailableAt": "2024-01-01",
+        "ratingKey": "1",
+        "sessionKey": "1",
+        "slug": "test-movie",
+        "studio": "Studio",
+        "summary": "",
+        "thumb": "/library/metadata/1/thumb/1790752573",
+        "title": "Test Movie",
+        "type": "movie",
+        "updatedAt": 1790752573,
+        "viewOffset": 4000,
+        "year": 2024,
+        "Media": [
+          {
+            "id": "1",
+            "videoProfile": "high 4:4:4 predictive",
+            "audioChannels": 1,
+            "audioCodec": "mp3",
+            "bitrate": 394,
+            "container": "mpegts",
+            "duration": 120023,
+            "height": 270,
+            "protocol": "hls",
+            "videoCodec": "h264",
+            "videoFrameRate": "PAL",
+            "videoResolution": "SD",
+            "width": 480,
+            "selected": true,
+            "Part": [
+              {
+                "id": "1",
+                "videoProfile": "high 4:4:4 predictive",
+                "bitrate": 394,
+                "container": "mpegts",
+                "duration": 120023,
+                "height": 270,
+                "protocol": "hls",
+                "width": 480,
+                "decision": "transcode",
+                "selected": true,
+                "Stream": [
+                  {
+                    "bitDepth": 8,
+                    "bitrate": 328,
+                    "codec": "h264",
+                    "displayTitle": "720p (H.264 High 4:4:4 Predictive)",
+                    "extendedDisplayTitle": "720p (H.264 High 4:4:4 Predictive)",
+                    "frameRate": 25.0,
+                    "height": 270,
+                    "id": "1",
+                    "language": "English",
+                    "languageCode": "eng",
+                    "languageTag": "en",
+                    "streamType": 1,
+                    "width": 480,
+                    "decision": "transcode",
+                    "location": "segments-av"
+                  },
+                  {
+                    "bitrate": 66,
+                    "bitrateMode": "vbr",
+                    "channels": 1,
+                    "codec": "mp3",
+                    "displayTitle": "English (AAC Mono)",
+                    "extendedDisplayTitle": "English (AAC Mono)",
+                    "id": "2",
+                    "language": "English",
+                    "languageCode": "eng",
+                    "languageTag": "en",
+                    "selected": true,
+                    "streamType": 2,
+                    "decision": "transcode",
+                    "location": "segments-av"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "User": {},
+        "Player": {
+          "address": "192.0.2.10",
+          "device": "Linux",
+          "machineIdentifier": "dm-test-client",
+          "platform": "Firefox",
+          "product": "Plex Web",
+          "profile": "Firefox",
+          "state": "playing",
+          "title": "Firefox",
+          "version": "4.150.0",
+          "local": true,
+          "relayed": false,
+          "secure": false,
+          "userID": 1
+        },
+        "Session": {
+          "id": "dm-test-client",
+          "bandwidth": 414,
+          "location": "lan"
+        },
+        "TranscodeSession": {
+          "key": "/transcode/sessions/dmtestsession1",
+          "throttled": false,
+          "complete": false,
+          "progress": 26.700000762939453,
+          "size": -1,
+          "speed": 1.5,
+          "error": false,
+          "duration": 120023,
+          "remaining": 53,
+          "context": "streaming",
+          "sourceVideoCodec": "h264",
+          "sourceAudioCodec": "aac",
+          "videoDecision": "transcode",
+          "audioDecision": "transcode",
+          "protocol": "hls",
+          "container": "mpegts",
+          "videoCodec": "h264",
+          "audioCodec": "mp3",
+          "audioChannels": 1,
+          "transcodeHwRequested": false,
+          "timeStamp": 1790752592.9312649,
+          "maxOffsetAvailable": 24.0,
+          "minOffsetAvailable": 0.0
+        }
+      }
+    ]
+  }
+}

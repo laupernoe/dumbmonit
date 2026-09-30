@@ -1,0 +1,35 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "allowSync": false,
+    "title1": "Plex Library",
+    "Directory": [
+      {
+        "allowSync": false,
+        "filters": true,
+        "refreshing": false,
+        "key": "1",
+        "type": "movie",
+        "title": "Movies",
+        "agent": "tv.plex.agents.movie",
+        "scanner": "Plex Movie",
+        "language": "en-US",
+        "metadataAgentProviderGroupId": 1,
+        "uuid": "fbc9277e-085f-4b0a-8a2a-5d978b3ecb18",
+        "updatedAt": 1790752569,
+        "createdAt": 1790752569,
+        "scannedAt": 1790752572,
+        "content": true,
+        "directory": true,
+        "contentChangedAt": 3,
+        "hidden": 0,
+        "Location": [
+          {
+            "id": 1,
+            "path": "/data/movies"
+          }
+        ]
+      }
+    ]
+  }
+}

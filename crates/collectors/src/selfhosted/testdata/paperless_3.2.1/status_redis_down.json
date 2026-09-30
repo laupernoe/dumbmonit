@@ -1,0 +1,46 @@
+{
+  "pngx_version": "3.2.1",
+  "server_os": "Linux-6.8.0-x86_64-with-glibc2.41",
+  "install_type": "docker",
+  "storage": {
+    "total": 247212277760,
+    "available": 64238022656
+  },
+  "database": {
+    "type": "sqlite",
+    "url": "/usr/src/paperless/data/db.sqlite3",
+    "status": "OK",
+    "error": null,
+    "migration_status": {
+      "latest_migration": "paperless_mail.0001_squashed",
+      "unapplied_migrations": []
+    }
+  },
+  "tasks": {
+    "redis_url": "redis://paperless-redis:6379",
+    "redis_status": "ERROR",
+    "redis_error": "Error connecting to redis, check logs for more detail.",
+    "celery_status": "ERROR",
+    "celery_url": null,
+    "celery_error": "Error connecting to celery, check logs for more detail.",
+    "index_status": "OK",
+    "index_last_modified": "2026-09-30T07:04:30.745265Z",
+    "index_error": null,
+    "classifier_status": "OK",
+    "classifier_last_trained": "2026-09-30T07:05:05.973683Z",
+    "classifier_error": null,
+    "sanity_check_status": "WARNING",
+    "sanity_check_last_run": null,
+    "sanity_check_error": "No sanity check tasks found",
+    "llmindex_status": "DISABLED",
+    "llmindex_last_modified": null,
+    "llmindex_error": null,
+    "summary": {
+      "days": 30,
+      "total_count": 10,
+      "pending_count": 0,
+      "success_count": 9,
+      "failure_count": 1
+    }
+  }
+}
