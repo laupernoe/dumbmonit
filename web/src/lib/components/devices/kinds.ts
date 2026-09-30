@@ -21,10 +21,13 @@ import PushPanel from './push/PushPanel.svelte';
 import RedfishPanel from './redfish/RedfishPanel.svelte';
 import SynologyPanel from './synology/SynologyPanel.svelte';
 import TruenasPanel from './truenas/TruenasPanel.svelte';
+import UnifiPanel from './unifi/UnifiPanel.svelte';
+import HomeAssistantPanel from './homeassistant/HomeAssistantPanel.svelte';
+import VspherePanel from './vsphere/VspherePanel.svelte';
 
 export type KindPanel = Component<{ target: Target }>;
 
-export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel };
+export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel, unifi: UnifiPanel, homeassistant: HomeAssistantPanel, vsphere: VspherePanel };
 
 /** The panel for a kind, or `null` when the generic charts are all there is. */
 export function kindPanel(kind: string): KindPanel | null {

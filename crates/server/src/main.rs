@@ -126,6 +126,10 @@ async fn run(config: Config) -> Result<()> {
     // identifiant est fourni.
     registry.register(Arc::new(collectors::MdaemonCollector::new()));
     registry.register(Arc::new(collectors::SecurityGatewayCollector::new()));
+    // Réseau UniFi, maison connectée Home Assistant, virtualisation vSphere.
+    registry.register(Arc::new(collectors::UnifiCollector::new()));
+    registry.register(Arc::new(collectors::HomeAssistantCollector::new()));
+    registry.register(Arc::new(collectors::VsphereCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.
