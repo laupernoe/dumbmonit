@@ -237,6 +237,15 @@ const CSP_BASE: &str = "default-src 'none'; \
      base-uri 'none'; \
      form-action 'self'";
 
+/// Lecteurs de musique que le mode mur peut intégrer (`web/src/lib/wall/music.ts`,
+/// liste `EMBED_ORIGINS`) : les trois origines d'intégration officielles, en
+/// `https`, sans joker ni domaine parent. L'interface reconstruit l'adresse du
+/// lecteur à partir d'un identifiant validé ; la politique garantit qu'aucune
+/// autre origine ne peut être encadrée, même si ce contrôle était contourné.
+/// Réservé à l'interface : une page de statut publique n'encadre rien.
+const CSP_FRAME_SRC: &str = "frame-src https://open.spotify.com https://widget.deezer.com \
+     https://www.youtube-nocookie.com";
+
 /// Chemins qu'une page tierce peut encadrer : une page de statut
 /// (`/s/<slug>`) et sa vue compacte (`/s/<slug>/embed`), rien d'autre — ni les
 /// pages de confirmation ou de désabonnement, ni un chemin qui ne ferait que
@@ -270,7 +279,10 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
         true => format!("{CSP_BASE}; script-src 'self' 'nonce-{nonce}'"),
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
-            format!("{CSP_BASE}; script-src 'self' 'nonce-{nonce}'; frame-ancestors 'none'")
+            format!(
+                "{CSP_BASE}; {CSP_FRAME_SRC}; script-src 'self' 'nonce-{nonce}'; \
+                 frame-ancestors 'none'"
+            )
         }
     };
     if let Ok(value) = HeaderValue::from_str(&policy) {
@@ -291,6 +303,21 @@ mod tests {
         assert!(!CSP_BASE.contains("http"), "aucune origine externe : {CSP_BASE}");
         // Les scripts ne sont jamais autorisés en ligne sans nonce.
         assert!(!CSP_BASE.contains("script-src"), "script-src dépend de la réponse");
+    }
+
+    #[test]
+    fn only_the_three_music_players_can_be_framed() {
+        let origins: Vec<&str> =
+            CSP_FRAME_SRC.strip_prefix("frame-src ").unwrap().split_whitespace().collect();
+        assert_eq!(
+            origins,
+            [
+                "https://open.spotify.com",
+                "https://widget.deezer.com",
+                "https://www.youtube-nocookie.com"
+            ]
+        );
+        assert!(!CSP_BASE.contains("frame-src"), "hors de l'interface, rien n'est encadré");
     }
 
     #[test]
