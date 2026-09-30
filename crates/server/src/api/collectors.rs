@@ -4206,7 +4206,12 @@ mod tests {
                 .replace("global administrator", "")
                 .replace("domain administrator", "")
                 // L'interrupteur « Administrator » de Home Assistant, à laisser éteint.
-                .replace("administrator toggle", "");
+                .replace("administrator toggle", "")
+                // MongoDB range ses comptes dans la base `admin` : c'est un nom
+                // de base, pas un compte.
+                .replace("use admin", "")
+                .replace("db: \"admin\"", "")
+                .replace("than admin", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
