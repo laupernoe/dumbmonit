@@ -1856,12 +1856,8 @@ const fn socket_port(default: &'static str) -> OptionView {
     number("port", "Port", "Used if the address does not give a port.", default, default)
 }
 
-const SOCKET_TLS: OptionView = boolean(
-    "tls",
-    "TLS",
-    "Tick when the server only accepts TLS connections on that port.",
-    false,
-);
+const SOCKET_TLS: OptionView =
+    boolean("tls", "TLS", "Tick when the server only accepts TLS connections on that port.", false);
 
 const SOCKET_INSECURE_TLS: OptionView = insecure_tls(
     "For a certificate from a private authority or a self-signed one: enable this if the connection is refused for that reason.",
@@ -1917,7 +1913,13 @@ const CROWDSEC_OPTIONS: &[OptionView] = &[
         "Checks /health of the Local API on this host. Untick for a host that only runs an agent.",
         true,
     ),
-    number("lapi_port", "Local API port", "The port of listen_uri in CrowdSec's api.server section.", "8080", "8080"),
+    number(
+        "lapi_port",
+        "Local API port",
+        "The port of listen_uri in CrowdSec's api.server section.",
+        "8080",
+        "8080",
+    ),
     OBSERVABILITY_TLS,
     OBSERVABILITY_TIMEOUT,
 ];
@@ -2665,7 +2667,11 @@ fn describe(kind: &'static str) -> CollectorView {
             kind,
             label: "MongoDB",
             summary: "The document database itself: replica set members and lag, a missing primary, connections against the limit, WiredTiger cache and assertions.",
-            examples: &["MongoDB replica set", "Standalone mongod", "The database behind UniFi or Rocket.Chat"],
+            examples: &[
+                "MongoDB replica set",
+                "Standalone mongod",
+                "The database behind UniFi or Rocket.Chat",
+            ],
             credential_types: &["username_password", "none"],
             credentials: &[MONGODB_LOGIN, NO_AUTH],
             address_hint: "db1.lan",
@@ -2709,7 +2715,11 @@ fn describe(kind: &'static str) -> CollectorView {
             kind,
             label: "CrowdSec",
             summary: "The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.",
-            examples: &["CrowdSec on a Linux host", "CrowdSec in Docker", "CrowdSec on OPNsense or pfSense"],
+            examples: &[
+                "CrowdSec on a Linux host",
+                "CrowdSec in Docker",
+                "CrowdSec on OPNsense or pfSense",
+            ],
             credential_types: &["none", "api_token"],
             credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY],
             address_hint: "crowdsec.lan",
@@ -3071,24 +3081,14 @@ mod tests {
                 ],
             ),
             ("redis", &["port", "tls", "insecure_tls", "request_timeout_seconds"]),
-            (
-                "mongodb",
-                &["port", "auth_source", "tls", "insecure_tls", "request_timeout_seconds"],
-            ),
+            ("mongodb", &["port", "auth_source", "tls", "insecure_tls", "request_timeout_seconds"]),
             (
                 "rabbitmq",
                 &["scheme", "port", "insecure_tls", "request_timeout_seconds", "max_queues"],
             ),
             (
                 "crowdsec",
-                &[
-                    "scheme",
-                    "port",
-                    "lapi",
-                    "lapi_port",
-                    "insecure_tls",
-                    "request_timeout_seconds",
-                ],
+                &["scheme", "port", "lapi", "lapi_port", "insecure_tls", "request_timeout_seconds"],
             ),
         ];
         for (kind, cles) in attendues {
@@ -3188,7 +3188,10 @@ mod tests {
             defaut("mongodb", "port"),
             dumbmonit_collectors::mongodb::DEFAULT_PORT.to_string()
         );
-        assert_eq!(defaut("mongodb", "auth_source"), dumbmonit_collectors::mongodb::DEFAULT_AUTH_SOURCE);
+        assert_eq!(
+            defaut("mongodb", "auth_source"),
+            dumbmonit_collectors::mongodb::DEFAULT_AUTH_SOURCE
+        );
         assert_eq!(
             defaut("rabbitmq", "port"),
             dumbmonit_collectors::rabbitmq::DEFAULT_PORT.to_string()
@@ -3317,16 +3320,21 @@ mod tests {
         for (kind, dedie) in attendus {
             let text = notice(kind);
             assert!(text.contains(dedie), "« {kind} » ne nomme pas le compte dédié « {dedie} »");
-            // Deux exceptions nommées, qui sont des privilèges et non des
-            // comptes : le groupe `administrators` de DSM, et le privilège
-            // « Local Administrator » que l'API REST de TrueNAS exige.
+            // Exceptions nommées, qui sont des privilèges ou des bases et non
+            // des comptes : le groupe `administrators` de DSM, le privilège
+            // « Local Administrator » que l'API REST de TrueNAS exige, etc.
             let allowed = text
                 .to_lowercase()
                 .replace("administrators", "")
                 .replace("local administrator", "")
                 .replace("read-only administrator", "")
                 .replace("global administrator", "")
-                .replace("domain administrator", "");
+                .replace("domain administrator", "")
+                // MongoDB range ses comptes dans la base `admin` : c'est un nom
+                // de base, pas un compte.
+                .replace("use admin", "")
+                .replace("db: \"admin\"", "")
+                .replace("than admin", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
