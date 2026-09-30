@@ -5,7 +5,7 @@
 //! web — ainsi que la sélection automatique du profil le plus spécifique.
 
 use std::collections::BTreeMap;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use serde::Deserialize;
 use tracing::error;
@@ -346,6 +346,22 @@ impl Catalog {
         Self { profiles }
     }
 
+    /// Ajoute un profil fourni à l'exécution (paquet d'intégration, par exemple)
+    /// à côté de ceux déjà chargés.
+    ///
+    /// Contrairement à [`Catalog::from_sources`], l'erreur est rendue à l'appelant :
+    /// c'est lui qui sait à qui l'afficher. Un identifiant déjà connu est refusé
+    /// plutôt que remplacé, pour qu'un ajout ne puisse pas changer en silence ce
+    /// que collectent les équipements existants.
+    pub fn add_source(&mut self, origin: &str, source: &str) -> Result<(), String> {
+        let profile = Profile::parse(source).map_err(|error| format!("{origin}: {error}"))?;
+        if self.get(&profile.id).is_some() {
+            return Err(format!("{origin}: profile \"{}\" already exists", profile.id));
+        }
+        self.profiles.push(profile);
+        Ok(())
+    }
+
     pub fn get(&self, id: &str) -> Option<&Profile> {
         self.profiles.iter().find(|profile| profile.id == id)
     }
@@ -458,8 +474,14 @@ const EMBEDDED: &[(&str, &str)] = &[
 
 /// Catalogue partagé, construit une seule fois.
 pub fn embedded() -> &'static Catalog {
-    static CATALOG: OnceLock<Catalog> = OnceLock::new();
-    CATALOG.get_or_init(|| Catalog::from_sources(EMBEDDED.iter().copied()))
+    embedded_shared()
+}
+
+/// Le même, sous la forme que garde un [`SnmpCollector`](super::SnmpCollector) :
+/// les collecteurs construits sans profil ajouté le partagent sans le copier.
+pub(crate) fn embedded_shared() -> &'static Arc<Catalog> {
+    static CATALOG: OnceLock<Arc<Catalog>> = OnceLock::new();
+    CATALOG.get_or_init(|| Arc::new(Catalog::from_sources(EMBEDDED.iter().copied())))
 }
 
 #[cfg(test)]
@@ -536,6 +558,23 @@ metrics: []
 
     fn oid(raw: &str) -> ObjectId {
         raw.parse().unwrap()
+    }
+
+    #[test]
+    fn un_profil_ajoute_a_lexecution_rejoint_les_profils_livres() {
+        let mut catalog = embedded().clone();
+        let livres = catalog.profiles().len();
+        let source = IF_MIB.replace("id: if-mib", "id: paquet-if-mib");
+        catalog.add_source("paquet.yaml", &source).unwrap();
+        assert_eq!(catalog.profiles().len(), livres + 1);
+        assert!(catalog.get("paquet-if-mib").is_some());
+        assert_eq!(embedded().profiles().len(), livres, "le catalogue livré reste intact");
+
+        // Un identifiant déjà pris, ou un profil illisible, est refusé.
+        let doublon = catalog.add_source("doublon.yaml", IF_MIB).unwrap_err();
+        assert!(doublon.contains("already exists"), "{doublon}");
+        assert!(catalog.add_source("casse.yaml", "id: [").is_err());
+        assert_eq!(catalog.profiles().len(), livres + 1);
     }
 
     #[test]

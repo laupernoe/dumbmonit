@@ -14,14 +14,21 @@
 //! l'interface propose un champ par option, avec son défaut et son aide. La liste
 //! est un miroir des `options.rs` de chaque collecteur : une étiquette absente
 //! ici reste lue, mais personne ne saura qu'elle existe.
+//!
+//! Les tables ci-dessous ne décrivent que les types compilés. Un type né à
+//! l'exécution (paquet d'intégration) se décrit lui-même
+//! (`Collector::description`), et tous sont servis sous la même forme,
+//! `dumbmonit_proto::KindDescription`.
 
 use axum::Json;
 use axum::extract::State;
-use serde::Serialize;
+use dumbmonit_proto::{
+    CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
+    SetupDescription, Text,
+};
 
 use crate::state::AppState;
 
-#[derive(Serialize)]
 pub struct CollectorView {
     /// Valeur à placer dans le champ `kind` d'une cible.
     pub kind: &'static str,
@@ -49,7 +56,6 @@ pub struct CollectorView {
     pub options: &'static [OptionView],
 }
 
-#[derive(Serialize)]
 pub struct Setup {
     /// Titre de la notice.
     pub title: &'static str,
@@ -71,7 +77,6 @@ pub struct Setup {
 ///
 /// C'est le contrat avec l'interface : elle construit un champ de formulaire par
 /// entrée, et enregistre la valeur saisie sous la clé `key` dans `Target::tags`.
-#[derive(Serialize)]
 pub struct OptionView {
     /// Clé du tag dans `Target::tags`.
     pub key: &'static str,
@@ -93,7 +98,6 @@ pub struct OptionView {
 /// `key` dans l'objet `credential` (`{"type": kind, key: valeur, …}`). Le serveur
 /// sait recomposer ce qu'il attend — un jeton Proxmox à partir de `token_id` et
 /// `secret`, un SNMP v3 à partir de ses protocoles et phrases de passe.
-#[derive(Serialize)]
 pub struct CredentialView {
     /// Valeur du champ `type` de `credential`.
     pub kind: &'static str,
@@ -103,7 +107,6 @@ pub struct CredentialView {
     pub fields: &'static [CredentialField],
 }
 
-#[derive(Serialize)]
 pub struct CredentialField {
     /// Clé du champ dans l'objet `credential`.
     pub key: &'static str,
@@ -2368,14 +2371,38 @@ const CROWDSEC_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
-pub async fn list(State(state): State<AppState>) -> Json<Vec<CollectorView>> {
-    Json(state.collectors.kinds().into_iter().map(describe).collect())
+pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
+    let registry = &state.collectors;
+    Json(
+        registry
+            .kinds()
+            .into_iter()
+            .map(|kind| describe(kind, registry.get(kind).and_then(|c| c.description())))
+            .collect(),
+    )
 }
 
-fn describe(kind: &'static str) -> CollectorView {
-    match kind {
+/// Description d'un type : celle des tables de ce fichier s'il y figure, sinon
+/// celle que fournit son collecteur (`Collector::description`, pour un type né à
+/// l'exécution), à défaut une description générique.
+///
+/// Les tables ont le dernier mot : un collecteur ne peut pas changer en silence la
+/// notice d'un type compilé.
+fn describe(kind: &str, own: Option<KindDescription>) -> KindDescription {
+    match (compiled(kind), own) {
+        (Some(view), _) => view.description(),
+        // Le type sous lequel le collecteur est enregistré fait foi : c'est lui
+        // que les cibles portent.
+        (None, Some(own)) => KindDescription { kind: kind.to_owned().into(), ..own },
+        (None, None) => generic(kind),
+    }
+}
+
+/// Les types compilés dans le serveur, décrits par les tables de ce fichier.
+fn compiled(kind: &str) -> Option<CollectorView> {
+    Some(match kind {
         "snmp" => CollectorView {
-            kind,
+            kind: "snmp",
             label: "SNMP device",
             summary: "Switches, routers, UPS, printers, access points: anything that answers SNMP.",
             examples: &["Switch", "Router", "NAS", "UPS", "Printer"],
@@ -2398,7 +2425,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: &[],
         },
         "proxmox" => CollectorView {
-            kind,
+            kind: "proxmox",
             label: "Proxmox VE",
             summary: "Nodes, virtual machines, containers, storage and backups of a Proxmox server or cluster.",
             examples: &["Proxmox server", "Proxmox cluster"],
@@ -2425,7 +2452,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PROXMOX_OPTIONS,
         },
         "pbs" => CollectorView {
-            kind,
+            kind: "pbs",
             label: "Proxmox Backup Server",
             summary: "Backup freshness per machine, failed tasks, sync and verify jobs, datastore space.",
             examples: &["Proxmox Backup Server"],
@@ -2451,7 +2478,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PBS_OPTIONS,
         },
         "pdm" => CollectorView {
-            kind,
+            kind: "pdm",
             label: "Proxmox Datacenter Manager",
             summary: "The console over several clusters: which instances it reaches, their failed tasks, its health.",
             examples: &["Proxmox Datacenter Manager"],
@@ -2474,7 +2501,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PDM_OPTIONS,
         },
         "pmg" => CollectorView {
-            kind,
+            kind: "pmg",
             label: "Proxmox Mail Gateway",
             summary: "Mail queues and stuck mail, spam and virus traffic, quarantine, signature age.",
             examples: &["Proxmox Mail Gateway"],
@@ -2497,7 +2524,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PMG_OPTIONS,
         },
         "redfish" => CollectorView {
-            kind,
+            kind: "redfish",
             label: "Server hardware (Redfish)",
             summary: "Fans, temperatures, power supplies, drives and memory, read from the BMC (iDRAC, iLO…).",
             examples: &[
@@ -2526,7 +2553,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: REDFISH_OPTIONS,
         },
         "mdaemon" => CollectorView {
-            kind,
+            kind: "mdaemon",
             label: "MDaemon Email Server",
             summary: "SMTP, IMAP, POP3 and webmail answering, version, and the XML API.",
             examples: &["MDaemon Email Server"],
@@ -2549,7 +2576,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: MDAEMON_OPTIONS,
         },
         "securitygateway" => CollectorView {
-            kind,
+            kind: "securitygateway",
             label: "SecurityGateway for Email Servers",
             summary: "Mail gateway services answering, version, and the REST API performance counters (12.5 and later).",
             examples: &["SecurityGateway for Email Servers"],
@@ -2573,7 +2600,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: SECURITY_GATEWAY_OPTIONS,
         },
         "truenas" => CollectorView {
-            kind,
+            kind: "truenas",
             label: "TrueNAS",
             summary: "Pool health, the failing disk, scrubs, snapshots, replication and TrueNAS's own alerts.",
             examples: &["TrueNAS SCALE", "TrueNAS Community Edition"],
@@ -2596,7 +2623,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: TRUENAS_OPTIONS,
         },
         "opnsense" => CollectorView {
-            kind,
+            kind: "opnsense",
             label: "OPNsense",
             summary: "Gateway latency and loss, VPN tunnels, DHCP leases, services and pending updates.",
             examples: &["OPNsense firewall", "Home router", "Multi-WAN edge"],
@@ -2619,7 +2646,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: OPNSENSE_OPTIONS,
         },
         "synology" => CollectorView {
-            kind,
+            kind: "synology",
             label: "Synology DSM",
             summary: "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs.",
             examples: &["DiskStation", "RackStation"],
@@ -2643,7 +2670,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: SYNOLOGY_OPTIONS,
         },
         "agent" => CollectorView {
-            kind,
+            kind: "agent",
             label: "Server with agent",
             summary: "Linux, Windows, macOS or FreeBSD: CPU, memory, disks, network, Docker, services, backups.",
             examples: &["Linux server", "Windows server", "Raspberry Pi"],
@@ -2671,7 +2698,7 @@ fn describe(kind: &'static str) -> CollectorView {
         // rappelle que l'état se lit sur « le service répond » et non sur « la sonde
         // a tourné ».
         "http" => CollectorView {
-            kind,
+            kind: "http",
             label: "Website or web API (HTTP)",
             summary: "A page or API answers with the right status and content, over a valid certificate.",
             examples: &[
@@ -2699,7 +2726,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: HTTP_OPTIONS,
         },
         "tcp" => CollectorView {
-            kind,
+            kind: "tcp",
             label: "Network port (TCP)",
             summary: "A port accepts connections: SSH, a file share, a game server, anything without its own probe.",
             examples: &["SSH", "SMB or NFS share", "Database", "Game server", "Network printer"],
@@ -2721,7 +2748,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: TCP_OPTIONS,
         },
         "dns" => CollectorView {
-            kind,
+            kind: "dns",
             label: "Domain name (DNS)",
             summary: "A name resolves, and points to the address you expect.",
             examples: &[
@@ -2747,7 +2774,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: DNS_OPTIONS,
         },
         "ping" => CollectorView {
-            kind,
+            kind: "ping",
             label: "Reachable host (ping)",
             summary: "A host answers ICMP: response time and packet loss.",
             examples: &[
@@ -2775,7 +2802,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PING_OPTIONS,
         },
         "tls" => CollectorView {
-            kind,
+            kind: "tls",
             label: "TLS certificate",
             summary: "A certificate is valid on any TLS port, with a warning well before it expires.",
             examples: &[
@@ -2804,7 +2831,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: TLS_OPTIONS,
         },
         "smtp" => CollectorView {
-            kind,
+            kind: "smtp",
             label: "Mail relay (SMTP)",
             summary: "A mail server greets, offers STARTTLS and accepts a login, like a real client.",
             examples: &[
@@ -2832,7 +2859,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: SMTP_OPTIONS,
         },
         "postgres" => CollectorView {
-            kind,
+            kind: "postgres",
             label: "PostgreSQL database",
             summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
             examples: &[
@@ -2860,7 +2887,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: POSTGRES_OPTIONS,
         },
         "mysql" => CollectorView {
-            kind,
+            kind: "mysql",
             label: "MySQL or MariaDB database",
             summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
             examples: &[
@@ -2888,7 +2915,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: MYSQL_OPTIONS,
         },
         "mqtt" => CollectorView {
-            kind,
+            kind: "mqtt",
             label: "MQTT broker",
             summary: "Connects, subscribes to a topic, and can wait for a retained message.",
             examples: &[
@@ -2916,7 +2943,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: MQTT_OPTIONS,
         },
         "websocket" => CollectorView {
-            kind,
+            kind: "websocket",
             label: "WebSocket endpoint",
             summary: "Completes the upgrade handshake, and can exchange a frame.",
             examples: &[
@@ -2947,7 +2974,7 @@ fn describe(kind: &'static str) -> CollectorView {
         // qui appelle. L'adresse n'est qu'un libellé : elle doit rester unique
         // parmi les heartbeats, comme toute adresse pour un type donné.
         "push" => CollectorView {
-            kind,
+            kind: "push",
             label: "Heartbeat (push)",
             summary: "Your cron job or backup script calls DumbMonit; when it goes quiet, you are told.",
             examples: &[
@@ -2976,7 +3003,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PUSH_OPTIONS,
         },
         "dummy" => CollectorView {
-            kind,
+            kind: "dummy",
             label: "Demo device",
             summary: "Made-up measurements, to explore DumbMonit without any hardware.",
             examples: &["No hardware required"],
@@ -2996,7 +3023,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: &[],
         },
         "victoriametrics" => CollectorView {
-            kind,
+            kind: "victoriametrics",
             label: "VictoriaMetrics",
             summary: "The time series database itself: ingestion, samples it refuses, disk headroom before it turns read-only, slow inserts and active series.",
             examples: &["VictoriaMetrics single-node", "Prometheus long-term storage"],
@@ -3018,7 +3045,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: VICTORIAMETRICS_OPTIONS,
         },
         "victorialogs" => CollectorView {
-            kind,
+            kind: "victorialogs",
             label: "VictoriaLogs",
             summary: "The log database itself: lines ingested, lines it refuses, disk headroom before it turns read-only, errors.",
             examples: &["VictoriaLogs single-node"],
@@ -3040,7 +3067,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: VICTORIALOGS_OPTIONS,
         },
         "loki" => CollectorView {
-            kind,
+            kind: "loki",
             label: "Grafana Loki",
             summary: "The log server itself: readiness, log lines it refuses and why, chunks that fail to reach storage, write-ahead log disk, request errors.",
             examples: &["Loki single binary", "Loki simple scalable"],
@@ -3062,7 +3089,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: LOKI_OPTIONS,
         },
         "graylog" => CollectorView {
-            kind,
+            kind: "graylog",
             label: "Graylog",
             summary: "The log server and its search cluster: processing, journal backlog, buffers, throughput in and out, OpenSearch health, failed inputs and indexing failures.",
             examples: &["Graylog Open", "Graylog with OpenSearch"],
@@ -3085,7 +3112,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: GRAYLOG_OPTIONS,
         },
         "nextcloud" => CollectorView {
-            kind,
+            kind: "nextcloud",
             label: "Nextcloud",
             summary: "Maintenance mode left on, a database upgrade waiting, Nextcloud and app updates, active users, free space, PHP OPcache.",
             examples: &["Nextcloud Server", "Nextcloud AIO", "Nextcloud Hub"],
@@ -3107,7 +3134,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: NEXTCLOUD_OPTIONS,
         },
         "immich" => CollectorView {
-            kind,
+            kind: "immich",
             label: "Immich",
             summary: "Job queues that stall or sit paused, updates, disk space, photo and video counts.",
             examples: &["Immich"],
@@ -3129,7 +3156,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: IMMICH_OPTIONS,
         },
         "paperless" => CollectorView {
-            kind,
+            kind: "paperless",
             label: "Paperless-ngx",
             summary: "Redis, Celery, search index and classifier health, failed imports, updates, disk space, document count.",
             examples: &["Paperless-ngx"],
@@ -3151,7 +3178,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PAPERLESS_OPTIONS,
         },
         "jellyfin" => CollectorView {
-            kind,
+            kind: "jellyfin",
             label: "Jellyfin",
             summary: "Scheduled tasks that fail (library scans), a restart waiting, broken plugins, active streams and transcodes.",
             examples: &["Jellyfin"],
@@ -3173,7 +3200,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: JELLYFIN_OPTIONS,
         },
         "plex" => CollectorView {
-            kind,
+            kind: "plex",
             label: "Plex Media Server",
             summary: "Active streams and transcodes, bandwidth, library scans, updates, read from the server itself.",
             examples: &["Plex Media Server"],
@@ -3195,7 +3222,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PLEX_OPTIONS,
         },
         "pihole" => CollectorView {
-            kind,
+            kind: "pihole",
             label: "Pi-hole",
             summary: "The DNS ad blocker: blocking on or paused, queries and share blocked, blocklist age, upstream failures, updates and its own diagnosis messages.",
             examples: &["Pi-hole v6 on a Raspberry Pi", "Pi-hole in Docker"],
@@ -3218,7 +3245,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: PIHOLE_OPTIONS,
         },
         "adguard" => CollectorView {
-            kind,
+            kind: "adguard",
             label: "AdGuard Home",
             summary: "The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.",
             examples: &["AdGuard Home", "AdGuard Home on OpenWrt or a NAS"],
@@ -3241,7 +3268,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: ADGUARD_OPTIONS,
         },
         "nut" => CollectorView {
-            kind,
+            kind: "nut",
             label: "UPS with NUT",
             summary: "UPS served by Network UPS Tools: on battery, low or worn-out battery, charge, runtime left, load and input voltage, for every UPS the server publishes.",
             examples: &[
@@ -3269,7 +3296,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: NUT_OPTIONS,
         },
         "mikrotik" => CollectorView {
-            kind,
+            kind: "mikrotik",
             label: "MikroTik RouterOS",
             summary: "RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.",
             examples: &["hAP", "RB5009", "CCR", "CRS switch", "Cloud Hosted Router"],
@@ -3292,7 +3319,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: MIKROTIK_OPTIONS,
         },
         "unifi" => CollectorView {
-            kind,
+            kind: "unifi",
             label: "UniFi Network",
             summary: "The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms.",
             examples: &[
@@ -3317,7 +3344,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: UNIFI_OPTIONS,
         },
         "homeassistant" => CollectorView {
-            kind,
+            kind: "homeassistant",
             label: "Home Assistant",
             summary: "The smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs.",
             examples: &["Home Assistant OS", "Home Assistant Container"],
@@ -3339,7 +3366,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: HOMEASSISTANT_OPTIONS,
         },
         "vsphere" => CollectorView {
-            kind,
+            kind: "vsphere",
             label: "VMware vSphere",
             summary: "vCenter and ESXi hosts: hosts not responding or left in maintenance, VMs and their VMware Tools, datastores filling up, and the alarms vSphere raised.",
             examples: &["vCenter Server", "ESXi (standalone host)"],
@@ -3362,7 +3389,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: VSPHERE_OPTIONS,
         },
         "redis" => CollectorView {
-            kind,
+            kind: "redis",
             label: "Redis / Valkey",
             summary: "The in-memory store itself: memory against maxmemory, refused connections, replication link and lag, failed saves and keyspace size.",
             examples: &["Redis", "Valkey", "The cache behind Nextcloud, Immich or Authentik"],
@@ -3385,7 +3412,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: REDIS_OPTIONS,
         },
         "mongodb" => CollectorView {
-            kind,
+            kind: "mongodb",
             label: "MongoDB",
             summary: "The document database itself: replica set members and lag, a missing primary, connections against the limit, WiredTiger cache and assertions.",
             examples: &[
@@ -3411,7 +3438,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: MONGODB_OPTIONS,
         },
         "rabbitmq" => CollectorView {
-            kind,
+            kind: "rabbitmq",
             label: "RabbitMQ",
             summary: "The message broker: memory and disk alarms that block publishers, stopped nodes and partitions, queues filling up with no consumer.",
             examples: &["RabbitMQ single node", "RabbitMQ cluster"],
@@ -3433,7 +3460,7 @@ fn describe(kind: &'static str) -> CollectorView {
             options: RABBITMQ_OPTIONS,
         },
         "crowdsec" => CollectorView {
-            kind,
+            kind: "crowdsec",
             label: "CrowdSec",
             summary: "The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.",
             examples: &[
@@ -3459,24 +3486,97 @@ fn describe(kind: &'static str) -> CollectorView {
             },
             options: CROWDSEC_OPTIONS,
         },
-        other => CollectorView {
-            kind,
-            label: other,
-            summary: "",
-            examples: &[],
-            credential_types: &["none"],
-            credentials: &[NO_AUTH],
-            address_hint: "",
-            default_port: 0,
-            setup: Setup { title: "", steps: &[], warning: "", doc_url: "" },
-            options: &[],
-        },
+        _ => return None,
+    })
+}
+
+/// Un type que ni les tables ni son collecteur ne décrivent : son nom brut, sans
+/// notice, sans identifiant.
+fn generic(kind: &str) -> KindDescription {
+    KindDescription {
+        kind: kind.to_owned().into(),
+        label: kind.to_owned().into(),
+        credential_types: vec![NO_AUTH.kind.into()],
+        credentials: vec![NO_AUTH.description()],
+        ..KindDescription::default()
+    }
+}
+
+/// Les textes des tables, empruntés plutôt que copiés.
+fn texts(values: &[&'static str]) -> Vec<Text> {
+    values.iter().map(|&value| value.into()).collect()
+}
+
+impl CollectorView {
+    /// La forme servie par l'API, commune aux types compilés et à ceux qui se
+    /// décrivent eux-mêmes.
+    fn description(&self) -> KindDescription {
+        KindDescription {
+            kind: self.kind.into(),
+            label: self.label.into(),
+            summary: self.summary.into(),
+            examples: texts(self.examples),
+            credential_types: texts(self.credential_types),
+            credentials: self.credentials.iter().map(CredentialView::description).collect(),
+            address_hint: self.address_hint.into(),
+            default_port: self.default_port,
+            setup: SetupDescription {
+                title: self.setup.title.into(),
+                steps: texts(self.setup.steps),
+                warning: self.setup.warning.into(),
+                doc_url: self.setup.doc_url.into(),
+            },
+            options: self.options.iter().map(OptionView::description).collect(),
+        }
+    }
+}
+
+impl OptionView {
+    fn description(&self) -> OptionDescription {
+        OptionDescription {
+            key: self.key.into(),
+            label: self.label.into(),
+            help: self.help.into(),
+            placeholder: self.placeholder.into(),
+            default: self.default.into(),
+            required: self.required,
+            input: self.input.into(),
+            choices: texts(self.choices),
+        }
+    }
+}
+
+impl CredentialView {
+    fn description(&self) -> CredentialDescription {
+        CredentialDescription {
+            kind: self.kind.into(),
+            label: self.label.into(),
+            help: self.help.into(),
+            fields: self
+                .fields
+                .iter()
+                .map(|field| CredentialFieldDescription {
+                    key: field.key.into(),
+                    label: field.label.into(),
+                    help: field.help.into(),
+                    placeholder: field.placeholder.into(),
+                    input: field.input.into(),
+                    choices: texts(field.choices),
+                    required: field.required,
+                })
+                .collect(),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Un type compilé, tel que les tables le décrivent.
+    fn describe(kind: &str) -> CollectorView {
+        compiled(kind).unwrap_or_else(|| panic!("« {kind} » absent des tables"))
+    }
 
     /// Les types enregistrés dans `main.rs`. Un type ajouté là-bas sans notice ici
     /// s'afficherait sous son nom brut, sans explication ni exemple d'adresse.
@@ -3548,11 +3648,33 @@ mod tests {
 
     #[test]
     fn un_type_inconnu_recoit_une_description_generique_mais_complete() {
-        let view = describe("inconnu");
+        let view = super::describe("inconnu", None);
+        assert_eq!(view.kind, "inconnu");
         assert_eq!(view.label, "inconnu");
         assert!(view.summary.is_empty());
         assert!(view.options.is_empty());
-        assert_eq!(view.credential_types, &["none"]);
+        assert_eq!(view.credential_types, ["none"]);
+        assert_eq!(view.credentials, [NO_AUTH.description()]);
+    }
+
+    /// Un type né à l'exécution se décrit lui-même, sous le type où il est
+    /// enregistré ; un type compilé garde la notice de ses tables.
+    #[test]
+    fn un_collecteur_absent_des_tables_se_decrit_lui_meme() {
+        let own = KindDescription {
+            kind: "autre-nom".into(),
+            label: "Imprimante du paquet".into(),
+            summary: "Décrite par son paquet.".into(),
+            ..KindDescription::default()
+        };
+        let view = super::describe("pack_printer", Some(own.clone()));
+        assert_eq!(view.kind, "pack_printer");
+        assert_eq!(view.label, "Imprimante du paquet");
+        assert_eq!(view.summary, "Décrite par son paquet.");
+
+        let view = super::describe("snmp", Some(own));
+        assert_eq!(view.label, "SNMP device");
+        assert_eq!(view, compiled("snmp").unwrap().description());
     }
 
     /// Les sondes lisent ces étiquettes dans leurs `options.rs` : l'interface ne
