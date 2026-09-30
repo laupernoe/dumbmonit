@@ -41,6 +41,9 @@ reqwest = { version = "0.13", default-features = false, features = [
 snmp2 = { version = "0.5", features = ["heap_buffers"] }
 
 serde_yaml_ng = "0.10"
+# Lecture des réponses SOAP de vSphere : un arbre en lecture seule, sans
+# dépendance, suffit pour les quelques balises lues.
+roxmltree = "0.20"
 ipnet = "2"
 futures = "0.3"
 
@@ -80,4 +83,4 @@ sqlx = { version = "0.9", default-features = false, features = [
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 # Faux services HTTP (DSM, PVE) montés dans les tests unitaires.
-axum = "0.8"
+axum = { version = "0.8", features = ["ws"] }

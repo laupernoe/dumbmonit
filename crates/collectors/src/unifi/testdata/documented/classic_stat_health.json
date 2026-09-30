@@ -1,0 +1,11 @@
+{
+ "meta": {"rc": "ok"},
+ "data": [
+  {"subsystem": "wlan", "status": "error", "num_ap": 3, "num_adopted": 3, "num_disabled": 0, "num_disconnected": 1, "num_pending": 1, "num_user": 27, "num_guest": 2, "num_iot": 0},
+  {"subsystem": "wan", "status": "ok", "num_gw": 1, "num_adopted": 1, "num_disconnected": 0, "num_pending": 0, "wan_ip": "203.0.113.24", "gw_mac": "e4:38:83:00:00:01", "gw_name": "Gateway", "gw_version": "4.1.13.9913", "gw_system-stats": {"cpu": "12.4", "mem": "61.8", "uptime": "1728035"},
+   "uptime_stats": {"WAN": {"availability": 99.87, "latency_average": 14, "time_period": 86400, "uptime": 86290}, "WAN2": {"availability": 0.0, "time_period": 86400, "uptime": 0}}},
+  {"subsystem": "www", "status": "ok", "latency": 13, "uptime": 1728010, "drops": 1, "xput_up": 38.2, "xput_down": 412.7, "speedtest_status": "Idle", "gw_mac": "e4:38:83:00:00:01"},
+  {"subsystem": "lan", "status": "ok", "num_sw": 1, "num_adopted": 1, "num_disconnected": 0, "num_pending": 0, "num_user": 12, "num_guest": 0, "num_iot": 0},
+  {"subsystem": "vpn", "status": "ok", "remote_user_enabled": true, "remote_user_num_active": 1, "remote_user_num_inactive": 0, "site_to_site_enabled": false}
+ ]
+}

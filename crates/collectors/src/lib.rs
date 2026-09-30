@@ -8,6 +8,8 @@
 //! des mesures poussées) reste côté serveur : il lit la base.
 
 pub mod adguard;
+pub(crate) mod api_options;
+pub mod homeassistant;
 pub mod dummy;
 pub mod http;
 pub mod mdaemon;
@@ -25,7 +27,9 @@ pub mod selfhosted;
 pub mod snmp;
 pub mod synology;
 pub mod truenas;
+pub mod unifi;
 pub mod uptime;
+pub mod vsphere;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -35,6 +39,7 @@ use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
 pub use adguard::AdguardCollector;
 pub use dummy::DummyCollector;
+pub use homeassistant::HomeAssistantCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
 pub use mikrotik::MikrotikCollector;
 pub use nut::NutCollector;
@@ -52,10 +57,12 @@ pub use selfhosted::{
 pub use snmp::SnmpCollector;
 pub use synology::SynologyCollector;
 pub use truenas::TruenasCollector;
+pub use unifi::UnifiCollector;
 pub use uptime::{
     DnsCollector, HttpCollector, MqttCollector, MysqlCollector, PingCollector, PostgresCollector,
     SmtpCollector, TcpCollector, TlsCollector, WebsocketCollector,
 };
+pub use vsphere::VsphereCollector;
 
 #[derive(Clone, Default)]
 pub struct Registry {
@@ -96,6 +103,9 @@ impl Registry {
         registry.register(Arc::new(AdguardCollector::new()));
         registry.register(Arc::new(NutCollector::new()));
         registry.register(Arc::new(MikrotikCollector::new()));
+        registry.register(Arc::new(VsphereCollector::new()));
+        registry.register(Arc::new(HomeAssistantCollector::new()));
+        registry.register(Arc::new(UnifiCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));
