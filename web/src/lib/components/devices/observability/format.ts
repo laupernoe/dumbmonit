@@ -12,7 +12,11 @@ export const TITLES: Record<string, string> = {
 	victoriametrics: 'VictoriaMetrics',
 	victorialogs: 'VictoriaLogs',
 	loki: 'Loki',
-	graylog: 'Graylog'
+	graylog: 'Graylog',
+	redis: 'Redis',
+	mongodb: 'MongoDB',
+	rabbitmq: 'RabbitMQ',
+	crowdsec: 'CrowdSec'
 };
 
 export function stateTone(state: ObservabilityState | null): Tone {

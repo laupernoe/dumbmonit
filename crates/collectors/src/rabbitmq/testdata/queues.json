@@ -1,0 +1,40 @@
+{
+ "filtered_count": 3,
+ "item_count": 3,
+ "items": [
+  {
+   "consumers": 0,
+   "messages": 7,
+   "messages_ready": 7,
+   "messages_unacknowledged": 0,
+   "name": "orders",
+   "state": "running",
+   "type": "classic",
+   "vhost": "/"
+  },
+  {
+   "consumers": 0,
+   "messages": 3,
+   "messages_ready": 3,
+   "messages_unacknowledged": 0,
+   "name": "emails",
+   "state": "running",
+   "type": "classic",
+   "vhost": "shop"
+  },
+  {
+   "consumers": 0,
+   "messages": 1,
+   "messages_ready": 1,
+   "messages_unacknowledged": 0,
+   "name": "invoices",
+   "state": "running",
+   "type": "quorum",
+   "vhost": "/"
+  }
+ ],
+ "page": 1,
+ "page_count": 1,
+ "page_size": 100,
+ "total_count": 3
+}
