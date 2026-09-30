@@ -1,0 +1,22 @@
+{
+  "documents_total": 6,
+  "documents_inbox": null,
+  "inbox_tag": null,
+  "inbox_tags": null,
+  "document_file_type_counts": [
+    {
+      "mime_type": "image/jpeg",
+      "mime_type_count": 5
+    },
+    {
+      "mime_type": "text/plain",
+      "mime_type_count": 1
+    }
+  ],
+  "character_count": 16,
+  "tag_count": 0,
+  "correspondent_count": 0,
+  "document_type_count": 0,
+  "storage_path_count": 0,
+  "current_asn": 0
+}

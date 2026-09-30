@@ -17,6 +17,7 @@ pub mod pdm;
 pub mod pmg;
 pub mod proxmox;
 pub mod redfish;
+pub mod selfhosted;
 pub mod snmp;
 pub mod synology;
 pub mod truenas;
@@ -37,6 +38,9 @@ pub use pdm::PdmCollector;
 pub use pmg::PmgCollector;
 pub use proxmox::ProxmoxCollector;
 pub use redfish::RedfishCollector;
+pub use selfhosted::{
+    ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
+};
 pub use snmp::SnmpCollector;
 pub use synology::SynologyCollector;
 pub use truenas::TruenasCollector;
@@ -75,6 +79,11 @@ impl Registry {
         registry.register(Arc::new(GraylogCollector::new()));
         registry.register(Arc::new(MdaemonCollector::new()));
         registry.register(Arc::new(SecurityGatewayCollector::new()));
+        registry.register(Arc::new(NextcloudCollector::new()));
+        registry.register(Arc::new(ImmichCollector::new()));
+        registry.register(Arc::new(PaperlessCollector::new()));
+        registry.register(Arc::new(JellyfinCollector::new()));
+        registry.register(Arc::new(PlexCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));

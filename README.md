@@ -91,6 +91,14 @@ back for a paid edition.
   through MDaemon's XML API, and on SecurityGateway 12.5 and later the
   performance counters of its REST API (delivery queue, quarantine, sessions).
   Built from the published documentation, not yet tried on a live server.
+- **Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex** — the self-hosted
+  applications that fail sideways: Nextcloud left in maintenance or waiting
+  for `occ upgrade`, Immich queues paused or stalled while uploads still
+  succeed, Paperless with Redis or Celery gone and nothing imported, the
+  Jellyfin library scan failing every night; updates, disk space, streams and
+  transcodes. Each through its own API with the narrowest access it allows (a
+  serverinfo token, a five-permission Immich key, a Paperless user that reads
+  no document).
 - **TrueNAS** — the ZFS pool that lost a disk and still serves its data (the
   failure nobody notices until the second disk), with the disk named; scrubs and
   resilvers, pool and dataset usage against quotas, snapshots and replication
@@ -318,7 +326,7 @@ and state.
 
 ```
 crates/proto     shared types: Sample, Target, Credential, trait Collector (+ ProbeError)
-crates/collectors  snmp (profiles/*.yaml), proxmox, pbs, pdm, pmg, synology, opnsense, truenas, redfish, mdaemon, uptime — shared by the server and the relay agent
+crates/collectors  snmp (profiles/*.yaml), proxmox, pbs, pdm, pmg, synology, opnsense, truenas, redfish, mdaemon, selfhosted, uptime — shared by the server and the relay agent
 crates/server    the binary
   api/           axum routes; spa.rs serves the embedded web UI
   auth/          accounts and roles, HttpOnly session cookie, TOTP, OIDC, API tokens, rate limit
