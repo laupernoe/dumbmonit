@@ -70,6 +70,9 @@ pub struct StatusView {
     #[serde(skip_serializing_if = "Option::is_none")]
     user: Option<UserView>,
     oidc: OidcStatus,
+    /// Mode démonstration publique : l'écran de connexion propose le compte
+    /// `demo`, et toute écriture sera refusée (voir `crate::demo`).
+    demo: bool,
 }
 
 /// Corps de `setup`. `username` est facultatif : « admin » par défaut.
@@ -143,6 +146,7 @@ pub async fn status(
             provider_name: resolved.config.provider_name,
             login_url: "/api/auth/oidc/start",
         },
+        demo: state.config.demo,
     }))
 }
 
@@ -206,7 +210,13 @@ pub async fn login(
     }
 
     let username = payload.username.as_deref().map(str::trim).filter(|name| !name.is_empty());
-    let keys = limiter_keys(ip, username);
+    let mut keys = limiter_keys(ip, username);
+    // Démonstration : le compte `demo` est partagé par tous les visiteurs. Un
+    // compteur par compte laisserait un seul visiteur malveillant l'enfermer
+    // pour tout le monde ; seul le seau de l'adresse du client subsiste.
+    if state.config.demo {
+        keys.retain(|key| matches!(key, Key::Ip(_)));
+    }
     guard_attempt(&auth, &keys).await?;
 
     let user = match username {
