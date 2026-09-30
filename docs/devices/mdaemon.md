@@ -3,7 +3,9 @@
 The mail services of an MDaemon server, checked from the outside: SMTP, IMAP,
 POP3, webmail and Remote Administration accept connections and greet the way
 they should. With an account, DumbMonit also reads the exact version through
-the XML API.
+the XML API. With the [agent](agent.md) installed on the MDaemon server, the
+same page also shows the mail queues, sessions and message totals, which
+MDaemon publishes only as Windows performance counters.
 
 !!! warning "Validated against the documentation only"
 
@@ -11,7 +13,9 @@ the XML API.
     documentation and the XML API response format shown there, not against a
     real MDaemon server. Every call is a read, and the mail-port checks follow
     the protocol standards, but nobody has yet run it against a live MDaemon.
-    Tell us what breaks.
+    The same goes for the queue counters read by the agent: their names come
+    from a published list of MDaemon's performance counters, not from a
+    running server. Tell us what breaks.
 
 ## What it watches
 
@@ -35,20 +39,23 @@ no service and no API answers at all is the device *unreachable*.
 password, an address the XML API does not allow, or a wrong port is shown on
 the device page with the reason and is not notified.
 
-**What is not read, and why.** MDaemon publishes its queue sizes (local,
-remote, retry, bad, holding, quarantine), its session counts and its uptime
-as Windows performance counters, in the object named MDaemon, and in its own
-Queue and Statistics Manager. None of MDaemon's published documentation
-describes an XML API call that returns them, so DumbMonit does not guess one.
-The license, mail store disk space and message statistics are not exposed
-through a documented interface either. To watch the MDaemon Windows service
-itself and the disk that holds the mail store, install the
-[agent](agent.md) on the server and list the MDaemon service in its
-`services` setting.
+**Queues come from the agent, not from this device.** MDaemon publishes its
+queue sizes (inbound, local, remote, retry, bad, holding, quarantine), its
+session counts, its message statistics and its uptime as Windows performance
+counters, in the object named MDaemon, and in its own Queue and Statistics
+Manager. None of MDaemon's published documentation describes an XML API call
+that returns them, so this device does not guess one: the
+[agent](agent.md), installed on the MDaemon server, reads the performance
+counters instead. See [Mail queues through the agent](#mail-queues-through-the-agent).
+The license and the mail store disk space are not exposed through a
+documented interface or a performance counter, and are not read. The agent
+also watches the disk that holds the mail store; list the MDaemon service in
+its `services` setting to watch the Windows service itself.
 
 The [built-in rules](../alerting/rules.md#mdaemon-and-securitygateway) that
 apply: MDaemon mail service down, MDaemon XML API not answering, plus Device
-unreachable.
+unreachable; with the agent, MDaemon mail queue growing, MDaemon Bad queue not
+empty and MDaemon Retry queue high.
 
 ## The device page
 
@@ -57,6 +64,53 @@ the last stored measurement: opening the page never connects to the server.
 It lists every watched service with its port, a word and a colour (Answering,
 Down), and its response time; then the version and where it was read. Stopped
 services come first.
+
+When the agent on the same server reports MDaemon's counters, a **Mail
+queues** panel follows: the number of messages in each queue (a frozen queue,
+a non-empty Bad queue and more than fifty messages in Retry are flagged in
+words), the active sessions, the messages and spam, virus and DNSBL verdicts
+of the last 24 hours, MDaemon's uptime, and the internal servers MDaemon
+reports as inactive. The same panel appears on the agent's own page.
+
+## Mail queues through the agent
+
+1. Install the [agent](agent.md#install) on the Windows server that runs
+   MDaemon. Nothing else is needed: the agent notices the Windows service
+   named `MDaemon` and reads the counters of the MDaemon performance object
+   every sampling period. To force it on or off, set `mdaemon: true` or
+   `mdaemon: false` in `agent.yaml`.
+2. The queues appear on the agent's page. To also show them on this MDaemon
+   device, DumbMonit looks for the agent on the same machine: the agent set as
+   this device's parent, or the relay agent that probes it, or the agent whose
+   host name matches this device's address (`mail` for `mail.example.com`),
+   or, when there is one MDaemon device and one agent reporting MDaemon
+   counters, that agent. If none matches, edit this device and choose the
+   agent as its **Parent device**: the agent and MDaemon share the machine, so
+   when the agent goes silent this device's alerts are held back as well.
+
+The series belong to the agent, with its `target` label. All are prefixed
+`dumbmonit_mdaemon_`:
+
+| Metric | Labels | Performance counters read |
+|---|---|---|
+| `queue_messages` | `queue`: `inbound`, `local`, `remote`, `retry`, `bad`, `holding`, `lan`, `quarantine`, `raw` | `Inbound queue messages`, `Local queue messages`, `Remote queue messages`, `Retry queue messages`, `Bad queue messages`, `Holding queue messages`, `LAN queue messages`, `Quarantine queue messages`, `RAW queue messages` |
+| `queue_frozen` (1 frozen) | `queue`: `inbound`, `local`, `remote` | `Inbound queue frozen`, `Local queue frozen`, `Remote queue frozen` |
+| `sessions_active` | `protocol`: `smtp_in`, `smtp_out`, `pop3_in`, `pop3_out`, `imap`, `webmail` | `Active SMTP (in) sessions`, `Active SMTP (out) sessions`, `Active POP3 (in) sessions`, `Active POP3 (out) sessions`, `Active IMAP sessions`, `Active Webmail sessions` |
+| `sessions_total` (counter) | `protocol`: `smtp_in`, `smtp_out`, `pop3`, `imap` | `SMTP sessions (in) total`, `SMTP sessions (out) total`, `POP3 sessions total`, `IMAP sessions total` |
+| `messages_total` (counter) | `protocol`: `smtp_in`, `smtp_out`, `domainpop_in` | `SMTP messages (in) total`, `SMTP messages (out) total`, `DomainPOP messages (in) total` |
+| `filtered_messages_total` (counter) | `filter`: `spam`, `virus`, `dnsbl`; `verdict`: `accepted`, `refused` | `spam accepted total`, `spam refused total`, `Viruses accepted total`, `Viruses refused total`, `DNSBL accepted total`, `DNSBL refused total` |
+| `server_active` (1 active) | `server`: `smtp`, `pop3`, `imap`, `webmail`, `webadmin`, `activesync`, `antispam`, `antivirus`, `minger`, `multipop`, `domainpop` | `SMTP server state`, `POP3 server state`, `IMAP server state`, `Web Mail server state`, `Web Admin server state`, `ActiveSync server state`, `AntiSpam server state`, `AntiVirus server state`, `Minger server state`, `MultiPOP server state`, `DomainPOP server state` |
+| `running` (1 running) | | `MDaemon running state` |
+| `uptime_seconds` | | `MDaemon up time` |
+
+Totals count since MDaemon last started: apply `increase()` or `rate()` in
+queries, as the page does for its 24-hour figures. The per-second counters
+(`SMTP messages (in)/sec`…) are not read, since the totals give the same
+rates. A counter that your MDaemon version does not have, or names
+differently, is reported once in the agent's log (`performance counter not
+available`) and the others are still read; to read one the preset lacks,
+list it under `perf_counters` in `agent.yaml` (see
+[Windows performance counters](agent.md#windows-performance-counters)).
 
 ## Watch the mail services, and optionally the XML API
 
@@ -83,7 +137,7 @@ services come first.
 5. In DumbMonit, enter the server address, for example "mail.example.com", then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default.
 
 !!! warning
-    MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. Mail queue sizes are not read: MDaemon publishes them only as Windows performance counters.
+    MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. Mail queue sizes are not read by this device: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.
 
 The XML API is served by the Remote Administration web server: port 1000 over
 HTTP and 444 over HTTPS by default, at `/MdMgmtWS/`, or by IIS when Remote

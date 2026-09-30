@@ -12,6 +12,7 @@ use crate::binding::Binding;
 use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::docker::DockerProbe;
+use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
 use crate::collect::sensors::SensorsProbe;
@@ -65,6 +66,9 @@ pub struct Agent {
     sensors: SensorsProbe,
     smart: SmartProbe,
     zfs: ZfsProbe,
+    /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
+    /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
+    perf_counters: PerfCountersProbe,
     buffer: PendingBuffer,
     client: PushClient,
     backoff: Backoff,
@@ -112,6 +116,7 @@ impl Agent {
             sensors: SensorsProbe::new(config.sensors),
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
+            perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
@@ -139,6 +144,7 @@ impl Agent {
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
         snapshot.zfs = self.zfs.read().await;
+        snapshot.perf_counters = self.perf_counters.read();
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
@@ -407,6 +413,7 @@ mod tests {
             sensors: false,
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
+            perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
             log_level: tracing::Level::INFO,

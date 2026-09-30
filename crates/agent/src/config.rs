@@ -15,6 +15,7 @@ use serde::Deserialize;
 
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
+use crate::collect::perf_counters::{self, CustomCounter, PerfCountersConfig, PresetMode};
 use crate::collect::plakar::{self, PlakarConfig};
 use crate::collect::smart::{self, SmartConfig};
 use crate::collect::system_health::SystemHealthConfig;
@@ -84,6 +85,8 @@ struct FileConfig {
     zfs: Option<bool>,
     zfs_bin: Option<String>,
     zfs_interval_secs: Option<u64>,
+    perf_counters: Option<Vec<PerfCounterFile>>,
+    mdaemon: Option<FlagOrAuto>,
     max_buffered_samples: Option<usize>,
     log_level: Option<String>,
     system_health: Option<SystemHealthFile>,
@@ -111,6 +114,24 @@ impl Patterns {
                 .collect(),
         }
     }
+}
+
+/// Un compteur de performance Windows : son chemin seul, ou son chemin et le
+/// nom sous lequel le publier.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+enum PerfCounterFile {
+    Path(String),
+    Named { path: String, name: Option<String> },
+}
+
+/// `true`, `false` ou `auto` : YAML lit les deux premiers comme des booléens,
+/// le troisième comme du texte.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+enum FlagOrAuto {
+    Flag(bool),
+    Text(String),
 }
 
 /// Section `system_health` du fichier : santé du système d'exploitation.
@@ -166,6 +187,8 @@ pub struct Config {
     pub smart: SmartConfig,
     /// Pools ZFS, par `zpool`.
     pub zfs: ZfsConfig,
+    /// Compteurs de performance Windows : liste libre et jeu MDaemon.
+    pub perf_counters: PerfCountersConfig,
     pub max_buffered_samples: usize,
     /// Fichier où l'agent range le secret de liaison que le serveur lui
     /// attribue. À côté de la configuration par défaut, pour qu'un déplacement
@@ -206,6 +229,7 @@ impl fmt::Debug for Config {
             .field("sensors", &self.sensors)
             .field("smart", &self.smart)
             .field("zfs", &self.zfs)
+            .field("perf_counters", &self.perf_counters)
             .finish()
     }
 }
@@ -448,6 +472,8 @@ impl Config {
             )?),
         };
 
+        let perf_counters = Self::merge_perf_counters(file.perf_counters, file.mdaemon, &env)?;
+
         let max_buffered_samples = match env.get("DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES") {
             Some(raw) => raw.trim().parse::<usize>().with_context(|| {
                 format!("DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES: invalid value '{raw}'")
@@ -494,6 +520,7 @@ impl Config {
             sensors,
             smart,
             zfs,
+            perf_counters,
             max_buffered_samples,
             secret_path: Self::resolve_secret_path(&env, config_path),
             log_level,
@@ -507,6 +534,72 @@ impl Config {
         for (legacy, name) in &self.deprecated_env {
             dumbmonit_proto::env::warn_deprecated(legacy, name);
         }
+    }
+
+    /// Compteurs de performance : la variable remplace la liste du fichier.
+    ///
+    /// Dans la variable, les chemins sont séparés par des points-virgules et non
+    /// des virgules : une instance comme `\Processor Information(0,1)` en
+    /// contient. Chaque chemin est vérifié au démarrage, pour qu'une barre
+    /// oubliée se voie tout de suite plutôt qu'en creux dans les graphes.
+    fn merge_perf_counters(
+        from_file: Option<Vec<PerfCounterFile>>,
+        mdaemon: Option<FlagOrAuto>,
+        env: &EnvSource,
+    ) -> Result<PerfCountersConfig> {
+        let counters: Vec<CustomCounter> = match env.get("DUMBMONIT_AGENT_PERF_COUNTERS") {
+            Some(raw) => raw
+                .split(';')
+                .map(str::trim)
+                .filter(|path| !path.is_empty())
+                .map(|path| CustomCounter { path: path.to_string(), name: path.to_string() })
+                .collect(),
+            None => from_file
+                .unwrap_or_default()
+                .into_iter()
+                .map(|entry| match entry {
+                    PerfCounterFile::Path(path) => {
+                        let path = path.trim().to_string();
+                        CustomCounter { name: path.clone(), path }
+                    }
+                    PerfCounterFile::Named { path, name } => {
+                        let path = path.trim().to_string();
+                        let name = name
+                            .map(|n| n.trim().to_string())
+                            .filter(|n| !n.is_empty())
+                            .unwrap_or_else(|| path.clone());
+                        CustomCounter { path, name }
+                    }
+                })
+                .filter(|counter| !counter.path.is_empty())
+                .collect(),
+        };
+        for counter in &counters {
+            perf_counters::parse_path(&counter.path).map_err(|reason| {
+                anyhow::anyhow!("perf_counters: {reason} (expected \\Object(Instance)\\Counter)")
+            })?;
+        }
+        if counters.len() > perf_counters::MAX_CUSTOM_COUNTERS {
+            bail!(
+                "perf_counters: {} counters listed, at most {} are read",
+                counters.len(),
+                perf_counters::MAX_CUSTOM_COUNTERS
+            );
+        }
+        let mdaemon = match env.get("DUMBMONIT_AGENT_MDAEMON") {
+            Some(raw) => PresetMode::parse(&raw).with_context(|| {
+                format!("DUMBMONIT_AGENT_MDAEMON: expected true, false or auto, got '{raw}'")
+            })?,
+            None => match mdaemon {
+                None => PresetMode::Auto,
+                Some(FlagOrAuto::Flag(true)) => PresetMode::On,
+                Some(FlagOrAuto::Flag(false)) => PresetMode::Off,
+                Some(FlagOrAuto::Text(text)) => PresetMode::parse(&text).with_context(|| {
+                    format!("mdaemon: expected true, false or auto, got '{text}'")
+                })?,
+            },
+        };
+        Ok(PerfCountersConfig { counters, mdaemon })
     }
 
     fn merge_system_health(file: SystemHealthFile, env: &EnvSource) -> Result<SystemHealthConfig> {
@@ -1104,5 +1197,78 @@ system_health:
         let rendered = format!("{config:?}");
         assert!(!rendered.contains("dmon_abc"), "le jeton a fuité : {rendered}");
         assert!(rendered.contains("redacted"));
+    }
+
+    fn from_yaml(yaml: &str) -> FileConfig {
+        FileConfig {
+            server_url: Some("http://s:8080".into()),
+            token: Some("dmon_abc".into()),
+            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+        }
+    }
+
+    #[test]
+    fn performance_counters_are_read_from_the_file_in_both_forms() {
+        let yaml = r#"
+perf_counters:
+  - '\Processor(_Total)\% Processor Time'
+  - path: '\Memory\Available MBytes'
+    name: memory_available_mb
+  - path: '\Paging File(_Total)\% Usage'
+mdaemon: true
+"#;
+        let config = Config::merge(from_yaml(yaml), env(&[])).expect("configuration");
+        let counters = &config.perf_counters.counters;
+        assert_eq!(counters.len(), 3);
+        assert_eq!(counters[0].name, r"\Processor(_Total)\% Processor Time");
+        assert_eq!(counters[1].path, r"\Memory\Available MBytes");
+        assert_eq!(counters[1].name, "memory_available_mb");
+        // Sans nom, l'étiquette est le chemin lui-même.
+        assert_eq!(counters[2].name, r"\Paging File(_Total)\% Usage");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::On);
+    }
+
+    #[test]
+    fn the_mdaemon_preset_is_automatic_by_default_and_follows_the_environment() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Auto);
+        assert!(config.perf_counters.counters.is_empty());
+
+        let config = Config::merge(from_yaml("mdaemon: auto\n"), env(&[])).expect("configuration");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Auto);
+        let config = Config::merge(from_yaml("mdaemon: false\n"), env(&[])).expect("configuration");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Off);
+
+        let config = Config::merge(
+            from_yaml("mdaemon: false\n"),
+            env(&[
+                ("DUMBMONIT_AGENT_MDAEMON", "on"),
+                (
+                    "DUMBMONIT_AGENT_PERF_COUNTERS",
+                    r"\Processor Information(0,1)\% Processor Time; \Memory\Available MBytes ;",
+                ),
+            ]),
+        )
+        .expect("configuration");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::On);
+        // Point-virgule : la virgule appartient ici au nom de l'instance.
+        let paths: Vec<&str> =
+            config.perf_counters.counters.iter().map(|c| c.path.as_str()).collect();
+        assert_eq!(
+            paths,
+            [r"\Processor Information(0,1)\% Processor Time", r"\Memory\Available MBytes"]
+        );
+    }
+
+    #[test]
+    fn a_malformed_counter_path_or_mdaemon_value_is_refused_at_startup() {
+        let error = Config::merge(from_yaml("perf_counters:\n  - 'Memory\\Available'\n"), env(&[]))
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("perf_counters"), "{error:#}");
+        assert!(Config::merge(from_yaml("mdaemon: sometimes\n"), env(&[])).is_err());
+        assert!(
+            Config::merge(file_with_url_and_token(), env(&[("DUMBMONIT_AGENT_MDAEMON", "2")]))
+                .is_err()
+        );
     }
 }

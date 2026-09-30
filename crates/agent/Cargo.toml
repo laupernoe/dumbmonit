@@ -75,3 +75,7 @@ tempfile = "3"
 # Intégration au gestionnaire de services : point d'entrée du service, prise en
 # charge de l'ordre d'arrêt, et interrogation de l'état des services surveillés.
 windows-service = "0.8"
+# Compteurs de performance (PDH) : files d'attente de MDaemon et compteurs
+# listés dans `perf_counters`. Même version que celle qu'apporte déjà
+# `windows-service`, pour ne pas faire entrer une seconde copie des liaisons.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Performance"] }
