@@ -166,11 +166,16 @@
 	// Agents are not relays for themselves: their metrics are pushed, not probed.
 	const canRelay = $derived(collector.kind !== 'agent');
 	let relays = $state<RelayAgent[]>([]);
+	/** Set once the list came back, so the "no relay yet" hint never flashes before it. */
+	let relaysRead = $state(false);
 	$effect(() => {
 		if (!canRelay) return;
 		const controller = new AbortController();
 		listRelays(controller.signal)
-			.then((list) => (relays = list.filter((r) => r.id !== target?.id)))
+			.then((list) => {
+				relays = list.filter((r) => r.id !== target?.id);
+				relaysRead = true;
+			})
 			.catch(() => (relays = []));
 		return () => controller.abort();
 	});
@@ -345,6 +350,12 @@
 							{/if}
 						</select>
 					</Field>
+				{:else if canRelay && relaysRead && !editing}
+					<!-- No relay yet: say once that a device on another network is reachable too. -->
+					<p class="text-[0.8125rem] leading-relaxed text-ink-2 sm:col-span-2">
+						On another network, behind a NAT or at a client’s? An agent there can probe it for this server.
+						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">Watch a remote site</a>
+					</p>
 				{/if}
 			</div>
 
