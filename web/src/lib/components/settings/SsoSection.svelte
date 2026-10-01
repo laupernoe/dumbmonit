@@ -246,7 +246,7 @@
 					</Confirm>
 				{/if}
 				{#if saved}
-					<Plate tone="signal" label="Saved" />
+					<Plate tone="signal" label="Saved" draw />
 				{/if}
 			</div>
 		</form>

@@ -12,8 +12,13 @@
 	 *
 	 * Alerts come from the shared store (polled app-wide); everything else is
 	 * refreshed here every 30 s. No device list: the rack lives on /targets.
+	 *
+	 * The pigeon in the sky lives the weather with the reader: it sleeps on a
+	 * wire on a quiet night, startles when something new goes wrong, and loops
+	 * under confetti when the sky clears again. When nothing needs the reader,
+	 * a "Did you know?" strip points at what the navigation does not show.
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import {
 		listTargets,
@@ -37,8 +42,9 @@
 	import { loadProbeStatuses } from '$lib/metrics';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark } from '$lib/ui';
-	import SkyScene from '$lib/components/overview/SkyScene.svelte';
+	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '$lib/ui';
+	import SkyScene, { type PigeonMood } from '$lib/components/overview/SkyScene.svelte';
+	import DidYouKnow from '$lib/components/overview/DidYouKnow.svelte';
 	import Briefing from '$lib/components/overview/Briefing.svelte';
 	import WeekAhead from '$lib/components/overview/WeekAhead.svelte';
 	import Streaks from '$lib/components/overview/Streaks.svelte';
@@ -103,6 +109,54 @@
 			return state === 'offline' || state === 'down';
 		})
 	);
+
+	// --- The pigeon's mood -----------------------------------------------------
+	// A quiet night (22:00–06:00 here, nothing worse than a cloud) sends it to
+	// sleep on its wire. A new problem startles it; the sky clearing after
+	// trouble makes it loop under confetti. Reactions only follow changes seen
+	// while the page is open — never the first reading — and stay off under
+	// reduced motion. `?pigeon=sleep|startle|celebrate` shows a mood for review.
+	const night = $derived(now.getHours() >= 22 || now.getHours() < 6);
+	let reaction = $state<'startle' | 'celebrate' | null>(null);
+	let reactionTimer: ReturnType<typeof setTimeout> | undefined;
+	const reviewMood = $derived.by(() => {
+		const asked = page.url.searchParams.get('pigeon');
+		return asked === 'sleep' || asked === 'startle' || asked === 'celebrate' ? (asked as PigeonMood) : null;
+	});
+	const pigeon = $derived<PigeonMood>(
+		reviewMood ?? reaction ?? (night && (condition === 'clear' || condition === 'cloudy') ? 'sleep' : 'fly')
+	);
+
+	function react(kind: 'startle' | 'celebrate') {
+		if (reducedMotion()) return;
+		clearTimeout(reactionTimer);
+		reaction = kind;
+		reactionTimer = setTimeout(() => (reaction = null), kind === 'celebrate' ? 3400 : 1500);
+	}
+
+	/** Armed a few seconds after the first full reading: what loads in is not news. */
+	let watching = $state(false);
+	let seenAttention = 0;
+	let seenCondition: string | null = null;
+	$effect(() => {
+		const attention = sky.attention;
+		const current = condition;
+		const armed = watching;
+		untrack(() => {
+			if (armed && seenCondition !== null && !demoEmpty) {
+				if (attention > seenAttention || (current === 'storm' && seenCondition !== 'storm')) {
+					react('startle');
+				} else if (current === 'clear' && ['storm', 'overcast', 'cloudy'].includes(seenCondition)) {
+					react('celebrate');
+				}
+			}
+			seenAttention = attention;
+			seenCondition = current;
+		});
+	});
+
+	/** The tips strip: only on a quiet sky, never over something that needs the reader. */
+	const showTips = $derived(sky.quiet && alertsStore.activeCount === 0 && !noDevices && !showGuide);
 
 	const briefing = $derived(
 		buildBriefing({ history, targets: shownTargets, rules, alerts, unreachable, channels, lastVisit, now })
@@ -198,8 +252,10 @@
 		now = at;
 		lastChecked = new Date();
 		void readOnboarding(signal);
-		void alertsStore.refresh(signal);
+		await alertsStore.refresh(signal);
+		if (!watching && !armTimer) armTimer = setTimeout(() => (watching = true), 3000);
 	}
+	let armTimer: ReturnType<typeof setTimeout> | undefined;
 
 	async function silence(alert: Alert, target: Target) {
 		silencingKey = alert.fingerprint;
@@ -236,6 +292,8 @@
 			controller.abort();
 			clearInterval(poll);
 			clearInterval(visit);
+			clearTimeout(armTimer);
+			clearTimeout(reactionTimer);
 			window.removeEventListener('pagehide', leave);
 			leave();
 		};
@@ -296,7 +354,7 @@
 		data-tour="weather"
 		class="rise-in relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift md:h-[260px]"
 	>
-		<SkyScene {condition} frame={false} class="absolute inset-0 h-full w-full" />
+		<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
 
 		{#if !noDevices && !showGuide}
 			<!--
@@ -359,6 +417,12 @@
 						<ClickSpark>
 							<Button variant="primary" href="/targets/new">Add a device</Button>
 						</ClickSpark>
+						{#if auth.isAdmin}
+							<p class="mt-4 text-sm text-ink-2">
+								Or <a href="/targets/new?kind=agent" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">install the agent on a machine</a>,
+								or <a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">watch a remote site</a> through one.
+							</p>
+						{/if}
 					{/snippet}
 				</EmptyState>
 			</div>
@@ -369,6 +433,12 @@
 				<ClickSpark>
 					<Button variant="primary" href="/targets/new" class="w-full">Add a device</Button>
 				</ClickSpark>
+			</div>
+		{/if}
+
+		{#if showTips}
+			<div class="rise-in mt-4" style={`--rise-delay: ${STAGGER_MS}ms`}>
+				<DidYouKnow />
 			</div>
 		{/if}
 

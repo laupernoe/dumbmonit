@@ -59,7 +59,8 @@ import {
 	Puzzle,
 	BrickWallFire,
 	BrickWallShield,
-	CloudBackup
+	CloudBackup,
+	RadioTower
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isPackKind } from '$lib/api/packs';
@@ -214,6 +215,17 @@ export interface AgentFeature {
 }
 
 export const AGENT_FEATURES: AgentFeature[] = [
+	{
+		// Not something the agent reads on its own machine: relay mode
+		// (`crates/agent/src/relay.rs`) runs this server's probes from the
+		// agent's network. Listed here so "remote site" finds it.
+		id: 'relay',
+		label: 'Another network (remote site)',
+		summary: 'An agent at a second site, a client’s office or behind a NAT probes the devices there for this server. Outbound only.',
+		next: 'Install the agent on any machine at the remote site, then switch it to relay mode. Add the devices of that site as usual, with their local address, and pick the agent under More options → Reached through.',
+		keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network probe proxy satellite outpost',
+		icon: RadioTower
+	},
 	{
 		id: 'docker',
 		label: 'Docker containers',

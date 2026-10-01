@@ -3,7 +3,9 @@
 	 * Add a device — the one way to add anything.
 	 *
 	 * Three views, all in the URL so the browser's Back button walks them:
-	 * the picker (no parameter: two front doors, then every kind, searchable),
+	 * the picker (no parameter: three front doors — the agent on a machine, a
+	 * network scan, an agent watching another network — then every kind,
+	 * searchable),
 	 * a kind's form (`?kind=snmp`, `?kind=agent&via=docker`), the network scan
 	 * (`?scan=1`). The setup guide (`&guide=1`) opens only on request, beside
 	 * the form on a desktop, above it on a phone. Every type, notice and option
@@ -17,7 +19,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar } from 'lucide-svelte';
+	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar, RadioTower } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '$lib/api';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
 	import CollectorPicker from '$lib/components/device-form/CollectorPicker.svelte';
@@ -25,10 +27,13 @@
 	import AgentEnroll from '$lib/components/device-form/AgentEnroll.svelte';
 	import Discovery from '$lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '$lib/components/device-form/SetupNotice.svelte';
+	import RelayDiagram from '$lib/components/device-form/RelayDiagram.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '$lib/components/device-form/kinds';
 
 	let collectors = $state<CollectorInfo[]>([]);
 	let targets = $state<Target[]>([]);
+	/** True once the device list came back: only then is "first device" known. */
+	let targetsKnown = $state(false);
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	/** True when the server predates `/api/collectors`. */
@@ -54,7 +59,10 @@
 		void load(controller.signal);
 		// Only feeds the "Parent device" list: its failure must not block adding.
 		void listTargets(controller.signal)
-			.then((list) => (targets = list))
+			.then((list) => {
+				targets = list;
+				targetsKnown = true;
+			})
 			.catch(() => {});
 		return () => controller.abort();
 	});
@@ -183,16 +191,25 @@
 
 	const SelectedIcon = $derived(feature ? feature.icon : selected ? kindIcon(selected.kind) : null);
 	const selectedLabel = $derived(feature ? feature.label : (selected?.label ?? ''));
-	const selectedSummary = $derived(feature ? 'Comes through the agent: install it on the machine.' : (selected?.summary ?? ''));
+	const relaying = $derived(feature?.id === 'relay');
+	const selectedSummary = $derived(
+		relaying
+			? 'An agent on that network probes its devices for this server.'
+			: feature
+				? 'Comes through the agent: install it on the machine.'
+				: (selected?.summary ?? '')
+	);
 	const crumb = $derived(view === 'kind' ? selectedLabel : view === 'scan' ? 'Scan my network' : null);
 	const description = $derived(
 		view === 'picker'
 			? 'Pick what to watch. The next step asks for the few fields it needs.'
 			: view === 'scan'
 				? 'Finds SNMP devices on a network range and adds them in one go.'
-				: selected?.kind === AGENT_KIND
-					? 'One command on the machine, and it reports on its own.'
-					: 'Tell DumbMonit where it is and how to read it.'
+				: relaying
+					? 'One agent at the other site, and its devices report through it.'
+					: selected?.kind === AGENT_KIND
+						? 'One command on the machine, and it reports on its own.'
+						: 'Tell DumbMonit where it is and how to read it.'
 	);
 
 	const doorClass =
@@ -288,7 +305,11 @@
 				</p>
 			{/if}
 			{#if hasAgent || snmp}
-				<!-- The two front doors: most of a homelab comes in through one of them. -->
+				<!--
+					The front doors: most of a homelab comes in through the first two. The
+					third is the one nobody guesses — an agent watching another network —
+					so it gets the width and a picture of how it works.
+				-->
 				<div class={`mb-6 grid gap-3 ${hasAgent && snmp ? 'md:grid-cols-2' : ''}`}>
 					{#if hasAgent}
 						<button type="button" data-door="agent" onclick={() => select(AGENT_KIND)} class={`${doorClass} border border-signal/40 bg-signal-soft`}>
@@ -296,9 +317,9 @@
 								<Cpu class="size-5" aria-hidden="true" />
 							</span>
 							<span class="min-w-0 flex-1">
-								<span class="block font-semibold text-ink">Install the agent on a machine</span>
+								<span class="block font-semibold text-ink">Monitor a machine with the agent</span>
 								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-									One command on Linux, Windows, macOS or FreeBSD: system, disks, Docker, services and backups.
+									One command on Linux, Windows, macOS or FreeBSD: system, disks, services, Docker containers and backups.
 								</span>
 							</span>
 							<ArrowRight class="mt-1 size-4 shrink-0 text-signal-ink transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -316,6 +337,36 @@
 								</span>
 							</span>
 							<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+						</button>
+					{/if}
+					{#if hasAgent}
+						<button
+							type="button"
+							data-door="relay"
+							data-choice="agent:relay"
+							onclick={() => select(AGENT_KIND, 'relay')}
+							class={`${doorClass} border border-line-strong bg-surface ${snmp ? 'md:col-span-2' : ''}`}
+						>
+							<span class="grid min-w-0 flex-1 items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+								<span class="flex min-w-0 items-start gap-3.5">
+									<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
+										<RadioTower class="size-5" aria-hidden="true" />
+									</span>
+									<span class="min-w-0 flex-1">
+										<span class="block font-semibold text-ink">
+											Watch another network <span class="font-normal text-ink-2">(remote site)</span>
+										</span>
+										<span class="mt-0.5 block text-sm leading-snug text-ink-2">
+											An agent at a second site, a client’s office or behind a NAT probes the switches, NAS and
+											hypervisors there for this server, and only connects out — no VPN, no port to open.
+										</span>
+									</span>
+									<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+								</span>
+								<span class="block rounded-lg border border-line bg-canvas-deep px-2 py-2 sm:px-3">
+									<RelayDiagram decorative />
+								</span>
+							</span>
 						</button>
 					{/if}
 				</div>
@@ -398,18 +449,24 @@
 					<!-- Re-mounted per kind: the form seeds itself once from its collector. -->
 					{#key selected.kind}
 						{#if selected.kind === AGENT_KIND}
-							{#if feature}
+							{#if feature && !relaying}
 								<p class="mb-5 rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-sm leading-relaxed text-ink">
 									{feature.next}
 								</p>
 							{/if}
-							<AgentEnroll cancelHref="/targets" />
+							{#key relaying}
+								<AgentEnroll cancelHref="/targets" relay={relaying} />
+							{/key}
 						{:else}
 							<TargetForm
 								collector={selected}
 								{targets}
 								cancelHref="/targets"
-								onsaved={(saved) => goto(`/targets/${saved.id}`)}
+								onsaved={(saved) =>
+									goto(`/targets/${saved.id}`, {
+										// The very first device gets a small celebration on its page.
+										state: { firstDevice: targetsKnown && targets.length === 0 } as App.PageState
+									})}
 							/>
 						{/if}
 					{/key}

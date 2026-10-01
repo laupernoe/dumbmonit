@@ -18,6 +18,8 @@
 		/** Hide the icon (for very tight rows). */
 		bare?: boolean;
 		pulse?: boolean;
+		/** The icon inks itself in once: for a confirmation that just happened ("Saved", "Done"). */
+		draw?: boolean;
 		class?: string;
 		title?: string;
 	}
@@ -29,6 +31,7 @@
 		size = 'sm',
 		bare = false,
 		pulse = false,
+		draw = false,
 		class: className = '',
 		title
 	}: Props = $props();
@@ -68,7 +71,7 @@
 	{title}
 >
 	{#if !bare}
-		<Icon class={`size-3.5 shrink-0 ${pulse ? 'animate-pulse' : ''}`} aria-hidden="true" />
+		<Icon class={`size-3.5 shrink-0 ${pulse ? 'animate-pulse' : ''} ${draw ? 'check-draw' : ''}`} aria-hidden="true" />
 	{/if}
 	{#if children}{@render children()}{:else}{label ?? DEFAULT_LABEL[tone]}{/if}
 </span>
