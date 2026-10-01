@@ -62,7 +62,21 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         agent_tokens: agent_tokens(pool).await?,
         api_tokens: api_tokens(pool).await?,
         push_monitors: push_monitors(pool, cipher, &refs).await?,
+        packs: packs(pool).await?,
     })
+}
+
+async fn packs(pool: &SqlitePool) -> Result<Vec<BundlePack>> {
+    Ok(crate::packs::list(pool)
+        .await?
+        .into_iter()
+        .map(|row| BundlePack {
+            id: row.id,
+            version: row.version,
+            yaml: row.yaml,
+            enabled: row.enabled,
+        })
+        .collect())
 }
 
 /// Identifiant d'équipement → référence portable (`kind|address`).
@@ -535,5 +549,6 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("agent_tokens", "Agent enrolment tokens, as hashes: installed agents keep working."),
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
+        ("packs", "Integration packs, so devices of a pack type are probed again."),
     ])
 }

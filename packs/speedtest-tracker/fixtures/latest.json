@@ -1,0 +1,28 @@
+{
+  "data": {
+    "id": 1432,
+    "service": "ookla",
+    "ping": 11.873,
+    "download": 118212450,
+    "upload": 5087312,
+    "download_bits": 945699600,
+    "upload_bits": 40698496,
+    "download_bits_human": "945.70 Mbps",
+    "upload_bits_human": "40.70 Mbps",
+    "benchmarks": null,
+    "healthy": true,
+    "status": "completed",
+    "scheduled": true,
+    "comments": null,
+    "data": {
+      "isp": "Example ISP",
+      "ping": { "low": 10.954, "high": 13.402, "jitter": 0.412, "latency": 11.873 },
+      "type": "result",
+      "server": { "id": 12345, "name": "Example Server", "location": "Paris", "country": "France" },
+      "packetLoss": 0
+    },
+    "created_at": "2026-09-30T20:00:04.000000Z",
+    "updated_at": "2026-09-30T20:00:41.000000Z"
+  },
+  "message": "ok"
+}

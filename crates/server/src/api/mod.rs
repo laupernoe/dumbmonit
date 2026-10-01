@@ -17,6 +17,7 @@ mod observability;
 mod oidc;
 mod onboarding;
 mod opnsense;
+mod packs;
 mod pbs;
 mod pdm;
 mod pmg;
@@ -125,6 +126,8 @@ pub fn router(state: AppState) -> Router {
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
+        .merge(packs::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(

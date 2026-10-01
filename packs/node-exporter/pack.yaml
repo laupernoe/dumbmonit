@@ -1,0 +1,109 @@
+# Prometheus node_exporter on a Linux host: a curated subset of its families,
+# enough for CPU, memory, disks and network without importing ~1,000 series.
+schema: 1
+id: node-exporter
+version: 1.0.0
+requires: ">=0.1"
+label: Linux host (node_exporter)
+summary: CPU, memory, filesystems, disks and network of a host running Prometheus node_exporter.
+examples: [Linux server, Raspberry Pi, NAS with node_exporter]
+address_hint: 192.168.1.20
+default_port: 9100
+setup:
+  title: Expose node_exporter to DumbMonit
+  steps:
+    - "Run node_exporter on the host, for example in Docker:\ndocker run -d --net=host --pid=host -v /:/host:ro,rslave quay.io/prometheus/node-exporter --path.rootfs=/host"
+    - Allow DumbMonit to reach port 9100 through the host's firewall.
+    - "Check from the DumbMonit host:\ncurl http://192.168.1.20:9100/metrics"
+  warning: node_exporter answers anyone who reaches port 9100; restrict it to your monitoring network.
+  doc_url: https://github.com/prometheus/node_exporter
+credentials:
+  - none
+  - kind: username_password
+    help: When node_exporter runs with basic authentication (--web.config.file).
+options:
+  - key: disk_threshold
+    label: Filesystem alert (% used)
+    input: number
+    default: 90
+  - key: memory_threshold
+    label: Memory alert (% used)
+    input: number
+    default: 90
+
+sources:
+  - id: metrics
+    type: prometheus
+    path: /metrics
+    keep:
+      - node_cpu_seconds_total
+      - node_load1
+      - node_load5
+      - node_load15
+      - node_memory_MemTotal_bytes
+      - node_memory_MemAvailable_bytes
+      - node_memory_SwapTotal_bytes
+      - node_memory_SwapFree_bytes
+      - node_filesystem_size_bytes
+      - node_filesystem_avail_bytes
+      - node_filesystem_readonly
+      - node_disk_read_bytes_total
+      - node_disk_written_bytes_total
+      - node_network_receive_bytes_total
+      - node_network_transmit_bytes_total
+      - node_boot_time_seconds
+    rename:
+      node_cpu_seconds_total: cpu_seconds_total
+      node_load1: load1
+      node_load5: load5
+      node_load15: load15
+      node_memory_MemTotal_bytes: memory_total_bytes
+      node_memory_MemAvailable_bytes: memory_available_bytes
+      node_memory_SwapTotal_bytes: swap_total_bytes
+      node_memory_SwapFree_bytes: swap_free_bytes
+      node_filesystem_size_bytes: filesystem_size_bytes
+      node_filesystem_avail_bytes: filesystem_avail_bytes
+      node_filesystem_readonly: filesystem_readonly
+      node_disk_read_bytes_total: disk_read_bytes_total
+      node_disk_written_bytes_total: disk_written_bytes_total
+      node_network_receive_bytes_total: network_receive_bytes_total
+      node_network_transmit_bytes_total: network_transmit_bytes_total
+      node_boot_time_seconds: boot_time_seconds
+    # Pseudo-filesystems, container layers and virtual interfaces: noise for a host view.
+    drop:
+      fstype: ^(tmpfs|devtmpfs|overlay|squashfs|nsfs|proc|sysfs|ramfs|autofs|fuse\..*)$
+      mountpoint: ^/(proc|sys|run|dev|var/lib/docker)($|/)
+      device: ^(lo|loop\d+|ram\d+|veth.*|docker.*|br-.*|virbr.*)$
+
+metrics:
+  - name: uname_info
+    help: Always 1; the labels tell the kernel release and architecture.
+    source: metrics
+    prom: node_uname_info
+    labels:
+      release: release
+      machine: machine
+
+rules:
+  - name: filesystem_full
+    title: Filesystem almost full
+    description: A filesystem stayed above the limit for fifteen minutes.
+    expr: >-
+      100 * (1 - dumbmonit_node_exporter_filesystem_avail_bytes
+      / dumbmonit_node_exporter_filesystem_size_bytes)
+    op: ">"
+    threshold: "{{option.disk_threshold}}"
+    for: 15m
+    severity: warning
+    unit: "%"
+  - name: memory_low
+    title: Memory almost exhausted
+    description: Less memory available than the limit allows, for fifteen minutes.
+    expr: >-
+      100 * (1 - dumbmonit_node_exporter_memory_available_bytes
+      / dumbmonit_node_exporter_memory_total_bytes)
+    op: ">"
+    threshold: "{{option.memory_threshold}}"
+    for: 15m
+    severity: warning
+    unit: "%"
