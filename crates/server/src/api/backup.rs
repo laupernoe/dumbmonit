@@ -191,6 +191,11 @@ pub async fn restore(
     let report = import::restore(&state.pool, &state.cipher, &opened, payload.apply).await?;
 
     if payload.apply {
+        // Les paquets restaurés définissent des types : le registre les prend
+        // tout de suite, sans attendre un redémarrage.
+        if let Err(error) = crate::packs::sync_registry(&state.pool, &state.collectors).await {
+            tracing::warn!(%error, "integration packs not reloaded after the restore");
+        }
         tracing::info!(
             actor = %me,
             created = report.created,

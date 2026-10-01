@@ -10,6 +10,13 @@ use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
 fn main() -> Result<()> {
+    // `dumbmonit pack lint|test …` : outils d'auteur de paquet, sans serveur, sans
+    // base, sans configuration — ils ne font que lire des fichiers.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("pack") {
+        std::process::exit(dumbmonit_pack::cli::run(&args[1..]));
+    }
+
     init_tracing();
 
     let config = Config::from_env().context("invalid configuration")?;
@@ -107,10 +114,18 @@ async fn run(config: Config) -> Result<()> {
 
     let mut registry = collectors::Registry::new();
 
+    // Paquets d'intégration activés : relus ici pour les profils SNMP qu'ils
+    // apportent, que le collecteur SNMP doit connaître dès sa construction. Leurs
+    // collecteurs HTTP sont enregistrés plus bas, avec les autres.
+    let packs = dumbmonit_server::packs::load_enabled(&pool).await?;
+
     // Équipements interrogés à distance.
-    registry.register(Arc::new(
-        collectors::SnmpCollector::new().with_request_timeout(config.probe_timeout),
-    ));
+    let snmp = collectors::SnmpCollector::new().with_request_timeout(config.probe_timeout);
+    let snmp = match dumbmonit_server::packs::snmp_catalog(snmp.catalog(), &packs) {
+        Some(catalog) => snmp.with_catalog(Arc::new(catalog)),
+        None => snmp,
+    };
+    registry.register(Arc::new(snmp));
     registry.register(Arc::new(collectors::ProxmoxCollector::new()));
     registry.register(Arc::new(
         collectors::PbsCollector::new()
@@ -200,6 +215,13 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::DummyCollector));
     if config.demo {
         demo::register_synthetic(&mut registry);
+    }
+    // Types définis par les paquets : dans l'étage du registre que l'API
+    // d'installation modifie ensuite sans redémarrage.
+    for pack in &packs {
+        if let Err(error) = dumbmonit_server::packs::activate(&registry, pack) {
+            warn!(pack = pack.id(), %error, "integration pack not registered");
+        }
     }
     info!(collectors = ?registry.kinds(), "collectors registered");
 
