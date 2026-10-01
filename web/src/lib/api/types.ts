@@ -2977,3 +2977,42 @@ export interface ObservabilityOverview {
 	figures: ObservabilityFigure[];
 	breakdowns: ObservabilityBreakdown[];
 }
+
+// --- Integration packs (crates/server/src/api/packs.rs) ------------------------
+
+/** What an install changed (`packs::Saved`). */
+export type PackSaved = 'created' | 'updated' | 'unchanged';
+
+/** An installed integration pack (`PackView`). */
+export interface PackView {
+	id: string;
+	version: string;
+	label: string;
+	summary: string;
+	/** Device type it adds (`pack.<id>`); `null` for a pack that only brings SNMP profiles. */
+	kind: string | null;
+	enabled: boolean;
+	/** Server timestamp, UTC without suffix. */
+	installed_at: string;
+	sha256: string;
+	/** Full names of the metrics it produces. */
+	metrics: string[];
+	/** `uid` of the alert rules it ships. */
+	rules: string[];
+	snmp_profiles: string[];
+	/** Devices that use this type. */
+	targets: number;
+	warnings: string[];
+	/** Set when the stored YAML no longer passes validation: the pack is then inactive. */
+	error: string | null;
+}
+
+/** Answer to `POST /api/packs` (`InstallReport`). */
+export interface PackInstallReport {
+	outcome: PackSaved;
+	pack: PackView;
+	/** Rules added; a rule already present is never rewritten. */
+	rules_added: number;
+	/** The pack brings SNMP profiles: they are read at start-up only. */
+	restart_required: boolean;
+}

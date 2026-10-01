@@ -1,7 +1,8 @@
 <script lang="ts">
 	/**
 	 * Settings: what is administrative — your account, who can sign in and
-	 * how, the tokens that let agents and assistants in, the theme, and the
+	 * how, the tokens that let agents and assistants in, the integration packs
+	 * installed, the theme, and the
 	 * server's health. Each section loads its own data; this page only lays
 	 * them out and offers a rail of anchors on wide screens, a strip of chips
 	 * on narrow ones.
@@ -21,6 +22,7 @@
 	import AssistantSection from '$lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '$lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '$lib/components/settings/BackupSection.svelte';
+	import PacksSection from '$lib/components/settings/PacksSection.svelte';
 	import AboutSection from '$lib/components/settings/AboutSection.svelte';
 
 	/** Sections that used to live here, and where they went. */
@@ -47,6 +49,7 @@
 			: []),
 		{ id: 'agents', label: 'Agents' },
 		{ id: 'assistant', label: 'API & assistants' },
+		{ id: 'packs', label: 'Integration packs' },
 		{ id: 'backup', label: 'Backup' },
 		{ id: 'appearance', label: 'Appearance' },
 		{ id: 'about', label: 'About' }
@@ -166,8 +169,9 @@
 		{/if}
 		<div class="min-w-0 rise-in" style="--rise-delay: 120ms"><AgentsSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 160ms"><AssistantSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 200ms"><BackupSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 240ms"><AppearanceSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AboutSection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 200ms"><PacksSection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 240ms"><BackupSection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AppearanceSection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 320ms"><AboutSection /></div>
 	</div>
 </div>
