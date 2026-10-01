@@ -1,0 +1,12 @@
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "secrets is forbidden: User \"system:serviceaccount:kube-system:dumbmonit\" cannot list resource \"secrets\" in API group \"\" at the cluster scope",
+  "reason": "Forbidden",
+  "details": {
+    "kind": "secrets"
+  },
+  "code": 403
+}

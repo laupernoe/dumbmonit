@@ -37,6 +37,7 @@ form always matches what this version can monitor.
 | [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
 | [Domain expiry](domain.md) | `domain` | none | Registered domain over RDAP: days before expiry, hold, redemption period, registrar |
+| [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
 | [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |

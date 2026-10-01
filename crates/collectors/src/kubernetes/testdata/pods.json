@@ -1,0 +1,766 @@
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "agent-dlq76",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1,
+        "labels": {
+          "app": "agent",
+          "controller-revision-hash": "7fcc6f94df",
+          "pod-template-generation": "1"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "DaemonSet",
+            "name": "agent",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "agent",
+            "image": "busybox:1.37.0",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.2",
+        "podIPs": [
+          {
+            "ip": "10.42.0.2"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "agent",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:36Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:1.37.0",
+            "started": true,
+            "resources": {}
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "api-7c9696d669-8tpp6",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1,
+        "labels": {
+          "app": "api",
+          "pod-template-hash": "7c9696d669"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "api-7c9696d669",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "api",
+            "image": "busybox:1.37.0",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:38Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:44:26Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [api]"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:44:26Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [api]"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.5",
+        "podIPs": [
+          {
+            "ip": "10.42.0.5"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "api",
+            "state": {
+              "waiting": {
+                "reason": "CrashLoopBackOff",
+                "message": "back-off 2m40s restarting failed container=api pod=api-7c9696d669-8tpp6_demo(00000000-0000-4000-8000-000000000006)"
+              }
+            },
+            "lastState": {
+              "terminated": {
+                "exitCode": 1,
+                "reason": "Error",
+                "startedAt": "2026-09-30T22:46:40Z",
+                "finishedAt": "2026-09-30T22:46:40Z"
+              }
+            },
+            "ready": false,
+            "restartCount": 5,
+            "image": "docker.io/library/busybox:1.37.0",
+            "started": false,
+            "resources": {}
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "big",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1
+      },
+      "spec": {
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "big",
+            "image": "busybox:1.37.0",
+            "resources": {
+              "requests": {
+                "cpu": "500"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {
+            "type": "PodScheduled",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z",
+            "reason": "Unschedulable",
+            "message": "0/1 nodes are available: 1 Insufficient cpu. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+          }
+        ],
+        "qosClass": "Burstable"
+      }
+    },
+    {
+      "metadata": {
+        "name": "db-0",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1,
+        "labels": {
+          "app": "db",
+          "apps.kubernetes.io/pod-index": "0",
+          "controller-revision-hash": "db-5b67cd8b7",
+          "statefulset.kubernetes.io/pod-name": "db-0"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "StatefulSet",
+            "name": "db",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "db",
+            "image": "busybox:1.37.0",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.6",
+        "podIPs": [
+          {
+            "ip": "10.42.0.6"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "db",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:36Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:1.37.0",
+            "started": true,
+            "resources": {}
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "web-5bd6c6ddd5-jc7wv",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1,
+        "labels": {
+          "app": "web",
+          "pod-template-hash": "5bd6c6ddd5"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "web-5bd6c6ddd5",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "web",
+            "image": "busybox:1.37.0",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:38Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:38Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:38Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.7",
+        "podIPs": [
+          {
+            "ip": "10.42.0.7"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "web",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:37Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:1.37.0",
+            "started": true,
+            "resources": {}
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "web-5bd6c6ddd5-prc5h",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1,
+        "labels": {
+          "app": "web",
+          "pod-template-hash": "5bd6c6ddd5"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "web-5bd6c6ddd5",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 0,
+        "containers": [
+          {
+            "name": "web",
+            "image": "busybox:1.37.0",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:37Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.8",
+        "podIPs": [
+          {
+            "ip": "10.42.0.8"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "web",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:36Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:1.37.0",
+            "started": true,
+            "resources": {}
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "coredns-64fd4b4794-7rk6k",
+        "namespace": "kube-system",
+        "creationTimestamp": "2026-09-30T22:43:26Z",
+        "generation": 1,
+        "labels": {
+          "k8s-app": "kube-dns",
+          "pod-template-hash": "64fd4b4794"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "coredns-64fd4b4794",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 2000000000,
+        "priorityClassName": "system-cluster-critical",
+        "containers": [
+          {
+            "name": "coredns",
+            "image": "rancher/mirrored-coredns-coredns:1.12.3",
+            "resources": {
+              "limits": {
+                "memory": "170Mi"
+              },
+              "requests": {
+                "cpu": "100m",
+                "memory": "70Mi"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:43Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:44Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:44Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.4",
+        "podIPs": [
+          {
+            "ip": "10.42.0.4"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "Burstable",
+        "containerStatuses": [
+          {
+            "name": "coredns",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:42Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/rancher/mirrored-coredns-coredns:1.12.3",
+            "started": true,
+            "resources": {
+              "limits": {
+                "memory": "170Mi"
+              },
+              "requests": {
+                "cpu": "100m",
+                "memory": "70Mi"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "local-path-provisioner-774c6665dc-kqfsb",
+        "namespace": "kube-system",
+        "creationTimestamp": "2026-09-30T22:43:26Z",
+        "generation": 1,
+        "labels": {
+          "app": "local-path-provisioner",
+          "pod-template-hash": "774c6665dc"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "local-path-provisioner-774c6665dc",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "priority": 2000001000,
+        "priorityClassName": "system-node-critical",
+        "containers": [
+          {
+            "name": "local-path-provisioner",
+            "image": "rancher/local-path-provisioner:v0.0.31",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "PodReadyToStartContainers",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:42Z"
+          },
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:42Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:42Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2026-09-30T22:43:30Z"
+          }
+        ],
+        "hostIP": "192.0.2.10",
+        "hostIPs": [
+          {
+            "ip": "192.0.2.10"
+          }
+        ],
+        "podIP": "10.42.0.3",
+        "podIPs": [
+          {
+            "ip": "10.42.0.3"
+          }
+        ],
+        "startTime": "2026-09-30T22:43:30Z",
+        "qosClass": "BestEffort",
+        "containerStatuses": [
+          {
+            "name": "local-path-provisioner",
+            "state": {
+              "running": {
+                "startedAt": "2026-09-30T22:43:41Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/rancher/local-path-provisioner:v0.0.31",
+            "started": true,
+            "resources": {}
+          }
+        ]
+      }
+    }
+  ]
+}

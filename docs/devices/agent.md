@@ -28,6 +28,8 @@ cannot write into another machine's series, even by forging its labels.
 | Sensors | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (the threshold the hardware itself declares), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Disk health (SMART) | `agent_disk_smart_ok` (1 = the disk passes its own self-assessment), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 worse), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
+| WireGuard | `agent_wireguard_interface_peers`; per peer `agent_wireguard_peer_handshake_age_seconds`, `agent_wireguard_peer_has_handshake`, `agent_wireguard_peer_keepalive_seconds`, `agent_wireguard_peer_rx_bytes`, `agent_wireguard_peer_tx_bytes` (counters) — see [WireGuard tunnels](#wireguard-tunnels) | `interface`, `peer`, `allowed_ips`, `name` |
+| restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — see [restic and Borg backups](#restic-and-borg-backups) | `tool`, `repo` |
 | Windows performance counters | `agent_perf_counter`, one series per counter listed in `perf_counters` | `counter` |
 | MDaemon (Windows) | `mdaemon_queue_messages`, `mdaemon_queue_frozen`, `mdaemon_sessions_active`, `mdaemon_sessions_total`, `mdaemon_messages_total`, `mdaemon_filtered_messages_total`, `mdaemon_server_active`, `mdaemon_running`, `mdaemon_uptime_seconds` — see [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`, `protocol`, `filter`, `verdict`, `server` |
 | Agent | `agent_collect_seconds`, `agent_buffered_samples`, `agent_dropped_samples` | |
@@ -52,6 +54,8 @@ than fans, and an empty one reads zero like a dead fan does.
 | ZFS pools | `zpool` (OpenZFS) | no | `zpool` | no |
 | OS health (updates, reboot, failed units, SELinux) | yes | no | no | no |
 | Plakar backups | yes | yes | yes | yes |
+| WireGuard tunnels | `wg show` | when `wg` is installed (not tested) | when `wg` is installed (not tested) | no |
+| restic and Borg backups | yes | yes | yes | restic only (not tested; Borg has no Windows build) |
 | Performance counters, MDaemon queues | no | no | no | yes |
 | Machine identity | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`, `/etc/hostid` | host name |
 | Relay mode | yes | yes | yes | yes |
@@ -82,6 +86,13 @@ no setting up and cannot go off on a machine without the hardware:
 | **ZFS pool degraded** (critical) | a pool is no longer `ONLINE` for five minutes |
 | **ZFS scrub found errors** (critical) | the last scrub found errors, or the pool reports permanently corrupted files |
 | **Temperature above critical** (critical) | a sensor exceeds the critical threshold **its own hardware declares** — no value is hard-coded, 85 °C being an emergency on a disk and a normal afternoon on a laptop CPU |
+
+Three more watch what you declare or run yourself, and stay silent otherwise:
+**WireGuard peer silent** (a peer with a persistent keepalive and no handshake
+for 15 minutes), **restic/Borg backup too old** (no snapshot for 48 hours) and
+**restic/Borg repository unreachable** — see
+[WireGuard tunnels](#wireguard-tunnels) and
+[restic and Borg backups](#restic-and-borg-backups).
 
 On a Windows server that runs MDaemon, three more watch its queues:
 **MDaemon mail queue growing**, **MDaemon Bad queue not empty** and **MDaemon
@@ -279,6 +290,9 @@ smart_interval_secs: 300   # minimum 60: a sleeping disk is never woken to be re
 zfs: true                  # ZFS pools through zpool (default: true)
 zfs_bin: zpool
 zfs_interval_secs: 120     # minimum 30
+wireguard: true            # WireGuard tunnels through wg (default: true), see below
+restic_repos: []           # restic repositories to watch, see "restic and Borg backups"
+borg_repos: []             # Borg repositories to watch
 mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
 perf_counters:             # Windows: performance counters to publish
   - '\Memory\Available MBytes'
@@ -329,6 +343,11 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_ZFS` | `true` / `false`: ZFS pools through `zpool` (default `true`) |
 | `DUMBMONIT_AGENT_ZFS_BIN` | Path of `zpool` |
 | `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | Period between two ZFS readings, default `120`, minimum `30` |
+| `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`: WireGuard tunnels through `wg` (default `true`) |
+| `DUMBMONIT_AGENT_WIREGUARD_BIN` | Path of `wg` |
+| `DUMBMONIT_AGENT_RESTIC_BIN` | Path of `restic` |
+| `DUMBMONIT_AGENT_BORG_BIN` | Path of `borg` |
+| `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | Period between two readings of the restic and Borg repositories, default `600`, minimum `60` |
 | `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` or `auto`: MDaemon's performance counters (default `auto`, read when the `MDaemon` Windows service exists) |
 | `DUMBMONIT_AGENT_PERF_COUNTERS` | Windows performance counter paths, separated by **semicolons** (a comma can be part of an instance name); replaces `perf_counters` |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Size of the catch-up buffer |
@@ -789,3 +808,133 @@ plakar at /tmp/plakar-demo ls
 then add `plakar_klosets: ["/tmp/plakar-demo"]` to `agent.yaml` (a bare path
 outside a home is not discovered) and check with `dumbmonit-agent --dry-run`
 that `backup_*` samples appear.
+
+## restic and Borg backups
+
+The agent can watch [restic](https://restic.net) and
+[Borg](https://www.borgbackup.org) repositories: every ten minutes, in the
+background, it opens each repository you declare and reports whether it could
+be read and how old its newest snapshot is. Nothing is discovered: a
+repository has no standard location and cannot be opened without its password,
+so each one is listed in `agent.yaml`, with the way to get its password.
+
+**The password never leaves the machine.** The agent hands it to `restic` or
+`borg` through the environment of the child process only; it is never logged,
+never sent to the server, and the series only carry the repository's name.
+
+```yaml
+restic_repos:
+  - name: nas                                   # the "repo" label; default: the repository, without credentials
+    repository: sftp:backup@nas.lan:/srv/restic  # passed as RESTIC_REPOSITORY, never on the command line
+    password_file: /etc/dumbmonit/restic-nas.pass
+    host: web-01                                # optional: only this host's snapshots (--host), for a shared repository
+    args: ["-o", "sftp.command=ssh -i /etc/dumbmonit/id_backup -o UserKnownHostsFile=/etc/dumbmonit/known_hosts backup@nas.lan -s sftp"]
+  - name: b2
+    repository: s3:https://s3.eu-central-003.backblazeb2.com/my-bucket
+    password_command: cat /etc/dumbmonit/restic-b2.pass   # or any command that prints it (RESTIC_PASSWORD_COMMAND)
+    env:                                        # extra environment for this repository only
+      AWS_ACCESS_KEY_ID: "…"
+      AWS_SECRET_ACCESS_KEY: "…"
+borg_repos:
+  - name: offsite
+    repository: ssh://borg@offsite.example.net/./backups   # passed as BORG_REPO
+    password_file: /etc/dumbmonit/borg-offsite.pass        # read by the agent, passed as BORG_PASSPHRASE
+    glob_archives: "web-01-*"                   # optional: only these archives (--glob-archives)
+    env:
+      BORG_RSH: "ssh -i /etc/dumbmonit/id_borg -o UserKnownHostsFile=/etc/dumbmonit/known_hosts"
+restic_bin: restic                              # default: on PATH
+borg_bin: borg
+backup_repos_interval_secs: 600                 # minimum 60
+```
+
+Keep `agent.yaml` and the password files readable by root only
+(`chmod 600`), as the installer does for `agent.yaml`. `password_command`
+maps to `RESTIC_PASSWORD_COMMAND` or `BORG_PASSCOMMAND`. Anything the tools
+read from their environment can go under `env` (`RESTIC_PASSWORD`,
+`BORG_PASSPHRASE`, cloud keys, `BORG_RSH`…), and the agent's own service
+environment is passed through as well.
+
+What the agent runs, read-only in the strictest sense:
+
+- `restic snapshots --json --latest 1 --no-lock --no-cache`: no lock is
+  written, so a read-only or append-only repository can be watched, and a
+  `prune` holding the exclusive lock does not make the repository look down;
+  no cache either, since the installed service cannot write to `/root`.
+- `borg --bypass-lock list --json --last 1`: without `--bypass-lock`, the
+  reading would fail for the whole duration of every `borg create`, which holds
+  the exclusive lock. Borg writes a small security record under
+  `~/.config/borg`; when that home is not writable (the installed service runs
+  with `ProtectHome=yes`), the agent points `BORG_BASE_DIR` to its private
+  `/tmp` instead, unless you set `BORG_BASE_DIR` yourself. A repository in
+  `keyfile` mode then needs `BORG_KEY_FILE` in its `env`.
+
+Because the service runs with `ProtectHome=yes`, keep what the tools need
+outside the home directories: password files, SSH keys and `known_hosts` under
+`/etc/dumbmonit/`, as in the example, and local repositories under `/srv`,
+`/mnt` or `/var` rather than `/home`. The readings run one after the other,
+inside the memory limit of the service (128 MiB with the agent itself).
+
+Metrics, labelled `tool` (`restic` or `borg`) and `repo`:
+`agent_backup_repo_reachable` (1 when the last reading succeeded, 0 otherwise:
+repository unreachable, password refused, binary missing — the agent logs the
+reason once, and again when it changes), `agent_backup_repo_last_snapshot_age_seconds`
+(age of the newest snapshot, absent while the repository is empty), and
+`agent_backup_repo_last_snapshot_bytes` (bytes the newest restic snapshot
+processed, restic 0.17 and later). With `--latest 1`, restic returns the
+newest snapshot of each host and path set; the newest of them all is kept, so
+set `host` on a repository shared by several machines.
+
+Built-in rules: **restic/Borg backup too old** (no snapshot for more than 48
+hours) and **restic/Borg repository unreachable** (for 30 minutes). The device
+page shows a Backup repositories panel, one line per repository.
+
+To check a declaration, run the agent once in the foreground and look for the
+`agent_backup_repo_*` samples:
+
+```sh
+sudo dumbmonit-agent --config /etc/dumbmonit/agent.yaml --dry-run
+```
+
+## WireGuard tunnels
+
+On a machine that runs WireGuard, the agent reads every interface and every
+peer with `wg show all dump`, at each cycle. Nothing to configure: without the
+`wg` command (wireguard-tools) or without an interface, no series is emitted
+and no panel shown. `wg` needs root (`CAP_NET_ADMIN`); the installed service
+has it, an agent started by hand under your own account logs the refusal once
+and reports nothing.
+
+The dump also holds the interface's private key and each peer's preshared key:
+the agent skips both fields without ever copying them.
+
+Per peer, labelled `interface`, `peer` (its public key) and `allowed_ips`:
+`agent_wireguard_peer_handshake_age_seconds` (seconds since the latest
+handshake), `agent_wireguard_peer_has_handshake` (0 while the peer has never
+completed one), `agent_wireguard_peer_keepalive_seconds` (its persistent
+keepalive, 0 when off), and the counters `agent_wireguard_peer_rx_bytes` and
+`agent_wireguard_peer_tx_bytes`; per interface,
+`agent_wireguard_interface_peers`. For a peer that has never completed a
+handshake, the age counts from the moment the agent first saw it: a tunnel
+that never came up is silent too, and is reported as such.
+
+WireGuard has no peer names. Give yours in `agent.yaml`, by public key, and
+they become the `name` label:
+
+```yaml
+wireguard: true                     # default; false stops even looking
+wireguard_bin: wg                   # default: on PATH
+wireguard_peer_names:
+  "zonmO992nrIL4FgJ3B/wccmu/SBkoX2kDhSYr8KpgRU=": office-gateway
+  "UsKpqhrXNlYy/+rh2DLAOOEqesn8L8okEwNNorZ09lQ=": laptop
+```
+
+The built-in rule **WireGuard peer silent** fires when a peer **with a
+persistent keepalive** has not completed a handshake for more than 15
+minutes. While a tunnel is up, WireGuard renews its handshake every two
+minutes, and a keepalive keeps it up even without traffic; a peer without
+keepalive (a phone, a laptop) may idle for days with nothing broken, so it is
+left out. Set `PersistentKeepalive = 25` on the tunnels that must stay up
+(site-to-site links, remote gateways). N is the rule's threshold: change it in
+**Alerts → Rules**, or remove the `and on (…)` part of its query to watch
+every peer. The device page shows a WireGuard panel with each peer, the time
+since its last handshake, its traffic and its keepalive.

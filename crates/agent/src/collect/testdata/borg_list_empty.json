@@ -1,0 +1,11 @@
+{
+    "archives": [],
+    "encryption": {
+        "mode": "repokey"
+    },
+    "repository": {
+        "id": "bbc3a210d182e7b5b59808fa99e6f80a97ad2654df00c319d5b9b02b4dfecd1c",
+        "last_modified": "2026-09-30T22:45:16.000000",
+        "location": "/repos/borg"
+    }
+}

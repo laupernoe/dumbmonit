@@ -2377,6 +2377,49 @@ const CROWDSEC_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
+/// Le jeton du compte de service `dumbmonit` (`collectors/kubernetes`).
+const KUBERNETES_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Service account token",
+    help: "The token of the dumbmonit service account, read from its dumbmonit-token Secret.",
+    fields: &[cred_secret(
+        "token",
+        "Service account token",
+        "Printed by the first kubectl get secret command of step 2. Stored encrypted, never shown again.",
+        "eyJhbGciOi…",
+        true,
+    )],
+};
+
+/// Options lues par `collectors/kubernetes/mod.rs`.
+const KUBERNETES_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. k3s, kubeadm and most distributions serve the API on 6443.",
+        "6443",
+        "6443",
+    ),
+    text(
+        "ca_cert",
+        "Cluster CA certificate",
+        "The base64 value of ca.crt printed by the second kubectl get secret command (a PEM certificate works too). Only this CA is then trusted.",
+        "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t…",
+        "",
+    ),
+    insecure_tls(
+        "Skips every certificate check. Prefer the cluster CA above; use this only on a network you trust.",
+    ),
+    OBSERVABILITY_TIMEOUT,
+    text(
+        "exclude_namespaces",
+        "Ignored namespaces",
+        "Comma-separated namespaces whose pods, workloads, volume claims and events are not watched, for example a CI namespace full of short-lived pods.",
+        "ci, sandbox",
+        "",
+    ),
+];
+
 /// Traefik sans mot de passe : le point d'entrée de l'API est filtré.
 const TRAEFIK_NO_AUTH: CredentialView = CredentialView {
     kind: "none",
@@ -3734,6 +3777,27 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: DOMAIN_OPTIONS,
         },
+        "kubernetes" => CollectorView {
+            kind: "kubernetes",
+            label: "Kubernetes / k3s",
+            summary: "A cluster through its API: nodes not ready or under pressure, pods crash looping or stuck pending, workloads missing replicas, volume claims never bound.",
+            examples: &["k3s", "kubeadm cluster", "k0s", "MicroK8s", "Talos"],
+            credential_types: &["api_token"],
+            credentials: &[KUBERNETES_TOKEN],
+            address_hint: "https://k3s.lan:6443",
+            default_port: 6443,
+            setup: Setup {
+                title: "Create a read-only service account for DumbMonit",
+                steps: &[
+                    "Create a service account, a ClusterRole that can only get and list nodes, pods, workloads, volume claims and events, and bind them together. The role reads no Secret and no ConfigMap. On a k3s server, run each command as sudo k3s kubectl.\nkubectl create serviceaccount dumbmonit -n kube-system\nkubectl create clusterrole dumbmonit-read --verb=get,list --resource=nodes,pods,persistentvolumeclaims,events,deployments.apps,statefulsets.apps,daemonsets.apps\nkubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit",
+                    "Give it a token that does not expire: a Secret of type service-account-token, which Kubernetes fills in. Then print the token, and the cluster CA in base64.\necho '{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"dumbmonit-token\",\"namespace\":\"kube-system\",\"annotations\":{\"kubernetes.io/service-account.name\":\"dumbmonit\"}},\"type\":\"kubernetes.io/service-account-token\"}' | kubectl apply -f -\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.token}' | base64 -d\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\\.crt}'",
+                    "In DumbMonit, enter the address of the API server, for example \"https://k3s.lan:6443\". Paste the token as Service account token and the base64 CA as Cluster CA certificate: only that CA is then trusted. One API server reports the whole cluster.",
+                ],
+                warning: "The API server's certificate only lists its own names and addresses: an address it does not list fails verification. Use one it lists (a node IP address, or a name added with --tls-san on k3s), or tick Accept an unverifiable certificate.",
+                doc_url: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+            },
+            options: KUBERNETES_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -3864,6 +3928,7 @@ mod tests {
         "caddy",
         "npm",
         "domain",
+        "kubernetes",
         "agent",
         "http",
         "tcp",
@@ -4264,6 +4329,16 @@ mod tests {
                 ],
             ),
             ("domain", &["rdap_server", "refresh_hours", "request_timeout_seconds"]),
+            (
+                "kubernetes",
+                &[
+                    "port",
+                    "ca_cert",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "exclude_namespaces",
+                ],
+            ),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -4404,6 +4479,14 @@ mod tests {
         assert_eq!(
             defaut("crowdsec", "lapi_port"),
             dumbmonit_collectors::crowdsec::DEFAULT_LAPI_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("kubernetes", "port"),
+            dumbmonit_collectors::kubernetes::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("kubernetes", "request_timeout_seconds"),
+            dumbmonit_collectors::kubernetes::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
         );
         for kind in ["redis", "mongodb"] {
             assert_eq!(
@@ -4603,6 +4686,7 @@ mod tests {
             ("traefik", "dumbmonit"),
             ("caddy", "dumbmonit"),
             ("npm", "dumbmonit@example.com"),
+            ("kubernetes", "dumbmonit"),
             ("nextcloud", "token"),
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
@@ -4709,6 +4793,7 @@ mod tests {
             ("caddy", include_str!("../../../../docs/devices/caddy.md")),
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
+            ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

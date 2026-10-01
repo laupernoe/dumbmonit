@@ -104,6 +104,7 @@ nav:
       - Caddy: devices/caddy.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
+      - Kubernetes / k3s: devices/kubernetes.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md
