@@ -287,13 +287,16 @@ impl Config {
 
     /// Emplacement du fichier de configuration lorsque rien n'est précisé.
     ///
-    /// Une installation antérieure au renommage du produit (`/etc/ezymonit`,
-    /// `C:\ProgramData\EzyMonit`) est encore reconnue tant que le nouvel
-    /// emplacement n'existe pas : le script d'installation la déplace à la
-    /// première mise à jour.
+    /// Le même que celui où `install.sh` et `install.ps1` l'écrivent, pour que
+    /// `dumbmonit-agent --dry-run` lancé à la main lise la configuration du
+    /// service. Un second emplacement est encore reconnu tant que le premier
+    /// n'existe pas : celui d'avant le renommage du produit (`/etc/ezymonit`,
+    /// `C:\ProgramData\EzyMonit`), que le script d'installation déplace à la
+    /// première mise à jour, et `/etc/dumbmonit` sous macOS et FreeBSD, qui y
+    /// était l'emplacement par défaut avant que l'agent ne suive le script.
     pub fn default_path() -> PathBuf {
-        let (current, legacy) = Self::default_paths();
-        if !current.exists() && legacy.exists() { legacy } else { current }
+        let (current, fallback) = Self::default_paths();
+        if !current.exists() && fallback.exists() { fallback } else { current }
     }
 
     fn default_paths() -> (PathBuf, PathBuf) {
@@ -304,7 +307,16 @@ impl Config {
             let root = PathBuf::from(root);
             (root.join("DumbMonit").join("agent.yaml"), root.join("EzyMonit").join("agent.yaml"))
         }
-        #[cfg(not(windows))]
+        // macOS réserve `/etc` au système, et les ports de FreeBSD rangent tout
+        // ce qui n'est pas la base sous `/usr/local` : c'est là qu'écrit install.sh.
+        #[cfg(any(target_os = "macos", target_os = "freebsd"))]
+        {
+            (
+                PathBuf::from("/usr/local/etc/dumbmonit/agent.yaml"),
+                PathBuf::from("/etc/dumbmonit/agent.yaml"),
+            )
+        }
+        #[cfg(not(any(windows, target_os = "macos", target_os = "freebsd")))]
         {
             (PathBuf::from("/etc/dumbmonit/agent.yaml"), PathBuf::from("/etc/ezymonit/agent.yaml"))
         }

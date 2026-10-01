@@ -115,9 +115,14 @@ $Url = $Url.TrimEnd('/')
 
 # ------------------------------------------------------------------ binaire
 
+# Un seul binaire Windows est construit, pour x86_64. Windows 11 sur ARM64 le fait
+# tourner en émulation x64 ; Windows 10 sur ARM64 ne sait émuler que du 32 bits.
 $architecture = switch ($env:PROCESSOR_ARCHITECTURE) {
     'AMD64' { 'x86_64' }
-    'ARM64' { 'aarch64' }
+    'ARM64' {
+        Write-Warning "No native ARM64 build of the agent: installing the x86_64 one, which Windows 11 runs under x64 emulation."
+        'x86_64'
+    }
     default { Stop-Sur "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE" }
 }
 
@@ -226,7 +231,13 @@ $commande = "`"$ExePath`" --service --config=`"$ConfigPath`""
 
 if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
     Write-Etape "Updating the existing service"
-    & sc.exe config $ServiceName binPath= $commande start= auto | Out-Null
+    # La ligne de commande est écrite directement dans le registre plutôt que
+    # passée à `sc.exe config` : Windows PowerShell 5 transmet mal à un programme
+    # externe un argument qui contient à la fois des espaces et des guillemets,
+    # et `sc.exe` recevrait un chemin coupé à « C:\Program ».
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\$ServiceName" `
+        -Name ImagePath -Value $commande
+    Set-Service -Name $ServiceName -StartupType Automatic
 } else {
     Write-Etape "Registering the service"
     New-Service -Name $ServiceName `
@@ -244,4 +255,4 @@ Start-Service -Name $ServiceName
 
 Write-Etape "Agent installed and started"
 Write-Etape "Status: Get-Service $ServiceName"
-Write-Etape "Logs:   Get-EventLog -LogName Application -Source $ServiceName -Newest 20"
+Write-Etape "Logs:   Get-Content '$(Join-Path $ConfigDir 'agent.log')' -Tail 20 -Wait"
