@@ -30,8 +30,21 @@ windows are scheduled.
 | [Proxmox VE](devices/proxmox.md) | Nodes, virtual machines and containers, storages, cluster quorum, and the age of the last successful backup per machine. |
 | [Proxmox Backup Server](devices/pbs.md) | Datastore usage and fill-up forecast, deduplication, age and verification of each machine's last snapshot, failed tasks, garbage collection. |
 | [Synology DSM](devices/synology.md) | Volumes, disks and their SMART health, temperature, load, through the NAS web API. |
-| [Linux, macOS, FreeBSD and Windows agent](devices/agent.md) | CPU, memory, disks, network, services, containers and uptime of machines that do not speak SNMP, plus temperatures, disk health (SMART) and ZFS pools where the machine exposes them. One command to install. |
+| [Linux, macOS, FreeBSD and Windows agent](devices/agent.md) | CPU, memory, disks, network, services, containers and uptime of machines that do not speak SNMP, plus temperatures, disk health (SMART) and ZFS pools where the machine exposes them. One command to install, or a Docker image; in [relay mode](install/remote-site.md) it probes a remote site's own devices over outbound connections only. |
 | [Services](devices/services.md) | HTTP(S), TCP port, DNS, ping and TLS certificate expiry, Uptime Kuma style, with a history bar and availability percentage. |
+| [Integration packs](packs/index.md) | A device kind declared in a single YAML file — an HTTP API or a Prometheus `/metrics` page on the device — with its own alert rules, installed without a server release. |
+
+## Talk to it
+
+- An [assistant over MCP](using/assistant.md) — Claude Code, Claude Desktop,
+  ChatGPT, VS Code, Cursor — with 27 tools: a `read` token only looks (status,
+  devices, alerts, metrics, agents, containers…), a `write` token can also act
+  (silence, acknowledge, add a device, restart a container, post a
+  status-page incident). Secrets are never returned.
+- The [HTTP API](reference/api.md) behind everything the UI does, described at
+  `/api/openapi.json` (OpenAPI 3.1). Tokens (`dmt_…`) are scoped read or
+  write, can expire, be restricted to a list of networks, and are
+  rate-limited.
 
 ## What runs
 
