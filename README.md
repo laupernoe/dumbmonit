@@ -135,6 +135,12 @@ back for a paid edition.
   Assistant automation calls a secret URL each time it runs; if it stops
   calling, you are told. Uptime Kuma push-compatible (`?status=down&msg=`).
 - **Network discovery** — sweep a CIDR and add everything that answers in one go.
+- **Integration packs** — a device kind declared in a single YAML file (an HTTP
+  API or a Prometheus `/metrics` page on the device, extracted by JSONPath,
+  regular expression or metric family), with its own alert rules, installed
+  from *Settings → Integration packs* without a server release. Reference
+  packs ship for Prometheus node_exporter, Shelly Gen2+ plugs and Speedtest
+  Tracker. See [Integration packs](https://dumbmonit.readthedocs.io/en/latest/packs/).
 
 **Alerting**
 
@@ -180,13 +186,22 @@ back for a paid edition.
   with recovery codes, an audit log of sign-ins and account changes, plus
   **OIDC / SSO** (Authentik, Authelia, Keycloak, Pocket ID…) with
   group-to-role mapping.
-- **REST API with scoped tokens** — `read` or `write`, created in
-  *Settings → API & assistants*; account and token management stays off limits
-  to them. See [the API reference](https://dumbmonit.readthedocs.io/en/latest/reference/api/).
+- **Open HTTP API** — the same API behind the whole UI, described at
+  `/api/openapi.json` (OpenAPI 3.1) for Swagger UI, Postman or a generated
+  client. Tokens (`dmt_…`), created in *Settings → API & assistants*, are
+  scoped `read` or `write`, can expire (30 days to never), be restricted to a
+  list of networks, and are rate-limited; CORS opens them to a browser-based
+  dashboard. Accounts, tokens and backups stay off limits to them. See
+  [the API reference](https://dumbmonit.readthedocs.io/en/latest/reference/api/).
 - **Install it on a phone** — a web manifest and home-screen icons; there is
   deliberately no offline mode, so the screen never shows yesterday's state.
-- **Built-in MCP server** — connect Claude, ChatGPT or any MCP client with a
-  scoped token and ask "is everything fine?" or "silence the NAS for an hour".
+- **Built-in MCP server** — connect Claude Code, Claude Desktop, ChatGPT, VS
+  Code or Cursor with a scoped token and ask "is everything fine?" or "silence
+  the NAS for an hour". 27 tools: a `read` token only looks (status, devices,
+  alerts, metrics, agents, containers…); a `write` token can also act —
+  silence or acknowledge, add a device, restart a container, post a
+  status-page incident. Credentials and other secrets are never returned. See
+  [Connect an assistant](https://dumbmonit.readthedocs.io/en/latest/using/assistant/).
 - **Readable by the Prometheus or Grafana you already run** — `GET /metrics`
   exposes the instance's own health, `GET /federate` the measurements by
   selector, and `/prometheus` answers as a Prometheus data source, all behind a
@@ -327,6 +342,8 @@ and state.
 ```
 crates/proto     shared types: Sample, Target, Credential, trait Collector (+ ProbeError)
 crates/collectors  snmp (profiles/*.yaml), proxmox, pbs, pdm, pmg, synology, opnsense, truenas, redfish, mdaemon, selfhosted, uptime — shared by the server and the relay agent
+crates/pack      integration packs: declarative YAML device types (HTTP or Prometheus
+                 sources), validated and run like any collector; the `pack lint` / `pack test` CLI
 crates/server    the binary
   api/           axum routes; spa.rs serves the embedded web UI
   auth/          accounts and roles, HttpOnly session cookie, TOTP, OIDC, API tokens, rate limit
@@ -340,6 +357,8 @@ crates/server    the binary
 crates/agent     Linux/macOS/FreeBSD/Windows agent + install scripts; relay mode runs the shared collectors remotely
 web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), static build embedded in the binary
 profiles/        SNMP collection profiles, auto-applied by sysObjectID
+packs/           reference integration packs (node-exporter, shelly-plug, speedtest-tracker),
+                 each with its fixtures and expected output
 ```
 
 Adding an integration means implementing the `Collector` trait
