@@ -26,7 +26,11 @@
 		BellPlus,
 		Megaphone,
 		SunMoon,
-		CornerDownLeft
+		CornerDownLeft,
+		Cpu,
+		RadioTower,
+		Bot,
+		KeyRound
 	} from 'lucide-svelte';
 	import { listTargets, type Target, type TargetId } from '$lib/api';
 	import { displayState, STATE_LABEL, STATE_TONE, type ProbeStatus } from '$lib/format';
@@ -68,6 +72,10 @@
 		{ id: 'page:docs', group: 'Pages', label: 'Documentation', keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
 		{ id: 'action:add', group: 'Actions', label: 'Add a device', keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
 		{ id: 'action:scan', group: 'Actions', label: 'Scan my network', keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
+		{ id: 'action:agent', group: 'Actions', label: 'Install an agent', detail: 'Linux, Windows, macOS, FreeBSD or Docker', keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },
+		{ id: 'action:relay', group: 'Actions', label: 'Watch a remote site', detail: 'An agent probes another network for this server', keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network agent', icon: RadioTower, run: go('/targets/new?kind=agent&via=relay') },
+		{ id: 'action:mcp', group: 'Actions', label: 'Connect an AI assistant (MCP)', detail: 'Claude, ChatGPT, Cursor or any MCP client', keywords: 'mcp ai assistant claude chatgpt cursor llm agent model context protocol', icon: Bot, run: go('/settings#assistant') },
+		{ id: 'action:api-token', group: 'Actions', label: 'Create an API token', detail: 'For scripts, the REST API, Prometheus or Grafana', keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings#assistant') },
 		{ id: 'action:maintenance', group: 'Actions', label: 'Schedule maintenance', keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
 		{ id: 'action:channel', group: 'Actions', label: 'Add notification channel', keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/alerts#notifications') },
 		{ id: 'action:status-page', group: 'Actions', label: 'New status page', keywords: 'public status page create', icon: Globe, run: go('/status/new') },
@@ -138,7 +146,8 @@
 				.map((entry) => ({ entry, score: score(entry, words) }))
 				.filter((item) => item.score > 0)
 				.sort((a, b) => b.score - a.score);
-			const entries = scored.slice(0, MAX_PER_GROUP).map((item) => item.entry);
+			// Pages and actions are a short fixed list, all worth seeing; only devices are capped.
+			const entries = (name === 'Devices' ? scored.slice(0, MAX_PER_GROUP) : scored).map((item) => item.entry);
 			if (entries.length > 0) groups.push({ name, entries });
 		}
 		return groups;

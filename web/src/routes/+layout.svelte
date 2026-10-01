@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto, onNavigate } from '$app/navigation';
 	import { theme } from '$lib/stores/theme.svelte';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '$lib/stores/auth.svelte';
@@ -12,6 +12,7 @@
 	import DemoNotice from '$lib/components/demo/DemoNotice.svelte';
 	import Tour from '$lib/components/demo/Tour.svelte';
 	import { demo } from '$lib/stores/demo.svelte';
+	import { reducedMotion } from '$lib/ui';
 
 	let { children } = $props();
 
@@ -64,6 +65,30 @@
 		if (!auth.demo || !auth.canUseApi) return;
 		demo.install();
 		if (!demo.tourSeen && !isPublicRoute(page.url.pathname)) demo.openTour();
+	});
+
+	// Page changes cross-fade through the View Transitions API: the bars stay,
+	// the page underneath leaves in 120 ms and the next one rises in. Only
+	// between pages — a step inside a page (`?kind=`, `#section`) swaps at once —
+	// and never under reduced motion or where the API is missing.
+	onNavigate((navigation) => {
+		if (typeof document === 'undefined' || !('startViewTransition' in document)) return;
+		if (!navigation.from || !navigation.to) return;
+		if (navigation.from.url.pathname === navigation.to.url.pathname) return;
+		// Wall mode covers the bars with its own overlay: a captured bar would
+		// float above it for the length of the fade.
+		if ([navigation.from, navigation.to].some((end) => end.url.pathname.startsWith('/wall'))) return;
+		if (reducedMotion()) return;
+		return new Promise<void>((resolve) => {
+			const transition = document.startViewTransition(async () => {
+				resolve();
+				// A cancelled navigation just ends the fade; it is not an error here.
+				await navigation.complete.catch(() => {});
+			});
+			// A transition skipped by the next click rejects these: nothing to report.
+			transition.ready.catch(() => {});
+			transition.finished.catch(() => {});
+		});
 	});
 
 	// The alert count is shared by the whole app; it only polls once a session exists.

@@ -88,8 +88,13 @@ async fn require_read(State(state): State<AppState>, request: Request, next: Nex
         return next.run(request).await;
     }
     if token::extract_bearer(request.headers()).is_some() {
-        return match token::check(&state.pool, request.headers(), Scope::Read).await {
-            Ok(_) => next.run(request).await,
+        let ip = token::request_ip(request.extensions(), request.headers());
+        return match token::check(&state.pool, request.headers(), ip, Scope::Read).await {
+            Ok(checked) => {
+                let mut response = next.run(request).await;
+                checked.rate.apply(response.headers_mut());
+                response
+            }
             Err(error) => error.into_response(),
         };
     }
