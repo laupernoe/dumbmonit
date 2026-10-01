@@ -134,6 +134,10 @@ pub struct Bundle {
     pub api_tokens: Vec<BundleApiToken>,
     #[serde(default)]
     pub push_monitors: Vec<BundlePushMonitor>,
+    /// Paquets d'intégration, avec leur YAML : un équipement de type `pack.x`
+    /// restauré sans son paquet ne serait plus interrogé.
+    #[serde(default)]
+    pub packs: Vec<BundlePack>,
 }
 
 impl Bundle {
@@ -151,6 +155,7 @@ impl Bundle {
             ("agent_tokens".to_string(), self.agent_tokens.len()),
             ("api_tokens".to_string(), self.api_tokens.len()),
             ("push_monitors".to_string(), self.push_monitors.len()),
+            ("packs".to_string(), self.packs.len()),
         ])
     }
 }
@@ -386,6 +391,15 @@ pub struct BundlePushMonitor {
     /// restauration donnerait une nouvelle URL et tous les travaux surveillés
     /// seraient déclarés en panne le lendemain.
     pub token: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundlePack {
+    pub id: String,
+    pub version: String,
+    /// Le paquet tel qu'il a été installé ; revérifié à la restauration.
+    pub yaml: String,
+    pub enabled: bool,
 }
 
 // --------------------------------------------------------------------------

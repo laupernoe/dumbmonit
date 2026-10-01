@@ -112,6 +112,8 @@ pub async fn restore(
     };
 
     report.push(restore_users(&mut tx, cipher, bundle).await?);
+    // Les paquets avant les équipements : ils en définissent les types.
+    report.push(restore_packs(&mut tx, bundle).await?);
     report.push(restore_targets(&mut tx, cipher, bundle).await?);
 
     let refs = target_ids(&mut tx).await?;
@@ -1212,6 +1214,59 @@ async fn restore_push_monitors(
             Err(error) => {
                 report.refused(&format!("Heartbeat token of {}", monitor.target), &error.into())
             }
+        }
+    }
+    Ok(report)
+}
+
+/// Paquets d'intégration : revérifiés par ce serveur-ci, qui peut être d'une
+/// autre version que celui qui a écrit le lot. Un paquet identique (même
+/// empreinte) est laissé tel quel ; un paquet différent remplace l'installé,
+/// son état activé ou non compris. Les règles viennent de la section `rules`.
+async fn restore_packs(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Result<SectionReport> {
+    let mut report = SectionReport::new("packs");
+    for entry in &bundle.packs {
+        let pack = match dumbmonit_pack::Pack::parse(&entry.yaml) {
+            Ok(pack) => pack,
+            Err(error) => {
+                report.skipped += 1;
+                report.notes.push(format!(
+                    "pack \"{}\" does not pass this server's validation: {}",
+                    entry.id,
+                    error.errors.join("; ")
+                ));
+                continue;
+            }
+        };
+        let existing = sqlx::query("SELECT sha256, enabled FROM packs WHERE id = ?")
+            .bind(pack.id())
+            .fetch_optional(&mut **tx)
+            .await
+            .context("recherche du paquet")?;
+        if let Some(row) = &existing
+            && row.try_get::<String, _>("sha256")? == pack.sha256()
+            && (row.try_get::<i64, _>("enabled")? != 0) == entry.enabled
+        {
+            report.skipped += 1;
+            continue;
+        }
+        let result = sqlx::query(
+            "INSERT INTO packs (id, version, yaml, sha256, enabled) VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET version = excluded.version, yaml = excluded.yaml,
+                 sha256 = excluded.sha256, enabled = excluded.enabled,
+                 installed_at = datetime('now')",
+        )
+        .bind(pack.id())
+        .bind(pack.version())
+        .bind(pack.yaml())
+        .bind(pack.sha256())
+        .bind(i64::from(entry.enabled))
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) if existing.is_some() => report.count(RestoreOutcome::Updated),
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused(&format!("pack \"{}\"", entry.id), &error.into()),
         }
     }
     Ok(report)

@@ -1,0 +1,19 @@
+{
+  "id": 0,
+  "source": "HTTP_in",
+  "output": true,
+  "apower": 8.9,
+  "voltage": 237.5,
+  "freq": 50.0,
+  "current": 0.069,
+  "pf": 0.54,
+  "aenergy": {
+    "total": 6532.2,
+    "by_minute": [45.199, 47.141, 88.397],
+    "minute_ts": 1654511972
+  },
+  "temperature": {
+    "tC": 41.3,
+    "tF": 106.3
+  }
+}
