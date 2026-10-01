@@ -60,13 +60,11 @@ mod check;
 pub(crate) mod options;
 
 use std::collections::HashMap;
-use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, ProbeError, Sample, Target};
-use reqwest::dns::{Addrs, Name, Resolve, Resolving};
 use reqwest::header::{LOCATION, USER_AGENT};
 use reqwest::redirect::Policy;
 use reqwest::{Client, Method, Response, StatusCode, Url};
@@ -113,56 +111,12 @@ impl HttpCollector {
         let client = Client::builder()
             .danger_accept_invalid_certs(insecure_tls)
             .redirect(Policy::none())
-            .dns_resolver(Arc::new(GuardedResolver { allow_private }))
+            .dns_resolver(Arc::new(guard::GuardedResolver { allow_private }))
             .build()
             .map_err(|error| ProbeError::Config(format!("HTTP client unusable: {error}")))?;
 
         cache.insert(key, client.clone());
         Ok(client)
-    }
-}
-
-/// Résolveur DNS du client : celui du système, suivi du garde-fou.
-///
-/// Vérifier les adresses *au moment de la connexion*, et non seulement avant la
-/// requête, ferme la fenêtre d'un nom qui changerait de réponse entre les deux
-/// (« DNS rebinding »). Les adresses IP littérales ne passent pas par ici —
-/// `hyper` les connecte directement — et sont vérifiées par [`vet_url`].
-struct GuardedResolver {
-    allow_private: bool,
-}
-
-impl Resolve for GuardedResolver {
-    fn resolve(&self, name: Name) -> Resolving {
-        let allow_private = self.allow_private;
-        Box::pin(async move {
-            let host = name.as_str().to_string();
-            let addresses: Vec<SocketAddr> =
-                tokio::net::lookup_host((host.as_str(), 0)).await?.collect();
-            guard::vet(&host, &addresses, allow_private)?;
-            Ok(Box::new(addresses.into_iter()) as Addrs)
-        })
-    }
-}
-
-/// Vérifie l'hôte d'une URL avant tout appel réseau.
-///
-/// Une adresse littérale est jugée sur place ; un nom est résolu et chacune de
-/// ses adresses examinée. Une résolution qui échoue n'est pas un refus : la
-/// requête elle-même la constatera et la rapportera comme telle.
-async fn vet_url(url: &Url, allow_private: bool, timeout: Duration) -> Result<(), ProbeError> {
-    if allow_private {
-        return Ok(());
-    }
-    let Some(host) = url.host_str() else { return Ok(()) };
-    let host = host.trim_matches(|c| c == '[' || c == ']');
-    if let Ok(ip) = host.parse() {
-        return if guard::is_forbidden(ip) { Err(guard::refusal(host, ip)) } else { Ok(()) };
-    }
-    let port = url.port_or_known_default().unwrap_or(80);
-    match tokio::time::timeout(timeout, tokio::net::lookup_host((host, port))).await {
-        Ok(Ok(addresses)) => guard::vet(host, &addresses.collect::<Vec<_>>(), false),
-        Ok(Err(_)) | Err(_) => Ok(()),
     }
 }
 
@@ -179,7 +133,7 @@ impl Collector for HttpCollector {
 
         // Avant toute connexion, relevé de certificat compris : un refus est une
         // erreur de configuration, pas une mesure.
-        vet_url(&options.url, allow_private, options.timeout).await?;
+        guard::vet_url(&options.url, allow_private, options.timeout).await?;
 
         let mut report = Report::new(self.kind()).label("url", options.url_label());
         let started = Instant::now();
@@ -284,7 +238,7 @@ async fn request(
             );
             return Ok(());
         }
-        if let Err(error) = vet_url(&next, allow_private, remaining).await {
+        if let Err(error) = guard::vet_url(&next, allow_private, remaining).await {
             let detail = match error {
                 ProbeError::Config(detail) => detail,
                 other => other.to_string(),

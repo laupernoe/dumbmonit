@@ -1,0 +1,76 @@
+# Speedtest Tracker (https://github.com/alexjustesen/speedtest-tracker): the
+# latest internet speed test it ran, read through its v1 API.
+schema: 1
+id: speedtest-tracker
+version: 1.0.0
+requires: ">=0.1"
+label: Speedtest Tracker
+summary: Download, upload, latency and health of the latest internet speed test.
+examples: [Speedtest Tracker]
+address_hint: speedtest.lan:8080
+default_port: 80
+setup:
+  title: Create a read-only API token
+  steps:
+    - In Speedtest Tracker, open Settings → API Tokens and create a token.
+    - Give it only the "results:read" ability.
+    - Paste the token below. DumbMonit reads the latest result on every probe.
+  doc_url: https://docs.speedtest-tracker.dev/api/authentication
+credentials:
+  - kind: api_token
+    label: API token
+    help: Created in Settings → API Tokens, with the results:read ability.
+
+sources:
+  - id: latest
+    type: http
+    path: /api/v1/results/latest
+    headers:
+      Accept: application/json
+
+metrics:
+  - name: ping_milliseconds
+    source: latest
+    json: $.data.ping
+  - name: jitter_milliseconds
+    source: latest
+    json: $.data.data.ping.jitter
+  - name: packet_loss_percent
+    source: latest
+    json: $.data.data.packetLoss
+  - name: download_bits_per_second
+    source: latest
+    json: $.data.download_bits
+  - name: upload_bits_per_second
+    source: latest
+    json: $.data.upload_bits
+  - name: healthy
+    help: 1 when the test met the thresholds set in Speedtest Tracker.
+    source: latest
+    json: $.data.healthy
+  - name: completed
+    help: 1 when the latest test completed, 0 when it failed.
+    source: latest
+    json: $.data.status
+    map:
+      completed: 1
+      failed: 0
+      skipped: 0
+
+rules:
+  - name: unhealthy
+    title: Internet below expectations
+    description: The latest speed test missed the thresholds set in Speedtest Tracker.
+    expr: dumbmonit_speedtest_tracker_healthy
+    op: "<"
+    threshold: 1
+    for: 1h
+    severity: info
+  - name: test_failed
+    title: Speed test failing
+    description: Speedtest Tracker could not complete its latest test.
+    expr: dumbmonit_speedtest_tracker_completed
+    op: "<"
+    threshold: 1
+    for: 2h
+    severity: warning

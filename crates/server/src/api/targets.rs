@@ -235,10 +235,12 @@ pub async fn create(
     let input = payload.validate(&state, None)?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
+    check_pack_relay(&input)?;
     let id = db::targets::create(&state.pool, &state.cipher, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
     let target = load(&state, id).await?;
+    crate::packs::apply_thresholds(&state.pool, &target).await;
 
     // La détection tourne en arrière-plan : l'équipement apparaît immédiatement dans
     // l'interface, et son profil s'y ajoute une seconde plus tard.
@@ -269,6 +271,7 @@ pub async fn update(
     if keep_relay {
         input.via_agent = db::targets::relay_of(&state.pool, id).await?;
     }
+    check_pack_relay(&input)?;
     let updated = db::targets::update(&state.pool, &state.cipher, id, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
@@ -281,6 +284,7 @@ pub async fn update(
         forget_alerts(&state, id).await;
     }
     let target = load(&state, id).await?;
+    crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     Ok(Json(TargetView::new(target, status)))
 }
@@ -360,6 +364,19 @@ async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult
         ))),
         Some(_) => Ok(()),
     }
+}
+
+/// Un paquet d'intégration tourne sur le serveur : les agents relais ne le
+/// connaissent pas, une sonde déléguée échouerait à chaque cycle.
+fn check_pack_relay(input: &db::targets::TargetInput) -> ApiResult<()> {
+    if input.via_agent.is_some() && dumbmonit_pack::id_from_kind(&input.kind).is_some() {
+        return Err(ApiError::BadRequest(
+            "Devices of an integration pack are probed by the server itself: relay agents \
+             cannot probe them yet."
+                .into(),
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Serialize)]

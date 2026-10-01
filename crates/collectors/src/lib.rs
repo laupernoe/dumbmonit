@@ -8,7 +8,7 @@
 //! des mesures poussées) reste côté serveur : il lit la base.
 
 pub mod adguard;
-pub(crate) mod api_options;
+pub mod api_options;
 pub mod caddy;
 pub mod crowdsec;
 pub mod domain;
@@ -42,7 +42,7 @@ pub mod uptime;
 pub mod vsphere;
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
@@ -84,11 +84,22 @@ pub use uptime::{
 };
 pub use vsphere::VsphereCollector;
 
+/// Les collecteurs connus, par type de cible.
+///
+/// Deux étages : les collecteurs compilés, enregistrés au démarrage et figés
+/// ensuite, et ceux qui naissent à l'exécution (paquets d'intégration), qu'une
+/// installation ajoute et qu'une désinstallation retire sans redémarrage. Le
+/// second étage est partagé entre les clones du registre : l'état du serveur en
+/// garde un, l'API d'installation agit sur le même.
 #[derive(Clone, Default)]
 pub struct Registry {
     /// Clé possédée : un type peut naître à l'exécution (paquet d'intégration).
     collectors: HashMap<Arc<str>, Arc<dyn Collector>>,
+    runtime: Arc<RwLock<Table>>,
 }
+
+/// Type de cible → collecteur.
+type Table = HashMap<Arc<str>, Arc<dyn Collector>>;
 
 impl Registry {
     pub fn new() -> Self {
@@ -154,14 +165,53 @@ impl Registry {
         self
     }
 
-    pub fn get(&self, kind: &str) -> Option<&Arc<dyn Collector>> {
-        self.collectors.get(kind)
+    /// Ajoute ou remplace un collecteur défini à l'exécution.
+    ///
+    /// Un type compilé n'est jamais remplacé : un paquet ne peut pas changer en
+    /// silence ce que collecte un type livré.
+    pub fn register_runtime(&self, collector: Arc<dyn Collector>) -> Result<(), String> {
+        let kind: Arc<str> = Arc::from(collector.kind());
+        if self.collectors.contains_key(&kind) {
+            return Err(format!("\"{kind}\" is a built-in device type"));
+        }
+        self.runtime_write().insert(kind, collector);
+        Ok(())
     }
 
-    pub fn kinds(&self) -> Vec<&str> {
-        let mut kinds: Vec<_> = self.collectors.keys().map(|kind| &**kind).collect();
+    /// Retire un collecteur défini à l'exécution ; vrai s'il était enregistré.
+    pub fn unregister_runtime(&self, kind: &str) -> bool {
+        self.runtime_write().remove(kind).is_some()
+    }
+
+    /// Les types définis à l'exécution, triés.
+    pub fn runtime_kinds(&self) -> Vec<Arc<str>> {
+        let mut kinds: Vec<_> = self.runtime_read().keys().cloned().collect();
         kinds.sort_unstable();
         kinds
+    }
+
+    pub fn get(&self, kind: &str) -> Option<Arc<dyn Collector>> {
+        match self.collectors.get(kind) {
+            Some(collector) => Some(collector.clone()),
+            None => self.runtime_read().get(kind).cloned(),
+        }
+    }
+
+    pub fn kinds(&self) -> Vec<Arc<str>> {
+        let mut kinds: Vec<_> = self.collectors.keys().cloned().collect();
+        kinds.extend(self.runtime_read().keys().cloned());
+        kinds.sort_unstable();
+        kinds
+    }
+
+    // Un verrou empoisonné ne protège qu'une table de pointeurs, toujours
+    // cohérente entre deux instructions : on la reprend telle quelle.
+    fn runtime_read(&self) -> std::sync::RwLockReadGuard<'_, Table> {
+        self.runtime.read().unwrap_or_else(|poison| poison.into_inner())
+    }
+
+    fn runtime_write(&self) -> std::sync::RwLockWriteGuard<'_, Table> {
+        self.runtime.write().unwrap_or_else(|poison| poison.into_inner())
     }
 
     /// Identifie une cible et propose le profil de collecte adapté.
@@ -226,5 +276,44 @@ impl Registry {
             }
         }
         Ok(samples)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Un collecteur dont le type est choisi à l'exécution.
+    struct Runtime(String);
+
+    #[async_trait::async_trait]
+    impl Collector for Runtime {
+        fn kind(&self) -> &str {
+            &self.0
+        }
+
+        async fn probe(&self, _target: &Target) -> Result<Vec<Sample>, ProbeError> {
+            Ok(Vec::new())
+        }
+    }
+
+    #[test]
+    fn un_type_ne_a_lexecution_sajoute_et_se_retire_sans_toucher_aux_types_compiles() {
+        let mut registry = Registry::new();
+        registry.register(Arc::new(DummyCollector));
+        let shared = registry.clone();
+
+        shared.register_runtime(Arc::new(Runtime("pack.demo".into()))).unwrap();
+        assert!(registry.get("pack.demo").is_some(), "l'étage d'exécution est partagé");
+        assert_eq!(registry.kinds().len(), 2);
+        assert_eq!(registry.runtime_kinds(), [Arc::from("pack.demo")]);
+
+        let builtin = DummyCollector.kind().to_string();
+        assert!(shared.register_runtime(Arc::new(Runtime(builtin.clone()))).is_err());
+        assert!(registry.get(&builtin).is_some());
+
+        assert!(shared.unregister_runtime("pack.demo"));
+        assert!(!shared.unregister_runtime("pack.demo"));
+        assert!(registry.get("pack.demo").is_none());
     }
 }

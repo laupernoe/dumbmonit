@@ -7,6 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Integration packs.** A device type can now be added without a release: one
+  YAML file declares HTTP or Prometheus sources on the device, the metrics to
+  extract (JSONPath, regular expressions, Prometheus families, rows discovered
+  in a list), its options and its alert rules, or SNMP profiles in the usual
+  format. Installed through `POST /api/packs`, the type is available at once
+  as `pack.<id>`, its metrics under `dumbmonit_<id>_`, its rules as
+  `pack:<id>:<name>` (never rewritten by an update). Every request stays on
+  the device's own address: other hosts, absolute URLs and redirects elsewhere
+  are refused, loopback needs the device's explicit option, responses are
+  capped at 4 MiB, credentials only go into headers. `dumbmonit pack lint` and
+  `dumbmonit pack test` check a pack and replay its fixtures offline. Three
+  reference packs: `node-exporter`, `shelly-plug`, `speedtest-tracker`. Packs
+  are part of backups.
+
 - **Status pages worth showing to users.** Each service's history bar now
   tells a day's minutes of downtime on hover and on keyboard focus (one tab
   stop, arrow keys between days), days without any measurement stay grey, and

@@ -85,7 +85,7 @@
 //! S'y ajoutent `target`, `host` et les `tag_*` posés par le registre.
 
 mod dns;
-pub(crate) mod guard;
+pub mod guard;
 mod http;
 mod mqtt;
 mod outcome;

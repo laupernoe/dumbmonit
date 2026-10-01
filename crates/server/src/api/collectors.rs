@@ -2574,7 +2574,7 @@ pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
         registry
             .kinds()
             .into_iter()
-            .map(|kind| describe(kind, registry.get(kind).and_then(|c| c.description())))
+            .map(|kind| describe(&kind, registry.get(&kind).and_then(|c| c.description())))
             .collect(),
     )
 }

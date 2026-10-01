@@ -20,6 +20,8 @@ path = "src/main.rs"
 [dependencies]
 dumbmonit-proto = { path = "../proto" }
 dumbmonit-collectors = { path = "../collectors" }
+# Paquets d'intégration : format, vérification, collecteur et commandes `pack`.
+dumbmonit-pack = { path = "../pack" }
 
 anyhow.workspace = true
 async-trait.workspace = true
