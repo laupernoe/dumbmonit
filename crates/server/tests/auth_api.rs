@@ -257,7 +257,7 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
         }
         assert!(csp.contains("script-src 'self' 'nonce-"), "{uri} : {csp}");
         // Le mode mur intègre un lecteur de musique : exactement ces trois
-        // origines d'intégration, rien de plus large.
+        // origines d'intégration et l'iframe du Web Playback SDK, rien de plus large.
         let frames: Vec<&str> = csp
             .split(';')
             .map(str::trim)
@@ -269,7 +269,8 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
             [
                 "https://open.spotify.com",
                 "https://widget.deezer.com",
-                "https://www.youtube-nocookie.com"
+                "https://www.youtube-nocookie.com",
+                "https://sdk.scdn.co"
             ],
             "{uri} : {csp}"
         );

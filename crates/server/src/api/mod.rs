@@ -12,6 +12,7 @@ mod health;
 mod ingest;
 mod mcp;
 mod metrics;
+mod music;
 mod notify_policy;
 mod observability;
 mod oidc;
@@ -50,6 +51,12 @@ use crate::auth::AuthState;
 use crate::state::AppState;
 
 pub fn router(state: AppState) -> Router {
+    router_with(state, crate::music::MusicHub::from_env())
+}
+
+/// Le même routeur, avec l'état de la musique du mur fourni par l'appelant —
+/// les tests y branchent un faux Spotify.
+pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router {
     let auth_state = AuthState::from_env(&state.config);
 
     // Tout ce qui touche à l'instance — lecture comprise : la liste des
@@ -131,6 +138,8 @@ pub fn router(state: AppState) -> Router {
         .merge(backup::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
         .merge(packs::routes())
+        // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
+        .merge(music::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(
@@ -169,7 +178,10 @@ pub fn router(state: AppState) -> Router {
         .merge(status_pages::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
-        .merge(push::public_routes());
+        .merge(push::public_routes())
+        // Retour de Spotify après l'approbation : une navigation, vérifiée par
+        // son `state` et par la session qui revient (`music.rs`).
+        .merge(music::public_routes());
 
     // Serveur MCP : authentifié par jeton d'API, pas par session — un assistant
     // n'a pas de navigateur. Le garde ne couvre que cette route ; `GET` reste
@@ -198,6 +210,7 @@ pub fn router(state: AppState) -> Router {
         // passe, elle doit donc pouvoir se charger d'abord.
         .fallback(spa::serve)
         .layer(Extension(auth_state))
+        .layer(Extension(music_hub))
         // Mode démonstration : toute écriture refusée ici, avant l'authentification
         // et avant tout gestionnaire — une seule porte, pas une vérification par route.
         .layer(middleware::from_fn_with_state(state.clone(), crate::demo::guard))
@@ -235,7 +248,10 @@ pub fn router(state: AppState) -> Router {
 ///   risque résiduel est l'exfiltration par feuille de style injectée, qui
 ///   suppose déjà une injection HTML.
 /// - `img-src` : les icônes de l'interface sont des `data:` SVG produits par le
-///   build (les flèches de `<select>`, par exemple).
+///   build (les flèches de `<select>`, par exemple). L'interface y ajoute les
+///   pochettes de Spotify ([`CSP_MUSIC_IMG_SRC`]).
+/// - `manifest-src` : le manifeste web de l'interface (installation sur un
+///   téléphone), sans quoi `default-src 'none'` le refuse à chaque page.
 /// - `font-src`, `connect-src` : `'self'` et rien d'autre. Aucune police
 ///   Google, aucun CDN, aucune télémétrie — et la politique le rend vérifiable.
 /// - `base-uri 'none'`, `form-action 'self'`, `object-src` hérité de
@@ -243,20 +259,38 @@ pub fn router(state: AppState) -> Router {
 ///   d'injection qui ne passent pas par un script.
 const CSP_BASE: &str = "default-src 'none'; \
      style-src 'self' 'unsafe-inline'; \
-     img-src 'self' data:; \
      font-src 'self'; \
      connect-src 'self'; \
+     manifest-src 'self'; \
      base-uri 'none'; \
      form-action 'self'";
 
-/// Lecteurs de musique que le mode mur peut intégrer (`web/src/lib/wall/music.ts`,
-/// liste `EMBED_ORIGINS`) : les trois origines d'intégration officielles, en
-/// `https`, sans joker ni domaine parent. L'interface reconstruit l'adresse du
-/// lecteur à partir d'un identifiant validé ; la politique garantit qu'aucune
-/// autre origine ne peut être encadrée, même si ce contrôle était contourné.
-/// Réservé à l'interface : une page de statut publique n'encadre rien.
-const CSP_FRAME_SRC: &str = "frame-src https://open.spotify.com https://widget.deezer.com \
-     https://www.youtube-nocookie.com";
+/// Images : celles du build (`data:` compris), partout.
+const CSP_IMG_SRC: &str = "img-src 'self' data:";
+
+/// Ce que le mode mur fait venir d'ailleurs pour la musique (`crate::music`),
+/// réservé à l'interface : une page de statut publique n'encadre rien et ne
+/// charge aucun script tiers.
+///
+/// - `frame-src` : les trois lecteurs intégrés que le mur sait construire
+///   (`web/src/lib/wall/music.ts`, liste `EMBED_ORIGINS`), plus l'iframe de
+///   lecture du Web Playback SDK de Spotify (`sdk.scdn.co/embedded/…`), qui
+///   porte le son et les DRM. Des origines `https`, sans joker ni domaine
+///   parent : l'interface reconstruit chaque adresse à partir d'un identifiant
+///   validé, et la politique garantit qu'aucune autre origine ne peut être
+///   encadrée, même si ce contrôle était contourné.
+/// - `script-src` : le script du SDK, et lui seul — le chemin complet, pas
+///   l'origine. Il ne fait aucune requête depuis la page : il crée l'iframe
+///   ci-dessus et lui parle par `postMessage`.
+/// - `img-src` : les pochettes, servies par le CDN d'images de Spotify (le
+///   serveur écarte toute autre adresse avant de la transmettre).
+///
+/// Rien en `connect-src` ni en `media-src` : c'est le serveur qui parle à l'API
+/// Spotify, et l'audio est joué dans l'iframe du SDK, sous sa propre politique.
+const CSP_MUSIC_FRAME_SRC: &str = "https://open.spotify.com https://widget.deezer.com \
+     https://www.youtube-nocookie.com https://sdk.scdn.co";
+const CSP_MUSIC_SCRIPT_SRC: &str = "https://sdk.scdn.co/spotify-player.js";
+const CSP_MUSIC_IMG_SRC: &str = "https://i.scdn.co";
 
 /// Chemins qu'une page tierce peut encadrer : une page de statut
 /// (`/s/<slug>`) et sa vue compacte (`/s/<slug>/embed`), rien d'autre — ni les
@@ -288,11 +322,13 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
     let policy = match embeddable {
         // Une page de statut est faite pour être intégrée dans l'intranet de
         // quelqu'un : lui interdire d'être encadrée la rendrait inutile.
-        true => format!("{CSP_BASE}; script-src 'self' 'nonce-{nonce}'"),
+        true => format!("{CSP_BASE}; {CSP_IMG_SRC}; script-src 'self' 'nonce-{nonce}'"),
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
             format!(
-                "{CSP_BASE}; {CSP_FRAME_SRC}; script-src 'self' 'nonce-{nonce}'; \
+                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}; \
+                 frame-src {CSP_MUSIC_FRAME_SRC}; \
+                 script-src 'self' 'nonce-{nonce}' {CSP_MUSIC_SCRIPT_SRC}; \
                  frame-ancestors 'none'"
             )
         }
@@ -318,18 +354,26 @@ mod tests {
     }
 
     #[test]
-    fn only_the_three_music_players_can_be_framed() {
-        let origins: Vec<&str> =
-            CSP_FRAME_SRC.strip_prefix("frame-src ").unwrap().split_whitespace().collect();
+    fn music_opens_exactly_the_players_the_sdk_and_the_covers() {
+        let frames: Vec<&str> = CSP_MUSIC_FRAME_SRC.split_whitespace().collect();
         assert_eq!(
-            origins,
+            frames,
             [
                 "https://open.spotify.com",
                 "https://widget.deezer.com",
-                "https://www.youtube-nocookie.com"
+                "https://www.youtube-nocookie.com",
+                "https://sdk.scdn.co"
             ]
         );
+        // Un seul script tiers, désigné par son chemin complet.
+        assert_eq!(CSP_MUSIC_SCRIPT_SRC, "https://sdk.scdn.co/spotify-player.js");
+        assert_eq!(CSP_MUSIC_IMG_SRC, "https://i.scdn.co");
+        for source in [CSP_MUSIC_FRAME_SRC, CSP_MUSIC_SCRIPT_SRC, CSP_MUSIC_IMG_SRC] {
+            assert!(!source.contains('*'), "aucun joker : {source}");
+            assert!(!source.contains("http:"), "https seulement : {source}");
+        }
         assert!(!CSP_BASE.contains("frame-src"), "hors de l'interface, rien n'est encadré");
+        assert!(!CSP_BASE.contains("img-src"), "chaque réponse choisit ses images");
     }
 
     #[test]

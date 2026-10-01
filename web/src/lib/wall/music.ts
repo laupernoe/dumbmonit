@@ -181,3 +181,22 @@ function youtube(video: string | null | undefined, list: string | null, music: b
 		}
 	};
 }
+
+/**
+ * The frame address, asking the player to start on its own where the provider
+ * allows it (YouTube, Deezer; Spotify's embed never does). Browsers still keep
+ * a frame silent until someone has touched the wall once: the wall asks for
+ * that tap. Same origin as `embed.src`, only a query parameter is added.
+ */
+export function embedSrc(embed: MusicEmbed, options: { autoplay?: boolean } = {}): string {
+	if (!options.autoplay) return embed.src;
+	const join = embed.src.includes('?') ? '&' : '?';
+	switch (embed.provider) {
+		case 'youtube':
+			return `${embed.src}${join}autoplay=1`;
+		case 'deezer':
+			return `${embed.src}${join}autoplay=true`;
+		default:
+			return embed.src;
+	}
+}

@@ -1,7 +1,7 @@
 // Share link → embed URL for the wall's music player. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseMusicLink, EMBED_ORIGINS } from '../src/lib/wall/music.ts';
+import { parseMusicLink, embedSrc, EMBED_ORIGINS } from '../src/lib/wall/music.ts';
 
 const SP = '37i9dQZF1DXcBWIGoYBM5M';
 const src = (link) => {
@@ -77,4 +77,21 @@ test('anything else is refused, never framed', () => {
 	assert.match(refused('https://spotify.link/AbCdEf'), /full/);
 	assert.match(refused('https://deezer.page.link/xyz'), /full/);
 	assert.match(refused('https://link.deezer.com/s/30abc'), /full/);
+});
+
+test('a link sent from a phone asks the player to start, where the provider allows it', () => {
+	const embed = (link) => parseMusicLink(link).embed;
+	const yt = embed('https://youtu.be/dQw4w9WgXcQ');
+	assert.equal(embedSrc(yt), yt.src, 'unchanged unless asked');
+	assert.equal(embedSrc(yt, { autoplay: true }), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1');
+	const list = embed('https://www.youtube.com/playlist?list=PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI');
+	assert.equal(embedSrc(list, { autoplay: true }), `${list.src}&autoplay=1`);
+	const dz = embed('https://www.deezer.com/track/3135556');
+	assert.equal(embedSrc(dz, { autoplay: true }), 'https://widget.deezer.com/widget/auto/track/3135556?autoplay=true');
+	// Spotify's embed has no autoplay: the address stays the validated one.
+	const sp = embed(`https://open.spotify.com/track/${SP}`);
+	assert.equal(embedSrc(sp, { autoplay: true }), sp.src);
+	for (const e of [yt, list, dz, sp]) {
+		assert.ok(EMBED_ORIGINS.includes(new URL(embedSrc(e, { autoplay: true })).origin));
+	}
 });
