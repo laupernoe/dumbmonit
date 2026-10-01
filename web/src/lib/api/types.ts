@@ -907,27 +907,6 @@ export interface RebindWindow {
 	minutes: number;
 }
 
-// --- API tokens (assistants, MCP) -------------------------------------------
-
-/** What a token may do. `read` can never change anything. */
-export type ApiTokenScope = 'read' | 'write';
-
-export interface ApiToken {
-	id: number;
-	name: string;
-	/** Start of the token (`dmt_` + a few characters), to identify it in a list. */
-	prefix: string;
-	scope: ApiTokenScope;
-	created_at: string;
-	last_used_at: string | null;
-	revoked_at: string | null;
-}
-
-/** Response of `POST /api/tokens`: the only chance to see the token in clear. */
-export interface CreatedApiToken extends ApiToken {
-	secret: string;
-}
-
 // --- Notification policy ----------------------------------------------------
 
 /** Weekly quiet-hours window, same shape as a weekly maintenance schedule. */
