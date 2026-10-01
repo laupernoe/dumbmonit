@@ -98,7 +98,8 @@ mod tests {
     ///   serveur, authentifié par un jeton d'enregistrement, que nul client n'a
     ///   à appeler ;
     /// - les redirections de la connexion OIDC (`/api/auth/oidc/start` et
-    ///   `/callback`) : des pages qu'un navigateur traverse, pas une API ;
+    ///   `/callback`), et le retour de Spotify (`/api/music/spotify/callback`) :
+    ///   des pages qu'un navigateur traverse, pas une API ;
     /// - la distribution de l'agent (`/install.sh`, `/install.ps1`,
     ///   `/download/{name}`) : des fichiers, pas du JSON.
     const EXCLUDED: &[&str] = &[
@@ -109,6 +110,7 @@ mod tests {
         "/api/agent/relay/{id}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
+        "/api/music/spotify/callback",
         "/install.sh",
         "/install.ps1",
         "/download/{name}",
@@ -134,11 +136,18 @@ mod tests {
             || (path == "/api/mcp" && method != "post")
     }
 
-    /// Routes fermées à tout jeton : celles du garde, plus les sauvegardes
-    /// (refusées par leur gestionnaire, qui exige une session d'administrateur).
+    /// Routes fermées à tout jeton : celles du garde, plus les sauvegardes et la
+    /// connexion à Spotify et son jeton pour le mur (refusées par leur
+    /// gestionnaire, qui exige une session).
     fn is_session_only(path: &str) -> bool {
         let Some(rest) = path.strip_prefix("/api") else { return false };
-        TOKEN_DENIED.iter().chain(["/backup"].iter()).any(|prefix| {
+        const BY_HANDLER: &[&str] = &[
+            "/backup",
+            "/music/spotify/authorize",
+            "/music/spotify/complete",
+            "/music/spotify/token",
+        ];
+        TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))
         })
     }
