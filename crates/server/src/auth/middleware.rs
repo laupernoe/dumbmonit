@@ -19,6 +19,8 @@
 //! portée par un jeton n'a pas de cookie, donc pas de CSRF possible : la preuve
 //! d'origine n'est exigée que des sessions.
 
+use std::net::IpAddr;
+
 use axum::extract::{Extension, FromRequestParts, Request, State};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, Method};
@@ -85,7 +87,9 @@ const SELF_SERVICE: &[&str] =
 /// d'autres secrets et ne touche pas à qui peut se connecter.
 pub const TOKEN_DENIED: &[&str] = &["/auth", "/users", "/tokens", "/agent/tokens"];
 
-const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor                                     authentication, SSO or other tokens: sign in to the web                                     interface for that.";
+const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
+                                    authentication, SSO or other tokens: sign in to the web \
+                                    interface for that.";
 
 /// En-tête que l'interface pose sur chaque écriture, et sa valeur attendue.
 ///
@@ -128,14 +132,38 @@ pub async fn require_session(
     // refusé, sinon un jeton révoqué dans un navigateur connecté passerait
     // inaperçu.
     if token::extract_bearer(request.headers()).is_some() {
-        let (method, path) = (request.method().clone(), request.uri().path().to_string());
-        return match bearer_identity(&state, request.headers(), &method, &path).await {
-            Ok(api_token) => {
-                request.extensions_mut().insert(CurrentPrincipal(Principal::Token(api_token)));
-                next.run(request).await
-            }
-            Err(response) => *response,
+        let method = request.method().clone();
+        let path = request.uri().path().to_string();
+        // Le routeur `/api` est imbriqué : le chemin vu ici a perdu son préfixe.
+        // Le journal porte le chemin complet, sans chaîne de requête.
+        let full_path = request
+            .extensions()
+            .get::<axum::extract::OriginalUri>()
+            .map_or_else(|| path.clone(), |uri| uri.path().to_string());
+        let ip = token::request_ip(request.extensions(), request.headers());
+        let checked = match bearer_identity(&state, request.headers(), ip, &method, &path).await {
+            Ok(checked) => checked,
+            Err(response) => return *response,
         };
+        let api_token = checked.token.clone();
+        request.extensions_mut().insert(CurrentPrincipal(Principal::Token(checked.token)));
+        let mut response = next.run(request).await;
+        checked.rate.apply(response.headers_mut());
+        if is_mutation(&method) {
+            // Toute écriture faite par un jeton laisse une trace : qui (le nom et
+            // l'identifiant du jeton, jamais le secret), quoi (méthode et chemin,
+            // sans la chaîne de requête ni le corps), et le résultat.
+            tracing::info!(
+                token = %api_token.name,
+                token_id = api_token.id,
+                %method,
+                path = %full_path,
+                status = response.status().as_u16(),
+                ip = ?ip,
+                "API write by token"
+            );
+        }
+        return response;
     }
 
     let (token, user) = match current_session(&state.pool, request.headers()).await {
@@ -169,21 +197,28 @@ pub async fn require_session(
 async fn bearer_identity(
     state: &AppState,
     headers: &HeaderMap,
+    ip: Option<IpAddr>,
     method: &Method,
     path: &str,
-) -> Result<ApiToken, Box<Response>> {
-    let api_token = token::check(&state.pool, headers, Scope::Read)
+) -> Result<token::Checked, Box<Response>> {
+    let checked = token::check(&state.pool, headers, ip, Scope::Read)
         .await
         .map_err(|error| Box::new(error.into_response()))?;
+    let refuse = |error: AuthError| {
+        let mut response = error.into_response();
+        checked.rate.apply(response.headers_mut());
+        Box::new(response)
+    };
     if is_token_denied(path) {
-        return Err(Box::new(AuthError::Forbidden(TOKEN_DENIED_MESSAGE.into()).into_response()));
+        return Err(refuse(AuthError::Forbidden(TOKEN_DENIED_MESSAGE.into())));
     }
     if is_mutation(method) {
-        api_token
+        checked
+            .token
             .require(Scope::Write)
-            .map_err(|reason| Box::new(AuthError::Forbidden(reason).into_response()))?;
+            .map_err(|reason| refuse(AuthError::Forbidden(reason)))?;
     }
-    Ok(api_token)
+    Ok(checked)
 }
 
 /// Vrai si la route est de celles qu'un jeton d'API ne peut pas appeler.

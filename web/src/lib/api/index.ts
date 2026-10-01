@@ -12,8 +12,6 @@ import type {
 	AgentToken,
 	AgentTokenPayload,
 	RebindWindow,
-	ApiToken,
-	ApiTokenScope,
 	AckPayload,
 	Alert,
 	AlertHistoryEntry,
@@ -27,7 +25,6 @@ import type {
 	ChannelPayload,
 	ChannelTestReport,
 	CreatedAgentToken,
-	CreatedApiToken,
 	AuthStatus,
 	CreateUserPayload,
 	OidcConfig,
@@ -541,21 +538,6 @@ export async function getAgentHost(id: TargetId, signal?: AbortSignal): Promise<
  */
 export function allowAgentRebind(id: TargetId): Promise<RebindWindow> {
 	return request<RebindWindow>(`/targets/${id}/agent/rebind`, { method: 'POST' });
-}
-
-// --- API tokens (assistants, MCP) -------------------------------------------
-
-export function listApiTokens(signal?: AbortSignal): Promise<ApiToken[]> {
-	return request<ApiToken[]>('/tokens', { signal });
-}
-
-/** Creates an API token. The secret is only ever returned here. */
-export function createApiToken(name: string, scope: ApiTokenScope): Promise<CreatedApiToken> {
-	return request<CreatedApiToken>('/tokens', { method: 'POST', body: { name, scope } });
-}
-
-export function revokeApiToken(id: number): Promise<void> {
-	return request<void>(`/tokens/${id}`, { method: 'DELETE' });
 }
 
 // --- Notification policy and per-device overrides --------------------------
