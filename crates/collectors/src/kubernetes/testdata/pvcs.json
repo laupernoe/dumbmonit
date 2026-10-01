@@ -1,0 +1,31 @@
+{
+  "kind": "PersistentVolumeClaimList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "data",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "1Gi"
+          }
+        },
+        "storageClassName": "nonexistent",
+        "volumeMode": "Filesystem"
+      },
+      "status": {
+        "phase": "Pending"
+      }
+    }
+  ]
+}

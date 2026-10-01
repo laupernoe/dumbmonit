@@ -686,6 +686,71 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_backup_last_status",
             )
         },
+        // Dépôts restic et Borg déclarés dans `agent.yaml`
+        // (`agent/src/collect/backup_repos.rs`). Mêmes deux jours que Plakar
+        // et PBS : une nuit ratée plus la marge d'une nuit. Sans dépôt déclaré,
+        // aucune série, aucune alerte possible.
+        Rule {
+            description: "No new restic or Borg snapshot in this repository for more than 48 \
+                          hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 48.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "backup_repo_too_old",
+                "restic/Borg backup too old",
+                RuleKind::Threshold,
+                "dumbmonit_agent_backup_repo_last_snapshot_age_seconds",
+            )
+        },
+        // Illisible couvre l'injoignable comme le mot de passe refusé : dans les
+        // deux cas, plus personne ne sait si les sauvegardes existent. La raison
+        // exacte est dans le journal de l'agent.
+        Rule {
+            description: "The agent cannot read this restic or Borg repository: unreachable, \
+                          password refused or binary missing (the agent's log says which)."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "backup_repo_unreachable",
+                "restic/Borg repository unreachable",
+                RuleKind::Threshold,
+                "dumbmonit_agent_backup_repo_reachable",
+            )
+        },
+        // WireGuard : seuls les pairs à maintien de connexion
+        // (`PersistentKeepalive`) sont visés. Ceux-là refont une poignée de main
+        // toutes les deux minutes tant que le tunnel vit ; un téléphone ou un
+        // portable sans maintien peut se taire des jours sans que rien ne soit
+        // cassé. Un pair qui n'a jamais répondu compte son silence depuis que
+        // l'agent le voit : un tunnel jamais monté alerte aussi.
+        Rule {
+            description: "A WireGuard peer with a persistent keepalive has not completed a \
+                          handshake for more than 15 minutes: the tunnel is down."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 15.0 * 60.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "wireguard_peer_silent",
+                "WireGuard peer silent",
+                RuleKind::Threshold,
+                "dumbmonit_agent_wireguard_peer_handshake_age_seconds \
+                 and on (target, interface, peer) \
+                 dumbmonit_agent_wireguard_peer_keepalive_seconds > 0",
+            )
+        },
         // ------------------------------------------------------------------
         // Matériel remonté par l'agent : disques, pools ZFS, sondes.
         //
@@ -4414,6 +4479,131 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])")
         },
+        // --- Kubernetes (`collectors/kubernetes`) ---
+        //
+        // Toutes ces séries n'existent que pour une cible Kubernetes : aucune ne
+        // peut se déclencher ailleurs.
+        Rule {
+            description: "A Kubernetes node is not Ready: its kubelet no longer reports, and its pods \
+                          will be evicted."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_node_not_ready",
+                "Kubernetes node not ready",
+                RuleKind::Threshold,
+                "dumbmonit_k8s_node_ready == bool 0",
+            )
+        },
+        Rule {
+            description: "A Kubernetes node reports memory, disk or PID pressure: the kubelet starts \
+                          evicting pods and refuses new ones."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_node_pressure",
+                "Kubernetes node under pressure",
+                RuleKind::Threshold,
+                "dumbmonit_k8s_node_pressure",
+            )
+        },
+        // Entre deux tentatives, le conteneur redémarre et l'état
+        // `CrashLoopBackOff` disparaît quelques secondes : le maximum sur dix
+        // minutes lisse ce va-et-vient, sans quoi le `for` repartirait de zéro.
+        Rule {
+            description: "A pod keeps crashing and Kubernetes waits longer and longer before \
+                          restarting it (CrashLoopBackOff)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_pod_crashlooping",
+                "Kubernetes pod crash looping",
+                RuleKind::Threshold,
+                "max_over_time(dumbmonit_k8s_pod_crashlooping[10m])",
+            )
+        },
+        Rule {
+            description: "A pod has been Pending for fifteen minutes: no node can take it, or a \
+                          volume or an image it needs does not come."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_pod_pending",
+                "Kubernetes pod stuck pending",
+                RuleKind::Threshold,
+                "dumbmonit_k8s_pod_pending",
+            )
+        },
+        // Un pod déjà signalé en boucle de redémarrage n'est pas compté deux fois.
+        Rule {
+            description: "A pod restarted more than five times in the last hour without being in \
+                          CrashLoopBackOff: it crashes, then recovers, then crashes again."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_pod_restarting",
+                "Kubernetes pod restarting",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) \
+                 unless on (target, namespace, pod) \
+                 max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0",
+            )
+        },
+        // Une mise à jour progressive retire un réplica le temps d'en démarrer
+        // un autre : dix minutes de patience.
+        Rule {
+            description: "A Deployment, StatefulSet or DaemonSet has fewer available replicas than \
+                          it asks for."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            escalate_after: Some(Duration::from_secs(3600)),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_workload_unavailable",
+                "Kubernetes workload missing replicas",
+                RuleKind::Threshold,
+                "dumbmonit_k8s_workload_unavailable",
+            )
+        },
+        Rule {
+            description: "A PersistentVolumeClaim that a pod needs, or that a provisioning error \
+                          concerns, is still not bound after fifteen minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "k8s_pvc_pending",
+                "Kubernetes volume claim pending",
+                RuleKind::Threshold,
+                "dumbmonit_k8s_pvc_pending",
+            )
+        },
         // --- fin du bloc Synology DSM ---
         // La sauvegarde locale de DumbMonit lui-même.
         //
@@ -4715,6 +4905,16 @@ mod tests {
             "crowdsec_lapi_down",
             "crowdsec_bouncer_stale",
             "crowdsec_no_logs_read",
+            "k8s_node_not_ready",
+            "k8s_node_pressure",
+            "k8s_pod_crashlooping",
+            "k8s_pod_pending",
+            "k8s_pod_restarting",
+            "k8s_workload_unavailable",
+            "k8s_pvc_pending",
+            "backup_repo_too_old",
+            "backup_repo_unreachable",
+            "wireguard_peer_silent",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -5021,6 +5221,20 @@ mod tests {
             "dumbmonit_crowdsec_lapi_up",
             "dumbmonit_crowdsec_bouncer_requests_total",
             "dumbmonit_crowdsec_lines_read_total",
+            // Kubernetes (`collectors/kubernetes/metrics.rs`).
+            "dumbmonit_k8s_node_ready",
+            "dumbmonit_k8s_node_pressure",
+            "dumbmonit_k8s_pod_crashlooping",
+            "dumbmonit_k8s_pod_pending",
+            "dumbmonit_k8s_pod_restarts",
+            "dumbmonit_k8s_workload_unavailable",
+            "dumbmonit_k8s_pvc_pending",
+            // Agent : dépôts restic/Borg et tunnels WireGuard
+            // (`agent/src/collect/{backup_repos,wireguard}.rs`).
+            "dumbmonit_agent_backup_repo_last_snapshot_age_seconds",
+            "dumbmonit_agent_backup_repo_reachable",
+            "dumbmonit_agent_wireguard_peer_handshake_age_seconds",
+            "dumbmonit_agent_wireguard_peer_keepalive_seconds",
         ];
 
         for rule in builtin_rules() {

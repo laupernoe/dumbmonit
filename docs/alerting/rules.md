@@ -80,6 +80,25 @@ while Plakar is not detected, so neither rule can fire on a machine without it.
 | Plakar backup too old | No new Plakar snapshot for this source for more than two days (`dumbmonit_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
 | Plakar backup failed | The latest snapshot has errors, or the kloset cannot be read (`dumbmonit_backup_last_status < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
 
+### restic and Borg backups
+
+Reported by the agent for each repository declared under `restic_repos` or
+`borg_repos` in agent.yaml; see [Agent](../devices/agent.md#restic-and-borg-backups).
+Without a declared repository there is no series, so neither rule can fire.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| restic/Borg backup too old | No new restic or Borg snapshot in this repository for more than 48 hours (`dumbmonit_agent_backup_repo_last_snapshot_age_seconds`). | > 48 h | 1 h | Advisory (`warning`) | 24 h |
+| restic/Borg repository unreachable | The agent cannot read the repository: unreachable, password refused or binary missing; the agent's log says which (`dumbmonit_agent_backup_repo_reachable < 1`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
+
+### WireGuard tunnels
+
+Reported by the agent; see [Agent](../devices/agent.md#wireguard-tunnels).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| WireGuard peer silent | A peer with a persistent keepalive has not completed a handshake for more than 15 minutes: the tunnel is down (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). A peer that never connected counts its silence from the moment the agent first saw it. Peers without keepalive (a phone, a laptop) idle for days and are left out; change the threshold to change N, or drop the `and on …` part to watch every peer. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
+
 ### Proxmox VE
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
@@ -406,6 +425,21 @@ Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [M
 | CrowdSec Local API down | The Local API does not answer `/health` (`dumbmonit_crowdsec_lapi_up`). | < 1 | 5 min | Warning (`critical`) | 1 h |
 | CrowdSec bouncer stopped pulling | A bouncer's requests did not change in 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
 | CrowdSec reads no logs | Not a single log line read in six hours (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
+
+### Kubernetes
+
+See [Kubernetes / k3s](../devices/kubernetes.md). Every series is labelled
+with the node, or the namespace and the pod, workload or claim concerned.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Kubernetes node not ready | A node is not Ready: its kubelet no longer reports, and its pods will be evicted (`dumbmonit_k8s_node_ready == bool 0`). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| Kubernetes node under pressure | A node reports memory, disk or PID pressure (`dumbmonit_k8s_node_pressure`, label `condition`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Kubernetes pod crash looping | A container is in `CrashLoopBackOff` (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`: the state disappears for a moment at each restart attempt). | > 0 | 10 min | Warning (`critical`) | 6 h |
+| Kubernetes pod stuck pending | A pod has been Pending for fifteen minutes: no node can take it, or a volume or an image it needs does not come (`dumbmonit_k8s_pod_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Kubernetes pod restarting | A pod restarted more than five times in the last hour without being in `CrashLoopBackOff` (`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`). | > 5 | 5 min | Advisory (`warning`) | 6 h |
+| Kubernetes workload missing replicas | A Deployment, StatefulSet or DaemonSet has fewer available replicas than it asks for (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
+| Kubernetes volume claim pending | A PersistentVolumeClaim that a pod needs, or that a provisioning error concerns, is still not bound (`dumbmonit_k8s_pvc_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
 
 ### DumbMonit itself
 

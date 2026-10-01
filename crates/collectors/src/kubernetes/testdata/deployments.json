@@ -1,0 +1,160 @@
+{
+  "kind": "DeploymentList",
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "api",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1
+      },
+      "spec": {
+        "replicas": 1
+      },
+      "status": {
+        "observedGeneration": 1,
+        "replicas": 1,
+        "updatedReplicas": 1,
+        "unavailableReplicas": 1,
+        "conditions": [
+          {
+            "type": "Progressing",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:39Z",
+            "lastTransitionTime": "2026-09-30T22:43:28Z",
+            "reason": "NewReplicaSetAvailable",
+            "message": "ReplicaSet \"api-7c9696d669\" has successfully progressed."
+          },
+          {
+            "type": "Available",
+            "status": "False",
+            "lastUpdateTime": "2026-09-30T22:44:26Z",
+            "lastTransitionTime": "2026-09-30T22:44:26Z",
+            "reason": "MinimumReplicasUnavailable",
+            "message": "Deployment does not have minimum availability."
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "web",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1
+      },
+      "spec": {
+        "replicas": 2
+      },
+      "status": {
+        "observedGeneration": 1,
+        "replicas": 2,
+        "updatedReplicas": 2,
+        "readyReplicas": 2,
+        "availableReplicas": 2,
+        "conditions": [
+          {
+            "type": "Available",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:39Z",
+            "lastTransitionTime": "2026-09-30T22:43:39Z",
+            "reason": "MinimumReplicasAvailable",
+            "message": "Deployment has minimum availability."
+          },
+          {
+            "type": "Progressing",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:39Z",
+            "lastTransitionTime": "2026-09-30T22:43:28Z",
+            "reason": "NewReplicaSetAvailable",
+            "message": "ReplicaSet \"web-5bd6c6ddd5\" has successfully progressed."
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "coredns",
+        "namespace": "kube-system",
+        "creationTimestamp": "2026-09-30T22:43:22Z",
+        "generation": 1,
+        "labels": {
+          "k8s-app": "kube-dns",
+          "kubernetes.io/name": "CoreDNS",
+          "objectset.rio.cattle.io/hash": "bce283298811743a0386ab510f2f67ef74240c57"
+        }
+      },
+      "spec": {
+        "replicas": 1
+      },
+      "status": {
+        "observedGeneration": 1,
+        "replicas": 1,
+        "updatedReplicas": 1,
+        "readyReplicas": 1,
+        "availableReplicas": 1,
+        "conditions": [
+          {
+            "type": "Available",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:26Z",
+            "lastTransitionTime": "2026-09-30T22:43:26Z",
+            "reason": "MinimumReplicasAvailable",
+            "message": "Deployment has minimum availability."
+          },
+          {
+            "type": "Progressing",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:44Z",
+            "lastTransitionTime": "2026-09-30T22:43:26Z",
+            "reason": "NewReplicaSetAvailable",
+            "message": "ReplicaSet \"coredns-64fd4b4794\" has successfully progressed."
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "local-path-provisioner",
+        "namespace": "kube-system",
+        "creationTimestamp": "2026-09-30T22:43:23Z",
+        "generation": 1,
+        "labels": {
+          "objectset.rio.cattle.io/hash": "183f35c65ffbc3064603f43f1580d8c68a2dabd4"
+        }
+      },
+      "spec": {
+        "replicas": 1
+      },
+      "status": {
+        "observedGeneration": 1,
+        "replicas": 1,
+        "updatedReplicas": 1,
+        "readyReplicas": 1,
+        "availableReplicas": 1,
+        "conditions": [
+          {
+            "type": "Available",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:26Z",
+            "lastTransitionTime": "2026-09-30T22:43:26Z",
+            "reason": "MinimumReplicasAvailable",
+            "message": "Deployment has minimum availability."
+          },
+          {
+            "type": "Progressing",
+            "status": "True",
+            "lastUpdateTime": "2026-09-30T22:43:42Z",
+            "lastTransitionTime": "2026-09-30T22:43:26Z",
+            "reason": "NewReplicaSetAvailable",
+            "message": "ReplicaSet \"local-path-provisioner-774c6665dc\" has successfully progressed."
+          }
+        ]
+      }
+    }
+  ]
+}

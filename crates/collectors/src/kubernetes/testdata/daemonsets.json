@@ -1,0 +1,27 @@
+{
+  "kind": "DaemonSetList",
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "agent",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1
+      },
+      "spec": {},
+      "status": {
+        "currentNumberScheduled": 1,
+        "numberMisscheduled": 0,
+        "desiredNumberScheduled": 1,
+        "numberReady": 1,
+        "observedGeneration": 1,
+        "updatedNumberScheduled": 1,
+        "numberAvailable": 1
+      }
+    }
+  ]
+}

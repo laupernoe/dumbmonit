@@ -13,12 +13,14 @@ use std::time::Duration;
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
+use crate::collect::backup_repos::{self, BackupReposConfig, RepoConfig, Tool};
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
 use crate::collect::perf_counters::{self, CustomCounter, PerfCountersConfig, PresetMode};
 use crate::collect::plakar::{self, PlakarConfig};
 use crate::collect::smart::{self, SmartConfig};
 use crate::collect::system_health::SystemHealthConfig;
+use crate::collect::wireguard::WireguardConfig;
 use crate::collect::zfs::{self, ZfsConfig};
 use crate::collect::{DEFAULT_INTERFACES_IGNORE, DEFAULT_MOUNTS_IGNORE, ProbeConfig};
 
@@ -85,6 +87,14 @@ struct FileConfig {
     zfs: Option<bool>,
     zfs_bin: Option<String>,
     zfs_interval_secs: Option<u64>,
+    wireguard: Option<bool>,
+    wireguard_bin: Option<String>,
+    wireguard_peer_names: Option<BTreeMap<String, String>>,
+    restic_bin: Option<String>,
+    borg_bin: Option<String>,
+    restic_repos: Option<Vec<RepoFile>>,
+    borg_repos: Option<Vec<RepoFile>>,
+    backup_repos_interval_secs: Option<u64>,
     perf_counters: Option<Vec<PerfCounterFile>>,
     mdaemon: Option<FlagOrAuto>,
     max_buffered_samples: Option<usize>,
@@ -132,6 +142,22 @@ enum PerfCounterFile {
 enum FlagOrAuto {
     Flag(bool),
     Text(String),
+}
+
+/// Un dépôt restic ou Borg déclaré dans le fichier. Le mot de passe n'y figure
+/// qu'indirectement — un fichier, une commande, ou une variable de `env` — et ne
+/// quitte jamais la machine.
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct RepoFile {
+    name: Option<String>,
+    repository: Option<String>,
+    password_file: Option<String>,
+    password_command: Option<String>,
+    env: BTreeMap<String, String>,
+    args: Vec<String>,
+    host: Option<String>,
+    glob_archives: Option<String>,
 }
 
 /// Section `system_health` du fichier : santé du système d'exploitation.
@@ -187,6 +213,10 @@ pub struct Config {
     pub smart: SmartConfig,
     /// Pools ZFS, par `zpool`.
     pub zfs: ZfsConfig,
+    /// Tunnels WireGuard, par `wg show all dump`.
+    pub wireguard: WireguardConfig,
+    /// Dépôts restic et Borg déclarés.
+    pub backup_repos: BackupReposConfig,
     /// Compteurs de performance Windows : liste libre et jeu MDaemon.
     pub perf_counters: PerfCountersConfig,
     pub max_buffered_samples: usize,
@@ -229,6 +259,8 @@ impl fmt::Debug for Config {
             .field("sensors", &self.sensors)
             .field("smart", &self.smart)
             .field("zfs", &self.zfs)
+            .field("wireguard", &self.wireguard)
+            .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
             .finish()
     }
@@ -472,6 +504,37 @@ impl Config {
             )?),
         };
 
+        let wireguard = WireguardConfig {
+            enabled: flag("DUMBMONIT_AGENT_WIREGUARD", file.wireguard, true)?,
+            bin: command_name(
+                env.get("DUMBMONIT_AGENT_WIREGUARD_BIN").or(file.wireguard_bin),
+                "wg",
+            ),
+            peer_names: file
+                .wireguard_peer_names
+                .unwrap_or_default()
+                .into_iter()
+                .map(|(key, name)| (key.trim().to_string(), name.trim().to_string()))
+                .filter(|(key, name)| !key.is_empty() && !name.is_empty())
+                .collect(),
+        };
+        let backup_repos = BackupReposConfig {
+            restic_bin: command_name(
+                env.get("DUMBMONIT_AGENT_RESTIC_BIN").or(file.restic_bin),
+                "restic",
+            ),
+            borg_bin: command_name(env.get("DUMBMONIT_AGENT_BORG_BIN").or(file.borg_bin), "borg"),
+            repos: backup_repo_list(file.restic_repos, file.borg_repos)?,
+            interval: Duration::from_secs(read_interval(
+                &env,
+                "DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS",
+                file.backup_repos_interval_secs,
+                backup_repos::DEFAULT_INTERVAL_SECS,
+                backup_repos::MIN_INTERVAL_SECS,
+                "the restic/Borg reading period",
+            )?),
+        };
+
         let perf_counters = Self::merge_perf_counters(file.perf_counters, file.mdaemon, &env)?;
 
         let max_buffered_samples = match env.get("DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES") {
@@ -520,6 +583,8 @@ impl Config {
             sensors,
             smart,
             zfs,
+            wireguard,
+            backup_repos,
             perf_counters,
             max_buffered_samples,
             secret_path: Self::resolve_secret_path(&env, config_path),
@@ -663,6 +728,61 @@ impl EnvSource {
 
     fn deprecated(&self) -> Vec<(String, String)> {
         self.deprecated.borrow().clone()
+    }
+}
+
+/// Les dépôts restic puis Borg, validés : un emplacement chacun, des noms
+/// uniques par outil, et aucun secret dans le nom par défaut.
+fn backup_repo_list(
+    restic: Option<Vec<RepoFile>>,
+    borg: Option<Vec<RepoFile>>,
+) -> Result<Vec<RepoConfig>> {
+    let clean =
+        |value: Option<String>| value.map(|v| v.trim().to_string()).filter(|v| !v.is_empty());
+    let mut repos: Vec<RepoConfig> = Vec::new();
+    let entries = restic
+        .unwrap_or_default()
+        .into_iter()
+        .map(|entry| (Tool::Restic, entry))
+        .chain(borg.unwrap_or_default().into_iter().map(|entry| (Tool::Borg, entry)));
+    for (tool, entry) in entries {
+        let key = format!("{}_repos", tool.as_str());
+        let Some(repository) = clean(entry.repository) else {
+            bail!("{key}: every entry needs a 'repository'");
+        };
+        let name = clean(entry.name).unwrap_or_else(|| without_credentials(&repository));
+        if repos.iter().any(|r| r.tool == tool && r.name == name) {
+            bail!("{key}: two repositories are named '{name}'");
+        }
+        repos.push(RepoConfig {
+            tool,
+            name,
+            repository,
+            password_file: clean(entry.password_file).map(PathBuf::from),
+            password_command: clean(entry.password_command),
+            env: entry.env,
+            args: entry.args,
+            host: clean(entry.host),
+            glob_archives: clean(entry.glob_archives),
+        });
+    }
+    if repos.len() > backup_repos::MAX_REPOS {
+        bail!("at most {} restic/Borg repositories can be watched", backup_repos::MAX_REPOS);
+    }
+    Ok(repos)
+}
+
+/// L'emplacement d'un dépôt, sans les identifiants qu'une URL peut porter
+/// (`rest:https://user:secret@host/`) : c'est lui qui sert d'étiquette quand
+/// aucun nom n'est donné, et une étiquette part au serveur.
+fn without_credentials(repository: &str) -> String {
+    let Some(scheme_end) = repository.find("://") else { return repository.to_string() };
+    let authority_start = scheme_end + 3;
+    let rest = &repository[authority_start..];
+    let authority_end = rest.find('/').unwrap_or(rest.len());
+    match rest[..authority_end].rfind('@') {
+        Some(at) => format!("{}{}", &repository[..authority_start], &rest[at + 1..]),
+        None => repository.to_string(),
     }
 }
 
@@ -1270,5 +1390,86 @@ mdaemon: true
             Config::merge(file_with_url_and_token(), env(&[("DUMBMONIT_AGENT_MDAEMON", "2")]))
                 .is_err()
         );
+    }
+
+    #[test]
+    fn restic_and_borg_repositories_come_from_the_file() {
+        let yaml = r#"
+server_url: http://serveur:8080
+token: dmon_abc
+wireguard_peer_names:
+  "zonmO992nrIL4FgJ3B/wccmu/SBkoX2kDhSYr8KpgRU=": laptop
+restic_repos:
+  - name: nas
+    repository: sftp:backup@192.0.2.10:/srv/restic
+    password_file: /etc/dumbmonit/restic-nas.pass
+    host: web-01
+  - repository: "rest:https://user:s3cret@backup.example.net/repo"
+    password_command: pass show restic
+    env:
+      RESTIC_REST_USERNAME: user
+borg_repos:
+  - name: offsite
+    repository: ssh://borg@192.0.2.20/./repo
+    password_file: /etc/dumbmonit/borg.pass
+    glob_archives: "web-01-*"
+backup_repos_interval_secs: 900
+"#;
+        let file: FileConfig = serde_yaml_ng::from_str(yaml).expect("yaml");
+        let config = Config::merge(file, env(&[("DUMBMONIT_AGENT_BORG_BIN", "/opt/borg")]))
+            .expect("configuration");
+        let repos = &config.backup_repos.repos;
+        assert_eq!(repos.len(), 3);
+        assert_eq!((repos[0].tool, repos[0].name.as_str()), (Tool::Restic, "nas"));
+        assert_eq!(repos[0].host.as_deref(), Some("web-01"));
+        assert_eq!(
+            repos[1].name, "rest:https://backup.example.net/repo",
+            "the default name never carries the password of the URL"
+        );
+        assert_eq!(repos[1].env["RESTIC_REST_USERNAME"], "user");
+        assert_eq!((repos[2].tool, repos[2].name.as_str()), (Tool::Borg, "offsite"));
+        assert_eq!(config.backup_repos.borg_bin, "/opt/borg");
+        assert_eq!(config.backup_repos.interval, Duration::from_secs(900));
+        assert_eq!(config.wireguard.peer_names.len(), 1);
+        assert!(config.wireguard.enabled);
+        let shown = format!("{config:?}");
+        assert!(!shown.contains("pass show restic"), "commands stay out of the logs");
+    }
+
+    #[test]
+    fn a_repository_entry_must_be_complete_and_unique() {
+        let missing: FileConfig = serde_yaml_ng::from_str(
+            "server_url: http://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
+        )
+        .expect("yaml");
+        assert!(Config::merge(missing, env(&[])).is_err());
+        let twice: FileConfig = serde_yaml_ng::from_str(
+            "server_url: http://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
+        )
+        .expect("yaml");
+        assert!(Config::merge(twice, env(&[])).is_err());
+        let too_fast: FileConfig = serde_yaml_ng::from_str(
+            "server_url: http://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
+        )
+        .expect("yaml");
+        assert!(Config::merge(too_fast, env(&[])).is_err());
+        let off = Config::merge(
+            file_with_url_and_token(),
+            env(&[("DUMBMONIT_AGENT_WIREGUARD", "false")]),
+        )
+        .expect("configuration");
+        assert!(!off.wireguard.enabled);
+    }
+
+    #[test]
+    fn credentials_are_stripped_from_repository_urls() {
+        assert_eq!(
+            without_credentials("s3:https://s3.example.net/bucket"),
+            "s3:https://s3.example.net/bucket"
+        );
+        assert_eq!(without_credentials("rest:https://u:p@h:8000/r"), "rest:https://h:8000/r");
+        assert_eq!(without_credentials("ssh://borg@host/./repo"), "ssh://host/./repo");
+        assert_eq!(without_credentials("/srv/restic"), "/srv/restic");
+        assert_eq!(without_credentials("sftp:user@host:/srv/r"), "sftp:user@host:/srv/r");
     }
 }
