@@ -12,11 +12,13 @@
 		error: unknown;
 		title?: string;
 		onretry?: () => void;
+		/** Replaces the generic recovery hint when the caller knows better. */
+		hint?: string;
 		children?: Snippet;
 		class?: string;
 	}
 
-	let { error, title = 'Something went wrong', onretry, children, class: className = '' }: Props = $props();
+	let { error, title = 'Something went wrong', onretry, hint, children, class: className = '' }: Props = $props();
 	const api = $derived(toApiError(error));
 </script>
 
@@ -25,7 +27,7 @@
 	<div class="min-w-0 flex-1">
 		<p class="font-semibold text-warning-ink">{title}</p>
 		<p class="mt-0.5 text-sm text-ink">{api.message}</p>
-		<p class="mt-1 text-sm text-ink-2">{api.hint}</p>
+		<p class="mt-1 text-sm text-ink-2">{api.demo || !hint ? api.hint : hint}</p>
 		{#if children}<div class="mt-2">{@render children()}</div>{/if}
 	</div>
 	{#if onretry}

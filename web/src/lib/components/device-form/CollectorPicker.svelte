@@ -12,6 +12,7 @@
 	 */
 	import { Check, Search } from 'lucide-svelte';
 	import type { CollectorInfo } from '$lib/api';
+	import { Plate } from '$lib/ui';
 	import { filterGroups, groupCollectors } from './kinds';
 
 	interface Props {
@@ -138,7 +139,10 @@
 										<Icon class="size-4" aria-hidden="true" />
 									</span>
 									<span class="min-w-0 flex-1 pr-5">
-										<span class="block text-[0.9375rem] leading-tight font-semibold text-ink">{choice.label}</span>
+										<span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+											<span class="text-[0.9375rem] leading-tight font-semibold text-ink">{choice.label}</span>
+											{#if choice.pack}<Plate tone="info" label="Pack" title="Added by an integration pack" />{/if}
+										</span>
 										{#if choice.summary}
 											<span class="mt-1 line-clamp-2 text-[0.8125rem] leading-snug text-ink-2">{choice.summary}</span>
 										{/if}
