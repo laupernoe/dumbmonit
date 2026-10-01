@@ -13,6 +13,9 @@ mod collect;
 mod commands;
 mod config;
 mod identity;
+// Le journal du service Windows ; compilé partout pour être testé sous Linux.
+#[cfg(any(windows, test))]
+mod logfile;
 mod relay;
 mod run;
 mod shutdown;
