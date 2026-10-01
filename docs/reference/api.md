@@ -164,7 +164,20 @@ administrator signed in to the web interface gets one. See
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/collectors` | Every device kind this server can monitor: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) and `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). |
+| `GET` | `/api/collectors` | Every device kind this server can monitor: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) and `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Kinds brought by an [integration pack](../packs/index.md) are listed the same way, as `pack.<id>`. |
+
+## Integration packs
+
+Admin session or API token (`write` scope for changes). See
+[Integration packs](../packs/index.md).
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/api/packs` | Installed packs: `id`, `version`, `label`, `summary`, `kind` (`null` for a pack with SNMP profiles only), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uids), `snmp_profiles`, `targets` (devices using it), `warnings`, and `error` when the stored pack no longer passes validation. |
+| `GET` | `/api/packs/{id}` | One pack. |
+| `POST` | `/api/packs` | Install or update. Body: the YAML (`application/yaml`, `text/plain`…) or `{"yaml": "…"}` in JSON. `201` when created, `200` when updated or unchanged, with `outcome` (`created`, `updated`, `unchanged`), `pack`, `rules_added` and `restart_required` (SNMP profiles). `400` lists every validation error. |
+| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Register or withdraw the pack's device type; devices, history and rules stay. |
+| `DELETE` | `/api/packs/{id}` | Uninstall, with its rules. `409` while devices use it. |
 
 ## Targets (devices)
 

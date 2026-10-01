@@ -19,8 +19,11 @@
 //! s'affiche, ne déclenche pas d'alerte de panne, et dit quelle option activer.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::time::Duration;
 
 use dumbmonit_proto::{ProbeError, Target};
+use reqwest::Url;
+use reqwest::dns::{Addrs, Name, Resolve, Resolving};
 
 use super::tags;
 
@@ -78,6 +81,53 @@ pub fn vet(host: &str, addresses: &[SocketAddr], allow_private: bool) -> Result<
     match addresses.iter().map(SocketAddr::ip).find(|ip| is_forbidden(*ip)) {
         Some(ip) => Err(refusal(host, ip)),
         None => Ok(()),
+    }
+}
+
+/// Résolveur DNS d'un client `reqwest` : celui du système, suivi du garde-fou.
+///
+/// Vérifier les adresses *au moment de la connexion*, et non seulement avant la
+/// requête, ferme la fenêtre d'un nom qui changerait de réponse entre les deux
+/// (« DNS rebinding »). Les adresses IP littérales ne passent pas par ici —
+/// `hyper` les connecte directement — et sont vérifiées par [`vet_url`].
+///
+/// Partagé avec les paquets d'intégration (`dumbmonit-pack`), dont chaque requête
+/// passe par la même règle.
+pub struct GuardedResolver {
+    pub allow_private: bool,
+}
+
+impl Resolve for GuardedResolver {
+    fn resolve(&self, name: Name) -> Resolving {
+        let allow_private = self.allow_private;
+        Box::pin(async move {
+            let host = name.as_str().to_string();
+            let addresses: Vec<SocketAddr> =
+                tokio::net::lookup_host((host.as_str(), 0)).await?.collect();
+            vet(&host, &addresses, allow_private)?;
+            Ok(Box::new(addresses.into_iter()) as Addrs)
+        })
+    }
+}
+
+/// Vérifie l'hôte d'une URL avant tout appel réseau.
+///
+/// Une adresse littérale est jugée sur place ; un nom est résolu et chacune de
+/// ses adresses examinée. Une résolution qui échoue n'est pas un refus : la
+/// requête elle-même la constatera et la rapportera comme telle.
+pub async fn vet_url(url: &Url, allow_private: bool, timeout: Duration) -> Result<(), ProbeError> {
+    if allow_private {
+        return Ok(());
+    }
+    let Some(host) = url.host_str() else { return Ok(()) };
+    let host = host.trim_matches(|c| c == '[' || c == ']');
+    if let Ok(ip) = host.parse() {
+        return if is_forbidden(ip) { Err(refusal(host, ip)) } else { Ok(()) };
+    }
+    let port = url.port_or_known_default().unwrap_or(80);
+    match tokio::time::timeout(timeout, tokio::net::lookup_host((host, port))).await {
+        Ok(Ok(addresses)) => vet(host, &addresses.collect::<Vec<_>>(), false),
+        Ok(Err(_)) | Err(_) => Ok(()),
     }
 }
 

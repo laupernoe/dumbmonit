@@ -1,0 +1,12 @@
+# TYPE dumbmonit_shelly_plug_current_amperes gauge
+dumbmonit_shelly_plug_current_amperes 0.069
+# TYPE dumbmonit_shelly_plug_energy_watthours_total counter
+dumbmonit_shelly_plug_energy_watthours_total 6532.2
+# TYPE dumbmonit_shelly_plug_output_on gauge
+dumbmonit_shelly_plug_output_on 1
+# TYPE dumbmonit_shelly_plug_power_watts gauge
+dumbmonit_shelly_plug_power_watts 8.9
+# TYPE dumbmonit_shelly_plug_temperature_celsius gauge
+dumbmonit_shelly_plug_temperature_celsius 41.3
+# TYPE dumbmonit_shelly_plug_voltage_volts gauge
+dumbmonit_shelly_plug_voltage_volts 237.5

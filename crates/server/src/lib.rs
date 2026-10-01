@@ -14,6 +14,7 @@ pub mod crypto;
 pub mod db;
 pub mod demo;
 pub mod notify;
+pub mod packs;
 pub mod scheduler;
 pub mod state;
 pub mod stats;

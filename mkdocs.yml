@@ -114,6 +114,10 @@ nav:
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md
       - Demo device: devices/demo.md
+  - Integration packs:
+      - What a pack is: packs/index.md
+      - Write your first pack: packs/first-pack.md
+      - Format reference: packs/format.md
   - Alerting:
       - How alerting works: alerting/index.md
       - Rules: alerting/rules.md
