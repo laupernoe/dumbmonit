@@ -49,7 +49,11 @@ import {
 	DatabaseZap,
 	Leaf,
 	Inbox,
-	ShieldAlert
+	ShieldAlert,
+	Waypoints,
+	Route,
+	Split,
+	CalendarClock
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
@@ -97,7 +101,11 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	redis: DatabaseZap,
 	mongodb: Leaf,
 	rabbitmq: Inbox,
-	crowdsec: ShieldAlert
+	crowdsec: ShieldAlert,
+	traefik: Waypoints,
+	caddy: Route,
+	npm: Split,
+	domain: CalendarClock
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -105,10 +113,13 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
+
+/** A domain's registration, read over RDAP: a service, polled rarely. */
+const DOMAIN_KIND = 'domain';
 
 /**
  * Words people type that the label does not contain. The search also reads
@@ -147,6 +158,10 @@ const KIND_KEYWORDS: Record<string, string> = {
 	mongodb: 'mongo database db nosql document replica set wiredtiger',
 	rabbitmq: 'rabbit amqp mqtt message broker queue messaging erlang',
 	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
+	traefik: 'reverse proxy router load balancer ingress docker kubernetes certificate acme lets encrypt 502 503',
+	caddy: 'reverse proxy web server upstream load balancer certificate acme lets encrypt 502 503',
+	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
+	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',
@@ -315,8 +330,9 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 				}))
 			]
 		: [];
-	// Heartbeats sit with the services: they watch a job, not a machine.
-	const isService = (kind: string) => isUptimeKind(kind) || kind === PUSH_KIND;
+	// Heartbeats and domain registrations sit with the services: they watch
+	// a job or a name, not a machine.
+	const isService = (kind: string) => isUptimeKind(kind) || kind === PUSH_KIND || kind === DOMAIN_KIND;
 	// Fixed order, most asked first; a service kind this build does not know goes last.
 	const rank = (kind: string) => {
 		const i = SERVICE_KINDS.indexOf(kind);

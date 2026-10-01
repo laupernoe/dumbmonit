@@ -95,7 +95,7 @@ mod smtp;
 mod sql;
 pub(crate) mod tags;
 mod tcp;
-mod tls;
+pub(crate) mod tls;
 pub(crate) mod websocket;
 
 pub use dns::DnsCollector;

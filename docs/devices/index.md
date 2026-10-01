@@ -33,6 +33,10 @@ form always matches what this version can monitor.
 | [MongoDB](mongodb.md) | `mongodb` | username/password (clusterMonitor) or none | Document database: replica set, lag, connections, WiredTiger cache |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | username/password (monitoring tag) | Message broker: resource alarms, nodes, partitions, queues without consumer |
 | [CrowdSec](crowdsec.md) | `crowdsec` | none, or bouncer API key | Security engine: decisions, alerts, bouncers that stopped pulling, log reading |
+| [Traefik](traefik.md) | `traefik` | none, or basicAuth user | Reverse proxy: disabled routers, backend servers down, certificates not obtained or not renewed, 5xx share |
+| [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |
+| [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
+| [Domain expiry](domain.md) | `domain` | none | Registered domain over RDAP: days before expiry, hold, redemption period, registrar |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
 | [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |

@@ -1,0 +1,20 @@
+[
+ {
+  "name": "140fec3479d3c619314cf7655076fd4b9e9ceca7a031645444ae6da37552c238",
+  "sans": [
+   "shop.example.test"
+  ],
+  "notAfter": "2026-10-10T22:44:51Z",
+  "notBefore": "2026-09-30T22:44:51Z",
+  "serialNumber": "80758687213035330712428349689921595513518491809",
+  "commonName": "shop.example.test",
+  "issuerCN": "shop.example.test",
+  "version": "v3",
+  "keyType": "RSA",
+  "keySize": 2048,
+  "signatureAlgorithm": "SHA256-RSA",
+  "certFingerprint": "140fec3479d3c619314cf7655076fd4b9e9ceca7a031645444ae6da37552c238",
+  "publicKeyFingerprint": "c898cb430d8d081c4b474104bbe15e3222f88a7e0b1c89909f8e1a8b8edd8270",
+  "status": "warning"
+ }
+]

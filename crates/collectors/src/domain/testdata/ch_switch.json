@@ -1,0 +1,115 @@
+{
+ "rdapConformance": [
+  "rdap_level_0"
+ ],
+ "notices": [
+  {
+   "title": "Acceptable Use Policy (AUP)",
+   "description": [
+    "This information is subject to an Acceptable Use Policy."
+   ],
+   "links": [
+    {
+     "rel": "alternate",
+     "type": "text/html",
+     "href": "https://www.nic.ch/terms/aup/"
+    }
+   ]
+  }
+ ],
+ "objectClassName": "domain",
+ "ldhName": "switch.ch",
+ "switch_name": "switch.ch",
+ "handle": "switch.ch",
+ "entities": [
+  {
+   "objectClassName": "entity",
+   "roles": [
+    "registrar"
+   ],
+   "vcardArray": [
+    "vcard",
+    [
+     [
+      "version",
+      {},
+      "text",
+      "4.0"
+     ],
+     [
+      "org",
+      {},
+      "text",
+      "Gandi SAS"
+     ],
+     [
+      "adr",
+      {},
+      "text",
+      [
+       "",
+       "",
+       "boulevard Massena 63-65",
+       "Paris",
+       "",
+       "75013",
+       "FR"
+      ]
+     ],
+     [
+      "kind",
+      {},
+      "text",
+      "group"
+     ]
+    ]
+   ],
+   "url": "https://gandi.net"
+  }
+ ],
+ "status": [
+  "active"
+ ],
+ "events": [],
+ "secureDNS": {
+  "delegationSigned": true
+ },
+ "nameservers": [
+  {
+   "ldhName": "ns2.switch.ch",
+   "objectClassName": "nameserver",
+   "ipAddresses": {
+    "v4": [
+     "130.59.31.29"
+    ],
+    "v6": [
+     "2001:620:0:ff::2f"
+    ]
+   }
+  },
+  {
+   "ldhName": "ns3.switch.ch",
+   "objectClassName": "nameserver",
+   "ipAddresses": {
+    "v4": [
+     "194.58.198.32"
+    ],
+    "v6": [
+     "2a01:3f1:3032::53"
+    ]
+   }
+  },
+  {
+   "ldhName": "scsnms.switch.ch",
+   "objectClassName": "nameserver",
+   "ipAddresses": {
+    "v4": [
+     "130.59.31.26"
+    ],
+    "v6": [
+     "2001:620:0:ff::a7"
+    ]
+   }
+  }
+ ]
+}

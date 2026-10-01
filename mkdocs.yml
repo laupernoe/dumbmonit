@@ -100,6 +100,10 @@ nav:
       - MongoDB: devices/mongodb.md
       - RabbitMQ: devices/rabbitmq.md
       - CrowdSec: devices/crowdsec.md
+      - Traefik: devices/traefik.md
+      - Caddy: devices/caddy.md
+      - Nginx Proxy Manager: devices/npm.md
+      - Domain expiry: devices/domain.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md
