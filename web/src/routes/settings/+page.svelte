@@ -24,6 +24,7 @@
 	import BackupSection from '$lib/components/settings/BackupSection.svelte';
 	import PacksSection from '$lib/components/settings/PacksSection.svelte';
 	import AboutSection from '$lib/components/settings/AboutSection.svelte';
+	import MusicSection from '$lib/components/settings/MusicSection.svelte';
 
 	/** Sections that used to live here, and where they went. */
 	const MOVED: Record<string, string> = {
@@ -52,6 +53,7 @@
 		{ id: 'packs', label: 'Integration packs' },
 		{ id: 'backup', label: 'Backup' },
 		{ id: 'appearance', label: 'Appearance' },
+		{ id: 'music', label: 'Wall music' },
 		{ id: 'about', label: 'About' }
 	]);
 
@@ -172,6 +174,7 @@
 		<div class="min-w-0 rise-in" style="--rise-delay: 200ms"><PacksSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 240ms"><BackupSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AppearanceSection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 300ms"><MusicSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 320ms"><AboutSection /></div>
 	</div>
 </div>
