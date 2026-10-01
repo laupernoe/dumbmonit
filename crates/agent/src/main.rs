@@ -164,6 +164,11 @@ ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_PLAKAR_BIN       Path to the plakar binary (default: plakar on PATH)
     DUMBMONIT_AGENT_PLAKAR_HOME      HOME used when running plakar
     DUMBMONIT_AGENT_PLAKAR_INTERVAL_SECS  Seconds between two kloset readings
+    DUMBMONIT_AGENT_WIREGUARD        Watch WireGuard tunnels when present (true/false, default true)
+    DUMBMONIT_AGENT_WIREGUARD_BIN    Path to the wg binary (default: wg on PATH)
+    DUMBMONIT_AGENT_RESTIC_BIN       Path to the restic binary (default: restic on PATH)
+    DUMBMONIT_AGENT_BORG_BIN         Path to the borg binary (default: borg on PATH)
+    DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS  Seconds between two restic/Borg readings
     DUMBMONIT_AGENT_LOG              Log level (info, debug, ...)",
         version = env!("CARGO_PKG_VERSION"),
         default = Config::default_path().display(),

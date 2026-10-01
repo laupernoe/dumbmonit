@@ -16,6 +16,8 @@
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '$lib/ui';
 	import RelayPanel from '$lib/components/devices/relay/RelayPanel.svelte';
 	import MdaemonQueues from '$lib/components/devices/mdaemon/MdaemonQueues.svelte';
+	import BackupReposPanel from './BackupReposPanel.svelte';
+	import WireguardPanel from './WireguardPanel.svelte';
 
 	interface Props {
 		target: Target;
@@ -143,3 +145,8 @@
 
 <!-- Shown only when this machine runs MDaemon and the agent reads its counters. -->
 <MdaemonQueues agent={target.id} />
+
+<!-- Each renders nothing unless the agent reports WireGuard tunnels or declared restic/Borg repositories. -->
+<BackupReposPanel {target} />
+
+<WireguardPanel {target} />

@@ -49,7 +49,10 @@ import {
 	DatabaseZap,
 	Leaf,
 	Inbox,
-	ShieldAlert
+	ShieldAlert,
+	ShipWheel,
+	ArchiveRestore,
+	Waypoints
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
@@ -97,7 +100,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	redis: DatabaseZap,
 	mongodb: Leaf,
 	rabbitmq: Inbox,
-	crowdsec: ShieldAlert
+	crowdsec: ShieldAlert,
+	kubernetes: ShipWheel
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -105,7 +109,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'kubernetes'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -147,6 +151,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	mongodb: 'mongo database db nosql document replica set wiredtiger',
 	rabbitmq: 'rabbit amqp mqtt message broker queue messaging erlang',
 	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
+	kubernetes: 'k8s k3s k0s microk8s talos rke2 cluster container orchestration pod node deployment helm',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',
@@ -193,6 +198,22 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		next: 'The agent finds Plakar and its klosets on its own. Install it on the machine that runs the backups: the Backups panel appears on its page.',
 		keywords: 'plakar backup snapshot kloset restore',
 		icon: DatabaseBackup
+	},
+	{
+		id: 'backups',
+		label: 'restic / Borg backups',
+		summary: 'Age of the last snapshot of each repository, and whether it can still be read.',
+		next: 'Install the agent on a machine that can open the repositories, then list them under “restic_repos:” or “borg_repos:” in its agent.yaml, with a password file. The password never leaves the machine.',
+		keywords: 'restic borg borgbackup borgmatic backup snapshot archive repository repo',
+		icon: ArchiveRestore
+	},
+	{
+		id: 'wireguard',
+		label: 'WireGuard tunnels',
+		summary: 'Every peer of every interface: time since its last handshake, traffic, and tunnels gone silent.',
+		next: 'The agent reads the tunnels with wg show, on Linux: install it on the machine that runs WireGuard. Peers with a persistent keepalive alert when they go silent.',
+		keywords: 'wireguard wg vpn tunnel peer handshake site-to-site wg-quick wg-easy',
+		icon: Waypoints
 	},
 	{
 		id: 'services',

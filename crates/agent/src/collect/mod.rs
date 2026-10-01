@@ -11,6 +11,7 @@
 //! calculerait lui-même des débits devrait garder un état entre deux cycles, et
 //! ce serait ce même état qui mentirait au premier redémarrage.
 
+pub mod backup_repos;
 pub mod docker;
 pub mod filter;
 pub mod perf_counters;
@@ -20,6 +21,7 @@ pub mod sensors;
 pub mod services;
 pub mod smart;
 pub mod system_health;
+pub mod wireguard;
 pub mod zfs;
 
 use std::collections::BTreeMap;
@@ -29,6 +31,7 @@ use sysinfo::{
     CpuRefreshKind, DiskRefreshKind, Disks, MemoryRefreshKind, Networks, RefreshKind, System,
 };
 
+use crate::collect::backup_repos::BackupReposReport;
 use crate::collect::docker::ContainerInventory;
 use crate::collect::filter::NameFilter;
 use crate::collect::perf_counters::PerfReport;
@@ -37,6 +40,7 @@ use crate::collect::sensors::SensorsStat;
 use crate::collect::services::ServiceState;
 use crate::collect::smart::SmartReport;
 use crate::collect::system_health::SystemHealthStat;
+use crate::collect::wireguard::WireguardReport;
 use crate::collect::zfs::ZfsReport;
 
 /// Systèmes de fichiers virtuels : ils ne représentent aucun espace réel et
@@ -241,6 +245,10 @@ pub struct Snapshot {
     pub zfs: Option<ZfsReport>,
     /// Compteurs de performance Windows. `None` : rien à lire ici.
     pub perf_counters: Option<PerfReport>,
+    /// Tunnels WireGuard. `None` : pas de `wg`, ou aucune interface.
+    pub wireguard: Option<WireguardReport>,
+    /// Dépôts restic et Borg déclarés. `None` : aucun, ou première lecture en cours.
+    pub backup_repos: Option<BackupReposReport>,
 }
 
 impl Snapshot {
@@ -278,6 +286,12 @@ impl Snapshot {
         }
         if let Some(counters) = &self.perf_counters {
             samples.extend(perf_counters::samples(counters, now_ms));
+        }
+        if let Some(tunnels) = &self.wireguard {
+            samples.extend(wireguard::samples(tunnels, now_ms));
+        }
+        if let Some(repos) = &self.backup_repos {
+            samples.extend(backup_repos::samples(repos, now_ms));
         }
         samples
     }
@@ -543,6 +557,8 @@ impl SystemProbe {
             smart: None,
             zfs: None,
             perf_counters: None,
+            wireguard: None,
+            backup_repos: None,
         }
     }
 
@@ -1088,6 +1104,22 @@ mod tests {
                     .map(|spec| (spec, 4.0))
                     .collect(),
             }),
+            wireguard: Some(wireguard::WireguardReport {
+                interfaces: vec![wireguard::Interface {
+                    name: "wg0".into(),
+                    listen_port: Some(51820),
+                    peers: 0,
+                }],
+                peers: Vec::new(),
+            }),
+            backup_repos: Some(backup_repos::BackupReposReport {
+                repos: vec![backup_repos::RepoStat {
+                    tool: backup_repos::Tool::Restic,
+                    name: "nas".into(),
+                    reachable: true,
+                    last: None,
+                }],
+            }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1113,6 +1145,8 @@ mod tests {
             "agent_disk_smart_ok",
             "agent_zfs_pool_health",
             "mdaemon_queue_messages",
+            "agent_wireguard_interface_peers",
+            "agent_backup_repo_reachable",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }
