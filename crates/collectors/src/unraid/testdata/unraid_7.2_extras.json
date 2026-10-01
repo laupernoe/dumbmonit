@@ -1,0 +1,23 @@
+{
+  "data": {
+    "array": {
+      "parityCheckStatus": { "status": "COMPLETED", "progress": 100, "errors": 0, "date": "2026-09-01T03:12:00Z", "duration": 28840, "speed": "118.4 MB/s", "correcting": false, "paused": false, "running": false }
+    },
+    "docker": {
+      "containers": [
+        { "id": "LOCAL:a1b2c3", "names": ["/media-server"], "state": "RUNNING", "status": "Up 3 days", "autoStart": true },
+        { "id": "LOCAL:d4e5f6", "names": ["/photo-sync"], "state": "EXITED", "status": "Exited (1) 2 hours ago", "autoStart": true },
+        { "id": "LOCAL:0a0b0c", "names": ["/test-build"], "state": "EXITED", "status": "Exited (0) 9 days ago", "autoStart": false }
+      ]
+    },
+    "vms": {
+      "domains": [
+        { "id": "LOCAL:5f1c", "name": "win11", "state": "RUNNING" },
+        { "id": "LOCAL:77ab", "name": "homeassistant", "state": "SHUTOFF" }
+      ]
+    },
+    "notifications": {
+      "overview": { "unread": { "info": 2, "warning": 1, "alert": 0, "total": 3 } }
+    }
+  }
+}
