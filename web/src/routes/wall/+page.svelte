@@ -9,14 +9,19 @@
 	 * goes back to the overview. Refreshes every 20 s, keeps the screen awake.
 	 *
 	 * The weather window is the hero: half the width on a desktop, its own band
-	 * on a phone. A display can also play music (Spotify, Deezer, YouTube): the
-	 * link is kept in this browser only and nothing third-party loads until
-	 * one is set.
+	 * on a phone. Music lives in that window's bottom corner (`MusicDock`), laid
+	 * over the sky and never in the grid: it can't shrink or push the bulletin.
+	 * What plays on the connected Spotify account shows there wherever it plays;
+	 * a link sent to the walls plays in the service's own player; and the
+	 * display can be a Spotify Connect speaker ("DumbMonit Wall"). Nothing
+	 * third-party loads until Spotify is connected or a link is set.
 	 */
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { X } from 'lucide-svelte';
 	import {
+		ApiError,
 		listTargets,
 		listAlerts,
 		listAlertRules,
@@ -28,6 +33,7 @@
 	} from '$lib/api';
 	import { formatRelative, type ProbeStatus } from '$lib/format';
 	import { loadProbeStatuses } from '$lib/metrics';
+	import { auth } from '$lib/stores/auth.svelte';
 	import { theme, type ThemePreference } from '$lib/stores/theme.svelte';
 	import { palette } from '$lib/stores/palette.svelte';
 	import { Button, Plate, Skeleton, ErrorNotice, DecryptText } from '$lib/ui';
@@ -37,9 +43,12 @@
 	import { quickSilencePayload } from '$lib/components/alerts/helpers';
 	import WallReadout from '$lib/components/wall/WallReadout.svelte';
 	import MusicControl from '$lib/components/wall/MusicControl.svelte';
-	import MusicPlayer from '$lib/components/wall/MusicPlayer.svelte';
+	import MusicDock from '$lib/components/wall/MusicDock.svelte';
 	import { skyCondition } from '$lib/components/overview/sky';
+	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '$lib/api/music';
 	import { parseMusicLink } from '$lib/wall/music';
+	import { cardVisible, pickPlaying } from '$lib/wall/spotify';
+	import { WallSpeaker } from '$lib/wall/speaker.svelte';
 
 	const REFRESH_MS = 20_000;
 
@@ -54,34 +63,160 @@
 	let silencingKey = $state<string | null>(null);
 	let silenceError = $state<string | null>(null);
 
-	/** Music for this display: the share link as pasted, per browser. */
-	const MUSIC_KEY = 'dumbmonit-wall-music';
-	let musicLink = $state<string | null>(readMusicLink());
+	// --- Music ------------------------------------------------------------------
+
+	/**
+	 * What the walls play, polled every 5 s while the display is visible: the
+	 * Spotify account's playback (wherever it plays) and the shared link. The
+	 * server caches Spotify for a few seconds, whatever the number of walls.
+	 */
+	const MUSIC_MS = 5_000;
+	let wallMusic = $state<WallMusic | null>(null);
+	let musicReadAt = $state(0);
 	let musicOpen = $state(false);
+	const speakerName = $derived(wallMusic?.speaker_name ?? 'DumbMonit Wall');
+
+	/**
+	 * Before September 2026 a wall kept its link in this browser only. It still
+	 * plays here until the walls share one; an admin's wall hands it over to
+	 * the server once, then forgets it.
+	 */
+	const LEGACY_KEY = 'dumbmonit-wall-music';
+	let legacyLink = $state<string | null>(readLegacyLink());
+
+	function readLegacyLink(): string | null {
+		try {
+			return localStorage.getItem(LEGACY_KEY) || null;
+		} catch {
+			return null;
+		}
+	}
+
+	function forgetLegacyLink() {
+		legacyLink = null;
+		try {
+			localStorage.removeItem(LEGACY_KEY);
+		} catch {
+			// Nothing stored, or storage blocked: nothing to forget.
+		}
+	}
+
+	const sharedLink = $derived(wallMusic?.link?.link ?? null);
+	const musicLink = $derived(sharedLink ?? (wallMusic ? legacyLink : null));
 	// Re-checked on every read: a stored value that no longer parses plays nothing.
 	const music = $derived.by(() => {
 		if (!musicLink) return null;
 		const parsed = parseMusicLink(musicLink);
 		return parsed.ok ? parsed.embed : null;
 	});
+	// The link present when the wall opened plays when asked; one sent while it
+	// is open (from a phone) starts by itself, where the provider allows it.
+	let openingLink = $state<string | null | undefined>(undefined);
+	const musicAutoplay = $derived(openingLink !== undefined && musicLink !== null && musicLink !== openingLink);
 
-	function readMusicLink(): string | null {
+	async function loadMusic(signal?: AbortSignal): Promise<boolean> {
 		try {
-			return localStorage.getItem(MUSIC_KEY);
+			const next = await getWallMusic(signal);
+			if (openingLink === undefined) openingLink = next.link?.link ?? legacyLink;
+			wallMusic = next;
+			musicReadAt = Date.now();
+			if (!next.link && legacyLink && auth.isAdmin) {
+				// Hand the old per-browser link over to every wall, once.
+				const link = legacyLink;
+				openingLink = link;
+				try {
+					wallMusic = { ...next, link: await playOnWall(link) };
+					forgetLegacyLink();
+				} catch (cause) {
+					// Refused (no longer a playable link): drop it rather than retry forever.
+					if (cause instanceof ApiError && cause.status === 400) forgetLegacyLink();
+				}
+			} else if (next.link && legacyLink) {
+				forgetLegacyLink();
+			}
+		} catch (cause) {
+			if (cause instanceof DOMException && cause.name === 'AbortError') return false;
+			// An older server without the route: no music, and no more asking.
+			if (cause instanceof ApiError && cause.missing) return false;
+			// Otherwise keep what is on screen and try again at the next tick.
+		}
+		return true;
+	}
+
+	$effect(() => {
+		const controller = new AbortController();
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const poll = async () => {
+			const again = document.visibilityState === 'visible' ? await loadMusic(controller.signal) : true;
+			if (again && !controller.signal.aborted) timer = setTimeout(poll, MUSIC_MS);
+		};
+		void poll();
+		const onVisible = () => {
+			if (document.visibilityState !== 'visible' || controller.signal.aborted) return;
+			clearTimeout(timer);
+			void poll();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+		return () => {
+			controller.abort();
+			clearTimeout(timer);
+			document.removeEventListener('visibilitychange', onVisible);
+		};
+	});
+
+	async function sendLink(link: string) {
+		const saved = await playOnWall(link);
+		if (wallMusic) wallMusic = { ...wallMusic, link: saved };
+		forgetLegacyLink();
+	}
+
+	async function stopLink() {
+		if (sharedLink) await stopWallLink();
+		if (wallMusic) wallMusic = { ...wallMusic, link: null };
+		forgetLegacyLink();
+	}
+
+	/** This display as a Spotify Connect speaker; each display may opt out. */
+	const SPEAKER_KEY = 'dumbmonit-wall-speaker';
+	const speaker = new WallSpeaker();
+	let speakerOn = $state(readSpeakerOn());
+
+	function readSpeakerOn(): boolean {
+		try {
+			return localStorage.getItem(SPEAKER_KEY) !== 'off';
 		} catch {
-			return null; // Storage blocked: the wall simply has no music.
+			return true;
 		}
 	}
 
-	function saveMusic(link: string | null) {
-		musicLink = link;
+	function setSpeakerOn(on: boolean) {
+		speakerOn = on;
 		try {
-			if (link) localStorage.setItem(MUSIC_KEY, link);
-			else localStorage.removeItem(MUSIC_KEY);
+			if (on) localStorage.removeItem(SPEAKER_KEY);
+			else localStorage.setItem(SPEAKER_KEY, 'off');
 		} catch {
-			// Not persisted (private window): it still plays until the tab closes.
+			// Not remembered: it applies until the page reloads.
 		}
 	}
+
+	const spotifyConnected = $derived(wallMusic?.spotify.status === 'connected');
+	$effect(() => {
+		const wanted = spotifyConnected && speakerOn;
+		const name = speakerName;
+		untrack(() => {
+			if (wanted) void speaker.start(name);
+			else if (speaker.phase !== 'off') speaker.stop();
+		});
+	});
+	$effect(() => () => speaker.stop());
+
+	const playing = $derived(pickPlaying(speaker.local, wallMusic?.spotify.now_playing ?? null));
+	const playingReadAt = $derived(playing?.source === 'speaker' ? speaker.localAt : musicReadAt);
+	let lastPlayingAt = $state<number | null>(null);
+	$effect(() => {
+		if (playing?.now.playing) lastPlayingAt = untrack(() => now.getTime());
+	});
+	const shownPlaying = $derived(playing && cardVisible(playing.now, lastPlayingAt, now.getTime()) ? playing : null);
 
 	const sky = $derived(readSky({ targets, probes, alerts, rules }));
 	const condition = $derived(skyCondition(sky));
@@ -167,7 +302,7 @@
 	$effect(() => {
 		const wanted = page.url.searchParams.get('theme');
 		if (wanted !== 'dark' && wanted !== 'light') return;
-		const previous: ThemePreference = theme.preference;
+		const previous: ThemePreference = untrack(() => theme.preference);
 		theme.preference = wanted;
 		return () => {
 			theme.preference = previous;
@@ -219,8 +354,15 @@
 			link={musicLink}
 			embed={music}
 			bind:open={musicOpen}
-			onsave={(link) => saveMusic(link)}
-			onclear={() => saveMusic(null)}
+			isAdmin={auth.isAdmin}
+			spotify={wallMusic?.spotify ?? null}
+			{speaker}
+			{speakerName}
+			{speakerOn}
+			onsave={sendLink}
+			onclear={stopLink}
+			onspeaker={setSpeakerOn}
+			onretry={() => void speaker.start(speakerName, { retry: true })}
 		/>
 		<Button variant="ghost" size="sm" onclick={exit} aria-label="Exit wall mode">
 			<X class="size-4" aria-hidden="true" />
@@ -259,21 +401,30 @@
 		{:else}
 			<!--
 				Bulletin. Desktop: the sentence and readouts on the left, the weather
-				window as the hero on the right (music under it when set). Phone: the
-				window first, as a band, then the sentence, readouts and music.
+				window as the hero on the right. Phone: the window first, as a band,
+				then the sentence and readouts. Music sits inside the window.
 			-->
-			<section
-				class="hero grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] xl:gap-x-14"
-			>
+			<section class="hero grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] xl:gap-x-14">
 				<div class="sky-cell relative lg:col-start-2 lg:row-start-1">
 					<SkyScene
 						{condition}
 						frame={false}
 						class="h-[200px] w-full rounded-[var(--radius-card)] border border-line shadow-float sm:h-[260px] lg:h-full lg:min-h-[clamp(300px,42vh,580px)]"
 					/>
+					<MusicDock
+						playing={shownPlaying}
+						{speakerName}
+						readAt={playingReadAt}
+						clock={now.getTime()}
+						embed={music}
+						autoplay={musicAutoplay}
+						needsTap={speakerOn && speaker.needsTap}
+						onactivate={() => speaker.activate()}
+						onstop={auth.isAdmin || !sharedLink ? () => void stopLink() : undefined}
+					/>
 				</div>
 
-				<div class="flex min-w-0 flex-col lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:py-2">
+				<div class="flex min-w-0 flex-col lg:col-start-1 lg:row-start-1 lg:py-2">
 					<DecryptText
 						tag="h1"
 						text={sky.sentence}
@@ -302,10 +453,6 @@
 						/>
 					</div>
 				</div>
-
-				{#if music}
-					<MusicPlayer embed={music} class="lg:col-start-2 lg:row-start-2" />
-				{/if}
 			</section>
 
 			<!-- Needs you -->
@@ -377,6 +524,21 @@
 	@media (prefers-reduced-motion: reduce) {
 		.wall :global(.music-toggle) {
 			transition: none;
+		}
+	}
+	/* The music corner's fold and stop buttons follow the same rule. */
+	.wall :global(.wall-reveal) {
+		opacity: 0;
+		transition: opacity 200ms ease;
+	}
+	.wall:hover :global(.wall-reveal),
+	.wall :global(.wall-reveal:focus-within),
+	.wall :global(.wall-reveal:focus-visible) {
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.wall :global(.wall-reveal) {
+			opacity: 1;
 		}
 	}
 
