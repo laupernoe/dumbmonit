@@ -1,0 +1,123 @@
+[
+ {
+  "status": "enabled",
+  "usedBy": [
+   "acme-http@internal"
+  ],
+  "name": "acme-http@internal",
+  "provider": "internal"
+ },
+ {
+  "status": "enabled",
+  "usedBy": [
+   "monitor-api@file"
+  ],
+  "name": "api@internal",
+  "provider": "internal"
+ },
+ {
+  "loadBalancer": {
+   "servers": [
+    {
+     "url": "http://whoami:80"
+    },
+    {
+     "url": "http://10.99.99.99:80"
+    }
+   ],
+   "strategy": "wrr",
+   "healthCheck": {
+    "mode": "http",
+    "path": "/",
+    "interval": "5s",
+    "timeout": "2s",
+    "followRedirects": true
+   },
+   "passHostHeader": true,
+   "responseForwarding": {
+    "flushInterval": "100ms"
+   }
+  },
+  "status": "enabled",
+  "usedBy": [
+   "blog@file"
+  ],
+  "name": "blog@file",
+  "provider": "file",
+  "type": "loadbalancer",
+  "serverStatus": {
+   "http://10.99.99.99:80": "DOWN",
+   "http://whoami:80": "UP"
+  }
+ },
+ {
+  "loadBalancer": {
+   "servers": [
+    {
+     "url": "http://10.99.99.98:80"
+    }
+   ],
+   "strategy": "wrr",
+   "healthCheck": {
+    "mode": "http",
+    "path": "/",
+    "interval": "5s",
+    "timeout": "2s",
+    "followRedirects": true
+   },
+   "passHostHeader": true,
+   "responseForwarding": {
+    "flushInterval": "100ms"
+   }
+  },
+  "status": "enabled",
+  "usedBy": [
+   "legacy@file"
+  ],
+  "name": "legacy@file",
+  "provider": "file",
+  "type": "loadbalancer",
+  "serverStatus": {
+   "http://10.99.99.98:80": "DOWN"
+  }
+ },
+ {
+  "status": "enabled",
+  "name": "noop@internal",
+  "provider": "internal"
+ },
+ {
+  "status": "enabled",
+  "usedBy": [
+   "monitor-metrics@file"
+  ],
+  "name": "prometheus@internal",
+  "provider": "internal"
+ },
+ {
+  "loadBalancer": {
+   "servers": [
+    {
+     "url": "http://whoami:80"
+    }
+   ],
+   "strategy": "wrr",
+   "passHostHeader": true,
+   "responseForwarding": {
+    "flushInterval": "100ms"
+   }
+  },
+  "status": "enabled",
+  "usedBy": [
+   "cloud@file",
+   "photos@file",
+   "shop@file"
+  ],
+  "name": "shop@file",
+  "provider": "file",
+  "type": "loadbalancer",
+  "serverStatus": {
+   "http://whoami:80": "UP"
+  }
+ }
+]

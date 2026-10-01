@@ -14,6 +14,7 @@
 //! | `record_type` | `A` | `A`, `AAAA`, `CNAME`, `MX`, `TXT`, `NS`, `SOA`, `SRV`, `PTR`, `CAA`. |
 //! | `resolver` | système | Adresse IP du résolveur, port facultatif (`1.1.1.1`, `10.0.0.1:5353`). |
 //! | `expect` | — | Valeurs devant toutes figurer dans la réponse, séparées par des virgules. |
+//! | `alert_on_change` | `false` | Publie `probe_dns_answer_fingerprint`, l'empreinte de la réponse. |
 //! | `timeout_seconds` | `5` | Délai propre à la sonde (1 à 60). |
 
 mod answer;
@@ -93,11 +94,17 @@ async fn resolve(report: &mut Report, resolver: &TokioResolver, options: &Option
         return;
     }
 
+    let answers = answer::render(records);
+
+    // Posée avant les attentes : c'est justement quand la réponse change que
+    // celles-ci échouent, et l'empreinte doit alors être écrite.
+    if options.alert_on_change {
+        report.gauge("dns_answer_fingerprint", f64::from(answer::fingerprint(&answers)));
+    }
+
     if options.expect.is_empty() && options.forbid.is_empty() {
         return;
     }
-
-    let answers = answer::render(records);
 
     let forbidden = answer::forbidden_present(&answers, &options.forbid);
     if !forbidden.is_empty() {
@@ -262,6 +269,60 @@ mod tests {
 
         options.forbid = vec!["198.51.100.7".to_string()];
         assert_eq!(answer::forbidden_present(&answers, &options.forbid), vec!["198.51.100.7"]);
+    }
+
+    /// Un faux serveur DNS (UDP) dont la réponse change en cours de route :
+    /// l'empreinte suit l'ensemble des valeurs, pas leur ordre.
+    #[tokio::test]
+    async fn l_empreinte_suit_un_changement_de_reponse_d_un_vrai_serveur() {
+        use std::net::Ipv4Addr;
+        use std::sync::{Arc, Mutex};
+
+        use hickory_resolver::proto::op::{Message, OpCode};
+        use hickory_resolver::proto::rr::rdata::A;
+        use hickory_resolver::proto::rr::{RData, Record};
+
+        let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let address = socket.local_addr().unwrap().to_string();
+        let answers =
+            Arc::new(Mutex::new(vec![Ipv4Addr::new(192, 0, 2, 1), Ipv4Addr::new(192, 0, 2, 2)]));
+        let served = answers.clone();
+        tokio::spawn(async move {
+            let mut buffer = [0u8; 512];
+            while let Ok((length, peer)) = socket.recv_from(&mut buffer).await {
+                let Ok(query) = Message::from_vec(&buffer[..length]) else { continue };
+                let mut reply = Message::response(query.metadata.id, OpCode::Query);
+                reply.metadata.recursion_desired = query.metadata.recursion_desired;
+                reply.metadata.recursion_available = true;
+                for question in &query.queries {
+                    reply.add_query(question.clone());
+                    let ips = served.lock().unwrap().clone();
+                    for ip in ips {
+                        let name = question.name().clone();
+                        reply.add_answer(Record::from_rdata(name, 60, RData::A(A(ip))));
+                    }
+                }
+                let _ = socket.send_to(&reply.to_vec().unwrap(), peer).await;
+            }
+        });
+
+        let tags = [("resolver", address.as_str()), ("alert_on_change", "true")];
+        let target = cible("dns", "www.exemple.test", &tags);
+        let probe = || async {
+            let samples = DnsCollector::new().probe(&target).await.unwrap();
+            let success = samples.iter().find(|s| s.metric == "probe_success").unwrap().value;
+            assert_eq!(success, 1.0);
+            samples.iter().find(|s| s.metric == "probe_dns_answer_fingerprint").map(|s| s.value)
+        };
+        let first = probe().await.expect("empreinte publiée");
+        answers.lock().unwrap().reverse();
+        assert_eq!(probe().await, Some(first), "le tourniquet ne change pas l'empreinte");
+        answers.lock().unwrap()[1] = Ipv4Addr::new(198, 51, 100, 7);
+        assert_ne!(probe().await, Some(first), "une adresse remplacée la change");
+
+        let target = cible("dns", "www.exemple.test", &[("resolver", address.as_str())]);
+        let samples = DnsCollector::new().probe(&target).await.unwrap();
+        assert!(!samples.iter().any(|s| s.metric == "probe_dns_answer_fingerprint"));
     }
 
     #[test]

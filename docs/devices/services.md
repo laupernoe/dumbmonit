@@ -57,6 +57,7 @@ to `target`, `host` and `tag_*`.
 | `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket | Presence; `issuer` label. |
 | `probe_dns_lookup_seconds` | dns | Resolution time. |
 | `probe_dns_answer_records` | dns | Records of the requested type. |
+| `probe_dns_answer_fingerprint` | dns | With "Alert when the answer changes": a 32-bit fingerprint of the sorted answer. Its value means nothing; only its changes do. |
 | `probe_icmp_rtt_seconds`, `_min_seconds`, `_max_seconds` | ping | Average, shortest and longest round trip. |
 | `probe_icmp_packet_loss_ratio` | ping | Loss between 0 and 1. |
 | `probe_icmp_packets_sent`, `probe_icmp_packets_received` | ping | Echoes sent and received. |
@@ -180,6 +181,7 @@ Pi-hole or AdGuard, an MX record.
 | `expect` | Expected values | *(empty)* | Values that must all appear in the answer, separated by commas. Empty: only the resolution is checked. |
 | `expect_mode` | Comparison | `contains` | `contains`: each expected value must appear somewhere in the answer. `exact`: the answer must hold those values and nothing else. |
 | `forbid` | Forbidden values | *(empty)* | Values that must never appear in the answer, separated by commas. Checked before the expected ones. |
+| `alert_on_change` | Alert when the answer changes | `false` | Records a fingerprint of the sorted answer and alerts whenever it changes, without having to write the expected values. |
 | `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
 
 ### Asserting what a zone answers
@@ -198,6 +200,23 @@ Both compare case-insensitively, ignore the trailing dot of a name and the
 quotes around a `TXT`, and treat an expected value as found when it appears
 inside a record — so an `MX` matches on `mail.example.com` without you having to
 copy its priority.
+
+### Alerting when the answer changes
+
+Writing the expected values is not always practical: a name served by a CDN,
+records someone else manages, or simply a zone you want to hear about whenever
+it moves. Tick **Alert when the answer changes**: every check then records a
+fingerprint of the answer, and the built-in rule
+[DNS answer changed](../alerting/rules.md#reverse-proxies-and-domains) fires
+when it differs from the one before. The alert resolves by itself an hour
+later; the new answer is the reference from then on.
+
+The fingerprint covers the values of the answer, sorted and without duplicates,
+with the CNAME chain included: a round-robin that returns the same addresses
+in another order does not change it, nor does a TTL. A name whose answer
+changes on every query (a large pool such as `pool.ntp.org`, or geographic DNS
+that answers differently from one resolver to the next) would alert all the
+time: leave the option off for those, or query one fixed resolver.
 
 ## Ping
 

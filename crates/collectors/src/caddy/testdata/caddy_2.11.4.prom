@@ -1,0 +1,55 @@
+# HELP caddy_admin_http_requests_total Counter of requests made to the Admin API's HTTP endpoints.
+# TYPE caddy_admin_http_requests_total counter
+caddy_admin_http_requests_total{code="200",handler="admin",method="GET",path="/config/"} 5
+caddy_admin_http_requests_total{code="200",handler="admin",method="GET",path="/metrics"} 4
+caddy_admin_http_requests_total{code="200",handler="admin",method="GET",path="/reverse_proxy/upstreams"} 3
+# HELP caddy_config_last_reload_success_timestamp_seconds Timestamp of the last successful configuration reload.
+# TYPE caddy_config_last_reload_success_timestamp_seconds gauge
+caddy_config_last_reload_success_timestamp_seconds 1.7908083685379272e+09
+# HELP caddy_config_last_reload_successful Whether the last configuration reload attempt was successful.
+# TYPE caddy_config_last_reload_successful gauge
+caddy_config_last_reload_successful 1
+# HELP caddy_http_request_duration_seconds Histogram of round-trip request durations.
+# TYPE caddy_http_request_duration_seconds histogram
+caddy_http_request_duration_seconds_sum{code="200",handler="reverse_proxy",method="GET",server="srv0"} 0.008160501
+caddy_http_request_duration_seconds_count{code="200",handler="reverse_proxy",method="GET",server="srv0"} 6
+caddy_http_request_duration_seconds_sum{code="502",handler="reverse_proxy",method="GET",server="srv1"} 6.0023276160000005
+caddy_http_request_duration_seconds_count{code="502",handler="reverse_proxy",method="GET",server="srv1"} 2
+caddy_http_request_duration_seconds_sum{code="503",handler="reverse_proxy",method="GET",server="srv1"} 0.000717975
+caddy_http_request_duration_seconds_count{code="503",handler="reverse_proxy",method="GET",server="srv1"} 6
+# HELP caddy_http_request_errors_total Number of requests resulting in middleware errors.
+# TYPE caddy_http_request_errors_total counter
+caddy_http_request_errors_total{handler="reverse_proxy",server="srv1"} 8
+# HELP caddy_http_request_size_bytes Total size of the request. Includes body
+# TYPE caddy_http_request_size_bytes histogram
+caddy_http_request_size_bytes_sum{code="200",handler="reverse_proxy",method="GET",server="srv0"} 342
+caddy_http_request_size_bytes_count{code="200",handler="reverse_proxy",method="GET",server="srv0"} 6
+caddy_http_request_size_bytes_sum{code="502",handler="reverse_proxy",method="GET",server="srv1"} 114
+caddy_http_request_size_bytes_count{code="502",handler="reverse_proxy",method="GET",server="srv1"} 2
+caddy_http_request_size_bytes_sum{code="503",handler="reverse_proxy",method="GET",server="srv1"} 342
+caddy_http_request_size_bytes_count{code="503",handler="reverse_proxy",method="GET",server="srv1"} 6
+# HELP caddy_http_requests_in_flight Number of requests currently handled by this server.
+# TYPE caddy_http_requests_in_flight gauge
+caddy_http_requests_in_flight{handler="reverse_proxy",server="srv0"} 0
+caddy_http_requests_in_flight{handler="reverse_proxy",server="srv1"} 0
+# HELP caddy_http_requests_total Counter of HTTP(S) requests made.
+# TYPE caddy_http_requests_total counter
+caddy_http_requests_total{handler="reverse_proxy",server="srv0"} 6
+caddy_http_requests_total{handler="reverse_proxy",server="srv1"} 8
+# HELP caddy_http_response_duration_seconds Histogram of times to first byte in response bodies.
+# TYPE caddy_http_response_duration_seconds histogram
+caddy_http_response_duration_seconds_sum{code="200",handler="reverse_proxy",method="GET",server="srv0"} 0.007235719
+caddy_http_response_duration_seconds_count{code="200",handler="reverse_proxy",method="GET",server="srv0"} 6
+# HELP caddy_http_response_size_bytes Size of the returned response.
+# TYPE caddy_http_response_size_bytes histogram
+caddy_http_response_size_bytes_sum{code="200",handler="reverse_proxy",method="GET",server="srv0"} 1812
+caddy_http_response_size_bytes_count{code="200",handler="reverse_proxy",method="GET",server="srv0"} 6
+caddy_http_response_size_bytes_sum{code="502",handler="reverse_proxy",method="GET",server="srv1"} 0
+caddy_http_response_size_bytes_count{code="502",handler="reverse_proxy",method="GET",server="srv1"} 2
+caddy_http_response_size_bytes_sum{code="503",handler="reverse_proxy",method="GET",server="srv1"} 0
+caddy_http_response_size_bytes_count{code="503",handler="reverse_proxy",method="GET",server="srv1"} 6
+# HELP caddy_reverse_proxy_upstreams_healthy Health status of reverse proxy upstreams.
+# TYPE caddy_reverse_proxy_upstreams_healthy gauge
+caddy_reverse_proxy_upstreams_healthy{upstream="10.99.99.98:80"} 1
+caddy_reverse_proxy_upstreams_healthy{upstream="10.99.99.99:80"} 0
+caddy_reverse_proxy_upstreams_healthy{upstream="whoami:80"} 1

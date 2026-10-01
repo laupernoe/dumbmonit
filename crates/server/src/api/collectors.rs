@@ -705,6 +705,12 @@ const DNS_OPTIONS: &[OptionView] = &[
         "198.51.100.7",
         "",
     ),
+    boolean(
+        "alert_on_change",
+        "Alert when the answer changes",
+        "Records a fingerprint of the sorted answer and alerts whenever it changes, without having to write the expected values. Leave off for names whose answer rotates between servers (large round-robin pools, geographic DNS).",
+        false,
+    ),
     PROBE_TIMEOUT,
 ];
 
@@ -2371,6 +2377,154 @@ const CROWDSEC_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
+/// Traefik sans mot de passe : le point d'entrée de l'API est filtré.
+const TRAEFIK_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "The API port is filtered so that only the DumbMonit host reaches it.",
+    fields: &[],
+};
+
+/// L'utilisateur d'un middleware basicAuth placé devant l'API (`collectors/traefik`).
+const TRAEFIK_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "basicAuth user",
+    help: "The user of the basicAuth middleware in front of the API and the metrics.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/traefik/mod.rs` et `observability/options.rs`.
+const TRAEFIK_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The API entry point listens over plain HTTP unless you gave it TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number(
+        "port",
+        "API port",
+        "The port of the entry point that serves /api: 8080 for the traefik entry point.",
+        "8080",
+        "8080",
+    ),
+    boolean(
+        "metrics",
+        "Read the metrics",
+        "Also reads /metrics on the same port, for the request rate and the share of 5xx answers. Nothing breaks if it is not served there.",
+        true,
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// L'API d'administration de Caddy publiée telle quelle, filtrée.
+const CADDY_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "The admin API itself, reachable only by the DumbMonit host.",
+    fields: &[],
+};
+
+/// La vue en lecture seule de la notice, protégée par `basic_auth` (`collectors/caddy`).
+const CADDY_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Read-only view",
+    help: "The user of the basic_auth block of the read-only view (recommended).",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/caddy/mod.rs` et `observability/options.rs`.
+const CADDY_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The admin API and the read-only view listen over plain HTTP unless you gave them TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: 2019 for the admin API itself.",
+        "2019",
+        "2019",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Un utilisateur de Nginx Proxy Manager, qui se connecte par son adresse
+/// électronique (`collectors/npm`).
+const NPM_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User email and password",
+    help: "A user of its own, allowed to view the hosts and nothing else.",
+    fields: &[
+        cred_text("username", "Email", "", "dumbmonit@example.com"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/npm/mod.rs` et `observability/options.rs`.
+const NPM_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The web interface listens over plain HTTP on port 81 unless you put it behind a proxy with TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number("port", "Web interface port", "Used if the address does not give a port.", "81", "81"),
+    boolean(
+        "certificates",
+        "Check the certificates",
+        "Reads the certificate each host presents with a TLS handshake on the HTTPS port below.",
+        true,
+    ),
+    number(
+        "tls_port",
+        "HTTPS port",
+        "The port on which Nginx Proxy Manager serves the hosts over HTTPS.",
+        "443",
+        "443",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Options lues par `collectors/domain/mod.rs`.
+const DOMAIN_OPTIONS: &[OptionView] = &[
+    text(
+        "rdap_server",
+        "RDAP server",
+        "The RDAP address of the registry, for an extension the IANA does not list. Empty: found in the IANA bootstrap file.",
+        "https://rdap.nic.ch/",
+        "",
+    ),
+    number(
+        "refresh_hours",
+        "Refresh interval (hours)",
+        "How often the registry is asked, from 1 to 168. The days left are recomputed at every check in between.",
+        "12",
+        "12",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per request (seconds)",
+        "Time allowed for each call to IANA or to the registry, from 1 to 120.",
+        "10",
+        "10",
+    ),
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let registry = &state.collectors;
     Json(
@@ -3486,6 +3640,100 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: CROWDSEC_OPTIONS,
         },
+        "traefik" => CollectorView {
+            kind: "traefik",
+            label: "Traefik",
+            summary: "The reverse proxy: routers disabled by a configuration error, backend servers failing their health check, certificates that never arrive or are not renewed, and the share of 5xx answers.",
+            examples: &[
+                "Traefik in Docker",
+                "Traefik on Kubernetes",
+                "Traefik in front of self-hosted apps",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[TRAEFIK_NO_AUTH, TRAEFIK_LOGIN],
+            address_hint: "traefik.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Let DumbMonit read Traefik's API",
+                steps: &[
+                    "Traefik's API only reads: routers, services and certificates, never a change. Enable it with the Prometheus metrics, which add the request rate and the share of 5xx answers: add these two arguments to Traefik's command (or the same keys to its static configuration) and restart it. Both are then served on the traefik entry point, port 8080.\n--api.insecure=true\n--metrics.prometheus=true",
+                    "Port 8080 answers without a password: publish it only on an address the DumbMonit host reaches, filter it so that nothing else does, and check that it answers.\ncurl -s http://traefik.lan:8080/api/overview",
+                    "To require a password instead, route /api and /metrics through an entry point of your own with a basicAuth middleware, as the documentation shows, and pick basicAuth user below. Create the user dumbmonit with htpasswd.\nhtpasswd -nbB dumbmonit 'a-long-password'",
+                    "In DumbMonit, enter the Traefik host, for example \"traefik.lan\", with the port of that entry point if it is not 8080. Untick Read the metrics if /metrics is served elsewhere.",
+                ],
+                warning: "A router disabled by a configuration error takes its sites down, and Traefik only says so in its log. The check that a certificate resolver obtained its certificates needs /api/certificates, which Traefik 3.7 serves; without it, certificate expiry comes from the metrics only.",
+                doc_url: "https://doc.traefik.io/traefik/operations/api/",
+            },
+            options: TRAEFIK_OPTIONS,
+        },
+        "caddy" => CollectorView {
+            kind: "caddy",
+            label: "Caddy",
+            summary: "The web server and reverse proxy: upstreams failing their health checks, a configuration reload that failed, handler errors and the share of 5xx answers.",
+            examples: &["Caddy in Docker", "Caddy as a reverse proxy", "Caddy on a Linux host"],
+            credential_types: &["username_password", "none"],
+            credentials: &[CADDY_LOGIN, CADDY_NO_AUTH],
+            address_hint: "caddy.lan:2020",
+            default_port: 2019,
+            setup: Setup {
+                title: "Publish a read-only view of Caddy's admin API",
+                steps: &[
+                    "Caddy's admin API can load a new configuration and stop Caddy: it must stay out of reach of anything but DumbMonit. Leave it where Caddy puts it, on localhost:2019, and let Caddy publish a read-only view of it: GET only, on the three paths DumbMonit reads, behind a password.",
+                    "Create the password hash for the user dumbmonit.\ncaddy hash-password --plaintext 'a-long-password'",
+                    "Add this site to the Caddyfile, with that hash in place of HASH, then reload Caddy. It answers on port 2020 and refuses everything but those three reads.\n:2020 {\nbasic_auth {\ndumbmonit HASH\n}\n@readonly {\nmethod GET\npath /config/apps/http/servers /reverse_proxy/upstreams /metrics\n}\nhandle @readonly {\nreverse_proxy localhost:2019 {\nheader_up Host localhost:2019\n}\n}\nrespond 403\n}",
+                    "Optional: add metrics to the global options block at the top of the Caddyfile to count requests, errors and 5xx answers per server. Upstream health and reloads are reported without it.\nmetrics",
+                    "Filter port 2020 so that only the DumbMonit host reaches it. In DumbMonit, enter the Caddy host with that port, for example \"caddy.lan:2020\", and the user dumbmonit with its password.",
+                ],
+                warning: "Never publish the admin API itself on the network without a firewall in front: anyone who reaches port 2019 can replace the configuration or stop Caddy, and the origins option does not stop a client that sends no Origin header. If you do expose it on a private network, filter the port so that only the DumbMonit host reaches it, and pick No password.",
+                doc_url: "https://caddyserver.com/docs/api",
+            },
+            options: CADDY_OPTIONS,
+        },
+        "npm" => CollectorView {
+            kind: "npm",
+            label: "Nginx Proxy Manager",
+            summary: "The proxy manager: hosts nginx refused to load, disabled hosts, and the certificates the hosts present, before Let's Encrypt renewal failures turn into expired sites.",
+            examples: &["Nginx Proxy Manager in Docker", "NPM in front of self-hosted apps"],
+            credential_types: &["username_password"],
+            credentials: &[NPM_LOGIN],
+            address_hint: "npm.lan:81",
+            default_port: 81,
+            setup: Setup {
+                title: "Create a view-only Nginx Proxy Manager user",
+                steps: &[
+                    "In Nginx Proxy Manager, open Users and add a user for DumbMonit, with an email address of its own such as dumbmonit@example.com. Leave every role unticked.",
+                    "In that user's menu, open Permissions: Item Visibility All Items; Proxy Hosts, Redirection Hosts, 404 Hosts and Streams View Only; Access Lists and SSL Certificates Hidden. Then set its password with Change Password in the same menu.",
+                    "SSL Certificates stay Hidden on purpose: Nginx Proxy Manager hands the private key of imported certificates, and the credentials of the DNS challenge, to any user allowed to view them. DumbMonit reads each certificate where it is served instead, with a TLS handshake on port 443 for every host that has one.",
+                    "In DumbMonit, enter the Nginx Proxy Manager host with the port of its web interface, for example \"npm.lan:81\", and the email and password of that user. If the hosts are served over HTTPS on another port than 443, set HTTPS port below.",
+                ],
+                warning: "A host whose configuration nginx refuses (a typo in Advanced, a missing certificate file) is not served, and Nginx Proxy Manager only shows it as a red dot in the list. Let's Encrypt certificates are renewed thirty days ahead: one that expires in less than fourteen days is one whose renewal failed, and DumbMonit warns then.",
+                doc_url: "https://nginxproxymanager.com/advanced-config/",
+            },
+            options: NPM_OPTIONS,
+        },
+        "domain" => CollectorView {
+            kind: "domain",
+            label: "Domain expiry",
+            summary: "A registered domain, read from its registry over RDAP: days left before expiry, a hold that takes it out of the DNS, a redemption period, and its registrar.",
+            examples: &["example.com", "Your company's domain", "The domain of your mail server"],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "example.com",
+            // Un nom, pas un service : aucun port à ajouter à l'adresse.
+            default_port: 0,
+            setup: Setup {
+                title: "Watch a domain's registration",
+                steps: &[
+                    "Enter the registered domain, for example \"example.com\", not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.",
+                    "DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.",
+                    "A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.\nhttps://rdap.nic.ch/",
+                    "Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.",
+                ],
+                warning: "A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.",
+                doc_url: "https://www.icann.org/rdap",
+            },
+            options: DOMAIN_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -3612,6 +3860,10 @@ mod tests {
         "mongodb",
         "rabbitmq",
         "crowdsec",
+        "traefik",
+        "caddy",
+        "npm",
+        "domain",
         "agent",
         "http",
         "tcp",
@@ -3707,7 +3959,15 @@ mod tests {
             ("tcp", &["port", "allow_private_targets", "timeout_seconds"]),
             (
                 "dns",
-                &["record_type", "resolver", "expect", "expect_mode", "forbid", "timeout_seconds"],
+                &[
+                    "record_type",
+                    "resolver",
+                    "expect",
+                    "expect_mode",
+                    "forbid",
+                    "alert_on_change",
+                    "timeout_seconds",
+                ],
             ),
             (
                 "ping",
@@ -3990,6 +4250,20 @@ mod tests {
                 "crowdsec",
                 &["scheme", "port", "lapi", "lapi_port", "insecure_tls", "request_timeout_seconds"],
             ),
+            ("traefik", &["scheme", "port", "metrics", "insecure_tls", "request_timeout_seconds"]),
+            ("caddy", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "npm",
+                &[
+                    "scheme",
+                    "port",
+                    "certificates",
+                    "tls_port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                ],
+            ),
+            ("domain", &["rdap_server", "refresh_hours", "request_timeout_seconds"]),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -4207,6 +4481,30 @@ mod tests {
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
         );
         assert_eq!(defaut("push", "grace"), crate::collectors::push::DEFAULT_GRACE);
+        // `collectors/{traefik,caddy,npm,domain}`.
+        use dumbmonit_collectors::{caddy, domain, npm, traefik};
+        for (kind, port) in [
+            ("traefik", traefik::DEFAULT_PORT),
+            ("caddy", caddy::DEFAULT_PORT),
+            ("npm", npm::DEFAULT_PORT),
+        ] {
+            assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
+            assert_eq!(describe(kind).default_port, port, "« {kind} »");
+            assert_eq!(defaut(kind, "scheme"), "http");
+            assert_eq!(
+                defaut(kind, "request_timeout_seconds"),
+                dumbmonit_collectors::observability::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+            );
+        }
+        assert_eq!(defaut("traefik", "metrics"), "true");
+        assert_eq!(defaut("npm", "certificates"), "true");
+        assert_eq!(defaut("npm", "tls_port"), npm::DEFAULT_TLS_PORT.to_string());
+        assert_eq!(defaut("domain", "refresh_hours"), domain::DEFAULT_REFRESH_HOURS.to_string());
+        assert_eq!(
+            defaut("domain", "request_timeout_seconds"),
+            domain::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(defaut("dns", "alert_on_change"), "false");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -4302,6 +4600,9 @@ mod tests {
             ("mongodb", "dumbmonit"),
             ("rabbitmq", "dumbmonit"),
             ("crowdsec", "dumbmonit"),
+            ("traefik", "dumbmonit"),
+            ("caddy", "dumbmonit"),
+            ("npm", "dumbmonit@example.com"),
             ("nextcloud", "token"),
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
@@ -4333,7 +4634,10 @@ mod tests {
                 // de base, pas un compte.
                 .replace("use admin", "")
                 .replace("db: \"admin\"", "")
-                .replace("than admin", "");
+                .replace("than admin", "")
+                // L'API d'administration de Caddy porte ce nom : c'est une
+                // interface, pas un compte, et la notice la tient à l'écart.
+                .replace("admin api", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
@@ -4401,6 +4705,10 @@ mod tests {
             ("mongodb", include_str!("../../../../docs/devices/mongodb.md")),
             ("rabbitmq", include_str!("../../../../docs/devices/rabbitmq.md")),
             ("crowdsec", include_str!("../../../../docs/devices/crowdsec.md")),
+            ("traefik", include_str!("../../../../docs/devices/traefik.md")),
+            ("caddy", include_str!("../../../../docs/devices/caddy.md")),
+            ("npm", include_str!("../../../../docs/devices/npm.md")),
+            ("domain", include_str!("../../../../docs/devices/domain.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
@@ -4443,7 +4751,7 @@ mod tests {
         let view = describe("http");
         assert!(view.credential_types.contains(&"username_password"));
         assert!(view.credential_types.contains(&"api_token"));
-        for kind in ["tcp", "dns", "ping", "tls", "push"] {
+        for kind in ["tcp", "dns", "ping", "tls", "push", "domain"] {
             assert_eq!(describe(kind).credential_types, &["none"], "« {kind} » n'envoie rien");
         }
     }

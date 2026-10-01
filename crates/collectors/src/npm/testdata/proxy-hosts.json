@@ -1,0 +1,89 @@
+[
+ {
+  "id": 1,
+  "created_on": "2026-09-30 22:48:35",
+  "modified_on": "2026-09-30 22:49:53",
+  "owner_user_id": 1,
+  "domain_names": [
+   "app.example.test"
+  ],
+  "forward_host": "whoami",
+  "forward_port": 80,
+  "access_list_id": 0,
+  "certificate_id": 1,
+  "ssl_forced": true,
+  "caching_enabled": false,
+  "block_exploits": false,
+  "advanced_config": "",
+  "meta": {
+   "nginx_online": true,
+   "nginx_err": null
+  },
+  "allow_websocket_upgrade": false,
+  "http2_support": false,
+  "forward_scheme": "http",
+  "enabled": true,
+  "locations": [],
+  "hsts_enabled": false,
+  "hsts_subdomains": false,
+  "trust_forwarded_proto": false
+ },
+ {
+  "id": 3,
+  "created_on": "2026-09-30 22:48:36",
+  "modified_on": "2026-09-30 22:48:36",
+  "owner_user_id": 1,
+  "domain_names": [
+   "broken.example.test"
+  ],
+  "forward_host": "whoami",
+  "forward_port": 80,
+  "access_list_id": 0,
+  "certificate_id": 0,
+  "ssl_forced": false,
+  "caching_enabled": false,
+  "block_exploits": false,
+  "advanced_config": "this_is_not_a_directive on;",
+  "meta": {
+   "nginx_online": false,
+   "nginx_err": "nginx: [emerg] unknown directive \"this_is_not_a_directive\" in /data/nginx/proxy_host/3.conf:37\nnginx: configuration file /etc/nginx/nginx.conf test failed\n"
+  },
+  "allow_websocket_upgrade": false,
+  "http2_support": false,
+  "forward_scheme": "http",
+  "enabled": true,
+  "locations": [],
+  "hsts_enabled": false,
+  "hsts_subdomains": false,
+  "trust_forwarded_proto": false
+ },
+ {
+  "id": 2,
+  "created_on": "2026-09-30 22:48:36",
+  "modified_on": "2026-09-30 22:48:37",
+  "owner_user_id": 1,
+  "domain_names": [
+   "photos.example.test"
+  ],
+  "forward_host": "whoami",
+  "forward_port": 80,
+  "access_list_id": 0,
+  "certificate_id": 0,
+  "ssl_forced": false,
+  "caching_enabled": false,
+  "block_exploits": false,
+  "advanced_config": "",
+  "meta": {
+   "nginx_online": true,
+   "nginx_err": null
+  },
+  "allow_websocket_upgrade": false,
+  "http2_support": false,
+  "forward_scheme": "http",
+  "enabled": false,
+  "locations": [],
+  "hsts_enabled": false,
+  "hsts_subdomains": false,
+  "trust_forwarded_proto": false
+ }
+]

@@ -66,10 +66,10 @@ async fn overview(
 
 // ------------------------------------------------------------- assemblage
 
-struct Entry {
-    name: String,
-    labels: BTreeMap<String, String>,
-    value: f64,
+pub(super) struct Entry {
+    pub(super) name: String,
+    pub(super) labels: BTreeMap<String, String>,
+    pub(super) value: f64,
 }
 
 /// Les séries de la cible, rangées par nom court (sans `dumbmonit_<kind>_`).
@@ -110,26 +110,34 @@ impl Series {
         }
     }
 
-    fn get(&self, name: &str) -> Option<f64> {
+    pub(super) fn get(&self, name: &str) -> Option<f64> {
         pick(&self.last, name)
     }
-    fn rate(&self, name: &str) -> Option<f64> {
+    pub(super) fn rate(&self, name: &str) -> Option<f64> {
         pick(&self.rate, name)
     }
-    fn day(&self, name: &str) -> Option<f64> {
+    pub(super) fn day(&self, name: &str) -> Option<f64> {
         pick(&self.day, name)
     }
-    fn all<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Entry> + 'a {
+    pub(super) fn all<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Entry> + 'a {
         self.last.iter().filter(move |e| e.name == name)
     }
-    fn max(&self, name: &str) -> Option<f64> {
+    /// Horodatage (secondes Unix) de la mesure la plus récente.
+    pub(super) fn sampled_at(&self) -> Option<f64> {
+        self.sampled_at
+    }
+    /// Les accroissements sur vingt-quatre heures d'une famille, un par série.
+    pub(super) fn all_day<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Entry> + 'a {
+        self.day.iter().filter(move |e| e.name == name)
+    }
+    pub(super) fn max(&self, name: &str) -> Option<f64> {
         self.all(name).map(|e| e.value).reduce(f64::max)
     }
-    fn label(&self, name: &str, label: &str) -> Option<String> {
+    pub(super) fn label(&self, name: &str, label: &str) -> Option<String> {
         self.all(name).next().and_then(|e| e.labels.get(label).cloned())
     }
     /// Valeur d'une série de la même famille portant les mêmes étiquettes `keys`.
-    fn sibling(&self, name: &str, entry: &Entry, keys: &[&str]) -> Option<f64> {
+    pub(super) fn sibling(&self, name: &str, entry: &Entry, keys: &[&str]) -> Option<f64> {
         self.all(name)
             .find(|e| keys.iter().all(|k| e.labels.get(*k) == entry.labels.get(*k)))
             .map(|e| e.value)
@@ -146,29 +154,29 @@ fn pick(entries: &[Entry], name: &str) -> Option<f64> {
     found.then_some(total)
 }
 
-fn check(label: &str, state: &'static str, detail: impl Into<String>) -> Check {
+pub(super) fn check(label: &str, state: &'static str, detail: impl Into<String>) -> Check {
     Check { label: label.to_string(), state, detail: detail.into() }
 }
 
-fn figure(label: &str, value: Option<f64>, unit: &'static str) -> Figure {
+pub(super) fn figure(label: &str, value: Option<f64>, unit: &'static str) -> Figure {
     Figure { label: label.to_string(), value, unit }
 }
 
-fn row(label: impl Into<String>, value: Option<f64>, unit: &'static str) -> Row {
+pub(super) fn row(label: impl Into<String>, value: Option<f64>, unit: &'static str) -> Row {
     Row { label: label.into(), value, unit, state: None }
 }
 
-fn plural(count: f64, one: &str, many: &str) -> String {
+pub(super) fn plural(count: f64, one: &str, many: &str) -> String {
     let n = count.round();
     format!("{n} {}", if n == 1.0 { one } else { many })
 }
 
-fn label_of(entry: &Entry, key: &str) -> String {
+pub(super) fn label_of(entry: &Entry, key: &str) -> String {
     entry.labels.get(key).cloned().unwrap_or_default()
 }
 
 /// Les trois premiers noms d'une liste, puis « and N more ».
-fn names(list: &[String]) -> String {
+pub(super) fn names(list: &[String]) -> String {
     let shown: Vec<&str> = list.iter().take(3).map(String::as_str).collect();
     let rest = list.len().saturating_sub(3);
     if rest > 0 { format!("{} and {rest} more", shown.join(", ")) } else { shown.join(", ") }
@@ -340,7 +348,7 @@ fn redis(view: &mut ObservabilityView, s: &Series) {
     }
 }
 
-fn capitalise(text: &str) -> String {
+pub(super) fn capitalise(text: &str) -> String {
     let mut chars = text.chars();
     chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
 }

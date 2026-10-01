@@ -28,6 +28,9 @@ pub struct Options {
     pub expect_mode: answer::Mode,
     /// Valeurs qui ne doivent surtout pas figurer dans la réponse.
     pub forbid: Vec<String>,
+    /// Publie l'empreinte de la réponse, pour qu'une règle signale tout
+    /// changement — sans avoir à écrire d'avance ce qu'elle doit contenir.
+    pub alert_on_change: bool,
     pub timeout: Duration,
 }
 
@@ -50,6 +53,7 @@ impl Options {
             expect: tags::tag(target, "expect").map(tags::split_list).unwrap_or_default(),
             expect_mode: answer::Mode::parse(tags::tag(target, "expect_mode").unwrap_or(""))?,
             forbid: tags::tag(target, "forbid").map(tags::split_list).unwrap_or_default(),
+            alert_on_change: tags::parse_bool(target, "alert_on_change", false)?,
             timeout: tags::parse_timeout(target, "timeout_seconds")?,
         })
     }
@@ -146,6 +150,13 @@ mod tests {
         let lues = options("exemple.fr", &[("forbid", "198.51.100.7, parked.example ")]).unwrap();
         assert_eq!(lues.forbid, vec!["198.51.100.7", "parked.example"]);
         assert!(options("exemple.fr", &[]).unwrap().forbid.is_empty());
+    }
+
+    #[test]
+    fn le_suivi_des_changements_est_facultatif() {
+        assert!(!options("exemple.fr", &[]).unwrap().alert_on_change);
+        assert!(options("exemple.fr", &[("alert_on_change", "true")]).unwrap().alert_on_change);
+        assert!(options("exemple.fr", &[("alert_on_change", "souvent")]).is_err());
     }
 
     #[test]

@@ -1,0 +1,55 @@
+{
+ "srv0": {
+  "listen": [
+   ":8081"
+  ],
+  "routes": [
+   {
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "health_checks": {
+       "active": {
+        "interval": 5000000000,
+        "timeout": 2000000000,
+        "uri": "/"
+       }
+      },
+      "upstreams": [
+       {
+        "dial": "whoami:80"
+       },
+       {
+        "dial": "10.99.99.99:80"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "srv1": {
+  "listen": [
+   ":8083"
+  ],
+  "routes": [
+   {
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "health_checks": {
+       "passive": {
+        "fail_duration": 30000000000
+       }
+      },
+      "upstreams": [
+       {
+        "dial": "10.99.99.98:80"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

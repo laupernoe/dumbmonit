@@ -4414,6 +4414,172 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])")
         },
+        // --- Proxys inverses (`collectors/{traefik,caddy,npm}`) ---
+        Rule {
+            description: "A Traefik router is disabled by a configuration error: its sites are not served."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("traefik_router_disabled", "Traefik router disabled", RuleKind::Threshold, "dumbmonit_traefik_router_status")
+        },
+        Rule {
+            description: "A backend server of a Traefik service fails its health check."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("traefik_server_down", "Traefik backend server down", RuleKind::Threshold, "dumbmonit_traefik_server_up")
+        },
+        Rule {
+            description: "No backend server of a Traefik service answers its health check: its sites get 503."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("traefik_service_down", "Traefik service without a server", RuleKind::Threshold, "dumbmonit_traefik_service_servers_up")
+        },
+        // ACME obtient un certificat en quelques secondes : une heure sans,
+        // c'est un résolveur qui échoue, et Traefik sert son certificat
+        // auto-signé par défaut.
+        Rule {
+            description: "A Traefik router has waited an hour for a certificate from its resolver: Traefik serves its default self-signed certificate instead."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("traefik_certificate_missing", "Traefik certificate not obtained", RuleKind::Threshold, "dumbmonit_traefik_resolver_routers_uncovered")
+        },
+        Rule {
+            description: "A Caddy upstream fails its active or passive health check."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("caddy_upstream_unhealthy", "Caddy upstream unhealthy", RuleKind::Threshold, "dumbmonit_caddy_upstream_healthy")
+        },
+        Rule {
+            description: "Caddy refused its last configuration reload: it still runs the previous configuration."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("caddy_reload_failed", "Caddy configuration reload failed", RuleKind::Threshold, "dumbmonit_caddy_config_last_reload_ok")
+        },
+        Rule {
+            description: "Nginx Proxy Manager could not load a host's configuration (nginx -t failed): the host is not served."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("npm_host_offline", "Nginx Proxy Manager host offline", RuleKind::Threshold, "dumbmonit_npm_host_online")
+        },
+        // Let's Encrypt et ACME renouvellent trente jours avant l'échéance : à
+        // quatorze jours, le renouvellement a échoué au moins une semaine.
+        Rule {
+            description: "A certificate served by the reverse proxy expires in less than fourteen days: its renewal is failing."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 14.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "d".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("proxy_cert_expiring", "Proxy certificate not renewed", RuleKind::Threshold, "dumbmonit_traefik_cert_expiry_days or dumbmonit_npm_cert_expiry_days")
+        },
+        // Part de 5xx sur dix minutes, avec un plancher de cinquante requêtes :
+        // une erreur sur deux requêtes nocturnes n'est pas un incident.
+        Rule {
+            description: "More than 5% of a reverse proxy's answers were 5xx errors over ten minutes, with at least fifty requests."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "proxy_5xx_rate",
+                "Reverse proxy answering 5xx",
+                RuleKind::Threshold,
+                "(100 * increase_prometheus(dumbmonit_traefik_requests_5xx_total[10m]) \
+                 / increase_prometheus(dumbmonit_traefik_requests_total[10m]) \
+                 and increase_prometheus(dumbmonit_traefik_requests_total[10m]) >= 50) \
+                 or (100 * increase_prometheus(dumbmonit_caddy_requests_5xx_total[10m]) \
+                 / increase_prometheus(dumbmonit_caddy_requests_total[10m]) \
+                 and increase_prometheus(dumbmonit_caddy_requests_total[10m]) >= 50)",
+            )
+        },
+        // --- Noms de domaine (`collectors/domain`) ---
+        // Deux règles disjointes (`>= 7` / `< 7`), comme pour les certificats.
+        Rule {
+            description: "The domain expires in less than thirty days.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "d".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_expiring", "Domain expiring", RuleKind::Threshold, "dumbmonit_domain_expiry_days >= 7")
+        },
+        Rule {
+            description: "The domain expires in less than seven days, or has expired.".to_string(),
+            operator: Operator::Lt,
+            threshold: 7.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Critical,
+            unit: "d".to_string(),
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base("domain_expiring_soon", "Domain about to expire", RuleKind::Threshold, "dumbmonit_domain_expiry_days")
+        },
+        Rule {
+            description: "The registry put the domain on hold (clientHold or serverHold): it is taken out of the DNS."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("domain_on_hold", "Domain on hold", RuleKind::Threshold, "dumbmonit_domain_on_hold")
+        },
+        Rule {
+            description: "The domain is in its redemption period or pending deletion: it has expired and will be released."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base("domain_redemption", "Domain in redemption", RuleKind::Threshold, "dumbmonit_domain_redemption")
+        },
+        // Réponse DNS modifiée (`uptime/dns`, option `alert_on_change`) :
+        // l'empreinte ne change que si l'ensemble des valeurs change, et
+        // `changes_prometheus` ne compte pas la première valeur d'une série
+        // neuve. L'alerte se résout d'elle-même une heure plus tard.
+        Rule {
+            description: "The answer of a DNS check changed: a record was added, removed or replaced."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("dns_answer_changed", "DNS answer changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])")
+        },
         // --- fin du bloc Synology DSM ---
         // La sauvegarde locale de DumbMonit lui-même.
         //
@@ -4715,6 +4881,20 @@ mod tests {
             "crowdsec_lapi_down",
             "crowdsec_bouncer_stale",
             "crowdsec_no_logs_read",
+            "traefik_router_disabled",
+            "traefik_server_down",
+            "traefik_service_down",
+            "traefik_certificate_missing",
+            "caddy_upstream_unhealthy",
+            "caddy_reload_failed",
+            "npm_host_offline",
+            "proxy_cert_expiring",
+            "proxy_5xx_rate",
+            "domain_expiring",
+            "domain_expiring_soon",
+            "domain_on_hold",
+            "domain_redemption",
+            "dns_answer_changed",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -5021,6 +5201,25 @@ mod tests {
             "dumbmonit_crowdsec_lapi_up",
             "dumbmonit_crowdsec_bouncer_requests_total",
             "dumbmonit_crowdsec_lines_read_total",
+            // Proxys inverses et domaines (`collectors/{traefik,caddy,npm,domain}`).
+            "dumbmonit_traefik_router_status",
+            "dumbmonit_traefik_server_up",
+            "dumbmonit_traefik_service_servers_up",
+            "dumbmonit_traefik_resolver_routers_uncovered",
+            "dumbmonit_traefik_cert_expiry_days",
+            "dumbmonit_traefik_requests_total",
+            "dumbmonit_traefik_requests_5xx_total",
+            "dumbmonit_caddy_upstream_healthy",
+            "dumbmonit_caddy_config_last_reload_ok",
+            "dumbmonit_caddy_requests_total",
+            "dumbmonit_caddy_requests_5xx_total",
+            "dumbmonit_npm_host_online",
+            "dumbmonit_npm_cert_expiry_days",
+            "dumbmonit_domain_expiry_days",
+            "dumbmonit_domain_on_hold",
+            "dumbmonit_domain_redemption",
+            // Sonde DNS, option `alert_on_change` (`uptime/dns`).
+            "dumbmonit_probe_dns_answer_fingerprint",
         ];
 
         for rule in builtin_rules() {

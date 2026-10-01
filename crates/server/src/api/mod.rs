@@ -21,6 +21,7 @@ mod pbs;
 mod pdm;
 mod pmg;
 mod prometheus;
+mod proxies;
 mod proxmox;
 mod push;
 mod redfish;
@@ -121,6 +122,8 @@ pub fn router(state: AppState) -> Router {
         .merge(observability::routes())
         // Santé de Redis, MongoDB, RabbitMQ et CrowdSec (`backends.rs`).
         .merge(backends::routes())
+        // Proxys inverses et enregistrement d'un domaine (`proxies.rs`).
+        .merge(proxies::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
