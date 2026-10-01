@@ -63,7 +63,8 @@ full history on the Alerts page.
 `/wall` shows the bulletin alone, full screen, for a room monitor: the
 sentence, the counts and the *Needs you* list, refreshed every 20 seconds, with
 the screen kept awake. ++esc++ or **Exit** returns to the overview. Open it from
-the command palette ("Wall mode") or by typing the URL.
+the command palette ("Wall mode") or by typing the URL. It can also play music
+started from your phone: see [Wall mode and music](wall.md).
 
 ![Wall mode](../assets/screenshots/wall-light.png){ loading=lazy }
 

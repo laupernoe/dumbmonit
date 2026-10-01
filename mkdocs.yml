@@ -132,6 +132,7 @@ nav:
       - Notification channels: notifications.md
   - Using DumbMonit:
       - Overview page: using/overview.md
+      - Wall mode and music: using/wall.md
       - Devices page: using/devices.md
       - Alerts page: using/alerts.md
       - Status pages: using/status-pages.md
