@@ -141,6 +141,11 @@ tags:
     description: Encrypted export and restore of the instance. Session only.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
+  - name: Wall music
+    description: >-
+      Music on the wall display: what plays on the connected Spotify account,
+      the link every wall plays, and connecting Spotify (Authorization Code +
+      PKCE). Refresh tokens never leave the server.
   - name: Prometheus compatibility
     description: Read access for an existing Prometheus or Grafana, outside `/api`.
 
@@ -3275,6 +3280,167 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/music/now:
+    get:
+      operationId: getWallMusic
+      tags: [Wall music]
+      summary: What the walls play
+      description: >-
+        What plays on the connected Spotify account, wherever it plays (read
+        from Spotify at most every few seconds, shared by every caller), and
+        the link the walls play. Walls poll it every five seconds.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Spotify playback and the shared link.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallMusic" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/link:
+    put:
+      operationId: playOnWall
+      tags: [Wall music]
+      summary: Every wall plays this Spotify, Deezer or YouTube link
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [link]
+              properties:
+                link: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: The link now on the walls.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallLink" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: stopWallLink
+      tags: [Wall music]
+      summary: The walls stop the embedded player
+      x-token-scope: write
+      responses:
+        "204": { description: Stopped. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify:
+    get:
+      operationId: getSpotifyAccount
+      tags: [Wall music]
+      summary: The connected Spotify account, never a token
+      x-token-scope: read
+      responses:
+        "200":
+          description: Connection state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SpotifyAccount" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: disconnectSpotify
+      tags: [Wall music]
+      summary: Disconnect Spotify and forget its tokens
+      x-token-scope: write
+      responses:
+        "204": { description: Disconnected. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/authorize:
+    post:
+      operationId: startSpotifyConnection
+      tags: [Wall music]
+      summary: Start connecting Spotify
+      description: >-
+        Administrator session only. Returns Spotify's approval URL (PKCE, valid
+        ten minutes, once). `redirect_uri` is `http://127.0.0.1:8888/callback`
+        or `https://<origin of the page>/api/music/spotify/callback`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, redirect_uri]
+              properties:
+                client_id: { type: string }
+                redirect_uri: { type: string }
+      responses:
+        "200":
+          description: Where to send the browser.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authorize_url, redirect_uri, expires_in]
+                properties:
+                  authorize_url: { type: string }
+                  redirect_uri: { type: string }
+                  expires_in: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/complete:
+    post:
+      operationId: completeSpotifyConnection
+      tags: [Wall music]
+      summary: Finish a loopback connection with the address the browser landed on
+      description: Administrator session only, the one that started the connection.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string }
+      responses:
+        "200":
+          description: The connected account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SpotifyAccount" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/token:
+    get:
+      operationId: getSpotifyToken
+      tags: [Wall music]
+      summary: A short-lived Spotify access token for the wall's player
+      description: >-
+        Browser sessions only (any role): the wall's Web Playback SDK needs it.
+        API tokens are refused.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The access token (never cached).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, expires_in]
+                properties:
+                  access_token: { type: string }
+                  expires_in: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -5017,3 +5183,58 @@ components:
             code: { type: integer }
             message: { type: string }
             data: {}
+    NowPlaying:
+      type: object
+      required: [playing, kind, title, artists, duration_ms, progress_ms]
+      properties:
+        playing: { type: boolean }
+        kind: { type: string, description: "`track`, `episode`, `ad` or `unknown`." }
+        title: { type: string }
+        artists: { type: array, items: { type: string } }
+        album: { type: [string, "null"] }
+        cover_url: { type: [string, "null"], description: Always on https://i.scdn.co. }
+        duration_ms: { type: integer }
+        progress_ms: { type: integer }
+        device_name: { type: [string, "null"] }
+        device_type: { type: [string, "null"] }
+    WallLink:
+      type: object
+      required: [link, set_by, set_at]
+      properties:
+        link: { type: string }
+        set_by: { type: string }
+        set_at: { type: string, description: UTC, without suffix. }
+    WallMusic:
+      type: object
+      required: [spotify, speaker_name]
+      properties:
+        spotify:
+          type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [off, connected, expired] }
+            now_playing:
+              oneOf:
+                - { $ref: "#/components/schemas/NowPlaying" }
+                - { type: "null" }
+            error: { type: [string, "null"] }
+        link:
+          oneOf:
+            - { $ref: "#/components/schemas/WallLink" }
+            - { type: "null" }
+        speaker_name: { type: string }
+    SpotifyAccount:
+      type: object
+      required: [status, missing_scopes, speaker_name, scopes, loopback_redirect_uri, callback_path]
+      properties:
+        status: { type: string, enum: [off, connected, expired] }
+        client_id: { type: [string, "null"] }
+        account_name: { type: [string, "null"] }
+        connected_at: { type: [string, "null"] }
+        reconnect_by: { type: [string, "null"], description: Spotify ends a connection six months after approval. }
+        missing_scopes: { type: array, items: { type: string } }
+        last_error: { type: [string, "null"] }
+        speaker_name: { type: string }
+        scopes: { type: array, items: { type: string } }
+        loopback_redirect_uri: { type: string }
+        callback_path: { type: string }
