@@ -9,13 +9,16 @@
 
 pub mod adguard;
 pub(crate) mod api_options;
+pub mod caddy;
 pub mod crowdsec;
+pub mod domain;
 pub mod dummy;
 pub mod homeassistant;
 pub mod http;
 pub mod mdaemon;
 pub mod mikrotik;
 pub mod mongodb;
+pub mod npm;
 pub mod nut;
 pub mod observability;
 pub mod opnsense;
@@ -31,6 +34,7 @@ pub mod selfhosted;
 pub mod snmp;
 pub(crate) mod socket;
 pub mod synology;
+pub mod traefik;
 pub mod truenas;
 pub mod unifi;
 pub mod uptime;
@@ -43,12 +47,15 @@ use std::time::Duration;
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
 pub use adguard::AdguardCollector;
+pub use caddy::CaddyCollector;
 pub use crowdsec::CrowdsecCollector;
+pub use domain::DomainCollector;
 pub use dummy::DummyCollector;
 pub use homeassistant::HomeAssistantCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
 pub use mikrotik::MikrotikCollector;
 pub use mongodb::MongodbCollector;
+pub use npm::NpmCollector;
 pub use nut::NutCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use opnsense::OpnsenseCollector;
@@ -66,6 +73,7 @@ pub use selfhosted::{
 pub use snmp::SnmpCollector;
 pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
 pub use synology::SynologyCollector;
+pub use traefik::TraefikCollector;
 pub use truenas::TruenasCollector;
 pub use unifi::UnifiCollector;
 pub use uptime::{
@@ -121,6 +129,10 @@ impl Registry {
         registry.register(Arc::new(MongodbCollector::new()));
         registry.register(Arc::new(RabbitmqCollector::new()));
         registry.register(Arc::new(CrowdsecCollector::new()));
+        registry.register(Arc::new(TraefikCollector::new()));
+        registry.register(Arc::new(CaddyCollector::new()));
+        registry.register(Arc::new(NpmCollector::new()));
+        registry.register(Arc::new(DomainCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));

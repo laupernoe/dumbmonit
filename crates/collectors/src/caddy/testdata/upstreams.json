@@ -1,0 +1,17 @@
+[
+ {
+  "address": "10.99.99.98:80",
+  "num_requests": 0,
+  "fails": 1
+ },
+ {
+  "address": "whoami:80",
+  "num_requests": 0,
+  "fails": 0
+ },
+ {
+  "address": "10.99.99.99:80",
+  "num_requests": 0,
+  "fails": 0
+ }
+]

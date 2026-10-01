@@ -1,0 +1,212 @@
+[
+ {
+  "entryPoints": [
+   "web"
+  ],
+  "service": "acme-http@internal",
+  "rule": "PathPrefix(`/.well-known/acme-challenge/`)",
+  "ruleSyntax": "default",
+  "priority": 9223372036854775807,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "web"
+  ],
+  "name": "acme-http@internal",
+  "provider": "internal",
+  "priorityStr": "9223372036854775807"
+ },
+ {
+  "entryPoints": [
+   "web"
+  ],
+  "service": "blog",
+  "rule": "Host(`blog.example.test`)",
+  "priority": 25,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "web"
+  ],
+  "name": "blog@file",
+  "provider": "file",
+  "priorityStr": "25"
+ },
+ {
+  "entryPoints": [
+   "websecure"
+  ],
+  "service": "shop",
+  "rule": "Host(`cloud.example.test`)",
+  "priority": 26,
+  "tls": {
+   "options": "default",
+   "certResolver": "le"
+  },
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "websecure"
+  ],
+  "name": "cloud@file",
+  "provider": "file",
+  "priorityStr": "26"
+ },
+ {
+  "entryPoints": [
+   "web"
+  ],
+  "service": "legacy",
+  "rule": "Host(`legacy.example.test`)",
+  "priority": 27,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "web"
+  ],
+  "name": "legacy@file",
+  "provider": "file",
+  "priorityStr": "27"
+ },
+ {
+  "entryPoints": [
+   "monitor"
+  ],
+  "middlewares": [
+   "dumbmonit-auth@file"
+  ],
+  "service": "api@internal",
+  "rule": "PathPrefix(`/api`)",
+  "priority": 18,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "monitor"
+  ],
+  "name": "monitor-api@file",
+  "provider": "file",
+  "priorityStr": "18"
+ },
+ {
+  "entryPoints": [
+   "monitor"
+  ],
+  "middlewares": [
+   "dumbmonit-auth@file"
+  ],
+  "service": "prometheus@internal",
+  "rule": "Path(`/metrics`)",
+  "priority": 16,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "monitor"
+  ],
+  "name": "monitor-metrics@file",
+  "provider": "file",
+  "priorityStr": "16"
+ },
+ {
+  "entryPoints": [
+   "websecure"
+  ],
+  "service": "shop",
+  "rule": "Host(`photos.example.test`)",
+  "priority": 27,
+  "tls": {
+   "options": "default",
+   "certResolver": "nope"
+  },
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "websecure"
+  ],
+  "name": "photos@file",
+  "provider": "file",
+  "priorityStr": "27"
+ },
+ {
+  "entryPoints": [
+   "websecure"
+  ],
+  "service": "shop",
+  "rule": "Host(`shop.example.test`)",
+  "priority": 25,
+  "tls": {
+   "options": "default"
+  },
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "status": "enabled",
+  "using": [
+   "websecure"
+  ],
+  "name": "shop@file",
+  "provider": "file",
+  "priorityStr": "25"
+ },
+ {
+  "entryPoints": [
+   "web"
+  ],
+  "service": "wiki-missing",
+  "rule": "Host(`wiki.example.test`)",
+  "priority": 25,
+  "observability": {
+   "accessLogs": true,
+   "metrics": true,
+   "tracing": true,
+   "traceVerbosity": "minimal"
+  },
+  "error": [
+   "the service \"wiki-missing@file\" does not exist"
+  ],
+  "status": "disabled",
+  "using": [
+   "web"
+  ],
+  "name": "wiki@file",
+  "provider": "file",
+  "priorityStr": "25"
+ }
+]

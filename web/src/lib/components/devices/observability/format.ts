@@ -16,7 +16,11 @@ export const TITLES: Record<string, string> = {
 	redis: 'Redis',
 	mongodb: 'MongoDB',
 	rabbitmq: 'RabbitMQ',
-	crowdsec: 'CrowdSec'
+	crowdsec: 'CrowdSec',
+	traefik: 'Traefik',
+	caddy: 'Caddy',
+	npm: 'Nginx Proxy Manager',
+	domain: 'Domain'
 };
 
 export function stateTone(state: ObservabilityState | null): Tone {

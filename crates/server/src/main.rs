@@ -171,6 +171,11 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::MongodbCollector::new()));
     registry.register(Arc::new(collectors::RabbitmqCollector::new()));
     registry.register(Arc::new(collectors::CrowdsecCollector::new()));
+    // Proxys inverses, et l'expiration des noms de domaine (RDAP).
+    registry.register(Arc::new(collectors::TraefikCollector::new()));
+    registry.register(Arc::new(collectors::CaddyCollector::new()));
+    registry.register(Arc::new(collectors::NpmCollector::new()));
+    registry.register(Arc::new(collectors::DomainCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

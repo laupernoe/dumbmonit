@@ -407,6 +407,27 @@ Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [M
 | CrowdSec bouncer stopped pulling | A bouncer's requests did not change in 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
 | CrowdSec reads no logs | Not a single log line read in six hours (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
+### Reverse proxies and domains
+
+Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Domain expiry](../devices/domain.md)), and the DNS check's *Alert when the answer changes* option ([Services](../devices/services.md#alerting-when-the-answer-changes)). Series carry `router`, `service`, `server`, `upstream`, `host` or `cert`, so the notification names what failed.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Traefik router disabled | A router is disabled by a configuration error (missing service or middleware, invalid rule): its sites are not served (`dumbmonit_traefik_router_status`: 0 enabled, 1 warning, 2 disabled). | ≥ 2 | 5 min | Advisory (`warning`) | 6 h |
+| Traefik backend server down | A server of a load-balanced service fails its health check (`dumbmonit_traefik_server_up`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| Traefik service without a server | No server of a service answers its health check: its sites get 503 (`dumbmonit_traefik_service_servers_up`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Traefik certificate not obtained | Routers ask a certificate resolver for a certificate that no certificate held by Traefik covers yet: Traefik serves its default self-signed certificate (`dumbmonit_traefik_resolver_routers_uncovered`, needs Traefik's `/api/certificates`). | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| Caddy upstream unhealthy | A backend fails Caddy's active or passive health check (`dumbmonit_caddy_upstream_healthy`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| Caddy configuration reload failed | Caddy refused its last configuration reload and still runs the previous one (`dumbmonit_caddy_config_last_reload_ok`). | < 1 | 5 min | Advisory (`warning`) | 24 h |
+| Nginx Proxy Manager host offline | nginx refused an enabled host's configuration: the host is not served (`dumbmonit_npm_host_online`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| Proxy certificate not renewed | A certificate Traefik holds or a Nginx Proxy Manager host presents expires in less than 14 days: automatic renewal starts at 30, so it is failing (`dumbmonit_traefik_cert_expiry_days or dumbmonit_npm_cert_expiry_days`). | < 14 d | 1 h | Advisory (`warning`) | 24 h |
+| Reverse proxy answering 5xx | More than 5 % of the answers over ten minutes were 5xx, with at least fifty requests (`increase_prometheus` of `dumbmonit_{traefik,caddy}_requests_5xx_total` over `…_requests_total`). Needs the proxy's metrics. | > 5 % | 10 min | Advisory (`warning`) | 6 h |
+| Domain expiring | The domain expires in less than 30 days (`dumbmonit_domain_expiry_days >= 7`). | < 30 d | 1 h | Advisory (`warning`) | 24 h |
+| Domain about to expire | The domain expires in less than 7 days, or has expired (`dumbmonit_domain_expiry_days`). | < 7 d | 1 h | Warning (`critical`) | 12 h |
+| Domain on hold | The registry put the domain in `clientHold` or `serverHold`: it is out of the DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Warning (`critical`) | 6 h |
+| Domain in redemption | The domain is in `redemptionPeriod`, `pendingDelete` or `pendingRestore`: it has expired (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
+| DNS answer changed | The answer of a DNS check with *Alert when the answer changes* differs from the one before (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

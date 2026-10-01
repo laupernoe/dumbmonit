@@ -137,6 +137,31 @@ impl HttpClient {
         Ok(Reply { status, body })
     }
 
+    /// Un `POST` JSON dont le code est laissé à l'appelant : une connexion
+    /// refusée (Nginx Proxy Manager répond 400) n'est pas une panne de transport.
+    pub async fn post_raw<B: Serialize>(&self, path: &str, body: &B) -> Result<Reply, ProbeError> {
+        let request = self
+            .http
+            .post(self.url(path))
+            .header(reqwest::header::ACCEPT, "application/json")
+            .json(body);
+        let response = self.send(request, path).await?;
+        let status = response.status();
+        let body = response.text().await.map_err(|error| self.transport(&error, path))?;
+        Ok(Reply { status, body })
+    }
+
+    /// Un `GET` JSON dont le code est laissé à l'appelant : un point d'accès
+    /// absent d'une version plus ancienne (404) n'est pas une erreur.
+    pub async fn get_json_raw(&self, path: &str) -> Result<Reply, ProbeError> {
+        let request =
+            self.http.get(self.url(path)).header(reqwest::header::ACCEPT, "application/json");
+        let response = self.send(request, path).await?;
+        let status = response.status();
+        let body = response.text().await.map_err(|error| self.transport(&error, path))?;
+        Ok(Reply { status, body })
+    }
+
     /// Un `GET` qui doit réussir, rendu en texte.
     pub async fn get_text(&self, path: &str) -> Result<String, ProbeError> {
         let reply = self.get_raw(path).await?;

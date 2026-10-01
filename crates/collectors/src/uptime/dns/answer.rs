@@ -55,6 +55,22 @@ pub fn render(records: &[Record]) -> Vec<String> {
     records.iter().map(|record| normalize(&record.data.to_string())).collect()
 }
 
+/// Empreinte d'une réponse : les valeurs dédoublonnées et triées, hachées en
+/// SHA-256 dont on garde 32 bits.
+///
+/// Le tri rend l'empreinte indifférente à la rotation d'un tourniquet DNS, qui
+/// rend le même ensemble dans un autre ordre ; les TTL n'y entrent pas. 32 bits
+/// tiennent exactement dans un `f64` et dans le stockage de VictoriaMetrics, et
+/// laissent une chance sur quatre milliards qu'un changement passe inaperçu.
+pub fn fingerprint(answers: &[String]) -> u32 {
+    let mut values: Vec<&str> = answers.iter().map(String::as_str).collect();
+    values.sort_unstable();
+    values.dedup();
+    let digest = ring::digest::digest(&ring::digest::SHA256, values.join("\n").as_bytes());
+    let bytes = digest.as_ref();
+    u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
+}
+
 /// Façon de confronter la réponse aux valeurs attendues.
 ///
 /// `Contains` est le réglage courant : la valeur attendue doit se retrouver
@@ -185,6 +201,20 @@ mod tests {
 
     use super::fixtures::{a, aaaa, cname, mx, txt};
     use super::*;
+
+    #[test]
+    fn l_empreinte_ignore_l_ordre_et_les_doublons_mais_pas_un_changement() {
+        let rotation = render(&[a("x.test.", [192, 0, 2, 1]), a("x.test.", [192, 0, 2, 2])]);
+        let tourne = render(&[a("x.test.", [192, 0, 2, 2]), a("X.TEST.", [192, 0, 2, 1])]);
+        assert_eq!(fingerprint(&rotation), fingerprint(&tourne));
+        let double = [rotation.clone(), rotation.clone()].concat();
+        assert_eq!(fingerprint(&rotation), fingerprint(&double));
+        let change = render(&[a("x.test.", [192, 0, 2, 1]), a("x.test.", [198, 51, 100, 7])]);
+        assert_ne!(fingerprint(&rotation), fingerprint(&change));
+        // Stable d'une version à l'autre : une règle compare des valeurs écrites
+        // avant et après une mise à jour de DumbMonit.
+        assert_eq!(fingerprint(&["192.0.2.1".to_string()]), 0x37fc_ff24);
+    }
 
     #[test]
     fn les_types_courants_sont_reconnus_quelle_que_soit_la_casse() {

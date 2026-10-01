@@ -26,6 +26,9 @@ pub use dumbmonit_collectors::{
     pihole,
 };
 pub use dumbmonit_collectors::{
+    CaddyCollector, DomainCollector, NpmCollector, TraefikCollector, caddy, domain, npm, traefik,
+};
+pub use dumbmonit_collectors::{
     CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
     rabbitmq, redis,
 };
