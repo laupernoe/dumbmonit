@@ -1,0 +1,20 @@
+{
+    "archives": [
+        {
+            "archive": "web-01-2026-10-01",
+            "barchive": "web-01-2026-10-01",
+            "id": "ffa4a2d798322f9f3a4e9557ddf3c6b7b0a70c03f64bc1b42391ed17daba70cf",
+            "name": "web-01-2026-10-01",
+            "start": "2026-09-30T22:45:20.000000",
+            "time": "2026-09-30T22:45:20.000000"
+        }
+    ],
+    "encryption": {
+        "mode": "repokey"
+    },
+    "repository": {
+        "id": "bbc3a210d182e7b5b59808fa99e6f80a97ad2654df00c319d5b9b02b4dfecd1c",
+        "last_modified": "2026-09-30T22:45:20.000000",
+        "location": "/repos/borg"
+    }
+}

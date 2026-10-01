@@ -11,6 +11,7 @@ use crate::backoff::Backoff;
 use crate::binding::Binding;
 use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
+use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
@@ -18,6 +19,7 @@ use crate::collect::registry::UpdateChecker;
 use crate::collect::sensors::SensorsProbe;
 use crate::collect::smart::SmartProbe;
 use crate::collect::system_health::SystemHealthProbe;
+use crate::collect::wireguard::WireguardProbe;
 use crate::collect::zfs::ZfsProbe;
 use crate::collect::{SystemProbe, agent_samples, services};
 use crate::commands::CommandRunner;
@@ -61,6 +63,10 @@ pub struct Agent {
     docker: DockerProbe,
     updates: UpdateChecker,
     plakar: PlakarProbe,
+    /// Dépôts restic et Borg déclarés dans la configuration.
+    backup_repos: BackupReposProbe,
+    /// Tunnels WireGuard : muet sans `wg` ni interface.
+    wireguard: WireguardProbe,
     /// Matériel : sondes de température, santé des disques, pools ZFS. Chacun
     /// se tait complètement là où la machine n'a rien à en dire.
     sensors: SensorsProbe,
@@ -113,6 +119,8 @@ impl Agent {
             docker: DockerProbe::new(&config.docker_socket, config.docker_max_containers),
             updates: UpdateChecker::new(),
             plakar: PlakarProbe::new(&config.plakar),
+            backup_repos: BackupReposProbe::new(&config.backup_repos),
+            wireguard: WireguardProbe::new(&config.wireguard),
             sensors: SensorsProbe::new(config.sensors),
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
@@ -141,6 +149,8 @@ impl Agent {
         }
         snapshot.system_health = self.health.read().await;
         snapshot.backups = self.plakar.read().await;
+        snapshot.backup_repos = self.backup_repos.read().await;
+        snapshot.wireguard = self.wireguard.read().await;
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
         snapshot.zfs = self.zfs.read().await;
@@ -413,6 +423,8 @@ mod tests {
             sensors: false,
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
+            wireguard: crate::collect::wireguard::WireguardConfig::default(),
+            backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
