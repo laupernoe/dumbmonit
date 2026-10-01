@@ -1,0 +1,32 @@
+{
+  "kind": "StatefulSetList",
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "db",
+        "namespace": "demo",
+        "creationTimestamp": "2026-09-30T22:43:28Z",
+        "generation": 1
+      },
+      "spec": {
+        "replicas": 1,
+        "serviceName": "db"
+      },
+      "status": {
+        "observedGeneration": 1,
+        "replicas": 1,
+        "readyReplicas": 1,
+        "currentReplicas": 1,
+        "updatedReplicas": 1,
+        "currentRevision": "db-5b67cd8b7",
+        "updateRevision": "db-5b67cd8b7",
+        "collisionCount": 0,
+        "availableReplicas": 1
+      }
+    }
+  ]
+}

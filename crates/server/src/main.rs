@@ -171,6 +171,7 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::MongodbCollector::new()));
     registry.register(Arc::new(collectors::RabbitmqCollector::new()));
     registry.register(Arc::new(collectors::CrowdsecCollector::new()));
+    registry.register(Arc::new(collectors::KubernetesCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

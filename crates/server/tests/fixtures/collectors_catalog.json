@@ -1076,6 +1076,103 @@
     ]
   },
   {
+    "kind": "kubernetes",
+    "label": "Kubernetes / k3s",
+    "summary": "A cluster through its API: nodes not ready or under pressure, pods crash looping or stuck pending, workloads missing replicas, volume claims never bound.",
+    "examples": [
+      "k3s",
+      "kubeadm cluster",
+      "k0s",
+      "MicroK8s",
+      "Talos"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Service account token",
+        "help": "The token of the dumbmonit service account, read from its dumbmonit-token Secret.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Service account token",
+            "help": "Printed by the first kubectl get secret command of step 2. Stored encrypted, never shown again.",
+            "placeholder": "eyJhbGciOi…",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "https://k3s.lan:6443",
+    "default_port": 6443,
+    "setup": {
+      "title": "Create a read-only service account for DumbMonit",
+      "steps": [
+        "Create a service account, a ClusterRole that can only get and list nodes, pods, workloads, volume claims and events, and bind them together. The role reads no Secret and no ConfigMap. On a k3s server, run each command as sudo k3s kubectl.\nkubectl create serviceaccount dumbmonit -n kube-system\nkubectl create clusterrole dumbmonit-read --verb=get,list --resource=nodes,pods,persistentvolumeclaims,events,deployments.apps,statefulsets.apps,daemonsets.apps\nkubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit",
+        "Give it a token that does not expire: a Secret of type service-account-token, which Kubernetes fills in. Then print the token, and the cluster CA in base64.\necho '{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"dumbmonit-token\",\"namespace\":\"kube-system\",\"annotations\":{\"kubernetes.io/service-account.name\":\"dumbmonit\"}},\"type\":\"kubernetes.io/service-account-token\"}' | kubectl apply -f -\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.token}' | base64 -d\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\\.crt}'",
+        "In DumbMonit, enter the address of the API server, for example \"https://k3s.lan:6443\". Paste the token as Service account token and the base64 CA as Cluster CA certificate: only that CA is then trusted. One API server reports the whole cluster."
+      ],
+      "warning": "The API server's certificate only lists its own names and addresses: an address it does not list fails verification. Use one it lists (a node IP address, or a name added with --tls-san on k3s), or tick Accept an unverifiable certificate.",
+      "doc_url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. k3s, kubeadm and most distributions serve the API on 6443.",
+        "placeholder": "6443",
+        "default": "6443",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "ca_cert",
+        "label": "Cluster CA certificate",
+        "help": "The base64 value of ca.crt printed by the second kubectl get secret command (a PEM certificate works too). Only this CA is then trusted.",
+        "placeholder": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t…",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "Skips every certificate check. Prefer the cluster CA above; use this only on a network you trust.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "exclude_namespaces",
+        "label": "Ignored namespaces",
+        "help": "Comma-separated namespaces whose pods, workloads, volume claims and events are not watched, for example a CI namespace full of short-lived pods.",
+        "placeholder": "ci, sandbox",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "loki",
     "label": "Grafana Loki",
     "summary": "The log server itself: readiness, log lines it refuses and why, chunks that fail to reach storage, write-ahead log disk, request errors.",

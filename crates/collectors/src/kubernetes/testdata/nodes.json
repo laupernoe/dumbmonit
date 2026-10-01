@@ -1,0 +1,141 @@
+{
+  "kind": "NodeList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "629"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "node-1",
+        "creationTimestamp": "2026-09-30T22:43:20Z",
+        "labels": {
+          "beta.kubernetes.io/arch": "amd64",
+          "beta.kubernetes.io/instance-type": "k3s",
+          "beta.kubernetes.io/os": "linux",
+          "kubernetes.io/arch": "amd64",
+          "kubernetes.io/hostname": "node-1",
+          "kubernetes.io/os": "linux",
+          "node-role.kubernetes.io/control-plane": "true",
+          "node-role.kubernetes.io/master": "true",
+          "node.kubernetes.io/instance-type": "k3s"
+        }
+      },
+      "spec": {
+        "podCIDR": "10.42.0.0/24",
+        "podCIDRs": [
+          "10.42.0.0/24"
+        ],
+        "providerID": "k3s://node-1"
+      },
+      "status": {
+        "capacity": {
+          "cpu": "8",
+          "ephemeral-storage": "235760Mi",
+          "hugepages-1Gi": "0",
+          "hugepages-2Mi": "0",
+          "memory": "15903428Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "8",
+          "ephemeral-storage": "234851663688",
+          "hugepages-1Gi": "0",
+          "hugepages-2Mi": "0",
+          "memory": "15903428Ki",
+          "pods": "110"
+        },
+        "conditions": [
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "lastHeartbeatTime": "2026-09-30T22:43:50Z",
+            "lastTransitionTime": "2026-09-30T22:43:20Z",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "lastHeartbeatTime": "2026-09-30T22:43:50Z",
+            "lastTransitionTime": "2026-09-30T22:43:20Z",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "lastHeartbeatTime": "2026-09-30T22:43:50Z",
+            "lastTransitionTime": "2026-09-30T22:43:20Z",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastHeartbeatTime": "2026-09-30T22:43:50Z",
+            "lastTransitionTime": "2026-09-30T22:43:20Z",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          }
+        ],
+        "addresses": [
+          {
+            "type": "InternalIP",
+            "address": "192.0.2.10"
+          },
+          {
+            "type": "Hostname",
+            "address": "node-1"
+          }
+        ],
+        "daemonEndpoints": {
+          "kubeletEndpoint": {
+            "Port": 10250
+          }
+        },
+        "nodeInfo": {
+          "machineID": "",
+          "systemUUID": "00000000-0000-4000-8000-000000000002",
+          "bootID": "00000000-0000-4000-8000-000000000003",
+          "kernelVersion": "6.12.0-1-amd64",
+          "osImage": "K3s v1.33.4+k3s1",
+          "containerRuntimeVersion": "containerd://2.0.5-k3s2",
+          "kubeletVersion": "v1.33.4+k3s1",
+          "kubeProxyVersion": "",
+          "operatingSystem": "linux",
+          "architecture": "amd64",
+          "swap": {
+            "capacity": 8589930496
+          }
+        },
+        "runtimeHandlers": [
+          {
+            "name": "runc",
+            "features": {
+              "recursiveReadOnlyMounts": true,
+              "userNamespaces": true
+            }
+          },
+          {
+            "name": "",
+            "features": {
+              "recursiveReadOnlyMounts": true,
+              "userNamespaces": true
+            }
+          },
+          {
+            "name": "runhcs-wcow-process",
+            "features": {
+              "recursiveReadOnlyMounts": false,
+              "userNamespaces": false
+            }
+          }
+        ],
+        "features": {
+          "supplementalGroupsPolicy": true
+        }
+      }
+    }
+  ]
+}
