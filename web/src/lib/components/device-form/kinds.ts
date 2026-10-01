@@ -55,9 +55,11 @@ import {
 	Waypoints,
 	Route,
 	Split,
-	CalendarClock
+	CalendarClock,
+	Puzzle
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
+import { isPackKind } from '$lib/api/packs';
 import { isUptimeKind, PUSH_KIND } from '$lib/format';
 
 const KIND_ICON: Record<string, typeof LucideIcon> = {
@@ -112,7 +114,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
-	return KIND_ICON[kind] ?? Server;
+	return KIND_ICON[kind] ?? (isPackKind(kind) ? Puzzle : Server);
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
@@ -286,12 +288,14 @@ export interface KindChoice {
 	label: string;
 	summary: string;
 	icon: typeof LucideIcon;
+	/** Added by an integration pack (`pack.<id>`), not built into the server. */
+	pack: boolean;
 	/** Lower-case words the search matches against. */
 	haystack: string;
 }
 
 export interface KindGroup {
-	id: 'devices' | 'agent' | 'services' | 'other';
+	id: 'devices' | 'agent' | 'services' | 'packs' | 'other';
 	title: string;
 	/** One line under the title saying how this group is collected. */
 	hint: string;
@@ -313,23 +317,28 @@ function kindChoice(c: CollectorInfo, groupTitle: string): KindChoice {
 		label: c.label,
 		summary: c.summary,
 		icon: kindIcon(c.kind),
-		haystack: fold([c.label, c.kind, c.summary, c.examples.join(' '), KIND_KEYWORDS[c.kind] ?? '', groupTitle].join(' '))
+		pack: isPackKind(c.kind),
+		haystack: fold(
+			[c.label, c.kind, c.summary, c.examples.join(' '), KIND_KEYWORDS[c.kind] ?? (isPackKind(c.kind) ? 'pack community' : ''), groupTitle].join(' ')
+		)
 	};
 }
 
 /**
- * Splits the server's kinds into "Devices", "On a machine", "Services" and
- * "Other".
+ * Splits the server's kinds into "Devices", "On a machine", "Services",
+ * "Community packs" and "Other".
  *
  * Known device kinds keep a fixed order so the picker reads the same on every
  * instance; the agent opens its own group, followed by what it reports;
- * services are recognised by `isUptimeKind`; anything else (a demo collector,
+ * services are recognised by `isUptimeKind`; kinds added by an integration
+ * pack (`pack.<id>`) have their own group, by label; anything else (a demo collector,
  * a kind added by a newer server) lands in "Other" untouched.
  */
 export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 	const DEVICES = 'Devices on the network';
 	const AGENT = 'On a machine, with the agent';
 	const SERVICES = 'Services and checks';
+	const PACKS = 'Community packs';
 	const OTHER = 'Other';
 	const devices = collectors
 		.filter((c) => DEVICE_KINDS.includes(c.kind))
@@ -346,6 +355,7 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 					label: f.label,
 					summary: f.summary,
 					icon: f.icon,
+					pack: false,
 					haystack: fold([f.label, f.summary, f.keywords, 'agent', AGENT].join(' '))
 				}))
 			]
@@ -362,13 +372,18 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 		.filter((c) => isService(c.kind))
 		.sort((a, b) => rank(a.kind) - rank(b.kind))
 		.map((c) => kindChoice(c, SERVICES));
+	const packs = collectors
+		.filter((c) => isPackKind(c.kind))
+		.sort((a, b) => a.label.localeCompare(b.label))
+		.map((c) => kindChoice(c, PACKS));
 	const other = collectors
-		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && !isService(c.kind))
+		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && !isService(c.kind) && !isPackKind(c.kind))
 		.map((c) => kindChoice(c, OTHER));
 	const groups: KindGroup[] = [
 		{ id: 'devices', title: DEVICES, hint: 'Read over the network, nothing to install.', choices: devices },
 		{ id: 'agent', title: AGENT, hint: 'One small agent on the machine reports all of this.', choices: agentChoices },
 		{ id: 'services', title: SERVICES, hint: 'Probed from this server, as a client would; heartbeats call in instead.', choices: services },
+		{ id: 'packs', title: PACKS, hint: 'Added by integration packs, managed under Settings.', choices: packs },
 		{ id: 'other', title: OTHER, hint: '', choices: other }
 	];
 	return groups.filter((group) => group.choices.length > 0);
