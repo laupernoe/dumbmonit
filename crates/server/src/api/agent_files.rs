@@ -56,31 +56,46 @@ pub const AGENT_FILES: &[&str] = &[
 /// changera cela. Les binaires macOS sont construits sur un exécuteur macOS à
 /// chaque version et attachés à la publication.
 ///
-/// Ils restent listés ici pour une seule raison : un 404 nu, sur une machine
-/// qu'on est en train d'installer, ne dit pas s'il faut corriger l'URL, le nom
-/// ou l'architecture. Celui-là dit exactement où aller chercher.
+/// Ils restent listés ici pour que `/download/<nom>` (et son `.sha256`) renvoie
+/// vers la publication : la commande d'installation affichée par l'interface,
+/// la même sous Linux et sous macOS, marche alors aussi sur un Mac. Liste
+/// fermée, comme l'autre : le serveur ne renvoie nulle part ailleurs.
 pub const AGENT_FILES_RELEASED_ELSEWHERE: &[&str] =
     &["dumbmonit-agent-macos-aarch64", "dumbmonit-agent-macos-x86_64"];
 
 /// Où trouver les binaires que l'image ne livre pas.
 pub const RELEASES_URL: &str = "https://github.com/noekan/dumbmonit/releases/latest";
 
-/// Ce que le serveur répond pour un binaire qu'il ne peut pas livrer.
+/// Fichiers de la dernière publication, par leur nom : GitHub sert sous ce
+/// préfixe la pièce jointe de ce nom de la version la plus récente.
+const RELEASE_DOWNLOAD_URL: &str = "https://github.com/noekan/dumbmonit/releases/latest/download";
+
+/// Ce que le serveur répond, en plus du renvoi, pour un binaire qu'il ne livre pas.
 ///
-/// Écrit pour être lu sur la machine qu'on est en train d'installer : le script
-/// d'installation récupère ce corps et l'affiche avant d'abandonner.
+/// Écrit pour être lu sur la machine qu'on est en train d'installer, par qui
+/// télécharge sans suivre les renvois (`curl` sans `-L`) : la raison, l'adresse,
+/// et la commande pour s'en servir.
 fn released_elsewhere_message(name: &str) -> String {
     format!(
         "{name} is not shipped in the DumbMonit image: building the agent for macOS \
          requires Apple's SDK, which cannot be redistributed.\n\
-         Download it from {RELEASES_URL} and install it with:\n\
+         It is attached to each release: {RELEASE_DOWNLOAD_URL}/{name}\n\
+         (all files: {RELEASES_URL}). Install it with:\n\
          \x20 sudo ./install.sh --token=... --url=... --bin=./{name}\n"
     )
 }
 
-/// Réponse donnée pour un binaire qui n'est, par nature, jamais dans l'image.
-fn released_elsewhere(name: &str) -> Response {
-    (StatusCode::NOT_FOUND, released_elsewhere_message(name)).into_response()
+/// Réponse donnée pour un binaire (ou son empreinte, `file` finissant alors par
+/// `.sha256`) qui n'est, par nature, jamais dans l'image : un renvoi vers la
+/// pièce jointe du même nom de la dernière publication.
+fn released_elsewhere(name: &str, file: &str) -> Response {
+    let location = format!("{RELEASE_DOWNLOAD_URL}/{file}");
+    (
+        StatusCode::TEMPORARY_REDIRECT,
+        [(header::LOCATION, location), (header::CACHE_CONTROL, "no-cache".to_string())],
+        released_elsewhere_message(name),
+    )
+        .into_response()
 }
 
 /// Suffixe sous lequel l'empreinte d'un binaire est servie : `/download/<nom>.sha256`.
@@ -102,7 +117,7 @@ pub async fn download(State(state): State<AppState>, Path(name): Path<String>) -
         return checksum(&state, binary).await;
     }
     if AGENT_FILES_RELEASED_ELSEWHERE.contains(&name.as_str()) {
-        return released_elsewhere(&name);
+        return released_elsewhere(&name, &name);
     }
     if !AGENT_FILES.contains(&name.as_str()) {
         return (StatusCode::NOT_FOUND, "Unknown file.").into_response();
@@ -138,7 +153,7 @@ pub async fn download(State(state): State<AppState>, Path(name): Path<String>) -
 /// d'installation puisse la passer telle quelle à `sha256sum -c`.
 async fn checksum(state: &AppState, name: &str) -> Response {
     if AGENT_FILES_RELEASED_ELSEWHERE.contains(&name) {
-        return released_elsewhere(name);
+        return released_elsewhere(name, &format!("{name}{CHECKSUM_SUFFIX}"));
     }
     if !AGENT_FILES.contains(&name) {
         return (StatusCode::NOT_FOUND, "Unknown file.").into_response();
@@ -220,12 +235,36 @@ mod tests {
     }
 
     #[test]
-    fn un_binaire_absent_par_nature_dit_ou_le_trouver() {
+    fn un_binaire_absent_par_nature_renvoie_vers_la_publication() {
+        // C'est ce renvoi qui fait marcher sur un Mac la commande que l'interface
+        // affiche : `curl -fsSL` (install.sh) le suit, binaire comme empreinte.
         let name = "dumbmonit-agent-macos-aarch64";
-        assert_eq!(released_elsewhere(name).status(), StatusCode::NOT_FOUND);
-        // Le corps est la seule chose que verra quelqu'un en train d'installer
-        // un agent : il doit porter la raison, l'adresse et la commande —
-        // pas seulement un regret.
+        let location = |response: &Response| {
+            response.headers().get(header::LOCATION).unwrap().to_str().unwrap().to_owned()
+        };
+
+        let binary = released_elsewhere(name, name);
+        assert_eq!(binary.status(), StatusCode::TEMPORARY_REDIRECT);
+        assert_eq!(
+            location(&binary),
+            "https://github.com/noekan/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64"
+        );
+
+        // L'empreinte suit le même chemin : le fichier `.sha256` publié à côté du
+        // binaire, au format de `shasum -a 256` que le script sait lire.
+        let checksum = released_elsewhere(name, &format!("{name}{CHECKSUM_SUFFIX}"));
+        assert_eq!(checksum.status(), StatusCode::TEMPORARY_REDIRECT);
+        assert!(
+            location(&checksum).ends_with("/latest/download/dumbmonit-agent-macos-aarch64.sha256")
+        );
+    }
+
+    #[test]
+    fn un_binaire_absent_par_nature_dit_ou_le_trouver() {
+        // Pour qui télécharge sans suivre les renvois, le corps est la seule chose
+        // visible : il doit porter la raison, l'adresse et la commande — pas
+        // seulement un regret.
+        let name = "dumbmonit-agent-macos-aarch64";
         let message = released_elsewhere_message(name);
         assert!(message.contains(name));
         assert!(message.contains(RELEASES_URL));

@@ -12,7 +12,7 @@
 	import { page } from '$app/state';
 	import { ApiError } from '$lib/api';
 	import { auth, safeDestination } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, DotField, ErrorNotice, Field } from '$lib/ui';
+	import { Button, ClickSpark, DotField, ErrorNotice, Field, shake } from '$lib/ui';
 	import { KeyRound, Info } from 'lucide-svelte';
 	import { tick } from 'svelte';
 	import Logo from '$lib/components/Logo.svelte';
@@ -40,6 +40,13 @@
 	let usernameError = $state<string | null>(null);
 	let failure = $state<{ title: string; error: unknown } | null>(null);
 	let localError = $state<string | null>(null);
+
+	// A refused sign-in shakes the gate once, and the pigeon's eyes cross
+	// until the next attempt: the refusal is felt, the message says why.
+	let gate = $state<HTMLElement | null>(null);
+	$effect(() => {
+		if (failure) shake(gate);
+	});
 
 	// The server answers 429 with the delay in its message; we count it down so
 	// the button comes back on its own instead of leaving a dead form.
@@ -181,9 +188,9 @@
 	</div>
 
 	<main class="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-12">
-		<section class="gate-panel rise-in relative w-full max-w-sm rounded-[var(--radius-card)] border border-line p-6 shadow-float sm:p-7" aria-labelledby="gate-title">
+		<section bind:this={gate} class="gate-panel rise-in relative w-full max-w-sm rounded-[var(--radius-card)] border border-line p-6 shadow-float sm:p-7" aria-labelledby="gate-title">
 			<!-- The pigeon peeks over the corner: the only playful note on an otherwise plain gate. -->
-			<Mascot mood="watch" class="mascot pointer-events-none absolute -top-12 -right-4 size-20 rotate-6 sm:-top-16 sm:-right-6 sm:size-28" />
+			<Mascot mood={failure ? 'dizzy' : 'watch'} class="mascot pointer-events-none absolute -top-12 -right-4 size-20 rotate-6 sm:-top-16 sm:-right-6 sm:size-28" />
 			<div class="flex items-center gap-2.5">
 				<Logo class="size-8" />
 				<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>

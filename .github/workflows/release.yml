@@ -6,6 +6,13 @@ name: Release
 #   - every push to main   -> :edge
 #   - every tag v*         -> :X.Y.Z, :X.Y, :X and :latest
 # CI (ci.yml) builds the same images without pushing, on every push and PR.
+#
+# It also delivers the agent as native binaries: Linux x86_64/aarch64 (static
+# musl), Windows x86_64 and FreeBSD x86_64 from the Dockerfile's `agent-dist`
+# stage, macOS arm64/x86_64 from a macOS runner, each with its `.sha256`.
+#   - every push to main   -> workflow artifacts `dumbmonit-agent-binaries`
+#                             and `dumbmonit-agent-macos` (kept 30 days)
+#   - every tag v*         -> attached to the GitHub release of that tag
 
 on:
   push:
@@ -70,6 +77,36 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # The agent binaries the server image ships in /agents, taken out of the
+      # same `agent` stage: it was just built for the image above, so this only
+      # exports it from the builder's cache — nothing is compiled twice.
+      - name: Extract the agent binaries
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: agent-dist
+          platforms: linux/amd64
+          outputs: type=local,dest=dist
+          cache-from: type=gha
+
+      # Same format as the checksums the server serves on /download/<name>.sha256:
+      # `sha256sum -c` and `shasum -a 256 -c` both read it.
+      - name: Checksums
+        run: |
+          set -eu
+          cd dist
+          for binary in dumbmonit-agent-*; do
+            sha256sum "$binary" > "$binary.sha256"
+          done
+          ls -l
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dumbmonit-agent-binaries
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
       - id: agent-meta
         uses: docker/metadata-action@v5
         with:
@@ -105,8 +142,8 @@ jobs:
   # Il ne peut pas sortir de l'image : compiler pour macOS exige le SDK d'Apple,
   # que sa licence interdit de redistribuer, et aucun conteneur ne peut donc le
   # construire légalement. Il est donc construit ici, sur un vrai exécuteur
-  # macOS, et attaché à la publication — c'est ce que le serveur indique quand
-  # on lui demande `/download/dumbmonit-agent-macos-…`.
+  # macOS, et attaché à la publication (job `github-release`) — c'est là que le
+  # serveur renvoie quand on lui demande `/download/dumbmonit-agent-macos-…`.
   #
   # Les deux architectures sont livrées séparément plutôt qu'en binaire
   # universel : l'agent se télécharge par un script qui connaît déjà la sienne.
@@ -114,8 +151,6 @@ jobs:
   macos-agent:
     name: Build the macOS agent
     runs-on: macos-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -148,18 +183,55 @@ jobs:
           done
           ls -l
 
-      # Sur une version publiée : les binaires rejoignent la page de la version,
-      # d'où install.sh --bin=… les attend.
-      - uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
-        with:
-          files: dist/*
-
-      # Sur main : gardés comme artefact de la construction, pour que l'agent
-      # macOS de la version de développement reste récupérable.
+      # Sur main, l'artefact garde l'agent macOS de la version de développement ;
+      # sur une étiquette, c'est aussi ce que `github-release` attache.
       - uses: actions/upload-artifact@v4
-        if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
           name: dumbmonit-agent-macos
           path: dist/*
+          if-no-files-found: error
           retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Publication GitHub d'une version : tous les binaires de l'agent et leurs
+  # empreintes, sur la page de l'étiquette.
+  #
+  # Un seul job crée la publication, une fois les deux constructions terminées :
+  # deux jobs qui la créent chacun de leur côté se la disputent, et l'un des
+  # deux finit par en ouvrir une seconde.
+  #
+  # Jamais marquée « pre-release », même pour une étiquette -alpha : GitHub ne
+  # compte pas les pre-releases dans /releases/latest, l'adresse où le serveur
+  # renvoie pour l'agent macOS et que la documentation donne.
+  # ---------------------------------------------------------------------------
+  github-release:
+    name: Publish the GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [image, macos-agent]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dumbmonit-agent-*
+          path: dist
+          merge-multiple: true
+
+      - name: Check the files
+        run: |
+          set -eu
+          cd dist
+          ls -l
+          for name in linux-x86_64 linux-aarch64 windows-x86_64.exe freebsd-x86_64 \
+                      macos-aarch64 macos-x86_64; do
+            test -s "dumbmonit-agent-$name" || { echo "missing: dumbmonit-agent-$name"; exit 1; }
+          done
+          sha256sum -c ./*.sha256
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: true
+          prerelease: false
+          make_latest: true

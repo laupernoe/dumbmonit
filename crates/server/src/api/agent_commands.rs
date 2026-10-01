@@ -391,7 +391,7 @@ fn checked_name(name: &str) -> ApiResult<String> {
     Ok(name.to_string())
 }
 
-async fn list_containers(
+pub(crate) async fn list_containers(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<Vec<ContainerView>>> {
@@ -514,7 +514,7 @@ async fn enqueue(
     }
 }
 
-async fn restart(
+pub(crate) async fn restart(
     State(state): State<AppState>,
     Path((id, name)): Path<(TargetId, String)>,
     who: Option<Extension<CurrentPrincipal>>,

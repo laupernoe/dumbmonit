@@ -1,7 +1,9 @@
 <script lang="ts">
 	/**
 	 * The rack itself: one faceplate per row, children indented under their
-	 * parent, entrance staggered 30 ms apart. Ordering lives in `rack.ts`.
+	 * parent, entrance staggered 30 ms apart; each LED flickers
+	 * on just after its unit slides in, so the rack powers up top to bottom.
+	 * Ordering lives in `rack.ts`.
 	 */
 	import type { TargetId } from '$lib/api';
 	import type { Serie } from '$lib/components/Chart.svelte';
@@ -28,6 +30,7 @@
 				sparkline={sparklines.get(row.target.id) ?? null}
 				depth={row.depth}
 				shadowed={row.shadowed}
+				bootDelay={Math.min(i, 14) * 30 + 220}
 			/>
 		</li>
 	{/each}

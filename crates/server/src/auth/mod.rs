@@ -19,6 +19,7 @@
 pub mod audit;
 pub mod client_ip;
 pub mod cookie;
+pub mod cors;
 pub mod middleware;
 pub mod oidc;
 pub mod password;

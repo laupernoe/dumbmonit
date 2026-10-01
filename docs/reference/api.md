@@ -1,14 +1,60 @@
 # HTTP API
 
-Everything the web UI does goes through `/api/*`; there is nothing else. The
-route table is `crates/server/src/api/mod.rs`; the response shapes are
-mirrored in `web/src/lib/api/types.ts`.
+Everything the web UI does goes through `/api/*`, and the same API is open to
+your own scripts, dashboards and assistants: there is no private half. It is
+plain JSON over HTTP, authenticated by a session cookie (the web UI) or by an
+API token (everything else).
+
+!!! warning "Alpha"
+    DumbMonit is an alpha and so is its API: routes and fields can still change.
+    The API version (below) changes whenever a route or a field is removed or
+    renamed, so a client can tell.
+
+## OpenAPI description
+
+Every instance describes its own API in an
+[OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0) document:
+
+```
+GET /api/openapi.json
+```
+
+It is public — it carries no secret, no address and nothing about your
+devices — and it is the exhaustive reference: every route a client can call,
+its parameters, request and response shapes, error responses and the scope it
+needs (the `x-token-scope` extension on each operation: `public`, `read`,
+`write`, or `none` for routes a token can never call). The tables further
+down this page are a readable summary of the same thing.
+
+Left out on purpose: the agent protocol (`/api/ingest`,
+`/api/agent/commands*`, `/api/agent/relay*`), which only the
+[agent](../devices/agent.md) speaks; the browser redirects of SSO sign-in
+(`/api/auth/oidc/start`, `/api/auth/oidc/callback`); and the agent downloads
+(`/install.sh`, `/install.ps1`, `/download/*`).
+
+Load it in any OpenAPI tool:
+
+```bash
+# Browse it, and try calls with your token, in Swagger UI
+docker run --rm -p 8081:8080 \
+  -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
+# then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
+
+# Generate a client library (here Python)
+docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
+  -i http://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
+
+# Or just list what is there
+curl -s http://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
+```
+
+Postman and Insomnia import it from the same URL.
 
 ## Authentication
 
 Two ways in, accepted on every protected route:
 
-- **Session cookie** — what the web UI uses. Log in with a password (or SSO)
+- **Session cookie** — what the web UI uses. Sign in with a password (or SSO)
   and send the HttpOnly `dumbmonit_session` cookie (SameSite Lax; `Secure`
   when `DUMBMONIT_COOKIE_SECURE=1`; 30 days). Every state-changing request
   (`POST`, `PUT`, `DELETE`) must also carry `X-Requested-With: DumbMonit` —
@@ -16,39 +62,27 @@ Two ways in, accepted on every protected route:
   refused with `403`.
 - **API token** — `Authorization: Bearer dmt_…`, for scripts, dashboards and
   assistants. Created in Settings → **API & assistants** (the same tokens the
-  [MCP server](../using/assistant.md) uses), shown once, hashed at rest. No
-  cookie is involved, so no `X-Requested-With` header is needed.
+  [MCP server](../using/assistant.md) uses) and shown once. No cookie is
+  involved, so no `X-Requested-With` header is ever needed.
 
 ```bash
-# Session: log in (204 and a Set-Cookie header), then send the cookie
-curl -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+# API token: one header, nothing else
+curl -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/targets
+curl -H 'Authorization: Bearer dmt_…' -X POST http://monit.lan:8080/api/targets/4/probe
+
+# Session: sign in (204 and a Set-Cookie header), then send the cookie
+curl -c cookies.txt -X POST http://monit.lan:8080/api/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"admin","password":"…"}'
-curl -b cookies.txt http://localhost:8080/api/targets
-curl -b cookies.txt -X POST http://localhost:8080/api/targets \
+curl -b cookies.txt http://monit.lan:8080/api/targets
+curl -b cookies.txt -X POST http://monit.lan:8080/api/targets \
   -H 'X-Requested-With: DumbMonit' -H 'content-type: application/json' \
   -d '{"name":"NAS","address":"nas.lan","kind":"snmp","credential":{"type":"snmp_community","community":"public"}}'
-
-# API token: one header, nothing else
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/targets
-curl -H 'Authorization: Bearer dmt_…' -X POST http://localhost:8080/api/targets/4/probe
 ```
 
-A token has one of two scopes. **`read`** grants what a *viewer* account
-sees: every `GET`. **`write`** grants what an *administrator* does: every
-`POST`, `PUT` and `DELETE` as well. A `read` token on a write route gets
-`403` with a message naming the token and the missing scope.
-
-Whatever its scope, a token can never touch accounts, sessions or other
-credentials — those are things a person does in the web UI. Every route under
-`/api/auth/*` (own account, password, two-factor, SSO configuration, audit
-log), `/api/users/*`, `/api/tokens/*` and `/api/agent/tokens/*` answers `403`
-to a bearer token. A missing, unknown or revoked token gets `401` with
-`WWW-Authenticate: Bearer`; when a bearer token is presented, the cookie is
-ignored, so a revoked token is refused even from a signed-in browser. Each
-token is limited to 120 calls per minute (`429` with `Retry-After` beyond),
-and the token list shows when each one was last used (updated at most once a
-minute).
+When a request carries a bearer token, the cookie is ignored: a revoked token
+is refused even from a signed-in browser, rather than quietly falling back on
+the session.
 
 Agent enrollment tokens (`dmon_…`) are a different thing: they only work on
 the agent routes (`/api/ingest`, `/api/agent/commands/*`, `/api/agent/relay*`).
@@ -57,9 +91,167 @@ machine must also present its own binding secret in `X-DumbMonit-Agent-Secret`
 (`dmab_…`), which the server hands out once at enrolment. See
 [Binding](../devices/agent.md#binding-one-machine-one-agent).
 
-Login is rate-limited: after five failed attempts, each further attempt is
+Sign-in is rate-limited: after five failed attempts, each further attempt is
 refused with `429` and a `Retry-After` delay that doubles from 30 s up to
 5 minutes. Never guess passwords in a loop.
+
+## Scopes
+
+A token has one of two scopes. There is no third, more powerful one: what an
+administrator does on their own account stays out of reach of every token.
+
+| | `read` token | `write` token |
+|---|---|---|
+| Every `GET` a *viewer* account can make (devices, alerts, metrics, rules, channels without their secrets, status pages…) | yes | yes |
+| `POST`, `PUT`, `DELETE` an *administrator* can make (devices, rules, silences, channels, status pages, packs, probes, discovery…) | `403` | yes |
+| `/metrics`, `/federate`, `/prometheus/*` ([scraping](metrics.md#scraping-dumbmonit)) | yes | yes |
+| MCP read tools / write tools ([assistants](../using/assistant.md#what-the-assistant-can-call)) | read only | both |
+| Accounts, sessions, two-factor, SSO, audit log (`/api/auth/*`, `/api/users/*`) | `403` | `403` |
+| API tokens and agent enrollment tokens (`/api/tokens/*`, `/api/agent/tokens/*`) | `403` | `403` |
+| Backup and restore (`/api/backup/*`) | `403` | `403` |
+
+A `read` token on a write route gets `403` with a message naming the token and
+the missing scope. Because no token can list, create or revoke tokens, a token
+can never mint another one — let alone a more powerful one.
+
+## Token security
+
+- **Shown once, stored hashed.** A token is `dmt_` followed by 128 random
+  bits. The server keeps only its SHA-256 digest (and the first characters,
+  `dmt_1a2b3c4d`, to recognise it in a list); the token in clear exists only
+  in the response to its creation. Presented tokens are compared in constant
+  time.
+- **Expiry.** Choose 30 days, 90 days, 1 year or never when creating it. An
+  expired token gets `401` with `The API token "<name>" expired on …` and
+  `WWW-Authenticate: Bearer error="invalid_token"`; it stays in the list,
+  marked expired, until you revoke it.
+- **Allowed networks.** Optionally restrict a token to a list of addresses or
+  CIDR ranges (`192.168.1.0/24, 10.8.0.5`, 32 entries at most). From anywhere
+  else it gets `403` with `The API token "<name>" cannot be used from <address>.` The
+  address checked is the TCP client's, or — only when the connection comes
+  from a proxy listed in `DUMBMONIT_TRUSTED_PROXIES` — the one that proxy
+  reports in `X-Forwarded-For`. Behind a reverse proxy you have not declared,
+  every request seems to come from the proxy: declare it, or the restriction
+  will refuse everyone.
+- **Last use.** The token list shows when each token was last used and from
+  which address (updated at most once a minute, or as soon as the address
+  changes): a token nobody uses any more is one to revoke.
+- **Bound to its creator.** A token remembers the account that created it. If
+  that account is disabled, its tokens are refused (`401`); if it is demoted to
+  viewer, its `write` tokens act as `read` tokens; if it is deleted, its tokens
+  are revoked.
+- **Revocation** is immediate: the next call gets `401`.
+- **Logged.** Every write made with a token is written to the server log with
+  the token's name and id, the method, the path (without query string) and the
+  status — never the token, never the body. Creating and revoking a token are
+  recorded in the audit log (Settings → Security).
+
+## Rate limits
+
+Each token may make 120 calls per minute, REST and MCP together. Beyond that,
+calls are refused with `429` and a `Retry-After` header (seconds) until the
+minute is over. Every response to a token-authenticated request tells where
+you stand:
+
+| Header | Meaning |
+|---|---|
+| `RateLimit-Limit` | Calls allowed per window (120). |
+| `RateLimit-Remaining` | Calls left in the current window. |
+| `RateLimit-Reset` | Seconds until the window starts over. |
+
+A Grafana dashboard with many panels and a short refresh can reach the limit:
+give it its own token, or lengthen the refresh.
+
+## Cross-origin requests (CORS)
+
+A page served from another origin — your own dashboard, Swagger UI, a
+browser-based MCP client — can call the API **with a bearer token, never with
+a session**:
+
+- a response carries `Access-Control-Allow-Origin` only when the request
+  carried `Authorization: Bearer dmt_…` (or for the public
+  `GET /api/openapi.json`). `Access-Control-Allow-Credentials` is never sent,
+  so a browser never attaches the session cookie to a cross-origin call;
+- a preflight (`OPTIONS`) on `/api/*` succeeds only when the announced headers
+  include `authorization`: `204`, methods `GET, POST, PUT, DELETE`, headers
+  `authorization, content-type, mcp-protocol-version, mcp-method, mcp-name`,
+  cached 10 minutes. `X-Requested-With` is not among them, so a cookie session
+  can never make a write from another origin;
+- `Retry-After`, `WWW-Authenticate`, the `RateLimit-*` headers and
+  `X-DumbMonit-Api-Version` are readable by the calling script.
+
+`DUMBMONIT_API_CORS_ORIGINS` sets which origins are allowed:
+
+| Value | Effect |
+|---|---|
+| unset (default) | Any origin (`Access-Control-Allow-Origin: *`). Safe, since only a bearer token opens anything. |
+| `https://grafana.example.com,https://dash.lan` | Only these origins, echoed back. |
+| `off` | No CORS headers at all: only same-origin pages and non-browser clients. |
+
+The same list decides which `Origin` the [MCP endpoint](../using/assistant.md#security-notes)
+accepts.
+
+```js
+// From a page on another origin. Never ship a write token in a public page.
+const response = await fetch('https://monit.example.com/api/alerts', {
+  headers: { Authorization: 'Bearer dmt_…' }
+});
+if (!response.ok) throw new Error((await response.json()).error);
+const alerts = await response.json();
+console.log(response.headers.get('RateLimit-Remaining'), 'calls left this minute');
+```
+
+## Versioning
+
+Every response under `/api` carries the API version:
+
+```
+X-DumbMonit-Api-Version: 0.1
+```
+
+The same value is `info.version` in the OpenAPI document, next to
+`x-server-version`, the version of the server that answered. While the API is
+`0.x` it is not frozen; the version changes whenever a route or a field is
+removed or renamed. Adding a route or a field does not change it: ignore
+fields you do not know.
+
+## Errors
+
+Every error is JSON: `{"error": "message"}`, written for a person.
+
+| Status | When |
+|---|---|
+| `400` | The request is malformed or a value is invalid; the message names it. |
+| `401` | No valid session or token: missing, unknown, revoked or expired token (with `WWW-Authenticate: Bearer`), or a token whose creator is disabled. |
+| `403` | Authenticated, but not allowed: a viewer or a `read` token on a write route, a token on an account, token or backup route, a token used from a network it is not allowed from, a cookie write without `X-Requested-With`, or any write on the public demo (with `"demo": true`). |
+| `404` | The id does not exist. A path under `/api` that matches no route answers `404 {"error": "Unknown API route: …"}` rather than the web UI's HTML. |
+| `405` | The method does not exist on that path (`GET /api/mcp`, for instance). |
+| `409` | A conflict with the current state (a duplicate, a command already running…). |
+| `429` | Rate-limited, with `Retry-After`. |
+| `500` | A server fault; the details are in the server log, never in the response. |
+
+```bash
+$ curl -i -H 'Authorization: Bearer dmt_revoked…' http://monit.lan:8080/api/targets
+HTTP/1.1 401 Unauthorized
+www-authenticate: Bearer
+{"error":"A valid API token is required."}
+
+$ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' http://monit.lan:8080/api/targets/4
+HTTP/1.1 403 Forbidden
+{"error":"This action needs a token with the \"write\" scope; the token \"Grafana\" is \"read\" only. Create a write token in Settings → API & assistants."}
+
+$ curl -i -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/alerts   # the 121st call this minute
+HTTP/1.1 429 Too Many Requests
+retry-after: 17
+ratelimit-limit: 120
+ratelimit-remaining: 0
+{"error":"Rate limit reached (120 calls per minute per token). Retry in 17 s."}
+```
+
+The [MCP endpoint](../using/assistant.md#protocol-details) answers in JSON-RPC
+instead, with its own error codes.
+
+## Accounts, sign-in and tokens
 
 In the tables below, *session* means a session cookie **or** an API token;
 *admin* means an administrator session or a `write` token; *session only*
@@ -90,11 +282,29 @@ means a session cookie, never a token.
 | `PUT` | `/api/users/{id}` | admin, session only | Any of `display_name`, `role`, `disabled`, `password`; an omitted field keeps its value. Cannot demote or disable the last administrator. |
 | `DELETE` | `/api/users/{id}` | admin, session only | `204`. Not yourself, not the last administrator. |
 | `DELETE` | `/api/users/{id}/totp` | admin, session only | Resets another account's second factor (a locked-out colleague). `204`. |
-| `GET` | `/api/tokens` | session only | Every API token: `id`, `name`, `prefix`, `scope`, `created_at`, `last_used_at`, `revoked_at`. |
-| `POST` | `/api/tokens` | admin, session only | `{"name": "Grafana", "scope": "read"}` (`read` by default, or `write`). `201` with the token fields plus `secret` (shown once). |
+| `GET` | `/api/tokens` | session only | Every API token: `id`, `name`, `prefix`, `scope`, `created_at`, `created_by` (the account that created it), `expires_at` (`null`: never), `expired`, `allowed_networks` (empty: anywhere), `last_used_at`, `last_used_ip`, `revoked_at`. Never the secret. |
+| `POST` | `/api/tokens` | admin, session only | `{"name": "Grafana", "scope": "read", "expires_in_days": 90, "allowed_networks": ["192.168.1.0/24"]}`. `name` is required (80 characters at most); `scope` is `read` (default) or `write`; `expires_in_days` runs from 1 to 3650, `null` or absent for a token that never expires; `allowed_networks` takes up to 32 addresses or CIDR ranges, stored in network form (`192.168.1.7/24` becomes `192.168.1.0/24`), empty or absent for anywhere. `201` with the token fields plus `secret` (shown once). `400` names an invalid network. |
 | `DELETE` | `/api/tokens/{id}` | admin, session only | Revoke. `204`; `404` when unknown or already revoked. |
 
-Every response carries `X-Content-Type-Options: nosniff`,
+A token as listed:
+
+```json
+{
+  "id": 3, "name": "Grafana", "prefix": "dmt_1a2b3c4d", "scope": "read",
+  "created_at": "2026-10-01T09:12:00Z", "created_by": "admin",
+  "expires_at": "2026-12-30T09:12:00Z", "expired": false,
+  "allowed_networks": ["192.168.1.0/24"],
+  "last_used_at": "2026-10-01T09:30:00Z", "last_used_ip": "192.168.1.20",
+  "revoked_at": null
+}
+```
+
+## Response headers
+
+Besides `X-DumbMonit-Api-Version` ([versioning](#versioning)), the
+`RateLimit-*` headers ([rate limits](#rate-limits)) and the CORS headers
+([cross-origin requests](#cross-origin-requests-cors)), every response carries
+`X-Content-Type-Options: nosniff`,
 `Referrer-Policy: same-origin` and a `Content-Security-Policy`. The policy
 starts from `default-src 'none'` and opens only what the interface really
 uses — all of it served by DumbMonit itself:
@@ -121,16 +331,6 @@ unsubscribe pages under `/s/` included, also carries `X-Frame-Options: DENY`.
 If you put DumbMonit behind a reverse proxy, do not let it add a second
 `Content-Security-Policy` header: browsers enforce the intersection of all of
 them, and a proxy default without the nonce leaves a blank page.
-
-## Errors
-
-Every error is JSON: `{"error": "message"}`, with `400` for a bad request,
-`401` without a valid session or token, `403` when the session or token may
-not do this (viewer on a write route, `read` token, missing anti-CSRF header,
-token on an account route), `404` when the id does not exist, `409` on a
-conflict, `429` when rate-limited and `500` otherwise. A path under `/api` that matches
-no route answers `404 {"error": "Unknown API route: …"}` rather than the web
-UI's HTML.
 
 ## Health
 
@@ -518,7 +718,7 @@ The exact keys per kind come from `/api/notify/kinds` and are documented in
 | `GET` | `/api/public/status/{slug}/uptime.svg`, `/response.svg` | public | Page badges: mean uptime over `?days=` `1`, `7`, `30` (default) or `90` — `400` beyond the page's history — and mean response time. SVG, `Cache-Control: public, max-age=60`. |
 | `GET` | `/api/public/status/{slug}/components/{key}/badge.svg`, `/uptime.svg`, `/response.svg` | public | The same three badges for one service; `key` is the service's `key` in the public document (its label in URL form). `404` for an unknown key. |
 | `GET` | `/api/public/status/{slug}/logo` | public | The page's logo with its image type, cacheable for a day (the document's `logo_url` carries a version). `404` without one. |
-| `POST` | `/api/public/status/{slug}/subscribe` | public | `{"email": "…"}`. Mails a confirmation link through the page's SMTP channel. Always `202` with the same message, whatever the address's state; `400` for an invalid address; `404` when the page offers no email subscription; `429` with `Retry-After` beyond five requests per client and sixty in all per 15 minutes. |
+| `POST` | `/api/public/status/{slug}/subscribe` | public | `{"email": "…"}`. Mails a confirmation link through the page's SMTP channel. Always `202` with the same message, whatever the address's state; `400` for an invalid address; `404` when the page offers no email subscription; `409` when the page cannot take more subscribers; `429` with `Retry-After` beyond five requests per client and sixty in all per 15 minutes. |
 | `POST` | `/api/public/status/{slug}/confirm?token=…` | public | Confirms a subscription (the link of the confirmation email opens `/s/{slug}/confirm`, whose button posts here). `404` for an unknown or expired token. |
 | `POST` | `/api/public/status/{slug}/unsubscribe?token=…` | public | Removes a subscription; the body is ignored, so it is also the RFC 8058 one-click target of `List-Unsubscribe`. Always `200`. |
 
@@ -602,7 +802,7 @@ last probe. Same status codes as above.
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/targets/{id}/proxmox/nodes` | One object per node, sorted by name: `name`, `up`, `cpu_percent`, `memory_percent`, `rootfs_percent`, `uptime_seconds`, `version` (the `pve-manager` release installed on that node), `services_down` (unit names of the daemons that are stopped or failed), `interfaces_offline` (interfaces set to start at boot that are not up), `thin_pools` (`name`, `vg`, `used_percent`, `metadata_used_percent`, `size_bytes`) and `volume_groups` (`name`, `used_percent`, `size_bytes`). A node that stopped answering keeps its entry with `up: false`. |
+| `GET` | `/api/targets/{id}/proxmox/nodes` | `{"nodes": […], "fencing_state", "fencing_armed"}` — the HA watchdog state (`armed`, `standby`…) and whether it would really isolate a lost node, then one object per node, sorted by name: `name`, `up`, `cpu_percent`, `cpu_iowait_percent`, `memory_percent`, `ksm_shared_bytes`, `rootfs_percent`, `uptime_seconds`, `version` (the `pve-manager` release installed on that node), `services_down` (unit names of the daemons that are stopped or failed), `interfaces_offline` (interfaces set to start at boot that are not up), `thin_pools` (`name`, `vg`, `used_percent`, `metadata_used_percent`, `size_bytes`) and `volume_groups` (`name`, `used_percent`, `size_bytes`). A node that stopped answering keeps its entry with `up: false`. |
 | `GET` | `/api/targets/{id}/proxmox/ceph` | `available` (`false` when the cluster has no Ceph — the UI then draws no section at all), `health` (0 OK, 1 WARN, 2 ERR, 3 unknown), `health_status`, `bytes_used`, `bytes_total`, `used_percent`, `osds_total`, `osds_up`, `osds_in`, `osds` (`name`, `host`, `device_class`, `up`, `in`, `used_percent`, `used_bytes`, `total_bytes`, `apply_latency_ms`, `commit_latency_ms`), `pools` (`name`, `used_percent`, `used_bytes`, `size`, `min_size`, `pg_num`, `pg_num_optimal`, `autoscale`), `filesystems` (CephFS names), `flags` (OSD flags currently set, such as `noout`) and `muted_checks` (health checks silenced, which `HEALTH_OK` no longer mentions). |
 
 ## Proxmox Backup Server
@@ -613,12 +813,12 @@ it is not a `pbs` target.
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/targets/{id}/pbs/calendar?days=30&offset=120` | One row per backup group (`datastore`, `namespace`, `backup_type`, `backup_id`, `name`, `count`, `last_time`, `last_size`, `last_verified`, `last_success`, `last_failure`, `retention`) with a `days` array of `{date, state, runs, snapshot}`. `offset` is the viewer's UTC offset in minutes, so that days are cut at local midnight. |
+| `GET` | `/api/targets/{id}/pbs/calendar?days=30&offset=120` | `{"probed_at", "days", "offset_minutes", "groups": […]}`: one entry per backup group (`datastore`, `namespace`, `backup_type`, `backup_id`, `name`, `count`, `last_time`, `last_size`, `last_verified`, `last_success`, `last_failure`, `retention`) with a `days` array of `{date, state, runs, snapshot}`. `offset` is the viewer's UTC offset in minutes, so that days are cut at local midnight. |
 | `GET` | `/api/targets/{id}/pbs/failures?days=30` | Failed tasks: `upid`, `worker_type`, `kind`, `worker_id`, `datastore`, `start`, `end`, `error`. |
-| `GET` | `/api/targets/{id}/pbs/jobs` | Sync, verify, prune and garbage-collection jobs with their schedule and last result. |
+| `GET` | `/api/targets/{id}/pbs/jobs` | `{"probed_at", "jobs": […]}`: sync, verify, prune and garbage-collection jobs with their schedule and last result. |
 | `GET` | `/api/targets/{id}/pbs/health` | Datastores (usage, estimated full date), disks (SMART, wearout) and ZFS pools. |
-| `GET` | `/api/targets/{id}/pbs/tasks/{upid}/log` | The log of one task, fetched from the server: `{"upid", "lines": […]}`. |
-| `GET` | `/api/targets/{id}/pbs/disks/smart` | SMART attributes of every disk. |
+| `GET` | `/api/targets/{id}/pbs/tasks/{upid}/log?lines=200` | The log of one task, fetched from the server: `{"upid", "lines": […]}`; `lines` caps how many are returned. |
+| `GET` | `/api/targets/{id}/pbs/disks/smart?disk=/dev/sda` | SMART attributes of one disk; `disk` is required (`400` without it). |
 | `GET` | `/api/targets/{id}/pdm/remotes` | Proxmox Datacenter Manager: estate totals (`estate`) and one row per federated instance (`id`, `kind`, `reachable`, `error`, `version`, `version_behind`, node and guest counts, memory and storage, `subscription`, `last_collection`, `tasks_failed`), unreachable first. |
 | `GET` | `/api/targets/{id}/pdm/failures?days=14` | Tasks that failed across the estate: `upid`, `remote`, `worker_type`, `kind`, `worker_id`, `node`, `start`, `end`, `error`. |
 | `GET` | `/api/targets/{id}/pdm/health` | The console host: CPU, memory, root filesystem, uptime, certificates, pending updates and subscription. |
@@ -643,27 +843,34 @@ it is not a `pbs` target.
 
 ## Assistants (MCP)
 
-The built-in Model Context Protocol server, the one an assistant talks to. It
-authenticates with the API tokens above and never with a session.
+The built-in [Model Context Protocol](https://modelcontextprotocol.io) server,
+the one an assistant talks to. It authenticates with the API tokens above —
+same scopes, expiry, networks and rate limit — and never with a session.
 
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
-| `POST` | `/api/mcp` | API token | JSON-RPC 2.0 over the Streamable HTTP transport (protocol `2025-06-18`; `2025-03-26` and `2024-11-05` are accepted too). Stateless: no `Mcp-Session-Id` is issued, each call carries its own token. |
-| `GET` | `/api/mcp` | public | `405` with `Allow: POST` — there is no server-sent stream; the body only says what this endpoint is. |
+| `POST` | `/api/mcp` | API token | JSON-RPC 2.0 over the Streamable HTTP transport, one request per `POST`, answered in JSON. Protocol `2026-07-28` (stateless: every request carries its version and client capabilities in `_meta`, plus the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers; `server/discover`), and `2025-11-25`, `2025-06-18` and `2025-03-26` through the `initialize` handshake. No session: no `Mcp-Session-Id` is issued, one sent is ignored. A notification gets `202` and no body. |
+| `GET`, `DELETE` | `/api/mcp` | public | `405` with `Allow: POST` — there is no server-sent stream and no session to end; the body only says what this endpoint is. |
 
-`tools` is the only capability — no resources, no prompts, no OAuth. A `read`
-token gets `get_status`, `list_devices`, `get_device`, `list_alerts`,
-`alert_history`, `query_metrics`, `list_silences` and `list_rules`;
-`silence_device`, `remove_silence`, `acknowledge_alert`, `probe_device`,
-`set_device_enabled` and `set_rule_enabled` need a `write` token. The tools
-call the same code as the web UI. See [Assistants](../using/assistant.md).
+`tools` is the only capability — no resources, no prompts, no OAuth. Of the 27
+tools, a `read` token can call the 15 that only read (`get_status`,
+`list_devices`, `get_device`, `list_alerts`, `alert_history`,
+`query_metrics`, `list_silences`, `list_rules`, `list_device_types`,
+`list_agents`, `list_containers`, `list_heartbeats`, `list_status_pages`,
+`list_channels`, `list_packs`); the 12 that change something
+(`silence_device`, `remove_silence`, `acknowledge_alert`, `probe_device`,
+`set_device_enabled`, `set_rule_enabled`, `add_device`, `discover_network`,
+`schedule_maintenance`, `restart_container`, `test_channel`,
+`post_incident`) need a `write` token. The tools call the same code as the
+web UI. Versions, headers, error codes and the security notes are in
+[Connect an assistant](../using/assistant.md#protocol-details).
 
 ## Agent files (outside `/api`)
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/install.sh` | The Linux installer. Public. |
+| `GET` | `/install.sh` | The Linux, macOS and FreeBSD installer. Public. |
 | `GET` | `/install.ps1` | The Windows installer. Public. |
-| `GET` | `/download/{name}` | `dumbmonit-agent-linux-x86_64`, `dumbmonit-agent-linux-aarch64`, `dumbmonit-agent-windows-x86_64.exe`, served from `DUMBMONIT_AGENT_DIR`. `404` if the file is absent. |
+| `GET` | `/download/{name}` | `dumbmonit-agent-linux-x86_64`, `dumbmonit-agent-linux-aarch64`, `dumbmonit-agent-freebsd-x86_64`, `dumbmonit-agent-windows-x86_64.exe`, served from `DUMBMONIT_AGENT_DIR`; `{name}.sha256` gives its checksum in `sha256sum` format. `404` if the file is absent. `dumbmonit-agent-macos-aarch64` and `dumbmonit-agent-macos-x86_64` (and their `.sha256`) answer `307` to the same file on the latest GitHub release. Public. |
 
 Every other path is served by the web UI, which asks you to sign in itself.

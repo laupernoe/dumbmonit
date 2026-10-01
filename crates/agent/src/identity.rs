@@ -74,10 +74,10 @@ fn machine_id() -> Option<String> {
     {
         // `/etc/hostid` est écrit au premier démarrage à partir du SMBIOS ;
         // `kern.hostuuid` dit la même chose et existe même sans ce fichier.
-        if let Ok(content) = std::fs::read_to_string("/etc/hostid") {
-            if let Some(id) = clean_uuid(&content) {
-                return Some(id);
-            }
+        if let Ok(content) = std::fs::read_to_string("/etc/hostid")
+            && let Some(id) = clean_uuid(&content)
+        {
+            return Some(id);
         }
         let output = std::process::Command::new("/sbin/sysctl")
             .args(["-n", "kern.hostuuid"])

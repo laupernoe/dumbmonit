@@ -846,7 +846,16 @@ impl SnapshotBudget {
 
     /// Réserve une place ; `false` quand le plafond est atteint.
     fn claim(&self) -> bool {
-        self.0.fetch_update(Ordering::AcqRel, Ordering::Acquire, |left| left.checked_sub(1)).is_ok()
+        let mut left = self.0.load(Ordering::Acquire);
+        // Boucle explicite plutôt que `fetch_update` (obsolète depuis Rust 1.99) ou
+        // `try_update` (absent de la MSRV 1.88).
+        while let Some(next) = left.checked_sub(1) {
+            match self.0.compare_exchange_weak(left, next, Ordering::AcqRel, Ordering::Acquire) {
+                Ok(_) => return true,
+                Err(current) => left = current,
+            }
+        }
+        false
     }
 }
 

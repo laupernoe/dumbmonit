@@ -305,7 +305,7 @@
 						<Button type="submit" variant="primary" loading={saving} disabled={!dirty}>Save changes</Button>
 					</ClickSpark>
 					{#if saved}
-						<Plate tone="signal" label="Saved" />
+						<Plate tone="signal" label="Saved" draw />
 					{/if}
 				</div>
 			{/if}

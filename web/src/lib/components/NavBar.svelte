@@ -6,9 +6,11 @@
 	 * Docs, new tab), wall mode, the theme and the session.
 	 */
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
+	import { scale } from 'svelte/transition';
 	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv } from 'lucide-svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { Plate } from '$lib/ui';
+	import { Plate, RollingNumber, bump, reducedMotion } from '$lib/ui';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { palette } from '$lib/stores/palette.svelte';
 	import Logo from './Logo.svelte';
@@ -46,6 +48,24 @@
 
 	const badge = $derived(alertsStore.available && !alertsStore.loading ? alertsStore.activeCount : 0);
 
+	// A count that goes up bumps once, so a new alert is noticed from the
+	// corner of the eye; one that goes down just rolls. Clearing to zero
+	// shrinks the badge away.
+	let badgeTop = $state<HTMLElement | null>(null);
+	let badgeBottom = $state<HTMLElement | null>(null);
+	let lastBadge = 0;
+	$effect(() => {
+		const next = badge;
+		untrack(() => {
+			if (next > lastBadge && lastBadge > 0) {
+				bump(badgeTop);
+				bump(badgeBottom);
+			}
+			lastBadge = next;
+		});
+	});
+	const badgeOut = () => ({ duration: reducedMotion() ? 0 : 220, start: 0.4 });
+
 	// The pill follows the route, and also the badge: a count appearing next to
 	// "Alerts" shifts every item after it without changing the list's own size.
 	$effect(() => {
@@ -63,7 +83,7 @@
 	});
 </script>
 
-<header class="sticky top-0 z-30 hidden border-b border-line bg-canvas/85 backdrop-blur-md sm:block">
+<header class="vt-nav-top sticky top-0 z-30 hidden border-b border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
 		<a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="DumbMonit, overview">
 			<Logo class="size-7" />
@@ -91,7 +111,7 @@
 						>
 							{link.label}
 							{#if link.href === '/alerts' && badge > 0}
-								<span class="tnum ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[0.6875rem] font-bold text-white" aria-label={`${badge} active alerts`}>{badge}</span>
+								<span bind:this={badgeTop} in:scale={badgeOut()} out:scale={badgeOut()} class="tnum ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[0.6875rem] font-bold text-white" aria-label={`${badge} active alerts`}><RollingNumber value={badge} /></span>
 							{/if}
 						</a>
 					</li>
@@ -158,7 +178,7 @@
 </header>
 
 <!-- Phones: the five destinations as thumb-reachable tabs. -->
-<nav aria-label="Main" class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
+<nav aria-label="Main" class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
 	<ul class="grid grid-cols-5">
 		{#each LINKS as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}
@@ -172,7 +192,7 @@
 					<link.icon class="size-5" aria-hidden="true" />
 					{link.label}
 					{#if link.href === '/alerts' && badge > 0}
-						<span class="tnum absolute top-1.5 right-[calc(50%-1.5rem)] inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[0.625rem] font-bold text-white">{badge}</span>
+						<span bind:this={badgeBottom} in:scale={badgeOut()} out:scale={badgeOut()} class="tnum absolute top-1.5 right-[calc(50%-1.5rem)] inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[0.625rem] font-bold text-white"><RollingNumber value={badge} /></span>
 					{/if}
 				</a>
 			</li>

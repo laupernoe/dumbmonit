@@ -17,6 +17,7 @@ mod notify_policy;
 mod observability;
 mod oidc;
 mod onboarding;
+mod openapi;
 mod opnsense;
 mod packs;
 mod pbs;
@@ -38,6 +39,9 @@ mod truenas;
 mod users;
 
 pub use error::{ApiError, ApiResult};
+pub use openapi::API_VERSION;
+
+use std::sync::Arc;
 
 use axum::extract::{DefaultBodyLimit, Request};
 use axum::http::HeaderValue;
@@ -48,6 +52,7 @@ use axum::{Extension, Router, middleware};
 use tower_http::trace::TraceLayer;
 
 use crate::auth::AuthState;
+use crate::auth::cors::CorsPolicy;
 use crate::state::AppState;
 
 pub fn router(state: AppState) -> Router {
@@ -153,6 +158,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
     // inutilisable.
     let public = Router::new()
         .route("/health", get(health::health))
+        // La spécification OpenAPI de tout ce qui suit : publique, sans secret.
+        .route("/openapi.json", get(openapi::spec))
         .route("/auth/status", get(auth::status))
         .route("/auth/setup", post(auth::setup))
         .route("/auth/login", post(auth::login))
@@ -184,15 +191,16 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(music::public_routes());
 
     // Serveur MCP : authentifié par jeton d'API, pas par session — un assistant
-    // n'a pas de navigateur. Le garde ne couvre que cette route ; `GET` reste
-    // libre, il ne fait qu'expliquer ce qu'est ce point d'entrée (405).
+    // n'a pas de navigateur. Le garde ne couvre que `POST` ; `GET` et `DELETE`
+    // restent libres, ils ne font qu'expliquer ce qu'est ce point d'entrée (405 :
+    // ni flux serveur, ni session à fermer).
     let assistant = Router::new()
         .route("/mcp", post(mcp::post))
         .route_layer(crate::auth::token::require_token(
             state.clone(),
             crate::auth::token::Scope::Read,
         ))
-        .route("/mcp", get(mcp::get));
+        .route("/mcp", get(mcp::get).delete(mcp::get));
 
     Router::new()
         .nest("/api", public.merge(protected).merge(assistant).fallback(spa::api_not_found))
@@ -214,6 +222,15 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // Mode démonstration : toute écriture refusée ici, avant l'authentification
         // et avant tout gestionnaire — une seule porte, pas une vérification par route.
         .layer(middleware::from_fn_with_state(state.clone(), crate::demo::guard))
+        // CORS de l'API ouverte : requêtes à jeton seulement, jamais la session
+        // (voir `auth/cors.rs`). Avant le mode démonstration, pour qu'un
+        // préflight ne soit pas pris pour une écriture.
+        .layer(middleware::from_fn_with_state(
+            Arc::new(CorsPolicy::from_env()),
+            crate::auth::cors::layer,
+        ))
+        // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
+        .layer(middleware::from_fn(openapi::version_header))
         .layer(middleware::from_fn(security_headers))
         // Le span ne porte que le chemin : la chaîne de requête d'une route peut
         // contenir un code d'autorisation OIDC ou un jeton — rien de tout cela
