@@ -1,0 +1,45 @@
+{
+  "devices": [
+    {
+      "addresses": ["100.101.102.103"], "id": "11055", "nodeId": "nAbC123CNTRL",
+      "user": "alice@example.com", "name": "gateway.tail1234.ts.net", "hostname": "gateway",
+      "clientVersion": "1.86.2-t1234abcd", "updateAvailable": true, "os": "linux",
+      "created": "2026-03-01T15:51:31Z", "connectedToControl": true,
+      "keyExpiryDisabled": true, "expires": "0001-01-01T00:00:00Z", "authorized": true,
+      "isExternal": false, "machineKey": "mkey:000", "nodeKey": "nodekey:000",
+      "blocksIncomingConnections": false, "enabledRoutes": ["192.168.4.0/24"],
+      "advertisedRoutes": ["192.168.4.0/24"], "tags": ["tag:server"],
+      "tailnetLockError": "", "tailnetLockKey": "nlpub:000"
+    },
+    {
+      "addresses": ["100.101.102.104"], "id": "11056", "nodeId": "nDeF456CNTRL",
+      "user": "alice@example.com", "name": "nas.tail1234.ts.net", "hostname": "nas",
+      "clientVersion": "1.90.2-t5678efgh", "updateAvailable": false, "os": "linux",
+      "created": "2025-11-10T09:00:00Z", "lastSeen": "2026-09-30T08:12:44Z",
+      "connectedToControl": false, "keyExpiryDisabled": false,
+      "expires": "2026-10-05T09:00:00Z", "authorized": true, "isExternal": false,
+      "machineKey": "mkey:111", "nodeKey": "nodekey:111", "blocksIncomingConnections": false,
+      "tags": ["tag:server"], "tailnetLockError": "", "tailnetLockKey": ""
+    },
+    {
+      "addresses": ["100.101.102.105"], "id": "11057", "nodeId": "nGhI789CNTRL",
+      "user": "bob@example.com", "name": "bob-phone.tail1234.ts.net", "hostname": "bob-phone",
+      "clientVersion": "1.88.0", "updateAvailable": false, "os": "iOS",
+      "created": "2026-01-10T09:00:00Z", "lastSeen": "2026-09-28T21:00:00Z",
+      "connectedToControl": false, "keyExpiryDisabled": false,
+      "expires": "2027-01-10T09:00:00Z", "authorized": false, "isExternal": false,
+      "machineKey": "mkey:222", "nodeKey": "nodekey:222", "blocksIncomingConnections": false,
+      "tags": [], "tailnetLockError": "", "tailnetLockKey": ""
+    },
+    {
+      "addresses": ["100.101.102.106"], "id": "11058", "nodeId": "nShared9CNTRL",
+      "user": "carol@example.org", "name": "shared-printer.example-org.ts.net",
+      "hostname": "shared-printer", "clientVersion": "", "updateAvailable": false,
+      "os": "linux", "created": "", "lastSeen": "2026-09-29T18:00:00Z",
+      "connectedToControl": false, "keyExpiryDisabled": false,
+      "expires": "2026-10-02T00:00:00Z", "authorized": true, "isExternal": true,
+      "machineKey": "", "nodeKey": "nodekey:333", "blocksIncomingConnections": false,
+      "tags": []
+    }
+  ]
+}

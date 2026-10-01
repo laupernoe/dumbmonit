@@ -42,7 +42,7 @@ mod client;
 pub mod immich;
 pub mod jellyfin;
 pub mod nextcloud;
-mod options;
+pub(crate) mod options;
 pub mod paperless;
 pub mod plex;
 

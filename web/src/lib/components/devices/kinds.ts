@@ -31,11 +31,12 @@ import TruenasPanel from './truenas/TruenasPanel.svelte';
 import UnifiPanel from './unifi/UnifiPanel.svelte';
 import HomeAssistantPanel from './homeassistant/HomeAssistantPanel.svelte';
 import KubernetesPanel from './kubernetes/KubernetesPanel.svelte';
+import AppliancePanel from './appliance/AppliancePanel.svelte';
 import VspherePanel from './vsphere/VspherePanel.svelte';
 
 export type KindPanel = Component<{ target: Target }>;
 
-export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel, pihole: PiholePanel, adguard: AdguardPanel, nut: NutPanel, mikrotik: MikrotikPanel, unifi: UnifiPanel, homeassistant: HomeAssistantPanel, vsphere: VspherePanel, redis: BackendPanel, mongodb: BackendPanel, rabbitmq: BackendPanel, crowdsec: BackendPanel, traefik: ProxyPanel, caddy: ProxyPanel, npm: ProxyPanel, domain: ProxyPanel, nextcloud: SelfHostedPanel, immich: SelfHostedPanel, paperless: SelfHostedPanel, jellyfin: SelfHostedPanel, plex: SelfHostedPanel, kubernetes: KubernetesPanel };
+export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel, pihole: PiholePanel, adguard: AdguardPanel, nut: NutPanel, mikrotik: MikrotikPanel, unifi: UnifiPanel, homeassistant: HomeAssistantPanel, vsphere: VspherePanel, redis: BackendPanel, mongodb: BackendPanel, rabbitmq: BackendPanel, crowdsec: BackendPanel, traefik: ProxyPanel, caddy: ProxyPanel, npm: ProxyPanel, domain: ProxyPanel, nextcloud: SelfHostedPanel, immich: SelfHostedPanel, paperless: SelfHostedPanel, jellyfin: SelfHostedPanel, plex: SelfHostedPanel, kubernetes: KubernetesPanel, pfsense: AppliancePanel, unraid: AppliancePanel, veeam: AppliancePanel, tailscale: AppliancePanel, fortigate: AppliancePanel, sophos: AppliancePanel };
 
 /** The panel for a kind, or `null` when the generic charts are all there is. */
 export function kindPanel(kind: string): KindPanel | null {
