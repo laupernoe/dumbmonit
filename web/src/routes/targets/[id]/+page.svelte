@@ -82,6 +82,7 @@
 		Plate,
 		Skeleton,
 		Toggle,
+		confetti,
 		type Tone
 	} from '$lib/ui';
 	import { Activity, ArrowUpRight, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
@@ -92,6 +93,16 @@
 
 	let target = $state<Target | null>(null);
 	let loading = $state(true);
+
+	// The very first device of the instance: a burst of confetti, once, as its
+	// page opens (the add form says so in the navigation state).
+	let celebrated = false;
+	$effect(() => {
+		if (celebrated || !target) return;
+		if (!(page.state as { firstDevice?: boolean }).firstDevice) return;
+		celebrated = true;
+		confetti();
+	});
 	let error = $state<unknown>(null);
 	let parent = $state<Target | null>(null);
 	/** The relay agent that probes this device, when it is not the server. */

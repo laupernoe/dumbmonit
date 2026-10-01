@@ -41,7 +41,7 @@
 		aria-label={title}
 		{title}
 	>
-		{#if status === 'copied'}<Check class="size-4 text-signal-ink" aria-hidden="true" />{:else if status === 'failed'}<TextCursorInput class="size-4 text-warning-ink" aria-hidden="true" />{:else}<Copy class="size-4" aria-hidden="true" />{/if}
+		{#if status === 'copied'}<Check class="check-draw size-4 text-signal-ink" aria-hidden="true" />{:else if status === 'failed'}<TextCursorInput class="size-4 text-warning-ink" aria-hidden="true" />{:else}<Copy class="size-4" aria-hidden="true" />{/if}
 	</button>
 	{#if status === 'failed'}
 		<span class="pointer-events-none absolute top-full right-1.5 mt-1 rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink-2 shadow-sm" role="status">Select and copy</span>

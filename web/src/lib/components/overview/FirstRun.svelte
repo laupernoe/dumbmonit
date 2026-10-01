@@ -15,7 +15,8 @@
 	import { Radar, Server, Bell, Send, X } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
 	import { updateOnboarding, type OnboardingState, type OnboardingStep } from '$lib/api';
-	import { Button, ClickSpark, Plate } from '$lib/ui';
+	import { untrack } from 'svelte';
+	import { Button, ClickSpark, Plate, confetti } from '$lib/ui';
 	import Mascot from '$lib/components/Mascot.svelte';
 
 	interface Props {
@@ -79,6 +80,17 @@
 	/** The one step the reader is on: the first that is neither done nor waved off. */
 	const current = $derived(steps.find((step) => !step.done && !waved(step)) ?? null);
 	const remaining = $derived(steps.filter((step) => !step.done).length);
+
+	// The last step turning green while the guide is open is worth a burst:
+	// the first device, the first channel and a message that really left.
+	let remainingSeen: number | null = null;
+	$effect(() => {
+		const left = remaining;
+		untrack(() => {
+			if (remainingSeen !== null && remainingSeen > 0 && left === 0) confetti();
+			remainingSeen = left;
+		});
+	});
 
 	let saving = $state<OnboardingStep | 'skip' | null>(null);
 	let failure = $state<string | null>(null);
@@ -157,7 +169,7 @@
 							{step.title}
 						</span>
 						{#if step.done}
-							<Plate tone="signal" label="Done" />
+							<Plate tone="signal" label="Done" draw />
 						{:else if off}
 							<Plate tone="ghost" label="Skipped" />
 						{/if}

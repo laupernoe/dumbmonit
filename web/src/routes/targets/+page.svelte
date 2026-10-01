@@ -194,7 +194,13 @@
 	>
 		{#snippet action()}
 			{#if auth.isAdmin}
-				<Button variant="primary" href="/targets/new">Add a device</Button>
+				<ClickSpark>
+					<Button variant="primary" href="/targets/new">Add a device</Button>
+				</ClickSpark>
+				<p class="mt-4 text-sm text-ink-2">
+					Or <a href="/targets/new?kind=agent" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">install the agent on a machine</a>,
+					or <a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">watch a remote site</a> through one.
+				</p>
 			{/if}
 		{/snippet}
 	</EmptyState>
