@@ -1,0 +1,5 @@
+{"data":[
+ {"id":"88788f9e-0000-4c0f-9a3f-000000000001","name":"Default Backup Repository","type":"WinLocal","description":"Created by Veeam Backup","hostId":"6745a759-0000-4cd2-b172-000000000001","hostName":"VBR01","path":"D:\\Backup","capacityGB":1862.9,"freeGB":1001.4,"usedSpaceGB":861.5},
+ {"id":"88788f9e-0000-4c0f-9a3f-000000000002","name":"NAS repository","type":"Smb","description":"","hostName":"nas.example.lan","path":"\\\\nas.example.lan\\veeam","capacityGB":7450.6,"freeGB":298.0,"usedSpaceGB":7152.6},
+ {"id":"88788f9e-0000-4c0f-9a3f-000000000003","name":"Offsite S3","type":"AmazonS3","description":"","capacityGB":0,"freeGB":0,"usedSpaceGB":512.3}
+],"pagination":{"total":3,"count":3,"skip":0,"limit":200}}

@@ -4770,6 +4770,508 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_k8s_pvc_pending",
             )
         },
+        // --- pfSense (`collectors/pfsense`) ---
+        Rule {
+            description: "A pfSense gateway is down: its monitor address no longer answers, and the traffic it carries stops or fails over.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "pfsense_gateway_down",
+                "pfSense gateway down",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_gateway_up",
+            )
+        },
+        // Une passerelle tombée perd tout : elle est déjà signalée par la règle précédente.
+        Rule {
+            description: "A pfSense gateway loses more than 10 % of the probes to its monitor address: the line is degraded.".to_string(),
+            operator: Operator::Gt,
+            threshold: 10.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "pfsense_gateway_loss",
+                "pfSense gateway losing packets",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_gateway_loss_percent unless on (target, gateway) dumbmonit_pfsense_gateway_up == 0",
+            )
+        },
+        Rule {
+            description: "The round trip to a pfSense gateway's monitor address has stayed above 500 ms for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 500.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "ms".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "pfsense_gateway_latency",
+                "pfSense gateway slow",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_gateway_delay_milliseconds",
+            )
+        },
+        Rule {
+            description: "An enabled pfSense interface has no link: cable, switch port or network card.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "pfsense_interface_down",
+                "pfSense interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_interface_down",
+            )
+        },
+        Rule {
+            description: "A pfSense service that is enabled is not running: DNS resolver, VPN, NTP…".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "pfsense_service_stopped",
+                "pfSense service stopped",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_service_stopped",
+            )
+        },
+        Rule {
+            description: "The pfSense disk is more than 90 % full: logs, reports and package updates stop being written.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "pfsense_disk_full",
+                "pfSense disk nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_pfsense_disk_used_percent",
+            )
+        },
+        // --- Unraid (`collectors/unraid`) ---
+        Rule {
+            description: "The Unraid array is not started: shares, containers and VMs that live on it are unavailable.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "unraid_array_stopped",
+                "Unraid array stopped",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_array_started",
+            )
+        },
+        Rule {
+            description: "An Unraid disk is disabled, missing or invalid: the array runs degraded, and one more failure loses data.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "unraid_disk_problem",
+                "Unraid disk disabled or missing",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_disk_ok",
+            )
+        },
+        Rule {
+            description: "An Unraid disk has reported read errors since the array started: it may be disabled at the next one.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "unraid_disk_errors",
+                "Unraid disk read errors",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_disk_errors",
+            )
+        },
+        // Les disques de cache (NVMe) chauffent plus, et légitimement : ils ne sont pas visés.
+        Rule {
+            description: "An Unraid array or parity disk has stayed above 55 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 55.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "unraid_disk_hot",
+                "Unraid disk too hot",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_disk_temperature_celsius{role=~\"data|parity\"}",
+            )
+        },
+        Rule {
+            description: "The last Unraid parity check failed or found sync errors: parity no longer matches the data.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "unraid_parity_errors",
+                "Unraid parity check found errors",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_parity_check_ok",
+            )
+        },
+        Rule {
+            description: "The last Unraid parity check is more than 40 days old: a monthly check was missed.".to_string(),
+            operator: Operator::Gt,
+            threshold: 40.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "unraid_parity_check_old",
+                "Unraid parity check overdue",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_parity_check_age_seconds",
+            )
+        },
+        Rule {
+            description: "An Unraid cache pool is more than 90 % full: writes fall back to the slow array, or fail.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "unraid_cache_full",
+                "Unraid cache nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_disk_used_percent{role=\"cache\"}",
+            )
+        },
+        Rule {
+            description: "A Docker container set to start with the array is not running.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "unraid_container_stopped",
+                "Unraid container stopped",
+                RuleKind::Threshold,
+                "dumbmonit_unraid_container_autostart_stopped",
+            )
+        },
+        // --- Veeam Backup & Replication (`collectors/veeam`) ---
+        Rule {
+            description: "The last run of an enabled Veeam job failed: what it protects has no new restore point.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_job_failed",
+                "Veeam job failed",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_job_failed",
+            )
+        },
+        Rule {
+            description: "The last run of an enabled Veeam job ended with a warning: some objects may not be protected.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_job_warning",
+                "Veeam job ended with a warning",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_job_warning",
+            )
+        },
+        Rule {
+            description: "A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_repository_full",
+                "Veeam repository nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_repository_used_percent",
+            )
+        },
+        Rule {
+            description: "The Veeam license expires in less than 30 days: jobs stop at the end of the grace period.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_license_expiring",
+                "Veeam license expiring",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_license_expiry_seconds",
+            )
+        },
+        // --- Tailscale (`collectors/tailscale`) ---
+        // Seuls les appareils surveillés : un téléphone éteint n'est pas une panne.
+        Rule {
+            description: "A Tailscale device that must stay online (a tagged device by default) has been disconnected for more than 15 minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 15.0 * 60.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "tailscale_device_offline",
+                "Tailscale device offline",
+                RuleKind::Threshold,
+                "dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0",
+            )
+        },
+        Rule {
+            description: "A Tailscale device's node key expires in less than 14 days: it will leave the tailnet until someone signs it in again.".to_string(),
+            operator: Operator::Lt,
+            threshold: 14.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "tailscale_key_expiring",
+                "Tailscale node key expiring",
+                RuleKind::Threshold,
+                "dumbmonit_tailscale_device_key_expiry_seconds",
+            )
+        },
+        Rule {
+            description: "A device joined the tailnet and awaits approval: approve it if it is expected, remove it otherwise.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "tailscale_device_unapproved",
+                "Tailscale device awaiting approval",
+                RuleKind::Threshold,
+                "dumbmonit_tailscale_device_authorized",
+            )
+        },
+        Rule {
+            description: "A Tailscale device that must stay online runs a client with an update available.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(6 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "tailscale_update_available",
+                "Tailscale client update",
+                RuleKind::Threshold,
+                "dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0",
+            )
+        },
+        // --- FortiGate (`collectors/fortigate`) ---
+        Rule {
+            description: "No phase 2 of a FortiGate site-to-site IPsec tunnel is up: the site behind it is cut off.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_ipsec_tunnel_down",
+                "FortiGate IPsec tunnel down",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_ipsec_tunnel_up",
+            )
+        },
+        Rule {
+            description: "An enabled FortiGate interface with an address has no link: cable, transceiver or the device in front.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_interface_down",
+                "FortiGate interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_interface_down",
+            )
+        },
+        Rule {
+            description: "The members of a FortiGate HA cluster no longer have the same configuration checksum: a failover would run another configuration.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_ha_out_of_sync",
+                "FortiGate HA out of sync",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_ha_in_sync",
+            )
+        },
+        // Le nombre attendu de membres n'est publié nulle part : le maximum d'une journée en tient lieu. Un membre retiré pour de bon cesse d'alerter le lendemain.
+        Rule {
+            description: "A FortiGate HA cluster has fewer members than in the last 24 hours: there is no standby any more.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_ha_member_lost",
+                "FortiGate HA member lost",
+                RuleKind::Threshold,
+                "max_over_time(dumbmonit_fortigate_ha_members[1d]) - dumbmonit_fortigate_ha_members",
+            )
+        },
+        Rule {
+            description: "FortiGate memory has stayed above 85 % for ten minutes: at 88 % (by default) it enters conserve mode and stops inspecting new sessions.".to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_memory_high",
+                "FortiGate memory near conserve mode",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "FortiGate CPU has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "fortigate_cpu_high",
+                "FortiGate CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "A FortiGuard or FortiCare licence of the FortiGate expires in less than 30 days, or has expired.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "fortigate_license_expiring",
+                "FortiGate licence expiring",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_license_expiry_seconds",
+            )
+        },
+        Rule {
+            description: "FortiGuard offers a newer patch release of the FortiOS branch the FortiGate runs.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "fortigate_firmware_update",
+                "FortiGate firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_fortigate_firmware_update_available",
+            )
+        },
+        // --- Sophos Firewall (`collectors/sophos`) ---
+        Rule {
+            description: "A Sophos Firewall interface that is switched on and bound to a zone has no link.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "sophos_interface_down",
+                "Sophos interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_sophos_interface_down",
+            )
+        },
+        // --- Hyper-V, par l'agent Windows (`agent/src/collect/perf_counters.rs`) ---
+        Rule {
+            description: "Hyper-V reports a virtual machine in critical health: a resource it needs, most often disk space, is exhausted.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "hyperv_vm_critical",
+                "Hyper-V VM health critical",
+                RuleKind::Threshold,
+                "dumbmonit_hyperv_vms_health_critical",
+            )
+        },
+        // Le compteur de l'hyperviseur, pas `\Processor(_Total)` : celui-là ne voit que la partition racine.
+        Rule {
+            description: "The Hyper-V host's logical processors have been more than 90 % busy for fifteen minutes, guests included.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "hyperv_host_cpu_high",
+                "Hyper-V host CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_hyperv_host_cpu_percent",
+            )
+        },
+        Rule {
+            description: "A Hyper-V virtual disk reported I/O errors in the last hour.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "hyperv_vhd_errors",
+                "Hyper-V virtual disk errors",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_hyperv_vhd_errors_total[1h])",
+            )
+        },
         // --- fin du bloc Synology DSM ---
         // La sauvegarde locale de DumbMonit lui-même.
         //
@@ -5095,6 +5597,40 @@ mod tests {
             "backup_repo_too_old",
             "backup_repo_unreachable",
             "wireguard_peer_silent",
+            "pfsense_gateway_down",
+            "pfsense_gateway_loss",
+            "pfsense_gateway_latency",
+            "pfsense_interface_down",
+            "pfsense_service_stopped",
+            "pfsense_disk_full",
+            "unraid_array_stopped",
+            "unraid_disk_problem",
+            "unraid_disk_errors",
+            "unraid_disk_hot",
+            "unraid_parity_errors",
+            "unraid_parity_check_old",
+            "unraid_cache_full",
+            "unraid_container_stopped",
+            "veeam_job_failed",
+            "veeam_job_warning",
+            "veeam_repository_full",
+            "veeam_license_expiring",
+            "tailscale_device_offline",
+            "tailscale_key_expiring",
+            "tailscale_device_unapproved",
+            "tailscale_update_available",
+            "fortigate_ipsec_tunnel_down",
+            "fortigate_interface_down",
+            "fortigate_ha_out_of_sync",
+            "fortigate_ha_member_lost",
+            "fortigate_memory_high",
+            "fortigate_cpu_high",
+            "fortigate_license_expiring",
+            "fortigate_firmware_update",
+            "sophos_interface_down",
+            "hyperv_vm_critical",
+            "hyperv_host_cpu_high",
+            "hyperv_vhd_errors",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
         ] {
@@ -5434,6 +5970,44 @@ mod tests {
             "dumbmonit_agent_backup_repo_reachable",
             "dumbmonit_agent_wireguard_peer_handshake_age_seconds",
             "dumbmonit_agent_wireguard_peer_keepalive_seconds",
+            // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos
+            // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`),
+            // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).
+            "dumbmonit_pfsense_gateway_up",
+            "dumbmonit_pfsense_gateway_loss_percent",
+            "dumbmonit_pfsense_gateway_delay_milliseconds",
+            "dumbmonit_pfsense_interface_down",
+            "dumbmonit_pfsense_service_stopped",
+            "dumbmonit_pfsense_disk_used_percent",
+            "dumbmonit_unraid_array_started",
+            "dumbmonit_unraid_disk_ok",
+            "dumbmonit_unraid_disk_errors",
+            "dumbmonit_unraid_disk_temperature_celsius",
+            "dumbmonit_unraid_parity_check_ok",
+            "dumbmonit_unraid_parity_check_age_seconds",
+            "dumbmonit_unraid_disk_used_percent",
+            "dumbmonit_unraid_container_autostart_stopped",
+            "dumbmonit_veeam_job_failed",
+            "dumbmonit_veeam_job_warning",
+            "dumbmonit_veeam_repository_used_percent",
+            "dumbmonit_veeam_license_expiry_seconds",
+            "dumbmonit_tailscale_device_offline_seconds",
+            "dumbmonit_tailscale_device_watched",
+            "dumbmonit_tailscale_device_key_expiry_seconds",
+            "dumbmonit_tailscale_device_authorized",
+            "dumbmonit_tailscale_device_update_available",
+            "dumbmonit_fortigate_ipsec_tunnel_up",
+            "dumbmonit_fortigate_interface_down",
+            "dumbmonit_fortigate_ha_in_sync",
+            "dumbmonit_fortigate_ha_members",
+            "dumbmonit_fortigate_memory_used_percent",
+            "dumbmonit_fortigate_cpu_usage_percent",
+            "dumbmonit_fortigate_license_expiry_seconds",
+            "dumbmonit_fortigate_firmware_update_available",
+            "dumbmonit_sophos_interface_down",
+            "dumbmonit_hyperv_vms_health_critical",
+            "dumbmonit_hyperv_host_cpu_percent",
+            "dumbmonit_hyperv_vhd_errors_total",
         ];
 
         for rule in builtin_rules() {

@@ -15,9 +15,13 @@ form always matches what this version can monitor.
 | [VMware vSphere](vsphere.md) | `vsphere` | username/password | vCenter or standalone ESXi: hosts, VMs, datastores, alarms |
 | [Synology DSM](synology.md) | `synology` | username/password | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | API key and secret | Firewall, router, multi-WAN edge |
+| [pfSense](pfsense.md) | `pfsense` | REST API key (read-only user) | Firewall: gateways down or lossy, interfaces without link, stopped services |
+| [FortiGate](fortigate.md) | `fortigate` | REST API token (read-only profile, trusted host) | Firewall: IPsec tunnels, links, HA sync, conserve mode, FortiGuard licences |
+| [Sophos Firewall](sophos.md) | `sophos` | username/password (read-only profile) | Firewall: interface links only (the XML API exposes no tunnel, HA or licence state) |
 | [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
+| [Unraid](unraid.md) | `unraid` | API key (Viewer role) | NAS: array, disks, parity checks, cache pools, containers, VMs |
 | [MikroTik RouterOS](mikrotik.md) | `mikrotik` | username/password (read-only group) | Router or switch: versions and firmware behind, CPU, memory, sensors, interface errors |
 | [UPS with NUT](nut.md) | `nut` | none, or username/password | UPS on a NAS, Raspberry Pi or server running Network UPS Tools |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |
@@ -38,12 +42,14 @@ form always matches what this version can monitor.
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
 | [Domain expiry](domain.md) | `domain` | none | Registered domain over RDAP: days before expiry, hold, redemption period, registrar |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
+| [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
+| [Tailscale](tailscale.md) | `tailscale` | OAuth client (devices:core:read) or API access token | Tailnet: servers offline, node keys expiring, devices awaiting approval |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
 | [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |
 | [Jellyfin](jellyfin.md) | `jellyfin` | API key | Media server: failed scheduled tasks, plugins, streams and transcodes |
 | [Plex Media Server](plex.md) | `plex` | X-Plex-Token, or none from an allowed network | Media server: streams, transcodes, libraries, updates |
-| [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi |
+| [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi, [Hyper-V host](agent.md#hyper-v-hosts) |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |
 | [Domain name](services.md#dns) | `dns` | none | Your domain, an internal name |

@@ -83,9 +83,13 @@ nav:
       - VMware vSphere: devices/vsphere.md
       - Synology DSM: devices/synology.md
       - OPNsense: devices/opnsense.md
+      - pfSense: devices/pfsense.md
+      - FortiGate: devices/fortigate.md
+      - Sophos Firewall: devices/sophos.md
       - UniFi Network: devices/unifi.md
       - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md
+      - Unraid: devices/unraid.md
       - MikroTik RouterOS: devices/mikrotik.md
       - UPS with NUT: devices/nut.md
       - Server hardware (Redfish): devices/redfish.md
@@ -105,6 +109,8 @@ nav:
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
       - Kubernetes / k3s: devices/kubernetes.md
+      - Veeam Backup & Replication: devices/veeam.md
+      - Tailscale: devices/tailscale.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md

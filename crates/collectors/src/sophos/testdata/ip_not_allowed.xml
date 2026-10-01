@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response APIVersion="2000.2" IPS_CAT_VER="1">
+  <Status code="534">API operations are not allowed from the requester IP address</Status>
+</Response>

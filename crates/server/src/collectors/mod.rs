@@ -38,6 +38,10 @@ pub use dumbmonit_collectors::{
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,
     snmp, synology, truenas, uptime,
 };
+pub use dumbmonit_collectors::{
+    FortigateCollector, PfsenseCollector, SophosCollector, TailscaleCollector, UnraidCollector,
+    VeeamCollector, fortigate, pfsense, sophos, tailscale, unraid, veeam,
+};
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{
     HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,

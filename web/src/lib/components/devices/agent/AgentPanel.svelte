@@ -18,6 +18,7 @@
 	import MdaemonQueues from '$lib/components/devices/mdaemon/MdaemonQueues.svelte';
 	import BackupReposPanel from './BackupReposPanel.svelte';
 	import WireguardPanel from './WireguardPanel.svelte';
+	import AppliancePanel from '$lib/components/devices/appliance/AppliancePanel.svelte';
 
 	interface Props {
 		target: Target;
@@ -150,3 +151,6 @@
 <BackupReposPanel {target} />
 
 <WireguardPanel {target} />
+
+<!-- Shown only on a Hyper-V host, where the agent reads Hyper-V's performance counters. -->
+<AppliancePanel {target} variant="hyperv" />

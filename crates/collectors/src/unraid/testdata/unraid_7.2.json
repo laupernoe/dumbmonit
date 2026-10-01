@@ -1,0 +1,25 @@
+{
+  "data": {
+    "info": {
+      "versions": { "core": { "unraid": "7.2.1", "api": "4.15.0", "kernel": "6.12.24-Unraid" } }
+    },
+    "array": {
+      "state": "STARTED",
+      "capacity": {
+        "kilobytes": { "free": "9751234560", "used": "4123456780", "total": "13874691340" },
+        "disks": { "free": "0", "used": "3", "total": "3" }
+      },
+      "parities": [
+        { "id": "LOCAL:disk0", "name": "parity", "device": "sdb", "status": "DISK_OK", "temp": 34, "numErrors": "0", "size": "11719476736", "type": "PARITY", "isSpinning": true }
+      ],
+      "disks": [
+        { "id": "LOCAL:disk1", "name": "disk1", "device": "sdc", "status": "DISK_OK", "temp": 32, "numErrors": "0", "size": "11719476736", "fsSize": "11701234560", "fsFree": "5123456780", "fsUsed": "6577777780", "type": "DATA", "isSpinning": true },
+        { "id": "LOCAL:disk2", "name": "disk2", "device": "sdd", "status": "DISK_DSBL", "temp": null, "numErrors": "1287", "size": "3907018532", "fsSize": "3906985768", "fsFree": "3604523436", "fsUsed": "302462332", "type": "DATA", "isSpinning": false },
+        { "id": "LOCAL:disk3", "name": "disk3", "device": "", "status": "DISK_NP", "temp": null, "numErrors": "0", "size": "0", "fsSize": null, "fsFree": null, "fsUsed": null, "type": "DATA", "isSpinning": null }
+      ],
+      "caches": [
+        { "id": "LOCAL:disk30", "name": "cache", "device": "nvme0n1", "status": "DISK_OK", "temp": 41, "numErrors": "0", "size": "976762584", "fsSize": "976762584", "fsFree": "58605755", "fsUsed": "918156829", "type": "CACHE", "isSpinning": null }
+      ]
+    }
+  }
+}

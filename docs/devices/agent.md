@@ -32,6 +32,7 @@ cannot write into another machine's series, even by forging its labels.
 | restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — see [restic and Borg backups](#restic-and-borg-backups) | `tool`, `repo` |
 | Windows performance counters | `agent_perf_counter`, one series per counter listed in `perf_counters` | `counter` |
 | MDaemon (Windows) | `mdaemon_queue_messages`, `mdaemon_queue_frozen`, `mdaemon_sessions_active`, `mdaemon_sessions_total`, `mdaemon_messages_total`, `mdaemon_filtered_messages_total`, `mdaemon_server_active`, `mdaemon_running`, `mdaemon_uptime_seconds` — see [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`, `protocol`, `filter`, `verdict`, `server` |
+| Hyper-V (Windows) | `hyperv_vms_health_ok`, `hyperv_vms_health_critical`, `hyperv_host_cpu_percent`, `hyperv_host_cpu_guest_percent`, `hyperv_partitions`; per VM `hyperv_vm_physical_memory_megabytes`, `hyperv_vm_guest_visible_memory_megabytes`, `hyperv_vm_memory_pressure_percent`; per virtual disk `hyperv_vhd_read_bytes_per_second`, `hyperv_vhd_write_bytes_per_second`, `hyperv_vhd_latency_seconds`, `hyperv_vhd_queue_length`, `hyperv_vhd_errors_total` — see [Hyper-V hosts](#hyper-v-hosts) | `vm`, `disk` |
 | Agent | `agent_collect_seconds`, `agent_buffered_samples`, `agent_dropped_samples` | |
 
 A series that cannot be measured is **absent**, never zero: no `smartctl`, no
@@ -56,7 +57,7 @@ than fans, and an empty one reads zero like a dead fan does.
 | Plakar backups | yes | yes | yes | yes |
 | WireGuard tunnels | `wg show` | when `wg` is installed (not tested) | when `wg` is installed (not tested) | no |
 | restic and Borg backups | yes | yes | yes | restic only (not tested; Borg has no Windows build) |
-| Performance counters, MDaemon queues | no | no | no | yes |
+| Performance counters, MDaemon queues, Hyper-V | no | no | no | yes |
 | Machine identity | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`, `/etc/hostid` | host name |
 | Relay mode | yes | yes | yes | yes |
 
@@ -97,6 +98,9 @@ for 15 minutes), **restic/Borg backup too old** (no snapshot for 48 hours) and
 On a Windows server that runs MDaemon, three more watch its queues:
 **MDaemon mail queue growing**, **MDaemon Bad queue not empty** and **MDaemon
 Retry queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
+On a Hyper-V host, three watch the virtual machines: **Hyper-V VM health
+critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
+[Hyper-V hosts](#hyper-v-hosts)).
 
 ## Install
 
@@ -294,6 +298,7 @@ wireguard: true            # WireGuard tunnels through wg (default: true), see b
 restic_repos: []           # restic repositories to watch, see "restic and Borg backups"
 borg_repos: []             # Borg repositories to watch
 mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
+hyperv: auto               # Windows: Hyper-V counters when the vmms service exists (true / false / auto)
 perf_counters:             # Windows: performance counters to publish
   - '\Memory\Available MBytes'
   - path: '\Processor(_Total)\% Processor Time'
@@ -349,6 +354,7 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_BORG_BIN` | Path of `borg` |
 | `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | Period between two readings of the restic and Borg repositories, default `600`, minimum `60` |
 | `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` or `auto`: MDaemon's performance counters (default `auto`, read when the `MDaemon` Windows service exists) |
+| `DUMBMONIT_AGENT_HYPERV` | `true`, `false` or `auto`: Hyper-V's performance counters (default `auto`, read when the `vmms` Windows service exists) |
 | `DUMBMONIT_AGENT_PERF_COUNTERS` | Windows performance counter paths, separated by **semicolons** (a comma can be part of an instance name); replaces `perf_counters` |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Size of the catch-up buffer |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
@@ -369,6 +375,11 @@ the rules and the page that shows them are described on the
 reads them even without the service (a renamed service), `mdaemon: false`
 never does. The presence of the service is checked again every ten periods,
 so an MDaemon installed after the agent is picked up without a restart.
+
+**Hyper-V.** When the Hyper-V Virtual Machine Management service (`vmms`)
+exists, the agent reads Hyper-V's performance objects; see
+[Hyper-V hosts](#hyper-v-hosts). `hyperv: true` and `hyperv: false` force the
+choice, as for MDaemon.
 
 **Any other counter.** List its full path under `perf_counters`, as
 `\Object(Instance)\Counter` or `\Object\Counter` for an object with a single
@@ -399,6 +410,52 @@ perf_counters:
 
 To see the exact names on the machine, run `typeperf -q MDaemon` (or any
 other object name) in a command prompt.
+
+## Hyper-V hosts
+
+Installed on a Hyper-V host — Windows Server with the Hyper-V role, or
+Windows with Hyper-V enabled — the agent finds the `vmms` service and reads
+Hyper-V's own performance counters, with nothing to configure. The agent's
+device page then shows a Hyper-V panel: how many virtual machines report
+healthy, the host's real CPU load, the memory each running VM holds, and the
+throughput, latency and errors of each virtual disk.
+
+!!! warning "Validated against the vendor documentation only — not yet tested on a real system"
+
+    The counter names come from Microsoft's Hyper-V performance
+    documentation and were checked against the logic with a simulated
+    counter source, not on a running Hyper-V host. A counter Windows does
+    not know is reported once in the agent's log and the others are still
+    read. Tell us what breaks.
+
+| Counter | Series | Labels |
+|---|---|---|
+| `\Hyper-V Virtual Machine Health Summary\Health Ok`, `…\Health Critical` | `hyperv_vms_health_ok`, `hyperv_vms_health_critical`: virtual machines in each state | |
+| `\Hyper-V Hypervisor Logical Processor(_Total)\% Total Run Time` | `hyperv_host_cpu_percent`: the host's load, guests included | |
+| `\Hyper-V Hypervisor Logical Processor(_Total)\% Guest Run Time` | `hyperv_host_cpu_guest_percent`: the share spent running guests | |
+| `\Hyper-V Hypervisor\Partitions` | `hyperv_partitions`: running VMs plus the host itself | |
+| `\Hyper-V Dynamic Memory VM(*)\Physical Memory`, `…\Guest Visible Physical Memory` | `hyperv_vm_physical_memory_megabytes`, `hyperv_vm_guest_visible_memory_megabytes` | `vm` |
+| `\Hyper-V Dynamic Memory VM(*)\Current Pressure` | `hyperv_vm_memory_pressure_percent`: memory demand over memory assigned; above 100 the VM wants more than it has | `vm` |
+| `\Hyper-V Virtual Storage Device(*)\Read Bytes/sec`, `…\Write Bytes/sec` | `hyperv_vhd_read_bytes_per_second`, `hyperv_vhd_write_bytes_per_second` | `disk` |
+| `\Hyper-V Virtual Storage Device(*)\Latency`, `…\Queue Length` | `hyperv_vhd_latency_seconds` (average), `hyperv_vhd_queue_length` | `disk` |
+| `\Hyper-V Virtual Storage Device(*)\Error Count` | `hyperv_vhd_errors_total`, a counter | `disk` |
+
+On a Hyper-V host, `\Processor(_Total)\% Processor Time` only measures the
+host's own partition, not what the virtual machines consume: the hypervisor's
+logical processor counter is the one that tells whether the machine is
+saturated. `vm` is the virtual machine's name as Hyper-V Manager shows it;
+`disk` is the instance name Windows gives each virtual disk, derived from its
+file path. The `_Total` instances are left out, and at most 200 VMs or disks
+are read per counter.
+
+Three [built-in rules](../alerting/rules.md#hyper-v) apply:
+
+- **Hyper-V VM health critical**: Hyper-V reports a VM in critical health for
+  five minutes (Warning) — most often a disk that ran out of space.
+- **Hyper-V host CPU high**: the logical processors more than 90 % busy for
+  fifteen minutes (Advisory).
+- **Hyper-V virtual disk errors**: a virtual disk reported I/O errors in the
+  last hour (Advisory).
 
 ## Run the agent in Docker / on another network
 
