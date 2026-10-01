@@ -252,7 +252,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Preview</span><span class="how">rc.d, x86_64, ZFS pools. Not yet run on real hardware.</span></li>
 				</ul>
 				<ul class="points" style="margin-top:32px">
-					<li><strong>Remote sites, outbound only</strong><p>In relay mode an agent runs the server's probes (SNMP, Proxmox, HTTP…) from its own network, so a second house or a small office shows up in the same DumbMonit without a VPN. <a href="https://dumbmonit.readthedocs.io/en/latest/install/remote-site/">Monitor a remote site</a></p></li>
+					<li><strong>Remote sites, outbound only</strong><p>In relay mode an agent runs the server's probes (SNMP, Proxmox, HTTP…) from its own network — a second site, a client's network or a VPS behind NAT — with nothing inbound: no VPN, no port to open. <a href="https://dumbmonit.readthedocs.io/en/latest/install/remote-site/">Monitor a remote site</a></p></li>
 				</ul>
 			</div>
 		</div>
@@ -272,7 +272,9 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<ul class="points">
 					<li><strong>Wall mode</strong><p>The bulletin alone, full screen, for a room monitor. It keeps the screen awake.</p></li>
 					<li><strong>Accounts</strong><p>Admin and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…).</p></li>
-					<li><strong>Plays well with what you run</strong><p><code>/metrics</code>, <code>/federate</code> and a Prometheus-compatible endpoint let an existing Grafana read DumbMonit's data. A REST API with scoped tokens, and a built-in MCP server for AI assistants.</p></li>
+					<li><strong>Plays well with what you run</strong><p><code>/metrics</code>, <code>/federate</code> and a Prometheus-compatible endpoint let an existing Grafana read DumbMonit's data.</p></li>
+					<li><strong>Open, documented API</strong><p>Every route behind <code>/api/openapi.json</code> (OpenAPI 3.1): scoped tokens (<code>dmt_…</code>, read or write) that can expire, be restricted to a network, and are rate-limited. <a href="https://dumbmonit.readthedocs.io/en/latest/reference/api/">API reference</a></p></li>
+					<li><strong>An assistant over MCP</strong><p>27 tools for Claude Code, Claude Desktop, ChatGPT, VS Code or Cursor: read status, devices, alerts, metrics and agents; a write token can also silence, acknowledge, add a device or restart a container. Secrets never come back. <a href="https://dumbmonit.readthedocs.io/en/latest/using/assistant/">Connect an assistant</a></p></li>
 					<li><strong>On a phone</strong><p>Read the state, acknowledge an alert, start a maintenance window. Installable on the home screen, deliberately without an offline mode: it never shows yesterday's state.</p></li>
 				</ul>
 			</div>
