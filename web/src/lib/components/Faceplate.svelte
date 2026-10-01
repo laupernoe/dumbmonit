@@ -22,9 +22,14 @@
 		/** The parent is unreachable: this unit's alerts are suppressed. */
 		shadowed?: boolean;
 		compact?: boolean;
+		/**
+		 * Milliseconds after which the LED flickers on, like a unit powering up
+		 * as the rack fills; `null` lights it straight away.
+		 */
+		bootDelay?: number | null;
 	}
 
-	let { target, state, kindLabel, sparkline = null, depth = 0, shadowed = false, compact = false }: Props = $props();
+	let { target, state, kindLabel, sparkline = null, depth = 0, shadowed = false, compact = false, bootDelay = null }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
@@ -43,7 +48,7 @@
 		{#if depth > 0}
 			<CornerDownRight class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 		{/if}
-		<Led {tone} {blink} size={compact ? 'sm' : 'md'} />
+		<Led {tone} {blink} size={compact ? 'sm' : 'md'} boot={bootDelay !== null} bootDelay={bootDelay ?? 0} />
 
 		<!--
 			The label grid follows the width of the faceplate itself, not the

@@ -1,16 +1,51 @@
 <script lang="ts">
 	/**
-	 * Settings → Agents: enrolment tokens for machines that run the agent.
+	 * Settings → Agents: what an agent is, the agents that report to this
+	 * server and how each one is doing, then the enrolment tokens.
 	 *
-	 * A token is shown in clear once, right after creation, together with the
-	 * install commands. After that only its prefix is ever displayed.
+	 * The agents are read from `GET /api/relays` (every agent device, with its
+	 * relay mode, site and the devices it probes) and their state from the
+	 * app-wide store, the same truth as the rack. A token is shown in clear
+	 * once, right after creation, together with the install commands. After
+	 * that only its prefix is ever displayed.
 	 */
-	import { Cpu, KeyRound } from 'lucide-svelte';
-	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
+	import { ArrowRight, Cpu, KeyRound, RadioTower } from 'lucide-svelte';
+	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '$lib/api';
+	import { listRelays } from '$lib/api/relay';
+	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '$lib/format';
+	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
+	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
 	import AgentChecksums from '$lib/components/device-form/AgentChecksums.svelte';
+
+	// --- The agents themselves -----------------------------------------------
+
+	/** `null` while unread, or when this server does not list them. */
+	let agents = $state<RelayAgent[] | null>(null);
+
+	$effect(() => {
+		const controller = new AbortController();
+		listRelays(controller.signal)
+			.then((list) => (agents = [...list].sort((a, b) => Number(b.relay) - Number(a.relay) || a.name.localeCompare(b.name))))
+			.catch(() => (agents = null));
+		return () => controller.abort();
+	});
+
+	/**
+	 * The agent's state as the rack shows it. Before the shared store has the
+	 * device, its last report decides: within three minutes is reporting.
+	 */
+	function agentState(agent: RelayAgent): TargetState {
+		const target = alertsStore.targets.find((t) => t.id === agent.id);
+		if (target) return displayState(target, alertsStore.probes.get(agent.id));
+		const seen = agent.last_seen_at ? parseServerDate(agent.last_seen_at) : null;
+		if (!seen) return 'pending';
+		return Date.now() - seen.getTime() < 3 * 60_000 ? 'online' : 'offline';
+	}
+
+	function devices(n: number): string {
+		return `${n} device${n === 1 ? '' : 's'}`;
+	}
 
 	let tokens = $state<AgentToken[]>([]);
 	let loading = $state(true);
@@ -133,14 +168,75 @@
 	}
 </script>
 
-<Panel id="agents" title="Agents" description="Install the agent on Linux or Windows machines that don't speak SNMP. It registers itself as a device." padded={false}>
+<Panel
+	id="agents"
+	title="Agents"
+	description="An agent is one small program on a Linux, Windows, macOS or FreeBSD machine: it reports the system, disks, services, Docker containers and backups, and lets you restart or update a container from here. In relay mode it also probes, for this server, the devices of its own network — a second site, a client, anything behind a NAT — and only ever connects out."
+	padded={false}
+>
 	{#snippet aside()}
 		{#if !auth.isAdmin}
 			<Plate tone="ghost" label="Viewer — read only" />
 		{/if}
 	{/snippet}
 
+	<!-- The agents reporting here, each with its state and what it relays. -->
+	{#if agents !== null}
+		<div class="border-b border-line px-5 py-4">
+			{#if agents.length === 0}
+				<p class="text-sm text-ink-2">No agent has reported to this server yet.</p>
+			{:else}
+				<ul class="grid gap-1.5" role="list" aria-label="Agents reporting to this server">
+					{#each agents as agent (agent.id)}
+						{@const state = agentState(agent)}
+						<li>
+							<a
+								href={`/targets/${agent.id}`}
+								class="group flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-canvas-deep/50 px-3 py-2 transition-colors hover:border-line-strong hover:bg-surface-2"
+							>
+								<Led tone={STATE_TONE[state]} blink={state === 'offline' || state === 'down'} size="sm" />
+								<span class="min-w-0 truncate font-semibold text-ink">{agent.name}</span>
+								<Plate tone={STATE_TONE[state] === 'ghost' ? 'ghost' : STATE_TONE[state]} label={STATE_LABEL[state]} bare />
+								{#if agent.relay}
+									<Plate tone="info" title="Relay mode: it probes devices of its own network for this server">
+										<RadioTower class="size-3.5" aria-hidden="true" />
+										Relay{agent.site ? ` · ${agent.site}` : ''}
+									</Plate>
+									<span class="text-[0.8125rem] text-ink-2">probes {devices(agent.relayed)}</span>
+								{:else if agent.relayed > 0}
+									<Plate tone="advisory" label={`Relay off — ${devices(agent.relayed)} waiting`} title="Set relay: true on this agent so it picks up their probes" />
+								{:else}
+									<span class="text-[0.8125rem] text-ink-2">Watches its own machine</span>
+								{/if}
+								<span class="tnum ml-auto text-[0.8125rem] text-ink-2">
+									Last report <time title={formatDateTime(agent.last_seen_at)}>{formatRelative(agent.last_seen_at)}</time>
+								</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			{#if auth.isAdmin}
+				<div class="mt-3 flex flex-wrap gap-2">
+					<Button variant="secondary" size="sm" href="/targets/new?kind=agent">
+						<Cpu class="size-4" aria-hidden="true" />
+						Install an agent
+					</Button>
+					<Button variant="ghost" size="sm" href="/targets/new?kind=agent&via=relay">
+						<RadioTower class="size-4" aria-hidden="true" />
+						Watch a remote site
+						<ArrowRight class="size-3.5" aria-hidden="true" />
+					</Button>
+				</div>
+			{/if}
+		</div>
+	{/if}
+
 	<div class="px-5 py-4">
+		<h3 class="text-sm font-semibold text-ink">Enrolment tokens</h3>
+		<p class="mt-0.5 mb-3 text-sm text-ink-2">
+			Adding a device of type agent makes a single-use token for you. Create one here for a fleet, a playbook or a machine image.
+		</p>
 		{#if auth.isAdmin}
 		<form class="flex flex-col gap-3 sm:flex-row sm:items-start" onsubmit={create} novalidate>
 			<Field label="New token" for="token-name" error={nameError} class="flex-1" help="Only used to recognise the token in this list.">
