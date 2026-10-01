@@ -10,11 +10,16 @@ d'ouvrir **aucun port** sur la machine surveillée.
 
 ## Installation
 
-### Linux (systemd)
+### Linux (systemd, OpenRC), macOS (launchd), FreeBSD (rc.d)
 
 ```sh
-curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://serveur:8080
+curl -sSL http://serveur:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://serveur:8080
 ```
+
+Le script choisit le binaire d'après `uname -s` et `uname -m`. Celui de macOS
+n'est pas dans l'image (le SDK d'Apple ne se redistribue pas) : le serveur
+renvoie vers la pièce jointe de la dernière publication GitHub, et le script
+suit le renvoi.
 
 ### Windows (service)
 
@@ -37,6 +42,7 @@ faites.
 ## Configuration
 
 Fichier YAML, `/etc/dumbmonit/agent.yaml` sur Linux,
+`/usr/local/etc/dumbmonit/agent.yaml` sur macOS et FreeBSD,
 `C:\ProgramData\DumbMonit\agent.yaml` sur Windows :
 
 ```yaml
@@ -136,57 +142,66 @@ cargo test  -p dumbmonit-agent
 cargo clippy -p dumbmonit-agent --all-targets -- -D warnings
 ```
 
-### Linux x86_64, binaire statique
+### Binaires distribués
 
-C'est la cible native de l'image de développement du projet.
+Six binaires, un par système, chacun avec son empreinte `<nom>.sha256` (format
+de `sha256sum`) :
 
-```sh
-rustup target add x86_64-unknown-linux-musl
-cargo build -p dumbmonit-agent --release --target x86_64-unknown-linux-musl
-# cible/x86_64-unknown-linux-musl/release/dumbmonit-agent
-```
+| Système | Fichier | Construit par |
+|---|---|---|
+| Linux x86_64, statique (musl) | `dumbmonit-agent-linux-x86_64` | étape `agent` du `Dockerfile` |
+| Linux aarch64, statique (musl) | `dumbmonit-agent-linux-aarch64` | étape `agent` du `Dockerfile` |
+| Windows x86_64 | `dumbmonit-agent-windows-x86_64.exe` | étape `agent` du `Dockerfile` |
+| FreeBSD x86_64 | `dumbmonit-agent-freebsd-x86_64` | étape `agent` du `Dockerfile` |
+| macOS Apple silicon | `dumbmonit-agent-macos-aarch64` | exécuteur macOS de `release.yml` |
+| macOS Intel | `dumbmonit-agent-macos-x86_64` | exécuteur macOS de `release.yml` |
 
-### Linux ARM64, binaire statique
-
-Pour un Raspberry Pi 4/5, un NAS ARM, une machine virtuelle Ampere.
-
-```sh
-rustup target add aarch64-unknown-linux-musl
-# Un éditeur de liens croisé est nécessaire : `aarch64-linux-musl-gcc`
-# (musl.cc) ou le paquet `gcc-aarch64-linux-gnu` de la distribution.
-export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc
-cargo build -p dumbmonit-agent --release --target aarch64-unknown-linux-musl
-```
-
-Le plus simple reste `cross`, qui apporte son propre conteneur de compilation :
+L'étape `agent` compile les quatre premiers sur la machine de construction,
+avec cargo-zigbuild (zig sert d'éditeur de liens pour chaque cible) et une
+chaîne Rust épinglée. L'image du serveur les embarque et les sert sur
+`/download/…` ; l'étape `agent-dist` les sort seuls :
 
 ```sh
-cargo install cross
-cross build -p dumbmonit-agent --release --target aarch64-unknown-linux-musl
+docker buildx build --target agent-dist --output type=local,dest=dist/agent .
+# Sur une machine partagée, brider cargo : --build-arg CARGO_BUILD_JOBS=4
 ```
 
-`aws-lc-rs`, tiré par `rustls`, se compile en C : la compilation croisée exige
-donc un `cmake` et un compilateur C pour la cible. `cross` les fournit ; une
-compilation croisée à la main les demande explicitement.
+macOS n'y est pas, et ne peut pas y être : l'édition de liens réclame le SDK
+d'Apple, que sa licence interdit de redistribuer. Les deux binaires sont
+construits sur un exécuteur macOS (job `macos-agent`). Sur `main`, tous les
+binaires restent trente jours en artefacts du workflow Release
+(`dumbmonit-agent-binaries`, `dumbmonit-agent-macos`) ; sur une étiquette `v*`,
+le job `github-release` attache les six et leurs empreintes à la publication
+GitHub, vers laquelle le serveur renvoie pour `/download/dumbmonit-agent-macos-…`.
 
-### Windows x86_64
+### Vérifier le code pour les autres systèmes
+
+La chaîne d'intégration ne passe clippy que sous Linux. L'image
+`ghcr.io/rust-cross/cargo-zigbuild` fournit les cibles macOS, Windows et
+FreeBSD, et un compilateur C pour chacune (zig), que demandent `ring` et
+`aws-lc-sys` ; clippy ne lie rien. Sa chaîne Rust est trop ancienne pour
+`sysinfo` : en installer une récente, puis, pour chaque cible :
 
 ```sh
-# Depuis Windows, avec les outils de compilation Visual Studio :
-cargo build -p dumbmonit-agent --release --target x86_64-pc-windows-msvc
-
-# Depuis Linux, avec MinGW-w64 :
-rustup target add x86_64-pc-windows-gnu
-cargo build -p dumbmonit-agent --release --target x86_64-pc-windows-gnu
+rustup toolchain install stable --profile minimal -c clippy \
+  --target x86_64-apple-darwin,aarch64-apple-darwin,x86_64-pc-windows-gnu,x86_64-unknown-freebsd
+cargo-zigbuild clippy -p dumbmonit-agent --all-targets --target x86_64-apple-darwin -- -D warnings
 ```
 
-**État connu :** la compilation Windows n'a pas pu être exercée dans l'image de
-développement du projet (Alpine musl, sans MinGW ni cible Windows installée). Le
-code y est structuré pour : tout ce qui est propre à une plateforme est isolé
-derrière `#[cfg(unix)]` / `#[cfg(windows)]` — `collect/services.rs`,
-`collect/docker.rs`, `shutdown.rs` et `winsvc.rs`. Les parties Windows
-(interrogation du gestionnaire de services, point d'entrée du service) restent à
-compiler et à vérifier sur une machine Windows.
+Le code propre à un système est isolé derrière `#[cfg(...)]` :
+`collect/services.rs`, `collect/docker.rs`, `collect/sensors.rs`,
+`collect/perf_counters.rs`, `identity.rs`, `shutdown.rs`, et `winsvc.rs` (point
+d'entrée du service Windows, journal dans `agent.log` à côté de la
+configuration, voir `logfile.rs`).
+
+### À la main
+
+```sh
+# Sur le Mac lui-même, avec Rust :
+cargo build --release -p dumbmonit-agent
+# Sous Windows, avec les outils de compilation Visual Studio :
+cargo build --release -p dumbmonit-agent --target x86_64-pc-windows-msvc
+```
 
 ## Empreinte
 

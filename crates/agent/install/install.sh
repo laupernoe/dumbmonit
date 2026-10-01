@@ -5,7 +5,8 @@
 #
 # C'est la commande que le serveur affiche à la création d'un jeton ; le binaire
 # est téléchargé sur ce même serveur, qui l'embarque dans son image — sauf pour
-# macOS, dont le binaire est publié avec la version (voir plus bas).
+# macOS, dont le binaire est publié avec chaque version sur GitHub : le serveur
+# y renvoie, et le téléchargement suit (voir plus bas).
 #
 # Quatre systèmes d'init, un seul script : systemd et OpenRC sous Linux, launchd
 # sous macOS, rc.d sous FreeBSD. Chacun a ses chemins, son fichier de service et
@@ -42,6 +43,9 @@ SERVICE_NAME="dumbmonit-agent"
 LAUNCHD_LABEL="com.dumbmonit.agent"
 RC_NAME="dumbmonit_agent"
 LOG_FILE="/var/log/dumbmonit-agent.log"
+# Où l'agent macOS est publié : le serveur y renvoie, et c'est là qu'on le
+# récupère à la main si ce renvoi échoue.
+RELEASES_URL="https://github.com/noekan/dumbmonit/releases/latest"
 
 usage() {
     cat <<'FIN'
@@ -69,8 +73,9 @@ Supported systems: Linux (systemd or OpenRC, x86_64 and aarch64), macOS
 install.ps1 instead.
 
 The macOS binary is not shipped in the DumbMonit image — building it requires
-Apple's SDK, which cannot be redistributed. Download it from the releases page
-and pass it with --bin=PATH.
+Apple's SDK, which cannot be redistributed. The server forwards its download to
+the binary attached to the latest release on GitHub; --bin=PATH installs one
+you downloaded or built yourself.
 FIN
 }
 
@@ -327,6 +332,14 @@ install_binaire() {
     if ! telecharger "$source_url" "$destination"; then
         rm -f "$destination"
         expliquer_echec "$source_url"
+        # Sous macOS, l'échec vient presque toujours de GitHub (pas encore de
+        # version publiée, machine sans accès à l'internet) : le serveur, lui,
+        # n'a fait que renvoyer. Autant dire comment s'en passer.
+        if [ "$PLATFORM" = "macos" ]; then
+            echo "The macOS agent is attached to each DumbMonit release: download
+dumbmonit-agent-macos-$ARCH from $RELEASES_URL
+and run this script again with --bin=PATH." >&2
+        fi
         echec "download failed from $source_url"
     fi
     verifier_empreinte "$source_url" "$destination"
@@ -376,6 +389,14 @@ TMP_BIN="$BIN_PATH.nouveau"
 install_binaire "$TMP_BIN"
 chmod 0755 "$TMP_BIN"
 mv -f "$TMP_BIN" "$BIN_PATH"
+
+# Un binaire téléchargé par un navigateur porte l'attribut de quarantaine, que
+# `cp` recopie : Gatekeeper refuserait alors de le lancer, et sous launchd
+# personne ne verrait la fenêtre qui le dit. Sans attribut, `xattr` échoue, d'où
+# le `|| true`.
+if [ "$PLATFORM" = "macos" ]; then
+    xattr -d com.apple.quarantine "$BIN_PATH" 2>/dev/null || true
+fi
 
 # Le nouveau binaire est en place : l'ancien agent, s'il est là, peut être
 # arrêté et sa configuration déplacée avant que la nouvelle ne soit écrite. Pas
