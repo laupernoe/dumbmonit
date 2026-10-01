@@ -1,0 +1,74 @@
+# Shelly smart plugs and relays of the second generation (Plus, Pro, Gen3),
+# read through their local RPC API. One target per switch channel.
+schema: 1
+id: shelly-plug
+version: 1.0.0
+requires: ">=0.1"
+label: Shelly plug (Gen2+)
+summary: Power, energy, voltage and temperature of a Shelly Plus/Pro/Gen3 plug or relay.
+examples: [Shelly Plus Plug S, Shelly Plug S Gen3, Shelly Pro 1PM, Shelly Plus 1PM]
+address_hint: 192.168.1.50
+default_port: 80
+setup:
+  title: Reach the plug on your network
+  steps:
+    - Give the plug a fixed address in your router (DHCP reservation).
+    - "Check that DumbMonit can read it: open this URL from the DumbMonit host.\ncurl http://192.168.1.50/rpc/Switch.GetStatus?id=0"
+    - For a relay with several channels, add one device per channel and set its switch channel.
+  warning: >-
+    Shelly protects its API with HTTP digest authentication, which packs do not
+    speak yet: leave the device password off and keep the plug on a trusted network.
+  doc_url: https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Switch
+credentials: [none]
+options:
+  - key: switch_id
+    label: Switch channel
+    help: 0 for a plug; 0, 1, 2… for each channel of a multi-channel relay.
+    input: number
+    default: 0
+  - key: max_temperature
+    label: Temperature alert (°C)
+    help: The internal temperature that raises an alert.
+    input: number
+    default: 70
+
+sources:
+  - id: status
+    type: http
+    path: /rpc/Switch.GetStatus?id={{option.switch_id}}
+
+metrics:
+  - name: output_on
+    help: 1 when the relay is closed (power flows), 0 when it is open.
+    source: status
+    json: $.output
+  - name: power_watts
+    help: Active power drawn by the load.
+    source: status
+    json: $.apower
+  - name: voltage_volts
+    source: status
+    json: $.voltage
+  - name: current_amperes
+    source: status
+    json: $.current
+  - name: energy_watthours_total
+    help: Energy drawn since the plug last restarted.
+    source: status
+    kind: counter
+    json: $.aenergy.total
+  - name: temperature_celsius
+    help: Internal temperature of the plug.
+    source: status
+    json: $.temperature.tC
+
+rules:
+  - name: overheating
+    title: Shelly plug overheating
+    description: The internal temperature stayed above the limit for five minutes.
+    expr: dumbmonit_shelly_plug_temperature_celsius
+    op: ">"
+    threshold: "{{option.max_temperature}}"
+    for: 5m
+    severity: warning
+    unit: °C

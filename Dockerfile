@@ -32,20 +32,22 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 COPY crates/proto/Cargo.toml crates/proto/
 COPY crates/collectors/Cargo.toml crates/collectors/
+COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
 # Une source factice par cible déclarée dans les manifestes — bibliothèques
 # incluses, sans quoi cargo échoue avant même de compiler les dépendances.
 # L'agent n'est pas compilé ici (il l'est dans l'étape `agent`, pour trois
 # plateformes), mais son manifeste doit exister pour que le workspace se charge.
-RUN mkdir -p crates/proto/src crates/collectors/src crates/server/src crates/agent/src \
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
+ && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \
  && cargo build --release --locked -p dumbmonit-server \
- && rm -rf crates/proto/src crates/collectors/src crates/server/src
+ && rm -rf crates/proto/src crates/collectors/src crates/pack/src crates/server/src
 
 # La coquille de l'agent reste en place : ses vraies sources ne servent à rien
 # ici, et les copier ferait recompiler le serveur à chaque retouche de l'agent.
@@ -53,6 +55,7 @@ RUN mkdir -p crates/proto/src crates/collectors/src crates/server/src crates/age
 # (`include_str!`) pour les servir sur `/install.sh` et `/install.ps1`.
 COPY crates/proto crates/proto
 COPY crates/collectors crates/collectors
+COPY crates/pack crates/pack
 COPY crates/server crates/server
 COPY crates/agent/install crates/agent/install
 COPY profiles profiles
@@ -61,7 +64,8 @@ COPY profiles profiles
 COPY --from=web /src/web/build web/build
 
 # Sans cela, cargo réutiliserait les artefacts des sources factices.
-RUN touch crates/proto/src/lib.rs crates/collectors/src/lib.rs crates/server/src/lib.rs \
+RUN touch crates/proto/src/lib.rs crates/collectors/src/lib.rs crates/pack/src/lib.rs \
+      crates/server/src/lib.rs \
       crates/server/src/main.rs \
  && cargo build --release --locked -p dumbmonit-server \
  && strip target/release/dumbmonit
@@ -129,11 +133,13 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_FREEBSD_RUSTFLAGS="-L native=/opt/freebsd-stubs 
 COPY Cargo.toml Cargo.lock ./
 COPY crates/proto/Cargo.toml crates/proto/
 COPY crates/collectors/Cargo.toml crates/collectors/
+COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
-RUN mkdir -p crates/proto/src crates/collectors/src crates/server/src crates/agent/src \
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
+ && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \

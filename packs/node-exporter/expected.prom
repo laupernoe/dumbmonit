@@ -1,0 +1,44 @@
+# TYPE dumbmonit_node_exporter_boot_time_seconds gauge
+dumbmonit_node_exporter_boot_time_seconds 1759212334
+# TYPE dumbmonit_node_exporter_cpu_seconds_total counter
+dumbmonit_node_exporter_cpu_seconds_total{cpu="0",mode="idle"} 312145.21
+dumbmonit_node_exporter_cpu_seconds_total{cpu="0",mode="iowait"} 402.17
+dumbmonit_node_exporter_cpu_seconds_total{cpu="0",mode="system"} 2231.66
+dumbmonit_node_exporter_cpu_seconds_total{cpu="0",mode="user"} 5120.03
+dumbmonit_node_exporter_cpu_seconds_total{cpu="1",mode="idle"} 311877.94
+dumbmonit_node_exporter_cpu_seconds_total{cpu="1",mode="iowait"} 388.02
+dumbmonit_node_exporter_cpu_seconds_total{cpu="1",mode="system"} 2250.13
+dumbmonit_node_exporter_cpu_seconds_total{cpu="1",mode="user"} 5302.71
+# TYPE dumbmonit_node_exporter_disk_read_bytes_total counter
+dumbmonit_node_exporter_disk_read_bytes_total{device="sda"} 82735022592
+# TYPE dumbmonit_node_exporter_disk_written_bytes_total counter
+dumbmonit_node_exporter_disk_written_bytes_total{device="sda"} 208312655872
+# TYPE dumbmonit_node_exporter_filesystem_avail_bytes gauge
+dumbmonit_node_exporter_filesystem_avail_bytes{device="/dev/sda1",fstype="ext4",mountpoint="/"} 41289846784
+dumbmonit_node_exporter_filesystem_avail_bytes{device="/dev/sda2",fstype="ext4",mountpoint="/srv"} 1986150400
+# TYPE dumbmonit_node_exporter_filesystem_readonly gauge
+dumbmonit_node_exporter_filesystem_readonly{device="/dev/sda1",fstype="ext4",mountpoint="/"} 0
+dumbmonit_node_exporter_filesystem_readonly{device="/dev/sda2",fstype="ext4",mountpoint="/srv"} 0
+# TYPE dumbmonit_node_exporter_filesystem_size_bytes gauge
+dumbmonit_node_exporter_filesystem_size_bytes{device="/dev/sda1",fstype="ext4",mountpoint="/"} 107321753600
+dumbmonit_node_exporter_filesystem_size_bytes{device="/dev/sda2",fstype="ext4",mountpoint="/srv"} 52710469632
+# TYPE dumbmonit_node_exporter_load1 gauge
+dumbmonit_node_exporter_load1 0.42
+# TYPE dumbmonit_node_exporter_load15 gauge
+dumbmonit_node_exporter_load15 0.33
+# TYPE dumbmonit_node_exporter_load5 gauge
+dumbmonit_node_exporter_load5 0.38
+# TYPE dumbmonit_node_exporter_memory_available_bytes gauge
+dumbmonit_node_exporter_memory_available_bytes 5943062528
+# TYPE dumbmonit_node_exporter_memory_total_bytes gauge
+dumbmonit_node_exporter_memory_total_bytes 8269504512
+# TYPE dumbmonit_node_exporter_network_receive_bytes_total counter
+dumbmonit_node_exporter_network_receive_bytes_total{device="eth0"} 98765432100
+# TYPE dumbmonit_node_exporter_network_transmit_bytes_total counter
+dumbmonit_node_exporter_network_transmit_bytes_total{device="eth0"} 12345678900
+# TYPE dumbmonit_node_exporter_swap_free_bytes gauge
+dumbmonit_node_exporter_swap_free_bytes 2143285248
+# TYPE dumbmonit_node_exporter_swap_total_bytes gauge
+dumbmonit_node_exporter_swap_total_bytes 2147479552
+# TYPE dumbmonit_node_exporter_uname_info gauge
+dumbmonit_node_exporter_uname_info{machine="x86_64",release="6.8.0-45-generic"} 1
