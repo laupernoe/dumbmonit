@@ -10,7 +10,7 @@
 //! tests exécutés dans notre chaîne d'intégration, qui est sous Linux.
 
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -41,17 +41,21 @@ pub fn start(config_path: PathBuf) -> Result<()> {
 
 fn service_main(_arguments: Vec<OsString>) {
     if let Err(error) = run_service() {
-        // Rien de mieux à faire ici : la journalisation n'est pas forcément encore
-        // en place, et le système ne lit que le code d'état du service.
-        eprintln!("the DumbMonit service stopped on an error: {error:#}");
+        // Le système ne lit que le code d'état du service : la raison de l'arrêt
+        // n'a que le journal pour être connue.
+        tracing::error!("the DumbMonit service stopped on an error: {error:#}");
     }
 }
 
 fn run_service() -> Result<()> {
     let config_path =
         CONFIG_PATH.get().cloned().unwrap_or_else(crate::config::Config::default_path);
-    let config = crate::config::Config::load(&config_path)?;
-    crate::init_tracing(config.log_level);
+    // La configuration fixe le niveau du journal, mais une configuration
+    // illisible doit, elle aussi, y laisser sa trace : le journal s'ouvre donc
+    // avant que l'erreur éventuelle ne remonte.
+    let loaded = crate::config::Config::load(&config_path);
+    init_log(&config_path, loaded.as_ref().map_or(tracing::Level::INFO, |c| c.log_level));
+    let config = loaded?;
     config.warn_deprecated_env();
 
     let (trigger, shutdown) = crate::shutdown::channel();
@@ -97,6 +101,22 @@ fn run_service() -> Result<()> {
         .context("reporting shutdown to the service manager")?;
 
     outcome
+}
+
+/// Journal du service : `agent.log` à côté de la configuration
+/// (`C:\ProgramData\DumbMonit\agent.log`). Un service n'a pas de console, et
+/// sans fichier tout ce qu'il écrit serait perdu ; si le fichier ne peut pas être
+/// ouvert, l'agent tourne quand même, sans journal plutôt que pas du tout.
+fn init_log(config_path: &Path, level: tracing::Level) {
+    match crate::logfile::LogFile::beside(config_path) {
+        Ok(file) => tracing_subscriber::fmt()
+            .with_max_level(level)
+            .with_target(false)
+            .with_ansi(false)
+            .with_writer(std::sync::Mutex::new(file))
+            .init(),
+        Err(_) => crate::init_tracing(level),
+    }
 }
 
 fn status(state: ServiceState, controls: ServiceControlAccept) -> ServiceStatus {

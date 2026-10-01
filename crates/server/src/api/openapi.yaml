@@ -1,0 +1,5019 @@
+# Spécification OpenAPI 3.1 de l'API HTTP de DumbMonit.
+#
+# Maintenue à la main, embarquée dans le binaire (`api/openapi.rs`) et servie en
+# JSON à `GET /api/openapi.json`. Le serveur réécrit `info.version` avec sa
+# constante API_VERSION et ajoute `info.x-server-version`.
+#
+# Un test de dérive compare les routes déclarées dans `crates/server/src/api/**`
+# à ce fichier : toute route ajoutée au routeur doit l'être ici, avec ses méthodes
+# exactes. Seules en sont exclues, volontairement, les routes du protocole des
+# agents (`/api/ingest`, `/api/agent/commands*`, `/api/agent/relay*`), les
+# redirections du navigateur pour OpenID Connect (`/api/auth/oidc/start`,
+# `/api/auth/oidc/callback`) et la distribution de l'agent (`/install.sh`,
+# `/install.ps1`, `/download/{name}`).
+#
+# Chaque opération porte `x-token-scope` :
+#   public  aucune authentification (`security: []`)
+#   read    jeton `read` (ou `write`), ou session de n'importe quel compte
+#   write   jeton `write`, ou session d'administrateur
+#   none    session seulement : tout jeton d'API est refusé (403)
+openapi: 3.1.0
+info:
+  title: DumbMonit HTTP API
+  version: "0.1"
+  summary: Monitoring for homelabs and small teams — the API the web UI uses, open to scripts and assistants.
+  description: |
+    Everything the DumbMonit web interface does goes through this API. It is an
+    **alpha**: routes and fields may still change between releases. The
+    `X-DumbMonit-Api-Version` header, present on every `/api` response, says
+    which revision of this document the server implements.
+
+    ## Authentication
+
+    Two ways in, accepted on every protected route:
+
+    - **API token** — `Authorization: Bearer dmt_…`, created in Settings →
+      *API & assistants*. Meant for scripts, dashboards and assistants. No
+      cookie is involved, so no anti-CSRF header is needed.
+    - **Session cookie** — `dumbmonit_session`, what the web UI uses after
+      `POST /api/auth/login`. Every state-changing request (`POST`, `PUT`,
+      `DELETE`) sent with the cookie must also carry
+      `X-Requested-With: DumbMonit`, or it is refused with `403`.
+
+    A token has a scope. **`read`** grants what a *viewer* account sees: every
+    `GET`. **`write`** grants what an *administrator* does: `POST`, `PUT` and
+    `DELETE` as well. Whatever its scope, a token can never manage accounts,
+    sessions, two-factor authentication, SSO, API or agent tokens, nor export
+    or restore a backup: those operations are marked `x-token-scope: none` and
+    answer `403` to a bearer token. A token can also expire, be restricted to
+    some networks, and is refused when the account that created it is disabled;
+    when that account is no longer an administrator, a `write` token acts as a
+    `read` one.
+
+    Each operation carries `x-token-scope`: `public` (no authentication),
+    `read`, `write` or `none` (session only).
+
+    ## Errors
+
+    Every error body is JSON: `{"error": "message"}` — `400` bad request,
+    `401` no valid session or token (with `WWW-Authenticate: Bearer` for a
+    token), `403` not allowed (viewer or `read` token on a write route, missing
+    anti-CSRF header, token on a session-only route, token used from a network
+    it is not allowed from), `404` unknown id, `409` conflict, `429` rate
+    limited (with `Retry-After`), `500` otherwise. An unknown path under `/api`
+    answers `404 {"error": "Unknown API route: …"}`.
+
+    ## Limits
+
+    Each API token may make **120 calls per minute**. Beyond, `429` with
+    `Retry-After` (seconds). Every response to a token-authenticated request
+    carries `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`.
+
+    ## CORS
+
+    Cross-origin requests are answered only when they carry an
+    `Authorization: Bearer dmt_…` header (plus `GET /api/openapi.json`, which
+    is public): `Access-Control-Allow-Origin` is sent, never
+    `Access-Control-Allow-Credentials`, so a session cookie is never usable
+    from another origin. Allowed origins: any by default, or the list in
+    `DUMBMONIT_API_CORS_ORIGINS` (`off` disables CORS altogether).
+
+    Full guide: <https://dumbmonit.readthedocs.io/en/latest/reference/api/>
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  contact:
+    name: DumbMonit
+    url: https://github.com/noekan/dumbmonit
+externalDocs:
+  description: HTTP API reference (Read the Docs)
+  url: https://dumbmonit.readthedocs.io/en/latest/reference/api/
+servers:
+  - url: /
+    description: This DumbMonit instance
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+tags:
+  - name: Health
+    description: Liveness of the server and its dependencies.
+  - name: Specification
+    description: This document.
+  - name: Accounts
+    description: Sign-in, sessions, two-factor authentication, SSO and accounts. Session only.
+  - name: API tokens
+    description: Tokens for scripts and assistants. Session only — a token never creates another token.
+  - name: Devices
+    description: Monitored devices and services (targets).
+  - name: Device types
+    description: The catalogue of kinds this server can monitor.
+  - name: Discovery
+    description: SNMP network scan.
+  - name: Onboarding
+    description: The first-run guide.
+  - name: Metrics
+    description: MetricsQL queries proxied to VictoriaMetrics.
+  - name: Alerts
+    description: Active alerts, history and acknowledgements.
+  - name: Rules
+    description: Alert rules and per-device overrides.
+  - name: Silences
+    description: Maintenance windows.
+  - name: Notifications
+    description: Notification channels and the global notification policy.
+  - name: Status pages
+    description: Status pages, their items, logos and subscribers.
+  - name: Incidents
+    description: Incidents and maintenance announcements shown on status pages.
+  - name: Public status
+    description: What a published status page exposes, without authentication.
+  - name: Agents
+    description: Machines running the DumbMonit agent, relays and enrolment tokens.
+  - name: Containers
+    description: Docker containers on agent machines, and the commands sent to them.
+  - name: Heartbeats
+    description: Push monitors — the secret URL a job calls.
+  - name: Integration packs
+    description: Device types described in YAML.
+  - name: Integrations
+    description: Panels specific to one device kind (Proxmox, PBS, PDM, PMG, OPNsense, TrueNAS, Redfish, Synology, observability backends, proxies).
+  - name: Backup
+    description: Encrypted export and restore of the instance. Session only.
+  - name: Assistants
+    description: The built-in Model Context Protocol (MCP) server.
+  - name: Prometheus compatibility
+    description: Read access for an existing Prometheus or Grafana, outside `/api`.
+
+paths:
+  # ------------------------------------------------------------------ santé
+  /api/health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Server version and state of its dependencies
+      description: Always `200`; a failing component is reported in the body and `status` is then `degraded`.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: Health report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+
+  /api/openapi.json:
+    get:
+      operationId: getOpenApi
+      tags: [Specification]
+      summary: This OpenAPI document
+      description: Public and free of any secret. Served with `Access-Control-Allow-Origin` so that API tools hosted elsewhere can load it.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The OpenAPI 3.1 document, in JSON.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  # ------------------------------------------------------------- comptes
+  /api/auth/status:
+    get:
+      operationId: getAuthStatus
+      tags: [Accounts]
+      summary: Whether the instance is configured and who is signed in
+      description: >-
+        `configured: false` means a fresh instance: until the first administrator
+        exists, every protected route answers `401`.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: Authentication state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthStatus" }
+
+  /api/auth/setup:
+    post:
+      operationId: setupFirstAdmin
+      tags: [Accounts]
+      summary: Create the first administrator
+      description: Only on a fresh instance (`409` once an account exists). Does not open a session.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetupRequest" }
+      responses:
+        "204": { description: Account created. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/auth/login:
+    post:
+      operationId: login
+      tags: [Accounts]
+      summary: Sign in with a password
+      description: >-
+        `204` with a `Set-Cookie` header carrying the session. When the account
+        has two-factor authentication, `200` with a pending ticket to finish
+        with `POST /api/auth/login/totp`. Rate limited after five failures
+        (`429`, `Retry-After` doubling from 30 s to 5 min).
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "204":
+          description: Signed in; the session cookie is set.
+          headers:
+            Set-Cookie:
+              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              schema: { type: string }
+        "200":
+          description: Two-factor authentication required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TotpChallenge" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/login/totp:
+    post:
+      operationId: loginTotp
+      tags: [Accounts]
+      summary: Finish a sign-in with a two-factor code
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TotpLoginRequest" }
+      responses:
+        "204":
+          description: Signed in; the session cookie is set.
+          headers:
+            Set-Cookie:
+              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/logout:
+    post:
+      operationId: logout
+      tags: [Accounts]
+      summary: End the current session
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Signed out; the cookie is cleared. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Accounts]
+      summary: The signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/password:
+    post:
+      operationId: changePassword
+      tags: [Accounts]
+      summary: Change the password of the signed-in account
+      description: Signs out every other session of the account.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChange" }
+      responses:
+        "204": { description: Password changed. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/totp:
+    get:
+      operationId: getTotpStatus
+      tags: [Accounts]
+      summary: Two-factor state of the signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Two-factor state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TotpStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: disableTotp
+      tags: [Accounts]
+      summary: Remove the second factor of the signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordConfirmation" }
+      responses:
+        "204": { description: Second factor removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/totp/enroll:
+    post:
+      operationId: enrollTotp
+      tags: [Accounts]
+      summary: Propose a two-factor secret
+      description: Nothing is enforced until the secret is confirmed with `POST /api/auth/totp/verify`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordConfirmation" }
+      responses:
+        "200":
+          description: The proposed secret.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TotpEnrolment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/totp/verify:
+    post:
+      operationId: verifyTotp
+      tags: [Accounts]
+      summary: Confirm the enrolment with a first code
+      description: Returns the recovery codes — shown once.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TotpCode" }
+      responses:
+        "200":
+          description: Two-factor enabled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecoveryCodes" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/auth/audit:
+    get:
+      operationId: listAuditLog
+      tags: [Accounts]
+      summary: The latest security events
+      description: Administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, default: 200 }
+      responses:
+        "200":
+          description: Events, most recent first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/oidc/config:
+    get:
+      operationId: getOidcConfig
+      tags: [Accounts]
+      summary: Single sign-on settings
+      description: Administrator session only. The client secret is never returned (`has_client_secret`).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The effective settings and where they come from.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OidcConfig" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putOidcConfig
+      tags: [Accounts]
+      summary: Store single sign-on settings
+      description: An absent or empty `client_secret` keeps the stored one.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OidcConfigUpdate" }
+      responses:
+        "200":
+          description: The new effective settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OidcConfig" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteOidcConfig
+      tags: [Accounts]
+      summary: Forget the stored single sign-on settings
+      description: Environment variables, if any, apply again.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Settings forgotten. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/oidc/test:
+    post:
+      operationId: testOidc
+      tags: [Accounts]
+      summary: Fetch the identity provider's discovery document
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OidcTestRequest" }
+      responses:
+        "200":
+          description: What was found, or why it failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OidcTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/users:
+    get:
+      operationId: listUsers
+      tags: [Accounts]
+      summary: Every account
+      description: Administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Accounts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createUser
+      tags: [Accounts]
+      summary: Create an account
+      description: "`password` may be omitted only when SSO is enabled."
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Account created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateUser
+      tags: [Accounts]
+      summary: Update an account
+      description: An omitted field keeps its value. The last administrator can be neither demoted nor disabled.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: The account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteUser
+      tags: [Accounts]
+      summary: Delete an account
+      description: Not yourself, not the last administrator. The account's API tokens are revoked.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Account deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/users/{id}/totp:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: resetUserTotp
+      tags: [Accounts]
+      summary: Reset another account's second factor
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Second factor removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------------- jetons d'API
+  /api/tokens:
+    get:
+      operationId: listApiTokens
+      tags: [API tokens]
+      summary: Every API token, revoked ones included
+      description: The secret is never listed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Tokens, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApiToken" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createApiToken
+      tags: [API tokens]
+      summary: Create an API token
+      description: >-
+        Administrator session only. The response is the only time the secret is
+        shown. The token is tied to the account that creates it.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiTokenCreate" }
+            example:
+              name: Grafana
+              scope: read
+              expires_in_days: 90
+              allowed_networks: ["192.168.1.0/24"]
+      responses:
+        "201":
+          description: Token created; `secret` is shown once.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedApiToken" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/tokens/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: revokeApiToken
+      tags: [API tokens]
+      summary: Revoke an API token
+      description: Effective immediately. `404` when unknown or already revoked.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Token revoked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ----------------------------------------------------------- équipements
+  /api/collectors:
+    get:
+      operationId: listDeviceTypes
+      tags: [Device types]
+      summary: Every device kind this server can monitor
+      description: >-
+        Drives the "Add device" form: label, examples, accepted credentials,
+        setup notice and typed options (stored as `tags[key]` on the device).
+        Kinds brought by an integration pack are listed as `pack.<id>`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The catalogue.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/KindDescription" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/discovery:
+    post:
+      operationId: scanNetwork
+      tags: [Discovery]
+      summary: Scan a network for SNMP devices
+      description: >-
+        At most 4096 addresses. A `POST` with a JSON body so that the community
+        never appears in a URL or a log line.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryRequest" }
+      responses:
+        "200":
+          description: What answered.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/onboarding:
+    get:
+      operationId: getOnboarding
+      tags: [Onboarding]
+      summary: Where the first-run guide stands
+      x-token-scope: read
+      responses:
+        "200":
+          description: Guide state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Onboarding" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putOnboarding
+      tags: [Onboarding]
+      summary: Skip the guide or dismiss steps
+      description: An omitted field keeps its stored value.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnboardingPatch" }
+      responses:
+        "200":
+          description: Guide state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Onboarding" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets:
+    get:
+      operationId: listTargets
+      tags: [Devices]
+      summary: Every device
+      x-token-scope: read
+      responses:
+        "200":
+          description: Devices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Target" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: createTarget
+      tags: [Devices]
+      summary: Add a device
+      description: Profile detection starts in the background for SNMP.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TargetPayload" }
+            example:
+              name: Core switch
+              address: 192.168.1.10
+              kind: snmp
+              interval_secs: 60
+              tags: {}
+              credential: { type: snmp_community, community: public }
+      responses:
+        "201":
+          description: The device.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Target" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/targets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTarget
+      tags: [Devices]
+      summary: One device
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Target" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateTarget
+      tags: [Devices]
+      summary: Replace a device
+      description: >-
+        Omitting `credential` keeps the stored secret; omitting `profile_id` keeps
+        the detected profile (`""` clears it); omitting `via_agent` keeps the
+        relay (`null` goes back to direct probing). `enabled: false` clears the
+        device's alerts without notifying.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TargetPayload" }
+      responses:
+        "200":
+          description: The device.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Target" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteTarget
+      tags: [Devices]
+      summary: Delete a device
+      description: Clears its alerts without notifying and deletes its time series (best effort).
+      x-token-scope: write
+      responses:
+        "204": { description: Device deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/probe:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: probeTarget
+      tags: [Devices]
+      summary: Probe a device now
+      description: >-
+        Through its relay agent when the device has one (`409` when a probe is
+        already in flight, `400 Timed out: relay agent …` when it does not answer).
+      x-token-scope: write
+      responses:
+        "200":
+          description: What was measured.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProbeReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/discover:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: rediscoverTarget
+      tags: [Devices]
+      summary: Re-run profile detection
+      x-token-scope: write
+      responses:
+        "200":
+          description: The detected profile, or `null`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ---------------------------------------------------------------- mesures
+  /api/metrics/query:
+    get:
+      operationId: queryMetrics
+      tags: [Metrics]
+      summary: Instant MetricsQL query
+      description: Each series carries a single `[timestamp, "value"]` pair in `values`.
+      x-token-scope: read
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema: { type: string }
+          example: avg by (target, host) (dumbmonit_cpu_usage_percent)
+      responses:
+        "200":
+          description: Series, in the Prometheus shape.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Series" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/metrics/query_range:
+    get:
+      operationId: queryMetricsRange
+      tags: [Metrics]
+      summary: Range MetricsQL query
+      description: >-
+        `start` and `end` are milliseconds since the epoch (400 days at most
+        between them); `step` is in seconds and is widened so that a series
+        never exceeds 2,000 points.
+      x-token-scope: read
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema: { type: string }
+        - name: start
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: end
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: step
+          in: query
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Series, in the Prometheus shape.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Series" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  # ---------------------------------------------------------------- alertes
+  /api/alerts:
+    get:
+      operationId: listActiveAlerts
+      tags: [Alerts]
+      summary: Active alerts
+      description: >-
+        Pending, firing, suppressed and recently resolved. `phase` is the
+        engine's state; `effective_phase` is what to show (`suppressed` when a
+        parent device is unreachable, named by `suppressed_by`). Alerts of
+        deleted or paused devices are never listed.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Alerts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/alerts/history:
+    get:
+      operationId: listAlertHistory
+      tags: [Alerts]
+      summary: Alert phase transitions
+      x-token-scope: read
+      parameters:
+        - name: since
+          in: query
+          description: RFC 3339 lower bound; the last seven days by default.
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Transitions, most recent first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AlertHistoryEntry" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/alerts/{fingerprint}/ack:
+    parameters:
+      - name: fingerprint
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: acknowledgeAlert
+      tags: [Alerts]
+      summary: Acknowledge an alert
+      description: >-
+        Reminders and escalations pause until `until` (or for `duration_secs`;
+        neither means 4 hours, at most 30 days). `{"until": null}` lifts the
+        acknowledgement. The resolution is still notified. Audited.
+      x-token-scope: write
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AckRequest" }
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: unacknowledgeAlert
+      tags: [Alerts]
+      summary: Lift an acknowledgement
+      x-token-scope: write
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/rules:
+    get:
+      operationId: listRules
+      tags: [Rules]
+      summary: Every alert rule
+      x-token-scope: read
+      responses:
+        "200":
+          description: Rules, with their per-device overrides.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Rule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createRule
+      tags: [Rules]
+      summary: Create an alert rule
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RulePayload" }
+      responses:
+        "201":
+          description: The rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/alerts/rules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateRule
+      tags: [Rules]
+      summary: Update an alert rule
+      description: A built-in rule keeps its query.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RulePayload" }
+      responses:
+        "200":
+          description: The rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteRule
+      tags: [Rules]
+      summary: Delete an alert rule
+      description: Built-in rules cannot be deleted — disable them instead.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule deleted. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/rules/{id}/enable:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: setRuleEnabled
+      tags: [Rules]
+      summary: Enable or disable an alert rule
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnableRequest" }
+      responses:
+        "200":
+          description: The rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/overrides:
+    get:
+      operationId: listOverrides
+      tags: [Rules]
+      summary: Per-device rule overrides
+      x-token-scope: read
+      parameters:
+        - name: target_id
+          in: query
+          description: Only the overrides of this device.
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Overrides.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RuleOverride" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/alerts/rules/{id}/overrides:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listRuleOverrides
+      tags: [Rules]
+      summary: The overrides of one rule
+      x-token-scope: read
+      responses:
+        "200":
+          description: Overrides.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RuleOverride" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/rules/{id}/overrides/{target_id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: target_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: putRuleOverride
+      tags: [Rules]
+      summary: Create or replace an override for one device
+      description: Each field is optional; `null` means "as the rule". An empty override is removed.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OverridePayload" }
+      responses:
+        "200":
+          description: The override.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RuleOverride" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteRuleOverride
+      tags: [Rules]
+      summary: Remove an override
+      x-token-scope: write
+      responses:
+        "204": { description: Override removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/silences:
+    get:
+      operationId: listSilences
+      tags: [Silences]
+      summary: Every maintenance window
+      x-token-scope: read
+      responses:
+        "200":
+          description: Windows, with `active_now`, `active_until` and `next_start_at` computed by the server.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Silence" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createSilence
+      tags: [Silences]
+      summary: Create a maintenance window
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SilencePayload" }
+            example:
+              name: Sunday backups
+              comment: NAS is busy
+              target_id: 4
+              matchers: {}
+              schedule: { kind: weekly, days: [6], start_minute: 120, end_minute: 240, timezone: Europe/Paris }
+              enabled: true
+      responses:
+        "201":
+          description: The window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Silence" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/alerts/silences/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: deleteSilence
+      tags: [Silences]
+      summary: Delete a maintenance window
+      x-token-scope: write
+      responses:
+        "204": { description: Window deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------------- notifications
+  /api/notify/kinds:
+    get:
+      operationId: listChannelKinds
+      tags: [Notifications]
+      summary: Every notification channel type and its fields
+      x-token-scope: read
+      responses:
+        "200":
+          description: Channel types.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ChannelKind" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/notify/channels:
+    get:
+      operationId: listChannels
+      tags: [Notifications]
+      summary: Every notification channel
+      description: Secrets are never returned (`has_secret`).
+      x-token-scope: read
+      responses:
+        "200":
+          description: Channels.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Channel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createChannel
+      tags: [Notifications]
+      summary: Create a notification channel
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChannelPayload" }
+            example:
+              name: Ops Discord
+              kind: discord
+              enabled: true
+              settings: { username: DumbMonit }
+              secrets: { webhook_url: "https://discord.com/api/webhooks/…" }
+      responses:
+        "201":
+          description: The channel.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Channel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/notify/channels/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateChannel
+      tags: [Notifications]
+      summary: Update a notification channel
+      description: >-
+        Omitting `secrets` keeps the stored ones; `"secrets": {}` clears them.
+        In `policy`, omitting `matcher` keeps the routing filter and
+        `"matcher": null` clears it.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChannelPayload" }
+      responses:
+        "200":
+          description: The channel.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Channel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteChannel
+      tags: [Notifications]
+      summary: Delete a notification channel
+      x-token-scope: write
+      responses:
+        "204": { description: Channel deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/notify/channels/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: testChannel
+      tags: [Notifications]
+      summary: Send a test message through a channel
+      x-token-scope: write
+      responses:
+        "200":
+          description: Whether the message left.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChannelTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/notify/policy:
+    get:
+      operationId: getNotifyPolicy
+      tags: [Notifications]
+      summary: The global notification policy
+      x-token-scope: read
+      responses:
+        "200":
+          description: The policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotifyPolicy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putNotifyPolicy
+      tags: [Notifications]
+      summary: Update the global notification policy
+      description: 'Every field is optional; an omitted field keeps its value. `"escalate_channel": null` switches escalation off.'
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotifyPolicyUpdate" }
+      responses:
+        "200":
+          description: The policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotifyPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/notify/match-preview:
+    post:
+      operationId: previewChannelMatcher
+      tags: [Notifications]
+      summary: Which devices a channel routing filter selects
+      description: Read-only, but a `POST` because the filter is a JSON body; needs the `write` scope like every `POST`.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MatchPreviewRequest" }
+      responses:
+        "200":
+          description: The preview.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchPreview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ------------------------------------------------------- pages de statut
+  /api/status-pages:
+    get:
+      operationId: listStatusPages
+      tags: [Status pages]
+      summary: Every status page with its items
+      x-token-scope: read
+      responses:
+        "200":
+          description: Pages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StatusPageView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createStatusPage
+      tags: [Status pages]
+      summary: Create a status page
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusPagePayload" }
+      responses:
+        "201":
+          description: The page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusPageView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/status-pages/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getStatusPage
+      tags: [Status pages]
+      summary: One status page with its items
+      x-token-scope: read
+      responses:
+        "200":
+          description: The page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusPageView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateStatusPage
+      tags: [Status pages]
+      summary: Replace a status page
+      description: >-
+        A full replacement: `title` is required and every omitted field goes back
+        to its default — except `accent`, `footer_text`, `homepage_url` and
+        `subscribe_channel_id`, which keep their stored value when omitted.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusPagePayload" }
+      responses:
+        "200":
+          description: The page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusPageView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteStatusPage
+      tags: [Status pages]
+      summary: Delete a status page
+      description: The public URL stops answering.
+      x-token-scope: write
+      responses:
+        "204": { description: Page deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/items:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: setStatusPageItems
+      tags: [Status pages]
+      summary: Replace the devices shown on a page
+      description: The full ordered list (200 at most). An empty label takes the device's name.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/StatusPageItemInput" }
+      responses:
+        "200":
+          description: The items, in display order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StatusPageItem" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/logo:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getStatusPageLogo
+      tags: [Status pages]
+      summary: The page's logo (editor preview, drafts included)
+      x-token-scope: read
+      responses:
+        "200":
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/webp: { schema: { type: string, format: binary } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: uploadStatusPageLogo
+      tags: [Status pages]
+      summary: Upload the page's logo
+      description: PNG, JPEG or WebP, recognised by content, 256 KiB at most.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogoUpload" }
+      responses:
+        "204": { description: Logo stored. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteStatusPageLogo
+      tags: [Status pages]
+      summary: Remove the page's logo
+      x-token-scope: write
+      responses:
+        "204": { description: Logo removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/subscribers:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listStatusPageSubscribers
+      tags: [Status pages]
+      summary: Email subscribers of a page
+      description: Their tokens never leave the server.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Subscribers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Subscriber" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/subscribers/{subscriber}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: subscriber
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    delete:
+      operationId: removeStatusPageSubscriber
+      tags: [Status pages]
+      summary: Remove a subscriber
+      x-token-scope: write
+      responses:
+        "204": { description: Subscriber removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/incidents:
+    get:
+      operationId: listIncidents
+      tags: [Incidents]
+      summary: Every incident and maintenance announcement, with its updates
+      x-token-scope: read
+      responses:
+        "200":
+          description: Incidents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IncidentView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createIncident
+      tags: [Incidents]
+      summary: Open an incident or announce a maintenance
+      description: "`body` becomes the first update."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IncidentPayload" }
+      responses:
+        "201":
+          description: The incident.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IncidentView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/incidents/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateIncident
+      tags: [Incidents]
+      summary: Update an incident
+      description: An omitted field keeps its value.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IncidentPayload" }
+      responses:
+        "200":
+          description: The incident.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IncidentView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteIncident
+      tags: [Incidents]
+      summary: Delete an incident
+      x-token-scope: write
+      responses:
+        "204": { description: Incident deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/incidents/{id}/updates:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listIncidentUpdates
+      tags: [Incidents]
+      summary: The timeline of an incident
+      x-token-scope: read
+      responses:
+        "200":
+          description: Updates, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IncidentUpdate" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: addIncidentUpdate
+      tags: [Incidents]
+      summary: Post an update and move the incident to its status
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IncidentUpdatePayload" }
+      responses:
+        "201":
+          description: The incident.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IncidentView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # -------------------------------------------------- pages de statut publiques
+  /api/public/status/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatus
+      tags: [Public status]
+      summary: The document a published status page is built from
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The page, its services and incidents.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicStatus" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/badge.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatusBadge
+      tags: [Public status]
+      summary: Overall status badge
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/rss:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatusRss
+      tags: [Public status]
+      summary: Incidents as an RSS feed
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: RSS 2.0.
+          content:
+            application/rss+xml:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/uptime.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/BadgeDays"
+    get:
+      operationId: getPublicUptimeBadge
+      tags: [Public status]
+      summary: Mean uptime badge
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/response.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicResponseBadge
+      tags: [Public status]
+      summary: Mean response time badge
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/components/{key}/badge.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/ComponentKey"
+    get:
+      operationId: getPublicComponentBadge
+      tags: [Public status]
+      summary: Status badge of one service
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/components/{key}/uptime.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/ComponentKey"
+      - $ref: "#/components/parameters/BadgeDays"
+    get:
+      operationId: getPublicComponentUptimeBadge
+      tags: [Public status]
+      summary: Uptime badge of one service
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/components/{key}/response.svg:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/ComponentKey"
+    get:
+      operationId: getPublicComponentResponseBadge
+      tags: [Public status]
+      summary: Response time badge of one service
+      security: []
+      x-token-scope: public
+      responses:
+        "200": { $ref: "#/components/responses/Svg" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/logo:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatusLogo
+      tags: [Public status]
+      summary: The page's logo
+      description: Cacheable for a day; the document's `logo_url` carries a version.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/webp: { schema: { type: string, format: binary } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/subscribe:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: subscribeToStatus
+      tags: [Public status]
+      summary: Subscribe an email address to a page's announcements
+      description: >-
+        Mails a confirmation link through the page's SMTP channel. Always `202`
+        with the same message, whatever the address's state. At most five
+        requests per client and sixty in all per 15 minutes.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: Confirmation pending.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusMessage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/public/status/{slug}/confirm:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/SubscriptionToken"
+    post:
+      operationId: confirmStatusSubscription
+      tags: [Public status]
+      summary: Confirm a subscription
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: "`{\"status\": \"confirmed\"}`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusMessage" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/unsubscribe:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/SubscriptionToken"
+    post:
+      operationId: unsubscribeFromStatus
+      tags: [Public status]
+      summary: Remove a subscription
+      description: The body is ignored — the RFC 8058 one-click target of `List-Unsubscribe`. Always `200`.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: "`{\"status\": \"unsubscribed\"}`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusMessage" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # -------------------------------------------------------------- agents
+  /api/agent/tokens:
+    get:
+      operationId: listAgentTokens
+      tags: [Agents]
+      summary: Every agent enrolment token
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Enrolment tokens.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentToken" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createAgentToken
+      tags: [Agents]
+      summary: Create an agent enrolment token
+      description: >-
+        Administrator session only. Single use unless `reusable`. The response is
+        the only time the secret is shown, with ready-to-paste install commands.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentTokenCreate" }
+      responses:
+        "201":
+          description: Token created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedAgentToken" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/tokens/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: revokeAgentToken
+      tags: [Agents]
+      summary: Revoke an agent enrolment token
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Token revoked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/relays:
+    get:
+      operationId: listRelays
+      tags: [Agents]
+      summary: Every agent machine as a possible relay
+      description: Declared relays first, then by name.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Agent machines.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Relay" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/{id}/agent:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getAgentHost
+      tags: [Agents]
+      summary: The machine as its agent last described it
+      description: "`404` when the device is not an `agent` device, or until an agent has reported."
+      x-token-scope: read
+      responses:
+        "200":
+          description: The machine.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentHost" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/rebind:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: allowAgentRebind
+      tags: [Agents]
+      summary: Let this machine bind itself again for one hour
+      description: The way back in after a reinstall lost the agent's secret. The window closes as soon as it is used.
+      x-token-scope: write
+      responses:
+        "200":
+          description: The window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RebindWindow" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/containers:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listContainers
+      tags: [Containers]
+      summary: Containers of an agent machine, from its last batch
+      x-token-scope: read
+      responses:
+        "200":
+          description: Containers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Container" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/containers/{name}/policy:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - $ref: "#/components/parameters/ContainerName"
+    put:
+      operationId: setContainerPolicy
+      tags: [Containers]
+      summary: Set a container's automatic actions
+      description: Every field is optional; an omitted field keeps its stored value.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContainerPolicyPatch" }
+      responses:
+        "200":
+          description: The full policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContainerPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/containers/{name}/restart:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - $ref: "#/components/parameters/ContainerName"
+    post:
+      operationId: restartContainer
+      tags: [Containers]
+      summary: Queue a container restart
+      description: >-
+        `404` when the container is not in the agent's inventory; `409` when the
+        same command is already queued or running, or when the agent cannot run
+        commands.
+      x-token-scope: write
+      responses:
+        "201":
+          description: The queued command.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/containers/{name}/update:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - $ref: "#/components/parameters/ContainerName"
+    post:
+      operationId: updateContainer
+      tags: [Containers]
+      summary: Queue a container image update
+      description: "`prune` defaults to the container's policy. Same status codes as a restart."
+      x-token-scope: write
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prune: { type: boolean, description: Remove the old image once updated. }
+      responses:
+        "201":
+          description: The queued command.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/commands:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listCommands
+      tags: [Containers]
+      summary: The last 20 commands of an agent machine
+      x-token-scope: read
+      responses:
+        "200":
+          description: Commands, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Command" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/commands/{command_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: command_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    delete:
+      operationId: cancelCommand
+      tags: [Containers]
+      summary: Cancel a queued command
+      description: "`409` once the agent has picked it up or when it is already closed."
+      x-token-scope: write
+      responses:
+        "204": { description: Command cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ---------------------------------------------------------- heartbeats
+  /api/push/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: The heartbeat's secret token — the URL is the credential.
+        schema: { type: string }
+      - name: status
+        in: query
+        description: "`up` (default) or `down`: the job reports its own failure (Uptime Kuma compatible)."
+        schema: { type: string, enum: [up, down] }
+      - name: msg
+        in: query
+        description: Free text, kept truncated to 500 characters.
+        schema: { type: string }
+    get:
+      operationId: pushHeartbeatGet
+      tags: [Heartbeats]
+      summary: Record a heartbeat
+      description: At most sixty calls a minute per token.
+      security: []
+      x-token-scope: public
+      responses:
+        "204": { description: Heartbeat recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: pushHeartbeatPost
+      tags: [Heartbeats]
+      summary: Record a heartbeat
+      description: Same as the `GET`; the body is ignored.
+      security: []
+      x-token-scope: public
+      responses:
+        "204": { description: Heartbeat recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/targets/{id}/push:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPushMonitor
+      tags: [Heartbeats]
+      summary: The monitor of a heartbeat device, token included
+      description: Created on first read. `400` when the device is not a heartbeat.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The monitor.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushMonitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/push/regenerate:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: regeneratePushToken
+      tags: [Heartbeats]
+      summary: Issue a new heartbeat token
+      description: The previous URL answers `404` from then on.
+      x-token-scope: write
+      responses:
+        "200":
+          description: The monitor, with its new token.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushMonitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ------------------------------------------------------ paquets d'intégration
+  /api/packs:
+    get:
+      operationId: listPacks
+      tags: [Integration packs]
+      summary: Installed integration packs
+      description: Administrator session, or any API token.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Packs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Pack" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: installPack
+      tags: [Integration packs]
+      summary: Install or update an integration pack
+      description: >-
+        The body is the pack's YAML as is, or `{"yaml": "…"}` in JSON. `201` when
+        created, `200` when updated or unchanged. `400` lists every validation
+        error.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema: { type: string }
+          text/plain:
+            schema: { type: string }
+          application/json:
+            schema:
+              type: object
+              required: [yaml]
+              additionalProperties: false
+              properties:
+                yaml: { type: string }
+      responses:
+        "201":
+          description: Pack installed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PackInstallReport" }
+        "200":
+          description: Pack updated or unchanged.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PackInstallReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/packs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PackId"
+    get:
+      operationId: getPack
+      tags: [Integration packs]
+      summary: One integration pack
+      x-token-scope: read
+      responses:
+        "200":
+          description: The pack.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pack" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: uninstallPack
+      tags: [Integration packs]
+      summary: Uninstall an integration pack, with its rules
+      description: "`409` while devices use it."
+      x-token-scope: write
+      responses:
+        "204": { description: Pack uninstalled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/packs/{id}/enable:
+    parameters:
+      - $ref: "#/components/parameters/PackId"
+    put:
+      operationId: enablePack
+      tags: [Integration packs]
+      summary: Register the pack's device type
+      x-token-scope: write
+      responses:
+        "200":
+          description: The pack.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pack" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/packs/{id}/disable:
+    parameters:
+      - $ref: "#/components/parameters/PackId"
+    put:
+      operationId: disablePack
+      tags: [Integration packs]
+      summary: Withdraw the pack's device type
+      description: Devices, history and rules stay.
+      x-token-scope: write
+      responses:
+        "200":
+          description: The pack.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pack" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ------------------------------------------------------------ sauvegarde
+  /api/backup:
+    get:
+      operationId: getBackupStatus
+      tags: [Backup]
+      summary: What a backup bundle would contain, and the scheduled backups
+      description: Administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Backup state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BackupStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: exportBackup
+      tags: [Backup]
+      summary: Export an encrypted backup bundle
+      description: >-
+        Returns the bundle itself as a JSON file: a cleartext header and a payload
+        encrypted with AES-256-GCM under a key derived from the passphrase by
+        Argon2id (at least 16 characters). It carries every credential of the
+        instance, which is why tokens are refused.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BackupExportRequest" }
+      responses:
+        "200":
+          description: The bundle, as an attachment.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/backup/restore:
+    post:
+      operationId: restoreBackup
+      tags: [Backup]
+      summary: Restore a backup bundle (dry run unless `apply`)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BackupRestoreRequest" }
+      responses:
+        "200":
+          description: Per-section report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RestoreReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/backup/local:
+    post:
+      operationId: runLocalBackup
+      tags: [Backup]
+      summary: Write one scheduled-style local backup now
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The scheduled backups' state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocalBackupStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # --------------------------------------------------- panneaux par intégration
+  /api/targets/{id}/proxmox/guests:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listProxmoxGuests
+      tags: [Integrations]
+      summary: Proxmox VE — VMs and containers, from the last probe
+      description: "`400` when the device is not a `proxmox` device. Unknown values are `null`."
+      x-token-scope: read
+      responses:
+        "200":
+          description: One object per guest, sorted by node then VMID.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProxmoxGuest" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/proxmox/nodes:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getProxmoxNodes
+      tags: [Integrations]
+      summary: Proxmox VE — nodes and fencing
+      x-token-scope: read
+      responses:
+        "200":
+          description: Nodes.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProxmoxNodes" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/proxmox/ceph:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getProxmoxCeph
+      tags: [Integrations]
+      summary: Proxmox VE — Ceph cluster
+      x-token-scope: read
+      responses:
+        "200":
+          description: Ceph state; `available` is `false` without Ceph.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProxmoxCeph" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/calendar:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPbsCalendar
+      tags: [Integrations]
+      summary: Proxmox Backup Server — backup calendar per group
+      x-token-scope: read
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, minimum: 1, default: 30 }
+        - name: offset
+          in: query
+          description: The viewer's UTC offset in minutes, so that days are cut at local midnight.
+          schema: { type: integer }
+      responses:
+        "200":
+          description: The calendar.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PbsCalendar" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/failures:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listPbsFailures
+      tags: [Integrations]
+      summary: Proxmox Backup Server — failed tasks
+      x-token-scope: read
+      parameters:
+        - $ref: "#/components/parameters/FailureDays"
+      responses:
+        "200":
+          description: Failed tasks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TaskFailure" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/jobs:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listPbsJobs
+      tags: [Integrations]
+      summary: Proxmox Backup Server — sync, verify, prune and GC jobs
+      x-token-scope: read
+      responses:
+        "200":
+          description: Jobs with their schedule and last result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PbsJobs" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/health:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPbsHealth
+      tags: [Integrations]
+      summary: Proxmox Backup Server — datastores, disks, ZFS, services
+      x-token-scope: read
+      responses:
+        "200":
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PbsHealth" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/tasks/{upid}/log:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: upid
+        in: path
+        required: true
+        description: Task identifier, starting with `UPID:`.
+        schema: { type: string }
+    get:
+      operationId: getPbsTaskLog
+      tags: [Integrations]
+      summary: Proxmox Backup Server — the log of one task, fetched live
+      x-token-scope: read
+      parameters:
+        - name: lines
+          in: query
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: The log.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PbsTaskLog" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pbs/disks/smart:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPbsDiskSmart
+      tags: [Integrations]
+      summary: Proxmox Backup Server — SMART attributes of one disk, fetched live
+      x-token-scope: read
+      parameters:
+        - name: disk
+          in: query
+          required: true
+          description: Device path, such as `/dev/sda`.
+          schema: { type: string }
+      responses:
+        "200":
+          description: SMART attributes.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PanelObject" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pdm/remotes:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPdmRemotes
+      tags: [Integrations]
+      summary: Proxmox Datacenter Manager — estate and federated instances
+      x-token-scope: read
+      responses:
+        "200":
+          description: Estate totals and one row per remote, unreachable first.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PdmRemotes" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pdm/failures:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listPdmFailures
+      tags: [Integrations]
+      summary: Proxmox Datacenter Manager — failed tasks across the estate
+      x-token-scope: read
+      parameters:
+        - $ref: "#/components/parameters/FailureDays"
+      responses:
+        "200":
+          description: Failed tasks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TaskFailure" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pdm/health:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPdmHealth
+      tags: [Integrations]
+      summary: Proxmox Datacenter Manager — the console host
+      x-token-scope: read
+      responses:
+        "200":
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PdmHealth" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pmg/queues:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPmgQueues
+      tags: [Integrations]
+      summary: Proxmox Mail Gateway — Postfix queues
+      x-token-scope: read
+      responses:
+        "200":
+          description: Queues.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PmgQueues" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pmg/traffic:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPmgTraffic
+      tags: [Integrations]
+      summary: Proxmox Mail Gateway — mail traffic, spam and quarantine counts
+      x-token-scope: read
+      responses:
+        "200":
+          description: Traffic (counts only, no message content).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PmgTraffic" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/pmg/health:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPmgHealth
+      tags: [Integrations]
+      summary: Proxmox Mail Gateway — nodes, cluster and services
+      x-token-scope: read
+      responses:
+        "200":
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PmgHealth" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/opnsense/gateways:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getOpnsenseGateways
+      tags: [Integrations]
+      summary: OPNsense — gateways and WAN addresses
+      x-token-scope: read
+      responses:
+        "200":
+          description: Gateways.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpnsenseGateways" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/opnsense/traffic:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getOpnsenseTraffic
+      tags: [Integrations]
+      summary: OPNsense — interfaces, firewall and DHCP
+      x-token-scope: read
+      responses:
+        "200":
+          description: Traffic.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpnsenseTraffic" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/opnsense/health:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getOpnsenseHealth
+      tags: [Integrations]
+      summary: OPNsense — system, services, tunnels, firmware
+      x-token-scope: read
+      responses:
+        "200":
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpnsenseHealth" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/truenas/storage:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTruenasStorage
+      tags: [Integrations]
+      summary: TrueNAS — pools, datasets and disks
+      x-token-scope: read
+      responses:
+        "200":
+          description: Storage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TruenasStorage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/truenas/protection:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTruenasProtection
+      tags: [Integrations]
+      summary: TrueNAS — scrubs and data protection tasks
+      x-token-scope: read
+      responses:
+        "200":
+          description: Data protection.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TruenasProtection" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/truenas/health:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTruenasHealth
+      tags: [Integrations]
+      summary: TrueNAS — system, alerts and services
+      x-token-scope: read
+      responses:
+        "200":
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TruenasHealth" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/redfish:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getRedfishOverview
+      tags: [Integrations]
+      summary: Redfish — server hardware read from its management controller
+      x-token-scope: read
+      responses:
+        "200":
+          description: Hardware.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RedfishOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/observability:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getObservabilityOverview
+      tags: [Integrations]
+      summary: Health of a log or metrics server
+      x-token-scope: read
+      responses:
+        "200":
+          description: Checks, figures and breakdowns.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/backend:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getBackendOverview
+      tags: [Integrations]
+      summary: Health of Redis, MongoDB, RabbitMQ or CrowdSec
+      x-token-scope: read
+      responses:
+        "200":
+          description: Checks, figures and breakdowns.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/proxy:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getProxyOverview
+      tags: [Integrations]
+      summary: Health of a reverse proxy or a domain registration
+      x-token-scope: read
+      responses:
+        "200":
+          description: Checks, figures and breakdowns.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/synology:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getSynologyOverview
+      tags: [Integrations]
+      summary: Synology DSM — system, volumes, pools and disks
+      x-token-scope: read
+      responses:
+        "200":
+          description: Overview from the last probe.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SynologyOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/synology/abb:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getSynologyActiveBackup
+      tags: [Integrations]
+      summary: Synology — Active Backup for Business tasks and protected devices
+      x-token-scope: read
+      responses:
+        "200":
+          description: Tasks and per-device reports.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SynologyActiveBackup" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ------------------------------------------------------------- assistants
+  /api/mcp:
+    get:
+      operationId: describeMcpEndpoint
+      tags: [Assistants]
+      summary: Explains the MCP endpoint (405)
+      description: There is no server-sent stream; the body only says what this endpoint is.
+      security: []
+      x-token-scope: public
+      responses:
+        "405":
+          description: Method not allowed; `Allow` names `POST`.
+          headers:
+            Allow:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/McpEndpointInfo" }
+    delete:
+      operationId: deleteMcpSession
+      tags: [Assistants]
+      summary: Session termination is not supported (405)
+      description: The server is stateless and issues no `Mcp-Session-Id`, so there is nothing to terminate.
+      security: []
+      x-token-scope: public
+      responses:
+        "405":
+          description: Method not allowed; `Allow` names `POST`.
+          headers:
+            Allow:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/McpEndpointInfo" }
+    post:
+      operationId: callMcp
+      tags: [Assistants]
+      summary: Model Context Protocol server (Streamable HTTP, JSON-RPC 2.0)
+      description: |
+        One JSON-RPC 2.0 request or notification per `POST`, answered in
+        `application/json` (no SSE stream, no session).
+
+        Protocol revisions:
+
+        - **2026-07-28** (stateless): every request carries
+          `params._meta["io.modelcontextprotocol/protocolVersion"]` and
+          `clientCapabilities`, plus the `MCP-Protocol-Version`, `Mcp-Method`
+          and (for `tools/call`) `Mcp-Name` headers, which must match the body
+          (`400` with error `-32020` otherwise). `server/discover` lists the
+          supported versions; an unsupported one gets `400` with error
+          `-32022`; an unknown method `404` with `-32601`.
+        - **2025-11-25**, **2025-06-18**, **2025-03-26**: the `initialize`
+          handshake, then `tools/list` and `tools/call`; `ping` is answered.
+
+        A notification is acknowledged with `202` and no body. The API token's
+        scope applies tool by tool: a `read` token can call every read tool and
+        gets an explanatory tool error (`isError: true`) from a write tool. The
+        27 tools are documented at
+        <https://dumbmonit.readthedocs.io/en/latest/using/assistant/>.
+      x-token-scope: read
+      parameters:
+        - name: MCP-Protocol-Version
+          in: header
+          schema: { type: string, examples: ["2026-07-28"] }
+        - name: Mcp-Method
+          in: header
+          schema: { type: string }
+        - name: Mcp-Name
+          in: header
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JsonRpcRequest" }
+            example:
+              jsonrpc: "2.0"
+              id: 1
+              method: tools/call
+              params:
+                name: get_status
+                arguments: {}
+                _meta:
+                  io.modelcontextprotocol/protocolVersion: "2026-07-28"
+                  io.modelcontextprotocol/clientCapabilities: {}
+      responses:
+        "200":
+          description: A JSON-RPC response (result or error).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JsonRpcResponse" }
+        "202": { description: 'Notification accepted, no body.' }
+        "400":
+          description: Malformed request, header mismatch or unsupported protocol version (JSON-RPC error body).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JsonRpcResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Unknown method on a 2026-07-28 request (JSON-RPC error `-32601`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JsonRpcResponse" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  # ------------------------------------------- compatibilité Prometheus (hors /api)
+  /metrics:
+    get:
+      operationId: getInstanceMetrics
+      tags: [Prometheus compatibility]
+      summary: Health of the instance itself, Prometheus text format
+      description: >-
+        Scheduler, probes, writes, alerting, notifications, agents, database,
+        VictoriaMetrics — a few dozen series, never one per device. Public when
+        `DUMBMONIT_METRICS_PUBLIC=true`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Prometheus exposition format.
+          content:
+            text/plain:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /federate:
+    get:
+      operationId: federateMetrics
+      tags: [Prometheus compatibility]
+      summary: The measurements, Prometheus text format
+      description: >-
+        `400` beyond 8 MiB, with what to narrow. Public when
+        `DUMBMONIT_METRICS_PUBLIC=true`.
+      x-token-scope: read
+      parameters:
+        - name: match[]
+          in: query
+          description: Series selector (repeatable, 10 at most; `{__name__=~"dumbmonit_.*"}` by default).
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - name: max_lookback
+          in: query
+          description: Window the last point is looked for in (`5m` by default).
+          schema: { type: string }
+      responses:
+        "200":
+          description: Prometheus exposition format.
+          content:
+            text/plain:
+              schema: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /prometheus/api/v1/{route}:
+    parameters:
+      - name: route
+        in: path
+        required: true
+        description: >-
+          One of `query`, `query_range`, `query_exemplars`, `series`, `labels`,
+          `label/{name}/values`, `metadata`, `status/buildinfo`; anything else is
+          `404`. Lets Grafana use `http://…/prometheus` as a Prometheus data source.
+        schema: { type: string }
+    get:
+      operationId: prometheusApiGet
+      tags: [Prometheus compatibility]
+      summary: Read half of the Prometheus HTTP API, relayed to the store
+      description: Public when `DUMBMONIT_METRICS_PUBLIC=true`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The Prometheus API response.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: prometheusApiPost
+      tags: [Prometheus compatibility]
+      summary: Same as the GET, with form-encoded parameters
+      description: Read-only despite the method, hence the `read` scope.
+      x-token-scope: read
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema: { type: object, additionalProperties: { type: string } }
+      responses:
+        "200":
+          description: The Prometheus API response.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: dmt_…
+      description: >-
+        API token created in Settings → API & assistants. `read` scope: every
+        `GET`; `write` scope: also `POST`, `PUT`, `DELETE`. Never valid on
+        operations marked `x-token-scope: none`. 120 calls per minute per token.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: dumbmonit_session
+      description: >-
+        Session opened by `POST /api/auth/login`. State-changing requests must
+        also carry `X-Requested-With: DumbMonit`.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    TargetId:
+      name: id
+      in: path
+      required: true
+      description: Device id.
+      schema: { type: integer, format: int64 }
+    PackId:
+      name: id
+      in: path
+      required: true
+      description: Pack id, as declared in its YAML.
+      schema: { type: string }
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z0-9-]{2,40}$" }
+    ComponentKey:
+      name: key
+      in: path
+      required: true
+      description: The service's `key` in the public document (its label in URL form).
+      schema: { type: string }
+    BadgeDays:
+      name: days
+      in: query
+      description: Window of the mean, `400` beyond the page's history.
+      schema: { type: integer, enum: [1, 7, 30, 90], default: 30 }
+    SubscriptionToken:
+      name: token
+      in: query
+      required: true
+      description: The token from the confirmation or update email.
+      schema: { type: string }
+    ContainerName:
+      name: name
+      in: path
+      required: true
+      description: Container name, as Docker reports it.
+      schema: { type: string, maxLength: 128 }
+    FailureDays:
+      name: days
+      in: query
+      description: How far back to look.
+      schema: { type: integer, minimum: 1 }
+
+  headers:
+    RetryAfter:
+      description: Seconds to wait before trying again.
+      schema: { type: integer }
+    RateLimitLimit:
+      description: Calls allowed per minute for this token.
+      schema: { type: integer }
+    RateLimitRemaining:
+      description: Calls left in the current window.
+      schema: { type: integer }
+    RateLimitReset:
+      description: Seconds until the window resets.
+      schema: { type: integer }
+    WwwAuthenticate:
+      description: "`Bearer` (with `error=\"invalid_token\"` for an expired token)."
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: The request is malformed or invalid.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: No valid session or API token (unknown, revoked or expired token).
+      headers:
+        WWW-Authenticate: { $ref: "#/components/headers/WwwAuthenticate" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: >-
+        Not allowed: viewer or `read` token on a write operation, token on a
+        session-only operation or from a network it is not allowed from,
+        missing `X-Requested-With: DumbMonit` on a cookie write.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Unknown id.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Not possible in the current state.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    TooManyRequests:
+      description: Rate limited.
+      headers:
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+        RateLimit-Limit: { $ref: "#/components/headers/RateLimitLimit" }
+        RateLimit-Remaining: { $ref: "#/components/headers/RateLimitRemaining" }
+        RateLimit-Reset: { $ref: "#/components/headers/RateLimitReset" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Svg:
+      description: An SVG badge, `Cache-Control public, max-age=60`.
+      content:
+        image/svg+xml:
+          schema: { type: string }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: Human-readable message. }
+
+    StatusMessage:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+        message: { type: string }
+
+    # ----------------------------------------------------------- santé
+    Health:
+      type: object
+      required: [status, version, database, victoria]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        version: { type: string }
+        database: { $ref: "#/components/schemas/ComponentHealth" }
+        victoria: { $ref: "#/components/schemas/ComponentHealth" }
+        demo: { type: boolean, description: 'Demonstration mode, every write refused.' }
+    ComponentHealth:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+        error: { type: string }
+        embedded: { type: boolean, description: "VictoriaMetrics only: `true` when the server runs its own." }
+
+    # ----------------------------------------------------------- comptes
+    Role:
+      type: string
+      enum: [admin, viewer]
+    User:
+      type: object
+      required: [id, username, display_name, role, auth, disabled, totp_enabled, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        username: { type: string }
+        display_name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        auth: { type: string, enum: [password, oidc] }
+        disabled: { type: boolean }
+        totp_enabled: { type: boolean }
+        created_at: { type: string }
+        last_login_at: { type: [string, "null"] }
+    AuthStatus:
+      type: object
+      required: [configured, authenticated, oidc, demo]
+      properties:
+        configured: { type: boolean, description: "`false` on a fresh instance." }
+        authenticated: { type: boolean }
+        user: { $ref: "#/components/schemas/User" }
+        oidc:
+          type: object
+          required: [enabled, provider_name, login_url]
+          properties:
+            enabled: { type: boolean }
+            provider_name: { type: string }
+            login_url: { type: string }
+        demo: { type: boolean }
+    SetupRequest:
+      type: object
+      required: [password]
+      properties:
+        username: { type: string, default: admin }
+        password: { type: string, minLength: 12, writeOnly: true }
+    LoginRequest:
+      type: object
+      required: [password]
+      properties:
+        username: { type: string }
+        password: { type: string, writeOnly: true }
+    TotpChallenge:
+      type: object
+      required: [totp_required, pending]
+      properties:
+        totp_required: { type: boolean, const: true }
+        pending: { type: string, description: 'Ticket valid five minutes, dead after five wrong codes.' }
+    TotpLoginRequest:
+      type: object
+      required: [pending, code]
+      properties:
+        pending: { type: string }
+        code: { type: string, description: A six-digit code or a recovery code. }
+    PasswordChange:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string, writeOnly: true }
+        new_password: { type: string, writeOnly: true }
+    PasswordConfirmation:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, writeOnly: true }
+    TotpStatus:
+      type: object
+      required: [enabled, pending, recovery_codes_left]
+      properties:
+        enabled: { type: boolean }
+        pending: { type: boolean }
+        recovery_codes_left: { type: integer }
+    TotpEnrolment:
+      type: object
+      required: [secret, otpauth_uri, issuer, account]
+      properties:
+        secret: { type: string, description: Base32. }
+        otpauth_uri: { type: string }
+        issuer: { type: string }
+        account: { type: string }
+    TotpCode:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string }
+    RecoveryCodes:
+      type: object
+      required: [recovery_codes]
+      properties:
+        recovery_codes:
+          type: array
+          items: { type: string }
+    AuditEntry:
+      type: object
+      required: [id, at, action]
+      properties:
+        id: { type: integer, format: int64 }
+        at: { type: string }
+        actor: { type: [string, "null"] }
+        action: { type: string, examples: [login, login.failed, token.created, user.updated] }
+        subject: { type: [string, "null"] }
+        ip: { type: [string, "null"] }
+    OidcConfig:
+      type: object
+      properties:
+        source: { type: string, enum: [settings, env, none] }
+        enabled: { type: boolean }
+        env_available: { type: boolean }
+        issuer: { type: string }
+        client_id: { type: string }
+        has_client_secret: { type: boolean }
+        provider_name: { type: string }
+        scopes: { type: string }
+        auto_create: { type: boolean }
+        admin_groups:
+          type: array
+          items: { type: string }
+        groups_claim: { type: string }
+        public_url: { type: string }
+        redirect_uri: { type: string }
+    OidcConfigUpdate:
+      type: object
+      required: [issuer, client_id]
+      properties:
+        issuer: { type: string }
+        client_id: { type: string }
+        client_secret: { type: [string, "null"], writeOnly: true, description: Absent or empty keeps the stored one. }
+        provider_name: { type: string }
+        scopes: { type: string }
+        auto_create: { type: boolean, default: true }
+        admin_groups:
+          type: array
+          items: { type: string }
+        groups_claim: { type: string }
+        public_url: { type: string }
+    OidcTestRequest:
+      type: object
+      properties:
+        issuer: { type: string, description: Defaults to the effective configuration's issuer. }
+    OidcTestReport:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+        error: { type: string }
+        discovery: { type: object, additionalProperties: true }
+    UserCreate:
+      type: object
+      required: [username, role]
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        password: { type: string, writeOnly: true }
+    UserUpdate:
+      type: object
+      properties:
+        display_name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        disabled: { type: boolean }
+        password: { type: string, writeOnly: true }
+
+    # ----------------------------------------------------------- jetons
+    TokenScope:
+      type: string
+      enum: [read, write]
+      description: "`read`: every `GET`. `write`: also `POST`, `PUT`, `DELETE`."
+    ApiToken:
+      type: object
+      required: [id, name, prefix, scope, created_at, created_by, expires_at, expired, allowed_networks, last_used_at, last_used_ip, revoked_at]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        prefix: { type: string, description: "Start of the token (`dmt_` and a few characters), to recognise it.", examples: [dmt_3f9a1c2b] }
+        scope: { $ref: "#/components/schemas/TokenScope" }
+        created_at: { type: string, format: date-time }
+        created_by: { type: [string, "null"], description: Account that created the token. }
+        expires_at: { type: [string, "null"], format: date-time, description: "`null`: never expires." }
+        expired: { type: boolean }
+        allowed_networks:
+          type: array
+          description: Networks the token may be used from (normalised CIDR); empty means anywhere.
+          items: { type: string, examples: ["192.168.1.0/24"] }
+        last_used_at: { type: [string, "null"], format: date-time, description: Updated at most once a minute. }
+        last_used_ip: { type: [string, "null"] }
+        revoked_at: { type: [string, "null"], format: date-time }
+    ApiTokenCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        scope: { $ref: "#/components/schemas/TokenScope", default: read }
+        expires_in_days:
+          type: [integer, "null"]
+          minimum: 1
+          maximum: 3650
+          description: 'Absent or `null`: never expires.'
+        allowed_networks:
+          type: array
+          maxItems: 32
+          description: CIDR networks or single addresses; absent or empty means anywhere.
+          items: { type: string }
+    CreatedApiToken:
+      allOf:
+        - $ref: "#/components/schemas/ApiToken"
+        - type: object
+          required: [secret]
+          properties:
+            secret: { type: string, description: "The token in clear — shown once, never again.", examples: ["dmt_…"] }
+    AgentToken:
+      type: object
+      required: [id, name, prefix, created_at, uses]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        prefix: { type: string }
+        created_at: { type: string }
+        last_used_at: { type: [string, "null"] }
+        revoked_at: { type: [string, "null"] }
+        max_uses: { type: [integer, "null"], description: "`null` for a fleet token." }
+        uses: { type: integer }
+        expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
+    AgentTokenCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        base_url: { type: string, description: The URL agents will use; the listen address by default. }
+        reusable: { type: boolean, default: false, description: 'Without it, the token enrols one machine.' }
+        max_uses: { type: [integer, "null"], minimum: 1 }
+        expires_in_days: { type: [integer, "null"], minimum: 1 }
+    CreatedAgentToken:
+      allOf:
+        - $ref: "#/components/schemas/AgentToken"
+        - type: object
+          required: [secret, install_linux, install_windows]
+          properties:
+            secret: { type: string, description: Shown once. }
+            install_linux: { type: string }
+            install_windows: { type: string }
+
+    # -------------------------------------------------- types d'équipement
+    KindDescription:
+      type: object
+      required: [kind, label, summary, examples, credential_types, credentials, address_hint, default_port, setup, options]
+      properties:
+        kind: { type: string }
+        label: { type: string }
+        summary: { type: string }
+        examples:
+          type: array
+          items: { type: string }
+        credential_types:
+          type: array
+          description: The `type` values of `credentials`, in order of preference.
+          items: { type: string }
+        credentials:
+          type: array
+          items: { $ref: "#/components/schemas/CredentialDescription" }
+        address_hint: { type: string }
+        default_port: { type: integer, description: "0 when there is none." }
+        setup: { $ref: "#/components/schemas/SetupDescription" }
+        options:
+          type: array
+          description: Settings read from the device's `tags`, in display order.
+          items: { $ref: "#/components/schemas/OptionDescription" }
+    SetupDescription:
+      type: object
+      properties:
+        title: { type: string }
+        steps:
+          type: array
+          items: { type: string }
+        warning: { type: string }
+        doc_url: { type: string }
+    OptionDescription:
+      type: object
+      properties:
+        key: { type: string }
+        label: { type: string }
+        help: { type: string }
+        placeholder: { type: string }
+        default: { type: string }
+        required: { type: boolean }
+        input: { type: string }
+        choices:
+          type: array
+          items: { type: string }
+    CredentialDescription:
+      type: object
+      properties:
+        kind: { type: string }
+        label: { type: string }
+        help: { type: string }
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              help: { type: string }
+              placeholder: { type: string }
+              input: { type: string }
+              choices:
+                type: array
+                items: { type: string }
+              required: { type: boolean }
+
+    DiscoveryRequest:
+      type: object
+      required: [cidr]
+      properties:
+        cidr: { type: string, examples: ["192.168.1.0/24"] }
+        community: { type: string, default: public, writeOnly: true }
+        port: { type: integer, default: 161 }
+        timeout_ms: { type: integer, minimum: 100, maximum: 10000 }
+    DiscoveryResult:
+      type: object
+      required: [devices, scanned]
+      properties:
+        scanned: { type: integer, description: Addresses probed. }
+        devices:
+          type: array
+          items:
+            type: object
+            required: [address]
+            properties:
+              address: { type: string }
+              sysdescr: { type: [string, "null"] }
+              sysname: { type: [string, "null"] }
+              sysobjectid: { type: [string, "null"] }
+              suggested_profile: { type: [string, "null"] }
+
+    Onboarding:
+      type: object
+      required: [skipped, complete, dismissed, has_target, has_channel, notification_confirmed]
+      properties:
+        skipped: { type: boolean }
+        complete: { type: boolean, description: Latched; never goes back to false. }
+        completed_at: { type: [string, "null"] }
+        dismissed:
+          type: array
+          items: { type: string, enum: [device, channel, test] }
+        has_target: { type: boolean }
+        has_channel: { type: boolean }
+        notification_confirmed: { type: boolean }
+    OnboardingPatch:
+      type: object
+      properties:
+        skipped: { type: boolean }
+        dismissed:
+          type: array
+          items: { type: string, enum: [device, channel, test] }
+
+    # ---------------------------------------------------------- équipements
+    Target:
+      type: object
+      required: [id, name, address, kind, interval_secs, enabled, tags, credential_kind]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        address: { type: string }
+        kind: { type: string, description: "A kind from `GET /api/collectors` (`snmp`, `proxmox`, `agent`, `http`, `pack.<id>`…)." }
+        profile_id: { type: [string, "null"] }
+        parent_id: { type: [integer, "null"], format: int64 }
+        via_agent: { type: [integer, "null"], format: int64, description: Relay agent probing this device; `null` means the server. }
+        interval_secs: { type: integer }
+        enabled: { type: boolean }
+        tags:
+          type: object
+          additionalProperties: { type: string }
+        credential_kind: { type: string, description: A label — the secret itself is never returned. }
+        last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        last_error: { type: [string, "null"] }
+        error_kind:
+          type: [string, "null"]
+          enum: [down, config, null]
+          description: "`down`: the device did not answer; `config`: our side (credentials, address, option)."
+    NullableServerTimestamp:
+      type: [string, "null"]
+      description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
+    TargetPayload:
+      type: object
+      required: [name, address, kind]
+      properties:
+        name: { type: string, maxLength: 200 }
+        address: { type: string, maxLength: 253 }
+        kind: { type: string }
+        profile_id: { type: [string, "null"], description: "Absent on `PUT` keeps the detected profile; `\"\"` clears it." }
+        parent_id: { type: [integer, "null"], format: int64 }
+        via_agent: { type: [integer, "null"], format: int64, description: "Absent on `PUT` keeps the relay; `null` means direct probing." }
+        interval_secs: { type: integer, minimum: 10, default: 60 }
+        enabled: { type: boolean, default: true }
+        tags:
+          type: object
+          description: Type options go here under their key.
+          additionalProperties: { type: string }
+        credential:
+          $ref: "#/components/schemas/CredentialInput"
+          description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'
+    CredentialInput:
+      description: A device credential. Accepted on input only — never returned.
+      writeOnly: true
+      oneOf:
+        - type: object
+          required: [type]
+          properties:
+            type: { const: none }
+        - type: object
+          required: [type, community]
+          properties:
+            type: { const: snmp_community }
+            community: { type: string }
+        - type: object
+          required: [type, username]
+          properties:
+            type: { const: snmp_v3 }
+            username: { type: string }
+            auth:
+              type: [object, "null"]
+              required: [protocol, passphrase]
+              properties:
+                protocol: { type: string, enum: [md5, sha1, sha224, sha256, sha384, sha512] }
+                passphrase: { type: string }
+            privacy:
+              type: [object, "null"]
+              required: [protocol, passphrase]
+              properties:
+                protocol: { type: string, enum: [des, aes128, aes192, aes256] }
+                passphrase: { type: string }
+            context: { type: [string, "null"] }
+        - type: object
+          required: [type]
+          description: "`token`, or the two halves `token_id` and `secret` that the server joins into `user@realm!name=secret` for Proxmox VE and PBS."
+          properties:
+            type: { const: api_token }
+            token: { type: string }
+            token_id: { type: string }
+            secret: { type: string }
+        - type: object
+          required: [type, username, password]
+          properties:
+            type: { const: username_password }
+            username: { type: string }
+            password: { type: string }
+    ProbeReport:
+      type: object
+      required: [sample_count, series]
+      properties:
+        sample_count: { type: integer }
+        series:
+          type: array
+          description: Series keys as the collector produced them, without the `dumbmonit_` prefix.
+          items: { type: string }
+    DiscoveryReport:
+      type: object
+      required: [profile_id]
+      properties:
+        profile_id: { type: [string, "null"] }
+
+    Series:
+      type: object
+      required: [metric, values]
+      properties:
+        metric:
+          type: object
+          additionalProperties: { type: string }
+        values:
+          type: array
+          description: "`[timestamp_seconds, \"value\"]` pairs."
+          items:
+            type: array
+            prefixItems:
+              - { type: number }
+              - { type: string }
+            minItems: 2
+            maxItems: 2
+
+    # -------------------------------------------------------------- alertes
+    Severity:
+      type: string
+      enum: [info, warning, critical]
+      description: Internal severity. The UI words are info, advisory (warning) and warning (critical).
+    Phase:
+      type: string
+      enum: [ok, pending, firing, resolved]
+    EffectivePhase:
+      type: string
+      enum: [ok, pending, firing, resolved, suppressed]
+    ActiveAlert:
+      type: object
+      required: [fingerprint, rule_uid, rule_name, severity, series_key, labels, phase, effective_phase, suppressed, silenced, learning, acked, notify_count]
+      properties:
+        fingerprint: { type: string }
+        rule_uid: { type: string }
+        rule_name: { type: string, description: Empty if the rule was deleted meanwhile. }
+        severity: { $ref: "#/components/schemas/Severity" }
+        target_id: { type: [integer, "null"], format: int64 }
+        series_key: { type: string }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+        phase: { $ref: "#/components/schemas/Phase" }
+        effective_phase: { $ref: "#/components/schemas/EffectivePhase" }
+        suppressed: { type: boolean }
+        suppressed_by: { type: [integer, "null"], format: int64, description: The unreachable parent device. }
+        silenced: { type: boolean }
+        learning: { type: boolean, description: Baseline rules stay silent for 14 days. }
+        acked: { type: boolean }
+        acked_until: { type: [string, "null"], format: date-time }
+        acked_by: { type: [string, "null"], description: "An account, or `token:<name>`." }
+        ack_note: { type: [string, "null"] }
+        value: { type: [number, "null"] }
+        score: { type: [number, "null"] }
+        condition_since: { type: [string, "null"], format: date-time }
+        firing_since: { type: [string, "null"], format: date-time }
+        last_eval_at: { type: [string, "null"], format: date-time }
+        last_notified_at: { type: [string, "null"], format: date-time }
+        notify_count: { type: integer }
+    AckRequest:
+      type: object
+      description: "`until` or `duration_secs` (not both); neither means 4 hours; `{\"until\": null}` lifts it."
+      properties:
+        until: { type: [string, "null"], description: "RFC 3339, or `YYYY-MM-DD HH:MM:SS` in UTC; at most 30 days ahead." }
+        duration_secs: { type: integer, minimum: 1 }
+        note: { type: string }
+    AlertHistoryEntry:
+      type: object
+      required: [id, fingerprint, rule_uid, from_phase, to_phase, severity, notified, reason, at]
+      properties:
+        id: { type: integer, format: int64 }
+        fingerprint: { type: string }
+        rule_uid: { type: string }
+        target_id: { type: [integer, "null"], format: int64 }
+        from_phase: { $ref: "#/components/schemas/Phase" }
+        to_phase: { $ref: "#/components/schemas/Phase" }
+        severity: { $ref: "#/components/schemas/Severity" }
+        value: { type: [number, "null"] }
+        notified: { type: boolean }
+        reason: { type: string, description: "Empty, or why nothing was sent (`learning: would have fired`, `maintenance window`…)." }
+        at: { type: string, format: date-time }
+
+    TargetSelector:
+      oneOf:
+        - type: object
+          required: [kind]
+          properties:
+            kind: { const: all }
+        - type: object
+          required: [kind, ids]
+          properties:
+            kind: { const: ids }
+            ids:
+              type: array
+              items: { type: integer, format: int64 }
+        - type: object
+          required: [kind, labels]
+          properties:
+            kind: { const: labels }
+            labels:
+              type: object
+              additionalProperties: { type: string }
+    AnomalyParams:
+      type: object
+      properties:
+        k: { type: number, default: 3.5 }
+        alpha: { type: number, default: 0.05 }
+        mad_floor_abs: { type: number, default: 0.000001 }
+        mad_floor_rel: { type: number, default: 0.01 }
+        min_samples: { type: integer, default: 3 }
+    Operator:
+      type: string
+      enum: [">", ">=", "<", "<="]
+    Rule:
+      type: object
+      required: [id, uid, name, description, kind, query, operator, threshold, for_secs, severity, selector, channels, params, unit, enabled, builtin, overrides]
+      properties:
+        id: { type: integer, format: int64 }
+        uid: { type: string }
+        name: { type: string }
+        description: { type: string }
+        kind: { type: string, enum: [threshold, anomaly, predict] }
+        query: { type: string }
+        operator: { $ref: "#/components/schemas/Operator" }
+        threshold: { type: number }
+        clear_threshold: { type: [number, "null"], description: Hysteresis; `null` without. }
+        for_secs: { type: integer }
+        severity: { $ref: "#/components/schemas/Severity" }
+        selector: { $ref: "#/components/schemas/TargetSelector" }
+        channels:
+          type: array
+          description: Channel ids; empty means every enabled channel.
+          items: { type: integer, format: int64 }
+        params: { $ref: "#/components/schemas/AnomalyParams" }
+        unit: { type: string }
+        repeat_secs: { type: [integer, "null"] }
+        escalate_after_secs: { type: [integer, "null"] }
+        enabled: { type: boolean }
+        builtin: { type: boolean }
+        overrides:
+          type: array
+          items: { $ref: "#/components/schemas/RuleOverride" }
+    RulePayload:
+      type: object
+      required: [name, query]
+      properties:
+        uid: { type: string, description: Derived from the name when absent. }
+        name: { type: string }
+        description: { type: string }
+        kind: { type: string, enum: [threshold, anomaly, predict] }
+        query: { type: string }
+        operator: { $ref: "#/components/schemas/Operator" }
+        threshold: { type: number }
+        clear_threshold: { type: [number, "null"] }
+        for_secs: { type: integer, minimum: 0 }
+        severity: { $ref: "#/components/schemas/Severity" }
+        selector: { $ref: "#/components/schemas/TargetSelector" }
+        channels:
+          type: array
+          items: { type: integer, format: int64 }
+        params: { $ref: "#/components/schemas/AnomalyParams" }
+        unit: { type: string }
+        repeat_secs: { type: [integer, "null"] }
+        escalate_after_secs: { type: [integer, "null"] }
+        enabled: { type: boolean }
+    EnableRequest:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    RuleOverride:
+      type: object
+      required: [rule_uid, target_id]
+      properties:
+        rule_uid: { type: string }
+        target_id: { type: integer, format: int64 }
+        threshold: { type: [number, "null"] }
+        clear_threshold: { type: [number, "null"] }
+        enabled: { type: [boolean, "null"], description: "`false` removes the device from the rule." }
+    OverridePayload:
+      type: object
+      properties:
+        threshold: { type: [number, "null"] }
+        clear_threshold: { type: [number, "null"] }
+        enabled: { type: [boolean, "null"] }
+
+    Schedule:
+      description: >-
+        Days are 0 = Monday … 6 = Sunday (1–31 for a monthly `days`); minutes are
+        since local midnight (0–1439). On a recurring schedule, `timezone` (IANA)
+        wins over `utc_offset_minutes`.
+      oneOf:
+        - type: object
+          required: [kind, starts_at, ends_at]
+          properties:
+            kind: { const: once }
+            starts_at: { type: string, format: date-time }
+            ends_at: { type: string, format: date-time }
+        - type: object
+          required: [kind, days, start_minute, end_minute]
+          properties:
+            kind: { const: weekly }
+            days:
+              type: array
+              items: { type: integer, minimum: 0, maximum: 6 }
+            start_minute: { type: integer, minimum: 0, maximum: 1439 }
+            end_minute: { type: integer, minimum: 0, maximum: 1440 }
+            utc_offset_minutes: { type: integer, default: 0 }
+            timezone: { type: string, examples: [Europe/Paris] }
+        - type: object
+          required: [kind, start_minute, duration_minutes]
+          properties:
+            kind: { const: monthly }
+            days:
+              type: array
+              items: { type: integer, minimum: 1, maximum: 31 }
+            nth_weekdays:
+              type: array
+              items:
+                type: object
+                required: [nth, weekday]
+                properties:
+                  nth: { type: integer, description: "1 to 5, or -1 for the last one of the month." }
+                  weekday: { type: integer, minimum: 0, maximum: 6 }
+            start_minute: { type: integer, minimum: 0, maximum: 1439 }
+            duration_minutes: { type: integer, minimum: 1 }
+            utc_offset_minutes: { type: integer, default: 0 }
+            timezone: { type: string }
+    Silence:
+      type: object
+      required: [id, name, comment, matchers, schedule, enabled, active_now]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        comment: { type: string }
+        target_id: { type: [integer, "null"], format: int64 }
+        matchers:
+          type: object
+          additionalProperties: { type: string }
+        schedule: { $ref: "#/components/schemas/Schedule" }
+        enabled: { type: boolean }
+        active_now: { type: boolean }
+        active_until: { type: [string, "null"], format: date-time }
+        next_start_at: { type: [string, "null"], format: date-time }
+    SilencePayload:
+      type: object
+      required: [name, schedule]
+      properties:
+        name: { type: string }
+        comment: { type: string }
+        target_id: { type: [integer, "null"], format: int64, description: "`null` with no matchers: the whole instance." }
+        matchers:
+          type: object
+          additionalProperties: { type: string }
+        schedule: { $ref: "#/components/schemas/Schedule" }
+        enabled: { type: boolean, default: true }
+
+    # -------------------------------------------------------- notifications
+    MatchCondition:
+      oneOf:
+        - type: object
+          required: [field, key, value]
+          properties:
+            field: { const: tag }
+            key: { type: string }
+            value: { type: string }
+        - type: object
+          required: [field, value]
+          properties:
+            field: { const: kind }
+            value: { type: string }
+        - type: object
+          required: [field, value]
+          properties:
+            field: { const: rule }
+            value: { type: string }
+    ChannelMatcher:
+      type: object
+      description: Routing filter (12 conditions at most). Empty means the channel receives everything.
+      properties:
+        include:
+          type: array
+          items: { $ref: "#/components/schemas/MatchCondition" }
+        exclude:
+          type: array
+          items: { $ref: "#/components/schemas/MatchCondition" }
+    ChannelPolicy:
+      type: object
+      properties:
+        min_severity: { $ref: "#/components/schemas/Severity" }
+        notify_resolved: { type: boolean }
+        min_interval_secs: { type: integer, minimum: 0 }
+        quiet_hours:
+          description: A weekly schedule, or `null`.
+          oneOf:
+            - $ref: "#/components/schemas/Schedule"
+            - type: "null"
+        matcher: { $ref: "#/components/schemas/ChannelMatcher" }
+    ChannelKind:
+      type: object
+      required: [kind, label, summary, doc_url, settings, secrets]
+      properties:
+        kind: { type: string }
+        label: { type: string }
+        summary: { type: string }
+        doc_url: { type: string }
+        settings:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+        secrets:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+    ChannelField:
+      type: object
+      properties:
+        key: { type: string }
+        label: { type: string }
+        required: { type: boolean }
+        input: { type: string, enum: [text, url, number, boolean, select, textarea, password] }
+        help: { type: string }
+        placeholder: { type: string }
+        options:
+          type: array
+          items: { type: string }
+        shape: { type: string, enum: [scalar, list, object] }
+        default: { type: string }
+    Channel:
+      type: object
+      required: [id, name, kind, enabled, settings, has_secret, policy]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        kind: { type: string }
+        enabled: { type: boolean }
+        settings: { type: object, additionalProperties: true }
+        has_secret: { type: boolean, description: Secrets are never returned. }
+        last_error: { type: [string, "null"] }
+        last_sent_at: { type: [string, "null"] }
+        policy: { $ref: "#/components/schemas/ChannelPolicy" }
+    ChannelPayload:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string }
+        kind: { type: string }
+        enabled: { type: boolean }
+        settings: { type: object, additionalProperties: true, description: Non-secret settings; secret keys are refused here. }
+        secrets:
+          type: [object, "null"]
+          additionalProperties: true
+          writeOnly: true
+          description: "Absent or `null` on `PUT` keeps the stored secrets; `{}` clears them."
+        policy:
+          type: [object, "null"]
+          description: Each field optional; absent keeps the stored policy.
+          properties:
+            min_severity: { $ref: "#/components/schemas/Severity" }
+            notify_resolved: { type: boolean }
+            min_interval_secs: { type: integer, minimum: 0 }
+            quiet_hours: { description: "A weekly schedule; `null` clears it." }
+            matcher: { description: "A `ChannelMatcher`; `null` or `{}` clears it." }
+    ChannelTestReport:
+      type: object
+      required: [ok, message]
+      properties:
+        ok: { type: boolean }
+        message: { type: string }
+    NotifyPolicy:
+      type: object
+      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel]
+      properties:
+        batch_window_secs: { type: integer, description: "0: send at once." }
+        max_per_hour: { type: integer, description: "Per channel; 0: unlimited." }
+        flap_events: { type: integer }
+        flap_window_secs: { type: integer }
+        flap_hold_secs: { type: integer, description: "0: no flap detection." }
+        public_url: { type: string, description: "Links in messages; empty: `DUMBMONIT_PUBLIC_URL`." }
+        escalate_after_secs: { type: integer, description: "0: no escalation." }
+        escalate_channel: { type: [integer, "null"], format: int64 }
+    NotifyPolicyUpdate:
+      type: object
+      properties:
+        batch_window_secs: { type: integer }
+        max_per_hour: { type: integer }
+        flap_events: { type: integer }
+        flap_window_secs: { type: integer }
+        flap_hold_secs: { type: integer }
+        public_url: { type: string }
+        escalate_after_secs: { type: integer }
+        escalate_channel: { type: [integer, "null"], format: int64 }
+    MatchPreviewRequest:
+      type: object
+      required: [matcher]
+      properties:
+        matcher: { $ref: "#/components/schemas/ChannelMatcher" }
+    MatchPreview:
+      type: object
+      required: [devices, matched, total, rules, excluded_rules]
+      properties:
+        devices:
+          type: array
+          items:
+            type: object
+            required: [id, name, kind, tags, matched]
+            properties:
+              id: { type: integer, format: int64 }
+              name: { type: string }
+              kind: { type: string }
+              tags:
+                type: object
+                additionalProperties: { type: string }
+              matched: { type: boolean }
+        matched: { type: integer }
+        total: { type: integer }
+        rules:
+          type: array
+          items: { type: string }
+        excluded_rules:
+          type: array
+          items: { type: string }
+
+    # ----------------------------------------------------- pages de statut
+    StatusPageView:
+      type: object
+      required: [id, slug, title, description, published, theme, show_uptime_days, created_at, updated_at, accent, footer_text, homepage_url, items]
+      properties:
+        id: { type: integer, format: int64 }
+        slug: { type: string }
+        title: { type: string }
+        description: { type: string }
+        published: { type: boolean }
+        theme: { type: string, enum: [auto, light, dark] }
+        show_uptime_days: { type: integer, minimum: 7, maximum: 90 }
+        created_at: { type: string }
+        updated_at: { type: string }
+        accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
+        footer_text: { type: string }
+        homepage_url: { type: string }
+        logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
+        subscribe_channel_id: { type: [integer, "null"], format: int64 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageItem" }
+    StatusPageItem:
+      type: object
+      required: [id, page_id, target_id, label, group_name, position]
+      properties:
+        id: { type: integer, format: int64 }
+        page_id: { type: integer, format: int64 }
+        target_id: { type: integer, format: int64 }
+        label: { type: string }
+        group_name: { type: string }
+        position: { type: integer }
+    StatusPageItemInput:
+      type: object
+      required: [target_id]
+      properties:
+        target_id: { type: integer, format: int64 }
+        label: { type: string, maxLength: 80 }
+        group_name: { type: string, maxLength: 60 }
+    StatusPagePayload:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, maxLength: 120 }
+        slug: { type: string, pattern: "^[a-z0-9-]{2,40}$", description: Derived from the title when omitted. }
+        description: { type: string, maxLength: 1000 }
+        published: { type: boolean, default: false }
+        theme: { type: string, enum: [auto, light, dark], default: auto }
+        show_uptime_days: { type: integer, minimum: 7, maximum: 90, default: 90 }
+        accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
+        footer_text: { type: string, maxLength: 280 }
+        homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
+        subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
+    LogoUpload:
+      type: object
+      required: [data]
+      properties:
+        data: { type: string, description: "Base64, or a `data:` URL." }
+    Subscriber:
+      type: object
+      required: [id, page_id, email, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        page_id: { type: integer, format: int64 }
+        email: { type: string }
+        confirmed_at: { type: [string, "null"], description: "`null` while pending." }
+        created_at: { type: string }
+    Incident:
+      type: object
+      required: [id, title, kind, status, severity, starts_at, created_at, updated_at]
+      properties:
+        id: { type: integer, format: int64 }
+        page_id: { type: [integer, "null"], format: int64 }
+        title: { type: string }
+        kind: { type: string, enum: [incident, maintenance] }
+        status:
+          type: string
+          description: "Incident: investigating, identified, monitoring, resolved. Maintenance: scheduled, in_progress, completed."
+        severity: { type: string, enum: [minor, major] }
+        starts_at: { type: string }
+        ends_at: { type: [string, "null"] }
+        created_at: { type: string }
+        updated_at: { type: string }
+    IncidentUpdate:
+      type: object
+      required: [id, incident_id, status, body, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        incident_id: { type: integer, format: int64 }
+        status: { type: string }
+        body: { type: string }
+        created_at: { type: string }
+    IncidentView:
+      allOf:
+        - $ref: "#/components/schemas/Incident"
+        - type: object
+          required: [updates]
+          properties:
+            updates:
+              type: array
+              items: { $ref: "#/components/schemas/IncidentUpdate" }
+    IncidentPayload:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, maxLength: 160 }
+        kind: { type: string, enum: [incident, maintenance] }
+        status: { type: string }
+        severity: { type: string, enum: [minor, major] }
+        page_id: { type: [integer, "null"], format: int64 }
+        starts_at: { type: string }
+        ends_at: { type: [string, "null"] }
+        body: { type: string, maxLength: 4000, description: 'First update, at creation only.' }
+    IncidentUpdatePayload:
+      type: object
+      required: [body]
+      properties:
+        status: { type: string, description: Defaults to the incident's current status. }
+        body: { type: string, maxLength: 4000 }
+    PublicStatus:
+      type: object
+      required: [page, overall, generated_at, groups, incidents, maintenance]
+      properties:
+        page:
+          type: object
+          properties:
+            slug: { type: string }
+            title: { type: string }
+            description: { type: string }
+            theme: { type: string }
+            show_uptime_days: { type: integer }
+            updated_at: { type: string }
+            accent: { type: string }
+            footer_text: { type: string }
+            homepage_url: { type: string }
+            logo_url: { type: [string, "null"] }
+            subscribe: { type: boolean }
+        overall: { type: string }
+        generated_at: { type: string }
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key: { type: string }
+                    label: { type: string }
+                    state: { type: string }
+                    uptime_24h: { type: [number, "null"] }
+                    uptime_7d: { type: [number, "null"] }
+                    uptime_30d: { type: [number, "null"] }
+                    uptime_90d: { type: [number, "null"] }
+                    latency_ms: { type: [number, "null"] }
+                    history:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          date: { type: string }
+                          uptime_pct: { type: [number, "null"] }
+                          down_minutes: { type: [integer, "null"] }
+                          incidents: { type: integer }
+        incidents:
+          type: array
+          items: { $ref: "#/components/schemas/PublicIncident" }
+        maintenance:
+          type: array
+          items: { $ref: "#/components/schemas/PublicIncident" }
+    PublicIncident:
+      type: object
+      properties:
+        title: { type: string }
+        kind: { type: string }
+        status: { type: string }
+        severity: { type: string }
+        starts_at: { type: string }
+        ends_at: { type: [string, "null"] }
+        updates:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              body: { type: string }
+              created_at: { type: string }
+
+    # ------------------------------------------------------- agents, conteneurs
+    Relay:
+      type: object
+      required: [id, name, relay, relayed]
+      properties:
+        id: { type: integer, format: int64, description: Id of the `agent` device. }
+        name: { type: string }
+        site: { type: [string, "null"] }
+        relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
+        last_seen_at: { type: [string, "null"] }
+        relayed: { type: integer, description: Devices reached through this agent. }
+    AgentHost:
+      type: object
+      required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
+      properties:
+        hostname: { type: string }
+        os: { type: string }
+        os_version: { type: [string, "null"] }
+        arch: { type: [string, "null"] }
+        agent_version: { type: string }
+        commands_supported: { type: boolean }
+        relay: { type: boolean }
+        site: { type: [string, "null"] }
+        relayed: { type: integer }
+        last_seen_at: { type: [string, "null"] }
+        binding: { type: string, enum: [bound, pending, unsupported] }
+        bound: { type: boolean }
+        bound_at: { type: [string, "null"] }
+        rebind_until: { type: [string, "null"] }
+    RebindWindow:
+      type: object
+      required: [rebind_until, minutes]
+      properties:
+        rebind_until: { type: string }
+        minutes: { type: integer }
+    ContainerPolicy:
+      type: object
+      required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]
+      properties:
+        auto_restart: { type: boolean }
+        auto_update: { type: boolean }
+        prune_old_image: { type: boolean }
+        only_in_maintenance: { type: boolean }
+    ContainerPolicyPatch:
+      type: object
+      properties:
+        auto_restart: { type: boolean }
+        auto_update: { type: boolean }
+        prune_old_image: { type: boolean }
+        only_in_maintenance: { type: boolean }
+    Command:
+      type: object
+      required: [id, target_id, kind, args, status, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        target_id: { type: integer, format: int64 }
+        kind: { type: string, enum: [container.restart, container.update] }
+        args: { type: object, additionalProperties: true }
+        status: { type: string, enum: [queued, running, done, failed, cancelled, expired] }
+        requested_by: { type: [string, "null"], description: "An account, `token:<name>`, or `policy`." }
+        created_at: { type: string }
+        started_at: { type: [string, "null"] }
+        finished_at: { type: [string, "null"] }
+        result: { type: [string, "null"], description: Truncated to the last 4 KB. }
+    Container:
+      type: object
+      required: [name, image, up, health, restart_count, policy]
+      properties:
+        name: { type: string }
+        image: { type: string }
+        up: { type: boolean }
+        health: { type: string }
+        restart_count: { type: integer }
+        uptime_seconds: { type: [integer, "null"] }
+        image_age_seconds: { type: [integer, "null"] }
+        update_available: { type: [boolean, "null"] }
+        policy: { $ref: "#/components/schemas/ContainerPolicy" }
+        last_command:
+          oneOf:
+            - $ref: "#/components/schemas/Command"
+            - type: "null"
+
+    PushMonitor:
+      type: object
+      required: [target_id, token, path, last_status, last_message, received_total, created_at, verdict]
+      properties:
+        target_id: { type: integer, format: int64 }
+        token: { type: string, description: The secret of the heartbeat URL. }
+        path: { type: string, description: "`/api/push/<token>`, relative to the server's address." }
+        last_seen_at: { type: [string, "null"] }
+        last_seen_age_secs: { type: [integer, "null"] }
+        last_status: { type: string, enum: [up, down] }
+        last_message: { type: string }
+        received_total: { type: integer }
+        created_at: { type: string }
+        expected_interval_secs: { type: [integer, "null"] }
+        grace_secs: { type: [integer, "null"] }
+        settings_error: { type: [string, "null"] }
+        verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+
+    Pack:
+      type: object
+      required: [id, version, label, summary, enabled, installed_at, sha256, metrics, rules, snmp_profiles, targets, warnings]
+      properties:
+        id: { type: string }
+        version: { type: string }
+        label: { type: string }
+        summary: { type: string }
+        kind: { type: [string, "null"], description: "`pack.<id>`; `null` for a pack with SNMP profiles only." }
+        enabled: { type: boolean }
+        installed_at: { type: string }
+        sha256: { type: string }
+        metrics:
+          type: array
+          items: { type: string }
+        rules:
+          type: array
+          description: Uids of the rules it ships.
+          items: { type: string }
+        snmp_profiles:
+          type: array
+          items: { type: string }
+        targets: { type: integer, description: Devices using it. }
+        warnings:
+          type: array
+          items: { type: string }
+        error: { type: [string, "null"], description: Set when the stored pack no longer passes validation. }
+    PackInstallReport:
+      type: object
+      required: [outcome, pack, rules_added, restart_required]
+      properties:
+        outcome: { type: string, enum: [created, updated, unchanged] }
+        pack: { $ref: "#/components/schemas/Pack" }
+        rules_added: { type: integer }
+        restart_required: { type: boolean, description: SNMP profiles take effect after a restart. }
+
+    # ------------------------------------------------------------- sauvegarde
+    BackupStatus:
+      type: object
+      required: [bundle_version, min_passphrase_length, contents, secret_source, secret_path, schedule]
+      properties:
+        bundle_version: { type: integer }
+        min_passphrase_length: { type: integer }
+        contents:
+          type: array
+          items:
+            type: object
+            properties:
+              section: { type: string }
+              description: { type: string }
+              count: { type: integer }
+        secret_source: { type: string, enum: [file, environment] }
+        secret_path: { type: string }
+        schedule: { $ref: "#/components/schemas/LocalBackupStatus" }
+    LocalBackupStatus:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        directory: { type: string }
+        interval_hours: { type: integer }
+        keep: { type: integer }
+        includes_secret_key: { type: boolean }
+        last_run:
+          type: [object, "null"]
+          properties:
+            at: { type: string }
+            ok: { type: boolean }
+            file: { type: string }
+            bytes: { type: integer }
+            duration_ms: { type: integer }
+            with_secret: { type: boolean }
+            error: { type: [string, "null"] }
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              bytes: { type: integer }
+              at: { type: string }
+              with_secret: { type: boolean }
+        total_bytes: { type: integer }
+        directory_error: { type: [string, "null"] }
+    BackupExportRequest:
+      type: object
+      required: [passphrase]
+      properties:
+        passphrase: { type: string, minLength: 16, writeOnly: true }
+        include_account_secrets: { type: boolean, default: false }
+    BackupRestoreRequest:
+      type: object
+      required: [bundle, passphrase]
+      properties:
+        bundle: { type: object, additionalProperties: true }
+        passphrase: { type: string, writeOnly: true }
+        apply: { type: boolean, default: false, description: "`false`: dry run inside a transaction rolled back." }
+    RestoreReport:
+      type: object
+      properties:
+        applied: { type: boolean }
+        created_at: { type: string }
+        source_version: { type: string }
+        sections:
+          type: array
+          items:
+            type: object
+            properties:
+              section: { type: string }
+              created: { type: integer }
+              updated: { type: integer }
+              skipped: { type: integer }
+              notes:
+                type: array
+                items: { type: string }
+        created: { type: integer }
+        updated: { type: integer }
+        skipped: { type: integer }
+        warnings:
+          type: array
+          items: { type: string }
+
+    # ------------------------------------------ panneaux (premier niveau seulement)
+    PanelObject:
+      type: object
+      description: >-
+        A panel read from the device's last probe. Only the top-level properties
+        are described here; see the HTTP API reference for the full shape.
+      additionalProperties: true
+    ProxmoxGuest:
+      type: object
+      additionalProperties: true
+      properties:
+        vmid: { type: integer }
+        name: { type: string }
+        node: { type: string }
+        kind: { type: string, enum: [qemu, lxc] }
+        status: { type: string }
+        cpu_percent: { type: [number, "null"] }
+        cpu_count: { type: [number, "null"] }
+        memory_used_bytes: { type: [number, "null"] }
+        memory_total_bytes: { type: [number, "null"] }
+        memory_percent: { type: [number, "null"] }
+        disk_used_bytes: { type: [number, "null"] }
+        disk_total_bytes: { type: [number, "null"] }
+        disk_percent: { type: [number, "null"] }
+        uptime_seconds: { type: [number, "null"] }
+        last_backup_age_seconds: { type: [number, "null"] }
+        os: { type: [string, "null"] }
+        ip: { type: [string, "null"] }
+    ProxmoxNodes:
+      type: object
+      additionalProperties: true
+      properties:
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+        fencing_state: { type: [string, "null"] }
+        fencing_armed: { type: [boolean, "null"] }
+    ProxmoxCeph:
+      type: object
+      additionalProperties: true
+      properties:
+        available: { type: boolean }
+        health: { type: [number, "null"], description: "0 OK, 1 WARN, 2 ERR, 3 unknown." }
+        health_status: { type: [string, "null"] }
+        used_percent: { type: [number, "null"] }
+        osds:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+        pools:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+        filesystems:
+          type: array
+          items: { type: string }
+    PbsCalendar:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        days: { type: integer }
+        offset_minutes: { type: integer }
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+    PbsJobs:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        jobs:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+    PbsHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        datastores: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        disks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        zpools: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        certificates: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    PbsTaskLog:
+      type: object
+      additionalProperties: true
+      properties:
+        upid: { type: string }
+        lines:
+          type: array
+          items: { type: string }
+    TaskFailure:
+      type: object
+      additionalProperties: true
+      properties:
+        upid: { type: string }
+        remote: { type: string, description: PDM only. }
+        worker_type: { type: string }
+        kind: { type: string }
+        worker_id: { type: string }
+        datastore: { type: [string, "null"], description: PBS only. }
+        node: { type: [string, "null"] }
+        start: { type: [integer, "null"] }
+        end: { type: [integer, "null"] }
+        error: { type: [string, "null"] }
+    PdmRemotes:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        estate: { $ref: "#/components/schemas/PanelObject" }
+        remotes:
+          type: array
+          items: { $ref: "#/components/schemas/PanelObject" }
+    PdmHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        memory_used_percent: { type: [number, "null"] }
+        rootfs_used_percent: { type: [number, "null"] }
+        certificates: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    PmgQueues:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        queues: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        total_messages: { type: number }
+        stuck: { type: boolean }
+    PmgTraffic:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        recent: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        spam_scores: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        viruses: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    PmgHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        nodes: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        cluster: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        stopped_services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    OpnsenseGateways:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        gateways: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        down: { type: integer }
+        degraded: { type: integer }
+        wan_addresses: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    OpnsenseTraffic:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        interfaces: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        dhcp: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    OpnsenseHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        hostname: { type: [string, "null"] }
+        services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        stopped_services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        tunnels: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        tunnels_down: { type: integer }
+    TruenasStorage:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        pools: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        unhealthy_pools: { type: integer }
+        datasets: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        snapshots_total: { type: [number, "null"] }
+        disks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    TruenasProtection:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        scrubs: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        tasks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        failed_tasks: { type: integer }
+    TruenasHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        version: { type: [string, "null"] }
+        hostname: { type: [string, "null"] }
+        alerts: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        stopped_services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    RedfishOverview:
+      type: object
+      additionalProperties: true
+      properties:
+        service: { $ref: "#/components/schemas/PanelObject" }
+        systems: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        temperatures: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        fans: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        power_supplies: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        drives: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        logs: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        scrape_errors: { type: [number, "null"] }
+    ServiceOverview:
+      type: object
+      additionalProperties: true
+      properties:
+        kind: { type: string }
+        version: { type: [string, "null"] }
+        sampled_at: { type: [number, "null"] }
+        state: { type: string }
+        checks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        figures: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        breakdowns: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    SynologyOverview:
+      type: object
+      additionalProperties: true
+      properties:
+        system: { $ref: "#/components/schemas/PanelObject" }
+        volumes: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        pools: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        ssd_caches: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        disks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        sampled_at: { type: [number, "null"] }
+    SynologyActiveBackup:
+      type: object
+      additionalProperties: true
+      properties:
+        tasks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        devices: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        utc_offset_s: { type: integer }
+
+    # ------------------------------------------------------------------ MCP
+    McpEndpointInfo:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        protocolVersion: { type: string }
+        transport: { type: string, const: streamable-http }
+        streaming: { type: boolean }
+        docs: { type: string }
+    JsonRpcRequest:
+      type: object
+      required: [jsonrpc, method]
+      description: A request (with `id`) or a notification (without). Batches are refused.
+      properties:
+        jsonrpc: { type: string, const: "2.0" }
+        id: { type: [string, integer] }
+        method:
+          type: string
+          examples: [server/discover, initialize, tools/list, tools/call, ping]
+        params: { type: object, additionalProperties: true }
+    JsonRpcResponse:
+      type: object
+      required: [jsonrpc]
+      properties:
+        jsonrpc: { type: string, const: "2.0" }
+        id: { type: [string, integer, "null"] }
+        result: { type: object, additionalProperties: true }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: integer }
+            message: { type: string }
+            data: {}

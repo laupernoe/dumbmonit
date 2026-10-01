@@ -115,8 +115,8 @@ account to create on the machine: the enrollment token is the only secret.
    the device form is single use: it enrols this one machine and nothing else.
    For a fleet, create a reusable token in Settings → Agents.
 3. Run the install command on the machine to monitor, with elevated rights
-   (sudo on Linux, an elevated PowerShell on Windows). It downloads the agent,
-   writes the token into agent.yaml and starts the service.
+   (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads
+   the agent, writes the token into agent.yaml and starts the service.
 4. The machine shows up on its own within a few seconds, named after its host
    name. On that first batch the server gives the agent a secret of its own and
    stores it in `/etc/dumbmonit/agent-secret`, readable by nobody else: from
@@ -163,12 +163,23 @@ you create a token.
 
 === "macOS (launchd)"
 
-    The macOS binaries are **not** served by the DumbMonit image: building them
-    requires Apple's SDK, which its licence forbids redistributing. Download
-    the one for your Mac from the
-    [releases page](https://github.com/noekan/dumbmonit/releases/latest) —
-    `dumbmonit-agent-macos-aarch64` (Apple silicon) or
-    `dumbmonit-agent-macos-x86_64` (Intel) — and pass it to the same script:
+    The same command as on Linux, run with `sudo`:
+
+    ```sh
+    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    ```
+
+    The macOS binaries are **not** in the DumbMonit image: building them
+    requires Apple's SDK, which its licence forbids redistributing. They are
+    attached to each [GitHub release](https://github.com/noekan/dumbmonit/releases/latest)
+    instead — `dumbmonit-agent-macos-aarch64` (Apple silicon) and
+    `dumbmonit-agent-macos-x86_64` (Intel), each with its `.sha256` — and the
+    server redirects `/download/dumbmonit-agent-macos-…` there, so the script
+    picks the one for the Mac's architecture (`uname -m`) and checks it against
+    the release's checksum. The Mac therefore needs to reach github.com.
+
+    Without that access, or to install a binary you already have, download it
+    and pass it with `--bin`:
 
     ```sh
     curl -sSLO https://github.com/noekan/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
@@ -176,13 +187,12 @@ you create a token.
         --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
-    The script installs the binary in `/usr/local/bin`, writes
+    The script installs the binary in `/usr/local/bin` (and removes the
+    quarantine attribute a browser download carries, which would make
+    Gatekeeper refuse to start it), writes
     `/usr/local/etc/dumbmonit/agent.yaml` (mode 0600) and registers the system
     daemon `com.dumbmonit.agent` in `/Library/LaunchDaemons`, started with
     `launchctl bootstrap system`. It runs at boot, with no one logged in.
-
-    Asking the server for `/download/dumbmonit-agent-macos-…` answers with the
-    address above rather than a bare 404.
 
     !!! note "Prefer to build it yourself?"
         On the Mac itself, with Rust installed:
@@ -211,24 +221,66 @@ you create a token.
     & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
     ```
 
-    The script installs the binary, writes
-    `C:\ProgramData\DumbMonit\agent.yaml` and registers a Windows service set to
-    restart on failure.
+    The script downloads `dumbmonit-agent-windows-x86_64.exe` from the server,
+    checks it against its SHA-256, installs it as
+    `C:\Program Files\DumbMonit\dumbmonit-agent.exe`, writes
+    `C:\ProgramData\DumbMonit\agent.yaml` (readable by SYSTEM and
+    Administrators only) and registers the Windows service `DumbMonitAgent`
+    ("DumbMonit system agent"): started automatically at boot, as LocalSystem,
+    and restarted after a failure (10 s, 30 s, then 60 s). The agent talks to
+    the service manager itself (`--service`), so stopping the service lets it
+    send what it still holds before exiting.
+
+    A service has no console: the agent writes its log to
+    `C:\ProgramData\DumbMonit\agent.log`, set aside as `agent.log.old` past
+    10 MB.
+
+    There is no native ARM64 build: on Windows 11 for ARM, the script installs
+    the x86_64 binary, which runs under x64 emulation.
 
 One token can enrol several machines: name it after a group or a machine.
 
+### Native binaries
+
+The agent is a single static executable per system, with nothing to install
+next to it:
+
+| System | File | Where to get it |
+|---|---|---|
+| Linux x86_64 | `dumbmonit-agent-linux-x86_64` | the server, `/download/…` |
+| Linux aarch64 (64-bit ARM: Raspberry Pi OS 64-bit, ARM servers) | `dumbmonit-agent-linux-aarch64` | the server, `/download/…` |
+| Windows x86_64 | `dumbmonit-agent-windows-x86_64.exe` | the server, `/download/…` |
+| FreeBSD x86_64 | `dumbmonit-agent-freebsd-x86_64` | the server, `/download/…` |
+| macOS Apple silicon | `dumbmonit-agent-macos-aarch64` | the GitHub release (the server redirects there) |
+| macOS Intel | `dumbmonit-agent-macos-x86_64` | the GitHub release (the server redirects there) |
+
+The Linux binaries are linked statically against musl: they run on any
+distribution, glibc or not (Alpine, NAS firmwares), with no library to match.
+Each file has its checksum next to it, `<file>.sha256`, in `sha256sum`
+format. Every [GitHub release](https://github.com/noekan/dumbmonit/releases/latest)
+carries all six binaries and their checksums, for machines that cannot reach
+the server's `/download/` or for installing with `--bin`.
+
+To build the Linux, Windows and FreeBSD binaries yourself, from a clone of the
+repository (Docker is the only requirement):
+
+```sh
+docker buildx build --target agent-dist --output type=local,dest=dist/agent .
+```
+
 ### Managing the service
 
-| | Linux (systemd) | Linux (OpenRC) | macOS (launchd) | FreeBSD (rc.d) |
-|---|---|---|---|---|
-| Status | `systemctl status dumbmonit-agent` | `rc-service dumbmonit-agent status` | `sudo launchctl print system/com.dumbmonit.agent` | `service dumbmonit_agent status` |
-| Logs | `journalctl -u dumbmonit-agent -f` | `tail -f /var/log/dumbmonit-agent.log` | `tail -f /var/log/dumbmonit-agent.log` | `tail -f /var/log/dumbmonit-agent.log` |
-| Restart | `systemctl restart dumbmonit-agent` | `rc-service dumbmonit-agent restart` | `sudo launchctl kickstart -k system/com.dumbmonit.agent` | `service dumbmonit_agent restart` |
-| Stop | `systemctl stop dumbmonit-agent` | `rc-service dumbmonit-agent stop` | `sudo launchctl bootout system/com.dumbmonit.agent` | `service dumbmonit_agent onestop` |
-| Configuration | `/etc/dumbmonit/agent.yaml` | `/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` |
-| Service file | `/etc/systemd/system/dumbmonit-agent.service` | `/etc/init.d/dumbmonit-agent` | `/Library/LaunchDaemons/com.dumbmonit.agent.plist` | `/usr/local/etc/rc.d/dumbmonit_agent` |
+| | Linux (systemd) | Linux (OpenRC) | macOS (launchd) | FreeBSD (rc.d) | Windows (PowerShell) |
+|---|---|---|---|---|---|
+| Status | `systemctl status dumbmonit-agent` | `rc-service dumbmonit-agent status` | `sudo launchctl print system/com.dumbmonit.agent` | `service dumbmonit_agent status` | `Get-Service DumbMonitAgent` |
+| Logs | `journalctl -u dumbmonit-agent -f` | `tail -f /var/log/dumbmonit-agent.log` | `tail -f /var/log/dumbmonit-agent.log` | `tail -f /var/log/dumbmonit-agent.log` | `Get-Content C:\ProgramData\DumbMonit\agent.log -Tail 20 -Wait` |
+| Restart | `systemctl restart dumbmonit-agent` | `rc-service dumbmonit-agent restart` | `sudo launchctl kickstart -k system/com.dumbmonit.agent` | `service dumbmonit_agent restart` | `Restart-Service DumbMonitAgent` |
+| Stop | `systemctl stop dumbmonit-agent` | `rc-service dumbmonit-agent stop` | `sudo launchctl bootout system/com.dumbmonit.agent` | `service dumbmonit_agent onestop` | `Stop-Service DumbMonitAgent` |
+| Configuration | `/etc/dumbmonit/agent.yaml` | `/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` | `C:\ProgramData\DumbMonit\agent.yaml` |
+| Service file | `/etc/systemd/system/dumbmonit-agent.service` | `/etc/init.d/dumbmonit-agent` | `/Library/LaunchDaemons/com.dumbmonit.agent.plist` | `/usr/local/etc/rc.d/dumbmonit_agent` | service `DumbMonitAgent` (`services.msc`) |
 
-`--uninstall` removes all of it, service included, on every system.
+`--uninstall` (`-Uninstall` on Windows) removes all of it, service included,
+on every system.
 
 !!! note "The download is verified"
     The server publishes the SHA-256 of each agent binary next to it
@@ -237,8 +289,10 @@ One token can enrol several machines: name it after a group or a machine.
     installing anything: a truncated or tampered download stops the install
     with "checksum mismatch". The same checksums are shown under the install
     command in the UI, to compare by hand if the server is reached over plain
-    HTTP. On a system without `sha256sum` or `shasum`, the Linux script warns
-    and installs unverified; `--bin=PATH` skips the check, the file being yours.
+    HTTP. For macOS, the checksum comes from the GitHub release, through the
+    same redirect as the binary. On a system without `sha256sum` or `shasum`,
+    the script warns and installs unverified; `--bin=PATH` skips the check, the
+    file being yours.
 
 ### Installer flags
 

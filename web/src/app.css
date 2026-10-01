@@ -264,6 +264,17 @@ time,
 	box-shadow: var(--shadow-float);
 	border-color: var(--c-line-strong);
 }
+/* Pressed like a unit pushed home in its bay: down a pixel, shadow tucked in. */
+.faceplate:where(a, button, [data-interactive]):active {
+	transform: translateY(0.5px);
+	box-shadow: var(--shadow-lift);
+	transition-duration: 80ms;
+}
+/* The station dot glows under the hand (direction contract: "device station dot glows"). */
+.faceplate:where(a, button, [data-interactive]):hover .led::after {
+	opacity: 0.85;
+	transform: scale(1.35);
+}
 
 /* Ghost cell: absence is designed too. Empty and disabled states use it. */
 .ghost-cell {
@@ -342,25 +353,7 @@ textarea.input {
 	display: none;
 }
 
-/* Keyframes used by the shell and effect components. */
-@keyframes led-blink {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.25;
-	}
-}
-@keyframes led-breathe {
-	0%,
-	100% {
-		box-shadow: 0 0 0 0 var(--led-glow);
-	}
-	50% {
-		box-shadow: 0 0 10px 2px var(--led-glow);
-	}
-}
+/* Keyframes used by the shell and effect components (the LED keeps its own). */
 @keyframes rise-in {
 	from {
 		opacity: 0;
@@ -385,7 +378,70 @@ textarea.input {
 	animation-delay: var(--rise-delay, 0ms);
 }
 
+/* A check that draws itself: the confirmation is a stroke being inked, once.
+   Works on lucide's Check and CircleCheck (circle first, then the tick). */
+.check-draw :where(path, polyline, circle) {
+	stroke-dasharray: 64;
+	stroke-dashoffset: 64;
+	animation: check-draw 520ms var(--ease-out-expo) forwards;
+}
+.check-draw :where(path, polyline) {
+	stroke-dasharray: 26;
+	stroke-dashoffset: 26;
+}
+.check-draw circle ~ :where(path, polyline) {
+	animation-delay: 160ms;
+}
+@keyframes check-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Page transitions (View Transitions API, started from the root layout). The
+   bars stay put; the page underneath fades out fast and the new one rises in.
+   Browsers without the API simply swap pages.
+   --------------------------------------------------------------------------- */
+.vt-nav-top {
+	view-transition-name: nav-top;
+}
+.vt-nav-bottom {
+	view-transition-name: nav-bottom;
+}
+::view-transition-old(nav-top),
+::view-transition-old(nav-bottom) {
+	display: none;
+}
+::view-transition-new(nav-top),
+::view-transition-new(nav-bottom),
+::view-transition-group(nav-top),
+::view-transition-group(nav-bottom) {
+	animation: none;
+}
+::view-transition-old(root) {
+	animation: vt-leave 120ms ease-in both;
+}
+::view-transition-new(root) {
+	animation: vt-enter 260ms var(--ease-out-expo) both;
+}
+@keyframes vt-leave {
+	to {
+		opacity: 0;
+	}
+}
+@keyframes vt-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
+	.check-draw :where(path, polyline, circle) {
+		stroke-dashoffset: 0;
+		animation: none;
+	}
 	*,
 	*::before,
 	*::after {

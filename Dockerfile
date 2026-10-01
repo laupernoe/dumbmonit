@@ -104,6 +104,11 @@ RUN rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal \
 ENV CARGO_PROFILE_RELEASE_OPT_LEVEL=s \
     CARGO_PROFILE_RELEASE_LTO=fat
 
+# Parallélisme de cargo, à brider sur une machine partagée
+# (`--build-arg CARGO_BUILD_JOBS=4`). Sans valeur, la variable n'existe pas et
+# cargo prend tous les cœurs, comme en CI.
+ARG CARGO_BUILD_JOBS
+
 WORKDIR /build
 
 # FreeBSD : zig fournit la libc, pas les autres bibliothèques de la base, dont
@@ -164,6 +169,17 @@ RUN touch crates/proto/src/lib.rs crates/collectors/src/lib.rs crates/agent/src/
  && cp target/x86_64-pc-windows-gnu/release/dumbmonit-agent.exe  /agents/dumbmonit-agent-windows-x86_64.exe \
  && cp target/x86_64-unknown-freebsd/release/dumbmonit-agent  /agents/dumbmonit-agent-freebsd-x86_64 \
  && ls -l /agents
+
+# ---------------------------------------------------------------------------
+# Les binaires seuls, pour les sortir de la construction sans rien d'autre :
+#
+#   docker buildx build --target agent-dist --output type=local,dest=dist/agent .
+#
+# C'est ce que fait la publication d'une version (.github/workflows/release.yml)
+# pour les attacher à la page de la version, à côté des binaires macOS.
+# ---------------------------------------------------------------------------
+FROM scratch AS agent-dist
+COPY --from=agent /agents /
 
 # ---------------------------------------------------------------------------
 # Image de l'agent (ghcr.io/noekan/dumbmonit-agent) : le binaire de la
