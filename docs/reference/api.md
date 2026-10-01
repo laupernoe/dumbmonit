@@ -662,8 +662,8 @@ call the same code as the web UI. See [Assistants](../using/assistant.md).
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/install.sh` | The Linux installer. Public. |
+| `GET` | `/install.sh` | The Linux, macOS and FreeBSD installer. Public. |
 | `GET` | `/install.ps1` | The Windows installer. Public. |
-| `GET` | `/download/{name}` | `dumbmonit-agent-linux-x86_64`, `dumbmonit-agent-linux-aarch64`, `dumbmonit-agent-windows-x86_64.exe`, served from `DUMBMONIT_AGENT_DIR`. `404` if the file is absent. |
+| `GET` | `/download/{name}` | `dumbmonit-agent-linux-x86_64`, `dumbmonit-agent-linux-aarch64`, `dumbmonit-agent-freebsd-x86_64`, `dumbmonit-agent-windows-x86_64.exe`, served from `DUMBMONIT_AGENT_DIR`; `{name}.sha256` gives its checksum in `sha256sum` format. `404` if the file is absent. `dumbmonit-agent-macos-aarch64` and `dumbmonit-agent-macos-x86_64` (and their `.sha256`) answer `307` to the same file on the latest GitHub release. Public. |
 
 Every other path is served by the web UI, which asks you to sign in itself.
