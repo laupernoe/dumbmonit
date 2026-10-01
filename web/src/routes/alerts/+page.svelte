@@ -12,7 +12,7 @@
 	 * their own data.
 	 */
 	import { browser } from '$app/environment';
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import {
 		listTargets,
 		listAlertRules,
@@ -35,7 +35,7 @@
 	import type { ProbeStatus } from '$lib/format';
 	import { loadProbeStatuses } from '$lib/metrics';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { PageHeader, Button, ErrorNotice, Plate, Skeleton } from '$lib/ui';
+	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { readSky } from '$lib/components/overview/sky';
 	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
@@ -79,6 +79,25 @@
 	const targetsMap = $derived(targetsById(targets));
 	// Same truth model as the Overview bulletin, so the two screens agree.
 	const sky = $derived(readSky({ targets, probes, alerts, rules }));
+
+	// The last row leaving "Now" while the reader watches is the moment the
+	// trouble is over: a burst of confetti, once per clearing. Armed a few
+	// seconds after the first reading, so what loads in is never celebrated.
+	let armed = $state(false);
+	$effect(() => {
+		if (loading || armed) return;
+		const timer = setTimeout(() => (armed = true), 3000);
+		return () => clearTimeout(timer);
+	});
+	let wasQuiet: boolean | null = null;
+	$effect(() => {
+		const quiet = sky.quiet;
+		const ready = armed && tab === 'now' && targets.length > 0;
+		untrack(() => {
+			if (ready && wasQuiet === false && quiet) confetti();
+			wasQuiet = quiet;
+		});
+	});
 
 	function reportError(cause: unknown, fallback: string) {
 		actionError = cause instanceof Error ? cause.message : fallback;
