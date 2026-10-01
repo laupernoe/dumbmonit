@@ -255,7 +255,16 @@ async fn get_explains_the_transport_with_a_405() {
     let reply = app.request("GET", "/api/mcp", None, None).await;
     assert_eq!(reply.status, StatusCode::METHOD_NOT_ALLOWED);
     assert!(reply.body["error"].as_str().unwrap().contains("Model Context Protocol"));
-    assert_eq!(reply.body["protocolVersion"], "2025-06-18");
+    assert_eq!(reply.body["protocolVersion"], "2026-07-28");
+    assert!(
+        reply.body["supportedVersions"]
+            .as_array()
+            .is_some_and(|v| v.contains(&json!("2025-11-25")) && v.contains(&json!("2025-06-18")))
+    );
+
+    // Pas de session à fermer non plus.
+    let reply = app.request("DELETE", "/api/mcp", None, None).await;
+    assert_eq!(reply.status, StatusCode::METHOD_NOT_ALLOWED);
 }
 
 #[tokio::test]
@@ -286,10 +295,13 @@ async fn initialize_announces_tools_and_the_server_identity() {
     assert!(result["capabilities"]["tools"].is_object());
     assert!(result["instructions"].as_str().is_some_and(|s| s.contains("get_status")));
 
-    // Une version inconnue du client : on annonce la nôtre.
+    // Une version inconnue du client : on annonce la plus récente de l'époque
+    // à poignée de main.
     let reply =
         app.rpc(&secret, json!(2), "initialize", json!({ "protocolVersion": "1999-01-01" })).await;
-    assert_eq!(reply.body["result"]["protocolVersion"], "2025-06-18");
+    assert_eq!(reply.body["result"]["protocolVersion"], "2025-11-25");
+    // Les résultats de l'ancienne époque n'ont pas de `resultType`.
+    assert!(reply.body["result"].get("resultType").is_none());
 
     // La notification `initialized` est acquittée sans corps.
     let reply = app
@@ -323,19 +335,36 @@ async fn tools_list_is_the_documented_catalogue() {
             "alert_history",
             "query_metrics",
             "list_silences",
+            "list_rules",
+            "list_device_types",
+            "list_agents",
+            "list_containers",
+            "list_heartbeats",
+            "list_status_pages",
+            "list_channels",
+            "list_packs",
             "silence_device",
+            "schedule_maintenance",
             "remove_silence",
             "acknowledge_alert",
             "probe_device",
             "set_device_enabled",
-            "list_rules",
             "set_rule_enabled",
+            "add_device",
+            "discover_network",
+            "restart_container",
+            "test_channel",
+            "post_incident",
         ]
     );
     for tool in tools {
         assert!(tool["description"].as_str().is_some_and(|d| d.len() > 20), "{tool}");
+        assert!(tool["title"].as_str().is_some_and(|t| !t.is_empty()), "{tool}");
         assert_eq!(tool["inputSchema"]["type"], "object", "{tool}");
+        assert_eq!(tool["outputSchema"]["type"], "object", "{tool}");
         assert!(tool["annotations"]["readOnlyHint"].is_boolean(), "{tool}");
+        assert!(tool["annotations"]["destructiveHint"].is_boolean(), "{tool}");
+        assert!(tool["annotations"]["idempotentHint"].is_boolean(), "{tool}");
     }
 }
 
