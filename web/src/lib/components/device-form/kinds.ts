@@ -56,7 +56,10 @@ import {
 	Route,
 	Split,
 	CalendarClock,
-	Puzzle
+	Puzzle,
+	BrickWallFire,
+	BrickWallShield,
+	CloudBackup
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isPackKind } from '$lib/api/packs';
@@ -110,7 +113,13 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	caddy: Route,
 	npm: Split,
 	domain: CalendarClock,
-	kubernetes: ShipWheel
+	kubernetes: ShipWheel,
+	pfsense: BrickWallFire,
+	unraid: HardDrive,
+	veeam: CloudBackup,
+	tailscale: Network,
+	fortigate: BrickWallShield,
+	sophos: ShieldCheck
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -118,7 +127,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'opnsense', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -139,7 +148,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	pmg: 'mail email spam antivirus proxmox gateway',
 	synology: 'nas storage diskstation backup hyper backup raid',
 	truenas: 'nas zfs storage pool backup replication snapshot',
-	opnsense: 'firewall router gateway vpn wireguard dhcp pfsense',
+	opnsense: 'firewall router gateway vpn wireguard dhcp',
 	redfish: 'bmc idrac ilo ipmi xclarity hardware fan psu power supply server',
 	mdaemon: 'mail email server smtp imap pop3 webmail worldclient windows mdaemon',
 	securitygateway: 'mail email gateway spam antivirus quarantine smtp mdaemon windows',
@@ -168,6 +177,12 @@ const KIND_KEYWORDS: Record<string, string> = {
 	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
 	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	kubernetes: 'k8s k3s k0s microk8s talos rke2 cluster container orchestration pod node deployment helm',
+	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
+	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
+	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
+	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
+	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
+	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',
@@ -230,6 +245,14 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		next: 'The agent reads the tunnels with wg show, on Linux: install it on the machine that runs WireGuard. Peers with a persistent keepalive alert when they go silent.',
 		keywords: 'wireguard wg vpn tunnel peer handshake site-to-site wg-quick wg-easy',
 		icon: Waypoints
+	},
+	{
+		id: 'hyperv',
+		label: 'Hyper-V hosts',
+		summary: 'Virtual machines in critical health, the host’s real CPU load with its guests, memory of each VM and virtual disk errors.',
+		next: 'Install the agent on the Hyper-V host (Windows Server or Windows with the Hyper-V role): it finds the vmms service and reads Hyper-V’s performance counters on its own. The Hyper-V panel appears on that machine’s page.',
+		keywords: 'hyper-v hyperv microsoft windows server virtualization virtual machine vm vhdx vmms host hypervisor',
+		icon: Boxes
 	},
 	{
 		id: 'services',

@@ -13,6 +13,7 @@ pub mod caddy;
 pub mod crowdsec;
 pub mod domain;
 pub mod dummy;
+pub mod fortigate;
 pub mod homeassistant;
 pub mod http;
 pub mod kubernetes;
@@ -25,20 +26,26 @@ pub mod observability;
 pub mod opnsense;
 pub mod pbs;
 pub mod pdm;
+pub mod pfsense;
 pub mod pihole;
 pub mod pmg;
 pub mod proxmox;
 pub mod rabbitmq;
 pub mod redfish;
 pub mod redis;
+pub mod rest;
 pub mod selfhosted;
 pub mod snmp;
 pub(crate) mod socket;
+pub mod sophos;
 pub mod synology;
+pub mod tailscale;
 pub mod traefik;
 pub mod truenas;
 pub mod unifi;
+pub mod unraid;
 pub mod uptime;
+pub mod veeam;
 pub mod vsphere;
 
 use std::collections::HashMap;
@@ -52,6 +59,7 @@ pub use caddy::CaddyCollector;
 pub use crowdsec::CrowdsecCollector;
 pub use domain::DomainCollector;
 pub use dummy::DummyCollector;
+pub use fortigate::FortigateCollector;
 pub use homeassistant::HomeAssistantCollector;
 pub use kubernetes::KubernetesCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
@@ -63,6 +71,7 @@ pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use opnsense::OpnsenseCollector;
 pub use pbs::PbsCollector;
 pub use pdm::PdmCollector;
+pub use pfsense::PfsenseCollector;
 pub use pihole::PiholeCollector;
 pub use pmg::PmgCollector;
 pub use proxmox::ProxmoxCollector;
@@ -74,14 +83,18 @@ pub use selfhosted::{
 };
 pub use snmp::SnmpCollector;
 pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
+pub use sophos::SophosCollector;
 pub use synology::SynologyCollector;
+pub use tailscale::TailscaleCollector;
 pub use traefik::TraefikCollector;
 pub use truenas::TruenasCollector;
 pub use unifi::UnifiCollector;
+pub use unraid::UnraidCollector;
 pub use uptime::{
     DnsCollector, HttpCollector, MqttCollector, MysqlCollector, PingCollector, PostgresCollector,
     SmtpCollector, TcpCollector, TlsCollector, WebsocketCollector,
 };
+pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
 
 /// Les collecteurs connus, par type de cible.
@@ -147,6 +160,12 @@ impl Registry {
         registry.register(Arc::new(NpmCollector::new()));
         registry.register(Arc::new(DomainCollector::new()));
         registry.register(Arc::new(KubernetesCollector::new()));
+        registry.register(Arc::new(PfsenseCollector::new()));
+        registry.register(Arc::new(UnraidCollector::new()));
+        registry.register(Arc::new(VeeamCollector::new()));
+        registry.register(Arc::new(TailscaleCollector::new()));
+        registry.register(Arc::new(FortigateCollector::new()));
+        registry.register(Arc::new(SophosCollector::new()));
         registry.register(Arc::new(HttpCollector::new()));
         registry.register(Arc::new(TcpCollector::new()));
         registry.register(Arc::new(DnsCollector::new()));

@@ -11,7 +11,15 @@
 //! - un jeu prédéfini pour MDaemon (`mdaemon: true`, ou `auto` — le défaut —
 //!   quand le service Windows « MDaemon » existe), publié sous des noms stables
 //!   (`mdaemon_queue_messages{queue="retry"}`…) que les règles et l'interface
-//!   du serveur connaissent.
+//!   du serveur connaissent ;
+//! - un jeu prédéfini pour Hyper-V (`hyperv: true`, ou `auto` quand le service
+//!   « vmms » existe) : santé des machines virtuelles, charge processeur de
+//!   l'hôte, mémoire de chaque VM et débit de chaque disque virtuel, publiés en
+//!   `hyperv_*`.
+//!
+//! Un chemin dont l'instance est le joker `(*)` rend une valeur par instance
+//! (une VM, un disque virtuel) : chacune devient une série, l'instance dans
+//! l'étiquette que le jeu désigne.
 //!
 //! # Découpage
 //!
@@ -48,6 +56,14 @@ pub const MDAEMON_OBJECT: &str = "MDaemon";
 /// Nom du service Windows du moteur de messagerie MDaemon.
 pub const MDAEMON_SERVICE: &str = "MDaemon";
 
+/// Nom du service Windows « Gestion des ordinateurs virtuels Hyper-V » : il
+/// n'existe que là où le rôle Hyper-V est installé.
+pub const HYPERV_SERVICE: &str = "vmms";
+
+/// Plafond des instances lues sous un joker : une VM ou un disque virtuel par
+/// série, et un hôte en porte rarement plus de quelques dizaines.
+pub const MAX_INSTANCES: usize = 200;
+
 /// Série d'un compteur de la liste libre.
 pub const CUSTOM_METRIC: &str = "agent_perf_counter";
 
@@ -61,10 +77,10 @@ pub const REOPEN_EVERY: u64 = 10;
 /// démesurée trahit presque toujours un joker mal placé.
 pub const MAX_CUSTOM_COUNTERS: usize = 200;
 
-/// Faut-il lire le jeu MDaemon ?
+/// Faut-il lire un jeu prédéfini (MDaemon, Hyper-V) ?
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PresetMode {
-    /// Seulement si le service Windows « MDaemon » existe.
+    /// Seulement si le service Windows du produit existe.
     #[default]
     Auto,
     On,
@@ -98,6 +114,7 @@ pub struct CustomCounter {
 pub struct PerfCountersConfig {
     pub counters: Vec<CustomCounter>,
     pub mdaemon: PresetMode,
+    pub hyperv: PresetMode,
 }
 
 // ------------------------------------------------------------------ chemins
@@ -166,6 +183,9 @@ pub struct CounterSpec {
     pub metric: String,
     pub labels: Vec<(String, String)>,
     pub kind: MetricKind,
+    /// Pour un chemin à joker `(*)` : l'étiquette qui reçoit le nom de chaque
+    /// instance (`vm`, `disk`).
+    pub instance_label: Option<String>,
 }
 
 impl CounterSpec {
@@ -175,7 +195,17 @@ impl CounterSpec {
             metric: metric.to_string(),
             labels: labels.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(),
             kind,
+            instance_label: None,
         }
+    }
+
+    /// La série d'une instance d'un chemin à joker.
+    fn for_instance(&self, instance: &str) -> Self {
+        let mut spec = self.clone();
+        if let Some(label) = spec.instance_label.take() {
+            spec.labels.push((label, instance.to_string()));
+        }
+        spec
     }
 }
 
@@ -378,6 +408,136 @@ pub fn mdaemon_specs() -> Vec<CounterSpec> {
         .collect()
 }
 
+/// Un compteur Hyper-V : (objet, instance, compteur, série, étiquette de
+/// l'instance pour un joker, nature).
+type HypervCounter =
+    (&'static str, &'static str, &'static str, &'static str, Option<&'static str>, MetricKind);
+
+/// Le jeu Hyper-V.
+///
+/// La charge de l'hôte se lit dans « Hyper-V Hypervisor Logical Processor » :
+/// sur un hôte Hyper-V, `\Processor(_Total)\% Processor Time` ne mesure que la
+/// partition racine, pas ce que consomment les VM. Les débits « /sec » des
+/// disques virtuels sont des dérivées que PDH calcule entre deux lectures de
+/// la même requête, qui reste ouverte d'un cycle à l'autre ; la première
+/// lecture n'a pas de valeur et n'est pas publiée.
+const HYPERV_COUNTERS: &[HypervCounter] = &[
+    (
+        "Hyper-V Virtual Machine Health Summary",
+        "",
+        "Health Ok",
+        "hyperv_vms_health_ok",
+        None,
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Machine Health Summary",
+        "",
+        "Health Critical",
+        "hyperv_vms_health_critical",
+        None,
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Hypervisor Logical Processor",
+        "_Total",
+        "% Total Run Time",
+        "hyperv_host_cpu_percent",
+        None,
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Hypervisor Logical Processor",
+        "_Total",
+        "% Guest Run Time",
+        "hyperv_host_cpu_guest_percent",
+        None,
+        MetricKind::Gauge,
+    ),
+    ("Hyper-V Hypervisor", "", "Partitions", "hyperv_partitions", None, MetricKind::Gauge),
+    (
+        "Hyper-V Dynamic Memory VM",
+        "*",
+        "Physical Memory",
+        "hyperv_vm_physical_memory_megabytes",
+        Some("vm"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Dynamic Memory VM",
+        "*",
+        "Guest Visible Physical Memory",
+        "hyperv_vm_guest_visible_memory_megabytes",
+        Some("vm"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Dynamic Memory VM",
+        "*",
+        "Current Pressure",
+        "hyperv_vm_memory_pressure_percent",
+        Some("vm"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Storage Device",
+        "*",
+        "Read Bytes/sec",
+        "hyperv_vhd_read_bytes_per_second",
+        Some("disk"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Storage Device",
+        "*",
+        "Write Bytes/sec",
+        "hyperv_vhd_write_bytes_per_second",
+        Some("disk"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Storage Device",
+        "*",
+        "Latency",
+        "hyperv_vhd_latency_seconds",
+        Some("disk"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Storage Device",
+        "*",
+        "Queue Length",
+        "hyperv_vhd_queue_length",
+        Some("disk"),
+        MetricKind::Gauge,
+    ),
+    (
+        "Hyper-V Virtual Storage Device",
+        "*",
+        "Error Count",
+        "hyperv_vhd_errors_total",
+        Some("disk"),
+        MetricKind::Counter,
+    ),
+];
+
+/// Le jeu Hyper-V, en chemins complets.
+pub fn hyperv_specs() -> Vec<CounterSpec> {
+    HYPERV_COUNTERS
+        .iter()
+        .map(|(object, instance, counter, metric, instance_label, kind)| {
+            let path = if instance.is_empty() {
+                format!(r"\{object}\{counter}")
+            } else {
+                format!(r"\{object}({instance})\{counter}")
+            };
+            let mut spec = CounterSpec::new(path, metric, &[], *kind);
+            spec.instance_label = instance_label.map(str::to_string);
+            spec
+        })
+        .collect()
+}
+
 /// La liste libre : une jauge par compteur, identifiée par son nom.
 pub fn custom_specs(counters: &[CustomCounter]) -> Vec<CounterSpec> {
     counters
@@ -414,14 +574,28 @@ pub fn samples(report: &PerfReport, now_ms: i64) -> Vec<Sample> {
 
 // ------------------------------------------------------------------ lecture
 
+/// Ce qu'un compteur a donné ce cycle.
+///
+/// Hors Windows, seule la source factice des tests en construit : la source de
+/// la plateforme n'y lit rien.
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(not(windows), allow(dead_code))]
+pub enum Reading {
+    /// Pas de valeur : compteur refusé, donnée invalide, premier cycle d'un débit.
+    Missing,
+    /// Un compteur sans joker.
+    One(f64),
+    /// Un chemin à joker `(*)` : une valeur par instance présente.
+    Instances(Vec<(String, f64)>),
+}
+
 /// Accès aux compteurs du système.
 pub trait CounterSource {
     /// Remplace l'ensemble lu. Rend, pour chaque chemin et dans l'ordre, la
     /// raison de son refus s'il n'a pas pu être ajouté.
     fn open(&mut self, paths: &[String]) -> Vec<Result<(), String>>;
     /// Une lecture de tous les compteurs ouverts, dans l'ordre de `open`.
-    /// `None` : pas de valeur ce cycle (compteur refusé, donnée invalide).
-    fn read(&mut self) -> Vec<Option<f64>>;
+    fn read(&mut self) -> Vec<Reading>;
     /// Le service Windows existe-t-il sur cette machine ?
     fn service_installed(&self, name: &str) -> bool;
 }
@@ -443,6 +617,7 @@ pub struct PerfCountersProbe<S: CounterSource> {
     /// Chemins déjà signalés en échec : un seul avertissement par chemin.
     announced: BTreeSet<String>,
     mdaemon_announced: Option<bool>,
+    hyperv_announced: Option<bool>,
 }
 
 /// La source de la plateforme : PDH sous Windows, rien ailleurs.
@@ -464,6 +639,7 @@ impl<S: CounterSource> PerfCountersProbe<S> {
             cycle: 0,
             announced: BTreeSet::new(),
             mdaemon_announced: None,
+            hyperv_announced: None,
         }
     }
 
@@ -486,6 +662,22 @@ impl<S: CounterSource> PerfCountersProbe<S> {
         if mdaemon {
             specs.extend(mdaemon_specs());
         }
+        let hyperv = match self.config.hyperv {
+            PresetMode::On => true,
+            PresetMode::Off => false,
+            PresetMode::Auto => self.source.service_installed(HYPERV_SERVICE),
+        };
+        if self.hyperv_announced != Some(hyperv) {
+            if hyperv {
+                info!("reading the Hyper-V performance counters");
+            } else if self.hyperv_announced.is_some() {
+                info!("Hyper-V is gone: its performance counters are no longer read");
+            }
+            self.hyperv_announced = Some(hyperv);
+        }
+        if hyperv {
+            specs.extend(hyperv_specs());
+        }
         specs
     }
 
@@ -503,13 +695,25 @@ impl<S: CounterSource> PerfCountersProbe<S> {
         if self.opened.is_empty() {
             return None;
         }
-        let values = self.source.read();
-        let values = self
-            .opened
-            .iter()
-            .zip(values)
-            .filter_map(|(spec, value)| value.map(|v| (spec.clone(), v)))
-            .collect();
+        let readings = self.source.read();
+        let mut values = Vec::new();
+        for (spec, reading) in self.opened.iter().zip(readings) {
+            match reading {
+                Reading::Missing => {}
+                Reading::One(value) => values.push((spec.clone(), value)),
+                Reading::Instances(instances) => {
+                    // `_Total` additionne les autres : le garder compterait tout
+                    // deux fois dans une somme par VM ou par disque.
+                    values.extend(
+                        instances
+                            .into_iter()
+                            .filter(|(name, _)| name != "_Total" && !name.is_empty())
+                            .take(MAX_INSTANCES)
+                            .map(|(name, value)| (spec.for_instance(&name), value)),
+                    );
+                }
+            }
+        }
         Some(PerfReport { values })
     }
 
@@ -553,7 +757,7 @@ impl CounterSource for PlatformSource {
             .collect()
     }
 
-    fn read(&mut self) -> Vec<Option<f64>> {
+    fn read(&mut self) -> Vec<Reading> {
         Vec::new()
     }
 
@@ -578,11 +782,16 @@ mod pdh {
     use windows_sys::Win32::System::Performance::{
         PDH_CSTATUS_BAD_COUNTERNAME, PDH_CSTATUS_NEW_DATA, PDH_CSTATUS_NO_COUNTER,
         PDH_CSTATUS_NO_INSTANCE, PDH_CSTATUS_NO_OBJECT, PDH_CSTATUS_VALID_DATA,
-        PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY, PdhAddEnglishCounterW,
-        PdhCloseQuery, PdhCollectQueryData, PdhGetFormattedCounterValue, PdhOpenQueryW,
+        PDH_FMT_COUNTERVALUE, PDH_FMT_COUNTERVALUE_ITEM_W, PDH_FMT_DOUBLE, PDH_HCOUNTER,
+        PDH_HQUERY, PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData,
+        PdhGetFormattedCounterArrayW, PdhGetFormattedCounterValue, PdhOpenQueryW,
     };
 
-    use super::CounterSource;
+    use super::{CounterSource, Reading};
+
+    /// `PDH_MORE_DATA` : le tampon est trop petit, sa taille est rendue. Défini
+    /// ici en `u32`, le type des statuts que rendent les fonctions PDH.
+    const PDH_MORE_DATA: u32 = 0x8000_07D2;
 
     /// `PDH_FMT_NOCAP100` : sans lui, un pourcentage au-delà de 100 (processeur
     /// sur plusieurs cœurs) serait écrêté. Absent des liaisons `windows-sys`.
@@ -590,13 +799,80 @@ mod pdh {
 
     pub struct PdhSource {
         query: PDH_HQUERY,
-        counters: Vec<Option<PDH_HCOUNTER>>,
+        /// Chaque compteur ouvert, et s'il porte le joker d'instance `(*)`.
+        counters: Vec<Option<(PDH_HCOUNTER, bool)>>,
     }
 
     impl Default for PdhSource {
         fn default() -> Self {
             Self { query: ptr::null_mut(), counters: Vec::new() }
         }
+    }
+
+    /// Une chaîne UTF-16 terminée par un zéro.
+    ///
+    /// # Safety
+    ///
+    /// `text` est nul ou pointe vers une chaîne terminée par un zéro, lisible
+    /// jusqu'à ce zéro.
+    unsafe fn from_wide(text: *const u16) -> String {
+        if text.is_null() {
+            return String::new();
+        }
+        let mut len = 0;
+        // SAFETY : chaîne terminée par un zéro, garanti par l'appelant.
+        while unsafe { *text.add(len) } != 0 {
+            len += 1;
+        }
+        // SAFETY : les `len` éléments lus ci-dessus.
+        String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(text, len) })
+    }
+
+    fn valid(status: u32) -> bool {
+        status == PDH_CSTATUS_VALID_DATA || status == PDH_CSTATUS_NEW_DATA
+    }
+
+    /// Une valeur par instance d'un chemin à joker.
+    fn read_array(counter: PDH_HCOUNTER) -> Reading {
+        let format = PDH_FMT_DOUBLE | PDH_FMT_NOCAP100;
+        let mut size: u32 = 0;
+        let mut count: u32 = 0;
+        // SAFETY : premier appel sans tampon, qui ne fait que rendre la taille
+        // requise dans `size`.
+        let status = unsafe {
+            PdhGetFormattedCounterArrayW(counter, format, &mut size, &mut count, ptr::null_mut())
+        };
+        if status == 0 {
+            // Aucune instance : aucune VM en marche, aucun disque attaché.
+            return Reading::Instances(Vec::new());
+        }
+        if status != PDH_MORE_DATA || size == 0 {
+            return Reading::Missing;
+        }
+        // Des `u64` pour l'alignement des éléments (pointeur et double).
+        let mut buffer: Vec<u64> = vec![0; (size as usize).div_ceil(8)];
+        let items = buffer.as_mut_ptr().cast::<PDH_FMT_COUNTERVALUE_ITEM_W>();
+        // SAFETY : `items` désigne un tampon d'au moins `size` octets, aligné.
+        let status =
+            unsafe { PdhGetFormattedCounterArrayW(counter, format, &mut size, &mut count, items) };
+        if status != 0 {
+            return Reading::Missing;
+        }
+        let mut values = Vec::with_capacity(count as usize);
+        for index in 0..count as usize {
+            // SAFETY : PDH a écrit `count` éléments au début du tampon, dont
+            // les noms pointent dans ce même tampon, encore vivant ici.
+            let item = unsafe { &*items.add(index) };
+            if !valid(item.FmtValue.CStatus) {
+                continue;
+            }
+            // SAFETY : nom terminé par un zéro, écrit par PDH.
+            let name = unsafe { from_wide(item.szName) };
+            // SAFETY : `PDH_FMT_DOUBLE` demandé.
+            values.push((name, unsafe { item.FmtValue.Anonymous.doubleValue }));
+        }
+        drop(buffer);
+        Reading::Instances(values)
     }
 
     impl PdhSource {
@@ -658,7 +934,7 @@ mod pdh {
                         PdhAddEnglishCounterW(self.query, path_w.as_ptr(), 0, &mut counter)
                     };
                     if status == 0 {
-                        self.counters.push(Some(counter));
+                        self.counters.push(Some((counter, path.contains("(*)"))));
                         Ok(())
                     } else {
                         self.counters.push(None);
@@ -668,20 +944,23 @@ mod pdh {
                 .collect()
         }
 
-        fn read(&mut self) -> Vec<Option<f64>> {
+        fn read(&mut self) -> Vec<Reading> {
             if self.query.is_null() {
-                return self.counters.iter().map(|_| None).collect();
+                return self.counters.iter().map(|_| Reading::Missing).collect();
             }
             // SAFETY : requête ouverte, non encore fermée.
             let status = unsafe { PdhCollectQueryData(self.query) };
             if status != 0 {
                 tracing::debug!(error = super::pdh_hex(status), "PDH collection failed");
-                return self.counters.iter().map(|_| None).collect();
+                return self.counters.iter().map(|_| Reading::Missing).collect();
             }
             self.counters
                 .iter()
                 .map(|counter| {
-                    let counter = (*counter)?;
+                    let Some((counter, wildcard)) = *counter else { return Reading::Missing };
+                    if wildcard {
+                        return read_array(counter);
+                    }
                     // SAFETY : structure C entièrement initialisée à zéro, puis
                     // remplie par PDH ; `lpdwtype` est facultatif.
                     let mut value: PDH_FMT_COUNTERVALUE = unsafe { std::mem::zeroed() };
@@ -693,14 +972,12 @@ mod pdh {
                             &mut value,
                         )
                     };
-                    let valid = value.CStatus == PDH_CSTATUS_VALID_DATA
-                        || value.CStatus == PDH_CSTATUS_NEW_DATA;
-                    if status == 0 && valid {
+                    if status == 0 && valid(value.CStatus) {
                         // SAFETY : `PDH_FMT_DOUBLE` demandé, c'est donc le
                         // champ `doubleValue` que PDH a écrit.
-                        Some(unsafe { value.Anonymous.doubleValue })
+                        Reading::One(unsafe { value.Anonymous.doubleValue })
                     } else {
-                        None
+                        Reading::Missing
                     }
                 })
                 .collect()
@@ -835,7 +1112,9 @@ mod tests {
     struct Fake {
         refused: Vec<String>,
         values: std::collections::BTreeMap<String, f64>,
+        instances: std::collections::BTreeMap<String, Vec<(String, f64)>>,
         mdaemon_installed: bool,
+        hyperv_installed: bool,
         opened: Vec<String>,
         opens: usize,
     }
@@ -858,15 +1137,24 @@ mod tests {
                 .collect()
         }
 
-        fn read(&mut self) -> Vec<Option<f64>> {
+        fn read(&mut self) -> Vec<Reading> {
             self.opened
                 .iter()
-                .map(|p| if self.refused.contains(p) { None } else { self.values.get(p).copied() })
+                .map(|p| {
+                    if self.refused.contains(p) {
+                        Reading::Missing
+                    } else if let Some(list) = self.instances.get(p) {
+                        Reading::Instances(list.clone())
+                    } else {
+                        self.values.get(p).map_or(Reading::Missing, |v| Reading::One(*v))
+                    }
+                })
                 .collect()
         }
 
         fn service_installed(&self, name: &str) -> bool {
-            name == MDAEMON_SERVICE && self.mdaemon_installed
+            (name == MDAEMON_SERVICE && self.mdaemon_installed)
+                || (name == HYPERV_SERVICE && self.hyperv_installed)
         }
     }
 
@@ -926,6 +1214,7 @@ mod tests {
                 },
             ],
             mdaemon: PresetMode::Off,
+            hyperv: PresetMode::Off,
         };
         let mut fake = Fake::default();
         fake.values.insert(r"\Memory\Available MBytes".into(), 2_048.0);
@@ -984,6 +1273,92 @@ mod tests {
         }
         let samples = samples(&probe.read().expect("picked up"), 0);
         assert_eq!(value_of(&samples, "mdaemon_running"), Some(1.0));
+    }
+
+    #[test]
+    fn every_hyperv_counter_is_a_valid_path_and_wildcards_name_their_instance() {
+        let specs = hyperv_specs();
+        for spec in &specs {
+            let path = parse_path(&spec.path).expect(&spec.path);
+            assert!(path.object.starts_with("Hyper-V "), "{}", spec.path);
+            assert!(spec.metric.starts_with("hyperv_"), "{}", spec.metric);
+            assert_eq!(
+                path.instance.as_deref() == Some("*"),
+                spec.instance_label.is_some(),
+                "{}: a wildcard needs an instance label, and only a wildcard",
+                spec.path
+            );
+        }
+        let find = |path: &str| specs.iter().find(|s| s.path == path).cloned().unwrap();
+        assert_eq!(
+            find(r"\Hyper-V Virtual Machine Health Summary\Health Critical").metric,
+            "hyperv_vms_health_critical"
+        );
+        assert_eq!(
+            find(r"\Hyper-V Hypervisor Logical Processor(_Total)\% Total Run Time").metric,
+            "hyperv_host_cpu_percent"
+        );
+        let memory = find(r"\Hyper-V Dynamic Memory VM(*)\Physical Memory");
+        assert_eq!(memory.instance_label.as_deref(), Some("vm"));
+        let errors = find(r"\Hyper-V Virtual Storage Device(*)\Error Count");
+        assert_eq!(
+            (errors.kind, errors.instance_label.as_deref()),
+            (MetricKind::Counter, Some("disk"))
+        );
+    }
+
+    #[test]
+    fn auto_mode_reads_the_hyperv_preset_on_a_host_with_the_vmms_service() {
+        let mut fake = Fake { hyperv_installed: true, ..Fake::default() };
+        fake.values.insert(r"\Hyper-V Virtual Machine Health Summary\Health Ok".into(), 3.0);
+        fake.values.insert(r"\Hyper-V Virtual Machine Health Summary\Health Critical".into(), 1.0);
+        fake.values
+            .insert(r"\Hyper-V Hypervisor Logical Processor(_Total)\% Total Run Time".into(), 37.5);
+        fake.instances.insert(
+            r"\Hyper-V Dynamic Memory VM(*)\Physical Memory".into(),
+            vec![("web01".into(), 4_096.0), ("db01".into(), 8_192.0), ("_Total".into(), 12_288.0)],
+        );
+        fake.instances.insert(
+            r"\Hyper-V Virtual Storage Device(*)\Error Count".into(),
+            vec![("D:-Hyper-V-web01-web01.vhdx".into(), 2.0)],
+        );
+        // Aucune VM à mémoire dynamique en marche : rien, pas une erreur.
+        fake.instances.insert(r"\Hyper-V Dynamic Memory VM(*)\Current Pressure".into(), vec![]);
+        let mut probe = PerfCountersProbe::new(&PerfCountersConfig::default(), fake);
+        let samples = samples(&probe.read().expect("Hyper-V detected"), 0);
+
+        assert_eq!(value_of(&samples, "hyperv_vms_health_critical"), Some(1.0));
+        assert_eq!(value_of(&samples, "hyperv_vms_health_ok"), Some(3.0));
+        assert_eq!(value_of(&samples, "hyperv_host_cpu_percent"), Some(37.5));
+        assert_eq!(
+            value_of(&samples, r#"hyperv_vm_physical_memory_megabytes{vm="db01"}"#),
+            Some(8_192.0)
+        );
+        assert!(
+            samples.iter().all(|s| s.labels.get("vm").map(String::as_str) != Some("_Total")),
+            "_Total would count every VM twice"
+        );
+        let errors = samples.iter().find(|s| s.metric == "hyperv_vhd_errors_total").unwrap();
+        assert_eq!(errors.kind, MetricKind::Counter);
+        assert_eq!(errors.labels["disk"], "D:-Hyper-V-web01-web01.vhdx");
+        assert!(samples.iter().all(|s| s.metric != "hyperv_vm_memory_pressure_percent"));
+        // MDaemon absent : son jeu n'est pas lu pour autant.
+        assert!(samples.iter().all(|s| !s.metric.starts_with("mdaemon_")));
+    }
+
+    #[test]
+    fn wildcard_instances_are_capped() {
+        let config = PerfCountersConfig { hyperv: PresetMode::On, ..Default::default() };
+        let mut fake = Fake::default();
+        fake.instances.insert(
+            r"\Hyper-V Dynamic Memory VM(*)\Physical Memory".into(),
+            (0..MAX_INSTANCES + 10).map(|i| (format!("vm{i}"), 1.0)).collect(),
+        );
+        let mut probe = PerfCountersProbe::new(&config, fake);
+        let samples = samples(&probe.read().unwrap(), 0);
+        let count =
+            samples.iter().filter(|s| s.metric == "hyperv_vm_physical_memory_megabytes").count();
+        assert_eq!(count, MAX_INSTANCES);
     }
 
     #[test]

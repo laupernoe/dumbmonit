@@ -2568,6 +2568,206 @@ const DOMAIN_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Délai par requête des équipements commerciaux lus par leur API
+/// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`, défaut de
+/// `selfhosted/options.rs`).
+const VENDOR_TIMEOUT: OptionView = number(
+    "request_timeout_seconds",
+    "Timeout per request (seconds)",
+    "Time allowed for each call, from 1 to 120.",
+    "15",
+    "15",
+);
+
+const SELF_SIGNED_TLS: OptionView = insecure_tls(
+    "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+);
+
+/// Clé du paquet REST API de pfSense, envoyée en `X-API-Key`.
+const PFSENSE_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "REST API key",
+    help: "The key created for the dumbmonit user: it carries only that user's read privileges.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Printed once by the key creation of step 3. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const PFSENSE_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("443"), SELF_SIGNED_TLS, VENDOR_TIMEOUT];
+
+/// Clé d'API Unraid au rôle Viewer, envoyée en `x-api-key`.
+const UNRAID_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "A key with the Viewer role: it reads everything and can change nothing.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Shown once when the key is created. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const UNRAID_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    app_port("80"),
+    insecure_tls(
+        "For a web interface served over HTTPS with a self-signed certificate: enable this if the connection is refused for that reason.",
+    ),
+    VENDOR_TIMEOUT,
+];
+
+/// Compte Windows au rôle Veeam Backup Viewer (`collectors/veeam`).
+const VEEAM_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The account given the Veeam Backup Viewer role, in the form HOST\\user or DOMAIN\\user.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The account given the Veeam Backup Viewer role.",
+            "VBR01\\dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const VEEAM_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    app_port("9419"),
+    text(
+        "api_version",
+        "API version",
+        "Sent in the x-api-version header. 1.1-rev0 is accepted from Veeam Backup & Replication 12.0 on; change it only if the server refuses it.",
+        "1.1-rev0",
+        "1.1-rev0",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Client OAuth Tailscale à la portée `devices:core:read`.
+const TAILSCALE_OAUTH: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "OAuth client",
+    help: "Recommended: a client limited to the devices:core:read scope, which can change nothing.",
+    fields: &[
+        cred_text(
+            "username",
+            "Client ID",
+            "The ID of the OAuth client created in step 1.",
+            "k123AbCDeF11CNTRL",
+        ),
+        cred_secret(
+            "password",
+            "Client secret",
+            "The tskey-client-… secret, shown once. Stored encrypted, never shown again.",
+            "tskey-client-…",
+            true,
+        ),
+    ],
+};
+
+/// Jeton d'accès à l'API Tailscale (`tskey-api-…`).
+const TAILSCALE_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API access token",
+    help: "Works too, but carries every right of the user who created it and expires after 90 days at most.",
+    fields: &[cred_secret(
+        "token",
+        "API access token",
+        "The tskey-api-… token. Stored encrypted, never shown again.",
+        "tskey-api-…",
+        true,
+    )],
+};
+
+const TAILSCALE_OPTIONS: &[OptionView] = &[
+    text(
+        "tailnet",
+        "Tailnet",
+        "Leave empty for the tailnet of the credentials, or enter the tailnet name shown in the Tailscale console.",
+        "example.com",
+        "",
+    ),
+    text(
+        "watch",
+        "Devices to keep online",
+        "Comma-separated device names or tags (tag:server) that must stay online, or all. Empty: every tagged device.",
+        "nas, tag:router",
+        "",
+    ),
+    VENDOR_TIMEOUT,
+];
+
+/// Jeton d'un administrateur REST API FortiOS au profil en lecture seule.
+const FORTIGATE_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token",
+    help: "The token of the dumbmonit REST API user, sent as a bearer token.",
+    fields: &[cred_secret(
+        "token",
+        "API token",
+        "Printed once by execute api-user generate-key. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const FORTIGATE_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the administration interface.",
+        "443",
+        "443",
+    ),
+    text(
+        "vdom",
+        "VDOM",
+        "The virtual domain to read. Empty: the one the REST API user belongs to.",
+        "root",
+        "",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Compte au profil d'accès en lecture seule (`collectors/sophos`).
+const SOPHOS_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit user, whose device access profile is read-only everywhere.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The read-only user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const SOPHOS_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the administration port, 4444 by default.",
+        "4444",
+        "4444",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let registry = &state.collectors;
     Json(
@@ -3798,6 +3998,137 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: KUBERNETES_OPTIONS,
         },
+        "pfsense" => CollectorView {
+            kind: "pfsense",
+            label: "pfSense",
+            summary: "A pfSense firewall through its REST API package: gateways down or losing packets, interfaces without link, stopped services, CPU, memory and disk.",
+            examples: &["pfSense CE", "pfSense Plus", "Netgate appliance"],
+            credential_types: &["api_token"],
+            credentials: &[PFSENSE_KEY],
+            address_hint: "pfsense.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only REST API key for DumbMonit",
+                steps: &[
+                    "Install the community REST API package (pfSense-pkg-RESTAPI, version 2) from Diagnostics > Command Prompt or an SSH shell, with the file of the project's releases page that matches your pfSense version (2.7.2 below). Then, under System > REST API > Settings, tick both BasicAuth and Key among the authentication methods.\npkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/latest/download/pfSense-2.7.2-pkg-RESTAPI.pkg",
+                    "Under System > User Manager, add a user named dumbmonit with a long random password. Under Effective Privileges, add only these REST API privileges: /api/v2/status/system GET, /api/v2/status/gateways GET, /api/v2/status/interfaces GET, /api/v2/status/services GET, /api/v2/system/version GET, plus /api/v2/system/restapi/version GET to hear about the package's own updates. For the next step only, add /api/v2/auth/key POST as well.",
+                    "Create the key as dumbmonit, from any machine that reaches pfSense: the key carries exactly that user's privileges. Copy the key value of the answer, then remove the /api/v2/auth/key POST privilege again.\ncurl -k -u dumbmonit -X POST -H 'Content-Type: application/json' -d '{\"descr\":\"DumbMonit\"}' https://pfsense.lan/api/v2/auth/key",
+                    "In DumbMonit, enter the address of pfSense, for example \"pfsense.lan\", and paste the key as API key. pfSense ships a self-signed certificate: tick Accept an unverifiable certificate unless you replaced it.",
+                ],
+                warning: "The REST API does not say whether a pfSense update is available, only whether the package itself has one. The package is a community project, not part of pfSense: reinstall it after each pfSense upgrade.",
+                doc_url: "https://pfrest.org/AUTHENTICATION_AND_AUTHORIZATION/",
+            },
+            options: PFSENSE_OPTIONS,
+        },
+        "unraid" => CollectorView {
+            kind: "unraid",
+            label: "Unraid",
+            summary: "An Unraid server through its GraphQL API: array stopped, disks disabled or with errors, parity checks, cache pool usage, containers that should be running.",
+            examples: &["Unraid 7", "Unraid 6.12 with Unraid Connect"],
+            credential_types: &["api_token"],
+            credentials: &[UNRAID_KEY],
+            address_hint: "tower.lan",
+            default_port: 80,
+            setup: Setup {
+                title: "Create a read-only API key for DumbMonit",
+                steps: &[
+                    "On Unraid 7.2 or later the API is built in. On Unraid 6.12 to 7.1, install the Unraid Connect plugin from the Apps tab first: it brings the same API, and no Unraid Connect sign-in is needed for local use.",
+                    "Create an API key with the Viewer role, which reads everything and can change nothing: under Settings > Management Access > API Keys, or from the Unraid terminal.\nunraid-api apikey --create --name dumbmonit --roles VIEWER --description \"DumbMonit monitoring\" --json",
+                    "Copy the key. In DumbMonit, enter the address of the Unraid server, for example \"tower.lan\", and paste the key as API key. If the web interface is served over HTTPS, choose https as protocol.",
+                ],
+                warning: "Unraid reports no temperature for a disk that is spun down, and DumbMonit never wakes one: a sleeping disk simply has no temperature until it spins up.",
+                doc_url: "https://docs.unraid.net/API/how-to-use-the-api/",
+            },
+            options: UNRAID_OPTIONS,
+        },
+        "veeam" => CollectorView {
+            kind: "veeam",
+            label: "Veeam Backup & Replication",
+            summary: "A Veeam backup server through its REST API: jobs whose last run failed, failed sessions of the last 24 hours, repositories filling up, license expiry.",
+            examples: &[
+                "Veeam Backup & Replication 12",
+                "Veeam Backup & Replication 13",
+                "Veeam Community Edition",
+            ],
+            credential_types: &["username_password"],
+            credentials: &[VEEAM_LOGIN],
+            address_hint: "vbr.lan",
+            default_port: 9419,
+            setup: Setup {
+                title: "Give DumbMonit a Veeam Backup Viewer account",
+                steps: &[
+                    "On the backup server, create a local Windows account for DumbMonit with a long random password and no other right on the machine (a domain account works too).\nnet user dumbmonit * /add",
+                    "In the Veeam console, open the main menu > Users and Roles > Security, click Add, enter the account (for example VBR01\\dumbmonit) and give it the Veeam Backup Viewer role only.",
+                    "In DumbMonit, enter the address of the backup server, for example \"vbr.lan\", and the account as HOST\\dumbmonit or DOMAIN\\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.",
+                ],
+                warning: "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions and repositories, and shows the license as not readable: it never asks for more.",
+                doc_url: "https://helpcenter.veeam.com/docs/backup/vbr_rest/requesting_authorization.html",
+            },
+            options: VEEAM_OPTIONS,
+        },
+        "tailscale" => CollectorView {
+            kind: "tailscale",
+            label: "Tailscale",
+            summary: "The devices of a tailnet through the Tailscale API: servers offline, node keys about to expire, devices awaiting approval, clients to update.",
+            examples: &["Tailscale tailnet", "Subnet routers", "Exit nodes"],
+            credential_types: &["username_password", "api_token"],
+            credentials: &[TAILSCALE_OAUTH, TAILSCALE_TOKEN],
+            address_hint: "api.tailscale.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only OAuth client for DumbMonit",
+                steps: &[
+                    "In the Tailscale console (login.tailscale.com), open Settings > Trust credentials (formerly OAuth clients) and generate an OAuth client with only the devices:core:read scope. It lists the devices and can change nothing.",
+                    "Copy the client ID and the client secret (tskey-client-…), shown once. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret. Leave the Tailnet option empty: the tailnet of the client is read.",
+                ],
+                warning: "Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all.",
+                doc_url: "https://tailscale.com/kb/1623/trust-credentials",
+            },
+            options: TAILSCALE_OPTIONS,
+        },
+        "fortigate" => CollectorView {
+            kind: "fortigate",
+            label: "FortiGate",
+            summary: "A Fortinet firewall through the FortiOS REST API: IPsec tunnels down, interfaces without link, HA out of sync, memory near conserve mode, FortiGuard licences expiring.",
+            examples: &["FortiGate 40F / 60F / 100F", "FortiGate VM", "FortiOS 7.x"],
+            credential_types: &["api_token"],
+            credentials: &[FORTIGATE_TOKEN],
+            address_hint: "fw.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only REST API user for DumbMonit",
+                steps: &[
+                    "From the FortiGate CLI, create an access profile that can only read the system, network and VPN state, and nothing else.\nconfig system accprofile\nedit \"dumbmonit-ro\"\nset sysgrp read\nset netgrp read\nset vpngrp read\nset fwgrp none\nset loggrp none\nset utmgrp none\nset wanoptgrp none\nset wifi none\nnext\nend",
+                    "Create the REST API user dumbmonit with that profile, trusting only the address of the DumbMonit server (replace 192.0.2.10), then generate its token: it is printed once.\nconfig system api-user\nedit \"dumbmonit\"\nset accprofile \"dumbmonit-ro\"\nset vdom \"root\"\nconfig trusthost\nedit 1\nset ipv4-trusthost 192.0.2.10 255.255.255.255\nnext\nend\nnext\nend\nexecute api-user generate-key dumbmonit",
+                    "In DumbMonit, enter the address of the FortiGate, for example \"fw.lan\" (add the port if the administration interface does not listen on 443), and paste the token as API token. FortiGate ships a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.",
+                ],
+                warning: "An interface counts as down only when it is enabled, has an address and has no link: free ports are left alone. Firmware updates are those FortiGuard offers the FortiGate itself: without access to FortiGuard, none is reported.",
+                doc_url: "https://docs.fortinet.com/document/fortigate/7.4.0/administration-guide/399023/rest-api-administrator",
+            },
+            options: FORTIGATE_OPTIONS,
+        },
+        "sophos" => CollectorView {
+            kind: "sophos",
+            label: "Sophos Firewall",
+            summary: "A Sophos Firewall (SFOS) through its XML API: the link of every interface in a zone, and which IPsec connections are activated. Its live tunnel, HA and licence state are not in that API.",
+            examples: &["Sophos XGS", "Sophos Firewall virtual appliance", "SFOS 19 to 21"],
+            credential_types: &["username_password"],
+            credentials: &[SOPHOS_LOGIN],
+            address_hint: "sophos.lan",
+            default_port: 4444,
+            setup: Setup {
+                title: "Allow DumbMonit to read the Sophos Firewall XML API",
+                steps: &[
+                    "Under Profiles > Device access, add a profile named DumbMonit read-only and set every permission to Read-only.",
+                    "Under Authentication > Users, add a user named dumbmonit, of type Administrator, with that profile and a long random password.",
+                    "Under Backup & firmware > API (Administration > API access from SFOS 22), turn the API configuration on and add the address of the DumbMonit server to the allowed IP addresses.",
+                    "In DumbMonit, enter the address of the firewall, for example \"sophos.lan\", with the dumbmonit user name and password. The API listens on the administration port, 4444 by default, with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.",
+                ],
+                warning: "The XML API is a configuration API: it reports the link of each interface and whether each IPsec connection is activated, not whether the tunnel is up. High availability, licences and the firmware version are not in it.",
+                doc_url: "https://docs.sophos.com/nsg/sophos-firewall/21.0/API/index.html",
+            },
+            options: SOPHOS_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -3929,6 +4260,12 @@ mod tests {
         "npm",
         "domain",
         "kubernetes",
+        "pfsense",
+        "unraid",
+        "veeam",
+        "tailscale",
+        "fortigate",
+        "sophos",
         "agent",
         "http",
         "tcp",
@@ -4339,6 +4676,15 @@ mod tests {
                     "exclude_namespaces",
                 ],
             ),
+            ("pfsense", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("unraid", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "veeam",
+                &["scheme", "port", "api_version", "insecure_tls", "request_timeout_seconds"],
+            ),
+            ("tailscale", &["tailnet", "watch", "request_timeout_seconds"]),
+            ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
+            ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -4487,6 +4833,33 @@ mod tests {
         assert_eq!(
             defaut("kubernetes", "request_timeout_seconds"),
             dumbmonit_collectors::kubernetes::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        // Équipements lus par leur API (`collectors/{pfsense,unraid,veeam,
+        // tailscale,fortigate,sophos}`) : ports et délai de `rest.rs`.
+        for (kind, port) in [
+            ("pfsense", dumbmonit_collectors::pfsense::DEFAULT_PORT),
+            ("unraid", dumbmonit_collectors::unraid::DEFAULT_PORT),
+            ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
+            ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
+            ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+        ] {
+            assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
+            assert_eq!(describe(kind).default_port, port, "{kind}");
+        }
+        for kind in ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos"] {
+            assert_eq!(
+                defaut(kind, "request_timeout_seconds"),
+                dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
+                "{kind}"
+            );
+        }
+        assert_eq!(
+            defaut("veeam", "api_version"),
+            dumbmonit_collectors::veeam::DEFAULT_API_VERSION
+        );
+        assert_eq!(
+            describe("tailscale").address_hint,
+            dumbmonit_collectors::tailscale::DEFAULT_ADDRESS
         );
         for kind in ["redis", "mongodb"] {
             assert_eq!(
@@ -4687,6 +5060,12 @@ mod tests {
             ("caddy", "dumbmonit"),
             ("npm", "dumbmonit@example.com"),
             ("kubernetes", "dumbmonit"),
+            ("pfsense", "dumbmonit"),
+            ("unraid", "dumbmonit"),
+            ("veeam", "dumbmonit"),
+            ("tailscale", "devices:core:read"),
+            ("fortigate", "dumbmonit"),
+            ("sophos", "dumbmonit"),
             ("nextcloud", "token"),
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
@@ -4721,7 +5100,17 @@ mod tests {
                 .replace("than admin", "")
                 // L'API d'administration de Caddy porte ce nom : c'est une
                 // interface, pas un compte, et la notice la tient à l'écart.
-                .replace("admin api", "");
+                .replace("admin api", "")
+                // Rôles et types de comptes nommés pour être écartés ou
+                // imposés par le produit : le rôle Backup Administrator que
+                // Veeam réserve à certaines routes (et que DumbMonit ne demande
+                // pas), le type « Administrator » obligatoire d'un compte
+                // d'API Sophos, borné par son profil en lecture seule.
+                .replace("backup administrator", "")
+                .replace("type administrator", "")
+                // Le domaine virtuel par défaut de FortiOS s'appelle `root` :
+                // un nom de VDOM, pas un compte.
+                .replace("set vdom \"root\"", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
@@ -4794,6 +5183,12 @@ mod tests {
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
             ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),
+            ("pfsense", include_str!("../../../../docs/devices/pfsense.md")),
+            ("unraid", include_str!("../../../../docs/devices/unraid.md")),
+            ("veeam", include_str!("../../../../docs/devices/veeam.md")),
+            ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
+            ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
+            ("sophos", include_str!("../../../../docs/devices/sophos.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),

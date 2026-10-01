@@ -97,6 +97,7 @@ struct FileConfig {
     backup_repos_interval_secs: Option<u64>,
     perf_counters: Option<Vec<PerfCounterFile>>,
     mdaemon: Option<FlagOrAuto>,
+    hyperv: Option<FlagOrAuto>,
     max_buffered_samples: Option<usize>,
     log_level: Option<String>,
     system_health: Option<SystemHealthFile>,
@@ -217,7 +218,7 @@ pub struct Config {
     pub wireguard: WireguardConfig,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
-    /// Compteurs de performance Windows : liste libre et jeu MDaemon.
+    /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
     pub perf_counters: PerfCountersConfig,
     pub max_buffered_samples: usize,
     /// Fichier où l'agent range le secret de liaison que le serveur lui
@@ -535,7 +536,8 @@ impl Config {
             )?),
         };
 
-        let perf_counters = Self::merge_perf_counters(file.perf_counters, file.mdaemon, &env)?;
+        let perf_counters =
+            Self::merge_perf_counters(file.perf_counters, file.mdaemon, file.hyperv, &env)?;
 
         let max_buffered_samples = match env.get("DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES") {
             Some(raw) => raw.trim().parse::<usize>().with_context(|| {
@@ -610,6 +612,7 @@ impl Config {
     fn merge_perf_counters(
         from_file: Option<Vec<PerfCounterFile>>,
         mdaemon: Option<FlagOrAuto>,
+        hyperv: Option<FlagOrAuto>,
         env: &EnvSource,
     ) -> Result<PerfCountersConfig> {
         let counters: Vec<CustomCounter> = match env.get("DUMBMONIT_AGENT_PERF_COUNTERS") {
@@ -651,20 +654,32 @@ impl Config {
                 perf_counters::MAX_CUSTOM_COUNTERS
             );
         }
-        let mdaemon = match env.get("DUMBMONIT_AGENT_MDAEMON") {
+        let mdaemon = Self::preset_mode("mdaemon", "DUMBMONIT_AGENT_MDAEMON", mdaemon, env)?;
+        let hyperv = Self::preset_mode("hyperv", "DUMBMONIT_AGENT_HYPERV", hyperv, env)?;
+        Ok(PerfCountersConfig { counters, mdaemon, hyperv })
+    }
+
+    /// Un jeu prédéfini de compteurs : `true`, `false` ou `auto` (le défaut),
+    /// la variable d'environnement primant sur le fichier.
+    fn preset_mode(
+        key: &str,
+        variable: &str,
+        from_file: Option<FlagOrAuto>,
+        env: &EnvSource,
+    ) -> Result<PresetMode> {
+        Ok(match env.get(variable) {
             Some(raw) => PresetMode::parse(&raw).with_context(|| {
-                format!("DUMBMONIT_AGENT_MDAEMON: expected true, false or auto, got '{raw}'")
+                format!("{variable}: expected true, false or auto, got '{raw}'")
             })?,
-            None => match mdaemon {
+            None => match from_file {
                 None => PresetMode::Auto,
                 Some(FlagOrAuto::Flag(true)) => PresetMode::On,
                 Some(FlagOrAuto::Flag(false)) => PresetMode::Off,
                 Some(FlagOrAuto::Text(text)) => PresetMode::parse(&text).with_context(|| {
-                    format!("mdaemon: expected true, false or auto, got '{text}'")
+                    format!("{key}: expected true, false or auto, got '{text}'")
                 })?,
             },
-        };
-        Ok(PerfCountersConfig { counters, mdaemon })
+        })
     }
 
     fn merge_system_health(file: SystemHealthFile, env: &EnvSource) -> Result<SystemHealthConfig> {
@@ -1378,6 +1393,20 @@ mdaemon: true
             paths,
             [r"\Processor Information(0,1)\% Processor Time", r"\Memory\Available MBytes"]
         );
+    }
+
+    #[test]
+    fn the_hyperv_preset_is_automatic_by_default_and_can_be_forced() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.perf_counters.hyperv, PresetMode::Auto);
+        let config = Config::merge(from_yaml("hyperv: false\n"), env(&[])).expect("configuration");
+        assert_eq!(config.perf_counters.hyperv, PresetMode::Off);
+        let config =
+            Config::merge(from_yaml("hyperv: false\n"), env(&[("DUMBMONIT_AGENT_HYPERV", "yes")]))
+                .expect("configuration");
+        assert_eq!(config.perf_counters.hyperv, PresetMode::On);
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Auto, "independent presets");
+        assert!(Config::merge(from_yaml("hyperv: maybe\n"), env(&[])).is_err());
     }
 
     #[test]

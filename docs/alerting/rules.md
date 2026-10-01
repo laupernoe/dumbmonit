@@ -462,6 +462,89 @@ with the node, or the namespace and the pod, workload or claim concerned.
 | Kubernetes workload missing replicas | A Deployment, StatefulSet or DaemonSet has fewer available replicas than it asks for (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
 | Kubernetes volume claim pending | A PersistentVolumeClaim that a pod needs, or that a provisioning error concerns, is still not bound (`dumbmonit_k8s_pvc_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
 
+### pfSense
+
+See [pfSense](../devices/pfsense.md). Gateways are labelled `gateway`, interfaces `interface` and `descr`, services `service`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| pfSense gateway down | A pfSense gateway is down: its monitor address no longer answers, and the traffic it carries stops or fails over (`dumbmonit_pfsense_gateway_up`). | < 1 | 3 min | Warning (`critical`) | 6 h |
+| pfSense gateway losing packets | A pfSense gateway loses more than 10 % of the probes to its monitor address: the line is degraded (`dumbmonit_pfsense_gateway_loss_percent unless on (target, gateway) dumbmonit_pfsense_gateway_up == 0`). | > 10 % | 10 min | Advisory (`warning`) | 6 h |
+| pfSense gateway slow | The round trip to a pfSense gateway's monitor address has stayed above 500 ms for fifteen minutes (`dumbmonit_pfsense_gateway_delay_milliseconds`). | > 500 ms | 15 min | Advisory (`warning`) | 6 h |
+| pfSense interface without link | An enabled pfSense interface has no link: cable, switch port or network card (`dumbmonit_pfsense_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| pfSense service stopped | A pfSense service that is enabled is not running: DNS resolver, VPN, NTP… (`dumbmonit_pfsense_service_stopped`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| pfSense disk nearly full | The pfSense disk is more than 90 % full: logs, reports and package updates stop being written (`dumbmonit_pfsense_disk_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
+
+### Unraid
+
+See [Unraid](../devices/unraid.md). Disks are labelled `disk` and `role` (`parity`, `data`, `cache`), containers `container`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Unraid array stopped | The Unraid array is not started: shares, containers and VMs that live on it are unavailable (`dumbmonit_unraid_array_started`). | < 1 | 10 min | Warning (`critical`) | 6 h |
+| Unraid disk disabled or missing | An Unraid disk is disabled, missing or invalid: the array runs degraded, and one more failure loses data (`dumbmonit_unraid_disk_ok`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| Unraid disk read errors | An Unraid disk has reported read errors since the array started: it may be disabled at the next one (`dumbmonit_unraid_disk_errors`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+| Unraid disk too hot | An Unraid array or parity disk has stayed above 55 °C for fifteen minutes (`dumbmonit_unraid_disk_temperature_celsius{role=~"data\|parity"}`). | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
+| Unraid parity check found errors | The last Unraid parity check failed or found sync errors: parity no longer matches the data (`dumbmonit_unraid_parity_check_ok`). | < 1 | 5 min | Advisory (`warning`) | 1 d |
+| Unraid parity check overdue | The last Unraid parity check is more than 40 days old: a monthly check was missed (`dumbmonit_unraid_parity_check_age_seconds`). | > 40 d | 1 h | Advisory (`warning`) | 1 d |
+| Unraid cache nearly full | An Unraid cache pool is more than 90 % full: writes fall back to the slow array, or fail (`dumbmonit_unraid_disk_used_percent{role="cache"}`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
+| Unraid container stopped | A Docker container set to start with the array is not running (`dumbmonit_unraid_container_autostart_stopped`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+
+### Veeam Backup & Replication
+
+See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` and `type`, repositories `repository`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Veeam job failed | The last run of an enabled Veeam job failed: what it protects has no new restore point (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Warning (`critical`) | 1 d |
+| Veeam job ended with a warning | The last run of an enabled Veeam job ended with a warning: some objects may not be protected (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+| Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
+| Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+
+### Tailscale
+
+See [Tailscale](../devices/tailscale.md). Devices are labelled `device`, the first label of their MagicDNS name.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Tailscale device offline | A Tailscale device that must stay online (a tagged device by default) has been disconnected for more than 15 minutes (`dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 15 min | 5 min | Advisory (`warning`) | 6 h |
+| Tailscale node key expiring | A Tailscale device's node key expires in less than 14 days: it will leave the tailnet until someone signs it in again (`dumbmonit_tailscale_device_key_expiry_seconds`). | < 14 d | 1 h | Advisory (`warning`) | 1 d |
+| Tailscale device awaiting approval | A device joined the tailnet and awaits approval: approve it if it is expected, remove it otherwise (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Advisory (`warning`) | 1 d |
+| Tailscale client update | A Tailscale device that must stay online runs a client with an update available (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
+
+### FortiGate
+
+See [FortiGate](../devices/fortigate.md). Tunnels are labelled `tunnel`, interfaces `interface` and `alias`, licences `license`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| FortiGate IPsec tunnel down | No phase 2 of a FortiGate site-to-site IPsec tunnel is up: the site behind it is cut off (`dumbmonit_fortigate_ipsec_tunnel_up`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| FortiGate interface without link | An enabled FortiGate interface with an address has no link: cable, transceiver or the device in front (`dumbmonit_fortigate_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| FortiGate HA out of sync | The members of a FortiGate HA cluster no longer have the same configuration checksum: a failover would run another configuration (`dumbmonit_fortigate_ha_in_sync`). | < 1 | 15 min | Advisory (`warning`) | 6 h |
+| FortiGate HA member lost | A FortiGate HA cluster has fewer members than in the last 24 hours: there is no standby any more (`max_over_time(dumbmonit_fortigate_ha_members[1d]) - dumbmonit_fortigate_ha_members`). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| FortiGate memory near conserve mode | FortiGate memory has stayed above 85 % for ten minutes: at 88 % (by default) it enters conserve mode and stops inspecting new sessions (`dumbmonit_fortigate_memory_used_percent`). | > 85 % | 10 min | Advisory (`warning`) | 6 h |
+| FortiGate CPU high | FortiGate CPU has stayed above 90 % for fifteen minutes (`dumbmonit_fortigate_cpu_usage_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| FortiGate licence expiring | A FortiGuard or FortiCare licence of the FortiGate expires in less than 30 days, or has expired (`dumbmonit_fortigate_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+| FortiGate firmware update | FortiGuard offers a newer patch release of the FortiOS branch the FortiGate runs (`dumbmonit_fortigate_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Sophos Firewall
+
+See [Sophos Firewall](../devices/sophos.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Sophos interface without link | A Sophos Firewall interface that is switched on and bound to a zone has no link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+
+### Hyper-V
+
+Reported by the Windows agent on a Hyper-V host; see [Agent](../devices/agent.md#hyper-v-hosts).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Hyper-V VM health critical | Hyper-V reports a virtual machine in critical health: a resource it needs, most often disk space, is exhausted (`dumbmonit_hyperv_vms_health_critical`). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| Hyper-V host CPU high | The Hyper-V host's logical processors have been more than 90 % busy for fifteen minutes, guests included (`dumbmonit_hyperv_host_cpu_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Hyper-V virtual disk errors | A Hyper-V virtual disk reported I/O errors in the last hour (`increase_prometheus(dumbmonit_hyperv_vhd_errors_total[1h])`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
