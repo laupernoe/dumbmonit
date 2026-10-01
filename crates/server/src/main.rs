@@ -192,6 +192,14 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::NpmCollector::new()));
     registry.register(Arc::new(collectors::DomainCollector::new()));
     registry.register(Arc::new(collectors::KubernetesCollector::new()));
+    // Équipements commerciaux interrogés par leur API (`collectors/{pfsense,
+    // unraid,veeam,tailscale,fortigate,sophos}`).
+    registry.register(Arc::new(collectors::PfsenseCollector::new()));
+    registry.register(Arc::new(collectors::UnraidCollector::new()));
+    registry.register(Arc::new(collectors::VeeamCollector::new()));
+    registry.register(Arc::new(collectors::TailscaleCollector::new()));
+    registry.register(Arc::new(collectors::FortigateCollector::new()));
+    registry.register(Arc::new(collectors::SophosCollector::new()));
 
     // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
     // fait que constater leur fraîcheur.

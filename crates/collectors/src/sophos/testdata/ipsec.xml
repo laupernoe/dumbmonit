@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response APIVersion="2000.2" IPS_CAT_VER="1">
+  <Login>
+    <status>Authentication Successful</status>
+  </Login>
+  <IPSecConnection transactionid="">
+    <Configuration>
+      <Name>to-headquarters</Name>
+      <Description/>
+      <ConnectionType>SiteToSite</ConnectionType>
+      <Policy>DefaultHeadOffice</Policy>
+      <ActionOnVPNRestart>RespondOnly</ActionOnVPNRestart>
+      <AuthenticationType>PresharedKey</AuthenticationType>
+      <Status>Active</Status>
+    </Configuration>
+  </IPSecConnection>
+  <IPSecConnection transactionid="">
+    <Configuration>
+      <Name>old-branch</Name>
+      <Description>Closed office</Description>
+      <ConnectionType>SiteToSite</ConnectionType>
+      <Policy>DefaultBranchOffice</Policy>
+      <AuthenticationType>PresharedKey</AuthenticationType>
+      <Status>Deactive</Status>
+    </Configuration>
+  </IPSecConnection>
+</Response>
