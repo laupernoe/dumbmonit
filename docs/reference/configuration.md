@@ -8,7 +8,7 @@ configuration file to mount.
 | Variable | Default | Role |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address of the API and the web UI, inside the container. |
-| `DUMBMONIT_DATA_DIR` | `/data` | Persistent directory: `dumbmonit.db` (SQLite), `secret.key` and `vm/` (embedded VictoriaMetrics). |
+| `DUMBMONIT_DATA_DIR` | `/data` | Persistent directory: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (embedded VictoriaMetrics) and `webchange/` (screenshots of website changes). |
 | `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics). |
 | `DUMBMONIT_SECRET` | *(generated)* | Instance secret. If empty, read from `<data dir>/secret.key`, generated on first start. Encrypts device credentials, channel secrets and agent tokens with AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Maximum simultaneous probes, all collectors combined. |
@@ -31,6 +31,7 @@ configuration file to mount.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
 | `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | How many backups are kept, 1 to 365. The oldest are removed with their `.key`. |
+| `DUMBMONIT_BROWSER_URL` | *(unset)* | Headless Chromium used for the screenshots of [website changes](../devices/webchange.md#screenshots), as `http://host:9222` (its DevTools port). The Compose file ships one under the `screenshots` profile: `DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d`. Unset: text comparison only. |
 
 Baseline retention (60 days) and the 14-day learning period are not
 configurable.

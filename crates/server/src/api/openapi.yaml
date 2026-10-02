@@ -133,6 +133,8 @@ tags:
     description: Docker containers on agent machines, and the commands sent to them.
   - name: Heartbeats
     description: Push monitors — the secret URL a job calls.
+  - name: Website changes
+    description: Pages, changes, line diffs and screenshots of a `webchange` device.
   - name: Integration packs
     description: Device types described in YAML.
   - name: Integrations
@@ -2311,6 +2313,139 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/PushMonitor" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------- changements d'un site
+  /api/targets/{id}/webchange/pages:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listWebchangePages
+      tags: [Website changes]
+      summary: Pages followed by a website watch
+      description: >-
+        Every page seen by the checks of a `webchange` device, removed pages
+        included (with their last error). `screenshots_available` is true when
+        a browser is configured (`DUMBMONIT_BROWSER_URL`) and answers.
+        `404` when the device is not a website watch.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The pages.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebchangePages" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/webchange/changes:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listWebchangeChanges
+      tags: [Website changes]
+      summary: Changes found on a watched website, newest first
+      description: The last hundred changes are kept per device.
+      x-token-scope: read
+      parameters:
+        - name: url
+          in: query
+          required: false
+          description: Only the changes of this exact page address.
+          schema: { type: string }
+        - name: limit
+          in: query
+          required: false
+          description: How many changes to return, 1 to 200.
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+      responses:
+        "200":
+          description: The changes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WebchangeChange" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/webchange/changes/{change_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: change_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: getWebchangeChange
+      tags: [Website changes]
+      summary: One change, with both versions and the line diff
+      description: >-
+        The diff keeps three lines of context around each modification; longer
+        unchanged runs are collapsed into one `skip` line whose `count` says how
+        many lines it hides.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebchangeChangeDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/webchange/snapshots/{snapshot_id}/screenshot:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: snapshot_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: getWebchangeScreenshot
+      tags: [Website changes]
+      summary: The screenshot of a snapshot
+      description: >-
+        A JPEG image, cacheable forever by the browser (a snapshot never
+        changes). `404` when the snapshot has no screenshot or belongs to
+        another device.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The image.
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/webchange/check:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: checkWebchangeNow
+      tags: [Website changes]
+      summary: Check a watched website now
+      description: >-
+        Starts a check in the background and answers at once. `started` is
+        false when a check is already running: that one stands for this request.
+      x-token-scope: write
+      responses:
+        "202":
+          description: The check is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [started]
+                properties:
+                  started: { type: boolean }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -4782,6 +4917,76 @@ components:
         grace_secs: { type: [integer, "null"] }
         settings_error: { type: [string, "null"] }
         verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+
+    WebchangePages:
+      type: object
+      required: [screenshots_available, pages]
+      properties:
+        screenshots_available: { type: boolean }
+        pages:
+          type: array
+          items: { $ref: "#/components/schemas/WebchangePage" }
+
+    WebchangePage:
+      type: object
+      required: [url, title, status, error, last_checked, last_changed, changes, latest_snapshot]
+      properties:
+        url: { type: string }
+        title: { type: [string, "null"] }
+        status: { type: [integer, "null"], description: "HTTP status of the last read; always 404 for a removed page, 410 or no longer linked included." }
+        error: { type: [string, "null"], description: "Why the last read failed, or why the page counts as removed." }
+        last_checked: { type: [string, "null"], description: "UTC, without suffix." }
+        last_changed: { type: [string, "null"], description: "UTC, without suffix." }
+        changes: { type: integer, description: Changes kept for this page. }
+        latest_snapshot: { type: [integer, "null"], format: int64 }
+
+    WebchangeChange:
+      type: object
+      required: [id, url, kind, detected_at, added, removed, before, after]
+      properties:
+        id: { type: integer, format: int64 }
+        url: { type: string }
+        kind: { type: string, enum: [changed, new_page, removed_page] }
+        detected_at: { type: string, description: "UTC, without suffix." }
+        added: { type: integer, description: Lines added. }
+        removed: { type: integer, description: Lines removed. }
+        before: { type: [integer, "null"], format: int64, description: Snapshot before the change. }
+        after: { type: [integer, "null"], format: int64, description: Snapshot after the change. }
+
+    WebchangeSnapshot:
+      type: object
+      required: [id, fetched_at, title, has_screenshot]
+      properties:
+        id: { type: integer, format: int64 }
+        fetched_at: { type: string, description: "UTC, without suffix." }
+        title: { type: [string, "null"] }
+        has_screenshot: { type: boolean }
+
+    WebchangeDiffLine:
+      type: object
+      required: [op, text, count]
+      properties:
+        op: { type: string, enum: [equal, insert, delete, skip] }
+        text: { type: string, description: "Empty for `skip`." }
+        count: { type: [integer, "null"], description: "Unchanged lines hidden by a `skip` line." }
+
+    WebchangeChangeDetail:
+      allOf:
+        - $ref: "#/components/schemas/WebchangeChange"
+        - type: object
+          required: [before_snapshot, after_snapshot, diff]
+          properties:
+            before_snapshot:
+              oneOf:
+                - $ref: "#/components/schemas/WebchangeSnapshot"
+                - type: "null"
+            after_snapshot:
+              oneOf:
+                - $ref: "#/components/schemas/WebchangeSnapshot"
+                - type: "null"
+            diff:
+              type: array
+              items: { $ref: "#/components/schemas/WebchangeDiffLine" }
 
     Pack:
       type: object

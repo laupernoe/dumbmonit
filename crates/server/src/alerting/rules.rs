@@ -4645,6 +4645,23 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base("dns_answer_changed", "DNS answer changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])")
         },
+        // Contenu d'un site modifié (`webchange`) : la jauge vaut le nombre de
+        // changements (page modifiée, apparue ou disparue) trouvés par la
+        // dernière vérification. Elle est réécrite à chaque passage du
+        // planificateur, donc toujours fraîche : l'alerte part après une
+        // vérification qui a trouvé quelque chose et se résout à la suivante
+        // qui ne trouve rien. Pas de rappel : le changement est un fait, pas
+        // une panne en cours.
+        Rule {
+            description: "The last check of a watched website found pages that changed, appeared or disappeared. The device page shows each change before and after."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base("webchange_detected", "Website changed", RuleKind::Threshold, "dumbmonit_webchange_last_check_changes")
+        },
         // --- Kubernetes (`collectors/kubernetes`) ---
         //
         // Toutes ces séries n'existent que pour une cible Kubernetes : aucune ne
@@ -5587,6 +5604,7 @@ mod tests {
             "domain_on_hold",
             "domain_redemption",
             "dns_answer_changed",
+            "webchange_detected",
             "k8s_node_not_ready",
             "k8s_node_pressure",
             "k8s_pod_crashlooping",
@@ -5956,6 +5974,8 @@ mod tests {
             "dumbmonit_domain_redemption",
             // Sonde DNS, option `alert_on_change` (`uptime/dns`).
             "dumbmonit_probe_dns_answer_fingerprint",
+            // Changements d'un site web (`webchange`).
+            "dumbmonit_webchange_last_check_changes",
             // Kubernetes (`collectors/kubernetes/metrics.rs`).
             "dumbmonit_k8s_node_ready",
             "dumbmonit_k8s_node_pressure",

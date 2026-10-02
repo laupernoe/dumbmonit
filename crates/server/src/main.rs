@@ -224,6 +224,18 @@ async fn run(config: Config) -> Result<()> {
     // collecteur ne fait que constater qu'il l'a fait à temps.
     registry.register(Arc::new(collectors::PushCollector::new(pool.clone())));
 
+    // Changements du contenu d'un site : texte, instantanés et captures, gardés
+    // en base et sous `<data>/webchange`. Une vérification interrompue par un
+    // arrêt du serveur a laissé son verrou : il est levé ici.
+    dumbmonit_server::webchange::store::release_all(&pool).await?;
+    registry.register(Arc::new(dumbmonit_server::webchange::WebchangeCollector::new(
+        dumbmonit_server::webchange::Context {
+            pool: pool.clone(),
+            data_dir: config.data_dir.clone(),
+            browser_url: config.browser_url.clone(),
+        },
+    )));
+
     // Collecteur de démonstration : il permet d'obtenir des graphes sans matériel,
     // le temps de configurer un premier équipement réel.
     registry.register(Arc::new(collectors::DummyCollector));

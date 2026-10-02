@@ -56,6 +56,7 @@ form always matches what this version can monitor.
 | [Reachable host](services.md#ping) | `ping` | none | Gateway, access point, printer |
 | [TLS certificate](services.md#tls) | `tls` | none | IMAPS, LDAPS, reverse proxy |
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
+| [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |
 | [Demo device](demo.md) | `dummy` | none | Explore the UI without hardware |
 
 ## How a device is read

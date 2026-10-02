@@ -189,6 +189,14 @@ impl TargetPayload {
                     .into(),
             ));
         }
+        // La surveillance d'un site garde ses instantanés sur le serveur : un
+        // relais ne sait pas la faire.
+        if via_agent.is_some() && self.kind == crate::webchange::KIND {
+            return Err(ApiError::BadRequest(
+                "Website change checks run on the server itself: they cannot go through a relay."
+                    .into(),
+            ));
+        }
 
         Ok(db::targets::TargetInput {
             name,
@@ -297,6 +305,9 @@ pub async fn delete(
         return Err(not_found(id));
     }
     forget_alerts(&state, id).await;
+    // Les captures d'écran d'une surveillance de site sont des fichiers : la
+    // cascade de la base ne les atteint pas.
+    crate::webchange::store::forget_files(&state.config.data_dir, id).await;
     spawn_series_deletion(state, id);
     Ok(StatusCode::NO_CONTENT)
 }
