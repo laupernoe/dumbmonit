@@ -27,6 +27,8 @@ use tower::ServiceExt;
 const FIXTURE: &str =
     concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/collectors_catalog.json");
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 /// Un type que les tables du serveur ignorent.
 struct Inconnu;
 
@@ -61,6 +63,9 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
     assert_eq!(response.status(), StatusCode::OK);
     let bytes = response.into_body().collect().await.expect("corps").to_bytes();
     let body = std::str::from_utf8(&bytes).expect("JSON en UTF-8");
+    // La version du serveur (User-Agent par défaut) change à chaque publication :
+    // l'instantané la remplace par un repère pour ne pas avoir à le réécrire.
+    let body = &body.replace(VERSION, "<version>");
 
     if std::env::var_os("DUMBMONIT_BLESS").is_some() {
         std::fs::write(FIXTURE, pretty(body)).expect("écriture de l'instantané");
