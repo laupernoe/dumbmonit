@@ -11,8 +11,13 @@
 		mood?: 'watch' | 'dizzy' | 'happy';
 		/** The occasional blink; off for a pigeon that must stay perfectly still. */
 		blink?: boolean;
+		/**
+		 * A one-off startled take — pupils snap small, independent of `mood` — for
+		 * a momentary reaction (e.g. a click). The caller toggles it back off.
+		 */
+		startled?: boolean;
 	}
-	let { class: className = 'size-16', mood = 'watch', blink = true }: Props = $props();
+	let { class: className = 'size-16', mood = 'watch', blink = true, startled = false }: Props = $props();
 
 	/** Pupil rest positions: "watch". Moods move them by an offset. */
 	const L = [82, 124];
@@ -28,7 +33,7 @@
 	const shiftR = $derived(`translate(${pupils.r[0] - R[0]}px, ${pupils.r[1] - R[1]}px)`);
 </script>
 
-<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${className}`} role="img" aria-label="DumbMonit, the pigeon">
+<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${className}`} role="img" aria-label="DumbMonit, the pigeon">
 	<!-- feet -->
 	<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" fill="#e97b3a" stroke="#1e2640" stroke-width="12" stroke-linejoin="round" />
 	<!-- body -->
@@ -61,6 +66,15 @@
 	.pupil {
 		transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
 	}
+	/* Startled take: pupils shrink to pinpricks, each about its own centre. */
+	.pupil circle {
+		transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.mascot-startled .pupil circle {
+		transform: scale(0.5);
+		transform-box: fill-box;
+		transform-origin: center;
+	}
 	.lid {
 		transform-box: fill-box;
 		transform-origin: top;
@@ -91,6 +105,9 @@
 			animation: none;
 		}
 		.pupil {
+			transition: none;
+		}
+		.pupil circle {
 			transition: none;
 		}
 	}
