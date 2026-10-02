@@ -21,6 +21,8 @@ export interface ComponentHealth {
 export interface Health {
 	status: 'ok' | 'degraded';
 	version: string;
+	/** Short commit the server was built from; absent from local builds. */
+	build?: string;
 	database: ComponentHealth;
 	victoria: ComponentHealth;
 	/** Public demo mode (`DUMBMONIT_DEMO=1`): read-only, fictional data. */

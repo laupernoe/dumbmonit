@@ -63,6 +63,10 @@ COPY profiles profiles
 # avant `cargo build`, sinon `rust_embed` produit un serveur sans interface.
 COPY --from=web /src/web/build web/build
 
+# Commit affiché dans l'interface (barre du haut, Réglages → About). La CI le
+# passe en `--build-arg` ; vide, l'interface n'affiche que le numéro de version.
+ARG DUMBMONIT_BUILD=""
+
 # Sans cela, cargo réutiliserait les artefacts des sources factices.
 RUN touch crates/proto/src/lib.rs crates/collectors/src/lib.rs crates/pack/src/lib.rs \
       crates/server/src/lib.rs \
