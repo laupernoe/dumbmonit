@@ -8,6 +8,9 @@ use crate::state::AppState;
 pub struct Health {
     status: &'static str,
     version: &'static str,
+    /// Commit dont est issu le binaire, raccourci ; absent d'une compilation locale.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    build: Option<&'static str>,
     database: ComponentHealth,
     victoria: ComponentHealth,
     /// Mode démonstration publique (`DUMBMONIT_DEMO`) : lecture seule, parc fictif.
@@ -38,6 +41,13 @@ impl ComponentHealth {
     }
 }
 
+/// Commit dont est issu le binaire : `DUMBMONIT_BUILD` à la compilation, posé par
+/// le Dockerfile depuis la CI. Raccourci à 7 caractères comme `git log --oneline`.
+fn build_id() -> Option<&'static str> {
+    let build = option_env!("DUMBMONIT_BUILD")?.trim();
+    (!build.is_empty()).then(|| build.get(..7).unwrap_or(build))
+}
+
 /// État de santé du serveur et de ses dépendances.
 ///
 /// Répond toujours 200 : c'est un rapport de diagnostic, pas une sonde de vivacité.
@@ -54,6 +64,7 @@ pub async fn health(State(state): State<AppState>) -> Json<Health> {
     Json(Health {
         status: if all_ok { "ok" } else { "degraded" },
         version: env!("CARGO_PKG_VERSION"),
+        build: build_id(),
         database: ComponentHealth::from(database),
         victoria: ComponentHealth::from(victoria).embedded(state.config.vm_embedded()),
         demo: state.config.demo,

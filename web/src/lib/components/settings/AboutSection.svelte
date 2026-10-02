@@ -48,7 +48,9 @@
 	{:else if health}
 		<dl class="grid gap-y-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-x-6">
 			<dt class="font-semibold text-ink">Version</dt>
-			<dd class="tnum text-ink-2">{health.version}</dd>
+			<dd class="tnum text-ink-2">
+				{health.version}{#if health.build}<span class="text-ink-3"> · build <span class="font-mono">{health.build}</span></span>{/if}
+			</dd>
 
 			{#each COMPONENTS as component (component.key)}
 				{@const state: ComponentHealth = health[component.key]}

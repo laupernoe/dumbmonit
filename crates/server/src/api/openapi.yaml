@@ -3596,6 +3596,7 @@ components:
       properties:
         status: { type: string, enum: [ok, degraded] }
         version: { type: string }
+        build: { type: string, description: 'Short commit the server was built from; absent from local builds.' }
         database: { $ref: "#/components/schemas/ComponentHealth" }
         victoria: { $ref: "#/components/schemas/ComponentHealth" }
         demo: { type: boolean, description: 'Demonstration mode, every write refused.' }

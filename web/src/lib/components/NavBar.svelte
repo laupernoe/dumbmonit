@@ -9,6 +9,7 @@
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv } from 'lucide-svelte';
+	import { getHealth } from '$lib/api';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Plate, RollingNumber, bump, reducedMotion } from '$lib/ui';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
@@ -25,6 +26,16 @@
 		{ href: '/status', label: 'Status', icon: Globe, exact: false },
 		{ href: '/settings', label: 'Settings', icon: Settings2, exact: false }
 	];
+
+	// Version shown next to the wordmark; read once, a failure just hides it.
+	let version = $state<{ number: string; build?: string } | null>(null);
+	$effect(() => {
+		const controller = new AbortController();
+		getHealth(controller.signal)
+			.then((health) => (version = { number: health.version, build: health.build }))
+			.catch(() => {});
+		return () => controller.abort();
+	});
 
 	function isActive(href: string, exact: boolean): boolean {
 		const path = page.url.pathname;
@@ -85,10 +96,19 @@
 
 <header class="vt-nav-top sticky top-0 z-30 hidden border-b border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
-		<a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="DumbMonit, overview">
-			<Logo class="size-7" />
-			<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>
-		</a>
+		<div class="flex shrink-0 items-center gap-2">
+			<a href="/" class="flex items-center gap-2.5" aria-label="DumbMonit, overview">
+				<Logo class="size-7" />
+				<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>
+			</a>
+			{#if version}
+				<a
+					href="/settings#about"
+					class="tnum hidden rounded-md border border-line px-1.5 py-0.5 text-[0.6875rem] font-semibold text-ink-3 transition-colors hover:text-ink md:inline-block"
+					title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
+				>v{version.number}</a>
+			{/if}
+		</div>
 
 		<nav aria-label="Main" class="relative">
 			<ul bind:this={list} class="relative flex items-center gap-1">
