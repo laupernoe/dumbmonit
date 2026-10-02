@@ -20,6 +20,7 @@
 	import IncidentCard from '$lib/components/status/IncidentCard.svelte';
 	import StatusUpdates from '$lib/components/status/StatusUpdates.svelte';
 	import ServiceRow from '$lib/components/status/ServiceRow.svelte';
+	import StatusMascot from '$lib/components/status/StatusMascot.svelte';
 	import { accentClass, homepageHost, isClosed, overallBanner } from '$lib/components/status/words';
 
 	const REFRESH_MS = 60_000;
@@ -226,6 +227,9 @@
 		{/if}
 
 		<footer class="mt-12 grid justify-items-center gap-3 text-center text-[0.8125rem] text-ink-2">
+			{#if status && banner}
+				<StatusMascot tone={bannerTone} />
+			{/if}
 			{#if status?.page.footer_text}
 				<p class="max-w-prose whitespace-pre-line">{status.page.footer_text}</p>
 			{/if}
