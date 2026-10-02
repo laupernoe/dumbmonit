@@ -37,6 +37,7 @@ mod tokens;
 mod totp;
 mod truenas;
 mod users;
+mod webchange;
 
 pub use error::{ApiError, ApiResult};
 pub use openapi::API_VERSION;
@@ -143,6 +144,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(backup::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
         .merge(packs::routes())
+        // Changements d'un site web : pages, diff et captures (`webchange.rs`).
+        .merge(webchange::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
         .merge(music::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
