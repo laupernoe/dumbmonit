@@ -106,7 +106,7 @@
 					href="/settings#about"
 					class="tnum hidden rounded-md border border-line px-1.5 py-0.5 text-[0.6875rem] font-semibold text-ink-3 transition-colors hover:text-ink md:inline-block"
 					title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
-				>v{version.number}</a>
+				>v{version.number}{#if version.build}<span class="font-mono font-normal"> · {version.build}</span>{/if}</a>
 			{/if}
 		</div>
 
