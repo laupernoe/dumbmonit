@@ -43,6 +43,10 @@ services:
       DUMBMONIT_VM_MEMORY: ${DUMBMONIT_VM_MEMORY:-256MB}
       # External VictoriaMetrics instead of the embedded one:
       # DUMBMONIT_VM_URL: http://victoriametrics:8428
+      # Screenshots of website changes, taken by the optional `browser`
+      # service below. Empty: website changes compare the text only.
+      #   DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
+      DUMBMONIT_BROWSER_URL: ${DUMBMONIT_BROWSER_URL:-}
     # Least privilege: no capability at all, no privilege escalation, and the
     # image's file system read-only — /data (volume) and /tmp (tmpfs) are the
     # only writable places. ICMP "ping" monitors need no capability either: the
@@ -59,6 +63,17 @@ services:
       net.ipv4.ping_group_range: "0 2147483647"
     # The server stops VictoriaMetrics after itself: leave it the time to do so.
     stop_grace_period: 30s
+    restart: unless-stopped
+
+  # Optional headless Chromium for the screenshots of website changes, started
+  # only with `--profile screenshots`. Nothing publishes its port: only the
+  # DumbMonit server talks to it, over the Compose network.
+  browser:
+    image: chromedp/headless-shell:stable
+    profiles: ["screenshots"]
+    # Chromium keeps its rendering buffers in /dev/shm: Docker's default 64 MB
+    # is too small for a long page.
+    shm_size: 256m
     restart: unless-stopped
 
 volumes:
