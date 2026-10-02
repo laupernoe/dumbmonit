@@ -119,6 +119,7 @@ nav:
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md
+      - Website changes: devices/webchange.md
       - Demo device: devices/demo.md
   - Integration packs:
       - What a pack is: packs/index.md

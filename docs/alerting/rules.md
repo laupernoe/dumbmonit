@@ -447,6 +447,14 @@ Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devic
 | Domain in redemption | The domain is in `redemptionPeriod`, `pendingDelete` or `pendingRestore`: it has expired (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
 | DNS answer changed | The answer of a DNS check with *Alert when the answer changes* differs from the one before (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
+### Website changes
+
+See [Website changes](../devices/webchange.md). The device page shows each change before and after.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Website changed | The last check of a watched page or site found pages that changed, appeared or disappeared (`dumbmonit_webchange_last_check_changes`). Resolves at the next check that finds none. | > 0 | 30 s | Info (`info`) | none |
+
 ### Kubernetes
 
 See [Kubernetes / k3s](../devices/kubernetes.md). Every series is labelled
