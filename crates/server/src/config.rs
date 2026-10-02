@@ -110,6 +110,10 @@ pub struct Config {
     /// Connexion OpenID Connect décrite par l'environnement (`DUMBMONIT_OIDC_*`,
     /// `DUMBMONIT_PUBLIC_URL`). Un réglage enregistré depuis l'interface l'emporte.
     pub oidc: OidcEnv,
+    /// Chromium sans interface qui fait les captures d'écran de la
+    /// surveillance des sites (`DUMBMONIT_BROWSER_URL`, `http://browser:9222`).
+    /// `None` : pas de capture, la comparaison de texte fonctionne seule.
+    pub browser_url: Option<String>,
 }
 
 impl Config {
@@ -155,6 +159,9 @@ impl Config {
             ),
             backup_keep: env_parsed::<usize>("DUMBMONIT_BACKUP_KEEP", "7")?.clamp(1, 365),
             oidc: OidcEnv::from_env(),
+            browser_url: env_var("DUMBMONIT_BROWSER_URL")
+                .map(|url| url.trim().trim_end_matches('/').to_string())
+                .filter(|url| !url.is_empty()),
         })
     }
 
