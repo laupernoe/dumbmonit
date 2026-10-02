@@ -6445,6 +6445,127 @@
     ]
   },
   {
+    "kind": "webchange",
+    "label": "Website changes",
+    "summary": "Be told when the content of a page, or of a whole site, changes, with a before/after view of each change.",
+    "examples": [
+      "Pricing or terms page",
+      "Documentation site",
+      "Supplier's status or maintenance notice",
+      "Public announcement page",
+      "Your own site after a deployment"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the device answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "https://example.com/pricing",
+    "default_port": 443,
+    "setup": {
+      "title": "Watch a website for changes",
+      "steps": [
+        "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
+        "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
+        "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
+        "For a screenshot of each version, start the optional browser service of the Compose file and point DumbMonit at it:\nDUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d"
+      ],
+      "warning": "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.",
+      "doc_url": ""
+    },
+    "options": [
+      {
+        "key": "scope",
+        "label": "Scope",
+        "help": "Page: only the address above. Site: every page under the same folder, found through the site's sitemap or by following its links.",
+        "placeholder": "",
+        "default": "page",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "page",
+          "site"
+        ]
+      },
+      {
+        "key": "max_pages",
+        "label": "Max pages",
+        "help": "Site scope only: pages read at most on each check, from 1 to 200.",
+        "placeholder": "25",
+        "default": "25",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "path_prefix",
+        "label": "Path prefix",
+        "help": "Site scope only: follow only the pages whose path starts with this, for example /docs/. Empty: the folder of the address above.",
+        "placeholder": "/docs/",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "ignore",
+        "label": "Ignore lines",
+        "help": "Regular expressions, one per line or joined with |: the text lines they match are left out of the comparison. For clocks, counters and \"last updated\" lines.",
+        "placeholder": "Updated \\d+ minutes ago|Visitors: \\d+",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "screenshots",
+        "label": "Screenshots",
+        "help": "Keep a screenshot of each new version. Needs the optional browser service (DUMBMONIT_BROWSER_URL); without it, only the text is kept.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "check_interval_minutes",
+        "label": "Check every (minutes)",
+        "help": "How often the pages are read and compared, from 5 to 10080 (a week). An unreachable start page is retried at every polling interval.",
+        "placeholder": "60",
+        "default": "60",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a site of your own behind a self-signed certificate. Never for someone else's site.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "websocket",
     "label": "WebSocket endpoint",
     "summary": "Completes the upgrade handshake, and can exchange a frame.",

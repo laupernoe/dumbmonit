@@ -1038,6 +1038,55 @@ const PUSH_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Options lues par `webchange/options.rs` (`Options::from_target`).
+const WEBCHANGE_OPTIONS: &[OptionView] = &[
+    select(
+        "scope",
+        "Scope",
+        "Page: only the address above. Site: every page under the same folder, found through the site's sitemap or by following its links.",
+        "page",
+        &["page", "site"],
+    ),
+    number(
+        "max_pages",
+        "Max pages",
+        "Site scope only: pages read at most on each check, from 1 to 200.",
+        "25",
+        "25",
+    ),
+    text(
+        "path_prefix",
+        "Path prefix",
+        "Site scope only: follow only the pages whose path starts with this, for example /docs/. Empty: the folder of the address above.",
+        "/docs/",
+        "",
+    ),
+    text(
+        "ignore",
+        "Ignore lines",
+        "Regular expressions, one per line or joined with |: the text lines they match are left out of the comparison. For clocks, counters and \"last updated\" lines.",
+        "Updated \\d+ minutes ago|Visitors: \\d+",
+        "",
+    ),
+    boolean(
+        "screenshots",
+        "Screenshots",
+        "Keep a screenshot of each new version. Needs the optional browser service (DUMBMONIT_BROWSER_URL); without it, only the text is kept.",
+        true,
+    ),
+    number(
+        "check_interval_minutes",
+        "Check every (minutes)",
+        "How often the pages are read and compared, from 5 to 10080 (a week). An unreachable start page is retried at every polling interval.",
+        "60",
+        "60",
+    ),
+    insecure_tls(
+        "For a site of your own behind a self-signed certificate. Never for someone else's site.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+];
+
 /// Options lues par `collectors/proxmox/options.rs`.
 const PROXMOX_OPTIONS: &[OptionView] = &[
     number("port", "API port", "Used if the address does not give a port.", "8006", "8006"),
@@ -3367,6 +3416,36 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: WEBSOCKET_OPTIONS,
         },
+        // Changements du contenu d'un site (`webchange`) : texte comparé page à
+        // page, instantanés et captures gardés sur le serveur.
+        "webchange" => CollectorView {
+            kind: "webchange",
+            label: "Website changes",
+            summary: "Be told when the content of a page, or of a whole site, changes, with a before/after view of each change.",
+            examples: &[
+                "Pricing or terms page",
+                "Documentation site",
+                "Supplier's status or maintenance notice",
+                "Public announcement page",
+                "Your own site after a deployment",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "https://example.com/pricing",
+            default_port: 443,
+            setup: Setup {
+                title: "Watch a website for changes",
+                steps: &[
+                    "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
+                    "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
+                    "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
+                    "For a screenshot of each version, start the optional browser service of the Compose file and point DumbMonit at it:\nDUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d",
+                ],
+                warning: "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.",
+                doc_url: "",
+            },
+            options: WEBCHANGE_OPTIONS,
+        },
         // Moniteur en poussée : rien n'est interrogé, c'est le travail surveillé
         // qui appelle. L'adresse n'est qu'un libellé : elle doit rester unique
         // parmi les heartbeats, comme toute adresse pour un type donné.
@@ -4278,6 +4357,7 @@ mod tests {
         "mqtt",
         "websocket",
         "push",
+        "webchange",
         "dummy",
     ];
 
@@ -4574,6 +4654,19 @@ mod tests {
                 ],
             ),
             ("push", &["expected_interval", "grace"]),
+            (
+                "webchange",
+                &[
+                    "scope",
+                    "max_pages",
+                    "path_prefix",
+                    "ignore",
+                    "screenshots",
+                    "check_interval_minutes",
+                    "insecure_tls",
+                    "allow_private_targets",
+                ],
+            ),
             (
                 "redfish",
                 &["port", "insecure_tls", "request_timeout_seconds", "auth", "storage", "logs"],
@@ -5191,6 +5284,7 @@ mod tests {
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
+            ("webchange", include_str!("../../../../docs/devices/webchange.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
             ("postgres", include_str!("../../../../docs/devices/services.md")),
             ("mysql", include_str!("../../../../docs/devices/services.md")),
@@ -5217,6 +5311,32 @@ mod tests {
             let warning = flatten(view.setup.warning);
             assert!(flat.contains(&warning), "docs/devices/{kind}.md ne reprend pas : {warning}");
         }
+    }
+
+    /// Les défauts affichés pour la surveillance des sites sont ceux que lit
+    /// `webchange/options.rs`.
+    #[test]
+    fn les_defauts_de_la_surveillance_des_sites_sont_ceux_du_collecteur() {
+        use crate::webchange::options as o;
+        let defaut = |cle: &str| {
+            describe("webchange").options.iter().find(|opt| opt.key == cle).map(|opt| opt.default)
+        };
+        assert_eq!(defaut(o::OPTION_SCOPE), Some("page"));
+        assert_eq!(defaut(o::OPTION_MAX_PAGES), Some(o::DEFAULT_MAX_PAGES.to_string().as_str()));
+        assert_eq!(
+            defaut(o::OPTION_CHECK_INTERVAL),
+            Some(o::DEFAULT_CHECK_INTERVAL_MINUTES.to_string().as_str())
+        );
+        assert_eq!(defaut(o::OPTION_SCREENSHOTS), Some("true"));
+        for cle in [
+            o::OPTION_PATH_PREFIX,
+            o::OPTION_IGNORE,
+            o::OPTION_INSECURE_TLS,
+            o::OPTION_ALLOW_PRIVATE,
+        ] {
+            assert!(defaut(cle).is_some(), "option « {cle} » absente du formulaire");
+        }
+        assert_eq!(describe("webchange").credential_types, &["none"]);
     }
 
     #[test]
