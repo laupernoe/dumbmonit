@@ -1151,7 +1151,7 @@
         "label": "Announced identity (User-Agent)",
         "help": "Name the check gives to the server. Change it if the server filters robots.",
         "placeholder": "DumbMonit/1.0",
-        "default": "DumbMonit/0.1.0",
+        "default": "DumbMonit/<version>",
         "required": false,
         "input": "text",
         "choices": []
