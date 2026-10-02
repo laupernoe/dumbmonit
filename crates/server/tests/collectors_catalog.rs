@@ -5,9 +5,9 @@
 //! passant, à l'occasion d'un remaniement de la façon dont il est construit.
 //!
 //! Le registre reproduit celui de `main.rs` (les collecteurs réseau de
-//! `Registry::remote`, plus l'agent, les heartbeats et la démonstration), et y
-//! ajoute un type qu'aucune table ne connaît, pour figer aussi la description
-//! générique.
+//! `Registry::remote`, plus l'agent, les heartbeats, la surveillance des sites
+//! et la démonstration), et y ajoute un type qu'aucune table ne connaît, pour
+//! figer aussi la description générique.
 //!
 //! `DUMBMONIT_BLESS=1` réécrit l'instantané après un changement voulu.
 
@@ -49,6 +49,13 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
     let mut registry = collectors::Registry::remote(Duration::from_secs(5));
     registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
     registry.register(Arc::new(collectors::PushCollector::new(pool.clone())));
+    registry.register(Arc::new(dumbmonit_server::webchange::WebchangeCollector::new(
+        dumbmonit_server::webchange::Context {
+            pool: pool.clone(),
+            data_dir: config.data_dir.clone(),
+            browser_url: None,
+        },
+    )));
     registry.register(Arc::new(collectors::DummyCollector));
     registry.register(Arc::new(Inconnu));
     let app = common::build_with_registry(dir, config, pool, registry).await;
