@@ -142,6 +142,74 @@ export interface ProbeReport {
 	series: string[];
 }
 
+// --- Website changes (webchange) --------------------------------------------
+
+/**
+ * One watched page of a `webchange` device, as last probed.
+ *
+ * `error` is set when the last fetch of this page failed (page unreachable,
+ * removed…); `status` is the HTTP status of that attempt, or `null` before
+ * the first check. `latest_snapshot` is the id to pass to the screenshot
+ * route for the most recent capture, or `null` when none was ever taken.
+ */
+export interface WebchangePage {
+	url: string;
+	title: string | null;
+	status: number | null;
+	error: string | null;
+	last_checked: string | null;
+	last_changed: string | null;
+	changes: number;
+	latest_snapshot: number | null;
+}
+
+/** `GET /api/targets/{id}/webchange/pages`. */
+export interface WebchangePagesResponse {
+	/** False when the server has no headless browser configured: text diffing still works. */
+	screenshots_available: boolean;
+	pages: WebchangePage[];
+}
+
+export type WebchangeChangeKind = 'changed' | 'new_page' | 'removed_page';
+
+/** One detected change, newest first; mirrors `GET .../webchange/changes`. */
+export interface WebchangeChange {
+	id: number;
+	url: string;
+	kind: WebchangeChangeKind;
+	detected_at: string;
+	added: number;
+	removed: number;
+	/** Id of the snapshot taken before the change, or `null` for a new page. */
+	before: number | null;
+	/** Id of the snapshot taken after the change, or `null` for a removed page. */
+	after: number | null;
+}
+
+/** One fetched copy of a page, referenced by a change's `before`/`after`. */
+export interface WebchangeSnapshot {
+	id: number;
+	fetched_at: string;
+	title: string | null;
+	has_screenshot: boolean;
+}
+
+export type WebchangeDiffOp = 'equal' | 'insert' | 'delete' | 'skip';
+
+/** One line of the text diff; `skip` collapses a run of `count` unchanged lines. */
+export interface WebchangeDiffLine {
+	op: WebchangeDiffOp;
+	text: string;
+	count: number | null;
+}
+
+/** `GET .../webchange/changes/{change_id}`: the change plus what it takes to show it. */
+export interface WebchangeChangeDetail extends WebchangeChange {
+	before_snapshot: WebchangeSnapshot | null;
+	after_snapshot: WebchangeSnapshot | null;
+	diff: WebchangeDiffLine[];
+}
+
 // --- Metrics ----------------------------------------------------------------
 
 /** A series in Prometheus format: `[timestamp_seconds, "value"]`. */

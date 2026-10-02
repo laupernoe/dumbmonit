@@ -42,6 +42,9 @@ import type {
 	Target,
 	TargetId,
 	TargetPayload,
+	WebchangeChange,
+	WebchangeChangeDetail,
+	WebchangePagesResponse,
 	ChannelMatcher,
 	MatchPreview,
 	NotificationPolicy,
@@ -95,6 +98,44 @@ export function deleteTarget(id: TargetId): Promise<void> {
 /** Probes the device right away. Can be slow: the caller shows an indicator. */
 export function probeTarget(id: TargetId): Promise<ProbeReport> {
 	return request<ProbeReport>(`/targets/${id}/probe`, { method: 'POST' });
+}
+
+// --- Website changes (webchange) --------------------------------------------
+
+/** Every page this `webchange` device watches, as last probed. */
+export function getWebchangePages(id: TargetId, signal?: AbortSignal): Promise<WebchangePagesResponse> {
+	return request<WebchangePagesResponse>(`/targets/${id}/webchange/pages`, { signal });
+}
+
+/** Changes detected on this device, newest first; `url` narrows to one page. */
+export function listWebchangeChanges(
+	id: TargetId,
+	options: { url?: string; limit?: number } = {},
+	signal?: AbortSignal
+): Promise<WebchangeChange[]> {
+	return request<WebchangeChange[]>(`/targets/${id}/webchange/changes`, {
+		query: { url: options.url, limit: options.limit },
+		signal
+	});
+}
+
+/** One change with its before/after snapshots and text diff. */
+export function getWebchangeChange(
+	id: TargetId,
+	changeId: number,
+	signal?: AbortSignal
+): Promise<WebchangeChangeDetail> {
+	return request<WebchangeChangeDetail>(`/targets/${id}/webchange/changes/${changeId}`, { signal });
+}
+
+/** Image URL of a snapshot's screenshot, for use as an `<img src>`. */
+export function webchangeScreenshotUrl(id: TargetId, snapshotId: number): string {
+	return `/api/targets/${id}/webchange/snapshots/${snapshotId}/screenshot`;
+}
+
+/** Asks for an immediate check of every page of this device. Fire-and-forget: 202. */
+export function checkWebchangeNow(id: TargetId): Promise<void> {
+	return request<void>(`/targets/${id}/webchange/check`, { method: 'POST' });
 }
 
 // --- Metrics (anticipated) --------------------------------------------------
