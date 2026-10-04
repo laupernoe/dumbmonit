@@ -8,6 +8,7 @@
 import type { Icon as LucideIcon } from 'lucide-svelte';
 import {
 	Antenna,
+	Building2,
 	Container,
 	DatabaseBackup,
 	Disc3,
@@ -115,6 +116,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	npm: Split,
 	domain: CalendarClock,
 	kubernetes: ShipWheel,
+	activedirectory: Building2,
 	pfsense: BrickWallFire,
 	unraid: HardDrive,
 	veeam: CloudBackup,
@@ -128,7 +130,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -178,6 +180,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
 	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	kubernetes: 'k8s k3s k0s microk8s talos rke2 cluster container orchestration pod node deployment helm',
+	activedirectory: 'ad active directory ldap ldaps windows domain controller dc kerberos krbtgt fsmo samba group policy laps',
 	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',

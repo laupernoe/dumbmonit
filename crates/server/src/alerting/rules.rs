@@ -4694,6 +4694,95 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: None,
             ..base("webchange_detected", "Website changed", RuleKind::Threshold, "dumbmonit_webchange_last_check_changes")
         },
+        // --- Active Directory (`collectors/activedirectory`) ---
+        //
+        // Le contrôleur interrogé lui-même relève de « Device unreachable » ;
+        // `ad_dc_reachable` couvre les autres contrôleurs du domaine. Un nom
+        // qui ne se résout pas depuis DumbMonit ne produit pas de série.
+        Rule {
+            description: "A domain controller of the domain no longer answers on its LDAP port.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ad_dc_unreachable",
+                "Domain controller unreachable",
+                RuleKind::Threshold,
+                "dumbmonit_ad_dc_reachable == bool 0",
+            )
+        },
+        // Le contrôleur répond mais refuse le compte de service : mot de
+        // passe expiré, compte désactivé ou verrouillé. Plus rien n'est lu.
+        Rule {
+            description: "The domain controller refuses the service account (expired password, \
+                          disabled or locked out account): nothing is read any more."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "ad_bind_failed",
+                "Active Directory bind failed",
+                RuleKind::Threshold,
+                "dumbmonit_ad_bind_ok == bool 0",
+            )
+        },
+        // L'empreinte change dès qu'un membre entre ou sort, même si le
+        // nombre reste le même ; `changes_prometheus` ignore la première valeur
+        // d'une série neuve. L'alerte se résout d'elle-même une heure plus tard.
+        Rule {
+            description: "The members of a privileged group (Domain Admins, Enterprise Admins, \
+                          Schema Admins, Administrators, operators) changed."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "ad_privileged_group_changed",
+                "Privileged group membership changed",
+                RuleKind::Threshold,
+                "changes_prometheus(dumbmonit_ad_privileged_group_fingerprint[1h])",
+            )
+        },
+        Rule {
+            description: "The domain controller cannot replicate from one of its partners: \
+                          changes made elsewhere do not reach it."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ad_replication_failing",
+                "Active Directory replication failing",
+                RuleKind::Threshold,
+                "dumbmonit_ad_replication_consecutive_failures",
+            )
+        },
+        Rule {
+            description: "The krbtgt password is older than 180 days: a stolen krbtgt hash keeps \
+                          forging valid tickets until it is changed twice."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 180.0 * 86_400.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Info,
+            unit: "s".to_string(),
+            repeat_interval: None,
+            ..base(
+                "ad_krbtgt_password_old",
+                "krbtgt password older than 180 days",
+                RuleKind::Threshold,
+                "dumbmonit_ad_krbtgt_password_age_seconds",
+            )
+        },
         // --- Kubernetes (`collectors/kubernetes`) ---
         //
         // Toutes ces séries n'existent que pour une cible Kubernetes : aucune ne
@@ -6012,6 +6101,12 @@ mod tests {
             "dumbmonit_webchange_last_check_changes",
             // Appareils clients, générique (`collectors/client_devices.rs`).
             "dumbmonit_client_device_stale_seconds",
+            // Active Directory (`collectors/activedirectory/metrics.rs`).
+            "dumbmonit_ad_dc_reachable",
+            "dumbmonit_ad_bind_ok",
+            "dumbmonit_ad_privileged_group_fingerprint",
+            "dumbmonit_ad_replication_consecutive_failures",
+            "dumbmonit_ad_krbtgt_password_age_seconds",
             // Kubernetes (`collectors/kubernetes/metrics.rs`).
             "dumbmonit_k8s_node_ready",
             "dumbmonit_k8s_node_pressure",
