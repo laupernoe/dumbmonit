@@ -641,8 +641,19 @@ fn validate_lookback(raw: Option<&str>) -> ApiResult<Option<String>> {
 /// qu'elle interroge au moment du test de connexion. Tout ce qui n'est pas là —
 /// au premier rang duquel `/api/v1/admin/tsdb/delete_series` — n'est pas relayé :
 /// ce point d'entrée ne sert qu'à lire.
+///
+/// La route reçue est déjà décodée une fois par axum. Elle est donc comparée
+/// à une liste fermée, et le seul segment variable (le nom d'étiquette de
+/// `label/<nom>/values`) n'admet ni `%`, ni `?`, ni `/`, ni `.`/`..` : un
+/// double encodage ne peut plus se transformer en `..` plus loin.
+#[cfg(test)]
 fn is_readable(route: &str) -> bool {
-    matches!(
+    readable_segments(route).is_some()
+}
+
+/// Segments à relayer pour une route autorisée, `None` sinon.
+fn readable_segments(route: &str) -> Option<Vec<&str>> {
+    if matches!(
         route,
         "query"
             | "query_range"
@@ -652,7 +663,24 @@ fn is_readable(route: &str) -> bool {
             | "metadata"
             | "status/buildinfo"
             | "status/runtimeinfo"
-    ) || (route.starts_with("label/") && route.ends_with("/values") && !route.contains(".."))
+    ) {
+        return Some(route.split('/').collect());
+    }
+    let name = route.strip_prefix("label/")?.strip_suffix("/values")?;
+    let valid = !name.is_empty()
+        && name.len() <= 256
+        && name != "."
+        && name != ".."
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'.' | b':' | b'-'));
+    valid.then(|| vec!["label", name, "values"])
+}
+
+/// Grafana envoie ses requêtes en POST (formulaire) pour ces routes-là ; les
+/// autres n'ont aucune raison d'en recevoir un corps.
+fn accepts_post(route: &str) -> bool {
+    matches!(route, "query" | "query_range" | "query_exemplars" | "series" | "labels")
 }
 
 /// Plafond d'une réponse PromQL. Un graphe Grafana en tient très largement
@@ -661,20 +689,27 @@ const MAX_QUERY_BYTES: usize = 8 * 1024 * 1024;
 
 async fn promql(
     State(state): State<AppState>,
+    method: axum::http::Method,
     AxumPath(route): AxumPath<String>,
     RawQuery(raw): RawQuery,
     body: String,
 ) -> ApiResult<Response> {
-    if !is_readable(&route) {
-        return Err(ApiError::NotFound(format!(
-            "`/prometheus/api/v1/{route}` is not relayed: only the read routes of the \
-             Prometheus API are (query, query_range, series, labels, label values, metadata)."
+    let Some(segments) = readable_segments(&route) else {
+        return Err(ApiError::NotFound(
+            "This route is not relayed: only the read routes of the Prometheus API are \
+             (query, query_range, series, labels, label values, metadata)."
+                .into(),
+        ));
+    };
+    if method == axum::http::Method::POST && !accepts_post(&route) {
+        return Err(ApiError::BadRequest(format!(
+            "`/prometheus/api/v1/{route}` only answers GET."
         )));
     }
 
     let form = (!body.trim().is_empty()).then_some(body);
     let (status, answer) =
-        match state.victoria.proxy_read(&route, raw.as_deref(), form, MAX_QUERY_BYTES).await {
+        match state.victoria.proxy_read(&segments, raw.as_deref(), form, MAX_QUERY_BYTES).await {
             Ok(answer) => answer,
             Err(error) => return Ok(store_error(&error)),
         };
@@ -896,6 +931,16 @@ mod tests {
             "label/../../admin/values",
             "import/prometheus",
             "",
+            // Double encodage : axum n'a décodé qu'une fois.
+            "label/%2e%2e/%2e%2e/%2e%2e/api/v1/admin/tsdb/delete_series?match[]={__name__=~\".+\"}&x=/values",
+            "label/%2e%2e/values",
+            "label/../values",
+            "label/./values",
+            "label/a/b/values",
+            "label/a?x=1/values",
+            "label/a#b/values",
+            "label/a\\b/values",
+            "label//values",
         ] {
             assert!(!is_readable(route), "acceptée à tort : {route}");
         }
