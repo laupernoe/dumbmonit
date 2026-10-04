@@ -3135,14 +3135,17 @@ pub fn builtin_rules() -> Vec<Rule> {
         // --- fin du bloc applications auto-hébergées ---
 
         // Appareils clients (`collectors/client_devices.rs`) : la même règle
-        // sert tous les produits qui suivent des téléphones, tablettes ou
-        // postes qui se connectent et sauvegardent — Immich aujourd'hui,
-        // Synology Active Backup for Business, les agents Veeam, les clients
-        // PBS, Tailscale, UniFi… demain. Le collecteur calcule déjà l'écart
-        // au seuil propre à la cible (`device_stale_days`, 3 jours par
-        // défaut) : la règle n'a donc qu'un seuil fixe à zéro, identique pour
-        // tout le monde. L'étiquette `device` qui accompagne la série nomme
-        // l'appareil dans l'alerte.
+        // sert tous les produits qui suivent des machines qui se connectent et
+        // sauvegardent — Immich, Proxmox Backup Server (un appareil par groupe
+        // de sauvegarde) et Veeam (un appareil par objet protégé, lu sur
+        // `/api/v1/restorePoints`) aujourd'hui ; Tailscale, UniFi… demain.
+        // Synology Active Backup for Business suit ses appareils par un
+        // mécanisme propre, plus riche (rythme appris par appareil, voir
+        // `synology::rhythm`), antérieur à celui-ci et non dupliqué ici. Le
+        // collecteur calcule déjà l'écart au seuil propre à la cible
+        // (`device_stale_days`, 3 jours par défaut) : la règle n'a donc qu'un
+        // seuil fixe à zéro, identique pour tout le monde. L'étiquette
+        // `device` qui accompagne la série nomme l'appareil dans l'alerte.
         Rule {
             description: "A client device (phone, tablet, desktop…) has not connected or not \
                           backed up within the staleness window configured for this target \
