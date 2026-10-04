@@ -9,8 +9,12 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type Target } from '$lib/api';
 	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '$lib/ui';
+	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import Figure from '../Figure.svelte';
 	import { TITLES, buildView, overall, type AppView, type CheckState } from './view';
+
+	/** Kinds whose devices page also shows the client-devices table. */
+	const WITH_DEVICES = new Set(['immich']);
 
 	interface Props {
 		target: Target;
@@ -132,6 +136,10 @@
 					</Panel>
 				{/each}
 			</div>
+		{/if}
+
+		{#if WITH_DEVICES.has(target.kind)}
+			<ClientDevicesTable {target} />
 		{/if}
 	</div>
 {/if}
