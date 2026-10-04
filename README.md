@@ -373,6 +373,12 @@ The user guide lives at **[dumbmonit.readthedocs.io](https://dumbmonit.readthedo
 installation, every source and notification channel, alerting, the agent, and
 the HTTP API.
 
+## Roadmap
+
+What is planned, in progress and recently shipped is on the public
+**[DumbMonit Roadmap](https://github.com/users/noekan/projects/2)**. Priorities
+can change; suggest an idea by opening an issue.
+
 ## Contributing
 
 Bug reports, device profiles and new integrations are welcome. Read
