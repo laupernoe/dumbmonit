@@ -270,7 +270,16 @@ async fn the_grafana_proxy_relays_nothing_but_reads() {
     let admin = app.admin_cookie().await;
     let (read, _) = create_token(&app, &admin, "Grafana", "read").await;
 
-    for route in ["admin/tsdb/delete_series", "write", "import/prometheus"] {
+    for route in [
+        "admin/tsdb/delete_series",
+        "write",
+        "import/prometheus",
+        // Double encodage : après le décodage d'axum, il resterait des `%2e%2e`
+        // que le parseur d'URL prendrait pour des `..`.
+        "label/%252e%252e/%252e%252e/%252e%252e/api/v1/admin/tsdb/delete_series\
+         %3Fmatch%5B%5D%3D%7B__name__%3D~%22.%2B%22%7D%26x%3D/values",
+        "label/%2e%2e/values",
+    ] {
         let reply = with_token(&app, &format!("/prometheus/api/v1/{route}"), &read).await;
         assert_eq!(reply.status, StatusCode::NOT_FOUND, "{route} : {}", reply.body);
     }

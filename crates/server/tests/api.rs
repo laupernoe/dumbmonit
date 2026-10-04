@@ -179,6 +179,42 @@ async fn updating_without_a_credential_keeps_the_stored_one() {
     );
 }
 
+/// Un secret enregistré ne suit pas la cible vers une autre destination : qui
+/// change l'adresse (ou le transport) doit le ressaisir.
+#[tokio::test]
+async fn a_stored_credential_is_never_sent_to_a_new_destination() {
+    let app = setup().await;
+    let created = app.create_snmp_target("Cible", "10.0.0.8").await;
+    let id = created["id"].as_i64().unwrap();
+    let uri = format!("/api/targets/{id}");
+
+    for change in [
+        json!({ "name": "Cible", "address": "attacker.example", "kind": "dummy" }),
+        json!({ "name": "Cible", "address": "10.0.0.8", "kind": "dummy", "tags": { "scheme": "http" } }),
+        json!({ "name": "Cible", "address": "10.0.0.8", "kind": "dummy", "tags": { "port": "8080" } }),
+    ] {
+        let (status, body) = app.request("PUT", &uri, Some(change.clone())).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{change} : {body}");
+        assert!(body["error"].as_str().unwrap().contains("Re-enter the credential"), "{body}");
+    }
+    let (_, current) = app.request("GET", &uri, None).await;
+    assert_eq!(current["address"], json!("10.0.0.8"), "rien n'a été enregistré");
+
+    // Avec le secret ressaisi, le changement passe.
+    let (status, body) = app
+        .request(
+            "PUT",
+            &uri,
+            Some(json!({
+                "name": "Cible", "address": "10.0.0.9", "kind": "dummy",
+                "credential": { "type": "snmp_community", "community": "nouveau" }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["address"], json!("10.0.0.9"));
+}
+
 #[tokio::test]
 async fn a_credential_can_be_cleared_explicitly() {
     let app = setup().await;
