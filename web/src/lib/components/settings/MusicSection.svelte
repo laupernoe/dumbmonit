@@ -34,6 +34,7 @@
 	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton } from '$lib/ui';
 	import { formatRelative, parseServerDate } from '$lib/format';
 	import { parseMusicLink } from '$lib/wall/music';
+	import SpeakerStatus from './SpeakerStatus.svelte';
 
 	let account = $state<SpotifyAccount | null>(null);
 	let wall = $state<WallMusic | null>(null);
@@ -291,6 +292,7 @@
 							Spotify did not grant {account.missing_scopes.join(', ')}: reconnect and accept every permission.
 						</p>
 					{/if}
+					<SpeakerStatus onrenamed={(name) => account && (account = { ...account, speaker_name: name })} />
 					{#if auth.isAdmin}
 						<div class="mt-4 flex flex-wrap items-center gap-2">
 							<Confirm variant="secondary" size="md" confirmLabel="Disconnect Spotify?" loading={disconnecting} onconfirm={disconnect}>
@@ -402,8 +404,9 @@
 					<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">What it needs</summary>
 					<ul class="grid list-disc gap-1.5 border-t border-line py-3 pr-4 pl-8 text-[0.8125rem] text-ink-2">
 						<li>Spotify Premium, on the account that owns the app. A personal app (development mode) admits up to five accounts: add others under <em>User Management</em>.</li>
-						<li>For the wall to be a speaker, its browser must open DumbMonit over HTTPS (or as localhost on the display itself) and play protected audio: Chrome, Edge, Firefox or Safari on a computer, Chromium with Widevine on a Raspberry Pi. Smart-TV browsers usually cannot.</li>
-						<li>Browsers keep a page silent until it is touched: tap “Enable sound” on the wall once after it loads (or start the kiosk browser with <code class="font-mono">--autoplay-policy=no-user-gesture-required</code>).</li>
+						<li>The phone must be signed in to the <strong class="font-semibold text-ink">same Spotify account</strong> as the one connected here: a browser speaker is only listed for its own account — not for other members of a Family plan, and not found on the network like a smart speaker.</li>
+						<li>For the wall to be a speaker, its browser must open DumbMonit over HTTPS (or as localhost on the display itself) and have working DRM (Widevine): Chrome, Edge or Firefox on a computer, Chromium with Widevine on a Raspberry Pi. Most smart-TV and kiosk browsers cannot — the wall says so on screen, and the walls below show it here.</li>
+						<li>Browsers keep a page silent until it is touched: tap or press a key on the wall once after it loads (or start the kiosk browser with <code class="font-mono">--autoplay-policy=no-user-gesture-required</code>).</li>
 						<li>“Now playing” works without any of that: the server asks Spotify what plays, every few seconds, even over plain HTTP.</li>
 						<li>Spotify ends a connection six months after it was approved: connect again before the date shown.</li>
 					</ul>
