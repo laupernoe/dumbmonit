@@ -162,6 +162,8 @@
 				{/if}
 			</section>
 
+			<StatusMascot tone={bannerTone} />
+
 			<!-- Open announcements -->
 			{#if active.length > 0}
 				<section class="rise-in mt-8" style="--rise-delay: 80ms" aria-labelledby="announcements">
@@ -227,9 +229,6 @@
 		{/if}
 
 		<footer class="mt-12 grid justify-items-center gap-3 text-center text-[0.8125rem] text-ink-2">
-			{#if status && banner}
-				<StatusMascot tone={bannerTone} />
-			{/if}
 			{#if status?.page.footer_text}
 				<p class="max-w-prose whitespace-pre-line">{status.page.footer_text}</p>
 			{/if}
