@@ -113,13 +113,14 @@ impl From<anyhow::Error> for FlowError {
     }
 }
 
-/// Construit l'URL d'autorisation et mémorise la tentative.
+/// Construit l'URL d'autorisation et mémorise la tentative. Rend l'URL et le
+/// `state`, que l'appelant lie au navigateur (voir `api::oidc`).
 pub async fn start(
     auth: &AuthState,
     config: &OidcConfig,
     request_origin: &str,
     redirect: Option<String>,
-) -> Result<String, FlowError> {
+) -> Result<(String, String), FlowError> {
     if !config.enabled() {
         return Err(FlowError::NotConfigured);
     }
@@ -146,7 +147,7 @@ pub async fn start(
         .append_pair("code_challenge_method", "S256");
 
     auth.pending_logins().lock().await.insert(
-        state,
+        state.clone(),
         Pending {
             nonce,
             verifier: challenge.verifier,
@@ -155,7 +156,7 @@ pub async fn start(
             started_at: Instant::now(),
         },
     );
-    Ok(url.to_string())
+    Ok((url.to_string(), state))
 }
 
 /// Paramètres du retour, tels que le fournisseur les met dans l'URL.

@@ -68,6 +68,29 @@ impl From<agent::IngestError> for IngestRejection {
     }
 }
 
+/// Refuse une requête d'agent sans jeton valide *avant* d'en lire le corps.
+///
+/// Les routes d'agent acceptent des corps de 16 Mio ; sans cette garde, le
+/// corps serait lu et désérialisé par l'extracteur `Json` avant que le
+/// gestionnaire ne regarde le jeton — n'importe qui joignant le port pourrait
+/// faire travailler le serveur à vide. Le gestionnaire revérifie le jeton : ce
+/// contrôle-ci ne fait que trier tôt.
+pub async fn require_agent_token(
+    State(state): State<AppState>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let bearer = request
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok());
+    match agent::authenticate_token(&state.pool, bearer).await {
+        Ok(Some(_)) => next.run(request).await,
+        Ok(None) => IngestRejection::from(agent::IngestError::Unauthorized).into_response(),
+        Err(error) => IngestRejection::from(agent::IngestError::Internal(error)).into_response(),
+    }
+}
+
 /// Réception d'un lot de mesures.
 ///
 /// `POST /api/ingest`, corps [`PushBatch`], réponse [`PushAck`].

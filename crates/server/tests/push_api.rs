@@ -225,6 +225,37 @@ async fn regenerer_change_lurl_et_coupe_lancienne() {
     assert_eq!(reply.status, StatusCode::FORBIDDEN);
 }
 
+/// Le jeton permet de déclarer « le travail a tourné » : un lecteur voit l'état
+/// du moniteur, pas l'URL secrète, et sa lecture ne crée rien.
+#[tokio::test]
+async fn un_lecteur_ne_voit_pas_le_jeton_et_ne_cree_rien() {
+    let (app, pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    sqlx::query("DELETE FROM push_monitors WHERE target_id = ?")
+        .bind(id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let viewer = app.viewer_cookie(&cookie).await;
+
+    let reply = app.get(&format!("/api/targets/{id}/push"), Some(&viewer)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert!(reply.body["token"].is_null(), "{}", reply.body);
+    assert!(reply.body["path"].is_null(), "{}", reply.body);
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM push_monitors WHERE target_id = ?")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count.0, 0, "une lecture de lecteur ne crée pas de jeton");
+
+    // L'administrateur, lui, l'obtient (et le crée au besoin).
+    let reply = app.get(&format!("/api/targets/{id}/push"), Some(&cookie)).await;
+    assert!(reply.body["token"].is_string(), "{}", reply.body);
+    let reply = app.get(&format!("/api/targets/{id}/push"), Some(&viewer)).await;
+    assert!(reply.body["token"].is_null(), "{}", reply.body);
+}
+
 #[tokio::test]
 async fn le_moniteur_ne_se_lit_que_sur_une_cible_push() {
     let (app, _pool, cookie) = setup().await;
