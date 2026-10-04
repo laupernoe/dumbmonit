@@ -43,6 +43,18 @@
 //! | `traffic_control` | `true` | Interroge les règles de limitation de débit et leur débit courant. |
 //! | `certificates` | `false` | Interroge les certificats — PBS exige `Sys.Modify` pour les lire. |
 //! | `tape` | `false` | Interroge l'étage bande : travaux, lecteurs, robotique, pools, médias. |
+//! | `device_stale_days` | `3` | Voir [`crate::client_devices`] : au-delà, une machine protégée sans sauvegarde récente est signalée. |
+//!
+//! # Appareils clients (`client_devices`)
+//!
+//! Chaque groupe de sauvegarde — hôte, VM ou conteneur — est republié comme un
+//! appareil client générique ([`crate::client_devices`]) : le nom lu dans les
+//! notes du dernier instantané quand PVE les a écrites, sinon `type/id`, et la
+//! date de ce même instantané comme dernière sauvegarde. Rien de nouveau n'est
+//! demandé à PBS : c'est la même date que `backup_last_timestamp_seconds`,
+//! seulement republiée sous la famille partagée avec les autres intégrations
+//! qui suivent des appareils protégés. PBS ne distingue pas une connexion
+//! d'une sauvegarde : `last_seen` reste toujours vide.
 //!
 //! # La vue, au-delà des métriques
 //!
@@ -82,6 +94,7 @@ use serde::de::DeserializeOwned;
 use tokio::sync::Semaphore;
 use tracing::{debug, warn};
 
+use crate::client_devices;
 use auth::{AuthMode, Ticket};
 use backup::{GroupKey, GroupSummary};
 use client::PbsClient;
@@ -193,6 +206,7 @@ impl Collector for PbsCollector {
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
         let options = Options::from_target(target)?;
+        let stale_days = client_devices::stale_days(target)?;
         let pbs = self.client(target, &options)?;
 
         let started = std::time::Instant::now();
@@ -431,6 +445,12 @@ impl Collector for PbsCollector {
 
                 samples.extend(backup::group_samples(&groups, options.max_groups, now_s, ts_ms));
                 samples.extend(backup::namespace_samples(&listed, &groups, ts_ms));
+                samples.extend(client_devices::samples(
+                    "pbs",
+                    &backup::client_devices(&groups),
+                    stale_days,
+                    ts_ms,
+                ));
                 view.groups = backup::group_views(&groups);
             }
             Err(error) => {
