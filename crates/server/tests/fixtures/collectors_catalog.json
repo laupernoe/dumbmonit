@@ -794,7 +794,7 @@
   {
     "kind": "homeassistant",
     "label": "Home Assistant",
-    "summary": "The smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs.",
+    "summary": "The smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs, plus the last connection of the companion app's phones and tablets.",
     "examples": [
       "Home Assistant OS",
       "Home Assistant Container"
@@ -830,7 +830,7 @@
         "In DumbMonit, enter the address of Home Assistant, for example \"homeassistant.local\" (port 8123) or \"https://ha.example.net\" behind a reverse proxy, and paste the token. Batteries under 20% count as low; the Low battery threshold option changes that.",
         "DumbMonit only reads /api/config, /api/states and, over the WebSocket API, the list of repairs. It never calls a service, never fires an event and never changes a state."
       ],
-      "warning": "A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS.",
+      "warning": "A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS. Every phone and tablet signed in to the companion app (the mobile_app integration) appears in the Devices table below with its last activity; it is optional and silent without that app.",
       "doc_url": "https://developers.home-assistant.io/docs/api/rest/"
     },
     "options": [
@@ -905,6 +905,16 @@
         "default": "true",
         "required": false,
         "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "device_stale_days",
+        "label": "Device staleness (days)",
+        "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+        "placeholder": "3",
+        "default": "3",
+        "required": false,
+        "input": "number",
         "choices": []
       }
     ]
@@ -5315,7 +5325,7 @@
   {
     "kind": "tailscale",
     "label": "Tailscale",
-    "summary": "The devices of a tailnet through the Tailscale API: servers offline, node keys about to expire, devices awaiting approval, clients to update.",
+    "summary": "The devices of a tailnet through the Tailscale API: servers offline, node keys about to expire, devices awaiting approval, clients to update, and each device's last connection.",
     "examples": [
       "Tailscale tailnet",
       "Subnet routers",
@@ -5376,7 +5386,7 @@
         "In the Tailscale console (login.tailscale.com), open Settings > Trust credentials (formerly OAuth clients) and generate an OAuth client with only the devices:core:read scope. It lists the devices and can change nothing.",
         "Copy the client ID and the client secret (tskey-client-…), shown once. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret. Leave the Tailnet option empty: the tailnet of the client is read."
       ],
-      "warning": "Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all.",
+      "warning": "Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all. Every device of the tailnet appears in the Devices table below with its last connection, watched or not; a phone that travels can go days without one, so raise Device staleness for those.",
       "doc_url": "https://tailscale.com/kb/1623/trust-credentials"
     },
     "options": [
@@ -5406,6 +5416,16 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "device_stale_days",
+        "label": "Device staleness (days)",
+        "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+        "placeholder": "3",
+        "default": "3",
         "required": false,
         "input": "number",
         "choices": []
@@ -5826,7 +5846,7 @@
   {
     "kind": "unifi",
     "label": "UniFi Network",
-    "summary": "The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms.",
+    "summary": "The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms, and the last connection of the clients you mark as worth watching.",
     "examples": [
       "UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key)",
       "UniFi Network Server (self-hosted)"
@@ -5888,7 +5908,7 @@
         "In DumbMonit, enter the address of the console or server, for example \"unifi.lan\" (port 443 on a console) or \"unifi.lan:8443\" for a self-hosted server, and paste the key or the account. If the network is not the default site, set the Site option to the short name shown in the address bar after /manage/ or /network/.",
         "DumbMonit only reads. It never restarts, adopts, upgrades or provisions a device, and never acknowledges an alarm."
       ],
-      "warning": "Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable \"Accept an unverifiable certificate\" unless you installed your own.",
+      "warning": "Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable \"Accept an unverifiable certificate\" unless you installed your own. UniFi knows every client that ever connected, most of them phones passing by: only those named, reserved on a fixed IP, or noted in UniFi are watched for staleness by default, to avoid an alert for every visitor's phone. List more in the Clients to watch option, or enter all.",
       "doc_url": ""
     },
     "options": [
@@ -5928,6 +5948,26 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "watched_clients",
+        "label": "Clients to watch besides the marked ones",
+        "help": "Comma-separated MAC addresses or client names, or all. Clients named, reserved on a fixed IP, or noted in UniFi are always watched; most phones and guest devices are not, to avoid an alert for every visitor.",
+        "placeholder": "all",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "device_stale_days",
+        "label": "Device staleness (days)",
+        "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+        "placeholder": "3",
+        "default": "3",
         "required": false,
         "input": "number",
         "choices": []

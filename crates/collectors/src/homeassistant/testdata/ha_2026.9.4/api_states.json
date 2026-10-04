@@ -135,7 +135,7 @@
   "attributes": {
    "editable": true,
    "id": "owner",
-   "device_trackers": [],
+   "device_trackers": ["device_tracker.pixel_8"],
    "in_zones": [],
    "friendly_name": "Owner"
   },
@@ -144,6 +144,50 @@
   "last_updated": "2026-09-30T07:20:38.592638+00:00",
   "context": {
    "id": "01M3RJZMY0995K62MS0WDRHGVN",
+   "parent_id": null,
+   "user_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.pixel_8",
+  "state": "home",
+  "attributes": {
+   "source_type": "gps",
+   "latitude": 48.8584,
+   "longitude": 2.2945,
+   "gps_accuracy": 12,
+   "altitude": 35.0,
+   "vertical_accuracy": 3,
+   "battery_level": 72,
+   "in_zones": ["zone.home"],
+   "friendly_name": "Pixel 8"
+  },
+  "last_changed": "2026-09-30T07:19:00.000000+00:00",
+  "last_reported": "2026-09-30T07:40:12.000000+00:00",
+  "last_updated": "2026-09-30T07:40:12.000000+00:00",
+  "context": {
+   "id": "01M3RJZN0A0PIXEL800008XX",
+   "parent_id": null,
+   "user_id": null
+  }
+ },
+ {
+  "entity_id": "device_tracker.iphone_15",
+  "state": "not_home",
+  "attributes": {
+   "source_type": "gps",
+   "latitude": 48.86,
+   "longitude": 2.35,
+   "gps_accuracy": 20,
+   "battery_level": 18,
+   "in_zones": [],
+   "friendly_name": "iPhone 15"
+  },
+  "last_changed": "2026-09-22T11:05:00.000000+00:00",
+  "last_reported": "2026-09-22T11:05:00.000000+00:00",
+  "last_updated": "2026-09-22T11:05:00.000000+00:00",
+  "context": {
+   "id": "01M3RJZN0A0IPHONE1500009",
    "parent_id": null,
    "user_id": null
   }

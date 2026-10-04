@@ -17,6 +17,20 @@
 //! mise à jour. Le seul `POST` est la lecture du journal système, que l'API
 //! n'expose pas autrement.
 //!
+//! # Clients suivis dans le tableau des appareils
+//!
+//! `/rest/user` (API classique, acceptée avec les deux formes d'accès) donne
+//! les clients que le contrôleur a un jour vus, pas seulement ceux connectés
+//! maintenant. Un réseau domestique en compte facilement des centaines —
+//! téléphones de passage, Wi-Fi invité, objets connectés — et la plupart ne
+//! reviendront jamais : les suivre tous noierait l'alerte de péremption sous
+//! des appareils qui ne sont simplement jamais revenus. Par défaut, seuls les
+//! clients que l'utilisateur a marqués d'une façon ou d'une autre comptent :
+//! nommés dans UniFi, réservés en IP fixe, ou annotés (« Notes »). L'option
+//! `watched_clients` ajoute des adresses MAC ou des noms précis à la liste, ou
+//! vaut `all` pour tout suivre (déconseillé : un routeur domestique voit
+//! défiler des dizaines de clients par jour).
+//!
 //! # Réglages, portés par les étiquettes de la cible
 //!
 //! | Étiquette | Défaut | Rôle |
@@ -25,6 +39,8 @@
 //! | `port` | `443` | 8443 pour un serveur auto-hébergé. |
 //! | `insecure_tls` | `false` | Accepte un certificat non vérifiable. |
 //! | `request_timeout_seconds` | `15` | Délai par appel. |
+//! | `watched_clients` | vide | Clients à suivre en plus des nommés/IP fixe/annotés : MAC ou noms, ou `all`. |
+//! | `device_stale_days` | `3` | Jours sans connexion au-delà desquels un client suivi est signalé périmé. |
 
 pub mod metrics;
 pub mod model;
@@ -42,7 +58,10 @@ use serde_json::{Value, json};
 use tracing::warn;
 
 use crate::api_options::{Connection, tag};
-use model::{Classic, Device, DeviceState, Info, IntegrationDevice, Paged, Site, Statistics};
+use crate::client_devices::{self, Device as ClientDevice};
+use model::{
+    Classic, ClientRecord, Device, DeviceState, Info, IntegrationDevice, Paged, Site, Statistics,
+};
 
 pub const DEFAULT_PORT: u16 = 443;
 pub const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
@@ -295,6 +314,80 @@ impl Client {
     }
 }
 
+/// Les clients à suivre dans le tableau générique des appareils ; voir le
+/// commentaire de module.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ClientWatch {
+    /// Seuls les clients marqués ([`ClientRecord::cared_about`]).
+    Default,
+    All,
+    /// Marqués, plus ces adresses MAC ou ces noms précis.
+    Listed(Vec<String>),
+}
+
+impl ClientWatch {
+    fn parse(raw: Option<&str>) -> Self {
+        let items: Vec<String> = raw
+            .unwrap_or_default()
+            .split(',')
+            .map(|item| item.trim().to_ascii_lowercase())
+            .filter(|item| !item.is_empty())
+            .collect();
+        match items.as_slice() {
+            [] => Self::Default,
+            [all] if all == "all" => Self::All,
+            _ => Self::Listed(items),
+        }
+    }
+
+    fn covers(&self, record: &ClientRecord) -> bool {
+        if record.cared_about() {
+            return true;
+        }
+        match self {
+            Self::Default => false,
+            Self::All => true,
+            Self::Listed(items) => {
+                let mac = record.mac.to_ascii_lowercase();
+                items.iter().any(|item| {
+                    *item == mac
+                        || record.name.as_deref().is_some_and(|n| n.eq_ignore_ascii_case(item))
+                        || record.hostname.as_deref().is_some_and(|n| n.eq_ignore_ascii_case(item))
+                })
+            }
+        }
+    }
+}
+
+/// Les clients retenus par `watch`, traduits vers le modèle générique
+/// `client_devices::Device`.
+fn watched_client_devices(records: &[ClientRecord], watch: &ClientWatch) -> Vec<ClientDevice> {
+    records
+        .iter()
+        .filter(|record| watch.covers(record))
+        .map(|record| ClientDevice {
+            name: record.display_name(),
+            device_type: match record.is_wired {
+                Some(true) => "Wired".to_string(),
+                Some(false) => "Wireless".to_string(),
+                None => "Unknown".to_string(),
+            },
+            os: String::new(),
+            user: String::new(),
+            last_seen: record.last_seen,
+            last_backup: None,
+        })
+        .collect()
+}
+
+/// `/rest/user` : les clients connus du site, nommés ou pas ; voir le
+/// commentaire de module. Acceptée avec les deux formes d'authentification
+/// (comme la santé classique lue avec une clé d'API, plus bas).
+async fn known_clients(client: &Client, site: &str) -> Result<Vec<ClientRecord>, ProbeError> {
+    let raw = client.classic(&format!("/api/s/{site}/rest/user")).await?;
+    Ok(raw.iter().filter_map(model::classic_client).collect())
+}
+
 #[derive(Default)]
 pub struct UnifiCollector {
     sessions: Mutex<HashMap<String, Session>>,
@@ -320,6 +413,8 @@ impl UnifiCollector {
 
     async fn collect(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
         let settings = Settings::from_target(target)?;
+        let stale_days = client_devices::stale_days(target)?;
+        let watch = ClientWatch::parse(tag(target, "watched_clients"));
         let key = settings.cache_key(target.id);
         let mut client = Client {
             http: crate::http::client(settings.connection.insecure_tls)?,
@@ -328,9 +423,10 @@ impl UnifiCollector {
         };
         let ts_ms = chrono::Utc::now().timestamp_millis();
         let outcome = match client.settings.auth.clone() {
-            Auth::ApiKey(_) => integration(&mut client, target.id, ts_ms).await,
+            Auth::ApiKey(_) => integration(&mut client, target.id, &watch, stale_days, ts_ms).await,
             Auth::Login { username, password } => {
-                classic(&mut client, &username, &password, target.id, ts_ms).await
+                classic(&mut client, &username, &password, target.id, &watch, stale_days, ts_ms)
+                    .await
             }
         };
         match &outcome {
@@ -398,6 +494,8 @@ async fn classic(
     username: &str,
     password: &str,
     target_id: TargetId,
+    watch: &ClientWatch,
+    stale_days: f64,
     ts_ms: i64,
 ) -> Result<Vec<Sample>, ProbeError> {
     if client.session.cookies.is_empty() {
@@ -419,11 +517,22 @@ async fn classic(
     let mut errors = 0u32;
     let (health_path, device_path) =
         (format!("/api/s/{site}/stat/health"), format!("/api/s/{site}/stat/device"));
-    let (health, devices, alarms) = futures::join!(
+    let (health, devices, alarms, clients) = futures::join!(
         client.classic(&health_path),
         client.classic(&device_path),
         alarm_count(client, &site, ts_ms),
+        known_clients(client, &site),
     );
+    match clients {
+        Ok(records) => {
+            let tracked = watched_client_devices(&records, watch);
+            out.extend(client_devices::samples("unifi", &tracked, stale_days, ts_ms));
+        }
+        Err(error) => {
+            errors += 1;
+            warn!(target_id, %error, "clients connus UniFi illisibles");
+        }
+    }
     match health {
         Ok(entries) => {
             let health = model::health(&entries);
@@ -496,6 +605,8 @@ async fn alarm_count(client: &Client, site: &str, ts_ms: i64) -> Result<f64, Pro
 async fn integration(
     client: &mut Client,
     target_id: TargetId,
+    watch: &ClientWatch,
+    stale_days: f64,
     ts_ms: i64,
 ) -> Result<Vec<Sample>, ProbeError> {
     // Où vit l'API : derrière UniFi OS ou à la racine d'un serveur auto-hébergé.
@@ -633,6 +744,19 @@ async fn integration(
         Err(error) => {
             errors += 1;
             warn!(target_id, %error, "santé UniFi illisible avec la clé d'API");
+        }
+    }
+    // Les clients connus (`/rest/user`) ne sont pas dans l'API d'intégration
+    // non plus : même clé, même tolérance que la santé ci-dessus.
+    match known_clients(client, &site_ref).await {
+        Ok(records) => {
+            let tracked = watched_client_devices(&records, watch);
+            out.extend(client_devices::samples("unifi", &tracked, stale_days, ts_ms));
+        }
+        Err(ProbeError::Auth(_) | ProbeError::Protocol(_) | ProbeError::Config(_)) => {}
+        Err(error) => {
+            errors += 1;
+            warn!(target_id, %error, "clients connus UniFi illisibles avec la clé d'API");
         }
     }
     out.push(Sample::new("unifi_scrape_errors", f64::from(errors), MetricKind::Gauge, ts_ms));
