@@ -42,9 +42,22 @@
 	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
 	import { quickSilencePayload } from '$lib/components/alerts/helpers';
 	import WallReadout from '$lib/components/wall/WallReadout.svelte';
+	import WallAmbient from '$lib/components/wall/WallAmbient.svelte';
+	import WallThemeControl from '$lib/components/wall/WallThemeControl.svelte';
 	import MusicControl from '$lib/components/wall/MusicControl.svelte';
 	import MusicDock from '$lib/components/wall/MusicDock.svelte';
 	import { skyCondition } from '$lib/components/overview/sky';
+	import {
+		readWallTheme,
+		writeWallTheme,
+		parseForcedWallTheme,
+		readNightDim,
+		writeNightDim,
+		isNightHour,
+		OLED_SHIFT_OFFSETS,
+		OLED_SHIFT_INTERVAL_MS,
+		type WallThemeChoice
+	} from '$lib/components/wall/wallTheme';
 	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '$lib/api/music';
 	import { parseMusicLink } from '$lib/wall/music';
 	import { cardVisible, pickPlaying } from '$lib/wall/spotify';
@@ -221,6 +234,84 @@
 	const sky = $derived(readSky({ targets, probes, alerts, rules }));
 	const condition = $derived(skyCondition(sky));
 
+	// --- Ambient background -----------------------------------------------------
+
+	/**
+	 * A change worth a glance gets three slow pulses from the ambient backdrop
+	 * (`WallAmbient`), then it holds still again: a new line in "Needs you",
+	 * or the sky turning to storm. Nothing pulses on the very first load.
+	 */
+	let ambientPulse = $state(false);
+	let ambientBaseline: { attention: number; condition: typeof condition } | null = null;
+	$effect(() => {
+		const attention = sky.attention;
+		const cond = condition;
+		// Ignore everything before the first load resolves: targets/alerts
+		// start empty, so the jump from "empty" to the real bulletin is not a
+		// change worth a pulse — it is simply the page finishing its first load.
+		if (loading) return;
+		if (ambientBaseline && (attention > ambientBaseline.attention || (cond === 'storm' && ambientBaseline.condition !== 'storm'))) {
+			ambientPulse = false;
+			requestAnimationFrame(() => (ambientPulse = true));
+		}
+		ambientBaseline = { attention, condition: cond };
+	});
+
+	// --- Theme --------------------------------------------------------------
+
+	/**
+	 * The wall's own Auto / Day / Night / OLED choice, remembered per browser
+	 * like the Spotify-speaker switch. A `?theme=` on a shared link overrides
+	 * it for this display only, the same way it already did for day/night.
+	 */
+	let wallTheme = $state<WallThemeChoice>(readWallTheme());
+	let themeOpen = $state(false);
+	let nightDim = $state(readNightDim());
+
+	function setWallTheme(choice: WallThemeChoice) {
+		wallTheme = choice;
+		writeWallTheme(choice);
+	}
+	function setNightDim(on: boolean) {
+		nightDim = on;
+		writeNightDim(on);
+	}
+
+	const forcedWallTheme = $derived(parseForcedWallTheme(page.url.searchParams.get('theme')));
+	const effectiveWallTheme = $derived(forcedWallTheme ?? wallTheme);
+	const oledActive = $derived(effectiveWallTheme === 'oled');
+	const nightDimActive = $derived(oledActive && nightDim && isNightHour(now));
+
+	// Auto rides whatever the rest of DumbMonit shows. Day/Night/OLED force
+	// the app-wide theme for this display only — never saved there, and
+	// restored on exit; OLED rides the Night palette, then this page paints
+	// true black and dimmed text over it (see the `oled` styles below).
+	$effect(() => {
+		if (effectiveWallTheme === 'auto') return;
+		const base: ThemePreference = effectiveWallTheme === 'oled' ? 'dark' : effectiveWallTheme;
+		const previous: ThemePreference = untrack(() => theme.preference);
+		theme.preference = base;
+		return () => {
+			theme.preference = previous;
+		};
+	});
+
+	// Burn-in care: nudge the whole layout a few pixels every few minutes so
+	// no static bright element (the clock, the tool pill) sits on the same
+	// pixels for long.
+	let oledShiftIndex = $state(0);
+	$effect(() => {
+		if (!oledActive) {
+			oledShiftIndex = 0;
+			return;
+		}
+		const timer = setInterval(() => {
+			oledShiftIndex = (oledShiftIndex + 1) % OLED_SHIFT_OFFSETS.length;
+		}, OLED_SHIFT_INTERVAL_MS);
+		return () => clearInterval(timer);
+	});
+	const oledShift = $derived(OLED_SHIFT_OFFSETS[oledShiftIndex]);
+
 	async function load(signal?: AbortSignal) {
 		const probesPromise = loadProbeStatuses(signal).catch(() => new Map<TargetId, ProbeStatus>());
 		try {
@@ -297,27 +388,16 @@
 		};
 	});
 
-	// `?theme=dark|light` forces a light for this display without touching the
-	// saved preference; leaving the wall restores it.
-	$effect(() => {
-		const wanted = page.url.searchParams.get('theme');
-		if (wanted !== 'dark' && wanted !== 'light') return;
-		const previous: ThemePreference = untrack(() => theme.preference);
-		theme.preference = wanted;
-		return () => {
-			theme.preference = previous;
-		};
-	});
-
 	function exit() {
 		void goto('/');
 	}
 
 	function onKeydown(event: KeyboardEvent) {
-		// The palette owns Escape while it is open; so does the music panel.
-		if (event.key === 'Escape' && musicOpen) {
+		// The palette owns Escape while it is open; so do the music and theme panels.
+		if (event.key === 'Escape' && (musicOpen || themeOpen)) {
 			event.preventDefault();
 			musicOpen = false;
+			themeOpen = false;
 			return;
 		}
 		if (event.key === 'Escape' && !palette.isOpen) {
@@ -345,159 +425,189 @@
 <svelte:head><title>Wall · DumbMonit</title></svelte:head>
 <svelte:window onkeydown={onKeydown} />
 
-<div class="wall fixed inset-0 z-40 flex flex-col bg-canvas text-ink">
-	<!-- Tools float over the weather window's corner, on a frosted pill. -->
+<div
+	class="wall fixed inset-0 z-40 flex flex-col bg-canvas text-ink"
+	data-wall-theme={oledActive ? 'oled' : undefined}
+>
+	<!-- The calm backdrop, behind everything, painted first so it never
+		 covers a click. -->
+	<WallAmbient {condition} pulse={ambientPulse} onpulseend={() => (ambientPulse = false)} />
+
+	<!--
+		Everything the room actually reads lives in this stage. On OLED it is
+		nudged a few pixels every few minutes (burn-in care) — the backdrop
+		above does not move with it, so the shift is never seen, only felt as
+		"nothing stays lit in one spot".
+	-->
 	<div
-		class="wall-tools absolute top-6 right-6 z-10 flex items-center rounded-xl bg-surface/80 p-1 shadow-lift backdrop-blur sm:top-[2.125rem] sm:right-[2.625rem] lg:top-[2.625rem] lg:right-[3.625rem]"
+		class="wall-stage relative flex min-h-0 flex-1 flex-col"
+		style:transform={oledActive ? `translate(${oledShift[0]}px, ${oledShift[1]}px)` : undefined}
 	>
-		<MusicControl
-			link={musicLink}
-			embed={music}
-			bind:open={musicOpen}
-			isAdmin={auth.isAdmin}
-			spotify={wallMusic?.spotify ?? null}
-			{speaker}
-			{speakerName}
-			{speakerOn}
-			onsave={sendLink}
-			onclear={stopLink}
-			onspeaker={setSpeakerOn}
-			onretry={() => void speaker.start(speakerName, { retry: true })}
-		/>
-		<Button variant="ghost" size="sm" onclick={exit} aria-label="Exit wall mode">
-			<X class="size-4" aria-hidden="true" />
-			Exit
-			<kbd class="ml-1 rounded-md border border-line bg-surface-2 px-1.5 text-[0.6875rem] text-ink-3">esc</kbd>
-		</Button>
-	</div>
-	<div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6 sm:px-8 sm:pt-6 lg:px-12 lg:pt-8">
-		{#if error && targets.length === 0}
-			<div class="mx-auto max-w-xl pt-[20vh]">
-				<ErrorNotice
-					{error}
-					title="Could not load the bulletin"
-					onretry={() => {
-						loading = true;
-						void load();
-					}}
-				/>
-				<div class="mt-4">
-					<Button variant="ghost" onclick={exit}>Back to the overview</Button>
-				</div>
-			</div>
-		{:else if firstLoad}
-			<div class="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
-				<Skeleton class="h-[200px] w-full sm:h-[260px] lg:order-last lg:h-[clamp(320px,46vh,620px)]" />
-				<div>
-					<Skeleton class="h-24 w-3/4" />
-					<Skeleton class="mt-6 h-8 w-1/3" />
-				</div>
-			</div>
-			<div class="mt-10 flex gap-16">
-				{#each { length: 3 } as _, i (i)}
-					<Skeleton class="h-28 w-40" />
-				{/each}
-			</div>
-		{:else}
-			<!--
-				Bulletin. Desktop: the sentence and readouts on the left, the weather
-				window as the hero on the right. Phone: the window first, as a band,
-				then the sentence and readouts. Music sits inside the window.
-			-->
-			<section class="hero grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] xl:gap-x-14">
-				<div class="sky-cell relative lg:col-start-2 lg:row-start-1">
-					<SkyScene
-						{condition}
-						frame={false}
-						class="h-[200px] w-full rounded-[var(--radius-card)] border border-line shadow-float sm:h-[260px] lg:h-full lg:min-h-[clamp(300px,42vh,580px)]"
-					/>
-					<MusicDock
-						playing={shownPlaying}
-						{speakerName}
-						readAt={playingReadAt}
-						clock={now.getTime()}
-						embed={music}
-						autoplay={musicAutoplay}
-						needsTap={speakerOn && speaker.needsTap}
-						onactivate={() => speaker.activate()}
-						onstop={auth.isAdmin || !sharedLink ? () => void stopLink() : undefined}
-					/>
-				</div>
-
-				<div class="flex min-w-0 flex-col lg:col-start-1 lg:row-start-1 lg:py-2">
-					<DecryptText
-						tag="h1"
-						text={sky.sentence}
-						speed={16}
-						hold={2}
-						class="display text-[clamp(2.5rem,4.4vw,5.5rem)] text-ink"
-					/>
-					<div class="mt-5 flex flex-wrap items-center gap-2.5 sm:gap-3">
-						{#each sky.plates as plate (plate.label)}
-							<Plate tone={plate.tone} label={plate.label} bare={plate.bare} size="md" />
-						{/each}
-					</div>
-
-					<!-- Three readouts, read from across the room; they sit on the window's baseline. -->
-					<div class="graticule mt-8 flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-14 lg:mt-auto lg:pt-10">
-						<WallReadout label="Reporting" value={sky.counts.reporting} tone="signal" />
-						<WallReadout
-							label="Needs you"
-							value={sky.attention}
-							tone={sky.attention > 0 ? 'warning' : 'ink'}
-						/>
-						<WallReadout
-							label="Forecasts"
-							value={sky.forecasts}
-							tone={sky.forecasts > 0 ? 'advisory' : 'ink'}
-						/>
-					</div>
-				</div>
-			</section>
-
-			<!-- Needs you -->
-			<section class="mt-8 lg:mt-10">
-				<h2 class="mb-4 text-lg font-semibold tracking-tight text-ink lg:text-xl">Needs you</h2>
-				{#if silenceError}
-					<p class="mb-3 text-sm text-warning-ink" role="alert" aria-live="polite">{silenceError}</p>
-				{/if}
-				<div class={sky.quiet ? 'wall-quiet' : 'wall-needs'}>
-					<NeedsYouList
-						{sky}
-						{checkedLabel}
-						{silencingKey}
-						onsilence={silence}
-						onackchange={() => void load()}
-					/>
-				</div>
-			</section>
-		{/if}
-	</div>
-
-	<!-- Clock and freshness, bottom-left; the bar fills up to the next refresh. -->
-	<footer class="relative shrink-0 border-t border-line bg-canvas px-4 py-3 sm:px-8 lg:px-12">
+		<!-- Tools float over the weather window's corner, on a frosted pill. -->
 		<div
-			class="absolute inset-x-0 top-0 h-px origin-left bg-signal transition-transform duration-1000 ease-linear"
-			style:transform={`scaleX(${progress})`}
-			aria-hidden="true"
-		></div>
-		<div class="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-			<time class="display tnum text-[clamp(1.75rem,3vw,2.75rem)] text-ink" datetime={now.toISOString()}>{clock}</time>
-			<span class="tnum text-sm text-ink-2 lg:text-base" aria-live="off">{updatedLabel}</span>
-			{#if error}
-				<span class="text-sm text-warning-ink lg:text-base" role="status">Last refresh failed, showing the previous bulletin.</span>
+			class="wall-tools absolute top-6 right-6 z-10 flex items-center rounded-xl bg-surface/80 p-1 shadow-lift backdrop-blur sm:top-[2.125rem] sm:right-[2.625rem] lg:top-[2.625rem] lg:right-[3.625rem]"
+		>
+			<WallThemeControl
+				value={wallTheme}
+				forced={forcedWallTheme}
+				{nightDim}
+				bind:open={themeOpen}
+				onchange={setWallTheme}
+				onnightdim={setNightDim}
+			/>
+			<MusicControl
+				link={musicLink}
+				embed={music}
+				bind:open={musicOpen}
+				isAdmin={auth.isAdmin}
+				spotify={wallMusic?.spotify ?? null}
+				{speaker}
+				{speakerName}
+				{speakerOn}
+				onsave={sendLink}
+				onclear={stopLink}
+				onspeaker={setSpeakerOn}
+				onretry={() => void speaker.start(speakerName, { retry: true })}
+			/>
+			<Button variant="ghost" size="sm" onclick={exit} aria-label="Exit wall mode">
+				<X class="size-4" aria-hidden="true" />
+				Exit
+				<kbd class="ml-1 rounded-md border border-line bg-surface-2 px-1.5 text-[0.6875rem] text-ink-3">esc</kbd>
+			</Button>
+		</div>
+		{#if nightDimActive}
+			<div class="wall-night-dim" aria-hidden="true"></div>
+		{/if}
+		<div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6 sm:px-8 sm:pt-6 lg:px-12 lg:pt-8">
+			{#if error && targets.length === 0}
+				<div class="mx-auto max-w-xl pt-[20vh]">
+					<ErrorNotice
+						{error}
+						title="Could not load the bulletin"
+						onretry={() => {
+							loading = true;
+							void load();
+						}}
+					/>
+					<div class="mt-4">
+						<Button variant="ghost" onclick={exit}>Back to the overview</Button>
+					</div>
+				</div>
+			{:else if firstLoad}
+				<div class="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
+					<Skeleton class="h-[200px] w-full sm:h-[260px] lg:order-last lg:h-[clamp(320px,46vh,620px)]" />
+					<div>
+						<Skeleton class="h-24 w-3/4" />
+						<Skeleton class="mt-6 h-8 w-1/3" />
+					</div>
+				</div>
+				<div class="mt-10 flex gap-16">
+					{#each { length: 3 } as _, i (i)}
+						<Skeleton class="h-28 w-40" />
+					{/each}
+				</div>
+			{:else}
+				<!--
+					Bulletin. Desktop: the sentence and readouts on the left, the weather
+					window as the hero on the right. Phone: the window first, as a band,
+					then the sentence and readouts. Music sits inside the window.
+				-->
+				<section class="hero grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] xl:gap-x-14">
+					<div class="sky-cell relative lg:col-start-2 lg:row-start-1">
+						<SkyScene
+							{condition}
+							frame={false}
+							class="h-[200px] w-full rounded-[var(--radius-card)] border border-line shadow-float sm:h-[260px] lg:h-full lg:min-h-[clamp(300px,42vh,580px)]"
+						/>
+						<MusicDock
+							playing={shownPlaying}
+							{speakerName}
+							readAt={playingReadAt}
+							clock={now.getTime()}
+							embed={music}
+							autoplay={musicAutoplay}
+							needsTap={speakerOn && speaker.needsTap}
+							onactivate={() => speaker.activate()}
+							onstop={auth.isAdmin || !sharedLink ? () => void stopLink() : undefined}
+						/>
+					</div>
+
+					<div class="flex min-w-0 flex-col lg:col-start-1 lg:row-start-1 lg:py-2">
+						<DecryptText
+							tag="h1"
+							text={sky.sentence}
+							speed={16}
+							hold={2}
+							class="display text-[clamp(2.5rem,4.4vw,5.5rem)] text-ink"
+						/>
+						<div class="mt-5 flex flex-wrap items-center gap-2.5 sm:gap-3">
+							{#each sky.plates as plate (plate.label)}
+								<Plate tone={plate.tone} label={plate.label} bare={plate.bare} size="md" />
+							{/each}
+						</div>
+
+						<!-- Three readouts, read from across the room; they sit on the window's baseline. -->
+						<div class="graticule mt-8 flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-14 lg:mt-auto lg:pt-10">
+							<WallReadout label="Reporting" value={sky.counts.reporting} tone="signal" />
+							<WallReadout
+								label="Needs you"
+								value={sky.attention}
+								tone={sky.attention > 0 ? 'warning' : 'ink'}
+							/>
+							<WallReadout
+								label="Forecasts"
+								value={sky.forecasts}
+								tone={sky.forecasts > 0 ? 'advisory' : 'ink'}
+							/>
+						</div>
+					</div>
+				</section>
+
+				<!-- Needs you -->
+				<section class="mt-8 lg:mt-10">
+					<h2 class="mb-4 text-lg font-semibold tracking-tight text-ink lg:text-xl">Needs you</h2>
+					{#if silenceError}
+						<p class="mb-3 text-sm text-warning-ink" role="alert" aria-live="polite">{silenceError}</p>
+					{/if}
+					<div class={sky.quiet ? 'wall-quiet' : 'wall-needs'}>
+						<NeedsYouList
+							{sky}
+							{checkedLabel}
+							{silencingKey}
+							onsilence={silence}
+							onackchange={() => void load()}
+						/>
+					</div>
+				</section>
 			{/if}
 		</div>
-	</footer>
+
+		<!-- Clock and freshness, bottom-left; the bar fills up to the next refresh. -->
+		<footer class="relative shrink-0 border-t border-line bg-canvas px-4 py-3 sm:px-8 lg:px-12">
+			<div
+				class="absolute inset-x-0 top-0 h-px origin-left bg-signal transition-transform duration-1000 ease-linear"
+				style:transform={`scaleX(${progress})`}
+				aria-hidden="true"
+			></div>
+			<div class="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+				<time class="display tnum text-[clamp(1.75rem,3vw,2.75rem)] text-ink" datetime={now.toISOString()}>{clock}</time>
+				<span class="tnum text-sm text-ink-2 lg:text-base" aria-live="off">{updatedLabel}</span>
+				{#if error}
+					<span class="text-sm text-warning-ink lg:text-base" role="status">Last refresh failed, showing the previous bulletin.</span>
+				{/if}
+			</div>
+		</footer>
+	</div>
 </div>
 
 <style>
 	/*
-	 * "Music" stays out of sight on a display nobody touches: it shows when a
-	 * pointer moves over the wall, when it is reached with the keyboard, and
-	 * always on touch screens (no hover to reveal it).
+	 * "Music" and "Theme" stay out of sight on a display nobody touches: they
+	 * show when a pointer moves over the wall, when reached with the
+	 * keyboard, and always on touch screens (no hover to reveal them).
 	 */
-	.wall :global(.music-toggle) {
+	.wall :global(.music-toggle),
+	.wall :global(.theme-toggle) {
 		max-width: 0;
 		padding-inline: 0;
 		opacity: 0;
@@ -509,20 +619,25 @@
 	}
 	.wall:hover :global(.music-toggle),
 	.wall :global(.music-toggle:focus-visible),
-	.wall :global(.music-toggle.is-open) {
+	.wall :global(.music-toggle.is-open),
+	.wall:hover :global(.theme-toggle),
+	.wall :global(.theme-toggle:focus-visible),
+	.wall :global(.theme-toggle.is-open) {
 		max-width: 8rem;
 		padding-inline: 0.75rem;
 		opacity: 1;
 	}
 	@media (hover: none) {
-		.wall :global(.music-toggle) {
+		.wall :global(.music-toggle),
+		.wall :global(.theme-toggle) {
 			max-width: 8rem;
 			padding-inline: 0.75rem;
 			opacity: 1;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.wall :global(.music-toggle) {
+		.wall :global(.music-toggle),
+		.wall :global(.theme-toggle) {
 			transition: none;
 		}
 	}
@@ -571,5 +686,75 @@
 		.wall-quiet {
 			zoom: 1.35;
 		}
+	}
+
+	/*
+	 * OLED burn-in care: the whole stage eases to its next offset over a few
+	 * seconds — slow enough that the shift itself is never seen, only ever
+	 * felt as "nothing stays lit in one spot" days later.
+	 */
+	.wall-stage {
+		transition: transform 4s var(--ease-out-expo, ease);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.wall-stage {
+			transition: none;
+		}
+	}
+
+	/* Optional night dimming on OLED: a plain black veil, opacity only. */
+	.wall-night-dim {
+		position: absolute;
+		inset: 0;
+		z-index: 15;
+		background: #000;
+		opacity: 0;
+		pointer-events: none;
+		animation: wall-dim-in 4s ease forwards;
+	}
+	@keyframes wall-dim-in {
+		to {
+			opacity: 0.45;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.wall-night-dim {
+			animation: none;
+			opacity: 0.45;
+		}
+	}
+
+	/*
+	 * OLED: true black, dimmed text, no bright surfaces. Scoped to the wall
+	 * so the rest of the app keeps its ordinary night palette; built on top
+	 * of it (the `dark` class still applies underneath, for anything this
+	 * does not override).
+	 */
+	.wall[data-wall-theme='oled'] {
+		--c-canvas: #000000;
+		--c-canvas-deep: #000000;
+		--c-surface: #000000;
+		--c-surface-2: #0a0a0a;
+		--c-line: rgb(255 255 255 / 0.1);
+		--c-line-strong: rgb(255 255 255 / 0.18);
+		--c-ink: #a9b2c2;
+		--c-ink-2: #6b7384;
+		--c-ink-3: #454b58;
+		--c-ghost: rgb(255 255 255 / 0.08);
+		--shadow-lift: none;
+		--shadow-float: none;
+		/* A touch dimmer still: OLED has no room for "a bit bright". Read by
+		   `WallAmbient`, which inherits it — it never sets this itself. */
+		--amb-scale: 0.7;
+	}
+	/*
+	 * The weather window (`SkyScene`) is shared with the Overview and keeps
+	 * its own palette and lightning flash — nothing here edits it. A single
+	 * static filter (no animated property, so it costs nothing beyond the
+	 * scene's own already-animated content) is the only OLED-safe way left
+	 * to take a bright sky and a white flash down to "no large bright area".
+	 */
+	.wall[data-wall-theme='oled'] :global(.sky) {
+		filter: brightness(0.5);
 	}
 </style>
