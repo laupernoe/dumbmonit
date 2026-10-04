@@ -303,6 +303,14 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcl
 | Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 
+### Client devices
+
+One rule, shared by every integration that tracks phones, tablets and desktops connecting and backing up through an account — Immich today ([devices](../devices/immich.md)), more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the device in the notification.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Client device stale | A device has not connected or not backed up within the staleness window configured for this target (`dumbmonit_client_device_stale_seconds`). | > 0 | 1 h | Advisory (`warning`) | 24 h |
+
 ### Pi-hole
 
 [Pi-hole](../devices/pihole.md) v6, read through its REST API.
