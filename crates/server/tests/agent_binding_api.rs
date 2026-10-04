@@ -260,6 +260,68 @@ async fn an_agent_from_before_binding_keeps_reporting_and_is_flagged() {
     assert_eq!(view.body["binding"], "bound");
 }
 
+/// Une machine pas encore liée ne se lie qu'avec le jeton qui l'a enrôlée : un
+/// autre porteur de jeton qui devine sa clé n'en prend ni la liaison ni les
+/// commandes, sauf fenêtre de reliaison ouverte par un administrateur.
+#[tokio::test]
+async fn an_unbound_machine_cannot_be_claimed_with_another_token() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let own = token(&app, &admin, json!({ "reusable": true })).await;
+    let other = token(&app, &admin, json!({ "reusable": true })).await;
+
+    let first = push(&app, &own, "id-ancien", "ancien", None, false).await;
+    assert_eq!(first.status, StatusCode::OK, "{}", first.body);
+    let target = first.body["target_id"].as_i64().expect("cible");
+
+    let stolen = push(&app, &other, "id-ancien", "pirate", None, true).await;
+    assert_eq!(stolen.status, StatusCode::FORBIDDEN, "{}", stolen.body);
+    assert!(stolen.body.get("agent_secret").is_none());
+    assert_eq!(fetch_commands(&app, &other, "id-ancien", None).await.status, StatusCode::FORBIDDEN);
+
+    // Son propre jeton passe toujours, et la lie dès que l'agent le sait.
+    let upgraded = push(&app, &own, "id-ancien", "ancien", None, true).await;
+    assert_eq!(upgraded.status, StatusCode::OK, "{}", upgraded.body);
+    assert!(upgraded.body["agent_secret"].is_string(), "{}", upgraded.body);
+
+    // Un nouveau jeton n'entre que par la fenêtre qu'ouvre un administrateur.
+    let second = push(&app, &own, "id-autre", "autre", None, false).await;
+    assert_eq!(second.status, StatusCode::OK, "{}", second.body);
+    let other_target = second.body["target_id"].as_i64().unwrap();
+    assert_ne!(other_target, target);
+    let opened = app
+        .post(&format!("/api/targets/{other_target}/agent/rebind"), json!({}), Some(&admin))
+        .await;
+    assert_eq!(opened.status, StatusCode::OK, "{}", opened.body);
+    let rebound = push(&app, &other, "id-autre", "autre", None, true).await;
+    assert_eq!(rebound.status, StatusCode::OK, "{}", rebound.body);
+    assert!(rebound.body["agent_secret"].is_string(), "{}", rebound.body);
+}
+
+/// Sans jeton valide, le corps n'est même pas lu : 401, pas une erreur de
+/// désérialisation.
+#[tokio::test]
+async fn agent_routes_refuse_unknown_tokens_before_reading_the_body() {
+    let app = TestApp::configured().await;
+    for (method, uri) in [
+        ("POST", "/api/ingest"),
+        ("POST", "/api/agent/commands/1?key=x"),
+        ("POST", "/api/agent/relay/1?key=x"),
+    ] {
+        for bearer in [None, Some("Bearer dmon_inconnu")] {
+            let mut builder = Request::builder()
+                .method(method)
+                .uri(uri)
+                .header(header::CONTENT_TYPE, "application/json");
+            if let Some(bearer) = bearer {
+                builder = builder.header(header::AUTHORIZATION, bearer);
+            }
+            let reply = send(&app, builder.body(Body::from("{ pas du json")).unwrap()).await;
+            assert_eq!(reply.status, StatusCode::UNAUTHORIZED, "{method} {uri}: {}", reply.body);
+        }
+    }
+}
+
 #[tokio::test]
 async fn a_reinstalled_machine_gets_back_in_through_the_window_an_admin_opens() {
     let app = TestApp::configured().await;
