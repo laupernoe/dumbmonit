@@ -2,7 +2,8 @@
 
 A Veeam Backup & Replication server through its REST API: jobs whose last run
 failed or ended with a warning, failed sessions of the last 24 hours,
-repositories filling up, and the license.
+repositories filling up, the license, and — per protected computer or VM —
+its last successful backup.
 
 DumbMonit logs in with a Windows account that holds only the Veeam Backup
 Viewer role (OAuth2 password grant on `/api/oauth2/token`, port 9419) and
@@ -12,18 +13,21 @@ came with version 12.0.
 
 The job states (`/api/v1/jobs/states`) are the one required read. The others —
 `/api/v1/serverInfo`, `/api/v1/sessions` (created in the last 24 hours),
-`/api/v1/backupInfrastructure/repositories/states` and `/api/v1/license` — are
-read when the role allows them. Veeam keeps some routes for the Backup
-Administrator role, the license among them on current versions: a refusal
-there is shown as "not readable", never as an error.
+`/api/v1/backupInfrastructure/repositories/states`, `/api/v1/license` and
+`/api/v1/restorePoints` (every protected object's restore points, server-wide,
+newest first) — are read when the role allows them. Veeam keeps some routes
+for the Backup Administrator role, the license among them on current
+versions: a refusal there is shown as "not readable", never as an error. A
+server too old to know `/api/v1/restorePoints` — the route appeared after
+12.0 — is treated the same way: no device, no error.
 
 !!! warning "Validated against the vendor documentation only — not yet tested on a real system"
 
     This integration was built from Veeam's REST API reference and help
-    center (authentication, versioning, the job, session, repository and
-    license models), not against a running backup server. Which routes the
-    Viewer role may read varies with the version: tell us what your server
-    refuses.
+    center (authentication, versioning, the job, session, repository,
+    license and restore point models), not against a running backup server.
+    Which routes the Viewer role may read varies with the version: tell us
+    what your server refuses.
 
 ## What it watches
 
@@ -44,7 +48,7 @@ All metrics are prefixed `dumbmonit_veeam_`.
 | `license_info` | `status`, `type`, `edition` | Value 1. |
 | `license_expiry_seconds`, `support_expiry_seconds` | | Until the license and the support contract expire; absent for a perpetual license. |
 | `license_instances_licensed`, `license_instances_used` | | Instance license use. |
-| `section_readable` | `section`: `sessions`, `repositories`, `license` | 1 when the account may read it, 0 when Veeam refused. |
+| `section_readable` | `section`: `sessions`, `repositories`, `license`, `restore_points` | 1 when the account may read it, 0 when Veeam refused. |
 
 The [built-in rules](../alerting/rules.md#veeam-backup-replication) that apply:
 
@@ -55,13 +59,43 @@ The [built-in rules](../alerting/rules.md#veeam-backup-replication) that apply:
   (Advisory).
 - **Veeam license expiring**: less than 30 days left (Advisory, reminded
   daily). Only when the account can read the license.
+- **Client device stale**: a protected computer or VM has gone past
+  `device_stale_days` without a successful backup (Advisory, reminded daily);
+  see [Devices](#devices) below.
+
+## Devices
+
+Every object with at least one restore point — a VM, a physical or virtual
+agent-protected computer, a file share — is published under the generic
+family shared by every DumbMonit integration that tracks protected devices —
+`dumbmonit_client_device_*`, prefixed without `veeam`, documented in full
+under [Client devices](../alerting/rules.md#client-devices):
+
+| Metric | What | Labels |
+|---|---|---|
+| `last_backup_timestamp_seconds` | The object's most recent restore point | `device`, `type`, `os`, `user`, `kind` |
+| `stale_seconds` | Positive once an object has gone past `device_stale_days` (3 by default) without a new restore point; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `backup`) |
+
+**Limits worth knowing**: a job protects its objects as a group
+(`jobs/states` gives only a count, `objectsCount`); the per-object date comes
+from `/api/v1/restorePoints` instead, read for the whole server in one call.
+Veeam creates a restore point only once a backup has at least partially
+succeeded, so the most recent one per object is already "the last successful
+backup" — nothing is filtered on the result here. Veeam does not expose a
+"last connection" separate from the backup itself, so `last_seen_timestamp_seconds`
+and the `connection` signal are never published; a device shows
+`last_connection` as "—" on the device page's table. The device's `type` is
+Veeam's own platform name (`VSphere`, `WindowsPhysical`, `HyperV`…), shown as
+is.
 
 ## The device page
 
 The Backups panel says what is wrong in a sentence, shows the failed jobs, the
 failed sessions of the last 24 hours, the running jobs and the license, then
 lists the enabled jobs — failures first — with their type and last run, and
-the repositories with their fill and free space.
+the repositories with their fill and free space. The table of protected
+devices (name, platform, last backup, status) follows, from the generic
+family above.
 
 ## Give DumbMonit a Veeam Backup Viewer account
 
@@ -76,7 +110,7 @@ the repositories with their fill and free space.
 3. In DumbMonit, enter the address of the backup server, for example "vbr.lan", and the account as HOST\dumbmonit or DOMAIN\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.
 
 !!! warning
-    Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions and repositories, and shows the license as not readable: it never asks for more.
+    Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions, repositories and restore points, and shows the license as not readable: it never asks for more.
 
 ## Credentials
 
@@ -93,6 +127,8 @@ Options:
 - **Accept an unverifiable certificate**: the REST API's own certificate is
   self-signed.
 - **Timeout per request** (15 s).
+- **Device staleness** (`device_stale_days`, 3 days by default): see
+  [Devices](#devices) above.
 
 ## Troubleshooting
 
@@ -107,3 +143,8 @@ lists on `https://<server>:9419/swagger`.
 
 The license shows "Not readable": expected with the Viewer role on current
 versions; DumbMonit does not ask for more.
+
+No device, or the Devices panel is empty: `restore_points` reads "Not
+readable", likely because the server is older than the route (anything before
+12.0's later revisions) rather than a role problem — restore points are
+ordinary inventory, not an administrator-only page.

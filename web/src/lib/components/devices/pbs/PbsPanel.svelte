@@ -10,6 +10,7 @@
 	import { getPbsCalendar, getPbsHealth, getPbsJobs, listPbsFailures } from '$lib/api/pbs';
 	import type { PbsCalendar, PbsFailure, PbsHealth, PbsJobs, Target } from '$lib/api';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import BackupCalendar from './BackupCalendar.svelte';
 	import DatastoreHealth from './DatastoreHealth.svelte';
 	import FailureList from './FailureList.svelte';
@@ -191,5 +192,7 @@
 				traffic={health?.traffic ?? []}
 			/>
 		</Panel>
+
+		<ClientDevicesTable {target} />
 	</div>
 {/if}

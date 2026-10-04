@@ -305,7 +305,7 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcl
 
 ### Client devices
 
-One rule, shared by every integration that tracks phones, tablets and desktops connecting and backing up through an account — Immich today ([devices](../devices/immich.md)), more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the device in the notification.
+One rule, shared by every integration that tracks devices connecting and backing up — Immich's phones, tablets and desktops ([devices](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([devices](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([devices](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the device in the notification. Synology Active Backup for Business tracks its own devices separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
