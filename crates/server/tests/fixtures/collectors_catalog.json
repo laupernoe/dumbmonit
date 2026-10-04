@@ -3052,6 +3052,16 @@
         "required": false,
         "input": "boolean",
         "choices": []
+      },
+      {
+        "key": "device_stale_days",
+        "label": "Device staleness (days)",
+        "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+        "placeholder": "3",
+        "default": "3",
+        "required": false,
+        "input": "number",
+        "choices": []
       }
     ]
   },
@@ -6059,7 +6069,7 @@
         "In the Veeam console, open the main menu > Users and Roles > Security, click Add, enter the account (for example VBR01\\dumbmonit) and give it the Veeam Backup Viewer role only.",
         "In DumbMonit, enter the address of the backup server, for example \"vbr.lan\", and the account as HOST\\dumbmonit or DOMAIN\\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own."
       ],
-      "warning": "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions and repositories, and shows the license as not readable: it never asks for more.",
+      "warning": "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions, repositories and restore points, and shows the license as not readable: it never asks for more.",
       "doc_url": "https://helpcenter.veeam.com/docs/backup/vbr_rest/requesting_authorization.html"
     },
     "options": [
@@ -6112,6 +6122,16 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "device_stale_days",
+        "label": "Device staleness (days)",
+        "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+        "placeholder": "3",
+        "default": "3",
         "required": false,
         "input": "number",
         "choices": []

@@ -19,6 +19,8 @@ use std::collections::BTreeMap;
 
 use dumbmonit_proto::Sample;
 
+use crate::client_devices::Device;
+
 use super::metrics::gauge;
 use super::model::{SnapshotEntry, TaskEntry};
 use super::view::{GroupView, MAX_SNAPSHOTS_PER_GROUP, SnapshotView, TaskView};
@@ -110,6 +112,32 @@ pub fn summarize_groups(
     }
 
     groups
+}
+
+/// Un appareil client (`collectors/client_devices.rs`) par groupe de sauvegarde :
+/// chaque machine protégée — hôte, VM ou conteneur — en est un, nommé d'après les
+/// notes du dernier instantané quand PVE les a écrites, sinon `type/id`. PBS ne
+/// distingue pas la connexion de la sauvegarde : seul `last_backup` est renseigné,
+/// daté du dernier instantané, déjà connu sans appel supplémentaire. Triés du plus
+/// récemment sauvegardé au plus ancien, comme [`group_samples`].
+pub fn client_devices(groups: &BTreeMap<GroupKey, GroupSummary>) -> Vec<Device> {
+    let mut retained: Vec<(&GroupKey, &GroupSummary)> = groups.iter().collect();
+    retained.sort_by(|a, b| b.1.last_time.cmp(&a.1.last_time).then_with(|| a.0.cmp(b.0)));
+    retained
+        .into_iter()
+        .map(|(key, summary)| Device {
+            name: summary
+                .name
+                .clone()
+                .filter(|n| !n.trim().is_empty())
+                .unwrap_or_else(|| format!("{}/{}", key.backup_type, key.backup_id)),
+            device_type: key.backup_type.clone(),
+            os: String::new(),
+            user: String::new(),
+            last_seen: None,
+            last_backup: Some(summary.last_time),
+        })
+        .collect()
 }
 
 /// Nom d'invité lisible dans les notes d'un instantané, ou rien.
@@ -590,6 +618,26 @@ mod tests {
             guest_name(Some("  pihole\nsecond line"), "ct", "200").as_deref(),
             Some("pihole")
         );
+    }
+
+    #[test]
+    fn chaque_groupe_devient_un_appareil_client_nomme_et_date() {
+        let snapshots: Vec<SnapshotEntry> = extraire(SNAPSHOTS);
+        let groups = summarize_groups("main", "", &snapshots);
+        let devices = client_devices(&groups);
+
+        assert_eq!(devices.len(), 3, "l'orphelin sans type n'en fait pas un appareil");
+        // Le plus récemment sauvegardé en premier, ici vm/100 dont les notes
+        // donnent un nom lisible.
+        assert_eq!(devices[0].name, "nextcloud");
+        assert_eq!(devices[0].device_type, "vm");
+        assert_eq!(devices[0].last_backup, Some(1_700_604_800));
+        assert!(devices[0].last_seen.is_none(), "PBS ne connaît pas de connexion séparée");
+
+        // Sans notes lisibles, l'identifiant du groupe sert de nom.
+        let host = devices.iter().find(|d| d.device_type == "host").unwrap();
+        assert_eq!(host.name, "host/nas");
+        assert_eq!(host.last_backup, Some(1_700_500_000));
     }
 
     #[test]
