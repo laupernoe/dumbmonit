@@ -21,6 +21,16 @@
 //! | `battery_threshold` | `20` | Pourcentage sous lequel une pile est faible. |
 //! | `exclude_domains` | — | Domaines hors des totaux d'entités indisponibles. |
 //! | `repairs` | `true` | Lit les réparations par l'API WebSocket. |
+//! | `device_stale_days` | `3` | Jours sans activité au-delà desquels un appareil de l'app compagnon est signalé périmé. |
+//!
+//! # Appareils de l'app compagnon (`mobile_app`)
+//!
+//! Chaque téléphone ou tablette qui a installé l'app Home Assistant crée un
+//! `device_tracker` ; sa dernière activité nourrit le tableau générique des
+//! appareils clients (`client_devices.rs`). L'identification se fait sans le
+//! registre d'entités, que l'API REST ne sert pas : voir le commentaire de
+//! [`metrics::mobile_app_devices`]. Facultatif de nature — une installation
+//! sans l'app compagnon ne publie simplement aucun appareil, sans erreur.
 
 pub mod metrics;
 pub mod websocket;
@@ -34,6 +44,7 @@ use serde::de::DeserializeOwned;
 use tracing::warn;
 
 use crate::api_options::{Connection, parse_bool, parse_list, parse_u64_in, tag};
+use crate::client_devices;
 use metrics::{Config, State, Tuning};
 
 pub const DEFAULT_PORT: u16 = 8123;
@@ -149,6 +160,7 @@ impl HomeAssistantCollector {
 
     async fn collect(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
         let settings = Settings::from_target(target)?;
+        let stale_days = client_devices::stale_days(target)?;
         let client =
             Client { http: crate::http::client(settings.connection.insecure_tls)?, settings };
         let ts_ms = chrono::Utc::now().timestamp_millis();
@@ -179,7 +191,11 @@ impl HomeAssistantCollector {
         };
         let (states, repairs) = futures::join!(client.get::<Vec<State>>("/api/states"), repairs);
         match states {
-            Ok(states) => out.extend(metrics::state_samples(&states, &settings.tuning, ts_ms)),
+            Ok(states) => {
+                out.extend(metrics::state_samples(&states, &settings.tuning, ts_ms));
+                let devices = metrics::mobile_app_devices(&states);
+                out.extend(client_devices::samples("homeassistant", &devices, stale_days, ts_ms));
+            }
             Err(error) => {
                 errors += 1;
                 warn!(target_id = target.id, %error, "états Home Assistant illisibles");
@@ -310,6 +326,12 @@ mod tests {
         assert_eq!(value(&samples, "homeassistant_updates_available"), Some(5.0));
         assert!(samples.iter().any(|s| s.metric == "homeassistant_repair"));
         assert_eq!(value(&samples, "homeassistant_scrape_errors"), Some(0.0));
+        assert!(
+            samples.iter().any(|s| s.metric == "client_device_last_seen_timestamp_seconds"
+                && s.labels.get("device").map(String::as_str) == Some("Pixel 8")
+                && s.labels.get("kind").map(String::as_str) == Some("homeassistant")),
+            "l'app compagnon nourrit le tableau générique des appareils"
+        );
     }
 
     #[tokio::test]
@@ -346,9 +368,12 @@ mod tests {
 
     #[tokio::test]
     async fn une_option_invalide_est_une_erreur_de_configuration() {
-        for tags in
-            [&[("battery_threshold", "0")][..], &[("repairs", "peut-être")], &[("port", "x")]]
-        {
+        for tags in [
+            &[("battery_threshold", "0")][..],
+            &[("repairs", "peut-être")],
+            &[("port", "x")],
+            &[("device_stale_days", "0")],
+        ] {
             let error = HomeAssistantCollector::new()
                 .probe(&target(
                     "homeassistant",
