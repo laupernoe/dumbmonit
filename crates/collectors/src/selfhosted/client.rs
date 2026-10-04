@@ -112,6 +112,34 @@ impl HttpClient {
         Ok((status, body))
     }
 
+    /// Un `POST` JSON dont le code est laissé à l'appelant (recherche
+    /// d'Immich, qui ne connaît pas de forme `GET`).
+    pub async fn post(
+        &self,
+        path: &str,
+        body: &impl serde::Serialize,
+    ) -> Result<(StatusCode, String), ProbeError> {
+        let mut request = self
+            .http
+            .post(self.url(path))
+            .header(reqwest::header::ACCEPT, "application/json")
+            .json(body);
+        for (name, value) in &self.auth.headers {
+            request = request.header(*name, value);
+        }
+        if let Some((username, password)) = &self.auth.basic {
+            request = request.basic_auth(username, Some(password));
+        }
+        let response = request
+            .timeout(self.timeout)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error, path))?;
+        let status = response.status();
+        let body = response.text().await.map_err(|error| self.transport(&error, path))?;
+        Ok((status, body))
+    }
+
     /// Traduit un code HTTP en erreur de sonde : un identifiant refusé ne doit
     /// jamais passer pour « serveur injoignable », un 503 jamais pour une erreur
     /// de configuration.
