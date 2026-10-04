@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, warn};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::middleware::Identity;
 use crate::collectors::push::{self, Settings, Status, Verdict, store, token};
 use crate::db;
 use crate::state::AppState;
@@ -165,19 +166,21 @@ async fn refresh(state: &AppState, target_id: TargetId) {
 
 // ----------------------------------------------------------- interface
 
-/// Le moniteur d'une cible, jeton compris.
+/// Le moniteur d'une cible, jeton compris pour un administrateur.
 ///
-/// Le jeton est bien renvoyé, contrairement aux autres secrets : il ne donne
-/// que le droit de dire « le travail a tourné », et l'utilisateur doit pouvoir
-/// le recopier dans une crontab longtemps après l'avoir créé.
+/// Le jeton est bien renvoyé à un administrateur (compte `admin` ou jeton
+/// `write`), contrairement aux autres secrets : l'utilisateur doit pouvoir le
+/// recopier dans une crontab longtemps après l'avoir créé. Il permet pourtant
+/// de déclarer « le travail a tourné » — donc de masquer une sauvegarde qui
+/// échoue : un lecteur n'en reçoit ni le jeton ni le chemin (`null`).
 #[derive(Debug, Serialize)]
 pub struct PushMonitorView {
     pub target_id: TargetId,
-    pub token: String,
+    pub token: Option<String>,
     /// Chemin à appeler, relatif à l'adresse du serveur : `/api/push/<token>`.
     /// L'interface le complète avec l'origine qu'elle voit — le serveur ne
     /// connaît pas son adresse publique.
-    pub path: String,
+    pub path: Option<String>,
     pub last_seen_at: Option<String>,
     /// Âge du dernier appel en secondes, `None` tant qu'aucun n'a été reçu.
     pub last_seen_age_secs: Option<u64>,
@@ -217,7 +220,11 @@ async fn load_push_target(state: &AppState, id: TargetId) -> ApiResult<dumbmonit
     Ok(target)
 }
 
-fn view(target: &dumbmonit_proto::Target, monitor: store::Monitor) -> PushMonitorView {
+fn view(
+    target: &dumbmonit_proto::Target,
+    monitor: store::Monitor,
+    reveal_token: bool,
+) -> PushMonitorView {
     let now_ms = chrono::Utc::now().timestamp_millis();
     let (settings, settings_error) = match Settings::from_target(target) {
         Ok(settings) => (Some(settings), None),
@@ -232,8 +239,8 @@ fn view(target: &dumbmonit_proto::Target, monitor: store::Monitor) -> PushMonito
     };
     PushMonitorView {
         target_id: monitor.target_id,
-        path: format!("/api/push/{}", monitor.token),
-        token: monitor.token,
+        path: reveal_token.then(|| format!("/api/push/{}", monitor.token)),
+        token: reveal_token.then_some(monitor.token),
         last_seen_at: monitor.last_seen_at,
         last_seen_age_secs: monitor.last_seen_ms.map(|then| push::age(then, now_ms).as_secs()),
         last_status: monitor.last_status.as_str(),
@@ -247,15 +254,35 @@ fn view(target: &dumbmonit_proto::Target, monitor: store::Monitor) -> PushMonito
     }
 }
 
-/// `GET /api/targets/{id}/push` : le moniteur, créé au passage s'il n'existait
-/// pas encore (cible créée par un client qui ignore ce type, ou changée de type).
+/// `GET /api/targets/{id}/push` : le moniteur. Pour un administrateur, il est
+/// créé au passage s'il n'existait pas encore (cible créée par un client qui
+/// ignore ce type, ou changée de type) ; un lecteur ne crée rien, et ne voit
+/// pas le jeton.
 async fn get_monitor(
     State(state): State<AppState>,
+    Identity(principal): Identity,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<PushMonitorView>> {
     let target = load_push_target(&state, id).await?;
-    let monitor = store::ensure(&state.pool, &state.cipher, id).await?;
-    Ok(Json(view(&target, monitor)))
+    let admin = principal.is_admin();
+    let monitor = if admin {
+        store::ensure(&state.pool, &state.cipher, id).await?
+    } else {
+        match store::get(&state.pool, &state.cipher, id).await? {
+            Some(monitor) => monitor,
+            None => store::Monitor {
+                target_id: id,
+                token: String::new(),
+                last_seen_ms: None,
+                last_seen_at: None,
+                last_status: store::Status::Up,
+                last_message: String::new(),
+                received_total: 0,
+                created_at: String::new(),
+            },
+        }
+    };
+    Ok(Json(view(&target, monitor, admin)))
 }
 
 /// `POST /api/targets/{id}/push/regenerate` : nouveau jeton, l'ancienne URL
@@ -266,7 +293,7 @@ async fn regenerate(
 ) -> ApiResult<Json<PushMonitorView>> {
     let target = load_push_target(&state, id).await?;
     let monitor = store::regenerate(&state.pool, &state.cipher, id).await?;
-    Ok(Json(view(&target, monitor)))
+    Ok(Json(view(&target, monitor, true)))
 }
 
 #[cfg(test)]

@@ -454,7 +454,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
     if options.screenshots
         && let Some(browser) = &context.browser_url
     {
-        capture_all(context, id, browser, &to_capture).await;
+        capture_all(context, id, browser, options.allow_private, &to_capture).await;
     }
 
     store::prune(pool, &context.data_dir, id).await?;
@@ -494,6 +494,7 @@ async fn capture_all(
     context: &Context,
     target: dumbmonit_proto::TargetId,
     browser: &str,
+    allow_private: bool,
     snapshots: &[(i64, String)],
 ) {
     let started = Instant::now();
@@ -505,7 +506,11 @@ async fn capture_all(
             );
             return;
         }
-        let image = match tokio::time::timeout(SCREENSHOT_TIMEOUT, cdp::capture(browser, url)).await
+        let image = match tokio::time::timeout(
+            SCREENSHOT_TIMEOUT,
+            cdp::capture(browser, url, allow_private),
+        )
+        .await
         {
             Ok(Ok(image)) => image,
             Ok(Err(error)) => {

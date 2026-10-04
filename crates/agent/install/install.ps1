@@ -66,6 +66,58 @@ function Remove-AncienAgent {
     return $retire
 }
 
+# Propriétaires admis pour le dossier de configuration et ce qu'il contient :
+# SYSTEM, les administrateurs, TrustedInstaller, et le compte qui exécute
+# l'installateur (déjà administrateur, contrôlé plus bas).
+$SidSysteme = New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
+$SidAdmins  = New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')
+
+function Test-ProprietaireSur($chemin) {
+    $proprietaire = (Get-Acl -LiteralPath $chemin).GetOwner([Security.Principal.SecurityIdentifier])
+    $admis = @(
+        'S-1-5-18',
+        'S-1-5-32-544',
+        'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464',
+        [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    )
+    return $admis -contains $proprietaire.Value
+}
+
+# Le dossier de configuration porte le jeton, le secret de liaison, et une
+# configuration que le service SYSTEM exécute (password_command des dépôts
+# restic). Sous ProgramData, il hériterait de droits qui laissent tout
+# utilisateur y créer des fichiers : un compte sans privilège qui l'aurait créé
+# avant nous en resterait propriétaire, et pourrait réécrire la configuration.
+# Un dossier ou un fichier appartenant à un autre compte arrête donc
+# l'installation ; sinon, le dossier est réservé à SYSTEM et aux
+# administrateurs (héritage coupé, propriétaire Administrators), puis tout son
+# contenu est réaligné sur ces seuls droits.
+function Protect-ConfigDir {
+    if (Test-Path -LiteralPath $ConfigDir) {
+        $elements = @(Get-Item -LiteralPath $ConfigDir -Force) + @(Get-ChildItem -LiteralPath $ConfigDir -Recurse -Force)
+        foreach ($element in $elements) {
+            if (-not (Test-ProprietaireSur $element.FullName)) {
+                Stop-Sur "$($element.FullName) belongs to another account: it may have been planted to take over the agent. Check it, remove $ConfigDir, then run the installer again."
+            }
+        }
+    } else {
+        New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
+    }
+    & icacls.exe $ConfigDir /setowner '*S-1-5-32-544' /T /C /Q | Out-Null
+    $acl = New-Object System.Security.AccessControl.DirectorySecurity
+    $acl.SetAccessRuleProtection($true, $false)
+    foreach ($sid in @($SidSysteme, $SidAdmins)) {
+        $regle = New-Object System.Security.AccessControl.FileSystemAccessRule(
+            $sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+        $acl.AddAccessRule($regle)
+    }
+    Set-Acl -LiteralPath $ConfigDir -AclObject $acl
+    # Le contenu ne garde que ce qu'il hérite du dossier.
+    Get-ChildItem -LiteralPath $ConfigDir -Recurse -Force | ForEach-Object {
+        & icacls.exe $_.FullName /reset /C /Q | Out-Null
+    }
+}
+
 # Migration sur place d'une installation d'avant le renommage : l'ancien service
 # est arrêté et retiré, et sa configuration reprend sa place sous le nouveau nom.
 # Elle est réécrite juste après depuis -Token/-Url, mais les clés qu'un
@@ -127,7 +179,9 @@ $architecture = switch ($env:PROCESSOR_ARCHITECTURE) {
 }
 
 New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-New-Item -ItemType Directory -Path $ConfigDir  -Force | Out-Null
+# Le dossier de configuration n'est créé qu'une fois protégé (Protect-ConfigDir),
+# juste avant d'y écrire : pas de fenêtre où il hériterait des droits de
+# ProgramData.
 
 # Écriture à côté puis renommage : Windows verrouille le fichier d'un exécutable
 # en cours, et un service déjà installé tiendrait le sien.
@@ -182,6 +236,7 @@ Move-Item -Path $exeTemporaire -Destination $ExePath -Force
 # arrêté et sa configuration déplacée avant que la nouvelle ne soit écrite. Pas
 # avant — un téléchargement raté ne doit pas laisser la machine sans agent.
 Migrate-Legacy
+Protect-ConfigDir
 
 # ------------------------------------------------------------ configuration
 

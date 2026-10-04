@@ -319,6 +319,22 @@ impl ChannelPayload {
             }
         };
 
+        // Des secrets conservés ne partent jamais vers une destination qu'ils n'ont
+        // pas connue : changer l'adresse du serveur, l'hôte SMTP ou le type du
+        // canal sans les ressaisir permettrait à un porteur de jeton `write` de se
+        // les faire envoyer, sans jamais avoir pu les lire.
+        if let (Some(current), None) = (current, &secrets)
+            && has_stored_secrets(&current.secrets)
+            && (current.kind != kind || destination_changed(&kind, &current.settings, &settings))
+        {
+            return Err(ApiError::BadRequest(
+                "Re-enter the secrets when changing where this channel sends to (server address, \
+                 host, port, encryption, region or channel type): stored secrets are never sent \
+                 to a new destination."
+                    .into(),
+            ));
+        }
+
         // Configuration telle qu'elle vivra après enregistrement, secrets conservés
         // compris : c'est elle qu'il faut éprouver, pas seulement ce qui a été soumis.
         let effective = ChannelConfig {
@@ -345,6 +361,26 @@ impl ChannelPayload {
             secrets,
         })
     }
+}
+
+fn has_stored_secrets(secrets: &Value) -> bool {
+    secrets.as_object().is_some_and(|map| map.values().any(|v| !v.is_null()))
+}
+
+/// Vrai si l'un des réglages « destination » du catalogue diffère. Absent, nul
+/// et vide valent la même chose : le notificateur applique alors son défaut.
+fn destination_changed(kind: &str, before: &Value, after: &Value) -> bool {
+    fn normalised(value: Option<&Value>) -> Option<String> {
+        match value? {
+            Value::Null => None,
+            Value::String(text) if text.trim().is_empty() => None,
+            Value::String(text) => Some(text.trim().to_string()),
+            other => Some(other.to_string()),
+        }
+    }
+    notify::catalog::destination_keys(kind)
+        .iter()
+        .any(|key| normalised(before.get(*key)) != normalised(after.get(*key)))
 }
 
 /// Traduit la politique soumise, champ par champ, par-dessus celle en place.

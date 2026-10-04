@@ -110,8 +110,11 @@ static CHECKSUMS: LazyLock<Mutex<HashMap<PathBuf, String>>> = LazyLock::new(Mute
 /// termine par `.sha256`.
 ///
 /// Les scripts d'installation vérifient le binaire téléchargé contre cette
-/// empreinte, et l'interface l'affiche à côté de la commande d'installation : un
-/// binaire remplacé en chemin (HTTP en clair, mandataire) ne s'installe pas.
+/// empreinte, et l'interface l'affiche à côté de la commande d'installation.
+/// Servie par la même origine que le binaire, elle détecte un téléchargement
+/// tronqué ou corrompu, mais ne protège pas d'un intermédiaire qui, en HTTP en
+/// clair, remplacerait le script, le binaire et l'empreinte ensemble : seul
+/// HTTPS (ou la comparaison avec l'empreinte affichée) le fait.
 pub async fn download(State(state): State<AppState>, Path(name): Path<String>) -> Response {
     if let Some(binary) = name.strip_suffix(CHECKSUM_SUFFIX) {
         return checksum(&state, binary).await;
@@ -222,6 +225,26 @@ mod tests {
         assert!(INSTALL_SH.contains("sha256sum"));
         assert!(INSTALL_PS1.contains(".sha256"));
         assert!(INSTALL_PS1.contains("Get-FileHash"));
+    }
+
+    /// Le dossier de configuration Windows est protégé avant que le jeton n'y
+    /// soit écrit, et un dossier préparé par un autre compte arrête tout.
+    #[test]
+    fn le_script_windows_protege_la_configuration_avant_d_y_ecrire() {
+        let body = INSTALL_PS1
+            .split("# --------------------------------------------------------------- privilèges")
+            .nth(1)
+            .expect("corps du script");
+        let protect = body.find("Protect-ConfigDir\n").expect("Protect-ConfigDir appelée");
+        let write = body.find("WriteAllLines($ConfigPath").expect("écriture de la configuration");
+        assert!(protect < write, "la protection doit précéder l'écriture du jeton");
+        assert!(
+            !body.contains("New-Item -ItemType Directory -Path $ConfigDir  -Force"),
+            "le dossier ne doit pas être créé avec les droits hérités de ProgramData"
+        );
+        assert!(INSTALL_PS1.contains("SetAccessRuleProtection($true, $false)"));
+        assert!(INSTALL_PS1.contains("/setowner '*S-1-5-32-544'"));
+        assert!(INSTALL_PS1.contains("belongs to another account"));
     }
 
     #[test]

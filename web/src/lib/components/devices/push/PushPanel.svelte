@@ -61,7 +61,7 @@
 	});
 
 	/** Full URL, from the origin the browser sees: the server does not know its public address. */
-	const url = $derived(monitor ? `${typeof location === 'undefined' ? '' : location.origin}${monitor.path}` : '');
+	const url = $derived(monitor?.path ? `${typeof location === 'undefined' ? '' : location.origin}${monitor.path}` : '');
 	const cronLine = $derived(`0 3 * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 ${url} > /dev/null`);
 
 	const VERDICT: Record<PushMonitor['verdict'], { tone: Tone; label: string }> = {
@@ -89,6 +89,9 @@
 		</div>
 	{:else}
 		<div class="flex flex-col gap-4">
+			{#if !monitor.path}
+				<p class="text-sm text-ink-2">The URL to call is shown to administrators only: anyone holding it can report the job as done.</p>
+			{:else}
 			<div>
 				<p class="mb-1.5 text-sm font-semibold text-ink">URL to call</p>
 				<CopyBlock value={url} label="Copy the URL" />
@@ -104,6 +107,7 @@
 					Place the call after the job, joined with <code>&amp;&amp;</code>: it then only runs when the job succeeded.
 				</p>
 			</div>
+			{/if}
 
 			<dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
 				<dt class="text-ink-2">Last call</dt>
@@ -135,10 +139,12 @@
 				<dd class="tnum text-ink">{monitor.received_total}</dd>
 			</dl>
 
+			{#if monitor.path}
 			<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
 				<Confirm variant="secondary" confirmLabel="Replace the URL?" onconfirm={regenerate} loading={regenerating}>Regenerate URL</Confirm>
 				<span class="text-[0.8125rem] text-ink-2">The current URL stops answering immediately; update the job with the new one.</span>
 			</div>
+			{/if}
 			{#if regenerateError}
 				<ErrorNotice error={regenerateError} title="Could not regenerate the URL" />
 			{/if}

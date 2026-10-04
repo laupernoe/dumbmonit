@@ -5,11 +5,13 @@
 //! d'Argon2id ralentit déjà l'attaquant ; ces compteurs le bloquent.
 //!
 //! Chaque tentative est comptée dans **deux seaux** : celui de l'adresse du
-//! client et celui du compte visé. Le premier arrête un script qui balaie des
-//! comptes depuis une adresse ; le second protège un compte visé depuis
-//! plusieurs adresses — au prix, assumé, qu'un inconnu qui atteint le port peut
-//! tenir un compte précis dehors quelques minutes en échouant exprès. Le blocage
-//! est donc plafonné, et il s'efface sur une connexion réussie.
+//! client et celui du couple (compte visé, adresse). Le premier arrête un script
+//! qui balaie des comptes depuis une adresse ; le second freine l'essai répété
+//! d'un même compte. Le compte n'est **pas** bloqué pour toutes les adresses :
+//! sinon n'importe quel inconnu atteignant le port tiendrait l'administrateur
+//! dehors — jusqu'à l'empêcher de changer son mot de passe — en échouant exprès.
+//! Une attaque répartie sur de nombreuses adresses reste ralentie par le coût
+//! d'Argon2id. Le blocage est plafonné, et s'efface sur une connexion réussie.
 //!
 //! Tout est **en mémoire** : une instance est un processus unique, et écrire
 //! chaque échec en base pour survivre à un redémarrage n'apporterait rien —
@@ -80,13 +82,14 @@ impl Default for RateLimiter {
 pub enum Key {
     /// Adresse du client, telle que [`crate::auth::client_ip`] l'a établie.
     Ip(IpAddr),
-    /// Compte visé, en minuscules — les identifiants ne distinguent pas la casse.
-    User(String),
+    /// Compte visé (en minuscules — les identifiants ne distinguent pas la
+    /// casse), depuis une adresse donnée.
+    User(String, Option<IpAddr>),
 }
 
 impl Key {
-    pub fn user(username: &str) -> Self {
-        Self::User(username.trim().to_lowercase())
+    pub fn user(username: &str, ip: Option<IpAddr>) -> Self {
+        Self::User(username.trim().to_lowercase(), ip)
     }
 }
 
@@ -201,22 +204,25 @@ mod tests {
         let now = Instant::now();
         let attacker = Key::Ip("203.0.113.7".parse().unwrap());
         let owner = Key::Ip("192.168.1.10".parse().unwrap());
-        let admin = Key::user("Admin");
-        let jane = Key::user("jane");
+        let attacker_ip = Some("203.0.113.7".parse().unwrap());
+        let owner_ip = Some("192.168.1.10".parse().unwrap());
+        let admin = Key::user("Admin", owner_ip);
+        let jane_from_attacker = Key::user("jane", attacker_ip);
+        let jane_from_owner = Key::user("jane", owner_ip);
 
         for _ in 0..=FREE_ATTEMPTS {
-            buckets.record_failure(&[attacker.clone(), jane.clone()], now);
+            buckets.record_failure(&[attacker.clone(), jane_from_attacker.clone()], now);
         }
         // L'adresse de l'attaquant est bloquée, quel que soit le compte visé.
-        assert!(buckets.check(&[attacker.clone(), admin.clone()], now).is_err());
-        // Le compte visé est bloqué, quelle que soit l'adresse.
-        assert!(buckets.check(&[owner.clone(), jane.clone()], now).is_err());
-        // Le propriétaire, depuis chez lui, sur son compte : rien à signaler.
+        assert!(buckets.check(&[attacker.clone(), Key::user("admin", attacker_ip)], now).is_err());
+        // Le compte visé ne l'est pas depuis une autre adresse : un inconnu ne
+        // peut pas tenir son propriétaire dehors.
+        assert!(buckets.check(&[owner.clone(), jane_from_owner.clone()], now).is_ok());
         assert!(buckets.check(&[owner.clone(), admin.clone()], now).is_ok());
 
-        buckets.record_success(&[owner, jane.clone()]);
-        assert!(buckets.check(&[jane], now).is_ok());
-        assert!(buckets.check(&[attacker], now).is_err());
+        buckets.record_success(&[attacker.clone(), jane_from_attacker.clone()]);
+        assert!(buckets.check(&[jane_from_attacker], now).is_ok());
+        assert!(buckets.check(&[attacker], now).is_ok());
     }
 
     #[test]
@@ -224,10 +230,10 @@ mod tests {
         let mut buckets = Buckets::new();
         let start = Instant::now();
         for i in 0..PURGE_ABOVE {
-            buckets.record_failure(&[Key::user(&format!("u{i}"))], start);
+            buckets.record_failure(&[Key::user(&format!("u{i}"), None)], start);
         }
         assert!(buckets.buckets.len() >= PURGE_ABOVE);
-        buckets.record_failure(&[Key::user("late")], start + IDLE + Duration::from_secs(1));
+        buckets.record_failure(&[Key::user("late", None)], start + IDLE + Duration::from_secs(1));
         assert!(buckets.buckets.len() < 10, "{}", buckets.buckets.len());
     }
 

@@ -132,7 +132,11 @@ pub async fn create(
     let options =
         export::ExportOptions { include_account_secrets: payload.include_account_secrets };
     let collected = export::collect(&state.pool, &state.cipher, options).await?;
-    let envelope = bundle::seal(&collected, &payload.passphrase)?;
+    // Argon2id (32 Mio, trois passes) hors des fils du runtime : une dérivation
+    // ne doit pas figer les autres requêtes.
+    let passphrase = payload.passphrase.clone();
+    let envelope =
+        tokio::task::spawn_blocking(move || bundle::seal(&collected, &passphrase)).await??;
     let body = serde_json::to_vec_pretty(&envelope)?;
 
     let name = format!("dumbmonit-backup-{}.json", chrono::Utc::now().format("%Y%m%d-%H%M%S"));
@@ -185,7 +189,9 @@ pub async fn restore(
     // phrase de passe pour un fichier que nous refuserons de toute façon.
     bundle::check_envelope(&envelope).map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
-    let opened = bundle::open(&envelope, &payload.passphrase)
+    let passphrase = payload.passphrase.clone();
+    let opened = tokio::task::spawn_blocking(move || bundle::open(&envelope, &passphrase))
+        .await?
         .map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
     let report = import::restore(&state.pool, &state.cipher, &opened, payload.apply).await?;
