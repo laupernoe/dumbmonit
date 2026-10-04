@@ -65,20 +65,44 @@ device offline, UniFi Internet down, UniFi WAN link down, UniFi gateway CPU
 high, UniFi device waiting for adoption, UniFi firmware update available,
 UniFi alarms, plus Device unreachable.
 
+## Devices
+
+`/rest/user` (the classic API, read with either credential) lists every
+client the controller has ever seen — most of a home network, in practice:
+phones passing by, guest Wi-Fi, smart devices that never come back. Tracking
+all of them for staleness would bury the alert under devices that simply
+never return, not devices that went silent. By default only clients the user
+marked one way or another count: named in UniFi, reserved on a fixed IP, or
+noted. The **Clients to watch besides the marked ones** option adds specific
+MAC addresses or client names, or `all` to track every client (not
+recommended on anything but a small, mostly-static network).
+
+Tracked clients are published under the generic family shared by every
+DumbMonit integration that tracks client devices — `dumbmonit_client_device_*`,
+prefixed without `unifi`, documented in full under
+[Client devices](../alerting/rules.md#client-devices):
+
+| Metric | What | Labels |
+|---|---|---|
+| `last_seen_timestamp_seconds` | Last connection, as `/rest/user` reports it | `device`, `type` (`Wired`, `Wireless` or `Unknown`), `os` (empty), `user` (empty), `kind` |
+| `stale_seconds` | Positive once a tracked client has gone past `device_stale_days` (3 by default) without connecting; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `connection`: UniFi has no backup to report) |
+
 ## The device page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries UniFi. It says what is wrong first (devices offline, Internet or a WAN
 link down, alarms), then the devices by type with their state, firmware and
-load, and the clients.
+load, and the clients, then the table of tracked clients with their last
+connection.
 
 ## How it was validated
 
 Login, the View Only role, error answers (refused password, unknown site,
 refused key, expired session) and the answers of a controller without devices
 were checked against UniFi Network 10.6.106, self-hosted. No device could be
-adopted there: the device list, the health of an equipped site and the
-Integration API payloads are validated against the official documentation.
+adopted there: the device list, the health of an equipped site, the known
+clients (`/rest/user`) and the Integration API payloads are validated against
+the official documentation.
 
 ## Create a read-only access in UniFi Network
 
@@ -95,7 +119,7 @@ Integration API payloads are validated against the official documentation.
 4. DumbMonit only reads. It never restarts, adopts, upgrades or provisions a device, and never acknowledges an alarm.
 
 !!! warning
-    Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless you installed your own.
+    Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless you installed your own. UniFi knows every client that ever connected, most of them phones passing by: only those named, reserved on a fixed IP, or noted in UniFi are watched for staleness by default, to avoid an alert for every visitor's phone. List more in the Clients to watch option, or enter all.
 
 ## Credentials
 
@@ -107,4 +131,6 @@ Integration API payloads are validated against the official documentation.
 Address: a host name or IP (`unifi.lan`), `host:port` (`unifi.lan:8443` for a
 self-hosted server), or a full URL; an address copied from the browser, with
 `/manage/…` or `/network/…`, is accepted. Options: site (`default`), port (443),
-certificate check and request timeout (15 s).
+certificate check, request timeout (15 s), clients to watch besides the marked
+ones (empty, or `all`), and device staleness (`device_stale_days`, 3 days by
+default).

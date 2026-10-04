@@ -19,7 +19,7 @@
 	import { FOLDS, type ApplianceView } from './folds';
 
 	/** Kinds whose devices page also shows the client-devices table. */
-	const WITH_DEVICES = new Set(['veeam']);
+	const WITH_DEVICES = new Set(['veeam', 'tailscale']);
 
 	interface Props {
 		target: Target;

@@ -222,6 +222,62 @@ pub fn classic_device(raw: &Value) -> Option<Device> {
     })
 }
 
+/// Un client connu du site, lu par `/rest/user` (API classique) : la liste
+/// que le contrôleur garde de tout appareil qui s'est un jour connecté, pas
+/// seulement de ceux qui sont en ligne maintenant — `stat/sta` ne donne que
+/// ces derniers. Voir le commentaire de module sur [`ClientWatch`] : la
+/// plupart ne sont jamais nommés ni annotés, et ne nourrissent pas le tableau
+/// des appareils par défaut.
+#[derive(Debug, Clone)]
+pub struct ClientRecord {
+    pub mac: String,
+    /// Alias que l'utilisateur a donné au client dans UniFi : un signe fort
+    /// qu'il lui importe.
+    pub name: Option<String>,
+    /// Nom annoncé par l'appareil lui-même (DHCP) : moins fiable, jamais
+    /// choisi par l'utilisateur.
+    pub hostname: Option<String>,
+    /// Coché dans l'interface (« Notes ») : l'utilisateur l'a remarqué.
+    pub noted: bool,
+    /// Réservation DHCP en IP fixe : encore un geste délibéré.
+    pub use_fixedip: bool,
+    pub is_wired: Option<bool>,
+    /// Dernière connexion, en secondes Unix ; déjà au format epoch dans
+    /// `/rest/user`, à la différence des horodatages ISO 8601 d'autres API
+    /// UniFi.
+    pub last_seen: Option<i64>,
+}
+
+impl ClientRecord {
+    /// Un client que l'utilisateur a marqué d'une façon ou d'une autre :
+    /// nommé, réservé en IP fixe, ou annoté. Voir le commentaire de module de
+    /// `collectors/unifi/mod.rs` sur le choix de ne pas suivre, par défaut,
+    /// les centaines de clients transitoires d'un réseau domestique.
+    pub fn cared_about(&self) -> bool {
+        self.noted || self.use_fixedip || self.name.is_some()
+    }
+
+    /// Le plus parlant : l'alias choisi, sinon le nom annoncé par l'appareil,
+    /// sinon son adresse MAC.
+    pub fn display_name(&self) -> String {
+        self.name.clone().or_else(|| self.hostname.clone()).unwrap_or_else(|| self.mac.clone())
+    }
+}
+
+/// Une entrée de `/rest/user`.
+pub fn classic_client(raw: &Value) -> Option<ClientRecord> {
+    let mac = text(raw.get("mac"))?;
+    Some(ClientRecord {
+        mac,
+        name: text(raw.get("name")),
+        hostname: text(raw.get("hostname")),
+        noted: raw.get("noted").and_then(Value::as_bool).unwrap_or(false),
+        use_fixedip: raw.get("use_fixedip").and_then(Value::as_bool).unwrap_or(false),
+        is_wired: raw.get("is_wired").and_then(Value::as_bool),
+        last_seen: number(raw.get("last_seen")).map(|v| v as i64),
+    })
+}
+
 /// Pagination de l'API d'intégration.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -378,6 +434,7 @@ mod tests {
     const HEALTH: &str = include_str!("testdata/documented/classic_stat_health.json");
     const HEALTH_EMPTY: &str = include_str!("testdata/network_10.6.106/stat_health_empty.json");
     const INTEGRATION: &str = include_str!("testdata/documented/integration_devices.json");
+    const REST_USER: &str = include_str!("testdata/documented/rest_user.json");
 
     fn devices() -> Vec<Device> {
         let classic: Classic<Value> = serde_json::from_str(DEVICES).unwrap();
@@ -454,6 +511,29 @@ mod tests {
                 .unwrap();
         assert_eq!(stats.cpu_utilization_pct, Some(12.4));
         assert_eq!(stats.uptime_sec, Some(1_728_035.0));
+    }
+
+    #[test]
+    fn un_client_connu_dit_s_il_est_remarque() {
+        let classic: Classic<Value> = serde_json::from_str(REST_USER).unwrap();
+        let clients: Vec<ClientRecord> = classic.data.iter().filter_map(classic_client).collect();
+        assert_eq!(clients.len(), 4);
+        let desktop = clients.iter().find(|c| c.mac == "aa:bb:cc:00:00:01").unwrap();
+        assert!(desktop.cared_about(), "nommé, en IP fixe et annoté");
+        assert_eq!(desktop.display_name(), "Noe's desktop");
+        assert_eq!(desktop.is_wired, Some(true));
+        assert_eq!(desktop.last_seen, Some(1_790_798_700));
+
+        let printer = clients.iter().find(|c| c.mac == "aa:bb:cc:00:00:03").unwrap();
+        assert!(printer.cared_about(), "nommé suffit, sans IP fixe ni note");
+
+        let phone = clients.iter().find(|c| c.mac == "aa:bb:cc:00:00:02").unwrap();
+        assert!(!phone.cared_about(), "seulement un nom d'hôte annoncé par l'appareil");
+        assert_eq!(phone.display_name(), "iPhone-de-Bob", "retombe sur le nom d'hôte");
+
+        let guest = clients.iter().find(|c| c.mac == "aa:bb:cc:00:00:04").unwrap();
+        assert!(!guest.cared_about());
+        assert_eq!(guest.display_name(), "android-xyz123");
     }
 
     #[test]

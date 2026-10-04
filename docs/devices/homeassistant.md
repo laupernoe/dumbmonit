@@ -55,19 +55,47 @@ Assistant in recovery mode, Home Assistant not running, Home Assistant entities
 went unavailable, Home Assistant battery low, Home Assistant update available,
 Home Assistant repair to address, plus Device unreachable.
 
+## Devices
+
+Every phone and tablet signed in to the companion app (the `mobile_app`
+integration) is published under the generic family shared by every DumbMonit
+integration that tracks client devices — `dumbmonit_client_device_*`,
+prefixed without `homeassistant`, documented in full under
+[Client devices](../alerting/rules.md#client-devices):
+
+| Metric | What | Labels |
+|---|---|---|
+| `last_seen_timestamp_seconds` | Last update of the device's `device_tracker` entity | `device`, `type` (`Mobile`), `os` (empty), `user` (the person it is linked to, if any), `kind` |
+| `stale_seconds` | Positive once a device has gone past `device_stale_days` (3 by default) without an update; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `connection`: Home Assistant has no backup to report) |
+
+**How a device is recognized**: `/api/states` does not say which integration
+created an entity — that needs the entity registry, which the REST API does
+not serve. The companion app's `device_tracker` is the only one that sets a
+`battery_level` attribute; third-party location integrations (Life360,
+OwnTracks, the demo integration used in testing) set at most `battery`. A
+third-party integration that happened to copy that exact attribute name would
+be mistaken for the companion app; conversely, a companion-app device with
+battery reporting turned off is missing from the table rather than shown
+wrongly. The device's account, when known, comes from a `person.*` entity
+whose `device_trackers` attribute names it.
+
 ## The device page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Home Assistant. It says what is wrong first (recovery mode, repairs of
 error severity, entities unavailable), then the low batteries by level, the
-updates waiting with their versions, and the entities by domain.
+updates waiting with their versions, the entities by domain, and the table of
+companion-app devices with their last connection.
 
 ## How it was validated
 
 Against Home Assistant 2026.9.4, with the long-lived token of a user without
 administrator rights: configuration, entity states of the demo integration and
 of template sensors (battery levels, a battery binary sensor, an unavailable
-sensor), update entities and the repairs list over the WebSocket API.
+sensor), update entities and the repairs list over the WebSocket API. The
+companion app's `device_tracker` attributes (`battery_level`, `source_type`)
+were checked against the `mobile_app` integration's source, not against a
+live phone.
 
 ## Create a dedicated user and a long-lived token in Home Assistant
 
@@ -84,7 +112,7 @@ sensor), update entities and the repairs list over the WebSocket API.
 4. DumbMonit only reads /api/config, /api/states and, over the WebSocket API, the list of repairs. It never calls a service, never fires an event and never changes a state.
 
 !!! warning
-    A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS.
+    A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS. Every phone and tablet signed in to the companion app (the mobile_app integration) appears in the Devices table below with its last activity; it is optional and silent without that app.
 
 ## Credentials
 
@@ -96,4 +124,5 @@ Address: a host name or IP (`homeassistant.local`), `host:port`, or a full URL
 (`https://ha.example.net`, with a path prefix behind a reverse proxy); a
 trailing `/api` is accepted. Options: protocol (HTTP by default), port (8123),
 certificate check, request timeout (10 s), low battery threshold (20%), domains
-left out (none) and repairs (read).
+left out (none), repairs (read) and device staleness (`device_stale_days`, 3
+days by default).

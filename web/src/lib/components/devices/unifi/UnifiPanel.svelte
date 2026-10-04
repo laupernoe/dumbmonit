@@ -8,6 +8,7 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type Target } from '$lib/api';
 	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import { formatCount, formatSpan } from '../truenas/format';
 	import { formatPercent, readings, selector } from '../instant';
 	import { SUBSYSTEM_WORD, TYPE_WORD, emptyView, fold, stateTone, stateWord, type UnifiView } from './format';
@@ -181,3 +182,5 @@
 		{/if}
 	</Panel>
 {/if}
+
+<ClientDevicesTable {target} />

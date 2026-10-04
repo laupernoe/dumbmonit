@@ -6,12 +6,19 @@
 //! `update.*`. Ce module lit l'état de toutes les entités en un appel et en
 //! tire des totaux par domaine, plus une série nommée pour ce qui demande une
 //! action (pile faible, mise à jour, réparation, entité indisponible).
+//!
+//! Les appareils de l'app compagnon (intégration `mobile_app` : téléphones et
+//! tablettes connectés au compte) nourrissent en plus le tableau générique
+//! des appareils clients ([`mobile_app_devices`]) : voir son commentaire pour
+//! comment ils sont reconnus sans registre d'entités.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use dumbmonit_proto::{MetricKind, Sample};
 use serde::Deserialize;
 use serde_json::Value;
+
+use crate::client_devices::Device;
 
 use super::websocket::Issues;
 
@@ -54,6 +61,11 @@ pub struct State {
     pub state: String,
     #[serde(default)]
     pub attributes: serde_json::Map<String, Value>,
+    /// Horodate de la dernière mise à jour de l'état, prise comme dernière
+    /// connexion pour un appareil de l'app compagnon (voir
+    /// [`mobile_app_devices`]).
+    #[serde(default)]
+    pub last_updated: Option<String>,
 }
 
 impl State {
@@ -237,6 +249,67 @@ pub fn repair_samples(issues: &Issues, ts_ms: i64) -> Vec<Sample> {
     out
 }
 
+/// Date ISO 8601 (telle que `/api/states` la renvoie) convertie en secondes
+/// Unix.
+fn parse_instant(value: &str) -> Option<i64> {
+    value.parse::<chrono::DateTime<chrono::Utc>>().ok().map(|dt| dt.timestamp())
+}
+
+/// Le compte propriétaire de chaque `device_tracker` qu'une entité `person.*`
+/// revendique (attribut `device_trackers`) : la seule donnée de compte que
+/// l'API REST donne pour un appareil de l'app compagnon.
+fn owners(states: &[State]) -> BTreeMap<&str, &str> {
+    let mut out = BTreeMap::new();
+    for state in states {
+        if state.domain() != "person" {
+            continue;
+        }
+        let Some(trackers) = state.attributes.get("device_trackers").and_then(Value::as_array)
+        else {
+            continue;
+        };
+        for tracker in trackers {
+            if let Some(entity_id) = tracker.as_str() {
+                out.insert(entity_id, state.name());
+            }
+        }
+    }
+    out
+}
+
+/// Les appareils de l'app compagnon (intégration `mobile_app`) : un téléphone
+/// ou une tablette connecté au compte, dont on veut la dernière activité
+/// comme dernière connexion.
+///
+/// `/api/states` ne dit pas quelle intégration a créé une entité — il
+/// faudrait le registre d'entités, que l'API REST ne sert pas. Le signe le
+/// plus fiable sans lui : l'app compagnon est la seule à poser l'attribut
+/// `battery_level` sur son `device_tracker` ; une intégration de
+/// géolocalisation générique (Life360, OwnTracks, le suivi de démonstration)
+/// pose au mieux `battery`, jamais `battery_level`. Un faux positif reste
+/// possible avec une intégration tierce qui copierait ce nom exact ; un faux
+/// négatif si l'app compagnon a coupé le rapport de pile — l'appareil manque
+/// alors au tableau plutôt que d'y apparaître à tort.
+pub fn mobile_app_devices(states: &[State]) -> Vec<Device> {
+    let owners = owners(states);
+    states
+        .iter()
+        .filter(|state| state.domain() == "device_tracker")
+        .filter(|state| state.attributes.contains_key("battery_level"))
+        .map(|state| Device {
+            name: state.name().to_string(),
+            device_type: "Mobile".to_string(),
+            os: String::new(),
+            user: owners
+                .get(state.entity_id.as_str())
+                .map(|name| name.to_string())
+                .unwrap_or_default(),
+            last_seen: state.last_updated.as_deref().and_then(parse_instant),
+            last_backup: None,
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -382,5 +455,62 @@ mod tests {
         let named =
             find(&samples, "homeassistant_repair", "issue", "country_not_configured").unwrap();
         assert_eq!(named.labels["domain"], "homeassistant");
+    }
+
+    fn client_value(
+        samples: &[Sample],
+        name: &str,
+        device: &str,
+        signal: Option<&str>,
+    ) -> Option<f64> {
+        samples
+            .iter()
+            .find(|s| {
+                s.metric == name
+                    && s.labels.get("device").map(String::as_str) == Some(device)
+                    && signal
+                        .is_none_or(|sig| s.labels.get("signal").map(String::as_str) == Some(sig))
+            })
+            .map(|s| s.value)
+    }
+
+    #[test]
+    fn un_appareil_de_l_app_compagnon_porte_battery_level_les_autres_non() {
+        let devices = mobile_app_devices(&states());
+        let names: Vec<&str> = devices.iter().map(|d| d.name.as_str()).collect();
+        assert_eq!(names, vec!["Pixel 8", "iPhone 15"]);
+        // Le suivi de démonstration (`device_tracker.demo_*`) pose `battery`,
+        // pas `battery_level` : il n'est pas confondu avec l'app compagnon.
+        assert!(!names.iter().any(|n| n.starts_with("Paulus") || *n == "Home Boy"));
+        let pixel = devices.iter().find(|d| d.name == "Pixel 8").unwrap();
+        assert_eq!(pixel.device_type, "Mobile");
+        assert_eq!(pixel.user, "Owner", "résolu par person.owner.device_trackers");
+        assert!(pixel.last_seen.is_some());
+        let iphone = devices.iter().find(|d| d.name == "iPhone 15").unwrap();
+        assert_eq!(iphone.user, "", "aucune personne ne revendique ce device_tracker");
+    }
+
+    #[test]
+    fn la_peremption_distingue_l_appareil_frais_du_vieux() {
+        use crate::client_devices;
+        let devices = mobile_app_devices(&states());
+        // Peu après la dernière activité du Pixel (07:40:12Z), bien après celle
+        // de l'iPhone (le 22, huit jours plus tôt).
+        let now = chrono::DateTime::parse_from_rfc3339("2026-09-30T08:00:00Z").unwrap();
+        let samples =
+            client_devices::samples("homeassistant", &devices, 3.0, now.timestamp_millis());
+        let pixel_age =
+            client_value(&samples, "client_device_stale_seconds", "Pixel 8", Some("connection"))
+                .unwrap();
+        assert!(pixel_age < 0.0, "le Pixel vient de se connecter : {pixel_age}");
+        let iphone_age =
+            client_value(&samples, "client_device_stale_seconds", "iPhone 15", Some("connection"))
+                .unwrap();
+        assert!(iphone_age > 0.0, "l'iPhone n'a pas donné signe depuis huit jours : {iphone_age}");
+        assert!(
+            client_value(&samples, "client_device_last_backup_timestamp_seconds", "Pixel 8", None)
+                .is_none(),
+            "Home Assistant ne sait rien d'une sauvegarde"
+        );
     }
 }

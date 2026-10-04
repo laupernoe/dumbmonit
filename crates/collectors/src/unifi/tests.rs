@@ -33,6 +33,12 @@ fn real(name: &str) -> &'static str {
     }
 }
 
+/// Quatre clients connus d'un site : un poste nommé, en IP fixe et annoté, un
+/// téléphone seulement annoncé par DHCP, une imprimante nommée mais sans IP
+/// fixe ni note, et un téléphone invité — voir le commentaire de module sur
+/// ceux qui comptent par défaut.
+const REST_USER: &str = include_str!("testdata/documented/rest_user.json");
+
 fn logged_in(headers: &HeaderMap) -> bool {
     headers.get("cookie").and_then(|v| v.to_str().ok()).is_some_and(|c| c.contains(COOKIE_VALUE))
 }
@@ -95,11 +101,27 @@ async fn self_hosted(counters: Arc<Counters>) -> String {
             }
         }
     };
+    let rest_user = {
+        let counters = counters.clone();
+        move |Path(site): Path<String>, headers: HeaderMap| {
+            let counters = counters.clone();
+            async move {
+                if !logged_in(&headers) || counters.expire.swap(0, Ordering::SeqCst) > 0 {
+                    return (StatusCode::UNAUTHORIZED, real("login_required")).into_response();
+                }
+                if site != "default" {
+                    return (StatusCode::UNAUTHORIZED, real("no_site")).into_response();
+                }
+                REST_USER.into_response()
+            }
+        }
+    };
     let app = Router::new()
         .route("/", get(|| async { Redirect::to("/manage") }))
         .route("/manage", get(|| async { "<html>UniFi Network</html>" }))
         .route("/api/login", post(login))
         .route("/api/s/{site}/stat/{what}", get(stat))
+        .route("/api/s/{site}/rest/user", get(rest_user))
         .route(
             "/v2/api/site/{site}/system-log/critical",
             post(|headers: HeaderMap| async move {
@@ -146,6 +168,35 @@ async fn un_compte_view_only_lit_tout_et_garde_sa_session() {
     assert_eq!(value(&samples, "unifi_clients"), Some(41.0));
     assert_eq!(value(&samples, "unifi_alarms"), Some(0.0));
     assert_eq!(value(&samples, "unifi_scrape_errors"), Some(0.0));
+    // Nommé, en IP fixe et annoté : suivi par défaut.
+    assert_eq!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "Noe's desktop"),
+        Some(1_790_798_700.0)
+    );
+    let desktop = samples
+        .iter()
+        .find(|s| {
+            s.metric == "client_device_last_seen_timestamp_seconds"
+                && s.labels.get("device").map(String::as_str) == Some("Noe's desktop")
+        })
+        .unwrap();
+    assert_eq!(desktop.labels["kind"], "unifi");
+    assert_eq!(desktop.labels["type"], "Wired");
+    // Nommé, sans IP fixe ni note : le nom suffit.
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "Office printer")
+            .is_some()
+    );
+    // Ni nommé, ni en IP fixe, ni annoté : pas suivi par défaut, pour ne pas
+    // noyer l'alerte sous les clients transitoires.
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "iPhone-de-Bob")
+            .is_none()
+    );
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "android-xyz123")
+            .is_none()
+    );
 
     collector.probe(&target).await.unwrap();
     assert_eq!(counters.logins.load(Ordering::SeqCst), 1, "la session est réutilisée");
@@ -221,6 +272,15 @@ async fn console_with_key(classic_accepts_key: bool) -> String {
                 }
                 guard(h, include_str!("testdata/documented/classic_stat_health.json"))
             }),
+        )
+        .route(
+            "/proxy/network/api/s/{site}/rest/user",
+            get(move |h: HeaderMap| async move {
+                if !classic_accepts_key {
+                    return (StatusCode::UNAUTHORIZED, real("login_required")).into_response();
+                }
+                guard(h, REST_USER)
+            }),
         );
     serve(app).await
 }
@@ -239,6 +299,75 @@ async fn une_cle_d_api_passe_par_l_api_d_integration() {
     assert_eq!(value(&samples, "unifi_clients"), Some(38.0));
     assert_eq!(value(&samples, "unifi_wan_up"), Some(1.0));
     assert_eq!(value(&samples, "unifi_scrape_errors"), Some(0.0));
+    // La clé d'API lit aussi /rest/user, comme la santé classique plus haut.
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "Noe's desktop")
+            .is_some()
+    );
+}
+
+#[tokio::test]
+async fn watched_clients_ajoute_des_clients_precis_ou_tous() {
+    let counters = Arc::new(Counters::default());
+    let base = self_hosted(counters.clone()).await;
+    let collector = UnifiCollector::new();
+
+    let named_only = target("unifi", &base, &[], login_credential("ViewOnly-Pass-42"));
+    let samples = collector.probe(&named_only).await.unwrap();
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "iPhone-de-Bob")
+            .is_none()
+    );
+
+    let listed = target(
+        "unifi",
+        &base,
+        &[("watched_clients", "iPhone-de-Bob")],
+        login_credential("ViewOnly-Pass-42"),
+    );
+    let samples = collector.probe(&listed).await.unwrap();
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "iPhone-de-Bob")
+            .is_some(),
+        "nommé dans l'option, il est suivi même sans marque dans UniFi"
+    );
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "android-xyz123")
+            .is_none(),
+        "le téléphone invité n'est pas dans la liste"
+    );
+
+    let all =
+        target("unifi", &base, &[("watched_clients", "all")], login_credential("ViewOnly-Pass-42"));
+    let samples = collector.probe(&all).await.unwrap();
+    assert!(
+        labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "android-xyz123")
+            .is_some(),
+        "all suit tout le monde"
+    );
+}
+
+#[test]
+fn la_liste_de_clients_a_surveiller() {
+    assert_eq!(ClientWatch::parse(None), ClientWatch::Default);
+    assert_eq!(ClientWatch::parse(Some(" ALL ")), ClientWatch::All);
+    let record = |mac: &str, name: Option<&str>, noted: bool, fixed: bool| ClientRecord {
+        mac: mac.to_string(),
+        name: name.map(str::to_string),
+        hostname: None,
+        noted,
+        use_fixedip: fixed,
+        is_wired: None,
+        last_seen: None,
+    };
+    let noted = record("aa:bb:cc:00:00:09", None, true, false);
+    assert!(ClientWatch::Default.covers(&noted), "un client marqué est suivi même par défaut");
+    let anonymous = record("aa:bb:cc:00:00:10", None, false, false);
+    assert!(!ClientWatch::Default.covers(&anonymous));
+    assert!(ClientWatch::All.covers(&anonymous));
+    let listed = ClientWatch::parse(Some("AA:BB:CC:00:00:10, Office printer"));
+    assert!(listed.covers(&anonymous), "adresse MAC listée");
+    assert!(!listed.covers(&record("aa:bb:cc:00:00:11", None, false, false)));
 }
 
 #[tokio::test]
