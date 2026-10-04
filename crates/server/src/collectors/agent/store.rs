@@ -248,6 +248,8 @@ impl From<sqlx::Error> for RegisterError {
 struct HostRow {
     target_id: TargetId,
     secret_hash: Option<String>,
+    /// Jeton d'enrôlement qui a fait entrer (ou a lié) la machine.
+    token_id: Option<i64>,
     /// Vrai si une fenêtre de reliaison est ouverte et encore valide.
     rebind_open: bool,
 }
@@ -267,7 +269,9 @@ struct HostRow {
 /// - machine inconnue : le jeton doit pouvoir enrôler, et le secret est attribué
 ///   si l'agent sait le recevoir ;
 /// - machine connue mais non liée (agent installé avant la liaison) : elle
-///   continue de remonter, et se lie dès que son binaire est à jour.
+///   continue de remonter avec le jeton qui l'a enrôlée, et se lie dès que son
+///   binaire est à jour ; un autre jeton n'y entre que par une fenêtre de
+///   reliaison ouverte par un administrateur.
 pub async fn register(
     pool: &SqlitePool,
     cipher: &Cipher,
@@ -385,7 +389,30 @@ async fn claim(
         // Machine connue mais pas encore liée : c'est l'état des agents installés
         // avant cette version. Elle continue de remonter, et se lie dès que son
         // binaire sait recevoir un secret.
+        //
+        // La clé d'identité (`/etc/machine-id`, nom d'hôte) se devine ou s'observe :
+        // si n'importe quel jeton suffisait, le premier venu présentant cette clé
+        // recevrait le secret de liaison, enfermerait dehors l'agent légitime, et
+        // hériterait de ses commandes. Seul le jeton qui a enrôlé la machine peut
+        // donc la lier — c'est celui que l'agent d'origine porte toujours, ce qui
+        // laisse les anciens agents fonctionner sans rien changer. Un autre jeton
+        // (agent réinstallé avec un nouveau jeton, ancien jeton supprimé) passe par
+        // la fenêtre de reliaison, que seul un administrateur ouvre.
         None => {
+            let same_token = host.token_id == Some(token_id);
+            if !same_token {
+                if !host.rebind_open {
+                    tracing::warn!(
+                        cible = target_id,
+                        hote = identity.hostname,
+                        "machine non liée présentée avec un autre jeton que le sien : refusée"
+                    );
+                    return Err(RegisterError::BindingMismatch);
+                }
+                if let Err(denied) = enrolment_allowed(pool, token_id).await? {
+                    return Err(RegisterError::EnrolmentDenied(denied));
+                }
+            }
             let issued = identity.binding_supported.then(token::generate_secret);
             if let Some(secret) = issued.as_deref() {
                 bind_host(pool, target_id, secret, token_id).await?;
@@ -408,7 +435,7 @@ async fn claim(
 
 async fn find_host(pool: &SqlitePool, key: &str) -> Result<Option<HostRow>> {
     let row = sqlx::query(
-        "SELECT target_id, secret_hash,
+        "SELECT target_id, secret_hash, token_id,
                 (rebind_until IS NOT NULL
                  AND rebind_until > strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) AS rebind_open
          FROM agent_hosts WHERE agent_key = ?",
@@ -421,6 +448,7 @@ async fn find_host(pool: &SqlitePool, key: &str) -> Result<Option<HostRow>> {
         Ok(HostRow {
             target_id: row.try_get("target_id")?,
             secret_hash: row.try_get("secret_hash")?,
+            token_id: row.try_get("token_id")?,
             rebind_open: row.try_get::<i64, _>("rebind_open")? != 0,
         })
     })
@@ -489,6 +517,7 @@ pub enum KeyAuth {
 pub async fn authorise_key(
     pool: &SqlitePool,
     key: &str,
+    token_id: i64,
     presented_secret: Option<&str>,
 ) -> Result<KeyAuth> {
     let Some(host) = find_host(pool, key).await? else {
@@ -506,8 +535,13 @@ pub async fn authorise_key(
             }
         }
         // Machine d'avant la liaison : on ne coupe pas un parc qui fonctionne,
-        // mais l'interface le dit et la trace le répète.
-        None => Ok(KeyAuth::Allowed { target_id: host.target_id, bound: false }),
+        // mais l'interface le dit et la trace le répète. Seul le jeton qui l'a
+        // enrôlée y a accès — sans quoi n'importe quel porteur d'un jeton
+        // viendrait chercher ses commandes Docker en devinant sa clé.
+        None if host.token_id == Some(token_id) => {
+            Ok(KeyAuth::Allowed { target_id: host.target_id, bound: false })
+        }
+        None => Ok(KeyAuth::Denied),
     }
 }
 
@@ -1074,17 +1108,23 @@ mod tests {
 
         // L'agent légitime, avec son secret.
         assert_eq!(
-            authorise_key(&db.pool, "id-nas", Some(&secret)).await.unwrap(),
+            authorise_key(&db.pool, "id-nas", token_id, Some(&secret)).await.unwrap(),
             KeyAuth::Allowed { target_id: victim.target_id, bound: true }
         );
         // Le voisin compromis, avec le jeton de flotte mais pas le secret.
-        assert_eq!(authorise_key(&db.pool, "id-nas", None).await.unwrap(), KeyAuth::Denied);
         assert_eq!(
-            authorise_key(&db.pool, "id-nas", Some("dmab_pas-le-bon")).await.unwrap(),
+            authorise_key(&db.pool, "id-nas", token_id, None).await.unwrap(),
+            KeyAuth::Denied
+        );
+        assert_eq!(
+            authorise_key(&db.pool, "id-nas", token_id, Some("dmab_pas-le-bon")).await.unwrap(),
             KeyAuth::Denied
         );
         // Une clé qu'aucune machine ne porte.
-        assert_eq!(authorise_key(&db.pool, "id-inconnu", None).await.unwrap(), KeyAuth::Unknown);
+        assert_eq!(
+            authorise_key(&db.pool, "id-inconnu", token_id, None).await.unwrap(),
+            KeyAuth::Unknown
+        );
     }
 
     #[tokio::test]
@@ -1103,9 +1143,21 @@ mod tests {
 
         // Et le canal de commandes reste ouvert pour lui, faute de mieux.
         assert_eq!(
-            authorise_key(&db.pool, "id-vieux", None).await.unwrap(),
+            authorise_key(&db.pool, "id-vieux", token_id, None).await.unwrap(),
             KeyAuth::Allowed { target_id: registration.target_id, bound: false }
         );
+
+        // Un autre jeton ne lui prend ni ses commandes, ni sa liaison.
+        let other = token(&db, "autre").await;
+        assert_eq!(
+            authorise_key(&db.pool, "id-vieux", other, None).await.unwrap(),
+            KeyAuth::Denied
+        );
+        let hijack =
+            register(&db.pool, &db.cipher, &identity("pirate", Some("id-vieux")), other, None)
+                .await
+                .expect_err("un autre jeton ne lie pas une machine non liée");
+        assert!(matches!(hijack, RegisterError::BindingMismatch), "{hijack:?}");
 
         // L'interface a de quoi dire quoi faire.
         let info = host(&db.pool, registration.target_id).await.unwrap().expect("machine");

@@ -4575,6 +4575,9 @@ components:
           items: { type: string }
         shape: { type: string, enum: [scalar, list, object] }
         default: { type: string }
+        destination:
+          type: boolean
+          description: The field says where the secrets go; changing it on update requires `secrets` in the same request.
     Channel:
       type: object
       required: [id, name, kind, enabled, settings, has_secret, policy]
@@ -4948,8 +4951,8 @@ components:
       required: [target_id, token, path, last_status, last_message, received_total, created_at, verdict]
       properties:
         target_id: { type: integer, format: int64 }
-        token: { type: string, description: The secret of the heartbeat URL. }
-        path: { type: string, description: "`/api/push/<token>`, relative to the server's address." }
+        token: { type: [string, "null"], description: "The secret of the heartbeat URL; `null` unless the caller is an admin (or holds a `write` token)." }
+        path: { type: [string, "null"], description: "`/api/push/<token>`, relative to the server's address; `null` like `token`." }
         last_seen_at: { type: [string, "null"] }
         last_seen_age_secs: { type: [integer, "null"] }
         last_status: { type: string, enum: [up, down] }
