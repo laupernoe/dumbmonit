@@ -16,8 +16,16 @@
 		 * a momentary reaction (e.g. a click). The caller toggles it back off.
 		 */
 		startled?: boolean;
+		/** Flapping wings (e.g. in flight). Transform-only, off by default. */
+		flap?: boolean;
 	}
-	let { class: className = 'size-16', mood = 'watch', blink = true, startled = false }: Props = $props();
+	let {
+		class: className = 'size-16',
+		mood = 'watch',
+		blink = true,
+		startled = false,
+		flap = false
+	}: Props = $props();
 
 	/** Pupil rest positions: "watch". Moods move them by an offset. */
 	const L = [82, 124];
@@ -33,14 +41,14 @@
 	const shiftR = $derived(`translate(${pupils.r[0] - R[0]}px, ${pupils.r[1] - R[1]}px)`);
 </script>
 
-<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${className}`} role="img" aria-label="DumbMonit, the pigeon">
+<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${flap ? 'mascot-flap' : ''} ${className}`} role="img" aria-label="DumbMonit, the pigeon">
 	<!-- feet -->
 	<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" fill="#e97b3a" stroke="#1e2640" stroke-width="12" stroke-linejoin="round" />
 	<!-- body -->
 	<path d="M140 46c70 0 118 54 118 128 0 62-44 104-118 104S22 236 22 174C22 100 70 46 140 46z" fill="#6f83a3" stroke="#1e2640" stroke-width="12" />
-	<!-- wings (lobes inside the outline) -->
-	<path d="M40 150c-14 40-10 90 18 118" fill="none" stroke="#1e2640" stroke-width="11" stroke-linecap="round" />
-	<path d="M240 150c14 40 10 90-18 118" fill="none" stroke="#1e2640" stroke-width="11" stroke-linecap="round" />
+	<!-- wings (lobes inside the outline); flap pivots each about its shoulder -->
+	<path class="wing wing-l" d="M40 150c-14 40-10 90 18 118" fill="none" stroke="#1e2640" stroke-width="11" stroke-linecap="round" />
+	<path class="wing wing-r" d="M240 150c14 40 10 90-18 118" fill="none" stroke="#1e2640" stroke-width="11" stroke-linecap="round" />
 	<!-- chest patch -->
 	<path d="M78 190c20 22 46 34 78 34 26 0 44-8 54-20-6 30-34 52-70 52-34 0-56-26-62-66z" fill="#4c9d6f" />
 	<path d="M110 232c30 2 52-8 64-26" fill="none" stroke="#1e2640" stroke-width="10" stroke-linecap="round" />
@@ -80,6 +88,35 @@
 		transform-origin: top;
 		transform: scaleY(0);
 	}
+	/* Flap: each wing pivots about where it meets the body, mirrored. */
+	.wing {
+		transform-box: fill-box;
+		transform-origin: top center;
+	}
+	.mascot-flap .wing-l {
+		animation: wing-flap-l 220ms ease-in-out infinite;
+	}
+	.mascot-flap .wing-r {
+		animation: wing-flap-r 220ms ease-in-out infinite;
+	}
+	@keyframes wing-flap-l {
+		0%,
+		100% {
+			transform: rotate(0deg);
+		}
+		50% {
+			transform: rotate(24deg);
+		}
+	}
+	@keyframes wing-flap-r {
+		0%,
+		100% {
+			transform: rotate(0deg);
+		}
+		50% {
+			transform: rotate(-24deg);
+		}
+	}
 	.mascot-blink .lid {
 		animation: blink 5.8s ease-in-out infinite;
 	}
@@ -109,6 +146,9 @@
 		}
 		.pupil circle {
 			transition: none;
+		}
+		.wing {
+			animation: none;
 		}
 	}
 </style>
