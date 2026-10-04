@@ -117,8 +117,24 @@
 
 	// --- Validation -----------------------------------------------------------
 	const credentialChanged = $derived(credential.kind !== initialCredential.kind || draftTouched(credential, draft));
+	/**
+	 * The server never sends a saved secret to a new destination: changing the
+	 * address, the relay or how the device is reached (these settings) means
+	 * typing the credential again. Mirrors `DESTINATION_TAGS` in `api/targets.rs`.
+	 */
+	const DESTINATION_TAGS = ['scheme', 'port', 'insecure_tls', 'tls', 'path', 'base_path', 'url', 'host'];
+	const destinationChanged = $derived.by(() => {
+		if (!target || target.credential_kind === 'None') return false;
+		const sentTag = (key: string) => (tags[key] ?? '').trim() || undefined;
+		const savedTag = (key: string) => target.tags[key];
+		return (
+			address.trim() !== target.address.trim() ||
+			(canRelay ? viaAgent : null) !== target.via_agent ||
+			DESTINATION_TAGS.some((key) => sentTag(key) !== savedTag(key))
+		);
+	});
 	/** On edit an untouched credential is simply not sent: the server keeps it. */
-	const sendCredential = $derived(!editing || credentialChanged);
+	const sendCredential = $derived(!editing || credentialChanged || destinationChanged);
 
 	const nameError = $derived(name.trim() ? null : 'Give this device a name.');
 	const addressError = $derived(address.trim() ? null : 'Enter the address to reach it.');
@@ -273,7 +289,7 @@
 			{views}
 			selected={credential}
 			bind:draft
-			{editing}
+			editing={editing && !destinationChanged}
 			errors={shownCredentialErrors}
 			onkindchange={changeCredential}
 			onblur={(field) => touch(`cred.${field}`)}
