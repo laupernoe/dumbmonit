@@ -56,12 +56,30 @@ The [built-in rules](../alerting/rules.md#tailscale) that apply:
 - **Tailscale client update**: a watched device has a client update for six
   hours (Info, reminded weekly).
 
+## Devices
+
+Every device of the tailnet, watched or not (shared devices excepted), is
+published under the generic family shared by every DumbMonit integration
+that tracks client devices — `dumbmonit_client_device_*`, prefixed without
+`tailscale`, documented in full under
+[Client devices](../alerting/rules.md#client-devices):
+
+| Metric | What | Labels |
+|---|---|---|
+| `last_seen_timestamp_seconds` | Last connection: "now" while `connectedToControl` is true, otherwise `lastSeen` | `device`, `type` (`Tagged` or `Personal`), `os`, `user`, `kind` |
+| `stale_seconds` | Positive once a device has gone past `device_stale_days` (3 by default) without connecting; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `connection`: Tailscale has no backup to report) |
+
+A phone or a laptop that travels can go several days without reconnecting:
+this is unrelated to the **Devices to keep online** setting above, which only
+raises an alert for watched devices going offline. Raise **Device staleness**
+for a tailnet with devices that roam.
+
 ## The device page
 
 The Tailnet panel says what is wrong in a sentence, shows the devices online,
 the watched devices offline, the available updates and the shared devices,
 then lists the watched devices and any device awaiting approval or whose key
-expires soon.
+expires soon, then the table of every device with its last connection.
 
 ## Create a read-only OAuth client for DumbMonit
 
@@ -70,7 +88,7 @@ expires soon.
 2. Copy the client ID and the client secret (tskey-client-…), shown once. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret. Leave the Tailnet option empty: the tailnet of the client is read.
 
 !!! warning
-    Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all.
+    Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all. Every device of the tailnet appears in the Devices table below with its last connection, watched or not; a phone that travels can go days without one, so raise Device staleness for those.
 
 ## Credentials
 
@@ -86,6 +104,7 @@ Address: `api.tailscale.com`. Options:
 - **Devices to keep online**: comma-separated device names or tags
   (`nas, tag:router`), or `all`. Empty: every tagged device.
 - **Timeout per request** (15 s).
+- **Device staleness** (`device_stale_days`, 3 days by default).
 
 ## Troubleshooting
 

@@ -1,0 +1,58 @@
+{
+  "meta": { "rc": "ok" },
+  "data": [
+    {
+      "_id": "5f7a1b2c3d4e5f60718293a4",
+      "mac": "aa:bb:cc:00:00:01",
+      "hostname": "DESKTOP-NOE",
+      "name": "Noe's desktop",
+      "noted": true,
+      "note": "Workstation, always on",
+      "use_fixedip": true,
+      "fixed_ip": "192.168.1.20",
+      "network_id": "63f1a2b3c4d5e6f708192a3b",
+      "is_guest": false,
+      "is_wired": true,
+      "first_seen": 1730000000,
+      "last_seen": 1790798700,
+      "oui": "Intel Corporate"
+    },
+    {
+      "_id": "5f7a1b2c3d4e5f60718293a5",
+      "mac": "aa:bb:cc:00:00:02",
+      "hostname": "iPhone-de-Bob",
+      "noted": false,
+      "use_fixedip": false,
+      "is_guest": false,
+      "is_wired": false,
+      "first_seen": 1789000000,
+      "last_seen": 1790798100,
+      "oui": "Apple, Inc."
+    },
+    {
+      "_id": "5f7a1b2c3d4e5f60718293a6",
+      "mac": "aa:bb:cc:00:00:03",
+      "hostname": "printer-hp",
+      "name": "Office printer",
+      "noted": false,
+      "use_fixedip": false,
+      "is_guest": false,
+      "is_wired": true,
+      "first_seen": 1700000000,
+      "last_seen": 1790000000,
+      "oui": "HP Inc."
+    },
+    {
+      "_id": "5f7a1b2c3d4e5f60718293a7",
+      "mac": "aa:bb:cc:00:00:04",
+      "hostname": "android-xyz123",
+      "noted": false,
+      "use_fixedip": false,
+      "is_guest": true,
+      "is_wired": false,
+      "first_seen": 1790700000,
+      "last_seen": 1790798000,
+      "oui": "Samsung"
+    }
+  ]
+}

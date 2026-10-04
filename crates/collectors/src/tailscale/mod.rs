@@ -26,6 +26,15 @@
 //! pas une panne. L'option `watch` change la liste. Les appareils partagés
 //! depuis un autre tailnet (`isExternal`) sont comptés mais pas décrits.
 //!
+//! Tout appareil propre au tailnet (étiqueté ou non) nourrit aussi le tableau
+//! générique des appareils clients (`client_devices.rs`) : dernière connexion
+//! (`lastSeen`, absent et remplacé par « maintenant » tant que
+//! `connectedToControl` vaut vrai), système et compte. Contrairement à
+//! `device_offline_seconds` ci-dessus, cette série ne distingue pas les
+//! appareils surveillés : un téléphone qui voyage peut rester plusieurs jours
+//! sans se reconnecter sans que ce soit une panne — relever `device_stale_days`
+//! pour ces appareils-là.
+//!
 //! # Réglages, portés par les étiquettes de la cible
 //!
 //! | Étiquette | Défaut | Rôle |
@@ -33,6 +42,7 @@
 //! | `tailnet` | `-` | Le tailnet, `-` pour celui du jeton. |
 //! | `watch` | vide | Appareils à garder en ligne : noms ou `tag:…`, ou `all` ; vide = les appareils étiquetés. |
 //! | `request_timeout_seconds` | `15` | Délai par requête HTTP. |
+//! | `device_stale_days` | `3` | Jours sans connexion au-delà desquels un appareil est signalé périmé. |
 
 use std::time::Duration;
 
@@ -40,6 +50,7 @@ use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, ProbeError, Sample, Target};
 use serde_json::Value;
 
+use crate::client_devices::{self, Device};
 use crate::rest::{
     MAX_NAMED, RestClient, TokenCache, age_seconds, flag, gauge, now_ms, seconds_until, text,
 };
@@ -154,9 +165,10 @@ impl Collector for TailscaleCollector {
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
+        let stale_days = client_devices::stale_days(target)?;
         let devices = self.devices(target).await?;
         let watch = Watch::parse(tag(target, "watch"));
-        Ok(samples(&devices, &watch, now_ms()))
+        Ok(samples(&devices, &watch, stale_days, now_ms()))
     }
 
     async fn discover(&self, target: &Target) -> Result<Option<String>, ProbeError> {
@@ -209,9 +221,11 @@ fn short_name(device: &Value) -> Option<&str> {
         .or_else(|| text(device, "hostname"))
 }
 
-pub fn samples(reply: &Value, watch: &Watch, ts_ms: i64) -> Vec<Sample> {
+pub fn samples(reply: &Value, watch: &Watch, stale_days: f64, ts_ms: i64) -> Vec<Sample> {
     let g = |name: &str, value: f64| gauge(name, value, ts_ms);
+    let now_s = ts_ms / 1000;
     let mut out = Vec::new();
+    let mut client_devices_list: Vec<Device> = Vec::new();
     let devices: Vec<&Value> =
         reply.get("devices").and_then(Value::as_array).into_iter().flatten().collect();
     let (mut own, mut external, mut online, mut updates, mut unauthorized, mut offline_watched) =
@@ -257,6 +271,14 @@ pub fn samples(reply: &Value, watch: &Watch, ts_ms: i64) -> Vec<Sample> {
             if watched && !is_online {
                 offline_watched += 1;
             }
+            client_devices_list.push(Device {
+                name: name.to_string(),
+                device_type: if tags.is_empty() { "Personal" } else { "Tagged" }.to_string(),
+                os: os.to_string(),
+                user: text(device, "user").unwrap_or_default().to_string(),
+                last_seen: Some(now_s - offline as i64),
+                last_backup: None,
+            });
         }
         let expiry_disabled =
             device.get("keyExpiryDisabled").and_then(Value::as_bool).unwrap_or(false);
@@ -281,6 +303,7 @@ pub fn samples(reply: &Value, watch: &Watch, ts_ms: i64) -> Vec<Sample> {
     out.push(g("tailscale_devices_update_available", updates as f64));
     out.push(g("tailscale_devices_unauthorized", unauthorized as f64));
     out.push(g("tailscale_devices_watched_offline", offline_watched as f64));
+    out.extend(client_devices::samples("tailscale", &client_devices_list, stale_days, ts_ms));
     out
 }
 
@@ -314,7 +337,7 @@ mod tests {
     #[test]
     fn appareils_du_tailnet() {
         let reply: Value = serde_json::from_str(DEVICES).unwrap();
-        let s = samples(&reply, &Watch::Tagged, now());
+        let s = samples(&reply, &Watch::Tagged, 3.0, now());
         assert_eq!(value(&s, "tailscale_devices", &[]), 3.0);
         assert_eq!(value(&s, "tailscale_devices_external", &[]), 1.0);
         assert_eq!(value(&s, "tailscale_devices_online", &[]), 1.0);
@@ -341,6 +364,56 @@ mod tests {
         let info = find(&s, "tailscale_device_info", &[("device", "gateway")]).unwrap();
         assert_eq!(info.labels["client_version"], "1.86.2");
         assert_eq!(info.labels["tags"], "tag:server");
+    }
+
+    #[test]
+    fn tout_appareil_propre_nourrit_le_tableau_des_appareils_clients() {
+        let reply: Value = serde_json::from_str(DEVICES).unwrap();
+        let s = samples(&reply, &Watch::Tagged, 3.0, now());
+        let now_s = (now() / 1000) as f64;
+        assert_eq!(
+            value(&s, "client_device_last_seen_timestamp_seconds", &[("device", "gateway")]),
+            now_s,
+            "en ligne : la dernière connexion vaut maintenant"
+        );
+        assert_eq!(
+            value(&s, "client_device_last_seen_timestamp_seconds", &[("device", "nas")]),
+            now_s - (47.0 * 60.0 + 16.0)
+        );
+        assert!(
+            find(&s, "client_device_last_seen_timestamp_seconds", &[("device", "shared-printer")])
+                .is_none(),
+            "un appareil partagé par un autre tailnet n'est pas publié"
+        );
+        let nas =
+            find(&s, "client_device_last_seen_timestamp_seconds", &[("device", "nas")]).unwrap();
+        assert_eq!(nas.labels["kind"], "tailscale");
+        assert_eq!(nas.labels["user"], "alice@example.com");
+        assert_eq!(nas.labels["type"], "Tagged");
+        let bob = find(&s, "client_device_last_seen_timestamp_seconds", &[("device", "bob-phone")])
+            .unwrap();
+        assert_eq!(bob.labels["type"], "Personal");
+        assert!(
+            find(&s, "client_device_last_backup_timestamp_seconds", &[("device", "nas")]).is_none(),
+            "Tailscale ne sait rien d'une sauvegarde"
+        );
+        assert!(
+            value(
+                &s,
+                "client_device_stale_seconds",
+                &[("device", "nas"), ("signal", "connection")]
+            ) < 0.0,
+            "quarante-sept minutes n'épuisent pas trois jours"
+        );
+    }
+
+    #[tokio::test]
+    async fn un_seuil_de_peremption_invalide_echoue_sans_appeler_l_api() {
+        let collector = TailscaleCollector::new();
+        let mut target = cible("tailscale", "unreachable.invalid:1", &[("device_stale_days", "0")]);
+        target.credential = Credential::ApiToken { token: "tskey-api-x".into() };
+        let error = collector.probe(&target).await.unwrap_err();
+        assert!(matches!(error, ProbeError::Config(_)), "{error}");
     }
 
     #[test]
