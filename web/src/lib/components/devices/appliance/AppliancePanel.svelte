@@ -14,8 +14,12 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type Target } from '$lib/api';
 	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import Figure from '../Figure.svelte';
 	import { FOLDS, type ApplianceView } from './folds';
+
+	/** Kinds whose devices page also shows the client-devices table. */
+	const WITH_DEVICES = new Set(['veeam']);
 
 	interface Props {
 		target: Target;
@@ -100,4 +104,8 @@
 			{/each}
 		{/if}
 	</Panel>
+{/if}
+
+{#if WITH_DEVICES.has(target.kind)}
+	<ClientDevicesTable {target} />
 {/if}
