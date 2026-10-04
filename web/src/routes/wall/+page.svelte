@@ -517,6 +517,7 @@
 						<SkyScene
 							{condition}
 							frame={false}
+							calm
 							class="h-[200px] w-full rounded-[var(--radius-card)] border border-line shadow-float sm:h-[260px] lg:h-full lg:min-h-[clamp(300px,42vh,580px)]"
 						/>
 						<MusicDock
