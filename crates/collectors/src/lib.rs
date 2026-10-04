@@ -10,6 +10,7 @@
 pub mod adguard;
 pub mod api_options;
 pub mod caddy;
+pub mod client_devices;
 pub mod crowdsec;
 pub mod domain;
 pub mod dummy;
