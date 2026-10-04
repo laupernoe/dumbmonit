@@ -129,7 +129,7 @@ pub async fn authenticate(
         )));
     }
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
-    match agent::authorise_key(&state.pool, key, agent::extract_secret(secret)).await? {
+    match agent::authorise_key(&state.pool, key, token_id, agent::extract_secret(secret)).await? {
         agent::KeyAuth::Allowed { target_id, .. } => Ok((token_id, target_id)),
         agent::KeyAuth::Denied => Err(Rejection::not_this_machine()),
         agent::KeyAuth::Unknown => {
