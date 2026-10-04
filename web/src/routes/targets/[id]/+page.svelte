@@ -56,6 +56,7 @@
 	import UptimeBar from '$lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '$lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '$lib/components/devices/FoldSection.svelte';
+	import SecurityCard from '$lib/components/devices/SecurityCard.svelte';
 	import { hasKindPanel, loadKindPanel, type KindPanel } from '$lib/components/devices/kinds';
 	import FoldRow from '$lib/components/devices/FoldRow.svelte';
 	import {
@@ -624,6 +625,9 @@
 			<PlakarPanel {target} />
 		</section>
 	{/if}
+
+	<!-- Security score: renders nothing unless this kind has checks -->
+	<SecurityCard {target} />
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind)}

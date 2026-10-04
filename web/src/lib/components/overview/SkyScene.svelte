@@ -18,6 +18,16 @@
 	 * `playful` lets a click on the sky poke it (a barrel roll; poke it four
 	 * times quickly and its eye spins). Under reduced motion the moods hold a
 	 * still pose and nothing loops.
+	 *
+	 * Calmed October 2026: a screen that stays on in a room all day cannot
+	 * strobe. The storm no longer washes the sky white — a soft, low-opacity
+	 * glow fires on its own rare, finite schedule (JS-timed, cleared on
+	 * unmount, never a steady loop) — rain falls slower at lower contrast, and
+	 * the flight is slower and less frequent. `calm` dampens all three further
+	 * for the wall, which stays on; the Overview, read in short glances, keeps
+	 * a little more life by default. Every continuous animation here also
+	 * pauses while the tab/page is hidden, on top of the existing
+	 * `prefers-reduced-motion` freeze.
 	 */
 	export type SkyCondition = 'clear' | 'cloudy' | 'overcast' | 'storm' | 'waiting' | 'empty';
 	export type PigeonMood = 'fly' | 'sleep' | 'startle' | 'celebrate';
@@ -33,9 +43,65 @@
 		mood?: PigeonMood;
 		/** A click on the sky pokes the pigeon. Off on the wall: nobody pokes a TV. */
 		playful?: boolean;
+		/** Dampens the flight, rain and lightning further still. The wall sets this — a
+		 *  screen left on in a room needs the calmest version; leave it off for a touch
+		 *  more life (the Overview's default). */
+		calm?: boolean;
 		class?: string;
 	}
-	let { condition, frame = true, mood = 'fly', playful = false, class: className = '' }: Props = $props();
+	let {
+		condition,
+		frame = true,
+		mood = 'fly',
+		playful = false,
+		calm = false,
+		class: className = ''
+	}: Props = $props();
+
+	// --- Pausing while hidden ---------------------------------------------------
+	// Every continuous CSS animation below is driven off this one class: a tab
+	// or window nobody is looking at has nothing to spend motion on.
+	let docVisible = $state(typeof document === 'undefined' || document.visibilityState === 'visible');
+	$effect(() => {
+		if (typeof document === 'undefined') return;
+		const onVisibility = () => (docVisible = document.visibilityState === 'visible');
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => document.removeEventListener('visibilitychange', onVisibility);
+	});
+
+	// --- Lightning: rare, finite, soft ------------------------------------------
+	// No more a white wash on a fixed loop. A single soft glow fires after a
+	// random, generous wait, fades back out, then — still storming — waits
+	// again. Each strike is a one-shot animation, never a strobe.
+	let flashing = $state(false);
+	$effect(() => {
+		if (condition !== 'storm' || !docVisible || reducedMotion()) {
+			flashing = false;
+			return;
+		}
+		let wait: ReturnType<typeof setTimeout>;
+		let hold: ReturnType<typeof setTimeout>;
+		let cancelled = false;
+		const [min, max] = calm ? [17000, 32000] : [10000, 20000];
+		const schedule = () => {
+			wait = setTimeout(() => {
+				if (cancelled) return;
+				flashing = true;
+				hold = setTimeout(() => {
+					if (cancelled) return;
+					flashing = false;
+					schedule();
+				}, 1200);
+			}, min + Math.random() * (max - min));
+		};
+		schedule();
+		return () => {
+			cancelled = true;
+			clearTimeout(wait);
+			clearTimeout(hold);
+			flashing = false;
+		};
+	});
 
 	// --- Poking ----------------------------------------------------------------
 	let poked = $state(false);
@@ -153,7 +219,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-	class="sky sky--{condition} sky--{mood} {frame ? '' : 'sky--bare'} {poked ? 'sky--poke' : ''} {dizzy ? 'sky--dizzy' : ''} {className}"
+	class="sky sky--{condition} sky--{mood} {frame ? '' : 'sky--bare'} {calm ? 'sky--calm' : ''} {poked ? 'sky--poke' : ''} {dizzy ? 'sky--dizzy' : ''} {flashing ? 'sky--flash' : ''} {docVisible ? '' : 'sky--paused'} {className}"
 	role="img"
 	aria-label={mood === 'sleep' ? `${LABEL[condition]}, the pigeon is asleep` : LABEL[condition]}
 	onclick={poke}
@@ -345,7 +411,7 @@
 		--moon: #ebe6d2;
 		--star: #fbf9f4;
 		--haze: rgb(255 255 255 / 0.55);
-		--rain: rgb(30 38 64 / 0.35);
+		--rain: rgb(30 38 64 / 0.22);
 		--body: #6f83a3;
 		--chest: #4c9d6f;
 		--beak: #e97b3a;
@@ -382,7 +448,7 @@
 		--sky-top: #3f4a60;
 		--sky-bottom: #7a8497;
 		--cloud: #55607a;
-		--rain: rgb(232 238 248 / 0.45);
+		--rain: rgb(232 238 248 / 0.3);
 	}
 	.sky--waiting {
 		--sky-top: #c9c3d6;
@@ -395,7 +461,7 @@
 		--sky-ink: #0a0f1f;
 		--cloud: #3d4a66;
 		--haze: rgb(159 176 200 / 0.18);
-		--rain: rgb(159 176 200 / 0.4);
+		--rain: rgb(159 176 200 / 0.25);
 	}
 	:global(html.dark) .sky--cloudy {
 		--sky-top: #131d3a;
@@ -509,27 +575,30 @@
 
 	/* ---- clouds ---- */
 	.drift {
-		animation: drift 9s ease-in-out infinite alternate;
+		animation: drift 13s ease-in-out infinite alternate;
 	}
 	.drift--slow {
-		animation-duration: 13s;
+		animation-duration: 18s;
 		animation-direction: alternate-reverse;
 	}
 	.bank {
-		animation: bank 60s linear infinite;
+		animation: bank 75s linear infinite;
 	}
 	.bank--storm {
-		animation-duration: 36s;
+		animation-duration: 50s;
 	}
 
 	/* ---- storm ---- */
 	.rain line {
 		stroke: var(--rain);
-		stroke-width: 1.4;
+		stroke-width: 1.1;
 		stroke-linecap: round;
 	}
 	.rain {
-		animation: rain 0.7s linear infinite;
+		animation: rain 1.6s linear infinite;
+	}
+	.sky--calm .rain {
+		animation-duration: 2.1s;
 	}
 	.bolt path {
 		fill: #ffd27a;
@@ -537,14 +606,24 @@
 		stroke-width: 1.5;
 		stroke-linejoin: round;
 	}
+	/*
+	 * A storm no longer washes the sky white on a fixed loop: a lone soft
+	 * glow fires on its own rare, finite JS schedule (the `sky--flash` class,
+	 * toggled in script). At rest it is invisible; `.sky--flash` plays each
+	 * keyframe once and settles back to nothing — never a repeating strobe.
+	 */
 	.bolt,
 	.flash {
 		opacity: 0;
-		animation: flash 7.5s steps(1, end) infinite;
+	}
+	.sky--flash .bolt {
+		animation: bolt-glow 1.2s ease-out 1;
+	}
+	.sky--flash .flash {
+		animation: flash-glow 1.2s ease-out 1;
 	}
 	.flash {
-		fill: #fff;
-		animation-name: flash-wash;
+		fill: #fff6e4;
 	}
 
 	/* ---- dawn haze ---- */
@@ -561,17 +640,29 @@
 	}
 
 	/* ---- the pigeon ---- */
+	/* Slower, rarer crossings: one lap takes a while, so the sky holds still
+	   between them far longer than the lap itself lasts. `sky--calm` (the
+	   wall) stretches every one of these a little further. */
 	.flight {
 		/* Base transform = where it rests under reduced motion (mid-sky). */
 		transform: translate(88px, 52px);
-		animation: fly 9s linear infinite;
+		animation: fly 17s linear infinite;
+	}
+	.sky--calm .flight {
+		animation-duration: 24s;
 	}
 	.bob {
-		animation: bob 1.6s ease-in-out infinite;
+		animation: bob 2.3s ease-in-out infinite;
 	}
-	/* Two-frame flap: the frames swap by opacity, four flaps a second. */
+	.sky--calm .bob {
+		animation-duration: 2.8s;
+	}
+	/* Two-frame flap: the frames swap by opacity, a slow, calm wingbeat. */
 	.wing {
-		animation: frame-a 0.25s steps(1, end) infinite;
+		animation: frame-a 0.38s steps(1, end) infinite;
+	}
+	.sky--calm .wing {
+		animation-duration: 0.44s;
 	}
 	.wing--down {
 		animation-name: frame-b;
@@ -579,16 +670,25 @@
 	.sky--storm .flight {
 		transform: translate(88px, 74px);
 		animation-name: fly-low;
-		animation-duration: 6.5s;
+		animation-duration: 11s;
+	}
+	.sky--calm.sky--storm .flight {
+		animation-duration: 15s;
 	}
 	.sky--storm .bob {
-		animation-duration: 0.9s;
+		animation-duration: 1.4s;
+	}
+	.sky--calm.sky--storm .bob {
+		animation-duration: 1.7s;
 	}
 	.sky--storm .ruffle {
-		animation: ruffle 0.45s ease-in-out infinite alternate;
+		animation: ruffle 0.6s ease-in-out infinite alternate;
 	}
 	.sky--storm .wing {
-		animation-duration: 0.18s;
+		animation-duration: 0.3s;
+	}
+	.sky--calm.sky--storm .wing {
+		animation-duration: 0.34s;
 	}
 
 	@keyframes fly {
@@ -690,35 +790,43 @@
 			transform: translate(-8px, 32px);
 		}
 	}
-	/* One flash per cycle, 120 ms of a 7.5 s loop, never a strobe. */
-	@keyframes flash {
+	/* One soft strike, played once: the bolt barely shows, fades, settles. */
+	@keyframes bolt-glow {
 		0%,
-		61.9%,
-		63.6%,
 		100% {
 			opacity: 0;
 		}
-		62%,
-		63.5% {
-			opacity: 1;
+		35% {
+			opacity: 0.8;
+		}
+		70% {
+			opacity: 0.25;
 		}
 	}
-	@keyframes flash-wash {
+	/* The wash that used to be a full-white flash: now a low ceiling, eased. */
+	@keyframes flash-glow {
 		0%,
-		61.9%,
-		63.6%,
 		100% {
 			opacity: 0;
 		}
-		62%,
-		63.5% {
-			opacity: 0.35;
+		35% {
+			opacity: 0.12;
+		}
+		70% {
+			opacity: 0.04;
 		}
 	}
 
 	/* ---- moods ---------------------------------------------------------- */
 	.sky {
 		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* Hidden tab/window: nothing to spend motion on. The lightning scheduler
+	   stops itself in script; this freezes the rest in place, same as
+	   `prefers-reduced-motion` below but reversible once visible again. */
+	.sky--paused :is(.flight, .bob, .wing, .ruffle, .rays, .star, .drift, .bank, .rain, .haze-band, .sleeper-body) {
+		animation-play-state: paused;
 	}
 
 	/* Asleep: the flying pigeon leaves, the perched one takes the wire. It

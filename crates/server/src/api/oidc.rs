@@ -5,11 +5,16 @@
 //! erreurs se terminent donc par une redirection vers l'écran de connexion, avec
 //! une raison courte dans l'URL, et jamais par un JSON que personne ne lirait.
 
+use std::net::SocketAddr;
+
 use axum::Json;
-use axum::extract::{Extension, Query, State};
-use axum::http::{HeaderMap, StatusCode, header};
+use axum::extract::{ConnectInfo, Extension, FromRequestParts, Query, State};
+use axum::http::request::Parts;
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Redirect, Response};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use subtle::ConstantTimeEq;
 
 use crate::auth::middleware::AdminUser;
 use crate::auth::oidc::flow::{self, CallbackParams, FlowError};
@@ -23,11 +28,60 @@ pub struct StartParams {
     redirect: Option<String>,
 }
 
+/// Cookie qui lie une tentative de connexion au navigateur qui l'a lancée.
+///
+/// Sans lui, le `state` ne prouve rien sur *qui* revient : un attaquant
+/// lancerait une connexion avec son propre compte chez le fournisseur, puis
+/// enverrait l'URL de retour à sa victime, qui se retrouverait connectée sous
+/// l'identité de l'attaquant. Le cookie porte l'empreinte du `state`, pas le
+/// `state` lui-même ; il ne vit que le temps d'une connexion et n'est envoyé
+/// qu'aux routes OIDC.
+const BINDING_COOKIE: &str = "dumbmonit_oidc";
+const BINDING_MAX_AGE_SECS: u64 = 600;
+
+fn state_fingerprint(state: &str) -> String {
+    hex::encode(Sha256::digest(state.as_bytes()))
+}
+
+fn binding_cookie(state: &str, secure: bool) -> HeaderValue {
+    let mut value = format!(
+        "{BINDING_COOKIE}={}; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age={BINDING_MAX_AGE_SECS}",
+        state_fingerprint(state)
+    );
+    if secure {
+        value.push_str("; Secure");
+    }
+    header_value(&value)
+}
+
+fn clear_binding_cookie(secure: bool) -> HeaderValue {
+    let mut value =
+        format!("{BINDING_COOKIE}=; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age=0");
+    if secure {
+        value.push_str("; Secure");
+    }
+    header_value(&value)
+}
+
+/// Le navigateur qui revient est-il celui qui est parti avec ce `state` ?
+fn binding_matches(headers: &HeaderMap, state: Option<&str>) -> bool {
+    let Some(state) = state else { return false };
+    let expected = state_fingerprint(state);
+    headers
+        .get_all(header::COOKIE)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(';'))
+        .filter_map(|pair| pair.trim().split_once('='))
+        .filter(|(name, _)| *name == BINDING_COOKIE)
+        .any(|(_, value)| bool::from(value.as_bytes().ct_eq(expected.as_bytes())))
+}
+
 /// `GET /api/auth/oidc/start` — envoie le navigateur chez le fournisseur.
 pub async fn start(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
-    headers: HeaderMap,
+    origin: Origin,
     Query(params): Query<StartParams>,
 ) -> Response {
     let resolved = match oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await {
@@ -35,8 +89,15 @@ pub async fn start(
         Err(error) => return failure(FlowError::Internal(error)),
     };
     let redirect = params.redirect.filter(|path| is_internal_path(path));
-    match flow::start(&auth, &resolved.config, &request_origin(&headers), redirect).await {
-        Ok(url) => Redirect::to(&url).into_response(),
+    match flow::start(&auth, &resolved.config, &origin.0, redirect).await {
+        Ok((url, login_state)) => (
+            StatusCode::SEE_OTHER,
+            [
+                (header::SET_COOKIE, binding_cookie(&login_state, auth.cookie_secure())),
+                (header::LOCATION, header_value(&url)),
+            ],
+        )
+            .into_response(),
         Err(error) => failure(error),
     }
 }
@@ -45,8 +106,12 @@ pub async fn start(
 pub async fn callback(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
+    headers: HeaderMap,
     Query(params): Query<CallbackParams>,
 ) -> Response {
+    if !binding_matches(&headers, params.state.as_deref()) {
+        return failure(FlowError::State);
+    }
     let resolved = match oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await {
         Ok(resolved) => resolved,
         Err(error) => return failure(FlowError::Internal(error)),
@@ -60,12 +125,14 @@ pub async fn callback(
         Err(error) => return failure(FlowError::Internal(error)),
     };
     let destination = redirect.unwrap_or_else(|| "/".to_string());
+    // `AppendHeaders` : deux `Set-Cookie` dans un même tableau se remplaceraient.
     (
         StatusCode::SEE_OTHER,
-        [
+        [(header::LOCATION, header_value(&destination))],
+        axum::response::AppendHeaders([
             (header::SET_COOKIE, cookie::set(&token, auth.cookie_secure())),
-            (header::LOCATION, header_value(&destination)),
-        ],
+            (header::SET_COOKIE, clear_binding_cookie(auth.cookie_secure())),
+        ]),
     )
         .into_response()
 }
@@ -118,19 +185,44 @@ fn is_internal_path(path: &str) -> bool {
         .is_ok_and(|url| url.host_str() == Some("internal.invalid"))
 }
 
+/// Origine de la requête, établie comme le fait [`request_origin`].
+pub struct Origin(String);
+
+impl<S: Send + Sync> FromRequestParts<S> for Origin {
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let trusted = parts
+            .extensions
+            .get::<AuthState>()
+            .map(|auth| auth.trusted_proxies().to_vec())
+            .unwrap_or_default();
+        let peer = parts.extensions.get::<ConnectInfo<SocketAddr>>().map(|info| info.0.ip());
+        let behind_proxy = peer.is_some_and(|peer| trusted.iter().any(|net| net.contains(&peer)));
+        Ok(Self(request_origin(&parts.headers, behind_proxy)))
+    }
+}
+
 /// Origine par laquelle le navigateur nous joint, pour construire l'URL de
-/// retour quand aucune URL publique n'est configurée. Les en-têtes `Forwarded`
-/// d'un reverse proxy sont lus en priorité.
-fn request_origin(headers: &HeaderMap) -> String {
+/// retour quand aucune URL publique n'est configurée.
+///
+/// Les en-têtes `X-Forwarded-*` ne sont lus que si la connexion vient d'un
+/// mandataire déclaré de confiance (`DUMBMONIT_TRUSTED_PROXIES`), comme pour
+/// l'adresse du client : sinon n'importe quel client choisirait l'adresse vers
+/// laquelle le fournisseur renverra le code.
+fn request_origin(headers: &HeaderMap, behind_trusted_proxy: bool) -> String {
     let text = |name: &str| headers.get(name).and_then(|value| value.to_str().ok()).map(str::trim);
-    let scheme = text("x-forwarded-proto")
-        .and_then(|value| value.split(',').next())
-        .map(str::trim)
+    let forwarded = |name: &str| {
+        behind_trusted_proxy
+            .then(|| text(name))
+            .flatten()
+            .and_then(|value| value.split(',').next())
+            .map(str::trim)
+    };
+    let scheme = forwarded("x-forwarded-proto")
         .filter(|scheme| *scheme == "https" || *scheme == "http")
         .unwrap_or("http");
-    let host = text("x-forwarded-host")
-        .and_then(|value| value.split(',').next())
-        .map(str::trim)
+    let host = forwarded("x-forwarded-host")
         .filter(|host| !host.is_empty())
         .or_else(|| text("host"))
         .unwrap_or("localhost:8080");
@@ -182,10 +274,10 @@ fn view(state: &AppState, resolved: oidc::Resolved, origin: &str) -> ConfigView 
 pub async fn get_config(
     State(state): State<AppState>,
     _: AdminUser,
-    headers: HeaderMap,
+    origin: Origin,
 ) -> AuthResult<Json<ConfigView>> {
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
-    Ok(Json(view(&state, resolved, &request_origin(&headers))))
+    Ok(Json(view(&state, resolved, &origin.0)))
 }
 
 /// Corps de `PUT`. Un secret absent ou vide conserve celui déjà enregistré.
@@ -228,7 +320,7 @@ pub async fn put_config(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
     _: AdminUser,
-    headers: HeaderMap,
+    origin: Origin,
     Json(payload): Json<ConfigPayload>,
 ) -> AuthResult<Json<ConfigView>> {
     let config = OidcConfig {
@@ -271,7 +363,7 @@ pub async fn put_config(
     tracing::info!("OIDC settings saved");
 
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
-    Ok(Json(view(&state, resolved, &request_origin(&headers))))
+    Ok(Json(view(&state, resolved, &origin.0)))
 }
 
 /// `DELETE /api/auth/oidc/config` — oublie le réglage enregistré ; l'environnement
@@ -280,13 +372,13 @@ pub async fn delete_config(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
     _: AdminUser,
-    headers: HeaderMap,
+    origin: Origin,
 ) -> AuthResult<Json<ConfigView>> {
     oidc::clear(&state.pool).await?;
     *auth.discovery_cache().lock().await = None;
     tracing::info!("OIDC settings cleared");
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
-    Ok(Json(view(&state, resolved, &request_origin(&headers))))
+    Ok(Json(view(&state, resolved, &origin.0)))
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -339,11 +431,25 @@ mod tests {
     fn the_origin_follows_the_proxy_headers_then_the_host() {
         let mut headers = HeaderMap::new();
         headers.insert("host", "192.168.1.10:8080".parse().unwrap());
-        assert_eq!(request_origin(&headers), "http://192.168.1.10:8080");
+        assert_eq!(request_origin(&headers, true), "http://192.168.1.10:8080");
 
         headers.insert("x-forwarded-proto", "https".parse().unwrap());
         headers.insert("x-forwarded-host", "monit.example.org".parse().unwrap());
-        assert_eq!(request_origin(&headers), "https://monit.example.org");
+        assert_eq!(request_origin(&headers, true), "https://monit.example.org");
+        // Sans mandataire de confiance devant, les en-têtes ne comptent pas.
+        assert_eq!(request_origin(&headers, false), "http://192.168.1.10:8080");
+    }
+
+    #[test]
+    fn the_callback_must_come_back_to_the_browser_that_started() {
+        let cookie = binding_cookie("etat-1", false);
+        let pair = cookie.to_str().unwrap().split(';').next().unwrap().to_string();
+        let mut headers = HeaderMap::new();
+        headers.insert(header::COOKIE, format!("autre=1; {pair}").parse().unwrap());
+        assert!(binding_matches(&headers, Some("etat-1")));
+        assert!(!binding_matches(&headers, Some("etat-2")));
+        assert!(!binding_matches(&headers, None));
+        assert!(!binding_matches(&HeaderMap::new(), Some("etat-1")));
     }
 
     #[test]
