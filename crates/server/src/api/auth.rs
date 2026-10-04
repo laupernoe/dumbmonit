@@ -274,7 +274,8 @@ pub async fn open_session(
         .into_response())
 }
 
-/// Seaux du compteur de tentatives : l'adresse du client et le compte visé.
+/// Seaux du compteur de tentatives : l'adresse du client, et le compte visé
+/// depuis cette adresse (voir `auth::rate_limit`).
 pub fn limiter_keys(ip: Option<std::net::IpAddr>, username: Option<&str>) -> Vec<Key> {
     let mut keys = Vec::with_capacity(2);
     if let Some(ip) = ip {
@@ -282,7 +283,7 @@ pub fn limiter_keys(ip: Option<std::net::IpAddr>, username: Option<&str>) -> Vec
     }
     // Sans identifiant (ancien formulaire), c'est le compte local unique qui est
     // visé : une clé vide le désigne aussi bien.
-    keys.push(Key::user(username.unwrap_or("")));
+    keys.push(Key::user(username.unwrap_or(""), ip));
     keys
 }
 

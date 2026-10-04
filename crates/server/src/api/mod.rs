@@ -29,6 +29,7 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod security;
 mod spa;
 mod status_pages;
 mod synology;
@@ -148,6 +149,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(webchange::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
         .merge(music::routes())
+        // Note de sécurité par équipement et vue du parc (`security.rs`).
+        .merge(security::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(
@@ -178,12 +181,23 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // La limite de corps est relevée : un lot de rattrapage après une panne de
         // réseau pèse plusieurs mégaoctets, là où le défaut d'axum en refuse deux —
         // et le refuserait à chaque nouvelle tentative, sans issue.
-        .route("/ingest", post(ingest::receive).layer(DefaultBodyLimit::max(16 * 1024 * 1024)))
-        // Canal de commandes des agents : même jeton, même raison d'être ouvert.
-        .merge(agent_commands::agent_routes())
-        // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
-        // compte rendu peut peser autant qu'un lot de mesures.
-        .merge(relay::agent_routes().layer(DefaultBodyLimit::max(16 * 1024 * 1024)))
+        //
+        // Le jeton est vérifié par `require_agent_token` avant que le corps ne
+        // soit lu : un inconnu n'obtient pas 16 Mio de désérialisation.
+        .merge(
+            Router::new()
+                .route("/ingest", post(ingest::receive))
+                // Canal de commandes des agents : même jeton, même raison d'être ouvert.
+                .merge(agent_commands::agent_routes())
+                // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
+                // compte rendu peut peser autant qu'un lot de mesures.
+                .merge(relay::agent_routes())
+                .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+                .route_layer(middleware::from_fn_with_state(
+                    state.clone(),
+                    ingest::require_agent_token,
+                )),
+        )
         // Pages de statut publiques : lecture seule, sans session, par conception.
         .merge(status_pages::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
@@ -242,10 +256,19 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             tracing::debug_span!(
                 "request",
                 method = %request.method(),
-                path = %request.uri().path(),
+                path = %loggable_path(request.uri().path()),
             )
         }))
         .with_state(state)
+}
+
+/// Chemin tel qu'il peut figurer dans un journal : le jeton d'un heartbeat
+/// (`/api/push/<jeton>`) est le seul secret porté par un chemin, il est masqué.
+fn loggable_path(path: &str) -> std::borrow::Cow<'_, str> {
+    match path.strip_prefix("/api/push/") {
+        Some(rest) if !rest.is_empty() => "/api/push/<redacted>".into(),
+        _ => path.into(),
+    }
 }
 
 /// Politique de contenu commune, sans la partie qui dépend de la requête.
@@ -362,6 +385,13 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn heartbeat_tokens_never_reach_the_log() {
+        assert_eq!(loggable_path("/api/push/abcdef0123456789"), "/api/push/<redacted>");
+        assert_eq!(loggable_path("/api/targets/3/push"), "/api/targets/3/push");
+        assert_eq!(loggable_path("/api/ingest"), "/api/ingest");
+    }
 
     #[test]
     fn the_policy_forbids_everything_it_does_not_name() {

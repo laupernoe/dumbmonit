@@ -561,6 +561,15 @@ Reported by the Windows agent on a Hyper-V host; see [Agent](../devices/agent.md
 | Hyper-V host CPU high | The Hyper-V host's logical processors have been more than 90 % busy for fifteen minutes, guests included (`dumbmonit_hyperv_host_cpu_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
 | Hyper-V virtual disk errors | A Hyper-V virtual disk reported I/O errors in the last hour (`increase_prometheus(dumbmonit_hyperv_vhd_errors_total[1h])`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
+### Security score
+
+Computed by the server every 15 minutes for every device whose kind has security checks, and stored as `dumbmonit_security_score` (0–100). See [Security score](../using/security-score.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Security score dropped | The score fell by 10 points or more against its best value of the last 24 hours (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): a check started failing. | ≥ 10 pts | 30 min | Advisory (`warning`) | 24 h |
+| Security score low | The score is below 40, grade F (`dumbmonit_security_score`). Raise or lower the threshold to match your own bar. | < 40 | 1 h | Info (`info`) | 7 d |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

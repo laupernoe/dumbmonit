@@ -835,6 +835,76 @@ async fn renaming_a_channel_keeps_its_stored_secret() {
     );
 }
 
+/// Des secrets enregistrés ne partent jamais vers un serveur qu'ils n'ont pas
+/// connu : changer l'adresse (ou l'hôte SMTP) impose de les ressaisir.
+#[tokio::test]
+async fn stored_channel_secrets_never_follow_a_new_destination() {
+    let app = setup().await;
+    let (status, created) = app
+        .request(
+            "POST",
+            "/api/notify/channels",
+            Some(json!({
+                "name": "Gotify",
+                "kind": "gotify",
+                "settings": { "server_url": "https://gotify.home" },
+                "secrets": { "token": JETON }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let id = created["id"].as_i64().unwrap();
+    let uri = format!("/api/notify/channels/{id}");
+
+    let moved = json!({
+        "name": "Gotify", "kind": "gotify",
+        "settings": { "server_url": "https://attacker.example" }
+    });
+    let (status, body) = app.request("PUT", &uri, Some(moved)).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+    assert!(body["error"].as_str().unwrap().contains("Re-enter the secrets"), "{body}");
+
+    // Changer de type sans les secrets : même refus.
+    let (status, body) =
+        app.request("PUT", &uri, Some(json!({ "name": "Gotify", "kind": "discord" }))).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+
+    // Renommer sans toucher la destination garde les secrets.
+    let (status, body) = app
+        .request(
+            "PUT",
+            &uri,
+            Some(json!({
+                "name": "Gotify maison", "kind": "gotify",
+                "settings": { "server_url": "https://gotify.home" }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(app.stored_secrets(id).await["token"], json!(JETON));
+
+    // Avec les secrets ressaisis, la nouvelle adresse passe.
+    let (status, body) = app
+        .request(
+            "PUT",
+            &uri,
+            Some(json!({
+                "name": "Gotify maison", "kind": "gotify",
+                "settings": { "server_url": "https://gotify.example" },
+                "secrets": { "token": "nouveau-jeton" }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    // Le catalogue le dit à l'interface.
+    let (_, kinds) = app.request("GET", "/api/notify/kinds", None).await;
+    let gotify = kinds.as_array().unwrap().iter().find(|k| k["kind"] == "gotify").unwrap();
+    let server_url =
+        gotify["settings"].as_array().unwrap().iter().find(|f| f["key"] == "server_url");
+    assert_eq!(server_url.unwrap()["destination"], json!(true));
+}
+
 #[tokio::test]
 async fn invalid_channel_input_is_rejected_with_an_explanation() {
     let app = setup().await;
