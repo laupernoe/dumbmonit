@@ -429,8 +429,8 @@ async fn failures_are_counted_per_account_and_per_address() {
     .await;
     app.create_admin().await;
 
-    // Six échecs sur « jane » depuis une adresse : « jane » et cette adresse
-    // sont bloquées, mais pas « admin » depuis ailleurs.
+    // Six échecs sur « jane » depuis une adresse : cette adresse est bloquée,
+    // mais ni « jane » ni « admin » depuis ailleurs.
     for _ in 0..6 {
         let (status, _, _) = send(
             &app,
@@ -471,7 +471,12 @@ async fn failures_are_counted_per_account_and_per_address() {
         },
     )
     .await;
-    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS, "le compte visé est bloqué partout");
+    assert_eq!(
+        status,
+        StatusCode::UNAUTHORIZED,
+        "le compte visé n'est pas bloqué depuis ailleurs : un inconnu ne tient pas son \
+         propriétaire dehors"
+    );
     let (status, _, _) = send(
         &app,
         Raw {

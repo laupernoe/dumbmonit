@@ -53,10 +53,12 @@ const KDF_T_COST: u32 = 3;
 const KDF_P_COST: u32 = 1;
 
 /// Bornes acceptées à la lecture d'un lot : un fichier hostile pourrait sinon
-/// annoncer des paramètres qui feraient réserver plusieurs gibioctets.
-const MAX_M_COST: u32 = 1024 * 1024;
-const MAX_T_COST: u32 = 16;
-const MAX_P_COST: u32 = 8;
+/// annoncer des paramètres qui feraient réserver des centaines de mégaoctets,
+/// voire faire tuer le conteneur. Le double de ce que DumbMonit écrit : assez
+/// pour relire un lot si ces réglages montent un jour, pas davantage.
+const MAX_M_COST: u32 = 2 * KDF_M_COST;
+const MAX_T_COST: u32 = 2 * KDF_T_COST;
+const MAX_P_COST: u32 = 4;
 
 /// Paramètres de dérivation, recopiés dans l'enveloppe pour qu'un lot reste
 /// lisible même si ce serveur change les siens plus tard.
@@ -627,6 +629,15 @@ mod tests {
     fn des_parametres_de_derivation_absurdes_sont_refuses() {
         let mut envelope = seal(&lot(), PHRASE).unwrap();
         envelope.kdf.m_cost = MAX_M_COST + 1;
+        assert!(open(&envelope, PHRASE).is_err());
+
+        // Un gibioctet annoncé par un fichier hostile : refusé avant toute
+        // allocation.
+        let mut envelope = seal(&lot(), PHRASE).unwrap();
+        envelope.kdf.m_cost = 1024 * 1024;
+        assert!(open(&envelope, PHRASE).is_err());
+        let mut envelope = seal(&lot(), PHRASE).unwrap();
+        envelope.kdf.t_cost = 16;
         assert!(open(&envelope, PHRASE).is_err());
     }
 }

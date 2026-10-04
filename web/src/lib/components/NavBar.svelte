@@ -8,7 +8,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
 	import { getHealth } from '$lib/api';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Plate, RollingNumber, bump, reducedMotion } from '$lib/ui';
@@ -23,6 +23,7 @@
 		{ href: '/', label: 'Overview', icon: Gauge, exact: true },
 		{ href: '/targets', label: 'Devices', icon: Server, exact: false },
 		{ href: '/alerts', label: 'Alerts', icon: BellRing, exact: false },
+		{ href: '/security', label: 'Security', icon: ShieldCheck, exact: false },
 		{ href: '/status', label: 'Status', icon: Globe, exact: false },
 		{ href: '/settings', label: 'Settings', icon: Settings2, exact: false }
 	];
@@ -199,7 +200,7 @@
 
 <!-- Phones: the five destinations as thumb-reachable tabs. -->
 <nav aria-label="Main" class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
-	<ul class="grid grid-cols-5">
+	<ul class="grid grid-cols-6">
 		{#each LINKS as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}
 			<li>

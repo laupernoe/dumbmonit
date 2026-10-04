@@ -126,12 +126,13 @@
 				<time class="tnum" title={formatDateTime(window_)}>{formatDateTime(window_)}</time>. The next batch
 				from an agent with a valid token will bind this machine again.
 			</p>
-		{:else if host.bound && auth.isAdmin}
+		{:else if auth.isAdmin}
 			<div class="mt-3 flex flex-wrap items-center gap-3">
 				<Confirm confirmLabel="Open the window?" loading={rebinding} onconfirm={rebind}>Allow re-enrolment</Confirm>
 				<p class="text-sm text-ink-2">
-					Use this after reinstalling the machine, when the agent lost the secret it had. It opens a short
-					window during which the agent binds itself again.
+					Use this after reinstalling the machine, when the agent lost the secret it had, or when an agent
+					that is not bound yet now uses a different enrolment token. It opens a short window during which the
+					agent binds itself again.
 				</p>
 			</div>
 		{/if}

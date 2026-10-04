@@ -43,6 +43,13 @@ For services (`http`, `tcp`, `dns`, `ping`, `tls`), `dumbmonit_up = 1` means
 fine. The two signals are kept apart on purpose: a `probe_success` of 0 says
 the service is down, an interruption of `up` says the monitoring is down.
 
+## `dumbmonit_security_score`
+
+Every 15 minutes the server computes the [security score](../using/security-score.md)
+of each device whose kind has security checks, and writes
+`dumbmonit_security_score` (0–100, absent while nothing can be rated) and
+`dumbmonit_security_checks_failed`, both labelled `target`.
+
 ## Labels
 
 | Label | Set by | Meaning |

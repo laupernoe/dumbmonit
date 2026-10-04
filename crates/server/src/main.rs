@@ -66,7 +66,13 @@ async fn run(config: Config) -> Result<()> {
     info!(database = %config.database_path().display(), "database ready");
 
     let victoria_url = config.effective_victoria_url();
-    let victoria = tsdb::Victoria::new(&victoria_url)?;
+    // Clé des routes d'administration du VictoriaMetrics embarqué, propre à ce
+    // démarrage : elle n'est écrite nulle part et n'existe que dans ce processus.
+    let vm_admin_key = dumbmonit_server::crypto::generate_secret();
+    let mut victoria = tsdb::Victoria::new(&victoria_url)?;
+    if config.vm_embedded() {
+        victoria = victoria.with_admin_key(vm_admin_key.clone());
+    }
     let embedded_vm = if config.vm_embedded() {
         // Sans URL externe, l'image se suffit : VictoriaMetrics est lancé ici même
         // et le démarrage attend qu'il réponde — une erreur à ce stade (binaire
@@ -78,6 +84,7 @@ async fn run(config: Config) -> Result<()> {
                 listen: config.vm_listen.clone(),
                 retention: config.vm_retention.clone(),
                 memory: config.vm_memory.clone(),
+                admin_key: vm_admin_key,
             },
             &victoria,
         )
@@ -265,6 +272,7 @@ async fn run(config: Config) -> Result<()> {
 
     scheduler::spawn(state.clone());
     alerting::spawn(state.clone());
+    dumbmonit_server::security::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),
