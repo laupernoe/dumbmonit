@@ -114,7 +114,27 @@
 	const info = $derived(kinds.find((k) => k.kind === kind));
 	const settingFields = $derived(info?.settings ?? []);
 	const secretFields = $derived(info?.secrets ?? []);
-	const keepsSecrets = $derived(editing && channel?.has_secret === true && !clearSecrets);
+	/** Normalised for comparison: blank and absent are the same (the server's default). */
+	function destinationValue(field: KindField, value: Value | undefined): string {
+		if (value === undefined || isBlank(value)) return '';
+		return typeof value === 'string' ? value.trim() : String(value);
+	}
+	/**
+	 * Saved secrets never follow a channel to a new destination: once the type
+	 * or a destination field (server address, host, port...) changes, the server
+	 * wants the secrets again, so the form asks for them.
+	 */
+	const destinationChanged = $derived.by(() => {
+		if (!channel || !channel.has_secret) return false;
+		if (kind !== channel.kind) return true;
+		return settingFields.some(
+			(field) =>
+				field.destination === true &&
+				destinationValue(field, settings[field.key]) !==
+					destinationValue(field, toField(field, channel.settings?.[field.key]))
+		);
+	});
+	const keepsSecrets = $derived(editing && channel?.has_secret === true && !clearSecrets && !destinationChanged);
 
 	const filteredKinds = $derived.by(() => {
 		const q = search.trim().toLowerCase();
@@ -239,7 +259,7 @@
 		// Rules: on create, always send `secrets` (possibly `{}`). On edit, send
 		// them only if something was typed or a clear was requested — an omitted
 		// `secrets` keeps the stored ones; `{}` clears them.
-		if (!editing || clearSecrets || Object.keys(typed).length > 0) payload.secrets = typed;
+		if (!editing || clearSecrets || destinationChanged || Object.keys(typed).length > 0) payload.secrets = typed;
 		return payload;
 	}
 
@@ -383,7 +403,7 @@
 						<legend class="mb-1 text-sm font-semibold text-ink">Secrets</legend>
 						<p class="-mt-3 text-[0.8125rem] text-ink-2">
 							Encrypted at rest and never shown again.
-							{#if editing && channel?.has_secret}A secret is already saved for this channel.{/if}
+							{#if destinationChanged}The destination changed: enter the secrets again, saved ones are not sent to a new address.{:else if editing && channel?.has_secret}A secret is already saved for this channel.{/if}
 						</p>
 						{#each secretFields as field (field.key)}
 							<ChannelFieldInput

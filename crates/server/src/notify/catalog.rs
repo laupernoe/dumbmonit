@@ -42,6 +42,11 @@ pub struct Field {
     /// Valeur appliquée par le serveur quand le champ est laissé vide, vide s'il
     /// n'y en a pas. Sert à préremplir les listes de choix et à documenter le reste.
     pub default: &'static str,
+    /// Vrai si le champ dit *où* partent les secrets (adresse du serveur, hôte
+    /// SMTP, port, chiffrement, région). Le modifier impose de ressaisir les
+    /// secrets : l'API refuse de les envoyer vers une destination qu'ils n'ont
+    /// pas connue, et l'interface les affiche alors comme obligatoires.
+    pub destination: bool,
 }
 
 /// Un type de canal, prêt à être présenté.
@@ -72,6 +77,23 @@ pub fn all() -> Vec<KindInfo> {
 /// `settings` : la liste vient du catalogue lui-même, si bien qu'un secret annoncé
 /// à l'interface ne peut pas échapper au refus. Le catalogue est figé au premier
 /// appel, ce qui donne des tranches statiques à un coût nul ensuite.
+pub fn destination_keys(kind: &str) -> &'static [&'static str] {
+    static BY_KIND: OnceLock<HashMap<&'static str, Vec<&'static str>>> = OnceLock::new();
+    BY_KIND
+        .get_or_init(|| {
+            all()
+                .into_iter()
+                .map(|info| {
+                    let keys = info.settings.iter().filter(|f| f.destination).map(|f| f.key);
+                    (info.kind, keys.collect())
+                })
+                .collect()
+        })
+        .get(kind)
+        .map_or(&[], Vec::as_slice)
+}
+
+/// Voir [`destination_keys`] : même mécanique, pour les secrets.
 pub fn secret_keys(kind: &str) -> &'static [&'static str] {
     static BY_KIND: OnceLock<HashMap<&'static str, Vec<&'static str>>> = OnceLock::new();
     BY_KIND
@@ -107,6 +129,7 @@ fn field(
         options: &[],
         shape: "scalar",
         default: "",
+        destination: false,
     }
 }
 
@@ -114,8 +137,9 @@ fn text(key: &'static str, label: &'static str, help: &'static str, ph: &'static
     field(key, label, "text", help, ph)
 }
 
+/// Une adresse est, par défaut, une destination ; voir [`Field::destination`].
 fn url(key: &'static str, label: &'static str, help: &'static str, ph: &'static str) -> Field {
-    field(key, label, "url", help, ph)
+    field(key, label, "url", help, ph).destination(true)
 }
 
 fn password(key: &'static str, label: &'static str, help: &'static str, ph: &'static str) -> Field {
@@ -141,6 +165,10 @@ fn select(
 }
 
 impl Field {
+    fn destination(self, destination: bool) -> Self {
+        Self { destination, ..self }
+    }
+
     fn required(self) -> Self {
         Self { required: true, ..self }
     }
@@ -596,15 +624,18 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
             "https://dumbmonit.readthedocs.io/en/latest/notifications/#email-smtp",
             vec![
                 text("host", "SMTP server", "Host name or IP address.", "smtp.example.org")
-                    .required(),
+                    .required()
+                    .destination(true),
                 select(
                     "security",
                     "Encryption",
                     "STARTTLS on 587, TLS from the start of the connection on 465, none \
                      (local relay only) on 25.",
                     &["starttls", "tls", "none"],
-                ),
-                number("port", "Port", "Empty, derived from encryption: 587, 465 or 25.", "587"),
+                )
+                .destination(true),
+                number("port", "Port", "Empty, derived from encryption: 587, 465 or 25.", "587")
+                    .destination(true),
                 text("from", "Sender", "Sending address.", "dumbmonit@example.org").required(),
                 textarea("to", "Recipients", "One address per line.", "admin@example.org")
                     .required()
@@ -717,7 +748,8 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
                     "Account region",
                     "\"eu\" if your account is hosted in Europe.",
                     &["us", "eu"],
-                ),
+                )
+                .destination(true),
                 text("source", "Source", "Source name shown in the incident.", "")
                     .with_default("dumbmonit"),
             ],
@@ -737,7 +769,8 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
             "Opsgenie alert opened by the alert, closed by its resolution.",
             "https://dumbmonit.readthedocs.io/en/latest/notifications/#opsgenie",
             vec![
-                select("region", "Account region", "\"eu\" for a European account.", &["us", "eu"]),
+                select("region", "Account region", "\"eu\" for a European account.", &["us", "eu"])
+                    .destination(true),
                 textarea("responders", "Teams to notify", "One team name per line.", "on-call")
                     .list(),
                 textarea("tags", "Tags", "One tag per line.", "homelab").list(),
@@ -786,7 +819,9 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
                     "Public address of DumbMonit",
                     "So that {{link}} gives a clickable link to the device.",
                     "https://dumbmonit.home",
-                ),
+                )
+                // Un lien inséré dans le message, pas l'endroit où il part.
+                .destination(false),
                 text(
                     "username",
                     "Username",

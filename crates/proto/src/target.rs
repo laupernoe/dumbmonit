@@ -41,8 +41,43 @@ impl Target {
         labels.insert("host".to_string(), self.name.clone());
         for (key, value) in &self.tags {
             // Préfixées pour ne jamais entrer en collision avec les étiquettes système.
+            // La clé vient de l'utilisateur ou d'un agent à l'enrôlement : tout ce
+            // qui sort de `[a-zA-Z0-9_]` devient `_`, faute de quoi le nom
+            // d'étiquette serait invalide (et l'échantillon écarté à l'écriture),
+            // voire injecterait du texte dans le flux d'import.
+            let key: String = key
+                .chars()
+                .map(|c| if c.is_ascii_alphanumeric() || c == '_' { c } else { '_' })
+                .collect();
             labels.insert(format!("tag_{key}"), value.clone());
         }
         labels
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tag_keys_become_valid_label_names() {
+        let target = Target {
+            id: 7,
+            name: "nas".into(),
+            address: "10.0.0.2".into(),
+            kind: "snmp".into(),
+            profile_id: None,
+            parent_id: None,
+            interval: Duration::from_secs(60),
+            enabled: true,
+            tags: BTreeMap::from([
+                ("rack-location".to_string(), "b2".to_string()),
+                ("x\"} 0 0\ndumbmonit_up{target".to_string(), "12".to_string()),
+            ]),
+            credential: Credential::None,
+        };
+        let labels = target.base_labels();
+        assert_eq!(labels.get("tag_rack_location").map(String::as_str), Some("b2"));
+        assert!(labels.keys().all(|k| k.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')));
     }
 }

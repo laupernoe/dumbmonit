@@ -5349,6 +5349,50 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "time() - dumbmonit_instance_backup_last_success_seconds",
             )
         },
+
+        // --- Note de sécurité (`security/`) ---
+        //
+        // La note n'est recalculée que toutes les quinze minutes et bouge
+        // rarement : une baisse d'au moins dix points sur la journée, c'est un
+        // nouveau défaut (mise à jour de sécurité publiée, sauvegarde en échec,
+        // certificat proche de l'échéance). Le maximum glissant sert de
+        // référence : une note restée basse cesse d'alerter le lendemain — la
+        // règle « note basse » prend alors le relais.
+        Rule {
+            description: "A device's security score dropped by 10 points or more within a day: \
+                          open its Security card to see the newly failing check."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 10.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: " pts".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "security_score_drop",
+                "Security score dropped",
+                RuleKind::Threshold,
+                "max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score",
+            )
+        },
+        // Seuil réglable comme toute règle livrée : 40 est la limite de la
+        // lettre F. Rappel hebdomadaire : c'est un chantier, pas une panne.
+        Rule {
+            description: "A device's security score is below 40 (grade F): several vendor best \
+                          practices are not followed."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 40.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "security_score_low",
+                "Security score low",
+                RuleKind::Threshold,
+                "dumbmonit_security_score",
+            )
+        },
     ]
 }
 
@@ -5685,6 +5729,9 @@ mod tests {
             "hyperv_vhd_errors",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
+            // Note de sécurité (`security/`).
+            "security_score_drop",
+            "security_score_low",
         ] {
             assert!(uids.contains(&attendu), "missing built-in rule: {attendu}");
         }
@@ -5699,6 +5746,8 @@ mod tests {
         // Proxmox VE et PBS et le registre, préfixe `dumbmonit_` inclus.
         const PRODUITES: &[&str] = &[
             "dumbmonit_up",
+            // Note de sécurité, calculée par le serveur (`security/mod.rs`).
+            "dumbmonit_security_score",
             "dumbmonit_cpu_load_percent",
             "dumbmonit_cpu_usage_percent",
             "dumbmonit_storage_bytes_used",
