@@ -56,6 +56,11 @@ struct FakeState {
     player: PlayerMode,
     player_calls: usize,
     refresh_calls: usize,
+    /// Appareils Spotify Connect du compte (`GET /v1/me/player/devices`).
+    devices: Vec<Value>,
+    devices_calls: usize,
+    /// Transferts reçus (`PUT /v1/me/player`) : (appareil, play).
+    transfers: Vec<(String, bool)>,
 }
 
 type Fake = Arc<Mutex<FakeState>>;
@@ -132,7 +137,38 @@ async fn me(State(fake): State<Fake>, headers: HeaderMap) -> Response {
     if !fake.lock().unwrap().access_tokens.contains(&bearer(&headers)) {
         return StatusCode::UNAUTHORIZED.into_response();
     }
-    axum::Json(json!({ "id": "noe", "display_name": "Noé", "type": "user" })).into_response()
+    axum::Json(json!({ "id": "noe", "display_name": "Noé", "type": "user", "product": "premium" }))
+        .into_response()
+}
+
+async fn devices(State(fake): State<Fake>, headers: HeaderMap) -> Response {
+    let mut fake = fake.lock().unwrap();
+    fake.devices_calls += 1;
+    if !fake.access_tokens.contains(&bearer(&headers)) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    axum::Json(json!({ "devices": fake.devices })).into_response()
+}
+
+async fn transfer(
+    State(fake): State<Fake>,
+    headers: HeaderMap,
+    axum::Json(body): axum::Json<Value>,
+) -> Response {
+    let mut fake = fake.lock().unwrap();
+    if !fake.access_tokens.contains(&bearer(&headers)) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    let id = body["device_ids"][0].as_str().unwrap_or_default().to_string();
+    if !fake.devices.iter().any(|d| d["id"] == id.as_str()) {
+        return (
+            StatusCode::NOT_FOUND,
+            axum::Json(json!({ "error": { "status": 404, "message": "Device not found" } })),
+        )
+            .into_response();
+    }
+    fake.transfers.push((id, body["play"].as_bool().unwrap_or(false)));
+    StatusCode::NO_CONTENT.into_response()
 }
 
 async fn player(State(fake): State<Fake>, headers: HeaderMap) -> Response {
@@ -176,11 +212,15 @@ async fn spawn_fake() -> (Fake, String) {
         player: PlayerMode::Idle,
         player_calls: 0,
         refresh_calls: 0,
+        devices: Vec::new(),
+        devices_calls: 0,
+        transfers: Vec::new(),
     }));
     let router = Router::new()
         .route("/api/token", post(token))
         .route("/v1/me", get(me))
-        .route("/v1/me/player", get(player))
+        .route("/v1/me/player", get(player).put(transfer))
+        .route("/v1/me/player/devices", get(devices))
         .with_state(fake.clone());
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -616,4 +656,163 @@ async fn the_shared_link_is_checked_and_reaches_every_wall() {
         StatusCode::NO_CONTENT
     );
     assert_eq!(m.app.get("/api/music/now", Some(&viewer)).await.body["link"], Value::Null);
+}
+
+// ----------------------------------------------------------------- l'enceinte
+
+fn wall_device(id: &str, name: &str) -> Value {
+    json!({ "id": id, "name": name, "type": "Computer", "is_active": false,
+            "is_restricted": false, "volume_percent": 80 })
+}
+
+#[tokio::test]
+async fn the_speaker_is_renamed_by_an_admin_for_every_wall() {
+    let m = music_app().await;
+    let viewer = m.app.viewer_cookie(&m.admin).await;
+
+    let refused =
+        m.app.put("/api/music/speaker", json!({ "name": "Kitchen" }), Some(&viewer)).await;
+    assert_eq!(refused.status, StatusCode::FORBIDDEN);
+    for bad in ["   x\ny", &"a".repeat(65)] {
+        let reply = m.app.put("/api/music/speaker", json!({ "name": bad }), Some(&m.admin)).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{bad:?}");
+    }
+
+    let renamed = m
+        .app
+        .put("/api/music/speaker", json!({ "name": "  Living room TV " }), Some(&m.admin))
+        .await;
+    assert_eq!(renamed.status, StatusCode::OK, "{}", renamed.body);
+    assert_eq!(renamed.body["speaker_name"], "Living room TV");
+    let now = m.app.get("/api/music/now", Some(&viewer)).await;
+    assert_eq!(now.body["speaker_name"], "Living room TV");
+    let account = m.app.get("/api/music/spotify", Some(&viewer)).await;
+    assert_eq!(account.body["speaker_name"], "Living room TV");
+
+    let reset = m.app.put("/api/music/speaker", json!({ "name": null }), Some(&m.admin)).await;
+    assert_eq!(reset.body["speaker_name"], "DumbMonit Wall");
+}
+
+#[tokio::test]
+async fn walls_report_their_speaker_and_learn_whether_spotify_lists_it() {
+    let m = music_app().await;
+    m.connect().await;
+    m.fake.lock().unwrap().devices =
+        vec![wall_device("wall1", "DumbMonit Wall"), wall_device("phone", "Pixel")];
+    let viewer = m.app.viewer_cookie(&m.admin).await;
+
+    let report = |display: &str, phase: &str, device: Option<&str>| {
+        json!({
+            "display": display, "name": "DumbMonit Wall", "phase": phase,
+            "activated": true, "device_id": device, "browser": "Chrome 130 on Linux",
+            "premium": if phase == "ready" { Some(true) } else { None },
+            "problem": if phase == "unsupported" { Some("No DRM module.") } else { None },
+        })
+    };
+    let listed = m
+        .app
+        .post(
+            "/api/music/speaker/report",
+            report("tv-000001", "ready", Some("wall1")),
+            Some(&viewer),
+        )
+        .await;
+    assert_eq!(listed.status, StatusCode::OK, "{}", listed.body);
+    assert_eq!(listed.body["listed"], true);
+    let ghost = m
+        .app
+        .post(
+            "/api/music/speaker/report",
+            report("tv-000002", "ready", Some("gone")),
+            Some(&viewer),
+        )
+        .await;
+    assert_eq!(ghost.body["listed"], false);
+    let no_drm = m
+        .app
+        .post("/api/music/speaker/report", report("tv-000003", "unsupported", None), Some(&viewer))
+        .await;
+    assert_eq!(no_drm.body["listed"], Value::Null);
+    assert_eq!(m.fake.lock().unwrap().devices_calls, 1, "la liste des appareils est mise en cache");
+
+    let bad = m
+        .app
+        .post("/api/music/speaker/report", report("tv-000004", "dancing", None), Some(&viewer))
+        .await;
+    assert_eq!(bad.status, StatusCode::BAD_REQUEST);
+
+    // Un jeton d'API ne se fait pas passer pour un mur.
+    let created = m
+        .app
+        .post("/api/tokens", json!({ "name": "script", "scope": "write" }), Some(&m.admin))
+        .await;
+    let secret = created.body["secret"].as_str().unwrap().to_string();
+    let mut request = Request::builder()
+        .method("POST")
+        .uri("/api/music/speaker/report")
+        .header("authorization", format!("Bearer {secret}"))
+        .header("content-type", "application/json")
+        .header("x-requested-with", "DumbMonit");
+    request = request.header("accept", "application/json");
+    let response = m
+        .app
+        .router
+        .clone()
+        .oneshot(request.body(Body::from(report("tv-000005", "ready", None).to_string())).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    let status = m.app.get("/api/music/speaker", Some(&viewer)).await;
+    assert_eq!(status.status, StatusCode::OK, "{}", status.body);
+    assert_eq!(status.body["status"], "connected");
+    assert_eq!(status.body["premium"], true);
+    assert_eq!(status.body["listed"], true);
+    assert_eq!(status.body["devices"].as_array().unwrap().len(), 2);
+    let walls = status.body["walls"].as_array().unwrap();
+    assert_eq!(walls.len(), 3);
+    let tv3 = walls.iter().find(|w| w["display"] == "tv-000003").unwrap();
+    assert_eq!(tv3["phase"], "unsupported");
+    assert_eq!(tv3["problem"], "No DRM module.");
+    assert_eq!(tv3["browser"], "Chrome 130 on Linux");
+}
+
+#[tokio::test]
+async fn play_here_transfers_the_account_to_the_speaker() {
+    let m = music_app().await;
+    let viewer = m.app.viewer_cookie(&m.admin).await;
+
+    let unconnected = m.app.post("/api/music/speaker/play", json!({}), Some(&viewer)).await;
+    assert_eq!(unconnected.status, StatusCode::CONFLICT);
+
+    m.connect().await;
+    m.fake.lock().unwrap().devices =
+        vec![wall_device("phone", "Pixel"), wall_device("wall1", "DumbMonit Wall")];
+
+    // Personne ne s'appelle ainsi chez Spotify : on dit quoi faire.
+    m.app.put("/api/music/speaker", json!({ "name": "Kitchen" }), Some(&m.admin)).await;
+    let missing = m.app.post("/api/music/speaker/play", json!({}), Some(&viewer)).await;
+    assert_eq!(missing.status, StatusCode::CONFLICT);
+    assert!(missing.body["error"].as_str().unwrap().contains("Kitchen"));
+    m.app.put("/api/music/speaker", json!({ "name": null }), Some(&m.admin)).await;
+
+    // « Test sound » : l'appareil qui porte le nom de l'enceinte.
+    let played = m.app.post("/api/music/speaker/play", json!({}), Some(&viewer)).await;
+    assert_eq!(played.status, StatusCode::OK, "{}", played.body);
+    assert_eq!(played.body["device_id"], "wall1");
+
+    // « Play here » depuis le mur : son propre identifiant.
+    let here =
+        m.app.post("/api/music/speaker/play", json!({ "device_id": "wall1" }), Some(&viewer)).await;
+    assert_eq!(here.status, StatusCode::OK, "{}", here.body);
+    assert_eq!(
+        m.fake.lock().unwrap().transfers,
+        [("wall1".to_string(), true), ("wall1".to_string(), true)]
+    );
+
+    // Un appareil que Spotify ne connaît pas : l'erreur de Spotify, traduite.
+    let gone =
+        m.app.post("/api/music/speaker/play", json!({ "device_id": "gone" }), Some(&viewer)).await;
+    assert_eq!(gone.status, StatusCode::BAD_GATEWAY);
+    assert!(gone.body["error"].as_str().unwrap().contains("Reload the wall"));
 }

@@ -15,8 +15,15 @@
 //!   YouTube qui n'ont pas d'équivalent « Connect » sur le web.
 //!
 //! L'état transitoire — autorisations en cours, jeton d'accès, dernière lecture
-//! lue — vit en mémoire dans [`MusicHub`] : un processus unique suffit, et rien
-//! de tout cela ne mérite de survivre à un redémarrage.
+//! lue, appareils du compte, rapports des murs — vit en mémoire dans
+//! [`MusicHub`] : un processus unique suffit, et rien de tout cela ne mérite de
+//! survivre à un redémarrage.
+//!
+//! **Rapports des murs.** Un mur qui échoue à devenir enceinte (page en HTTP,
+//! navigateur sans DRM, compte sans Premium…) le dit sur son écran, mais
+//! personne ne regarde la télé de près : il le rapporte aussi au serveur
+//! (`POST /api/music/speaker/report`), et les réglages montrent, mur par mur,
+//! où il en est et si Spotify le liste bien parmi les appareils du compte.
 
 pub mod link;
 pub mod spotify;
@@ -33,7 +40,7 @@ use tokio::sync::Mutex;
 
 use crate::auth::oidc::pkce;
 use crate::crypto::Cipher;
-use spotify::{Endpoints, NowPlaying, Player, SpotifyError};
+use spotify::{Authorized, Device, Endpoints, NowPlaying, Player, SpotifyError};
 
 /// Délai laissé pour revenir de Spotify avec un code (ou le recoller).
 const PENDING_TTL: Duration = Duration::from_secs(10 * 60);
@@ -45,6 +52,12 @@ const NOW_TTL: Duration = Duration::from_secs(4);
 /// Un jeton d'accès qui expire dans moins que cela est renouvelé d'avance : le
 /// SDK le garde jusqu'à ce qu'il échoue.
 const TOKEN_MARGIN: Duration = Duration::from_secs(120);
+/// Durée pendant laquelle la liste des appareils du compte est resservie.
+const DEVICES_TTL: Duration = Duration::from_secs(10);
+/// Un mur qui ne s'est pas rapporté depuis ce délai est oublié.
+const REPORT_TTL: Duration = Duration::from_secs(15 * 60);
+/// Murs suivis au plus (une maison n'en a que quelques-uns).
+const REPORTS_MAX: usize = 16;
 
 /// Pourquoi une opération n'a pas abouti.
 #[derive(Debug)]
@@ -216,7 +229,7 @@ pub struct SpotifyView {
     pub missing_scopes: Vec<String>,
     /// Pourquoi la connexion a pris fin, quand elle a pris fin.
     pub last_error: Option<String>,
-    pub speaker_name: &'static str,
+    pub speaker_name: String,
     pub scopes: &'static [&'static str],
     pub loopback_redirect_uri: &'static str,
     pub callback_path: &'static str,
@@ -246,7 +259,7 @@ impl SpotifyView {
                 .map(|a| missing_scopes(&a.scopes))
                 .unwrap_or_default(),
             last_error: account.as_ref().and_then(|a| a.last_error.clone()),
-            speaker_name: spotify::SPEAKER_NAME,
+            speaker_name: store::speaker_name(pool).await?,
             scopes: spotify::SCOPES,
             loopback_redirect_uri: spotify::LOOPBACK_REDIRECT_URI,
             callback_path: spotify::CALLBACK_PATH,
@@ -298,6 +311,105 @@ struct Pending {
     started: Instant,
 }
 
+/// Ce qu'un mur dit de son enceinte (`POST /api/music/speaker/report`).
+#[derive(Debug, Clone, Deserialize)]
+pub struct SpeakerReport {
+    /// Identifiant aléatoire du mur, gardé par son navigateur.
+    pub display: String,
+    /// Le nom sous lequel il s'annonce.
+    pub name: String,
+    /// `off`, `unsupported`, `starting`, `ready` ou `error`.
+    pub phase: String,
+    /// Le son est débloqué (un geste a eu lieu sur la page).
+    #[serde(default)]
+    pub activated: bool,
+    /// L'identifiant d'appareil que le SDK a reçu.
+    #[serde(default)]
+    pub device_id: Option<String>,
+    /// Ce qui manque ou a échoué, en une phrase.
+    #[serde(default)]
+    pub problem: Option<String>,
+    /// « Chrome 130 on Linux » : de quoi reconnaître l'écran.
+    #[serde(default)]
+    pub browser: Option<String>,
+    /// `false` : le SDK a dit que le compte n'a pas Premium ; `true` : prêt.
+    #[serde(default)]
+    pub premium: Option<bool>,
+}
+
+/// Un mur tel que les réglages le montrent.
+#[derive(Debug, Clone, Serialize)]
+pub struct WallReport {
+    pub display: String,
+    pub name: String,
+    pub phase: String,
+    pub activated: bool,
+    pub device_id: Option<String>,
+    pub problem: Option<String>,
+    pub browser: Option<String>,
+    pub premium: Option<bool>,
+    /// Spotify liste bien cet appareil (`None` : pas vérifiable).
+    pub listed: Option<bool>,
+    /// Dernier rapport, UTC sans suffixe.
+    pub seen_at: String,
+    #[serde(skip)]
+    seen: Option<Instant>,
+}
+
+/// Coupe une chaîne venue d'un navigateur à une longueur raisonnable, sans
+/// caractère de contrôle.
+fn tidy(text: &str, max: usize) -> String {
+    text.chars().filter(|c| !c.is_control()).take(max).collect::<String>().trim().to_string()
+}
+
+impl SpeakerReport {
+    /// Vérifie et nettoie : rien de ce qu'envoie un mur n'est cru tel quel.
+    pub fn check(self) -> Result<Self, &'static str> {
+        let display_ok = (8..=64).contains(&self.display.len())
+            && self.display.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-');
+        if !display_ok {
+            return Err("Unknown display.");
+        }
+        if !["off", "unsupported", "starting", "ready", "error"].contains(&self.phase.as_str()) {
+            return Err("Unknown speaker phase.");
+        }
+        let device_id = self.device_id.filter(|id| {
+            (1..=128).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric())
+        });
+        Ok(Self {
+            name: tidy(&self.name, spotify::SPEAKER_NAME_MAX),
+            problem: self.problem.map(|p| tidy(&p, 400)).filter(|p| !p.is_empty()),
+            browser: self.browser.map(|b| tidy(&b, 80)).filter(|b| !b.is_empty()),
+            device_id,
+            ..self
+        })
+    }
+}
+
+/// L'enceinte, telle que les réglages la montrent (`GET /api/music/speaker`).
+#[derive(Debug, Clone, Serialize)]
+pub struct SpeakerStatus {
+    pub speaker_name: String,
+    pub status: Connection,
+    pub account_name: Option<String>,
+    /// `None` : inconnu (Spotify ne le dit plus aux applications personnelles,
+    /// et aucun mur ne l'a encore appris).
+    pub premium: Option<bool>,
+    /// Les appareils Spotify Connect du compte, à l'instant.
+    pub devices: Vec<Device>,
+    /// Un appareil à ce nom (ou d'un mur prêt) est dans la liste.
+    pub listed: bool,
+    pub walls: Vec<WallReport>,
+    /// Pourquoi la liste des appareils n'a pas pu être lue.
+    pub error: Option<String>,
+}
+
+#[derive(Default)]
+struct DevicesCache {
+    value: Option<Vec<Device>>,
+    at: Option<Instant>,
+}
+
 #[derive(Default)]
 struct NowCache {
     value: Option<SpotifyNow>,
@@ -315,6 +427,9 @@ struct Inner {
     token: Mutex<Option<AccessToken>>,
     /// Même idée pour la lecture en cours : une requête à Spotify à la fois.
     now: Mutex<NowCache>,
+    devices: Mutex<DevicesCache>,
+    /// Derniers rapports des murs, par identifiant de mur.
+    walls: StdMutex<HashMap<String, WallReport>>,
 }
 
 /// L'état en mémoire de la musique du mur, partagé par les gestionnaires HTTP.
@@ -334,6 +449,8 @@ impl MusicHub {
             pending: StdMutex::new(HashMap::new()),
             token: Mutex::new(None),
             now: Mutex::new(NowCache::default()),
+            devices: Mutex::new(DevicesCache::default()),
+            walls: StdMutex::new(HashMap::new()),
         }))
     }
 
@@ -414,6 +531,9 @@ impl MusicHub {
             .await
             .map_err(ConnectError::Spotify)?;
         let scopes = tokens.scope.clone().unwrap_or_else(|| spotify::SCOPES.join(" "));
+        store::set_product(pool, profile.product.as_deref().filter(|p| !p.is_empty()))
+            .await
+            .map_err(ConnectError::Internal)?;
         store::save_connection(
             pool,
             cipher,
@@ -428,6 +548,8 @@ impl MusicHub {
 
         *self.0.token.lock().await = Some(AccessToken::from_tokens(&tokens));
         *self.0.now.lock().await = NowCache::default();
+        *self.0.devices.lock().await = DevicesCache::default();
+        self.walls().clear();
         Ok(())
     }
 
@@ -435,6 +557,179 @@ impl MusicHub {
     pub async fn forget(&self) {
         *self.0.token.lock().await = None;
         *self.0.now.lock().await = NowCache::default();
+        *self.0.devices.lock().await = DevicesCache::default();
+        self.walls().clear();
+    }
+
+    fn walls(&self) -> std::sync::MutexGuard<'_, HashMap<String, WallReport>> {
+        self.0.walls.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// Les appareils Spotify Connect du compte, depuis le cache s'il est frais.
+    pub async fn devices(
+        &self,
+        pool: &SqlitePool,
+        cipher: &Cipher,
+    ) -> Result<Vec<Device>, MusicError> {
+        let mut cache = self.0.devices.lock().await;
+        if let (Some(value), Some(at)) = (&cache.value, cache.at)
+            && at.elapsed() < DEVICES_TTL
+        {
+            return Ok(value.clone());
+        }
+        for attempt in 0..2 {
+            let token = self.access_token(pool, cipher).await?;
+            match spotify::devices(&self.0.http, &self.0.endpoints, &token.token).await? {
+                Authorized::Ok(devices) => {
+                    cache.value = Some(devices.clone());
+                    cache.at = Some(Instant::now());
+                    return Ok(devices);
+                }
+                Authorized::Unauthorized if attempt == 0 => self.drop_token().await,
+                Authorized::Unauthorized => break,
+            }
+        }
+        Err(SpotifyError::Rejected("the access token was refused".into()).into())
+    }
+
+    /// Fait jouer le compte sur cet appareil.
+    pub async fn transfer(
+        &self,
+        pool: &SqlitePool,
+        cipher: &Cipher,
+        device_id: &str,
+    ) -> Result<(), MusicError> {
+        for attempt in 0..2 {
+            let token = self.access_token(pool, cipher).await?;
+            match spotify::transfer(&self.0.http, &self.0.endpoints, &token.token, device_id)
+                .await?
+            {
+                Authorized::Ok(()) => {
+                    // Ce qui joue, et où, vient de changer.
+                    *self.0.now.lock().await = NowCache::default();
+                    *self.0.devices.lock().await = DevicesCache::default();
+                    return Ok(());
+                }
+                Authorized::Unauthorized if attempt == 0 => self.drop_token().await,
+                Authorized::Unauthorized => break,
+            }
+        }
+        Err(SpotifyError::Rejected("the access token was refused".into()).into())
+    }
+
+    /// Enregistre le rapport d'un mur et lui dit si Spotify le liste.
+    pub async fn report(
+        &self,
+        pool: &SqlitePool,
+        cipher: &Cipher,
+        report: SpeakerReport,
+    ) -> Option<bool> {
+        let listed = match (&report.device_id, report.phase.as_str()) {
+            (Some(id), "ready") => match self.devices(pool, cipher).await {
+                Ok(devices) => Some(devices.iter().any(|d| d.id.as_deref() == Some(id))),
+                Err(_) => None,
+            },
+            _ => None,
+        };
+        let mut walls = self.walls();
+        walls.retain(|_, wall| wall.seen.is_some_and(|seen| seen.elapsed() < REPORT_TTL));
+        if !walls.contains_key(&report.display)
+            && walls.len() >= REPORTS_MAX
+            && let Some(oldest) =
+                walls.iter().min_by_key(|(_, w)| w.seen).map(|(display, _)| display.clone())
+        {
+            walls.remove(&oldest);
+        }
+        walls.insert(
+            report.display.clone(),
+            WallReport {
+                display: report.display,
+                name: report.name,
+                phase: report.phase,
+                activated: report.activated,
+                device_id: report.device_id,
+                problem: report.problem,
+                browser: report.browser,
+                premium: report.premium,
+                listed,
+                seen_at: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                seen: Some(Instant::now()),
+            },
+        );
+        listed
+    }
+
+    /// Les murs qui se sont rapportés récemment, le plus récent d'abord.
+    pub fn wall_reports(&self) -> Vec<WallReport> {
+        let mut walls: Vec<WallReport> = self
+            .walls()
+            .values()
+            .filter(|wall| wall.seen.is_some_and(|seen| seen.elapsed() < REPORT_TTL))
+            .cloned()
+            .collect();
+        walls.sort_by_key(|wall| std::cmp::Reverse(wall.seen));
+        walls
+    }
+
+    /// L'appareil d'un mur prêt sous ce nom, ou à défaut un appareil du compte
+    /// qui porte ce nom.
+    pub async fn speaker_device(
+        &self,
+        pool: &SqlitePool,
+        cipher: &Cipher,
+        name: &str,
+    ) -> Result<Option<String>, MusicError> {
+        let devices = self.devices(pool, cipher).await?;
+        let listed = |id: &str| devices.iter().any(|d| d.id.as_deref() == Some(id));
+        let from_wall = self
+            .wall_reports()
+            .into_iter()
+            .filter(|w| w.phase == "ready" && w.name == name)
+            .filter_map(|w| w.device_id)
+            .find(|id| listed(id));
+        Ok(from_wall.or_else(|| {
+            devices.iter().filter(|d| d.name == name && !d.is_restricted).find_map(|d| d.id.clone())
+        }))
+    }
+
+    /// L'état complet de l'enceinte, pour les réglages.
+    pub async fn speaker_status(
+        &self,
+        pool: &SqlitePool,
+        cipher: &Cipher,
+    ) -> anyhow::Result<SpeakerStatus> {
+        let view = SpotifyView::load(pool).await?;
+        let walls = self.wall_reports();
+        let (devices, error) = match view.status {
+            Connection::Connected => match self.devices(pool, cipher).await {
+                Ok(devices) => (devices, None),
+                Err(MusicError::Spotify(error)) => (Vec::new(), Some(error.message())),
+                Err(MusicError::Internal(error)) => return Err(error),
+            },
+            _ => (Vec::new(), None),
+        };
+        let ready_ids: Vec<&str> = walls
+            .iter()
+            .filter(|w| w.phase == "ready")
+            .filter_map(|w| w.device_id.as_deref())
+            .collect();
+        let listed = devices.iter().any(|d| {
+            d.name == view.speaker_name || d.id.as_deref().is_some_and(|id| ready_ids.contains(&id))
+        });
+        let premium = match store::product(pool).await? {
+            Some(product) => Some(product == "premium"),
+            None => walls.iter().find_map(|w| w.premium),
+        };
+        Ok(SpeakerStatus {
+            speaker_name: view.speaker_name,
+            status: view.status,
+            account_name: view.account_name,
+            premium,
+            devices,
+            listed,
+            walls,
+            error,
+        })
     }
 
     /// Un jeton d'accès valable encore au moins deux minutes, rafraîchi au besoin.
@@ -608,6 +903,28 @@ mod tests {
         ] {
             assert!(check_redirect_uri(refused, None).is_err(), "{refused}");
         }
+    }
+
+    #[test]
+    fn wall_reports_are_checked_and_tidied() {
+        let report = |display: &str, phase: &str| SpeakerReport {
+            display: display.into(),
+            name: " Living\u{7}room ".into(),
+            phase: phase.into(),
+            activated: true,
+            device_id: Some("abc123".into()),
+            problem: Some("x".repeat(1000)),
+            browser: Some("Chrome 130 on Linux".into()),
+            premium: Some(true),
+        };
+        let checked = report("display-0001", "ready").check().unwrap();
+        assert_eq!(checked.name, "Livingroom");
+        assert_eq!(checked.problem.as_deref().map(str::len), Some(400));
+        assert!(report("short", "ready").check().is_err());
+        assert!(report("display-0001", "dancing").check().is_err());
+        let mut odd = report("display-0001", "ready");
+        odd.device_id = Some("../../etc".into());
+        assert_eq!(odd.check().unwrap().device_id, None);
     }
 
     #[test]

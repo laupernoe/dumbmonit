@@ -16,16 +16,39 @@
 //!   le rafraîchir ne remet pas le compteur à zéro. Il n'est pas toujours
 //!   renvoyé : on garde l'ancien quand la réponse n'en porte pas.
 //! - Mode développement (applications personnelles) : propriétaire Premium,
-//!   cinq utilisateurs au plus ; `GET /me` ne rend plus `product` ni `email`,
-//!   on ne peut donc pas vérifier Premium côté serveur — le SDK le dit au mur.
+//!   cinq utilisateurs au plus ; `GET /me` ne rend plus toujours `product` :
+//!   quand il manque, c'est le SDK du mur qui dit si Premium manque
+//!   (`account_error`), et le mur le rapporte au serveur.
+//! - Un appareil du Web Playback SDK n'apparaît dans Spotify Connect que pour
+//!   le compte dont il tient le jeton : le téléphone doit utiliser ce compte-là.
 
 use std::time::Duration;
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-/// Nom sous lequel le mur s'annonce comme appareil Spotify Connect.
+/// Nom sous lequel le mur s'annonce comme appareil Spotify Connect, tant
+/// qu'aucun autre n'a été choisi dans les réglages.
 pub const SPEAKER_NAME: &str = "DumbMonit Wall";
+
+/// Longueur maximale d'un nom d'appareil (en caractères).
+pub const SPEAKER_NAME_MAX: usize = 64;
+
+/// Un nom d'appareil acceptable : non vide une fois rogné, sans caractère de
+/// contrôle, pas trop long. Rend le nom rogné.
+pub fn clean_speaker_name(name: &str) -> Result<String, &'static str> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Give the speaker a name.");
+    }
+    if name.chars().count() > SPEAKER_NAME_MAX {
+        return Err("A speaker name is at most 64 characters.");
+    }
+    if name.chars().any(char::is_control) {
+        return Err("A speaker name is a single line of text.");
+    }
+    Ok(name.to_string())
+}
 
 /// Portées demandées : lecture par le SDK (`streaming`, `user-read-email`,
 /// `user-read-private`), lecture en cours et appareils (`…-playback-state`,
@@ -262,6 +285,9 @@ pub struct Profile {
     pub id: String,
     #[serde(default)]
     pub display_name: Option<String>,
+    /// `premium`, `free`… — absent pour une application en mode développement.
+    #[serde(default)]
+    pub product: Option<String>,
 }
 
 pub async fn me(
@@ -321,6 +347,93 @@ pub async fn player(
                 .map_err(|_| SpotifyError::Unreachable("unreadable playback state".into()))?;
             Ok(raw.into_now_playing().map_or(Player::Idle, |now| Player::State(Box::new(now))))
         }
+        _ => Err(api_error(response).await),
+    }
+}
+
+/// Un appareil Spotify Connect du compte (`GET /v1/me/player/devices`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Device {
+    /// Absent pour un appareil que l'API ne permet pas de piloter.
+    #[serde(default)]
+    pub id: Option<String>,
+    #[serde(default)]
+    pub name: String,
+    /// `Computer`, `Smartphone`, `Speaker`, `TV`…
+    #[serde(default, rename = "type")]
+    pub kind: String,
+    #[serde(default)]
+    pub is_active: bool,
+    #[serde(default)]
+    pub is_restricted: bool,
+    #[serde(default)]
+    pub volume_percent: Option<u8>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct RawDevices {
+    #[serde(default)]
+    devices: Vec<Device>,
+}
+
+/// Réponse d'un appel à l'API Web qui peut demander un nouveau jeton.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Authorized<T> {
+    Ok(T),
+    /// 401 : le jeton d'accès n'est plus accepté (à rafraîchir puis réessayer).
+    Unauthorized,
+}
+
+/// Les appareils Spotify Connect visibles du compte, à cet instant.
+pub async fn devices(
+    http: &reqwest::Client,
+    endpoints: &Endpoints,
+    access_token: &str,
+) -> Result<Authorized<Vec<Device>>, SpotifyError> {
+    let response = http
+        .get(format!("{}/v1/me/player/devices", endpoints.api))
+        .bearer_auth(access_token)
+        .send()
+        .await
+        .map_err(|error| SpotifyError::Unreachable(short(&error)))?;
+    match response.status() {
+        StatusCode::UNAUTHORIZED => Ok(Authorized::Unauthorized),
+        status if status.is_success() => {
+            let raw: RawDevices = response
+                .json()
+                .await
+                .map_err(|_| SpotifyError::Unreachable("unreadable device list".into()))?;
+            Ok(Authorized::Ok(raw.devices))
+        }
+        _ => Err(api_error(response).await),
+    }
+}
+
+/// Fait jouer le compte sur cet appareil (`PUT /v1/me/player`), en reprenant
+/// ce qui jouait ou ce qui a joué en dernier.
+pub async fn transfer(
+    http: &reqwest::Client,
+    endpoints: &Endpoints,
+    access_token: &str,
+    device_id: &str,
+) -> Result<Authorized<()>, SpotifyError> {
+    let response = http
+        .put(format!("{}/v1/me/player", endpoints.api))
+        .bearer_auth(access_token)
+        .json(&serde_json::json!({ "device_ids": [device_id], "play": true }))
+        .send()
+        .await
+        .map_err(|error| SpotifyError::Unreachable(short(&error)))?;
+    match response.status() {
+        StatusCode::UNAUTHORIZED => Ok(Authorized::Unauthorized),
+        status if status.is_success() => Ok(Authorized::Ok(())),
+        StatusCode::NOT_FOUND => Err(SpotifyError::Rejected(
+            "Spotify does not know this speaker (any more). Reload the wall, then try again."
+                .into(),
+        )),
+        StatusCode::FORBIDDEN => Err(SpotifyError::Rejected(
+            "Spotify refused to play: choosing where the account plays needs Premium.".into(),
+        )),
         _ => Err(api_error(response).await),
     }
 }
@@ -653,6 +766,27 @@ mod tests {
             assert!(query["scope"].split(' ').any(|s| s == scope), "{scope}");
         }
         assert!(!query.contains_key("client_secret"));
+    }
+
+    #[test]
+    fn speaker_names_are_one_short_line() {
+        assert_eq!(clean_speaker_name("  Living room TV ").as_deref(), Ok("Living room TV"));
+        assert!(clean_speaker_name("   ").is_err());
+        assert!(clean_speaker_name("a\nb").is_err());
+        assert!(clean_speaker_name(&"é".repeat(64)).is_ok());
+        assert!(clean_speaker_name(&"é".repeat(65)).is_err());
+    }
+
+    #[test]
+    fn devices_are_read_with_their_type() {
+        let raw: RawDevices = serde_json::from_str(
+            r#"{"devices":[{"id":"abc","name":"Living room","type":"Computer","is_active":true,
+                "is_restricted":false,"volume_percent":80,"is_private_session":false}]}"#,
+        )
+        .unwrap();
+        assert_eq!(raw.devices[0].kind, "Computer");
+        assert_eq!(raw.devices[0].id.as_deref(), Some("abc"));
+        assert!(raw.devices[0].is_active);
     }
 
     #[test]
