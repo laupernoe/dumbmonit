@@ -1331,6 +1331,7 @@ const PBS_OPTIONS: &[OptionView] = &[
         "Reads the tape tier: backup jobs and their last run, drives, changers, media pools and the tapes themselves. Off by default, since most installations have no tape hardware. Needs Tape.Audit on \"/tape\".",
         false,
     ),
+    DEVICE_STALE_DAYS,
 ];
 
 /// Options lues par `collectors/pdm/options.rs`.
@@ -2709,6 +2710,7 @@ const VEEAM_OPTIONS: &[OptionView] = &[
     ),
     SELF_SIGNED_TLS,
     VENDOR_TIMEOUT,
+    DEVICE_STALE_DAYS,
 ];
 
 /// Client OAuth Tailscale à la portée `devices:core:read`.
@@ -4149,7 +4151,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the Veeam console, open the main menu > Users and Roles > Security, click Add, enter the account (for example VBR01\\dumbmonit) and give it the Veeam Backup Viewer role only.",
                     "In DumbMonit, enter the address of the backup server, for example \"vbr.lan\", and the account as HOST\\dumbmonit or DOMAIN\\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.",
                 ],
-                warning: "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions and repositories, and shows the license as not readable: it never asks for more.",
+                warning: "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions, repositories and restore points, and shows the license as not readable: it never asks for more.",
                 doc_url: "https://helpcenter.veeam.com/docs/backup/vbr_rest/requesting_authorization.html",
             },
             options: VEEAM_OPTIONS,
@@ -4589,6 +4591,7 @@ mod tests {
                     "traffic_control",
                     "certificates",
                     "tape",
+                    "device_stale_days",
                 ],
             ),
             (
@@ -4785,7 +4788,14 @@ mod tests {
             ("unraid", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             (
                 "veeam",
-                &["scheme", "port", "api_version", "insecure_tls", "request_timeout_seconds"],
+                &[
+                    "scheme",
+                    "port",
+                    "api_version",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "device_stale_days",
+                ],
             ),
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),

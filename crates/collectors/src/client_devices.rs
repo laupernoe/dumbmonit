@@ -1,14 +1,23 @@
 //! Appareils clients : le même manque revient pour chaque produit qui garde
 //! trace de postes qui se connectent et sauvegardent — Immich (le premier
-//! branché ici), puis à terme Synology Active Backup for Business, les agents
-//! Veeam, les clients PBS, Tailscale, UniFi, l'app compagnon Home Assistant,
+//! branché ici), Proxmox Backup Server (un appareil par groupe de sauvegarde,
+//! voir `pbs::backup::client_devices`) et Veeam (un appareil par objet
+//! protégé, lu sur `/api/v1/restorePoints`, voir `veeam::protected_devices`),
+//! puis à terme les clients Tailscale, UniFi, l'app compagnon Home Assistant,
 //! les clients Nextcloud… Dans tous les cas la question posée par
-//! l'utilisateur est la même : « ce téléphone s'est-il connecté récemment, et
+//! l'utilisateur est la même : « cet appareil s'est-il connecté récemment, et
 //! a-t-il bien sauvegardé ? ». Ce module factorise la métrique, le seuil et
 //! l'étiquetage pour qu'une seule règle d'alerte et un seul composant
 //! d'interface ([`ClientDevicesTable.svelte`](
 //! ../../../../web/src/lib/components/devices/ClientDevicesTable.svelte))
 //! servent tous les produits, présents et futurs.
+//!
+//! Synology Active Backup for Business n'est volontairement **pas** branché
+//! ici : il suit déjà ses appareils par un mécanisme propre et plus riche —
+//! rythme appris par appareil, tolérance adaptée aux jours de repos, voir
+//! `synology::rhythm` et `synology::devices` — construit avant ce module
+//! générique. Le dupliquer ferait cohabiter deux verdicts différents pour les
+//! mêmes machines.
 //!
 //! # Comment brancher un nouveau produit
 //!

@@ -119,6 +119,29 @@ no pool and no tape job — an installation without tape must not grow a dozen
 zero series that read like a tape tier in trouble. A tape that belongs to no
 pool, blank media or media retired from a pool, is in no pool count.
 
+## Devices
+
+Every backed-up machine — host, VM or container — is also published under the
+generic family shared by every DumbMonit integration that tracks protected
+devices — `dumbmonit_client_device_*`, prefixed without `pbs`, documented in
+full under [Client devices](../alerting/rules.md#client-devices). Nothing new
+is asked of PBS: it is the same last-snapshot date already behind
+`backup_last_timestamp_seconds`, republished under the shared family so that
+one rule and one table serve PBS alongside every other integration that
+protects a device.
+
+| Metric | What | Labels |
+|---|---|---|
+| `last_backup_timestamp_seconds` | Same instant as `backup_last_timestamp_seconds` for that group | `device`, `type`, `os`, `user`, `kind` |
+| `stale_seconds` | Positive once a group has gone past `device_stale_days` (3 by default) without a new snapshot; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `backup`) |
+
+**Limit worth knowing**: PBS does not record a separate "connection" for a
+backed-up machine, only backups — `last_seen_timestamp_seconds` and the
+`connection` signal are never published here; a device shows `last_connection`
+as "—" on the device page's table. The device named in the alert is the guest
+name from the snapshot notes when PVE wrote one, otherwise `type/id`, same as
+the backup calendar.
+
 Built-in rules that apply: Device unreachable, PBS datastore almost full, PBS
 datastore filling up, PBS backup too old (per backup group: no new snapshot
 for two days — edit the rule's threshold for a longer window), PBS backup
@@ -127,8 +150,8 @@ garbage collection failed, PBS corrupt chunks found, PBS sync job failed, PBS
 prune job failed, PBS verification job failed, PBS job never ran, PBS
 datastore not mounted, PBS service down, PBS restart pending after upgrade,
 PBS certificate expiring, PBS tape backup failed, PBS disk SMART failure, PBS
-SSD worn out, PBS ZFS pool degraded, PBS updates pending. Notifications name
-the job, datastore or backup group concerned.
+SSD worn out, PBS ZFS pool degraded, PBS updates pending, Client device stale.
+Notifications name the job, datastore or backup group concerned.
 
 ## What to prepare in PBS
 
@@ -279,6 +302,7 @@ The `https` scheme and port 8007 are added if missing.
 | `traffic_control` | Watch traffic limits | `true` | Reads the rate limits and what they are carrying right now. Needs `Sys.Audit`; silently skipped otherwise. |
 | `certificates` | Watch certificate expiry | `false` | Off by default: PBS guards this one call behind `Sys.Modify`, a write privilege a monitoring token should not be given. |
 | `tape` | Watch tape backups | `false` | Reads the tape tier. Off by default, since most installations have no tape hardware. Needs `Tape.Audit` on `/tape`. |
+| `device_stale_days` | Device staleness (days) | `3` | A backed-up machine with no new snapshot for longer than this is reported stale. From 1 to 90. |
 
 ## Common errors
 
