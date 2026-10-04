@@ -139,6 +139,10 @@ tags:
     description: Device types described in YAML.
   - name: Integrations
     description: Panels specific to one device kind (Proxmox, PBS, PDM, PMG, OPNsense, TrueNAS, Redfish, Synology, observability backends, proxies).
+  - name: Security
+    description: >-
+      Security score per device: checks derived from vendor best practices,
+      evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
   - name: Assistants
@@ -3205,6 +3209,45 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ---------------------------------------------------------------- sécurité
+  /api/targets/{id}/security:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTargetSecurity
+      tags: [Security]
+      summary: Security score, grade and checks of one device
+      description: >-
+        Checks are evaluated on the last values the collectors recorded (6 h
+        lookback). `unknown` checks are listed but excluded from the score. A
+        device kind without checks answers `supported: false`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device's security report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecurityReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/security/summary:
+    get:
+      operationId: getSecuritySummary
+      tags: [Security]
+      summary: Security score of every rated device, worst first
+      x-token-scope: read
+      responses:
+        "200":
+          description: One row per enabled device whose kind has checks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # ------------------------------------------------------------- assistants
   /api/mcp:
     get:
@@ -5353,6 +5396,71 @@ components:
         tasks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         devices: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         utc_offset_s: { type: integer }
+
+    # -------------------------------------------------------------- sécurité
+    SecurityGrade:
+      type: [string, "null"]
+      enum: [A, B, C, D, F, null]
+      description: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F below; null when nothing could be rated.
+    SecurityCheck:
+      type: object
+      required: [id, title, category, severity, weight, result, evidence, remediation, reference]
+      properties:
+        id: { type: string, example: pve.updates.security }
+        title: { type: string }
+        category:
+          type: string
+          enum: [exposure, patching, authentication, encryption, backup, configuration]
+        severity: { type: string, enum: [critical, high, medium, low] }
+        weight: { type: integer, description: "critical 10, high 6, medium 3, low 1" }
+        result: { type: string, enum: [pass, fail, unknown] }
+        evidence: { type: string }
+        remediation: { type: string }
+        reference: { type: string, format: uri, description: Vendor best-practice page. }
+    SecurityReport:
+      type: object
+      required: [target_id, target_name, kind, supported, score, grade, capped, evaluated_at, counts, checks]
+      properties:
+        target_id: { type: integer }
+        target_name: { type: string }
+        kind: { type: string }
+        supported: { type: boolean }
+        score: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        grade: { $ref: "#/components/schemas/SecurityGrade" }
+        capped:
+          type: boolean
+          description: A failing critical check capped the grade at C.
+        evaluated_at: { type: string, description: UTC, without suffix. }
+        counts:
+          type: object
+          properties:
+            pass: { type: integer }
+            fail: { type: integer }
+            unknown: { type: integer }
+        checks:
+          type: array
+          description: Failing checks first (heaviest first), then passing, then unknown.
+          items: { $ref: "#/components/schemas/SecurityCheck" }
+    SecuritySummary:
+      type: object
+      required: [evaluated_at, devices]
+      properties:
+        evaluated_at: { type: string }
+        devices:
+          type: array
+          items:
+            type: object
+            properties:
+              target_id: { type: integer }
+              target_name: { type: string }
+              kind: { type: string }
+              score: { type: [integer, "null"] }
+              grade: { $ref: "#/components/schemas/SecurityGrade" }
+              capped: { type: boolean }
+              pass: { type: integer }
+              fail: { type: integer }
+              unknown: { type: integer }
+              top_failures: { type: array, items: { type: string } }
 
     # ------------------------------------------------------------------ MCP
     McpEndpointInfo:

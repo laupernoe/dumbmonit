@@ -17,6 +17,7 @@ pub mod music;
 pub mod notify;
 pub mod packs;
 pub mod scheduler;
+pub mod security;
 pub mod state;
 pub mod stats;
 pub mod tsdb;
