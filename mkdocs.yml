@@ -109,6 +109,7 @@ nav:
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
       - Kubernetes / k3s: devices/kubernetes.md
+      - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
       - Tailscale: devices/tailscale.md
       - Nextcloud: devices/nextcloud.md
