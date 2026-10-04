@@ -6,40 +6,72 @@
  * a panel here; the page mounts it between the alerts and the instruments,
  * with `{ target }` as its only prop. One line per kind, so several people can
  * add theirs without touching the page.
+ *
+ * Each entry is a dynamic import rather than a static one: a device page shows
+ * exactly one panel, so there is no reason to ship and parse the other forty-odd
+ * ones. `loadKindPanel` resolves the component for a kind; the page shows a
+ * skeleton until it settles.
  */
 import type { Component } from 'svelte';
 import type { Target } from '$lib/api/types';
-import AdguardPanel from './adguard/AdguardPanel.svelte';
-import AgentPanel from './agent/AgentPanel.svelte';
-import BackendPanel from './backends/BackendPanel.svelte';
-import MailServicesPanel from './mdaemon/MailServicesPanel.svelte';
-import MikrotikPanel from './mikrotik/MikrotikPanel.svelte';
-import NutPanel from './nut/NutPanel.svelte';
-import ObservabilityPanel from './observability/ObservabilityPanel.svelte';
-import OpnsensePanel from './opnsense/OpnsensePanel.svelte';
-import PbsPanel from './pbs/PbsPanel.svelte';
-import PdmPanel from './pdm/PdmPanel.svelte';
-import PiholePanel from './pihole/PiholePanel.svelte';
-import PmgPanel from './pmg/PmgPanel.svelte';
-import ProxmoxPanel from './proxmox/ProxmoxPanel.svelte';
-import ProxyPanel from './proxies/ProxyPanel.svelte';
-import PushPanel from './push/PushPanel.svelte';
-import RedfishPanel from './redfish/RedfishPanel.svelte';
-import SelfHostedPanel from './selfhosted/SelfHostedPanel.svelte';
-import SynologyPanel from './synology/SynologyPanel.svelte';
-import TruenasPanel from './truenas/TruenasPanel.svelte';
-import UnifiPanel from './unifi/UnifiPanel.svelte';
-import HomeAssistantPanel from './homeassistant/HomeAssistantPanel.svelte';
-import KubernetesPanel from './kubernetes/KubernetesPanel.svelte';
-import AppliancePanel from './appliance/AppliancePanel.svelte';
-import VspherePanel from './vsphere/VspherePanel.svelte';
-import WebchangePanel from './webchange/WebchangePanel.svelte';
 
 export type KindPanel = Component<{ target: Target }>;
+type PanelLoader = () => Promise<{ default: KindPanel }>;
 
-export const kindPanels: Record<string, KindPanel> = { pbs: PbsPanel, pdm: PdmPanel, pmg: PmgPanel, agent: AgentPanel, proxmox: ProxmoxPanel, synology: SynologyPanel, push: PushPanel, opnsense: OpnsensePanel, truenas: TruenasPanel, redfish: RedfishPanel, victoriametrics: ObservabilityPanel, victorialogs: ObservabilityPanel, loki: ObservabilityPanel, graylog: ObservabilityPanel, mdaemon: MailServicesPanel, securitygateway: MailServicesPanel, pihole: PiholePanel, adguard: AdguardPanel, nut: NutPanel, mikrotik: MikrotikPanel, unifi: UnifiPanel, homeassistant: HomeAssistantPanel, vsphere: VspherePanel, redis: BackendPanel, mongodb: BackendPanel, rabbitmq: BackendPanel, crowdsec: BackendPanel, traefik: ProxyPanel, caddy: ProxyPanel, npm: ProxyPanel, domain: ProxyPanel, nextcloud: SelfHostedPanel, immich: SelfHostedPanel, paperless: SelfHostedPanel, jellyfin: SelfHostedPanel, plex: SelfHostedPanel, kubernetes: KubernetesPanel, pfsense: AppliancePanel, unraid: AppliancePanel, veeam: AppliancePanel, tailscale: AppliancePanel, fortigate: AppliancePanel, sophos: AppliancePanel, webchange: WebchangePanel };
+const kindPanelLoaders: Record<string, PanelLoader> = {
+	pbs: () => import('./pbs/PbsPanel.svelte'),
+	pdm: () => import('./pdm/PdmPanel.svelte'),
+	pmg: () => import('./pmg/PmgPanel.svelte'),
+	agent: () => import('./agent/AgentPanel.svelte'),
+	proxmox: () => import('./proxmox/ProxmoxPanel.svelte'),
+	synology: () => import('./synology/SynologyPanel.svelte'),
+	push: () => import('./push/PushPanel.svelte'),
+	opnsense: () => import('./opnsense/OpnsensePanel.svelte'),
+	truenas: () => import('./truenas/TruenasPanel.svelte'),
+	redfish: () => import('./redfish/RedfishPanel.svelte'),
+	victoriametrics: () => import('./observability/ObservabilityPanel.svelte'),
+	victorialogs: () => import('./observability/ObservabilityPanel.svelte'),
+	loki: () => import('./observability/ObservabilityPanel.svelte'),
+	graylog: () => import('./observability/ObservabilityPanel.svelte'),
+	mdaemon: () => import('./mdaemon/MailServicesPanel.svelte'),
+	securitygateway: () => import('./mdaemon/MailServicesPanel.svelte'),
+	pihole: () => import('./pihole/PiholePanel.svelte'),
+	adguard: () => import('./adguard/AdguardPanel.svelte'),
+	nut: () => import('./nut/NutPanel.svelte'),
+	mikrotik: () => import('./mikrotik/MikrotikPanel.svelte'),
+	unifi: () => import('./unifi/UnifiPanel.svelte'),
+	homeassistant: () => import('./homeassistant/HomeAssistantPanel.svelte'),
+	vsphere: () => import('./vsphere/VspherePanel.svelte'),
+	redis: () => import('./backends/BackendPanel.svelte'),
+	mongodb: () => import('./backends/BackendPanel.svelte'),
+	rabbitmq: () => import('./backends/BackendPanel.svelte'),
+	crowdsec: () => import('./backends/BackendPanel.svelte'),
+	traefik: () => import('./proxies/ProxyPanel.svelte'),
+	caddy: () => import('./proxies/ProxyPanel.svelte'),
+	npm: () => import('./proxies/ProxyPanel.svelte'),
+	domain: () => import('./proxies/ProxyPanel.svelte'),
+	nextcloud: () => import('./selfhosted/SelfHostedPanel.svelte'),
+	immich: () => import('./selfhosted/SelfHostedPanel.svelte'),
+	paperless: () => import('./selfhosted/SelfHostedPanel.svelte'),
+	jellyfin: () => import('./selfhosted/SelfHostedPanel.svelte'),
+	plex: () => import('./selfhosted/SelfHostedPanel.svelte'),
+	kubernetes: () => import('./kubernetes/KubernetesPanel.svelte'),
+	pfsense: () => import('./appliance/AppliancePanel.svelte'),
+	unraid: () => import('./appliance/AppliancePanel.svelte'),
+	veeam: () => import('./appliance/AppliancePanel.svelte'),
+	tailscale: () => import('./appliance/AppliancePanel.svelte'),
+	fortigate: () => import('./appliance/AppliancePanel.svelte'),
+	sophos: () => import('./appliance/AppliancePanel.svelte'),
+	webchange: () => import('./webchange/WebchangePanel.svelte')
+};
 
-/** The panel for a kind, or `null` when the generic charts are all there is. */
-export function kindPanel(kind: string): KindPanel | null {
-	return kindPanels[kind] ?? null;
+/** Whether a kind has a dedicated panel, without loading it. */
+export function hasKindPanel(kind: string): boolean {
+	return kind in kindPanelLoaders;
+}
+
+/** Loads the panel component for a kind; `null` when there is none (unknown kind). */
+export function loadKindPanel(kind: string): Promise<KindPanel> | null {
+	const loader = kindPanelLoaders[kind];
+	return loader ? loader().then((mod) => mod.default) : null;
 }

@@ -211,6 +211,7 @@ Everything `GET /metrics` exposes. Values are read when you scrape; the
 | `dumbmonit_samples_written_total` | counter | Samples accepted by VictoriaMetrics. |
 | `dumbmonit_sample_writes_failed_total` | counter | Batches VictoriaMetrics refused or did not answer. The batch stays buffered and is retried; a rising value with a rising `dumbmonit_samples_pending` means the store is down or full. |
 | `dumbmonit_samples_pending` | gauge | Samples still in the write buffer after the last flush. Normally 0. |
+| `dumbmonit_samples_dropped_total` | counter | Samples dropped before even reaching the write buffer, because it was full or closed. Never retried — a rising value during an outage means data loss, not just delay. |
 | `dumbmonit_alerting_cycles_total` | counter | Alerting cycles run (one every `DUMBMONIT_ALERT_INTERVAL_SECS`, 30 s by default). |
 | `dumbmonit_alerting_cycle_seconds` | gauge | Duration of the last alerting cycle, query time included. Approaching the interval means the rules are querying more than the store can serve. |
 | `dumbmonit_alerting_rules_evaluated` | gauge | Rules evaluated in the last cycle. |
