@@ -190,12 +190,10 @@
 		entry.run();
 	}
 
+	// The Ctrl/⌘ K shortcut itself is handled once, in the root layout (which
+	// mounts this component dynamically on first use); this listener only
+	// handles keys that matter while the panel is already open.
 	function onWindowKeydown(event: KeyboardEvent) {
-		if (palette.matches(event)) {
-			event.preventDefault();
-			palette.toggle();
-			return;
-		}
 		if (!palette.isOpen) return;
 		if (event.key === 'Escape') {
 			event.preventDefault();

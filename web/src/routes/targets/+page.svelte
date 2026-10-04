@@ -2,14 +2,16 @@
 	/**
 	 * Devices — the rack.
 	 *
-	 * Every device is a 1U faceplate, children stacked under their parent. The
-	 * list refreshes every 30 s; the sparklines come from one batched query so
-	 * the page costs three requests, not three per device.
+	 * Every device is a 1U faceplate, children stacked under their parent.
+	 * Targets and probe states come from the shared store (polled app-wide by
+	 * the root layout, see `alertsStore`); this page only adds the sparklines,
+	 * from one batched query refreshed every 30 s.
 	 */
-	import { listCollectors, listTargets, type Target, type TargetId } from '$lib/api';
-	import { displayState, type ProbeStatus } from '$lib/format';
-	import { loadProbeStatuses, loadSparklines } from '$lib/metrics';
+	import { listCollectors, type Target, type TargetId } from '$lib/api';
+	import { displayState } from '$lib/format';
+	import { loadSparklines } from '$lib/metrics';
 	import type { Serie } from '$lib/components/Chart.svelte';
+	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, PageHeader, Skeleton } from '$lib/ui';
 	import RackList from '$lib/components/devices/RackList.svelte';
@@ -19,12 +21,12 @@
 
 	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
 
-	let targets = $state<Target[]>([]);
-	let probes = $state<Map<TargetId, ProbeStatus>>(new Map());
+	const targets = $derived(alertsStore.targets);
+	const probes = $derived(alertsStore.probes);
 	let sparklines = $state<Map<TargetId, Serie[]>>(new Map());
 	let kindLabels = $state<Map<string, string>>(new Map());
-	let loading = $state(true);
-	let error = $state<unknown>(null);
+	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
+	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
 
 	let search = $state('');
 	let segment = $state<Segment>('all');
@@ -97,22 +99,10 @@
 	}
 
 	async function load(signal?: AbortSignal) {
-		error = null;
-		// Probe states and sparklines are decoration on top of the list: their
-		// failure must not take the rack down with them.
-		const probesNext = loadProbeStatuses(signal).catch(() => null);
-		const sparksNext = loadSparklines(24 * 3600, signal).catch(() => null);
-		try {
-			targets = await listTargets(signal);
-		} catch (cause) {
-			if (cause instanceof DOMException && cause.name === 'AbortError') return;
-			error = cause;
-		} finally {
-			loading = false;
-		}
-		const [p, s] = await Promise.all([probesNext, sparksNext]);
-		if (p) probes = p;
-		if (s) sparklines = s;
+		// Decoration on top of the list the shared store already holds: a
+		// failure here must not take the rack down with it.
+		const next = await loadSparklines(24 * 3600, signal).catch(() => null);
+		if (next) sparklines = next;
 	}
 
 	async function loadKinds(signal?: AbortSignal) {
@@ -141,7 +131,7 @@
 <PageHeader title="Devices" description="Everything DumbMonit watches, stacked like a rack.">
 	{#snippet actions()}
 		<!-- The empty state carries the primary itself: one primary per view. Viewers cannot add. -->
-		{#if auth.isAdmin && (loading || error || targets.length > 0)}
+		{#if auth.isAdmin && (firstLoad || pageError || targets.length > 0)}
 			<ClickSpark>
 				<Button variant="primary" href="/targets/new">
 					<Plus class="size-4" aria-hidden="true" />
@@ -152,7 +142,7 @@
 	{/snippet}
 </PageHeader>
 
-{#if !loading && !error && targets.length > 0}
+{#if !firstLoad && !pageError && targets.length > 0}
 	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
 		<label class="relative min-w-0 flex-1 lg:max-w-sm">
 			<span class="sr-only">Search devices</span>
@@ -180,9 +170,13 @@
 	</div>
 {/if}
 
-{#if error}
-	<ErrorNotice {error} title="Could not load the devices" onretry={() => void load()} />
-{:else if loading}
+{#if pageError}
+	<ErrorNotice
+		error={pageError}
+		title="Could not load the devices"
+		onretry={() => void alertsStore.refresh()}
+	/>
+{:else if firstLoad}
 	<div class="flex flex-col gap-2" aria-busy="true" aria-label="Loading devices">
 		<Skeleton class="h-[66px] w-full rounded-[var(--radius-card)]" rows={5} />
 	</div>

@@ -7,14 +7,14 @@
 	 * linkable: Now (the live "Needs you" list, grouped by device), Scheduled
 	 * (maintenance windows), Rules, Notifications (channels and the policy that
 	 * keeps them quiet — they belong with alerting, not with administration),
-	 * and History. Active alerts come from the shared store; the rest is loaded
+	 * and History. Active alerts, devices and probe states come from the
+	 * shared store (polled app-wide, see `alertsStore`); the rest is loaded
 	 * here and refreshed after each action. The notification sections load
 	 * their own data.
 	 */
 	import { browser } from '$app/environment';
 	import { tick, untrack } from 'svelte';
 	import {
-		listTargets,
 		listAlertRules,
 		listSilences,
 		listAlertHistory,
@@ -24,7 +24,6 @@
 		deleteAlertRule,
 		createAlertRule,
 		type Target,
-		type TargetId,
 		type AlertRule,
 		type Silence,
 		type AlertHistoryEntry,
@@ -32,8 +31,6 @@
 		type AlertRulePayload
 	} from '$lib/api';
 	import type { Alert } from '$lib/api';
-	import type { ProbeStatus } from '$lib/format';
-	import { loadProbeStatuses } from '$lib/metrics';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -60,8 +57,10 @@
 	const NOTIFICATION_ANCHORS = ['notifications-channels', 'notifications-policy'];
 
 	let tab = $state<Tab>('now');
-	let targets = $state<Target[]>([]);
-	let probes = $state<Map<TargetId, ProbeStatus>>(new Map());
+	// Devices and probe states: the shared store, polled app-wide (see H3 of
+	// the September 2026 pass) rather than a second copy on this page's own clock.
+	const targets = $derived(alertsStore.targets);
+	const probes = $derived(alertsStore.probes);
 	let rules = $state<AlertRule[]>([]);
 	let silences = $state<Silence[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
@@ -79,6 +78,11 @@
 	const targetsMap = $derived(targetsById(targets));
 	// Same truth model as the Overview bulletin, so the two screens agree.
 	const sky = $derived(readSky({ targets, probes, alerts, rules }));
+	// This page's own fetch (rules/silences/history) takes precedence; absent
+	// that, a failure on the shared store is this page's problem too — "Now"
+	// needs both devices and alerts.
+	const pageError = $derived(error ?? (!alertsStore.available ? alertsStore.lastError : null));
+	const firstLoad = $derived(loading || (alertsStore.loading && targets.length === 0));
 
 	// The last row leaving "Now" while the reader watches is the moment the
 	// trouble is over: a burst of confetti, once per clearing. Armed a few
@@ -105,16 +109,12 @@
 
 	async function loadAll(signal?: AbortSignal) {
 		error = null;
-		// Service states are not blocking: without them, a service reads as "unknown".
-		const probesPromise = loadProbeStatuses(signal).catch(() => new Map<TargetId, ProbeStatus>());
 		try {
-			const [t, r, s, h] = await Promise.all([
-				listTargets(signal),
+			const [r, s, h] = await Promise.all([
 				listAlertRules(signal),
 				listSilences(signal),
 				listAlertHistory({ limit: 200 }, signal)
 			]);
-			targets = t;
 			rules = r;
 			silences = s;
 			history = h;
@@ -124,8 +124,6 @@
 		} finally {
 			loading = false;
 		}
-		probes = await probesPromise;
-		void alertsStore.refresh(signal);
 	}
 
 	async function refreshSilences() {
@@ -229,8 +227,8 @@
 		window.addEventListener('hashchange', readHash);
 		const controller = new AbortController();
 		void loadAll(controller.signal);
-		// Alerts refresh app-wide every 30 s; mirror that cadence for the page,
-		// and re-read the devices with them so an outage shows up without a reload.
+		// Rules, silences and history are this page's own; devices, probes and
+		// alerts are the shared store's (polled app-wide). Same cadence either way.
 		const timer = setInterval(() => void loadAll(controller.signal), 30_000);
 		return () => {
 			window.removeEventListener('hashchange', readHash);
@@ -303,16 +301,17 @@
 	</p>
 {/if}
 
-{#if error}
+{#if pageError}
 	<ErrorNotice
-		{error}
+		error={pageError}
 		title="Could not load the alerts"
 		onretry={() => {
 			loading = true;
 			void loadAll();
+			void alertsStore.refresh();
 		}}
 	/>
-{:else if loading && tab !== 'notifications'}
+{:else if firstLoad && tab !== 'notifications'}
 	<div class="space-y-2.5">
 		{#each { length: 4 } as _, i (i)}
 			<Skeleton class="h-20 w-full" />
