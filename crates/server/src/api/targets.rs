@@ -273,11 +273,13 @@ pub async fn update(
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
     let before = load(&state, id).await?;
+    let relay_before = db::targets::relay_of(&state.pool, id).await?;
+    if keep_relay {
+        input.via_agent = relay_before;
+    }
+    check_secret_destination(&before, relay_before, &input)?;
     if keep_profile {
         input.profile_id = before.profile_id;
-    }
-    if keep_relay {
-        input.via_agent = db::targets::relay_of(&state.pool, id).await?;
     }
     check_pack_relay(&input)?;
     let updated = db::targets::update(&state.pool, &state.cipher, id, &input)
@@ -295,6 +297,41 @@ pub async fn update(
     crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     Ok(Json(TargetView::new(target, status)))
+}
+
+/// Étiquettes qui changent l'endroit (ou la manière) dont le secret est envoyé.
+const DESTINATION_TAGS: &[&str] =
+    &["scheme", "port", "insecure_tls", "tls", "path", "base_path", "url", "host"];
+
+/// Un secret enregistré ne part jamais vers une destination qu'il n'a pas
+/// connue sans être ressaisi.
+///
+/// Garder le secret quand `credential` est absent évite de le redemander à
+/// chaque renommage ; mais si l'adresse, le relais ou le transport changent
+/// dans la même requête, la conserver reviendrait à laisser n'importe quel
+/// porteur d'un jeton `write` l'envoyer chez lui — sans jamais l'avoir lu.
+fn check_secret_destination(
+    before: &Target,
+    relay_before: Option<TargetId>,
+    input: &db::targets::TargetInput,
+) -> ApiResult<()> {
+    if input.credential.is_some() || matches!(before.credential, Credential::None) {
+        return Ok(());
+    }
+    let tag_changed =
+        DESTINATION_TAGS.iter().any(|key| before.tags.get(*key) != input.tags.get(*key));
+    let moved = before.address.trim() != input.address.trim()
+        || before.kind != input.kind
+        || relay_before != input.via_agent
+        || tag_changed;
+    if moved {
+        return Err(ApiError::BadRequest(
+            "Re-enter the credential when changing the address, relay or connection settings: \
+             a stored secret is never sent to a new destination."
+                .into(),
+        ));
+    }
+    Ok(())
 }
 
 pub async fn delete(

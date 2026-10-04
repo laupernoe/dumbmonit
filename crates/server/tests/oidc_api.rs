@@ -140,7 +140,7 @@ async fn sign_in(app: &TestApp, provider: &Shared, redirect: Option<&str>) -> co
     };
     let start = app.get(&start_uri, None).await;
     assert_eq!(start.status, StatusCode::SEE_OTHER, "{}", start.body);
-    let location = start.location.expect("redirection vers le fournisseur");
+    let location = start.location.clone().expect("redirection vers le fournisseur");
     let url = reqwest::Url::parse(&location).unwrap();
     let param = |name: &str| url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.to_string());
 
@@ -151,8 +151,45 @@ async fn sign_in(app: &TestApp, provider: &Shared, redirect: Option<&str>) -> co
     assert_eq!(param("redirect_uri").as_deref(), Some("http://monit.lab/api/auth/oidc/callback"));
     let state = param("state").expect("state");
     provider.lock().unwrap().nonce = param("nonce").expect("nonce");
+    // Le navigateur qui revient est celui qui est parti : il rapporte le cookie.
+    let binding = start.cookie();
+    assert!(binding.starts_with("dumbmonit_oidc="), "{binding}");
 
-    app.get(&format!("/api/auth/oidc/callback?code={CODE}&state={}", urlencode(&state)), None).await
+    app.get(
+        &format!("/api/auth/oidc/callback?code={CODE}&state={}", urlencode(&state)),
+        Some(&binding),
+    )
+    .await
+}
+
+/// Connexion forcée : l'attaquant lance la connexion, s'authentifie chez le
+/// fournisseur avec son propre compte, puis fait suivre l'URL de retour à sa
+/// victime. Le navigateur de la victime n'a pas le cookie de la tentative : refusé.
+#[tokio::test]
+async fn a_callback_from_another_browser_is_refused() {
+    let provider = spawn_provider().await;
+    let app = app_with_sso(&provider, |_| {}).await;
+    provider.lock().unwrap().claims = json!({ "sub": "u-9", "preferred_username": "mallory" });
+
+    let start = app.get("/api/auth/oidc/start", None).await;
+    let url = reqwest::Url::parse(start.location.as_deref().unwrap()).unwrap();
+    let state = url.query_pairs().find(|(k, _)| k == "state").unwrap().1.to_string();
+    provider.lock().unwrap().nonce =
+        url.query_pairs().find(|(k, _)| k == "nonce").unwrap().1.to_string();
+
+    let callback = format!("/api/auth/oidc/callback?code={CODE}&state={}", urlencode(&state));
+    let victim = app.get(&callback, None).await;
+    assert_eq!(victim.location.as_deref(), Some("/login?error=oidc&reason=state"));
+    assert!(victim.set_cookie.is_none());
+
+    // Un cookie d'une autre tentative ne vaut pas mieux.
+    let other = app.get("/api/auth/oidc/start", None).await.cookie();
+    let victim = app.get(&callback, Some(&other)).await;
+    assert_eq!(victim.location.as_deref(), Some("/login?error=oidc&reason=state"));
+
+    // Le navigateur d'origine, lui, passe toujours.
+    let reply = app.get(&callback, Some(&start.cookie())).await;
+    assert_eq!(reply.location.as_deref(), Some("/"));
 }
 
 fn urlencode(value: &str) -> String {
@@ -389,13 +426,16 @@ async fn a_token_with_the_wrong_nonce_is_refused() {
     provider.lock().unwrap().claims = json!({ "sub": "u-3", "preferred_username": "mallory" });
 
     let start = app.get("/api/auth/oidc/start", None).await;
-    let url = reqwest::Url::parse(&start.location.unwrap()).unwrap();
+    let url = reqwest::Url::parse(start.location.as_deref().unwrap()).unwrap();
     let state = url.query_pairs().find(|(k, _)| k == "state").unwrap().1.to_string();
     // Le fournisseur signe un jeton pour une autre tentative.
     provider.lock().unwrap().nonce = "un-autre-nonce".into();
 
     let reply = app
-        .get(&format!("/api/auth/oidc/callback?code={CODE}&state={}", urlencode(&state)), None)
+        .get(
+            &format!("/api/auth/oidc/callback?code={CODE}&state={}", urlencode(&state)),
+            Some(&start.cookie()),
+        )
         .await;
     assert_eq!(reply.location.as_deref(), Some("/login?error=oidc&reason=invalid_token"));
     assert!(reply.set_cookie.is_none());
@@ -406,13 +446,13 @@ async fn a_provider_refusal_comes_back_as_denied() {
     let provider = spawn_provider().await;
     let app = app_with_sso(&provider, |_| {}).await;
     let start = app.get("/api/auth/oidc/start", None).await;
-    let url = reqwest::Url::parse(&start.location.unwrap()).unwrap();
+    let url = reqwest::Url::parse(start.location.as_deref().unwrap()).unwrap();
     let state = url.query_pairs().find(|(k, _)| k == "state").unwrap().1.to_string();
 
     let reply = app
         .get(
             &format!("/api/auth/oidc/callback?error=access_denied&state={}", urlencode(&state)),
-            None,
+            Some(&start.cookie()),
         )
         .await;
     assert_eq!(reply.location.as_deref(), Some("/login?error=oidc&reason=denied"));

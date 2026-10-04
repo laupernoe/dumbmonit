@@ -3,23 +3,38 @@ updates:
   - package-ecosystem: cargo
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       cargo-minor:
         update-types: ["minor", "patch"]
+    # Majors are handled by hand (changelog review, auth-sensitive crates get
+    # their tests run explicitly): Dependabot only opens a PR to tell us one
+    # exists, one at a time, instead of bundling it into the noisy weekly churn.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels: ["dependencies", "rust"]
 
   - package-ecosystem: npm
     directory: /web
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       npm-minor:
         update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels: ["dependencies", "web"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels: ["dependencies", "ci"]

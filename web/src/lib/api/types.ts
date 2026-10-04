@@ -845,6 +845,12 @@ export interface ChannelField {
 	shape: 'scalar' | 'list' | 'object';
 	/** Value applied by the server when the field is left empty. */
 	default: string;
+	/**
+	 * The field says where the secrets go (server address, SMTP host, port...).
+	 * Changing it on edit means typing the secrets again: the server refuses to
+	 * send stored secrets to a new destination.
+	 */
+	destination?: boolean;
 }
 
 /** A channel type (Discord, Telegram...) and the fields it expects. */
@@ -1958,14 +1964,15 @@ export interface SynologyAbb {
 /**
  * `GET /api/targets/{id}/push`: the secret URL a heartbeat device is called
  * on, and what its last call said. Mirrors `PushMonitorView`. The token is
- * returned on purpose: it only lets a caller say "the job ran", and it must be
- * copied into a crontab long after the device was created.
+ * returned to admins on purpose (it must be copied into a crontab long after
+ * the device was created), and `null` for viewers: it lets a caller say "the
+ * job ran", which would hide a failing job.
  */
 export interface PushMonitor {
 	target_id: TargetId;
-	token: string;
-	/** Path relative to the server: `/api/push/<token>`. The UI prepends its origin. */
-	path: string;
+	token: string | null;
+	/** Path relative to the server: `/api/push/<token>`. The UI prepends its origin. `null` for viewers. */
+	path: string | null;
 	last_seen_at: string | null;
 	/** Age of the last call in seconds, `null` until the first one. */
 	last_seen_age_secs: number | null;
@@ -3064,4 +3071,88 @@ export interface PackInstallReport {
 	rules_added: number;
 	/** The pack brings SNMP profiles: they are read at start-up only. */
 	restart_required: boolean;
+}
+
+// --- Security score (crates/server/src/api/security.rs) -----------------------
+
+export type SecurityCategory =
+	| 'exposure'
+	| 'patching'
+	| 'authentication'
+	| 'encryption'
+	| 'backup'
+	| 'configuration';
+
+export type SecuritySeverity = 'critical' | 'high' | 'medium' | 'low';
+
+export type SecurityResult = 'pass' | 'fail' | 'unknown';
+
+export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
+
+/** One PingCastle-style check. Mirrors `SecurityCheckView`. */
+export interface SecurityCheck {
+	id: string;
+	title: string;
+	category: SecurityCategory;
+	severity: SecuritySeverity;
+	/** critical 10, high 6, medium 3, low 1. */
+	weight: number;
+	result: SecurityResult;
+	evidence: string;
+	remediation: string;
+	/** Vendor best-practice URL. */
+	reference: string;
+}
+
+export interface SecurityCounts {
+	pass: number;
+	fail: number;
+	unknown: number;
+}
+
+/**
+ * `GET /api/targets/{id}/security`: the security score of one device.
+ * Mirrors `SecurityReport`. 404 only when the device itself does not exist;
+ * a kind with no checks answers 200 with `supported: false`.
+ */
+export interface SecurityReport {
+	target_id: TargetId;
+	target_name: string;
+	kind: string;
+	/** `false`: this kind has no security checks; `checks` is empty, `score`/`grade` are `null`. */
+	supported: boolean;
+	/** 0-100, or `null` when every check is `unknown`. */
+	score: number | null;
+	grade: SecurityGrade | null;
+	/** A failing critical check capped the grade at C or worse. */
+	capped: boolean;
+	/** Server timestamp, UTC without suffix: parse with `parseServerDate`. */
+	evaluated_at: string;
+	counts: SecurityCounts;
+	/** Sorted: fail (heaviest first), then pass, then unknown. */
+	checks: SecurityCheck[];
+}
+
+/** One row of `GET /api/security/summary`. Mirrors `SecuritySummaryDevice`. */
+export interface SecuritySummaryDevice {
+	target_id: TargetId;
+	target_name: string;
+	kind: string;
+	score: number | null;
+	grade: SecurityGrade | null;
+	capped: boolean;
+	pass: number;
+	fail: number;
+	unknown: number;
+	/** Up to 3 failing titles, heaviest first. */
+	top_failures: string[];
+}
+
+/**
+ * `GET /api/security/summary`: every device whose kind has security checks,
+ * worst first. Mirrors `SecuritySummary`.
+ */
+export interface SecuritySummary {
+	evaluated_at: string;
+	devices: SecuritySummaryDevice[];
 }

@@ -42,6 +42,12 @@ pub struct EmbeddedConfig {
     pub listen: String,
     pub retention: String,
     pub memory: String,
+    /// Clé tirée au hasard au démarrage, exigée par les routes d'administration
+    /// de VictoriaMetrics (effacement de séries, instantanés, fusion forcée,
+    /// pprof). Le processus n'écoute que sur la boucle locale, mais une requête
+    /// relayée par erreur ne doit pas pouvoir y effacer quoi que ce soit : seul
+    /// le client [`Victoria`] du serveur la connaît.
+    pub admin_key: String,
 }
 
 impl EmbeddedConfig {
@@ -52,6 +58,10 @@ impl EmbeddedConfig {
             .arg(format!("-httpListenAddr={}", self.listen))
             .arg(format!("-retentionPeriod={}", self.retention))
             .arg(format!("-memory.allowedBytes={}", self.memory))
+            .arg(format!("-deleteAuthKey={}", self.admin_key))
+            .arg(format!("-snapshotAuthKey={}", self.admin_key))
+            .arg(format!("-forceMergeAuthKey={}", self.admin_key))
+            .arg(format!("-pprofAuthKey={}", self.admin_key))
             // Une instance DumbMonit n'interroge jamais plus de quelques milliers
             // de séries : une requête qui s'emballe est coupée avant d'épuiser le
             // budget mémoire ci-dessus.
