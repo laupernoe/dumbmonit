@@ -56,7 +56,7 @@
 	import UptimeBar from '$lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '$lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '$lib/components/devices/FoldSection.svelte';
-	import { kindPanel } from '$lib/components/devices/kinds';
+	import { hasKindPanel, loadKindPanel, type KindPanel } from '$lib/components/devices/kinds';
 	import FoldRow from '$lib/components/devices/FoldRow.svelte';
 	import {
 		formatRate,
@@ -93,6 +93,30 @@
 
 	let target = $state<Target | null>(null);
 	let loading = $state(true);
+
+	// --- Kind-specific panel ----------------------------------------------
+	// Dynamically imported (`kinds.ts`): loaded once per kind, not on every poll.
+
+	let kindPanelComponent = $state<KindPanel | null>(null);
+	let kindPanelLoadedFor = $state<string | null>(null);
+	$effect(() => {
+		const kind = target?.kind;
+		if (!kind || !hasKindPanel(kind)) {
+			kindPanelComponent = null;
+			kindPanelLoadedFor = null;
+			return;
+		}
+		if (kindPanelLoadedFor === kind) return;
+		let cancelled = false;
+		loadKindPanel(kind)?.then((component) => {
+			if (cancelled) return;
+			kindPanelComponent = component;
+			kindPanelLoadedFor = kind;
+		});
+		return () => {
+			cancelled = true;
+		};
+	});
 
 	// The very first device of the instance: a burst of confetti, once, as its
 	// page opens (the add form says so in the navigation state).
@@ -602,10 +626,14 @@
 	{/if}
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
-	{#if kindPanel(target.kind)}
-		{@const Panel = kindPanel(target.kind)}
+	{#if hasKindPanel(target.kind)}
 		<section class="mt-6" aria-label="Device details">
-			<Panel {target} />
+			{#if kindPanelComponent && kindPanelLoadedFor === target.kind}
+				{@const Panel = kindPanelComponent}
+				<Panel {target} />
+			{:else}
+				<Skeleton class="h-40 w-full rounded-[var(--radius-card)]" />
+			{/if}
 		</section>
 	{/if}
 

@@ -513,52 +513,58 @@ pub async fn purge_states(pool: &SqlitePool, cycle_start: DateTime<Utc>) -> Resu
     Ok(result.rows_affected())
 }
 
+/// Colonnes communes à `list_active` et `get_active` : une seule définition
+/// pour que les deux lectures restent en phase.
+const ACTIVE_ALERT_COLUMNS: &str = "fingerprint, rule_uid, target_id, series_key, labels, phase, \
+     suppressed, suppressed_by, silenced, learning, value, score, condition_since, \
+     firing_since, last_eval_at, last_notified_at, notify_count, resolved_at, \
+     acked_until, acked_by, ack_note";
+
+fn row_to_stored_alert(row: &sqlx::sqlite::SqliteRow) -> Result<StoredAlert> {
+    let labels: String = row.try_get("labels")?;
+    let phase: String = row.try_get("phase")?;
+    Ok(StoredAlert {
+        fingerprint: row.try_get("fingerprint")?,
+        rule_uid: row.try_get("rule_uid")?,
+        target_id: row.try_get("target_id")?,
+        series_key: row.try_get("series_key")?,
+        labels: json_or_default(&labels),
+        state: AlertState {
+            phase: Phase::parse(&phase),
+            condition_since: from_sql(row.try_get("condition_since")?),
+            firing_since: from_sql(row.try_get("firing_since")?),
+            resolved_at: from_sql(row.try_get("resolved_at")?),
+            last_eval_at: from_sql(row.try_get("last_eval_at")?),
+            last_notified_at: from_sql(row.try_get("last_notified_at")?),
+            notify_count: row.try_get::<i64, _>("notify_count")?.max(0) as u32,
+            suppressed: row.try_get::<i64, _>("suppressed")? != 0,
+            suppressed_by: row.try_get("suppressed_by")?,
+            silenced: row.try_get::<i64, _>("silenced")? != 0,
+            learning: row.try_get::<i64, _>("learning")? != 0,
+            value: row.try_get("value")?,
+            score: row.try_get("score")?,
+            acked_until: from_sql(row.try_get("acked_until")?),
+            acked_by: row.try_get("acked_by")?,
+            ack_note: row.try_get("ack_note")?,
+        },
+    })
+}
+
 /// Alertes actives, pour l'API et l'interface.
 pub async fn list_active(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
-    let rows = sqlx::query(
-        "SELECT fingerprint, rule_uid, target_id, series_key, labels, phase, suppressed,
-                suppressed_by, silenced, learning, value, score, condition_since,
-                firing_since, last_eval_at, last_notified_at, notify_count, resolved_at,
-                acked_until, acked_by, ack_note
+    // `AssertSqlSafe` : seule `ACTIVE_ALERT_COLUMNS`, une constante du module,
+    // varie d'un appel à l'autre — rien qui vienne d'une entrée utilisateur.
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {ACTIVE_ALERT_COLUMNS}
          FROM alert_state
          WHERE phase IN ('pending', 'firing')
-         ORDER BY firing_since DESC",
-    )
+         ORDER BY firing_since DESC"
+    )))
     .fetch_all(pool)
     .await
     .context("lecture des alertes actives")?;
 
-    rows.iter()
-        .map(|row| {
-            let labels: String = row.try_get("labels")?;
-            let phase: String = row.try_get("phase")?;
-            Ok(StoredAlert {
-                fingerprint: row.try_get("fingerprint")?,
-                rule_uid: row.try_get("rule_uid")?,
-                target_id: row.try_get("target_id")?,
-                series_key: row.try_get("series_key")?,
-                labels: json_or_default(&labels),
-                state: AlertState {
-                    phase: Phase::parse(&phase),
-                    condition_since: from_sql(row.try_get("condition_since")?),
-                    firing_since: from_sql(row.try_get("firing_since")?),
-                    resolved_at: from_sql(row.try_get("resolved_at")?),
-                    last_eval_at: from_sql(row.try_get("last_eval_at")?),
-                    last_notified_at: from_sql(row.try_get("last_notified_at")?),
-                    notify_count: row.try_get::<i64, _>("notify_count")?.max(0) as u32,
-                    suppressed: row.try_get::<i64, _>("suppressed")? != 0,
-                    suppressed_by: row.try_get("suppressed_by")?,
-                    silenced: row.try_get::<i64, _>("silenced")? != 0,
-                    learning: row.try_get::<i64, _>("learning")? != 0,
-                    value: row.try_get("value")?,
-                    score: row.try_get("score")?,
-                    acked_until: from_sql(row.try_get("acked_until")?),
-                    acked_by: row.try_get("acked_by")?,
-                    ack_note: row.try_get("ack_note")?,
-                },
-            })
-        })
-        .collect()
+    rows.iter().map(row_to_stored_alert).collect()
 }
 
 /// Acquittement à poser sur une alerte.
@@ -606,10 +612,24 @@ pub async fn set_ack(pool: &SqlitePool, fingerprint: &str, ack: Option<&Ack>) ->
     Ok(true)
 }
 
-/// Une alerte active, par son empreinte, pour l'API.
+/// Une alerte active, par son empreinte — sa clé primaire — pour l'API.
+///
+/// Une recherche directe plutôt qu'un filtrage de `list_active` en mémoire :
+/// l'empreinte est indexée, cette lecture ne dépend pas du nombre d'alertes
+/// actives.
 pub async fn get_active(pool: &SqlitePool, fingerprint: &str) -> Result<Option<StoredAlert>> {
-    let alerts = list_active(pool).await?;
-    Ok(alerts.into_iter().find(|alert| alert.fingerprint == fingerprint))
+    // `AssertSqlSafe` : même raison que dans `list_active` ci-dessus.
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {ACTIVE_ALERT_COLUMNS}
+         FROM alert_state
+         WHERE fingerprint = ? AND phase IN ('pending', 'firing')"
+    )))
+    .bind(fingerprint)
+    .fetch_optional(pool)
+    .await
+    .context("lecture de l'alerte active")?;
+
+    row.as_ref().map(row_to_stored_alert).transpose()
 }
 
 // --------------------------------------------------------------------------
