@@ -3133,6 +3133,35 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // --- fin du bloc applications auto-hébergées ---
+
+        // Appareils clients (`collectors/client_devices.rs`) : la même règle
+        // sert tous les produits qui suivent des téléphones, tablettes ou
+        // postes qui se connectent et sauvegardent — Immich aujourd'hui,
+        // Synology Active Backup for Business, les agents Veeam, les clients
+        // PBS, Tailscale, UniFi… demain. Le collecteur calcule déjà l'écart
+        // au seuil propre à la cible (`device_stale_days`, 3 jours par
+        // défaut) : la règle n'a donc qu'un seuil fixe à zéro, identique pour
+        // tout le monde. L'étiquette `device` qui accompagne la série nomme
+        // l'appareil dans l'alerte.
+        Rule {
+            description: "A client device (phone, tablet, desktop…) has not connected or not \
+                          backed up within the staleness window configured for this target \
+                          (`device_stale_days`, three days by default)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "client_device_stale",
+                "Client device stale",
+                RuleKind::Threshold,
+                "dumbmonit_client_device_stale_seconds",
+            )
+        },
+
         // --- Pi-hole (`collectors/pihole`) ---
         //
         // Le blocage se suspend d'un clic pour cinq minutes ou une heure :
@@ -5510,6 +5539,8 @@ mod tests {
             "immich_queue_paused",
             "immich_storage_almost_full",
             "immich_update_available",
+            // Appareils clients, générique (`collectors/client_devices.rs`).
+            "client_device_stale",
             "paperless_broker_down",
             "paperless_component_error",
             "paperless_migrations_pending",
@@ -5976,6 +6007,8 @@ mod tests {
             "dumbmonit_probe_dns_answer_fingerprint",
             // Changements d'un site web (`webchange`).
             "dumbmonit_webchange_last_check_changes",
+            // Appareils clients, générique (`collectors/client_devices.rs`).
+            "dumbmonit_client_device_stale_seconds",
             // Kubernetes (`collectors/kubernetes/metrics.rs`).
             "dumbmonit_k8s_node_ready",
             "dumbmonit_k8s_node_pressure",

@@ -1868,9 +1868,18 @@ const APP_TIMEOUT: OptionView = number(
     "15",
 );
 
+const DEVICE_STALE_DAYS: OptionView = number(
+    "device_stale_days",
+    "Device staleness (days)",
+    "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
+    "3",
+    "3",
+);
+
 const NEXTCLOUD_OPTIONS: &[OptionView] =
     &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
-const IMMICH_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("2283"), APP_TLS, APP_TIMEOUT];
+const IMMICH_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("2283"), APP_TLS, APP_TIMEOUT, DEVICE_STALE_DAYS];
 const PAPERLESS_OPTIONS: &[OptionView] = &[
     app_scheme("http"),
     app_port("8000"),
@@ -1898,7 +1907,7 @@ const NEXTCLOUD_TOKEN: CredentialView = CredentialView {
 const IMMICH_KEY: CredentialView = CredentialView {
     kind: "api_token",
     label: "API key",
-    help: "An Immich API key limited to the five read permissions of the setup guide.",
+    help: "An Immich API key limited to the read permissions of the setup guide.",
     fields: &[cred_secret(
         "token",
         "API key",
@@ -3612,7 +3621,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "immich" => CollectorView {
             kind: "immich",
             label: "Immich",
-            summary: "Job queues that stall or sit paused, updates, disk space, photo and video counts.",
+            summary: "Job queues that stall or sit paused, updates, disk space, photo and video counts, each device's last connection and last backup.",
             examples: &["Immich"],
             credential_types: &["api_token"],
             credentials: &[IMMICH_KEY],
@@ -3621,12 +3630,12 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             setup: Setup {
                 title: "Create a read-only API key in Immich",
                 steps: &[
-                    "Log in to Immich with an account that can open Administration: Immich only lets those accounts read photo counts and job queues. Open Account Settings → API Keys → New API Key, name it as follows, and tick only these five permissions.\ndumbmonit\nserver.about server.versionCheck server.storage server.statistics queue.read",
-                    "Copy the key now: Immich shows it only once. It reads those five pages and nothing else: no photo, no album, no setting. If your Immich does not offer queue.read, tick job.read instead.",
-                    "A key made by an ordinary account works too: version, updates and disk space are read, photo counts and job queues are skipped.",
+                    "Log in to Immich with an account that can open Administration: Immich only lets those accounts read photo counts and job queues. Open Account Settings → API Keys → New API Key, name it as follows, and tick these eight permissions: the first five for job queues, counts and version, the last three to list the account's devices and their last connection and backup.\ndumbmonit\nserver.about server.versionCheck server.storage server.statistics queue.read session.read asset.read user.read",
+                    "Copy the key now: Immich shows it only once. It reads those eight pages and nothing else: no photo, no album, no setting. If your Immich does not offer queue.read, tick job.read instead.",
+                    "A key made by an ordinary account works too: version, updates, disk space and devices are read, photo counts and job queues are skipped.",
                     "In DumbMonit, enter Immich's address, for example \"immich.lan\" (port 2283) or \"https://photos.example.com\" behind a reverse proxy, and paste the key.",
                 ],
-                warning: "A paused queue is easy to forget: new photos get no thumbnail, no metadata and no face, and Immich only says so on its Jobs page. DumbMonit warns when jobs wait in a queue that is not paused and runs nothing.",
+                warning: "A paused queue is easy to forget: new photos get no thumbnail, no metadata and no face, and Immich only says so on its Jobs page. DumbMonit warns when jobs wait in a queue that is not paused and runs nothing. session.read, asset.read and user.read list every device of the account that owns the key — its phones, tablets and browsers — with each one's last connection. Immich's API does not record which device uploaded a given photo, so \"last backup\" is the whole library's most recent upload, shown the same for every device: if only one device stops backing up while the others keep going, its connection will show as stale but the shared backup figure will still look fresh.",
                 doc_url: "https://immich.app/docs/api/",
             },
             options: IMMICH_OPTIONS,
@@ -4708,7 +4717,10 @@ mod tests {
                 ],
             ),
             ("nextcloud", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
-            ("immich", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "immich",
+                &["scheme", "port", "insecure_tls", "request_timeout_seconds", "device_stale_days"],
+            ),
             (
                 "paperless",
                 &[

@@ -1,0 +1,19 @@
+{
+  "id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+  "name": "Noe",
+  "email": "noe@example.lan",
+  "isAdmin": true,
+  "profileImagePath": "",
+  "avatarColor": "blue",
+  "profileChangedAt": "2026-01-01T00:00:00.000Z",
+  "storageLabel": null,
+  "shouldChangePassword": false,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "deletedAt": null,
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "oauthId": "",
+  "quotaSizeInBytes": null,
+  "quotaUsageInBytes": 2260992000,
+  "status": "active",
+  "license": null
+}

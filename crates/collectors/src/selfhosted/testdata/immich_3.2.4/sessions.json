@@ -1,0 +1,35 @@
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "createdAt": "2026-08-01T09:12:03.000Z",
+    "updatedAt": "2026-09-30T18:42:11.000Z",
+    "expiresAt": "2027-08-01T09:12:03.000Z",
+    "deviceType": "Mobile",
+    "deviceOS": "iOS 17.5",
+    "appVersion": "v2.1.0",
+    "current": false,
+    "isPendingSyncReset": false
+  },
+  {
+    "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "createdAt": "2026-05-14T07:00:00.000Z",
+    "updatedAt": "2026-09-15T06:30:44.000Z",
+    "expiresAt": "2027-05-14T07:00:00.000Z",
+    "deviceType": "Mobile",
+    "deviceOS": "Android 14",
+    "appVersion": "v2.1.0",
+    "current": false,
+    "isPendingSyncReset": false
+  },
+  {
+    "id": "9b2d3c1a-0e5f-4a8b-9c3d-1f2e3a4b5c6d",
+    "createdAt": "2026-09-30T20:00:00.000Z",
+    "updatedAt": "2026-09-30T20:05:30.000Z",
+    "expiresAt": "2026-10-07T20:00:00.000Z",
+    "deviceType": "Web",
+    "deviceOS": "Linux",
+    "appVersion": null,
+    "current": true,
+    "isPendingSyncReset": false
+  }
+]
