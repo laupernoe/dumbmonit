@@ -3065,3 +3065,179 @@ export interface PackInstallReport {
 	/** The pack brings SNMP profiles: they are read at start-up only. */
 	restart_required: boolean;
 }
+
+// --- Active Directory (crates/server/src/api/activedirectory.rs) -------------
+
+/** The security score's scale; the interface shows it as info, advisory, warning. */
+export type AdFindingSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+/** A raw security fact: a stable id, how many objects, and a few of them. */
+export interface AdFinding {
+	id: string;
+	severity: AdFindingSeverity;
+	/** `privileged`, `kerberos`, `accounts`, `policy`, `hygiene`, `infrastructure`. */
+	category: string;
+	title: string;
+	detail: string;
+	/** Objects concerned; 0: examined, nothing found. */
+	count: number;
+	/** Up to twenty account names, sorted. */
+	samples: string[];
+}
+
+export interface AdFindingCounts {
+	low: number;
+	medium: number;
+	high: number;
+	critical: number;
+}
+
+export interface AdConnection {
+	host: string;
+	port: number;
+	/** `ldaps`, `starttls` or `plain`. */
+	security: string;
+	certificate_verified: boolean;
+	connect_seconds: number | null;
+	bind_seconds: number | null;
+}
+
+export interface AdDomain {
+	dns_name: string;
+	naming_context: string;
+	forest_dns_name: string;
+	forest_root: boolean;
+	domain_sid: string | null;
+	domain_level: number | null;
+	domain_level_label: string | null;
+	forest_level: number | null;
+	forest_level_label: string | null;
+	dc_host_name: string | null;
+	dc_synchronized: boolean | null;
+	dc_global_catalog_ready: boolean | null;
+	/** Domain controller clock minus DumbMonit's, in seconds. */
+	clock_skew_seconds: number | null;
+	recycle_bin_enabled: boolean | null;
+}
+
+export interface AdPolicy {
+	min_password_length: number | null;
+	password_history_length: number | null;
+	/** `null`: passwords never expire. */
+	max_password_age_seconds: number | null;
+	min_password_age_seconds: number | null;
+	complexity_required: boolean | null;
+	/** `0`: no lockout. */
+	lockout_threshold: number | null;
+	/** `null`: locked until unlocked by hand. */
+	lockout_duration_seconds: number | null;
+	lockout_window_seconds: number | null;
+	machine_account_quota: number | null;
+}
+
+export interface AdDomainController {
+	name: string;
+	host_name: string | null;
+	site: string;
+	global_catalog: boolean;
+	read_only: boolean;
+	operating_system: string | null;
+	os_version: string | null;
+	queried: boolean;
+	/** `reachable`, `unreachable`, `unresolved` or `not_checked`. */
+	reachability: string;
+	reachability_detail: string | null;
+	inbound_connections: number;
+	/** FSMO roles held: `schema`, `domain_naming`, `pdc`, `rid`, `infrastructure`. */
+	roles: string[];
+}
+
+export interface AdFsmo {
+	role: string;
+	label: string;
+	holder: string | null;
+}
+
+export interface AdNeighbor {
+	source: string;
+	naming_context: string;
+	last_success: number | null;
+	last_attempt: number | null;
+	last_result: number;
+	consecutive_failures: number;
+}
+
+export interface AdReplication {
+	/** `readable`, `not_readable` or `single_dc`. */
+	status: string;
+	neighbors: AdNeighbor[];
+	failing: number;
+}
+
+export interface AdMember {
+	name: string;
+	kind: 'user' | 'computer' | 'group' | 'other';
+	enabled: boolean;
+}
+
+export interface AdPrivilegedGroup {
+	name: string;
+	rid: number;
+	/** `false`: not in this domain (Enterprise and Schema Admins live in the forest root). */
+	found: boolean;
+	dn: string | null;
+	member_count: number;
+	enabled_member_count: number;
+	nested_group_count: number;
+	members: AdMember[];
+	truncated: boolean;
+}
+
+export interface AdInventory {
+	refreshed_at: number;
+	users_total: number;
+	users_enabled: number;
+	users_disabled: number;
+	users_locked_out: number;
+	users_password_never_expires: number;
+	users_stale: number;
+	computers_total: number;
+	computers_enabled: number;
+	computers_stale: number;
+	groups_total: number;
+	admin_count_accounts: number;
+	krbtgt_password_last_set: number | null;
+	krbtgt_password_age_seconds: number | null;
+	laps_schema: boolean;
+	laps_computers: number;
+	laps_eligible_computers: number;
+	stale_days_users: number;
+	stale_days_computers: number;
+}
+
+/** `GET /targets/{id}/ad`. Dates are Unix seconds. */
+export interface AdOverview {
+	probed_at: number | null;
+	connection: AdConnection | null;
+	/** Why the service account was refused; everything else is then empty. */
+	bind_error: string | null;
+	domain: AdDomain | null;
+	policy: AdPolicy | null;
+	dcs: AdDomainController[];
+	fsmo: AdFsmo[];
+	replication: AdReplication | null;
+	privileged_groups: AdPrivilegedGroup[];
+	/** `null` until the first background inventory completes. */
+	inventory: AdInventory | null;
+	findings: AdFinding[];
+	finding_counts: AdFindingCounts;
+	errors: string[];
+}
+
+/** `GET /targets/{id}/ad/findings`. */
+export interface AdFindings {
+	probed_at: number | null;
+	inventory_at: number | null;
+	findings: AdFinding[];
+	counts: AdFindingCounts;
+}
