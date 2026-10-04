@@ -845,6 +845,12 @@ export interface ChannelField {
 	shape: 'scalar' | 'list' | 'object';
 	/** Value applied by the server when the field is left empty. */
 	default: string;
+	/**
+	 * The field says where the secrets go (server address, SMTP host, port...).
+	 * Changing it on edit means typing the secrets again: the server refuses to
+	 * send stored secrets to a new destination.
+	 */
+	destination?: boolean;
 }
 
 /** A channel type (Discord, Telegram...) and the fields it expects. */
@@ -1958,14 +1964,15 @@ export interface SynologyAbb {
 /**
  * `GET /api/targets/{id}/push`: the secret URL a heartbeat device is called
  * on, and what its last call said. Mirrors `PushMonitorView`. The token is
- * returned on purpose: it only lets a caller say "the job ran", and it must be
- * copied into a crontab long after the device was created.
+ * returned to admins on purpose (it must be copied into a crontab long after
+ * the device was created), and `null` for viewers: it lets a caller say "the
+ * job ran", which would hide a failing job.
  */
 export interface PushMonitor {
 	target_id: TargetId;
-	token: string;
-	/** Path relative to the server: `/api/push/<token>`. The UI prepends its origin. */
-	path: string;
+	token: string | null;
+	/** Path relative to the server: `/api/push/<token>`. The UI prepends its origin. `null` for viewers. */
+	path: string | null;
 	last_seen_at: string | null;
 	/** Age of the last call in seconds, `null` until the first one. */
 	last_seen_age_secs: number | null;
