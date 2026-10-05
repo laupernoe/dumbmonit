@@ -18,6 +18,17 @@
 //! tâche de fond (cron). Elle n'est lisible qu'avec un compte
 //! d'administration complet, que DumbMonit ne demande pas ; la documentation
 //! propose un battement de cœur à la place.
+//!
+//! Pas d'appareils clients non plus (voir [`crate::client_devices`], branché
+//! sur Immich, PBS et Veeam) : Nextcloud n'a aucune API — ni OCS, ni
+//! `serverinfo` — qui liste les postes ou mobiles synchronisés pour
+//! l'ensemble des comptes. La page personnelle « Appareils et sessions »
+//! (Réglages › Sécurité) ne montre que le compte connecté dans le navigateur
+//! qui l'affiche, et le seul équivalent à l'échelle de l'instance est en
+//! ligne de commande (`occ user:auth-tokens:list <utilisateur>`, un compte à
+//! la fois) : rien qu'un jeton de supervision ne puisse atteindre. Recherché
+//! le 5 octobre 2026 dans la documentation OCS et développeur de Nextcloud
+//! sans trouver mieux ; voir `docs/devices/nextcloud.md#client-devices`.
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, ProbeError, Sample, Target};

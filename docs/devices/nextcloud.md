@@ -61,6 +61,25 @@ With an expected interval of 5 minutes, the heartbeat alerts as soon as cron
 stops, whatever the reason (a container restarted without its cron, a PHP
 error, background jobs left on AJAX).
 
+## Client devices
+
+Nextcloud does not expose an admin-wide list of sync clients or mobile
+devices through any API. The personal "Devices & sessions" page (Settings →
+Security) lists only the account currently logged in, backed by a browser
+session rather than an API token, and the only admin-wide equivalent is the
+command line (`occ user:auth-tokens:list <user>`, one account at a time) —
+not something the monitoring token can reach, and not something DumbMonit
+asks an administrator to script into a probe. The `serverinfo` API that
+DumbMonit reads has no device list either: it gives counts of active users
+(`active_users`, above), never who or what they are.
+
+This is a deliberate limit, not a missing feature: giving DumbMonit a device
+list would mean widening the monitoring token into a full administration
+account, which the rest of this page goes out of its way to avoid. If
+Nextcloud ever exposes this over OCS, DumbMonit will follow the same
+[client devices](../alerting/rules.md) pattern already used for Immich,
+Proxmox Backup Server and Veeam.
+
 ## The device page
 
 The panel above the charts reads what the probe stored; opening the page never

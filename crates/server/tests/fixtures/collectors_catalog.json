@@ -5216,7 +5216,7 @@
   {
     "kind": "synology",
     "label": "Synology DSM",
-    "summary": "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs.",
+    "summary": "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs, Synology Drive and Photos.",
     "examples": [
       "DiskStation",
       "RackStation"
@@ -5314,6 +5314,26 @@
         "key": "abb",
         "label": "Watch Active Backup for Business",
         "help": "Reads the Active Backup for Business tasks (PCs, servers, virtual machines, file servers): last result, age of the last successful backup, schedule. Needs the package installed and an account allowed to use it; a NAS without the package is simply skipped.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "drive",
+        "label": "Watch Synology Drive",
+        "help": "Reads whether the Synology Drive service responds, its team folders and its active connection count. A NAS without the package is simply skipped.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "photos",
+        "label": "Watch Synology Photos",
+        "help": "Shows whether the Synology Photos package is installed, with no extra request to the NAS. Synology does not expose a list of mobile backup devices through any API.",
         "placeholder": "",
         "default": "true",
         "required": false,
