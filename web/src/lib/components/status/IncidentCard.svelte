@@ -6,7 +6,7 @@
 	 */
 	import type { PublicIncident } from '$lib/api';
 	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Plate } from '$lib/ui';
+	import { Plate, Tilt } from '$lib/ui';
 	import { INCIDENT_STATUS, KIND_LABEL, isClosed } from './words';
 
 	interface Props {
@@ -26,7 +26,7 @@
 	const isMaintenance = $derived(incident.kind === 'maintenance');
 </script>
 
-<article class={`rounded-[var(--radius-card)] border bg-surface ${closed || compact ? 'border-line' : isMaintenance ? 'border-info/40' : incident.severity === 'major' ? 'border-warning/40' : 'border-advisory/40'} ${compact ? 'px-4 py-3' : 'px-4 py-4 shadow-lift sm:px-5'}`}>
+<Tilt tag="article" maxTilt={2.5} class={`rounded-[var(--radius-card)] border bg-surface ${closed || compact ? 'border-line' : isMaintenance ? 'border-info/40' : incident.severity === 'major' ? 'border-warning/40' : 'border-advisory/40'} ${compact ? 'px-4 py-3' : 'px-4 py-4 shadow-lift sm:px-5'}`}>
 	<div class="flex flex-wrap items-center gap-2">
 		<Plate tone={isMaintenance ? 'info' : closed ? 'ghost' : incident.severity === 'major' ? 'warning' : 'advisory'} label={KIND_LABEL[incident.kind]} bare />
 		<Plate tone={status.tone} label={status.label} />
@@ -77,4 +77,4 @@
 			</ol>
 		</details>
 	{/if}
-</article>
+</Tilt>
