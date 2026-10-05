@@ -8,34 +8,51 @@ right, opens the form for a window from any tab.
 
 | Tab | What it holds |
 |---|---|
-| **Now** | The live *Needs you* list, grouped by device: severity plate, reason, since when, and *Ack*, *Silence 1 h* or *Open device* on each. Acknowledged alerts sit in their own *Acknowledged* group at the bottom. The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
+| **Now** | The live *Needs you* list, grouped by device: severity plate, reason, since when, and *Ack*, *Snooze*, *Ignore* and *Open device* on each. Acknowledged and snoozed alerts each sit in their own quiet group at the bottom. The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
 | **Scheduled** | Maintenance windows, *Active now* or *Scheduled*, one-off, weekly or monthly, each with the next occurrence. See [Maintenance windows](../alerting/maintenance.md). |
-| **Rules** | Every rule with its severity and a *Built-in* mark; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
+| **Rules** | Every rule with its severity, a *Built-in* mark and, if any device ignores it, *Ignored on N devices*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
 | **Notifications** | Where alerts reach you: the channels and the notification policy. Details below. |
-| **History** | The last 200 transitions, each naming the device, the rule and what happened. |
+| **History** | The last 200 transitions, each naming the device, the rule and what happened; resolved ones can be cleared. |
 
 The same truth model feeds the overview bulletin and this page, so the two
 always agree on what needs you.
 
-## Acknowledge vs silence
+## Getting rid of an alert
 
-Two ways to make an alert quiet, for two different situations:
+A firing alert is not binary — "fix it" or "live with the noise forever".
+Four actions, for four different situations, all admin-only (a viewer sees
+the state but cannot change it):
 
-- **Ack** is for one alert you know about: "I know, stop reminding me for
-  4 h". The menu offers 1 h, 4 h, 24 h or *until resolved*, plus an optional
-  note for whoever reads the card after you. The alert stays firing and keeps
-  being evaluated; only its reminders and escalations pause — including the
-  escalation to a second channel. You are still
-  told when it resolves, and the acknowledgement clears at that moment — an
-  alert that comes back later notifies again. Acked cards read *Acked by
-  someone until a time* and offer **Un-ack**.
-- **Silence 1 h** (and scheduled maintenance) is for a device: every alert on
-  it is muted while you work on it, including new ones. See
-  [Maintenance windows](../alerting/maintenance.md).
+- **Acknowledge** ("I'm on it") is for one alert you are actively working on:
+  "I know, stop reminding me for 4 h". The menu offers 1 h, 4 h, 24 h or
+  *until resolved*, plus an optional note for whoever reads the card after
+  you. The alert keeps firing and being evaluated; only its reminders and
+  escalations pause — including the escalation to a second channel. You are
+  still told when it resolves, and the acknowledgement clears at that moment —
+  an alert that comes back later notifies again. The card moves out of the
+  main list into a quieter *Acknowledged* group, reads *Acked by someone
+  until a time*, and offers **Un-ack**.
+- **Snooze** is for "not now, check back later" without claiming you are
+  doing anything about it: 1 h, 8 h, 1 day or *until resolved*. Unlike Ack,
+  it works by opening a maintenance window scoped to that one alert's exact
+  labels — a sibling rule on the same device keeps talking. The card moves to
+  a quiet *Snoozed* group showing the time left, and offers **Unsnooze**.
+  Reminders pause the same way an acknowledgement's do.
+- **Ignore** ("don't alert me about this again") is for a rule that will
+  never make sense on this device: it disables that rule for that device
+  alone (a per-device override — see
+  [Per-device overrides](../alerting/rules.md#per-device-overrides)) and the
+  alert disappears for good, immediately, not just quietened. It is
+  reversible: **Stop ignoring** on the device page, or from the rule itself in
+  Alerts → Rules, where it reads *Ignored on N devices*.
+- **Clear** is for history, not for a live alert: once a transition has
+  resolved, *Clear* (or *Clear all resolved*) drops it from the default
+  History view. The row stays in the database — nothing is deleted — and
+  *Show cleared* brings it back.
 
-Both are admin actions; viewers see the acknowledgement but cannot make one.
-Public status pages ignore acknowledgements: an acked alert is still an
-alert for the outside world.
+Public status pages ignore acknowledgements and snoozes: an acked or snoozed
+alert is still an alert for the outside world. An ignored rule, on the other
+hand, never produced an alert in the first place.
 
 ## Notifications
 

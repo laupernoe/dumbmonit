@@ -327,6 +327,8 @@ export interface AlertHistoryEntry {
 	reason: string;
 	/** RFC 3339 timestamp in UTC. */
 	at: string;
+	/** Cleared from the active view by the user; the row itself is kept. */
+	dismissed: boolean;
 }
 
 /** An alert rule, mirroring the server's `RuleView`. */
