@@ -271,14 +271,23 @@ pub async fn forget_pages_except(
             .fetch_all(pool)
             .await
             .context("lecture des pages surveillées")?;
-    for url in known.iter().filter(|url| !keep.contains(url)) {
+    let to_forget: Vec<&String> = known.iter().filter(|url| !keep.contains(url)).collect();
+    if to_forget.is_empty() {
+        return Ok(());
+    }
+    // Une transaction plutôt qu'un autocommit par page : ce réglage ne change
+    // jamais qu'une poignée de pages à la fois, mais autant suivre la même
+    // convention que le reste du nettoyage (`db/alerts.rs`, `db/pbs.rs`, …).
+    let mut tx = pool.begin().await.context("ouverture de la transaction d'oubli")?;
+    for url in to_forget {
         sqlx::query("DELETE FROM webchange_pages WHERE target_id = ? AND url = ?")
             .bind(target)
             .bind(url)
-            .execute(pool)
+            .execute(&mut *tx)
             .await
             .context("oubli d'une page")?;
     }
+    tx.commit().await.context("validation de l'oubli des pages")?;
     Ok(())
 }
 
