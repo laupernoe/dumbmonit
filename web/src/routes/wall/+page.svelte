@@ -13,8 +13,11 @@
 	 * over the sky and never in the grid: it can't shrink or push the bulletin.
 	 * What plays on the connected Spotify account shows there wherever it plays;
 	 * a link sent to the walls plays in the service's own player; and the
-	 * display can be a Spotify Connect speaker ("DumbMonit Wall"). Nothing
-	 * third-party loads until Spotify is connected or a link is set.
+	 * display can be a Spotify Connect speaker ("DumbMonit Wall", the name
+	 * chosen in Settings, or `?speaker=Living room` for this display alone).
+	 * The first click or key press anywhere on the wall unlocks its sound; when
+	 * the speaker cannot work here, the dock says why, on the wall itself.
+	 * Nothing third-party loads until Spotify is connected or a link is set.
 	 */
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -60,7 +63,7 @@
 	} from '$lib/components/wall/wallTheme';
 	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '$lib/api/music';
 	import { parseMusicLink } from '$lib/wall/music';
-	import { cardVisible, pickPlaying } from '$lib/wall/spotify';
+	import { cardVisible, displaySpeakerName, pickPlaying } from '$lib/wall/spotify';
 	import { WallSpeaker } from '$lib/wall/speaker.svelte';
 
 	const REFRESH_MS = 20_000;
@@ -87,7 +90,31 @@
 	let wallMusic = $state<WallMusic | null>(null);
 	let musicReadAt = $state(0);
 	let musicOpen = $state(false);
-	const speakerName = $derived(wallMusic?.speaker_name ?? 'DumbMonit Wall');
+	/** `?speaker=Kitchen` names this display alone, and is remembered by it (`?speaker=` forgets). */
+	const SPEAKER_NAME_KEY = 'dumbmonit-wall-speaker-name';
+	let rememberedName = $state<string | null>(readRememberedName());
+	function readRememberedName(): string | null {
+		try {
+			return localStorage.getItem(SPEAKER_NAME_KEY);
+		} catch {
+			return null;
+		}
+	}
+	$effect(() => {
+		const wanted = page.url.searchParams.get('speaker');
+		if (wanted === null) return;
+		const name = wanted.trim();
+		rememberedName = name || null;
+		try {
+			if (name) localStorage.setItem(SPEAKER_NAME_KEY, name);
+			else localStorage.removeItem(SPEAKER_NAME_KEY);
+		} catch {
+			// Not remembered: the address still names it while it is open.
+		}
+	});
+	const speakerName = $derived(
+		displaySpeakerName(page.url.searchParams.get('speaker'), rememberedName, wallMusic?.speaker_name ?? 'DumbMonit Wall')
+	);
 
 	/**
 	 * Before September 2026 a wall kept its link in this browser only. It still
@@ -222,6 +249,28 @@
 		});
 	});
 	$effect(() => () => speaker.stop());
+
+	// The first click, tap or key press anywhere on the wall (a TV remote's OK
+	// button included) unlocks the sound: browsers want a gesture, not a
+	// particular button.
+	$effect(() => {
+		const unlock = () => {
+			if (speakerOn && speaker.needsTap) speaker.activate();
+		};
+		document.addEventListener('pointerdown', unlock, { capture: true });
+		document.addEventListener('keydown', unlock, { capture: true });
+		return () => {
+			document.removeEventListener('pointerdown', unlock, { capture: true });
+			document.removeEventListener('keydown', unlock, { capture: true });
+		};
+	});
+
+	/** Why this display cannot be a speaker, on the wall itself (not only in the Music panel). */
+	const speakerTrouble = $derived(
+		speakerOn && spotifyConnected && (speaker.phase === 'unsupported' || speaker.phase === 'error') && speaker.problem
+			? { problem: speaker.problem, fix: speaker.fix, retrying: speaker.retryAt !== null }
+			: null
+	);
 
 	const playing = $derived(pickPlaying(speaker.local, wallMusic?.spotify.now_playing ?? null));
 	const playingReadAt = $derived(playing?.source === 'speaker' ? speaker.localAt : musicReadAt);
@@ -528,7 +577,9 @@
 							embed={music}
 							autoplay={musicAutoplay}
 							needsTap={speakerOn && speaker.needsTap}
+							trouble={speakerTrouble}
 							onactivate={() => speaker.activate()}
+							onretry={() => void speaker.start(speakerName, { retry: true })}
 							onstop={auth.isAdmin || !sharedLink ? () => void stopLink() : undefined}
 						/>
 					</div>

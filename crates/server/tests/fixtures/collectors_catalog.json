@@ -1,5 +1,165 @@
 [
   {
+    "kind": "activedirectory",
+    "label": "Active Directory",
+    "summary": "A Windows domain over LDAP, read-only: domain controllers and FSMO roles, privileged group members, password policy, and security findings such as Kerberos-roastable accounts, unconstrained delegation or an old krbtgt password.",
+    "examples": [
+      "Windows Server domain controller",
+      "Samba AD domain controller"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Service account",
+        "help": "A plain domain user created for DumbMonit, member of no group.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The user principal name (svc-dumbmonit@corp.example.com), DOMAIN\\svc-dumbmonit, or the full DN.",
+            "placeholder": "svc-dumbmonit@corp.example.com",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "dc1.corp.example.com",
+    "default_port": 636,
+    "setup": {
+      "title": "Create a read-only service account for DumbMonit",
+      "steps": [
+        "Create a dedicated user for DumbMonit, for example svc-dumbmonit, and add it to no group. A plain domain user is enough: every authenticated user can read what DumbMonit reads. In PowerShell, with the Active Directory module:\nNew-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true",
+        "Give it a long random password. If passwords expire in your domain, DumbMonit raises Active Directory bind failed the day this one does.",
+        "Optional: to see inbound replication status, grant the account the Monitor active directory replication right on the domain object itself. It reveals no password and no secret.\ndsacls \"DC=corp,DC=example,DC=com\" /G \"CORP\\svc-dumbmonit:CA;Monitor active directory replication\"",
+        "LDAPS needs a certificate on each domain controller; an enterprise certification authority (AD CS) issues one automatically. Export the certificate of that authority in Base-64 encoded X.509 format and paste it as CA certificate below.",
+        "In DumbMonit, enter the name of one domain controller as its certificate names it, for example \"dc1.corp.example.com\", and log in as svc-dumbmonit@corp.example.com. DumbMonit finds the other domain controllers by itself and checks that each one answers.",
+        "DumbMonit only reads: it never writes to the directory, and of LAPS it reads the expiry date, never the password."
+      ],
+      "warning": "Plain LDAP on port 389 sends the service account's password in clear text: DumbMonit refuses it unless you tick Allow plain LDAP, and a domain controller that requires LDAP signing refuses it too. Use LDAPS, or StartTLS on port 389.",
+      "doc_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/enable-ldap-over-ssl-3rd-certification-authority"
+    },
+    "options": [
+      {
+        "key": "security",
+        "label": "Connection security",
+        "help": "ldaps (port 636) encrypts from the first byte; starttls upgrades port 389 before logging in; plain sends the password in clear text and needs Allow plain LDAP.",
+        "placeholder": "",
+        "default": "ldaps",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "ldaps",
+          "starttls",
+          "plain"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: 636 for LDAPS, 389 otherwise.",
+        "placeholder": "636",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "ca_cert",
+        "label": "CA certificate",
+        "help": "The PEM certificate (Base-64 encoded X.509) of the authority that issued the domain controllers' certificates. Only that authority is then trusted.",
+        "placeholder": "-----BEGIN CERTIFICATE-----…",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "Skips every certificate check: the connection stays encrypted, but anyone on the path could pose as the domain controller. Prefer the CA certificate above.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "allow_plaintext",
+        "label": "Allow plain LDAP",
+        "help": "Required for the plain setting: the service account's password then crosses the network readable by anyone on the path.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "check_all_dcs",
+        "label": "Check every domain controller",
+        "help": "Opens a connection to the LDAP port of each domain controller of the domain, to alert when one stops answering. Names that do not resolve from DumbMonit are reported, not alerted on.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "stale_days_users",
+        "label": "Inactive user after (days)",
+        "help": "An enabled user with no logon for this long is counted as inactive. The last-logon date can lag by up to 14 days.",
+        "placeholder": "90",
+        "default": "90",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "stale_days_computers",
+        "label": "Inactive computer after (days)",
+        "help": "An enabled computer with no logon for this long is counted as inactive.",
+        "placeholder": "90",
+        "default": "90",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "inventory_minutes",
+        "label": "Full inventory every (minutes)",
+        "help": "Every user and computer is read in the background at this pace (1 to 1440); health is read at every check.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time allowed for each LDAP operation, from 1 to 60.",
+        "placeholder": "8",
+        "default": "8",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "adguard",
     "label": "AdGuard Home",
     "summary": "The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.",
@@ -150,6 +310,122 @@
       "doc_url": ""
     },
     "options": []
+  },
+  {
+    "kind": "apache",
+    "label": "Apache httpd",
+    "summary": "The web server: busy and idle workers, the worker scoreboard by state, and request/byte rates when ExtendedStatus is on.",
+    "examples": [
+      "Apache in Docker",
+      "Apache on a Linux host",
+      "A LAMP stack"
+    ],
+    "credential_types": [
+      "none",
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No password",
+        "help": "The status page is filtered so that only the DumbMonit host reaches it.",
+        "fields": []
+      },
+      {
+        "kind": "username_password",
+        "label": "Basic auth",
+        "help": "If the status page sits behind a basic auth block or directive.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "apache.lan",
+    "default_port": 80,
+    "setup": {
+      "title": "Enable Apache's mod_status",
+      "steps": [
+        "Make sure mod_status is loaded (it ships with Apache and is usually enabled by default).\na2enmod status",
+        "Add a status location, restricted to the DumbMonit host; adjust the address to match. On Debian and Ubuntu this goes in a file of its own, elsewhere in the main configuration.\n<Location \"/server-status\">\nSetHandler server-status\nRequire ip 10.0.0.5\n</Location>",
+        "Turn on the request and byte counters (optional, but worth it): without it, only busy/idle workers and the scoreboard are reported.\nExtendedStatus On",
+        "Reload Apache and check that it answers before configuring DumbMonit.\napachectl graceful\ncurl -s 'http://apache.lan/server-status?auto'",
+        "In DumbMonit, enter the Apache host, for example \"apache.lan\", and the path if it is not \"/server-status\" (DumbMonit adds \"?auto\" itself)."
+      ],
+      "warning": "Without ExtendedStatus, requests and bytes are not reported at all, not as zero: the chart stays empty rather than lying flat. Apache does not publish its own version in mod_status; DumbMonit reads it from the Server response header instead, which some distributions trim down on purpose.",
+      "doc_url": "https://httpd.apache.org/docs/2.4/mod/mod_status.html"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "The status page listens over plain HTTP unless Apache gave it TLS.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port.",
+        "placeholder": "80",
+        "default": "80",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "status_path",
+        "label": "Status path",
+        "help": "Location where \"SetHandler server-status\" was declared, without the \"?auto\" query string: it is added automatically.",
+        "placeholder": "/server-status",
+        "default": "/server-status",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a reverse proxy with a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
   },
   {
     "kind": "caddy",
@@ -2310,6 +2586,141 @@
     ]
   },
   {
+    "kind": "nginx",
+    "label": "Nginx",
+    "summary": "The web server and reverse proxy: active and waiting connections, the accept/handled/request rates, and upstream health when the commercial NGINX Plus API is available.",
+    "examples": [
+      "Nginx in Docker",
+      "Nginx as a reverse proxy",
+      "Nginx on a Linux host"
+    ],
+    "credential_types": [
+      "none",
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No password",
+        "help": "The status page is filtered so that only the DumbMonit host reaches it.",
+        "fields": []
+      },
+      {
+        "kind": "username_password",
+        "label": "Basic auth",
+        "help": "If the status page sits behind a basic auth block or directive.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "nginx.lan",
+    "default_port": 80,
+    "setup": {
+      "title": "Enable Nginx's stub_status module",
+      "steps": [
+        "Nginx ships stub_status built in: it only needs a location that turns it on. Add this to the server block Nginx already serves (or to its own server block on a port of its own), then reload Nginx.\nlocation /basic_status {\nstub_status;\n}",
+        "Restrict that location to the DumbMonit host, so no one else can read it; adjust the address to match.\nlocation /basic_status {\nstub_status;\nallow 10.0.0.5;\ndeny all;\n}\nnginx -s reload",
+        "Check that it answers before configuring DumbMonit.\ncurl -s http://nginx.lan/basic_status",
+        "In DumbMonit, enter the Nginx host, for example \"nginx.lan\", and the path if it is not \"/basic_status\". If NGINX Plus is installed, tick \"Read the NGINX Plus API\" to add upstream health and per-zone counters."
+      ],
+      "warning": "stub_status only counts connections and requests: a configuration error in a server block, or a backend nginx cannot reach, does not show here. The open-source build has no notion of \"upstream\": that only exists in NGINX Plus, read through its own API when enabled.",
+      "doc_url": "https://nginx.org/en/docs/http/ngx_http_stub_status_module.html"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "The status page listens over plain HTTP unless Nginx gave it TLS.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port.",
+        "placeholder": "80",
+        "default": "80",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "status_path",
+        "label": "Status path",
+        "help": "Location where \"stub_status;\" was declared.",
+        "placeholder": "/basic_status",
+        "default": "/basic_status",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a reverse proxy with a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "plus_api",
+        "label": "Read the NGINX Plus API",
+        "help": "In addition to stub_status, read upstream health and server zone counters from NGINX Plus's API. No effect on the open-source build, which does not serve it.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "plus_api_version",
+        "label": "NGINX Plus API version",
+        "help": "Path segment of the API (\"/api/<version>/...\").",
+        "placeholder": "9",
+        "default": "9",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "npm",
     "label": "Nginx Proxy Manager",
     "summary": "The proxy manager: hosts nginx refused to load, disabled hosts, and the certificates the hosts present, before Let's Encrypt renewal failures turn into expired sites.",
@@ -2420,6 +2831,83 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
+  },
+  {
+    "kind": "ntp",
+    "label": "NTP time server",
+    "summary": "A time server answers SNTP with a sane clock: offset, delay, stratum and leap indicator.",
+    "examples": [
+      "A router or NAS acting as a local time server",
+      "An internal NTP server (chrony, ntpd)",
+      "A public pool server used as a reference"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the device answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "pool.ntp.org",
+    "default_port": 123,
+    "setup": {
+      "title": "Monitor an NTP server",
+      "steps": [
+        "In the address, write the server's name or IP address: \"pool.ntp.org\" or \"192.168.1.1\". UDP port 123 is used unless the \"Port\" option says otherwise.",
+        "The check sends a single SNTP request and reads the reply: no state is kept between polls, and nothing is written to the server.",
+        "It records the offset between the server's clock and the DumbMonit host, the round-trip delay, the stratum and the leap indicator.",
+        "A server that answers stratum 16, or whose leap indicator reads \"unsynchronized\", has never managed to synchronize: the check reports it down whatever the offset.",
+        "Lower \"Tolerated offset\" to be warned earlier than 100 ms; raise it for a server several hops from a reference clock."
+      ],
+      "warning": "The offset is only as good as the DumbMonit host's own clock: if that host is not itself kept in sync (NTP, a hypervisor's time sync), the measured offset reflects its drift as much as the server's.",
+      "doc_url": ""
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "UDP port of the NTP server.",
+        "placeholder": "123",
+        "default": "123",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "offset_threshold_ms",
+        "label": "Tolerated offset (ms)",
+        "help": "Above this clock offset, the server is reported down. An unsynchronized server (stratum 16) always fails, whatever this value.",
+        "placeholder": "100",
+        "default": "100",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
         "required": false,
         "input": "number",
         "choices": []

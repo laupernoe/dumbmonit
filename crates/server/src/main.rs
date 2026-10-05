@@ -199,6 +199,12 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::NpmCollector::new()));
     registry.register(Arc::new(collectors::DomainCollector::new()));
     registry.register(Arc::new(collectors::KubernetesCollector::new()));
+    // Active Directory en LDAP, lecture seule : la vue (contrôleurs, groupes
+    // privilégiés, constats) est conservée pour la page.
+    registry.register(Arc::new(
+        collectors::ActiveDirectoryCollector::new()
+            .with_observer(collectors::activedirectory_history::sqlite_observer(pool.clone())),
+    ));
     // Équipements commerciaux interrogés par leur API (`collectors/{pfsense,
     // unraid,veeam,tailscale,fortigate,sophos}`).
     registry.register(Arc::new(collectors::PfsenseCollector::new()));

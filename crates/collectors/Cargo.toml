@@ -88,6 +88,17 @@ sqlx = { version = "0.9", default-features = false, features = [
 ring = "0.17"
 stringprep = "0.1"
 
+# --- Active Directory (`activedirectory/`) ---
+#
+# Client LDAP en Rust pur (MIT/Apache-2.0), en asynchrone sur Tokio. TLS par
+# rustls avec `ring`, le fournisseur déjà employé partout ailleurs : ni OpenSSL
+# ni bibliothèque C, le binaire statique et l'image `scratch` tiennent. La
+# configuration TLS est construite ici (`activedirectory/tls.rs`) et passée au
+# client : il n'en choisit aucune lui-même. `rustls-native-certs` est déjà
+# dans le verrou (reqwest) ; il ajoute le magasin du système aux racines.
+ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
+rustls-native-certs = "0.8"
+
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 # Faux services HTTP (DSM, PVE) montés dans les tests unitaires.

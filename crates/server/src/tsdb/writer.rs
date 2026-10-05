@@ -26,6 +26,12 @@ pub const DEFAULT_FLUSH_SIZE: usize = 5_000;
 /// complet que la plupart des instances n'atteignent jamais.
 const INITIAL_CAPACITY: usize = 512;
 
+/// Nombre de lots en attente avant que `try_send` refuse et abandonne le lot.
+/// Chaque lot est l'ensemble des échantillons d'une seule interrogation : à
+/// `max_concurrent_probes` sondes en vol (soixante-quatre par défaut), cette
+/// capacité couvre plusieurs tours complets avant de perdre quoi que ce soit.
+const CHANNEL_CAPACITY: usize = 1024;
+
 /// Point d'entrée des échantillons. Clonable, à distribuer aux collecteurs.
 #[derive(Clone)]
 pub struct SampleSink {
@@ -35,16 +41,27 @@ pub struct SampleSink {
 impl SampleSink {
     /// Dépose un lot d'échantillons.
     ///
-    /// N'échoue jamais du point de vue de l'appelant : si le tampon est saturé, le
-    /// lot est abandonné avec une trace. Une interrogation ne doit pas échouer parce
-    /// que la base de séries est lente.
+    /// N'échoue jamais du point de vue de l'appelant, et ne bloque jamais : si le
+    /// tampon est saturé, le lot est abandonné avec une trace plutôt que d'attendre
+    /// de la place. L'appelant est une tâche `probe_once` qui tient encore son jeton
+    /// du sémaphore du planificateur pendant cet appel — un `send` bloquant
+    /// transformerait un VictoriaMetrics lent en un planificateur bloqué pour toutes
+    /// les cibles, pas seulement la plus lente.
     pub async fn send(&self, samples: Vec<Sample>) {
         if samples.is_empty() {
             return;
         }
         let count = samples.len();
-        if self.tx.send(samples).await.is_err() {
-            warn!(count, "write buffer closed, samples dropped");
+        match self.tx.try_send(samples) {
+            Ok(()) => {}
+            Err(mpsc::error::TrySendError::Full(_)) => {
+                warn!(count, "write buffer full, samples dropped");
+                stats().samples_dropped(count);
+            }
+            Err(mpsc::error::TrySendError::Closed(_)) => {
+                warn!(count, "write buffer closed, samples dropped");
+                stats().samples_dropped(count);
+            }
         }
     }
 }
@@ -60,7 +77,7 @@ pub fn spawn_writer_with(
     flush_interval: Duration,
     flush_size: usize,
 ) -> SampleSink {
-    let (tx, mut rx) = mpsc::channel::<Vec<Sample>>(256);
+    let (tx, mut rx) = mpsc::channel::<Vec<Sample>>(CHANNEL_CAPACITY);
     let flush_at = flush_size.max(1);
 
     tokio::spawn(async move {
@@ -120,5 +137,48 @@ async fn flush(victoria: &Victoria, buffer: &mut Vec<Sample>) {
             }
             stats().sample_write_failed(buffer.len());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dumbmonit_proto::MetricKind;
+
+    fn batch() -> Vec<Sample> {
+        vec![Sample::new("probe_up", 1.0, MetricKind::Gauge, 0)]
+    }
+
+    /// `send` ne doit jamais attendre après de la place : un tampon saturé fait
+    /// perdre le lot plutôt que de bloquer l'appelant, qui tient encore le jeton
+    /// du sémaphore du planificateur.
+    #[tokio::test]
+    async fn send_drops_without_blocking_when_the_buffer_is_full() {
+        let (tx, _rx) = mpsc::channel::<Vec<Sample>>(1);
+        let sink = SampleSink { tx };
+
+        // Premier lot : il prend l'unique place, personne ne le vide derrière.
+        sink.send(batch()).await;
+        let before = stats().snapshot().samples_dropped;
+
+        // Deuxième lot : le canal est plein, `send` doit revenir aussitôt plutôt
+        // que d'attendre une place, et le compteur de pertes doit bouger.
+        let dropped = tokio::time::timeout(Duration::from_millis(200), sink.send(batch())).await;
+        assert!(dropped.is_ok(), "send() a attendu alors que le tampon était saturé");
+        assert_eq!(stats().snapshot().samples_dropped, before + 1);
+    }
+
+    /// Un canal fermé (le lecteur a disparu) ne doit pas non plus faire attendre
+    /// l'appelant : le lot est simplement abandonné.
+    #[tokio::test]
+    async fn send_drops_without_blocking_when_the_buffer_is_closed() {
+        let (tx, rx) = mpsc::channel::<Vec<Sample>>(4);
+        drop(rx);
+        let sink = SampleSink { tx };
+        let before = stats().snapshot().samples_dropped;
+
+        let result = tokio::time::timeout(Duration::from_millis(200), sink.send(batch())).await;
+        assert!(result.is_ok(), "send() a attendu alors que le canal était fermé");
+        assert_eq!(stats().snapshot().samples_dropped, before + 1);
     }
 }

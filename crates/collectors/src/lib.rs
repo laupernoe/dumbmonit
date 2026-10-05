@@ -7,6 +7,7 @@
 //! sur un agent relais posé dans un autre site. Le collecteur « agent » (fraîcheur
 //! des mesures poussées) reste côté serveur : il lit la base.
 
+pub mod activedirectory;
 pub mod adguard;
 pub mod apache;
 pub mod api_options;
@@ -57,6 +58,7 @@ use std::time::Duration;
 
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
+pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
 pub use apache::ApacheCollector;
 pub use caddy::CaddyCollector;
@@ -165,6 +167,7 @@ impl Registry {
         registry.register(Arc::new(NpmCollector::new()));
         registry.register(Arc::new(DomainCollector::new()));
         registry.register(Arc::new(KubernetesCollector::new()));
+        registry.register(Arc::new(ActiveDirectoryCollector::new()));
         registry.register(Arc::new(PfsenseCollector::new()));
         registry.register(Arc::new(UnraidCollector::new()));
         registry.register(Arc::new(VeeamCollector::new()));

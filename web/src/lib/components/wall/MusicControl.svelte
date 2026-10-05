@@ -6,10 +6,11 @@
 	 *   wall"), checked here (`parseMusicLink`) before it is saved; a refused
 	 *   link says why and never reaches a frame. Admins only, like every change.
 	 * - Spotify Connect on this display: whether it can be a speaker, what is
-	 *   missing when it cannot, and a switch to keep it off here.
+	 *   missing when it cannot, whether Spotify lists it, "Play here" (moves
+	 *   the account's playback to this display), and a switch to keep it off.
 	 */
 	import { tick } from 'svelte';
-	import { Music2, RotateCcw } from 'lucide-svelte';
+	import { Music2, Play, RotateCcw } from 'lucide-svelte';
 	import type { SpotifyNow } from '$lib/api/music';
 	import { Button, Led, Toggle } from '$lib/ui';
 	import { parseMusicLink, type MusicEmbed } from '$lib/wall/music';
@@ -46,6 +47,20 @@
 		onspeaker,
 		onretry
 	}: Props = $props();
+
+	let playing = $state(false);
+	let playError = $state<string | null>(null);
+	async function playHere() {
+		playing = true;
+		playError = null;
+		try {
+			await speaker.playHere();
+		} catch (cause) {
+			playError = cause instanceof Error ? cause.message : 'Spotify did not start playing here.';
+		} finally {
+			playing = false;
+		}
+	}
 
 	let draft = $state('');
 	let error = $state<string | null>(null);
@@ -130,9 +145,17 @@
 			case 'error':
 				return { tone: 'warning', word: 'Stopped', detail: [speaker.problem, speaker.fix].filter(Boolean).join(' ') };
 			case 'ready':
-				return speaker.activated
-					? { tone: 'signal', word: 'Ready', detail: `In Spotify on your phone: Devices → ${speakerName}.` }
-					: { tone: 'advisory', word: 'Sound locked', detail: 'Tap “Enable sound” on the wall once, then pick it in Spotify.' };
+				if (!speaker.activated) {
+					return { tone: 'advisory', word: 'Sound locked', detail: 'Tap anywhere on the wall once, then pick it in Spotify.' };
+				}
+				if (speaker.listed === false) {
+					return { tone: 'advisory', word: 'Not listed yet', detail: 'Spotify does not list this display yet; it reconnects by itself in a minute or two.' };
+				}
+				return {
+					tone: 'signal',
+					word: 'Ready',
+					detail: `In Spotify on a phone signed in to the same account: Devices → ${speakerName}. Or play here from this panel.`
+				};
 			default:
 				return { tone: 'ghost', word: 'Starting…', detail: null };
 		}
@@ -217,6 +240,15 @@
 				</div>
 				{#if speakerLine.detail}
 					<p class="mt-1.5 text-[0.8125rem] text-ink-2">{speakerLine.detail}</p>
+				{/if}
+				{#if speakerOn && spotify?.status === 'connected' && speaker.phase === 'ready'}
+					<Button variant="secondary" size="sm" class="mt-2" onclick={() => void playHere()} loading={playing}>
+						<Play class="size-3.5" aria-hidden="true" />
+						Play here
+					</Button>
+					{#if playError}
+						<p class="mt-1.5 text-[0.8125rem] font-medium text-warning-ink" role="alert">{playError}</p>
+					{/if}
 				{/if}
 				{#if speakerOn && spotify?.status === 'connected' && (speaker.phase === 'error' || speaker.phase === 'unsupported')}
 					<Button variant="ghost" size="sm" class="mt-2 -ml-3" onclick={onretry}>
