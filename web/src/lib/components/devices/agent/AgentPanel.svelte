@@ -4,12 +4,11 @@
 	 * that matters for security — whether this registration is bound to that one
 	 * agent installation.
 	 *
-	 * Unbound is not a failure: agents installed before binding existed keep
-	 * reporting. But it is worth saying, because until they are bound any other
-	 * machine holding the same fleet token can push in their name and take their
-	 * container commands.
+	 * Unbound means refused: a host enrolled before binding existed, and never
+	 * bound since, no longer gets its measurements, container commands or relayed
+	 * probes accepted. The way back is the re-enrolment window below.
 	 */
-	import { ShieldCheck, ShieldAlert, ShieldQuestion } from 'lucide-svelte';
+	import { ShieldCheck, ShieldAlert } from 'lucide-svelte';
 	import { allowAgentRebind, getAgentHost, type AgentHost, type Target } from '$lib/api';
 	import { formatDateTime, formatRelative } from '$lib/format';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -50,23 +49,18 @@
 			detail:
 				'This agent holds a secret of its own. No other machine can push measurements in its name, or pick up its container commands.'
 		},
-		pending: {
-			tone: 'advisory' as const,
-			icon: ShieldQuestion,
-			label: 'Not bound yet',
-			detail:
-				'The agent knows how to be bound and will be at its next batch. Until then, any machine holding the same enrolment token could report in its name.'
-		},
-		unsupported: {
+		unbound: {
 			tone: 'warning' as const,
 			icon: ShieldAlert,
-			label: 'Not bound — agent too old',
+			label: 'Not bound — re-enrol this host',
 			detail:
-				'This agent predates binding and cannot be bound. It keeps reporting, but any machine holding the same enrolment token could report in its name. Re-run the install command on it to fix that.'
+				'This host was enrolled before agent binding and never bound to its agent, so the server now refuses its measurements, container commands and relayed probes. Allow re-enrolment, then restart the agent: its next batch binds the host.'
 		}
 	};
 
-	const binding = $derived(host ? BINDING[host.binding] : null);
+	/** An unknown state from a newer server reads as "not bound", never as safe. */
+	const binding = $derived(host ? (BINDING[host.binding as keyof typeof BINDING] ?? BINDING.unbound) : null);
+	const unbound = $derived(!!host && host.binding !== 'bound');
 	/** A re-enrolment window that has not run out yet. */
 	const window_ = $derived.by(() => {
 		if (!host?.rebind_until) return null;
@@ -119,6 +113,11 @@
 			<Icon class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 			<span>{binding.detail}</span>
 		</p>
+		{#if unbound && !host.binding_supported}
+			<p class="mt-2 text-sm text-ink-2">
+				The installed agent ({host.agent_version}) is too old to be bound: re-run the install command on this host as well.
+			</p>
+		{/if}
 
 		{#if window_}
 			<p class="mt-3 rounded-[var(--radius-card)] border border-advisory/40 bg-surface px-3 py-2 text-sm text-ink">
@@ -128,11 +127,14 @@
 			</p>
 		{:else if auth.isAdmin}
 			<div class="mt-3 flex flex-wrap items-center gap-3">
-				<Confirm confirmLabel="Open the window?" loading={rebinding} onconfirm={rebind}>Allow re-enrolment</Confirm>
+				<Confirm variant={unbound ? 'secondary' : 'danger'} confirmLabel="Open the window?" loading={rebinding} onconfirm={rebind}>Allow re-enrolment</Confirm>
 				<p class="text-sm text-ink-2">
-					Use this after reinstalling the machine, when the agent lost the secret it had, or when an agent
-					that is not bound yet now uses a different enrolment token. It opens a short window during which the
-					agent binds itself again.
+					{#if unbound}
+						Opens a one-hour window during which this host's agent binds itself at its next batch.
+					{:else}
+						Use this after reinstalling the machine, or when the agent lost the secret it had. It opens a short
+						window during which the agent binds itself again.
+					{/if}
 				</p>
 			</div>
 		{/if}

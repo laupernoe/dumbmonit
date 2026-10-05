@@ -57,6 +57,11 @@ impl Rejection {
     pub fn not_this_machine() -> Self {
         Self { status: StatusCode::FORBIDDEN, message: agent::BINDING_MISMATCH.to_string() }
     }
+
+    /// Refus opposé à une machine jamais liée à son agent.
+    pub fn not_bound() -> Self {
+        Self { status: StatusCode::FORBIDDEN, message: agent::NOT_BOUND.to_string() }
+    }
 }
 
 impl axum::response::IntoResponse for Rejection {
@@ -129,9 +134,10 @@ pub async fn authenticate(
         )));
     }
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
-    match agent::authorise_key(&state.pool, key, token_id, agent::extract_secret(secret)).await? {
-        agent::KeyAuth::Allowed { target_id, .. } => Ok((token_id, target_id)),
+    match agent::authorise_key(&state.pool, key, agent::extract_secret(secret)).await? {
+        agent::KeyAuth::Allowed { target_id } => Ok((token_id, target_id)),
         agent::KeyAuth::Denied => Err(Rejection::not_this_machine()),
+        agent::KeyAuth::NotBound => Err(Rejection::not_bound()),
         agent::KeyAuth::Unknown => {
             Err(Rejection::not_found("Unknown machine: push a batch first."))
         }
@@ -204,13 +210,15 @@ pub struct AgentHostView {
     ///
     /// - `bound` : l'agent détient un secret propre à cette machine, personne
     ///   d'autre ne peut pousser en son nom ni prendre ses commandes ;
-    /// - `pending` : le binaire sait se lier, le prochain lot y suffira ;
-    /// - `unsupported` : agent antérieur à la liaison, à réinstaller.
+    /// - `unbound` : machine enrôlée avant la liaison et jamais liée ; ses lots,
+    ///   commandes et sondes relayées sont refusés jusqu'à son réenrôlement.
     pub binding: &'static str,
     /// Vrai pour l'état `bound`, pour que l'interface n'ait pas à comparer des
     /// chaînes pour allumer un voyant.
     pub bound: bool,
     pub bound_at: Option<String>,
+    /// Faux pour un binaire antérieur à la liaison : il faudra le réinstaller.
+    pub binding_supported: bool,
     /// Fin de la fenêtre de reliaison ouverte à la main, si elle court encore.
     pub rebind_until: Option<String>,
 }
@@ -230,6 +238,7 @@ impl AgentHostView {
             relayed,
             bound: info.bound,
             bound_at: info.bound_at,
+            binding_supported: info.binding_supported,
             rebind_until: info.rebind_until,
             last_seen_at: info.last_seen_at,
         }
