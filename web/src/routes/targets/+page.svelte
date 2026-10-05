@@ -25,12 +25,15 @@
 	import type { ReorderControls } from '$lib/components/devices/RackList.svelte';
 	import FolderHeader from '$lib/components/devices/FolderHeader.svelte';
 	import Segmented from '$lib/components/devices/Segmented.svelte';
-	import { needsAttention } from '$lib/components/devices/rack';
+	import { nearestRow, needsAttention } from '$lib/components/devices/rack';
 	import {
 		buildFolders,
+		folderKeyOf,
 		knownFolders,
 		moveWithinScope,
 		reorderByDrop,
+		reorderScope,
+		rootOf,
 		worstState
 	} from '$lib/components/devices/folders';
 	import { Plus, Search } from 'lucide-svelte';
@@ -49,6 +52,22 @@
 	let kind = $state('');
 
 	const stateOf = (target: Target) => displayState(target, probes.get(target.id));
+
+	// --- Optimistic overrides for a reorder or a folder move/rename/delete:
+	// applied on top of the store's `targets` until a refresh confirms them,
+	// or rolled back on failure. `position` is only ever compared within one
+	// reorder scope, so a sibling-local index is all an override needs. ---
+	let positionOverride = $state<Map<TargetId, number>>(new Map());
+	let groupOverride = $state<Map<TargetId, string>>(new Map());
+	const effectiveTargets = $derived.by(() => {
+		if (positionOverride.size === 0 && groupOverride.size === 0) return targets;
+		return targets.map((t) => {
+			const pos = positionOverride.get(t.id);
+			const grp = groupOverride.get(t.id);
+			if (pos === undefined && grp === undefined) return t;
+			return { ...t, position: pos ?? t.position, group_name: grp ?? t.group_name };
+		});
+	});
 
 	/** Kinds offered by the filter: the server's list, plus any kind a device already uses. */
 	const kinds = $derived.by(() => {
@@ -105,7 +124,7 @@
 		return ids;
 	});
 
-	const folderSections = $derived(buildFolders(targets, stateOf, visible));
+	const folderSections = $derived(buildFolders(effectiveTargets, stateOf, visible));
 	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0));
 	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '');
 	/** A single, group-less section looks exactly like the old flat list — no header shown. */
@@ -144,64 +163,336 @@
 		};
 	}
 
-	// A failed move or reorder is shown above the list; the list itself comes
-	// from the shared store and stays as it was.
+	// A failed move, folder edit or reorder is shown above the list, in-app
+	// (never a native alert); the list itself comes from the shared store and
+	// stays as it was, since the optimistic overrides above are rolled back.
 	let actionError = $state<unknown>(null);
 	let moving = $state(false);
+
 	async function moveToFolder(target: Target, groupName: string) {
-		if (target.group_name === groupName || moving) return;
+		const current = target.group_name || '';
+		if (current === groupName || moving) return;
 		moving = true;
+		const prev = groupOverride.get(target.id);
+		const next = new Map(groupOverride);
+		next.set(target.id, groupName);
+		groupOverride = next;
 		try {
 			await updateTarget(target.id, targetToPayload(target, { group_name: groupName }));
 			actionError = null;
 			await alertsStore.refresh();
+			const cleared = new Map(groupOverride);
+			cleared.delete(target.id);
+			groupOverride = cleared;
 		} catch (cause) {
+			const rolled = new Map(groupOverride);
+			if (prev === undefined) rolled.delete(target.id);
+			else rolled.set(target.id, prev);
+			groupOverride = rolled;
 			actionError = cause;
 		} finally {
 			moving = false;
 		}
 	}
 
-	function promptFolder(target: Target) {
-		const known = knownFolders(targets);
-		const hint = known.length > 0 ? ` Existing folders: ${known.join(', ')}.` : '';
-		const next = window.prompt(`Move "${target.name}" to which folder? Leave empty for none.${hint}`, target.group_name);
-		if (next === null) return;
-		void moveToFolder(target, next.trim());
+	/** Every root device currently in folder `key` — the only ones whose own `group_name` is the folder's. */
+	function rootsInFolder(key: string): Target[] {
+		const roots = new Map<TargetId, Target>();
+		for (const root of rootOf(effectiveTargets).values()) roots.set(root.id, root);
+		return [...roots.values()].filter((r) => (r.group_name || '') === key);
 	}
 
-	let dragging = $state<TargetId | null>(null);
+	async function bulkSetGroup(rows: Target[], groupName: string) {
+		if (rows.length === 0 || moving) return;
+		moving = true;
+		const prevValues = new Map(rows.map((t) => [t.id, groupOverride.get(t.id)] as const));
+		const next = new Map(groupOverride);
+		for (const t of rows) next.set(t.id, groupName);
+		groupOverride = next;
+		try {
+			await Promise.all(rows.map((t) => updateTarget(t.id, targetToPayload(t, { group_name: groupName }))));
+			actionError = null;
+			await alertsStore.refresh();
+			const cleared = new Map(groupOverride);
+			for (const t of rows) cleared.delete(t.id);
+			groupOverride = cleared;
+		} catch (cause) {
+			const rolled = new Map(groupOverride);
+			for (const [id, v] of prevValues) {
+				if (v === undefined) rolled.delete(id);
+				else rolled.set(id, v);
+			}
+			groupOverride = rolled;
+			actionError = cause;
+		} finally {
+			moving = false;
+		}
+	}
+
+	function renameFolder(oldKey: string, newKey: string) {
+		const trimmed = newKey.trim();
+		if (!trimmed || trimmed === oldKey) return;
+		void bulkSetGroup(rootsInFolder(oldKey), trimmed);
+	}
+
+	function deleteFolder(key: string) {
+		void bulkSetGroup(rootsInFolder(key), '');
+	}
+
 	async function persistOrder(order: TargetId[]) {
+		const prev = new Map(positionOverride);
+		const next = new Map(positionOverride);
+		order.forEach((id, i) => next.set(id, i));
+		positionOverride = next;
 		try {
 			await reorderTargets(order);
 			actionError = null;
 			await alertsStore.refresh();
+			const cleared = new Map(positionOverride);
+			order.forEach((id) => cleared.delete(id));
+			positionOverride = cleared;
 		} catch (cause) {
+			positionOverride = prev;
 			actionError = cause;
 		}
 	}
+
+	// --- Drag-and-drop, pointer-based (mouse and touch — HTML5 drag-and-drop
+	// does not work on touch). A drag handle's pointerdown starts it straight
+	// away for a mouse or a pen; a touch needs a short press first, so a plain
+	// tap still just taps. Row and folder-header elements are reported by the
+	// components themselves and hit-tested on every pointer move; rows never
+	// reflow mid-drag, so their rects stay valid for the whole gesture. ---
+
+	type DropSlot = { kind: 'row'; id: TargetId; before: boolean } | { kind: 'folder'; key: string };
+
+	let dragging = $state<TargetId | null>(null);
+	let dragLabel = $state('');
+	let pointerPos = $state<{ x: number; y: number } | null>(null);
+	let dropSlot = $state<DropSlot | null>(null);
+	const rowDropSlot = $derived(dropSlot?.kind === 'row' ? dropSlot : null);
+
+	/** Devices needing attention float to the top regardless of a manual drop: shown as a hint on the ghost. */
+	const dropBlockedHint = $derived.by(() => {
+		const slot = dropSlot;
+		if (dragging === null || !slot || slot.kind !== 'row' || slot.id === dragging) return false;
+		const dragged = effectiveTargets.find((t) => t.id === dragging);
+		if (!dragged) return false;
+		if (!reorderScope(effectiveTargets, dragged).some((t) => t.id === slot.id)) return false;
+		return reorderByDrop(effectiveTargets, stateOf, dragging, slot.id) === null;
+	});
+
+	const rowEls = new Map<TargetId, HTMLElement>();
+	const headerEls = new Map<string, HTMLElement>();
+	function registerRow(id: TargetId, el: HTMLElement | null) {
+		if (el) rowEls.set(id, el);
+		else rowEls.delete(id);
+	}
+	function registerHeader(key: string, el: HTMLElement | null) {
+		if (el) headerEls.set(key, el);
+		else headerEls.delete(key);
+	}
+
+	function computeDropSlot(x: number, y: number): DropSlot | null {
+		for (const [key, el] of headerEls) {
+			const r = el.getBoundingClientRect();
+			if (y >= r.top && y <= r.bottom) return { kind: 'folder', key };
+		}
+		const rects = [...rowEls.entries()].map(([id, el]) => {
+			const r = el.getBoundingClientRect();
+			return { id, top: r.top, height: r.height };
+		});
+		const slot = nearestRow(rects, y);
+		return slot ? { kind: 'row', ...slot } : null;
+	}
+
+	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function onGripPointerDown(id: TargetId, event: PointerEvent) {
+		if (!auth.isAdmin || filtered) return;
+		if (event.pointerType === 'touch') {
+			const startX = event.clientX;
+			const startY = event.clientY;
+			const onmove = (e: PointerEvent) => {
+				if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) cancelArm();
+			};
+			const onup = () => cancelArm();
+			function cancelArm() {
+				if (longPressTimer) clearTimeout(longPressTimer);
+				longPressTimer = null;
+				window.removeEventListener('pointermove', onmove);
+				window.removeEventListener('pointerup', onup);
+			}
+			window.addEventListener('pointermove', onmove);
+			window.addEventListener('pointerup', onup, { once: true });
+			longPressTimer = setTimeout(() => {
+				window.removeEventListener('pointermove', onmove);
+				window.removeEventListener('pointerup', onup);
+				longPressTimer = null;
+				beginDrag(id, event);
+			}, 300);
+			return;
+		}
+		beginDrag(id, event);
+	}
+
+	function beginDrag(id: TargetId, event: PointerEvent) {
+		event.preventDefault();
+		const target = targets.find((t) => t.id === id);
+		if (!target) return;
+		dragging = id;
+		dragLabel = target.name;
+		pointerPos = { x: event.clientX, y: event.clientY };
+		dropSlot = computeDropSlot(event.clientX, event.clientY);
+	}
+
+	function onPointerMove(e: PointerEvent) {
+		pointerPos = { x: e.clientX, y: e.clientY };
+		dropSlot = computeDropSlot(e.clientX, e.clientY);
+	}
+
+	function cancelDrag() {
+		dragging = null;
+		pointerPos = null;
+		dropSlot = null;
+	}
+
+	function finishDrag() {
+		const draggedId = dragging;
+		const slot = dropSlot;
+		cancelDrag();
+		if (draggedId !== null && slot) void applyDrop(draggedId, slot);
+	}
+
+	async function applyDrop(draggedId: TargetId, slot: DropSlot) {
+		const dragged = effectiveTargets.find((t) => t.id === draggedId);
+		if (!dragged) return;
+		if (slot.kind === 'row') {
+			if (slot.id === draggedId) return;
+			const order = reorderByDrop(effectiveTargets, stateOf, draggedId, slot.id);
+			if (order) {
+				void persistOrder(order);
+				return;
+			}
+			// Not reorderable in place (a different folder, parent or state tier):
+			// fall back to a folder-level move, root devices only — a child's
+			// folder is its parent's, dragging it onto another one is a no-op.
+			if (dragged.parent_id !== null) return;
+			const over = effectiveTargets.find((t) => t.id === slot.id);
+			if (!over) return;
+			const key = folderKeyOf(effectiveTargets, over);
+			if (key !== (dragged.group_name || '')) void moveToFolder(dragged, key);
+			return;
+		}
+		if (dragged.parent_id !== null) return;
+		if ((dragged.group_name || '') !== slot.key) void moveToFolder(dragged, slot.key);
+	}
+
+	let autoScrollRaf: number | null = null;
+	function startAutoScroll() {
+		const EDGE = 72;
+		const MAX_SPEED = 16;
+		const tick = () => {
+			if (dragging === null) {
+				autoScrollRaf = null;
+				return;
+			}
+			if (pointerPos) {
+				const { y } = pointerPos;
+				const h = window.innerHeight;
+				if (y < EDGE) window.scrollBy(0, -MAX_SPEED * (1 - y / EDGE));
+				else if (y > h - EDGE) window.scrollBy(0, MAX_SPEED * (1 - (h - y) / EDGE));
+			}
+			autoScrollRaf = requestAnimationFrame(tick);
+		};
+		autoScrollRaf = requestAnimationFrame(tick);
+	}
+	function stopAutoScroll() {
+		if (autoScrollRaf !== null) cancelAnimationFrame(autoScrollRaf);
+		autoScrollRaf = null;
+	}
+
+	$effect(() => {
+		if (dragging === null) return;
+		const onpointerup = () => finishDrag();
+		const onpointercancel = () => cancelDrag();
+		const onkeydown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') cancelDrag();
+		};
+		window.addEventListener('pointermove', onPointerMove);
+		window.addEventListener('pointerup', onpointerup);
+		window.addEventListener('pointercancel', onpointercancel);
+		window.addEventListener('keydown', onkeydown);
+		startAutoScroll();
+		return () => {
+			window.removeEventListener('pointermove', onPointerMove);
+			window.removeEventListener('pointerup', onpointerup);
+			window.removeEventListener('pointercancel', onpointercancel);
+			window.removeEventListener('keydown', onkeydown);
+			stopAutoScroll();
+		};
+	});
+
+	// --- Keyboard reorder: Space picks a row up, arrows move it within its
+	// scope (persisted immediately, same as a drag), Space drops it, Escape
+	// restores the scope's original order. No visible buttons: the grip
+	// handle itself is the one focus stop, with an aria-live announcement. ---
+
+	let pickedUp = $state<TargetId | null>(null);
+	let pickedSnapshot = $state<TargetId[] | null>(null);
+	let announce = $state('');
+
+	function onGripKeyDown(id: TargetId, event: KeyboardEvent) {
+		if (!auth.isAdmin || filtered) return;
+		const target = targets.find((t) => t.id === id);
+		if (!target) return;
+		if (event.key === ' ' || event.key === 'Enter') {
+			event.preventDefault();
+			if (pickedUp === id) {
+				pickedUp = null;
+				pickedSnapshot = null;
+				announce = `Dropped ${target.name}.`;
+			} else {
+				pickedUp = id;
+				pickedSnapshot = reorderScope(effectiveTargets, target).map((t) => t.id);
+				announce = `Picked up ${target.name}. Use the up and down arrow keys to move it, space to drop, escape to cancel.`;
+			}
+			return;
+		}
+		if (pickedUp !== id) return;
+		if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+			event.preventDefault();
+			const delta = event.key === 'ArrowUp' ? -1 : 1;
+			const order = moveWithinScope(effectiveTargets, stateOf, id, delta);
+			if (order) {
+				void persistOrder(order);
+				announce = `${target.name} moved to position ${order.indexOf(id) + 1} of ${order.length}.`;
+			} else {
+				announce = `${target.name} cannot move further that way: devices needing attention stay above the rest.`;
+			}
+			return;
+		}
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			pickedUp = null;
+			if (pickedSnapshot) void persistOrder(pickedSnapshot);
+			pickedSnapshot = null;
+			announce = `Cancelled. ${target.name} is back where it was.`;
+		}
+	}
+
 	function reorderControls(): ReorderControls {
 		return {
 			dragging,
-			canMoveUp: (id) => moveWithinScope(targets, stateOf, id, -1) !== null,
-			canMoveDown: (id) => moveWithinScope(targets, stateOf, id, 1) !== null,
-			onMove: (id, delta) => {
-				const order = moveWithinScope(targets, stateOf, id, delta);
-				if (order) void persistOrder(order);
-			},
-			onDragStart: (id) => (dragging = id),
-			onDragOver: () => {},
-			onDrop: (overId) => {
-				const draggedId = dragging;
-				dragging = null;
-				if (draggedId === null) return;
-				const order = reorderByDrop(targets, stateOf, draggedId, overId);
-				if (order) void persistOrder(order);
-			},
-			onDragEnd: () => (dragging = null),
-			onMoveToFolder: (id) => {
+			pickedUp,
+			dropSlot: rowDropSlot,
+			folders: knownFolders(effectiveTargets),
+			onGripPointerDown,
+			onGripKeyDown,
+			registerRow,
+			onMoveToFolder: (id, groupName) => {
 				const target = targets.find((t) => t.id === id);
-				if (target) promptFolder(target);
+				if (target) void moveToFolder(target, groupName);
 			}
 		};
 	}
@@ -330,16 +621,18 @@
 			{#if showFolderHeaders}
 				<FolderHeader
 					label={section.label}
+					folderKey={section.key}
 					count={section.rows.length}
 					worst={worstState(section.rows)}
 					{collapsed}
 					ontoggle={() => toggleFolder(section.key)}
+					canManage={auth.isAdmin && !filtered && section.key !== ''}
+					busy={moving}
+					onrename={(next) => renameFolder(section.key, next)}
+					ondelete={() => deleteFolder(section.key)}
 					dropActive={auth.isAdmin && dragging !== null && !filtered}
-					ondrop={() => {
-						const target = targets.find((t) => t.id === dragging);
-						dragging = null;
-						if (target) void moveToFolder(target, section.key);
-					}}
+					dropHover={dragging !== null && dropSlot?.kind === 'folder' && dropSlot.key === section.key}
+					onheaderref={(el) => registerHeader(section.key, el)}
 				/>
 			{/if}
 			{#if !collapsed}
@@ -353,3 +646,16 @@
 		{/each}
 	</div>
 {/if}
+
+{#if dragging !== null && pointerPos}
+	<div
+		class="pointer-events-none fixed z-50 flex -translate-y-1/2 items-center gap-2 rounded-[var(--radius-card)] border border-line-strong bg-surface px-3 py-2 text-sm font-semibold text-ink shadow-float"
+		style={`left: ${pointerPos.x + 18}px; top: ${pointerPos.y}px;`}
+	>
+		{dragLabel}
+		{#if dropBlockedHint}
+			<span class="text-[0.75rem] font-normal text-ink-2">stays above — needs attention</span>
+		{/if}
+	</div>
+{/if}
+<p class="sr-only" aria-live="polite">{announce}</p>

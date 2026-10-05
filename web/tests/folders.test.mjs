@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	buildFolders,
+	compareFolderSections,
+	folderKeyOf,
 	knownFolders,
 	moveWithinScope,
 	reorderByDrop
@@ -119,4 +121,25 @@ test('reorderByDrop refuses devices outside the same reorder scope', () => {
 	const a = target({ name: 'a', group_name: 'Rack A' });
 	const b = target({ name: 'b', group_name: 'Rack B' });
 	assert.equal(reorderByDrop([a, b], () => 'online', a.id, b.id), null);
+});
+
+test('folderKeyOf reads the group of the topmost ancestor, not the device itself', () => {
+	const parent = target({ name: 'parent', group_name: 'Rack A' });
+	const child = target({ name: 'child', parent_id: parent.id, group_name: 'Rack B' });
+	const all = [parent, child];
+	assert.equal(folderKeyOf(all, parent), 'Rack A');
+	assert.equal(folderKeyOf(all, child), 'Rack A');
+});
+
+test('compareFolderSections keeps "no folder" first, then attention, then alphabetical', () => {
+	const sections = [
+		{ key: 'Z quiet', label: 'Z quiet', rows: [] },
+		{ key: '', label: 'No folder', rows: [] },
+		{ key: 'A trouble', label: 'A trouble', rows: [{ state: 'down' }] },
+		{ key: 'B quiet', label: 'B quiet', rows: [] }
+	];
+	assert.deepEqual(
+		sections.slice().sort(compareFolderSections).map((s) => s.key),
+		['', 'A trouble', 'B quiet', 'Z quiet']
+	);
 });
