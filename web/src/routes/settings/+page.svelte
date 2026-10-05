@@ -15,6 +15,7 @@
 	import { page } from '$app/state';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { PageHeader } from '$lib/ui';
+	import { m } from '$lib/paraglide/messages.js';
 	import SecuritySection from '$lib/components/settings/SecuritySection.svelte';
 	import UsersSection from '$lib/components/settings/UsersSection.svelte';
 	import SsoSection from '$lib/components/settings/SsoSection.svelte';
@@ -48,27 +49,27 @@
 		{
 			label: null,
 			items: [
-				{ id: 'security', label: 'Account & security' },
+				{ id: 'security', label: m["settings.section.security"]() },
 				...(showAccounts
 					? [
-							{ id: 'users', label: 'Users' },
-							{ id: 'sso', label: 'Single sign-on' }
+							{ id: 'users', label: m["settings.section.users"]() },
+							{ id: 'sso', label: m["settings.section.sso"]() }
 						]
 					: []),
-				{ id: 'agents', label: 'Agents' },
-				{ id: 'assistant', label: 'API & assistants' },
-				{ id: 'packs', label: 'Integration packs' },
-				{ id: 'backup', label: 'Backup' }
+				{ id: 'agents', label: m["settings.section.agents"]() },
+				{ id: 'assistant', label: m["settings.section.assistant"]() },
+				{ id: 'packs', label: m["settings.section.packs"]() },
+				{ id: 'backup', label: m["settings.section.backup"]() }
 			]
 		},
 		{
-			label: 'Wall & display',
+			label: m["settings.group.wall_display"](),
 			items: [
-				{ id: 'appearance', label: 'Appearance' },
-				{ id: 'music', label: 'Wall music' }
+				{ id: 'appearance', label: m["settings.section.appearance"]() },
+				{ id: 'music', label: m["settings.section.music"]() }
 			]
 		},
-		{ label: null, items: [{ id: 'about', label: 'About' }] }
+		{ label: null, items: [{ id: 'about', label: m["settings.section.about"]() }] }
 	]);
 	const SECTIONS = $derived(GROUPS.flatMap((group) => group.items));
 
@@ -133,12 +134,12 @@
 	});
 </script>
 
-<svelte:head><title>Settings · DumbMonit</title></svelte:head>
+<svelte:head><title>{m["settings.page.title"]()} · DumbMonit</title></svelte:head>
 
-<PageHeader title="Settings" description="Your account, who can sign in, what may connect, and how DumbMonit looks." />
+<PageHeader title={m["settings.page.title"]()} description={m["settings.page.description"]()} />
 
 <!-- Phones and tablets: a strip of chips under the title, one per section. -->
-<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label="Settings sections">
+<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m["settings.nav.aria_label"]()}>
 	<ul bind:this={strip} class="flex gap-1.5 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 		{#each SECTIONS as section (section.id)}
 			<li class="shrink-0">
@@ -156,7 +157,7 @@
 
 <div class="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
 	<aside class="hidden lg:block">
-		<nav class="sticky top-20" aria-label="Settings sections">
+		<nav class="sticky top-20" aria-label={m["settings.nav.aria_label"]()}>
 			<ul class="space-y-0.5 text-sm">
 				{#each GROUPS as group, i (group.label ?? i)}
 					{#if group.label}
@@ -178,9 +179,10 @@
 				{/each}
 			</ul>
 			<p class="mt-5 border-t border-line pt-4 text-[0.8125rem] leading-relaxed text-ink-2">
-				Looking for channels and quiet hours? They live under
-				<a href="/alerts#notifications" class="font-semibold text-ink hover:underline">Alerts → Notifications</a>.
-				Public pages are under <a href="/status" class="font-semibold text-ink hover:underline">Status</a>.
+				{m["settings.hint.notifications_lead"]()}
+				<a href="/alerts#notifications" class="font-semibold text-ink hover:underline">{m["settings.hint.notifications_link"]()}</a>.
+				{m["settings.hint.status_lead"]()}
+				<a href="/status" class="font-semibold text-ink hover:underline">{m["settings.hint.status_link"]()}</a>.
 			</p>
 		</nav>
 	</aside>
