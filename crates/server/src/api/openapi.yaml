@@ -3095,6 +3095,49 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/ad:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getActiveDirectoryOverview
+      tags: [Integrations]
+      summary: Active Directory — domain, controllers, privileged groups and findings
+      description: >-
+        Read from what the last probe stored; opening it never queries the domain controller.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Domain overview.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveDirectoryOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/ad/findings:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getActiveDirectoryFindings
+      tags: [Integrations]
+      summary: Active Directory — raw security findings
+      description: >-
+        Raw facts (stable id, severity, category, count, sample objects), most severe first.
+        Account findings appear once the background inventory has completed (`inventory_at`).
+      x-token-scope: read
+      responses:
+        "200":
+          description: Findings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveDirectoryFindings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/redfish:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -5359,6 +5402,51 @@ components:
         alerts: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         stopped_services: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    ActiveDirectoryFinding:
+      type: object
+      required: [id, severity, category, title, detail, count, samples]
+      properties:
+        id: { type: string, description: "Stable identifier, e.g. asrep_roastable_users, krbtgt_password_age." }
+        severity: { type: string, enum: [low, medium, high, critical] }
+        category:
+          type: string
+          enum: [privileged, kerberos, accounts, policy, hygiene, infrastructure]
+        title: { type: string }
+        detail: { type: string }
+        count: { type: integer, minimum: 0, description: "Objects concerned; 0 means the check was examined and found nothing." }
+        samples: { type: array, items: { type: string }, maxItems: 20 }
+    ActiveDirectoryFindingCounts:
+      type: object
+      properties:
+        low: { type: integer }
+        medium: { type: integer }
+        high: { type: integer }
+        critical: { type: integer }
+    ActiveDirectoryFindings:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        inventory_at: { type: [integer, "null"] }
+        findings: { type: array, items: { $ref: "#/components/schemas/ActiveDirectoryFinding" } }
+        counts: { $ref: "#/components/schemas/ActiveDirectoryFindingCounts" }
+    ActiveDirectoryOverview:
+      type: object
+      additionalProperties: true
+      properties:
+        probed_at: { type: [integer, "null"] }
+        connection: { oneOf: [{ $ref: "#/components/schemas/PanelObject" }, { type: "null" }] }
+        bind_error: { type: [string, "null"] }
+        domain: { oneOf: [{ $ref: "#/components/schemas/PanelObject" }, { type: "null" }] }
+        policy: { oneOf: [{ $ref: "#/components/schemas/PanelObject" }, { type: "null" }] }
+        dcs: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        fsmo: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        replication: { oneOf: [{ $ref: "#/components/schemas/PanelObject" }, { type: "null" }] }
+        privileged_groups: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        inventory: { oneOf: [{ $ref: "#/components/schemas/PanelObject" }, { type: "null" }] }
+        findings: { type: array, items: { $ref: "#/components/schemas/ActiveDirectoryFinding" } }
+        finding_counts: { $ref: "#/components/schemas/ActiveDirectoryFindingCounts" }
+        errors: { type: array, items: { type: string } }
     RedfishOverview:
       type: object
       additionalProperties: true

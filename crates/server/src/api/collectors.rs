@@ -2488,6 +2488,90 @@ const KUBERNETES_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Le compte de service en lecture seule (`collectors/activedirectory`).
+const ACTIVE_DIRECTORY_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Service account",
+    help: "A plain domain user created for DumbMonit, member of no group.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The user principal name (svc-dumbmonit@corp.example.com), DOMAIN\\svc-dumbmonit, or the full DN.",
+            "svc-dumbmonit@corp.example.com",
+        ),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Options lues par `collectors/activedirectory/options.rs`.
+const ACTIVE_DIRECTORY_OPTIONS: &[OptionView] = &[
+    select(
+        "security",
+        "Connection security",
+        "ldaps (port 636) encrypts from the first byte; starttls upgrades port 389 before logging in; plain sends the password in clear text and needs Allow plain LDAP.",
+        "ldaps",
+        &["ldaps", "starttls", "plain"],
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: 636 for LDAPS, 389 otherwise.",
+        "636",
+        "",
+    ),
+    text(
+        "ca_cert",
+        "CA certificate",
+        "The PEM certificate (Base-64 encoded X.509) of the authority that issued the domain controllers' certificates. Only that authority is then trusted.",
+        "-----BEGIN CERTIFICATE-----…",
+        "",
+    ),
+    insecure_tls(
+        "Skips every certificate check: the connection stays encrypted, but anyone on the path could pose as the domain controller. Prefer the CA certificate above.",
+    ),
+    boolean(
+        "allow_plaintext",
+        "Allow plain LDAP",
+        "Required for the plain setting: the service account's password then crosses the network readable by anyone on the path.",
+        false,
+    ),
+    boolean(
+        "check_all_dcs",
+        "Check every domain controller",
+        "Opens a connection to the LDAP port of each domain controller of the domain, to alert when one stops answering. Names that do not resolve from DumbMonit are reported, not alerted on.",
+        true,
+    ),
+    number(
+        "stale_days_users",
+        "Inactive user after (days)",
+        "An enabled user with no logon for this long is counted as inactive. The last-logon date can lag by up to 14 days.",
+        "90",
+        "90",
+    ),
+    number(
+        "stale_days_computers",
+        "Inactive computer after (days)",
+        "An enabled computer with no logon for this long is counted as inactive.",
+        "90",
+        "90",
+    ),
+    number(
+        "inventory_minutes",
+        "Full inventory every (minutes)",
+        "Every user and computer is read in the background at this pace (1 to 1440); health is read at every check.",
+        "15",
+        "15",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout (seconds)",
+        "Time allowed for each LDAP operation, from 1 to 60.",
+        "8",
+        "8",
+    ),
+];
+
 /// Traefik sans mot de passe : le point d'entrée de l'API est filtré.
 const TRAEFIK_NO_AUTH: CredentialView = CredentialView {
     kind: "none",
@@ -4098,6 +4182,30 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: KUBERNETES_OPTIONS,
         },
+        "activedirectory" => CollectorView {
+            kind: "activedirectory",
+            label: "Active Directory",
+            summary: "A Windows domain over LDAP, read-only: domain controllers and FSMO roles, privileged group members, password policy, and security findings such as Kerberos-roastable accounts, unconstrained delegation or an old krbtgt password.",
+            examples: &["Windows Server domain controller", "Samba AD domain controller"],
+            credential_types: &["username_password"],
+            credentials: &[ACTIVE_DIRECTORY_LOGIN],
+            address_hint: "dc1.corp.example.com",
+            default_port: 636,
+            setup: Setup {
+                title: "Create a read-only service account for DumbMonit",
+                steps: &[
+                    "Create a dedicated user for DumbMonit, for example svc-dumbmonit, and add it to no group. A plain domain user is enough: every authenticated user can read what DumbMonit reads. In PowerShell, with the Active Directory module:\nNew-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true",
+                    "Give it a long random password. If passwords expire in your domain, DumbMonit raises Active Directory bind failed the day this one does.",
+                    "Optional: to see inbound replication status, grant the account the Monitor active directory replication right on the domain object itself. It reveals no password and no secret.\ndsacls \"DC=corp,DC=example,DC=com\" /G \"CORP\\svc-dumbmonit:CA;Monitor active directory replication\"",
+                    "LDAPS needs a certificate on each domain controller; an enterprise certification authority (AD CS) issues one automatically. Export the certificate of that authority in Base-64 encoded X.509 format and paste it as CA certificate below.",
+                    "In DumbMonit, enter the name of one domain controller as its certificate names it, for example \"dc1.corp.example.com\", and log in as svc-dumbmonit@corp.example.com. DumbMonit finds the other domain controllers by itself and checks that each one answers.",
+                    "DumbMonit only reads: it never writes to the directory, and of LAPS it reads the expiry date, never the password.",
+                ],
+                warning: "Plain LDAP on port 389 sends the service account's password in clear text: DumbMonit refuses it unless you tick Allow plain LDAP, and a domain controller that requires LDAP signing refuses it too. Use LDAPS, or StartTLS on port 389.",
+                doc_url: "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/enable-ldap-over-ssl-3rd-certification-authority",
+            },
+            options: ACTIVE_DIRECTORY_OPTIONS,
+        },
         "pfsense" => CollectorView {
             kind: "pfsense",
             label: "pfSense",
@@ -4360,6 +4468,7 @@ mod tests {
         "npm",
         "domain",
         "kubernetes",
+        "activedirectory",
         "pfsense",
         "unraid",
         "veeam",
@@ -4898,6 +5007,21 @@ mod tests {
         assert_eq!(defaut("pmg", "attachment_quarantine"), "false");
         assert_eq!(defaut("synology", "request_timeout_seconds"), "15");
         assert_eq!(defaut("synology", "abb"), "true");
+        assert_eq!(defaut("activedirectory", "security"), "ldaps");
+        assert_eq!(defaut("activedirectory", "check_all_dcs"), "true");
+        assert_eq!(defaut("activedirectory", "allow_plaintext"), "false");
+        assert_eq!(
+            defaut("activedirectory", "stale_days_users"),
+            dumbmonit_collectors::activedirectory::DEFAULT_STALE_DAYS.to_string()
+        );
+        assert_eq!(
+            defaut("activedirectory", "inventory_minutes"),
+            dumbmonit_collectors::activedirectory::DEFAULT_INVENTORY_MINUTES.to_string()
+        );
+        assert_eq!(
+            defaut("activedirectory", "request_timeout_seconds"),
+            dumbmonit_collectors::activedirectory::DEFAULT_REQUEST_TIMEOUT_SECONDS.to_string()
+        );
         assert_eq!(defaut("redfish", "port"), "443");
         assert_eq!(defaut("redfish", "request_timeout_seconds"), "8");
         assert_eq!(defaut("redfish", "auth"), "basic");
@@ -5196,6 +5320,7 @@ mod tests {
             ("caddy", "dumbmonit"),
             ("npm", "dumbmonit@example.com"),
             ("kubernetes", "dumbmonit"),
+            ("activedirectory", "svc-dumbmonit"),
             ("pfsense", "dumbmonit"),
             ("unraid", "dumbmonit"),
             ("veeam", "dumbmonit"),
@@ -5319,6 +5444,7 @@ mod tests {
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
             ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),
+            ("activedirectory", include_str!("../../../../docs/devices/activedirectory.md")),
             ("pfsense", include_str!("../../../../docs/devices/pfsense.md")),
             ("unraid", include_str!("../../../../docs/devices/unraid.md")),
             ("veeam", include_str!("../../../../docs/devices/veeam.md")),
