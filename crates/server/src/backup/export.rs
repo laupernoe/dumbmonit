@@ -109,7 +109,7 @@ async fn targets(
 ) -> Result<Vec<BundleTarget>> {
     let rows = sqlx::query(
         "SELECT id, name, address, kind, profile_id, parent_id, via_agent, interval_secs,
-                enabled, tags, credential_enc
+                enabled, tags, credential_enc, group_name, position
          FROM targets ORDER BY id",
     )
     .fetch_all(pool)
@@ -147,6 +147,8 @@ async fn targets(
             enabled: row.try_get::<i64, _>("enabled")? != 0,
             tags: serde_json::from_str(&tags).unwrap_or_default(),
             credential,
+            group_name: row.try_get("group_name")?,
+            position: row.try_get("position")?,
         });
     }
     Ok(out)
