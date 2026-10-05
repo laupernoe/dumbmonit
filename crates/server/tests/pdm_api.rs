@@ -206,6 +206,7 @@ async fn pdm() -> Pdm {
             credential: Some(dumbmonit_proto::Credential::ApiToken {
                 token: "dumbmonit@pdm!monitor=secret".into(),
             }),
+            group_name: String::new(),
         },
     )
     .await

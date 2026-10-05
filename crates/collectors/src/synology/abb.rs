@@ -669,6 +669,8 @@ mod end_to_end_tests {
                 username: USERNAME.into(),
                 password: PASSWORD.into(),
             },
+            group_name: String::new(),
+            position: 0,
         }
     }
 

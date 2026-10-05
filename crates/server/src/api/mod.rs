@@ -87,6 +87,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery", post(discovery::scan))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
+        .route("/targets/reorder", post(targets::reorder))
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))

@@ -18,6 +18,7 @@
 		listAlertRules,
 		listSilences,
 		listAlertHistory,
+		listCollectors,
 		createSilence,
 		deleteSilence,
 		setAlertRuleEnabled,
@@ -29,7 +30,8 @@
 		type Silence,
 		type AlertHistoryEntry,
 		type SilencePayload,
-		type AlertRulePayload
+		type AlertRulePayload,
+		type CollectorInfo
 	} from '$lib/api';
 	import type { Alert } from '$lib/api';
 	import type { ProbeStatus } from '$lib/format';
@@ -63,6 +65,7 @@
 	let targets = $state<Target[]>([]);
 	let probes = $state<Map<TargetId, ProbeStatus>>(new Map());
 	let rules = $state<AlertRule[]>([]);
+	let collectors = $state<CollectorInfo[]>([]);
 	let silences = $state<Silence[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
 	let loading = $state(true);
@@ -107,6 +110,9 @@
 		error = null;
 		// Service states are not blocking: without them, a service reads as "unknown".
 		const probesPromise = loadProbeStatuses(signal).catch(() => new Map<TargetId, ProbeStatus>());
+		// Only used to label/filter rules by collector kind: a stale or failed
+		// fetch must not block the rest of the page.
+		const collectorsPromise = listCollectors(signal).catch(() => [] as CollectorInfo[]);
 		try {
 			const [t, r, s, h] = await Promise.all([
 				listTargets(signal),
@@ -125,6 +131,7 @@
 			loading = false;
 		}
 		probes = await probesPromise;
+		collectors = await collectorsPromise;
 		void alertsStore.refresh(signal);
 	}
 
@@ -338,6 +345,8 @@
 {:else if tab === 'rules'}
 	<RulesSection
 		{rules}
+		{targets}
+		{collectors}
 		busyId={ruleBusyId}
 		ontoggle={toggleRule}
 		ondelete={removeRule}

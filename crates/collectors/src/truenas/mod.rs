@@ -379,6 +379,8 @@ mod tests {
             enabled: true,
             tags: Map::new(),
             credential,
+            group_name: String::new(),
+            position: 0,
         }
     }
 
