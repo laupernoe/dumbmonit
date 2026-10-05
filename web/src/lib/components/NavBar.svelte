@@ -3,15 +3,16 @@
 	 * Top bar on desktop, bottom tab bar on phones. The active link carries a
 	 * sliding pill that springs between items (the gooey nav, tamed). The
 	 * right-hand cluster holds the command palette, the documentation (Read the
-	 * Docs, new tab), wall mode, the theme and the session.
+	 * Docs, new tab), wall mode, the theme and the session. The version number
+	 * lives in `VersionTag.svelte`, fixed at a page corner, not here: a nav is
+	 * not the place for a build hash.
 	 */
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Globe, Settings2, Command, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
-	import { getHealth } from '$lib/api';
+	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { Plate, RollingNumber, bump, reducedMotion } from '$lib/ui';
+	import { RollingNumber, bump, reducedMotion } from '$lib/ui';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { palette } from '$lib/stores/palette.svelte';
 	import Logo from './Logo.svelte';
@@ -27,16 +28,6 @@
 		{ href: '/status', label: 'Status', icon: Globe, exact: false },
 		{ href: '/settings', label: 'Settings', icon: Settings2, exact: false }
 	];
-
-	// Version shown next to the wordmark; read once, a failure just hides it.
-	let version = $state<{ number: string; build?: string } | null>(null);
-	$effect(() => {
-		const controller = new AbortController();
-		getHealth(controller.signal)
-			.then((health) => (version = { number: health.version, build: health.build }))
-			.catch(() => {});
-		return () => controller.abort();
-	});
 
 	function isActive(href: string, exact: boolean): boolean {
 		const path = page.url.pathname;
@@ -102,13 +93,6 @@
 				<Logo class="size-7" />
 				<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>
 			</a>
-			{#if version}
-				<a
-					href="/settings#about"
-					class="tnum hidden rounded-md border border-line px-1.5 py-0.5 text-[0.6875rem] font-semibold text-ink-3 transition-colors hover:text-ink md:inline-block"
-					title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
-				>v{version.number}{#if version.build}<span class="font-mono font-normal"> · {version.build}</span>{/if}</a>
-			{/if}
 		</div>
 
 		<nav aria-label="Main" class="relative">
@@ -143,17 +127,12 @@
 		<div class="ml-auto flex items-center gap-1">
 			<button
 				type="button"
-				class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 				onclick={() => palette.open()}
 				aria-label="Open the command palette"
 				title={`Command palette (${palette.shortcutLabel})`}
 			>
-				{#if palette.isMac}
-					<Command class="size-4" aria-hidden="true" />
-				{:else}
-					<Search class="size-4" aria-hidden="true" />
-				{/if}
-				<span class="tnum">{palette.shortcutLabel}</span>
+				<Search class="size-4" aria-hidden="true" />
 			</button>
 			<a
 				href={DOCS_URL}
@@ -177,10 +156,10 @@
 			</a>
 			<ThemeToggle />
 			{#if auth.user}
-				<!-- Who is signed in, and with which role: the role decides what the pages offer. -->
-				<div class="ml-1 hidden items-center gap-2 pl-2 md:flex" title={`Signed in as ${auth.user.username}`}>
+				<!-- Who is signed in; the role still decides what the pages offer, it is just
+				     not spelled out here any more. -->
+				<div class="ml-1 hidden items-center pl-2 md:flex" title={`Signed in as ${auth.user.username} (${auth.isAdmin ? 'admin' : 'viewer'})`}>
 					<span class="max-w-[10rem] truncate text-[0.8125rem] font-semibold text-ink-2">{auth.displayName}</span>
-					<Plate tone={auth.isAdmin ? 'signal' : 'ghost'} bare label={auth.isAdmin ? 'Admin' : 'Viewer'} />
 				</div>
 			{/if}
 			{#if auth.canSignOut}

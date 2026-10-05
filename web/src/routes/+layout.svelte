@@ -8,6 +8,8 @@
 	import { palette } from '$lib/stores/palette.svelte';
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '$lib/stores/auth.svelte';
 	import NavBar from '$lib/components/NavBar.svelte';
+	import VersionTag from '$lib/components/VersionTag.svelte';
+	import Pip from '$lib/components/pigeon/Pip.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import DemoBanner from '$lib/components/demo/DemoBanner.svelte';
 	import DemoNotice from '$lib/components/demo/DemoNotice.svelte';
@@ -127,6 +129,9 @@
 </svelte:head>
 
 <div class="flex min-h-full flex-col">
+	{#if !onWall}
+		<VersionTag />
+	{/if}
 	{#if publicPath}
 		{@render children()}
 	{:else if !auth.canUseApi}
@@ -146,6 +151,9 @@
 		</main>
 		{#if CommandPalette && !onWall}
 			<CommandPalette />
+		{/if}
+		{#if !onWall}
+			<Pip />
 		{/if}
 		{#if auth.demo}
 			<Tour />
