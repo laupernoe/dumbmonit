@@ -59,8 +59,15 @@ const AUDIO_CONFIGS: MediaKeySystemConfiguration[] = [
 	}
 ];
 
-/** Widevine (Chrome, Edge, Firefox, Android), then FairPlay (Safari). */
-const KEY_SYSTEMS = ['com.widevine.alpha', 'com.apple.fps', 'com.apple.fps.1_0'];
+/**
+ * Widevine (Chrome, Edge, Firefox, Android), PlayReady (Edge on Windows),
+ * then FairPlay (Safari): the key systems Spotify's player tries.
+ */
+const KEY_SYSTEMS = ['com.widevine.alpha', 'com.microsoft.playready', 'com.apple.fps', 'com.apple.fps.1_0'];
+
+/** What to do when this display cannot play Spotify: the honest alternatives. */
+export const NO_DRM_FIX =
+	'Use Chrome, Edge or Firefox on a computer plugged into the TV (Firefox: allow “Play DRM-controlled content”; Chromium on a Raspberry Pi: install Widevine, the libwidevinecdm0 package). Most smart-TV and kiosk browsers cannot. Otherwise play from the TV’s own Spotify app or a Chromecast: the wall still shows what plays.';
 
 /**
  * Can this browser be a Spotify Connect speaker? The Web Playback SDK needs a
@@ -80,8 +87,8 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 	if (typeof request !== 'function') {
 		return {
 			ok: false,
-			reason: 'This browser cannot play protected audio (no Encrypted Media Extensions).',
-			fix: 'Use Chrome, Edge, Firefox or Safari on this display.'
+			reason: 'This browser cannot play Spotify: it has no Encrypted Media Extensions (DRM).',
+			fix: NO_DRM_FIX
 		};
 	}
 	for (const keySystem of KEY_SYSTEMS) {
@@ -94,9 +101,108 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 	}
 	return {
 		ok: false,
-		reason: 'This browser has no DRM module for Spotify (Widevine).',
-		fix: 'Firefox: allow “Play DRM-controlled content” in its settings. Chromium on a Raspberry Pi: install Widevine (the libwidevinecdm0 package). Smart-TV browsers usually cannot.'
+		reason: 'This browser cannot play Spotify: it has no DRM module (Widevine).',
+		fix: NO_DRM_FIX
 	};
+}
+
+/** Why the Web Playback SDK gave up, in words, and whether trying again can help. */
+export interface SdkFailure {
+	problem: string;
+	fix: string | null;
+	/** Nothing changes by waiting: only a change on the display or the account helps. */
+	permanent: boolean;
+	/** The SDK said the account has no Premium. */
+	noPremium?: boolean;
+}
+
+/**
+ * The SDK's error events, said plainly. `initialization_error` is what a
+ * browser without usable DRM (EME/Widevine) raises, even when it claims EME
+ * support: many TV, kiosk and Linux Chromium builds do.
+ */
+export function sdkFailure(event: 'initialization_error' | 'authentication_error' | 'account_error', message = ''): SdkFailure {
+	const detail = message ? ` (${message})` : '';
+	switch (event) {
+		case 'initialization_error':
+			return {
+				problem: `This browser cannot play Spotify: its DRM (Widevine) did not start${detail}.`,
+				fix: NO_DRM_FIX,
+				permanent: true
+			};
+		case 'account_error':
+			return {
+				problem: 'Spotify Premium is required for the wall to be a speaker.',
+				fix: 'Connect a Premium account in Settings → Wall music. Now playing still shows what plays on your other devices.',
+				permanent: true,
+				noPremium: true
+			};
+		default:
+			return {
+				problem: `Spotify refused the wall’s connection${detail}.`,
+				fix: 'Trying again by itself. If it keeps failing, reconnect Spotify in Settings → Wall music.',
+				permanent: false
+			};
+	}
+}
+
+/** Waits between automatic retries: 15 s, 30 s, 1 min, 2 min, then every 5 min. */
+export function retryDelay(attempt: number): number {
+	return Math.min(15_000 * 2 ** Math.max(0, attempt), 300_000);
+}
+
+/** The bits of `navigator` that say whether a page may make sound without a tap. */
+export interface AutoplayEnv {
+	getAutoplayPolicy?: (type: 'mediaelement' | 'audiocontext') => string;
+}
+
+/**
+ * The browser already lets this page play sound (a kiosk started with
+ * `--autoplay-policy=no-user-gesture-required`, Firefox with autoplay allowed
+ * for the site…): no tap needed. Only Firefox and recent Chromium say so;
+ * elsewhere the answer is "unknown", and the wall asks for a tap.
+ */
+export function autoplayAllowed(env: AutoplayEnv): boolean {
+	try {
+		return typeof env.getAutoplayPolicy === 'function' && env.getAutoplayPolicy('mediaelement') === 'allowed';
+	} catch {
+		return false;
+	}
+}
+
+/** "Chrome 130 on Linux", "Firefox 131 on Windows", "Samsung Internet 25 on Tizen": to recognise a display. */
+export function browserLabel(userAgent: string): string {
+	const ua = userAgent || '';
+	const version = (pattern: RegExp) => ua.match(pattern)?.[1]?.split('.')[0] ?? '';
+	let browser = 'A browser';
+	if (/SamsungBrowser\//.test(ua)) browser = `Samsung Internet ${version(/SamsungBrowser\/([\d.]+)/)}`;
+	else if (/Edg\//.test(ua)) browser = `Edge ${version(/Edg\/([\d.]+)/)}`;
+	else if (/OPR\//.test(ua)) browser = `Opera ${version(/OPR\/([\d.]+)/)}`;
+	else if (/Firefox\//.test(ua)) browser = `Firefox ${version(/Firefox\/([\d.]+)/)}`;
+	else if (/Chrom(e|ium)\//.test(ua)) browser = `${/Chromium\//.test(ua) ? 'Chromium' : 'Chrome'} ${version(/Chrom(?:e|ium)\/([\d.]+)/)}`;
+	else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = `Safari ${version(/Version\/([\d.]+)/)}`;
+	let system = '';
+	if (/Tizen/.test(ua)) system = 'Tizen';
+	else if (/Web0S|webOS/.test(ua)) system = 'webOS';
+	else if (/Android/.test(ua)) system = /TV|AFT|BRAVIA|SMART-TV/i.test(ua) ? 'Android TV' : 'Android';
+	else if (/CrOS/.test(ua)) system = 'ChromeOS';
+	else if (/Windows/.test(ua)) system = 'Windows';
+	else if (/iPhone|iPad/.test(ua)) system = 'iOS';
+	else if (/Mac OS X/.test(ua)) system = 'macOS';
+	else if (/Linux/.test(ua)) system = 'Linux';
+	return `${browser.trim()}${system ? ` on ${system}` : ''}`;
+}
+
+/**
+ * The name this display announces: `?speaker=` in its address (remembered by
+ * the display), else the name chosen in Settings.
+ */
+export function displaySpeakerName(fromUrl: string | null, remembered: string | null, fromServer: string): string {
+	const clean = (value: string | null) => {
+		const name = (value ?? '').replace(/\p{Cc}/gu, '').trim();
+		return name.length > 0 && name.length <= 64 ? name : null;
+	};
+	return clean(fromUrl) ?? clean(remembered) ?? fromServer;
 }
 
 /** The Web Playback SDK's state, as far as the wall reads it. */
