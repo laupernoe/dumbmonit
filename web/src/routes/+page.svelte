@@ -28,10 +28,8 @@
 		listSilences,
 		listChannels,
 		listCollectors,
-		createSilence,
 		getOnboarding,
 		queryInstant,
-		type Target,
 		type TargetId,
 		type AlertRule,
 		type AlertHistoryEntry,
@@ -55,7 +53,6 @@
 	import { computeStreaks } from '$lib/components/overview/streaks';
 	import { readLastVisit, writeLastVisit } from '$lib/components/overview/lastVisit';
 	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
-	import { quickSilencePayload } from '$lib/components/alerts/helpers';
 
 	const DAY_MS = 24 * 3600 * 1000;
 	const HISTORY_DAYS = 7;
@@ -86,7 +83,6 @@
 	let now = $state(new Date());
 	/** Start of the briefing window; `null` until read, and on a first visit. */
 	let lastVisit = $state<Date | null>(null);
-	let silencingKey = $state<string | null>(null);
 	let silenceError = $state<string | null>(null);
 
 	// `?demo=empty` shows the first-run screen on a populated server. Harmless, kept for review.
@@ -254,16 +250,15 @@
 	}
 	let armTimer: ReturnType<typeof setTimeout> | undefined;
 
-	async function silence(alert: Alert, target: Target) {
-		silencingKey = alert.fingerprint;
+	/** A needs-you row changed (ack, snooze, ignore): refresh the alerts and,
+	 *  since a snooze is a silence, its "time left" too. */
+	async function onNeedsYouChanged() {
 		silenceError = null;
 		try {
-			await createSilence(quickSilencePayload(target));
-			await alertsStore.refresh();
+			const [, refreshedSilences] = await Promise.all([alertsStore.refresh(), listSilences()]);
+			silences = refreshedSilences;
 		} catch (cause) {
-			silenceError = cause instanceof Error ? cause.message : 'Could not create the silence.';
-		} finally {
-			silencingKey = null;
+			silenceError = cause instanceof Error ? cause.message : 'Could not refresh the alerts.';
 		}
 	}
 
@@ -464,10 +459,9 @@
 			<NeedsYouList
 				{sky}
 				{checkedLabel}
-				{silencingKey}
+				{silences}
 				mascot="happy"
-				onsilence={silence}
-				onackchange={() => void alertsStore.refresh()}
+				onchanged={() => void onNeedsYouChanged()}
 			/>
 		</section>
 

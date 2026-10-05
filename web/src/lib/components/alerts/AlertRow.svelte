@@ -11,43 +11,52 @@
 	 * until when — still a problem, a known one. Every row can be acknowledged
 	 * or silenced for an hour, and — on the Alerts page — opened on its device.
 	 */
-	import type { Alert, Target } from '$lib/api';
+	import type { Alert, Silence, Target } from '$lib/api';
 	import type { SkyRow } from '$lib/components/overview/sky';
 	import { Button, Plate } from '$lib/ui';
 	import { formatRelative, formatDateTime } from '$lib/format';
-	import { alertDetail, severityTone, severityWord, TONE_BAR } from './helpers';
+	import { alertDetail, coveringSilence, severityTone, severityWord, TONE_BAR } from './helpers';
 	import AckControl from './AckControl.svelte';
+	import SnoozeControl from './SnoozeControl.svelte';
+	import IgnoreControl from './IgnoreControl.svelte';
 
 	interface Props {
 		row: Extract<SkyRow, { kind: 'alert' }>;
 		/** Sibling alerts folded into this row (same device, rule and phase). */
 		extra?: Alert[];
 		showOpen?: boolean;
-		silencing?: boolean;
-		onsilence: (alert: Alert, target: Target) => void;
-		/** An acknowledgement was made or lifted: the page should refresh its alerts. */
-		onackchange?: (alert: Alert) => void;
+		/** Maintenance windows, for `SnoozeControl`'s "time left" and already-snoozed state. */
+		silences?: Silence[];
+		/** An acknowledgement, a snooze or an ignore was made or lifted: refresh the alerts. */
+		onchanged?: () => void;
 	}
 
-	let {
-		row,
-		extra = [],
-		showOpen = false,
-		silencing = false,
-		onsilence,
-		onackchange
-	}: Props = $props();
+	let { row, extra = [], showOpen = false, silences = [], onchanged }: Props = $props();
 
 	const alert = $derived(row.alert);
 	const target = $derived(row.target);
 	const suppressed = $derived(alert.effective_phase === 'suppressed');
 	const acked = $derived(alert.acked);
-	const firing = $derived(alert.effective_phase === 'firing' && !alert.learning && !acked);
+	const snoozed = $derived(alert.silenced && !acked);
+	const firing = $derived(
+		alert.effective_phase === 'firing' && !alert.learning && !acked && !snoozed
+	);
 	const detail = $derived(alertDetail(alert, row.rule));
+	const snoozeUntil = $derived(coveringSilence(alert, silences)?.active_until ?? null);
 	/** "Acked by admin until 14:30", the time alone when it is today. */
 	const ackedUntil = $derived.by(() => {
 		if (!alert.acked_until) return '';
 		const until = new Date(alert.acked_until);
+		if (Number.isNaN(until.getTime())) return '';
+		const sameDay = until.toDateString() === new Date().toDateString();
+		return sameDay
+			? until.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+			: formatDateTime(until);
+	});
+	/** Same "today reads as a time" rule, for the snooze's end. */
+	const snoozeUntilLabel = $derived.by(() => {
+		if (!snoozeUntil) return '';
+		const until = new Date(snoozeUntil);
 		if (Number.isNaN(until.getTime())) return '';
 		const sameDay = until.toDateString() === new Date().toDateString();
 		return sameDay
@@ -61,7 +70,7 @@
 </script>
 
 <article
-	class={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface py-3 pr-4 pl-5 shadow-lift transition ${suppressed || acked ? 'opacity-60' : ''}`}
+	class={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface py-3 pr-4 pl-5 shadow-lift transition ${suppressed || acked || snoozed ? 'opacity-60' : ''}`}
 	aria-label={`${row.plate}: ${alert.rule_name || alert.rule_uid}${target ? ` on ${target.name}` : ''}`}
 >
 	<span class={`absolute inset-y-0 left-0 w-1 ${TONE_BAR[row.tone]}`} aria-hidden="true"></span>
@@ -69,7 +78,7 @@
 	<div class="flex items-start justify-between gap-2">
 		<div class="flex min-w-0 flex-wrap items-center gap-1.5">
 			<Plate tone={row.tone} label={row.plate} pulse={firing} />
-			{#if acked && !alert.learning}
+			{#if (acked || snoozed) && !alert.learning}
 				<Plate tone={severityTone(alert.severity)} label={severityWord(alert.severity)} bare />
 			{/if}
 			{#if extra.length > 0}
@@ -130,23 +139,20 @@
 				until <span class="tnum">{ackedUntil}</span>{/if}{#if alert.ack_note}
 				— {alert.ack_note}{/if}. Reminders paused; you will still hear when it resolves.
 		</p>
+	{:else if snoozed}
+		<p class="mt-1 text-[0.8125rem] text-ink-2" title={formatDateTime(snoozeUntil)}>
+			Snoozed{#if snoozeUntilLabel}
+				until <span class="tnum">{snoozeUntilLabel}</span>{/if}. Quiet until then, or until it resolves.
+		</p>
 	{/if}
 
 	<div class="mt-auto pt-3">
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
-			<AckControl {alert} onchanged={onackchange} />
-			{#if target}
-				<Button
-					size="sm"
-					variant="ghost"
-					loading={silencing}
-					onclick={() => onsilence(alert, target)}
-				>
-					Silence 1 h
-				</Button>
-				{#if showOpen}
-					<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">Open device</Button>
-				{/if}
+			<AckControl {alert} onchanged={onchanged} />
+			<SnoozeControl {alert} {target} {silences} {onchanged} />
+			<IgnoreControl rule={row.rule} {target} {onchanged} />
+			{#if showOpen && target}
+				<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">Open device</Button>
 			{/if}
 		</div>
 	</div>

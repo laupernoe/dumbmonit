@@ -1806,7 +1806,7 @@ async fn alert_history(state: &AppState, args: &Args) -> ToolResult {
     let fetch = if only.is_some() { (limit * 10).min(5_000) } else { limit };
     let Json(entries) = alerts::history(
         State(state.clone()),
-        Query(HistoryQuery { since: Some(since.clone()), limit: Some(fetch) }),
+        Query(HistoryQuery { since: Some(since.clone()), limit: Some(fetch), dismissed: None }),
     )
     .await?;
     let Json(rules) = alerts::list_rules(State(state.clone())).await?;

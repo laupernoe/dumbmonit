@@ -265,6 +265,10 @@ pub struct HistoryEntryView {
     pub reason: String,
     /// Horodatage RFC 3339 en UTC, tel que consigné.
     pub at: String,
+    /// Vrai une fois « effacée » par l'utilisateur : la ligne reste en base (c'est
+    /// la mémoire de l'instance) mais ne doit plus apparaître dans une vue par
+    /// défaut. Seules les transitions vers `resolved` peuvent l'être.
+    pub dismissed: bool,
 }
 
 /// Fenêtre de maintenance telle que l'API la renvoie.
@@ -495,6 +499,12 @@ pub struct HistoryQuery {
     pub since: Option<String>,
     #[serde(default)]
     pub limit: Option<i64>,
+    /// Faux par défaut : les lignes « effacées » (résolues, puis dégagées de la
+    /// vue) sont tues, exactement ce qu'une vue active doit montrer. L'historique
+    /// complet reste accessible en le passant à vrai — rien n'est jamais détruit
+    /// par un « clear ».
+    #[serde(default)]
+    pub dismissed: Option<bool>,
 }
 
 // --------------------------------------------------------------------------
@@ -1168,15 +1178,18 @@ pub async fn history(
         None => DEFAULT_HISTORY_LIMIT,
     };
 
+    let include_dismissed = params.dismissed.unwrap_or(false);
+
     let rows = sqlx::query(
         "SELECT id, fingerprint, rule_uid, target_id, from_phase, to_phase, severity, value,
-                notified, reason, at
+                notified, reason, at, dismissed
          FROM alert_history
-         WHERE at >= ?
+         WHERE at >= ? AND (dismissed = 0 OR ?)
          ORDER BY at DESC, id DESC
          LIMIT ?",
     )
     .bind(since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
+    .bind(include_dismissed)
     .bind(limit)
     .fetch_all(&state.pool)
     .await
@@ -1200,12 +1213,73 @@ pub async fn history(
                 notified: row.try_get::<i64, _>("notified")? != 0,
                 reason: row.try_get("reason")?,
                 at: row.try_get("at")?,
+                dismissed: row.try_get::<i64, _>("dismissed")? != 0,
             })
         })
         .collect::<Result<Vec<_>, sqlx::Error>>()
         .map_err(anyhow::Error::from)?;
 
     Ok(Json(entries))
+}
+
+/// `POST /alerts/history/{id}/dismiss` : « j'ai vu, dégage-le des vues actives ».
+///
+/// Seule une transition vers `resolved` peut être effacée — c'est la seule que
+/// cette fonctionnalité concerne ; une transition encore active n'a pas de sens
+/// à faire disparaître puisque l'alerte, elle, est toujours là. La ligne reste
+/// en base : c'est la mémoire de l'instance, et seule une suppression explicite
+/// (non proposée ici) l'effacerait pour de bon.
+pub async fn dismiss_history_entry(
+    State(state): State<AppState>,
+    AdminIdentity(principal): AdminIdentity,
+    ClientIp(ip): ClientIp,
+    Path(id): Path<i64>,
+) -> ApiResult<StatusCode> {
+    let updated = sqlx::query(
+        "UPDATE alert_history SET dismissed = 1 WHERE id = ? AND to_phase = 'resolved'",
+    )
+    .bind(id)
+    .execute(&state.pool)
+    .await
+    .map_err(anyhow::Error::from)?;
+    if updated.rows_affected() == 0 {
+        return Err(ApiError::NotFound(format!("No resolved history entry {id} to clear.")));
+    }
+    let actor = principal.label();
+    audit::record(&state.pool, Some(&actor), "alert_history.dismissed", Some(&id.to_string()), ip)
+        .await;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Combien de lignes une purge « Clear all resolved » a effacées des vues actives.
+#[derive(Debug, Serialize)]
+pub struct DismissedCount {
+    pub dismissed: u64,
+}
+
+/// `POST /alerts/history/dismiss-resolved` : « j'ai tout vu, nettoie ».
+pub async fn dismiss_resolved_history(
+    State(state): State<AppState>,
+    AdminIdentity(principal): AdminIdentity,
+    ClientIp(ip): ClientIp,
+) -> ApiResult<Json<DismissedCount>> {
+    let updated = sqlx::query(
+        "UPDATE alert_history SET dismissed = 1 WHERE to_phase = 'resolved' AND dismissed = 0",
+    )
+    .execute(&state.pool)
+    .await
+    .map_err(anyhow::Error::from)?;
+    let count = updated.rows_affected();
+    let actor = principal.label();
+    audit::record(
+        &state.pool,
+        Some(&actor),
+        "alert_history.dismissed_resolved",
+        Some(&count.to_string()),
+        ip,
+    )
+    .await;
+    Ok(Json(DismissedCount { dismissed: count }))
 }
 
 // --------------------------------------------------------------------------

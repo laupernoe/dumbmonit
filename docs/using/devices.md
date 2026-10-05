@@ -33,8 +33,11 @@ last probe, and for services the certificate status. Actions:
 | Silence 1 h / Silence until… | A one-off maintenance window on this device. |
 | Delete | Asks "Delete for good?" inline for five seconds, then deletes the device. Its series stay in VictoriaMetrics until retention expires. |
 
-Below: **Alerts on this device**, then **Metrics** over a time range (1 h,
-6 h, 24 h, 7 days), one chart per metric name with one line per series.
+Below: **Alerts on this device** — each active alert offers *Ack*, *Snooze*
+and *Ignore*, and a rule ignored on this device is listed separately with
+**Stop ignoring** — then **Metrics** over a time range (1 h, 6 h, 24 h,
+7 days), one chart per metric name with one line per series. See
+[Getting rid of an alert](alerts.md#getting-rid-of-an-alert).
 
 Services (HTTP, TCP, DNS, ping, TLS) get instruments instead: **Availability**
 over the last 24 hours or 7 days, **Response time**, the number of **Checks**,

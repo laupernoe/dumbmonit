@@ -1083,6 +1083,69 @@ mod tests {
         assert_eq!(apres.alerts[0].state.firing_since, Some(at(0)), "the age is kept");
     }
 
+    /// Un silence posé avec les étiquettes exactes d'une série (le « snooze »
+    /// d'une seule alerte, côté interface) ne doit taire que celle-ci : une autre
+    /// règle sur le même équipement continue de parler.
+    #[test]
+    fn un_silence_a_etiquettes_precises_ne_fait_taire_qu_une_seule_alerte() {
+        let cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        let disk = rule("disk_almost_full", RuleKind::Threshold, 90.0, 0);
+        let mut baselines = BaselineStore::default();
+
+        // Deux séries distinctes du même équipement : seule celle du CPU doit
+        // correspondre au silence, par son nom de métrique propre.
+        let cpu_point = SeriesPoint {
+            labels: [
+                ("__name__".to_string(), "dumbmonit_cpu_usage_percent".to_string()),
+                ("target".to_string(), "1".to_string()),
+                ("host".to_string(), "device-1".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+            value: 95.0,
+            ts_ms: 0,
+        };
+        let disk_point = SeriesPoint {
+            labels: [
+                ("__name__".to_string(), "dumbmonit_disk_used_percent".to_string()),
+                ("target".to_string(), "1".to_string()),
+                ("host".to_string(), "device-1".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+            value: 95.0,
+            ts_ms: 0,
+        };
+        let silence = Silence {
+            id: 1,
+            name: "Snooze · cpu_high · device-1".to_string(),
+            comment: String::new(),
+            target_id: Some(1),
+            matchers: cpu_point.labels.clone(),
+            schedule: Schedule::Once { starts_at: at(-60), ends_at: at(3600) },
+            enabled: true,
+        };
+
+        let mut cycle_input = input(
+            at(0),
+            vec![
+                RuleObservations { rule: cpu, series: Some(vec![cpu_point]) },
+                RuleObservations { rule: disk, series: Some(vec![disk_point]) },
+            ],
+            vec![node(1, None)],
+            Vec::new(),
+        );
+        cycle_input.silences = vec![silence];
+        let outcome = plan_cycle(cycle_input, &mut baselines);
+
+        let cpu_alert = outcome.alerts.iter().find(|a| a.rule_uid == "cpu_high").unwrap();
+        let disk_alert = outcome.alerts.iter().find(|a| a.rule_uid == "disk_almost_full").unwrap();
+        assert!(cpu_alert.state.silenced, "the snoozed alert is quiet");
+        assert!(!disk_alert.state.silenced, "a sibling rule on the same device still speaks");
+        assert_eq!(outcome.groups.len(), 1, "only the disk alert is announced");
+        assert_eq!(outcome.groups[0].items[0].fingerprint, disk_alert.fingerprint);
+    }
+
     #[test]
     fn une_anomalie_notifie_une_fois_l_apprentissage_termine() {
         let mut anomaly = rule("cpu_anomaly", RuleKind::Anomaly, 0.0, 0);
