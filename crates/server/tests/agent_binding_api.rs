@@ -227,73 +227,121 @@ async fn a_machine_cannot_fetch_the_container_commands_of_another() {
     assert_eq!(send(&app, report).await.status, StatusCode::FORBIDDEN);
 }
 
+/// Instance configurée dont le test garde la base, pour y reproduire l'état
+/// d'une machine enrôlée avant la liaison.
+async fn configured_with_pool() -> (TestApp, sqlx::SqlitePool) {
+    let dir = tempfile::tempdir().expect("répertoire temporaire");
+    let config = common::base_config(dir.path());
+    let pool = dumbmonit_server::db::open(&config.database_path()).await.expect("base");
+    let app = common::build(dir, config, pool.clone()).await;
+    app.create_admin().await;
+    (app, pool)
+}
+
+/// Ramène une machine à l'état d'un enregistrement d'avant la liaison : aucun
+/// secret, binaire qui ne sait pas en recevoir.
+async fn make_legacy(pool: &sqlx::SqlitePool, target: i64) {
+    sqlx::query(
+        "UPDATE agent_hosts SET secret_hash = NULL, bound_at = NULL, binding_supported = 0
+         WHERE target_id = ?",
+    )
+    .bind(target)
+    .execute(pool)
+    .await
+    .expect("machine d'avant la liaison");
+}
+
+/// Demande les sondes relayées pour une clé d'identité.
+async fn fetch_relay(app: &TestApp, enrolment: &str, key: &str) -> Reply {
+    let request = Request::builder()
+        .method("GET")
+        .uri(format!("/api/agent/relay?key={key}"))
+        .header(header::AUTHORIZATION, format!("Bearer {enrolment}"))
+        .body(Body::empty())
+        .unwrap();
+    send(app, request).await
+}
+
 #[tokio::test]
-async fn an_agent_from_before_binding_keeps_reporting_and_is_flagged() {
+async fn an_agent_too_old_to_be_bound_is_not_enrolled() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let enrolment = token(&app, &admin, json!({ "reusable": true })).await;
 
-    // Un binaire antérieur : il ne déclare pas savoir se lier.
-    let first = push(&app, &enrolment, "id-vieux", "vieux-nas", None, false).await;
-    assert_eq!(first.status, StatusCode::OK, "{}", first.body);
-    assert_eq!(first.body["bound"], false);
-    assert!(first.body.get("agent_secret").is_none(), "il le jetterait");
-    let target = first.body["target_id"].as_i64().expect("cible");
-
-    // Il continue de pousser, lot après lot, sans rien changer chez lui.
-    assert_eq!(
-        push(&app, &enrolment, "id-vieux", "vieux-nas", None, false).await.status,
-        StatusCode::OK
+    let refused = push(&app, &enrolment, "id-vieux", "vieux-nas", None, false).await;
+    assert_eq!(refused.status, StatusCode::FORBIDDEN, "{}", refused.body);
+    assert!(
+        refused.body["error"].as_str().unwrap_or("").contains("install command"),
+        "le refus doit dire quoi faire : {}",
+        refused.body
     );
-    // Et son canal de commandes reste ouvert.
-    assert_eq!(fetch_commands(&app, &enrolment, "id-vieux", None).await.status, StatusCode::OK);
+    // Aucune machine n'est apparue.
+    let targets = app.get("/api/targets", Some(&admin)).await;
+    assert_eq!(targets.body.as_array().map(Vec::len), Some(0), "{}", targets.body);
+}
 
-    // L'interface dit quoi faire.
+/// Une machine enrôlée avant la liaison et jamais liée est refusée partout —
+/// lots, commandes, relais — même avec le jeton qui l'a enrôlée, et même une
+/// fois son agent à jour : seule la fenêtre de reliaison la fait rentrer.
+#[tokio::test]
+async fn a_legacy_unbound_machine_is_refused_until_it_is_re_enrolled() {
+    let (app, pool) = configured_with_pool().await;
+    let (enrolment, _, target, admin) = bound_machine(&app).await;
+    make_legacy(&pool, target).await;
+
+    for supported in [false, true] {
+        let refused = push(&app, &enrolment, "id-nas", "nas", None, supported).await;
+        assert_eq!(refused.status, StatusCode::FORBIDDEN, "{}", refused.body);
+        assert!(
+            refused.body["error"].as_str().unwrap_or("").contains("Re-enrol this host"),
+            "le refus doit dire quoi faire : {}",
+            refused.body
+        );
+        assert!(refused.body.get("agent_secret").is_none());
+    }
+    let commands = fetch_commands(&app, &enrolment, "id-nas", None).await;
+    assert_eq!(commands.status, StatusCode::FORBIDDEN, "{}", commands.body);
+    assert!(commands.body["error"].as_str().unwrap_or("").contains("Allow re-enrolment"));
+    assert_eq!(fetch_relay(&app, &enrolment, "id-nas").await.status, StatusCode::FORBIDDEN);
+
+    // L'interface le montre, avec de quoi agir.
     let view = app.get(&format!("/api/targets/{target}/agent"), Some(&admin)).await;
-    assert_eq!(view.body["binding"], "unsupported");
+    assert_eq!(view.body["binding"], "unbound");
     assert_eq!(view.body["bound"], false);
 
-    // Une fois le binaire mis à jour, le premier lot suffit à lier la machine.
-    let upgraded = push(&app, &enrolment, "id-vieux", "vieux-nas", None, true).await;
-    assert!(upgraded.body["agent_secret"].is_string(), "{}", upgraded.body);
+    // Un administrateur ouvre la fenêtre ; l'agent à jour s'y lie.
+    let opened =
+        app.post(&format!("/api/targets/{target}/agent/rebind"), json!({}), Some(&admin)).await;
+    assert_eq!(opened.status, StatusCode::OK, "{}", opened.body);
+    let rebound = push(&app, &enrolment, "id-nas", "nas", None, true).await;
+    assert_eq!(rebound.status, StatusCode::OK, "{}", rebound.body);
+    let secret = rebound.body["agent_secret"].as_str().expect("secret de liaison").to_string();
+    assert_eq!(
+        fetch_commands(&app, &enrolment, "id-nas", Some(&secret)).await.status,
+        StatusCode::OK
+    );
     let view = app.get(&format!("/api/targets/{target}/agent"), Some(&admin)).await;
     assert_eq!(view.body["binding"], "bound");
 }
 
-/// Une machine pas encore liée ne se lie qu'avec le jeton qui l'a enrôlée : un
-/// autre porteur de jeton qui devine sa clé n'en prend ni la liaison ni les
-/// commandes, sauf fenêtre de reliaison ouverte par un administrateur.
+/// Une machine jamais liée ne se lie pas davantage avec un autre jeton : il
+/// faut la fenêtre, et un jeton qui puisse encore enrôler.
 #[tokio::test]
 async fn an_unbound_machine_cannot_be_claimed_with_another_token() {
-    let app = TestApp::configured().await;
-    let admin = app.admin_cookie().await;
-    let own = token(&app, &admin, json!({ "reusable": true })).await;
+    let (app, pool) = configured_with_pool().await;
+    let (_, _, target, admin) = bound_machine(&app).await;
+    make_legacy(&pool, target).await;
     let other = token(&app, &admin, json!({ "reusable": true })).await;
 
-    let first = push(&app, &own, "id-ancien", "ancien", None, false).await;
-    assert_eq!(first.status, StatusCode::OK, "{}", first.body);
-    let target = first.body["target_id"].as_i64().expect("cible");
-
-    let stolen = push(&app, &other, "id-ancien", "pirate", None, true).await;
+    let stolen = push(&app, &other, "id-nas", "pirate", None, true).await;
     assert_eq!(stolen.status, StatusCode::FORBIDDEN, "{}", stolen.body);
     assert!(stolen.body.get("agent_secret").is_none());
-    assert_eq!(fetch_commands(&app, &other, "id-ancien", None).await.status, StatusCode::FORBIDDEN);
+    assert_eq!(fetch_commands(&app, &other, "id-nas", None).await.status, StatusCode::FORBIDDEN);
 
-    // Son propre jeton passe toujours, et la lie dès que l'agent le sait.
-    let upgraded = push(&app, &own, "id-ancien", "ancien", None, true).await;
-    assert_eq!(upgraded.status, StatusCode::OK, "{}", upgraded.body);
-    assert!(upgraded.body["agent_secret"].is_string(), "{}", upgraded.body);
-
-    // Un nouveau jeton n'entre que par la fenêtre qu'ouvre un administrateur.
-    let second = push(&app, &own, "id-autre", "autre", None, false).await;
-    assert_eq!(second.status, StatusCode::OK, "{}", second.body);
-    let other_target = second.body["target_id"].as_i64().unwrap();
-    assert_ne!(other_target, target);
-    let opened = app
-        .post(&format!("/api/targets/{other_target}/agent/rebind"), json!({}), Some(&admin))
-        .await;
+    let opened =
+        app.post(&format!("/api/targets/{target}/agent/rebind"), json!({}), Some(&admin)).await;
     assert_eq!(opened.status, StatusCode::OK, "{}", opened.body);
-    let rebound = push(&app, &other, "id-autre", "autre", None, true).await;
+    let rebound = push(&app, &other, "id-nas", "nas", None, true).await;
     assert_eq!(rebound.status, StatusCode::OK, "{}", rebound.body);
     assert!(rebound.body["agent_secret"].is_string(), "{}", rebound.body);
 }

@@ -59,6 +59,25 @@ async fn enrollment_token(app: &TestApp, admin: &str) -> String {
     reply.body["secret"].as_str().expect("secret").to_string()
 }
 
+/// Secrets de liaison remis aux agents simulés, par (jeton, clé d'identité).
+///
+/// Un vrai agent garde le sien sur disque et le présente à chaque requête :
+/// une machine non liée est refusée partout. Les jetons sont propres à chaque
+/// test, ce qui suffit à isoler les tests qui tournent en parallèle.
+static SECRETS: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<(String, String), String>>,
+> = std::sync::LazyLock::new(Default::default);
+
+fn remembered_secret(token: &str, key: &str) -> Option<String> {
+    SECRETS.lock().unwrap().get(&(token.to_string(), key.to_string())).cloned()
+}
+
+fn remember_secret(token: &str, key: &str, body: &Value) {
+    if let Some(secret) = body["agent_secret"].as_str() {
+        SECRETS.lock().unwrap().insert((token.to_string(), key.to_string()), secret.to_string());
+    }
+}
+
 /// Pousse un lot vide au nom d'un agent, et rend l'identifiant de la cible.
 /// `commands_enabled: None` reproduit un agent antérieur au canal de commandes.
 async fn push_batch(
@@ -73,23 +92,27 @@ async fn push_batch(
         "os": "linux",
         "agent_version": version,
         "machine_id": machine_id,
+        "binding_supported": true,
     });
     if let Some(enabled) = commands_enabled {
         identity["commands_enabled"] = Value::Bool(enabled);
     }
     let batch = json!({ "protocol": 1, "identity": identity, "sent_at_ms": 0, "samples": [] });
-    let request = Request::builder()
+    let mut builder = Request::builder()
         .method("POST")
         .uri("/api/ingest")
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(batch.to_string()))
-        .unwrap();
+        .header(header::CONTENT_TYPE, "application/json");
+    if let Some(secret) = remembered_secret(token, machine_id) {
+        builder = builder.header("x-dumbmonit-agent-secret", secret);
+    }
+    let request = builder.body(Body::from(batch.to_string())).unwrap();
     let response = app.router.clone().oneshot(request).await.expect("réponse");
     let status = response.status();
     let bytes = response.into_body().collect().await.expect("corps").to_bytes();
     let body: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     assert_eq!(status, StatusCode::OK, "ingestion : {body}");
+    remember_secret(token, machine_id, &body);
     body["target_id"].as_i64().expect("target id")
 }
 
