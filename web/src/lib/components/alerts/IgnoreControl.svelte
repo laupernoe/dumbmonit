@@ -104,9 +104,9 @@
 				</button>
 			</p>
 		{:else}
-			<Confirm size="sm" variant="secondary" confirmLabel="Ignore?" loading={busy} onconfirm={ignore}>
+			<Confirm size="sm" variant="secondary" confirmLabel="Never again?" loading={busy} onconfirm={ignore}>
 				<EyeOff class="size-3.5" aria-hidden="true" />
-				Ignore
+				Never for this device
 			</Confirm>
 		{/if}
 	</div>

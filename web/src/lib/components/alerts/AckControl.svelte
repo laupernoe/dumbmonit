@@ -20,6 +20,7 @@
 	import { Button } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Check } from 'lucide-svelte';
+	import { UNTIL_RESOLVED_SECS } from './helpers';
 
 	interface Props {
 		alert: Alert;
@@ -33,7 +34,7 @@
 		{ label: '1 h', secs: 3600 },
 		{ label: '4 h', secs: 4 * 3600 },
 		{ label: '24 h', secs: 24 * 3600 },
-		{ label: 'Until resolved', secs: 30 * 24 * 3600 }
+		{ label: 'Until resolved', secs: UNTIL_RESOLVED_SECS }
 	];
 
 	let open = $state(false);

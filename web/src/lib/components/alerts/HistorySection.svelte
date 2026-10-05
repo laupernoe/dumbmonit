@@ -14,7 +14,7 @@
 	import { Button, Confirm, EmptyState, Plate, Toggle } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
 	import Segmented from '$lib/components/devices/Segmented.svelte';
-	import { History, Download } from 'lucide-svelte';
+	import { History, Download, X } from 'lucide-svelte';
 	import { formatDateTime, parseServerDate } from '$lib/format';
 	import { formatAlertValue, severityTone, severityWord } from './helpers';
 
@@ -375,10 +375,13 @@
 										<Button
 											size="sm"
 											variant="ghost"
+											class="!h-7 !w-7 !px-0"
+											aria-label="Dismiss"
+											title="Dismiss"
 											loading={clearingId === entry.id}
 											onclick={() => void clearEntry(entry)}
 										>
-											Clear
+											<X class="size-3.5" aria-hidden="true" />
 										</Button>
 									{/if}
 								</div>

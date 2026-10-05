@@ -20,3 +20,4 @@ export { default as Confirm } from './Confirm.svelte';
 export { default as Menu } from './Menu.svelte';
 export { default as CopyBlock } from './CopyBlock.svelte';
 export { default as PageHeader } from './PageHeader.svelte';
+export { default as Toast } from './Toast.svelte';
