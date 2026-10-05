@@ -53,6 +53,8 @@
 //! | `port` | `5001` en HTTPS, `5000` en HTTP | Port de DSM, si l'adresse n'en précise pas. |
 //! | `request_timeout_seconds` | `15` | Délai par requête HTTP. |
 //! | `abb` | `true` | Interroge Active Backup for Business (voir [`abb`]). |
+//! | `drive` | `true` | Interroge Synology Drive : état du service, dossiers d'équipe, connexions actives (voir [`drive`]). |
+//! | `photos` | `true` | Publie la présence du paquet Synology Photos (voir [`photos`]). |
 
 mod abb;
 mod auth;
@@ -62,10 +64,12 @@ mod backup;
 mod capture;
 mod client;
 pub mod devices;
+mod drive;
 mod error;
 mod metrics;
 mod model;
 mod options;
+mod photos;
 pub mod rhythm;
 
 use std::collections::HashMap;
@@ -126,6 +130,10 @@ const WANTED_APIS: &[&str] = &[
     abb::API_TASK,
     abb::API_LOG,
     devices::API_OVERVIEW,
+    drive::API_STATUS,
+    drive::API_TEAM_FOLDERS,
+    drive::API_CONNECTION,
+    photos::API_PRESENCE,
 ];
 
 pub struct SynologyCollector {
@@ -348,6 +356,36 @@ impl Collector for SynologyCollector {
             } else {
                 debug!(target_id = target.id, "aperçu par appareil absent de ce NAS");
             }
+        }
+
+        // Synology Drive, même logique que Hyper Backup et ABB : un paquet absent
+        // du catalogue n'est pas une erreur, simplement une métrique en moins.
+        if !options.drive {
+            debug!(target_id = target.id, "Synology Drive ignoré : option \"drive\" désactivée");
+        } else if !dsm.supports(drive::API_STATUS) {
+            debug!(target_id = target.id, "Synology Drive absent du catalogue de ce NAS");
+        } else {
+            outcome.absorb(target.id, "état de Synology Drive", drive::status(&dsm, ts_ms).await);
+            if dsm.supports(drive::API_TEAM_FOLDERS) {
+                outcome.absorb(
+                    target.id,
+                    "dossiers d'équipe Synology Drive",
+                    drive::team_folders(&dsm, ts_ms).await,
+                );
+            }
+            if dsm.supports(drive::API_CONNECTION) {
+                outcome.absorb(
+                    target.id,
+                    "connexions Synology Drive",
+                    drive::connections(&dsm, ts_ms).await,
+                );
+            }
+        }
+
+        // Synology Photos : seulement la présence du paquet (voir `photos`), sans
+        // appel réseau, donc jamais d'erreur à absorber ici.
+        if options.photos && dsm.supports(photos::API_PRESENCE) {
+            outcome.samples.push(photos::installed_sample(ts_ms));
         }
 
         let mut samples = outcome.samples;
@@ -595,6 +633,10 @@ mod tests {
             abb::API_TASK,
             abb::API_LOG,
             devices::API_OVERVIEW,
+            drive::API_STATUS,
+            drive::API_TEAM_FOLDERS,
+            drive::API_CONNECTION,
+            photos::API_PRESENCE,
         ] {
             assert!(WANTED_APIS.contains(&api), "{api} manque à la requête SYNO.API.Info");
         }

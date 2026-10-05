@@ -1784,6 +1784,18 @@ const SYNOLOGY_OPTIONS: &[OptionView] = &[
         "Reads the Active Backup for Business tasks (PCs, servers, virtual machines, file servers): last result, age of the last successful backup, schedule. Needs the package installed and an account allowed to use it; a NAS without the package is simply skipped.",
         true,
     ),
+    boolean(
+        "drive",
+        "Watch Synology Drive",
+        "Reads whether the Synology Drive service responds, its team folders and its active connection count. A NAS without the package is simply skipped.",
+        true,
+    ),
+    boolean(
+        "photos",
+        "Watch Synology Photos",
+        "Shows whether the Synology Photos package is installed, with no extra request to the NAS. Synology does not expose a list of mobile backup devices through any API.",
+        true,
+    ),
 ];
 
 /// Options lues par `collectors/mdaemon/email_server.rs`.
@@ -3286,7 +3298,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "synology" => CollectorView {
             kind: "synology",
             label: "Synology DSM",
-            summary: "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs.",
+            summary: "Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs, Synology Drive and Photos.",
             examples: &["DiskStation", "RackStation"],
             credential_types: &["username_password"],
             credentials: &[SYNOLOGY_LOGIN],
@@ -4837,7 +4849,18 @@ mod tests {
                     "subscription",
                 ],
             ),
-            ("synology", &["scheme", "port", "insecure_tls", "request_timeout_seconds", "abb"]),
+            (
+                "synology",
+                &[
+                    "scheme",
+                    "port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "abb",
+                    "drive",
+                    "photos",
+                ],
+            ),
             (
                 "truenas",
                 &[
@@ -5110,6 +5133,8 @@ mod tests {
             defaut("activedirectory", "request_timeout_seconds"),
             dumbmonit_collectors::activedirectory::DEFAULT_REQUEST_TIMEOUT_SECONDS.to_string()
         );
+        assert_eq!(defaut("synology", "drive"), "true");
+        assert_eq!(defaut("synology", "photos"), "true");
         assert_eq!(defaut("redfish", "port"), "443");
         assert_eq!(defaut("redfish", "request_timeout_seconds"), "8");
         assert_eq!(defaut("redfish", "auth"), "basic");
