@@ -67,7 +67,7 @@
 </script>
 
 <span
-	class={`inline-flex items-center gap-1.5 rounded-[var(--radius-plate)] border font-semibold leading-none ${size === 'sm' ? 'h-6 px-2 text-[0.75rem]' : 'h-7 px-2.5 text-[0.8125rem]'} ${TONE_CLASS[tone]} ${className}`}
+	class={`inline-flex items-center gap-1.5 rounded-[var(--radius-plate)] border font-semibold leading-none transition-colors duration-300 ease-out-expo ${size === 'sm' ? 'h-6 px-2 text-[0.75rem]' : 'h-7 px-2.5 text-[0.8125rem]'} ${TONE_CLASS[tone]} ${className}`}
 	{title}
 >
 	{#if !bare}
