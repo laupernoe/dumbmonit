@@ -31,7 +31,7 @@ use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 use sqlx::SqlitePool;
 
 pub use policy::spawn_policy_scheduler;
-pub use receive::{BINDING_MISMATCH, IngestError, ingest};
+pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, ingest};
 pub use store::{
     HostInfo, KeyAuth, REBIND_WINDOW_MINUTES, TokenPolicy, TokenRecord, allow_rebind,
     authorise_key, create_token, host, list_hosts, list_tokens, revoke_token,

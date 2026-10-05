@@ -99,7 +99,8 @@ and falls back to the variables when they exist.
 **Advanced.** The rest of the form sits under *Advanced*: *Scopes* names what
 to ask the provider for, *Groups claim* the token claim that lists the user's
 groups, and *Create accounts on first sign-in* decides whether an unknown
-person gets an account.
+person gets an account. It is **off by default**: only accounts that already
+exist can sign in until you turn it on.
 
 **Roles.** *Admin groups* lists the groups whose members become admins;
 everyone else is a viewer. Leave it empty to keep managing roles under
@@ -122,14 +123,21 @@ provider subject after the first sign-in. On a first sign-in:
   created (username from the provider, suffixed `-1`, `-2`… when taken). With
   it off, only the verified-email link above can sign in.
 
+**Account creation is off unless you choose it.** New installs start with
+*Create accounts on first sign-in* off, and so does any configuration where
+it was never set — settings saved before the option existed, or
+environment-only setups without `DUMBMONIT_OIDC_AUTO_CREATE`. Earlier releases
+treated "never set" as on; the Single sign-on panel now says when this
+default applies. A value you saved explicitly is kept as it is.
+
 ## Agents
 
 Enrollment tokens for the [Linux, macOS, FreeBSD and Windows agent](../devices/agent.md).
 Create one with a name ("File server", "Home fleet"): the token is shown once,
-with the Linux and Windows install commands ready to copy, and the SHA-256
-checksums of the agent binaries this server ships — the installer checks the
-download against them by itself, they are there for anyone who wants to
-compare by hand. The list shows each token's prefix, creation date, last use
+with the Linux and Windows install commands ready to copy. Each command carries
+the SHA-256 checksums of the agent binaries this server ships, and the
+installer refuses a download that does not match; the checksums are also
+listed below the commands, to compare by hand. The list shows each token's prefix, creation date, last use
 and whether it was revoked. **Revoke** stops every agent using that token at
 its next push.
 

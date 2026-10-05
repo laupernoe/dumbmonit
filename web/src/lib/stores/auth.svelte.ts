@@ -179,8 +179,8 @@ class AuthStore {
 	}
 
 	/** Creates the first admin account, then opens the session right after. */
-	async setupAccount(username: string, password: string): Promise<void> {
-		await apiSetupAccount(username, password);
+	async setupAccount(setupCode: string, username: string, password: string): Promise<void> {
+		await apiSetupAccount(setupCode, username, password);
 		// Creating the account does not open a session: we sign in explicitly.
 		// The state is only updated afterwards, by `login` — announcing "protected
 		// instance" before having a cookie would flip the navigation guard to the

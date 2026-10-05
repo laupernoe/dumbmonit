@@ -229,6 +229,13 @@ pub enum RegisterError {
     BindingMismatch,
     /// Le jeton est valide mais ne peut plus faire entrer de machine.
     EnrolmentDenied(EnrolmentDenied),
+    /// La machine est connue mais n'a jamais été liée (enrôlée avant la
+    /// liaison) : elle est refusée tant qu'un administrateur n'a pas ouvert la
+    /// fenêtre de reliaison.
+    NotBound,
+    /// Le binaire ne sait pas recevoir de secret de liaison : la machine ne
+    /// pourrait jamais être liée, donc elle n'entre pas.
+    AgentTooOld,
     Internal(anyhow::Error),
 }
 
@@ -266,12 +273,11 @@ struct HostRow {
 /// seule, qui fait la différence. Les trois cas :
 ///
 /// - machine liée : le secret doit correspondre, sinon rien ne passe ;
-/// - machine inconnue : le jeton doit pouvoir enrôler, et le secret est attribué
-///   si l'agent sait le recevoir ;
-/// - machine connue mais non liée (agent installé avant la liaison) : elle
-///   continue de remonter avec le jeton qui l'a enrôlée, et se lie dès que son
-///   binaire est à jour ; un autre jeton n'y entre que par une fenêtre de
-///   reliaison ouverte par un administrateur.
+/// - machine inconnue : le jeton doit pouvoir enrôler, l'agent doit savoir
+///   recevoir un secret, et le secret est attribué ;
+/// - machine connue mais non liée (agent installé avant la liaison) : refusée.
+///   La période de transition est close : elle ne se lie plus que par une
+///   fenêtre de reliaison ouverte par un administrateur.
 pub async fn register(
     pool: &SqlitePool,
     cipher: &Cipher,
@@ -283,6 +289,13 @@ pub async fn register(
 
     if let Some(host) = find_host(pool, &key).await? {
         return claim(pool, host, identity, token_id, presented_secret).await;
+    }
+
+    // Un binaire qui ne sait pas recevoir de secret donnerait une machine non
+    // liée, que le lot suivant refuserait : autant le dire tout de suite.
+    if !identity.binding_supported {
+        tracing::warn!(hote = identity.hostname, "agent trop ancien pour être lié : refusé");
+        return Err(RegisterError::AgentTooOld);
     }
 
     // Une machine inconnue est un enrôlement : c'est là, et seulement là, que la
@@ -325,17 +338,10 @@ pub async fn register(
         }
     };
 
-    let issued = identity.binding_supported.then(token::generate_secret);
-    insert_host(pool, target_id, &key, identity, token_id, issued.as_deref()).await?;
+    let secret = token::generate_secret();
+    insert_host(pool, target_id, &key, identity, token_id, Some(&secret)).await?;
     consume_enrolment(pool, token_id).await?;
-    if issued.is_none() {
-        tracing::warn!(
-            cible = target_id,
-            hote = identity.hostname,
-            "agent trop ancien pour être lié à sa machine : mettre à jour le binaire"
-        );
-    }
-    Ok(Registration { target_id, created, bound: issued.is_some(), issued_secret: issued })
+    Ok(Registration { target_id, created, bound: true, issued_secret: Some(secret) })
 }
 
 /// Décide si l'agent qui se présente est bien celui de cette machine.
@@ -387,49 +393,40 @@ async fn claim(
             );
             Err(RegisterError::BindingMismatch)
         }
-        // Machine connue mais pas encore liée : c'est l'état des agents installés
-        // avant cette version. Elle continue de remonter, et se lie dès que son
-        // binaire sait recevoir un secret.
-        //
-        // La clé d'identité (`/etc/machine-id`, nom d'hôte) se devine ou s'observe :
-        // si n'importe quel jeton suffisait, le premier venu présentant cette clé
-        // recevrait le secret de liaison, enfermerait dehors l'agent légitime, et
-        // hériterait de ses commandes. Seul le jeton qui a enrôlé la machine peut
-        // donc la lier — c'est celui que l'agent d'origine porte toujours, ce qui
-        // laisse les anciens agents fonctionner sans rien changer. Un autre jeton
-        // (agent réinstallé avec un nouveau jeton, ancien jeton supprimé) passe par
-        // la fenêtre de reliaison, que seul un administrateur ouvre.
+        // Machine connue mais jamais liée : un agent installé avant la liaison,
+        // accepté pendant la période de transition. Elle est close : la clé
+        // d'identité (`/etc/machine-id`, nom d'hôte) se devine, et un jeton de
+        // flotte est partagé par tout un parc, donc rien ne prouve que celui qui
+        // se présente est la machine d'origine. Seule une fenêtre de reliaison,
+        // ouverte par un administrateur, la fait entrer — avec un secret.
         None => {
-            let same_token = host.token_id == Some(token_id);
-            if !same_token {
-                if !host.rebind_open {
-                    tracing::warn!(
-                        cible = target_id,
-                        hote = identity.hostname,
-                        "machine non liée présentée avec un autre jeton que le sien : refusée"
-                    );
-                    return Err(RegisterError::BindingMismatch);
-                }
-                if let Err(denied) = enrolment_allowed(pool, token_id).await? {
-                    return Err(RegisterError::EnrolmentDenied(denied));
-                }
-            }
-            let issued = identity.binding_supported.then(token::generate_secret);
-            if let Some(secret) = issued.as_deref() {
-                bind_host(pool, target_id, secret, token_id).await?;
-                tracing::info!(
+            if !host.rebind_open {
+                tracing::warn!(
                     cible = target_id,
                     hote = identity.hostname,
-                    "machine liée à son agent"
+                    "machine jamais liée à son agent : refusée, réenrôlement nécessaire"
                 );
+                return Err(RegisterError::NotBound);
             }
+            if !identity.binding_supported {
+                return Err(RegisterError::AgentTooOld);
+            }
+            // Le jeton qui a enrôlé la machine l'a déjà comptée ; un autre doit
+            // encore pouvoir enrôler.
+            if host.token_id != Some(token_id)
+                && let Err(denied) = enrolment_allowed(pool, token_id).await?
+            {
+                return Err(RegisterError::EnrolmentDenied(denied));
+            }
+            let secret = token::generate_secret();
+            bind_host(pool, target_id, &secret, token_id).await?;
             update_host(pool, target_id, identity).await?;
-            Ok(Registration {
-                target_id,
-                created: false,
-                bound: issued.is_some(),
-                issued_secret: issued,
-            })
+            tracing::info!(
+                cible = target_id,
+                hote = identity.hostname,
+                "machine liée à son agent pendant sa fenêtre de reliaison"
+            );
+            Ok(Registration { target_id, created: false, bound: true, issued_secret: Some(secret) })
         }
     }
 }
@@ -506,8 +503,10 @@ pub enum KeyAuth {
     Unknown,
     /// La clé existe, mais le secret présenté n'est pas le sien.
     Denied,
-    /// Requête acceptée. `bound` est faux pour une machine d'avant la liaison.
-    Allowed { target_id: TargetId, bound: bool },
+    /// La machine n'a jamais été liée : refusée jusqu'à son réenrôlement.
+    NotBound,
+    /// Requête acceptée : la machine est liée et le secret est le sien.
+    Allowed { target_id: TargetId },
 }
 
 /// Autorise une requête du canal de commandes ou du relais.
@@ -518,7 +517,6 @@ pub enum KeyAuth {
 pub async fn authorise_key(
     pool: &SqlitePool,
     key: &str,
-    token_id: i64,
     presented_secret: Option<&str>,
 ) -> Result<KeyAuth> {
     let Some(host) = find_host(pool, key).await? else {
@@ -530,19 +528,15 @@ pub async fn authorise_key(
                 .map(token::fingerprint)
                 .is_some_and(|presented| presented == stored);
             if matches {
-                Ok(KeyAuth::Allowed { target_id: host.target_id, bound: true })
+                Ok(KeyAuth::Allowed { target_id: host.target_id })
             } else {
                 Ok(KeyAuth::Denied)
             }
         }
-        // Machine d'avant la liaison : on ne coupe pas un parc qui fonctionne,
-        // mais l'interface le dit et la trace le répète. Seul le jeton qui l'a
-        // enrôlée y a accès — sans quoi n'importe quel porteur d'un jeton
-        // viendrait chercher ses commandes Docker en devinant sa clé.
-        None if host.token_id == Some(token_id) => {
-            Ok(KeyAuth::Allowed { target_id: host.target_id, bound: false })
-        }
-        None => Ok(KeyAuth::Denied),
+        // Machine d'avant la liaison : plus de commandes ni de relais tant
+        // qu'elle n'est pas liée. Rien ne distingue son agent d'un voisin qui
+        // aurait deviné sa clé.
+        None => Ok(KeyAuth::NotBound),
     }
 }
 
@@ -683,15 +677,10 @@ impl HostInfo {
 
     /// Ce que l'interface affiche sous « Binding ».
     ///
-    /// Trois états seulement, parce qu'il n'y a que trois choses à faire :
-    /// rien, attendre le prochain lot, ou aller mettre l'agent à jour.
+    /// Deux états : liée, ou refusée jusqu'à son réenrôlement (fenêtre de
+    /// reliaison, puis agent à jour s'il est antérieur à la liaison).
     pub fn binding_state(&self) -> &'static str {
-        match (self.bound, self.binding_supported) {
-            (true, _) => "bound",
-            // Le binaire sait se lier : le prochain lot suffira.
-            (false, true) => "pending",
-            (false, false) => "unsupported",
-        }
+        if self.bound { "bound" } else { "unbound" }
     }
 }
 
@@ -1110,98 +1099,125 @@ mod tests {
 
         // L'agent légitime, avec son secret.
         assert_eq!(
-            authorise_key(&db.pool, "id-nas", token_id, Some(&secret)).await.unwrap(),
-            KeyAuth::Allowed { target_id: victim.target_id, bound: true }
+            authorise_key(&db.pool, "id-nas", Some(&secret)).await.unwrap(),
+            KeyAuth::Allowed { target_id: victim.target_id }
         );
         // Le voisin compromis, avec le jeton de flotte mais pas le secret.
+        assert_eq!(authorise_key(&db.pool, "id-nas", None).await.unwrap(), KeyAuth::Denied);
         assert_eq!(
-            authorise_key(&db.pool, "id-nas", token_id, None).await.unwrap(),
-            KeyAuth::Denied
-        );
-        assert_eq!(
-            authorise_key(&db.pool, "id-nas", token_id, Some("dmab_pas-le-bon")).await.unwrap(),
+            authorise_key(&db.pool, "id-nas", Some("dmab_pas-le-bon")).await.unwrap(),
             KeyAuth::Denied
         );
         // Une clé qu'aucune machine ne porte.
-        assert_eq!(
-            authorise_key(&db.pool, "id-inconnu", token_id, None).await.unwrap(),
-            KeyAuth::Unknown
-        );
+        assert_eq!(authorise_key(&db.pool, "id-inconnu", None).await.unwrap(), KeyAuth::Unknown);
+    }
+
+    /// Une machine enrôlée avant la liaison, telle que la base la garde : une
+    /// ligne sans secret, rattachée au jeton qui l'a fait entrer.
+    async fn legacy_host(db: &TestDb, hostname: &str, key: &str, token_id: i64) -> TargetId {
+        let identity = legacy(hostname, Some(key));
+        let target_id = db::targets::create(
+            &db.pool,
+            &db.cipher,
+            &db::targets::TargetInput {
+                name: hostname.into(),
+                address: identity.key(),
+                kind: "agent".into(),
+                profile_id: None,
+                parent_id: None,
+                via_agent: None,
+                interval: std::time::Duration::from_secs(60),
+                enabled: true,
+                tags: BTreeMap::new(),
+                credential: Some(Credential::None),
+                group_name: String::new(),
+            },
+        )
+        .await
+        .unwrap();
+        insert_host(&db.pool, target_id, &identity.key(), &identity, token_id, None).await.unwrap();
+        target_id
     }
 
     #[tokio::test]
-    async fn an_agent_from_before_the_binding_keeps_reporting_and_is_shown_as_such() {
+    async fn an_agent_too_old_to_be_bound_is_not_enrolled() {
         let db = setup().await;
         let token_id = token(&db, "parc").await;
 
-        let registration = enrol(&db, &legacy("vieux-nas", Some("id-vieux")), token_id).await;
-        assert!(!registration.bound);
-        assert!(registration.issued_secret.is_none(), "un agent qui l'ignorerait n'en reçoit pas");
-
-        // Il continue de pousser, lot après lot.
-        let again = enrol(&db, &legacy("vieux-nas", Some("id-vieux")), token_id).await;
-        assert_eq!(again.target_id, registration.target_id);
-        assert!(!again.bound);
-
-        // Et le canal de commandes reste ouvert pour lui, faute de mieux.
-        assert_eq!(
-            authorise_key(&db.pool, "id-vieux", token_id, None).await.unwrap(),
-            KeyAuth::Allowed { target_id: registration.target_id, bound: false }
-        );
-
-        // Un autre jeton ne lui prend ni ses commandes, ni sa liaison.
-        let other = token(&db, "autre").await;
-        assert_eq!(
-            authorise_key(&db.pool, "id-vieux", other, None).await.unwrap(),
-            KeyAuth::Denied
-        );
-        let hijack =
-            register(&db.pool, &db.cipher, &identity("pirate", Some("id-vieux")), other, None)
+        let error =
+            register(&db.pool, &db.cipher, &legacy("vieux", Some("id-vieux")), token_id, None)
                 .await
-                .expect_err("un autre jeton ne lie pas une machine non liée");
-        assert!(matches!(hijack, RegisterError::BindingMismatch), "{hijack:?}");
+                .expect_err("un agent qui ne sait pas se lier n'entre plus");
+        assert!(matches!(error, RegisterError::AgentTooOld), "{error:?}");
+        // Rien n'a été créé, et le jeton n'a rien consommé.
+        assert!(db::targets::list(&db.pool, &db.cipher).await.unwrap().is_empty());
+        assert!(find_host(&db.pool, "id-vieux").await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn a_legacy_unbound_machine_is_refused_everywhere_until_re_enrolled() {
+        let db = setup().await;
+        let token_id = token(&db, "parc").await;
+        let target_id = legacy_host(&db, "vieux-nas", "id-vieux", token_id).await;
+
+        // Ni le binaire d'origine, ni un binaire à jour, même avec son propre jeton.
+        for agent in
+            [legacy("vieux-nas", Some("id-vieux")), identity("vieux-nas", Some("id-vieux"))]
+        {
+            let error = register(&db.pool, &db.cipher, &agent, token_id, None)
+                .await
+                .expect_err("une machine jamais liée est refusée");
+            assert!(matches!(error, RegisterError::NotBound), "{error:?}");
+        }
+        // Les commandes et le relais non plus.
+        assert_eq!(authorise_key(&db.pool, "id-vieux", None).await.unwrap(), KeyAuth::NotBound);
 
         // L'interface a de quoi dire quoi faire.
-        let info = host(&db.pool, registration.target_id).await.unwrap().expect("machine");
-        assert_eq!(info.binding_state(), "unsupported");
+        let info = host(&db.pool, target_id).await.unwrap().expect("machine");
+        assert_eq!(info.binding_state(), "unbound");
         assert!(!info.bound);
         assert!(info.bound_at.is_none());
+
+        // Fenêtre ouverte : un binaire trop ancien ne s'y lie toujours pas…
+        allow_rebind(&db.pool, target_id).await.unwrap().expect("fenêtre");
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &legacy("vieux-nas", Some("id-vieux")), token_id, None)
+                .await
+                .expect_err("trop ancien"),
+            RegisterError::AgentTooOld
+        ));
+        // … un binaire à jour, si : il reçoit son secret, et la fenêtre se referme.
+        let bound = enrol(&db, &identity("vieux-nas", Some("id-vieux")), token_id).await;
+        assert_eq!(bound.target_id, target_id);
+        assert!(bound.bound);
+        let secret = bound.issued_secret.expect("secret remis à la liaison");
+        assert_eq!(
+            authorise_key(&db.pool, "id-vieux", Some(&secret)).await.unwrap(),
+            KeyAuth::Allowed { target_id }
+        );
+        let info = host(&db.pool, target_id).await.unwrap().expect("machine");
+        assert_eq!(info.binding_state(), "bound");
+        assert!(info.rebind_until.is_none());
     }
 
     #[tokio::test]
-    async fn upgrading_the_agent_binds_the_machine_without_anyone_doing_anything() {
+    async fn a_legacy_machine_re_enrolled_with_another_token_needs_a_token_that_can_enrol() {
         let db = setup().await;
-        let token_id = token(&db, "parc").await;
-        let before = enrol(&db, &legacy("nas", Some("id-nas")), token_id).await;
-        assert!(!before.bound);
+        let own = token(&db, "parc").await;
+        let target_id = legacy_host(&db, "nas", "id-nas", own).await;
+        let (spent, _) =
+            create_token(&db.pool, "épuisé", TokenPolicy::default()).await.expect("création");
+        enrol(&db, &identity("autre", Some("id-autre")), spent.id).await;
 
-        // Le binaire est mis à jour : le premier lot suffit à lier la machine.
-        let after = enrol(&db, &identity("nas", Some("id-nas")), token_id).await;
-        assert_eq!(after.target_id, before.target_id);
-        assert!(after.bound);
-        let secret = after.issued_secret.clone().expect("secret remis à la liaison");
-
-        // À partir de là, plus personne d'autre ne passe.
+        allow_rebind(&db.pool, target_id).await.unwrap().expect("fenêtre");
         assert!(matches!(
-            register(&db.pool, &db.cipher, &identity("nas", Some("id-nas")), token_id, None)
+            register(&db.pool, &db.cipher, &identity("nas", Some("id-nas")), spent.id, None)
                 .await
-                .expect_err("liaison exigée"),
-            RegisterError::BindingMismatch
+                .expect_err("jeton épuisé"),
+            RegisterError::EnrolmentDenied(EnrolmentDenied::Exhausted)
         ));
-        assert!(
-            register(
-                &db.pool,
-                &db.cipher,
-                &identity("nas", Some("id-nas")),
-                token_id,
-                Some(&secret)
-            )
-            .await
-            .is_ok()
-        );
-        let info = host(&db.pool, before.target_id).await.unwrap().expect("machine");
-        assert_eq!(info.binding_state(), "bound");
-        assert!(info.bound_at.is_some());
+        let fresh = token(&db, "neuf").await;
+        assert!(enrol(&db, &identity("nas", Some("id-nas")), fresh).await.issued_secret.is_some());
     }
 
     #[tokio::test]
