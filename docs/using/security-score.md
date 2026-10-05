@@ -145,6 +145,36 @@ Sources: [Mozilla Server Side TLS](https://wiki.mozilla.org/Security/Server_Side
 [NIST SP 800-52 Rev. 2](https://csrc.nist.gov/pubs/sp/800/52/r2/final),
 [Let's Encrypt integration guide](https://letsencrypt.org/docs/integration-guide/).
 
+### NTP time servers
+
+| Check | Severity | Data |
+|---|---|---|
+| Server reports a synchronized clock | medium | stratum and leap indicator |
+| Clock offset within 100 ms | low | measured offset |
+
+A stratum of 16 (or 0, a "kiss-o'-death") and an "unsynchronized" leap
+indicator both fail the first check regardless of the offset: a server that
+has never synchronized has nothing trustworthy to offer. The 100 ms
+threshold is fixed here and does not follow the per-device "Tolerated
+offset" option, the same way the certificate check always warns at fourteen
+days regardless of a monitor's own settings.
+
+Source: [RFC 5905](https://www.rfc-editor.org/rfc/rfc5905).
+
+### Nginx and Apache httpd
+
+| Check | Severity | Data |
+|---|---|---|
+| Server header does not disclose the version | low | the `Server` response header captured alongside the status page |
+
+A header that still names the product ("nginx", "Apache") without a version
+number passes: that is what `server_tokens off` and `ServerTokens Prod`
+produce, and an absent header passes too. A header such as "nginx/1.25.3" or
+"Apache/2.4.58 (Unix)" fails: it tells a scanner exactly which CVEs to try.
+
+Sources: [Nginx core module reference](https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens),
+[Apache core module reference](https://httpd.apache.org/docs/2.4/mod/core.html#servertokens).
+
 ### Machines with the agent (and their Docker containers)
 
 | Check | Severity | Data |

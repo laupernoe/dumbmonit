@@ -1049,3 +1049,26 @@ left out. Set `PersistentKeepalive = 25` on the tunnels that must stay up
 **Alerts → Rules**, or remove the `and on (…)` part of its query to watch
 every peer. The device page shows a WireGuard panel with each peer, the time
 since its last handshake, its traffic and its keepalive.
+
+## TLS certificates (Certbot / Let's Encrypt)
+
+The agent does not read `/etc/letsencrypt` directly. Every certificate
+Certbot renews is served somewhere — a web server, a mail server, a reverse
+proxy — and that is where DumbMonit reads it: add a
+[TLS certificate](services.md#tls) monitor (or a
+[Website or web API](services.md#http) one, for a site already watched that
+way) pointed at the port the certificate is actually presented on. It reads
+the live certificate, not a file on disk, so it also catches a renewal that
+succeeded in `/etc/letsencrypt` but was never picked up by the service (a
+reverse proxy that needs a reload to see the new file is the usual case, and
+exactly the gap that matters).
+
+Reading `/etc/letsencrypt/live/*/cert.pem`, the renewal configuration and the
+Certbot log from the agent was considered and set aside: it would duplicate
+the expiry date the TLS monitor already reports, while adding a second,
+host-local path to the same information — one more thing to keep in sync
+after a certificate is moved or a domain renamed. A host where Certbot runs
+but serves nothing DumbMonit can reach directly (an internal CA step, a DNS
+validation hook) is the one case this leaves uncovered; it is also the case
+where a TLS monitor could not help either, since nothing on that host speaks
+TLS to probe.

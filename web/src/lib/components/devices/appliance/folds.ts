@@ -2,7 +2,7 @@
  * How each appliance's stored series become a panel: a verdict sentence, a
  * few figures and the lists worth reading. One fold per kind, all pure, all
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '$lib/api';
@@ -460,6 +460,66 @@ function sophos(series: MetricSeries[]): ApplianceView {
 	};
 }
 
+// --------------------------------------------------------------------- Nginx
+
+function nginx(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'nginx');
+	const active = single(ps, 'connections_active');
+	const reading = single(ps, 'connections_reading');
+	const writing = single(ps, 'connections_writing');
+	const waiting = single(ps, 'connections_waiting');
+	const versionInfo = ps.find((p) => p.name === 'version_info');
+	const upstreams: Row[] = [...byLabel(ps, 'plus_upstream_server_up', 'server').values()].map((p) => ({
+		key: `${p.labels.upstream}/${p.labels.server}`,
+		name: p.labels.server,
+		tone: p.value >= 1 ? 'signal' : 'warning',
+		plate: p.value >= 1 ? 'Up' : 'Down',
+		details: [p.labels.upstream]
+	}));
+	upstreams.sort((a, b) => Number(a.tone !== 'warning') - Number(b.tone !== 'warning') || byName(a, b));
+	const down = upstreams.filter((u) => u.tone === 'warning').length;
+	return {
+		title: 'Web server',
+		description: versionInfo ? `Nginx, ${versionInfo.labels.server}.` : 'Nginx, read through stub_status.',
+		verdict:
+			upstreams.length > 0
+				? verdict(down > 0 ? [{ text: `${plural(down, 'upstream server', 'upstream servers')} down`, severe: false }] : [], 'Every upstream server answers its health check.')
+				: { tone: 'signal', text: 'Reporting connections and requests.' },
+		figures: [
+			{ label: 'Active connections', value: active !== null ? String(active) : null },
+			{ label: 'Reading', value: reading !== null ? String(reading) : null },
+			{ label: 'Writing', value: writing !== null ? String(writing) : null },
+			{ label: 'Waiting', value: waiting !== null ? String(waiting) : null }
+		],
+		sections: upstreams.length > 0 ? [{ title: 'NGINX Plus upstream servers', rows: upstreams }] : []
+	};
+}
+
+// --------------------------------------------------------------------- Apache
+
+function apache(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'apache');
+	const busy = single(ps, 'workers_busy');
+	const idle = single(ps, 'workers_idle');
+	const reqPerSec = single(ps, 'requests_per_second');
+	const cpu = single(ps, 'cpu_load_ratio');
+	const versionInfo = ps.find((p) => p.name === 'version_info');
+	const total = busy !== null && idle !== null ? busy + idle : null;
+	const saturated = busy !== null && total !== null && total > 0 && busy / total >= 0.9;
+	return {
+		title: 'Web server',
+		description: versionInfo ? `Apache httpd, ${versionInfo.labels.version}.` : 'Apache httpd, read through mod_status.',
+		verdict: verdict(saturated ? [{ text: 'almost every worker is busy', severe: false }] : [], 'Worker capacity is not under pressure.'),
+		figures: [
+			{ label: 'Busy workers', value: busy !== null ? String(busy) : null, tone: saturated ? 'advisory' : 'ink' },
+			{ label: 'Idle workers', value: idle !== null ? String(idle) : null },
+			{ label: 'Requests/s', value: reqPerSec !== null ? reqPerSec.toFixed(2) : null },
+			{ label: 'CPU load', value: cpu !== null ? cpu.toFixed(2) : null, hint: "Apache's own CPULoad" }
+		],
+		sections: []
+	};
+}
+
 // --------------------------------------------------------------------- Hyper-V
 
 function hyperv(series: MetricSeries[]): ApplianceView {
@@ -525,5 +585,7 @@ export const FOLDS: Record<string, Fold> = {
 	tailscale: { prefix: 'tailscale', title: 'Tailnet', fold: tailscale },
 	fortigate: { prefix: 'fortigate', title: 'Firewall', fold: fortigate },
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
+	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },
+	apache: { prefix: 'apache', title: 'Web server', fold: apache },
 	hyperv: { prefix: 'hyperv', title: 'Hyper-V', fold: hyperv }
 };

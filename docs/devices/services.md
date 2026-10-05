@@ -1,13 +1,16 @@
-# Services: HTTP, TCP, DNS, ping, TLS, SMTP, SQL, MQTT, WebSocket
+# Services: HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket
 
-Ten monitors watch **services** rather than equipment, Uptime Kuma style: a web
-page, a port, a DNS name, a host, a certificate, a mail relay, a database, an
-MQTT broker, a WebSocket endpoint. Each service gets a history bar, a response
-time and an availability percentage on its device page.
+Eleven monitors watch **services** rather than equipment, Uptime Kuma style: a
+web page, a port, a DNS name, a host, a certificate, a time server, a mail
+relay, a database, an MQTT broker, a WebSocket endpoint. Each service gets a
+history bar, a response time and an availability percentage on its device
+page.
 
 The last five go further than opening a connection: they begin a real session in
 the service's own protocol. That is the difference between "port 5432 is open"
-and "the database still accepts my account and answers a query".
+and "the database still accepts my account and answers a query". NTP sits
+between the two: a single request and reply, in NTP's own protocol, enough to
+read the server's clock without a session.
 
 ## How service state works
 
@@ -26,7 +29,7 @@ Every monitor has its own timeout (`timeout_seconds`, 5 s by default, 60 s at
 most), shorter than the server's `DUMBMONIT_PROBE_TIMEOUT_SECS`: interrupted by
 the scheduler, it could not write its zero.
 
-Built-in rules that apply to all ten: Service down (3 minutes), Service
+Built-in rules that apply to all eleven: Service down (3 minutes), Service
 flapping (more than six state changes in thirty minutes), Slow service (more
 than 3 s for ten minutes). For every check that reads a certificate — `http`,
 `tls`, `smtp`, `mqtt`, `websocket`: Certificate expiring soon (14 days) and
@@ -571,9 +574,57 @@ the opening request) or a token (sent as `Authorization: Bearer`).
 | `protocol` | It answered `101` but its `Sec-WebSocket-Accept` does not match the key sent, it picked another subprotocol, or it closed the connection at once. |
 | `payload` | No frame arrived, or it does not contain the expected text. |
 
+## NTP
+
+**NTP time server** — sends a single SNTP request and reads the reply:
+offset, round-trip delay, stratum and leap indicator. Examples: a router or
+NAS acting as a local time server, an internal NTP server (chrony, ntpd), a
+public pool server used as a reference.
+
+### Setup
+
+1. In the address, write the server's name or IP address: "pool.ntp.org" or
+   "192.168.1.1". UDP port 123 is used unless the "Port" option says
+   otherwise.
+2. The check sends a single SNTP request and reads the reply: no state is
+   kept between polls, and nothing is written to the server.
+3. It records the offset between the server's clock and the DumbMonit host,
+   the round-trip delay, the stratum and the leap indicator.
+4. A server that answers stratum 16, or whose leap indicator reads
+   "unsynchronized", has never managed to synchronize: the check reports it
+   down whatever the offset.
+5. Lower "Tolerated offset" to be warned earlier than 100 ms; raise it for a
+   server several hops from a reference clock.
+
+!!! warning
+    The offset is only as good as the DumbMonit host's own clock: if that
+    host is not itself kept in sync (NTP, a hypervisor's time sync), the
+    measured offset reflects its drift as much as the server's.
+
+Credentials: none.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `port` | Port | `123` | UDP port of the NTP server. |
+| `offset_threshold_ms` | Tolerated offset (ms) | `100` | Above this clock offset, the server is reported down. An unsynchronized server (stratum 16) always fails, whatever this value. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `connect` | The UDP socket could not be opened, or the reply came from an unexpected address. |
+| `timeout` | No reply arrived within the timeout. |
+| `protocol` | The reply was not a valid NTP packet, or did not come from a server (wrong mode). |
+| `unsynchronized` | The server answered stratum 16 or 0 (a "kiss-o'-death", which also names the reason in the log), or its leap indicator reads "unsynchronized". |
+| `clock_offset` | The measured offset exceeds "Tolerated offset". |
+
 ## Addresses the checks refuse
 
-The checks that connect to an address you give them — HTTP, TCP, TLS, SMTP,
+The checks that connect to an address you give them — HTTP, TCP, TLS, NTP, SMTP,
 PostgreSQL, MySQL, MQTT, WebSocket — report what they see — which is also, word for word, what a server-side request
 forgery does. To keep a monitoring admin from reading services that only the
 DumbMonit host can reach (the embedded metrics database on `127.0.0.1:8428`,

@@ -998,6 +998,20 @@ const WEBSOCKET_OPTIONS: &[OptionView] = &[
     PROBE_TIMEOUT,
 ];
 
+/// Options lues par `collectors/uptime/ntp/options.rs`.
+const NTP_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "UDP port of the NTP server.", "123", "123"),
+    number(
+        "offset_threshold_ms",
+        "Tolerated offset (ms)",
+        "Above this clock offset, the server is reported down. An unsynchronized server (stratum 16) always fails, whatever this value.",
+        "100",
+        "100",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Identifiants d'un relais de messagerie ou d'un courtier MQTT.
 const APP_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
@@ -2572,6 +2586,81 @@ const CADDY_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
+/// `stub_status` et `mod_status` are not guarded by a password on a correctly
+/// filtered network : the usual setup is no credential at all.
+const WEB_SERVER_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "The status page is filtered so that only the DumbMonit host reaches it.",
+    fields: &[],
+};
+
+/// Un compte protégeant la page de statut par `basic_auth` (Nginx ou Apache).
+const WEB_SERVER_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Basic auth",
+    help: "If the status page sits behind a basic auth block or directive.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+/// Options lues par `collectors/nginx/mod.rs` et `observability/options.rs`.
+const NGINX_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The status page listens over plain HTTP unless Nginx gave it TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number("port", "Port", "Used if the address does not give a port.", "80", "80"),
+    text(
+        "status_path",
+        "Status path",
+        "Location where \"stub_status;\" was declared.",
+        "/basic_status",
+        "/basic_status",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+    boolean(
+        "plus_api",
+        "Read the NGINX Plus API",
+        "In addition to stub_status, read upstream health and server zone counters from NGINX Plus's API. No effect on the open-source build, which does not serve it.",
+        false,
+    ),
+    number(
+        "plus_api_version",
+        "NGINX Plus API version",
+        "Path segment of the API (\"/api/<version>/...\").",
+        "9",
+        "9",
+    ),
+];
+
+/// Options lues par `collectors/apache/mod.rs` et `observability/options.rs`.
+const APACHE_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "The status page listens over plain HTTP unless Apache gave it TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number("port", "Port", "Used if the address does not give a port.", "80", "80"),
+    text(
+        "status_path",
+        "Status path",
+        "Location where \"SetHandler server-status\" was declared, without the \"?auto\" query string: it is added automatically.",
+        "/server-status",
+        "/server-status",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
 /// Un utilisateur de Nginx Proxy Manager, qui se connecte par son adresse
 /// électronique (`collectors/npm`).
 const NPM_LOGIN: CredentialView = CredentialView {
@@ -3296,6 +3385,33 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 doc_url: "",
             },
             options: TLS_OPTIONS,
+        },
+        "ntp" => CollectorView {
+            kind: "ntp",
+            label: "NTP time server",
+            summary: "A time server answers SNTP with a sane clock: offset, delay, stratum and leap indicator.",
+            examples: &[
+                "A router or NAS acting as a local time server",
+                "An internal NTP server (chrony, ntpd)",
+                "A public pool server used as a reference",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "pool.ntp.org",
+            default_port: 123,
+            setup: Setup {
+                title: "Monitor an NTP server",
+                steps: &[
+                    "In the address, write the server's name or IP address: \"pool.ntp.org\" or \"192.168.1.1\". UDP port 123 is used unless the \"Port\" option says otherwise.",
+                    "The check sends a single SNTP request and reads the reply: no state is kept between polls, and nothing is written to the server.",
+                    "It records the offset between the server's clock and the DumbMonit host, the round-trip delay, the stratum and the leap indicator.",
+                    "A server that answers stratum 16, or whose leap indicator reads \"unsynchronized\", has never managed to synchronize: the check reports it down whatever the offset.",
+                    "Lower \"Tolerated offset\" to be warned earlier than 100 ms; raise it for a server several hops from a reference clock.",
+                ],
+                warning: "The offset is only as good as the DumbMonit host's own clock: if that host is not itself kept in sync (NTP, a hypervisor's time sync), the measured offset reflects its drift as much as the server's.",
+                doc_url: "",
+            },
+            options: NTP_OPTIONS,
         },
         "smtp" => CollectorView {
             kind: "smtp",
@@ -4032,6 +4148,51 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: CADDY_OPTIONS,
         },
+        "nginx" => CollectorView {
+            kind: "nginx",
+            label: "Nginx",
+            summary: "The web server and reverse proxy: active and waiting connections, the accept/handled/request rates, and upstream health when the commercial NGINX Plus API is available.",
+            examples: &["Nginx in Docker", "Nginx as a reverse proxy", "Nginx on a Linux host"],
+            credential_types: &["none", "username_password"],
+            credentials: &[WEB_SERVER_NO_AUTH, WEB_SERVER_LOGIN],
+            address_hint: "nginx.lan",
+            default_port: 80,
+            setup: Setup {
+                title: "Enable Nginx's stub_status module",
+                steps: &[
+                    "Nginx ships stub_status built in: it only needs a location that turns it on. Add this to the server block Nginx already serves (or to its own server block on a port of its own), then reload Nginx.\nlocation /basic_status {\nstub_status;\n}",
+                    "Restrict that location to the DumbMonit host, so no one else can read it; adjust the address to match.\nlocation /basic_status {\nstub_status;\nallow 10.0.0.5;\ndeny all;\n}\nnginx -s reload",
+                    "Check that it answers before configuring DumbMonit.\ncurl -s http://nginx.lan/basic_status",
+                    "In DumbMonit, enter the Nginx host, for example \"nginx.lan\", and the path if it is not \"/basic_status\". If NGINX Plus is installed, tick \"Read the NGINX Plus API\" to add upstream health and per-zone counters.",
+                ],
+                warning: "stub_status only counts connections and requests: a configuration error in a server block, or a backend nginx cannot reach, does not show here. The open-source build has no notion of \"upstream\": that only exists in NGINX Plus, read through its own API when enabled.",
+                doc_url: "https://nginx.org/en/docs/http/ngx_http_stub_status_module.html",
+            },
+            options: NGINX_OPTIONS,
+        },
+        "apache" => CollectorView {
+            kind: "apache",
+            label: "Apache httpd",
+            summary: "The web server: busy and idle workers, the worker scoreboard by state, and request/byte rates when ExtendedStatus is on.",
+            examples: &["Apache in Docker", "Apache on a Linux host", "A LAMP stack"],
+            credential_types: &["none", "username_password"],
+            credentials: &[WEB_SERVER_NO_AUTH, WEB_SERVER_LOGIN],
+            address_hint: "apache.lan",
+            default_port: 80,
+            setup: Setup {
+                title: "Enable Apache's mod_status",
+                steps: &[
+                    "Make sure mod_status is loaded (it ships with Apache and is usually enabled by default).\na2enmod status",
+                    "Add a status location, restricted to the DumbMonit host; adjust the address to match. On Debian and Ubuntu this goes in a file of its own, elsewhere in the main configuration.\n<Location \"/server-status\">\nSetHandler server-status\nRequire ip 10.0.0.5\n</Location>",
+                    "Turn on the request and byte counters (optional, but worth it): without it, only busy/idle workers and the scoreboard are reported.\nExtendedStatus On",
+                    "Reload Apache and check that it answers before configuring DumbMonit.\napachectl graceful\ncurl -s 'http://apache.lan/server-status?auto'",
+                    "In DumbMonit, enter the Apache host, for example \"apache.lan\", and the path if it is not \"/server-status\" (DumbMonit adds \"?auto\" itself).",
+                ],
+                warning: "Without ExtendedStatus, requests and bytes are not reported at all, not as zero: the chart stays empty rather than lying flat. Apache does not publish its own version in mod_status; DumbMonit reads it from the Server response header instead, which some distributions trim down on purpose.",
+                doc_url: "https://httpd.apache.org/docs/2.4/mod/mod_status.html",
+            },
+            options: APACHE_OPTIONS,
+        },
         "npm" => CollectorView {
             kind: "npm",
             label: "Nginx Proxy Manager",
@@ -4357,6 +4518,8 @@ mod tests {
         "crowdsec",
         "traefik",
         "caddy",
+        "nginx",
+        "apache",
         "npm",
         "domain",
         "kubernetes",
@@ -4372,6 +4535,7 @@ mod tests {
         "dns",
         "ping",
         "tls",
+        "ntp",
         "smtp",
         "postgres",
         "mysql",
@@ -4485,6 +4649,7 @@ mod tests {
                 ],
             ),
             ("tls", &["server_name", "insecure_tls", "allow_private_targets", "timeout_seconds"]),
+            ("ntp", &["port", "offset_threshold_ms", "allow_private_targets", "timeout_seconds"]),
             (
                 "smtp",
                 &[
@@ -4784,6 +4949,22 @@ mod tests {
             ("traefik", &["scheme", "port", "metrics", "insecure_tls", "request_timeout_seconds"]),
             ("caddy", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             (
+                "nginx",
+                &[
+                    "scheme",
+                    "port",
+                    "status_path",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "plus_api",
+                    "plus_api_version",
+                ],
+            ),
+            (
+                "apache",
+                &["scheme", "port", "status_path", "insecure_tls", "request_timeout_seconds"],
+            ),
+            (
                 "npm",
                 &[
                     "scheme",
@@ -5073,12 +5254,14 @@ mod tests {
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
         );
         assert_eq!(defaut("push", "grace"), crate::collectors::push::DEFAULT_GRACE);
-        // `collectors/{traefik,caddy,npm,domain}`.
-        use dumbmonit_collectors::{caddy, domain, npm, traefik};
+        // `collectors/{traefik,caddy,nginx,apache,npm,domain}`.
+        use dumbmonit_collectors::{apache, caddy, domain, nginx, npm, traefik};
         for (kind, port) in [
             ("traefik", traefik::DEFAULT_PORT),
             ("caddy", caddy::DEFAULT_PORT),
             ("npm", npm::DEFAULT_PORT),
+            ("nginx", nginx::DEFAULT_PORT),
+            ("apache", apache::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
             assert_eq!(describe(kind).default_port, port, "« {kind} »");
@@ -5097,6 +5280,19 @@ mod tests {
             domain::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
         );
         assert_eq!(defaut("dns", "alert_on_change"), "false");
+        // `collectors/nginx/mod.rs`.
+        assert_eq!(defaut("nginx", "status_path"), nginx::DEFAULT_STATUS_PATH);
+        assert_eq!(defaut("nginx", "plus_api"), "false");
+        assert_eq!(
+            defaut("nginx", "plus_api_version"),
+            nginx::DEFAULT_PLUS_API_VERSION.to_string()
+        );
+        // `collectors/apache/mod.rs`.
+        assert_eq!(defaut("apache", "status_path"), apache::DEFAULT_STATUS_PATH);
+        // `collectors/uptime/ntp/options.rs` : les sondes de disponibilité
+        // n'exportent pas leurs défauts (ils ne sont lus que par la notice).
+        assert_eq!(defaut("ntp", "port"), "123");
+        assert_eq!(defaut("ntp", "offset_threshold_ms"), "100");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -5316,6 +5512,8 @@ mod tests {
             ("crowdsec", include_str!("../../../../docs/devices/crowdsec.md")),
             ("traefik", include_str!("../../../../docs/devices/traefik.md")),
             ("caddy", include_str!("../../../../docs/devices/caddy.md")),
+            ("nginx", include_str!("../../../../docs/devices/nginx.md")),
+            ("apache", include_str!("../../../../docs/devices/apache.md")),
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
             ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),

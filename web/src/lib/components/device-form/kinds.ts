@@ -60,7 +60,8 @@ import {
 	BrickWallFire,
 	BrickWallShield,
 	CloudBackup,
-	RadioTower
+	RadioTower,
+	Clock
 } from 'lucide-svelte';
 import type { CollectorInfo } from '$lib/api';
 import { isPackKind } from '$lib/api/packs';
@@ -77,6 +78,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	dns: AtSign,
 	ping: Radio,
 	tls: ShieldCheck,
+	ntp: Clock,
 	smtp: Mail,
 	postgres: Database,
 	mysql: Database,
@@ -112,6 +114,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	crowdsec: ShieldAlert,
 	traefik: Waypoints,
 	caddy: Route,
+	nginx: Route,
+	apache: Route,
 	npm: Split,
 	domain: CalendarClock,
 	kubernetes: ShipWheel,
@@ -128,10 +132,10 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
 
 /** A domain's registration, read over RDAP: a service, polled rarely. */
 const DOMAIN_KIND = 'domain';
@@ -175,6 +179,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
 	traefik: 'reverse proxy router load balancer ingress docker kubernetes certificate acme lets encrypt 502 503',
 	caddy: 'reverse proxy web server upstream load balancer certificate acme lets encrypt 502 503',
+	nginx: 'web server reverse proxy stub_status nginx plus upstream connections requests',
+	apache: 'web server httpd apache2 mod_status workers scoreboard busy idle lamp',
 	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
 	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	kubernetes: 'k8s k3s k0s microk8s talos rke2 cluster container orchestration pod node deployment helm',
@@ -190,6 +196,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	dns: 'domain name resolve record',
 	ping: 'icmp host latency reachable packet loss',
 	tls: 'ssl certificate https expiry expiration',
+	ntp: 'time clock sync chrony ntpd stratum offset leap second sntp',
 	smtp: 'mail email relay postfix',
 	postgres: 'database db sql postgresql',
 	mysql: 'database db sql mariadb',
