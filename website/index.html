@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: dumb-simple monitoring for homelabs and small teams</title>
-<meta name="description" content="Self-hosted monitoring in one container: SNMP, Proxmox, Synology, TrueNAS, OPNsense, an agent for Linux and Windows, uptime checks and quiet alerts. Open source, Apache 2.0. Alpha.">
+<meta name="description" content="Self-hosted monitoring in one container: SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory, an agent for Linux and Windows, uptime checks and quiet alerts. Open source, Apache 2.0. Alpha.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -91,7 +91,7 @@
 					<img src="assets/shots/wall-light.webp" alt="Wall mode: the sentence '9 warnings, 7 advisories, 2 info.', readouts for reporting devices, alerts and forecasts, a stormy weather window with the pigeon, and the alerts that need you" width="1440" height="670" fetchpriority="high">
 				</picture>
 			</div>
-			<figcaption>The bulletin, on the wall screen of a test instance with failures switched on. On a quiet day it reads “Clear skies.”</figcaption>
+			<figcaption>The bulletin, on the wall screen of a test instance with failures switched on &mdash; the weather window is a living Paris rooftop with the pigeons. On a quiet day it reads “Clear skies.”</figcaption>
 		</figure>
 	</div>
 </section>
@@ -127,6 +127,7 @@
 					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Datacenter Manager <span class="plate plate-advisory">Test instance only</span></span><span class="what">Which clusters and backup servers the console still reaches, the whole estate on one page, failed tasks on every site.</span></li>
 					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Server hardware (Redfish) <span class="plate plate-advisory">Reference mockups only</span></span><span class="what">Fans, temperatures against the hardware's own thresholds, power supplies and redundancy, drives, memory, the event log. Checked against the DMTF mockups, not yet a real iDRAC, iLO or Supermicro board.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Machines with the agent</span><span class="what">Linux and Windows, with macOS and FreeBSD in preview. <a href="#agent">More below.</a></span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Active Directory</span><span class="what">A Windows domain over LDAP with a plain, unprivileged account: FSMO roles, privileged groups, and the facts a domain audit looks for first — Kerberoastable accounts, old krbtgt password, computers without LAPS.</span></li>
 				</ul>
 			</div>
 
@@ -134,7 +135,7 @@
 				<h3>Storage and backups</h3>
 				<ul class="faceplates">
 					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox Backup Server</span><span class="what">A 30-day backup calendar per machine, failed tasks with their logs, verify and GC jobs, datastore fill-up forecast.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Synology DSM</span><span class="what">Volumes, pools, disks and SMART, temperature, Hyper Backup and Active Backup for Business with the age of the last success.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Synology DSM</span><span class="what">Volumes, pools, disks and SMART, temperature, Hyper Backup and Active Backup for Business with the age of the last success, plus Drive and Photos package status.</span></li>
 					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">TrueNAS <span class="plate plate-advisory">Test instance only</span></span><span class="what">The pool that lost a disk and still serves data, with the disk named; scrubs, quotas, snapshots, replication, SMART.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Plakar backups</span><span class="what">Age and result of the last snapshot per repository, through the agent.</span></li>
 				</ul>
@@ -143,10 +144,13 @@
 			<div class="rack-group">
 				<h3>Services and applications</h3>
 				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Uptime checks</span><span class="what">HTTP(S) with status, keyword, JSON path and certificate; TCP port; DNS records; ping; TLS certificate expiry. History bar, response time, availability.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Uptime checks</span><span class="what">HTTP(S) with status, keyword, JSON path and certificate; TCP port; DNS records; ping; TLS certificate expiry; NTP offset and stratum. History bar, response time, availability.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Application sessions</span><span class="what">SMTP, PostgreSQL, MySQL and MariaDB, MQTT and WebSocket: a real login or handshake, so “up but refusing you” is not reported as “up”.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Heartbeats</span><span class="what">A cron job or backup script calls a secret URL; when it stops calling, you hear about it. Uptime Kuma push-compatible.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Docker containers</span><span class="what">State, health, restarts, image age and available updates, through the agent. Opt-in restart and update inside a maintenance window.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Website change detection</span><span class="what">Watch a page, or a whole site crawled from its sitemap, for changes in its visible text: before/after text, a line diff and, when available, screenshots.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">GitLab and Forgejo/Gitea</span><span class="what">Sidekiq queues, CI/CD runners, scheduled tasks and database migrations on a self-managed Git forge. An ordinary access token proves the instance is up.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Nginx and Apache</span><span class="what">Active/idle workers or connections, request and byte rates, through <code>stub_status</code> or <code>mod_status</code>. No account needed.</span></li>
 					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Mail Gateway <span class="plate plate-advisory">Test instance only</span></span><span class="what">Postfix queues and the oldest stuck message, mail filtered today, quarantine sizes, the age of antivirus and antispam signatures.</span></li>
 				</ul>
 			</div>
@@ -200,7 +204,7 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dependencies</strong><p>Declare a switch as the parent of what sits behind it. When it goes down you get one notification, not thirty; the others read “Suppressed by parent”.</p></li>
-					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation and acknowledgement (“I know, stop reminding me”) are built in.</p></li>
+					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation, acknowledgement, snooze, per-device ignore and clearing resolved history are all built in.</p></li>
 					<li><strong>Baselines that learn first</strong><p>Anomaly detection with no threshold to tune: 168 buckets, one per hour of the week. It stays silent for its first 14 days and only shows what it would have fired.</p></li>
 					<li><strong>Forecasts</strong><p>“This filesystem will be full within four days” is listed as a forecast, apart from what is broken right now.</p></li>
 					<li><strong>Maintenance and a notification policy</strong><p>One-off or weekly windows, hysteresis, flap hold, quiet hours, batching and an hourly cap, so a bad night does not become two hundred pushes.</p></li>
@@ -270,8 +274,9 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			</div>
 			<div>
 				<ul class="points">
-					<li><strong>Wall mode</strong><p>The bulletin alone, full screen, for a room monitor. It keeps the screen awake.</p></li>
-					<li><strong>Accounts</strong><p>Admin and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…).</p></li>
+					<li><strong>Wall mode</strong><p>The bulletin alone, full screen, for a room monitor: a living Paris rooftop with the Eiffel Tower and the DumbMonit pigeons, an OLED theme for a screen left on for days, and wall music &mdash; Spotify Connect turns the screen into a speaker.</p></li>
+					<li><strong>Security score</strong><p>Every supported device gets a 0–100 score and an A–F grade from the vendor’s own best-practice checks, PingCastle-style: category, severity, evidence, remediation, and a worst-first Security page.</p></li>
+					<li><strong>Accounts</strong><p>Admin and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), account creation off by default.</p></li>
 					<li><strong>Plays well with what you run</strong><p><code>/metrics</code>, <code>/federate</code> and a Prometheus-compatible endpoint let an existing Grafana read DumbMonit's data.</p></li>
 					<li><strong>Open, documented API</strong><p>Every route behind <code>/api/openapi.json</code> (OpenAPI 3.1): scoped tokens (<code>dmt_…</code>, read or write) that can expire, be restricted to a network, and are rate-limited. <a href="https://dumbmonit.readthedocs.io/en/latest/reference/api/">API reference</a></p></li>
 					<li><strong>An assistant over MCP</strong><p>27 tools for Claude Code, Claude Desktop, ChatGPT, VS Code or Cursor: read status, devices, alerts, metrics and agents; a write token can also silence, acknowledge, add a device or restart a container. Secrets never come back. <a href="https://dumbmonit.readthedocs.io/en/latest/using/assistant/">Connect an assistant</a></p></li>
