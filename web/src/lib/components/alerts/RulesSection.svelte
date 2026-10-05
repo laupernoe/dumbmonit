@@ -173,6 +173,11 @@
 		return () => controller.abort();
 	});
 
+	/** Devices where this rule has been told "don't alert me about this again". */
+	function ignoredCount(rule: AlertRule): number {
+		return rule.overrides.filter((o) => o.enabled === false).length;
+	}
+
 	/** "All enabled channels" / "Telegram, Email" for the row summary. */
 	function channelsLabel(rule: AlertRule): string {
 		if (rule.channels.length === 0) return 'all enabled channels';
@@ -351,6 +356,7 @@
 
 {#snippet row(rule: AlertRule, i: number)}
 	{@const firing = firingByRule.get(rule.uid) ?? 0}
+	{@const ignored = ignoredCount(rule)}
 	{@const editing = editingId === rule.id}
 	{@const showQuery = shownQueryIds.has(rule.id)}
 	<div
@@ -367,6 +373,9 @@
 					{/if}
 					{#if firing > 0}
 						<Plate tone="warning" label={`${firing} firing now`} pulse />
+					{/if}
+					{#if ignored > 0}
+						<Plate tone="ghost" label={`Ignored on ${ignored} device${ignored > 1 ? 's' : ''}`} bare />
 					{/if}
 					{#if savedId === rule.id}
 						<Plate tone="signal" label="Saved" bare />

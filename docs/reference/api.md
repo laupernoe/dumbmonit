@@ -542,7 +542,9 @@ a firewall, since they carry every measurement of every device.
 | Method | Route | Purpose |
 |---|---|---|
 | `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused devices are never listed. |
-| `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200` | Phase transitions. `since` is RFC 3339, default the last seven days; `limit` must be positive. |
+| `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Phase transitions. `since` is RFC 3339, default the last seven days; `limit` must be positive. `dismissed` (default `false`) excludes entries cleared with the two routes below; nothing is ever destroyed by a clear, only hidden from the default view. |
+| `POST` | `/api/alerts/history/{id}/dismiss` | Clears one `resolved` entry from the default history view. `204`. `404` on an unknown id or a still-active transition. Admin only; audited. |
+| `POST` | `/api/alerts/history/dismiss-resolved` | Clears every not-yet-cleared `resolved` entry at once ("Clear all resolved"). Returns `{"dismissed": <count>}`. Admin only; audited. |
 | `POST` | `/api/alerts/{fingerprint}/ack` | Acknowledge: `{"duration_secs": 14400, "note": "…"}` or `{"until": "2026-09-22T18:00:00Z"}` (one of the two; neither means 4 hours, at most 30 days). `{"until": null}` lifts it. Returns the alert. Admin only; audited. |
 | `DELETE` | `/api/alerts/{fingerprint}/ack` | Lift the acknowledgement. Returns the alert. |
 
@@ -581,7 +583,8 @@ A history entry has `id`, `fingerprint`, `rule_uid`, `target_id`,
 `from_phase`, `to_phase`, `severity`, `value`, `notified`, `reason` (empty, or
 why nothing was sent: `learning: would have fired`, `suppressed: device 2
 unreachable`, `maintenance window`, `acknowledged by admin`, `device removed
-or disabled`) and `at`. `acked` is true while `acked_until` is in the future:
+or disabled`), `at` and `dismissed` (cleared from the active view; the row
+itself is kept). `acked` is true while `acked_until` is in the future:
 reminders and escalations pause, the resolution is still notified and clears
 the acknowledgement.
 A `target_id` that no longer exists is shown as "(deleted device)" by the UI.
@@ -654,6 +657,9 @@ is refused.
 ### Per-device overrides
 
 A rule can be tuned for one device without touching the rule itself.
+`{"enabled": false}` is what the UI's **Ignore** action (on the alert, the
+device page or the rule) writes: the device is dropped from this one rule for
+good, reversibly, without disabling the rule for anyone else.
 
 | Method | Route | Purpose |
 |---|---|---|

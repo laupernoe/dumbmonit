@@ -82,6 +82,8 @@ export interface Sky {
 		suppressed: number;
 		/** Firing alerts someone has acknowledged: known, reminders paused. */
 		acked: number;
+		/** Firing or building-up alerts a maintenance window is quieting, unacked. */
+		snoozed: number;
 	};
 }
 
@@ -115,11 +117,12 @@ function count(n: number, one: string, many = `${one}s`): string {
 
 /**
  * Sort key for a firing alert: warnings first, then advisories, then info.
- * An acknowledged alert reads last — someone already knows — even below the
- * suppressed ones, and the list gathers those rows under their own heading.
+ * A snoozed alert reads below those, an acknowledged one last of all — someone
+ * already knows — and the list gathers both kinds under their own heading.
  */
 function alertRank(alert: Alert): number {
-	if (alert.acked) return 5;
+	if (alert.acked) return 6;
+	if (alert.silenced) return 5;
 	if (alert.effective_phase === 'suppressed') return 4;
 	if (alert.effective_phase === 'pending') return 3;
 	return severityRank(alert.severity);
@@ -128,6 +131,15 @@ function alertRank(alert: Alert): number {
 /** True for a row the "Needs you" list files under "Acknowledged". */
 export function isAckedRow(row: SkyRow): boolean {
 	return row.kind === 'alert' && row.alert.acked;
+}
+
+/**
+ * True for a row filed under "Snoozed": a maintenance window (quick or
+ * scheduled) currently covers it. An acknowledged alert wins the "Acked"
+ * heading instead — the two never show twice.
+ */
+export function isSnoozedRow(row: SkyRow): boolean {
+	return row.kind === 'alert' && row.alert.silenced && !row.alert.acked;
 }
 
 export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
@@ -177,12 +189,13 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 	for (const alert of [...firing, ...pending, ...suppressed]) {
 		const isPending = alert.effective_phase === 'pending';
 		const isSuppressed = alert.effective_phase === 'suppressed';
+		const isSnoozed = alert.silenced && !alert.acked;
 		rows.push({
 			kind: 'alert',
 			key: `alert:${alert.fingerprint}`,
 			rank: alertRank(alert),
 			tone:
-				alert.acked || isSuppressed
+				alert.acked || isSnoozed || isSuppressed
 					? 'muted'
 					: alert.learning
 						? 'info'
@@ -191,13 +204,15 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 							: severityTone(alert.severity),
 			plate: alert.acked
 				? 'Acked'
-				: isSuppressed
-					? 'Suppressed by parent'
-					: alert.learning
-						? 'Learning'
-						: isPending
-							? 'Building up'
-							: severityWord(alert.severity),
+				: isSnoozed
+					? 'Snoozed'
+					: isSuppressed
+						? 'Suppressed by parent'
+						: alert.learning
+							? 'Learning'
+							: isPending
+								? 'Building up'
+								: severityWord(alert.severity),
 			alert,
 			rule: rulesMap.get(alert.rule_uid),
 			target: alert.target_id !== null ? targetsMap.get(alert.target_id) : undefined,
@@ -221,7 +236,8 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 		notices: firing.filter((alert) => alert.severity === 'info').length,
 		buildingUp: pending.length,
 		suppressed: suppressed.length,
-		acked: [...firing, ...pending].filter((alert) => alert.acked).length
+		acked: [...firing, ...pending].filter((alert) => alert.acked).length,
+		snoozed: [...firing, ...pending].filter((alert) => alert.silenced && !alert.acked).length
 	};
 
 	const forecasts = [...firing, ...pending].filter((alert) =>
@@ -256,10 +272,13 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 		plates.push({ tone: 'muted', label: `${counts.suppressed} suppressed by parent` });
 	}
 	if (counts.acked > 0) plates.push({ tone: 'muted', label: `${counts.acked} acknowledged` });
+	if (counts.snoozed > 0) plates.push({ tone: 'muted', label: `${counts.snoozed} snoozed` });
 
-	// Acknowledged alerts stay in the counts (the sky is honest about the
-	// weather) but leave the "Needs you" readout: someone already knows.
+	// Acknowledged and snoozed alerts stay in the counts (the sky is honest
+	// about the weather) but leave the "Needs you" readout: someone already
+	// knows, or asked not to be told again just yet.
 	const ackedFiring = firing.filter((alert) => alert.acked).length;
+	const snoozedFiring = firing.filter((alert) => alert.silenced && !alert.acked).length;
 
 	return {
 		sentence,
@@ -269,7 +288,8 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 			counts.warnings +
 			counts.advisories +
 			counts.notices -
-			ackedFiring +
+			ackedFiring -
+			snoozedFiring +
 			unreachableRows +
 			misconfiguredRows,
 		forecasts,
