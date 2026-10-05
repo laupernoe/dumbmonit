@@ -24,6 +24,9 @@ const DEFAULT_INTERVAL_SECS: u64 = 60;
 const MAX_NAME_CHARS: usize = 200;
 /// Longueur maximale d'une adresse : celle d'un nom d'hôte DNS complet.
 const MAX_ADDRESS_CHARS: usize = 253;
+/// Longueur maximale d'un nom de dossier, comme pour le groupe d'une page de
+/// statut (même usage, même limite).
+const MAX_GROUP_NAME_CHARS: usize = 60;
 
 /// Représentation d'une cible renvoyée par l'API.
 ///
@@ -44,6 +47,11 @@ pub struct TargetView {
     pub enabled: bool,
     pub tags: BTreeMap<String, String>,
     pub credential_kind: String,
+    /// Dossier plat et libre, affiché sur `/targets`. Vide : aucun dossier.
+    pub group_name: String,
+    /// Rang manuel (drag, Haut/Bas), départagé par l'interface seulement entre
+    /// cibles de même état et de même dossier.
+    pub position: i64,
     pub last_probe_at: Option<String>,
     pub last_error: Option<String>,
     /// Nature de `last_error` : `down` (équipement injoignable) ou `config`
@@ -79,6 +87,8 @@ impl TargetView {
             enabled: target.enabled,
             tags: target.tags,
             credential_kind: target.credential.kind_label().to_string(),
+            group_name: target.group_name,
+            position: target.position,
             last_probe_at,
             last_error,
             error_kind,
@@ -111,6 +121,9 @@ pub struct TargetPayload {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub tags: BTreeMap<String, String>,
+    /// Dossier plat et libre ; absent ou vide signifie « aucun dossier ».
+    #[serde(default)]
+    pub group_name: String,
     /// Absent lors d'une modification signifie « conserver le secret enregistré ».
     ///
     /// Renommer une cible ou changer sa période est bien plus fréquent que changer
@@ -150,6 +163,13 @@ impl TargetPayload {
                 "Unknown device type \"{}\" (available: {})",
                 self.kind,
                 state.collectors.kinds().join(", ")
+            )));
+        }
+
+        let group_name = self.group_name.trim().to_string();
+        if group_name.chars().count() > MAX_GROUP_NAME_CHARS {
+            return Err(ApiError::BadRequest(format!(
+                "The folder name must be at most {MAX_GROUP_NAME_CHARS} characters."
             )));
         }
 
@@ -208,6 +228,7 @@ impl TargetPayload {
             interval: Duration::from_secs(interval_secs),
             enabled: self.enabled.unwrap_or(true),
             tags: self.tags,
+            group_name,
             credential: self.credential,
         })
     }
@@ -295,6 +316,27 @@ pub async fn update(
     crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     Ok(Json(TargetView::new(target, status)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReorderPayload {
+    /// Identifiants dans l'ordre d'affichage voulu. Seules les cibles listées
+    /// voient leur rang réécrit (0, 1, 2…) : une réorganisation locale (un
+    /// dossier, un bouton Haut/Bas) n'a pas besoin de connaître le rang des
+    /// autres cibles.
+    pub order: Vec<TargetId>,
+}
+
+/// Réordonne un lot de cibles — drag-and-drop ou boutons Haut/Bas sur `/targets`.
+pub async fn reorder(
+    State(state): State<AppState>,
+    Json(payload): Json<ReorderPayload>,
+) -> ApiResult<StatusCode> {
+    if payload.order.is_empty() {
+        return Err(ApiError::BadRequest("The order list cannot be empty.".into()));
+    }
+    db::targets::reorder(&state.pool, &payload.order).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn delete(

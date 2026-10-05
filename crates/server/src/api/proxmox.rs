@@ -902,6 +902,8 @@ mod tests {
             enabled: true,
             tags: BTreeMap::new(),
             credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
         };
         assert_eq!(lookback(&target), 300, "jamais moins de cinq minutes");
         target.interval = std::time::Duration::from_secs(600);

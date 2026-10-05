@@ -1035,6 +1035,7 @@ mod tests {
             enabled: true,
             tags: Default::default(),
             credential: None,
+            group_name: String::new(),
         };
         let silent = crate::db::targets::create(&pool, &cipher, &input("silent")).await.unwrap();
         let broken = crate::db::targets::create(&pool, &cipher, &input("broken")).await.unwrap();

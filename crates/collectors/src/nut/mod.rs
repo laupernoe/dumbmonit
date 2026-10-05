@@ -280,6 +280,8 @@ mod tests {
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect::<BTreeMap<_, _>>(),
             credential,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

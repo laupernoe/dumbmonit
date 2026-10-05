@@ -282,6 +282,8 @@ mod tests {
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect::<BTreeMap<_, _>>(),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 
@@ -384,6 +386,7 @@ mod tests {
                 enabled: true,
                 tags: Default::default(),
                 credential: None,
+                group_name: String::new(),
             },
         )
         .await

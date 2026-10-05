@@ -306,6 +306,8 @@ mod tests {
                 enabled: true,
                 tags: Default::default(),
                 credential: crate::Credential::ApiToken { token: "s3cr3t".into() },
+                group_name: String::new(),
+                position: 0,
             },
             timeout_secs: 10,
             discover: false,

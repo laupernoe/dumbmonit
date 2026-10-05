@@ -786,6 +786,35 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/targets/reorder:
+    post:
+      operationId: reorderTargets
+      tags: [Devices]
+      summary: Reorder devices
+      description: >-
+        Sets the manual rank of each listed device to its index in `order`
+        (0, 1, 2…). Devices left out keep their rank: a local reorder (one
+        folder, one Up/Down click) does not need to know every other device's
+        rank — `/targets` only ever compares rank between devices of the same
+        state tier and folder.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order]
+              properties:
+                order:
+                  type: array
+                  items: { type: integer, format: int64 }
+      responses:
+        "204": { description: Devices reordered. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -4033,6 +4062,7 @@ components:
         choices:
           type: array
           items: { type: string }
+        group: { type: string, description: "Sub-heading under \"More options\"; empty: the UI falls back to a generic key-prefix heuristic." }
     CredentialDescription:
       type: object
       properties:
@@ -4118,6 +4148,8 @@ components:
           type: object
           additionalProperties: { type: string }
         credential_kind: { type: string, description: A label — the secret itself is never returned. }
+        group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
+        position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
@@ -4143,6 +4175,7 @@ components:
           type: object
           description: Type options go here under their key.
           additionalProperties: { type: string }
+        group_name: { type: string, description: "Flat folder shown on `/targets`. Absent or empty: no folder." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'

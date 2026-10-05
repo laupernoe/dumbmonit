@@ -3,9 +3,10 @@
 	 * Overview — a briefing from the pigeon, not a dashboard.
 	 *
 	 * The sky says how things are right now; "Since you last looked" tells
-	 * what happened while you were away, in sentences; "The week ahead" places
-	 * what is due on its day; "Needs you" lays out what to act on as tiles;
-	 * "Last 7 days" reads three figures off the week's alert history (how long
+	 * what happened while you were away, in sentences; "Needs you" lays out
+	 * what to act on as tiles; "The week ahead" places what is due on its day
+	 * (a quiet week shrinks to one line, no section of its own); "Last 7 days"
+	 * reads three figures off the week's alert history (how long
 	 * everything has been reporting, the quietest device, the one with the most
 	 * alert events). The last visit lives in the browser, so the story starts
 	 * where the reader left it.
@@ -451,14 +452,8 @@
 			<Briefing sentences={briefing} />
 		</section>
 
-		<!-- The week ahead -->
-		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
-			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">The week ahead</h2>
-			<WeekAhead {week} />
-		</section>
-
 		<!-- Needs you -->
-		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
+		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
 			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">Needs you</h2>
 			{#if silenceError}
 				<p class="mb-3 text-[0.8125rem] text-warning-ink" role="alert" aria-live="polite">
@@ -474,6 +469,18 @@
 				onackchange={() => void alertsStore.refresh()}
 			/>
 		</section>
+
+		<!-- The week ahead: a full section when something is due; otherwise one quiet line, no heading or chrome. -->
+		{#if week.empty}
+			<div class="rise-in mt-6 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
+				<WeekAhead {week} />
+			</div>
+		{:else}
+			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
+				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">The week ahead</h2>
+				<WeekAhead {week} />
+			</section>
+		{/if}
 
 		<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
 		{#if streaks.length > 0}
