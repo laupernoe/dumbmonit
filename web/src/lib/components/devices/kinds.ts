@@ -56,6 +56,7 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	jellyfin: () => import('./selfhosted/SelfHostedPanel.svelte'),
 	plex: () => import('./selfhosted/SelfHostedPanel.svelte'),
 	kubernetes: () => import('./kubernetes/KubernetesPanel.svelte'),
+	activedirectory: () => import('./activedirectory/ActiveDirectoryPanel.svelte'),
 	pfsense: () => import('./appliance/AppliancePanel.svelte'),
 	unraid: () => import('./appliance/AppliancePanel.svelte'),
 	veeam: () => import('./appliance/AppliancePanel.svelte'),
