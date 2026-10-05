@@ -21,7 +21,7 @@
 	let { title, description, icon: Icon, mascot, action, tone = 'ghost', class: className = '' }: Props = $props();
 </script>
 
-<div class={`ghost-cell flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center ${className}`}>
+<div class={`ghost-cell rise-in flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center ${className}`}>
 	{#if mascot}
 		<Mascot mood={mascot} class="mb-4 size-[4.5rem]" />
 	{:else if Icon}

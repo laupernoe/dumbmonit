@@ -8,7 +8,7 @@
 	import type { Target } from '$lib/api';
 	import type { TargetState } from '$lib/format';
 	import { STATE_LABEL, STATE_TONE, formatRelative } from '$lib/format';
-	import { Led, Plate, Spotlight } from '$lib/ui';
+	import { Led, Plate, Spotlight, Tilt } from '$lib/ui';
 	import Chart, { type Serie } from './Chart.svelte';
 	import { ChevronRight, CornerDownRight } from 'lucide-svelte';
 
@@ -36,12 +36,17 @@
 	const plateTone = $derived(tone === 'signal' ? 'signal' : tone === 'warning' ? 'warning' : tone === 'advisory' ? 'advisory' : 'ghost');
 </script>
 
+<Tilt
+	tag="div"
+	class="block"
+	maxTilt={3}
+	style={depth ? `margin-left: ${Math.min(depth, 3) * 1.25}rem` : undefined}
+>
 <Spotlight
 	tag="a"
 	href={`/targets/${target.id}`}
 	class={`faceplate @container block ${shadowed ? 'opacity-60' : ''}`}
 	data-interactive
-	style={depth ? `margin-left: ${Math.min(depth, 3) * 1.25}rem` : undefined}
 	aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 >
 	<div class={`flex items-center gap-3 ${compact ? 'px-3 py-2.5' : 'px-4 py-3'}`}>
@@ -104,3 +109,4 @@
 		<ChevronRight class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 	</div>
 </Spotlight>
+</Tilt>
