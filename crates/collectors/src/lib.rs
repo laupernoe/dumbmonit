@@ -82,7 +82,8 @@ pub use rabbitmq::RabbitmqCollector;
 pub use redfish::RedfishCollector;
 pub use redis::RedisCollector;
 pub use selfhosted::{
-    ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
+    ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector,
 };
 pub use snmp::SnmpCollector;
 pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
@@ -147,6 +148,8 @@ impl Registry {
         registry.register(Arc::new(PaperlessCollector::new()));
         registry.register(Arc::new(JellyfinCollector::new()));
         registry.register(Arc::new(PlexCollector::new()));
+        registry.register(Arc::new(GitlabCollector::new()));
+        registry.register(Arc::new(ForgejoCollector::new()));
         registry.register(Arc::new(PiholeCollector::new()));
         registry.register(Arc::new(AdguardCollector::new()));
         registry.register(Arc::new(NutCollector::new()));

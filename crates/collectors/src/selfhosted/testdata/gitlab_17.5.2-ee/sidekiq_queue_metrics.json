@@ -1,0 +1,16 @@
+{
+  "queues": {
+    "default": {
+      "backlog": 0,
+      "latency": 0
+    },
+    "mailers": {
+      "backlog": 0,
+      "latency": 0
+    },
+    "post_receive": {
+      "backlog": 842,
+      "latency": 311
+    }
+  }
+}
