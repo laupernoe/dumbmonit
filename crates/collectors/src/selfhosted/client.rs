@@ -82,6 +82,55 @@ impl HttpClient {
         self.decode(&body, path)
     }
 
+    /// Comme [`Self::get_json`], mais un corps JSON est accepté même sur un
+    /// code d'erreur générique (GitLab répond 503 sur `/-/readiness` quand un
+    /// composant est en échec, Forgejo 424 sur `/api/healthz` : le détail est
+    /// dans le corps, pas seulement dans le code). Un refus d'authentification
+    /// ou une route absente restent des erreurs.
+    pub async fn get_json_even_on_error<T: DeserializeOwned>(
+        &self,
+        path: &str,
+    ) -> Result<T, ProbeError> {
+        let (status, body) = self.get(path).await?;
+        if matches!(
+            status,
+            StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN | StatusCode::NOT_FOUND
+        ) {
+            return Err(self.status_error(status, &body, path));
+        }
+        self.decode(&body, path)
+    }
+
+    /// Le nombre total d'éléments d'une liste paginée, lu dans l'en-tête
+    /// `X-Total-Count` (convention de Gitea et Forgejo). `None` si l'appel a
+    /// échoué ou si l'en-tête manque (route non admin, ancienne version).
+    pub async fn get_total_count(&self, path: &str) -> Result<Option<f64>, ProbeError> {
+        let mut request =
+            self.http.get(self.url(path)).header(reqwest::header::ACCEPT, "application/json");
+        for (name, value) in &self.auth.headers {
+            request = request.header(*name, value);
+        }
+        if let Some((username, password)) = &self.auth.basic {
+            request = request.basic_auth(username, Some(password));
+        }
+        let response = request
+            .timeout(self.timeout)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error, path))?;
+        let status = response.status();
+        let total = response
+            .headers()
+            .get("x-total-count")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.parse::<f64>().ok());
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(self.status_error(status, &body, path));
+        }
+        Ok(total)
+    }
+
     /// Désérialise un corps déjà lu, avec un message qui dit qui a répondu.
     pub fn decode<T: DeserializeOwned>(&self, body: &str, path: &str) -> Result<T, ProbeError> {
         serde_json::from_str(body).map_err(|error| {

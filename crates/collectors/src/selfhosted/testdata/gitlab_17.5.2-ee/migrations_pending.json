@@ -1,0 +1,12 @@
+{
+  "pending_migrations": [
+    {
+      "version": 20260815120000,
+      "name": "add_index_to_issues_on_namespace_id",
+      "filename": "20260815120000_add_index_to_issues_on_namespace_id.rb",
+      "status": "pending"
+    }
+  ],
+  "database": "main",
+  "total_pending": 1
+}

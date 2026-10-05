@@ -3132,6 +3132,96 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_plex_update_available",
             )
         },
+        // GitLab (`collectors/selfhosted/gitlab.rs`) : l'indisponibilité pure
+        // relève déjà de « Équipement injoignable », la version lue par le
+        // premier appel suffisant à faire échouer la sonde si l'instance ne
+        // répond plus.
+        Rule {
+            description: "Every CI/CD runner GitLab knows is offline: no pipeline can run.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "gitlab_runners_all_offline",
+                "GitLab runners all offline",
+                RuleKind::Threshold,
+                "dumbmonit_gitlab_runners_online and on (target) dumbmonit_gitlab_runners_total > 0",
+            )
+        },
+        Rule {
+            description: "A Sidekiq queue has over 500 jobs waiting: notifications, webhooks and imports fall behind.".to_string(),
+            operator: Operator::Gt,
+            threshold: 500.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "gitlab_sidekiq_backlog_high",
+                "GitLab Sidekiq backlog high",
+                RuleKind::Threshold,
+                "max by (target) (dumbmonit_gitlab_sidekiq_queue_backlog)",
+            )
+        },
+        Rule {
+            description: "GitLab has database migrations left to apply after an upgrade.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "gitlab_migrations_pending",
+                "GitLab migrations pending",
+                RuleKind::Threshold,
+                "dumbmonit_gitlab_migrations_pending",
+            )
+        },
+        Rule {
+            description: "The GitLab license expires in less than 30 days.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "gitlab_license_expiring",
+                "GitLab license expiring",
+                RuleKind::Threshold,
+                "dumbmonit_gitlab_license_expiry_seconds",
+            )
+        },
+        // Forgejo et Gitea (`collectors/selfhosted/forgejo.rs`).
+        Rule {
+            description: "Every Actions runner Forgejo or Gitea knows is offline: no workflow can run.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "forgejo_runners_all_offline",
+                "Forgejo/Gitea runners all offline",
+                RuleKind::Threshold,
+                "dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0",
+            )
+        },
+        Rule {
+            description: "A scheduled task (repository check, cleanup, update checker) did not run at its own interval.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "forgejo_cron_task_overdue",
+                "Forgejo/Gitea scheduled task overdue",
+                RuleKind::Threshold,
+                "dumbmonit_forgejo_cron_task_overdue",
+            )
+        },
         // --- fin du bloc applications auto-hébergées ---
 
         // Appareils clients (`collectors/client_devices.rs`) : la même règle
@@ -5687,6 +5777,12 @@ mod tests {
             "jellyfin_plugin_broken",
             "jellyfin_restart_pending",
             "plex_update_available",
+            "gitlab_runners_all_offline",
+            "gitlab_sidekiq_backlog_high",
+            "gitlab_migrations_pending",
+            "gitlab_license_expiring",
+            "forgejo_runners_all_offline",
+            "forgejo_cron_task_overdue",
             // Pi-hole (`collectors/pihole`).
             "pihole_blocking_disabled",
             "pihole_gravity_stale",
@@ -6083,6 +6179,14 @@ mod tests {
             "dumbmonit_jellyfin_plugins_broken",
             "dumbmonit_jellyfin_pending_restart",
             "dumbmonit_plex_update_available",
+            "dumbmonit_gitlab_runners_online",
+            "dumbmonit_gitlab_runners_total",
+            "dumbmonit_gitlab_sidekiq_queue_backlog",
+            "dumbmonit_gitlab_migrations_pending",
+            "dumbmonit_gitlab_license_expiry_seconds",
+            "dumbmonit_forgejo_runners_online",
+            "dumbmonit_forgejo_runners_total",
+            "dumbmonit_forgejo_cron_task_overdue",
             // UniFi, Home Assistant, vSphere (`collectors/{unifi,homeassistant,vsphere}`).
             "dumbmonit_unifi_device_up",
             "dumbmonit_unifi_internet_up",

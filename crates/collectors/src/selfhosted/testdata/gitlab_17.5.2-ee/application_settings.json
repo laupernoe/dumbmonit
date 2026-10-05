@@ -1,0 +1,9 @@
+{
+  "id": 1,
+  "signup_enabled": false,
+  "require_two_factor_authentication": true,
+  "two_factor_grace_period": 48,
+  "password_authentication_enabled_for_web": true,
+  "created_at": "2024-02-01T09:00:00.000Z",
+  "updated_at": "2026-09-30T18:12:04.000Z"
+}

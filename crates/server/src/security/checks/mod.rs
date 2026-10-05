@@ -8,6 +8,8 @@
 pub mod activedirectory;
 pub mod agent;
 pub mod firewall;
+pub mod forgejo;
+pub mod gitlab;
 pub mod pbs;
 pub mod proxmox;
 pub mod synology;
@@ -31,6 +33,8 @@ pub fn all_defs() -> Vec<&'static CheckDef> {
         agent::DEFS,
         updates::DEFS,
         activedirectory::DEFS,
+        gitlab::DEFS,
+        forgejo::DEFS,
     ]
     .concat()
 }

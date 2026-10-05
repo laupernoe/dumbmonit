@@ -50,6 +50,8 @@ form always matches what this version can monitor.
 | [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |
 | [Jellyfin](jellyfin.md) | `jellyfin` | API key | Media server: failed scheduled tasks, plugins, streams and transcodes |
 | [Plex Media Server](plex.md) | `plex` | X-Plex-Token, or none from an allowed network | Media server: streams, transcodes, libraries, updates |
+| [GitLab (self-managed)](gitlab.md) | `gitlab` | personal access token | Forge: Sidekiq backlog, CI runners, pending migrations, sign-up/2FA settings, licence |
+| [Forgejo / Gitea](forgejo.md) | `forgejo` | access token | Forge: health check, scheduled tasks, Actions runners, repository/account counts |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi, [Hyper-V host](agent.md#hyper-v-hosts) |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |
