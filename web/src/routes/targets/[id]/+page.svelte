@@ -69,6 +69,7 @@
 		type MetricRow
 	} from '$lib/components/devices/metrics';
 	import SilenceControl from '$lib/components/devices/SilenceControl.svelte';
+	import { deviceContext } from '$lib/components/pigeon/deviceContext.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import DockerPanel from '$lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '$lib/components/devices/docker/DockerStrip.svelte';
@@ -139,6 +140,13 @@
 	const service = $derived(target !== null && isUptimeKind(target.kind));
 	const collector = $derived(collectors.find((c) => c.kind === target?.kind) ?? null);
 	const kindLabel = $derived(collector?.label ?? target?.kind ?? '');
+
+	// Pip reads this device's own setup notice straight from the collector
+	// description already fetched above, instead of guessing at one.
+	$effect(() => {
+		deviceContext.set(collector);
+		return () => deviceContext.clear();
+	});
 
 	const tags = $derived(Object.entries(target?.tags ?? {}));
 
