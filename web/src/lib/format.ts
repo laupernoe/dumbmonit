@@ -97,6 +97,7 @@ export const UPTIME_KINDS = [
 	'dns',
 	'ping',
 	'tls',
+	'ntp',
 	'smtp',
 	'postgres',
 	'mysql',

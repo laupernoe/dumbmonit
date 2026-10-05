@@ -96,6 +96,15 @@ pub struct HttpClient {
 pub struct Reply {
     pub status: StatusCode,
     pub body: String,
+    /// L'en-tête `Server`, tel qu'annoncé — utile aux contrôles de sécurité qui
+    /// jugent une divulgation de version (`nginx/1.18.0`), jamais au décodage du
+    /// corps lui-même.
+    pub server_header: Option<String>,
+}
+
+/// L'en-tête `Server`, s'il est annoncé et lisible en ASCII.
+fn server_header(response: &reqwest::Response) -> Option<String> {
+    response.headers().get(reqwest::header::SERVER)?.to_str().ok().map(str::to_string)
 }
 
 impl HttpClient {
@@ -118,8 +127,9 @@ impl HttpClient {
     pub async fn get_raw(&self, path: &str) -> Result<Reply, ProbeError> {
         let response = self.send(self.http.get(self.url(path)), path).await?;
         let status = response.status();
+        let server_header = server_header(&response);
         let body = response.text().await.map_err(|error| self.transport(&error, path))?;
-        Ok(Reply { status, body })
+        Ok(Reply { status, body, server_header })
     }
 
     /// Un `GET` avec un en-tête propre au produit (la clé `X-Api-Key` d'un
@@ -133,8 +143,9 @@ impl HttpClient {
         let request = self.http.get(self.url(path)).header(header, value);
         let response = self.send(request, path).await?;
         let status = response.status();
+        let server_header = server_header(&response);
         let body = response.text().await.map_err(|error| self.transport(&error, path))?;
-        Ok(Reply { status, body })
+        Ok(Reply { status, body, server_header })
     }
 
     /// Un `POST` JSON dont le code est laissé à l'appelant : une connexion
@@ -147,8 +158,9 @@ impl HttpClient {
             .json(body);
         let response = self.send(request, path).await?;
         let status = response.status();
+        let server_header = server_header(&response);
         let body = response.text().await.map_err(|error| self.transport(&error, path))?;
-        Ok(Reply { status, body })
+        Ok(Reply { status, body, server_header })
     }
 
     /// Un `GET` JSON dont le code est laissé à l'appelant : un point d'accès
@@ -158,8 +170,9 @@ impl HttpClient {
             self.http.get(self.url(path)).header(reqwest::header::ACCEPT, "application/json");
         let response = self.send(request, path).await?;
         let status = response.status();
+        let server_header = server_header(&response);
         let body = response.text().await.map_err(|error| self.transport(&error, path))?;
-        Ok(Reply { status, body })
+        Ok(Reply { status, body, server_header })
     }
 
     /// Un `GET` qui doit réussir, rendu en texte.
