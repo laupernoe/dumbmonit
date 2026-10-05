@@ -20,7 +20,7 @@
 	import type { Serie } from '$lib/components/Chart.svelte';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, EmptyState, ErrorNotice, PageHeader, Skeleton } from '$lib/ui';
+	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '$lib/ui';
 	import RackList from '$lib/components/devices/RackList.svelte';
 	import type { ReorderControls } from '$lib/components/devices/RackList.svelte';
 	import FolderHeader from '$lib/components/devices/FolderHeader.svelte';
@@ -28,15 +28,15 @@
 	import { nearestRow, needsAttention } from '$lib/components/devices/rack';
 	import {
 		buildFolders,
+		compareFolderSections,
 		folderKeyOf,
-		knownFolders,
 		moveWithinScope,
 		reorderByDrop,
 		reorderScope,
 		rootOf,
 		worstState
 	} from '$lib/components/devices/folders';
-	import { Plus, Search } from 'lucide-svelte';
+	import { FolderPlus, Plus, Search } from 'lucide-svelte';
 
 	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
 
@@ -124,9 +124,22 @@
 		return ids;
 	});
 
-	const folderSections = $derived(buildFolders(effectiveTargets, stateOf, visible));
-	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0));
+	// A folder just created in-app, with no device in it yet: there is no
+	// server-side folder entity (a folder is only `Target.group_name`), so an
+	// empty one exists only for this session — it is slotted in alongside the
+	// real sections, in the same order, until a device is dropped into it.
+	let pendingEmptyFolders = $state<Set<string>>(new Set());
 	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '');
+	const folderSections = $derived.by(() => {
+		const base = buildFolders(effectiveTargets, stateOf, visible);
+		if (filtered || pendingEmptyFolders.size === 0) return base;
+		const extra = [...pendingEmptyFolders]
+			.filter((key) => !base.some((s) => s.key === key))
+			.map((key) => ({ key, label: key, rows: [] }));
+		if (extra.length === 0) return base;
+		return [...base, ...extra].sort(compareFolderSections);
+	});
+	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0));
 	/** A single, group-less section looks exactly like the old flat list — no header shown. */
 	const showFolderHeaders = $derived(folderSections.length > 1 || (folderSections[0]?.key ?? '') !== '');
 
@@ -146,6 +159,11 @@
 		else next.add(key);
 		collapsedFolders = next;
 	}
+
+	// "Create folder" in the toolbar: an in-app inline name field, never
+	// `window.prompt`.
+	let newFolderDraft = $state('');
+	let newFolderInput = $state<HTMLInputElement | null>(null);
 
 	/** Builds the payload a save needs to echo every field the server does not keep by itself. */
 	function targetToPayload(target: Target, patch: Partial<TargetPayload> = {}): TargetPayload {
@@ -232,11 +250,38 @@
 	function renameFolder(oldKey: string, newKey: string) {
 		const trimmed = newKey.trim();
 		if (!trimmed || trimmed === oldKey) return;
-		void bulkSetGroup(rootsInFolder(oldKey), trimmed);
+		if (pendingEmptyFolders.has(oldKey)) {
+			const next = new Set(pendingEmptyFolders);
+			next.delete(oldKey);
+			next.add(trimmed);
+			pendingEmptyFolders = next;
+		}
+		const rows = rootsInFolder(oldKey);
+		if (rows.length > 0) void bulkSetGroup(rows, trimmed);
 	}
 
 	function deleteFolder(key: string) {
-		void bulkSetGroup(rootsInFolder(key), '');
+		if (pendingEmptyFolders.has(key)) {
+			const next = new Set(pendingEmptyFolders);
+			next.delete(key);
+			pendingEmptyFolders = next;
+		}
+		const rows = rootsInFolder(key);
+		if (rows.length > 0) void bulkSetGroup(rows, '');
+	}
+
+	/** "Create folder" in the toolbar: an empty folder with nowhere to drop a
+	 *  device yet, until the user drags one in (there is no server-side
+	 *  folder entity to create — see `pendingEmptyFolders` above). */
+	function createFolder(name: string) {
+		const trimmed = name.trim();
+		if (!trimmed) return;
+		const next = new Set(pendingEmptyFolders);
+		next.add(trimmed);
+		pendingEmptyFolders = next;
+		const nextCollapsed = new Set(collapsedFolders);
+		nextCollapsed.delete(trimmed);
+		collapsedFolders = nextCollapsed;
 	}
 
 	async function persistOrder(order: TargetId[]) {
@@ -307,43 +352,76 @@
 	}
 
 	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+	// Set the moment a pointer drag actually starts (threshold crossed, or the
+	// touch long-press fired), so the click that follows the pointerup — if
+	// the browser still fires one over the same row — can be swallowed
+	// instead of opening the device.
+	let justDragged = false;
 
-	function onGripPointerDown(id: TargetId, event: PointerEvent) {
+	/**
+	 * The row itself is the drag surface, pressed anywhere on it (no handle).
+	 * A mouse/pen only arms a drag once the pointer has moved past a small
+	 * threshold, so a plain click still opens the device; a touch needs a
+	 * short hold first (so a tap, or a scroll starting on the row, still
+	 * works) and is disarmed by any early movement.
+	 */
+	function onRowPointerDown(id: TargetId, event: PointerEvent) {
 		if (!auth.isAdmin || filtered) return;
-		if (event.pointerType === 'touch') {
-			const startX = event.clientX;
-			const startY = event.clientY;
-			const onmove = (e: PointerEvent) => {
-				if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) cancelArm();
-			};
-			const onup = () => cancelArm();
-			function cancelArm() {
-				if (longPressTimer) clearTimeout(longPressTimer);
-				longPressTimer = null;
-				window.removeEventListener('pointermove', onmove);
-				window.removeEventListener('pointerup', onup);
+		if (event.button !== 0) return;
+		const startX = event.clientX;
+		const startY = event.clientY;
+		const touch = event.pointerType === 'touch';
+		const threshold = touch ? 10 : 6;
+		let settled = false;
+
+		const onmove = (e: PointerEvent) => {
+			if (settled) return;
+			if (Math.hypot(e.clientX - startX, e.clientY - startY) <= threshold) return;
+			if (touch) {
+				// Moved too soon: this is a scroll, not a hold. Disarm.
+				settle();
+			} else {
+				settle();
+				beginDrag(id, e);
 			}
-			window.addEventListener('pointermove', onmove);
-			window.addEventListener('pointerup', onup, { once: true });
-			longPressTimer = setTimeout(() => {
-				window.removeEventListener('pointermove', onmove);
-				window.removeEventListener('pointerup', onup);
-				longPressTimer = null;
-				beginDrag(id, event);
-			}, 300);
-			return;
+		};
+		const onup = () => settle();
+		function settle() {
+			settled = true;
+			if (longPressTimer) clearTimeout(longPressTimer);
+			longPressTimer = null;
+			window.removeEventListener('pointermove', onmove);
+			window.removeEventListener('pointerup', onup);
 		}
-		beginDrag(id, event);
+		window.addEventListener('pointermove', onmove);
+		window.addEventListener('pointerup', onup, { once: true });
+
+		if (touch) {
+			longPressTimer = setTimeout(() => {
+				if (settled) return;
+				settle();
+				beginDrag(id, event);
+			}, 350);
+		}
 	}
 
 	function beginDrag(id: TargetId, event: PointerEvent) {
 		event.preventDefault();
 		const target = targets.find((t) => t.id === id);
 		if (!target) return;
+		justDragged = true;
 		dragging = id;
 		dragLabel = target.name;
 		pointerPos = { x: event.clientX, y: event.clientY };
 		dropSlot = computeDropSlot(event.clientX, event.clientY);
+	}
+
+	/** Swallows the click a pointer drag leaves in its wake (see `justDragged`). */
+	function onRowClick(_id: TargetId, event: MouseEvent) {
+		if (!justDragged) return;
+		justDragged = false;
+		event.preventDefault();
+		event.stopPropagation();
 	}
 
 	function onPointerMove(e: PointerEvent) {
@@ -355,6 +433,10 @@
 		dragging = null;
 		pointerPos = null;
 		dropSlot = null;
+		// Safety net: a click should follow the pointerup within the same
+		// task, if the browser fires one at all — drop the flag afterwards so
+		// it never lingers onto some later, unrelated click.
+		setTimeout(() => (justDragged = false), 0);
 	}
 
 	function finishDrag() {
@@ -434,15 +516,15 @@
 	});
 
 	// --- Keyboard reorder: Space picks a row up, arrows move it within its
-	// scope (persisted immediately, same as a drag), Space drops it, Escape
-	// restores the scope's original order. No visible buttons: the grip
-	// handle itself is the one focus stop, with an aria-live announcement. ---
+	// scope (persisted immediately, same as a drag), Space/Enter drops it,
+	// Escape restores the scope's original order. No separate handle: the
+	// row itself is the one focus stop, with an aria-live announcement. ---
 
 	let pickedUp = $state<TargetId | null>(null);
 	let pickedSnapshot = $state<TargetId[] | null>(null);
 	let announce = $state('');
 
-	function onGripKeyDown(id: TargetId, event: KeyboardEvent) {
+	function onRowKeyDown(id: TargetId, event: KeyboardEvent) {
 		if (!auth.isAdmin || filtered) return;
 		const target = targets.find((t) => t.id === id);
 		if (!target) return;
@@ -486,14 +568,10 @@
 			dragging,
 			pickedUp,
 			dropSlot: rowDropSlot,
-			folders: knownFolders(effectiveTargets),
-			onGripPointerDown,
-			onGripKeyDown,
-			registerRow,
-			onMoveToFolder: (id, groupName) => {
-				const target = targets.find((t) => t.id === id);
-				if (target) void moveToFolder(target, groupName);
-			}
+			onRowPointerDown,
+			onRowKeyDown,
+			onRowClick,
+			registerRow
 		};
 	}
 
@@ -529,6 +607,58 @@
 
 <PageHeader title="Devices" description="Everything DumbMonit watches, stacked like a rack.">
 	{#snippet actions()}
+		{#if auth.isAdmin && targets.length > 0}
+			<Menu label="Create a folder" align="right">
+				{#snippet trigger({ toggle, open })}
+					<Button
+						variant="secondary"
+						aria-haspopup="menu"
+						aria-expanded={open}
+						onclick={() => {
+							toggle();
+							newFolderDraft = '';
+							queueMicrotask(() => newFolderInput?.focus());
+						}}
+					>
+						<FolderPlus class="size-4" aria-hidden="true" />
+						Create folder
+					</Button>
+				{/snippet}
+				{#snippet children({ close })}
+					<form
+						class="flex items-center gap-1 p-0.5"
+						onsubmit={(e) => {
+							e.preventDefault();
+							createFolder(newFolderDraft);
+							newFolderDraft = '';
+							close();
+						}}
+					>
+						<input
+							bind:this={newFolderInput}
+							bind:value={newFolderDraft}
+							class="input !h-8 min-w-0 flex-1 text-[0.8125rem]"
+							placeholder="Folder name"
+							maxlength="80"
+							aria-label="New folder name"
+							onkeydown={(e) => {
+								if (e.key === 'Escape') {
+									e.preventDefault();
+									close();
+								}
+							}}
+						/>
+						<button
+							type="submit"
+							class="shrink-0 rounded-lg bg-signal px-2 py-1.5 text-[0.75rem] font-semibold text-on-signal disabled:opacity-50"
+							disabled={!newFolderDraft.trim()}
+						>
+							Create
+						</button>
+					</form>
+				{/snippet}
+			</Menu>
+		{/if}
 		<!-- The empty state carries the primary itself: one primary per view. Viewers cannot add. -->
 		{#if auth.isAdmin && (firstLoad || pageError || targets.length > 0)}
 			<ClickSpark>
