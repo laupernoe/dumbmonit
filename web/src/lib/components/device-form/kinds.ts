@@ -43,6 +43,8 @@ import {
 	FileText,
 	Film,
 	Tv,
+	GitBranch,
+	GitFork,
 	ShieldBan,
 	BatteryCharging,
 	Router,
@@ -100,6 +102,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	paperless: FileText,
 	jellyfin: Film,
 	plex: Tv,
+	gitlab: GitBranch,
+	forgejo: GitFork,
 	pihole: ShieldBan,
 	adguard: ShieldBan,
 	nut: BatteryCharging,
@@ -130,7 +134,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -164,6 +168,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	paperless: 'documents paperless-ngx scan ocr archive pdf self-hosted app',
 	jellyfin: 'media server movies tv shows music streaming emby transcode self-hosted app',
 	plex: 'media server movies tv shows music streaming transcode pms self-hosted app',
+	gitlab: 'forge source control git ci cd pipeline sidekiq runner self-hosted app devops',
+	forgejo: 'forge gitea source control git self-hosted app devops actions runner',
 	pihole: 'dns ad blocker adblock blocklist gravity ftl dhcp sinkhole privacy',
 	adguard: 'dns ad blocker adblock blocklist filter adguardhome doh dot dhcp sinkhole privacy',
 	nut: 'ups battery power outage upsd upsc network ups tools apc eaton cyberpower synology',

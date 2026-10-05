@@ -1,8 +1,8 @@
 /**
- * Self-hosted applications (Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex):
- * what the latest stored measurement says, folded into sentences, figures and
- * short lists. Pure functions over the series of one device, so the panel
- * only lays them out.
+ * Self-hosted applications (Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex,
+ * GitLab, Forgejo/Gitea): what the latest stored measurement says, folded
+ * into sentences, figures and short lists. Pure functions over the series of
+ * one device, so the panel only lays them out.
  *
  * The collector (`crates/collectors/src/selfhosted`) writes one family per
  * fact, prefixed by the kind: `dumbmonit_nextcloud_maintenance`,
@@ -52,7 +52,9 @@ export const TITLES: Record<string, string> = {
 	immich: 'Immich',
 	paperless: 'Paperless-ngx',
 	jellyfin: 'Jellyfin',
-	plex: 'Plex Media Server'
+	plex: 'Plex Media Server',
+	gitlab: 'GitLab',
+	forgejo: 'Forgejo / Gitea'
 };
 
 export const SELFHOSTED_KINDS = Object.keys(TITLES);
@@ -370,7 +372,122 @@ function plex(r: Reading): Omit<AppView, 'measured'> {
 	return { version: r.label('version_info', 'version'), checks, figures, breakdowns: [] };
 }
 
-const BUILDERS: Record<string, (r: Reading) => Omit<AppView, 'measured'>> = { nextcloud, immich, paperless, jellyfin, plex };
+function gitlab(r: Reading): Omit<AppView, 'measured'> {
+	const checks: Check[] = [];
+	const readiness = r.all('readiness_check');
+	const failingReadiness = readiness.filter((p) => p.value >= 1).map((p) => p.labels.check ?? '');
+	if (failingReadiness.length > 0) {
+		checks.push({
+			state: 'warning',
+			label: 'Readiness check failing',
+			detail: `${failingReadiness.join(', ')} ${failingReadiness.length === 1 ? 'is' : 'are'} not ok.`
+		});
+	} else if (readiness.length > 0) {
+		checks.push({ state: 'ok', label: 'Readiness', detail: 'Database, cache, queues, shared state and Gitaly all answer.' });
+	}
+	const runnersTotal = r.one('runners_total');
+	const runnersOnline = r.one('runners_online');
+	const runnersOffline = r.one('runners_offline') ?? 0;
+	if (runnersTotal !== null && runnersTotal > 0 && runnersOnline === 0) {
+		checks.push({ state: 'warning', label: 'Runners all offline', detail: 'No CI/CD runner can run a pipeline.' });
+	} else if (runnersOffline > 0) {
+		checks.push({ state: 'advisory', label: 'Runners offline', detail: `${plural(runnersOffline, 'runner is', 'runners are')} offline.` });
+	}
+	const migrations = r.one('migrations_pending');
+	if (migrations !== null && migrations > 0) {
+		checks.push({ state: 'advisory', label: 'Migrations pending', detail: `${plural(migrations, 'database migration', 'database migrations')} left to apply after an upgrade.` });
+	}
+	if (r.flag('two_factor_required') === false) {
+		checks.push({ state: 'advisory', label: 'Two-factor not required', detail: 'Users can sign in with a password alone.' });
+	}
+	if (r.flag('signup_enabled')) {
+		checks.push({ state: 'advisory', label: 'Sign-up open', detail: 'Anyone can create an account on this instance.' });
+	}
+	if (r.flag('license_expired')) {
+		checks.push({ state: 'warning', label: 'License expired', detail: 'The Enterprise Edition licence has expired.' });
+	}
+	const backlog = r.all('sidekiq_queue_backlog').reduce((sum, p) => sum + p.value, 0);
+	const figures: FigureView[] = [
+		{ label: 'Projects', value: count(r.one('projects')) },
+		{ label: 'Users', value: count(r.one('users')) },
+		{ label: 'Groups', value: count(r.one('groups')) },
+		{ label: 'Runners online', value: count(runnersOnline) },
+		{ label: 'Sidekiq backlog', value: count(backlog) },
+		{ label: 'Open merge requests', value: count(r.one('merge_requests')) }
+	];
+	const breakdowns: Breakdown[] = [];
+	const queues = r
+		.all('sidekiq_queue_backlog')
+		.filter((p) => p.value > 0)
+		.map((p) => ({ label: p.labels.queue ?? '', value: `${count(p.value)} waiting` }));
+	if (queues.length > 0) breakdowns.push({ title: 'Sidekiq queues with a backlog', rows: queues });
+	const offlineRunners = r.all('runner_offline').map((p) => ({ label: p.labels.runner ?? '', state: 'warning' as const }));
+	if (offlineRunners.length > 0) breakdowns.push({ title: 'Offline runners', rows: offlineRunners });
+	const pendingMigrations = r.all('migration_pending').map((p) => ({ label: p.labels.migration ?? '' }));
+	if (pendingMigrations.length > 0) breakdowns.push({ title: 'Pending migrations', rows: pendingMigrations });
+	return { version: r.label('version_info', 'version'), checks, figures, breakdowns };
+}
+
+function forgejo(r: Reading): Omit<AppView, 'measured'> {
+	const checks: Check[] = [];
+	const healthz = r.flag('healthz_ok');
+	if (healthz === false) {
+		const failing = r.all('healthz_check').filter((p) => p.value >= 1).map((p) => p.labels.check ?? '');
+		checks.push({
+			state: 'warning',
+			label: 'Health check failing',
+			detail: failing.length > 0 ? `${failing.join(', ')} not ok.` : 'The instance reports itself unhealthy.'
+		});
+	} else if (healthz) {
+		checks.push({ state: 'ok', label: 'Healthy', detail: 'Database and cache answer.' });
+	}
+	const tasks = r.all('cron_task_overdue');
+	const overdue = tasks.filter((p) => p.value >= 1);
+	if (overdue.length > 0) {
+		checks.push({
+			state: 'warning',
+			label: 'Scheduled task overdue',
+			detail: `${overdue.map((p) => p.labels.task ?? '').join(', ')} did not run at its own interval.`
+		});
+	} else if (tasks.length > 0) {
+		checks.push({ state: 'ok', label: 'Scheduled tasks', detail: 'All run on time.' });
+	}
+	const runnersTotal = r.one('runners_total');
+	const runnersOnline = r.one('runners_online');
+	const runnersOffline = r.one('runners_offline') ?? 0;
+	if (runnersTotal !== null && runnersTotal > 0 && runnersOnline === 0) {
+		checks.push({ state: 'warning', label: 'Runners all offline', detail: 'No Actions runner can run a workflow.' });
+	} else if (runnersOffline > 0) {
+		checks.push({ state: 'advisory', label: 'Runners offline', detail: `${plural(runnersOffline, 'runner is', 'runners are')} offline.` });
+	}
+	if (r.flag('token_is_admin') === false) {
+		checks.push({
+			state: 'advisory',
+			label: 'Ordinary token',
+			detail: 'Administration counts, scheduled tasks and runners are skipped without a site administrator token.'
+		});
+	}
+	const figures: FigureView[] = [
+		{ label: 'Repositories', value: count(r.one('repos')) },
+		{ label: 'Users', value: count(r.one('users')) },
+		{ label: 'Organisations', value: count(r.one('orgs')) },
+		{ label: 'Runners online', value: count(runnersOnline) }
+	];
+	const breakdowns: Breakdown[] = [];
+	const offlineRunners = r.all('runner_offline').map((p) => ({ label: p.labels.runner ?? '', state: 'warning' as const }));
+	if (offlineRunners.length > 0) breakdowns.push({ title: 'Offline runners', rows: offlineRunners });
+	return { version: r.label('version_info', 'version'), checks, figures, breakdowns };
+}
+
+const BUILDERS: Record<string, (r: Reading) => Omit<AppView, 'measured'>> = {
+	nextcloud,
+	immich,
+	paperless,
+	jellyfin,
+	plex,
+	gitlab,
+	forgejo
+};
 
 /** Problems first, then what needs a look, then what is fine. */
 const RANK: Record<CheckState, number> = { warning: 0, advisory: 1, ok: 2 };
