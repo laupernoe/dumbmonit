@@ -188,6 +188,8 @@ pub fn providers() -> &'static [&'static dyn SecurityProvider] {
         &checks::agent::Agent,
         &checks::updates::VendorUpdates,
         &checks::activedirectory::ActiveDirectory,
+        &checks::gitlab::Gitlab,
+        &checks::forgejo::Forgejo,
     ]
 }
 

@@ -1,0 +1,19 @@
+{
+  "id": 2,
+  "plan": "ultimate",
+  "created_at": "2025-01-10T00:00:00.000Z",
+  "starts_at": "2025-01-10",
+  "expires_at": "2026-10-20",
+  "historical_max": 58,
+  "maximum_user_count": 100,
+  "expired": false,
+  "overage": 0,
+  "user_limit": 100,
+  "active_users": 55,
+  "licensee": {
+    "Name": "Example Corp",
+    "Email": "it@example.com",
+    "Company": "Example Corp"
+  },
+  "add_ons": {}
+}

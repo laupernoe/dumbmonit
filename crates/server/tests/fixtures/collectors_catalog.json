@@ -787,6 +787,93 @@
     "options": []
   },
   {
+    "kind": "forgejo",
+    "label": "Forgejo / Gitea",
+    "summary": "Health check, repository, user and organisation counts, scheduled tasks running on time, Actions runners online or not.",
+    "examples": [
+      "Forgejo",
+      "Gitea"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Access token",
+        "help": "A site administrator's access token, sent as \"Authorization: token …\". A token without admin rights still works, but only the version and the account's own repositories are read.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Access token",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "forgejo.lan",
+    "default_port": 3000,
+    "setup": {
+      "title": "Create an access token on a site administrator account",
+      "steps": [
+        "Create an access token on a site administrator account: avatar → Settings → Applications → Generate new token. Name it as follows and tick the read:admin, read:repository and read:user scopes.\ndumbmonit",
+        "read:admin opens the administration counts, the scheduled tasks and the Actions runners; without it, only the version and the token's own account are read, and the rest is skipped without failing the probe. Forgejo and Gitea have no read-only administrator role either.",
+        "In DumbMonit, enter the address, for example \"forgejo.lan\" (port 3000) or \"https://git.example.com\" behind a reverse proxy, and paste the token."
+      ],
+      "warning": "An access token on a site administrator account can read and change everything the account can, whatever scopes are ticked: Forgejo and Gitea only gate which API routes a scope opens, not how much an administrator account itself can do. Dedicate a bot account to it rather than reusing your own.",
+      "doc_url": "https://forgejo.org/docs/latest/user/api/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "3000",
+        "default": "3000",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120. Photo and file counts are computed on every call on a large instance.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "fortigate",
     "label": "FortiGate",
     "summary": "A Fortinet firewall through the FortiOS REST API: IPsec tunnels down, interfaces without link, HA out of sync, memory near conserve mode, FortiGuard licences expiring.",
@@ -872,6 +959,114 @@
         "input": "number",
         "choices": [],
         "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "gitlab",
+    "label": "GitLab (self-managed)",
+    "summary": "Readiness, Sidekiq backlog, CI runners online or not, pending migrations, instance statistics, sign-up and two-factor settings, licence expiry.",
+    "examples": [
+      "GitLab Community Edition",
+      "GitLab Enterprise Edition"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Personal access token",
+        "help": "An administrator's personal access token, sent as PRIVATE-TOKEN. A token without admin rights still works, but only the version is read.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Personal access token",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "gitlab.example.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a personal access token on an administrator account",
+      "steps": [
+        "Create a personal access token on an administrator account: avatar → Edit profile → Access tokens → Add new token. Name it as follows, set an expiration date you are comfortable renewing, and tick the read_api scope only: it reads the whole API and writes nothing.\ndumbmonit",
+        "Sidekiq queues, CI runners, pending migrations, instance statistics, the sign-up and two-factor settings and the licence are each read from an administrator-only endpoint: GitLab has no finer delegation for them. A token from an ordinary account still works; only the version is then read, and the rest is skipped without failing the probe.",
+        "In DumbMonit, enter the address you open GitLab with, for example \"gitlab.example.com\" (HTTPS on 443) or \"https://git.example.com\" behind a reverse proxy, and paste the token.",
+        "To also watch CI pipelines, list the numeric project IDs (shown on each project's overview page, under its name) in the \"Projects watched for CI health\" option, comma-separated."
+      ],
+      "warning": "A personal access token on an administrator account can read everything the account can read, even with the read_api scope: GitLab has no read-only administrator role. Dedicate a bot account to it rather than reusing your own, and revoke the token if it ever leaks.",
+      "doc_url": "https://docs.gitlab.com/ee/api/rest/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120. Photo and file counts are computed on every call on a large instance.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "watched_projects",
+        "label": "Projects watched for CI health (optional)",
+        "help": "Comma-separated numeric project IDs. Their recent pipelines are read for failed and running counts; leave empty to skip pipeline health entirely.",
+        "placeholder": "12,47",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "pipeline_lookback_hours",
+        "label": "Failed pipeline window (hours)",
+        "help": "Pipelines older than this are not counted as recently failed. From 1 to 720.",
+        "placeholder": "24",
+        "default": "24",
+        "required": false,
+        "input": "number",
+        "choices": []
       }
     ]
   },

@@ -117,6 +117,8 @@ nav:
       - Paperless-ngx: devices/paperless.md
       - Jellyfin: devices/jellyfin.md
       - Plex Media Server: devices/plex.md
+      - GitLab (self-managed): devices/gitlab.md
+      - Forgejo / Gitea: devices/forgejo.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
       - Heartbeat (push): devices/push.md

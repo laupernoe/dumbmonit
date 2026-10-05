@@ -1,0 +1,11 @@
+{
+  "id": 4,
+  "login": "dumbmonit",
+  "login_name": "dumbmonit",
+  "full_name": "DumbMonit",
+  "email": "dumbmonit@example.com",
+  "is_admin": true,
+  "active": true,
+  "restricted": false,
+  "visibility": "limited"
+}

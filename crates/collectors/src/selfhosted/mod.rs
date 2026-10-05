@@ -1,21 +1,28 @@
-//! Applications auto-hébergées : Nextcloud, Immich, Paperless-ngx, Jellyfin et
-//! Plex Media Server.
+//! Applications auto-hébergées : Nextcloud, Immich, Paperless-ngx, Jellyfin,
+//! Plex Media Server, et les forges GitLab et Forgejo/Gitea.
 //!
 //! Ces applications tombent rarement d'un bloc. Elles tombent *de côté* :
 //! Nextcloud reste coincé en maintenance après une mise à jour, Immich empile
 //! des miniatures qu'aucun travailleur ne traite, Paperless perd son Redis et
-//! n'importe plus rien, Jellyfin rate son scan de bibliothèque chaque nuit.
-//! La page s'ouvre, personne ne remarque rien. Chaque module lit ce que
-//! l'application dit d'elle-même par son API d'administration, avec l'accès le
-//! plus restreint qu'elle permette, sans jamais lire un fichier, une photo,
-//! un document ou un média.
+//! n'importe plus rien, Jellyfin rate son scan de bibliothèque chaque nuit,
+//! GitLab laisse Sidekiq prendre du retard, Forgejo laisse une tâche
+//! planifiée ne plus tourner. La page s'ouvre, personne ne remarque rien.
+//! Chaque module lit ce que l'application dit d'elle-même par son API
+//! d'administration, avec l'accès le plus restreint qu'elle permette, sans
+//! jamais lire un fichier, une photo, un document, un média ou le contenu
+//! d'un dépôt.
 //!
 //! * [`nextcloud`] — `status.php` et l'application `serverinfo` (jeton `NC-Token`) ;
 //! * [`immich`] — `/api/server/*` et les files de travaux (clé d'API restreinte) ;
 //! * [`paperless`] — `/api/status/`, `/api/tasks/`, `/api/remote_version/` ;
 //! * [`jellyfin`] — `/System/Info`, `/ScheduledTasks`, `/Sessions`, `/Plugins` ;
 //! * [`plex`] — `/`, `/identity`, `/status/sessions`, `/library/sections`,
-//!   `/updater/status`, `/activities`.
+//!   `/updater/status`, `/activities` ;
+//! * [`gitlab`] — `/api/v4/version`, `/-/readiness`, Sidekiq, exécuteurs,
+//!   migrations, statistiques, réglages de sécurité, licence (jeton `PRIVATE-TOKEN`) ;
+//! * [`forgejo`] — `/api/v1/version`, `/api/healthz`, statistiques et
+//!   exécuteurs Actions de l'administration (jeton `Authorization: token …`),
+//!   partagé avec Gitea.
 //!
 //! # Principes
 //!
@@ -39,6 +46,8 @@
 //! | `request_timeout_seconds` | `15` | Délai par requête HTTP. |
 
 mod client;
+pub mod forgejo;
+pub mod gitlab;
 pub mod immich;
 pub mod jellyfin;
 pub mod nextcloud;
@@ -52,6 +61,8 @@ use serde_json::Value;
 use client::{Auth, HttpClient};
 use options::Options;
 
+pub use forgejo::ForgejoCollector;
+pub use gitlab::GitlabCollector;
 pub use immich::ImmichCollector;
 pub use jellyfin::JellyfinCollector;
 pub use nextcloud::NextcloudCollector;
