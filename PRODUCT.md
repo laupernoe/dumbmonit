@@ -37,7 +37,7 @@ The product is an alpha: it runs daily on the author's homelab, the HTTP API is 
 
 ## Capabilities and Constraints
 
-- Interface language: English only (decision 2026-09-14). Previous UI was French; the rebuild ships English copy only, no i18n mechanism.
+- Interface language: English is the source language and the only one shipped today, but the UI is wired for community translation through Weblate (decision 2026-10-05, superseding the "no i18n mechanism" decision of 2026-09-14): strings are extracted progressively into `web/messages/en.json` (Paraglide JS), starting with the Settings pages; a language only appears in the Settings → Appearance picker once a translated locale file exists.
 - Stack is fixed: Svelte 5 (runes) + SvelteKit static adapter + Tailwind 4 + uPlot. No React. Visual effects inspired by React Bits are ported to Svelte 5 natively (canvas/CSS/WebGL allowed; no constraint on dependencies was set).
 - Light and dark theme both supported; system preference by default with manual toggle.
 - The rebuild replaces the whole web UI from scratch, keeping the API client and types.
