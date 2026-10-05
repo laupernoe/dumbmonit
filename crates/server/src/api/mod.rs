@@ -1,3 +1,4 @@
+mod activedirectory;
 mod agent_commands;
 mod agent_files;
 mod alerts;
@@ -131,6 +132,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(opnsense::routes())
         // Pools, protection des données et santé d'un NAS TrueNAS (`truenas.rs`).
         .merge(truenas::routes())
+        // Domaine Active Directory : contrôleurs, groupes privilégiés, constats (`activedirectory.rs`).
+        .merge(activedirectory::routes())
         // Matériel d'un serveur lu par son contrôleur de gestion (`redfish.rs`).
         .merge(redfish::routes())
         // Santé d'un serveur de journaux ou de métriques (`observability.rs`).
