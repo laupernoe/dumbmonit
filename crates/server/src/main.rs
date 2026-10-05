@@ -271,6 +271,7 @@ async fn run(config: Config) -> Result<()> {
 
     scheduler::spawn(state.clone());
     alerting::spawn(state.clone());
+    dumbmonit_server::security::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),

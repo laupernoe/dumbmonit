@@ -196,6 +196,29 @@ mod tests {
         assert!(overview.replication.is_some());
     }
 
+    /// Le score de sécurité consomme cette réponse telle quelle
+    /// (`security::checks::activedirectory::checks_from_findings`).
+    #[test]
+    fn le_score_de_securite_lit_les_constats_tels_quels() {
+        use crate::security::Outcome;
+        use crate::security::checks::activedirectory::{AdFinding, checks_from_findings};
+        let mut clean = finding("unconstrained_delegation", FindingSeverity::Critical);
+        clean.count = 0;
+        clean.samples.clear();
+        let view = ProbeView {
+            probed_at: 100,
+            findings: vec![finding("kerberoastable_users", FindingSeverity::High), clean],
+            ..ProbeView::default()
+        };
+        let json = serde_json::to_value(build_findings(Some(view))).unwrap();
+        let findings: Vec<AdFinding> = serde_json::from_value(json["findings"].clone()).unwrap();
+        let checks = checks_from_findings(&findings);
+        let check = |id: &str| checks.iter().find(|c| c.id == id).unwrap();
+        assert_eq!(check("ad.kerberoastable_users").result, Outcome::Fail);
+        assert!(check("ad.kerberoastable_users").evidence.contains("alice"));
+        assert_eq!(check("ad.unconstrained_delegation").result, Outcome::Pass);
+    }
+
     #[test]
     fn une_liaison_refusee_ne_montre_pas_de_replication() {
         let view = ProbeView {
