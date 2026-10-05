@@ -95,6 +95,15 @@ export function deleteTarget(id: TargetId): Promise<void> {
 	return request<void>(`/targets/${id}`, { method: 'DELETE' });
 }
 
+/**
+ * Sets the manual rank of each listed device to its index in `order`.
+ * Devices left out keep their rank — a local reorder (one folder, one
+ * Up/Down click) does not need to resend every device.
+ */
+export function reorderTargets(order: TargetId[]): Promise<void> {
+	return request<void>('/targets/reorder', { method: 'POST', body: { order } });
+}
+
 /** Probes the device right away. Can be slow: the caller shows an indicator. */
 export function probeTarget(id: TargetId): Promise<ProbeReport> {
 	return request<ProbeReport>(`/targets/${id}/probe`, { method: 'POST' });

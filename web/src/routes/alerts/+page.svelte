@@ -18,6 +18,7 @@
 		listAlertRules,
 		listSilences,
 		listAlertHistory,
+		listCollectors,
 		createSilence,
 		deleteSilence,
 		setAlertRuleEnabled,
@@ -28,7 +29,8 @@
 		type Silence,
 		type AlertHistoryEntry,
 		type SilencePayload,
-		type AlertRulePayload
+		type AlertRulePayload,
+		type CollectorInfo
 	} from '$lib/api';
 	import type { Alert } from '$lib/api';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
@@ -62,6 +64,7 @@
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
 	let rules = $state<AlertRule[]>([]);
+	let collectors = $state<CollectorInfo[]>([]);
 	let silences = $state<Silence[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
 	let loading = $state(true);
@@ -109,6 +112,9 @@
 
 	async function loadAll(signal?: AbortSignal) {
 		error = null;
+		// Only used to label/filter rules by collector kind: a stale or failed
+		// fetch must not block the rest of the page.
+		const collectorsPromise = listCollectors(signal).catch(() => [] as CollectorInfo[]);
 		try {
 			const [r, s, h] = await Promise.all([
 				listAlertRules(signal),
@@ -124,6 +130,7 @@
 		} finally {
 			loading = false;
 		}
+		collectors = await collectorsPromise;
 	}
 
 	async function refreshSilences() {
@@ -337,6 +344,8 @@
 {:else if tab === 'rules'}
 	<RulesSection
 		{rules}
+		{targets}
+		{collectors}
 		busyId={ruleBusyId}
 		ontoggle={toggleRule}
 		ondelete={removeRule}

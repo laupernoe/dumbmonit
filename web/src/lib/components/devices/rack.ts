@@ -21,7 +21,7 @@ export function needsAttention(state: TargetState): boolean {
 	return state === 'offline' || state === 'down' || state === 'misconfigured';
 }
 
-const RANK: Record<TargetState, number> = {
+export const RANK: Record<TargetState, number> = {
 	offline: 0,
 	down: 0,
 	misconfigured: 0,
@@ -30,6 +30,23 @@ const RANK: Record<TargetState, number> = {
 	online: 2,
 	disabled: 3
 };
+
+/**
+ * Orders two siblings (same parent, same folder): state tier first — a
+ * device needing attention always floats above a quiet one, manual order
+ * notwithstanding — then the manual `position`, then the name.
+ */
+export function compareSiblings(
+	a: Target,
+	b: Target,
+	states: Map<TargetId, TargetState>
+): number {
+	const rank = RANK[states.get(a.id)!] - RANK[states.get(b.id)!];
+	if (rank !== 0) return rank;
+	const position = a.position - b.position;
+	if (position !== 0) return position;
+	return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+}
 
 /**
  * Flattens the device tree into display rows.
@@ -54,11 +71,7 @@ export function buildRack(
 	}
 
 	const states = new Map(targets.map((t) => [t.id, stateOf(t)]));
-	const sort = (list: Target[]) =>
-		list.sort((a, b) => {
-			const rank = RANK[states.get(a.id)!] - RANK[states.get(b.id)!];
-			return rank !== 0 ? rank : a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
-		});
+	const sort = (list: Target[]) => list.sort((a, b) => compareSiblings(a, b, states));
 
 	const rows: RackRow[] = [];
 	const seen = new Set<TargetId>();

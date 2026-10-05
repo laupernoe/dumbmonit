@@ -28,6 +28,12 @@ pub struct Target {
     pub enabled: bool,
     pub tags: BTreeMap<String, String>,
     pub credential: Credential,
+    /// Dossier plat et libre, affiché sur `/targets`. Vide : aucun dossier.
+    pub group_name: String,
+    /// Rang manuel, départagé par l'interface seulement entre cibles de même
+    /// état (et, de premier niveau, du même dossier) : un équipement en panne
+    /// reste toujours en tête, quel que soit l'ordre choisi.
+    pub position: i64,
 }
 
 impl Target {
@@ -75,6 +81,8 @@ mod tests {
                 ("x\"} 0 0\ndumbmonit_up{target".to_string(), "12".to_string()),
             ]),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         };
         let labels = target.base_labels();
         assert_eq!(labels.get("tag_rack_location").map(String::as_str), Some("b2"));

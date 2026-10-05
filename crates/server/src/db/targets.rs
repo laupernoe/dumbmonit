@@ -31,13 +31,15 @@ pub struct TargetInput {
     /// changement d'identifiants. Pour effacer réellement un secret, on passe
     /// `Some(Credential::None)`.
     pub credential: Option<Credential>,
+    /// Dossier plat et libre, affiché sur `/targets`. Vide : aucun dossier.
+    pub group_name: String,
 }
 
 pub async fn list(pool: &SqlitePool, cipher: &Cipher) -> Result<Vec<Target>> {
     let rows = sqlx::query(
         "SELECT id, name, address, kind, profile_id, parent_id, interval_secs, enabled,
-                tags, credential_enc
-         FROM targets ORDER BY name",
+                tags, credential_enc, group_name, position
+         FROM targets ORDER BY position, name",
     )
     .fetch_all(pool)
     .await
@@ -49,7 +51,7 @@ pub async fn list(pool: &SqlitePool, cipher: &Cipher) -> Result<Vec<Target>> {
 pub async fn list_enabled(pool: &SqlitePool, cipher: &Cipher) -> Result<Vec<Target>> {
     let rows = sqlx::query(
         "SELECT id, name, address, kind, profile_id, parent_id, interval_secs, enabled,
-                tags, credential_enc
+                tags, credential_enc, group_name, position
          FROM targets WHERE enabled = 1",
     )
     .fetch_all(pool)
@@ -61,7 +63,7 @@ pub async fn list_enabled(pool: &SqlitePool, cipher: &Cipher) -> Result<Vec<Targ
 pub async fn get(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Option<Target>> {
     let row = sqlx::query(
         "SELECT id, name, address, kind, profile_id, parent_id, interval_secs, enabled,
-                tags, credential_enc
+                tags, credential_enc, group_name, position
          FROM targets WHERE id = ?",
     )
     .bind(id)
@@ -72,11 +74,14 @@ pub async fn get(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Opt
 }
 
 pub async fn create(pool: &SqlitePool, cipher: &Cipher, input: &TargetInput) -> Result<TargetId> {
+    // La position de départ place la nouvelle cible après toutes les autres :
+    // un rang déjà trié à la main ne doit jamais recevoir une arrivée au hasard.
     let row = sqlx::query(
         "INSERT INTO targets
              (name, address, kind, profile_id, parent_id, via_agent, interval_secs, enabled, tags,
-              credential_enc)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              credential_enc, group_name, position)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 (SELECT COALESCE(MAX(position), 0) + 1 FROM targets))
          RETURNING id",
     )
     .bind(&input.name)
@@ -89,6 +94,7 @@ pub async fn create(pool: &SqlitePool, cipher: &Cipher, input: &TargetInput) -> 
     .bind(i64::from(input.enabled))
     .bind(serde_json::to_string(&input.tags)?)
     .bind(encrypt_credential(cipher, input.credential.as_ref().unwrap_or(&Credential::None))?)
+    .bind(&input.group_name)
     .fetch_one(pool)
     .await
     .context("création de la cible")?;
@@ -111,7 +117,7 @@ pub async fn update(
                 "UPDATE targets SET
                      name = ?, address = ?, kind = ?, profile_id = ?, parent_id = ?,
                      via_agent = ?, interval_secs = ?, enabled = ?, tags = ?, credential_enc = ?,
-                     updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                     group_name = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
                  WHERE id = ?",
             )
             .bind(&input.name)
@@ -124,6 +130,7 @@ pub async fn update(
             .bind(i64::from(input.enabled))
             .bind(serde_json::to_string(&input.tags)?)
             .bind(encrypt_credential(cipher, credential)?)
+            .bind(&input.group_name)
             .bind(id)
             .execute(pool)
             .await
@@ -133,7 +140,7 @@ pub async fn update(
                 "UPDATE targets SET
                      name = ?, address = ?, kind = ?, profile_id = ?, parent_id = ?,
                      via_agent = ?, interval_secs = ?, enabled = ?, tags = ?,
-                     updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                     group_name = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
                  WHERE id = ?",
             )
             .bind(&input.name)
@@ -145,6 +152,7 @@ pub async fn update(
             .bind(input.interval.as_secs() as i64)
             .bind(i64::from(input.enabled))
             .bind(serde_json::to_string(&input.tags)?)
+            .bind(&input.group_name)
             .bind(id)
             .execute(pool)
             .await
@@ -153,6 +161,28 @@ pub async fn update(
     .context("mise à jour de la cible")?;
 
     Ok(result.rows_affected() > 0)
+}
+
+/// Réécrit le rang manuel d'un lot de cibles d'après leur position dans `order` :
+/// la première vaut 0, la suivante 1, etc.
+///
+/// N'écrase que les cibles listées : une réorganisation locale (un dossier, un
+/// Haut/Bas) n'a pas besoin de connaître le rang des autres — `rack.ts` ne
+/// compare jamais deux cibles de dossiers ou d'états différents entre elles,
+/// donc des rangs numériquement identiques entre deux lots distincts sont sans
+/// consequence.
+pub async fn reorder(pool: &SqlitePool, order: &[TargetId]) -> Result<()> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction de réordonnancement")?;
+    for (position, id) in order.iter().enumerate() {
+        sqlx::query("UPDATE targets SET position = ? WHERE id = ?")
+            .bind(position as i64)
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("réordonnancement d'une cible")?;
+    }
+    tx.commit().await.context("validation du réordonnancement")?;
+    Ok(())
 }
 
 pub async fn delete(pool: &SqlitePool, id: TargetId) -> Result<bool> {
@@ -234,6 +264,8 @@ fn row_to_target(row: &SqliteRow, cipher: &Cipher) -> Result<Target> {
             .with_context(|| format!("étiquettes illisibles pour la cible {id}"))?,
         credential: decrypt_credential(cipher, credential_enc.as_deref())
             .with_context(|| format!("identifiants illisibles pour la cible {id}"))?,
+        group_name: row.try_get("group_name")?,
+        position: row.try_get("position")?,
     })
 }
 

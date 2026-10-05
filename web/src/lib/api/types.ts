@@ -116,6 +116,10 @@ export interface Target {
 	enabled: boolean;
 	tags: Record<string, string>;
 	credential_kind: string;
+	/** Flat folder shown on `/targets`. Empty: no folder. */
+	group_name: string;
+	/** Manual rank, tiebreaking only within the same state and folder. */
+	position: number;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
@@ -133,6 +137,8 @@ export interface TargetPayload {
 	interval_secs?: number;
 	enabled?: boolean;
 	tags?: Record<string, string>;
+	/** Flat folder shown on `/targets`. Absent or empty: no folder. */
+	group_name?: string;
 	credential?: Credential;
 }
 
@@ -505,6 +511,8 @@ export interface CollectorOption {
 	input: CollectorOptionInput;
 	/** Values offered when `input === 'select'`. */
 	choices: string[];
+	/** Sub-heading grouping this setting under "More options". Empty: the UI falls back to a generic key-prefix heuristic. */
+	group: string;
 }
 
 /**
@@ -593,7 +601,8 @@ function normalizeOption(raw: Partial<CollectorOption> & { key: string }): Colle
 		default: typeof raw.default === 'string' ? raw.default : '',
 		required: Boolean(raw.required),
 		input,
-		choices: Array.isArray(raw.choices) ? raw.choices.filter((c) => typeof c === 'string') : []
+		choices: Array.isArray(raw.choices) ? raw.choices.filter((c) => typeof c === 'string') : [],
+		group: raw.group?.trim() ?? ''
 	};
 }
 

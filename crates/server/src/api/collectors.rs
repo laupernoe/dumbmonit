@@ -90,6 +90,17 @@ pub struct OptionView {
     pub input: &'static str,
     /// Valeurs proposées quand `input == "select"`.
     pub choices: &'static [&'static str],
+    /// Sous-titre regroupant ce réglage avec d'autres dans « Plus d'options » ;
+    /// vide par défaut (voir [`grouped`]).
+    pub group: &'static str,
+}
+
+/// Range un réglage sous un sous-titre, dans la zone « Plus d'options » d'un
+/// type qui en compte beaucoup (Proxmox VE…). Sans appel à cette fonction, un
+/// réglage reste sans groupe et l'interface retombe sur un classement
+/// générique par préfixe de clé.
+const fn grouped(view: OptionView, group: &'static str) -> OptionView {
+    OptionView { group, ..view }
 }
 
 /// Une forme d'identifiant acceptée par un type, et les champs à remplir.
@@ -460,6 +471,7 @@ const fn text(
         required: false,
         input: "text",
         choices: &[],
+        group: "",
     }
 }
 
@@ -480,6 +492,7 @@ const fn number(
         required: false,
         input: "number",
         choices: &[],
+        group: "",
     }
 }
 
@@ -500,6 +513,7 @@ const fn boolean(
         required: false,
         input: "boolean",
         choices: &[],
+        group: "",
     }
 }
 
@@ -520,6 +534,7 @@ const fn select(
         required: false,
         input: "select",
         choices,
+        group: "",
     }
 }
 
@@ -1100,152 +1115,224 @@ const PROXMOX_OPTIONS: &[OptionView] = &[
         "10",
         "10",
     ),
-    number(
-        "backup_lookback_days",
-        "Backup lookback (days)",
-        "Older backup tasks are not examined, from 1 to 3650.",
-        "31",
-        "31",
+    grouped(
+        number(
+            "backup_lookback_days",
+            "Backup lookback (days)",
+            "Older backup tasks are not examined, from 1 to 3650.",
+            "31",
+            "31",
+        ),
+        "Backups & replication",
     ),
-    boolean(
-        "scan_backup_storage",
-        "Inventory backup archives",
-        "Scans the backup storages to date the last backup of each machine. Disable if the storage is slow to answer.",
-        true,
+    grouped(
+        boolean(
+            "scan_backup_storage",
+            "Inventory backup archives",
+            "Scans the backup storages to date the last backup of each machine. Disable if the storage is slow to answer.",
+            true,
+        ),
+        "Backups & replication",
     ),
-    text(
-        "nodes",
-        "Monitored nodes",
-        "Names of the nodes to monitor, separated by commas. Empty: every node in the cluster.",
-        "pve1, pve2",
-        "",
+    grouped(
+        text(
+            "nodes",
+            "Monitored nodes",
+            "Names of the nodes to monitor, separated by commas. Empty: every node in the cluster.",
+            "pve1, pve2",
+            "",
+        ),
+        "Inventory",
     ),
-    boolean(
-        "ha",
-        "Watch high availability",
-        "Reads the HA manager state: quorum, master, LRMs and the state of each HA resource.",
-        true,
+    grouped(
+        boolean(
+            "ha",
+            "Watch high availability",
+            "Reads the HA manager state: quorum, master, LRMs and the state of each HA resource.",
+            true,
+        ),
+        "Performance & capacity",
     ),
-    boolean(
-        "backup_jobs",
-        "Watch backup jobs",
-        "Reads the scheduled backup jobs (next run, last result) and lists the guests no job covers.",
-        true,
+    grouped(
+        boolean(
+            "backup_jobs",
+            "Watch backup jobs",
+            "Reads the scheduled backup jobs (next run, last result) and lists the guests no job covers.",
+            true,
+        ),
+        "Backups & replication",
     ),
-    boolean(
-        "scan_snapshots",
-        "Inventory snapshots",
-        "Lists the snapshots of every VM and container to report their number and age. One API call per guest.",
-        true,
+    grouped(
+        boolean(
+            "scan_snapshots",
+            "Inventory snapshots",
+            "Lists the snapshots of every VM and container to report their number and age. One API call per guest.",
+            true,
+        ),
+        "Backups & replication",
     ),
-    number(
-        "max_snapshot_guests",
-        "Snapshot inventory limit",
-        "Maximum number of guests whose snapshots are listed per probe, from 1 to 10000. Beyond it, the remaining guests are counted as skipped.",
-        "200",
-        "200",
+    grouped(
+        number(
+            "max_snapshot_guests",
+            "Snapshot inventory limit",
+            "Maximum number of guests whose snapshots are listed per probe, from 1 to 10000. Beyond it, the remaining guests are counted as skipped.",
+            "200",
+            "200",
+        ),
+        "Backups & replication",
     ),
-    boolean(
-        "replication",
-        "Watch replication jobs",
-        "Reads the state of ZFS replication jobs on every node.",
-        true,
+    grouped(
+        boolean(
+            "replication",
+            "Watch replication jobs",
+            "Reads the state of ZFS replication jobs on every node.",
+            true,
+        ),
+        "Backups & replication",
     ),
-    boolean(
-        "ceph",
-        "Watch Ceph",
-        "Reads the Ceph cluster health, OSDs and usage. Silently skipped when Ceph is not set up.",
-        true,
+    grouped(
+        boolean(
+            "ceph",
+            "Watch Ceph",
+            "Reads the Ceph cluster health, OSDs and usage. Silently skipped when Ceph is not set up.",
+            true,
+        ),
+        "Cluster services",
     ),
-    boolean(
-        "updates",
-        "Count pending updates",
-        "Lists the packages waiting for an update on each node. Needs Sys.Modify on \"/nodes\" (see the docs); silently skipped otherwise.",
-        true,
+    grouped(
+        boolean(
+            "updates",
+            "Count pending updates",
+            "Lists the packages waiting for an update on each node. Needs Sys.Modify on \"/nodes\" (see the docs); silently skipped otherwise.",
+            true,
+        ),
+        "Security & certificates",
     ),
-    boolean(
-        "certificates",
-        "Watch node certificates",
-        "Reports the days left before each node certificate expires.",
-        true,
+    grouped(
+        boolean(
+            "certificates",
+            "Watch node certificates",
+            "Reports the days left before each node certificate expires.",
+            true,
+        ),
+        "Security & certificates",
     ),
-    boolean(
-        "guest_agent",
-        "Ask the QEMU guest agent",
-        "For each running VM: balloon memory and, when the guest agent is enabled, the disk usage seen from inside (needs VM.GuestAgent.Audit, or VM.Monitor before Proxmox VE 9). Silently skipped when the agent is absent.",
-        true,
+    grouped(
+        boolean(
+            "guest_agent",
+            "Ask the QEMU guest agent",
+            "For each running VM: balloon memory and, when the guest agent is enabled, the disk usage seen from inside (needs VM.GuestAgent.Audit, or VM.Monitor before Proxmox VE 9). Silently skipped when the agent is absent.",
+            true,
+        ),
+        "Cluster services",
     ),
-    boolean(
-        "disks",
-        "Watch physical disks",
-        "SMART health, wearout and temperature of every disk of each node.",
-        true,
+    grouped(
+        boolean(
+            "disks",
+            "Watch physical disks",
+            "SMART health, wearout and temperature of every disk of each node.",
+            true,
+        ),
+        "Performance & capacity",
     ),
-    boolean(
-        "zfs",
-        "Watch ZFS pools",
-        "Health, capacity and fragmentation of the ZFS pools of each node.",
-        true,
+    grouped(
+        boolean(
+            "zfs",
+            "Watch ZFS pools",
+            "Health, capacity and fragmentation of the ZFS pools of each node.",
+            true,
+        ),
+        "Performance & capacity",
     ),
-    boolean(
-        "packages",
-        "Detect package changes",
-        "Compares the installed Proxmox packages with the previous probe and reports an upgrade for one hour.",
-        true,
+    grouped(
+        boolean(
+            "packages",
+            "Detect package changes",
+            "Compares the installed Proxmox packages with the previous probe and reports an upgrade for one hour.",
+            true,
+        ),
+        "Inventory",
     ),
-    boolean(
-        "subscription",
-        "Watch subscription and repositories",
-        "Subscription status and APT repositories of each node (enterprise without subscription, unreadable sources).",
-        true,
+    grouped(
+        boolean(
+            "subscription",
+            "Watch subscription and repositories",
+            "Subscription status and APT repositories of each node (enterprise without subscription, unreadable sources).",
+            true,
+        ),
+        "Security & certificates",
     ),
-    boolean(
-        "cluster_resources",
-        "Read the cluster inventory",
-        "One call lists every node, guest, storage and pool of the cluster. Keep it on: it is the only source that still sees the guests of a node that stopped answering, and it saves two calls per node.",
-        true,
+    grouped(
+        boolean(
+            "cluster_resources",
+            "Read the cluster inventory",
+            "One call lists every node, guest, storage and pool of the cluster. Keep it on: it is the only source that still sees the guests of a node that stopped answering, and it saves two calls per node.",
+            true,
+        ),
+        "Inventory",
     ),
-    boolean(
-        "services",
-        "Watch node services",
-        "State of the Proxmox daemons of each node (pvestatd, pveproxy, pve-cluster, corosync…) and the version installed on it. A stopped pvestatd leaves the whole cluster showing frozen numbers.",
-        true,
+    grouped(
+        boolean(
+            "services",
+            "Watch node services",
+            "State of the Proxmox daemons of each node (pvestatd, pveproxy, pve-cluster, corosync…) and the version installed on it. A stopped pvestatd leaves the whole cluster showing frozen numbers.",
+            true,
+        ),
+        "Cluster services",
     ),
-    boolean(
-        "network",
-        "Watch node networking",
-        "Bridges, bonds and VLANs of each node with their link state, plus the traffic counters of each guest network card.",
-        true,
+    grouped(
+        boolean(
+            "network",
+            "Watch node networking",
+            "Bridges, bonds and VLANs of each node with their link state, plus the traffic counters of each guest network card.",
+            true,
+        ),
+        "Performance & capacity",
     ),
-    boolean(
-        "lvm",
-        "Watch LVM and thin pools",
-        "Volume groups, LVM thin pools (data and metadata fill) and PVE-managed directory mounts. A full thin pool puts every guest on it read-only.",
-        true,
+    grouped(
+        boolean(
+            "lvm",
+            "Watch LVM and thin pools",
+            "Volume groups, LVM thin pools (data and metadata fill) and PVE-managed directory mounts. A full thin pool puts every guest on it read-only.",
+            true,
+        ),
+        "Performance & capacity",
     ),
-    boolean(
-        "ceph_detail",
-        "Watch Ceph in detail",
-        "Per-OSD state, usage and latency, per-pool usage, CephFS, OSD flags and muted health checks. Needs \"Watch Ceph\" to be on; silently skipped when Ceph is not set up.",
-        true,
+    grouped(
+        boolean(
+            "ceph_detail",
+            "Watch Ceph in detail",
+            "Per-OSD state, usage and latency, per-pool usage, CephFS, OSD flags and muted health checks. Needs \"Watch Ceph\" to be on; silently skipped when Ceph is not set up.",
+            true,
+        ),
+        "Cluster services",
     ),
-    boolean(
-        "backup_volumes",
-        "Check what backup jobs include",
-        "For each scheduled job, which guests it covers and which of their disks it actually writes. Catches a job that succeeds every night while skipping a data disk.",
-        true,
+    grouped(
+        boolean(
+            "backup_volumes",
+            "Check what backup jobs include",
+            "For each scheduled job, which guests it covers and which of their disks it actually writes. Catches a job that succeeds every night while skipping a data disk.",
+            true,
+        ),
+        "Backups & replication",
     ),
-    boolean(
-        "guest_os",
-        "Read guest OS and addresses",
-        "Operating system and IP addresses seen from inside each running guest (QEMU guest agent for VMs, the container namespace for containers). Refreshed once an hour, not at every probe.",
-        true,
+    grouped(
+        boolean(
+            "guest_os",
+            "Read guest OS and addresses",
+            "Operating system and IP addresses seen from inside each running guest (QEMU guest agent for VMs, the container namespace for containers). Refreshed once an hour, not at every probe.",
+            true,
+        ),
+        "Inventory",
     ),
-    boolean(
-        "metrics_export",
-        "Ingest the full RRD metric stream",
-        "Reads /cluster/metrics/export, the stream Proxmox's own metric servers consume: everything pvestatd measures, including per-node pressure stall (PSI), and every point since the last probe rather than just the current one. Off by default: the series it adds (…_rrd_…) partly repeat the ones already collected. Needs Sys.Audit on \"/\".",
-        false,
+    grouped(
+        boolean(
+            "metrics_export",
+            "Ingest the full RRD metric stream",
+            "Reads /cluster/metrics/export, the stream Proxmox's own metric servers consume: everything pvestatd measures, including per-node pressure stall (PSI), and every point since the last probe rather than just the current one. Off by default: the series it adds (…_rrd_…) partly repeat the ones already collected. Needs Sys.Audit on \"/\".",
+            false,
+        ),
+        "Performance & capacity",
     ),
 ];
 
@@ -4393,6 +4480,7 @@ impl OptionView {
             required: self.required,
             input: self.input.into(),
             choices: texts(self.choices),
+            group: self.group.into(),
         }
     }
 }

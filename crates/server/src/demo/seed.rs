@@ -81,6 +81,7 @@ pub async fn run(
             enabled: true,
             tags: device.tags.iter().map(|(k, v)| (k.to_string(), v.clone())).collect(),
             credential: Some(device.credential.clone()),
+            group_name: String::new(),
         };
         let id = db::targets::create(pool, cipher, &input).await?;
         targets.push((id, device.name.to_string(), device.kind.to_string()));
@@ -100,6 +101,7 @@ pub async fn run(
             enabled: true,
             tags: BTreeMap::new(),
             credential: Some(Credential::None),
+            group_name: String::new(),
         };
         let id = db::targets::create(pool, cipher, &input).await?;
         targets.push((id, name.to_string(), kind.to_string()));
