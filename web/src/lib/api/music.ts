@@ -125,3 +125,82 @@ export function disconnectSpotify(): Promise<void> {
 export function getSpotifyToken(): Promise<SpotifyAccessToken> {
 	return request<SpotifyAccessToken>('/music/spotify/token');
 }
+
+// --- The speaker -------------------------------------------------------------
+
+/** A Spotify Connect device of the account (`GET /v1/me/player/devices`). */
+export interface SpeakerDevice {
+	id: string | null;
+	name: string;
+	/** `Computer`, `Smartphone`, `Speaker`, `TV`… */
+	type: string;
+	is_active: boolean;
+	is_restricted: boolean;
+	volume_percent: number | null;
+}
+
+export type SpeakerPhaseName = 'off' | 'unsupported' | 'starting' | 'ready' | 'error';
+
+/** What a wall says about its speaker (sent every minute and on every change). */
+export interface SpeakerReportBody {
+	/** Random id kept by the wall's browser. */
+	display: string;
+	name: string;
+	phase: SpeakerPhaseName;
+	activated: boolean;
+	device_id: string | null;
+	problem: string | null;
+	/** "Chrome 130 on Linux". */
+	browser: string | null;
+	/** false: Spotify said the account has no Premium; true: the player is ready. */
+	premium: boolean | null;
+}
+
+/** A wall as Settings shows it. */
+export interface WallReport extends SpeakerReportBody {
+	/** Spotify lists this wall's device (`null`: could not be checked). */
+	listed: boolean | null;
+	/** Server time, UTC without suffix. */
+	seen_at: string;
+}
+
+/** `GET /api/music/speaker`. */
+export interface WallSpeaker {
+	speaker_name: string;
+	status: SpotifyConnection;
+	account_name: string | null;
+	/** `null`: unknown until Spotify or a wall says. */
+	premium: boolean | null;
+	devices: SpeakerDevice[];
+	/** Spotify lists the speaker among the account's devices. */
+	listed: boolean;
+	/** Walls that reported in the last fifteen minutes, newest first. */
+	walls: WallReport[];
+	/** Why the device list could not be read. */
+	error: string | null;
+}
+
+export function getWallSpeaker(signal?: AbortSignal): Promise<WallSpeaker> {
+	return request<WallSpeaker>('/music/speaker', { signal, anticipated: true });
+}
+
+/** Renames the speaker every wall announces (admin); `null` goes back to the default. */
+export function setSpeakerName(name: string | null): Promise<{ speaker_name: string }> {
+	return request<{ speaker_name: string }>('/music/speaker', { method: 'PUT', body: { name } });
+}
+
+/** A wall's report; the reply says whether Spotify lists its device. */
+export function reportSpeaker(report: SpeakerReportBody): Promise<{ listed: boolean | null }> {
+	return request<{ listed: boolean | null }>('/music/speaker/report', { method: 'POST', body: report, anticipated: true });
+}
+
+/**
+ * Plays the account on the speaker: this wall's device when given ("Play
+ * here"), else the device named like the speaker ("Test sound").
+ */
+export function playOnSpeaker(deviceId?: string | null): Promise<{ device_id: string; speaker_name: string }> {
+	return request<{ device_id: string; speaker_name: string }>('/music/speaker/play', {
+		method: 'POST',
+		body: { device_id: deviceId ?? null }
+	});
+}

@@ -6,6 +6,7 @@
 	 * Colours depend on the theme, so the instance is rebuilt when it changes.
 	 * `compact` is the faceplate's display window: same data, no axes, no legend.
 	 */
+	import { untrack } from 'svelte';
 	import uPlot from 'uplot';
 	import { theme } from '$lib/stores/theme.svelte';
 
@@ -138,18 +139,50 @@
 		};
 	}
 
+	/** Series "shape": labels in order. uPlot's own series/scale setup depends
+	 *  on this, not on the data — a rebuild is only needed when it changes.
+	 *  `$derived` matters here: a poll replaces the `series` array with a new
+	 *  reference every time, but this string stays equal when the shape
+	 *  itself didn't change, so dependants below are not marked dirty by it. */
+	const shape = $derived(series.map((serie) => serie.label).join('\u0000'));
+	const themeKey = $derived(theme.resolved);
+
+	/** Create or fully rebuild: host appears, theme changes, or the series
+	 *  shape changes (label added/removed/reordered), plus the few props that
+	 *  change uPlot's own config (`height`, `compact`, `unit`, `tone`). Never
+	 *  on a plain poll: `shape`/`themeKey` only change value — hence only mark
+	 *  this effect dirty — when the structure actually changes, and the data
+	 *  itself (`series`, read inside `untrack`) is deliberately not a
+	 *  dependency here: the data effect below handles a plain refresh. */
 	$effect(() => {
-		const data = toUplotData(series);
 		const w = width;
-		theme.resolved;
 		const host = container;
+		void shape;
+		void themeKey;
+		void height;
+		void compact;
+		void unit;
+		void tone;
 		if (!host || w === 0) return;
 		plot?.destroy();
-		plot = new uPlot(buildOptions(w), data, host);
+		plot = untrack(() => new uPlot(buildOptions(w), toUplotData(series), host));
 		return () => {
 			plot?.destroy();
 			plot = null;
 		};
+	});
+
+	/** Data refresh: same instance, `setData` only. Runs on every poll (this
+	 *  effect does depend on `series` directly), but never tears down the
+	 *  canvas. Right after a rebuild above it re-applies the same data, which
+	 *  is a cheap no-op. */
+	$effect(() => {
+		plot?.setData(toUplotData(series));
+	});
+
+	/** Size refresh: same instance, `setSize` only — never a rebuild. */
+	$effect(() => {
+		if (width > 0) plot?.setSize({ width: Math.max(width, 120), height });
 	});
 
 	$effect(() => {
