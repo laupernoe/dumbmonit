@@ -8,6 +8,20 @@
 	import type { Icon as LucideIcon } from 'lucide-svelte';
 	import { theme, type ThemePreference } from '$lib/stores/theme.svelte';
 	import { Button, Panel } from '$lib/ui';
+	import { m } from '$lib/paraglide/messages.js';
+	import { getLocale, locales, setLocale, type Locale } from '$lib/paraglide/runtime.js';
+
+	// A name for each shipped locale, in that locale's own language where we
+	// can tell (Intl knows), falling back to English. Only locales with a
+	// `messages/{locale}.json` file exist here — today, just English — so the
+	// picker below hides itself until a second one lands through Weblate.
+	function localeName(locale: string): string {
+		try {
+			return new Intl.DisplayNames([locale, 'en'], { type: 'language' }).of(locale) ?? locale;
+		} catch {
+			return locale;
+		}
+	}
 
 	interface Option {
 		value: ThemePreference;
@@ -81,6 +95,22 @@
 			</button>
 		{/each}
 	</div>
+
+	{#if locales.length > 1}
+		<div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+			<label for="settings-language" class="text-sm font-semibold text-ink">{m["settings.appearance.language_label"]()}</label>
+			<select
+				id="settings-language"
+				class="h-9 rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink"
+				value={getLocale()}
+				onchange={(e) => setLocale((e.currentTarget as HTMLSelectElement).value as Locale)}
+			>
+				{#each locales as locale (locale)}
+					<option value={locale}>{localeName(locale)}</option>
+				{/each}
+			</select>
+		</div>
+	{/if}
 
 	<div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
 		<div class="min-w-0">
