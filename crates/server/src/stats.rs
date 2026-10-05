@@ -37,6 +37,7 @@ pub struct Stats {
     samples_written: AtomicU64,
     sample_writes_failed: AtomicU64,
     samples_pending: AtomicU64,
+    samples_dropped: AtomicU64,
     alerting_cycles: AtomicU64,
     alerting_cycle_micros: AtomicU64,
     alerting_rules_evaluated: AtomicU64,
@@ -69,6 +70,7 @@ impl Stats {
             samples_written: AtomicU64::new(0),
             sample_writes_failed: AtomicU64::new(0),
             samples_pending: AtomicU64::new(0),
+            samples_dropped: AtomicU64::new(0),
             alerting_cycles: AtomicU64::new(0),
             alerting_cycle_micros: AtomicU64::new(0),
             alerting_rules_evaluated: AtomicU64::new(0),
@@ -102,6 +104,13 @@ impl Stats {
         self.samples_pending.store(pending as u64, Ordering::Relaxed);
     }
 
+    /// Des échantillons abandonnés avant même d'atteindre le tampon : le canal
+    /// vers la tâche d'écriture était saturé ou fermé. Distinct de
+    /// `sample_write_failed`, qui compte des lots retentés, pas perdus.
+    pub fn samples_dropped(&self, count: usize) {
+        self.samples_dropped.fetch_add(count as u64, Ordering::Relaxed);
+    }
+
     /// Un cycle d'alerting : sa durée et le sort des règles évaluées.
     pub fn alerting_cycle(&self, elapsed: Duration, evaluated: usize, failed: usize) {
         self.alerting_cycles.fetch_add(1, Ordering::Relaxed);
@@ -128,6 +137,7 @@ impl Stats {
             samples_written: self.samples_written.load(Ordering::Relaxed),
             sample_writes_failed: self.sample_writes_failed.load(Ordering::Relaxed),
             samples_pending: self.samples_pending.load(Ordering::Relaxed),
+            samples_dropped: self.samples_dropped.load(Ordering::Relaxed),
             alerting_cycles: self.alerting_cycles.load(Ordering::Relaxed),
             alerting_cycle: Duration::from_micros(
                 self.alerting_cycle_micros.load(Ordering::Relaxed),
@@ -150,6 +160,7 @@ pub struct Snapshot {
     pub samples_written: u64,
     pub sample_writes_failed: u64,
     pub samples_pending: u64,
+    pub samples_dropped: u64,
     pub alerting_cycles: u64,
     pub alerting_cycle: Duration,
     pub alerting_rules_evaluated: u64,
@@ -218,6 +229,7 @@ mod tests {
         stats.probe("snmp", true);
         stats.samples_written(500, 12);
         stats.sample_write_failed(600);
+        stats.samples_dropped(42);
         stats.alerting_cycle(Duration::from_millis(40), 9, 1);
         stats.notification("email", false);
 
@@ -229,6 +241,7 @@ mod tests {
         assert_eq!(snapshot.samples_written, 500);
         assert_eq!(snapshot.sample_writes_failed, 1);
         assert_eq!(snapshot.samples_pending, 600, "la dernière valeur connue");
+        assert_eq!(snapshot.samples_dropped, 42);
         assert_eq!(snapshot.alerting_rules_evaluated, 9);
         assert_eq!(snapshot.alerting_rules_failed, 1);
         assert_eq!(snapshot.notifications["email"], Counts { total: 1, failed: 0 });

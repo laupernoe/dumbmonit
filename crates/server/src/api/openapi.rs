@@ -146,6 +146,8 @@ mod tests {
             "/music/spotify/authorize",
             "/music/spotify/complete",
             "/music/spotify/token",
+            "/music/speaker/report",
+            "/music/speaker/play",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))

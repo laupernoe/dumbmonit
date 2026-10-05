@@ -319,6 +319,13 @@ fn render(snapshot: &Snapshot, alerts: &AlertCounts, agents: (u64, u64), health:
     );
     out.value(snapshot.samples_pending as f64);
 
+    out.metric(
+        "dumbmonit_samples_dropped_total",
+        "counter",
+        "Samples dropped because the write buffer was full or closed; never retried.",
+    );
+    out.value(snapshot.samples_dropped as f64);
+
     out.metric("dumbmonit_alerting_cycles_total", "counter", "Alerting cycles run since startup.");
     out.value(snapshot.alerting_cycles as f64);
 
@@ -748,6 +755,7 @@ mod tests {
             samples_written: 1_234,
             sample_writes_failed: 1,
             samples_pending: 5,
+            samples_dropped: 7,
             alerting_cycles: 4,
             alerting_cycle: Duration::from_millis(250),
             alerting_rules_evaluated: 9,
@@ -835,6 +843,7 @@ mod tests {
             "dumbmonit_probes_failed_total{kind=\"snmp\"} 3",
             "dumbmonit_samples_written_total 1234",
             "dumbmonit_samples_pending 5",
+            "dumbmonit_samples_dropped_total 7",
             "dumbmonit_alerts{phase=\"firing\"} 2",
             "dumbmonit_alerts_learning 3",
             "dumbmonit_notifications_total{kind=\"email\"} 3",

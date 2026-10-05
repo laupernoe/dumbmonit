@@ -10,8 +10,9 @@
 	 * alert events). The last visit lives in the browser, so the story starts
 	 * where the reader left it.
 	 *
-	 * Alerts come from the shared store (polled app-wide); everything else is
-	 * refreshed here every 30 s. No device list: the rack lives on /targets.
+	 * Alerts, devices and probe states come from the shared store (polled
+	 * app-wide, see `alertsStore`); everything else is refreshed here every
+	 * 30 s. No device list: the rack lives on /targets.
 	 *
 	 * The pigeon in the sky lives the weather with the reader: it sleeps on a
 	 * wire on a quiet night, startles when something new goes wrong, and loops
@@ -21,7 +22,6 @@
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import {
-		listTargets,
 		listAlertRules,
 		listAlertHistory,
 		listSilences,
@@ -38,8 +38,7 @@
 		type Silence
 	} from '$lib/api';
 	import type { Alert } from '$lib/api';
-	import { displayState, formatRelative, type ProbeStatus } from '$lib/format';
-	import { loadProbeStatuses } from '$lib/metrics';
+	import { displayState, formatRelative } from '$lib/format';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '$lib/ui';
@@ -64,9 +63,7 @@
 	/** Entrance stagger, one step per section top to bottom. */
 	const STAGGER_MS = 60;
 
-	let targets = $state<Target[]>([]);
 	let rules = $state<AlertRule[]>([]);
-	let probes = $state<Map<TargetId, ProbeStatus>>(new Map());
 	let history = $state<AlertHistoryEntry[]>([]);
 	let silences = $state<Silence[]>([]);
 	let certificates = $state<{ targetId: TargetId; days: number }[]>([]);
@@ -93,6 +90,10 @@
 
 	// `?demo=empty` shows the first-run screen on a populated server. Harmless, kept for review.
 	const demoEmpty = $derived(page.url.searchParams.get('demo') === 'empty');
+	// Targets and probe states are read from the shared store (polled app-wide
+	// by the root layout) instead of fetched again here: see `alertsStore`.
+	const targets = $derived(alertsStore.targets);
+	const probes = $derived(alertsStore.probes);
 	const shownTargets = $derived(demoEmpty ? [] : targets);
 	const alerts = $derived<Alert[]>(demoEmpty ? [] : alertsStore.alerts);
 	const noDevices = $derived(shownTargets.length === 0);
@@ -215,9 +216,10 @@
 		// The history reaches back to the last visit or seven days, whichever is
 		// older, so one read feeds both the briefing and the last-7-days figures.
 		const sinceMs = Math.min(lastVisit?.getTime() ?? Infinity, at.getTime() - HISTORY_DAYS * DAY_MS);
-		// Secondary readings leave with the lists: their failure is not blocking.
+		// Targets and probe states come from the shared store, polled app-wide;
+		// this covers only what it doesn't hold. Secondary readings leave with
+		// the lists: their failure is not blocking.
 		const side = Promise.all([
-			loadProbeStatuses(signal).catch(() => new Map<TargetId, ProbeStatus>()),
 			listAlertHistory({ limit: 500, since: new Date(sinceMs).toISOString() }, signal).catch(
 				() => [] as AlertHistoryEntry[]
 			),
@@ -230,12 +232,7 @@
 				: Promise.resolve(channels)
 		]);
 		try {
-			const [nextTargets, nextRules] = await Promise.all([
-				listTargets(signal),
-				listAlertRules(signal)
-			]);
-			targets = nextTargets;
-			rules = nextRules;
+			rules = await listAlertRules(signal);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;
@@ -243,8 +240,8 @@
 		} finally {
 			loading = false;
 		}
-		[probes, history, silences, certificates, channels] = await side;
-		if (targets.length === 0 || demoEmpty) {
+		[history, silences, certificates, channels] = await side;
+		if (shownTargets.length === 0 || demoEmpty) {
 			hasDemoKind = await listCollectors(signal)
 				.then((kinds) => kinds.some((kind) => kind.kind === 'dummy'))
 				.catch(() => false);
@@ -252,7 +249,6 @@
 		now = at;
 		lastChecked = new Date();
 		void readOnboarding(signal);
-		await alertsStore.refresh(signal);
 		if (!watching && !armTimer) armTimer = setTimeout(() => (watching = true), 3000);
 	}
 	let armTimer: ReturnType<typeof setTimeout> | undefined;
@@ -299,18 +295,23 @@
 		};
 	});
 
-	const firstLoad = $derived(loading && targets.length === 0);
+	const firstLoad = $derived((loading || alertsStore.loading) && targets.length === 0);
+	// This page's own error (the rules read) takes precedence; absent that, a
+	// failure on the shared store (targets, the badge's alerts) is this page's
+	// problem too, since the sky model needs both.
+	const pageError = $derived(error ?? (!alertsStore.available ? alertsStore.lastError : null));
 </script>
 
 <svelte:head><title>Overview · DumbMonit</title></svelte:head>
 
-{#if error && targets.length === 0}
+{#if pageError && targets.length === 0}
 	<ErrorNotice
-		{error}
+		error={pageError}
 		title="Could not load the overview"
 		onretry={() => {
 			loading = true;
 			void load();
+			void alertsStore.refresh();
 		}}
 	/>
 {:else if firstLoad}

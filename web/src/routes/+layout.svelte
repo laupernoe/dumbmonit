@@ -1,13 +1,14 @@
 <script lang="ts">
 	import '../app.css';
+	import type { Component } from 'svelte';
 	import { page } from '$app/state';
 	import { goto, onNavigate } from '$app/navigation';
 	import { theme } from '$lib/stores/theme.svelte';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
+	import { palette } from '$lib/stores/palette.svelte';
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '$lib/stores/auth.svelte';
 	import NavBar from '$lib/components/NavBar.svelte';
 	import Logo from '$lib/components/Logo.svelte';
-	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import DemoBanner from '$lib/components/demo/DemoBanner.svelte';
 	import DemoNotice from '$lib/components/demo/DemoNotice.svelte';
 	import Tour from '$lib/components/demo/Tour.svelte';
@@ -15,6 +16,29 @@
 	import { reducedMotion } from '$lib/ui';
 
 	let { children } = $props();
+
+	// The command palette (Ctrl/⌘ K) is not mounted on `/wall`, a full-screen
+	// kiosk display that owns its own Escape handling and has no use for it,
+	// and is otherwise loaded only on its first open: forty-odd icons and the
+	// device catalogue it searches are not worth shipping to every page.
+	const onWall = $derived(page.url.pathname.startsWith('/wall'));
+	let CommandPalette = $state<Component | null>(null);
+	$effect(() => {
+		if (onWall || CommandPalette || !palette.isOpen) return;
+		void import('$lib/components/CommandPalette.svelte').then((mod) => {
+			CommandPalette = mod.default;
+		});
+	});
+	$effect(() => {
+		if (onWall) return;
+		function onKeydown(event: KeyboardEvent) {
+			if (!palette.matches(event)) return;
+			event.preventDefault();
+			palette.toggle();
+		}
+		window.addEventListener('keydown', onKeydown);
+		return () => window.removeEventListener('keydown', onKeydown);
+	});
 
 	// The system theme can flip during a session (evening switch).
 	$effect(() => theme.watchSystem());
@@ -120,7 +144,9 @@
 		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-24 sm:px-6 sm:pb-12">
 			{@render children()}
 		</main>
-		<CommandPalette />
+		{#if CommandPalette && !onWall}
+			<CommandPalette />
+		{/if}
 		{#if auth.demo}
 			<Tour />
 		{/if}

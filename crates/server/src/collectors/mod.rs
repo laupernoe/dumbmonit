@@ -11,6 +11,7 @@
 //! dans le [`Registry`] : le planificateur et l'API n'ont pas connaissance des
 //! types concrets.
 
+pub mod activedirectory_history;
 pub mod agent;
 pub mod opnsense_history;
 pub mod pbs_history;
@@ -21,6 +22,7 @@ pub mod relay;
 pub mod synology_history;
 pub mod truenas_history;
 
+pub use dumbmonit_collectors::{ActiveDirectoryCollector, activedirectory};
 pub use dumbmonit_collectors::{
     AdguardCollector, MikrotikCollector, NutCollector, PiholeCollector, adguard, mikrotik, nut,
     pihole,
