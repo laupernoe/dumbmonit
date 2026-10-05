@@ -9,6 +9,7 @@
 
 pub mod activedirectory;
 pub mod adguard;
+pub mod apache;
 pub mod api_options;
 pub mod caddy;
 pub mod client_devices;
@@ -22,6 +23,7 @@ pub mod kubernetes;
 pub mod mdaemon;
 pub mod mikrotik;
 pub mod mongodb;
+pub mod nginx;
 pub mod npm;
 pub mod nut;
 pub mod observability;
@@ -58,6 +60,7 @@ use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 
 pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
+pub use apache::ApacheCollector;
 pub use caddy::CaddyCollector;
 pub use crowdsec::CrowdsecCollector;
 pub use domain::DomainCollector;
@@ -68,6 +71,7 @@ pub use kubernetes::KubernetesCollector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
 pub use mikrotik::MikrotikCollector;
 pub use mongodb::MongodbCollector;
+pub use nginx::NginxCollector;
 pub use npm::NpmCollector;
 pub use nut::NutCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
@@ -95,8 +99,8 @@ pub use truenas::TruenasCollector;
 pub use unifi::UnifiCollector;
 pub use unraid::UnraidCollector;
 pub use uptime::{
-    DnsCollector, HttpCollector, MqttCollector, MysqlCollector, PingCollector, PostgresCollector,
-    SmtpCollector, TcpCollector, TlsCollector, WebsocketCollector,
+    DnsCollector, HttpCollector, MqttCollector, MysqlCollector, NtpCollector, PingCollector,
+    PostgresCollector, SmtpCollector, TcpCollector, TlsCollector, WebsocketCollector,
 };
 pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
@@ -183,6 +187,9 @@ impl Registry {
         registry.register(Arc::new(MysqlCollector::new()));
         registry.register(Arc::new(MqttCollector::new()));
         registry.register(Arc::new(WebsocketCollector::new()));
+        registry.register(Arc::new(NtpCollector::new()));
+        registry.register(Arc::new(NginxCollector::new()));
+        registry.register(Arc::new(ApacheCollector::new()));
         registry
     }
 

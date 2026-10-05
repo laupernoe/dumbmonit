@@ -65,6 +65,8 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	tailscale: () => import('./appliance/AppliancePanel.svelte'),
 	fortigate: () => import('./appliance/AppliancePanel.svelte'),
 	sophos: () => import('./appliance/AppliancePanel.svelte'),
+	nginx: () => import('./appliance/AppliancePanel.svelte'),
+	apache: () => import('./appliance/AppliancePanel.svelte'),
 	webchange: () => import('./webchange/WebchangePanel.svelte')
 };
 

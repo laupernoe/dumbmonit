@@ -106,6 +106,8 @@ nav:
       - CrowdSec: devices/crowdsec.md
       - Traefik: devices/traefik.md
       - Caddy: devices/caddy.md
+      - Nginx: devices/nginx.md
+      - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
       - Kubernetes / k3s: devices/kubernetes.md
@@ -120,7 +122,7 @@ nav:
       - GitLab (self-managed): devices/gitlab.md
       - Forgejo / Gitea: devices/forgejo.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
-      - Services (HTTP, TCP, DNS, ping, TLS): devices/services.md
+      - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
       - Demo device: devices/demo.md

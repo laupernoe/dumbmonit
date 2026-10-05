@@ -39,6 +39,8 @@ form always matches what this version can monitor.
 | [CrowdSec](crowdsec.md) | `crowdsec` | none, or bouncer API key | Security engine: decisions, alerts, bouncers that stopped pulling, log reading |
 | [Traefik](traefik.md) | `traefik` | none, or basicAuth user | Reverse proxy: disabled routers, backend servers down, certificates not obtained or not renewed, 5xx share |
 | [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |
+| [Nginx](nginx.md) | `nginx` | none, or basic auth | Web server: active/waiting connections, accept/handled/request rates, NGINX Plus upstream health |
+| [Apache httpd](apache.md) | `apache` | none, or basic auth | Web server: busy/idle workers, scoreboard by state, request and byte rates |
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
 | [Domain expiry](domain.md) | `domain` | none | Registered domain over RDAP: days before expiry, hold, redemption period, registrar |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
@@ -58,6 +60,7 @@ form always matches what this version can monitor.
 | [Domain name](services.md#dns) | `dns` | none | Your domain, an internal name |
 | [Reachable host](services.md#ping) | `ping` | none | Gateway, access point, printer |
 | [TLS certificate](services.md#tls) | `tls` | none | IMAPS, LDAPS, reverse proxy |
+| [NTP time server](services.md#ntp) | `ntp` | none | Router, NAS, internal time server, public pool server |
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
 | [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |
 | [Demo device](demo.md) | `dummy` | none | Explore the UI without hardware |
