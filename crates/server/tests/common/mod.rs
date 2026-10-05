@@ -64,8 +64,12 @@ pub fn base_config(dir: &std::path::Path) -> Config {
     config.data_dir = dir.to_path_buf();
     config.victoria_url = Some(UNREACHABLE_VICTORIA.to_string());
     config.oidc = Default::default();
+    config.setup_code = Some(SETUP_CODE.to_string());
     config
 }
+
+/// Code de première configuration des instances de test.
+pub const SETUP_CODE: &str = "TESTS-SETUP";
 
 /// Monte l'application sur une base déjà ouverte — utile pour préparer une
 /// instance « ancienne » avant que les migrations ne la fassent avancer.
@@ -161,7 +165,11 @@ impl TestApp {
 
     pub async fn create_admin(&self) {
         let reply = self
-            .post("/api/auth/setup", json!({ "username": "admin", "password": PASSWORD }), None)
+            .post(
+                "/api/auth/setup",
+                json!({ "setup_code": SETUP_CODE, "username": "admin", "password": PASSWORD }),
+                None,
+            )
             .await;
         assert_eq!(reply.status, StatusCode::NO_CONTENT, "création refusée : {}", reply.body);
     }
