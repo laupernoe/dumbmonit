@@ -85,6 +85,12 @@ back for a paid edition.
   supplies and their redundancy, drives and their predicted failures, memory and
   processor health, and the event log counted by severity. An empty slot is
   never a failure. Read-only account, basic authentication by default.
+- **Active Directory** — a Windows domain read over LDAP with a plain,
+  unprivileged domain account: domain controllers and FSMO roles, privileged
+  group membership, password policy, and the raw facts a domain audit looks
+  for first — Kerberoastable and AS-REP roastable accounts, unconstrained
+  delegation, an old krbtgt password, computers without LAPS, systems out of
+  support. One device covers the whole domain.
 - **MDaemon Email Server and SecurityGateway** — the Windows mail server and
   mail gateway from MDaemon Technologies: SMTP, IMAP, POP3 and webmail checked
   from the outside, greeting included, with no account at all; the version
@@ -99,6 +105,16 @@ back for a paid edition.
   transcodes. Each through its own API with the narrowest access it allows (a
   serverinfo token, a five-permission Immich key, a Paperless user that reads
   no document).
+- **GitLab (self-managed) and Forgejo/Gitea** — a Git forge's health: Sidekiq
+  queue backlog and latency on GitLab, scheduled tasks and Actions runners on
+  Forgejo/Gitea, CI/CD runners online, pending database migrations and, for
+  GitLab Enterprise Edition, the licence. An ordinary access token proves the
+  instance is up; administrator-only endpoints are skipped, not failed,
+  without one.
+- **Nginx and Apache** — the web server itself, through `stub_status` or
+  `mod_status`: active/idle workers or connections, accept/handled/request
+  rates, and, with the commercial NGINX Plus, upstream health and per-zone
+  traffic. No account needed.
 - **TrueNAS** — the ZFS pool that lost a disk and still serves its data (the
   failure nobody notices until the second disk), with the disk named; scrubs and
   resilvers, pool and dataset usage against quotas, snapshots and replication
@@ -106,7 +122,9 @@ back for a paid edition.
   itself. Nothing is ever started: no scrub, no test, no update check.
 - **Synology DSM** — volumes, disks and SMART health, temperature, load and
   services, through the NAS web API; **Active Backup for Business** tasks, their
-  last result and the age of the last success.
+  last result and the age of the last success; whether **Synology Drive** and
+  **Synology Photos** are installed and serving, with Drive's team folders
+  and active connections.
 - **Linux, macOS, FreeBSD and Windows agent** — CPU, memory, disks, network,
   services and uptime for machines that do not speak SNMP, plus **temperatures
   and fans**, **disk health (SMART)** and **ZFS pools** where the machine
@@ -121,9 +139,10 @@ back for a paid edition.
   snapshot per kloset.
 - **Service monitors**, Uptime Kuma style — HTTP(S) (status code, keyword, JSON
   path, certificate), TCP port, DNS resolution (asserting the record type, the
-  expected values, and the ones that must never come back), ping and TLS
-  certificate expiry, each with its history bar, response time and availability
-  percentage.
+  expected values, and the ones that must never come back), ping, TLS
+  certificate expiry and NTP (offset, stratum, leap indicator, for a router or
+  a chrony/ntpd server acting as a local time source), each with its history
+  bar, response time and availability percentage.
 - **Application monitors** that begin a real session instead of knocking on a
   port — **SMTP** (greeting, EHLO, STARTTLS, AUTH: does your relay still accept
   you?), **PostgreSQL** and **MySQL/MariaDB** (connect, authenticate, run a
@@ -134,6 +153,15 @@ back for a paid edition.
 - **Heartbeats** (dead man's switch) — a cron job, backup script or Home
   Assistant automation calls a secret URL each time it runs; if it stops
   calling, you are told. Uptime Kuma push-compatible (`?status=down&msg=`).
+- **Website change detection** — watch a page, or a whole site crawled from its
+  sitemap or its links, for changes in its visible text: a pricing page, a
+  documentation site, a supplier's maintenance notice. Each change keeps the
+  text before and after, a line diff and, when a browser is available, a
+  screenshot of each version.
+- **Client device tracking** — last-seen and last-backup per machine for
+  products that serve many clients: Immich, Proxmox Backup Server and Veeam
+  protected machines, Tailscale, UniFi and the Home Assistant companion app,
+  each with a stale-device alert when one goes quiet.
 - **Network discovery** — sweep a CIDR and add everything that answers in one go.
 - **Integration packs** — a device kind declared in a single YAML file (an HTTP
   API or a Prometheus `/metrics` page on the device, extracted by JSONPath,
@@ -150,10 +178,16 @@ back for a paid edition.
 - **Dependency suppression** — declare a device as the parent of others; when the
   parent goes down, its descendants' alerts are suppressed instead of sent.
 - **Grouping by host**, deduplication, periodic reminders and escalation.
-- **Acknowledge an alert** — "I know, stop reminding me": reminders go quiet
-  for four hours by default (up to thirty days) with an optional note, while the
-  condition keeps being tracked. Resolution is still announced, and clears the
-  acknowledgement, so the same alert notifies again if it comes back.
+- **Acknowledge, snooze, ignore or clear** — **Acknowledge** ("I know, stop
+  reminding me") quiets reminders for four hours by default (up to thirty
+  days) with an optional note, while the condition keeps being tracked;
+  resolution is still announced, and clears the acknowledgement, so the same
+  alert notifies again if it comes back. **Snooze** does the same without
+  claiming you are working on it. **Ignore** turns a rule off for one device
+  for good, shown as "Ignored on N devices" on the rule. **Clear** drops a
+  resolved transition from History, one at a time or all at once; *Show
+  cleared* brings it back. Public status pages ignore acknowledgements and
+  snoozes — an acked or snoozed alert is still an alert for the outside world.
 - **Maintenance windows**, one-off or weekly.
 - **Notification policy** — hysteresis (trigger/clear thresholds), flap hold,
   per-channel cooldown, quiet hours, batching and an hourly cap, so a bad night
@@ -173,10 +207,24 @@ back for a paid edition.
 **Interface**
 
 - Light and dark themes, following the system by default.
-- **Wall mode** (`/wall`) — the bulletin alone, full screen, for a room monitor.
+- **Wall mode** (`/wall`) — the bulletin alone, full screen, for a room monitor:
+  a living Paris rooftop with the Eiffel Tower, lit windows and the DumbMonit
+  pigeons going about their day, gentle and constant motion with nothing that
+  flashes; an **OLED theme** (true black, dimmed text, a slow pixel shift
+  against burn-in) next to Auto/Day/Night; and **wall music** — Spotify
+  Connect turns the screen itself into a self-diagnosing, self-reconnecting
+  speaker, or send any screen a Spotify, Deezer, YouTube or YouTube Music link
+  to play and show what is on.
+- **Security score** — every supported device gets a 0–100 score and an A–F
+  grade from the vendor's own best-practice checks, PingCastle- and Secure
+  Score-style: category, severity, pass/fail/unknown, evidence and
+  remediation, a worst-first **Security** page, the score itself as a metric,
+  and built-in rules for a score that drops or stays low.
 - **⌘K / Ctrl K palette** — jump to any page, device or action.
 - Every device is a 1U faceplate: LED, name, kind, address, last seen, sparkline;
-  children stack under their parent and dim when it is unreachable.
+  children stack under their parent and dim when it is unreachable. Devices can
+  be grouped into **folders**, reordered by drag-and-drop (mouse, touch or
+  keyboard), renamed and deleted in place.
 - Mobile works for reading state, silencing an alert and scheduling maintenance.
 - **Public status pages** (`/s/<slug>`) — groups of monitors with a 90-day
   daily history and 30/90-day uptime, incidents and maintenance, your logo and
@@ -185,7 +233,7 @@ back for a paid edition.
 - **Accounts** — admin and viewer roles, an optional **TOTP second factor**
   with recovery codes, an audit log of sign-ins and account changes, plus
   **OIDC / SSO** (Authentik, Authelia, Keycloak, Pocket ID…) with
-  group-to-role mapping.
+  group-to-role mapping and account creation on first sign-in off by default.
 - **Open HTTP API** — the same API behind the whole UI, described at
   `/api/openapi.json` (OpenAPI 3.1) for Swagger UI, Postman or a generated
   client. Tokens (`dmt_…`), created in *Settings → API & assistants*, are
@@ -264,9 +312,14 @@ system and registers the service with systemd, OpenRC, launchd or rc.d. On
 macOS, download the binary from the
 [releases page](https://github.com/noekan/dumbmonit/releases/latest) and add
 `--bin=./dumbmonit-agent-macos-aarch64`. A PowerShell script is served at
-`/install.ps1` for Windows.
+`/install.ps1` for Windows. Every install command carries the expected
+SHA-256 of the binary, and the script refuses a download that does not match
+it, has no checksum, or cannot be hashed (`--insecure-skip-checksum` /
+`-InsecureSkipChecksum` is the explicit escape hatch for air-gapped setups).
 
-The agent registers itself as a device.
+The agent registers itself as a device. A host that was enrolled before agent
+binding existed, and never bound, is refused once its transition window
+closes; the device page explains how to re-enrol it.
 
 The agent is also published as an image, `ghcr.io/noekan/dumbmonit-agent`
 (same tags as the server), for Docker hosts and **remote sites**: with
