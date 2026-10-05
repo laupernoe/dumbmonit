@@ -25,7 +25,7 @@ export interface FolderSection {
 }
 
 /** Topmost ancestor of every target (itself, if it has no live parent). */
-function rootOf(targets: Target[]): Map<TargetId, Target> {
+export function rootOf(targets: Target[]): Map<TargetId, Target> {
 	const byId = new Map(targets.map((t) => [t.id, t]));
 	const roots = new Map<TargetId, Target>();
 	for (const target of targets) {
@@ -52,9 +52,23 @@ export function worstState(rows: RackRow[]): TargetState {
 }
 
 /**
- * Partitions the rack into folder sections, in display order: the "no
- * folder" section first, then named folders — those needing attention
- * before the quiet ones, alphabetically among themselves.
+ * Display order of folder sections: the "no folder" section first, then
+ * named folders — those needing attention before the quiet ones,
+ * alphabetically among themselves. Exported so the page can slot in a
+ * freshly-created, still-empty folder at the right spot.
+ */
+export function compareFolderSections(a: FolderSection, b: FolderSection): number {
+	if (a.key === '') return -1;
+	if (b.key === '') return 1;
+	const attentionA = a.rows.some((r) => needsAttention(r.state));
+	const attentionB = b.rows.some((r) => needsAttention(r.state));
+	if (attentionA !== attentionB) return attentionA ? -1 : 1;
+	return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+}
+
+/**
+ * Partitions the rack into folder sections, in display order (see
+ * `compareFolderSections`).
  */
 export function buildFolders(
 	targets: Target[],
@@ -78,14 +92,7 @@ export function buildFolders(
 		rows: bucketRows
 	}));
 
-	sections.sort((a, b) => {
-		if (a.key === '') return -1;
-		if (b.key === '') return 1;
-		const attentionA = a.rows.some((r) => needsAttention(r.state));
-		const attentionB = b.rows.some((r) => needsAttention(r.state));
-		if (attentionA !== attentionB) return attentionA ? -1 : 1;
-		return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
-	});
+	sections.sort(compareFolderSections);
 	return sections;
 }
 
@@ -96,13 +103,18 @@ export function knownFolders(targets: Target[]): string[] {
 	);
 }
 
+/** The folder a target's own position in the tree puts it in (its topmost ancestor's `group_name`). */
+export function folderKeyOf(targets: Target[], target: Target): string {
+	return rootOf(targets).get(target.id)?.group_name || '';
+}
+
 /**
  * Siblings a device can be reordered against: other children of the same
  * parent, or — for a top-level device — other top-level devices of the same
  * folder. Crossing a folder or a parent boundary is a "move to folder" or
  * "set parent" action, never a reorder.
  */
-function reorderScope(targets: Target[], target: Target): Target[] {
+export function reorderScope(targets: Target[], target: Target): Target[] {
 	const byId = new Map(targets.map((t) => [t.id, t]));
 	const parentOf = (t: Target): TargetId | null =>
 		t.parent_id !== null && byId.has(t.parent_id) ? t.parent_id : null;
