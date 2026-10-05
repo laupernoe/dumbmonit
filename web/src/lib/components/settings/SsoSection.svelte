@@ -28,7 +28,7 @@
 		client_id: '',
 		client_secret: '',
 		scopes: '',
-		auto_create: true,
+		auto_create: false,
 		admin_groups: '',
 		groups_claim: '',
 		public_url: ''
@@ -210,6 +210,17 @@
 				<CopyBlock value={redirectUri} label="Copy redirect URI" />
 			</div>
 
+			{#if config.auto_create_defaulted && config.source !== 'none'}
+				<div class="flex flex-wrap items-start gap-2 rounded-[var(--radius-card)] border border-advisory/30 bg-surface p-3 text-sm text-ink-2" role="note">
+					<Plate tone="advisory" label="Account creation off" />
+					<p class="min-w-0 flex-1">
+						New identities are not given an account on first sign-in: this setting was never chosen, and it now defaults to off (earlier versions turned it on).
+						Only accounts already linked, or matched by a provider-verified email, can sign in.
+						{#if fromEnv}Set <code class="font-mono text-[0.8125rem]">DUMBMONIT_OIDC_AUTO_CREATE=true</code>, or turn it on under More options and save.{:else}Turn it on under More options if you want it.{/if}
+					</p>
+				</div>
+			{/if}
+
 			<details class="group rounded-[var(--radius-card)] border border-line">
 				<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">More options</summary>
 				<div class="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-2">
@@ -223,7 +234,7 @@
 						<input id="sso-admin-groups" type="text" class="input" bind:value={form.admin_groups} placeholder="dumbmonit-admins, ops" autocomplete="off" disabled={saving} />
 					</Field>
 					<div class="sm:col-span-2">
-						<Field label="Create accounts on first sign-in" for="sso-auto-create" inline help="Off: only accounts already linked, or matched by a provider-verified email that equals their username, can sign in. A local admin with a password is never linked automatically.">
+						<Field label="Create accounts on first sign-in" for="sso-auto-create" inline help="Off by default. Off: only accounts already linked, or matched by a provider-verified email that equals their username, can sign in. A local admin with a password is never linked automatically.">
 							<Toggle id="sso-auto-create" bind:checked={form.auto_create} disabled={saving} />
 						</Field>
 					</div>

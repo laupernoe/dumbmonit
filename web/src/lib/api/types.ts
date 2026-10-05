@@ -778,6 +778,8 @@ export interface OidcConfig {
 	provider_name: string;
 	scopes: string;
 	auto_create: boolean;
+	/** True when `auto_create` was never chosen explicitly: it then defaults to off. */
+	auto_create_defaulted: boolean;
 	admin_groups: string[];
 	groups_claim: string;
 	public_url: string;
@@ -975,13 +977,15 @@ export interface AgentHost {
 	 *
 	 * - `bound` — the agent holds a secret of its own, so no other machine can
 	 *   push in its name or take its container commands;
-	 * - `pending` — the binary knows how to be bound; its next batch will do it;
-	 * - `unsupported` — an agent older than binding: reinstall it.
+	 * - `unbound` — enrolled before binding and never bound: its batches,
+	 *   commands and relayed probes are refused until it is re-enrolled.
 	 */
-	binding: 'bound' | 'pending' | 'unsupported';
+	binding: 'bound' | 'unbound';
 	/** True for `bound`. */
 	bound: boolean;
 	bound_at: string | null;
+	/** False for an agent binary older than binding: it must be reinstalled. */
+	binding_supported: boolean;
 	/** End of a re-enrolment window someone opened, while it still runs. */
 	rebind_until: string | null;
 }

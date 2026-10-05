@@ -41,6 +41,9 @@ pub struct Seeded {
     /// Jeton d'enregistrement de l'agent simulé, en clair : il ne quitte pas le
     /// processus.
     pub agent_token: String,
+    /// Secret de liaison remis à l'agent simulé à son premier lot : sans lui, le
+    /// serveur refuserait les lots suivants, comme pour une vraie machine.
+    pub agent_secret: Option<String>,
     pub targets: Vec<(TargetId, String, String)>,
 }
 
@@ -114,23 +117,25 @@ pub async fn run(
         TokenPolicy { max_uses: None, expires_in_days: None },
     )
     .await?;
-    let agent_id = push_agent_batch(pool, cipher, sink, &agent_token).await?;
+    let (agent_id, agent_secret) = push_agent_batch(pool, cipher, sink, &agent_token, None).await?;
     targets.push((agent_id, AGENT_HOST.to_string(), "agent".to_string()));
 
     seed_notifications(pool).await?;
     seed_status_page(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
 
-    Ok(Seeded { agent_token, targets })
+    Ok(Seeded { agent_token, agent_secret, targets })
 }
 
-/// Un lot de l'agent simulé, par le vrai chemin d'ingestion.
+/// Un lot de l'agent simulé, par le vrai chemin d'ingestion. Rend la cible et
+/// le secret de liaison remis au premier lot, s'il y en a un.
 pub async fn push_agent_batch(
     pool: &SqlitePool,
     cipher: &Cipher,
     sink: &SampleSink,
     token: &str,
-) -> Result<TargetId> {
+    secret: Option<&str>,
+) -> Result<(TargetId, Option<String>)> {
     let now = Utc::now().timestamp_millis();
     let identity = AgentIdentity {
         hostname: AGENT_HOST.to_string(),
@@ -144,7 +149,7 @@ pub async fn push_agent_batch(
         site: None,
         machine_id: Some("demo-docker01".to_string()),
         tags: BTreeMap::new(),
-        binding_supported: false,
+        binding_supported: true,
     };
     let batch = PushBatch {
         protocol: PUSH_PROTOCOL_VERSION,
@@ -153,10 +158,10 @@ pub async fn push_agent_batch(
         samples: synthetic::agent_samples(now),
     };
     let bearer = format!("Bearer {token}");
-    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), None, batch)
+    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)
         .await
         .map_err(|error| anyhow::anyhow!("demo agent push refused: {error:?}"))?;
-    Ok(ack.target_id)
+    Ok((ack.target_id, ack.agent_secret))
 }
 
 /// Deux canaux pour que la page des notifications ne soit pas vide. Ils ne

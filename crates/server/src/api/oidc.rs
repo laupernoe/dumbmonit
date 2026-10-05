@@ -245,6 +245,9 @@ pub struct ConfigView {
     provider_name: String,
     scopes: String,
     auto_create: bool,
+    /// `auto_create` n'a jamais été choisi : il vaut « non » par défaut, et
+    /// l'interface l'explique (les versions antérieures l'activaient).
+    auto_create_defaulted: bool,
     admin_groups: Vec<String>,
     groups_claim: String,
     public_url: String,
@@ -264,6 +267,7 @@ fn view(state: &AppState, resolved: oidc::Resolved, origin: &str) -> ConfigView 
         provider_name: config.provider_name,
         scopes: config.scopes,
         auto_create: config.auto_create,
+        auto_create_defaulted: resolved.auto_create_defaulted,
         admin_groups: config.admin_groups,
         groups_claim: config.groups_claim,
         public_url: config.public_url,
@@ -291,7 +295,8 @@ pub struct ConfigPayload {
     provider_name: String,
     #[serde(default)]
     scopes: String,
-    #[serde(default = "default_true")]
+    /// Absent : désactivé. Créer des comptes à la volée doit être un choix.
+    #[serde(default)]
     auto_create: bool,
     #[serde(default)]
     admin_groups: Vec<String>,
@@ -299,10 +304,6 @@ pub struct ConfigPayload {
     groups_claim: String,
     #[serde(default)]
     public_url: String,
-}
-
-fn default_true() -> bool {
-    true
 }
 
 impl std::fmt::Debug for ConfigPayload {

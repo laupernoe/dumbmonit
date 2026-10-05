@@ -36,7 +36,26 @@ async fn enrollment_token(app: &TestApp, admin: &str) -> String {
     reply.body["secret"].as_str().expect("secret").to_string()
 }
 
-/// Requête au nom de l'agent : jeton porteur, pas de session.
+/// Secrets de liaison remis aux agents simulés, par (jeton, clé d'identité).
+///
+/// Un vrai agent garde le sien sur disque et le présente à chaque requête :
+/// une machine non liée est refusée partout. Les jetons sont propres à chaque
+/// test, ce qui suffit à isoler les tests qui tournent en parallèle.
+static SECRETS: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<(String, String), String>>,
+> = std::sync::LazyLock::new(Default::default);
+
+fn remembered_secret(token: &str, key: &str) -> Option<String> {
+    SECRETS.lock().unwrap().get(&(token.to_string(), key.to_string())).cloned()
+}
+
+fn remember_secret(token: &str, key: &str, body: &Value) {
+    if let Some(secret) = body["agent_secret"].as_str() {
+        SECRETS.lock().unwrap().insert((token.to_string(), key.to_string()), secret.to_string());
+    }
+}
+
+/// Requête au nom de l'agent : jeton porteur, secret de liaison, pas de session.
 async fn as_agent(
     app: &TestApp,
     method: &str,
@@ -44,13 +63,16 @@ async fn as_agent(
     token: &str,
     body: Value,
 ) -> (StatusCode, Value) {
-    let request = Request::builder()
+    let mut builder = Request::builder()
         .method(method)
         .uri(uri)
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(body.to_string()))
-        .unwrap();
+        .header(header::CONTENT_TYPE, "application/json");
+    let key = uri.split_once("key=").map(|(_, rest)| rest.split('&').next().unwrap_or_default());
+    if let Some(secret) = key.and_then(|key| remembered_secret(token, key)) {
+        builder = builder.header("x-dumbmonit-agent-secret", secret);
+    }
+    let request = builder.body(Body::from(body.to_string())).unwrap();
     let response = app.router.clone().oneshot(request).await.expect("réponse");
     let status = response.status();
     let bytes = response.into_body().collect().await.expect("corps").to_bytes();
@@ -64,12 +86,14 @@ async fn register_relay(app: &TestApp, token: &str, key: &str, relay: bool) -> i
         "identity": {
             "hostname": "relay-lyon", "os": "linux", "agent_version": "0.1.0",
             "machine_id": key, "commands_enabled": false, "relay": relay, "site": "Lyon",
+            "binding_supported": true,
         },
         "sent_at_ms": 0,
         "samples": [],
     });
     let (status, body) = as_agent(app, "POST", "/api/ingest", token, batch).await;
     assert_eq!(status, StatusCode::OK, "ingestion : {body}");
+    remember_secret(token, key, &body);
     body["target_id"].as_i64().expect("target id")
 }
 
