@@ -5,29 +5,40 @@
 	 * on just after its unit slides in, so the rack powers up top to bottom.
 	 * Ordering lives in `rack.ts`.
 	 *
-	 * `reorder`, when given, adds admin controls: a drag handle (desktop,
-	 * native HTML5 drag-and-drop — no library, and it already degrades to a
-	 * no-op on touch) plus Up/Down buttons that work from a keyboard or a
-	 * phone. Both ask the caller, which knows whether the move is allowed
-	 * (never across a state tier) and persists it.
+	 * `reorder`, when given, adds admin controls: a drag handle, pointer-based
+	 * (mouse and touch — a long press arms a touch drag so a tap still just
+	 * taps) rather than HTML5 drag-and-drop, which touch does not support.
+	 * All the hit-testing and persistence lives one level up, in the page: this
+	 * component only reports its rows' elements and forwards pointer/keyboard
+	 * events, and draws the insertion line the page tells it to.
 	 */
 	import type { TargetId } from '$lib/api';
 	import type { Serie } from '$lib/components/Chart.svelte';
 	import Faceplate from '$lib/components/Faceplate.svelte';
-	import { ArrowDown, ArrowUp, FolderInput, GripVertical } from 'lucide-svelte';
+	import { GripVertical } from 'lucide-svelte';
 	import type { RackRow } from './rack';
+	import MoveToFolderMenu from './MoveToFolderMenu.svelte';
+
+	export interface DropSlot {
+		kind: 'row';
+		id: TargetId;
+		before: boolean;
+	}
 
 	export interface ReorderControls {
-		canMoveUp: (id: TargetId) => boolean;
-		canMoveDown: (id: TargetId) => boolean;
-		onMove: (id: TargetId, delta: -1 | 1) => void;
-		onDragStart: (id: TargetId) => void;
-		onDragOver: (id: TargetId) => void;
-		onDrop: (id: TargetId) => void;
-		onDragEnd: () => void;
-		/** "Move to folder" quick action; omitted hides the button. */
-		onMoveToFolder?: (id: TargetId) => void;
+		/** Device currently being dragged (pointer or keyboard), if any. */
 		dragging: TargetId | null;
+		/** Device "picked up" with the keyboard, waiting for arrow keys. */
+		pickedUp: TargetId | null;
+		/** Where a drag would land, when it is over a row (not a folder header). */
+		dropSlot: DropSlot | null;
+		/** Folder names already in use, for the "move to folder" menu. */
+		folders: string[];
+		onGripPointerDown: (id: TargetId, event: PointerEvent) => void;
+		onGripKeyDown: (id: TargetId, event: KeyboardEvent) => void;
+		/** Reports a row's own element so the page can hit-test it while dragging. */
+		registerRow: (id: TargetId, el: HTMLElement | null) => void;
+		onMoveToFolder: (id: TargetId, groupName: string) => void;
 	}
 
 	interface Props {
@@ -39,25 +50,39 @@
 	}
 
 	let { rows, sparklines, kindLabels, reorder = null }: Props = $props();
+
+	// A row's own "move to folder" menu overflows below it, into the next
+	// row's rectangle — which, being a later sibling, otherwise paints (and
+	// catches pointer events) above it. Lifting the open row's own stacking
+	// order fixes that without needing a portal.
+	let openMenuRow = $state<TargetId | null>(null);
 </script>
 
 <ol class="flex flex-col gap-2" aria-label="Devices">
 	{#each rows as row, i (row.target.id)}
 		{@const id = row.target.id}
+		{@const slot = reorder?.dropSlot?.id === id ? reorder.dropSlot : null}
 		<li
-			class={`rise-in flex items-stretch gap-1.5 ${reorder?.dragging === id ? 'opacity-50' : ''}`}
-			style="--rise-delay: {Math.min(i, 14) * 30}ms"
-			ondragover={reorder ? (e) => { e.preventDefault(); reorder!.onDragOver(id); } : undefined}
-			ondrop={reorder ? (e) => { e.preventDefault(); reorder!.onDrop(id); } : undefined}
+			class={`rise-in relative flex items-stretch gap-1.5 ${reorder?.dragging === id ? 'opacity-40' : ''}`}
+			style="--rise-delay: {Math.min(i, 14) * 30}ms; {openMenuRow === id ? 'z-index: 40;' : ''}"
+			{@attach (node) => {
+				reorder?.registerRow(id, node);
+				return () => reorder?.registerRow(id, null);
+			}}
 		>
+			{#if slot?.before}
+				<div class="absolute inset-x-0 -top-[5px] h-0.5 rounded-full bg-signal" aria-hidden="true"></div>
+			{:else if slot && !slot.before}
+				<div class="absolute inset-x-0 -bottom-[5px] h-0.5 rounded-full bg-signal" aria-hidden="true"></div>
+			{/if}
 			{#if reorder}
 				<button
 					type="button"
-					class="hidden shrink-0 cursor-grab touch-none items-center rounded-lg px-1 text-ink-3 hover:bg-surface-2 hover:text-ink active:cursor-grabbing sm:flex"
-					draggable="true"
-					ondragstart={() => reorder!.onDragStart(id)}
-					ondragend={() => reorder!.onDragEnd()}
-					aria-label={`Drag ${row.target.name} to reorder`}
+					class={`flex shrink-0 cursor-grab touch-none items-center rounded-lg px-1 text-ink-3 hover:bg-surface-2 hover:text-ink active:cursor-grabbing ${reorder.pickedUp === id ? 'bg-signal-soft text-signal' : ''}`}
+					onpointerdown={(e) => reorder!.onGripPointerDown(id, e)}
+					onkeydown={(e) => reorder!.onGripKeyDown(id, e)}
+					aria-pressed={reorder.pickedUp === id}
+					aria-label={`Drag ${row.target.name} to reorder, or press space to pick it up with the keyboard`}
 				>
 					<GripVertical class="size-4" aria-hidden="true" />
 				</button>
@@ -73,36 +98,15 @@
 					bootDelay={Math.min(i, 14) * 30 + 220}
 				/>
 			</div>
-			{#if reorder}
-				<div class="flex shrink-0 flex-col justify-center gap-0.5">
-					<button
-						type="button"
-						class="rounded-md p-1 text-ink-3 hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
-						disabled={!reorder.canMoveUp(id)}
-						onclick={() => reorder!.onMove(id, -1)}
-						aria-label={`Move ${row.target.name} up`}
-					>
-						<ArrowUp class="size-3.5" aria-hidden="true" />
-					</button>
-					<button
-						type="button"
-						class="rounded-md p-1 text-ink-3 hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
-						disabled={!reorder.canMoveDown(id)}
-						onclick={() => reorder!.onMove(id, 1)}
-						aria-label={`Move ${row.target.name} down`}
-					>
-						<ArrowDown class="size-3.5" aria-hidden="true" />
-					</button>
-					{#if reorder.onMoveToFolder}
-						<button
-							type="button"
-							class="rounded-md p-1 text-ink-3 hover:bg-surface-2 hover:text-ink"
-							onclick={() => reorder!.onMoveToFolder?.(id)}
-							aria-label={`Move ${row.target.name} to a folder`}
-						>
-							<FolderInput class="size-3.5" aria-hidden="true" />
-						</button>
-					{/if}
+			{#if reorder && row.depth === 0}
+				<div class="flex shrink-0 flex-col justify-center">
+					<MoveToFolderMenu
+						targetName={row.target.name}
+						currentFolder={row.target.group_name || ''}
+						folders={reorder.folders}
+						onmove={(groupName) => reorder!.onMoveToFolder(id, groupName)}
+						onopenchange={(open) => (openMenuRow = open ? id : openMenuRow === id ? null : openMenuRow)}
+					/>
 				</div>
 			{/if}
 		</li>
