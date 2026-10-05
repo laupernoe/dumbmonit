@@ -616,7 +616,13 @@
 	<!-- The story of this device: what fires now, what fired before -->
 	<section class="mt-6" aria-labelledby="device-alerts">
 		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">Alerts on this device</h2>
-		<DeviceTimeline targetId={id} {alerts} {refreshKey} onackchange={() => void loadContext()} />
+		<DeviceTimeline
+		targetId={id}
+		target={target ?? undefined}
+		{alerts}
+		{refreshKey}
+		onackchange={() => void loadContext()}
+	/>
 	</section>
 
 	<!-- Backups the agent watches; the containers sit with the metrics below -->

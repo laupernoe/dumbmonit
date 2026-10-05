@@ -9,9 +9,10 @@
 	 * newest keep arriving. Filters and the CSV export work on what is shown.
 	 */
 	import type { AlertHistoryEntry, AlertPhase, AlertRule, AlertSeverity, Target } from '$lib/api';
-	import { listAlertHistory } from '$lib/api';
+	import { dismissAlertHistoryEntry, dismissResolvedAlertHistory, listAlertHistory } from '$lib/api';
 	import type { Tone } from '$lib/ui';
-	import { Button, EmptyState, Plate, Toggle } from '$lib/ui';
+	import { Button, Confirm, EmptyState, Plate, Toggle } from '$lib/ui';
+	import { auth } from '$lib/stores/auth.svelte';
 	import Segmented from '$lib/components/devices/Segmented.svelte';
 	import { History, Download } from 'lucide-svelte';
 	import { formatDateTime, parseServerDate } from '$lib/format';
@@ -56,6 +57,66 @@
 	let exhausted = $state(false);
 	let loadingMore = $state(false);
 	let loadError = $state<string | null>(null);
+
+	// --- Clear / Dismiss ----------------------------------------------------
+	//
+	// A resolved entry needing no further attention can be cleared from the
+	// active view; the row stays in the database. "Show cleared" re-reads the
+	// log with dismissed rows included (the server leaves them out by
+	// default), while a clear itself is applied optimistically — the row is
+	// kept locally in `clearedIds` until the next refresh confirms it.
+
+	let showCleared = $state(false);
+	let clearedLoaded = $state(false);
+	let clearedIds = $state<Set<number>>(new Set());
+	let clearingId = $state<number | null>(null);
+	let clearingAll = $state(false);
+	let clearError = $state<string | null>(null);
+
+	async function toggleShowCleared(value: boolean) {
+		showCleared = value;
+		if (!showCleared || clearedLoaded) return;
+		loadingMore = true;
+		clearError = null;
+		try {
+			extra = await listAlertHistory({ limit: Math.max(limit, PAGE), dismissed: true });
+			clearedLoaded = true;
+		} catch (cause) {
+			loadError = cause instanceof Error ? cause.message : 'Could not load the cleared entries.';
+		} finally {
+			loadingMore = false;
+		}
+	}
+
+	async function clearEntry(entry: AlertHistoryEntry) {
+		clearingId = entry.id;
+		clearError = null;
+		try {
+			await dismissAlertHistoryEntry(entry.id);
+			clearedIds = new Set(clearedIds).add(entry.id);
+		} catch (cause) {
+			clearError = cause instanceof Error ? cause.message : 'Could not clear this entry.';
+		} finally {
+			clearingId = null;
+		}
+	}
+
+	async function clearAllResolved() {
+		clearingAll = true;
+		clearError = null;
+		try {
+			await dismissResolvedAlertHistory();
+			const cleared = new Set(clearedIds);
+			for (const entry of all) {
+				if (entry.to_phase === 'resolved' && !entry.dismissed) cleared.add(entry.id);
+			}
+			clearedIds = cleared;
+		} catch (cause) {
+			clearError = cause instanceof Error ? cause.message : 'Could not clear the resolved entries.';
+		} finally {
+			clearingAll = false;
+		}
+	}
 
 	async function loadMore() {
 		loadingMore = true;
@@ -107,6 +168,7 @@
 
 	const filtered = $derived(
 		all.filter((entry) => {
+			if (!showCleared && (entry.dismissed || clearedIds.has(entry.id))) return false;
 			if (deviceFilter !== 'all') {
 				const key = entry.target_id === null ? 'none' : String(entry.target_id);
 				if (key !== deviceFilter) return false;
@@ -115,6 +177,12 @@
 			if (onlyNotified && !entry.notified) return false;
 			return true;
 		})
+	);
+
+	/** Resolved, not yet cleared — what "Clear all resolved" would sweep. */
+	const resolvedCount = $derived(
+		all.filter((entry) => entry.to_phase === 'resolved' && !entry.dismissed && !clearedIds.has(entry.id))
+			.length
 	);
 
 	// --- Day groups ---------------------------------------------------------
@@ -220,16 +288,35 @@
 			<Toggle id="history-notified" bind:checked={onlyNotified} />
 			<label for="history-notified" class="text-[0.8125rem] font-medium text-ink">Only notified</label>
 		</div>
+		<div class="inline-flex items-center gap-2">
+			<Toggle id="history-cleared" checked={showCleared} onchange={toggleShowCleared} />
+			<label for="history-cleared" class="text-[0.8125rem] font-medium text-ink">Show cleared</label>
+		</div>
 		<div class="ml-auto flex items-center gap-3">
 			<span class="tnum text-[0.8125rem] text-ink-2" aria-live="polite">
 				{filtered.length} of {all.length}
 			</span>
+			{#if auth.isAdmin && resolvedCount > 0}
+				<Confirm
+					variant="secondary"
+					size="sm"
+					confirmLabel={`Clear ${resolvedCount}?`}
+					loading={clearingAll}
+					onconfirm={clearAllResolved}
+				>
+					Clear all resolved
+				</Confirm>
+			{/if}
 			<Button variant="secondary" size="sm" onclick={exportCsv} disabled={filtered.length === 0}>
 				<Download class="size-3.5" aria-hidden="true" />
 				Export CSV
 			</Button>
 		</div>
 	</div>
+
+	{#if clearError}
+		<p class="mb-3 text-[0.8125rem] font-medium text-warning-ink" role="alert">{clearError}</p>
+	{/if}
 
 	{#if groups.length === 0}
 		<EmptyState icon={History} title="Nothing matches these filters." description="Widen the filters to see the log again." />
@@ -281,6 +368,18 @@
 										<Plate tone="signal" label="Notified" bare />
 									{:else}
 										<Plate tone="ghost" label={`Not sent · ${entry.reason || 'quiet'}`} bare />
+									{/if}
+									{#if entry.dismissed || clearedIds.has(entry.id)}
+										<Plate tone="ghost" label="Cleared" bare />
+									{:else if auth.isAdmin && entry.to_phase === 'resolved'}
+										<Button
+											size="sm"
+											variant="ghost"
+											loading={clearingId === entry.id}
+											onclick={() => void clearEntry(entry)}
+										>
+											Clear
+										</Button>
 									{/if}
 								</div>
 							</li>

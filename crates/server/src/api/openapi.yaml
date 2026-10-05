@@ -1021,6 +1021,13 @@ paths:
         - name: limit
           in: query
           schema: { type: integer, minimum: 1 }
+        - name: dismissed
+          in: query
+          description: >-
+            False (default): entries cleared with the dismiss endpoints below
+            are left out. True includes them — nothing is ever destroyed by a
+            "clear", only hidden from the active view.
+          schema: { type: boolean }
       responses:
         "200":
           description: Transitions, most recent first.
@@ -1032,6 +1039,46 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/alerts/history/dismiss-resolved:
+    post:
+      operationId: dismissResolvedAlertHistory
+      tags: [Alerts]
+      summary: "Clear all resolved history entries"
+      description: >-
+        Marks every not-yet-cleared `resolved` transition as dismissed: they
+        leave the default history view, the rows stay in the database.
+      x-token-scope: write
+      responses:
+        "200":
+          description: How many entries were cleared.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dismissed]
+                properties:
+                  dismissed: { type: integer, format: int64 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/alerts/history/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: dismissAlertHistoryEntry
+      tags: [Alerts]
+      summary: Clear one resolved history entry
+      description: >-
+        Only a `resolved` transition can be cleared: an active one still
+        needs attention. The row stays in the database, only hidden from the
+        default history view.
+      x-token-scope: write
+      responses:
+        "204": { description: Entry cleared. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/alerts/{fingerprint}/ack:
     parameters:
@@ -4516,7 +4563,7 @@ components:
         note: { type: string }
     AlertHistoryEntry:
       type: object
-      required: [id, fingerprint, rule_uid, from_phase, to_phase, severity, notified, reason, at]
+      required: [id, fingerprint, rule_uid, from_phase, to_phase, severity, notified, reason, at, dismissed]
       properties:
         id: { type: integer, format: int64 }
         fingerprint: { type: string }
@@ -4529,6 +4576,7 @@ components:
         notified: { type: boolean }
         reason: { type: string, description: "Empty, or why nothing was sent (`learning: would have fired`, `maintenance window`…)." }
         at: { type: string, format: date-time }
+        dismissed: { type: boolean, description: "Cleared from the active view by the user; the row is kept." }
 
     TargetSelector:
       oneOf:
