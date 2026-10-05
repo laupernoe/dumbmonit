@@ -1,5 +1,165 @@
 [
   {
+    "kind": "activedirectory",
+    "label": "Active Directory",
+    "summary": "A Windows domain over LDAP, read-only: domain controllers and FSMO roles, privileged group members, password policy, and security findings such as Kerberos-roastable accounts, unconstrained delegation or an old krbtgt password.",
+    "examples": [
+      "Windows Server domain controller",
+      "Samba AD domain controller"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Service account",
+        "help": "A plain domain user created for DumbMonit, member of no group.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The user principal name (svc-dumbmonit@corp.example.com), DOMAIN\\svc-dumbmonit, or the full DN.",
+            "placeholder": "svc-dumbmonit@corp.example.com",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "dc1.corp.example.com",
+    "default_port": 636,
+    "setup": {
+      "title": "Create a read-only service account for DumbMonit",
+      "steps": [
+        "Create a dedicated user for DumbMonit, for example svc-dumbmonit, and add it to no group. A plain domain user is enough: every authenticated user can read what DumbMonit reads. In PowerShell, with the Active Directory module:\nNew-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true",
+        "Give it a long random password. If passwords expire in your domain, DumbMonit raises Active Directory bind failed the day this one does.",
+        "Optional: to see inbound replication status, grant the account the Monitor active directory replication right on the domain object itself. It reveals no password and no secret.\ndsacls \"DC=corp,DC=example,DC=com\" /G \"CORP\\svc-dumbmonit:CA;Monitor active directory replication\"",
+        "LDAPS needs a certificate on each domain controller; an enterprise certification authority (AD CS) issues one automatically. Export the certificate of that authority in Base-64 encoded X.509 format and paste it as CA certificate below.",
+        "In DumbMonit, enter the name of one domain controller as its certificate names it, for example \"dc1.corp.example.com\", and log in as svc-dumbmonit@corp.example.com. DumbMonit finds the other domain controllers by itself and checks that each one answers.",
+        "DumbMonit only reads: it never writes to the directory, and of LAPS it reads the expiry date, never the password."
+      ],
+      "warning": "Plain LDAP on port 389 sends the service account's password in clear text: DumbMonit refuses it unless you tick Allow plain LDAP, and a domain controller that requires LDAP signing refuses it too. Use LDAPS, or StartTLS on port 389.",
+      "doc_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/enable-ldap-over-ssl-3rd-certification-authority"
+    },
+    "options": [
+      {
+        "key": "security",
+        "label": "Connection security",
+        "help": "ldaps (port 636) encrypts from the first byte; starttls upgrades port 389 before logging in; plain sends the password in clear text and needs Allow plain LDAP.",
+        "placeholder": "",
+        "default": "ldaps",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "ldaps",
+          "starttls",
+          "plain"
+        ]
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: 636 for LDAPS, 389 otherwise.",
+        "placeholder": "636",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "ca_cert",
+        "label": "CA certificate",
+        "help": "The PEM certificate (Base-64 encoded X.509) of the authority that issued the domain controllers' certificates. Only that authority is then trusted.",
+        "placeholder": "-----BEGIN CERTIFICATE-----…",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": []
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "Skips every certificate check: the connection stays encrypted, but anyone on the path could pose as the domain controller. Prefer the CA certificate above.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "allow_plaintext",
+        "label": "Allow plain LDAP",
+        "help": "Required for the plain setting: the service account's password then crosses the network readable by anyone on the path.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "check_all_dcs",
+        "label": "Check every domain controller",
+        "help": "Opens a connection to the LDAP port of each domain controller of the domain, to alert when one stops answering. Names that do not resolve from DumbMonit are reported, not alerted on.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": []
+      },
+      {
+        "key": "stale_days_users",
+        "label": "Inactive user after (days)",
+        "help": "An enabled user with no logon for this long is counted as inactive. The last-logon date can lag by up to 14 days.",
+        "placeholder": "90",
+        "default": "90",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "stale_days_computers",
+        "label": "Inactive computer after (days)",
+        "help": "An enabled computer with no logon for this long is counted as inactive.",
+        "placeholder": "90",
+        "default": "90",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "inventory_minutes",
+        "label": "Full inventory every (minutes)",
+        "help": "Every user and computer is read in the background at this pace (1 to 1440); health is read at every check.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": []
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time allowed for each LDAP operation, from 1 to 60.",
+        "placeholder": "8",
+        "default": "8",
+        "required": false,
+        "input": "number",
+        "choices": []
+      }
+    ]
+  },
+  {
     "kind": "adguard",
     "label": "AdGuard Home",
     "summary": "The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.",
