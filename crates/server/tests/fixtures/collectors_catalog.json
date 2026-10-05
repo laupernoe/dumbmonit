@@ -839,7 +839,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -849,7 +850,8 @@
         "default": "3000",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -859,7 +861,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -869,7 +872,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1016,7 +1020,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -1026,7 +1031,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1036,7 +1042,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1046,7 +1053,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "watched_projects",
@@ -1056,7 +1064,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "pipeline_lookback_hours",
@@ -1066,7 +1075,8 @@
         "default": "24",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
