@@ -78,6 +78,7 @@ async fn create(
             enabled: true,
             tags: Default::default(),
             credential: None,
+            group_name: String::new(),
         },
     )
     .await

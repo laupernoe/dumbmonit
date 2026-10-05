@@ -10,26 +10,47 @@
 	 * after a toggle); a save is shown right away through a local overlay that
 	 * the next refresh replaces.
 	 */
-	import type { AlertRule, AlertRulePayload, RuleOperator, AlertSeverity, Channel } from '$lib/api';
+	import type {
+		AlertRule,
+		AlertRulePayload,
+		RuleOperator,
+		AlertSeverity,
+		Channel,
+		Target,
+		CollectorInfo
+	} from '$lib/api';
 	import { listChannels } from '$lib/api';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { Button, Confirm, Field, Panel, Plate, Toggle, EmptyState } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { SlidersHorizontal, ChevronDown, ChevronUp, Search } from 'lucide-svelte';
 	import { formatDuration } from '$lib/format';
 	import { severityTone, severityWord } from './helpers';
+	import { ruleKinds, isRelevant } from './rules-filter';
 	import RuleEditor from './rules/RuleEditor.svelte';
 	import { anomalySummary } from './rules/options';
 
 	interface Props {
 		rules: AlertRule[];
+		/** Devices this instance actually has — decides which built-in rules are "relevant". */
+		targets?: Target[];
+		/** For kind labels, and for inferring which collector kind a rule's query is about. */
+		collectors?: CollectorInfo[];
 		busyId?: number | null;
 		ontoggle: (rule: AlertRule, enabled: boolean) => void;
 		ondelete: (id: number) => void;
 		oncreate: (payload: AlertRulePayload) => Promise<void>;
 	}
 
-	let { rules, busyId = null, ontoggle, ondelete, oncreate }: Props = $props();
+	let {
+		rules,
+		targets = [],
+		collectors = [],
+		busyId = null,
+		ontoggle,
+		ondelete,
+		oncreate
+	}: Props = $props();
 
 	const OPERATORS: RuleOperator[] = ['>', '>=', '<', '<='];
 	const SEVERITIES: AlertSeverity[] = ['info', 'warning', 'critical'];
@@ -43,6 +64,65 @@
 		saved = new Map();
 	});
 	const rows = $derived(rules.map((rule) => saved.get(rule.id) ?? rule));
+
+	// --- Search, kind filter and the relevance split --------------------------
+	//
+	// ~50 collector kinds ship a handful of rules each: a reader with a few
+	// devices otherwise sees rules for kinds they don't own. Default view:
+	// only "relevant" rules (see `rules-filter.ts`) plus universal ones, the
+	// rest behind "Show all", grouped by kind. Typing in the search box or
+	// choosing an explicit kind always searches/filters across every rule,
+	// bypassing that split immediately.
+
+	let search = $state('');
+	let kindFilter = $state('');
+	let showAll = $state(false);
+
+	const knownKinds = $derived(collectors.map((c) => c.kind));
+	const ownedKinds = $derived(new Set(targets.map((t) => t.kind)));
+
+	function kindLabel(kind: string): string {
+		return collectors.find((c) => c.kind === kind)?.label ?? kind;
+	}
+
+	/** Kinds actually referenced by at least one rule — the select's options. */
+	const kindOptions = $derived.by(() => {
+		const seen = new Set<string>();
+		for (const rule of rows) for (const kind of ruleKinds(rule, knownKinds)) seen.add(kind);
+		return [...seen].map((kind) => [kind, kindLabel(kind)] as const).sort((a, b) => a[1].localeCompare(b[1], 'en'));
+	});
+
+	const searching = $derived(search.trim() !== '' || kindFilter !== '');
+
+	/** Every rule matching the search box and the kind select, ignoring relevance. */
+	const searchResults = $derived.by(() => {
+		const term = search.trim().toLowerCase();
+		return rows.filter((rule) => {
+			if (kindFilter && !ruleKinds(rule, knownKinds).includes(kindFilter)) return false;
+			if (!term) return true;
+			return (
+				rule.name.toLowerCase().includes(term) ||
+				rule.description.toLowerCase().includes(term) ||
+				rule.query.toLowerCase().includes(term)
+			);
+		});
+	});
+
+	/** Default view, no search/filter active: relevant rules, and the rest grouped by kind. */
+	const relevantRows = $derived(rows.filter((rule) => isRelevant(rule, ownedKinds, knownKinds)));
+	const hiddenGroups = $derived.by(() => {
+		const groups = new Map<string, AlertRule[]>();
+		for (const rule of rows) {
+			if (isRelevant(rule, ownedKinds, knownKinds)) continue;
+			// `isRelevant` false guarantees at least one kind; group under the first.
+			const kind = ruleKinds(rule, knownKinds).sort((a, b) => a.localeCompare(b, 'en'))[0];
+			const list = groups.get(kind);
+			if (list) list.push(rule);
+			else groups.set(kind, [rule]);
+		}
+		return [...groups].sort((a, b) => kindLabel(a[0]).localeCompare(kindLabel(b[0]), 'en'));
+	});
+	const hiddenCount = $derived(hiddenGroups.reduce((sum, [, list]) => sum + list.length, 0));
 
 	let editingId = $state<number | null>(null);
 	let shownQueryIds = $state<Set<number>>(new Set());
@@ -269,6 +349,102 @@
 	</div>
 {/if}
 
+{#snippet row(rule: AlertRule, i: number)}
+	{@const firing = firingByRule.get(rule.uid) ?? 0}
+	{@const editing = editingId === rule.id}
+	{@const showQuery = shownQueryIds.has(rule.id)}
+	<div
+		class={`rise-in rounded-[var(--radius-card)] border bg-surface px-4 py-3 shadow-lift ${editing ? 'border-line-strong' : 'border-line'} ${rule.enabled || editing ? '' : 'opacity-70'}`}
+		style={`--rise-delay: ${Math.min(i, 10) * 30}ms`}
+	>
+		<div class="flex flex-wrap items-start gap-x-4 gap-y-3">
+			<div class="min-w-0 flex-[1_1_16rem]">
+				<div class="flex flex-wrap items-center gap-2">
+					<Plate tone={severityTone(rule.severity)} label={severityWord(rule.severity)} bare />
+					<span class="truncate font-semibold text-ink">{rule.name}</span>
+					{#if rule.builtin}
+						<Plate tone="ghost" label="Built-in" bare />
+					{/if}
+					{#if firing > 0}
+						<Plate tone="warning" label={`${firing} firing now`} pulse />
+					{/if}
+					{#if savedId === rule.id}
+						<Plate tone="signal" label="Saved" bare />
+					{/if}
+				</div>
+				{#if rule.description}
+					<p class="mt-1 text-[0.8125rem] text-ink-2">{rule.description}</p>
+				{/if}
+				<p class="tnum mt-1 text-[0.8125rem] text-ink-2">
+					{summary(rule)}
+					<span class="text-ink-3" aria-hidden="true">·</span>
+					notifies {channelsLabel(rule)}
+				</p>
+				{#if rule.kind === 'anomaly' && !editing}
+					<p class="tnum mt-0.5 text-[0.75rem] text-ink-2">{anomalySummary(rule)}</p>
+				{/if}
+				<button
+					type="button"
+					class="mt-1 inline-flex items-center gap-1 text-[0.75rem] font-medium text-ink-2 hover:text-ink hover:underline"
+					aria-expanded={showQuery}
+					aria-controls={`rule-query-${rule.id}`}
+					onclick={() => toggleQuery(rule.id)}
+				>
+					{#if showQuery}
+						<ChevronUp class="size-3.5" aria-hidden="true" />
+						Hide query
+					{:else}
+						<ChevronDown class="size-3.5" aria-hidden="true" />
+						Show query
+					{/if}
+				</button>
+				{#if showQuery}
+					<p
+						id={`rule-query-${rule.id}`}
+						class="mt-1 rounded-lg bg-canvas-deep px-2.5 py-1.5 font-mono text-[0.75rem] break-all text-ink-2"
+					>
+						{rule.query}
+					</p>
+				{/if}
+			</div>
+
+			{#if auth.isAdmin}
+				<div class="flex shrink-0 items-center gap-3">
+					{#if !editing}
+						<Button variant="ghost" size="sm" onclick={() => (editingId = rule.id)} aria-label={`Edit ${rule.name}`}>
+							Edit
+						</Button>
+					{/if}
+					<Toggle
+						id={`rule-toggle-${rule.id}`}
+						checked={rule.enabled}
+						disabled={busyId === rule.id}
+						label={`${rule.enabled ? 'Disable' : 'Enable'} ${rule.name}`}
+						onchange={(value) => ontoggle(rule, value)}
+					/>
+					{#if !rule.builtin}
+						<Confirm
+							size="sm"
+							variant="danger"
+							confirmLabel="Delete?"
+							loading={busyId === rule.id}
+							onconfirm={() => ondelete(rule.id)}
+						>
+							Delete
+						</Confirm>
+					{/if}
+				</div>
+			{:else}
+				<Plate tone={rule.enabled ? 'signal' : 'ghost'} bare label={rule.enabled ? 'Enabled' : 'Disabled'} />
+			{/if}
+		</div>
+
+		{#if editing}
+			<RuleEditor {rule} {channels} {channelsError} onsaved={onSaved} oncancel={() => (editingId = null)} />
+		{/if}
+	</div>
+{/snippet}
+
 {#if rows.length === 0}
 	<EmptyState
 		icon={SlidersHorizontal}
@@ -276,101 +452,70 @@
 		description="Add a rule to start watching a metric, or wait for the shipped rules to appear."
 	/>
 {:else}
-	<div class="space-y-2.5" aria-live="polite">
-		{#each rows as rule, i (rule.id)}
-			{@const firing = firingByRule.get(rule.uid) ?? 0}
-			{@const editing = editingId === rule.id}
-			{@const showQuery = shownQueryIds.has(rule.id)}
-			<div
-				class={`rise-in rounded-[var(--radius-card)] border bg-surface px-4 py-3 shadow-lift ${editing ? 'border-line-strong' : 'border-line'} ${rule.enabled || editing ? '' : 'opacity-70'}`}
-				style={`--rise-delay: ${Math.min(i, 10) * 30}ms`}
-			>
-				<div class="flex flex-wrap items-start gap-x-4 gap-y-3">
-					<div class="min-w-0 flex-[1_1_16rem]">
-						<div class="flex flex-wrap items-center gap-2">
-							<Plate tone={severityTone(rule.severity)} label={severityWord(rule.severity)} bare />
-							<span class="truncate font-semibold text-ink">{rule.name}</span>
-							{#if rule.builtin}
-								<Plate tone="ghost" label="Built-in" bare />
-							{/if}
-							{#if firing > 0}
-								<Plate tone="warning" label={`${firing} firing now`} pulse />
-							{/if}
-							{#if savedId === rule.id}
-								<Plate tone="signal" label="Saved" bare />
-							{/if}
-						</div>
-						{#if rule.description}
-							<p class="mt-1 text-[0.8125rem] text-ink-2">{rule.description}</p>
-						{/if}
-						<p class="tnum mt-1 text-[0.8125rem] text-ink-2">
-							{summary(rule)}
-							<span class="text-ink-3" aria-hidden="true">·</span>
-							notifies {channelsLabel(rule)}
-						</p>
-						{#if rule.kind === 'anomaly' && !editing}
-							<p class="tnum mt-0.5 text-[0.75rem] text-ink-2">{anomalySummary(rule)}</p>
-						{/if}
-						<button
-							type="button"
-							class="mt-1 inline-flex items-center gap-1 text-[0.75rem] font-medium text-ink-2 hover:text-ink hover:underline"
-							aria-expanded={showQuery}
-							aria-controls={`rule-query-${rule.id}`}
-							onclick={() => toggleQuery(rule.id)}
-						>
-							{#if showQuery}
-								<ChevronUp class="size-3.5" aria-hidden="true" />
-								Hide query
-							{:else}
-								<ChevronDown class="size-3.5" aria-hidden="true" />
-								Show query
-							{/if}
-						</button>
-						{#if showQuery}
-							<p
-								id={`rule-query-${rule.id}`}
-								class="mt-1 rounded-lg bg-canvas-deep px-2.5 py-1.5 font-mono text-[0.75rem] break-all text-ink-2"
-							>
-								{rule.query}
-							</p>
-						{/if}
+	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+		<label class="relative min-w-0 flex-1 lg:max-w-sm">
+			<span class="sr-only">Search rules</span>
+			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
+			<input
+				type="search"
+				class="input !pl-9"
+				placeholder="Search by name, description or query"
+				bind:value={search}
+				autocomplete="off"
+			/>
+		</label>
+		<label class="min-w-0">
+			<span class="sr-only">Filter by kind</span>
+			<select class="input !min-h-9 !w-auto !py-1.5 text-sm" bind:value={kindFilter}>
+				<option value="">All kinds</option>
+				{#each kindOptions as [value, label] (value)}
+					<option {value}>{label}</option>
+				{/each}
+			</select>
+		</label>
+	</div>
+
+	{#if searching}
+		{#if searchResults.length === 0}
+			<EmptyState icon={Search} title="No rules match." description="Try a different search term or kind." />
+		{:else}
+			<div class="space-y-2.5" aria-live="polite">
+				{#each searchResults as rule, i (rule.id)}
+					{@render row(rule, i)}
+				{/each}
+			</div>
+		{/if}
+	{:else}
+		<div class="space-y-2.5" aria-live="polite">
+			{#each relevantRows as rule, i (rule.id)}
+				{@render row(rule, i)}
+			{/each}
+		</div>
+
+		{#if hiddenGroups.length > 0}
+			<div class="mt-4">
+				{#if !showAll}
+					<Button variant="ghost" size="sm" onclick={() => (showAll = true)}>
+						Show all {hiddenCount} built-in rules
+					</Button>
+				{:else}
+					<div class="space-y-2">
+						{#each hiddenGroups as [kind, groupRules] (kind)}
+							<details class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-2.5">
+								<summary class="cursor-pointer text-sm font-medium text-ink-2">
+									{kindLabel(kind)} ({groupRules.length})
+								</summary>
+								<div class="mt-2.5 space-y-2.5">
+									{#each groupRules as rule, i (rule.id)}
+										{@render row(rule, i)}
+									{/each}
+								</div>
+							</details>
+						{/each}
 					</div>
-
-					{#if auth.isAdmin}
-						<div class="flex shrink-0 items-center gap-3">
-							{#if !editing}
-								<Button variant="ghost" size="sm" onclick={() => (editingId = rule.id)} aria-label={`Edit ${rule.name}`}>
-									Edit
-								</Button>
-							{/if}
-							<Toggle
-								id={`rule-toggle-${rule.id}`}
-								checked={rule.enabled}
-								disabled={busyId === rule.id}
-								label={`${rule.enabled ? 'Disable' : 'Enable'} ${rule.name}`}
-								onchange={(value) => ontoggle(rule, value)}
-							/>
-							{#if !rule.builtin}
-								<Confirm
-									size="sm"
-									variant="danger"
-									confirmLabel="Delete?"
-									loading={busyId === rule.id}
-									onconfirm={() => ondelete(rule.id)}
-								>
-									Delete
-								</Confirm>
-							{/if}
-						</div>
-					{:else}
-						<Plate tone={rule.enabled ? 'signal' : 'ghost'} bare label={rule.enabled ? 'Enabled' : 'Disabled'} />
-					{/if}
-				</div>
-
-				{#if editing}
-					<RuleEditor {rule} {channels} {channelsError} onsaved={onSaved} oncancel={() => (editingId = null)} />
+					<Button variant="ghost" size="sm" class="mt-2" onclick={() => (showAll = false)}>Show fewer rules</Button>
 				{/if}
 			</div>
-		{/each}
-	</div>
+		{/if}
+	{/if}
 {/if}

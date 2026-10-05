@@ -7,7 +7,14 @@
 	 * the root layout, see `alertsStore`); this page only adds the sparklines,
 	 * from one batched query refreshed every 30 s.
 	 */
-	import { listCollectors, type Target, type TargetId } from '$lib/api';
+	import {
+		listCollectors,
+		reorderTargets,
+		updateTarget,
+		type Target,
+		type TargetId,
+		type TargetPayload
+	} from '$lib/api';
 	import { displayState } from '$lib/format';
 	import { loadSparklines } from '$lib/metrics';
 	import type { Serie } from '$lib/components/Chart.svelte';
@@ -15,8 +22,17 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, PageHeader, Skeleton } from '$lib/ui';
 	import RackList from '$lib/components/devices/RackList.svelte';
+	import type { ReorderControls } from '$lib/components/devices/RackList.svelte';
+	import FolderHeader from '$lib/components/devices/FolderHeader.svelte';
 	import Segmented from '$lib/components/devices/Segmented.svelte';
-	import { buildRack, needsAttention } from '$lib/components/devices/rack';
+	import { needsAttention } from '$lib/components/devices/rack';
+	import {
+		buildFolders,
+		knownFolders,
+		moveWithinScope,
+		reorderByDrop,
+		worstState
+	} from '$lib/components/devices/folders';
 	import { Plus, Search } from 'lucide-svelte';
 
 	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
@@ -89,13 +105,105 @@
 		return ids;
 	});
 
-	const rows = $derived(buildRack(targets, stateOf, visible));
+	const folderSections = $derived(buildFolders(targets, stateOf, visible));
+	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0));
 	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '');
+	/** A single, group-less section looks exactly like the old flat list — no header shown. */
+	const showFolderHeaders = $derived(folderSections.length > 1 || (folderSections[0]?.key ?? '') !== '');
 
 	function clearFilters() {
 		search = '';
 		segment = 'all';
 		kind = '';
+	}
+
+	// --- Folders & manual order (admin only, and only while unfiltered: the
+	// reorder scope is computed from the full fleet, not the narrowed view) ---
+
+	let collapsedFolders = $state<Set<string>>(new Set());
+	function toggleFolder(key: string) {
+		const next = new Set(collapsedFolders);
+		if (next.has(key)) next.delete(key);
+		else next.add(key);
+		collapsedFolders = next;
+	}
+
+	/** Builds the payload a save needs to echo every field the server does not keep by itself. */
+	function targetToPayload(target: Target, patch: Partial<TargetPayload> = {}): TargetPayload {
+		return {
+			name: target.name,
+			address: target.address,
+			kind: target.kind,
+			parent_id: target.parent_id,
+			via_agent: target.via_agent,
+			interval_secs: target.interval_secs,
+			enabled: target.enabled,
+			tags: target.tags,
+			group_name: target.group_name,
+			...patch
+		};
+	}
+
+	// A failed move or reorder is shown above the list; the list itself comes
+	// from the shared store and stays as it was.
+	let actionError = $state<unknown>(null);
+	let moving = $state(false);
+	async function moveToFolder(target: Target, groupName: string) {
+		if (target.group_name === groupName || moving) return;
+		moving = true;
+		try {
+			await updateTarget(target.id, targetToPayload(target, { group_name: groupName }));
+			actionError = null;
+			await alertsStore.refresh();
+		} catch (cause) {
+			actionError = cause;
+		} finally {
+			moving = false;
+		}
+	}
+
+	function promptFolder(target: Target) {
+		const known = knownFolders(targets);
+		const hint = known.length > 0 ? ` Existing folders: ${known.join(', ')}.` : '';
+		const next = window.prompt(`Move "${target.name}" to which folder? Leave empty for none.${hint}`, target.group_name);
+		if (next === null) return;
+		void moveToFolder(target, next.trim());
+	}
+
+	let dragging = $state<TargetId | null>(null);
+	async function persistOrder(order: TargetId[]) {
+		try {
+			await reorderTargets(order);
+			actionError = null;
+			await alertsStore.refresh();
+		} catch (cause) {
+			actionError = cause;
+		}
+	}
+	function reorderControls(): ReorderControls {
+		return {
+			dragging,
+			canMoveUp: (id) => moveWithinScope(targets, stateOf, id, -1) !== null,
+			canMoveDown: (id) => moveWithinScope(targets, stateOf, id, 1) !== null,
+			onMove: (id, delta) => {
+				const order = moveWithinScope(targets, stateOf, id, delta);
+				if (order) void persistOrder(order);
+			},
+			onDragStart: (id) => (dragging = id),
+			onDragOver: () => {},
+			onDrop: (overId) => {
+				const draggedId = dragging;
+				dragging = null;
+				if (draggedId === null) return;
+				const order = reorderByDrop(targets, stateOf, draggedId, overId);
+				if (order) void persistOrder(order);
+			},
+			onDragEnd: () => (dragging = null),
+			onMoveToFolder: (id) => {
+				const target = targets.find((t) => t.id === id);
+				if (target) promptFolder(target);
+			}
+		};
 	}
 
 	async function load(signal?: AbortSignal) {
@@ -170,6 +278,10 @@
 	</div>
 {/if}
 
+{#if actionError}
+	<div class="mb-3"><ErrorNotice error={actionError} title="Could not save the new order or folder" /></div>
+{/if}
+
 {#if pageError}
 	<ErrorNotice
 		error={pageError}
@@ -198,19 +310,46 @@
 			{/if}
 		{/snippet}
 	</EmptyState>
-{:else if rows.length === 0}
+{:else if totalRows === 0}
 	<EmptyState title="Nothing matches." description="No device matches these filters.">
 		{#snippet action()}
 			<Button variant="ghost" onclick={clearFilters}>Clear filters</Button>
 		{/snippet}
 	</EmptyState>
 {:else}
-	<p class="sr-only" aria-live="polite">{rows.length} of {targets.length} devices shown</p>
+	<p class="sr-only" aria-live="polite">{totalRows} of {targets.length} devices shown</p>
 	{#if filtered}
 		<p class="mb-2 text-[0.8125rem] text-ink-2">
-			<span class="tnum">{rows.length}</span> of <span class="tnum">{targets.length}</span> devices
+			<span class="tnum">{totalRows}</span> of <span class="tnum">{targets.length}</span> devices
 			<button type="button" class="ml-1 text-ink-2 underline hover:text-ink" onclick={clearFilters}>Clear filters</button>
 		</p>
 	{/if}
-	<RackList {rows} {sparklines} {kindLabels} />
+	<div class="flex flex-col gap-4">
+		{#each folderSections as section (section.key)}
+			{@const collapsed = collapsedFolders.has(section.key)}
+			{#if showFolderHeaders}
+				<FolderHeader
+					label={section.label}
+					count={section.rows.length}
+					worst={worstState(section.rows)}
+					{collapsed}
+					ontoggle={() => toggleFolder(section.key)}
+					dropActive={auth.isAdmin && dragging !== null && !filtered}
+					ondrop={() => {
+						const target = targets.find((t) => t.id === dragging);
+						dragging = null;
+						if (target) void moveToFolder(target, section.key);
+					}}
+				/>
+			{/if}
+			{#if !collapsed}
+				<RackList
+					rows={section.rows}
+					{sparklines}
+					{kindLabels}
+					reorder={auth.isAdmin && !filtered ? reorderControls() : null}
+				/>
+			{/if}
+		{/each}
+	</div>
 {/if}

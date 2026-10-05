@@ -319,6 +319,7 @@ pub async fn register(
                 // Aucun secret à conserver de ce côté : c'est l'agent qui se
                 // connecte, le serveur n'a jamais à joindre la machine.
                 credential: Some(Credential::None),
+                group_name: String::new(),
             };
             (db::targets::create(pool, cipher, &input).await?, true)
         }
@@ -1029,6 +1030,7 @@ mod tests {
                 enabled: true,
                 tags: BTreeMap::new(),
                 credential: Some(Credential::None),
+                group_name: String::new(),
             },
         )
         .await

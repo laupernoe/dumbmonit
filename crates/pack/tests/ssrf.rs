@@ -85,6 +85,8 @@ fn target(address: SocketAddr, tags: &[(&str, &str)]) -> Target {
         enabled: true,
         tags: tags.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<BTreeMap<_, _>>(),
         credential: Credential::ApiToken { token: TOKEN.into() },
+        group_name: String::new(),
+        position: 0,
     }
 }
 

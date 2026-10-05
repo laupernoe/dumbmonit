@@ -3189,6 +3189,8 @@ mod tests {
             enabled,
             tags: BTreeMap::new(),
             credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

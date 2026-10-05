@@ -357,6 +357,8 @@ mod tests {
             enabled: true,
             tags: BTreeMap::new(),
             credential: Credential::ApiToken { token: token.into() },
+            group_name: String::new(),
+            position: 0,
         }
     }
 

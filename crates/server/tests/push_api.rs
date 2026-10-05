@@ -73,6 +73,8 @@ fn target(id: i64, expected: &str) -> dumbmonit_proto::Target {
         enabled: true,
         tags: [("expected_interval".to_string(), expected.to_string())].into_iter().collect(),
         credential: dumbmonit_proto::Credential::None,
+        group_name: String::new(),
+        position: 0,
     }
 }
 

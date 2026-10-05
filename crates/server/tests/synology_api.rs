@@ -72,6 +72,7 @@ async fn setup() -> (TestApp, sqlx::SqlitePool, i64) {
             enabled: true,
             tags: Default::default(),
             credential: None,
+            group_name: String::new(),
         },
     )
     .await
