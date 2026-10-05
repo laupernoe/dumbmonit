@@ -16,6 +16,27 @@ export interface RackRow {
 	shadowed: boolean;
 }
 
+/** A row's live screen position, read once when a drag starts (rows never reflow mid-drag). */
+export interface RowRect {
+	id: TargetId;
+	top: number;
+	height: number;
+}
+
+/**
+ * The row a dragged pointer sits nearest to, and whether it should land
+ * above or below it — the geometry half of pointer-based drag-and-drop.
+ * `rects` must be in on-screen (top to bottom) order. `null` when there is
+ * nothing to drop against.
+ */
+export function nearestRow(rects: RowRect[], pointerY: number): { id: TargetId; before: boolean } | null {
+	for (const r of rects) {
+		if (pointerY < r.top + r.height / 2) return { id: r.id, before: true };
+	}
+	const last = rects[rects.length - 1];
+	return last ? { id: last.id, before: false } : null;
+}
+
 /** States the operator has to act on. `pending` only waits. */
 export function needsAttention(state: TargetState): boolean {
 	return state === 'offline' || state === 'down' || state === 'misconfigured';
