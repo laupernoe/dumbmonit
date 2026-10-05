@@ -246,7 +246,10 @@ mod tests {
         assert_eq!(value(&samples, "ad_dc_reachable", Some(("dc", "dc2.corp.lan"))), Some(0.0));
         assert_eq!(value(&samples, "ad_dc_reachable", Some(("dc", "dc3"))), None);
         assert_eq!(value(&samples, "ad_dc_count", None), Some(3.0));
-        assert_eq!(value(&samples, "ad_finding_count", Some(("finding", "asrep_roastable_users"))), Some(3.0));
+        assert_eq!(
+            value(&samples, "ad_finding_count", Some(("finding", "asrep_roastable_users"))),
+            Some(3.0)
+        );
         assert_eq!(value(&samples, "ad_bind_ok", None), Some(1.0));
     }
 

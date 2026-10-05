@@ -30,6 +30,7 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod security;
 mod spa;
 mod status_pages;
 mod synology;
@@ -151,6 +152,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(webchange::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
         .merge(music::routes())
+        // Note de sécurité par équipement et vue du parc (`security.rs`).
+        .merge(security::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(

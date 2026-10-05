@@ -1008,7 +1008,8 @@ mod tests {
         let mut obs = observed();
         obs.groups = vec![group(def(512), &[&inventory.users[0]])];
         let findings = findings(&obs, Some(&inventory), SETTINGS, NOW);
-        let raised: Vec<_> = findings.iter().filter(|f| f.count > 0).map(|f| f.id.as_str()).collect();
+        let raised: Vec<_> =
+            findings.iter().filter(|f| f.count > 0).map(|f| f.id.as_str()).collect();
         assert!(raised.is_empty(), "{raised:?}");
         // Chaque constat examiné est publié, à zéro : un constat corrigé passe
         // au vert au lieu de disparaître.
@@ -1083,8 +1084,7 @@ mod tests {
         assert_eq!(find(&f, "kerberoastable_privileged").severity, FindingSeverity::Critical);
 
         // Les plus graves d'abord.
-        let severities: Vec<_> =
-            f.iter().filter(|x| x.count > 0).map(|x| x.severity).collect();
+        let severities: Vec<_> = f.iter().filter(|x| x.count > 0).map(|x| x.severity).collect();
         let mut sorted = severities.clone();
         sorted.sort_by(|a, b| b.cmp(a));
         assert_eq!(severities, sorted);
