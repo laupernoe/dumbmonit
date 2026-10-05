@@ -40,22 +40,37 @@
 	// Accounts only exist once the instance is protected; viewers never see these two.
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
 
-	const SECTIONS = $derived([
-		{ id: 'security', label: 'Account & security' },
-		...(showAccounts
-			? [
-					{ id: 'users', label: 'Users' },
-					{ id: 'sso', label: 'Single sign-on' }
-				]
-			: []),
-		{ id: 'agents', label: 'Agents' },
-		{ id: 'assistant', label: 'API & assistants' },
-		{ id: 'packs', label: 'Integration packs' },
-		{ id: 'backup', label: 'Backup' },
-		{ id: 'appearance', label: 'Appearance' },
-		{ id: 'music', label: 'Wall music' },
-		{ id: 'about', label: 'About' }
+	// Grouped so the rail reads as what it is: account/security/instance
+	// administration, set apart from the room-display options nobody needs
+	// admin judgement to touch. A `null` group label renders no heading — the
+	// first group stays unlabelled, as it did before grouping existed.
+	const GROUPS = $derived([
+		{
+			label: null,
+			items: [
+				{ id: 'security', label: 'Account & security' },
+				...(showAccounts
+					? [
+							{ id: 'users', label: 'Users' },
+							{ id: 'sso', label: 'Single sign-on' }
+						]
+					: []),
+				{ id: 'agents', label: 'Agents' },
+				{ id: 'assistant', label: 'API & assistants' },
+				{ id: 'packs', label: 'Integration packs' },
+				{ id: 'backup', label: 'Backup' }
+			]
+		},
+		{
+			label: 'Wall & display',
+			items: [
+				{ id: 'appearance', label: 'Appearance' },
+				{ id: 'music', label: 'Wall music' }
+			]
+		},
+		{ label: null, items: [{ id: 'about', label: 'About' }] }
 	]);
+	const SECTIONS = $derived(GROUPS.flatMap((group) => group.items));
 
 	// The rail follows the scroll: the topmost section in view is the current one.
 	let visible = $state<string>('security');
@@ -143,16 +158,23 @@
 	<aside class="hidden lg:block">
 		<nav class="sticky top-20" aria-label="Settings sections">
 			<ul class="space-y-0.5 text-sm">
-				{#each SECTIONS as section (section.id)}
-					<li>
-						<a
-							href="#{section.id}"
-							class={`block rounded-md px-2.5 py-1.5 transition-colors hover:bg-surface-2 hover:text-ink ${visible === section.id ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2'}`}
-							aria-current={visible === section.id ? 'location' : undefined}
-						>
-							{section.label}
-						</a>
-					</li>
+				{#each GROUPS as group, i (group.label ?? i)}
+					{#if group.label}
+						<li class={`px-2.5 ${i === 0 ? 'pb-1.5' : 'pt-3 pb-1.5'} text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase`}>
+							{group.label}
+						</li>
+					{/if}
+					{#each group.items as section (section.id)}
+						<li>
+							<a
+								href="#{section.id}"
+								class={`block rounded-md px-2.5 py-1.5 transition-colors hover:bg-surface-2 hover:text-ink ${visible === section.id ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2'}`}
+								aria-current={visible === section.id ? 'location' : undefined}
+							>
+								{section.label}
+							</a>
+						</li>
+					{/each}
 				{/each}
 			</ul>
 			<p class="mt-5 border-t border-line pt-4 text-[0.8125rem] leading-relaxed text-ink-2">
