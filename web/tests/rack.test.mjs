@@ -2,7 +2,7 @@
 // Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildRack, compareSiblings, needsAttention, RANK } from '../src/lib/components/devices/rack.ts';
+import { buildRack, compareSiblings, nearestRow, needsAttention, RANK } from '../src/lib/components/devices/rack.ts';
 
 let nextId = 1;
 function target(overrides = {}) {
@@ -118,4 +118,23 @@ test('RANK ties pending and unknown below trouble, above online', () => {
 	assert.ok(RANK.down < RANK.pending);
 	assert.ok(RANK.pending < RANK.online);
 	assert.ok(RANK.online < RANK.disabled);
+});
+
+test('nearestRow lands before a row once the pointer crosses its midpoint', () => {
+	const rects = [
+		{ id: 1, top: 0, height: 60 },
+		{ id: 2, top: 60, height: 60 }
+	];
+	assert.deepEqual(nearestRow(rects, 10), { id: 1, before: true });
+	assert.deepEqual(nearestRow(rects, 50), { id: 2, before: true }); // past row 1's midpoint (30)
+	assert.deepEqual(nearestRow(rects, 100), { id: 2, before: false }); // past row 2's own midpoint (90) too
+});
+
+test('nearestRow lands after the last row once the pointer is past its midpoint', () => {
+	const rects = [{ id: 1, top: 0, height: 60 }];
+	assert.deepEqual(nearestRow(rects, 50), { id: 1, before: false });
+});
+
+test('nearestRow is null with no rows to drop against', () => {
+	assert.equal(nearestRow([], 50), null);
 });
