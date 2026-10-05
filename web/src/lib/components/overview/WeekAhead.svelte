@@ -28,11 +28,7 @@
 {/snippet}
 
 {#if week.empty}
-	<p
-		class="ghost-cell rounded-[var(--radius-card)] border border-dashed border-line px-5 py-5 text-[0.9375rem] text-ink-2"
-	>
-		A quiet week ahead: no certificate, disk or maintenance due.
-	</p>
+	<p class="text-[0.9375rem] text-ink-2">A quiet week ahead: no certificate, disk or maintenance due.</p>
 {:else}
 	<!-- Desktop: one column per day. -->
 	<ol class="hidden gap-2 md:grid md:grid-cols-7">

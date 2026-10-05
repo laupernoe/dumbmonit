@@ -156,6 +156,8 @@ pub(crate) mod test_support {
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect::<BTreeMap<_, _>>(),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 }

@@ -9,6 +9,10 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"moduleResolution": "bundler"
+		"moduleResolution": "bundler",
+		// Lets a pure helper (`folders.ts`) import another one by its explicit
+		// `.ts` extension: Node's own ESM resolver — unlike Vite's — needs it to
+		// run `tests/*.test.mjs` with `node --test`, no bundler involved.
+		"allowImportingTsExtensions": true
 	}
 }

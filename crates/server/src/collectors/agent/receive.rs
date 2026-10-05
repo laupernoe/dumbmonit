@@ -206,6 +206,8 @@ mod tests {
             enabled: true,
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

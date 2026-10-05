@@ -150,6 +150,8 @@ mod tests {
             enabled: true,
             tags: Default::default(),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

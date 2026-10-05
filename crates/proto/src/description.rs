@@ -63,6 +63,12 @@ pub struct OptionDescription {
     /// `text`, `number`, `boolean`, `select`…
     pub input: Text,
     pub choices: Vec<Text>,
+    /// Sous-titre regroupant ce réglage avec d'autres dans « Plus d'options » ;
+    /// vide : l'interface retombe sur un classement générique par préfixe de
+    /// clé. Permet aux types avec beaucoup de réglages (Proxmox VE…) de les
+    /// présenter sous quelques titres plutôt qu'en une seule colonne.
+    #[serde(default)]
+    pub group: Text,
 }
 
 /// Une forme d'identifiant acceptée (le `type` de `credential`), et ses champs.

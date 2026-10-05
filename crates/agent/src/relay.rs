@@ -201,6 +201,8 @@ mod tests {
             // option ; ici le serveur de test tourne sur la machine du test.
             tags: BTreeMap::from([("allow_private_targets".to_string(), "true".to_string())]),
             credential: Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

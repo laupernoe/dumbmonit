@@ -255,6 +255,7 @@ async fn pbs() -> Pbs {
             credential: Some(dumbmonit_proto::Credential::ApiToken {
                 token: "monitoring@pbs!dumbmonit=secret".into(),
             }),
+            group_name: String::new(),
         },
     )
     .await

@@ -121,6 +121,7 @@ fn option(spec: &OptionSpec) -> OptionDescription {
         required: spec.required,
         input: spec.input.clone().into(),
         choices: spec.choices.iter().cloned().map(Into::into).collect(),
+        ..OptionDescription::default()
     }
 }
 
