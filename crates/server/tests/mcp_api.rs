@@ -44,6 +44,7 @@ async fn setup() -> TestApp {
 
     let mut config = Config::from_env().expect("configuration par défaut");
     config.data_dir = dir.path().to_path_buf();
+    config.setup_code = Some("test-setup-code".into());
     config.victoria_url = Some(UNREACHABLE_VICTORIA.to_string());
 
     let pool = db::open(&config.database_path()).await.expect("ouverture de la base");
@@ -68,7 +69,12 @@ impl TestApp {
     /// Crée le compte `admin` puis ouvre sa session ; rend la valeur du cookie.
     async fn open_admin_session(&self) -> String {
         let reply = self
-            .request("POST", "/api/auth/setup", Some(json!({ "password": PASSWORD })), None)
+            .request(
+                "POST",
+                "/api/auth/setup",
+                Some(json!({ "setup_code": "test-setup-code", "password": PASSWORD })),
+                None,
+            )
             .await;
         assert_eq!(reply.status, StatusCode::NO_CONTENT, "création de l'admin : {}", reply.body);
         let request = Request::builder()

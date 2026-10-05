@@ -175,11 +175,15 @@ you create a token.
     instead — `dumbmonit-agent-macos-aarch64` (Apple silicon) and
     `dumbmonit-agent-macos-x86_64` (Intel), each with its `.sha256` — and the
     server redirects `/download/dumbmonit-agent-macos-…` there, so the script
-    picks the one for the Mac's architecture (`uname -m`) and checks it against
-    the release's checksum. The Mac therefore needs to reach github.com.
+    picks the one for the Mac's architecture (`uname -m`). The server does not
+    ship those binaries, so the install command carries no checksum for them:
+    add `--sha256=macos-aarch64:<hex>` (or `macos-x86_64`) with the value of the
+    release's `.sha256`, or the installer refuses the download. The Mac also
+    needs to reach github.com.
 
     Without that access, or to install a binary you already have, download it
-    and pass it with `--bin`:
+    and pass it with `--bin` (compare it with the release's `.sha256` first:
+    `--bin` installs what you give it):
 
     ```sh
     curl -sSLO https://github.com/noekan/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
@@ -282,17 +286,24 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 `--uninstall` (`-Uninstall` on Windows) removes all of it, service included,
 on every system.
 
-!!! note "The download is verified"
-    The server publishes the SHA-256 of each agent binary next to it
-    (`/download/dumbmonit-agent-linux-x86_64.sha256`, in `sha256sum` format),
-    and both installers check the file they downloaded against it before
-    installing anything: a truncated or tampered download stops the install
-    with "checksum mismatch". The same checksums are shown under the install
-    command in the UI, to compare by hand if the server is reached over plain
-    HTTP. For macOS, the checksum comes from the GitHub release, through the
-    same redirect as the binary. On a system without `sha256sum` or `shasum`,
-    the script warns and installs unverified; `--bin=PATH` skips the check, the
-    file being yours.
+!!! note "The download is verified — always"
+    The install command shown by DumbMonit carries the expected SHA-256 of
+    each agent binary the server ships (`--sha256=linux-x86_64:…,linux-aarch64:…,freebsd-x86_64:…`,
+    `-Sha256 windows-x86_64:…` on Windows). Both installers check the file
+    they downloaded against it before installing anything, and **refuse** to
+    install when it does not match, when no checksum is given for the platform,
+    or when no SHA-256 tool (`sha256sum`, `shasum`, `sha256`) is available.
+
+    The checksums change with every server release: after upgrading DumbMonit,
+    copy a fresh install command from **Settings → Agents** (or from a new
+    token) rather than re-running an old one, which would stop with
+    "checksum mismatch". The same checksums are shown under the install
+    command, and published at `/download/<file>.sha256`.
+
+    For air-gapped or manual setups, `--insecure-skip-checksum`
+    (`-InsecureSkipChecksum`) installs a downloaded binary unverified and says
+    so loudly; `--bin=PATH` installs a local file as is, the file being yours
+    to verify.
 
 ### Installer flags
 
@@ -305,6 +316,8 @@ on every system.
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, copied as `tag_<key>` on every series. |
 | `--hostname=NAME` | `-HostName` | Name announced to the server (default: the machine's). |
 | `--bin=PATH` | `-BinPath` | Local binary to install instead of downloading it. |
+| `--sha256=LIST` | `-Sha256` | Expected SHA-256 of the download, as `platform-arch:hex` pairs separated by commas (a bare hex value also works). Included in the command DumbMonit shows; required unless the next flag is given. |
+| `--insecure-skip-checksum` | `-InsecureSkipChecksum` | Install a downloaded binary without verifying it, with a warning. Only for air-gapped or manual setups. |
 | `--no-start` | | Install everything, but do not contact the server or start the service (machine image, testing). |
 | `--uninstall` | `-Uninstall` | Uninstall the agent and delete its configuration. |
 | `--help` | | Show the help. |
@@ -313,7 +326,9 @@ on every system.
 
 Both scripts are idempotent: running the install command again, with the same
 token and URL, replaces the binary, rewrites the configuration and restarts the
-service. That is the upgrade procedure.
+service. That is the upgrade procedure. Take the command from the current
+server (Settings → Agents): its `--sha256` must match the binaries of the
+server version you upgraded to.
 
 The same command migrates a machine still running the EzyMonit agent, on Linux
 and on Windows. The installer stops and removes the old service
@@ -579,21 +594,42 @@ The device page shows where a machine stands, under **Agent → Binding**:
 | State | What it means | What to do |
 |---|---|---|
 | **Bound** | The agent holds a secret of its own. | Nothing. |
-| **Not bound yet** | The binary knows about binding; its next batch will bind it. | Nothing — it settles within one sampling period. |
-| **Not bound — agent too old** | An agent installed before binding existed. It keeps reporting, but any machine holding the same enrollment token could report in its name. | Re-run the install command on that machine. |
+| **Not bound — re-enrol this host** | A host enrolled before binding existed, and never bound since. The server refuses its measurements, container commands and relayed probes. | Click **Allow re-enrolment** on the device page, then restart the agent. If the agent predates binding, re-run the install command on the host first. |
 
-### Upgrading a fleet that predates binding
+### Hosts that predate binding
 
-Nothing breaks on the day you upgrade the server. Agents installed before
-binding keep pushing exactly as they did, and keep running container commands;
-they simply show as *not bound*. As you re-run the install command on each of
-them, they bind themselves at their next batch, one by one, with no window
-during which the machine is missing from the interface.
+!!! warning "Changed: unbound hosts are refused"
+    Earlier releases kept accepting hosts enrolled before binding, as long as
+    they used the token that had enrolled them, and bound them silently once
+    their agent was updated. That transition window is closed: a host that never
+    bound is now **refused on every agent route** — measurements, container
+    commands and relayed probes — until an administrator re-enrols it. A fleet
+    token is shared by many machines and the identity key can be guessed, so
+    nothing else proves that the agent asking is the host's own.
 
-They are not, however, protected until you do. Treat **not bound — agent too
-old** as a to-do list: a homelab can take a weekend over it, a fleet should
-plan it, and the support window for unbound agents ends with DumbMonit 1.0 —
-after that the server refuses batches from an agent it cannot bind.
+    An agent binary too old to receive a binding secret is refused as well,
+    including on its first enrolment.
+
+To bring such a host back:
+
+1. If its agent predates binding, re-run the install command on it (the agent
+   binary must be able to store a binding secret).
+2. Open its device page and click **Agent → Allow re-enrolment**. This opens a
+   one-hour window.
+3. Restart the agent, or wait for its next retry: that batch binds the host
+   with a fresh secret and closes the window. A token other than the one that
+   enrolled the host must still be able to enrol (not used up, not expired).
+
+Until then, the agent's log carries the server's explanation:
+
+```
+WARN this agent is not recognised for this machine
+     reason: This machine was enrolled before agent binding and was never bound
+     to its agent installation, so the server no longer accepts it. Re-enrol
+     this host: open its device page in DumbMonit, click 'Allow re-enrolment',
+     then restart the agent (re-run the install command first if the agent is
+     older than binding).
+```
 
 ### Re-enrolment after a reinstall
 
@@ -671,10 +707,13 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 |---|---|
 | Installer says "could not reach the server" | Wrong URL or token. The configuration is written: fix `agent.yaml`, then restart the service. |
 | Download fails with 404 | The server has no agent binaries (`DUMBMONIT_AGENT_DIR` empty). Use `--bin=PATH` with a binary you built. |
-| Installer stops with "checksum mismatch" | The binary received is not the one the server serves: a proxy or a cache in the way, or a tampered download. Retry; if it persists, download the file and its `.sha256` by hand and compare. |
+| Installer stops with "checksum mismatch" | The command was copied before a server upgrade (copy a fresh one from Settings → Agents), or the binary received is not the one the server serves: a proxy or a cache in the way, or a tampered download. |
+| Installer stops with "no expected checksum" | The command has no `--sha256` for this platform: an old command, or a macOS binary (not shipped by the server). Copy a fresh command, or pass `--sha256=<platform>-<arch>:<hex>` from the release's `.sha256`. |
 | Machine never appears | The push goes to `/api/ingest` on the URL in the install command; behind a reverse proxy, make sure it is forwarded and that bodies up to 16 MB are allowed. |
 | *Unreachable* although the agent runs | The token was revoked, or the pushes are rejected. Check `journalctl -u dumbmonit-agent`: the error is logged there. |
 | Log says "this agent is not recognised for this machine" | The machine is bound to an agent installation whose secret this one does not have — a reinstall, or a container recreated without its state volume. Open the device page and click **Allow re-enrolment**; see [Re-enrolment after a reinstall](#re-enrolment-after-a-reinstall). |
+| Log says "this machine was enrolled before agent binding" | A host that never bound to its agent. Click **Allow re-enrolment** on its device page, then restart the agent; see [Hosts that predate binding](#hosts-that-predate-binding). |
+| Log says "this agent is too old to be bound to its machine" | The agent binary cannot store a binding secret. Re-run the install command on the host; if the device already exists, click **Allow re-enrolment** first. |
 | Log says "this enrollment token has already enrolled all the machines it was allowed to" | A single-use token being reused. Create a new one, or a reusable token in Settings → Agents. |
 | Windows | The Windows service parts had not been exercised in the project's build image at the time of writing; report issues on GitHub. |
 

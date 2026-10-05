@@ -260,7 +260,7 @@ means a session cookie, never a token.
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/auth/status` | public | `{"configured": bool, "authenticated": bool, "user": …, "oidc": {"enabled", "provider_name", "login_url"}}`. `configured: false` means a fresh instance: until the first admin exists, every route marked *session* answers `401` — only `status`, `setup`, `login` and `health` are reachable. |
-| `POST` | `/api/auth/setup` | public | `{"username": "admin", "password": "…"}`. Creates the first administrator on a fresh instance (at least 12 characters); `username` may be omitted and is then `admin`. `204`; does not open a session. `409` once an account exists. |
+| `POST` | `/api/auth/setup` | public | `{"setup_code": "…", "username": "admin", "password": "…"}`. Creates the first administrator on a fresh instance (at least 12 characters); `username` may be omitted and is then `admin`. `setup_code` is the one-time code printed in the server logs at startup (or `DUMBMONIT_SETUP_CODE`); case, dashes and spaces are ignored. `204`; does not open a session. `401` for a wrong code, `429` after too many, `409` once an account exists. |
 | `POST` | `/api/auth/login` | public | `{"username": "…", "password": "…"}`. `204` with `Set-Cookie`. `401` on a wrong password, `429` when rate-limited. When the account has two-factor enabled, `200` with `{"totp_required": true, "pending": "…"}` instead — a ticket that lives five minutes and dies after five wrong codes: finish with `/api/auth/login/totp`. |
 | `POST` | `/api/auth/login/totp` | public | `{"pending": "…", "code": "123456"}` — the ticket from the first step and a code (or a recovery code). `204` with the session cookie. |
 | `GET` | `/api/auth/oidc/start` | public | Redirects the browser to the identity provider. |
@@ -274,7 +274,7 @@ means a session cookie, never a token.
 | `DELETE` | `/api/auth/totp` | session only | `{"password": "…"}`. Removes the second factor. `204`. |
 | `GET` | `/api/auth/audit?limit=200` | admin, session only | The latest security events: `id`, `at`, `actor`, `action` (`login`, `login.failed`, `password.changed`, `token.created`, `user.updated`, …), `subject`, `ip`. |
 | `GET` | `/api/auth/oidc/config` | admin, session only | The SSO settings and where they come from (environment or database); the client secret is never returned. |
-| `PUT` | `/api/auth/oidc/config` | admin, session only | `{"issuer", "client_id", "client_secret", "provider_name", "scopes", "auto_create", "admin_groups", "groups_claim", "public_url"}`. An absent or empty `client_secret` keeps the stored one. |
+| `PUT` | `/api/auth/oidc/config` | admin, session only | `{"issuer", "client_id", "client_secret", "provider_name", "scopes", "auto_create", "admin_groups", "groups_claim", "public_url"}`. An absent or empty `client_secret` keeps the stored one; an absent `auto_create` means off. |
 | `DELETE` | `/api/auth/oidc/config` | admin, session only | Forgets the stored SSO settings (environment variables, if any, apply again). `204`. |
 | `POST` | `/api/auth/oidc/test` | admin, session only | Fetches the provider's discovery document and reports what it found. |
 | `GET` | `/api/users` | admin, session only | Every account, in the shape of `/api/auth/me`. |

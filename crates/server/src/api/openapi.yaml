@@ -212,7 +212,7 @@ paths:
       operationId: setupFirstAdmin
       tags: [Accounts]
       summary: Create the first administrator
-      description: Only on a fresh instance (`409` once an account exists). Does not open a session.
+      description: Only on a fresh instance (`409` once an account exists), with the setup code printed in the server logs (`401` if wrong, `429` after too many attempts). Does not open a session.
       security: []
       x-token-scope: public
       requestBody:
@@ -223,7 +223,9 @@ paths:
       responses:
         "204": { description: Account created. }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /api/auth/login:
     post:
@@ -4015,8 +4017,12 @@ components:
         demo: { type: boolean }
     SetupRequest:
       type: object
-      required: [password]
+      required: [setup_code, password]
       properties:
+        setup_code:
+          type: string
+          writeOnly: true
+          description: One-time code printed in the server logs at startup (or `DUMBMONIT_SETUP_CODE`). Case, dashes and spaces are ignored.
         username: { type: string, default: admin }
         password: { type: string, minLength: 12, writeOnly: true }
     LoginRequest:

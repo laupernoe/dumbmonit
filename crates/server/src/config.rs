@@ -69,6 +69,10 @@ pub struct Config {
     /// efface tous les comptes et toutes les sessions au démarrage (les réglages
     /// SSO restent), puis l'interface repropose l'écran de première configuration.
     pub reset_password: bool,
+    /// Code de première configuration imposé (`DUMBMONIT_SETUP_CODE`), pour un
+    /// déploiement automatisé. Absent : le serveur en tire un à chaque
+    /// démarrage et l'affiche dans son journal (voir [`crate::auth::setup_code`]).
+    pub setup_code: Option<String>,
     /// Mode démonstration publique (`DUMBMONIT_DEMO`) : base recréée à chaque
     /// démarrage avec un parc fictif, toute écriture refusée, aucune
     /// notification envoyée. Voir [`crate::demo`].
@@ -140,6 +144,8 @@ impl Config {
             db_pool_size: env_parsed::<u32>("DUMBMONIT_DB_POOL", "4")?.clamp(1, 64),
             agent_dir: PathBuf::from(env_or("DUMBMONIT_AGENT_DIR", "/agents")),
             reset_password: env_flag("DUMBMONIT_RESET_PASSWORD"),
+            setup_code: env_var("DUMBMONIT_SETUP_CODE")
+                .filter(|code| !crate::auth::setup_code::normalize(code).is_empty()),
             demo: env_flag("DUMBMONIT_DEMO"),
             trusted_proxies: crate::auth::client_ip::parse_trusted_proxies(&env_or(
                 "DUMBMONIT_TRUSTED_PROXIES",

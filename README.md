@@ -225,7 +225,8 @@ source instead, clone the repository and use `docker compose up -d --build`
 (about ten minutes; Docker is the only requirement).
 
 Then open http://localhost:8080. The first visit lands on `/setup`, where you
-create the first admin account. The overview then walks you through three
+create the first admin account with the one-time setup code the server prints
+in its logs (`docker compose logs dumbmonit`). The overview then walks you through three
 steps — add a device, connect a notification channel, check that a message
 arrives — and each one is a single click. Add a device with its IP address and
 SNMP community: the collection profile is detected automatically.
@@ -237,7 +238,8 @@ SNMP community: the collection profile is detected automatically.
 - **Lost password**: another admin can set a new one in *Settings → Users*. If
   no admin can sign in, `DUMBMONIT_RESET_PASSWORD=1 docker compose up -d`
   removes every account and session at startup — devices, rules and channels are
-  untouched — and the UI asks you to create the first admin again at `/setup`.
+  untouched — and the UI asks you to create the first admin again at `/setup`,
+  with the new setup code from the logs.
   Then run `docker compose up -d` again without the variable.
 - **ICMP ping monitors** work without any capability: the container runs as a
   non-root user and `docker-compose.yml` sets the `net.ipv4.ping_group_range`
@@ -317,6 +319,7 @@ Everything goes through environment variables; none is required.
 | `DUMBMONIT_LOG` | `info` | Log filter (`tracing` syntax) |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Agent binaries served under `/download/…` |
 | `DUMBMONIT_RESET_PASSWORD` | *(empty)* | Set to `1` to remove every account and session at startup |
+| `DUMBMONIT_SETUP_CODE` | *(generated)* | Code asked by `/setup` while no admin exists; unset, a random one is printed in the logs at each start |
 
 The `DUMBMONIT_PORT` variable is read by `docker-compose.yml` only and sets the
 host port (default `8080`). The former `EZYMONIT_*` names are still accepted,
