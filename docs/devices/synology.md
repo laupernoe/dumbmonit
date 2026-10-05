@@ -1,9 +1,10 @@
 # Synology DSM
 
 Synology NAS through the DSM web API: volumes, storage pools, disk health,
-temperature, Hyper Backup tasks and Active Backup for Business tasks. The
-first reason to monitor a NAS is its disks: a disk that heats up or whose
-SMART status degrades announces a failure long before a volume falls over.
+temperature, Hyper Backup tasks, Active Backup for Business tasks, and
+Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
+disk that heats up or whose SMART status degrades announces a failure long
+before a volume falls over.
 
 ## What it watches
 
@@ -18,6 +19,8 @@ All metrics are prefixed `dumbmonit_synology_`.
 | Storage pools and SSD caches | `pool_status`, `pool_failed_disks`, `pool_total/used_bytes`, and the same four under `ssd_cache_` | `pool` or `ssd_cache`, `name`, `raid_type` |
 | Disks | `disk_status`, `disk_smart_status`, `disk_temperature_celsius`, `disk_size_bytes`, `disk_bad_sector_exceeded`, `disk_life_below_threshold`, `disk_remaining_life_percent` (SSD only: the life the drive says it has left), `disk_unc_count` (DSM's unreadable-sector counter, the one it checks against its bad-sector threshold), `disk_info` | `disk`, `name`; on `disk_info`: `model`, `serial`, `vendor`, `firmware`, `type`, `ssd` |
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | per task |
+| Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (see below) | `drive_team_folder_info`: `name` |
+| Synology Photos | `photos_installed` (see below) | |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Active Backup for Business metrics are the exception: they are prefixed
@@ -241,6 +244,46 @@ Built-in rules on devices:
     token is missing, so DumbMonit asks DSM for one at login and sends it on
     every call.
 
+## Synology Drive
+
+DSM does not document the Synology Drive web API. DumbMonit reads three calls
+whose name and shape come from the community library `N4S4/synology-api`,
+which calls them from the same screens as the Synology Drive admin console,
+and follows the same rule as Active Backup for Business: an API a NAS does
+not advertise is a package that is not installed, never a failure.
+
+| Metric | Value | Labels |
+|---|---|---|
+| `dumbmonit_synology_drive_up` | `1` while the service answers `get_status`. Absent if the package is not installed. | |
+| `dumbmonit_synology_drive_team_folders` | Number of team folders. | |
+| `dumbmonit_synology_drive_team_folder_info` | Value `1` per team folder (at most 32). | `name` |
+| `dumbmonit_synology_drive_connections` | Number of active connections (desktop and mobile clients currently synced). | |
+
+!!! note "Why connections are only a count"
+    The admin console's "Client list" page shows each connection's device
+    name, user, application type, online status, IP address and location,
+    but that is a description of the page, not of the API's JSON fields:
+    neither Synology nor any community project documents what
+    `SYNO.SynologyDrive.Connection` actually names its fields. Rather than
+    guess a device's name or last sync date from an unconfirmed key,
+    DumbMonit publishes only the connection count. Individual devices will
+    plug into the same [client devices](../alerting/rules.md) table used by
+    Immich, Proxmox Backup Server and Veeam once that shape is confirmed from
+    a real NAS's response.
+
+The `drive` option (on by default) turns the whole family off.
+
+## Synology Photos
+
+Synology Photos ships a well-documented browsing API, but neither Synology
+nor the community libraries expose an admin-wide list of mobile backup
+devices or their last backup — the mobile app shows its own backup status
+locally, and nothing centralises it on the NAS side through an API. DumbMonit
+therefore only reports that the package is installed: `dumbmonit_synology_photos_installed`
+(value `1`), read from the API catalogue without any extra request to the
+NAS — the same catalogue `SYNO.API.Info` already answers for every other
+package. The `photos` option (on by default) turns it off.
+
 ## What to prepare on the NAS
 
 The steps below are the ones the notice next to the form shows. The principle:
@@ -308,6 +351,8 @@ used over HTTPS and 5000 over HTTP.
 | `insecure_tls` | Accept an unverifiable certificate | `false` | A NAS ships with a self-signed certificate by default: enable this if the connection is refused for that reason. |
 | `request_timeout_seconds` | Timeout per request (seconds) | `15` | Time allowed for each API call, from 1 to 120. The storage inventory can wake up sleeping disks. |
 | `abb` | Watch Active Backup for Business | `true` | Reads the Active Backup for Business tasks. Needs the package installed and an account allowed to use it; a NAS without the package is simply skipped. |
+| `drive` | Watch Synology Drive | `true` | Reads whether the Synology Drive service responds, its team folders and its active connection count. A NAS without the package is simply skipped. |
+| `photos` | Watch Synology Photos | `true` | Shows whether the Synology Photos package is installed, with no extra request to the NAS. Synology does not expose a list of mobile backup devices through any API. |
 
 ## Common errors
 
