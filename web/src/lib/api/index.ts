@@ -441,11 +441,15 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 	}
 }
 
-/** Creates the first admin account. Answers 409 if one already exists. */
-export function setupAccount(username: string, password: string): Promise<void> {
+/**
+ * Creates the first admin account. `setupCode` is the one-time code the server
+ * prints in its logs at startup. Answers 409 if an admin already exists, 401
+ * for a wrong code, 429 after too many wrong codes.
+ */
+export function setupAccount(setupCode: string, username: string, password: string): Promise<void> {
 	return request<void>('/auth/setup', {
 		method: 'POST',
-		body: { username, password },
+		body: { setup_code: setupCode, username, password },
 		allowUnauthorized: true
 	});
 }

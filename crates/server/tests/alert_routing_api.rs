@@ -36,6 +36,7 @@ async fn setup() -> TestApp {
 
     let mut config = Config::from_env().expect("default configuration");
     config.data_dir = dir.path().to_path_buf();
+    config.setup_code = Some("test-setup-code".into());
     config.victoria_url = Some(UNREACHABLE_VICTORIA.to_string());
 
     let pool = db::open(&config.database_path()).await.expect("database opened");
@@ -63,8 +64,13 @@ async fn setup() -> TestApp {
 
 impl TestApp {
     async fn open_admin_session(&self) -> String {
-        let (status, body) =
-            self.request("POST", "/api/auth/setup", Some(json!({ "password": PASSWORD }))).await;
+        let (status, body) = self
+            .request(
+                "POST",
+                "/api/auth/setup",
+                Some(json!({ "setup_code": "test-setup-code", "password": PASSWORD })),
+            )
+            .await;
         assert_eq!(status, StatusCode::NO_CONTENT, "admin creation: {body}");
         let request = Request::builder()
             .method("POST")

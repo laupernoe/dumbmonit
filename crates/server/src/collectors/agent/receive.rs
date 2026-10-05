@@ -48,10 +48,24 @@ pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound t
      If you reinstalled it, open its device page in DumbMonit and click \
      'Allow re-enrolment', then restart the agent.";
 
+/// Ce que le serveur répond à une machine connue mais jamais liée à son agent
+/// (enrôlée avant la liaison). Même destinataire : la personne qui lit le journal.
+pub const NOT_BOUND: &str = "This machine was enrolled before agent binding and was never bound to \
+     its agent installation, so the server no longer accepts it. Re-enrol this host: open its \
+     device page in DumbMonit, click 'Allow re-enrolment', then restart the agent (re-run the \
+     install command first if the agent is older than binding).";
+
+/// Ce que le serveur répond à un binaire qui ne sait pas recevoir de secret.
+pub const AGENT_TOO_OLD: &str = "This agent is too old to be bound to its machine, and the server \
+     no longer accepts unbound agents. Re-run the install command from DumbMonit to update it; \
+     for a machine already listed, click 'Allow re-enrolment' on its device page first.";
+
 impl From<RegisterError> for IngestError {
     fn from(error: RegisterError) -> Self {
         match error {
             RegisterError::BindingMismatch => Self::Forbidden(BINDING_MISMATCH.to_string()),
+            RegisterError::NotBound => Self::Forbidden(NOT_BOUND.to_string()),
+            RegisterError::AgentTooOld => Self::Forbidden(AGENT_TOO_OLD.to_string()),
             RegisterError::EnrolmentDenied(denied) => Self::Forbidden(denied.message().to_string()),
             RegisterError::Internal(error) => Self::Internal(error),
         }

@@ -161,26 +161,16 @@ async fn checksum(state: &AppState, name: &str) -> Response {
     if !AGENT_FILES.contains(&name) {
         return (StatusCode::NOT_FOUND, "Unknown file.").into_response();
     }
-    let path = state.config.agent_dir.join(name);
-    let cached = CHECKSUMS.lock().expect("cache des empreintes").get(&path).cloned();
-    let digest = match cached {
-        Some(digest) => digest,
-        None => match tokio::fs::read(&path).await {
-            Ok(bytes) => {
-                let digest = hex::encode(Sha256::digest(&bytes));
-                CHECKSUMS.lock().expect("cache des empreintes").insert(path, digest.clone());
-                digest
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                return (StatusCode::NOT_FOUND, "This image does not ship the agent binaries.")
-                    .into_response();
-            }
-            Err(error) => {
-                tracing::error!(path = %path.display(), %error, "failed to hash agent binary");
-                return (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.")
-                    .into_response();
-            }
-        },
+    let digest = match sha256_of(&state.config.agent_dir, name).await {
+        Ok(Some(digest)) => digest,
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, "This image does not ship the agent binaries.")
+                .into_response();
+        }
+        Err(error) => {
+            tracing::error!(name, %error, "failed to hash agent binary");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.").into_response();
+        }
     };
     (
         [(header::CONTENT_TYPE, "text/plain; charset=utf-8"), (header::CACHE_CONTROL, "no-cache")],
@@ -189,9 +179,92 @@ async fn checksum(state: &AppState, name: &str) -> Response {
         .into_response()
 }
 
+/// Empreinte SHA-256 (hexadécimal) d'un binaire livré par l'image, ou `None`
+/// s'il n'y est pas. Mise en cache : les binaires sont figés dans l'image.
+pub async fn sha256_of(agent_dir: &std::path::Path, name: &str) -> std::io::Result<Option<String>> {
+    let path = agent_dir.join(name);
+    if let Some(digest) = CHECKSUMS.lock().expect("cache des empreintes").get(&path).cloned() {
+        return Ok(Some(digest));
+    }
+    match tokio::fs::read(&path).await {
+        Ok(bytes) => {
+            let digest = hex::encode(Sha256::digest(&bytes));
+            CHECKSUMS.lock().expect("cache des empreintes").insert(path, digest.clone());
+            Ok(Some(digest))
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+/// Empreintes des binaires que l'image livre, par plateforme (`linux-x86_64`,
+/// `windows-x86_64`…), dans l'ordre de [`AGENT_FILES`]. Ce sont elles que la
+/// commande d'installation embarque, et que les scripts exigent.
+pub async fn platform_checksums(agent_dir: &std::path::Path) -> Vec<(String, String)> {
+    let mut found = Vec::new();
+    for name in AGENT_FILES {
+        match sha256_of(agent_dir, name).await {
+            Ok(Some(digest)) => {
+                let platform = name.trim_start_matches("dumbmonit-agent-").trim_end_matches(".exe");
+                found.push((platform.to_string(), digest));
+            }
+            Ok(None) => {}
+            Err(error) => tracing::warn!(name, %error, "failed to hash agent binary"),
+        }
+    }
+    found
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn the_checksums_of_the_shipped_binaries_are_named_by_platform() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("dumbmonit-agent-linux-x86_64"), b"abc").unwrap();
+        std::fs::write(dir.path().join("dumbmonit-agent-windows-x86_64.exe"), b"").unwrap();
+        let found = platform_checksums(dir.path()).await;
+        assert_eq!(
+            found,
+            vec![
+                (
+                    "linux-x86_64".to_string(),
+                    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_string()
+                ),
+                (
+                    "windows-x86_64".to_string(),
+                    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string()
+                ),
+            ]
+        );
+        // Une image sans binaires n'a rien à embarquer.
+        assert!(platform_checksums(&dir.path().join("absent")).await.is_empty());
+    }
+
+    /// La vérification est obligatoire : sans empreinte, ou sans outil pour la
+    /// calculer, rien n'est installé, sauf échappatoire explicite et bruyante.
+    #[test]
+    fn the_scripts_refuse_a_download_without_its_checksum() {
+        assert!(INSTALL_SH.contains("--sha256=*)"));
+        assert!(INSTALL_SH.contains("--insecure-skip-checksum)"));
+        assert!(INSTALL_SH.contains("no expected checksum for $PLATFORM-$ARCH"));
+        assert!(INSTALL_SH.contains("WARNING: --insecure-skip-checksum"));
+        assert!(!INSTALL_SH.contains("binary not verified\" >&2\n        return 0"));
+        assert!(!INSTALL_SH.contains("Warning: no SHA-256 tool found"));
+        // La vérification précède l'installation du binaire.
+        let verify = INSTALL_SH.find("verifier_empreinte \"$source_url\"").expect("appel");
+        let install = INSTALL_SH.find("mv -f \"$TMP_BIN\" \"$BIN_PATH\"").expect("installation");
+        assert!(verify < install);
+
+        assert!(INSTALL_PS1.contains("[string]$Sha256"));
+        assert!(INSTALL_PS1.contains("[switch]$InsecureSkipChecksum"));
+        assert!(INSTALL_PS1.contains("No expected checksum for"));
+        assert!(!INSTALL_PS1.contains("binary not verified\"\n"));
+        let verify = INSTALL_PS1.find("Get-FileHash").expect("vérification");
+        let install = INSTALL_PS1.find("Move-Item -Path $exeTemporaire").expect("installation");
+        assert!(verify < install);
+    }
 
     #[test]
     fn les_scripts_embarques_demandent_les_fichiers_que_le_serveur_sait_servir() {
@@ -220,10 +293,11 @@ mod tests {
                 "{name} is composed by install.sh but known nowhere"
             );
         }
-        // Et ils vérifient ce qu'ils ont téléchargé contre l'empreinte servie à côté.
-        assert!(INSTALL_SH.contains("$source_url.sha256"));
+        // Et ils vérifient ce qu'ils ont téléchargé contre l'empreinte que porte
+        // la commande d'installation.
         assert!(INSTALL_SH.contains("sha256sum"));
-        assert!(INSTALL_PS1.contains(".sha256"));
+        assert!(INSTALL_SH.contains("$PLATFORM-$ARCH"));
+        assert!(INSTALL_PS1.contains("windows-$architecture"));
         assert!(INSTALL_PS1.contains("Get-FileHash"));
     }
 

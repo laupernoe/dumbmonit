@@ -128,10 +128,26 @@ address (`http://host:8428`): the embedded one is then not started and
 
 ## First start
 
-Open `http://<your-host>:8080`. A fresh instance shows the `/setup` screen and
-asks you to choose a password (at least 12 characters). That single password
-protects the whole instance; there are no user accounts. Once it is set, you are
-sent to `/login`.
+Open `http://<your-host>:8080`. A fresh instance shows the `/setup` screen,
+where you create the first administrator account (password of at least 12
+characters).
+
+The screen first asks for the **setup code**. While no administrator exists,
+the server prints a one-time code in its logs at startup:
+
+```sh
+docker compose logs dumbmonit | grep -A1 "setup code"
+```
+
+```
+  First-run setup code: K7XQ4-M9PRT
+```
+
+It proves that whoever creates the admin account runs the server, so someone
+else on the network cannot claim a fresh instance first. The code lives in
+memory only, changes at every restart until an admin exists, and wrong
+attempts are rate-limited. For an automated deployment, set
+`DUMBMONIT_SETUP_CODE` to choose it yourself.
 
 ![The login screen](../assets/screenshots/login-light.png){ loading=lazy }
 
@@ -156,6 +172,7 @@ Everything goes through environment variables; none is required.
 | `DUMBMONIT_LOG` | `info` | Log filter (`tracing` syntax, e.g. `debug`, `dumbmonit=trace`). |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Agent binaries served under `/download/…`. |
 | `DUMBMONIT_RESET_PASSWORD` | *(empty)* | Set to `1` to clear the password and every session at startup. |
+| `DUMBMONIT_SETUP_CODE` | *(generated)* | Setup code asked by `/setup` while no admin exists. Unset, a random one is printed in the logs at each start. |
 | `DUMBMONIT_COOKIE_SECURE` | *(off)* | Set to `1` behind a TLS reverse proxy to mark the session cookie `Secure`. |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period (never below 10). |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | 90 days | Retention of alert history. See the [configuration reference](../reference/configuration.md) for a caveat about its unit. |

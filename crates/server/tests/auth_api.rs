@@ -5,7 +5,7 @@ mod common;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use common::{NEW_PASSWORD, PASSWORD, TestApp, VIEWER_PASSWORD, setup};
+use common::{NEW_PASSWORD, PASSWORD, SETUP_CODE, TestApp, VIEWER_PASSWORD, setup};
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
@@ -42,7 +42,9 @@ async fn a_fresh_instance_announces_itself_as_unconfigured() {
 async fn creating_the_password_closes_the_instance() {
     let app = setup().await;
     // Sans identifiant, le premier compte s'appelle « admin ».
-    let reply = app.post("/api/auth/setup", json!({ "password": PASSWORD }), None).await;
+    let reply = app
+        .post("/api/auth/setup", json!({ "setup_code": SETUP_CODE, "password": PASSWORD }), None)
+        .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
 
     let status = app.get("/api/auth/status", None).await;
@@ -55,10 +57,66 @@ async fn creating_the_password_closes_the_instance() {
     assert!(refused.body["error"].is_string(), "corps attendu : {}", refused.body);
 }
 
+/// Sans le code imprimé dans le journal du serveur, pas de premier compte ; et
+/// les essais sont comptés, toutes adresses confondues.
+#[tokio::test]
+async fn setup_requires_the_code_from_the_server_logs() {
+    let app = setup().await;
+    for body in [
+        json!({ "password": PASSWORD }),
+        json!({ "setup_code": "", "password": PASSWORD }),
+        json!({ "setup_code": "WRONG-CODE1", "password": PASSWORD }),
+    ] {
+        let reply = app.post("/api/auth/setup", body, None).await;
+        assert_eq!(reply.status, StatusCode::UNAUTHORIZED, "{}", reply.body);
+        assert!(reply.body["error"].as_str().unwrap_or("").contains("server logs"));
+    }
+    assert_eq!(app.get("/api/auth/status", None).await.body["configured"], json!(false));
+
+    // Casse, tirets et espaces ne comptent pas.
+    let lowered = SETUP_CODE.to_lowercase().replace('-', " ");
+    let reply = app
+        .post("/api/auth/setup", json!({ "setup_code": lowered, "password": PASSWORD }), None)
+        .await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn wrong_setup_codes_are_rate_limited() {
+    let app = setup().await;
+    let mut limited = false;
+    for _ in 0..10 {
+        let reply = app
+            .post(
+                "/api/auth/setup",
+                json!({ "setup_code": "WRONG-CODE1", "password": PASSWORD }),
+                None,
+            )
+            .await;
+        if reply.status == StatusCode::TOO_MANY_REQUESTS {
+            limited = true;
+            break;
+        }
+        assert_eq!(reply.status, StatusCode::UNAUTHORIZED, "{}", reply.body);
+    }
+    assert!(limited, "les essais de code doivent être limités");
+    // Même le bon code attend la fin du délai.
+    let reply = app
+        .post("/api/auth/setup", json!({ "setup_code": SETUP_CODE, "password": PASSWORD }), None)
+        .await;
+    assert_eq!(reply.status, StatusCode::TOO_MANY_REQUESTS, "{}", reply.body);
+}
+
 #[tokio::test]
 async fn setup_is_refused_once_a_password_exists() {
     let app = TestApp::configured().await;
-    let reply = app.post("/api/auth/setup", json!({ "password": NEW_PASSWORD }), None).await;
+    let reply = app
+        .post(
+            "/api/auth/setup",
+            json!({ "setup_code": SETUP_CODE, "password": NEW_PASSWORD }),
+            None,
+        )
+        .await;
     assert_eq!(reply.status, StatusCode::CONFLICT);
     assert!(reply.body["error"].is_string(), "corps attendu : {}", reply.body);
 }
@@ -66,7 +124,9 @@ async fn setup_is_refused_once_a_password_exists() {
 #[tokio::test]
 async fn a_short_password_is_refused_with_a_readable_message() {
     let app = setup().await;
-    let reply = app.post("/api/auth/setup", json!({ "password": "court" }), None).await;
+    let reply = app
+        .post("/api/auth/setup", json!({ "setup_code": SETUP_CODE, "password": "court" }), None)
+        .await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST);
     let message = reply.body["error"].as_str().expect("message");
     assert!(message.contains("12 characters"), "{message}");
@@ -345,10 +405,24 @@ async fn no_response_ever_echoes_a_password() {
     rendered.push_str(&app.login("mot-de-passe-du-voisin").await.body.to_string());
     rendered.push_str(&app.login(PASSWORD).await.body.to_string());
     rendered.push_str(
-        &app.post("/api/auth/setup", json!({ "password": PASSWORD }), None).await.body.to_string(),
+        &app.post(
+            "/api/auth/setup",
+            json!({ "setup_code": SETUP_CODE, "password": PASSWORD }),
+            None,
+        )
+        .await
+        .body
+        .to_string(),
     );
     rendered.push_str(
-        &app.post("/api/auth/setup", json!({ "password": "court" }), None).await.body.to_string(),
+        &app.post(
+            "/api/auth/setup",
+            json!({ "setup_code": SETUP_CODE, "password": "court" }),
+            None,
+        )
+        .await
+        .body
+        .to_string(),
     );
 
     let cookie = app.login(PASSWORD).await;
@@ -375,7 +449,11 @@ async fn no_response_ever_echoes_a_password() {
 async fn setup_creates_an_admin_account_with_the_chosen_username() {
     let app = setup().await;
     let reply = app
-        .post("/api/auth/setup", json!({ "username": "jane", "password": PASSWORD }), None)
+        .post(
+            "/api/auth/setup",
+            json!({ "setup_code": SETUP_CODE, "username": "jane", "password": PASSWORD }),
+            None,
+        )
         .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
 
@@ -550,7 +628,11 @@ async fn disabling_or_deleting_an_account_closes_its_sessions() {
 
     // Un mot de passe remis par l'administrateur ferme aussi les sessions.
     let reset = app
-        .put(&format!("/api/users/{viewer_id}"), json!({ "password": NEW_PASSWORD }), Some(&admin))
+        .put(
+            &format!("/api/users/{viewer_id}"),
+            json!({ "setup_code": SETUP_CODE, "password": NEW_PASSWORD }),
+            Some(&admin),
+        )
         .await;
     assert_eq!(reset.status, StatusCode::OK, "{}", reset.body);
     assert_eq!(app.get("/api/targets", Some(&viewer)).await.status, StatusCode::UNAUTHORIZED);
