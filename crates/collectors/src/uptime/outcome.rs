@@ -100,6 +100,11 @@ pub enum Failure {
     /// Le contenu attendu n'est pas arrivé : message MQTT retenu absent, trame
     /// WebSocket muette ou différente, valeur SQL inattendue.
     Payload,
+    /// Horloge de référence non synchronisée : stratum 16 (ou 0, « kiss-o'-death »)
+    /// ou indicateur de correction « unsynchronized » (sonde NTP).
+    Unsynchronized,
+    /// Écart d'horloge au-delà du seuil toléré (sonde NTP).
+    ClockOffset,
 }
 
 impl Failure {
@@ -120,6 +125,8 @@ impl Failure {
             Self::Protocol => "protocol",
             Self::Query => "query",
             Self::Payload => "payload",
+            Self::Unsynchronized => "unsynchronized",
+            Self::ClockOffset => "clock_offset",
         }
     }
 }
@@ -297,6 +304,8 @@ mod tests {
             Failure::Protocol,
             Failure::Query,
             Failure::Payload,
+            Failure::Unsynchronized,
+            Failure::ClockOffset,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {
