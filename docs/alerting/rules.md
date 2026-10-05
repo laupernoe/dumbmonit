@@ -478,6 +478,20 @@ with the node, or the namespace and the pod, workload or claim concerned.
 | Kubernetes workload missing replicas | A Deployment, StatefulSet or DaemonSet has fewer available replicas than it asks for (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
 | Kubernetes volume claim pending | A PersistentVolumeClaim that a pod needs, or that a provisioning error concerns, is still not bound (`dumbmonit_k8s_pvc_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
 
+### Active Directory
+
+See [Active Directory](../devices/activedirectory.md). The domain controller
+DumbMonit queries is covered by *Device unreachable*; the other domain
+controllers of the domain by *Domain controller unreachable* (label `dc`).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Domain controller unreachable | A domain controller of the domain no longer answers on its LDAP port (`dumbmonit_ad_dc_reachable == bool 0`). A name that does not resolve from DumbMonit produces no series and never fires. | > 0 | 5 min | Warning (`critical`) | 6 h |
+| Active Directory bind failed | The domain controller answers but refuses the service account: expired password, disabled or locked-out account (`dumbmonit_ad_bind_ok == bool 0`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Privileged group membership changed | A member joined or left Domain Admins, Enterprise Admins, Schema Admins, Administrators or an operators group, nesting included (`changes_prometheus(dumbmonit_ad_privileged_group_fingerprint[1h])`, label `group`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Active Directory replication failing | The queried domain controller cannot replicate from a partner (`dumbmonit_ad_replication_consecutive_failures`). Only when the account may read replication status. | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| krbtgt password older than 180 days | The krbtgt password was last changed more than 180 days ago (`dumbmonit_ad_krbtgt_password_age_seconds`). | > 180 days | 10 min | Info (`info`) | none |
+
 ### pfSense
 
 See [pfSense](../devices/pfsense.md). Gateways are labelled `gateway`, interfaces `interface` and `descr`, services `service`.
