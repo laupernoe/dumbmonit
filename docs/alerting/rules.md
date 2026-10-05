@@ -622,6 +622,21 @@ now. Each rule has:
   parameters read-only;
 - **Delete**, for your own rules only.
 
+## Per-device overrides
+
+A rule can be tuned for one device without touching the rule itself: a
+different threshold, a different clear threshold, or turned off for that
+device alone. Each rule's editor has a **Per-device overrides** panel to add
+or remove one directly.
+
+The one-click **Ignore** action on an alert (in the *Needs you* list or the
+alert's device page) is the same mechanism, written with `enabled: false`:
+the device stops carrying that rule, immediately, reversibly. The device page
+lists what it ignores, with **Stop ignoring**; the rule itself shows *Ignored
+on N devices* in Alerts → Rules, where the same per-device overrides panel
+removes it. See [Per-device overrides](../reference/api.md#per-device-overrides)
+for the API.
+
 ## Creating a threshold rule
 
 Click **New rule**. The form needs:

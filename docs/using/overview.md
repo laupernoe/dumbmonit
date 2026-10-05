@@ -33,14 +33,16 @@ not start the guide over. See
 The list of what needs you now, most severe first: unreachable devices, then
 firing alerts by severity. Each row names the rule, the device, the current
 value, how long it has been going on, and whether it groups several series
-("×4" for four filesystems on the same device). Three actions: **Ack**
+("×4" for four filesystems on the same device). Four actions: **Ack**
 (acknowledge this alert for 1 h, 4 h, 24 h or until resolved — reminders
-pause, the resolution is still notified), **Silence 1 h**, a one-hour
-maintenance window on that device, and **Open device**.
+pause, the resolution is still notified), **Snooze** (hide just this alert
+for 1 h, 8 h, 1 day or until resolved), **Ignore** (stop this rule from ever
+alerting on this device again, reversibly), and **Open device**.
 
-Acknowledged alerts move to a quieter *Acknowledged* group under the list and
-leave the *Needs you* count. See
-[Acknowledge vs silence](alerts.md#acknowledge-vs-silence).
+Acknowledged and snoozed alerts move to their own quieter group under the
+list and leave the *Needs you* count. An ignored alert disappears outright —
+it is not "known", it is turned off for that device. See
+[Getting rid of an alert](alerts.md#getting-rid-of-an-alert).
 
 ## Devices summary
 

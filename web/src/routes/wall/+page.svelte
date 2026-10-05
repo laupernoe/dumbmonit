@@ -28,9 +28,10 @@
 		listTargets,
 		listAlerts,
 		listAlertRules,
-		createSilence,
+		listSilences,
 		type Alert,
 		type AlertRule,
+		type Silence,
 		type Target,
 		type TargetId
 	} from '$lib/api';
@@ -43,7 +44,6 @@
 	import { readSky } from '$lib/components/overview/sky';
 	import SkyScene from '$lib/components/overview/SkyScene.svelte';
 	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
-	import { quickSilencePayload } from '$lib/components/alerts/helpers';
 	import WallReadout from '$lib/components/wall/WallReadout.svelte';
 	import WallAmbient from '$lib/components/wall/WallAmbient.svelte';
 	import WallThemeControl from '$lib/components/wall/WallThemeControl.svelte';
@@ -71,13 +71,12 @@
 	let targets = $state<Target[]>([]);
 	let alerts = $state<Alert[]>([]);
 	let rules = $state<AlertRule[]>([]);
+	let silences = $state<Silence[]>([]);
 	let probes = $state<Map<TargetId, ProbeStatus>>(new Map());
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let lastChecked = $state<Date | null>(null);
 	let now = $state(new Date());
-	let silencingKey = $state<string | null>(null);
-	let silenceError = $state<string | null>(null);
 
 	// --- Music ------------------------------------------------------------------
 
@@ -363,6 +362,7 @@
 
 	async function load(signal?: AbortSignal) {
 		const probesPromise = loadProbeStatuses(signal).catch(() => new Map<TargetId, ProbeStatus>());
+		const silencesPromise = listSilences(signal).catch(() => [] as Silence[]);
 		try {
 			const [nextTargets, nextAlerts, nextRules] = await Promise.all([
 				listTargets(signal),
@@ -382,20 +382,13 @@
 			loading = false;
 		}
 		probes = await probesPromise;
+		silences = await silencesPromise;
 		lastChecked = new Date();
 	}
 
-	async function silence(alert: Alert, target: Target) {
-		silencingKey = alert.fingerprint;
-		silenceError = null;
-		try {
-			await createSilence(quickSilencePayload(target));
-			await load();
-		} catch (cause) {
-			silenceError = cause instanceof Error ? cause.message : 'Could not create the silence.';
-		} finally {
-			silencingKey = null;
-		}
+	/** A needs-you row changed (ack, snooze, ignore): refresh the bulletin. */
+	async function onNeedsYouChanged() {
+		await load();
 	}
 
 	// Loaded on open, then every 20 seconds.
@@ -618,17 +611,8 @@
 				<!-- Needs you -->
 				<section class="mt-8 lg:mt-10">
 					<h2 class="mb-4 text-lg font-semibold tracking-tight text-ink lg:text-xl">Needs you</h2>
-					{#if silenceError}
-						<p class="mb-3 text-sm text-warning-ink" role="alert" aria-live="polite">{silenceError}</p>
-					{/if}
 					<div class={sky.quiet ? 'wall-quiet' : 'wall-needs'}>
-						<NeedsYouList
-							{sky}
-							{checkedLabel}
-							{silencingKey}
-							onsilence={silence}
-							onackchange={() => void load()}
-						/>
+						<NeedsYouList {sky} {checkedLabel} {silences} onchanged={() => void onNeedsYouChanged()} />
 					</div>
 				</section>
 			{/if}
