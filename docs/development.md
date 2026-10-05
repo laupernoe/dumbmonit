@@ -74,6 +74,39 @@ system (tokens in `src/app.css`, primitives in `src/lib/ui/`) is documented in
 `DESIGN.md`; the product context in `PRODUCT.md`. Never run two `vite build`s
 at once: they wipe `.svelte-kit/output`.
 
+## Translations (Weblate)
+
+The web UI is wired for community translation but nothing is translated yet:
+English is the only locale shipped, in `web/messages/en.json` (flat, dotted
+keys, `{param}` placeholders, compiled by
+[Paraglide JS](https://paraglidejs.com) into tree-shaken message functions
+under `web/src/lib/paraglide/`, generated and untracked). Translation happens
+on [hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
+(project to be created there), against this component configuration:
+
+| Setting | Value |
+| --- | --- |
+| Repository | this repo, `web/` subdirectory |
+| File mask | `web/messages/*.json` |
+| Monolingual base language file | `web/messages/en.json` |
+| File format | JSON file (monolingual) |
+| New language | create a new translation file (Weblate writes `web/messages/<locale>.json`) |
+
+New UI strings land in `web/messages/en.json` only; a translator then fills in
+the other locale files through Weblate. Keys are extracted progressively —
+today that covers the Settings pages (`web/src/routes/settings/`) and the
+built-in copy of a couple of `web/src/lib/ui/` primitives — the rest of the UI
+still reads plain English and gets extracted as it is touched. See
+`CONTRIBUTING.md` for the string-authoring convention.
+
+`web/project.inlang/settings.json` points its one plugin (message-format) at
+`./node_modules/@inlang/plugin-message-format/dist/index.js` rather than the
+jsdelivr URL inlang's own tooling defaults to: a relative, non-`http` path is
+read straight from disk, so `npm run build` never reaches out to a CDN —
+important since the image build has no guarantee of a warm npm cache offering
+that URL, and a homelab tool that needs the internet to rebuild itself is a
+bad look.
+
 ## Tests and CI
 
 `.github/workflows/ci.yml` runs, on every push and pull request:
