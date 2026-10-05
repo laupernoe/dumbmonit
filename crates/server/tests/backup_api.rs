@@ -168,7 +168,7 @@ impl TestApp {
                 "/api/targets",
                 Some(json!({
                     "name": "Switch", "address": "192.168.1.1", "kind": "snmp",
-                    "interval_secs": 120,
+                    "interval_secs": 120, "group_name": "Rack A",
                     "credential": { "type": "snmp_community", "community": COMMUNITY }
                 })),
             )
@@ -187,6 +187,18 @@ impl TestApp {
             )
             .await;
         assert_eq!(status, StatusCode::CREATED, "target refused: {child}");
+        let child_id = child["id"].as_i64().expect("id");
+
+        // Le NAS passe devant le switch : un ordre qui ne doit rien au hasard
+        // de la création, et que le lot doit rendre à l'identique.
+        let (status, _) = self
+            .request(
+                "POST",
+                "/api/targets/reorder",
+                Some(json!({ "order": [child_id, parent_id] })),
+            )
+            .await;
+        assert_eq!(status, StatusCode::NO_CONTENT);
 
         let (status, channel) = self
             .request(
@@ -279,6 +291,15 @@ async fn le_lot_traverse_vers_une_instance_neuve_avec_ses_secrets() {
     assert_eq!(switch["interval_secs"], 120);
     assert_eq!(nas["parent_id"], switch["id"]);
     assert_eq!(nas["tags"]["room"], "cellar");
+
+    // Le dossier et le rang manuel (migration 0038) ont traversé le lot : le
+    // NAS, mis devant le switch avant l'export, reste devant après restauration.
+    assert_eq!(switch["group_name"], "Rack A", "{switch}");
+    assert_eq!(nas["group_name"], "", "{nas}");
+    assert!(
+        nas["position"].as_i64().unwrap() < switch["position"].as_i64().unwrap(),
+        "l'ordre manuel n'a pas survécu : {targets}"
+    );
 
     // Et surtout : la community est relisible avec le secret de la destination,
     // donc une sonde SNMP s'authentifierait encore.
