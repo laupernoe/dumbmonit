@@ -14,6 +14,8 @@
 	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
 	import Mascot from '$lib/components/Mascot.svelte';
 
+	let setupCode = $state('');
+	let codeError = $state<string | null>(null);
 	let username = $state('admin');
 	let password = $state('');
 	let confirmation = $state('');
@@ -37,14 +39,16 @@
 		event.preventDefault();
 		failure = null;
 		const name = username.trim();
+		const code = setupCode.trim();
+		codeError = code ? null : 'Enter the setup code printed in the server logs.';
 		usernameError = !name ? 'Choose a username.' : /\s/.test(name) ? 'The username cannot contain spaces.' : null;
 		passwordError = validatePassword(password);
 		confirmError = !passwordError && password !== confirmation ? 'The two passwords do not match. Type the confirmation again.' : null;
-		if (usernameError || passwordError || confirmError) return;
+		if (codeError || usernameError || passwordError || confirmError) return;
 
 		sending = true;
 		try {
-			await auth.setupAccount(name, password);
+			await auth.setupAccount(code, name, password);
 			password = '';
 			confirmation = '';
 		} catch (cause) {
@@ -55,6 +59,8 @@
 				};
 				// The guard will move to the sign-in screen once the status is re-read.
 				await auth.refresh();
+			} else if (cause instanceof ApiError && cause.status === 401) {
+				codeError = 'This is not the setup code the server printed. Check the latest one in its logs: it changes at every restart.';
 			} else {
 				failure = { title: 'Could not create the account', error: cause };
 			}
@@ -88,6 +94,27 @@
 			</p>
 
 			<form class="mt-6 grid gap-4" onsubmit={submit} novalidate>
+				<Field
+					label="Setup code"
+					for="setup-code"
+					error={codeError}
+					help="Printed in the server logs at startup (docker compose logs dumbmonit). It proves you run this server."
+				>
+					<input
+						id="setup-code"
+						type="text"
+						class="input font-mono tracking-wider uppercase"
+						bind:value={setupCode}
+						autocomplete="one-time-code"
+						autocapitalize="characters"
+						spellcheck="false"
+						placeholder="XXXXX-XXXXX"
+						disabled={sending}
+						aria-invalid={codeError ? 'true' : undefined}
+						oninput={() => (codeError = null)}
+					/>
+				</Field>
+
 				<Field label="Username" for="username" error={usernameError}>
 					<input
 						id="username"

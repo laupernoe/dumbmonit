@@ -26,6 +26,7 @@ pub mod password;
 pub mod rate_limit;
 pub mod session;
 pub mod settings;
+pub mod setup_code;
 pub mod token;
 pub mod totp;
 pub mod totp_login;
@@ -90,6 +91,9 @@ struct Inner {
     discovery: Mutex<Option<oidc::discovery::Cached>>,
     /// Connexions OIDC commencées et pas encore terminées, indexées par `state`.
     pending: Mutex<oidc::flow::PendingLogins>,
+    /// Code exigé par la création du premier administrateur (voir
+    /// [`setup_code`]). En mémoire seulement : jamais écrit nulle part.
+    setup_code: String,
 }
 
 /// Valeurs du cache [`Inner::configured`], encodées dans un `AtomicU8`.
@@ -102,7 +106,14 @@ mod configured {
 impl AuthState {
     /// Construit l'état à partir de l'environnement et de la configuration.
     pub fn from_env(config: &crate::config::Config) -> Self {
-        Self::new(env_flag(COOKIE_SECURE_ENV)).with_trusted_proxies(config.trusted_proxies.clone())
+        let mut state = Self::new(env_flag(COOKIE_SECURE_ENV))
+            .with_trusted_proxies(config.trusted_proxies.clone());
+        if let Some(code) = &config.setup_code {
+            Arc::get_mut(&mut state.0)
+                .expect("état d'authentification pas encore partagé")
+                .setup_code = code.clone();
+        }
+        state
     }
 
     pub fn with_trusted_proxies(mut self, trusted: Vec<ipnet::IpNet>) -> Self {
@@ -129,7 +140,15 @@ impl AuthState {
             http,
             discovery: Mutex::new(None),
             pending: Mutex::new(oidc::flow::PendingLogins::default()),
+            // Un code que personne n'a vu ne sert à rien : `main` fixe celui
+            // qu'il affiche dans `Config::setup_code`.
+            setup_code: setup_code::generate(),
         }))
+    }
+
+    /// Le code de première configuration attendu.
+    pub fn setup_code(&self) -> &str {
+        &self.0.setup_code
     }
 
     pub fn cookie_secure(&self) -> bool {

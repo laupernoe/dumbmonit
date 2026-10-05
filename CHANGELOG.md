@@ -5,6 +5,34 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Security
+
+- **Hosts that never bound to their agent are refused.** The transition
+  window for hosts enrolled before agent binding is closed: their batches,
+  container commands and relayed probes are now refused with a message that
+  says what to do, and an agent too old to be bound is no longer enrolled. The
+  device page shows **Not bound — re-enrol this host** with the *Allow
+  re-enrolment* button; the next batch inside that window binds the host. See
+  [Hosts that predate binding](docs/devices/agent.md#hosts-that-predate-binding).
+- **The first admin account needs a setup code.** While no administrator
+  exists, the server prints a one-time code in its logs at startup
+  (`docker compose logs dumbmonit`), kept in memory and changed at every
+  restart; `/setup` asks for it, and wrong codes are rate-limited. Someone else
+  on the network can no longer claim a fresh instance first.
+  `DUMBMONIT_SETUP_CODE` presets it for automated deployments.
+- **Agent installs always verify the binary.** The install commands now carry
+  the expected SHA-256 of each binary the server ships (`--sha256=…`,
+  `-Sha256 …`), and `install.sh` / `install.ps1` refuse a download that does
+  not match, that has no checksum, or that cannot be hashed — no more
+  warning-only. `--insecure-skip-checksum` (`-InsecureSkipChecksum`) is the
+  explicit, loud escape hatch for air-gapped setups. After a server upgrade,
+  copy a fresh install command.
+- **Single sign-on no longer creates accounts unless asked.** *Create accounts
+  on first sign-in* is off by default, for new installs and wherever it was
+  never set (`DUMBMONIT_OIDC_AUTO_CREATE` unset, or settings saved before the
+  option existed); Settings → Single sign-on says so. A value saved explicitly
+  is kept.
+
 ### Added
 
 - **Integration packs.** A device type can now be added without a release: one

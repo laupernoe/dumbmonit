@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     runtime.block_on(run(config))
 }
 
-async fn run(config: Config) -> Result<()> {
+async fn run(mut config: Config) -> Result<()> {
     tokio::fs::create_dir_all(&config.data_dir)
         .await
         .with_context(|| format!("creating directory {}", config.data_dir.display()))?;
@@ -64,6 +64,13 @@ async fn run(config: Config) -> Result<()> {
         );
     }
     info!(database = %config.database_path().display(), "database ready");
+
+    // Pas encore d'administrateur : la création du premier compte exige le code
+    // affiché ici, que seul qui lit le journal du serveur connaît.
+    let setup_code = config.setup_code.get_or_insert_with(auth::setup_code::generate).clone();
+    if !config.demo && auth::users::count(&pool).await? == 0 {
+        auth::setup_code::announce(&setup_code);
+    }
 
     let victoria_url = config.effective_victoria_url();
     // Clé des routes d'administration du VictoriaMetrics embarqué, propre à ce

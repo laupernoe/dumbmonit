@@ -81,6 +81,9 @@ pub struct StatusView {
 /// qu'aucune trace de requête ne puisse imprimer le mot de passe.
 #[derive(Deserialize)]
 pub struct SetupPayload {
+    /// Code affiché dans le journal du serveur au démarrage.
+    #[serde(default)]
+    setup_code: String,
     #[serde(default)]
     username: Option<String>,
     password: String,
@@ -88,9 +91,17 @@ pub struct SetupPayload {
 
 impl std::fmt::Debug for SetupPayload {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SetupPayload {{ username: {:?}, password: <redacted> }}", self.username)
+        write!(
+            f,
+            "SetupPayload {{ setup_code: <redacted>, username: {:?}, password: <redacted> }}",
+            self.username
+        )
     }
 }
+
+/// Seau partagé par toutes les tentatives de code, d'où qu'elles viennent :
+/// répartir les essais sur plusieurs adresses ne les multiplie pas.
+const SETUP_BUCKET: &str = "\u{0}setup";
 
 /// Corps de `login`. Sans `username`, le mot de passe seul suffit tant qu'il n'y
 /// a qu'un compte local : c'est ce que l'ancienne interface envoie.
@@ -163,11 +174,30 @@ pub async fn me(Authenticated(user): Authenticated) -> Json<UserView> {
 pub async fn setup(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
+    ClientIp(ip): ClientIp,
     Json(payload): Json<SetupPayload>,
 ) -> AuthResult<StatusCode> {
     if auth.is_configured(&state.pool).await? {
         return Err(already_configured());
     }
+
+    // Le code prouve qu'on a la main sur le serveur : sans lui, le premier venu
+    // sur le réseau prendrait l'instance avant son propriétaire.
+    let mut keys = vec![Key::User(SETUP_BUCKET.to_string(), None)];
+    if let Some(ip) = ip {
+        keys.push(Key::Ip(ip));
+    }
+    guard_attempt(&auth, &keys).await?;
+    if !crate::auth::setup_code::matches(auth.setup_code(), &payload.setup_code) {
+        auth.limiter().lock().await.record_failure(&keys, Instant::now());
+        audit::record(&state.pool, None, "setup.failed", None, ip).await;
+        return Err(AuthError::Unauthorized(
+            "Wrong setup code. It is printed in the server logs at startup \
+             (docker compose logs dumbmonit) and changes at every restart."
+                .into(),
+        ));
+    }
+    auth.limiter().lock().await.record_success(&keys);
     let username = payload.username.as_deref().map(str::trim).filter(|name| !name.is_empty());
     let username = username.unwrap_or("admin");
     users::validate_username(username).map_err(AuthError::Invalid)?;
@@ -372,7 +402,7 @@ mod tests {
         let rendered = format!(
             "{:?} {:?} {:?}",
             LoginPayload { username: Some("admin".into()), password: secrets[2].into() },
-            SetupPayload { username: None, password: secrets[2].into() },
+            SetupPayload { setup_code: "code".into(), username: None, password: secrets[2].into() },
             ChangePayload { current_password: secrets[0].into(), new_password: secrets[1].into() },
         );
 

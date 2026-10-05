@@ -102,7 +102,7 @@ somewhere that has never seen `secret.key`.
 ### Restoring onto a fresh instance
 
 1. Start the new container and create the first administrator account at
-   `/setup`. That account is yours; the restore will not touch it.
+   `/setup`, with the setup code printed in its logs. That account is yours; the restore will not touch it.
 2. **Settings → Backup → Restore a bundle.** Pick the file, type the passphrase,
    and press **Check this backup**.
 3. Read the report. It says, section by section, what would be **created**, what

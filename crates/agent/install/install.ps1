@@ -9,7 +9,10 @@
     name (EzyMonitAgent) is migrated in place by the same command.
 
 .EXAMPLE
-    & ([scriptblock]::Create((irm http://serveur:8080/install.ps1))) -Token dmon_xxx -Url http://serveur:8080
+    & ([scriptblock]::Create((irm http://serveur:8080/install.ps1))) -Token dmon_xxx -Url http://serveur:8080 -Sha256 windows-x86_64:<hex>
+
+    The install command shown by the server carries -Sha256: a downloaded binary
+    that does not match it, or a download without it, is refused.
 
 .EXAMPLE
     .\install.ps1 -Token dmon_xxx -Url http://serveur:8080 -Services @('Spooler','MSSQLSERVER')
@@ -24,6 +27,10 @@ param(
     [string]$HostName,
     # Local binary to install instead of downloading it.
     [string]$BinPath,
+    # Expected SHA-256 of the downloaded binary: windows-x86_64:<hex>, or the bare hex.
+    [string]$Sha256,
+    # Install a downloaded binary without verifying it (air-gapped or manual setups only).
+    [switch]$InsecureSkipChecksum,
     [switch]$Uninstall
 )
 
@@ -206,21 +213,34 @@ if ($BinPath) {
         $ProgressPreference = $progression
     }
 
-    # Le serveur publie l'empreinte SHA-256 du binaire à côté (`<url>.sha256`) :
-    # un téléchargement tronqué ou remplacé en chemin n'est pas installé.
-    $sourceEmpreinte = "$source.sha256"
-    $attendu = $null
-    try {
-        $reponse = Invoke-WebRequest -Uri $sourceEmpreinte -UseBasicParsing
-        $attendu = ([string]$reponse.Content).Trim().Split(' ')[0].ToLowerInvariant()
-    } catch {
-        Write-Warning "No checksum published at ${sourceEmpreinte}: binary not verified"
-    }
-    if ($attendu) {
+    # Le binaire n'est installé que s'il correspond à l'empreinte portée par la
+    # commande d'installation (-Sha256), copiée depuis l'interface : un binaire
+    # remplacé en chemin ou tronqué est refusé, et une empreinte absente aussi,
+    # sauf -InsecureSkipChecksum, qui le dit haut et fort.
+    if ($InsecureSkipChecksum) {
+        Write-Warning "-InsecureSkipChecksum: the downloaded binary is NOT verified."
+        Write-Warning "Anyone able to alter the download now runs code as SYSTEM on this machine."
+    } else {
+        $cle = "windows-$architecture"
+        $attendu = $null
+        foreach ($entree in ($Sha256 -split ',')) {
+            $entree = $entree.Trim().ToLowerInvariant()
+            if (-not $entree) { continue }
+            if ($entree.StartsWith("${cle}:")) { $attendu = $entree.Substring($cle.Length + 1); break }
+            if (-not $entree.Contains(':')) { $attendu = $entree; break }
+        }
+        if (-not $attendu) {
+            Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
+            Stop-Sur "No expected checksum for ${cle}: nothing was installed. Copy a fresh install command from DumbMonit (Settings > Agents): it carries -Sha256. For a binary you verified yourself, use -BinPath."
+        }
+        if ($attendu -notmatch '^[0-9a-f]{64}$') {
+            Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
+            Stop-Sur "Invalid -Sha256 value for ${cle}: $attendu"
+        }
         $obtenu = (Get-FileHash -Path $exeTemporaire -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($obtenu -ne $attendu) {
             Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
-            Stop-Sur "Checksum mismatch for ${source} (expected $attendu, got $obtenu): the download is corrupt or has been tampered with. Nothing was installed."
+            Stop-Sur "Checksum mismatch for ${source} (expected $attendu, got $obtenu): the download is corrupt or has been tampered with, or the server was upgraded since this command was copied. Nothing was installed. Copy a fresh install command from DumbMonit (Settings > Agents)."
         }
         Write-Etape "Checksum verified ($obtenu)"
     }
