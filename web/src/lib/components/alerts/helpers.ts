@@ -20,6 +20,13 @@ import { isDistinctiveLabel } from '$lib/metrics';
 import type { Tone } from '$lib/ui';
 import { formatDateTime, formatDuration } from '$lib/format';
 
+/**
+ * The server's ack ceiling (`MAX_ACK_SECS`), in seconds: "until resolved".
+ * Both the full Ack menu's last choice and the one-click Dismiss use it — a
+ * dismiss *is* an ack until resolved, just without the menu.
+ */
+export const UNTIL_RESOLVED_SECS = 30 * 24 * 3600;
+
 /** Plate tone for an alert's severity: the meteorological shift down one rung. */
 export function severityTone(severity: AlertSeverity): Tone {
 	if (severity === 'critical') return 'warning';

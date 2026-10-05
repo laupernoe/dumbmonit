@@ -8,14 +8,21 @@
 	 * severity, a pending one is "Building up", a suppressed one is dimmed and
 	 * names the parent that masks it, a learning baseline rule stays quiet on
 	 * purpose and says so. An acknowledged alert wears "Acked" with who and
-	 * until when — still a problem, a known one. Every row can be acknowledged
-	 * or silenced for an hour, and — on the Alerts page — opened on its device.
+	 * until when — still a problem, a known one.
+	 *
+	 * Top-right carries the one-click "×" (dismiss: ack until resolved, see
+	 * `NeedsYouList`'s optimistic handling and undo toast) next to a small
+	 * "⋯" menu for Snooze and "Never for this device" — kept out of the way
+	 * once an alert is already known. The footer keeps the full Ack control
+	 * (a chosen duration, a note) and, on the Alerts page, "Open device".
 	 */
 	import type { Alert, Silence, Target } from '$lib/api';
 	import type { SkyRow } from '$lib/components/overview/sky';
-	import { Button, Plate } from '$lib/ui';
+	import { Button, Menu, Plate } from '$lib/ui';
+	import { auth } from '$lib/stores/auth.svelte';
 	import { formatRelative, formatDateTime } from '$lib/format';
 	import { alertDetail, coveringSilence, severityTone, severityWord, TONE_BAR } from './helpers';
+	import { X, EllipsisVertical } from 'lucide-svelte';
 	import AckControl from './AckControl.svelte';
 	import SnoozeControl from './SnoozeControl.svelte';
 	import IgnoreControl from './IgnoreControl.svelte';
@@ -29,9 +36,11 @@
 		silences?: Silence[];
 		/** An acknowledgement, a snooze or an ignore was made or lifted: refresh the alerts. */
 		onchanged?: () => void;
+		/** The × was clicked: dismiss this alert (ack until resolved), one click, optimistic. */
+		ondismiss?: () => void;
 	}
 
-	let { row, extra = [], showOpen = false, silences = [], onchanged }: Props = $props();
+	let { row, extra = [], showOpen = false, silences = [], onchanged, ondismiss }: Props = $props();
 
 	const alert = $derived(row.alert);
 	const target = $derived(row.target);
@@ -87,11 +96,47 @@
 				>
 			{/if}
 		</div>
-		{#if row.since}
-			<span class="tnum shrink-0 pt-0.5 text-[0.75rem] whitespace-nowrap text-ink-2" title={formatDateTime(row.since)}>
-				since {formatRelative(row.since)}
-			</span>
-		{/if}
+		<div class="flex shrink-0 items-center gap-1">
+			{#if row.since}
+				<span class="tnum pt-0.5 text-[0.75rem] whitespace-nowrap text-ink-2" title={formatDateTime(row.since)}>
+					since {formatRelative(row.since)}
+				</span>
+			{/if}
+			{#if auth.isAdmin && !acked}
+				<Menu label="More actions for this alert">
+					{#snippet trigger({ toggle, open })}
+						<Button
+							size="sm"
+							variant="ghost"
+							class="!h-7 !w-7 !px-0"
+							aria-haspopup="menu"
+							aria-expanded={open}
+							aria-label="More actions"
+							title="More actions"
+							onclick={toggle}
+						>
+							<EllipsisVertical class="size-3.5" aria-hidden="true" />
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<div class="flex flex-col items-stretch gap-1">
+							<SnoozeControl {alert} {target} {silences} onchanged={() => { onchanged?.(); close(); }} />
+							<IgnoreControl rule={row.rule} {target} onchanged={() => { onchanged?.(); close(); }} />
+						</div>
+					{/snippet}
+				</Menu>
+				<Button
+					size="sm"
+					variant="ghost"
+					class="!h-7 !w-7 !px-0"
+					aria-label="Dismiss"
+					title="Dismiss"
+					onclick={() => ondismiss?.()}
+				>
+					<X class="size-3.5" aria-hidden="true" />
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	<p class="mt-2 line-clamp-2 font-semibold break-words text-ink" title={alert.rule_name || alert.rule_uid}>
@@ -149,8 +194,6 @@
 	<div class="mt-auto pt-3">
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
 			<AckControl {alert} onchanged={onchanged} />
-			<SnoozeControl {alert} {target} {silences} {onchanged} />
-			<IgnoreControl rule={row.rule} {target} {onchanged} />
 			{#if showOpen && target}
 				<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">Open device</Button>
 			{/if}
