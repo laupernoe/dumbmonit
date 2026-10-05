@@ -17,12 +17,27 @@
 	 * and filtered here; the rules are read for their names and units.
 	 */
 	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule, RuleOverride, Silence, Target } from '$lib/api';
-	import { deleteRuleOverride, listAlertHistory, listAlertRules, listRuleOverrides, listSilences } from '$lib/api';
+	import {
+		ackAlert,
+		deleteRuleOverride,
+		listAlertHistory,
+		listAlertRules,
+		listRuleOverrides,
+		listSilences,
+		unackAlert
+	} from '$lib/api';
 	import type { Tone } from '$lib/ui';
-	import { Button, EmptyState, ErrorNotice, Plate, Skeleton } from '$lib/ui';
-	import { ShieldCheck } from 'lucide-svelte';
+	import { Button, EmptyState, ErrorNotice, Plate, Skeleton, Toast } from '$lib/ui';
+	import { auth } from '$lib/stores/auth.svelte';
+	import { ShieldCheck, X } from 'lucide-svelte';
 	import { formatDateTime, formatRelative } from '$lib/format';
-	import { alertDetail, formatAlertValue, severityTone, severityWord } from '$lib/components/alerts/helpers';
+	import {
+		alertDetail,
+		formatAlertValue,
+		severityTone,
+		severityWord,
+		UNTIL_RESOLVED_SECS
+	} from '$lib/components/alerts/helpers';
 	import AckControl from '$lib/components/alerts/AckControl.svelte';
 	import SnoozeControl from '$lib/components/alerts/SnoozeControl.svelte';
 	import IgnoreControl from '$lib/components/alerts/IgnoreControl.svelte';
@@ -98,6 +113,46 @@
 	let showQuiet = $state(false);
 	/** The history list collapses to its most recent rows until this is flipped. */
 	let showAll = $state(false);
+
+	// --- Dismiss (one click, optimistic) ------------------------------------
+	//
+	// The × is an ack until resolved without the menu — same mechanics and
+	// same "Dismissed · Undo" toast as the Overview/Alerts cards. The row
+	// leaves this device's active list immediately (`dismissing`); once the
+	// parent's refresh (`onackchange`) catches up, the alert shows "Acked"
+	// if it is still around, same as everywhere else.
+
+	let dismissing = $state<Set<string>>(new Set());
+	let dismissToast = $state<{ fingerprint: string } | { error: string } | null>(null);
+
+	async function dismissAlert(alert: Alert) {
+		dismissing = new Set(dismissing).add(alert.fingerprint);
+		dismissToast = { fingerprint: alert.fingerprint };
+		try {
+			const updated = await ackAlert(alert.fingerprint, { duration_secs: UNTIL_RESOLVED_SECS });
+			onackchange?.(updated);
+		} catch (cause) {
+			dismissing = new Set(dismissing);
+			dismissing.delete(alert.fingerprint);
+			dismissToast = {
+				error: cause instanceof Error ? cause.message : 'Could not dismiss this alert.'
+			};
+		}
+	}
+
+	async function undoDismissAlert(fingerprint: string) {
+		dismissToast = null;
+		dismissing = new Set(dismissing);
+		dismissing.delete(fingerprint);
+		try {
+			const updated = await unackAlert(fingerprint);
+			onackchange?.(updated);
+		} catch {
+			// Best effort: the next refresh shows the server's real state either way.
+		}
+	}
+
+	const visibleAlerts = $derived(alerts.filter((alert) => !dismissing.has(alert.fingerprint)));
 
 	async function load(signal?: AbortSignal) {
 		error = null;
@@ -299,7 +354,7 @@
 	</EmptyState>
 {:else}
 	<ol class="relative ml-2 border-l border-line pl-5">
-		{#each alerts as alert, i (alert.fingerprint)}
+		{#each visibleAlerts as alert, i (alert.fingerprint)}
 			{@const plate = activePlate(alert)}
 			{@const detail = alertDetail(alert, rules.get(alert.rule_uid))}
 			<li class="rise-in relative pb-3" style={`--rise-delay: ${Math.min(i, 8) * 30}ms`}>
@@ -326,6 +381,18 @@
 					<AckControl {alert} onchanged={onackchange} />
 					<SnoozeControl {alert} {target} {silences} onchanged={() => onackchange?.(alert)} />
 					<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => onackchange?.(alert)} />
+					{#if auth.isAdmin && !alert.acked}
+						<Button
+							size="sm"
+							variant="ghost"
+							class="!h-7 !w-7 !px-0"
+							aria-label="Dismiss"
+							title="Dismiss"
+							onclick={() => void dismissAlert(alert)}
+						>
+							<X class="size-3.5" aria-hidden="true" />
+						</Button>
+					{/if}
 				</div>
 				{#if alert.acked}
 					<p class="mt-0.5 text-[0.8125rem] text-ink-2" title={formatDateTime(alert.acked_until)}>
@@ -390,4 +457,18 @@
 			<span>Last {SHOWN} rows. <a href="/alerts#history" class="text-ink hover:underline">Full history</a></span>
 		{/if}
 	</div>
+{/if}
+
+{#if dismissToast}
+	{#if 'fingerprint' in dismissToast}
+		{@const fingerprint = dismissToast.fingerprint}
+		<Toast
+			message="Dismissed."
+			actionLabel="Undo"
+			onaction={() => void undoDismissAlert(fingerprint)}
+			onclose={() => (dismissToast = null)}
+		/>
+	{:else}
+		<Toast message={dismissToast.error} onclose={() => (dismissToast = null)} />
+	{/if}
 {/if}
