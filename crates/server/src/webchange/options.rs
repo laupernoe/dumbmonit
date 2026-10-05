@@ -216,6 +216,8 @@ mod tests {
             enabled: true,
             tags: tags.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(),
             credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
         }
     }
 

@@ -70,7 +70,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -80,7 +81,8 @@
         "default": "80",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -90,7 +92,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -100,7 +103,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "upstream_check",
@@ -110,7 +114,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -223,7 +228,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -233,7 +239,8 @@
         "default": "2019",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -243,7 +250,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -253,7 +261,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -320,7 +329,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -330,7 +340,8 @@
         "default": "6060",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "lapi",
@@ -340,7 +351,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "lapi_port",
@@ -350,7 +362,8 @@
         "default": "8080",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -360,7 +373,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -370,7 +384,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -427,7 +442,8 @@
           "SRV",
           "PTR",
           "CAA"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "resolver",
@@ -437,7 +453,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect",
@@ -447,7 +464,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect_mode",
@@ -460,7 +478,8 @@
         "choices": [
           "contains",
           "exact"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "forbid",
@@ -470,7 +489,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "alert_on_change",
@@ -480,7 +500,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -490,7 +511,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -536,7 +558,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "refresh_hours",
@@ -546,7 +569,8 @@
         "default": "12",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -556,7 +580,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -642,7 +667,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "vdom",
@@ -652,7 +678,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -662,7 +689,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -672,7 +700,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -757,7 +786,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -767,7 +797,8 @@
         "default": "9000",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -777,7 +808,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -787,7 +819,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -845,7 +878,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -855,7 +889,8 @@
         "default": "8123",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -865,7 +900,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -875,7 +911,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "battery_threshold",
@@ -885,7 +922,8 @@
         "default": "20",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "exclude_domains",
@@ -895,7 +933,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "repairs",
@@ -905,7 +944,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -915,7 +955,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1014,7 +1055,8 @@
           "PATCH",
           "DELETE",
           "OPTIONS"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "accepted_status",
@@ -1024,7 +1066,8 @@
         "default": "200-299",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "keyword",
@@ -1034,7 +1077,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "keyword_absent",
@@ -1044,7 +1088,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "keyword_case_sensitive",
@@ -1054,7 +1099,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "json_path",
@@ -1064,7 +1110,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "json_expect",
@@ -1074,7 +1121,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "headers",
@@ -1084,7 +1132,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "body",
@@ -1094,7 +1143,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "follow_redirects",
@@ -1104,7 +1154,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_redirects",
@@ -1114,7 +1165,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1124,7 +1176,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -1134,7 +1187,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "check_certificate",
@@ -1144,7 +1198,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_body_bytes",
@@ -1154,7 +1209,8 @@
         "default": "524288",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "user_agent",
@@ -1164,7 +1220,8 @@
         "default": "DumbMonit/<version>",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -1174,7 +1231,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1231,7 +1289,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -1241,7 +1300,8 @@
         "default": "2283",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1251,7 +1311,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1261,7 +1322,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -1271,7 +1333,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1328,7 +1391,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -1338,7 +1402,8 @@
         "default": "8096",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1348,7 +1413,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1358,7 +1424,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1415,7 +1482,8 @@
         "default": "6443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "ca_cert",
@@ -1425,7 +1493,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1435,7 +1504,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1445,7 +1515,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "exclude_namespaces",
@@ -1455,7 +1526,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1546,7 +1618,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -1556,7 +1629,8 @@
         "default": "3100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1566,7 +1640,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1576,7 +1651,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1647,7 +1723,8 @@
         "default": "smtp,imap,webmail",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1657,7 +1734,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "api_port",
@@ -1667,7 +1745,8 @@
         "default": "444",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "api_tls",
@@ -1677,7 +1756,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1687,7 +1767,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1758,7 +1839,8 @@
         "choices": [
           "https",
           "http"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -1768,7 +1850,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1778,7 +1861,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1788,7 +1872,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "interfaces",
@@ -1798,7 +1883,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_interfaces",
@@ -1808,7 +1894,8 @@
         "default": "64",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1880,7 +1967,8 @@
         "default": "27017",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "auth_source",
@@ -1890,7 +1978,8 @@
         "default": "admin",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tls",
@@ -1900,7 +1989,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -1910,7 +2000,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -1920,7 +2011,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -1994,7 +2086,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "port",
@@ -2004,7 +2097,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "topic",
@@ -2014,7 +2108,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect_message",
@@ -2024,7 +2119,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect",
@@ -2034,7 +2130,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "client_id",
@@ -2044,7 +2141,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "server_name",
@@ -2054,7 +2152,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2064,7 +2163,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -2074,7 +2174,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -2084,7 +2185,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2151,7 +2253,8 @@
         "default": "3306",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "database",
@@ -2161,7 +2264,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "query",
@@ -2171,7 +2275,8 @@
         "default": "SELECT 1",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect",
@@ -2181,7 +2286,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "sslmode",
@@ -2196,7 +2302,8 @@
           "require",
           "verify-full",
           "disable"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -2206,7 +2313,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -2216,7 +2324,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2275,7 +2384,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -2285,7 +2395,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2295,7 +2406,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2305,7 +2417,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2372,7 +2485,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -2382,7 +2496,8 @@
         "default": "81",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "certificates",
@@ -2392,7 +2507,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tls_port",
@@ -2402,7 +2518,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2412,7 +2529,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2422,7 +2540,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2496,7 +2615,8 @@
         "default": "3493",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "ups",
@@ -2506,7 +2626,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2516,7 +2637,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2585,7 +2707,8 @@
         "choices": [
           "https",
           "http"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -2595,7 +2718,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2605,7 +2729,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2615,7 +2740,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "gateways",
@@ -2625,7 +2751,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "interfaces",
@@ -2635,7 +2762,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "firewall",
@@ -2645,7 +2773,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "dhcp",
@@ -2655,7 +2784,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "vpn",
@@ -2665,7 +2795,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "unbound",
@@ -2675,7 +2806,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "services",
@@ -2685,7 +2817,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "carp",
@@ -2695,7 +2828,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "firmware",
@@ -2705,7 +2839,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "temperature",
@@ -2715,7 +2850,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2798,7 +2934,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -2808,7 +2945,8 @@
         "default": "8000",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2818,7 +2956,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2828,7 +2967,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "task_lookback_hours",
@@ -2838,7 +2978,8 @@
         "default": "24",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2931,7 +3072,8 @@
         "default": "8007",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -2941,7 +3083,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -2951,7 +3094,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "task_lookback_hours",
@@ -2961,7 +3105,8 @@
         "default": "24",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "datastores",
@@ -2971,7 +3116,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_groups",
@@ -2981,7 +3127,8 @@
         "default": "500",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "jobs",
@@ -2991,7 +3138,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "updates",
@@ -3001,7 +3149,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "disks",
@@ -3011,7 +3160,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "services",
@@ -3021,7 +3171,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "datastore_details",
@@ -3031,7 +3182,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "traffic_control",
@@ -3041,7 +3193,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "certificates",
@@ -3051,7 +3204,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tape",
@@ -3061,7 +3215,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -3071,7 +3226,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3135,7 +3291,8 @@
         "default": "8443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3145,7 +3302,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3155,7 +3313,8 @@
         "default": "20",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "node",
@@ -3165,7 +3324,8 @@
         "default": "localhost",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "task_lookback_hours",
@@ -3175,7 +3335,8 @@
         "default": "24",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_age_seconds",
@@ -3185,7 +3346,8 @@
         "default": "60",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "remotes",
@@ -3195,7 +3357,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_remotes",
@@ -3205,7 +3368,8 @@
         "default": "100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "versions",
@@ -3215,7 +3379,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tasks",
@@ -3225,7 +3390,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "node_status",
@@ -3235,7 +3401,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "updates",
@@ -3245,7 +3412,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "remote_updates",
@@ -3255,7 +3423,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3314,7 +3483,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -3324,7 +3494,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3334,7 +3505,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3344,7 +3516,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3410,7 +3583,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -3420,7 +3594,8 @@
         "default": "80",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3430,7 +3605,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3440,7 +3616,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3488,7 +3665,8 @@
         "default": "4",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "packet_timeout_ms",
@@ -3498,7 +3676,8 @@
         "default": "1000",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "interval_ms",
@@ -3508,7 +3687,8 @@
         "default": "100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "payload_bytes",
@@ -3518,7 +3698,8 @@
         "default": "56",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "ip_version",
@@ -3532,7 +3713,8 @@
           "auto",
           "4",
           "6"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "loss_threshold_percent",
@@ -3542,7 +3724,8 @@
         "default": "100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -3552,7 +3735,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3616,7 +3800,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -3626,7 +3811,8 @@
         "default": "32400",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3636,7 +3822,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3646,7 +3833,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3736,7 +3924,8 @@
         "default": "8006",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3746,7 +3935,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3756,7 +3946,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "node",
@@ -3766,7 +3957,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "recent_hours",
@@ -3776,7 +3968,8 @@
         "default": "12",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "queues",
@@ -3786,7 +3979,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "quarantine",
@@ -3796,7 +3990,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "attachment_quarantine",
@@ -3806,7 +4001,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "signatures",
@@ -3816,7 +4012,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "services",
@@ -3826,7 +4023,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "certificates",
@@ -3836,7 +4034,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "updates",
@@ -3846,7 +4045,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "subscription",
@@ -3856,7 +4056,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3923,7 +4124,8 @@
         "default": "5432",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "database",
@@ -3933,7 +4135,8 @@
         "default": "postgres",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "query",
@@ -3943,7 +4146,8 @@
         "default": "SELECT 1",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect",
@@ -3953,7 +4157,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "sslmode",
@@ -3968,7 +4173,8 @@
           "require",
           "verify-full",
           "disable"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -3978,7 +4184,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -3988,7 +4195,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4083,7 +4291,8 @@
         "default": "8006",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4093,7 +4302,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -4103,7 +4313,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "backup_lookback_days",
@@ -4113,7 +4324,8 @@
         "default": "31",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "scan_backup_storage",
@@ -4123,7 +4335,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "nodes",
@@ -4133,7 +4346,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": "Inventory"
       },
       {
         "key": "ha",
@@ -4143,7 +4357,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       },
       {
         "key": "backup_jobs",
@@ -4153,7 +4368,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "scan_snapshots",
@@ -4163,7 +4379,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "max_snapshot_guests",
@@ -4173,7 +4390,8 @@
         "default": "200",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "replication",
@@ -4183,7 +4401,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "ceph",
@@ -4193,7 +4412,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Cluster services"
       },
       {
         "key": "updates",
@@ -4203,7 +4423,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Security & certificates"
       },
       {
         "key": "certificates",
@@ -4213,7 +4434,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Security & certificates"
       },
       {
         "key": "guest_agent",
@@ -4223,7 +4445,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Cluster services"
       },
       {
         "key": "disks",
@@ -4233,7 +4456,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       },
       {
         "key": "zfs",
@@ -4243,7 +4467,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       },
       {
         "key": "packages",
@@ -4253,7 +4478,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Inventory"
       },
       {
         "key": "subscription",
@@ -4263,7 +4489,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Security & certificates"
       },
       {
         "key": "cluster_resources",
@@ -4273,7 +4500,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Inventory"
       },
       {
         "key": "services",
@@ -4283,7 +4511,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Cluster services"
       },
       {
         "key": "network",
@@ -4293,7 +4522,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       },
       {
         "key": "lvm",
@@ -4303,7 +4533,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       },
       {
         "key": "ceph_detail",
@@ -4313,7 +4544,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Cluster services"
       },
       {
         "key": "backup_volumes",
@@ -4323,7 +4555,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Backups & replication"
       },
       {
         "key": "guest_os",
@@ -4333,7 +4566,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Inventory"
       },
       {
         "key": "metrics_export",
@@ -4343,7 +4577,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": "Performance & capacity"
       }
     ]
   },
@@ -4392,7 +4627,8 @@
         "default": "24h",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "grace",
@@ -4402,7 +4638,8 @@
         "default": "10%",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4469,7 +4706,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -4479,7 +4717,8 @@
         "default": "15672",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4489,7 +4728,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -4499,7 +4739,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "max_queues",
@@ -4509,7 +4750,8 @@
         "default": "100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4577,7 +4819,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4587,7 +4830,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -4597,7 +4841,8 @@
         "default": "8",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "auth",
@@ -4610,7 +4855,8 @@
         "choices": [
           "basic",
           "session"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "storage",
@@ -4620,7 +4866,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "logs",
@@ -4630,7 +4877,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4720,7 +4968,8 @@
         "default": "6379",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tls",
@@ -4730,7 +4979,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4740,7 +4990,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -4750,7 +5001,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4813,7 +5065,8 @@
         "default": "smtp,web",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -4823,7 +5076,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "api_port",
@@ -4833,7 +5087,8 @@
         "default": "4443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "api_tls",
@@ -4843,7 +5098,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4853,7 +5109,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "counters",
@@ -4863,7 +5120,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -4941,7 +5199,8 @@
           "starttls",
           "tls",
           "none"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -4951,7 +5210,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "helo_name",
@@ -4961,7 +5221,8 @@
         "default": "dumbmonit",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect_capability",
@@ -4971,7 +5232,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "server_name",
@@ -4981,7 +5243,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -4991,7 +5254,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -5001,7 +5265,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -5011,7 +5276,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5189,7 +5455,8 @@
         "default": "4444",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5199,7 +5466,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5209,7 +5477,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5278,7 +5547,8 @@
         "choices": [
           "https",
           "http"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -5288,7 +5558,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5298,7 +5569,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5308,7 +5580,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "abb",
@@ -5318,7 +5591,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5398,7 +5672,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "watch",
@@ -5408,7 +5683,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5418,7 +5694,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -5428,7 +5705,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5476,7 +5754,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -5486,7 +5765,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -5496,7 +5776,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5545,7 +5826,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5555,7 +5837,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -5565,7 +5848,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -5575,7 +5859,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5650,7 +5935,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -5660,7 +5946,8 @@
         "default": "8080",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "metrics",
@@ -5670,7 +5957,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5680,7 +5968,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5690,7 +5979,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5749,7 +6039,8 @@
         "choices": [
           "https",
           "http"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -5759,7 +6050,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5769,7 +6061,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5779,7 +6072,8 @@
         "default": "20",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "datasets",
@@ -5789,7 +6083,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "disks",
@@ -5799,7 +6094,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "smart",
@@ -5809,7 +6105,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "alerts",
@@ -5819,7 +6116,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "tasks",
@@ -5829,7 +6127,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "services",
@@ -5839,7 +6138,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -5920,7 +6220,8 @@
         "default": "default",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "port",
@@ -5930,7 +6231,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -5940,7 +6242,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -5950,7 +6253,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "watched_clients",
@@ -5960,7 +6264,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -5970,7 +6275,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6027,7 +6333,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -6037,7 +6344,8 @@
         "default": "80",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6047,7 +6355,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -6057,7 +6366,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6124,7 +6434,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -6134,7 +6445,8 @@
         "default": "9419",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "api_version",
@@ -6144,7 +6456,8 @@
         "default": "1.1-rev0",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6154,7 +6467,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -6164,7 +6478,8 @@
         "default": "15",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "device_stale_days",
@@ -6174,7 +6489,8 @@
         "default": "3",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6264,7 +6580,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -6274,7 +6591,8 @@
         "default": "9428",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6284,7 +6602,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -6294,7 +6613,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6385,7 +6705,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -6395,7 +6716,8 @@
         "default": "8428",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6405,7 +6727,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -6415,7 +6738,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6480,7 +6804,8 @@
         "default": "443",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6490,7 +6815,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -6500,7 +6826,8 @@
         "default": "20",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "alarms",
@@ -6510,7 +6837,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6561,7 +6889,8 @@
         "choices": [
           "page",
           "site"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "max_pages",
@@ -6571,7 +6900,8 @@
         "default": "25",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "path_prefix",
@@ -6581,7 +6911,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "ignore",
@@ -6591,7 +6922,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "screenshots",
@@ -6601,7 +6933,8 @@
         "default": "true",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "check_interval_minutes",
@@ -6611,7 +6944,8 @@
         "default": "60",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6621,7 +6955,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -6631,7 +6966,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -6722,7 +7058,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "port",
@@ -6732,7 +7069,8 @@
         "default": "",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "send",
@@ -6742,7 +7080,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "expect",
@@ -6752,7 +7091,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "subprotocol",
@@ -6762,7 +7102,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "origin",
@@ -6772,7 +7113,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "server_name",
@@ -6782,7 +7124,8 @@
         "default": "",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -6792,7 +7135,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -6802,7 +7146,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -6812,7 +7157,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },

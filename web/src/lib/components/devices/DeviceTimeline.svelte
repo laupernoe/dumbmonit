@@ -9,7 +9,9 @@
 	 * By default only transitions into or out of `firing` are shown; the quiet
 	 * ones (building up and back) are one toggle away. Consecutive identical
 	 * transitions of one rule fold into one row — "fired on 7 containers" —
-	 * with the labels when the matching active alert still carries them.
+	 * with the labels when the matching active alert still carries them. The
+	 * folded list itself opens on its 5 most recent rows; "Show all" (the
+	 * same toggle idiom) reveals the rest, up to `SHOWN`.
 	 *
 	 * The history route has no per-device filter, so a generous window is read
 	 * and filtered here; the rules are read for their names and units.
@@ -37,6 +39,8 @@
 
 	const SHOWN = 20;
 	const WINDOW = 400;
+	/** Rows shown before "Show all" is pressed — a busy device should not open on 20+ of them. */
+	const DEFAULT_SHOWN = 5;
 
 	const PHASE_WORD: Record<AlertPhase, string> = {
 		ok: 'OK',
@@ -50,6 +54,8 @@
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let showQuiet = $state(false);
+	/** The history list collapses to its most recent rows until this is flipped. */
+	let showAll = $state(false);
 
 	async function load(signal?: AbortSignal) {
 		error = null;
@@ -166,6 +172,9 @@
 
 	const quietCount = $derived(history.length - history.filter(isLoud).length);
 
+	/** The rows actually rendered: the 5 most recent until "Show all" is pressed. */
+	const visibleRows = $derived(showAll ? rows : rows.slice(0, DEFAULT_SHOWN));
+
 	function toneOf(fold: Fold): Tone {
 		if (fold.to_phase === 'firing') return severityTone(fold.severity);
 		if (fold.to_phase === 'pending') return 'ghost';
@@ -267,7 +276,7 @@
 			</li>
 		{/if}
 
-		{#each rows as fold, i (fold.key)}
+		{#each visibleRows as fold, i (fold.key)}
 			{@const tone = toneOf(fold)}
 			{@const newest = fold.entries[0]}
 			{@const oldest = fold.entries[fold.entries.length - 1]}
@@ -298,6 +307,11 @@
 		{/each}
 	</ol>
 	<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-ink-2">
+		{#if rows.length > DEFAULT_SHOWN}
+			<Button size="sm" variant="ghost" onclick={() => (showAll = !showAll)} aria-pressed={showAll}>
+				{showAll ? 'Show fewer' : `Show all · ${rows.length - DEFAULT_SHOWN} more`}
+			</Button>
+		{/if}
 		{#if quietCount > 0}
 			<Button size="sm" variant="ghost" onclick={() => (showQuiet = !showQuiet)} aria-pressed={showQuiet}>
 				{showQuiet ? 'Hide quiet transitions' : `Show quiet transitions (building up and back) · ${quietCount}`}

@@ -51,6 +51,8 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
                 .map(|(k, v)| (k.to_string(), v.clone()))
                 .collect::<BTreeMap<_, _>>(),
             credential: device.credential.clone(),
+            group_name: String::new(),
+            position: 0,
         };
         let samples =
             match tokio::time::timeout(Duration::from_secs(30), collector.probe(&target)).await {

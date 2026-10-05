@@ -18,6 +18,8 @@
 		type Target,
 		type TargetPayload
 	} from '$lib/api';
+	import { knownFolders } from '$lib/components/devices/folders';
+	import { groupOptions } from './option-groups';
 	import { listRelays } from '$lib/api/relay';
 	import type { RelayAgent } from '$lib/api/types';
 	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '$lib/ui';
@@ -60,6 +62,8 @@
 	let parentId = $state<number | null>(untrack(() => target?.parent_id ?? null));
 	let viaAgent = $state<number | null>(untrack(() => target?.via_agent ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
+	let groupName = $state(untrack(() => target?.group_name ?? ''));
+	const folderChoices = $derived(knownFolders(targets));
 	let tags = $state<Record<string, string>>(untrack(() => ({ ...(target?.tags ?? {}) })));
 	let credential = $state<CredentialView>(initialCredential);
 	// "public" is the factory community of nearly every device: pre-filled on add.
@@ -91,6 +95,7 @@
 					target.via_agent !== null ||
 					target.interval_secs !== DEFAULT_INTERVAL ||
 					!target.enabled ||
+					target.group_name !== '' ||
 					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key)))
 		)
 	);
@@ -105,6 +110,7 @@
 	/** The first few settings sit in the main form; the rest behind "More options". */
 	const primaryOptions = $derived(options.filter((o, i) => o.required || i < 3));
 	const moreOptions = $derived(options.filter((o) => !primaryOptions.includes(o)));
+	const moreOptionGroups = $derived(groupOptions(moreOptions));
 	const optionValues = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => optionKeys.includes(k))));
 	const freeTags = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => !optionKeys.includes(k))));
 
@@ -199,6 +205,7 @@
 			via_agent: canRelay ? viaAgent : null,
 			interval_secs: intervalSecs,
 			enabled,
+			group_name: groupName.trim(),
 			// No empty tag: a blank setting means "server default".
 			tags: Object.fromEntries(Object.entries(tags).filter(([, v]) => v.trim()))
 		};
@@ -300,10 +307,19 @@
 	{#if more}
 		<div id="target-more" class="grid gap-5 rise-in">
 			{#if moreOptions.length > 0}
-				<div class="grid gap-1">
-					<p class="text-sm font-semibold text-ink">More {collector.label} settings</p>
-					<p class="mb-2 text-[0.8125rem] text-ink-2">Blank fields use the server's defaults.</p>
-					<OptionsFields options={moreOptions} values={optionValues} errors={shownOptionErrors} onchange={setOptions} />
+				<div class="grid gap-4">
+					<div class="grid gap-1">
+						<p class="text-sm font-semibold text-ink">More {collector.label} settings</p>
+						<p class="text-[0.8125rem] text-ink-2">Blank fields use the server's defaults.</p>
+					</div>
+					{#each moreOptionGroups as group (group.label || '_ungrouped')}
+						<div class="grid gap-2">
+							{#if group.label}
+								<p class="text-[0.8125rem] font-semibold text-ink-2">{group.label}</p>
+							{/if}
+							<OptionsFields options={group.options} values={optionValues} errors={shownOptionErrors} onchange={setOptions} />
+						</div>
+					{/each}
 				</div>
 			{/if}
 
@@ -317,6 +333,20 @@
 							<option value={intervalSecs}>{intervalSecs} s</option>
 						{/if}
 					</select>
+				</Field>
+
+				<Field label="Folder" for="target-group" help="Groups this device under a collapsible section on the devices page. Blank: no folder.">
+					<input
+						id="target-group"
+						class="input"
+						list="target-group-choices"
+						maxlength="60"
+						bind:value={groupName}
+						placeholder="No folder"
+					/>
+					<datalist id="target-group-choices">
+						{#each folderChoices as choice (choice)}<option value={choice}></option>{/each}
+					</datalist>
 				</Field>
 
 				<Field

@@ -237,6 +237,7 @@ async fn pmg() -> Pmg {
                 username: "dumbmonit@pmg".into(),
                 password: "secret".into(),
             }),
+            group_name: String::new(),
         },
     )
     .await

@@ -10,10 +10,10 @@
 	 * Every kind comes from `GET /api/collectors`; only icons, groups, search
 	 * words and the agent shortcuts are ours.
 	 */
-	import { Check, Search } from 'lucide-svelte';
+	import { Check, ChevronDown, Search } from 'lucide-svelte';
 	import type { CollectorInfo } from '$lib/api';
 	import { Plate } from '$lib/ui';
-	import { filterGroups, groupCollectors } from './kinds';
+	import { filterGroups, groupCollectors, type KindChoice, type KindGroup } from './kinds';
 
 	interface Props {
 		collectors: CollectorInfo[];
@@ -31,7 +31,23 @@
 	let query = $state('');
 	const groups = $derived(groupCollectors(collectors));
 	const visible = $derived(filterGroups(groups, query));
-	const flat = $derived(visible.flatMap((group) => group.choices));
+	/** Typing narrows the whole catalog already: collapsing under it would just hide matches. */
+	const searching = $derived(query.trim().length > 0);
+	/** Long sections open to their first tiles only, until expanded or searched past. */
+	const COLLAPSE_AT = 6;
+	/** Which categories are expanded to their full list. Empty: every long one starts collapsed. */
+	let expanded = $state<Set<string>>(new Set());
+	function shown(group: KindGroup): KindChoice[] {
+		if (searching || expanded.has(group.id) || group.choices.length <= COLLAPSE_AT) return group.choices;
+		return group.choices.slice(0, COLLAPSE_AT);
+	}
+	function toggleExpanded(id: string) {
+		const next = new Set(expanded);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		expanded = next;
+	}
+	const flat = $derived(visible.flatMap((group) => shown(group)));
 	/** Roving tabindex: the selected choice, or the first one, is the tab stop. */
 	const tabStop = $derived(selected && flat.some((c) => c.id === selected) ? selected : flat[0]?.id);
 
@@ -106,13 +122,15 @@
 	{:else}
 		<div bind:this={host} role="radiogroup" aria-label="What to monitor" class="grid gap-5">
 			{#each visible as group (group.id)}
+				{@const items = shown(group)}
+				{@const isExpanded = searching || expanded.has(group.id)}
 				<section aria-labelledby={`picker-${group.id}`}>
 					<div class="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-						<h3 id={`picker-${group.id}`} class="label-tape">{group.title}</h3>
+						<h3 id={`picker-${group.id}`} class="label-tape">{group.title} ({group.choices.length})</h3>
 						{#if group.hint}<p class="text-[0.8125rem] text-ink-3">{group.hint}</p>{/if}
 					</div>
 					<ul class={`grid gap-2 sm:grid-cols-2 ${wide ? 'xl:grid-cols-3' : ''}`}>
-						{#each group.choices as choice, i (choice.id)}
+						{#each items as choice, i (choice.id)}
 							{@const Icon = choice.icon}
 							{@const active = choice.id === selected}
 							<li class="rise-in min-w-0" style={`--rise-delay: ${Math.min(i, 10) * 25}ms`}>
@@ -159,6 +177,17 @@
 							</li>
 						{/each}
 					</ul>
+					{#if !searching && group.choices.length > COLLAPSE_AT}
+						<button
+							type="button"
+							class="mt-2.5 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+							aria-expanded={isExpanded}
+							onclick={() => toggleExpanded(group.id)}
+						>
+							<ChevronDown class={`size-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+							{isExpanded ? 'Show less' : `Show all ${group.choices.length}`}
+						</button>
+					{/if}
 				</section>
 			{/each}
 		</div>

@@ -190,6 +190,8 @@ mod tests {
                 username: "dumbmonit".into(),
                 password: password.into(),
             },
+            group_name: String::new(),
+            position: 0,
         }
     }
 

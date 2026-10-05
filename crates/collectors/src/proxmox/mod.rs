@@ -1518,6 +1518,8 @@ mod tests {
             enabled: true,
             tags: BTreeMap::new(),
             credential,
+            group_name: String::new(),
+            position: 0,
         }
     }
 
@@ -1994,6 +1996,8 @@ mod e2e {
             credential: Credential::ApiToken {
                 token: "monitoring@pve!dumbmonit=8f3a1c9e-dead-beef".into(),
             },
+            group_name: String::new(),
+            position: 0,
         }
     }
 
