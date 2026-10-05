@@ -61,6 +61,13 @@ pub struct Options {
     /// sert à qui préfère ne pas voir ses sauvegardes de postes dans DumbMonit, ou
     /// dont le compte de supervision n'a pas les droits sur le paquet.
     pub abb: bool,
+    /// Interrogation de Synology Drive (état du service, dossiers d'équipe,
+    /// connexions actives). Même logique que `abb` : un NAS sans le paquet ne
+    /// l'annonce pas au catalogue.
+    pub drive: bool,
+    /// Lecture de la présence du paquet Synology Photos. Sans appel réseau ; ne
+    /// sert qu'à masquer la métrique pour qui ne veut pas la voir.
+    pub photos: bool,
     /// Nom de session annoncé à DSM à la connexion. Un nom distinct de celui du
     /// navigateur évite que la connexion d'DumbMonit et celle de l'administrateur
     /// s'invalident mutuellement (code d'erreur 107).
@@ -77,6 +84,8 @@ impl Options {
             insecure_tls: parse_bool(tag(target, "insecure_tls"))?,
             request_timeout: parse_timeout(tag(target, "request_timeout_seconds"))?,
             abb: parse_bool_or(tag(target, "abb"), true)?,
+            drive: parse_bool_or(tag(target, "drive"), true)?,
+            photos: parse_bool_or(tag(target, "photos"), true)?,
             session_name: DEFAULT_SESSION_NAME.to_string(),
         })
     }
@@ -216,6 +225,8 @@ mod tests {
         assert_eq!(options.request_timeout, Duration::from_secs(15));
         assert_eq!(options.session_name, "DumbMonit");
         assert!(options.abb, "Active Backup est interrogé sans rien configurer");
+        assert!(options.drive, "Synology Drive est interrogé sans rien configurer");
+        assert!(options.photos, "la présence de Synology Photos est lue sans rien configurer");
     }
 
     #[test]
@@ -226,6 +237,13 @@ mod tests {
         // Une étiquette vide vaut absence d'étiquette : le défaut reste actif.
         assert!(Options::from_target(&cible(&[("abb", " ")])).unwrap().abb);
         assert!(Options::from_target(&cible(&[("abb", "peut-être")])).is_err());
+    }
+
+    #[test]
+    fn synology_drive_et_photos_se_desactivent_explicitement() {
+        assert!(!Options::from_target(&cible(&[("drive", "false")])).unwrap().drive);
+        assert!(!Options::from_target(&cible(&[("photos", "false")])).unwrap().photos);
+        assert!(Options::from_target(&cible(&[("drive", "true")])).unwrap().drive);
     }
 
     #[test]
