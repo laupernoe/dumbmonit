@@ -75,12 +75,19 @@
 //! | `probe_mqtt_message_value` | mqtt | Contenu du message, s'il est numérique. |
 //! | `probe_ws_handshake_seconds` | websocket | Négociation d'ouverture. |
 //! | `probe_ws_message_bytes` | websocket | Taille de la trame reçue. |
+//! | `probe_ntp_offset_seconds` | ntp | Écart entre l'horloge locale et le serveur. |
+//! | `probe_ntp_delay_seconds` | ntp | Délai aller-retour réseau. |
+//! | `probe_ntp_stratum` | ntp | Distance à une horloge de référence (16 : non synchronisé). |
+//! | `probe_ntp_leap_indicator` | ntp | 0 à 3, voir `ntp::packet::LeapIndicator`. |
+//! | `probe_ntp_root_delay_seconds` | ntp | Délai cumulé jusqu'à la racine de la hiérarchie. |
+//! | `probe_ntp_root_dispersion_seconds` | ntp | Dispersion cumulée jusqu'à la racine. |
+//! | `probe_ntp_reference_info` | ntp | Présence ; étiquette `reference_id`. |
 //!
 //! Toutes sont des jauges : rien ici n'est cumulatif, chaque interrogation mesure
 //! un instant. Le préfixe `dumbmonit_` est ajouté à l'écriture, comme partout.
 //!
-//! Les étiquettes d'identité restent de faible cardinalité : `probe` prend dix
-//! valeurs, `reason` quinze, `record_type` dix, `security` trois, `sslmode`
+//! Les étiquettes d'identité restent de faible cardinalité : `probe` prend onze
+//! valeurs, `reason` dix-sept, `record_type` dix, `security` trois, `sslmode`
 //! quatre, et `url`, `port`, `server_name`, `resolver` en prennent une par cible.
 //! S'y ajoutent `target`, `host` et les `tag_*` posés par le registre.
 
@@ -88,6 +95,7 @@ mod dns;
 pub mod guard;
 mod http;
 mod mqtt;
+mod ntp;
 mod outcome;
 mod ping;
 pub(crate) mod session;
@@ -101,6 +109,7 @@ pub(crate) mod websocket;
 pub use dns::DnsCollector;
 pub use http::HttpCollector;
 pub use mqtt::MqttCollector;
+pub use ntp::NtpCollector;
 pub use ping::PingCollector;
 pub use smtp::SmtpCollector;
 pub use sql::{MysqlCollector, PostgresCollector};
@@ -135,6 +144,7 @@ mod tests {
         assert_eq!(MysqlCollector::new().kind(), "mysql");
         assert_eq!(MqttCollector::new().kind(), "mqtt");
         assert_eq!(WebsocketCollector::new().kind(), "websocket");
+        assert_eq!(NtpCollector::new().kind(), "ntp");
     }
 
     #[test]
@@ -150,6 +160,7 @@ mod tests {
             MysqlCollector::new().kind().to_owned(),
             MqttCollector::new().kind().to_owned(),
             WebsocketCollector::new().kind().to_owned(),
+            NtpCollector::new().kind().to_owned(),
         ];
         let mut uniques = kinds.to_vec();
         uniques.sort_unstable();
