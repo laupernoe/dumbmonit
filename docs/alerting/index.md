@@ -41,7 +41,10 @@ is not notified again when the parent recovers.
 An alert can also be **acknowledged** (`acked`, with `acked_by`, `acked_until`
 and `ack_note`): the phase does not move, reminders and escalations pause until
 `acked_until`, the resolution is still notified and clears the acknowledgement.
-See [Acknowledge vs silence](../using/alerts.md#acknowledge-vs-silence).
+**Snoozing** one alert works the same way under the hood but through a
+maintenance window scoped to that alert's exact labels (`silenced: true`),
+rather than the whole device: a sibling rule on the same device keeps talking.
+See [Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Dependency suppression
 

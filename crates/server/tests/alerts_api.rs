@@ -640,6 +640,96 @@ async fn the_history_route_carries_the_reason_for_each_transition() {
     assert!(body["error"].as_str().unwrap().contains("RFC 3339"));
 }
 
+#[tokio::test]
+async fn a_resolved_history_entry_can_be_cleared_but_a_firing_one_cannot() {
+    let app = setup().await;
+    let resolved = HistoryEntry {
+        fingerprint: "cpu_high@0000000000000001".to_string(),
+        rule_uid: "cpu_high".to_string(),
+        target_id: Some(7),
+        transition: Transition { from: Phase::Firing, to: Phase::Resolved },
+        severity: Severity::Warning,
+        value: None,
+        reason: String::new(),
+        at: Utc::now(),
+    };
+    let firing = HistoryEntry {
+        transition: Transition { from: Phase::Pending, to: Phase::Firing },
+        ..resolved.clone()
+    };
+    db::alerts::record_history(&app.pool, &[firing, resolved], &HashSet::new())
+        .await
+        .expect("history recorded");
+
+    let (_, body) = app.request("GET", "/api/alerts/history", None).await;
+    let rows = body.as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    let find =
+        |phase: &str| rows.iter().find(|e| e["to_phase"] == phase).unwrap()["id"].as_i64().unwrap();
+    let resolved_id = find("resolved");
+    let firing_id = find("firing");
+
+    // A still-active transition is not "resolved": clearing it is refused.
+    let (status, _) =
+        app.request("POST", &format!("/api/alerts/history/{firing_id}/dismiss"), None).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let (status, _) =
+        app.request("POST", &format!("/api/alerts/history/{resolved_id}/dismiss"), None).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    // Gone from the default view…
+    let (_, body) = app.request("GET", "/api/alerts/history", None).await;
+    assert_eq!(body.as_array().unwrap().len(), 1, "{body}");
+    // …but the row is kept, and comes back when explicitly asked for.
+    let (_, body) = app.request("GET", "/api/alerts/history?dismissed=true", None).await;
+    let rows = body.as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    let cleared = rows.iter().find(|e| e["id"] == resolved_id).unwrap();
+    assert_eq!(cleared["dismissed"], json!(true));
+
+    let (status, _) = app.request("POST", "/api/alerts/history/999999/dismiss", None).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn clear_all_resolved_sweeps_every_resolved_entry_at_once() {
+    let app = setup().await;
+    let base = HistoryEntry {
+        fingerprint: "cpu_high@0000000000000001".to_string(),
+        rule_uid: "cpu_high".to_string(),
+        target_id: Some(7),
+        transition: Transition { from: Phase::Firing, to: Phase::Resolved },
+        severity: Severity::Warning,
+        value: None,
+        reason: String::new(),
+        at: Utc::now(),
+    };
+    let mut second = base.clone();
+    second.fingerprint = "cpu_high@0000000000000002".to_string();
+    let still_pending = HistoryEntry {
+        transition: Transition { from: Phase::Ok, to: Phase::Pending },
+        ..base.clone()
+    };
+    db::alerts::record_history(&app.pool, &[base, second, still_pending], &HashSet::new())
+        .await
+        .expect("history recorded");
+
+    let (status, body) = app.request("POST", "/api/alerts/history/dismiss-resolved", None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["dismissed"], json!(2));
+
+    let (_, body) = app.request("GET", "/api/alerts/history", None).await;
+    let rows = body.as_array().unwrap();
+    assert_eq!(rows.len(), 1, "only the still-pending transition remains visible: {body}");
+    assert_eq!(rows[0]["to_phase"], json!("pending"));
+
+    // Nothing left to clear: a second call is a no-op.
+    let (status, body) = app.request("POST", "/api/alerts/history/dismiss-resolved", None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["dismissed"], json!(0));
+}
+
 // --------------------------------------------------------------------------
 // Silences
 // --------------------------------------------------------------------------

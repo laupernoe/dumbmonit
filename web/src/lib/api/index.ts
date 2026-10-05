@@ -234,12 +234,12 @@ export async function alertsAvailable(signal?: AbortSignal): Promise<boolean> {
  * RFC 3339 lower bound (the server defaults to the last seven days).
  */
 export async function listAlertHistory(
-	options: { limit?: number; since?: string } = {},
+	options: { limit?: number; since?: string; dismissed?: boolean } = {},
 	signal?: AbortSignal
 ): Promise<AlertHistoryEntry[]> {
 	try {
 		const entries = await request<AlertHistoryEntry[]>('/alerts/history', {
-			query: { limit: options.limit, since: options.since },
+			query: { limit: options.limit, since: options.since, dismissed: options.dismissed },
 			signal,
 			anticipated: true
 		});
@@ -248,6 +248,16 @@ export async function listAlertHistory(
 		if (cause instanceof ApiError && cause.missing) return [];
 		throw cause;
 	}
+}
+
+/** Clears one resolved history entry from the default view; the row is kept. */
+export function dismissAlertHistoryEntry(id: number): Promise<void> {
+	return request<void>(`/alerts/history/${id}/dismiss`, { method: 'POST' });
+}
+
+/** Clears every resolved history entry at once; returns how many were cleared. */
+export function dismissResolvedAlertHistory(): Promise<{ dismissed: number }> {
+	return request<{ dismissed: number }>('/alerts/history/dismiss-resolved', { method: 'POST' });
 }
 
 /** Lists the alert rules, or an empty array if the route does not exist yet. */

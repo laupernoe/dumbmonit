@@ -16,26 +16,68 @@
 	 * The history route has no per-device filter, so a generous window is read
 	 * and filtered here; the rules are read for their names and units.
 	 */
-	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule } from '$lib/api';
-	import { listAlertHistory, listAlertRules } from '$lib/api';
+	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule, RuleOverride, Silence, Target } from '$lib/api';
+	import { deleteRuleOverride, listAlertHistory, listAlertRules, listRuleOverrides, listSilences } from '$lib/api';
 	import type { Tone } from '$lib/ui';
 	import { Button, EmptyState, ErrorNotice, Plate, Skeleton } from '$lib/ui';
 	import { ShieldCheck } from 'lucide-svelte';
 	import { formatDateTime, formatRelative } from '$lib/format';
 	import { alertDetail, formatAlertValue, severityTone, severityWord } from '$lib/components/alerts/helpers';
 	import AckControl from '$lib/components/alerts/AckControl.svelte';
+	import SnoozeControl from '$lib/components/alerts/SnoozeControl.svelte';
+	import IgnoreControl from '$lib/components/alerts/IgnoreControl.svelte';
 
 	interface Props {
 		targetId: number;
+		target?: Target;
 		/** Active alerts on this device, as the page already filters them. */
 		alerts: Alert[];
 		/** Bumped by the page on each refresh so the log follows it. */
 		refreshKey?: number;
-		/** An alert was acknowledged or un-acknowledged: the page should refresh them. */
+		/** An alert was acknowledged, snoozed, un-snoozed or ignored: refresh. */
 		onackchange?: (alert: Alert) => void;
 	}
 
-	let { targetId, alerts, refreshKey = 0, onackchange }: Props = $props();
+	let { targetId, target, alerts, refreshKey = 0, onackchange }: Props = $props();
+
+	let silences = $state<Silence[]>([]);
+	async function loadSilences(signal?: AbortSignal) {
+		try {
+			silences = await listSilences(signal);
+		} catch {
+			// The control still works without it; only the "time left" is missing.
+		}
+	}
+
+	/** Rules ignored on this device ("don't alert me about this again"), with a
+	 *  way back: reversible here, or from the rule itself in Alerts → Rules. */
+	let overrides = $state<RuleOverride[]>([]);
+	async function loadOverrides(signal?: AbortSignal) {
+		try {
+			overrides = await listRuleOverrides(targetId, signal);
+		} catch {
+			// Best effort: the list just stays empty, nothing else depends on it.
+		}
+	}
+	const ignoredRules = $derived(
+		overrides
+			.filter((o) => o.enabled === false)
+			.map((o) => ({ override: o, rule: rules.get(o.rule_uid) }))
+	);
+	let unignoringUid = $state<string | null>(null);
+	async function unignore(ruleUid: string) {
+		const rule = rules.get(ruleUid);
+		if (!rule) return;
+		unignoringUid = ruleUid;
+		try {
+			await deleteRuleOverride(rule.id, targetId);
+			overrides = overrides.filter((o) => o.rule_uid !== ruleUid);
+		} catch {
+			// The row stays; the admin can try again.
+		} finally {
+			unignoringUid = null;
+		}
+	}
 
 	const SHOWN = 20;
 	const WINDOW = 400;
@@ -79,6 +121,8 @@
 		void refreshKey;
 		const controller = new AbortController();
 		void load(controller.signal);
+		void loadSilences(controller.signal);
+		void loadOverrides(controller.signal);
 		return () => controller.abort();
 	});
 
@@ -216,6 +260,29 @@
 	const empty = $derived(!loading && !error && alerts.length === 0 && history.length === 0);
 </script>
 
+{#if ignoredRules.length > 0}
+	<div class="mb-4 rounded-[var(--radius-card)] border border-line bg-surface-2 px-4 py-2.5">
+		<p class="text-[0.8125rem] font-semibold text-ink-2">
+			Ignored on this device — never alerts, never notifies
+		</p>
+		<ul class="mt-1.5 grid gap-1" role="list">
+			{#each ignoredRules as { override, rule } (override.rule_uid)}
+				<li class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+					<span class="font-medium text-ink">{rule?.name ?? override.rule_uid}</span>
+					<Button
+						size="sm"
+						variant="ghost"
+						loading={unignoringUid === override.rule_uid}
+						onclick={() => void unignore(override.rule_uid)}
+					>
+						Stop ignoring
+					</Button>
+				</li>
+			{/each}
+		</ul>
+	</div>
+{/if}
+
 {#if error}
 	<ErrorNotice {error} title="Could not load the alert history" onretry={() => void load()} />
 {:else if loading}
@@ -250,13 +317,15 @@
 						<span class="tnum min-w-0 break-all text-ink-2">{detail}</span>
 					{/if}
 					{#if alert.silenced}
-						<Plate tone="ghost" bare label="Scheduled maintenance" />
+						<Plate tone="ghost" bare label="Quiet · maintenance window" />
 					{/if}
 					<span class="tnum text-ink-2" title={formatDateTime(alert.firing_since ?? alert.condition_since)}>
 						since {formatRelative(alert.firing_since ?? alert.condition_since)}
 					</span>
 					<a href="/alerts" class="text-ink-2 hover:text-ink hover:underline">Open alerts</a>
 					<AckControl {alert} onchanged={onackchange} />
+					<SnoozeControl {alert} {target} {silences} onchanged={() => onackchange?.(alert)} />
+					<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => onackchange?.(alert)} />
 				</div>
 				{#if alert.acked}
 					<p class="mt-0.5 text-[0.8125rem] text-ink-2" title={formatDateTime(alert.acked_until)}>

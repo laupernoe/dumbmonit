@@ -63,7 +63,7 @@ export function toApiError(cause: unknown): ApiError {
 interface RequestOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
 	body?: unknown;
-	query?: Record<string, string | number | undefined>;
+	query?: Record<string, string | number | boolean | undefined>;
 	signal?: AbortSignal;
 	/**
 	 * Marks a route not yet implemented on the server. A 404 then becomes an

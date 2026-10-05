@@ -9,13 +9,13 @@
 	 * still reads top-left first.
 	 * When `grouped` is set, rows are gathered under their device (host
 	 * grouping), which is how the Alerts page reads them; the Overview leaves
-	 * them as one flat stream. Acknowledged alerts leave the stream for a
-	 * quieter "Acknowledged" group at the bottom: still visible, no longer
-	 * shouting. The empty state only appears when the sky says so — a device
-	 * that has stopped reporting is never "nothing".
+	 * them as one flat stream. Acknowledged and snoozed alerts each leave the
+	 * stream for their own quieter group at the bottom: still visible, no
+	 * longer shouting. The empty state only appears when the sky says so — a
+	 * device that has stopped reporting is never "nothing".
 	 */
-	import type { Alert, Target } from '$lib/api';
-	import { isAckedRow, type Sky, type SkyRow } from '$lib/components/overview/sky';
+	import type { Alert, Silence, Target } from '$lib/api';
+	import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from '$lib/components/overview/sky';
 	import { EmptyState } from '$lib/ui';
 	import { CloudSun } from 'lucide-svelte';
 	import AlertRow from './AlertRow.svelte';
@@ -27,13 +27,12 @@
 		checkedLabel?: string;
 		grouped?: boolean;
 		showOpen?: boolean;
-		/** Fingerprint of the alert whose silence request is in flight. */
-		silencingKey?: string | null;
+		/** Maintenance windows, passed through to `SnoozeControl` for "time left". */
+		silences?: Silence[];
 		/** The pigeon instead of the icon in the quiet state (the Overview smiles). */
 		mascot?: 'watch' | 'dizzy' | 'happy';
-		onsilence: (alert: Alert, target: Target) => void;
-		/** An acknowledgement was made or lifted: refresh the alerts. */
-		onackchange?: (alert: Alert) => void;
+		/** An acknowledgement, a snooze or an ignore was made or lifted: refresh the alerts. */
+		onchanged?: () => void;
 	}
 
 	let {
@@ -41,10 +40,9 @@
 		checkedLabel,
 		grouped = false,
 		showOpen = false,
-		silencingKey = null,
+		silences = [],
 		mascot,
-		onsilence,
-		onackchange
+		onchanged
 	}: Props = $props();
 
 	/**
@@ -76,8 +74,13 @@
 		return out;
 	}
 
-	const rows = $derived(fold(sky.needsYou.filter((row) => !isAckedRow(row))));
+	const rows = $derived(
+		fold(sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row)))
+	);
 	const ackedRows = $derived(fold(sky.needsYou.filter(isAckedRow)));
+	const snoozedRows = $derived(
+		fold(sky.needsYou.filter((row) => isSnoozedRow(row) && !isAckedRow(row)))
+	);
 
 	/** What "quiet" means right now: everything reporting, or still waiting. */
 	const quietDescription = $derived.by(() => {
@@ -125,20 +128,34 @@
 	{#if folded.row.kind === 'device'}
 		<DeviceRow row={folded.row} />
 	{:else}
-		<AlertRow
-			row={folded.row}
-			extra={folded.extra}
-			{showOpen}
-			silencing={silencingKey === folded.row.alert.fingerprint}
-			{onsilence}
-			{onackchange}
-		/>
+		<AlertRow row={folded.row} extra={folded.extra} {showOpen} {silences} {onchanged} />
+	{/if}
+{/snippet}
+
+{#snippet snoozedSection()}
+	{#if snoozedRows.length > 0}
+		<div class={rows.length > 0 ? 'mt-6' : ''}>
+			<h3 class="label-tape mb-2 flex items-center gap-2">
+				Snoozed
+				<span class="tnum font-normal text-ink-3">· {snoozedRows.length}</span>
+			</h3>
+			<p class="mb-2 text-[0.8125rem] text-ink-2">
+				Hidden for a while: no reminder until the window ends or the alert resolves.
+			</p>
+			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+				{#each snoozedRows as folded, i (folded.row.key)}
+					<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
+						{@render rowView(folded)}
+					</div>
+				{/each}
+			</div>
+		</div>
 	{/if}
 {/snippet}
 
 {#snippet ackedSection()}
 	{#if ackedRows.length > 0}
-		<div class={rows.length > 0 ? 'mt-6' : ''}>
+		<div class={rows.length > 0 || snoozedRows.length > 0 ? 'mt-6' : ''}>
 			<h3 class="label-tape mb-2 flex items-center gap-2">
 				Acknowledged
 				<span class="tnum font-normal text-ink-3">· {ackedRows.length}</span>
@@ -188,6 +205,7 @@
 			</div>
 		{/each}
 	</div>
+	{@render snoozedSection()}
 	{@render ackedSection()}
 {:else}
 	<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -197,5 +215,6 @@
 			</div>
 		{/each}
 	</div>
+	{@render snoozedSection()}
 	{@render ackedSection()}
 {/if}

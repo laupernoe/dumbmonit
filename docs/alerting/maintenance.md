@@ -10,9 +10,14 @@ appearing out of nowhere after two hours.
 - **Alerts → Scheduled maintenance**: the list of windows, with *Active now*
   or *Scheduled*, and the form to add one.
 - **Device page → Silence 1 h / Silence until…**: a quick one-off window for
-  that device. The overview's *Needs you* list offers the same shortcut on each
-  alert.
+  the whole device.
 - ++ctrl+k++ → *Schedule maintenance*.
+
+**Snooze**, on one alert in the *Needs you* list or a device page, is a
+smaller version of the same mechanism: a one-off window scoped to that one
+alert's exact labels rather than the whole device, so a sibling rule keeps
+talking. It shows up here too, named `Snooze · …`. See
+[Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
 ## One-off window
 

@@ -24,7 +24,6 @@
 		setAlertRuleEnabled,
 		deleteAlertRule,
 		createAlertRule,
-		type Target,
 		type AlertRule,
 		type Silence,
 		type AlertHistoryEntry,
@@ -32,7 +31,6 @@
 		type AlertRulePayload,
 		type CollectorInfo
 	} from '$lib/api';
-	import type { Alert } from '$lib/api';
 	import { alertsStore } from '$lib/stores/alerts.svelte';
 	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -44,7 +42,7 @@
 	import HistorySection from '$lib/components/alerts/HistorySection.svelte';
 	import ChannelsSection from '$lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '$lib/components/notifications/NotificationPolicySection.svelte';
-	import { rulesByUid, targetsById, quickSilencePayload } from '$lib/components/alerts/helpers';
+	import { rulesByUid, targetsById } from '$lib/components/alerts/helpers';
 
 	type Tab = 'now' | 'scheduled' | 'rules' | 'notifications' | 'history';
 	const TABS: { id: Tab; label: string }[] = [
@@ -71,7 +69,6 @@
 	let error = $state<unknown>(null);
 
 	let scheduling = $state(false);
-	let silencingKey = $state<string | null>(null);
 	let removingSilenceId = $state<number | null>(null);
 	let ruleBusyId = $state<number | null>(null);
 	let actionError = $state<string | null>(null);
@@ -149,17 +146,10 @@
 		}
 	}
 
-	async function silence(alert: Alert, target: Target) {
-		silencingKey = alert.fingerprint;
-		actionError = null;
-		try {
-			await createSilence(quickSilencePayload(target));
-			await Promise.all([alertsStore.refresh(), refreshSilences()]);
-		} catch (cause) {
-			reportError(cause, 'Could not create the silence.');
-		} finally {
-			silencingKey = null;
-		}
+	/** A needs-you row changed (ack, snooze, ignore): the alerts and, since a
+	 *  snooze is a silence, the silences list (its "time left") both move. */
+	async function onNeedsYouChanged() {
+		await Promise.all([alertsStore.refresh(), refreshSilences()]);
 	}
 
 	async function createFromForm(payload: SilencePayload) {
@@ -325,14 +315,7 @@
 		{/each}
 	</div>
 {:else if tab === 'now'}
-	<NeedsYouList
-		{sky}
-		grouped
-		showOpen
-		{silencingKey}
-		onsilence={silence}
-		onackchange={() => void alertsStore.refresh()}
-	/>
+	<NeedsYouList {sky} grouped showOpen {silences} onchanged={() => void onNeedsYouChanged()} />
 {:else if tab === 'scheduled'}
 	<SilencesSection
 		{silences}

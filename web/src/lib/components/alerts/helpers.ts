@@ -253,8 +253,8 @@ export function silenceScope(silence: Silence, targets: Map<number, Target>): st
 /**
  * Payload for a one-hour "quick silence" on a device, starting now.
  *
- * Used from the alert rows: the operator wants this one alert to stop shouting
- * for an hour, not to open the whole scheduling form.
+ * Used from the device page: the whole device should stop shouting for an
+ * hour, not just one alert.
  */
 export function quickSilencePayload(target: Target) {
 	const now = new Date();
@@ -269,3 +269,8 @@ export function quickSilencePayload(target: Target) {
 		}
 	};
 }
+
+// Per-alert snooze (`SNOOZE_DURATIONS`, `snoozePayload`, `coveringSilence`) lives
+// in `./snooze`: it is a dependency-free module on purpose, so it can be unit
+// tested directly with `node --test`, the way `rules-filter.ts` already is.
+export { SNOOZE_DURATIONS, snoozePayload, coveringSilence } from './snooze';
