@@ -10,6 +10,15 @@
 //! - `GET /api/music/spotify/token` : un jeton d'accès court pour le Web
 //!   Playback SDK du mur. Réservé à une session de navigateur — jamais à un
 //!   jeton d'API — car c'est la seule chose qui sorte du serveur vers Spotify.
+//! - `GET /api/music/speaker`, `PUT /api/music/speaker` : l'enceinte vue des
+//!   réglages (compte, Premium, appareils listés par Spotify, rapports des
+//!   murs) et son nom.
+//! - `POST /api/music/speaker/report` : un mur dit où en est son enceinte, et
+//!   apprend si Spotify la liste bien.
+//! - `POST /api/music/speaker/play` : « Play here » sur le mur, « Test sound »
+//!   dans les réglages — le compte se met à jouer sur l'enceinte. Session de
+//!   navigateur seulement, lecteurs compris : c'est ce que permet déjà le jeton
+//!   que reçoit le mur.
 //!
 //! Le jeton de rafraîchissement, lui, ne quitte jamais le serveur.
 
@@ -25,9 +34,12 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{AdminIdentity, AdminUser, Authenticated, Identity};
-use crate::music::spotify::{SPEAKER_NAME, SpotifyError};
+use crate::music::spotify::{self as spotify_api, SpotifyError};
 use crate::music::store::{self, WallLink};
-use crate::music::{self, CallbackParams, MusicError, MusicHub, SpotifyNow, SpotifyView};
+use crate::music::{
+    self, CallbackParams, MusicError, MusicHub, SpeakerReport, SpeakerStatus, SpotifyNow,
+    SpotifyView,
+};
 use crate::state::AppState;
 
 /// Routes sous le garde de session (les écritures y exigent un administrateur).
@@ -39,6 +51,9 @@ pub fn routes() -> Router<AppState> {
         .route("/music/spotify/authorize", post(authorize))
         .route("/music/spotify/complete", post(complete))
         .route("/music/spotify/token", get(sdk_token))
+        .route("/music/speaker", get(speaker_status).put(set_speaker_name))
+        .route("/music/speaker/report", post(speaker_report))
+        .route("/music/speaker/play", post(speaker_play))
 }
 
 /// Le retour direct de Spotify : une navigation du navigateur, sans l'en-tête
@@ -55,7 +70,7 @@ pub struct WallMusic {
     pub spotify: SpotifyNow,
     pub link: Option<WallLink>,
     /// Nom de l'appareil Spotify Connect que le mur annonce.
-    pub speaker_name: &'static str,
+    pub speaker_name: String,
 }
 
 /// `GET /api/music/now`.
@@ -66,7 +81,8 @@ async fn now(
 ) -> ApiResult<Response> {
     let spotify = hub.now(&state.pool, &state.cipher).await;
     let link = store::link(&state.pool).await?;
-    Ok(no_store(Json(WallMusic { spotify, link, speaker_name: SPEAKER_NAME })))
+    let speaker_name = store::speaker_name(&state.pool).await?;
+    Ok(no_store(Json(WallMusic { spotify, link, speaker_name })))
 }
 
 #[derive(Debug, Deserialize)]
@@ -108,6 +124,97 @@ async fn sdk_token(
             "access_token": token.token,
             "expires_in": token.expires_in().as_secs(),
         }))),
+        Err(error) => music_error(error),
+    }
+}
+
+// ---------------------------------------------------------------- l'enceinte
+
+/// `GET /api/music/speaker` — l'enceinte vue des réglages.
+async fn speaker_status(
+    State(state): State<AppState>,
+    Extension(hub): Extension<MusicHub>,
+    Identity(_): Identity,
+) -> ApiResult<Response> {
+    let status: SpeakerStatus = hub.speaker_status(&state.pool, &state.cipher).await?;
+    Ok(no_store(Json(status)))
+}
+
+#[derive(Debug, Deserialize)]
+struct SpeakerNamePayload {
+    /// `null` (ou vide) : revenir au nom par défaut.
+    name: Option<String>,
+}
+
+/// `PUT /api/music/speaker` — renomme l'enceinte de tous les murs.
+async fn set_speaker_name(
+    State(state): State<AppState>,
+    AdminIdentity(_): AdminIdentity,
+    Json(payload): Json<SpeakerNamePayload>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let name = match payload.name.as_deref().map(str::trim).filter(|n| !n.is_empty()) {
+        None => None,
+        Some(name) => Some(
+            spotify_api::clean_speaker_name(name)
+                .map_err(|why| ApiError::BadRequest(why.into()))?,
+        ),
+    };
+    let name = name.filter(|n| n != spotify_api::SPEAKER_NAME);
+    store::set_speaker_name(&state.pool, name.as_deref()).await?;
+    Ok(Json(json!({ "speaker_name": store::speaker_name(&state.pool).await? })))
+}
+
+/// `POST /api/music/speaker/report` — un mur dit où en est son enceinte.
+///
+/// Session de navigateur seulement : ce sont les murs qui parlent ici.
+async fn speaker_report(
+    State(state): State<AppState>,
+    Extension(hub): Extension<MusicHub>,
+    Authenticated(_): Authenticated,
+    Json(report): Json<SpeakerReport>,
+) -> ApiResult<Response> {
+    let report = report.check().map_err(|why| ApiError::BadRequest(why.into()))?;
+    let listed = hub.report(&state.pool, &state.cipher, report).await;
+    Ok(no_store(Json(json!({ "listed": listed }))))
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct PlayPayload {
+    /// L'appareil du mur ; absent, celui qui porte le nom de l'enceinte.
+    #[serde(default)]
+    device_id: Option<String>,
+}
+
+/// `POST /api/music/speaker/play` — le compte se met à jouer sur l'enceinte.
+async fn speaker_play(
+    State(state): State<AppState>,
+    Extension(hub): Extension<MusicHub>,
+    Authenticated(_): Authenticated,
+    Json(payload): Json<PlayPayload>,
+) -> Response {
+    let name = match store::speaker_name(&state.pool).await {
+        Ok(name) => name,
+        Err(error) => return ApiError::Internal(error).into_response(),
+    };
+    let requested = payload.device_id.filter(|id| {
+        (1..=128).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric())
+    });
+    let device = match requested {
+        Some(id) => id,
+        None => match hub.speaker_device(&state.pool, &state.cipher, &name).await {
+            Ok(Some(id)) => id,
+            Ok(None) => {
+                let message = format!(
+                    "Spotify does not list “{name}” right now. Open the wall on the display, \
+                     check that it says the speaker is ready, then try again."
+                );
+                return no_store((StatusCode::CONFLICT, Json(json!({ "error": message }))));
+            }
+            Err(error) => return music_error(error),
+        },
+    };
+    match hub.transfer(&state.pool, &state.cipher, &device).await {
+        Ok(()) => no_store(Json(json!({ "device_id": device, "speaker_name": name }))),
         Err(error) => music_error(error),
     }
 }
@@ -238,6 +345,7 @@ async fn disconnect(
     ClientIp(ip): ClientIp,
 ) -> ApiResult<StatusCode> {
     store::delete_account(&state.pool).await?;
+    store::set_product(&state.pool, None).await?;
     hub.forget().await;
     let actor = principal.label();
     audit::record(&state.pool, Some(&actor), "spotify.disconnected", None, ip).await;

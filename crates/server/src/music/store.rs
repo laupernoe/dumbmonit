@@ -167,3 +167,35 @@ pub async fn clear_link(pool: &SqlitePool) -> Result<()> {
         .context("suppression du lien du mur")?;
     Ok(())
 }
+
+// ------------------------------------------------------------- l'enceinte
+
+/// Clé du nom d'appareil choisi dans les réglages (table `settings`).
+const SPEAKER_NAME_KEY: &str = "music.speaker_name";
+/// Clé de l'abonnement du compte relié (`premium`, `free`…), quand Spotify le dit.
+const PRODUCT_KEY: &str = "music.spotify_product";
+
+/// Le nom sous lequel les murs s'annoncent : celui des réglages, sinon le défaut.
+pub async fn speaker_name(pool: &SqlitePool) -> Result<String> {
+    let stored: Option<String> = crate::auth::settings::get(pool, SPEAKER_NAME_KEY).await?;
+    Ok(stored.unwrap_or_else(|| super::spotify::SPEAKER_NAME.to_string()))
+}
+
+/// `None` revient au nom par défaut.
+pub async fn set_speaker_name(pool: &SqlitePool, name: Option<&str>) -> Result<()> {
+    match name {
+        Some(name) => crate::auth::settings::set(pool, SPEAKER_NAME_KEY, &name).await,
+        None => crate::auth::settings::delete(pool, SPEAKER_NAME_KEY).await,
+    }
+}
+
+pub async fn product(pool: &SqlitePool) -> Result<Option<String>> {
+    crate::auth::settings::get(pool, PRODUCT_KEY).await
+}
+
+pub async fn set_product(pool: &SqlitePool, product: Option<&str>) -> Result<()> {
+    match product {
+        Some(product) => crate::auth::settings::set(pool, PRODUCT_KEY, &product).await,
+        None => crate::auth::settings::delete(pool, PRODUCT_KEY).await,
+    }
+}

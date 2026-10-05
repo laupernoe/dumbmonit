@@ -3661,6 +3661,129 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
+  /api/music/speaker:
+    get:
+      operationId: getWallSpeaker
+      tags: [Wall music]
+      summary: The wall's Spotify speaker, as Settings shows it
+      description: >-
+        The speaker name, the connected account, whether it has Premium (when
+        Spotify or a wall said so), the account's Spotify Connect devices right
+        now, whether the speaker is among them, and what each wall reported in
+        the last fifteen minutes (browser, phase, problem).
+      x-token-scope: read
+      responses:
+        "200":
+          description: The speaker's state (never cached).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallSpeaker" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setWallSpeakerName
+      tags: [Wall music]
+      summary: Rename the speaker every wall announces (admin)
+      description: >-
+        `null` or an empty name goes back to "DumbMonit Wall". Walls pick the
+        new name up within a few seconds.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: [string, "null"], maxLength: 64 }
+      responses:
+        "200":
+          description: The name now in use.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [speaker_name]
+                properties:
+                  speaker_name: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/speaker/report:
+    post:
+      operationId: reportWallSpeaker
+      tags: [Wall music]
+      summary: A wall reports its speaker's state
+      description: >-
+        Browser sessions only: sent by the wall every minute and on every
+        change. The reply says whether Spotify lists the wall's device
+        (`null` when it cannot be checked).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [display, name, phase]
+              properties:
+                display: { type: string, description: "Random id kept by the wall's browser (8–64 letters, digits, dashes)." }
+                name: { type: string }
+                phase: { type: string, enum: [off, unsupported, starting, ready, error] }
+                activated: { type: boolean }
+                device_id: { type: [string, "null"] }
+                problem: { type: [string, "null"] }
+                browser: { type: [string, "null"] }
+                premium: { type: [boolean, "null"] }
+      responses:
+        "200":
+          description: Whether Spotify lists this wall.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [listed]
+                properties:
+                  listed: { type: [boolean, "null"] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/speaker/play:
+    post:
+      operationId: playOnWallSpeaker
+      tags: [Wall music]
+      summary: Play the account on the wall's speaker
+      description: >-
+        Browser sessions only (any role: the wall already holds a token that
+        can do this). Transfers the account's playback to `device_id`, or to
+        the device named like the speaker, and resumes it — "Play here" on the
+        wall, "Test sound" in Settings.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_id: { type: [string, "null"] }
+      responses:
+        "200":
+          description: Spotify now plays there.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device_id, speaker_name]
+                properties:
+                  device_id: { type: string }
+                  speaker_name: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
 components:
   securitySchemes:
@@ -5628,6 +5751,44 @@ components:
             - { $ref: "#/components/schemas/WallLink" }
             - { type: "null" }
         speaker_name: { type: string }
+    WallSpeaker:
+      type: object
+      required: [speaker_name, status, devices, listed, walls]
+      properties:
+        speaker_name: { type: string }
+        status: { type: string, enum: [off, connected, expired] }
+        account_name: { type: [string, "null"] }
+        premium: { type: [boolean, "null"], description: "null: unknown." }
+        devices:
+          type: array
+          items:
+            type: object
+            required: [name, type, is_active, is_restricted]
+            properties:
+              id: { type: [string, "null"] }
+              name: { type: string }
+              type: { type: string }
+              is_active: { type: boolean }
+              is_restricted: { type: boolean }
+              volume_percent: { type: [integer, "null"] }
+        listed: { type: boolean, description: "Spotify lists the speaker among the account's devices." }
+        walls:
+          type: array
+          items:
+            type: object
+            required: [display, name, phase, activated, seen_at]
+            properties:
+              display: { type: string }
+              name: { type: string }
+              phase: { type: string }
+              activated: { type: boolean }
+              device_id: { type: [string, "null"] }
+              problem: { type: [string, "null"] }
+              browser: { type: [string, "null"] }
+              premium: { type: [boolean, "null"] }
+              listed: { type: [boolean, "null"] }
+              seen_at: { type: string, description: "UTC, no suffix." }
+        error: { type: [string, "null"] }
     SpotifyAccount:
       type: object
       required: [status, missing_scopes, speaker_name, scopes, loopback_redirect_uri, callback_path]
