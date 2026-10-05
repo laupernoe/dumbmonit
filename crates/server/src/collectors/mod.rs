@@ -41,16 +41,16 @@ pub use dumbmonit_collectors::{
     snmp, synology, truenas, uptime,
 };
 pub use dumbmonit_collectors::{
+    ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector, selfhosted,
+};
+pub use dumbmonit_collectors::{
     FortigateCollector, PfsenseCollector, SophosCollector, TailscaleCollector, UnraidCollector,
     VeeamCollector, fortigate, pfsense, sophos, tailscale, unraid, veeam,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{
     HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
-};
-pub use dumbmonit_collectors::{
-    ImmichCollector, JellyfinCollector, NextcloudCollector, PaperlessCollector, PlexCollector,
-    selfhosted,
 };
 pub use dumbmonit_collectors::{KubernetesCollector, kubernetes};
 pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};

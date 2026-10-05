@@ -177,6 +177,9 @@ async fn run(config: Config) -> Result<()> {
     registry.register(Arc::new(collectors::PaperlessCollector::new()));
     registry.register(Arc::new(collectors::JellyfinCollector::new()));
     registry.register(Arc::new(collectors::PlexCollector::new()));
+    // Forges auto-hébergées (`collectors/selfhosted/{gitlab,forgejo}.rs`).
+    registry.register(Arc::new(collectors::GitlabCollector::new()));
+    registry.register(Arc::new(collectors::ForgejoCollector::new()));
     // Filtrage DNS (Pi-hole, AdGuard Home), onduleurs derrière NUT, routeurs
     // MikroTik.
     registry.register(Arc::new(collectors::PiholeCollector::new()));

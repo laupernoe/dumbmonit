@@ -1,0 +1,23 @@
+[
+  {
+    "name": "update_checker",
+    "schedule": "@every 168h",
+    "next": "2026-10-10T03:00:00Z",
+    "prev": "2026-10-03T03:00:00Z",
+    "exec_times": 52
+  },
+  {
+    "name": "cleanup_hook_task_table",
+    "schedule": "@every 168h",
+    "next": "2026-09-20T03:00:00Z",
+    "prev": "2026-09-13T03:00:00Z",
+    "exec_times": 3
+  },
+  {
+    "name": "repo_health_check",
+    "schedule": "@every 24h",
+    "next": "2026-10-04T03:00:00Z",
+    "prev": "2026-10-03T03:00:00Z",
+    "exec_times": 120
+  }
+]

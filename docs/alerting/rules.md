@@ -303,6 +303,22 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcl
 | Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 
+### Self-hosted forges
+
+GitLab (self-managed) and Forgejo/Gitea ([devices](../devices/gitlab.md)). An
+instance that answers nothing at all is Device unreachable; these rules watch
+the parts that keep serving pages while quietly falling behind — Sidekiq,
+CI/CD runners, a scheduled task that stopped running.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| GitLab runners all offline | Every CI/CD runner GitLab knows is offline, and at least one is registered (`dumbmonit_gitlab_runners_online and on (target) dumbmonit_gitlab_runners_total > 0`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| GitLab Sidekiq backlog high | A Sidekiq queue has more than 500 jobs waiting (`max by (target) (dumbmonit_gitlab_sidekiq_queue_backlog)`): notifications, webhooks and imports fall behind. | > 500 | 15 min | Advisory (`warning`) | 6 h |
+| GitLab migrations pending | Database migrations from an upgrade are left to apply (`dumbmonit_gitlab_migrations_pending`). | > 0 | 1 h | Info (`info`) | 24 h |
+| GitLab license expiring | The Enterprise Edition licence expires in less than 30 days (`dumbmonit_gitlab_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 24 h |
+| Forgejo/Gitea runners all offline | Every Actions runner is offline, and at least one is registered (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| Forgejo/Gitea scheduled task overdue | A scheduled task (repository check, cleanup, update checker) did not run at its own interval (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+
 ### Client devices
 
 One rule, shared by every integration that tracks devices connecting and backing up — Immich's phones, tablets and desktops ([devices](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([devices](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([devices](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the device in the notification. Synology Active Backup for Business tracks its own devices separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).
