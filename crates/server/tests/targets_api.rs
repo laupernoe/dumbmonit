@@ -31,6 +31,7 @@ async fn setup() -> TestApp {
     let dir = tempfile::tempdir().expect("temporary directory");
     let mut config = Config::from_env().expect("default configuration");
     config.data_dir = dir.path().to_path_buf();
+    config.setup_code = Some("test-setup-code".into());
     config.victoria_url = Some(UNREACHABLE_VICTORIA.to_string());
 
     let pool = db::open(&config.database_path()).await.expect("database opened");
@@ -55,7 +56,7 @@ async fn setup() -> TestApp {
         .request(
             "POST",
             "/api/auth/setup",
-            Some(json!({ "username": "admin", "password": PASSWORD })),
+            Some(json!({ "setup_code": "test-setup-code", "username": "admin", "password": PASSWORD })),
             None,
         )
         .await;

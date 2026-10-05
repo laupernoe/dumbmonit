@@ -1,9 +1,13 @@
 #!/bin/sh
 # Installe l'agent système DumbMonit et son service.
 #
-#   curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://serveur:8080
+#   curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://serveur:8080 \
+#       --sha256=linux-x86_64:<empreinte>,linux-aarch64:<empreinte>,freebsd-x86_64:<empreinte>
 #
-# C'est la commande que le serveur affiche à la création d'un jeton ; le binaire
+# C'est la commande que le serveur affiche à la création d'un jeton : elle porte
+# l'empreinte SHA-256 attendue de chaque binaire qu'il livre, et le script refuse
+# d'installer un binaire téléchargé qui n'y correspond pas — ou pour lequel elle
+# manque (voir `verifier_empreinte`). Le binaire
 # est téléchargé sur ce même serveur, qui l'embarque dans son image — sauf pour
 # macOS, dont le binaire est publié avec chaque version sur GitHub : le serveur
 # y renvoie, et le téléchargement suit (voir plus bas).
@@ -34,6 +38,9 @@ SERVICES=""
 TAGS=""
 HOSTNAME_OVERRIDE=""
 LOCAL_BIN=""
+# Empreintes attendues, `plateforme-arch:hex` séparées par des virgules.
+EXPECTED_SHA256=""
+SKIP_CHECKSUM=0
 UNINSTALL=0
 NO_START=0
 
@@ -63,6 +70,15 @@ OPTIONS:
     --tags=key=value    Tags, comma-separated
     --hostname=NAME     Name announced to the server (default: the machine's)
     --bin=PATH          Local binary to install instead of downloading it
+    --sha256=LIST       Expected SHA-256 of the downloaded binary, as
+                        platform-arch:hex pairs separated by commas (for example
+                        linux-x86_64:0a1b…). The install command shown by the
+                        server includes it; a download without a matching
+                        checksum is refused.
+    --insecure-skip-checksum
+                        Install a downloaded binary without verifying it.
+                        Only for air-gapped or manual setups: anyone able to
+                        tamper with the download then runs code as root here.
     --no-start          Install everything, but do not contact the server or
                         start the service (machine image, testing)
     --uninstall         Uninstall the agent and delete its configuration
@@ -97,6 +113,8 @@ for argument in "$@"; do
         --tags=*)     TAGS="${argument#*=}" ;;
         --hostname=*) HOSTNAME_OVERRIDE="${argument#*=}" ;;
         --bin=*)      LOCAL_BIN="${argument#*=}" ;;
+        --sha256=*)   EXPECTED_SHA256="${argument#*=}" ;;
+        --insecure-skip-checksum) SKIP_CHECKSUM=1 ;;
         --no-start)   NO_START=1 ;;
         --uninstall)  UNINSTALL=1 ;;
         --help|-h)    usage; exit 0 ;;
@@ -345,22 +363,51 @@ and run this script again with --bin=PATH." >&2
     verifier_empreinte "$source_url" "$destination"
 }
 
-# Le serveur publie l'empreinte SHA-256 de chaque binaire à côté de celui-ci
-# (`<url>.sha256`, au format de `sha256sum`). Un binaire qui ne lui correspond
-# pas — remplacé en chemin, téléchargement tronqué — n'est pas installé. Sans
-# outil pour la calculer, on prévient et on continue : un système minimal ne doit
-# pas être privé d'agent pour autant.
+# Empreinte attendue pour cette plateforme, tirée de --sha256. Accepte aussi
+# une empreinte nue, pour qui installe à la main sur une seule plateforme.
+empreinte_attendue() {
+    cle="$PLATFORM-$ARCH"
+    reste="$EXPECTED_SHA256,"
+    while [ -n "$reste" ]; do
+        entree="${reste%%,*}"
+        reste="${reste#*,}"
+        entree="$(printf '%s' "$entree" | tr -d '[:space:]' | tr 'A-F' 'a-f')"
+        case "$entree" in
+            "$cle":*) printf '%s' "${entree#*:}"; return 0 ;;
+            *:*|"") ;;
+            *) printf '%s' "$entree"; return 0 ;;
+        esac
+    done
+    return 0
+}
+
+# Le binaire téléchargé n'est installé que s'il correspond à l'empreinte que
+# porte la commande d'installation (--sha256). Elle vient de l'écran où
+# l'administrateur a copié la commande, pas du canal qui livre le binaire : un
+# binaire remplacé en chemin, ou un téléchargement tronqué, est refusé. Pas
+# d'empreinte, pas d'outil pour la calculer : refus aussi, sauf
+# --insecure-skip-checksum, qui le dit haut et fort.
 verifier_empreinte() {
     source_url="$1"
     fichier="$2"
-    attendu_fichier="$fichier.sha256"
-    if ! telecharger "$source_url.sha256" "$attendu_fichier" 2>/dev/null; then
-        rm -f "$attendu_fichier"
-        echo "Warning: no checksum published at $source_url.sha256, binary not verified" >&2
+    if [ "$SKIP_CHECKSUM" -eq 1 ]; then
+        echo "WARNING: --insecure-skip-checksum: the downloaded binary is NOT verified." >&2
+        echo "WARNING: anyone able to alter the download now runs code as root on this machine." >&2
         return 0
     fi
-    attendu="$(cut -d' ' -f1 "$attendu_fichier" | tr -d '[:space:]')"
-    rm -f "$attendu_fichier"
+    attendu="$(empreinte_attendue)"
+    if [ -z "$attendu" ]; then
+        rm -f "$fichier"
+        echec "no expected checksum for $PLATFORM-$ARCH: nothing was installed.
+       Copy a fresh install command from DumbMonit (Settings > Agents): it carries
+       --sha256 for the binaries this server ships. For a binary downloaded
+       elsewhere, verify it yourself and pass --sha256=$PLATFORM-$ARCH:<hex>, or
+       install it with --bin=PATH."
+    fi
+    case "$attendu" in
+        *[!0-9a-f]*) rm -f "$fichier"; echec "invalid --sha256 value for $PLATFORM-$ARCH: $attendu" ;;
+    esac
+    [ "${#attendu}" -eq 64 ] || { rm -f "$fichier"; echec "invalid --sha256 value for $PLATFORM-$ARCH: $attendu"; }
     # `sha256sum` sous Linux, `shasum -a 256` sous macOS, `sha256 -q` sous
     # FreeBSD : trois noms pour la même empreinte.
     if command -v sha256sum >/dev/null 2>&1; then
@@ -370,13 +417,17 @@ verifier_empreinte() {
     elif command -v sha256 >/dev/null 2>&1; then
         obtenu="$(sha256 -q "$fichier" | tr -d '[:space:]')"
     else
-        echo "Warning: no SHA-256 tool found, binary not verified" >&2
-        return 0
+        rm -f "$fichier"
+        echec "no SHA-256 tool found (sha256sum, shasum or sha256): the binary cannot be
+       verified, so nothing was installed. Install one of them, or use
+       --insecure-skip-checksum if you accept an unverified binary."
     fi
-    if [ -z "$attendu" ] || [ "$attendu" != "$obtenu" ]; then
+    if [ "$attendu" != "$obtenu" ]; then
         rm -f "$fichier"
         echec "checksum mismatch for $source_url (expected $attendu, got $obtenu):
-       the download is corrupt or has been tampered with. Nothing was installed."
+       the download is corrupt or has been tampered with — or the server was
+       upgraded since this command was copied. Nothing was installed. Copy a fresh
+       install command from DumbMonit (Settings > Agents) and run it again."
     fi
     info "checksum verified ($obtenu)"
 }

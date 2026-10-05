@@ -226,12 +226,13 @@ pub async fn create_token(
     let (record, secret) = agent::create_token(&state.pool, &name, payload.policy()?).await?;
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
     let base_url = normalise_base_url(payload.base_url.as_deref(), state.config.bind);
+    let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir).await;
 
     Ok((
         StatusCode::CREATED,
         Json(CreatedToken {
-            install_linux: install_linux(&base_url, &secret),
-            install_windows: install_windows(&base_url, &secret),
+            install_linux: install_linux(&base_url, &secret, &checksums),
+            install_windows: install_windows(&base_url, &secret, &checksums),
             token: record.into(),
             secret,
         }),
@@ -264,16 +265,38 @@ fn normalise_base_url(provided: Option<&str>, bind: std::net::SocketAddr) -> Str
     }
 }
 
-fn install_linux(base_url: &str, token: &str) -> String {
-    format!("curl -sSL {base_url}/install.sh | sh -s -- --token={token} --url={base_url}")
+/// Commande d'installation Unix. Elle porte l'empreinte de chaque binaire Unix
+/// que l'image livre (`--sha256=linux-x86_64:…,…`) : le script refuse un
+/// téléchargement qui n'y correspond pas, ou pour lequel elle manque.
+fn install_linux(base_url: &str, token: &str, checksums: &[(String, String)]) -> String {
+    let mut command =
+        format!("curl -sSL {base_url}/install.sh | sh -s -- --token={token} --url={base_url}");
+    let unix: Vec<String> = checksums
+        .iter()
+        .filter(|(platform, _)| !platform.starts_with("windows-"))
+        .map(|(platform, digest)| format!("{platform}:{digest}"))
+        .collect();
+    if !unix.is_empty() {
+        command.push_str(&format!(" --sha256={}", unix.join(",")));
+    }
+    command
 }
 
-fn install_windows(base_url: &str, token: &str) -> String {
+fn install_windows(base_url: &str, token: &str, checksums: &[(String, String)]) -> String {
     // `iex` ne sait pas passer d'arguments : il faut construire un bloc de script.
     // C'est la formule consacrée pour un installateur PowerShell paramétré.
-    format!(
+    let mut command = format!(
         "& ([scriptblock]::Create((irm {base_url}/install.ps1))) -Token {token} -Url {base_url}"
-    )
+    );
+    let windows: Vec<String> = checksums
+        .iter()
+        .filter(|(platform, _)| platform.starts_with("windows-"))
+        .map(|(platform, digest)| format!("{platform}:{digest}"))
+        .collect();
+    if !windows.is_empty() {
+        command.push_str(&format!(" -Sha256 {}", windows.join(",")));
+    }
+    command
 }
 
 #[cfg(test)]
@@ -341,9 +364,31 @@ mod tests {
     #[test]
     fn the_install_command_is_the_one_promised_in_the_documentation() {
         assert_eq!(
-            install_linux("http://serveur:8080", "dmon_abc"),
+            install_linux("http://serveur:8080", "dmon_abc", &[]),
             "curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_abc --url=http://serveur:8080"
         );
-        assert!(install_windows("http://serveur:8080", "dmon_abc").contains("install.ps1"));
+        assert!(install_windows("http://serveur:8080", "dmon_abc", &[]).contains("install.ps1"));
+    }
+
+    #[test]
+    fn the_install_commands_carry_the_checksums_of_their_platforms() {
+        let checksums = vec![
+            ("linux-x86_64".to_string(), "a".repeat(64)),
+            ("linux-aarch64".to_string(), "b".repeat(64)),
+            ("windows-x86_64".to_string(), "c".repeat(64)),
+        ];
+        let linux = install_linux("http://s:8080", "dmon_abc", &checksums);
+        assert!(
+            linux.ends_with(&format!(
+                " --sha256=linux-x86_64:{},linux-aarch64:{}",
+                "a".repeat(64),
+                "b".repeat(64)
+            )),
+            "{linux}"
+        );
+        assert!(!linux.contains(&"c".repeat(64)));
+        let windows = install_windows("http://s:8080", "dmon_abc", &checksums);
+        assert!(windows.ends_with(&format!(" -Sha256 windows-x86_64:{}", "c".repeat(64))));
+        assert!(!windows.contains(&"a".repeat(64)));
     }
 }

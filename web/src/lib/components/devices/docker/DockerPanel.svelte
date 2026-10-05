@@ -11,6 +11,7 @@
 	 * container's own charts only once it is opened.
 	 */
 	import type { Target } from '$lib/api';
+	import { fetchAgentChecksums, unixSha256Argument } from '$lib/api/agent_files';
 	import { formatDuration, formatRelative } from '$lib/format';
 	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, Skeleton, Toggle, type Tone } from '$lib/ui';
 	import Chart from '$lib/components/Chart.svelte';
@@ -112,7 +113,21 @@
 	);
 	// The token is not known here: the placeholder points at Settings → Agents.
 	const origin = typeof window === 'undefined' ? 'http://server:8080' : window.location.origin;
-	const installHint = `curl -sSL ${origin}/install.sh | sh -s -- --token=<token> --url=${origin}`;
+	// The installer refuses a download without its checksum: carry the ones this server ships.
+	let sha256Argument = $state<string | null>(null);
+	$effect(() => {
+		let cancelled = false;
+		void fetchAgentChecksums().then((found) => {
+			if (!cancelled) sha256Argument = unixSha256Argument(found);
+		});
+		return () => {
+			cancelled = true;
+		};
+	});
+	const installHint = $derived(
+		`curl -sSL ${origin}/install.sh | sh -s -- --token=<token> --url=${origin}` +
+			(sha256Argument ? ` --sha256=${sha256Argument}` : '')
+	);
 
 	// --- Loading ------------------------------------------------------------------
 

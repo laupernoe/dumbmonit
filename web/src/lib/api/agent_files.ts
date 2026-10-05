@@ -42,6 +42,18 @@ export async function fetchAgentChecksum(file: string): Promise<AgentChecksum> {
 	}
 }
 
+/**
+ * The `--sha256=` value `install.sh` expects: `platform-arch:hex` pairs for the
+ * Unix binaries found, or `null` when the image ships none. The installer
+ * refuses a download without a matching checksum.
+ */
+export function unixSha256Argument(checksums: AgentChecksum[]): string | null {
+	const pairs = checksums
+		.filter((entry) => entry.sha256 && !entry.file.endsWith('.exe'))
+		.map((entry) => `${entry.file.replace(/^dumbmonit-agent-/, '')}:${entry.sha256}`);
+	return pairs.length > 0 ? pairs.join(',') : null;
+}
+
 /** Checksums of every agent binary the server knows, in a stable order. */
 export function fetchAgentChecksums(): Promise<AgentChecksum[]> {
 	return Promise.all(Object.values(AGENT_FILES).map(fetchAgentChecksum));

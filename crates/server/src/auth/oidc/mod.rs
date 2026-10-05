@@ -47,6 +47,10 @@ pub struct OidcConfig {
     pub client_secret: String,
     pub provider_name: String,
     pub scopes: String,
+    /// Création de comptes à la première connexion. Désactivée par défaut : un
+    /// réglage enregistré sans ce champ, ou une variable d'environnement absente,
+    /// vaut « non ». Seul un choix explicite de l'administrateur l'active.
+    #[serde(default)]
     pub auto_create: bool,
     pub admin_groups: Vec<String>,
     pub groups_claim: String,
@@ -101,6 +105,9 @@ impl OidcConfig {
 #[derive(Debug, Clone, Default)]
 pub struct OidcEnv {
     pub config: OidcConfig,
+    /// `DUMBMONIT_OIDC_AUTO_CREATE` absente : la création automatique est
+    /// désactivée par défaut, et l'écran des réglages le signale.
+    pub auto_create_unset: bool,
 }
 
 impl OidcEnv {
@@ -113,13 +120,13 @@ impl OidcEnv {
             client_secret: var("DUMBMONIT_OIDC_CLIENT_SECRET"),
             provider_name: var("DUMBMONIT_OIDC_PROVIDER_NAME"),
             scopes: var("DUMBMONIT_OIDC_SCOPES"),
-            auto_create: auto_create.trim().is_empty() || flag(&auto_create),
+            auto_create: flag(&auto_create),
             admin_groups: vec![var("DUMBMONIT_OIDC_ADMIN_GROUPS")],
             groups_claim: var("DUMBMONIT_OIDC_GROUPS_CLAIM"),
             public_url: var("DUMBMONIT_PUBLIC_URL"),
         }
         .normalized();
-        Self { config }
+        Self { config, auto_create_unset: auto_create.trim().is_empty() }
     }
 
     /// L'environnement fournit-il de quoi se connecter ?
@@ -148,6 +155,16 @@ pub enum Source {
 pub struct Resolved {
     pub config: OidcConfig,
     pub source: Source,
+    /// `auto_create` n'a jamais été choisi explicitement : il vaut « non » par
+    /// défaut. Les versions antérieures l'activaient dans ce cas.
+    pub auto_create_defaulted: bool,
+}
+
+/// Lit seulement la présence du champ `auto_create` dans le réglage enregistré.
+#[derive(Deserialize)]
+struct AutoCreateProbe {
+    #[serde(default)]
+    auto_create: Option<bool>,
 }
 
 /// Configuration effective : le réglage enregistré, sinon l'environnement.
@@ -155,12 +172,26 @@ pub async fn resolve(pool: &SqlitePool, cipher: &Cipher, env: &OidcEnv) -> Resul
     if let Some(mut saved) = settings::get::<OidcConfig>(pool, SETTINGS_KEY).await? {
         saved.client_secret =
             settings::get_secret(pool, cipher, SECRET_KEY).await?.unwrap_or_default();
-        return Ok(Resolved { config: saved.normalized(), source: Source::Settings });
+        let probe = settings::get::<AutoCreateProbe>(pool, SETTINGS_KEY).await?;
+        let auto_create_defaulted = probe.is_none_or(|probe| probe.auto_create.is_none());
+        return Ok(Resolved {
+            config: saved.normalized(),
+            source: Source::Settings,
+            auto_create_defaulted,
+        });
     }
     if env.is_set() {
-        return Ok(Resolved { config: env.config.clone(), source: Source::Env });
+        return Ok(Resolved {
+            config: env.config.clone(),
+            source: Source::Env,
+            auto_create_defaulted: env.auto_create_unset,
+        });
     }
-    Ok(Resolved { config: OidcConfig::default().normalized(), source: Source::None })
+    Ok(Resolved {
+        config: OidcConfig::default().normalized(),
+        source: Source::None,
+        auto_create_defaulted: true,
+    })
 }
 
 /// Enregistre la configuration. Un secret vide conserve celui déjà stocké.
@@ -206,6 +237,34 @@ mod tests {
             "https://monit.example.org/api/auth/oidc/callback"
         );
         assert!(config.enabled());
+    }
+
+    #[test]
+    fn auto_create_is_off_unless_explicitly_chosen() {
+        // Un réglage enregistré sans le champ (antérieur à son introduction).
+        let legacy: OidcConfig = serde_json::from_str(
+            r#"{"issuer":"https://id.example.org","client_id":"c","provider_name":"SSO",
+                "scopes":"openid","admin_groups":[],"groups_claim":"groups","public_url":""}"#,
+        )
+        .unwrap();
+        assert!(!legacy.auto_create);
+        // Un choix explicite est conservé tel quel.
+        let chosen: OidcConfig = serde_json::from_str(
+            r#"{"issuer":"","client_id":"","provider_name":"","scopes":"","auto_create":true,
+                "admin_groups":[],"groups_claim":"","public_url":""}"#,
+        )
+        .unwrap();
+        assert!(chosen.auto_create);
+        assert!(!OidcConfig::default().auto_create);
+    }
+
+    #[test]
+    fn the_auto_create_variable_must_be_truthy() {
+        assert!(!flag(""));
+        assert!(!flag("0"));
+        assert!(!flag("false"));
+        assert!(flag("true"));
+        assert!(flag(" YES "));
     }
 
     #[test]

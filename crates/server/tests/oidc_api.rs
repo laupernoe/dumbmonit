@@ -10,7 +10,7 @@ use axum::extract::{Form, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use common::{PASSWORD, TestApp, setup_with};
+use common::{PASSWORD, TestApp, base_config, build, setup_with};
 use dumbmonit_server::auth::oidc::{OidcConfig, OidcEnv};
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use serde::Deserialize;
@@ -123,7 +123,7 @@ async fn app_with_sso(provider: &Shared, adjust: impl FnOnce(&mut OidcConfig)) -
             ..Default::default()
         };
         adjust(&mut oidc);
-        config.oidc = OidcEnv { config: oidc.normalized() };
+        config.oidc = OidcEnv { config: oidc.normalized(), auto_create_unset: false };
         // Le fournisseur factice écoute en clair sur la boucle locale.
         config.oidc_allow_http = true;
     })
@@ -417,6 +417,82 @@ async fn without_auto_create_an_unknown_identity_is_refused() {
     assert_eq!(reply.status, StatusCode::SEE_OTHER);
     assert_eq!(reply.location.as_deref(), Some("/login?error=oidc&reason=no_account"));
     assert!(reply.set_cookie.is_none());
+}
+
+/// Sans `DUMBMONIT_OIDC_AUTO_CREATE`, la création automatique est désactivée
+/// (elle était active par défaut auparavant) et les réglages le signalent.
+#[tokio::test]
+async fn auto_create_is_off_when_the_variable_is_not_set() {
+    let provider = spawn_provider().await;
+    let issuer = provider.lock().unwrap().issuer.clone();
+    let app = setup_with(|config| {
+        config.oidc = OidcEnv {
+            config: OidcConfig {
+                issuer,
+                client_id: CLIENT_ID.into(),
+                client_secret: CLIENT_SECRET.into(),
+                public_url: "http://monit.lab".into(),
+                ..Default::default()
+            }
+            .normalized(),
+            auto_create_unset: true,
+        };
+        config.oidc_allow_http = true;
+    })
+    .await;
+    app.create_admin().await;
+    let admin = app.admin_cookie().await;
+
+    let current = app.get("/api/auth/oidc/config", Some(&admin)).await;
+    assert_eq!(current.body["auto_create"], json!(false));
+    assert_eq!(current.body["auto_create_defaulted"], json!(true));
+
+    provider.lock().unwrap().claims = json!({ "sub": "u-10", "preferred_username": "stranger" });
+    let reply = sign_in(&app, &provider, None).await;
+    assert_eq!(reply.location.as_deref(), Some("/login?error=oidc&reason=no_account"));
+
+    // Enregistré sans le champ : désactivé, mais désormais un choix explicite.
+    let saved = app
+        .put(
+            "/api/auth/oidc/config",
+            json!({ "issuer": provider.lock().unwrap().issuer.clone(), "client_id": CLIENT_ID,
+                    "client_secret": CLIENT_SECRET, "public_url": "http://monit.lab" }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(saved.status, StatusCode::OK, "{}", saved.body);
+    assert_eq!(saved.body["auto_create"], json!(false));
+    assert_eq!(saved.body["auto_create_defaulted"], json!(false));
+}
+
+/// Un réglage enregistré garde le choix de l'administrateur ; un réglage
+/// ancien sans le champ vaut « non ».
+#[tokio::test]
+async fn a_stored_auto_create_choice_is_kept_and_a_missing_one_means_off() {
+    for (stored, expected, defaulted) in
+        [(Some(true), true, false), (Some(false), false, false), (None, false, true)]
+    {
+        let dir = tempfile::tempdir().unwrap();
+        let config = base_config(dir.path());
+        let pool = dumbmonit_server::db::open(&config.database_path()).await.unwrap();
+        let mut value = json!({
+            "issuer": "https://id.example.org", "client_id": "c", "provider_name": "SSO",
+            "scopes": "openid", "admin_groups": [], "groups_claim": "groups", "public_url": ""
+        });
+        if let Some(choice) = stored {
+            value["auto_create"] = json!(choice);
+        }
+        dumbmonit_server::auth::settings::set(&pool, "oidc", &value).await.unwrap();
+        let app = build(dir, config, pool).await;
+        app.create_admin().await;
+        let admin = app.admin_cookie().await;
+
+        let current = app.get("/api/auth/oidc/config", Some(&admin)).await;
+        assert_eq!(current.status, StatusCode::OK, "{}", current.body);
+        assert_eq!(current.body["source"], json!("settings"));
+        assert_eq!(current.body["auto_create"], json!(expected), "{stored:?}");
+        assert_eq!(current.body["auto_create_defaulted"], json!(defaulted), "{stored:?}");
+    }
 }
 
 #[tokio::test]

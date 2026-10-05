@@ -68,6 +68,7 @@ pub fn register_synthetic(registry: &mut crate::collectors::Registry) {
 pub fn spawn(state: AppState, seeded: seed::Seeded) {
     let agent_state = state.clone();
     let token = seeded.agent_token;
+    let secret = seeded.agent_secret;
     tokio::spawn(async move {
         let mut tick = tokio::time::interval(std::time::Duration::from_secs(30));
         tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
@@ -78,6 +79,7 @@ pub fn spawn(state: AppState, seeded: seed::Seeded) {
                 &agent_state.cipher,
                 &agent_state.sink,
                 &token,
+                secret.as_deref(),
             )
             .await
             {
