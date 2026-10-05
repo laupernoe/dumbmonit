@@ -192,6 +192,16 @@ pub struct BundleTarget {
     /// `Credential` en clair : c'est le lot entier qui est chiffré.
     #[serde(default)]
     pub credential: Option<Value>,
+    /// Dossier plat et libre, affiché sur `/targets` (migration 0038). Vide
+    /// dans un lot écrit par un serveur plus ancien, qui ne le connaissait pas
+    /// encore : c'est aussi ce que vaut « sans dossier ».
+    #[serde(default)]
+    pub group_name: String,
+    /// Rang manuel dans `/targets` (migration 0038). Zéro par défaut pour un
+    /// lot plus ancien : les cibles restaurées arrivent alors toutes à la même
+    /// hauteur plutôt que dans un ordre inventé.
+    #[serde(default)]
+    pub position: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -550,6 +560,8 @@ mod tests {
                 enabled: true,
                 tags: BTreeMap::new(),
                 credential: Some(serde_json::json!({"type": "snmp_v2c", "community": "s3cret"})),
+                group_name: "Rack A".to_string(),
+                position: 3,
             }],
             ..Bundle::default()
         }
@@ -564,6 +576,23 @@ mod tests {
         assert_eq!(reopened.targets.len(), 1);
         assert_eq!(reopened.targets[0].address, "192.168.1.1");
         assert_eq!(reopened.targets[0].credential.as_ref().unwrap()["community"], "s3cret");
+        assert_eq!(reopened.targets[0].group_name, "Rack A");
+        assert_eq!(reopened.targets[0].position, 3);
+    }
+
+    #[test]
+    fn un_lot_sans_dossier_ni_rang_restaure_les_valeurs_par_defaut() {
+        let json = serde_json::json!({
+            "version": VERSION,
+            "created_at": "2026-09-22 10:00:00",
+            "targets": [{
+                "kind": "snmp", "address": "192.168.1.1", "name": "switch",
+                "interval_secs": 60, "enabled": true
+            }]
+        });
+        let bundle: Bundle = serde_json::from_value(json).unwrap();
+        assert_eq!(bundle.targets[0].group_name, "");
+        assert_eq!(bundle.targets[0].position, 0);
     }
 
     #[test]

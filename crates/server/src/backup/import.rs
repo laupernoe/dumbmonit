@@ -297,7 +297,8 @@ async fn upsert_target(
     let tags = serde_json::to_string(&target.tags)?;
 
     let existing = sqlx::query(
-        "SELECT id, name, profile_id, interval_secs, enabled, tags, credential_enc
+        "SELECT id, name, profile_id, interval_secs, enabled, tags, credential_enc, group_name,
+                position
          FROM targets WHERE kind = ? AND address = ?",
     )
     .bind(&target.kind)
@@ -309,8 +310,8 @@ async fn upsert_target(
     let Some(row) = existing else {
         sqlx::query(
             "INSERT INTO targets (name, address, kind, profile_id, interval_secs, enabled, tags,
-                                  credential_enc)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                  credential_enc, group_name, position)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(&target.name)
         .bind(&target.address)
@@ -320,6 +321,8 @@ async fn upsert_target(
         .bind(i64::from(target.enabled))
         .bind(&tags)
         .bind(credential.map(|plain| cipher.encrypt(&plain)).transpose()?)
+        .bind(&target.group_name)
+        .bind(target.position)
         .execute(&mut **tx)
         .await
         .context("création de l'équipement")?;
@@ -335,7 +338,9 @@ async fn upsert_target(
         && (row.try_get::<i64, _>("enabled")? != 0) == target.enabled
         && serde_json::from_str::<Value>(&stored_tags).ok()
             == serde_json::from_str::<Value>(&tags).ok()
-        && same_secret(cipher, stored_credential.as_deref(), target.credential.as_ref());
+        && same_secret(cipher, stored_credential.as_deref(), target.credential.as_ref())
+        && row.try_get::<String, _>("group_name")? == target.group_name
+        && row.try_get::<i64, _>("position")? == target.position;
 
     if same {
         return Ok(RestoreOutcome::Skipped);
@@ -343,7 +348,8 @@ async fn upsert_target(
 
     sqlx::query(
         "UPDATE targets SET name = ?, profile_id = ?, interval_secs = ?, enabled = ?, tags = ?,
-             credential_enc = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+             credential_enc = ?, group_name = ?, position = ?,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
     )
     .bind(&target.name)
@@ -352,6 +358,8 @@ async fn upsert_target(
     .bind(i64::from(target.enabled))
     .bind(&tags)
     .bind(credential.map(|plain| cipher.encrypt(&plain)).transpose()?)
+    .bind(&target.group_name)
+    .bind(target.position)
     .bind(id)
     .execute(&mut **tx)
     .await
