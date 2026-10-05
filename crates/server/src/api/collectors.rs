@@ -1897,6 +1897,28 @@ const PAPERLESS_OPTIONS: &[OptionView] = &[
 const JELLYFIN_OPTIONS: &[OptionView] =
     &[app_scheme("http"), app_port("8096"), APP_TLS, APP_TIMEOUT];
 const PLEX_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("32400"), APP_TLS, APP_TIMEOUT];
+const GITLAB_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    app_port("443"),
+    APP_TLS,
+    APP_TIMEOUT,
+    text(
+        "watched_projects",
+        "Projects watched for CI health (optional)",
+        "Comma-separated numeric project IDs. Their recent pipelines are read for failed and running counts; leave empty to skip pipeline health entirely.",
+        "12,47",
+        "",
+    ),
+    number(
+        "pipeline_lookback_hours",
+        "Failed pipeline window (hours)",
+        "Pipelines older than this are not counted as recently failed. From 1 to 720.",
+        "24",
+        "24",
+    ),
+];
+const FORGEJO_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("3000"), APP_TLS, APP_TIMEOUT];
 
 const NEXTCLOUD_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
@@ -1954,6 +1976,32 @@ const PLEX_NO_TOKEN: CredentialView = CredentialView {
     label: "No token (allowed network)",
     help: "For a server that lists DumbMonit's address among the networks allowed without authentication.",
     fields: &[],
+};
+
+const GITLAB_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Personal access token",
+    help: "An administrator's personal access token, sent as PRIVATE-TOKEN. A token without admin rights still works, but only the version is read.",
+    fields: &[cred_secret(
+        "token",
+        "Personal access token",
+        "Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const FORGEJO_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Access token",
+    help: "A site administrator's access token, sent as \"Authorization: token …\". A token without admin rights still works, but only the version and the account's own repositories are read.",
+    fields: &[cred_secret(
+        "token",
+        "Access token",
+        "Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
 };
 
 /// Mot de passe d'application Pi-hole : échangé contre une session, gardée
@@ -3802,6 +3850,49 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: PLEX_OPTIONS,
         },
+        "gitlab" => CollectorView {
+            kind: "gitlab",
+            label: "GitLab (self-managed)",
+            summary: "Readiness, Sidekiq backlog, CI runners online or not, pending migrations, instance statistics, sign-up and two-factor settings, licence expiry.",
+            examples: &["GitLab Community Edition", "GitLab Enterprise Edition"],
+            credential_types: &["api_token"],
+            credentials: &[GITLAB_TOKEN],
+            address_hint: "gitlab.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a personal access token on an administrator account",
+                steps: &[
+                    "Create a personal access token on an administrator account: avatar → Edit profile → Access tokens → Add new token. Name it as follows, set an expiration date you are comfortable renewing, and tick the read_api scope only: it reads the whole API and writes nothing.\ndumbmonit",
+                    "Sidekiq queues, CI runners, pending migrations, instance statistics, the sign-up and two-factor settings and the licence are each read from an administrator-only endpoint: GitLab has no finer delegation for them. A token from an ordinary account still works; only the version is then read, and the rest is skipped without failing the probe.",
+                    "In DumbMonit, enter the address you open GitLab with, for example \"gitlab.example.com\" (HTTPS on 443) or \"https://git.example.com\" behind a reverse proxy, and paste the token.",
+                    "To also watch CI pipelines, list the numeric project IDs (shown on each project's overview page, under its name) in the \"Projects watched for CI health\" option, comma-separated.",
+                ],
+                warning: "A personal access token on an administrator account can read everything the account can read, even with the read_api scope: GitLab has no read-only administrator role. Dedicate a bot account to it rather than reusing your own, and revoke the token if it ever leaks.",
+                doc_url: "https://docs.gitlab.com/ee/api/rest/",
+            },
+            options: GITLAB_OPTIONS,
+        },
+        "forgejo" => CollectorView {
+            kind: "forgejo",
+            label: "Forgejo / Gitea",
+            summary: "Health check, repository, user and organisation counts, scheduled tasks running on time, Actions runners online or not.",
+            examples: &["Forgejo", "Gitea"],
+            credential_types: &["api_token"],
+            credentials: &[FORGEJO_TOKEN],
+            address_hint: "forgejo.lan",
+            default_port: 3000,
+            setup: Setup {
+                title: "Create an access token on a site administrator account",
+                steps: &[
+                    "Create an access token on a site administrator account: avatar → Settings → Applications → Generate new token. Name it as follows and tick the read:admin, read:repository and read:user scopes.\ndumbmonit",
+                    "read:admin opens the administration counts, the scheduled tasks and the Actions runners; without it, only the version and the token's own account are read, and the rest is skipped without failing the probe. Forgejo and Gitea have no read-only administrator role either.",
+                    "In DumbMonit, enter the address, for example \"forgejo.lan\" (port 3000) or \"https://git.example.com\" behind a reverse proxy, and paste the token.",
+                ],
+                warning: "An access token on a site administrator account can read and change everything the account can, whatever scopes are ticked: Forgejo and Gitea only gate which API routes a scope opens, not how much an administrator account itself can do. Dedicate a bot account to it rather than reusing your own.",
+                doc_url: "https://forgejo.org/docs/latest/user/api/",
+            },
+            options: FORGEJO_OPTIONS,
+        },
         "pihole" => CollectorView {
             kind: "pihole",
             label: "Pi-hole",
@@ -4452,6 +4543,8 @@ mod tests {
         "paperless",
         "jellyfin",
         "plex",
+        "gitlab",
+        "forgejo",
         "pihole",
         "adguard",
         "nut",
@@ -4856,6 +4949,18 @@ mod tests {
             ("jellyfin", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("plex", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             (
+                "gitlab",
+                &[
+                    "scheme",
+                    "port",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "watched_projects",
+                    "pipeline_lookback_hours",
+                ],
+            ),
+            ("forgejo", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
                 "unifi",
                 &[
                     "site",
@@ -5037,7 +5142,7 @@ mod tests {
                 dumbmonit_collectors::observability::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
             );
         }
-        // `collectors/selfhosted/{options,nextcloud,immich,paperless,jellyfin,plex}.rs`.
+        // `collectors/selfhosted/{options,nextcloud,immich,paperless,jellyfin,plex,gitlab,forgejo}.rs`.
         use dumbmonit_collectors::selfhosted;
         for (kind, scheme, port) in [
             ("nextcloud", "https", selfhosted::nextcloud::DEFAULT_PORT),
@@ -5045,6 +5150,8 @@ mod tests {
             ("paperless", "http", selfhosted::paperless::DEFAULT_PORT),
             ("jellyfin", "http", selfhosted::jellyfin::DEFAULT_PORT),
             ("plex", "http", selfhosted::plex::DEFAULT_PORT),
+            ("gitlab", "https", selfhosted::gitlab::DEFAULT_PORT),
+            ("forgejo", "http", selfhosted::forgejo::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "scheme"), scheme, "« {kind} »");
             assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
@@ -5192,6 +5299,11 @@ mod tests {
             defaut("paperless", "task_lookback_hours"),
             selfhosted::paperless::DEFAULT_TASK_LOOKBACK_HOURS.to_string()
         );
+        assert_eq!(
+            defaut("gitlab", "pipeline_lookback_hours"),
+            selfhosted::gitlab::DEFAULT_PIPELINE_LOOKBACK_HOURS.to_string()
+        );
+        assert_eq!(defaut("gitlab", "watched_projects"), "");
         assert_eq!(
             defaut("push", "expected_interval"),
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
@@ -5428,6 +5540,8 @@ mod tests {
             ("paperless", include_str!("../../../../docs/devices/paperless.md")),
             ("jellyfin", include_str!("../../../../docs/devices/jellyfin.md")),
             ("plex", include_str!("../../../../docs/devices/plex.md")),
+            ("gitlab", include_str!("../../../../docs/devices/gitlab.md")),
+            ("forgejo", include_str!("../../../../docs/devices/forgejo.md")),
             ("pihole", include_str!("../../../../docs/devices/pihole.md")),
             ("adguard", include_str!("../../../../docs/devices/adguard.md")),
             ("nut", include_str!("../../../../docs/devices/nut.md")),

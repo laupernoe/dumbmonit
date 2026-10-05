@@ -195,6 +195,30 @@ Sources: [PingCastle health check rules](https://www.pingcastle.com/PingCastleFi
 [Windows LAPS](https://learn.microsoft.com/en-us/windows-server/identity/laps/laps-overview),
 [Resetting the krbtgt password](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/forest-recovery-guide/ad-forest-recovery-resetting-the-krbtgt-password).
 
+### GitLab
+
+Read from the administration API, with an administrator's personal access
+token; unknown with an ordinary one.
+
+| Check | Severity | Data |
+|---|---|---|
+| Two-factor authentication required | high | `require_two_factor_authentication` setting |
+| Public sign-up disabled | medium | `signup_enabled` setting |
+| Database migrations applied | medium | pending migrations after an upgrade |
+
+Source: [GitLab application settings API](https://docs.gitlab.com/ee/api/settings.html).
+
+### Forgejo and Gitea
+
+| Check | Severity | Data |
+|---|---|---|
+| Scheduled tasks run on time | medium | tasks whose next run is already overdue |
+
+Unknown without a site administrator's access token: Forgejo and Gitea
+reserve the scheduled-task list to administration.
+
+Source: [Forgejo API](https://forgejo.org/docs/latest/user/api/).
+
 ## Limits
 
 The score only reflects what DumbMonit can see. It is a prompt to look, not

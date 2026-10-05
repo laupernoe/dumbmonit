@@ -1,0 +1,21 @@
+{
+  "entries": [
+    {
+      "id": 1,
+      "name": "runner-amd64-1",
+      "status": "online",
+      "busy": true,
+      "disabled": false,
+      "ephemeral": false
+    },
+    {
+      "id": 2,
+      "name": "runner-amd64-2",
+      "status": "offline",
+      "busy": false,
+      "disabled": false,
+      "ephemeral": false
+    }
+  ],
+  "total_count": 2
+}

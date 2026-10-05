@@ -1,0 +1,18 @@
+{
+  "status": "fail",
+  "description": "Forgejo: Beyond coding. We Forge.",
+  "checks": {
+    "database:ping": [
+      {
+        "status": "fail",
+        "time": "2026-10-03T03:00:00Z"
+      }
+    ],
+    "cache:ping": [
+      {
+        "status": "pass",
+        "time": "2026-10-03T03:00:00Z"
+      }
+    ]
+  }
+}
