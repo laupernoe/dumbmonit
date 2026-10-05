@@ -5,6 +5,7 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import Button from './Button.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
 		children: Snippet;
@@ -18,7 +19,8 @@
 		class?: string;
 	}
 
-	let { children, confirmLabel = 'Are you sure?', onconfirm, loading = false, disabled = false, size = 'sm', variant = 'danger', class: className = '' }: Props = $props();
+	let { children, confirmLabel, onconfirm, loading = false, disabled = false, size = 'sm', variant = 'danger', class: className = '' }: Props = $props();
+	const label = $derived(confirmLabel ?? m["ui.confirm.default_label"]());
 
 	let armed = $state(false);
 	let timer: ReturnType<typeof setTimeout> | null = null;
@@ -36,5 +38,5 @@
 </script>
 
 <Button {size} {variant} {loading} {disabled} onclick={click} class={`${armed ? (variant === 'danger' ? '!bg-warning !text-white !border-warning' : '!bg-ink !text-canvas') : ''} ${className}`} aria-live="polite">
-	{#if armed}{confirmLabel}{:else}{@render children()}{/if}
+	{#if armed}{label}{:else}{@render children()}{/if}
 </Button>
