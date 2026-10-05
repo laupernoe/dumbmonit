@@ -398,7 +398,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -408,7 +409,8 @@
         "default": "80",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "status_path",
@@ -418,7 +420,8 @@
         "default": "/server-status",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -428,7 +431,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -438,7 +442,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -2984,7 +2989,8 @@
         "choices": [
           "http",
           "https"
-        ]
+        ],
+        "group": ""
       },
       {
         "key": "port",
@@ -2994,7 +3000,8 @@
         "default": "80",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "status_path",
@@ -3004,7 +3011,8 @@
         "default": "/basic_status",
         "required": false,
         "input": "text",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "insecure_tls",
@@ -3014,7 +3022,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "request_timeout_seconds",
@@ -3024,7 +3033,8 @@
         "default": "10",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "plus_api",
@@ -3034,7 +3044,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "plus_api_version",
@@ -3044,7 +3055,8 @@
         "default": "9",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
@@ -3214,7 +3226,8 @@
         "default": "123",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "offset_threshold_ms",
@@ -3224,7 +3237,8 @@
         "default": "100",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "allow_private_targets",
@@ -3234,7 +3248,8 @@
         "default": "false",
         "required": false,
         "input": "boolean",
-        "choices": []
+        "choices": [],
+        "group": ""
       },
       {
         "key": "timeout_seconds",
@@ -3244,7 +3259,8 @@
         "default": "5",
         "required": false,
         "input": "number",
-        "choices": []
+        "choices": [],
+        "group": ""
       }
     ]
   },
