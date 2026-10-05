@@ -296,6 +296,8 @@ mod tests {
             enabled: true,
             tags: BTreeMap::new(),
             credential,
+            group_name: String::new(),
+            position: 0,
         }
     }
 
