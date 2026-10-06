@@ -63,7 +63,7 @@ jobs:
             latest=${{ startsWith(github.ref, 'refs/tags/v') }}
           labels: |
             org.opencontainers.image.title=DumbMonit
-            org.opencontainers.image.description=Dumb-simple monitoring for homelabs and small teams
+            org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
             org.opencontainers.image.licenses=Apache-2.0
 
       - uses: docker/build-push-action@v6
