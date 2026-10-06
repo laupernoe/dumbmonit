@@ -68,7 +68,8 @@ pub const RELEASES_URL: &str = "https://github.com/laupernoe/dumbmonit/releases/
 
 /// Fichiers de la dernière publication, par leur nom : GitHub sert sous ce
 /// préfixe la pièce jointe de ce nom de la version la plus récente.
-const RELEASE_DOWNLOAD_URL: &str = "https://github.com/laupernoe/dumbmonit/releases/latest/download";
+const RELEASE_DOWNLOAD_URL: &str =
+    "https://github.com/laupernoe/dumbmonit/releases/latest/download";
 
 /// Ce que le serveur répond, en plus du renvoi, pour un binaire qu'il ne livre pas.
 ///
