@@ -108,7 +108,7 @@ does not look like a drop.
 ## 5. Check it
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/noekan/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -160,7 +160,7 @@ not produce, an option that does not exist or a path that points elsewhere are
 reported with where they are.
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/noekan/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. Install it
@@ -180,5 +180,5 @@ To publish a new version, raise `version`, run `pack test`, and install it
 again: the extraction is replaced, the rule you may have tuned is kept.
 
 The complete pack, with its setup notice, is in
-[`packs/shelly-plug`](https://github.com/noekan/dumbmonit/tree/main/packs/shelly-plug).
+[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug).
 Everything the format accepts is in the [reference](format.md).

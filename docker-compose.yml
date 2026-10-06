@@ -9,7 +9,7 @@ services:
     # `:edge` for the last commit on main). To build from this checkout instead,
     # run `docker compose up -d --build`: the result is tagged with the same name
     # and used from then on.
-    image: ghcr.io/noekan/dumbmonit:latest
+    image: ghcr.io/laupernoe/dumbmonit:latest
     build: .
     ports:
       # The host port is configurable: 8080 is a crowded port on a homelab
