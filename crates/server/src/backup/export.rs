@@ -310,7 +310,7 @@ async fn status_pages(
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
-             accent, footer_text, homepage_url
+             accent, scenes, scene_rotation, footer_text, homepage_url
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -350,6 +350,8 @@ async fn status_pages(
             show_uptime_days: row.try_get("show_uptime_days")?,
             items: listed,
             accent: row.try_get("accent")?,
+            scenes: crate::db::status_pages::split_scenes(&row.try_get::<String, _>("scenes")?),
+            scene_rotation: row.try_get("scene_rotation")?,
             footer_text: row.try_get("footer_text")?,
             homepage_url: row.try_get("homepage_url")?,
         });

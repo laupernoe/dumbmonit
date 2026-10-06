@@ -1105,6 +1105,11 @@ export interface RuleOverridePayload {
 
 export type StatusPageTheme = 'auto' | 'light' | 'dark';
 /** Accent of a public page: a closed set, each checked for contrast in day and night. */
+/** Banner scenes a page can show; the server may add more, so unknown ids must be tolerated. */
+export type StatusPageScene = 'venice' | 'paris' | 'tokyo' | 'newyork' | 'london' | 'rome';
+/** How a page with several scenes picks the one on screen. */
+export type StatusPageSceneRotation = 'visit' | '1m' | '10m' | '1h';
+
 export type StatusPageAccent = 'default' | 'blue' | 'teal' | 'violet' | 'rose' | 'amber';
 
 /** A service shown on a status page, as stored (admin view). */
@@ -1130,6 +1135,10 @@ export interface StatusPage {
 	created_at: string;
 	updated_at: string;
 	accent: StatusPageAccent;
+	/** Ordered banner scenes; empty: no scene (the default). */
+	scenes: string[];
+	/** Only used when `scenes` holds more than one. */
+	scene_rotation: StatusPageSceneRotation;
 	footer_text: string;
 	/** Link back to the organisation's site; empty for none. */
 	homepage_url: string;
@@ -1150,6 +1159,8 @@ export interface StatusPagePayload {
 	show_uptime_days?: number;
 	/** Omitted fields below keep their stored value. */
 	accent?: StatusPageAccent;
+	scenes?: string[];
+	scene_rotation?: StatusPageSceneRotation;
 	footer_text?: string;
 	homepage_url?: string;
 	/** `null` turns email subscription off. */
@@ -1283,6 +1294,9 @@ export interface PublicStatus {
 		show_uptime_days: number;
 		updated_at: string;
 		accent: StatusPageAccent;
+		/** Ordered banner scenes; empty or absent: none. */
+		scenes: string[];
+		scene_rotation: StatusPageSceneRotation;
 		footer_text: string;
 		homepage_url: string;
 		/** Versioned relative URL of the logo, `null` without one. */

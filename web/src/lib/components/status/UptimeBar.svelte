@@ -99,6 +99,7 @@
 					tabindex={index === tabIndex ? 0 : -1}
 					class={`block h-full w-full rounded-[2px] transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${FILL[dayTone(day.uptime_pct)]} ${active !== null && active !== index ? 'opacity-50' : ''}`}
 					aria-label={describe(day)}
+					title={compact ? describe(day) : undefined}
 					onmouseenter={() => (active = index)}
 					onfocus={() => {
 						active = index;

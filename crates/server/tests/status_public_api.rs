@@ -270,6 +270,102 @@ async fn branding_is_public_and_bounded() {
     );
 }
 
+async fn public_skyline(app: &TestApp) -> Value {
+    serde_json::from_str(&raw(app, "GET", "/api/public/status/skyline", None).await.text).unwrap()
+}
+
+#[tokio::test]
+async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+
+    // Par défaut : aucune scène, rotation à chaque visite.
+    let reply = app
+        .post(
+            "/api/status-pages",
+            json!({ "title": "Skyline", "slug": "skyline", "published": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    assert_eq!(reply.body["scenes"], json!([]));
+    assert_eq!(reply.body["scene_rotation"], "visit");
+    let page = reply.body["id"].as_i64().unwrap();
+    let doc = public_skyline(&app).await;
+    assert_eq!(doc["page"]["scenes"], json!([]));
+    assert_eq!(doc["page"]["scene_rotation"], "visit");
+
+    // Aller-retour, ordre conservé, côté admin comme côté public.
+    let url = format!("/api/status-pages/{page}");
+    let reply = app
+        .put(
+            &url,
+            json!({
+                "title": "Skyline", "slug": "skyline", "published": true,
+                "scenes": ["tokyo", "venice", "rome"], "scene_rotation": "10m"
+            }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(reply.body["scene_rotation"], "10m");
+    let doc = public_skyline(&app).await;
+    assert_eq!(doc["page"]["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(doc["page"]["scene_rotation"], "10m");
+
+    // Un PUT qui n'en parle pas garde les deux réglages.
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(reply.body["scene_rotation"], "10m");
+
+    // Jeu fermé : inconnue, doublon, plus de six, rotation inconnue.
+    for bad in [
+        json!({ "scenes": ["atlantis"] }),
+        json!({ "scenes": ["paris", "paris"] }),
+        json!({ "scenes": ["venice", "paris", "tokyo", "newyork", "london", "rome", "venice"] }),
+        json!({ "scene_rotation": "5m" }),
+    ] {
+        let mut body = json!({ "title": "Skyline", "slug": "skyline" });
+        body.as_object_mut().unwrap().extend(bad.as_object().unwrap().clone());
+        let reply = app.put(&url, body.clone(), Some(&admin)).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{body}: {}", reply.body);
+    }
+    let doc = public_skyline(&app).await;
+    assert_eq!(
+        doc["page"]["scenes"],
+        json!(["tokyo", "venice", "rome"]),
+        "refusals change nothing"
+    );
+
+    // Les six villes passent ; `[]` vide la liste.
+    let all = json!(["venice", "paris", "tokyo", "newyork", "london", "rome"]);
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true, "scenes": all }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["scenes"], all);
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true, "scenes": [] }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.body["scenes"], json!([]));
+}
+
 #[tokio::test]
 async fn badges_are_svg_cacheable_and_say_no_more_than_the_page() {
     let app = TestApp::configured().await;

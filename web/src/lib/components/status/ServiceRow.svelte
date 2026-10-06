@@ -12,9 +12,11 @@
 	interface Props {
 		item: PublicStatusItem;
 		days: number;
+		/** Tighter row (name, one uptime figure, short bar) for pages with a banner scene. */
+		compact?: boolean;
 	}
 
-	let { item, days }: Props = $props();
+	let { item, days, compact = false }: Props = $props();
 
 	const state = $derived(ITEM_STATE[item.state] ?? ITEM_STATE.unknown);
 
@@ -33,6 +35,20 @@
 	]);
 </script>
 
+{#if compact}
+	<li class="px-4 py-2.5 sm:px-5">
+		<div class="flex items-center gap-3">
+			<Plate tone={state.tone} label={state.label} pulse={item.state === 'down'} />
+			<span class="min-w-0 flex-1 truncate font-semibold text-ink">{item.label}</span>
+			<span class="tnum shrink-0 text-sm text-ink-2" title={days >= 90 ? 'Uptime over 90 days' : 'Uptime over 30 days'}>
+				{formatPercent(days >= 90 ? item.uptime_90d : item.uptime_30d)}
+			</span>
+		</div>
+		<div class="mt-2">
+			<UptimeBar history={item.history} label={item.label} compact />
+		</div>
+	</li>
+{:else}
 <li class="px-4 py-4 sm:px-5">
 	<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 		<div class="flex min-w-0 items-center gap-3">
@@ -57,3 +73,4 @@
 		{/each}
 	</dl>
 </li>
+{/if}

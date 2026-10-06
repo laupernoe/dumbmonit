@@ -32,7 +32,8 @@ mod badges;
 mod branding;
 mod subscribers;
 use crate::db::status_pages::{
-    Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput, StatusPage, StatusPageInput,
+    Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput, SCENE_ROTATIONS, SCENES,
+    StatusPage, StatusPageInput, split_scenes,
 };
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
@@ -152,6 +153,12 @@ pub struct StatusPagePayload {
     /// Absent : la valeur enregistrée est gardée (défaut à la création).
     #[serde(default)]
     pub accent: Option<String>,
+    /// Absent : la liste enregistrée est gardée ; `[]` : aucune scène.
+    #[serde(default)]
+    pub scenes: Option<Vec<String>>,
+    /// Absent : la valeur enregistrée est gardée (`visit` à la création).
+    #[serde(default)]
+    pub scene_rotation: Option<String>,
     #[serde(default)]
     pub footer_text: Option<String>,
     #[serde(default)]
@@ -219,6 +226,23 @@ impl StatusPagePayload {
                 ACCENTS.join(", ")
             )));
         }
+        let scenes = match self.scenes {
+            Some(list) => list.into_iter().map(|s| s.trim().to_string()).collect(),
+            None => existing.map(|page| split_scenes(&page.scenes)).unwrap_or_default(),
+        };
+        let scenes = validate_scenes(scenes)?;
+        let scene_rotation = match self.scene_rotation {
+            Some(rotation) => rotation.trim().to_string(),
+            None => {
+                existing.map_or_else(|| "visit".to_string(), |page| page.scene_rotation.clone())
+            }
+        };
+        if !SCENE_ROTATIONS.contains(&scene_rotation.as_str()) {
+            return Err(ApiError::BadRequest(format!(
+                "Unknown scene rotation \"{scene_rotation}\" (expected: {}).",
+                SCENE_ROTATIONS.join(", ")
+            )));
+        }
         let footer_text = match self.footer_text {
             Some(text) => text.trim().to_string(),
             None => existing.map(|page| page.footer_text.clone()).unwrap_or_default(),
@@ -265,12 +289,34 @@ impl StatusPagePayload {
             theme,
             show_uptime_days,
             accent,
+            scenes,
+            scene_rotation,
             footer_text,
             homepage_url,
             subscribe_channel_id,
             link_origin: origin,
         })
     }
+}
+
+/// Valide la liste de scènes : jeu fermé [`SCENES`], sans doublon, au plus une
+/// par ville. Rend la liste enregistrable (séparée par des virgules).
+fn validate_scenes(scenes: Vec<String>) -> ApiResult<String> {
+    if scenes.len() > SCENES.len() {
+        return Err(ApiError::BadRequest(format!("A page shows at most {} scenes.", SCENES.len())));
+    }
+    for (i, scene) in scenes.iter().enumerate() {
+        if !SCENES.contains(&scene.as_str()) {
+            return Err(ApiError::BadRequest(format!(
+                "Unknown scene \"{scene}\" (expected: {}).",
+                SCENES.join(", ")
+            )));
+        }
+        if scenes[..i].contains(scene) {
+            return Err(ApiError::BadRequest(format!("The scene \"{scene}\" is listed twice.")));
+        }
+    }
+    Ok(scenes.join(","))
 }
 
 /// Lien vers le site de l'organisation : vide, ou une URL http(s) absolue sans
@@ -833,6 +879,10 @@ struct PublicPage {
     updated_at: String,
     /// Teinte d'accent choisie parmi [`ACCENTS`].
     accent: String,
+    /// Scènes de la bannière, dans l'ordre, parmi [`SCENES`] ; vide : aucune.
+    scenes: Vec<String>,
+    /// Rythme de changement de scène, parmi [`SCENE_ROTATIONS`].
+    scene_rotation: String,
     footer_text: String,
     /// Site de l'organisation, vide si la page n'en cite pas.
     homepage_url: String,
@@ -1448,6 +1498,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             show_uptime_days: days,
             updated_at: page.updated_at.clone(),
             accent: page.accent.clone(),
+            scenes: split_scenes(&page.scenes),
+            scene_rotation: page.scene_rotation.clone(),
             footer_text: page.footer_text.clone(),
             homepage_url: page.homepage_url.clone(),
             logo_url: page.logo_type.as_ref().map(|_| {

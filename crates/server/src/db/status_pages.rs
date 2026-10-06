@@ -23,6 +23,12 @@ pub struct StatusPage {
     pub updated_at: String,
     /// Teinte d'accent, parmi le jeu fermé de `api::status_pages`.
     pub accent: String,
+    /// Scènes de la bannière, séparées par des virgules (voir la migration) ;
+    /// servies en liste JSON.
+    #[serde(serialize_with = "serialize_scenes")]
+    pub scenes: String,
+    /// Rythme de changement de scène, parmi le jeu fermé de `api::status_pages`.
+    pub scene_rotation: String,
     pub footer_text: String,
     pub homepage_url: String,
     /// Type MIME du logo déposé ; `None` : pas de logo.
@@ -34,13 +40,27 @@ pub struct StatusPage {
     pub link_origin: String,
 }
 
+/// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
+/// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
+pub const SCENES: [&str; 6] = ["venice", "paris", "tokyo", "newyork", "london", "rome"];
+/// Rythmes de changement de scène (plusieurs scènes seulement).
+pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];
+/// Sépare la liste enregistrée (`venice,paris`) en identifiants de scène.
+pub fn split_scenes(csv: &str) -> Vec<String> {
+    csv.split(',').map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect()
+}
+
+fn serialize_scenes<S: serde::Serializer>(csv: &str, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.collect_seq(split_scenes(csv))
+}
+
 /// Colonnes lues d'une page, dans l'ordre de [`StatusPage`].
 macro_rules! select_page {
     ($tail:literal) => {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
-            "created_at, updated_at, accent, footer_text, homepage_url, logo_type, ",
-            "subscribe_channel_id, link_origin FROM status_pages ",
+            "created_at, updated_at, accent, scenes, scene_rotation, footer_text, homepage_url, ",
+            "logo_type, subscribe_channel_id, link_origin FROM status_pages ",
             $tail
         )
     };
@@ -56,6 +76,9 @@ pub struct StatusPageInput {
     pub theme: String,
     pub show_uptime_days: i64,
     pub accent: String,
+    /// Scènes séparées par des virgules, déjà validées.
+    pub scenes: String,
+    pub scene_rotation: String,
     pub footer_text: String,
     pub homepage_url: String,
     pub subscribe_channel_id: Option<i64>,
@@ -146,8 +169,9 @@ pub async fn get_page_by_slug(pool: &SqlitePool, slug: &str) -> Result<Option<St
 pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i64> {
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO status_pages (slug, title, description, published, theme, show_uptime_days,
-             accent, footer_text, homepage_url, subscribe_channel_id, link_origin)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             accent, scenes, scene_rotation, footer_text, homepage_url,
+             subscribe_channel_id, link_origin)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id",
     )
     .bind(&input.slug)
@@ -157,6 +181,8 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     .bind(&input.theme)
     .bind(input.show_uptime_days)
     .bind(&input.accent)
+    .bind(&input.scenes)
+    .bind(&input.scene_rotation)
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
@@ -171,8 +197,8 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     let result = sqlx::query(
         "UPDATE status_pages SET
              slug = ?, title = ?, description = ?, published = ?, theme = ?,
-             show_uptime_days = ?, accent = ?, footer_text = ?, homepage_url = ?,
-             subscribe_channel_id = ?, link_origin = ?,
+             show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?,
+             footer_text = ?, homepage_url = ?, subscribe_channel_id = ?, link_origin = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
     )
@@ -183,6 +209,8 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .bind(&input.theme)
     .bind(input.show_uptime_days)
     .bind(&input.accent)
+    .bind(&input.scenes)
+    .bind(&input.scene_rotation)
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
