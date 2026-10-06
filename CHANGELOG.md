@@ -32,6 +32,15 @@ All notable changes to this project are documented here. The format follows
   never set (`DUMBMONIT_OIDC_AUTO_CREATE` unset, or settings saved before the
   option existed); Settings → Single sign-on says so. A value saved explicitly
   is kept.
+- **Hardening from the autumn audit.** The login lockout is keyed on account
+  and address; agent tokens are checked before request bodies are read and
+  heartbeat tokens are hidden from viewers; the OIDC login is bound to the
+  browser that started it and spoofed forwarded headers are distrusted; the
+  Windows agent's configuration directory is locked down; the private-address
+  guard also covers website-change screenshots; a secret must be re-entered
+  when its destination changes; the Prometheus read proxy and the
+  VictoriaMetrics import stream are tightened; backup key derivation is capped
+  and runs off the async runtime.
 
 ### Added
 
@@ -197,6 +206,49 @@ All notable changes to this project are documented here. The format follows
   that is still `ONLINE` while reading back damaged data. Covers FreeBSD,
   TrueNAS and the many Linux machines on OpenZFS at once, and stays completely
   silent where there is no `zpool`.
+
+- **Many more integrations.** Nextcloud, Immich, Paperless-ngx, Jellyfin and
+  Plex; Pi-hole, AdGuard Home, UPS through NUT and MikroTik RouterOS; UniFi
+  Network, Home Assistant and VMware vSphere; Redis/Valkey, MongoDB, RabbitMQ
+  and CrowdSec; Traefik, Caddy, Nginx Proxy Manager, domain expiry over RDAP
+  and DNS answer changes; Kubernetes, WireGuard and restic/Borg; pfSense,
+  Unraid, Veeam, Tailscale, FortiGate, Sophos Firewall and Hyper-V; Nginx,
+  Apache and NTP; GitLab and Forgejo/Gitea; Synology Drive and Photos.
+- **Website changes**: crawl a page, diff its text, keep snapshots and
+  before/after screenshots.
+- **Client devices.** Last-seen clients for Immich, Tailscale, UniFi and Home
+  Assistant, protected devices for PBS and Veeam.
+- **Active Directory over LDAP**: domain controllers, privileged groups and
+  security findings.
+- **A security score per device**, from the vendor's own best practices.
+- **Device folders and manual order**, moved by dragging the whole row and
+  carried through backup and restore.
+- **Alerts you can get rid of**: acknowledge, snooze, ignore or clear, and a
+  one-click dismiss with an undo on every alert card.
+- **A new wall**: a calm ambient backdrop, an OLED theme, a living Paris
+  rooftop with the pigeons, and a music player whose Spotify Connect speaker
+  appears on your phone with visible diagnostics and a test sound.
+- **An open, documented API** and an MCP server on protocol 2026-07-28, native
+  agent binaries for every OS attached to GitHub releases, and a read-only
+  public demo mode.
+- **Pip the pigeon** gives tips across the interface, including setup tips on
+  device pages, and the status page has a pigeon of its own.
+- **Ready for community translation.** The web UI is wired for Weblate,
+  starting with Settings, with a language picker that appears once a second
+  language ships.
+- **A themed message on browsers too old to run the UI**, such as a TV,
+  instead of a blank page.
+
+### Changed
+
+- The version and build commit sit discreetly at the bottom right and in
+  Settings → About; the command-palette hint and the Admin badge are gone from
+  the top bar.
+- Server images are published for amd64 only for now.
+- Optimisation pass: a non-blocking write buffer, lazily loaded device panels
+  and steadier charts.
+- Dependencies: jsonwebtoken 11, base64 0.23, Vite 8; Dependabot runs monthly,
+  grouped, with majors ignored by default.
 
 ## 0.1.0-alpha.5 — 2026-09-25
 

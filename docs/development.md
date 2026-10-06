@@ -82,7 +82,7 @@ keys, `{param}` placeholders, compiled by
 [Paraglide JS](https://paraglidejs.com) into tree-shaken message functions
 under `web/src/lib/paraglide/`, generated and untracked). Translation happens
 on [hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
-(project to be created there), against this component configuration:
+(component `web-ui`), configured as follows:
 
 | Setting | Value |
 | --- | --- |
@@ -91,6 +91,7 @@ on [hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/d
 | Monolingual base language file | `web/messages/en.json` |
 | File format | JSON file (monolingual) |
 | New language | create a new translation file (Weblate writes `web/messages/<locale>.json`) |
+| Version control | GitHub, through the Weblate GitHub app: translations come back as pull requests on `main` |
 
 New UI strings land in `web/messages/en.json` only; a translator then fills in
 the other locale files through Weblate. Keys are extracted progressively —
