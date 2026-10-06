@@ -44,7 +44,7 @@ reverse proxy with HTTPS and set `DUMBMONIT_COOKIE_SECURE=1` and
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \
   -e DUMBMONIT_DEMO=1 \
-  ghcr.io/noekan/dumbmonit:latest
+  ghcr.io/laupernoe/dumbmonit:latest
 ```
 
 Or with Compose, without a volume so every restart starts clean:
@@ -52,7 +52,7 @@ Or with Compose, without a volume so every restart starts clean:
 ```yaml
 services:
   dumbmonit-demo:
-    image: ghcr.io/noekan/dumbmonit:latest
+    image: ghcr.io/laupernoe/dumbmonit:latest
     restart: unless-stopped
     ports:
       - "8080:8080"

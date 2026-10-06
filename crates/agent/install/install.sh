@@ -52,7 +52,7 @@ RC_NAME="dumbmonit_agent"
 LOG_FILE="/var/log/dumbmonit-agent.log"
 # Où l'agent macOS est publié : le serveur y renvoie, et c'est là qu'on le
 # récupère à la main si ce renvoi échoue.
-RELEASES_URL="https://github.com/noekan/dumbmonit/releases/latest"
+RELEASES_URL="https://github.com/laupernoe/dumbmonit/releases/latest"
 
 usage() {
     cat <<'FIN'
@@ -501,7 +501,7 @@ ecrire_unite_systemd() {
     cat > "$UNIT_PATH" <<FIN
 [Unit]
 Description=DumbMonit system agent
-Documentation=https://github.com/noekan/dumbmonit
+Documentation=https://github.com/laupernoe/dumbmonit
 # Sans réseau, le premier envoi échouerait et l'agent temporiserait pour rien.
 After=network-online.target
 Wants=network-online.target

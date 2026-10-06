@@ -189,7 +189,7 @@ rules:
 ## SNMP profiles
 
 A pack can bring SNMP profiles, written exactly like the built-in ones in
-[`profiles/`](https://github.com/noekan/dumbmonit/tree/main/profiles). They
+[`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles). They
 join the SNMP catalogue and are applied by `sysObjectID` like the others; they
 do not create a device type of their own.
 

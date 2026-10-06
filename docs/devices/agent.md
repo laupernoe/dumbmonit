@@ -171,7 +171,7 @@ you create a token.
 
     The macOS binaries are **not** in the DumbMonit image: building them
     requires Apple's SDK, which its licence forbids redistributing. They are
-    attached to each [GitHub release](https://github.com/noekan/dumbmonit/releases/latest)
+    attached to each [GitHub release](https://github.com/laupernoe/dumbmonit/releases/latest)
     instead — `dumbmonit-agent-macos-aarch64` (Apple silicon) and
     `dumbmonit-agent-macos-x86_64` (Intel), each with its `.sha256` — and the
     server redirects `/download/dumbmonit-agent-macos-…` there, so the script
@@ -186,7 +186,7 @@ you create a token.
     `--bin` installs what you give it):
 
     ```sh
-    curl -sSLO https://github.com/noekan/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
+    curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
     curl -sSL http://server:8080/install.sh | sudo sh -s -- \
         --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
@@ -261,7 +261,7 @@ next to it:
 The Linux binaries are linked statically against musl: they run on any
 distribution, glibc or not (Alpine, NAS firmwares), with no library to match.
 Each file has its checksum next to it, `<file>.sha256`, in `sha256sum`
-format. Every [GitHub release](https://github.com/noekan/dumbmonit/releases/latest)
+format. Every [GitHub release](https://github.com/laupernoe/dumbmonit/releases/latest)
 carries all six binaries and their checksums, for machines that cannot reach
 the server's `/download/` or for installing with `--bin`.
 
@@ -529,7 +529,7 @@ Three [built-in rules](../alerting/rules.md#hyper-v) apply:
 ## Run the agent in Docker / on another network
 
 The agent is also published as a container image, with the same tags as the
-server: `ghcr.io/noekan/dumbmonit-agent:latest` (last release), `:edge` (last
+server: `ghcr.io/laupernoe/dumbmonit-agent:latest` (last release), `:edge` (last
 commit on `main`). It is a `FROM scratch` image holding the agent binary and
 the Mozilla CA bundle, configured entirely by environment variables. The
 repository ships a ready-to-use `docker-compose.agent.yml`:

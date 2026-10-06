@@ -7,7 +7,7 @@ database. One volume, `/data`, holds the database, the instance secret and the
 time series.
 
 !!! note "Alpha image"
-    `ghcr.io/noekan/dumbmonit:latest` is the last tagged alpha build (amd64;
+    `ghcr.io/laupernoe/dumbmonit:latest` is the last tagged alpha build (amd64;
     arm64 images are paused for now); `:edge` follows the last commit on `main`. To run from source,
     `docker compose up -d --build` builds the same image locally (about ten
     minutes the first time; only Docker is needed).
@@ -37,7 +37,7 @@ services:
     # `:edge` for the last commit on main). To build from this checkout instead,
     # run `docker compose up -d --build`: the result is tagged with the same name
     # and used from then on.
-    image: ghcr.io/noekan/dumbmonit:latest
+    image: ghcr.io/laupernoe/dumbmonit:latest
     build: .
     ports:
       # The host port is configurable: 8080 is a crowded port on a homelab

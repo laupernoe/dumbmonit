@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for the report. Security problems go to
-        https://github.com/noekan/dumbmonit/security/advisories/new instead, not here.
+        https://github.com/laupernoe/dumbmonit/security/advisories/new instead, not here.
   - type: textarea
     id: what
     attributes:
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Version
       description: Image tag or commit (`docker compose images`, or `curl localhost:8080/api/health`).
-      placeholder: ghcr.io/noekan/dumbmonit:edge, commit abc1234
+      placeholder: ghcr.io/laupernoe/dumbmonit:edge, commit abc1234
     validations:
       required: true
   - type: dropdown

@@ -20,7 +20,7 @@ in the next tagged release and in the `edge` image.
 **Please do not open a public issue for a security problem.**
 
 Report it privately through GitHub's vulnerability reporting:
-**https://github.com/noekan/dumbmonit/security/advisories/new**
+**https://github.com/laupernoe/dumbmonit/security/advisories/new**
 
 Include what you can of: the affected component (see the scope below), steps to
 reproduce or a proof of concept, the impact as you understand it, and the

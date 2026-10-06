@@ -1,7 +1,7 @@
 name: Release
 
 # Builds the images (amd64 only for now; arm64 comes back later) with the repository Dockerfile and pushes them to
-# ghcr.io/noekan/dumbmonit (server) and ghcr.io/noekan/dumbmonit-agent (agent,
+# ghcr.io/laupernoe/dumbmonit (server) and ghcr.io/laupernoe/dumbmonit-agent (agent,
 # `--target agent-image`), with the same tags:
 #   - every push to main   -> :edge
 #   - every tag v*         -> :X.Y.Z, :X.Y, :X and :latest
@@ -24,8 +24,8 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/noekan/dumbmonit
-  AGENT_IMAGE: ghcr.io/noekan/dumbmonit-agent
+  IMAGE: ghcr.io/laupernoe/dumbmonit
+  AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
 
 # Only the newest :edge matters: a newer push to main cancels the build in
 # progress. Tags each get their own group and are never cancelled.

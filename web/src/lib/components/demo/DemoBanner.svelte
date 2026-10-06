@@ -7,7 +7,7 @@
 	import { demo } from '$lib/stores/demo.svelte';
 
 	const INSTALL_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/docker/';
-	const GITHUB_URL = 'https://github.com/noekan/dumbmonit';
+	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	const link =
 		'inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';

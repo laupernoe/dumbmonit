@@ -15,7 +15,7 @@ services:
   agent:
     # Same tags as the server image (:latest, :edge, :X.Y.Z). To build from this
     # checkout: `docker compose -f docker-compose.agent.yml up -d --build`.
-    image: ghcr.io/noekan/dumbmonit-agent:latest
+    image: ghcr.io/laupernoe/dumbmonit-agent:latest
     build:
       context: .
       target: agent-image

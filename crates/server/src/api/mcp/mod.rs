@@ -439,7 +439,7 @@ fn server_info() -> Value {
         "version": env!("CARGO_PKG_VERSION"),
         "description": "Self-hosted monitoring for homelabs and small teams: devices, \
                         services, alerts, maintenance windows and status pages.",
-        "websiteUrl": "https://github.com/noekan/dumbmonit",
+        "websiteUrl": "https://github.com/laupernoe/dumbmonit",
     })
 }
 

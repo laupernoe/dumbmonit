@@ -64,11 +64,11 @@ pub const AGENT_FILES_RELEASED_ELSEWHERE: &[&str] =
     &["dumbmonit-agent-macos-aarch64", "dumbmonit-agent-macos-x86_64"];
 
 /// Où trouver les binaires que l'image ne livre pas.
-pub const RELEASES_URL: &str = "https://github.com/noekan/dumbmonit/releases/latest";
+pub const RELEASES_URL: &str = "https://github.com/laupernoe/dumbmonit/releases/latest";
 
 /// Fichiers de la dernière publication, par leur nom : GitHub sert sous ce
 /// préfixe la pièce jointe de ce nom de la version la plus récente.
-const RELEASE_DOWNLOAD_URL: &str = "https://github.com/noekan/dumbmonit/releases/latest/download";
+const RELEASE_DOWNLOAD_URL: &str = "https://github.com/laupernoe/dumbmonit/releases/latest/download";
 
 /// Ce que le serveur répond, en plus du renvoi, pour un binaire qu'il ne livre pas.
 ///
@@ -344,7 +344,7 @@ mod tests {
         assert_eq!(binary.status(), StatusCode::TEMPORARY_REDIRECT);
         assert_eq!(
             location(&binary),
-            "https://github.com/noekan/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64"
+            "https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64"
         );
 
         // L'empreinte suit le même chemin : le fichier `.sha256` publié à côté du

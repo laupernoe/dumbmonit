@@ -9,7 +9,7 @@
 One container, one IP address to type in, useful graphs and alerts in under a minute.<br>
 The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 
-[![CI](https://github.com/noekan/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/noekan/dumbmonit/actions/workflows/ci.yml)
+[![CI](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml)
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Made for homelabs](https://img.shields.io/badge/made%20for-homelabs-6f83a3.svg)](#quick-start)
@@ -22,7 +22,7 @@ The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 </div>
 
 > **Work in progress.** DumbMonit is under active development; the current
-> build is an alpha for early testers (`ghcr.io/noekan/dumbmonit:latest`). It
+> build is an alpha for early testers (`ghcr.io/laupernoe/dumbmonit:latest`). It
 > runs daily on the author's homelab, but expect rough edges and breaking
 > changes. Feedback and bug reports are very welcome; see [Status](#status)
 > for what is known to be missing.
@@ -264,11 +264,11 @@ back for a paid edition.
 
 ```bash
 mkdir dumbmonit && cd dumbmonit
-curl -fsSLO https://raw.githubusercontent.com/noekan/dumbmonit/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
 docker compose up -d
 ```
 
-That pulls `ghcr.io/noekan/dumbmonit:latest` (amd64; arm64 images are paused for now). To run from
+That pulls `ghcr.io/laupernoe/dumbmonit:latest` (amd64; arm64 images are paused for now). To run from
 source instead, clone the repository and use `docker compose up -d --build`
 (about ten minutes; Docker is the only requirement).
 
@@ -310,7 +310,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http:/
 The same command installs the agent on Linux, macOS and FreeBSD: it detects the
 system and registers the service with systemd, OpenRC, launchd or rc.d. On
 macOS, download the binary from the
-[releases page](https://github.com/noekan/dumbmonit/releases/latest) and add
+[releases page](https://github.com/laupernoe/dumbmonit/releases/latest) and add
 `--bin=./dumbmonit-agent-macos-aarch64`. A PowerShell script is served at
 `/install.ps1` for Windows. Every install command carries the expected
 SHA-256 of the binary, and the script refuses a download that does not match
@@ -321,7 +321,7 @@ The agent registers itself as a device. A host that was enrolled before agent
 binding existed, and never bound, is refused once its transition window
 closes; the device page explains how to re-enrol it.
 
-The agent is also published as an image, `ghcr.io/noekan/dumbmonit-agent`
+The agent is also published as an image, `ghcr.io/laupernoe/dumbmonit-agent`
 (same tags as the server), for Docker hosts and **remote sites**: with
 `DUMBMONIT_AGENT_RELAY=true` the agent runs, on the server's behalf, the
 probes of the devices you assign to it (SNMP, Proxmox, HTTP…) from its own
@@ -351,7 +351,7 @@ One container, one volume. The image ships the VictoriaMetrics binary and the
 server runs it as a child process; set `DUMBMONIT_VM_URL` to use an instance
 you already have instead. Configuration and state live in an embedded SQLite
 database: there is no database container. The published image is
-`ghcr.io/noekan/dumbmonit` (`latest` = last tagged build, `edge` = last
+`ghcr.io/laupernoe/dumbmonit` (`latest` = last tagged build, `edge` = last
 commit on `main`, or a version such as `0.1.0-alpha.1`).
 
 ## Configuration
@@ -432,7 +432,7 @@ the HTTP API.
 ## Roadmap
 
 What is planned, in progress and recently shipped is on the public
-**[DumbMonit Roadmap](https://github.com/users/noekan/projects/2)**. Priorities
+**[DumbMonit Roadmap](https://github.com/users/laupernoe/projects/2)**. Priorities
 can change; suggest an idea by opening an issue.
 
 ## Contributing
@@ -453,7 +453,7 @@ used daily on the author's own homelab, but it is not ready for anyone who needs
 it to be boring: the HTTP API is not frozen, the database schema still moves,
 and some integrations have only been exercised against simulated devices, not
 the real hardware. Known gaps and open bugs are tracked in the
-[issues](https://github.com/noekan/dumbmonit/issues). Heartbeat monitors,
+[issues](https://github.com/laupernoe/dumbmonit/issues). Heartbeat monitors,
 scoped API tokens covering the whole REST API and the TOTP second factor have
 since shipped, as has backup and restore; there is still no upgrade guarantee
 across schema changes. The project was called
