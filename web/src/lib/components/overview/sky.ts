@@ -75,6 +75,7 @@ export interface Sky {
 		/** Devices whose last probe failed on our side (credentials, address, option). */
 		misconfigured: number;
 		waiting: number;
+		/** Warnings, advisories, notices and building-up: only alerts nobody has acknowledged or snoozed. */
 		warnings: number;
 		advisories: number;
 		notices: number;
@@ -159,6 +160,19 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 		firing.map((alert) => alert.target_id).filter((id): id is TargetId => id !== null)
 	);
 
+	// Weather and sentence only follow alerts nobody has dealt with: a dismissed
+	// (acknowledged) or snoozed alert is still listed and counted in its plate,
+	// but it no longer rains.
+	const isLive = (alert: Alert) => !alert.acked && !alert.silenced;
+	const liveFiring = firing.filter(isLive);
+	const livePending = pending.filter(isLive);
+	// A device whose only firing alerts are all quieted does not storm either.
+	const quietedTargets = new Set(
+		[...firingByTarget].filter((id) =>
+			firing.filter((alert) => alert.target_id === id).every((alert) => !isLive(alert))
+		)
+	);
+
 	const rows: SkyRow[] = [];
 	let unreachableRows = 0;
 	let misconfiguredRows = 0;
@@ -228,13 +242,15 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 	const counts: Sky['counts'] = {
 		devices: targets.length,
 		reporting: stateCount('online'),
-		unreachable: stateCount('offline', 'down'),
+		unreachable: [...states].filter(
+			([id, state]) => (state === 'offline' || state === 'down') && !quietedTargets.has(id)
+		).length,
 		misconfigured: stateCount('misconfigured'),
 		waiting: stateCount('pending'),
-		warnings: firing.filter((alert) => alert.severity === 'critical').length,
-		advisories: firing.filter((alert) => alert.severity === 'warning').length,
-		notices: firing.filter((alert) => alert.severity === 'info').length,
-		buildingUp: pending.length,
+		warnings: liveFiring.filter((alert) => alert.severity === 'critical').length,
+		advisories: liveFiring.filter((alert) => alert.severity === 'warning').length,
+		notices: liveFiring.filter((alert) => alert.severity === 'info').length,
+		buildingUp: livePending.length,
 		suppressed: suppressed.length,
 		acked: [...firing, ...pending].filter((alert) => alert.acked).length,
 		snoozed: [...firing, ...pending].filter((alert) => alert.silenced && !alert.acked).length
@@ -274,12 +290,6 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 	if (counts.acked > 0) plates.push({ tone: 'muted', label: `${counts.acked} acknowledged` });
 	if (counts.snoozed > 0) plates.push({ tone: 'muted', label: `${counts.snoozed} snoozed` });
 
-	// Acknowledged and snoozed alerts stay in the counts (the sky is honest
-	// about the weather) but leave the "Needs you" readout: someone already
-	// knows, or asked not to be told again just yet.
-	const ackedFiring = firing.filter((alert) => alert.acked).length;
-	const snoozedFiring = firing.filter((alert) => alert.silenced && !alert.acked).length;
-
 	return {
 		sentence,
 		plates,
@@ -287,9 +297,7 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 		attention:
 			counts.warnings +
 			counts.advisories +
-			counts.notices -
-			ackedFiring -
-			snoozedFiring +
+			counts.notices +
 			unreachableRows +
 			misconfiguredRows,
 		forecasts,
