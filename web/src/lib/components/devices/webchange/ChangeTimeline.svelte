@@ -9,7 +9,7 @@
 	import type { WebchangeChange, WebchangeChangeKind } from '$lib/api';
 	import { formatDateTime, formatRelative } from '$lib/format';
 	import { EmptyState, Skeleton } from '$lib/ui';
-	import { FileDiff, FileMinus, FilePlus } from 'lucide-svelte';
+	import { Eye, FileDiff, FileMinus, FilePlus } from 'lucide-svelte';
 	import { pagePath, shortenPath } from './format';
 
 	interface Props {
@@ -83,6 +83,10 @@
 					<time class="tnum shrink-0 text-[0.8125rem] text-ink-2" datetime={change.detected_at} title={formatDateTime(change.detected_at)}>
 						{formatRelative(change.detected_at)}
 					</time>
+					<span class="inline-flex shrink-0 items-center gap-1 text-[0.8125rem] font-semibold text-ink">
+						<Eye class="size-3.5" aria-hidden="true" />
+						View
+					</span>
 				</button>
 			</li>
 		{/each}

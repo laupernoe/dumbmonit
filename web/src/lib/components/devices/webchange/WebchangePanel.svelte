@@ -20,7 +20,7 @@
 	import { formatRelative } from '$lib/format';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { Button, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
-	import { RefreshCw } from 'lucide-svelte';
+	import { Eye, RefreshCw } from 'lucide-svelte';
 	import PagesTable from './PagesTable.svelte';
 	import ChangeTimeline from './ChangeTimeline.svelte';
 
@@ -129,6 +129,12 @@
 		class="rise-in"
 	>
 		{#snippet aside()}
+			{#if changes.length > 0 && selectedUrl === null}
+				<Button variant="primary" href={`/targets/${target.id}/changes/${changes[0].id}`}>
+					<Eye class="size-4" aria-hidden="true" />
+					See the latest change
+				</Button>
+			{/if}
 			{#if auth.isAdmin}
 				<Button variant="secondary" onclick={checkNow} loading={checking}>
 					<RefreshCw class="size-4" aria-hidden="true" />
@@ -156,6 +162,8 @@
 		{/if}
 	</Panel>
 
+	<!-- A single page is the device's own address, already in the header -->
+	{#if loadingPages || pagesError || pages.length > 1}
 	<Panel title="Pages" padded={false} class="rise-in">
 		<div class="px-5 py-4">
 			{#if pagesError}
@@ -169,6 +177,7 @@
 			{/if}
 		</div>
 	</Panel>
+	{/if}
 
 	<Panel
 		title="Change timeline"

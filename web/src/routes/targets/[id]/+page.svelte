@@ -640,9 +640,6 @@
 		</section>
 	{/if}
 
-	<!-- Security score: renders nothing unless this kind has checks -->
-	<SecurityCard {target} />
-
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind)}
 		<section class="mt-6" aria-label="Device details">
@@ -655,7 +652,8 @@
 		</section>
 	{/if}
 
-	<!-- Instruments -->
+	<!-- Instruments: a website-change watcher already says everything in its own panel -->
+	{#if target.kind !== 'webchange'}
 	<section class="mt-8" aria-labelledby="device-metrics">
 		<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
 			<h2 id="device-metrics" class="text-base font-semibold tracking-tight text-ink">
@@ -826,4 +824,8 @@
 			</div>
 		{/if}
 	</section>
+{/if}
+
+	<!-- Security score: secondary, folded by default; renders nothing unless this kind has checks -->
+	<SecurityCard {target} />
 {/if}
