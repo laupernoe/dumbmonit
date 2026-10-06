@@ -161,7 +161,10 @@ the product principles in [PRODUCT.md](PRODUCT.md).
 
 The web UI can be **translated on [Weblate](https://hosted.weblate.org/engage/dumbmonit/)**,
 no code needed: pick a language, translate, and Weblate opens the pull request.
-English is the only shipped language so far.
+The language picker (*Settings → Appearance*) lists English, French, German,
+Spanish, Italian, Portuguese (Portugal and Brazil), Russian and Simplified
+Chinese; only the Settings page is translated so far, the rest follows as strings
+move into the message files.
 
 Please report security issues privately: see [SECURITY.md](SECURITY.md).
 This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
