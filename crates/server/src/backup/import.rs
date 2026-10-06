@@ -806,9 +806,25 @@ async fn restore_status_pages(
 ) -> Result<SectionReport> {
     let mut report = SectionReport::new("status_pages");
     for page in &bundle.status_pages {
+        // Une sauvegarde éditée à la main ne doit pas contourner le jeu fermé.
+        let mut kept: Vec<&str> = Vec::new();
+        for scene in &page.scenes {
+            if crate::db::status_pages::SCENES.contains(&scene.as_str())
+                && !kept.contains(&scene.as_str())
+            {
+                kept.push(scene);
+            }
+        }
+        let scenes = kept.join(",");
+        let scene_rotation =
+            if crate::db::status_pages::SCENE_ROTATIONS.contains(&page.scene_rotation.as_str()) {
+                page.scene_rotation.as_str()
+            } else {
+                "visit"
+            };
         let existing = sqlx::query(
             "SELECT id, title, description, published, theme, show_uptime_days,
-                 accent, footer_text, homepage_url
+                 accent, scenes, scene_rotation, footer_text, homepage_url
              FROM status_pages WHERE slug = ?",
         )
         .bind(&page.slug)
@@ -825,13 +841,15 @@ async fn restore_status_pages(
                     && row.try_get::<String, _>("theme")? == page.theme
                     && row.try_get::<i64, _>("show_uptime_days")? == page.show_uptime_days
                     && row.try_get::<String, _>("accent")? == page.accent
+                    && row.try_get::<String, _>("scenes")? == scenes
+                    && row.try_get::<String, _>("scene_rotation")? == scene_rotation
                     && row.try_get::<String, _>("footer_text")? == page.footer_text
                     && row.try_get::<String, _>("homepage_url")? == page.homepage_url;
                 if !same {
                     sqlx::query(
                         "UPDATE status_pages SET title = ?, description = ?, published = ?,
-                             theme = ?, show_uptime_days = ?, accent = ?, footer_text = ?,
-                             homepage_url = ?,
+                             theme = ?, show_uptime_days = ?, accent = ?, scenes = ?,
+                             scene_rotation = ?, footer_text = ?, homepage_url = ?,
                              updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
                          WHERE id = ?",
                     )
@@ -841,6 +859,8 @@ async fn restore_status_pages(
                     .bind(&page.theme)
                     .bind(page.show_uptime_days)
                     .bind(&page.accent)
+                    .bind(&scenes)
+                    .bind(scene_rotation)
                     .bind(&page.footer_text)
                     .bind(&page.homepage_url)
                     .bind(id)
@@ -854,8 +874,8 @@ async fn restore_status_pages(
                 let row = sqlx::query(
                     "INSERT INTO status_pages
                          (slug, title, description, published, theme, show_uptime_days,
-                          accent, footer_text, homepage_url)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                          accent, scenes, scene_rotation, footer_text, homepage_url)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
                 )
                 .bind(&page.slug)
                 .bind(&page.title)
@@ -864,6 +884,8 @@ async fn restore_status_pages(
                 .bind(&page.theme)
                 .bind(page.show_uptime_days)
                 .bind(&page.accent)
+                .bind(&scenes)
+                .bind(scene_rotation)
                 .bind(&page.footer_text)
                 .bind(&page.homepage_url)
                 .fetch_one(&mut **tx)

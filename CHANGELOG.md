@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **A city scene behind the status page banner.** The page editor's **Scene**
+  setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
+  (none by default), with a rotation of every visit, minute, ten minutes or
+  hour when there are several. Both settings are kept in backups. See
+  [Status pages](docs/using/status-pages.md#scene).
+
 ## 0.1.0-alpha.6 — 2026-10-06
 
 ### Security

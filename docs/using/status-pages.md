@@ -48,6 +48,15 @@ opening it to arbitrary code:
 | **Organisation website** | An `http://` or `https://` link shown next to the title, as the site's host name. |
 | **Footer text** | Plain text under the page, up to 280 characters: who runs it, how to reach them. Line breaks are kept; nothing is interpreted as HTML or Markdown. |
 
+### Scene
+
+The **Scene** setting draws a city skyline behind the banner. There is none by
+default. Pick up to six, in the order you want them: Venice, Paris, Tokyo, New
+York, London or Rome. With more than one, **Rotation** decides when the page
+moves to the next: at every visit (default), every minute, every ten minutes or
+every hour. The scenes are a closed set of drawings shipped with DumbMonit —
+nothing is uploaded or interpreted.
+
 There is deliberately no custom CSS or HTML: a status page is public and lives
 on the same origin as your admin interface, under the same
 [content security policy](../reference/api.md).
