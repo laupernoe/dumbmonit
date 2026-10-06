@@ -295,6 +295,12 @@ pub struct BundleStatusPage {
     /// les abonnés, données personnelles, ne voyagent pas dans une sauvegarde.
     #[serde(default = "default_accent")]
     pub accent: String,
+    /// Décor de la bannière (depuis la migration 0041) : absents d'une
+    /// ancienne sauvegarde, d'où les défauts.
+    #[serde(default)]
+    pub scenes: Vec<String>,
+    #[serde(default = "default_scene_rotation")]
+    pub scene_rotation: String,
     #[serde(default)]
     pub footer_text: String,
     #[serde(default)]
@@ -303,6 +309,10 @@ pub struct BundleStatusPage {
 
 fn default_accent() -> String {
     "default".to_string()
+}
+
+fn default_scene_rotation() -> String {
+    "visit".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

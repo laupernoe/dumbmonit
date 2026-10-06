@@ -2,7 +2,8 @@
 	/**
 	 * Create or edit a status page, inline: title, slug (suggested from the
 	 * title until typed by hand), description, theme, history depth, published
-	 * toggle, the look (logo, accent, footer, link to the organisation's site),
+	 * toggle, the look (logo, accent, footer, link to the organisation's site), the
+	 * optional banner scene(s),
 	 * email subscription, and the service picker — tick devices, name them for
 	 * the public, group them. Saves the page, its logo, then its services.
 	 */
@@ -19,11 +20,14 @@
 		type StatusPage,
 		type StatusPageAccent,
 		type StatusPageItemPayload,
+		type StatusPageSceneRotation,
 		type StatusPageTheme,
 		type Target
 	} from '$lib/api';
 	import { Button, ErrorNotice, Field, Toggle } from '$lib/ui';
 	import { ACCENTS, accentClass, slugify } from './words';
+	import SceneDefs from './scenes/SceneDefs.svelte';
+	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
 
 	interface Props {
 		/** `null` creates a page. */
@@ -52,6 +56,9 @@
 	let published = $state(initial?.published ?? false);
 	let showDays = $state(initial?.show_uptime_days ?? 90);
 	let accent = $state<StatusPageAccent>(initial?.accent ?? 'default');
+	// Banner scenes in the order they were ticked; none (the default) keeps the plain page.
+	let scenes = $state<string[]>([...(initial?.scenes ?? [])]);
+	let sceneRotation = $state<StatusPageSceneRotation>(initial?.scene_rotation ?? 'visit');
 	let footerText = $state(initial?.footer_text ?? '');
 	let homepageUrl = $state(initial?.homepage_url ?? '');
 	let subscribeChannel = $state<number | null>(initial?.subscribe_channel_id ?? null);
@@ -97,6 +104,10 @@
 	}
 
 	let homepageError = $state<string | null>(null);
+
+	function toggleScene(id: string, on: boolean) {
+		scenes = on ? [...scenes.filter((s) => s !== id), id] : scenes.filter((s) => s !== id);
+	}
 
 	// Picker state: per target, whether it is shown and how.
 	interface Pick {
@@ -170,6 +181,8 @@
 				published,
 				show_uptime_days: showDays,
 				accent,
+				scenes,
+				scene_rotation: sceneRotation,
 				footer_text: footerText.trim(),
 				homepage_url: homepageUrl.trim(),
 				subscribe_channel_id: subscribeChannel
@@ -306,6 +319,51 @@
 		<Field label="Footer text" for="{idPrefix}-footer" help="Plain text under the page, up to 280 characters: who runs it, how to reach them.">
 			<textarea id="{idPrefix}-footer" class="input min-h-16" bind:value={footerText} maxlength="280" rows="2" disabled={saving}></textarea>
 		</Field>
+	</fieldset>
+
+	<!-- Scene -->
+	<fieldset class="grid gap-3" disabled={saving}>
+		<legend class="text-sm font-semibold text-ink">Scene</legend>
+		<p class="text-[0.8125rem] text-ink-2">
+			An optional illustrated city behind the title of the public page. Off by default: tick none and the page stays plain. Tick several to alternate between them.
+		</p>
+		<SceneDefs />
+		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+			{#each SCENE_CHOICES as choice (choice.value)}
+				{@const Preview = SCENE_COMPONENTS[choice.value]}
+				{@const rank = scenes.indexOf(choice.value)}
+				<label
+					class={`group relative grid cursor-pointer gap-1.5 rounded-lg border p-1.5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink ${rank >= 0 ? 'border-ink bg-surface-2' : 'border-line hover:border-line-strong'}`}
+				>
+					<input
+						type="checkbox"
+						class="sr-only"
+						checked={rank >= 0}
+						onchange={(event) => toggleScene(choice.value, event.currentTarget.checked)}
+					/>
+					<span class="relative block h-20 overflow-hidden rounded-md border border-line" aria-hidden="true">
+						<Preview />
+					</span>
+					<span class="flex items-center justify-between gap-2 px-0.5 text-sm text-ink">
+						{choice.label}
+						{#if rank >= 0}
+							<span class="inline-flex min-w-5 items-center justify-center rounded-full bg-ink px-1.5 text-[0.6875rem] font-semibold text-canvas" aria-label={scenes.length > 1 ? `Position ${rank + 1}` : 'Selected'}>
+								{scenes.length > 1 ? rank + 1 : '✓'}
+							</span>
+						{/if}
+					</span>
+				</label>
+			{/each}
+		</div>
+		{#if scenes.length > 1}
+			<Field label="Change scene" for="{idPrefix}-rotation" help="With several scenes ticked, which one a visitor sees and when it changes. They follow the order in which you ticked them.">
+				<select id="{idPrefix}-rotation" class="input" bind:value={sceneRotation} disabled={saving}>
+					{#each SCENE_ROTATIONS as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
+			</Field>
+		{/if}
 	</fieldset>
 
 	<!-- Email subscription -->
