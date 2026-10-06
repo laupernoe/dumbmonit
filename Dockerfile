@@ -186,7 +186,7 @@ FROM scratch AS agent-dist
 COPY --from=agent /agents /
 
 # ---------------------------------------------------------------------------
-# Image de l'agent (ghcr.io/noekan/dumbmonit-agent) : le binaire de la
+# Image de l'agent (ghcr.io/laupernoe/dumbmonit-agent) : le binaire de la
 # plateforme cible et les racines TLS, rien d'autre. Construite avec
 # `--target agent-image` ; l'image par défaut reste celle du serveur, plus bas.
 #

@@ -84,7 +84,7 @@ info:
     identifier: Apache-2.0
   contact:
     name: DumbMonit
-    url: https://github.com/noekan/dumbmonit
+    url: https://github.com/laupernoe/dumbmonit
 externalDocs:
   description: HTTP API reference (Read the Docs)
   url: https://dumbmonit.readthedocs.io/en/latest/reference/api/

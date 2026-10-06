@@ -28,7 +28,7 @@ exactly like the HTTP checks. Private LAN addresses are always allowed.
 ## Reference packs
 
 The repository ships three packs under
-[`packs/`](https://github.com/noekan/dumbmonit/tree/main/packs), each with its
+[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), each with its
 fixtures and expected output:
 
 | Pack | Reads | Rules |
@@ -101,11 +101,11 @@ The server binary validates and tests packs offline:
 
 ```bash
 # Schema and consistency checks, without a server or a database
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/noekan/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # Replay fixtures/ through the real extraction and compare with expected.prom
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/noekan/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

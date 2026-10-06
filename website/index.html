@@ -28,7 +28,7 @@
 <meta name="twitter:description" content="One container, one IP address to type in, useful graphs and alerts in under a minute. Open source, Apache 2.0. Alpha.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/","codeRepository":"https://github.com/noekan/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
 </head>
 <body>
@@ -47,7 +47,7 @@
 		<div class="actions">
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live demo</a>
 			<a class="btn btn-ghost btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/">Docs</a>
-			<a class="btn btn-secondary btn-sm" href="https://github.com/noekan/dumbmonit">GitHub</a>
+			<a class="btn btn-secondary btn-sm" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
 		</div>
 	</div>
 </header>
@@ -67,15 +67,15 @@
 
 				<div class="code rise-in">
 					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
-<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/noekan/dumbmonit/main/docker-compose.yml
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
 <span class="prompt">$ </span>docker compose up -d</code></pre>
 					<button class="copy" type="button" data-copy="quickstart">Copy</button>
 				</div>
-				<p class="code-note">Then open <code>http://localhost:8080</code> and create the first account. Image for amd64 (arm64 later): <code>ghcr.io/noekan/dumbmonit</code>.</p>
+				<p class="code-note">Then open <code>http://localhost:8080</code> and create the first account. Image for amd64 (arm64 later): <code>ghcr.io/laupernoe/dumbmonit</code>.</p>
 
 				<div class="cta">
 					<a class="btn btn-primary" href="https://demo.dumbmonit.app"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.9-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z"/></svg>Try the live demo</a>
-					<a class="btn btn-secondary" href="https://github.com/noekan/dumbmonit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>View on GitHub</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>View on GitHub</a>
 					<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/en/latest/install/docker/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>Read the install guide</a>
 				</div>
 			</div>
@@ -99,7 +99,7 @@
 <div class="wrap">
 	<div class="notice" role="note">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
-		<p><strong>This is an alpha.</strong> DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href="https://github.com/noekan/dumbmonit/issues">tell us what breaks</a>.</p>
+		<p><strong>This is an alpha.</strong> DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href="https://github.com/laupernoe/dumbmonit/issues">tell us what breaks</a>.</p>
 	</div>
 </div>
 
@@ -246,7 +246,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
   --token=dmon_xxx --url=http://server:8080</code></pre>
 					<button class="copy" type="button" data-copy="agent-cmd">Copy</button>
 				</div>
-				<p class="code-note">A PowerShell script is served at <code>/install.ps1</code> for Windows. The agent is also an image, <code>ghcr.io/noekan/dumbmonit-agent</code>.</p>
+				<p class="code-note">A PowerShell script is served at <code>/install.ps1</code> for Windows. The agent is also an image, <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
 			</div>
 			<div>
 				<ul class="os-list">
@@ -357,7 +357,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 					<li><span>The HTTP API is not frozen and the database schema still changes between alphas.</span></li>
 					<li><span>OPNsense, TrueNAS, Proxmox Datacenter Manager and Mail Gateway need reports from real, long-running installs. Redfish needs a real management controller.</span></li>
 					<li><span>The macOS and FreeBSD agents need someone to run them on real hardware.</span></li>
-					<li><span>What gets built next is decided in the <a href="https://github.com/noekan/dumbmonit/issues">GitHub issues</a>, and the <a href="https://github.com/noekan/dumbmonit/blob/main/CHANGELOG.md">changelog</a> says what changed.</span></li>
+					<li><span>What gets built next is decided in the <a href="https://github.com/laupernoe/dumbmonit/issues">GitHub issues</a>, and the <a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">changelog</a> says what changed.</span></li>
 				</ul>
 			</div>
 		</div>
@@ -369,7 +369,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>A device that reads wrong, an alert that woke you for nothing, a page that confused you: each report makes the next alpha better. Device support requests are welcome too.</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="https://github.com/noekan/dumbmonit/issues/new/choose">Open an issue</a>
+				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">Open an issue</a>
 				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">Live demo</a>
 				<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/en/latest/">Documentation</a>
 			</div>
@@ -384,11 +384,11 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<p>DumbMonit, Apache 2.0. The mascot is a pigeon.</p>
 		<nav aria-label="Footer">
 			<a href="https://demo.dumbmonit.app">Live demo</a>
-			<a href="https://github.com/noekan/dumbmonit">GitHub</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
 			<a href="https://dumbmonit.readthedocs.io/en/latest/">Documentation</a>
-			<a href="https://github.com/noekan/dumbmonit/releases">Releases</a>
-			<a href="https://github.com/noekan/dumbmonit/blob/main/LICENSE">License</a>
-			<a href="https://github.com/noekan/dumbmonit/blob/main/SECURITY.md">Security</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">License</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Security</a>
 		</nav>
 	</div>
 </footer>
