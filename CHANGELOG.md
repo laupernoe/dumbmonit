@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.1.0-alpha.6 — 2026-10-06
+
 ### Security
 
 - **Hosts that never bound to their agent are refused.** The transition
