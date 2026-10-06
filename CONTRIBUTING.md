@@ -139,9 +139,11 @@ For an SNMP device that only needs a new profile, add a YAML file under
 ## Translating DumbMonit
 
 The web UI is wired for community translation through
-[Weblate](https://hosted.weblate.org/projects/dumbmonit/) (project to be
-created there); nothing is translated yet — English (`web/messages/en.json`)
-is the only shipped locale. Strings are extracted with
+[Weblate](https://hosted.weblate.org/engage/dumbmonit/) (project `dumbmonit`,
+component `web-ui`), no code needed: a translator picks or adds a language
+there and Weblate opens a pull request adding or updating
+`web/messages/<locale>.json`, which a maintainer merges. Nothing is
+translated yet — English (`web/messages/en.json`) is the only shipped locale. Strings are extracted with
 [Paraglide JS](https://paraglidejs.com) (compile-time, tree-shaken, MIT):
 
 - Each UI string is a flat, dotted key in `web/messages/en.json`
