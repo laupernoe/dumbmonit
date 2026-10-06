@@ -4,7 +4,7 @@
 
 # DumbMonit
 
-**Dumb-simple monitoring for homelabs and small teams.**
+**Dumb-simple monitoring from the homelab to the small business.**
 
 One container, one IP address to type in, useful graphs and alerts in under a minute.<br>
 The UI reads like a weather bulletin for your network. The mascot is a pigeon.
@@ -13,7 +13,7 @@ The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
 [![Translation status](https://hosted.weblate.org/widget/dumbmonit/web-ui/svg-badge.svg)](https://hosted.weblate.org/engage/dumbmonit/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Made for homelabs](https://img.shields.io/badge/made%20for-homelabs-6f83a3.svg)](#quick-start)
+[![From homelab to small business](https://img.shields.io/badge/from%20homelab-to%20small%20business-6f83a3.svg)](#quick-start)
 [![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange.svg)](#status)
 
 **[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)**

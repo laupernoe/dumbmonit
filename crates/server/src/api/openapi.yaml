@@ -21,7 +21,7 @@ openapi: 3.1.0
 info:
   title: DumbMonit HTTP API
   version: "0.1"
-  summary: Monitoring for homelabs and small teams — the API the web UI uses, open to scripts and assistants.
+  summary: Monitoring from the homelab to the small business — the API the web UI uses, open to scripts and assistants.
   description: |
     Everything the DumbMonit web interface does goes through this API. It is an
     **alpha**: routes and fields may still change between releases. The
