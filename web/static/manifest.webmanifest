@@ -2,7 +2,7 @@
   "id": "/",
   "name": "DumbMonit",
   "short_name": "DumbMonit",
-  "description": "Simple monitoring for homelabs and small teams.",
+  "description": "Simple monitoring from the homelab to the small business.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",

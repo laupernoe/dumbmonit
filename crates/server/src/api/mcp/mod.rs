@@ -437,7 +437,7 @@ fn server_info() -> Value {
         "name": SERVER_NAME,
         "title": "DumbMonit monitoring",
         "version": env!("CARGO_PKG_VERSION"),
-        "description": "Self-hosted monitoring for homelabs and small teams: devices, \
+        "description": "Self-hosted monitoring from the homelab to the small business: devices, \
                         services, alerts, maintenance windows and status pages.",
         "websiteUrl": "https://github.com/laupernoe/dumbmonit",
     })
