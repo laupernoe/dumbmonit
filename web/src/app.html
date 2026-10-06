@@ -33,6 +33,87 @@
 				/* localStorage unavailable: stay on the light theme. */
 			}
 		</script>
+		<script>
+			class DmProbe { #p = 1; static ok = (null)?.x ?? true; }
+			window.__dmModern = DmProbe.ok;
+		</script>
+		<script>
+			// Old browsers (TV, set-top boxes) cannot run the app: Svelte 5 needs
+			// ES2022 syntax, Tailwind 4 needs color-mix() and cascade layers. Instead
+			// of a blank screen, they get a plain message in the app's colours.
+			// Written in ES3 on purpose so this very check parses everywhere.
+			(function () {
+				// Set by the previous <script>, which only parses on a modern engine
+				// (no eval: the CSP forbids it).
+				var ok = window.__dmModern === true;
+				try {
+					if (!window.CSS || !CSS.supports || !CSS.supports('color', 'color-mix(in srgb, red, blue)'))
+						ok = false;
+				} catch (e) {
+					ok = false;
+				}
+				try {
+					if (sessionStorage.getItem('dumbmonit-skip-compat') === '1') ok = true;
+				} catch (e) {}
+				if (ok) return;
+
+				var dark = true;
+				try {
+					var choice = localStorage.getItem('dumbmonit-theme');
+					if (choice === 'light') dark = false;
+					else if (choice !== 'dark' && window.matchMedia)
+						dark = !window.matchMedia('(prefers-color-scheme: light)').matches;
+				} catch (e) {}
+				var c = dark
+					? { bg: '#0a1020', card: '#111a2e', ink: '#e8eef8', ink2: '#9fb0c8', line: '#1f2b44', accent: '#22d3c5', btn: '#0a1020' }
+					: { bg: '#f3efe6', card: '#fbf9f4', ink: '#16213a', ink2: '#4a5a78', line: '#d9d6cf', accent: '#0f8f86', btn: '#ffffff' };
+
+				var css =
+					'body>div{display:none!important}' +
+					'html,body{margin:0;height:100%;background:' + c.bg + ';color:' + c.ink + ';' +
+					"font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}" +
+					'#dm-old{display:table;width:100%;height:100%}' +
+					'#dm-old .cell{display:table-cell;vertical-align:middle;text-align:center;padding:24px}' +
+					'#dm-old .card{display:inline-block;max-width:560px;text-align:left;background:' + c.card + ';' +
+					'border:1px solid ' + c.line + ';border-radius:16px;padding:32px 36px}' +
+					'#dm-old img{display:inline-block;width:48px;height:48px;vertical-align:middle;margin-right:12px}' +
+					'#dm-old .brand{font-size:22px;font-weight:bold;vertical-align:middle}' +
+					'#dm-old h1{font-size:24px;margin:24px 0 8px}' +
+					'#dm-old p,#dm-old li{font-size:16px;line-height:1.5;color:' + c.ink2 + '}' +
+					'#dm-old ul{list-style:disc;padding-left:20px;margin:8px 0 20px}' +
+					'#dm-old .ua{font-size:12px;opacity:.7;word-break:break-all}' +
+					'#dm-old a{display:inline-block;margin-top:8px;padding:10px 18px;border-radius:10px;' +
+					'background:' + c.accent + ';color:' + c.btn + ';text-decoration:none;font-weight:bold}';
+				var style = document.createElement('style');
+				style.appendChild(document.createTextNode(css));
+				document.getElementsByTagName('head')[0].appendChild(style);
+
+				function show() {
+					var box = document.createElement('section');
+					box.id = 'dm-old';
+					box.innerHTML =
+						'<div class="cell"><div class="card">' +
+						'<img src="%sveltekit.assets%/favicon.svg" alt=""><span class="brand">DumbMonit</span>' +
+						'<h1>This browser is too old for DumbMonit</h1>' +
+						'<p>Your devices are fine, it is only this screen that cannot draw the dashboard. Try one of these:</p>' +
+						'<ul><li>Update the browser, or use a recent Chrome, Edge, Firefox or Safari.</li>' +
+						'<li>On a TV: cast a computer tab, or plug in a streaming stick with a recent browser.</li></ul>' +
+						'<p class="ua"></p>' +
+						'<a href="#" id="dm-old-try">Try anyway</a></div></div>';
+					document.body.appendChild(box);
+					box.getElementsByTagName('p')[1].appendChild(document.createTextNode(navigator.userAgent));
+					document.getElementById('dm-old-try').onclick = function () {
+						try {
+							sessionStorage.setItem('dumbmonit-skip-compat', '1');
+						} catch (e) {}
+						location.reload();
+						return false;
+					};
+				}
+				if (document.body) show();
+				else document.addEventListener('DOMContentLoaded', show);
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover" class="h-full">
