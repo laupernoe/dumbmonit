@@ -28,6 +28,8 @@
 	/** Unsupported kind, or the device vanished mid-flight: the card shows nothing. */
 	let hide = $state(false);
 	let unknownOpen = $state(false);
+	/** Folded by default: the score is useful, rarely the first thing to read. */
+	let open = $state(false);
 
 	async function load(signal?: AbortSignal) {
 		error = null;
@@ -93,6 +95,18 @@
 		class="rise-in"
 	>
 		{#snippet aside()}
+			{#if report && report.grade !== null && report.score !== null}
+				<Plate tone={GRADE_TONE[report.grade]} label={`Grade ${report.grade} · ${report.score}/100`} />
+			{/if}
+			<button
+				type="button"
+				class="inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink"
+				aria-expanded={open}
+				onclick={() => (open = !open)}
+			>
+				<ChevronRight class={`size-4 transition-transform duration-200 ease-out-expo ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+				{open ? 'Hide' : 'Details'}
+			</button>
 			<a
 				href={DOCS_URL}
 				target="_blank"
@@ -104,6 +118,7 @@
 			</a>
 		{/snippet}
 
+		{#if open}
 		<div class="flex flex-wrap items-center gap-4 border-b border-line px-5 py-4">
 			{#if report.grade !== null && report.score !== null}
 				<div class="flex items-center gap-3">
@@ -198,6 +213,7 @@
 					</div>
 				{/if}
 			</div>
+		{/if}
 		{/if}
 	</Panel>
 	</section>

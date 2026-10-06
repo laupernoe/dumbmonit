@@ -27,9 +27,9 @@
 		unackAlert
 	} from '$lib/api';
 	import type { Tone } from '$lib/ui';
-	import { Button, EmptyState, ErrorNotice, Plate, Skeleton, Toast } from '$lib/ui';
+	import { Button, ErrorNotice, Plate, Skeleton, Toast } from '$lib/ui';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { ShieldCheck, X } from 'lucide-svelte';
+	import { X } from 'lucide-svelte';
 	import { formatDateTime, formatRelative } from '$lib/format';
 	import {
 		alertDetail,
@@ -347,11 +347,10 @@
 		<Skeleton class="h-10 w-3/4" />
 	</div>
 {:else if empty}
-	<EmptyState icon={ShieldCheck} tone="signal" title="No alert has ever fired on this device." description="It shows up here the moment a rule starts building up.">
-		{#snippet action()}
-			<Plate tone="signal" label="Reporting" size="md" />
-		{/snippet}
-	</EmptyState>
+	<p class="flex flex-wrap items-center gap-2 text-sm text-ink-2">
+		<Plate tone="signal" label="Reporting" />
+		No alert has ever fired on this device.
+	</p>
 {:else}
 	<ol class="relative ml-2 border-l border-line pl-5">
 		{#each visibleAlerts as alert, i (alert.fingerprint)}
