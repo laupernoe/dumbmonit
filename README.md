@@ -11,6 +11,7 @@ The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 
 [![CI](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml)
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
+[![Translation status](https://hosted.weblate.org/widget/dumbmonit/web-ui/svg-badge.svg)](https://hosted.weblate.org/engage/dumbmonit/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Made for homelabs](https://img.shields.io/badge/made%20for-homelabs-6f83a3.svg)](#quick-start)
 [![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange.svg)](#status)
@@ -442,6 +443,10 @@ Bug reports, device profiles and new integrations are welcome. Read
 Rust toolchain needed), the conventions, and how to add a collector or a
 notification channel. Design rules for the UI are in [DESIGN.md](DESIGN.md) and
 the product principles in [PRODUCT.md](PRODUCT.md).
+
+The web UI can be **translated on [Weblate](https://hosted.weblate.org/engage/dumbmonit/)**,
+no code needed: pick a language, translate, and Weblate opens the pull request.
+English is the only shipped language so far.
 
 Please report security issues privately: see [SECURITY.md](SECURITY.md).
 This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
