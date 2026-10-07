@@ -27,6 +27,7 @@
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
+	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
 
 	/** Sections that used to live here, and where they went. */
 	const MOVED: Record<string, string> = {
@@ -61,7 +62,8 @@
 				{ id: 'agents', label: m["settings.section.agents"]() },
 				{ id: 'assistant', label: m["settings.section.assistant"]() },
 				{ id: 'packs', label: m["settings.section.packs"]() },
-				{ id: 'backup', label: m["settings.section.backup"]() }
+				{ id: 'backup', label: m["settings.section.backup"]() },
+				...(auth.isAdmin ? [{ id: 'reports', label: m["settings.section.reports"]() }] : [])
 			]
 		},
 		{
@@ -200,6 +202,9 @@
 		<div class="min-w-0 rise-in" style="--rise-delay: 160ms"><AssistantSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 200ms"><PacksSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 240ms"><BackupSection /></div>
+		{#if auth.isAdmin}
+			<div class="min-w-0 rise-in" style="--rise-delay: 260ms"><ReportsSection /></div>
+		{/if}
 		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AppearanceSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 300ms"><MusicSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 320ms"><AboutSection /></div>

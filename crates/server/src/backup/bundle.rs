@@ -126,6 +126,9 @@ pub struct Bundle {
     pub silences: Vec<BundleSilence>,
     #[serde(default)]
     pub status_pages: Vec<BundleStatusPage>,
+    /// Rapports périodiques par courriel.
+    #[serde(default)]
+    pub report_schedules: Vec<BundleReportSchedule>,
     #[serde(default)]
     pub incidents: Vec<BundleIncident>,
     #[serde(default)]
@@ -152,6 +155,7 @@ impl Bundle {
             ("channels".to_string(), self.channels.len()),
             ("silences".to_string(), self.silences.len()),
             ("status_pages".to_string(), self.status_pages.len()),
+            ("report_schedules".to_string(), self.report_schedules.len()),
             ("incidents".to_string(), self.incidents.len()),
             ("users".to_string(), self.users.len()),
             ("agent_tokens".to_string(), self.agent_tokens.len()),
@@ -278,6 +282,39 @@ pub struct BundleSilence {
     pub matchers: Value,
     pub schedule: Value,
     pub enabled: bool,
+}
+
+/// Rapport périodique : le canal SMTP est référencé par son nom, comme pour les
+/// règles ; le dernier envoi n'est pas emporté (un rapport restauré repart de zéro).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleReportSchedule {
+    pub name: String,
+    pub enabled: bool,
+    pub frequency: String,
+    #[serde(default)]
+    pub weekday: u32,
+    #[serde(default = "one")]
+    pub day_of_month: u32,
+    #[serde(default = "eight")]
+    pub hour: u32,
+    #[serde(default = "utc")]
+    pub timezone: String,
+    #[serde(default)]
+    pub recipients: Vec<String>,
+    #[serde(default)]
+    pub channel: Option<String>,
+}
+
+fn one() -> u32 {
+    1
+}
+
+fn eight() -> u32 {
+    8
+}
+
+fn utc() -> String {
+    "UTC".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

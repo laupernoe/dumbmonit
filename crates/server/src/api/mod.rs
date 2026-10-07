@@ -30,9 +30,10 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod reports;
 mod security;
 pub(crate) mod spa;
-mod status_pages;
+pub(crate) mod status_pages;
 mod synology;
 mod targets;
 mod tokens;
@@ -124,6 +125,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(proxmox::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
         .merge(notify_policy::routes())
+        // Rapports périodiques par courriel (`reports.rs`).
+        .merge(reports::routes())
         // Pages de statut et incidents (`status_pages.rs`).
         .merge(status_pages::routes())
         // Calendrier des sauvegardes et travaux d'un Proxmox Backup Server (`pbs.rs`).

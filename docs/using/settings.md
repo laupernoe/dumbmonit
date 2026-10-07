@@ -216,6 +216,12 @@ now** writes one immediately — the thing to do before an upgrade.
 
 Everything here is admin-only. See [Backup and restore](../install/backup.md).
 
+## Reports
+
+Periodic availability emails for the team: pick weekly, daily or monthly, the
+day, hour and timezone, the recipients and the email channel, then **Send a
+preview** to see the result. Admin-only. See [Email reports](reports.md).
+
 ## Appearance
 
 Three tiles, each previewing its own theme: **System** (follows your device and
