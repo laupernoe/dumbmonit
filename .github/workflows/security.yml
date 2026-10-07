@@ -1,0 +1,69 @@
+name: Security
+
+# Weekly and after every publication of :edge: scans the published server and
+# agent images for known CVEs (Trivy), and scores the repository's practices
+# (OpenSSF Scorecard). Results land in the repository's Security tab.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trivy:
+    name: Image CVE scan
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: server
+            image: ghcr.io/laupernoe/dumbmonit:edge
+          - name: agent
+            image: ghcr.io/laupernoe/dumbmonit-agent:edge
+    steps:
+      - uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          image-ref: ${{ matrix.image }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles(format('trivy-{0}.sarif', matrix.name)) != ''
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+          category: trivy-${{ matrix.name }}
+
+  scorecard:
+    name: OpenSSF Scorecard
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run'
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ossf/scorecard-action@v2.4.2
+        with:
+          results_file: scorecard.sarif
+          results_format: sarif
+          publish_results: true
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scorecard.sarif
+          category: scorecard
