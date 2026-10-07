@@ -148,6 +148,7 @@ mod tests {
             "/music/spotify/token",
             "/music/speaker/report",
             "/music/speaker/play",
+            "/webpush",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))

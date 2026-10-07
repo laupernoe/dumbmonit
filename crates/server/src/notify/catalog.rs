@@ -545,6 +545,47 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
                 .required(),
             ],
         ),
+        // Pas de secret : les destinataires sont les appareils abonnés depuis
+        // Réglages → Push notifications, et la clé VAPID est celle de l'instance.
+        "webpush" => info(
+            kind,
+            "Web Push (browser, PWA)",
+            "Native notifications on the phones and computers where DumbMonit was enabled, \
+             even with the tab closed. No app, no third-party account.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#web-push",
+            vec![
+                text(
+                    "users",
+                    "Accounts",
+                    "Accounts whose devices get this channel, one per line. Empty: every \
+                     subscribed device of every account.",
+                    "admin",
+                )
+                .list(),
+                select(
+                    "urgency",
+                    "Urgency",
+                    "Delivery priority asked of the push service. \"low\" may wait until the \
+                     phone is charging or on Wi-Fi.",
+                    super::webpush::URGENCIES,
+                ),
+                number(
+                    "ttl",
+                    "Keep for (seconds)",
+                    "How long the push service keeps the message while the device is off.",
+                    "86400",
+                )
+                .with_default("86400"),
+                text(
+                    "contact",
+                    "Contact",
+                    "mailto: or https: address given to push services in case of abuse. Empty: \
+                     DUMBMONIT_PUBLIC_URL when it is HTTPS, otherwise the project page.",
+                    "mailto:ops@example.com",
+                ),
+            ],
+            vec![],
+        ),
 
         // --- Passerelles, domotique et messagerie ---------------------------
         "apprise" => info(

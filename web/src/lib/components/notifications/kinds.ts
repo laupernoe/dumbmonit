@@ -83,6 +83,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pushover: BellRing,
 	pushbullet: BellRing,
 	bark: BellRing,
+	webpush: Smartphone,
 	pagerduty: Siren,
 	opsgenie: Siren,
 	teams: MessageSquare,

@@ -1479,6 +1479,86 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/webpush:
+    get:
+      operationId: getWebPush
+      tags: [Notifications]
+      summary: Web Push key and the signed-in account's devices
+      description: The VAPID public key to subscribe with (`applicationServerKey`), generated at first start. The private key is never returned. Only the signed-in account's devices are listed, without their endpoint or keys.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Key and devices.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebPushOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/webpush/subscriptions:
+    post:
+      operationId: subscribeWebPush
+      tags: [Notifications]
+      summary: Subscribe this browser to Web Push
+      description: Body is `PushSubscription.toJSON()`. The endpoint must be HTTPS on a public address (private, loopback and link-local addresses are refused). The same endpoint subscribing again replaces its row. Allowed for viewers too.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebPushSubscription" }
+      responses:
+        "201":
+          description: The subscribed device.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebPushDevice" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/webpush/subscriptions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: deleteWebPushDevice
+      tags: [Notifications]
+      summary: Remove one of the signed-in account's devices
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Device removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/webpush/test:
+    post:
+      operationId: testWebPush
+      tags: [Notifications]
+      summary: Send a test notification to the signed-in account's devices
+      description: Every device of the account, or the one named by `id`. Expired subscriptions (404/410 from the push service) are removed on the way.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: { type: integer, description: "One device only." }
+      responses:
+        "200":
+          description: What the push services answered.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebPushTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/notify/policy:
     get:
       operationId: getNotifyPolicy
@@ -4871,6 +4951,46 @@ components:
       required: [ok, message]
       properties:
         ok: { type: boolean }
+        message: { type: string }
+    WebPushDevice:
+      type: object
+      required: [id, device, push_service, fingerprint, created_at, last_success_at, last_error]
+      properties:
+        id: { type: integer }
+        device: { type: string, description: "Readable label from the User-Agent, e.g. \"Firefox on Android\"." }
+        push_service: { type: string, description: "Host of the browser's push service." }
+        fingerprint: { type: string, description: "First 16 hex characters of SHA-256(endpoint)." }
+        created_at: { type: string }
+        last_success_at: { type: [string, "null"] }
+        last_error: { type: [string, "null"] }
+    WebPushOverview:
+      type: object
+      required: [public_key, devices]
+      properties:
+        public_key: { type: string, description: "VAPID public key, base64url (uncompressed P-256 point)." }
+        devices:
+          type: array
+          items: { $ref: "#/components/schemas/WebPushDevice" }
+    WebPushSubscription:
+      type: object
+      required: [endpoint, keys]
+      properties:
+        endpoint: { type: string, format: uri }
+        expirationTime: { type: [integer, "null"] }
+        keys:
+          type: object
+          required: [p256dh, auth]
+          properties:
+            p256dh: { type: string, description: "base64url, 65 bytes." }
+            auth: { type: string, description: "base64url, 16 bytes." }
+    WebPushTestReport:
+      type: object
+      required: [ok, delivered, failed, removed, message]
+      properties:
+        ok: { type: boolean }
+        delivered: { type: integer }
+        failed: { type: integer }
+        removed: { type: integer, description: "Expired subscriptions removed." }
         message: { type: string }
     NotifyPolicy:
       type: object

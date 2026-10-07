@@ -64,6 +64,14 @@ async fn run(mut config: Config) -> Result<()> {
         );
     }
     info!(database = %config.database_path().display(), "database ready");
+    // Paire VAPID des notifications Web Push : générée au premier démarrage,
+    // chiffrée en base. Un échec ici n'empêche pas de surveiller : il sera
+    // retenté à la première demande de l'interface.
+    if let Err(error) =
+        dumbmonit_server::notify::webpush::vapid::load_or_create(&pool, &cipher).await
+    {
+        warn!(?error, "Web Push keys unavailable");
+    }
 
     // Pas encore d'administrateur : la création du premier compte exige le code
     // affiché ici, que seul qui lit le journal du serveur connaît.
