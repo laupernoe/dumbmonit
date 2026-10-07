@@ -44,8 +44,8 @@
 	/** Pixel anchor: the pigeon's resting spot inside the scene. */
 	const REST_LEFT = 22;
 	const REST_BOTTOM = 6;
-	const PIGEON_SIZE = 48;
-	const APPROACH_PX = 54;
+	const PIGEON_SIZE = 24;
+	const APPROACH_PX = 28;
 
 	let sceneEl: HTMLDivElement | undefined;
 	let pigeonEl: HTMLDivElement | undefined;
@@ -372,7 +372,7 @@
 </script>
 
 <div
-	class={`status-scene relative mt-6 h-28 w-full overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift sm:h-32 ${className}`}
+	class={`status-scene relative mt-6 h-16 w-full overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift sm:h-20 ${className}`}
 	aria-hidden="true"
 	bind:this={sceneEl}
 >
@@ -408,7 +408,7 @@
 
 	{#if intruderOn}
 		<div class="intruder pointer-events-none absolute bottom-1 left-[30%]">
-			<Mascot mood="happy" blink={false} flap={true} class="size-7 scale-x-[-1]" />
+			<Mascot mood="happy" blink={false} flap={true} class="size-4 scale-x-[-1]" />
 		</div>
 	{/if}
 
@@ -420,7 +420,7 @@
 		style={anchorStyle}
 		onclick={onPigeonClick}
 	>
-		<Mascot {mood} {startled} {flap} class="size-12" />
+		<Mascot {mood} {startled} {flap} class="size-6" />
 
 		{#if stars}
 			<span class="stars" aria-hidden="true">&#10022; &#10022;</span>

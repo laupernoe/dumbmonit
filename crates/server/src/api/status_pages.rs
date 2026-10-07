@@ -32,8 +32,8 @@ mod badges;
 mod branding;
 mod subscribers;
 use crate::db::status_pages::{
-    Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput, SCENE_ROTATIONS, SCENES,
-    StatusPage, StatusPageInput, split_scenes,
+    DEFAULT_SCENE, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
+    SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
 };
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
@@ -153,12 +153,16 @@ pub struct StatusPagePayload {
     /// Absent : la valeur enregistrée est gardée (défaut à la création).
     #[serde(default)]
     pub accent: Option<String>,
-    /// Absent : la liste enregistrée est gardée ; `[]` : aucune scène.
+    /// Absent : la liste enregistrée est gardée (la scène par défaut à la
+    /// création) ; `[]` : aucune scène.
     #[serde(default)]
     pub scenes: Option<Vec<String>>,
     /// Absent : la valeur enregistrée est gardée (`visit` à la création).
     #[serde(default)]
     pub scene_rotation: Option<String>,
+    /// Absent : la valeur enregistrée est gardée (`false` à la création).
+    #[serde(default)]
+    pub simple: Option<bool>,
     #[serde(default)]
     pub footer_text: Option<String>,
     #[serde(default)]
@@ -238,7 +242,8 @@ impl StatusPagePayload {
         }
         let scenes = match self.scenes {
             Some(list) => list.into_iter().map(|s| s.trim().to_string()).collect(),
-            None => existing.map(|page| split_scenes(&page.scenes)).unwrap_or_default(),
+            None => existing
+                .map_or_else(|| vec![DEFAULT_SCENE.to_string()], |page| split_scenes(&page.scenes)),
         };
         let scenes = validate_scenes(scenes)?;
         let scene_rotation = match self.scene_rotation {
@@ -253,6 +258,7 @@ impl StatusPagePayload {
                 SCENE_ROTATIONS.join(", ")
             )));
         }
+        let simple = self.simple.unwrap_or_else(|| existing.is_some_and(|page| page.simple));
         let footer_text = match self.footer_text {
             Some(text) => text.trim().to_string(),
             None => existing.map(|page| page.footer_text.clone()).unwrap_or_default(),
@@ -314,6 +320,7 @@ impl StatusPagePayload {
             accent,
             scenes,
             scene_rotation,
+            simple,
             footer_text,
             homepage_url,
             subscribe_channel_id,
@@ -924,7 +931,10 @@ struct PublicPage {
     title: String,
     description: String,
     theme: String,
+    /// Réglage de la page : la fenêtre la plus longue qu'elle montre.
     show_uptime_days: i64,
+    /// Fenêtre réellement montrée : l'âge des données, de 7 jours au réglage.
+    history_days: i64,
     updated_at: String,
     /// Teinte d'accent choisie parmi [`ACCENTS`].
     accent: String,
@@ -932,6 +942,8 @@ struct PublicPage {
     scenes: Vec<String>,
     /// Rythme de changement de scène, parmi [`SCENE_ROTATIONS`].
     scene_rotation: String,
+    /// Mode simple : le public n'affiche ni scène, ni pigeon, ni animation.
+    simple: bool,
     footer_text: String,
     /// Site de l'organisation, vide si la page n'en cite pas.
     homepage_url: String,
@@ -1356,7 +1368,15 @@ fn round(value: f64) -> f64 {
 
 async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicStatus> {
     let now = Utc::now();
-    let days = page.show_uptime_days.clamp(MIN_HISTORY_DAYS, MAX_HISTORY_DAYS);
+    // Fenêtre adaptative : l'âge des données (plus ancien appareil montré), borné
+    // par le réglage de la page, `MIN_HISTORY_DAYS` au moins.
+    let cap = page.show_uptime_days.clamp(MIN_HISTORY_DAYS, MAX_HISTORY_DAYS);
+    let age_days = db::status_pages::oldest_target_created_at(&state.pool, page.id)
+        .await?
+        .as_deref()
+        .and_then(parse_stored)
+        .map_or(0, |created| (now - created).num_days() + 1);
+    let days = age_days.clamp(MIN_HISTORY_DAYS, cap);
 
     let items = db::status_pages::list_items(&state.pool, page.id).await?;
     let targets: HashMap<TargetId, Target> = db::targets::list(&state.pool, &state.cipher)
@@ -1546,11 +1566,13 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             title: page.title.clone(),
             description: page.description.clone(),
             theme: page.theme.clone(),
-            show_uptime_days: days,
+            show_uptime_days: cap,
+            history_days: days,
             updated_at: page.updated_at.clone(),
             accent: page.accent.clone(),
             scenes: split_scenes(&page.scenes),
             scene_rotation: page.scene_rotation.clone(),
+            simple: page.simple,
             footer_text: page.footer_text.clone(),
             homepage_url: page.homepage_url.clone(),
             logo_url: page.logo_type.as_ref().map(|_| {

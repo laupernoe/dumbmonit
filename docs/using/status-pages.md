@@ -3,7 +3,7 @@
 ![The Status page: your pages, and the announcements under them](../assets/screenshots/status-light.png){ loading=lazy }
 
 A status page is the public face of your monitoring: a page anyone can open —
-no sign-in, no cookie — that says whether your services are up, shows 90 days
+no sign-in, no cookie — that says whether your services are up, shows up to 90 days
 of daily history for each of them, carries your incident and maintenance
 announcements, and lets visitors follow them by RSS or email. Badges put the
 same answer in a README; a compact view fits in an intranet page.
@@ -26,7 +26,8 @@ its own route (`/status/new`, `/status/<id>`). The public rendering is at
 | **Address** | The last part of the URL, `/s/<address>`. Suggested from the title; lowercase letters, digits and hyphens, 2 to 40 characters. |
 | **Description** | One sentence under the title. Optional. |
 | **Theme** | Day, night, or follow the visitor's system. |
-| **History** | How many days the history bar covers (30, 60 or 90). A page never says more than this — see [Badges](#badges). |
+| **History** | The longest window the history bar covers (30, 60 or 90 days). The bar adapts to the age of the page's data: it shows as many days as the oldest service has been monitored, from 7 days up to this setting. A page never says more than this — see [Badges](#badges). |
+| **Simple mode** | A plain page: no scene, no mascot, no animation and no easter eggs. Light or dark follows the visitor's system, with a toggle in the header; the page's Theme setting is ignored. |
 | **Published** | Off = draft: the page, its badges and its logo answer "not found" to visitors until you switch it on. |
 
 Then tick the devices to show. For each one, set the **label** visitors will
@@ -50,8 +51,9 @@ opening it to arbitrary code:
 
 ### Scene
 
-The **Scene** setting draws a city skyline behind the banner. There is none by
-default. Pick as many as you like, in the order you want them. Cities: Venice, Paris,
+The **Scene** setting draws a city skyline behind the banner. New pages start with Paris,
+and existing pages that had no scene now show it too; untick it for a plain
+banner, or turn on **Simple mode** to drop scenes altogether. Pick as many as you like, in the order you want them. Cities: Venice, Paris,
 Tokyo, New York, London, Rome, Sydney, Dubai, San Francisco, Barcelona,
 Amsterdam, Istanbul and Rio de Janeiro. The new seven wonders: Chichén Itzá,
 Machu Picchu, the Great Wall, Petra and the Taj Mahal (Rio's Christ the

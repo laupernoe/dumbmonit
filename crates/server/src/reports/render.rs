@@ -360,7 +360,9 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
     let link = data
         .link
         .as_deref()
-        .map(|url| format!(" <a href=\"{0}\" style=\"color:#1d4ed8\">Open DumbMonit</a>.", esc(url)))
+        .map(|url| {
+            format!(" <a href=\"{0}\" style=\"color:#1d4ed8\">Open DumbMonit</a>.", esc(url))
+        })
         .unwrap_or_default();
     let _ = write!(
         out,
@@ -484,8 +486,8 @@ fn text(data: &ReportData, tz: Tz, preview: bool) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::reports::collect::{Incident, assemble};
     use crate::reports::collect::{DeviceInfo, Inputs};
+    use crate::reports::collect::{Incident, assemble};
     use crate::reports::schedule::Period;
     use std::collections::HashMap;
 

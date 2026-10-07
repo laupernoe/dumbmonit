@@ -106,7 +106,9 @@ impl SchedulePayload {
             ));
         }
         let frequency = Frequency::parse(&self.frequency).ok_or_else(|| {
-            ApiError::BadRequest("The frequency must be \"daily\", \"weekly\" or \"monthly\".".into())
+            ApiError::BadRequest(
+                "The frequency must be \"daily\", \"weekly\" or \"monthly\".".into(),
+            )
         })?;
         if self.weekday > 6 {
             return Err(ApiError::BadRequest(

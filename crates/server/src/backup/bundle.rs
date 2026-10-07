@@ -338,6 +338,9 @@ pub struct BundleStatusPage {
     pub scenes: Vec<String>,
     #[serde(default = "default_scene_rotation")]
     pub scene_rotation: String,
+    /// Mode simple (depuis la migration 0047).
+    #[serde(default)]
+    pub simple: bool,
     #[serde(default)]
     pub footer_text: String,
     #[serde(default)]
