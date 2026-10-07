@@ -12,6 +12,7 @@ The UI reads like a weather bulletin for your network. The mascot is a pigeon.
 [![CI](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml)
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
 [![Translation status](https://hosted.weblate.org/widget/dumbmonit/web-ui/svg-badge.svg)](https://hosted.weblate.org/engage/dumbmonit/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/laupernoe/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/laupernoe/dumbmonit)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![From homelab to small business](https://img.shields.io/badge/from%20homelab-to%20small%20business-6f83a3.svg)](#quick-start)
 [![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange.svg)](#status)
