@@ -49,10 +49,17 @@
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { Button, Plate, Skeleton, ErrorNotice } from '#lib/ui/index.js';
 	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
-	import ParisScene from '#lib/components/wall/paris/ParisScene.svelte';
 	import type { SceneMood, SceneTheme } from '#lib/components/wall/paris/daylight.js';
 	import WallProblems from '#lib/components/wall/WallProblems.svelte';
 	import WallDevices from '#lib/components/wall/WallDevices.svelte';
+	import {
+		WALL_CITIES,
+		readWallCity,
+		writeWallCity,
+		parseForcedWallCity,
+		resolveWallCity,
+		type WallCityChoice
+	} from '#lib/components/wall/wallCity.js';
 	import WallThemeControl from '#lib/components/wall/WallThemeControl.svelte';
 	import MusicControl from '#lib/components/wall/MusicControl.svelte';
 	import MusicDock from '#lib/components/wall/MusicDock.svelte';
@@ -296,6 +303,15 @@
 	 */
 	let wallTheme = $state<WallThemeChoice>(readWallTheme());
 	let themeOpen = $state(false);
+	let wallCity = $state<WallCityChoice>(readWallCity());
+	const activeCity = $derived(
+		parseForcedWallCity(page.url.searchParams.get('city')) ?? resolveWallCity(wallCity)
+	);
+	const CityScene = $derived(WALL_CITIES.find((c) => c.value === activeCity)!.scene);
+	function setWallCity(choice: WallCityChoice) {
+		wallCity = choice;
+		writeWallCity(choice);
+	}
 	let nightDim = $state(readNightDim());
 
 	function setWallTheme(choice: WallThemeChoice) {
@@ -510,7 +526,7 @@
 		style:transform={oledActive ? `translate(${oledShift[0]}px, ${oledShift[1]}px)` : undefined}
 	>
 		<div class="scene-box">
-			<ParisScene
+			<CityScene
 				theme={sceneTheme}
 				{now}
 				{mood}
@@ -606,6 +622,8 @@
 				bind:open={themeOpen}
 				onchange={setWallTheme}
 				onnightdim={setNightDim}
+				city={wallCity}
+				oncity={setWallCity}
 			/>
 			<MusicControl
 				link={musicLink}
