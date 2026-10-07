@@ -9,6 +9,7 @@
 	"settings.section.agents": "代理",
 	"settings.section.assistant": "API 和助手",
 	"settings.section.packs": "集成包",
+	"settings.section.reports": "报告",
 	"settings.section.backup": "备份",
 	"settings.group.wall_display": "墙面与显示",
 	"settings.section.appearance": "外观",

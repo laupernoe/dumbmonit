@@ -126,6 +126,7 @@ pub async fn restore(
     report.push(restore_notify_policy(&mut tx, bundle).await?);
     report.push(restore_silences(&mut tx, bundle, &refs).await?);
     report.push(restore_status_pages(&mut tx, bundle, &refs).await?);
+    report.push(restore_report_schedules(&mut tx, bundle, &channels).await?);
     report.push(restore_incidents(&mut tx, bundle).await?);
     report.push(restore_agent_tokens(&mut tx, bundle).await?);
     report.push(restore_api_tokens(&mut tx, bundle).await?);
@@ -792,6 +793,121 @@ async fn restore_silences(
                 .execute(&mut **tx)
                 .await
                 .context("création du silence")?;
+                report.created += 1;
+            }
+        }
+    }
+    Ok(report)
+}
+
+async fn restore_report_schedules(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    channels: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    use crate::reports::schedule::{Frequency, parse_timezone};
+
+    let mut report = SectionReport::new("report_schedules");
+    for item in &bundle.report_schedules {
+        // Une sauvegarde éditée à la main ne doit pas contourner les contrôles de l'API.
+        let name = item.name.trim();
+        let valid = !name.is_empty()
+            && name.chars().count() <= 80
+            && !name.chars().any(char::is_control)
+            && Frequency::parse(&item.frequency).is_some()
+            && item.weekday <= 6
+            && (1..=28).contains(&item.day_of_month)
+            && item.hour <= 23
+            && parse_timezone(&item.timezone).is_some();
+        let recipients = crate::reports::normalise_recipients(&item.recipients);
+        let (true, Ok(recipients)) = (valid, recipients) else {
+            report.skipped += 1;
+            report
+                .notes
+                .push(format!("Report \"{}\" has invalid settings and was skipped.", item.name));
+            continue;
+        };
+        let channel_id = match &item.channel {
+            None => None,
+            Some(channel) => match channels.get(channel) {
+                Some(id) => Some(*id),
+                None => {
+                    report.notes.push(format!(
+                        "Report \"{name}\": the channel \"{channel}\" is not in this backup; the \
+                         first email channel will be used."
+                    ));
+                    None
+                }
+            },
+        };
+        let recipients_json = serde_json::to_string(&recipients)?;
+        let enabled = item.enabled && !recipients.is_empty();
+
+        let existing = sqlx::query(
+            "SELECT id, enabled, frequency, weekday, day_of_month, hour, timezone, recipients,
+                 channel_id
+             FROM report_schedules WHERE name = ?",
+        )
+        .bind(name)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du rapport planifié")?;
+
+        match existing {
+            Some(row) => {
+                let same = (row.try_get::<i64, _>("enabled")? != 0) == enabled
+                    && row.try_get::<String, _>("frequency")? == item.frequency
+                    && row.try_get::<i64, _>("weekday")? == i64::from(item.weekday)
+                    && row.try_get::<i64, _>("day_of_month")? == i64::from(item.day_of_month)
+                    && row.try_get::<i64, _>("hour")? == i64::from(item.hour)
+                    && row.try_get::<String, _>("timezone")? == item.timezone.trim()
+                    && row.try_get::<String, _>("recipients")? == recipients_json
+                    && row.try_get::<Option<i64>, _>("channel_id")? == channel_id;
+                if same {
+                    report.skipped += 1;
+                    continue;
+                }
+                // Réarmé : un créneau antérieur à la restauration ne part pas après coup.
+                sqlx::query(
+                    "UPDATE report_schedules
+                     SET enabled = ?, frequency = ?, weekday = ?, day_of_month = ?, hour = ?,
+                         timezone = ?, recipients = ?, channel_id = ?,
+                         armed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                     WHERE id = ?",
+                )
+                .bind(i64::from(enabled))
+                .bind(&item.frequency)
+                .bind(i64::from(item.weekday))
+                .bind(i64::from(item.day_of_month))
+                .bind(i64::from(item.hour))
+                .bind(item.timezone.trim())
+                .bind(&recipients_json)
+                .bind(channel_id)
+                .bind(row.try_get::<i64, _>("id")?)
+                .execute(&mut **tx)
+                .await
+                .context("mise à jour du rapport planifié")?;
+                report.updated += 1;
+            }
+            None => {
+                sqlx::query(
+                    "INSERT INTO report_schedules
+                         (name, enabled, frequency, weekday, day_of_month, hour, timezone,
+                          recipients, channel_id, armed_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))",
+                )
+                .bind(name)
+                .bind(i64::from(enabled))
+                .bind(&item.frequency)
+                .bind(i64::from(item.weekday))
+                .bind(i64::from(item.day_of_month))
+                .bind(i64::from(item.hour))
+                .bind(item.timezone.trim())
+                .bind(&recipients_json)
+                .bind(channel_id)
+                .execute(&mut **tx)
+                .await
+                .context("création du rapport planifié")?;
                 report.created += 1;
             }
         }

@@ -9,6 +9,7 @@
 	"settings.section.agents": "Agentes",
 	"settings.section.assistant": "API y asistentes",
 	"settings.section.packs": "Paquetes de integración",
+	"settings.section.reports": "Informes",
 	"settings.section.backup": "Copia de seguridad",
 	"settings.group.wall_display": "Pared y pantalla",
 	"settings.section.appearance": "Apariencia",
