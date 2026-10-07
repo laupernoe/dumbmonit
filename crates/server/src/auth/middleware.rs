@@ -323,7 +323,18 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path)
+    SELF_SERVICE.contains(&path) || is_own_push_device(path)
+}
+
+/// Abonnements Web Push : chacun abonne, teste et retire *ses* appareils, ce
+/// qui ne touche à rien de la supervision. Les gestionnaires (`api::webpush`)
+/// ne voient que les abonnements du compte connecté et refusent les jetons.
+fn is_own_push_device(path: &str) -> bool {
+    path == "/webpush/test"
+        || path == "/webpush/subscriptions"
+        || path
+            .strip_prefix("/webpush/subscriptions/")
+            .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Vrai si l'écriture `method path` fait partie de ce qu'un opérateur peut faire.
@@ -457,6 +468,11 @@ mod tests {
         assert!(is_self_service("/auth/totp/enroll"));
         assert!(!is_self_service("/targets"));
         assert!(!is_self_service("/api/users"));
+        assert!(is_self_service("/api/webpush/subscriptions"));
+        assert!(is_self_service("/webpush/subscriptions/12"));
+        assert!(is_self_service("/webpush/test"));
+        assert!(!is_self_service("/webpush/subscriptions/12/../../users"));
+        assert!(!is_self_service("/webpush/subscriptions/"));
     }
 
     #[test]

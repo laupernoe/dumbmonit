@@ -3370,3 +3370,37 @@ export interface SecuritySummary {
 	evaluated_at: string;
 	devices: SecuritySummaryDevice[];
 }
+
+/**
+ * A browser subscribed to Web Push for the signed-in account. Mirrors
+ * `notify::webpush::store::Device`. Neither the full endpoint nor the
+ * browser keys are ever returned.
+ */
+export interface PushDevice {
+	id: number;
+	/** Readable label derived from the User-Agent: "Firefox on Android". */
+	device: string;
+	/** Host of the browser's push service (`fcm.googleapis.com`, `web.push.apple.com`…). */
+	push_service: string;
+	/** First 16 hex characters of SHA-256(endpoint): the browser recognises itself with it. */
+	fingerprint: string;
+	created_at: string;
+	last_success_at: string | null;
+	last_error: string | null;
+}
+
+/** `GET /api/webpush`. Mirrors `api::webpush::Overview`. */
+export interface PushOverview {
+	/** VAPID public key, base64url: the `applicationServerKey` to subscribe with. */
+	public_key: string;
+	devices: PushDevice[];
+}
+
+/** `POST /api/webpush/test`. Mirrors `api::webpush::TestReport`. */
+export interface PushTestReport {
+	ok: boolean;
+	delivered: number;
+	failed: number;
+	removed: number;
+	message: string;
+}

@@ -299,7 +299,7 @@ pub async fn evaluate_once(
     let public_url = global.public_url(env_url.as_deref());
     let window = TimeDelta::seconds(i64::from(global.batch_window_secs));
     send_outgoing(
-        pool,
+        notify::webpush::Store { pool, cipher },
         http,
         &channels,
         &plan.outgoing,
@@ -344,7 +344,7 @@ pub async fn evaluate_once(
 /// le comportement attendu d'une panne passagère du service de notification.
 #[allow(clippy::too_many_arguments)]
 async fn send_outgoing(
-    pool: &SqlitePool,
+    store: notify::webpush::Store<'_>,
     http: &reqwest::Client,
     channels: &[notify::ChannelConfig],
     outgoing: &[Outgoing],
@@ -353,12 +353,13 @@ async fn send_outgoing(
     now: DateTime<Utc>,
     report: &mut EvalReport,
 ) {
+    let pool = store.pool;
     for out in outgoing {
         let Some(config) = channels.iter().find(|channel| channel.id == out.channel_id) else {
             continue;
         };
         let message = notify::render_digest(&out.digest, public_url);
-        let delivery = notify::deliver(http, config, &message).await;
+        let delivery = notify::deliver_stored(store, http, config, &message).await;
 
         stats().notification(&config.kind, !delivery.is_success());
         if delivery.is_success() {
