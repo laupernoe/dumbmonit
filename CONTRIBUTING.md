@@ -46,7 +46,7 @@ CI runs it on every push: a dependency under a licence that is not in
 `deny.toml`'s allow list fails the build — that is how the "100 % open source"
 promise is enforced.
 
-If you do have Rust installed (MSRV 1.88, edition 2024), `cargo test`,
+If you do have Rust installed (MSRV 1.95, edition 2024), `cargo test`,
 `cargo clippy` and `cargo fmt` work directly. `rustfmt.toml` sets
 `max_width = 100` and `use_small_heuristics = "Max"`.
 
