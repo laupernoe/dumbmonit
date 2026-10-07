@@ -251,6 +251,8 @@ nav:
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
       - Demo device: devices/demo.md
+  - Integrations:
+      - Website banner: integrations/website-banner.md
   - Integration packs:
       - What a pack is: packs/index.md
       - Write your first pack: packs/first-pack.md
