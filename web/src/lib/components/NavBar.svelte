@@ -158,7 +158,7 @@
 			{#if auth.user}
 				<!-- Who is signed in; the role still decides what the pages offer, it is just
 				     not spelled out here any more. -->
-				<div class="ml-1 hidden items-center pl-2 md:flex" title={`Signed in as ${auth.user.username} (${auth.isAdmin ? 'admin' : 'viewer'})`}>
+				<div class="ml-1 hidden items-center pl-2 md:flex" title={`Signed in as ${auth.user.username} (${auth.isAdmin ? 'admin' : auth.canOperate ? 'operator' : 'viewer'})`}>
 					<span class="max-w-[10rem] truncate text-[0.8125rem] font-semibold text-ink-2">{auth.displayName}</span>
 				</div>
 			{/if}

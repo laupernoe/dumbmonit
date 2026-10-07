@@ -202,7 +202,7 @@
 <Panel id="notifications-policy" title="Notification policy" description="How DumbMonit keeps notifications few: one message per burst, a cap per hour, and silence for alerts that flap.">
 	{#snippet aside()}
 		{#if !auth.isAdmin}
-			<Plate tone="ghost" label="Viewer — read only" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} />
 		{/if}
 	{/snippet}
 

@@ -273,7 +273,7 @@
 
 <div class="mb-4 flex justify-end">
 	{#if !auth.isAdmin}
-		<Plate tone="ghost" label="Viewer — read only" />
+		<Plate tone="ghost" label={auth.readOnlyLabel} />
 	{:else if !creating}
 		<Button variant="secondary" size="sm" onclick={() => (creating = true)}>New rule</Button>
 	{/if}

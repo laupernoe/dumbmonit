@@ -581,7 +581,10 @@
 					<Confirm size="md" confirmLabel="Delete for good?" onconfirm={remove} loading={deleting}>Delete</Confirm>
 					<SilenceControl {target} {refreshKey} />
 				{:else}
-					<Plate tone="ghost" label="Viewer — read only" size="md" />
+					{#if auth.canOperate}
+						<SilenceControl {target} {refreshKey} />
+					{/if}
+					<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
 				{/if}
 			</div>
 		</div>

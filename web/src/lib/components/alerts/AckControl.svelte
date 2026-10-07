@@ -104,7 +104,7 @@
 	});
 </script>
 
-{#if auth.isAdmin}
+{#if auth.canOperate}
 	<div class="flex flex-col items-start gap-1 sm:items-end" bind:this={root} onkeydown={onkeydown} role="presentation">
 		{#if alert.acked}
 			<Button size="sm" variant="ghost" loading={busy} onclick={unack}>Un-ack</Button>

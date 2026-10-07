@@ -708,7 +708,8 @@ function fallbackCredentialView(kind: string): CredentialView {
 
 // --- Authentication ---------------------------------------------------------
 
-export type Role = 'admin' | 'viewer';
+/** `operator` handles alerts (ack, ignore, snooze) but changes no configuration. */
+export type Role = 'admin' | 'operator' | 'viewer';
 
 /** How an account signs in: with a local password, or through the identity provider. */
 export type AuthMethod = 'password' | 'oidc';
@@ -783,6 +784,8 @@ export interface OidcConfig {
 	/** True when `auto_create` was never chosen explicitly: it then defaults to off. */
 	auto_create_defaulted: boolean;
 	admin_groups: string[];
+	/** Groups whose members become operators (unless also in an admin group). */
+	operator_groups: string[];
 	groups_claim: string;
 	public_url: string;
 	/** Computed from `public_url` (or the request origin): register it at the provider. */
@@ -798,6 +801,8 @@ export interface OidcConfigPayload {
 	scopes: string;
 	auto_create: boolean;
 	admin_groups: string[];
+	/** Groups whose members become operators (unless also in an admin group). */
+	operator_groups: string[];
 	groups_claim: string;
 	public_url: string;
 }
