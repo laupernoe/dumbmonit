@@ -16,6 +16,7 @@ pub mod demo;
 pub mod music;
 pub mod notify;
 pub mod packs;
+pub mod reports;
 pub mod scheduler;
 pub mod security;
 pub mod state;

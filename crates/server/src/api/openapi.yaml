@@ -134,6 +134,8 @@ tags:
     description: Notification channels and the global notification policy.
   - name: Status pages
     description: Status pages, their items, logos and subscribers.
+  - name: Reports
+    description: Periodic availability reports sent by email.
   - name: Incidents
     description: Incidents and maintenance announcements shown on status pages.
   - name: Public status
@@ -1840,6 +1842,125 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  # ------------------------------------------------- rapports périodiques
+  /api/reports/schedules:
+    get:
+      operationId: listReportSchedules
+      tags: [Reports]
+      summary: Every periodic email report
+      description: >-
+        Administrators only, even for reading: the response lists the
+        recipients' addresses.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Report schedules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ReportSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createReportSchedule
+      tags: [Reports]
+      summary: Create a periodic email report
+      description: >-
+        Omitted fields take their default: weekly, Monday at 8:00, UTC. A new
+        schedule never sends a report for a slot that already passed.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportSchedulePayload" }
+      responses:
+        "201":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/reports/schedules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getReportSchedule
+      tags: [Reports]
+      summary: One periodic email report
+      x-token-scope: read
+      responses:
+        "200":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateReportSchedule
+      tags: [Reports]
+      summary: Replace a periodic email report
+      description: >-
+        A full replacement. Changing the frequency, day, hour, timezone or
+        turning the report on re-arms it: a slot that already passed is not sent.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportSchedulePayload" }
+      responses:
+        "200":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteReportSchedule
+      tags: [Reports]
+      summary: Delete a periodic email report
+      x-token-scope: write
+      responses:
+        "204": { description: Schedule deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/reports/schedules/{id}/send-test:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: sendReportPreview
+      tags: [Reports]
+      summary: Send a preview of the report now
+      description: >-
+        Sends the report for the current period to the saved recipients, marked
+        as a preview. It does not change the schedule: nothing is recorded as
+        sent. One preview per schedule every 30 seconds.
+      x-token-scope: write
+      responses:
+        "200":
+          description: How many recipients were reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportPreviewResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /api/incidents:
     get:
@@ -5079,6 +5200,47 @@ components:
           items: { type: string }
 
     # ----------------------------------------------------- pages de statut
+    ReportSchedule:
+      type: object
+      required: [id, name, enabled, frequency, weekday, day_of_month, hour, timezone, recipients]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        enabled: { type: boolean }
+        frequency: { type: string, enum: [daily, weekly, monthly] }
+        weekday: { type: integer, minimum: 0, maximum: 6, description: 0 is Monday. }
+        day_of_month: { type: integer, minimum: 1, maximum: 28 }
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        timezone: { type: string, description: IANA name, example: Europe/Paris }
+        recipients: { type: array, items: { type: string, format: email } }
+        channel_id:
+          type: [integer, "null"]
+          format: int64
+          description: Email (SMTP) channel used to send; null means the first enabled one.
+        last_sent_at: { type: [string, "null"], format: date-time }
+        last_error: { type: [string, "null"] }
+        next_run_at: { type: [string, "null"], format: date-time }
+    ReportSchedulePayload:
+      type: object
+      properties:
+        name: { type: string, maxLength: 80, default: Team report }
+        enabled: { type: boolean, default: true }
+        frequency: { type: string, enum: [daily, weekly, monthly], default: weekly }
+        weekday: { type: integer, minimum: 0, maximum: 6, default: 0 }
+        day_of_month: { type: integer, minimum: 1, maximum: 28, default: 1 }
+        hour: { type: integer, minimum: 0, maximum: 23, default: 8 }
+        timezone: { type: string, default: UTC }
+        recipients:
+          type: array
+          maxItems: 20
+          items: { type: string, format: email }
+        channel_id: { type: [integer, "null"], format: int64 }
+    ReportPreviewResult:
+      type: object
+      required: [sent, failed]
+      properties:
+        sent: { type: integer }
+        failed: { type: integer }
     StatusPageView:
       type: object
       required: [id, slug, title, description, published, theme, show_uptime_days, created_at, updated_at, accent, footer_text, homepage_url, items]

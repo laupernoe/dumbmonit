@@ -295,6 +295,7 @@ async fn run(mut config: Config) -> Result<()> {
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
 
     scheduler::spawn(state.clone());
+    dumbmonit_server::reports::spawn(state.clone());
     alerting::spawn(state.clone());
     dumbmonit_server::security::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());

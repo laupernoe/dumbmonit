@@ -66,7 +66,7 @@ const SEVERITIES: [&str; 2] = ["minor", "major"];
 
 /// Types de cibles qui émettent `probe_success` : leur état vient de là, et non
 /// de la simple présence de mesures. Les heartbeats (`push`) en font partie.
-const PROBE_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
+pub(crate) const PROBE_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
 
 /// Fenêtre au-delà de laquelle une sonde sans mesure est d'état inconnu — la même
 /// que celle de l'interface.
@@ -1075,11 +1075,11 @@ struct Metrics {
     daily_down: HashMap<TargetId, HashMap<i64, f64>>,
 }
 
-fn target_of(metric: &BTreeMap<String, String>) -> Option<TargetId> {
+pub(crate) fn target_of(metric: &BTreeMap<String, String>) -> Option<TargetId> {
     metric.get("target")?.parse().ok()
 }
 
-fn instant_map(series: Vec<InstantSeries>) -> HashMap<TargetId, f64> {
+pub(crate) fn instant_map(series: Vec<InstantSeries>) -> HashMap<TargetId, f64> {
     series
         .into_iter()
         .filter_map(|item| {
@@ -1090,7 +1090,7 @@ fn instant_map(series: Vec<InstantSeries>) -> HashMap<TargetId, f64> {
         .collect()
 }
 
-fn selector(ids: &[TargetId]) -> String {
+pub(crate) fn selector(ids: &[TargetId]) -> String {
     let joined: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
     format!("target=~\"{}\"", joined.join("|"))
 }
@@ -1109,7 +1109,7 @@ fn presence_query(sel: &str, window: &str) -> String {
 /// Ramène une mesure de présence à la part de la fenêtre réellement couverte
 /// par des données : avant la première mesure, `default 0` compte des absences
 /// qui n'en sont pas.
-fn rescale(measured: f64, window_secs: f64, covered_secs: f64) -> Option<f64> {
+pub(crate) fn rescale(measured: f64, window_secs: f64, covered_secs: f64) -> Option<f64> {
     if covered_secs <= 0.0 {
         return None;
     }
