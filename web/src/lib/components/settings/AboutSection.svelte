@@ -6,6 +6,7 @@
 	import { BookOpen } from 'lucide-svelte';
 	import { getHealth, type ComponentHealth, type Health } from '$lib/api';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import UpdateNotice from '$lib/components/settings/UpdateNotice.svelte';
 
 	let health = $state<Health | null>(null);
 	let loading = $state(true);
@@ -72,6 +73,8 @@
 			{/each}
 		</dl>
 	{/if}
+
+	<UpdateNotice />
 
 	<div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-4 text-sm">
 		<a href="https://dumbmonit.readthedocs.io/en/latest/" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 font-medium text-signal-ink hover:underline">

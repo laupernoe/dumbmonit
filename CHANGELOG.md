@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Guided updates.** The server looks at the latest GitHub release at most
+  once a day (one anonymous request, nothing about your instance is sent) and
+  shows **Update available: vX** in the corner and in **Settings → About**,
+  with a **How to update** panel (back up the database and `/data/secret.key`,
+  then `docker compose pull && docker compose up -d`), a link to the release
+  notes, **Check now** and **See what's new**. Pre-releases compare correctly
+  (`alpha.10` is newer than `alpha.9`). Nothing is installed automatically.
+  Turn it off in **Settings → About** or with `DUMBMONIT_UPDATE_CHECK=off` for
+  air-gapped instances. New `GET /api/update`. See
+  [Update](docs/install/update.md).
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or
