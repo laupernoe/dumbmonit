@@ -93,8 +93,8 @@
     </g>
 
     <!-- mascottes : sur le quai et sur un toit -->
-    <use href="#dm-mascot" transform="translate(1020 422) scale(.2)" />
-    <use href="#dm-mascot" transform="translate(1418 270) scale(.2)" />
+    <use href="#dm-mascot" transform="translate(1034 452) scale(.1)" />
+    <use href="#dm-mascot" transform="translate(1432 300) scale(.1)" />
   </svg>
 </div>
 

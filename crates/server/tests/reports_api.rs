@@ -166,7 +166,6 @@ async fn l_apercu_echoue_proprement_sans_canal_courriel() {
     let message = reply.body["error"].as_str().unwrap_or_default();
     assert!(message.contains("email"), "message explicite : {message}");
 
-    let unknown =
-        app.post("/api/reports/schedules/99999/send-test", json!({}), Some(&admin)).await;
+    let unknown = app.post("/api/reports/schedules/99999/send-test", json!({}), Some(&admin)).await;
     assert_eq!(unknown.status, StatusCode::NOT_FOUND);
 }

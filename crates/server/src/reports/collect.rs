@@ -340,8 +340,9 @@ async fn uptimes(
     if !probes.is_empty() {
         let sel = selector(&probes);
         let now_q = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{span}s]) * 100");
-        let prev_q =
-            format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{span}s] offset {span}s) * 100");
+        let prev_q = format!(
+            "avg_over_time(dumbmonit_probe_success{{{sel}}}[{span}s] offset {span}s) * 100"
+        );
         match tokio::try_join!(state.victoria.query(&now_q), state.victoria.query(&prev_q)) {
             Ok((a, b)) => {
                 current.extend(instant_map(a));

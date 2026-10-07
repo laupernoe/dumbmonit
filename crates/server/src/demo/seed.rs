@@ -206,6 +206,7 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
             accent: "default".to_string(),
             scenes: String::new(),
             scene_rotation: "visit".to_string(),
+            simple: false,
             footer_text: "Fictional data — DumbMonit live demo.".to_string(),
             homepage_url: String::new(),
             subscribe_channel_id: None,

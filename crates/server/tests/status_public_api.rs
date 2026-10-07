@@ -279,7 +279,7 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
 
-    // Par défaut : aucune scène, rotation à chaque visite.
+    // Par défaut : la scène par défaut, rotation à chaque visite.
     let reply = app
         .post(
             "/api/status-pages",
@@ -288,12 +288,16 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
         )
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
-    assert_eq!(reply.body["scenes"], json!([]));
+    assert_eq!(reply.body["scenes"], json!(["paris"]));
     assert_eq!(reply.body["scene_rotation"], "visit");
+    assert_eq!(reply.body["simple"], json!(false));
     let page = reply.body["id"].as_i64().unwrap();
     let doc = public_skyline(&app).await;
-    assert_eq!(doc["page"]["scenes"], json!([]));
+    assert_eq!(doc["page"]["scenes"], json!(["paris"]));
     assert_eq!(doc["page"]["scene_rotation"], "visit");
+    assert_eq!(doc["page"]["simple"], json!(false));
+    // Sans appareil, la fenêtre d'historique est au minimum de 7 jours.
+    assert_eq!(doc["page"]["history_days"], json!(7));
 
     // Aller-retour, ordre conservé, côté admin comme côté public.
     let url = format!("/api/status-pages/{page}");
@@ -367,6 +371,42 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
 }
 
 #[tokio::test]
+async fn simple_mode_round_trips_and_is_kept_when_omitted() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let reply = app
+        .post(
+            "/api/status-pages",
+            json!({ "title": "Skyline", "slug": "skyline", "published": true, "simple": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    assert_eq!(reply.body["simple"], json!(true));
+    let page = reply.body["id"].as_i64().unwrap();
+    assert_eq!(public_skyline(&app).await["page"]["simple"], json!(true));
+
+    let url = format!("/api/status-pages/{page}");
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.body["simple"], json!(true), "omitted: kept");
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true, "simple": false }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.body["simple"], json!(false));
+    assert_eq!(public_skyline(&app).await["page"]["simple"], json!(false));
+}
+
+#[tokio::test]
 async fn badges_are_svg_cacheable_and_say_no_more_than_the_page() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
@@ -434,7 +474,10 @@ async fn history_has_thirty_day_uptime_and_unknown_days() {
     assert!(item.get("uptime_30d").is_some());
     assert!(item["uptime_90d"].is_null(), "a 30-day page does not show 90 days");
     let history = item["history"].as_array().unwrap();
-    assert_eq!(history.len(), 30);
+    // Fenêtre adaptative : les données ont un jour, la page n'en montre que 7.
+    assert_eq!(doc["page"]["show_uptime_days"], 30);
+    assert_eq!(doc["page"]["history_days"], 7);
+    assert_eq!(history.len(), 7);
     // Sans mesure, un jour est inconnu — ni vert, ni zéro minute de panne.
     for day in history {
         assert!(day["uptime_pct"].is_null());
