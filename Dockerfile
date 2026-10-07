@@ -4,7 +4,7 @@
 # Construction de l'interface web. Node n'existe que dans cette étape : l'image
 # finale ne contient que le binaire Rust, qui embarque le résultat.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS web
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS web
 
 # La page d'aide importe `docs/notifications.md` depuis la racine du dépôt : on
 # reproduit la même arborescence (`/src/web` et `/src/docs`) pour que l'import
@@ -19,7 +19,7 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 # Compilation du serveur en binaire statique musl.
 # ---------------------------------------------------------------------------
-FROM rust:1-alpine AS builder
+FROM rust:1-alpine@sha256:0cce0a5e0e8ba67b455257a3a02a1d99005f382748789d6464460028810f1627 AS builder
 
 # musl-dev et gcc sont requis par libsqlite3-sys, qui compile SQLite depuis
 # ses sources ; cela évite toute dépendance système dans l'image finale.
@@ -91,7 +91,7 @@ RUN mkdir -p /empty
 # construits sur un exécuteur macOS et attachés à chaque version publiée
 # (.github/workflows/release.yml) ; le serveur explique où les prendre.
 # ---------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM ghcr.io/rust-cross/cargo-zigbuild:0.23.4 AS agent
+FROM --platform=$BUILDPLATFORM ghcr.io/rust-cross/cargo-zigbuild:0.23.4@sha256:d8313491ec5798de0633fdc1c5753761bff79967bea69076020dc78121b2cca8 AS agent
 
 # L'image embarque un rustc plus ancien que ce qu'exigent nos dépendances
 # (sysinfo demande 1.95) : la chaîne est donc installée explicitement, à une
@@ -194,7 +194,7 @@ COPY --from=agent /agents /
 # sur la machine de construction : on choisit ici celui de la plateforme
 # demandée (TARGETARCH vaut `amd64` ou `arm64`).
 # ---------------------------------------------------------------------------
-FROM alpine:3.21 AS agent-pick
+FROM alpine:3.21@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507 AS agent-pick
 ARG TARGETARCH
 COPY --from=agent /agents /agents
 RUN case "$TARGETARCH" in \
@@ -225,7 +225,7 @@ ENTRYPOINT ["/dumbmonit-agent"]
 # externe n'est désignée (DUMBMONIT_VM_URL) — un seul conteneur suffit.
 # Version épinglée : le serveur en connaît les options.
 # ---------------------------------------------------------------------------
-FROM victoriametrics/victoria-metrics:v1.152.0 AS victoriametrics
+FROM victoriametrics/victoria-metrics:v1.152.0@sha256:86ca5fdb6d87d56ba047b044039019ba2bd9042b36e35f6ea34e437b6c825cef AS victoriametrics
 
 # ---------------------------------------------------------------------------
 # Image finale : les deux binaires et rien d'autre.

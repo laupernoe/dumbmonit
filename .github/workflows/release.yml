@@ -39,18 +39,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - uses: docker/login-action@v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.IMAGE }}
           tags: |
@@ -66,7 +66,7 @@ jobs:
             org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
             org.opencontainers.image.licenses=Apache-2.0
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           platforms: linux/amd64
@@ -82,7 +82,7 @@ jobs:
       # same `agent` stage: it was just built for the image above, so this only
       # exports it from the builder's cache — nothing is compiled twice.
       - name: Extract the agent binaries
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           target: agent-dist
@@ -101,7 +101,7 @@ jobs:
           done
           ls -l
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dumbmonit-agent-binaries
           path: dist/*
@@ -109,7 +109,7 @@ jobs:
           retention-days: 30
 
       - id: agent-meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.AGENT_IMAGE }}
           tags: |
@@ -125,7 +125,7 @@ jobs:
             org.opencontainers.image.licenses=Apache-2.0
 
       # Same Dockerfile, second target: the layers above are reused from cache.
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           target: agent-image
@@ -153,7 +153,7 @@ jobs:
     name: Build the macOS agent
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # Même version que l'étape `agent` du Dockerfile : l'agent livré ne doit
       # pas dépendre de la date de construction, ni de la plateforme.
@@ -186,7 +186,7 @@ jobs:
 
       # Sur main, l'artefact garde l'agent macOS de la version de développement ;
       # sur une étiquette, c'est aussi ce que `github-release` attache.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dumbmonit-agent-macos
           path: dist/*
@@ -213,7 +213,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: dumbmonit-agent-*
           path: dist
@@ -230,7 +230,7 @@ jobs:
           done
           sha256sum -c ./*.sha256
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: dist/*
           fail_on_unmatched_files: true
