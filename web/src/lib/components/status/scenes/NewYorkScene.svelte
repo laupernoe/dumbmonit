@@ -80,8 +80,8 @@
     </g>
 
     <!-- mascottes : sur un toit de brique et sur le ponton -->
-    <use href="#dm-mascot" transform="translate(1310 290) scale(.2)" />
-    <use href="#dm-mascot" transform="translate(932 422) scale(.2)" />
+    <use href="#dm-mascot" transform="translate(1324 320) scale(.1)" />
+    <use href="#dm-mascot" transform="translate(946 452) scale(.1)" />
   </svg>
 </div>
 

@@ -49,6 +49,7 @@
 
 	const SLUG_RULE = /^[a-z0-9-]{2,40}$/;
 	const HISTORY_CHOICES = [30, 60, 90];
+	const DEFAULT_SCENE = 'paris';
 
 	let title = $state(initial?.title ?? '');
 	let slug = $state(initial?.slug ?? '');
@@ -58,8 +59,9 @@
 	let published = $state(initial?.published ?? false);
 	let showDays = $state(initial?.show_uptime_days ?? 90);
 	let accent = $state<StatusPageAccent>(initial?.accent ?? 'default');
-	// Banner scenes in the order they were ticked; none (the default) keeps the plain page.
-	let scenes = $state<string[]>([...(initial?.scenes ?? [])]);
+	// Banner scenes in the order they were ticked; none keeps the plain page. New pages start on one.
+	let scenes = $state<string[]>([...(initial?.scenes ?? [DEFAULT_SCENE])]);
+	let simple = $state(initial?.simple ?? false);
 	let sceneRotation = $state<StatusPageSceneRotation>(initial?.scene_rotation ?? 'visit');
 	let footerText = $state(initial?.footer_text ?? '');
 	let homepageUrl = $state(initial?.homepage_url ?? '');
@@ -191,6 +193,7 @@
 				accent,
 				scenes,
 				scene_rotation: sceneRotation,
+				simple,
 				footer_text: footerText.trim(),
 				homepage_url: homepageUrl.trim(),
 				subscribe_channel_id: subscribeChannel,
@@ -273,7 +276,7 @@
 				<option value="dark">Night</option>
 			</select>
 		</Field>
-		<Field label="History" for="{idPrefix}-days">
+		<Field label="History" for="{idPrefix}-days" help="Longest window. The page shows as many days as its data covers, from 7 up to this.">
 			<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
 				{#each HISTORY_CHOICES as choice (choice)}
 					<option value={choice}>{choice} days</option>
@@ -336,11 +339,15 @@
 		</Field>
 	</fieldset>
 
+	<Field label="Simple mode" for="{idPrefix}-simple" inline help="A plain page: no scene, no mascot, no animation. Light or dark follows the visitor's system, with a toggle.">
+		<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label="Simple mode" />
+	</Field>
+
 	<!-- Scene -->
-	<fieldset class="grid gap-3" disabled={saving}>
+	<fieldset class="grid gap-3" disabled={saving || simple}>
 		<legend class="text-sm font-semibold text-ink">Scene</legend>
 		<p class="text-[0.8125rem] text-ink-2">
-			An optional illustrated city behind the title of the public page. Off by default: tick none and the page stays plain. Tick several to alternate between them.
+			An optional illustrated city behind the title of the public page. New pages start on Paris; untick it for a plain page. Ignored in simple mode. Tick several to alternate between them.
 		</p>
 		<SceneDefs />
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">

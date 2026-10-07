@@ -1047,6 +1047,13 @@ async fn restore_status_pages(
                 (row.try_get("id")?, RestoreOutcome::Created)
             }
         };
+        sqlx::query("UPDATE status_pages SET simple = ? WHERE id = ? AND simple != ?")
+            .bind(i64::from(page.simple))
+            .bind(id)
+            .bind(i64::from(page.simple))
+            .execute(&mut **tx)
+            .await
+            .context("mode simple de la page de statut")?;
 
         for item in &page.items {
             let Some(target_id) = refs.get(&item.target).copied() else {

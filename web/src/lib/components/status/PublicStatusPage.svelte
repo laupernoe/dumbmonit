@@ -12,7 +12,7 @@
 	 * theme follows the page setting (`light` / `dark`) or the visitor's system;
 	 * the accent is one of a closed set of tokens, never free-form CSS.
 	 */
-	import { CalendarClock, ExternalLink, Megaphone } from 'lucide-svelte';
+	import { CalendarClock, ExternalLink, Megaphone, Moon, Sun } from 'lucide-svelte';
 	import { getPublicStatus, toApiError, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
 	import { formatDateTime, formatPercent, formatRelative, parseServerDate } from '#lib/format.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
@@ -70,7 +70,8 @@
 	// The page decides its light: a fixed theme overrides whatever the visitor
 	// (or the admin, on this browser) chose; `auto` follows the system.
 	$effect(() => {
-		const wanted = status?.page.theme ?? 'auto';
+		// Simple mode ignores the page's fixed theme: the visitor's system (or toggle) decides.
+		const wanted = status?.page.simple ? 'auto' : (status?.page.theme ?? 'auto');
 		const dark = wanted === 'auto' ? theme.resolved === 'dark' : wanted === 'dark';
 		document.documentElement.classList.toggle('dark', dark);
 		return () => theme.apply();
@@ -78,7 +79,7 @@
 
 	const notFound = $derived(error !== null && toApiError(error).status === 404);
 	const banner = $derived(status ? overallBanner(status) : null);
-	const days = $derived(status?.page.show_uptime_days ?? 90);
+	const days = $derived(status?.page.history_days ?? 7);
 	const bannerTone = $derived(banner?.tone ?? 'signal');
 
 	// Open announcements sit at the top; everything closed goes to the history.
@@ -108,7 +109,9 @@
 
 	// Banner scene: an empty (or unknown) list keeps the plain page.
 	const sceneIds = $derived(knownScenes(status?.page.scenes));
-	const withScene = $derived(sceneIds.length > 0);
+	// Simple mode: no scene, no pigeon, no animation, only a light/dark toggle.
+	const simple = $derived(status?.page.simple ?? false);
+	const withScene = $derived(!simple && sceneIds.length > 0);
 
 	// The sentence on the scene keeps its last word in the tone's colour.
 	const TONE_WORD: Record<string, string> = {
@@ -136,8 +139,8 @@
 	const tally = $derived.by(() => {
 		const items = status ? status.groups.flatMap((g) => g.items) : [];
 		const count = (state: string) => items.filter((i) => i.state === state).length;
-		const window = days >= 90 ? 90 : 30;
-		const values = items.map((i) => (window === 90 ? i.uptime_90d : i.uptime_30d)).filter((v): v is number => v !== null);
+		const window = days >= 90 ? 90 : days >= 30 ? 30 : 7;
+		const values = items.map((i) => (window === 90 ? i.uptime_90d : window === 30 ? i.uptime_30d : i.uptime_7d)).filter((v): v is number => v !== null);
 		const up = count('up');
 		const degraded = count('degraded');
 		const down = count('down');
@@ -347,6 +350,16 @@
 							<ExternalLink class="size-3.5" aria-hidden="true" />
 						</a>
 					{/if}
+					{#if simple}
+						<button
+							type="button"
+							class="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm font-semibold text-ink hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+							onclick={() => theme.toggle()}
+							aria-label={theme.resolved === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme'}
+						>
+							{#if theme.resolved === 'dark'}<Sun class="size-4" aria-hidden="true" />Light{:else}<Moon class="size-4" aria-hidden="true" />Dark{/if}
+						</button>
+					{/if}
 				</header>
 
 				<!-- Overall banner: the one-second answer. -->
@@ -358,7 +371,7 @@
 					<div class="flex min-w-0 items-center gap-3">
 						<Plate tone={bannerTone} size="md" label={banner.plate} />
 						<p class="display text-xl text-ink sm:text-2xl">
-							<DecryptText text={banner.label} tag="span" />
+							{#if simple}{banner.label}{:else}<DecryptText text={banner.label} tag="span" />{/if}
 						</p>
 					</div>
 					{#if lastChecked}
@@ -368,7 +381,9 @@
 					{/if}
 				</section>
 
-				<StatusMascot tone={bannerTone} />
+				{#if !simple}
+					<StatusMascot tone={bannerTone} />
+				{/if}
 
 				{@render announcements()}
 				{@render services(false)}

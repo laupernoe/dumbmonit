@@ -73,7 +73,7 @@
   <circle cx="886" cy="366" r="9" fill="var(--scene-tone, var(--c-signal))"/><circle cx="886" cy="366" r="20" fill="var(--scene-tone, var(--c-signal))" opacity=".25"/>
  </g>
  <!-- pigeons on the quay and the mascot -->
- <use href="#dm-mascot" transform="translate(1180 340) scale(.2)"/><use href="#dm-mascot" transform="translate(1262 340) scale(.2)"/>
+ <use href="#dm-mascot" transform="translate(1194 370) scale(.1)"/><use href="#dm-mascot" transform="translate(1276 370) scale(.1)"/>
 </g></svg>
 </div>
 

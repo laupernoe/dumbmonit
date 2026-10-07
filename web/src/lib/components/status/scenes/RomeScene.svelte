@@ -73,8 +73,8 @@
     <g stroke="var(--rome-pave)" stroke-width="2" stroke-linecap="round" opacity=".55"><path d="M600 512h100M780 540h120M1040 506h130M1260 534h100M1480 512h110M700 576h90M1160 570h130M1400 560h80" /></g>
 
     <!-- mascottes : sur les ruines et au pied du Colisée -->
-    <use href="#dm-mascot" transform="translate(842 296) scale(.2)" />
-    <use href="#dm-mascot" transform="translate(1440 422) scale(.2)" />
+    <use href="#dm-mascot" transform="translate(856 326) scale(.1)" />
+    <use href="#dm-mascot" transform="translate(1454 452) scale(.1)" />
   </svg>
 </div>
 

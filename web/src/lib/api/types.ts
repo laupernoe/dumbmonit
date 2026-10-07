@@ -1140,10 +1140,12 @@ export interface StatusPage {
 	created_at: string;
 	updated_at: string;
 	accent: StatusPageAccent;
-	/** Ordered banner scenes; empty: no scene (the default). */
+	/** Ordered banner scenes; new pages start with `paris`, empty: no scene. */
 	scenes: string[];
 	/** Only used when `scenes` holds more than one. */
 	scene_rotation: StatusPageSceneRotation;
+	/** Simple mode: the public page has no scene, mascot or animation. */
+	simple: boolean;
 	footer_text: string;
 	/** Link back to the organisation's site; empty for none. */
 	homepage_url: string;
@@ -1168,6 +1170,7 @@ export interface StatusPagePayload {
 	accent?: StatusPageAccent;
 	scenes?: string[];
 	scene_rotation?: StatusPageSceneRotation;
+	simple?: boolean;
 	footer_text?: string;
 	homepage_url?: string;
 	/** `null` turns email subscription off. */
@@ -1300,12 +1303,17 @@ export interface PublicStatus {
 		title: string;
 		description: string;
 		theme: StatusPageTheme;
+		/** The page's setting: the longest window it shows (30, 60 or 90). */
 		show_uptime_days: number;
+		/** The window actually shown: the age of the data, from 7 days up to `show_uptime_days`. */
+		history_days: number;
 		updated_at: string;
 		accent: StatusPageAccent;
 		/** Ordered banner scenes; empty or absent: none. */
 		scenes: string[];
 		scene_rotation: StatusPageSceneRotation;
+		/** Simple mode: no scene, mascot or animation; light/dark follows the visitor. */
+		simple: boolean;
 		footer_text: string;
 		homepage_url: string;
 		/** Versioned relative URL of the logo, `null` without one. */

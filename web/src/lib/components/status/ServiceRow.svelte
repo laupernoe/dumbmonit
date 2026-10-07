@@ -26,11 +26,12 @@
 		return `${(Math.round(value / 100) / 10).toString()} s`;
 	}
 
-	// 30 and 90 days are the headline figures; 90 only when the page shows them.
+	// The window adapts to the data's age: 30 and 90 days are listed only once the page covers them.
+	const headline = $derived(days >= 90 ? 90 : days >= 30 ? 30 : 7);
 	const readouts = $derived([
 		{ label: '24 h', value: item.uptime_24h },
 		{ label: '7 d', value: item.uptime_7d },
-		{ label: '30 d', value: item.uptime_30d },
+		...(days >= 30 ? [{ label: '30 d', value: item.uptime_30d }] : []),
 		...(days >= 90 ? [{ label: '90 d', value: item.uptime_90d }] : [])
 	]);
 </script>
@@ -40,8 +41,8 @@
 		<div class="flex items-center gap-3">
 			<Plate tone={state.tone} label={state.label} pulse={item.state === 'down'} />
 			<span class="min-w-0 flex-1 truncate font-semibold text-ink">{item.label}</span>
-			<span class="tnum shrink-0 text-sm text-ink-2" title={days >= 90 ? 'Uptime over 90 days' : 'Uptime over 30 days'}>
-				{formatPercent(days >= 90 ? item.uptime_90d : item.uptime_30d)}
+			<span class="tnum shrink-0 text-sm text-ink-2" title={`Uptime over ${headline} days`}>
+				{formatPercent(headline === 90 ? item.uptime_90d : headline === 30 ? item.uptime_30d : item.uptime_7d)}
 			</span>
 		</div>
 		<div class="mt-2">

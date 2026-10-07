@@ -29,6 +29,8 @@ pub struct StatusPage {
     pub scenes: String,
     /// Rythme de changement de scène, parmi le jeu fermé de `api::status_pages`.
     pub scene_rotation: String,
+    /// Mode simple : ni scène, ni pigeon, ni animation (voir la migration 0047).
+    pub simple: bool,
     pub footer_text: String,
     pub homepage_url: String,
     /// Type MIME du logo déposé ; `None` : pas de logo.
@@ -45,11 +47,35 @@ pub struct StatusPage {
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
 /// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
+/// Scène d'une page créée sans liste de scènes.
+pub const DEFAULT_SCENE: &str = "paris";
 pub const SCENES: [&str; 26] = [
-    "venice", "paris", "tokyo", "newyork", "london", "rome", "sydney", "dubai", "sanfrancisco",
-    "barcelona", "amsterdam", "istanbul", "rio", "chichenitza", "machupicchu", "greatwall",
-    "petra", "tajmahal", "giza", "babylon", "artemis", "zeus", "halicarnassus", "rhodes",
-    "alexandria", "athens",
+    "venice",
+    "paris",
+    "tokyo",
+    "newyork",
+    "london",
+    "rome",
+    "sydney",
+    "dubai",
+    "sanfrancisco",
+    "barcelona",
+    "amsterdam",
+    "istanbul",
+    "rio",
+    "chichenitza",
+    "machupicchu",
+    "greatwall",
+    "petra",
+    "tajmahal",
+    "giza",
+    "babylon",
+    "artemis",
+    "zeus",
+    "halicarnassus",
+    "rhodes",
+    "alexandria",
+    "athens",
 ];
 /// Rythmes de changement de scène (plusieurs scènes seulement).
 pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];
@@ -67,7 +93,7 @@ macro_rules! select_page {
     ($tail:literal) => {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
-            "created_at, updated_at, accent, scenes, scene_rotation, footer_text, homepage_url, ",
+            "created_at, updated_at, accent, scenes, scene_rotation, simple, footer_text, homepage_url, ",
             "logo_type, subscribe_channel_id, link_origin, domain FROM status_pages ",
             $tail
         )
@@ -87,6 +113,7 @@ pub struct StatusPageInput {
     /// Scènes séparées par des virgules, déjà validées.
     pub scenes: String,
     pub scene_rotation: String,
+    pub simple: bool,
     pub footer_text: String,
     pub homepage_url: String,
     pub subscribe_channel_id: Option<i64>,
@@ -179,9 +206,9 @@ pub async fn get_page_by_slug(pool: &SqlitePool, slug: &str) -> Result<Option<St
 pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i64> {
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO status_pages (slug, title, description, published, theme, show_uptime_days,
-             accent, scenes, scene_rotation, footer_text, homepage_url,
+             accent, scenes, scene_rotation, simple, footer_text, homepage_url,
              subscribe_channel_id, link_origin, domain)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id",
     )
     .bind(&input.slug)
@@ -193,6 +220,7 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     .bind(&input.accent)
     .bind(&input.scenes)
     .bind(&input.scene_rotation)
+    .bind(i64::from(input.simple))
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
@@ -204,11 +232,25 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     Ok(id)
 }
 
+/// Date de création du plus ancien appareil montré par la page : l'âge de ses
+/// données, qui borne la fenêtre d'historique affichée.
+pub async fn oldest_target_created_at(pool: &SqlitePool, page_id: i64) -> Result<Option<String>> {
+    let (oldest,): (Option<String>,) = sqlx::query_as(
+        "SELECT MIN(t.created_at) FROM targets t
+         JOIN status_page_items i ON i.target_id = t.id WHERE i.page_id = ?",
+    )
+    .bind(page_id)
+    .fetch_one(pool)
+    .await
+    .context("âge des données d'une page de statut")?;
+    Ok(oldest)
+}
+
 pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) -> Result<bool> {
     let result = sqlx::query(
         "UPDATE status_pages SET
              slug = ?, title = ?, description = ?, published = ?, theme = ?,
-             show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?,
+             show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?, simple = ?,
              footer_text = ?, homepage_url = ?, subscribe_channel_id = ?, link_origin = ?,
              domain = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
@@ -222,6 +264,7 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .bind(&input.accent)
     .bind(&input.scenes)
     .bind(&input.scene_rotation)
+    .bind(i64::from(input.simple))
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
