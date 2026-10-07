@@ -6,7 +6,7 @@
 	 * never get in the way. Mounted by `VersionTag`.
 	 */
 	import { ArrowUpCircle } from 'lucide-svelte';
-	import { getUpdate } from '$lib/api/update';
+	import { getUpdate } from '#lib/api/update.js';
 
 	let latest = $state<string | null>(null);
 	$effect(() => {

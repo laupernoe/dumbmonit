@@ -9,11 +9,11 @@
 	 * `$lib/push`; the server side in `$lib/api/webpush`.
 	 */
 	import { BellRing, Info, Send, Smartphone } from 'lucide-svelte';
-	import type { PushDevice, PushOverview } from '$lib/api';
-	import { deletePushDevice, getPushOverview, savePushSubscription, sendPushTest } from '$lib/api/webpush';
-	import { currentSubscription, fingerprint, isStandalone, pushSupport, subscribe, type PushSupport } from '$lib/push';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Button, Confirm, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import type { PushDevice, PushOverview } from '#lib/api/index.js';
+	import { deletePushDevice, getPushOverview, savePushSubscription, sendPushTest } from '#lib/api/webpush.js';
+	import { currentSubscription, fingerprint, isStandalone, pushSupport, subscribe, type PushSupport } from '#lib/push.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { Button, Confirm, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	let overview = $state<PushOverview | null>(null);
 	let loadError = $state<unknown>(null);

@@ -6,7 +6,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { Send } from 'lucide-svelte';
-	import { toApiError, type Channel } from '$lib/api';
+	import { toApiError, type Channel } from '#lib/api/index.js';
 	import {
 		MAX_REPORT_RECIPIENTS,
 		createReportSchedule,
@@ -16,9 +16,9 @@
 		type ReportFrequency,
 		type ReportSchedule,
 		type ReportSchedulePayload
-	} from '$lib/api/reports';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Button, Confirm, ErrorNotice, Field, Plate, Toggle } from '$lib/ui';
+	} from '#lib/api/reports.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { Button, Confirm, ErrorNotice, Field, Plate, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		schedule: ReportSchedule | null;

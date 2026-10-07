@@ -5,9 +5,9 @@
 	 * daily one for the on-call and a monthly one for management.
 	 */
 	import { Info, Mail, Plus } from 'lucide-svelte';
-	import { listChannels, type Channel } from '$lib/api';
-	import { listReportSchedules, type ReportSchedule } from '$lib/api/reports';
-	import { Button, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { listChannels, type Channel } from '#lib/api/index.js';
+	import { listReportSchedules, type ReportSchedule } from '#lib/api/reports.js';
+	import { Button, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ReportEditor from './ReportEditor.svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/reports/';

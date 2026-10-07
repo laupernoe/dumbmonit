@@ -7,11 +7,11 @@
 	 * a minute server-side.
 	 */
 	import { ArrowUpCircle, CheckCircle2, RefreshCw } from 'lucide-svelte';
-	import { toApiError } from '$lib/api';
-	import { checkUpdateNow, getUpdate, setUpdateCheck } from '$lib/api/update';
-	import type { UpdateInfo } from '$lib/api/types';
-	import { formatRelative } from '$lib/format';
-	import { Button, CopyBlock, ErrorNotice, Toggle } from '$lib/ui';
+	import { toApiError } from '#lib/api/index.js';
+	import { checkUpdateNow, getUpdate, setUpdateCheck } from '#lib/api/update.js';
+	import type { UpdateInfo } from '#lib/api/types.js';
+	import { formatRelative } from '#lib/format.js';
+	import { Button, CopyBlock, ErrorNotice, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		/** Reopens the "What's new" window; omit to hide the button. */
