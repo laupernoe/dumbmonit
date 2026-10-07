@@ -700,6 +700,20 @@ good, reversibly, without disabling the rule for anyone else.
 The exact keys per kind come from `/api/notify/kinds` and are documented in
 [Notification channels](../notifications.md).
 
+## Email reports
+
+Administrators only, `GET` included (the response lists recipients). Bearer
+tokens need the `write` scope for changes. See [Email reports](../using/reports.md).
+
+| Method | Route | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/api/reports/schedules` | admin | Every report: `id`, `name`, `enabled`, `frequency`, `weekday` (0 is Monday), `day_of_month`, `hour`, `timezone`, `recipients`, `channel_id`, `last_sent_at`, `last_error`, `next_run_at`. |
+| `POST` | `/api/reports/schedules` | admin | The same writable fields; each defaults to weekly, Monday, 8:00, `UTC`. `recipients` holds 20 addresses at most and is required to enable the report; `channel_id` must be an `smtp` channel or `null`. `201`; `409` beyond 10 reports. |
+| `GET` | `/api/reports/schedules/{id}` | admin | One report. |
+| `PUT` | `/api/reports/schedules/{id}` | admin | Full replacement. |
+| `DELETE` | `/api/reports/schedules/{id}` | admin | `204`. |
+| `POST` | `/api/reports/schedules/{id}/send-test` | admin | Emails a preview to the saved recipients: `{"sent": 2, "failed": 0}`. Does not touch the schedule. `400` without a usable email channel; `409` within 30 seconds of the previous preview. |
+
 ## Status pages and incidents
 
 | Method | Route | Auth | Purpose |

@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Periodic email reports.** **Settings > Reports** sends the team a weekly
+  (or daily, or monthly) email: availability per group and device, the
+  period's incidents, the least stable devices and the comparison with the
+  previous period. Plain HTML tables with a text version, no remote image,
+  sent once per slot, with a **Send a preview** button. Kept in backups. See
+  [Email reports](docs/using/reports.md).
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or

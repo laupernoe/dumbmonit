@@ -94,6 +94,41 @@ impl Smtp {
         self.password.iter().cloned().collect()
     }
 
+    /// Envoie un courriel à deux versions (texte et HTML) à un seul
+    /// destinataire : c'est le format des rapports périodiques.
+    pub async fn send_html(
+        &self,
+        recipient: &str,
+        subject: &str,
+        text: String,
+        html: String,
+    ) -> Result<(), NotifyError> {
+        if super::sending_disabled() {
+            return Ok(());
+        }
+        use lettre::message::MultiPart;
+
+        let email = lettre::Message::builder()
+            .from(
+                self.from
+                    .parse()
+                    .map_err(|_| NotifyError::Config("invalid sender address".to_string()))?,
+            )
+            .to(recipient
+                .parse()
+                .map_err(|_| NotifyError::Config("invalid recipient address".to_string()))?)
+            .subject(subject)
+            .multipart(MultiPart::alternative_plain_html(text, html))
+            .map_err(|error| NotifyError::Config(error.to_string()))?;
+        self.transport.send(email).await.map_err(|error| {
+            NotifyError::Transport(secret::truncate(
+                &secret::redact(&error.to_string(), &self.secrets()),
+                200,
+            ))
+        })?;
+        Ok(())
+    }
+
     /// Envoie un courriel à un seul destinataire, hors des destinataires du
     /// canal : c'est ce que font les pages de statut pour leurs abonnés.
     ///

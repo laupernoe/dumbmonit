@@ -57,6 +57,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         .await?,
         silences: silences(pool, &refs).await?,
         status_pages: status_pages(pool, &refs).await?,
+        report_schedules: report_schedules(pool, &channel_names).await?,
         incidents: incidents(pool).await?,
         users: users(pool, cipher, options).await?,
         agent_tokens: agent_tokens(pool).await?,
@@ -302,6 +303,27 @@ async fn silences(pool: &SqlitePool, refs: &HashMap<i64, String>) -> Result<Vec<
             })
         })
         .collect()
+}
+
+async fn report_schedules(
+    pool: &SqlitePool,
+    channel_names: &HashMap<i64, String>,
+) -> Result<Vec<BundleReportSchedule>> {
+    Ok(crate::reports::store::list(pool)
+        .await?
+        .into_iter()
+        .map(|row| BundleReportSchedule {
+            name: row.name,
+            enabled: row.enabled,
+            frequency: row.frequency,
+            weekday: row.weekday,
+            day_of_month: row.day_of_month,
+            hour: row.hour,
+            timezone: row.timezone,
+            recipients: row.recipients,
+            channel: row.channel_id.and_then(|id| channel_names.get(&id).cloned()),
+        })
+        .collect())
 }
 
 async fn status_pages(
