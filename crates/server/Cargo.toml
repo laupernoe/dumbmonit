@@ -46,7 +46,7 @@ sqlx = { version = "0.9", default-features = false, features = [
 # bundle Mozilla ; le monter en volume suffit alors à faire accepter une autorité
 # privée, cas courant sur un webhook interne ou un serveur SMTP d'entreprise.
 reqwest = { version = "0.13", default-features = false, features = [
-    "json", "query", "form", "rustls", "rustls-native-certs", "gzip",
+    "json", "query", "form", "rustls", "gzip",
 ] }
 
 # Les collecteurs réseau (SNMP, sondes de disponibilité, clients Proxmox/PBS/DSM)

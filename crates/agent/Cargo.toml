@@ -39,7 +39,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["f
 
 # Mêmes réglages TLS que le serveur, pour ne pas entretenir deux configurations.
 reqwest = { version = "0.13", default-features = false, features = [
-    "json", "rustls", "rustls-native-certs", "gzip",
+    "json", "rustls", "gzip",
 ] }
 
 # Couche multiplateforme d'accès aux compteurs système.

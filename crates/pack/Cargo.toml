@@ -22,7 +22,7 @@ serde_json.workspace = true
 tracing.workspace = true
 
 reqwest = { version = "0.13", default-features = false, features = [
-    "rustls", "rustls-native-certs", "gzip",
+    "rustls", "gzip",
 ] }
 serde_yaml_ng = "0.10"
 # Chemins JSONPath (RFC 9535) des métriques et des lignes découvertes. MIT.
