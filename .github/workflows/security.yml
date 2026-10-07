@@ -33,13 +33,11 @@ jobs:
           - name: agent
             image: ghcr.io/laupernoe/dumbmonit-agent:edge
     steps:
-      - uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: ${{ matrix.image }}
-          format: sarif
-          output: trivy-${{ matrix.name }}.sarif
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
+      - name: Scan
+        run: |
+          docker run --rm -v "$PWD:/out" aquasec/trivy:0.65.0 image \
+            --format sarif --output /out/trivy-${{ matrix.name }}.sarif \
+            --severity CRITICAL,HIGH --ignore-unfixed ${{ matrix.image }}
       - uses: github/codeql-action/upload-sarif@v3
         if: always() && hashFiles(format('trivy-{0}.sarif', matrix.name)) != ''
         with:
