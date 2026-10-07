@@ -242,7 +242,7 @@
 	description="What is firing now, what is scheduled to stay quiet, the rules behind it, and where you are told."
 >
 	{#snippet actions()}
-		{#if auth.isAdmin}
+		{#if auth.canOperate}
 			<Button
 				variant="secondary"
 				onclick={() => {
@@ -253,7 +253,7 @@
 				Schedule maintenance
 			</Button>
 		{:else}
-			<Plate tone="ghost" label="Viewer — read only" size="md" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
 		{/if}
 	{/snippet}
 </PageHeader>

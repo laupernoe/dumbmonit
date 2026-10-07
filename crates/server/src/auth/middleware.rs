@@ -6,9 +6,12 @@
 //!
 //! Il applique aussi la règle des rôles, en un seul endroit : toute écriture
 //! (POST, PUT, DELETE) exige un administrateur, sauf ce que chacun fait pour
-//! lui-même — se déconnecter, changer son mot de passe. Les lectures sont ouvertes
-//! aux deux rôles ; les quelques lectures réservées (liste des comptes, réglages
-//! SSO) le disent elles-mêmes avec l'extracteur [`AdminUser`].
+//! lui-même — se déconnecter, changer son mot de passe — et le traitement des
+//! alertes, ouvert aussi aux opérateurs ([`OPERATOR_ROUTES`], liste fermée :
+//! une route d'écriture qui n'y figure pas reste réservée à l'administrateur).
+//! Les lectures sont ouvertes aux trois rôles ; les quelques lectures réservées
+//! (liste des comptes, réglages SSO) le disent elles-mêmes avec l'extracteur
+//! [`AdminUser`].
 //!
 //! Deux façons de se présenter : le cookie de session d'un navigateur, ou un
 //! jeton d'API (`Authorization: Bearer dmt_…`) pour les scripts et les
@@ -69,6 +72,15 @@ impl Principal {
             Self::Token(token) => token.scope.allows(Scope::Write),
         }
     }
+
+    /// Peut traiter les alertes : administrateur ou opérateur, ou jeton `write`.
+    /// Un jeton `read` ne le peut pas, quel que soit son propriétaire.
+    pub fn can_operate(&self) -> bool {
+        match self {
+            Self::User(user) => user.role.can_operate(),
+            Self::Token(token) => token.scope.allows(Scope::Write),
+        }
+    }
 }
 
 /// L'identité de la requête, quel qu'en soit le porteur. Toujours déposée par le
@@ -91,6 +103,31 @@ const SELF_SERVICE: &[&str] = &[
     "/auth/totp/verify",
     "/music/speaker/report",
     "/music/speaker/play",
+];
+
+/// Écritures ouvertes au rôle `operator`, en plus de [`SELF_SERVICE`] : le
+/// traitement des alertes, rien de la configuration. Chaque entrée est une
+/// méthode et un gabarit de chemin (sans le préfixe `/api`) où `*` vaut un
+/// segment quelconque, non vide.
+///
+/// Liste fermée, refus par défaut : une route ajoutée demain à `api/mod.rs`
+/// reste réservée à l'administrateur tant qu'on ne l'a pas inscrite ici. Un
+/// gabarit ne doit couvrir que des routes de traitement d'alerte — y compris
+/// celles qu'axum ferait correspondre au même chemin.
+///
+/// Les surcharges de règle par équipement (`/alerts/rules/*/overrides/*`) ne
+/// sont ouvertes qu'en partie : le gestionnaire n'y accepte d'un opérateur que
+/// le geste « ignorer » (`enabled: false`, sans seuil) et son annulation — voir
+/// `api::alerts::put_override`.
+pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
+    ("POST", "/alerts/*/ack"),
+    ("DELETE", "/alerts/*/ack"),
+    ("POST", "/alerts/silences"),
+    ("DELETE", "/alerts/silences/*"),
+    ("POST", "/alerts/history/dismiss-resolved"),
+    ("POST", "/alerts/history/*/dismiss"),
+    ("PUT", "/alerts/rules/*/overrides/*"),
+    ("DELETE", "/alerts/rules/*/overrides/*"),
 ];
 
 /// Préfixes de routes interdits aux jetons d'API, quelle que soit leur portée :
@@ -190,7 +227,11 @@ pub async fn require_session(
         if let Err(reason) = same_origin(request.headers()) {
             return AuthError::Forbidden(reason.into()).into_response();
         }
-        if !user.role.is_admin() && !is_self_service(request.uri().path()) {
+        let path = request.uri().path();
+        let allowed = user.role.is_admin()
+            || is_self_service(path)
+            || (user.role.can_operate() && is_operator_route(request.method(), path));
+        if !allowed {
             return AuthError::admin_required().into_response();
         }
     }
@@ -285,6 +326,26 @@ fn is_self_service(path: &str) -> bool {
     SELF_SERVICE.contains(&path)
 }
 
+/// Vrai si l'écriture `method path` fait partie de ce qu'un opérateur peut faire.
+pub fn is_operator_route(method: &Method, path: &str) -> bool {
+    let path = path.strip_prefix("/api").unwrap_or(path);
+    let path = path.strip_suffix('/').unwrap_or(path);
+    OPERATOR_ROUTES.iter().any(|(allowed, pattern)| {
+        *allowed == method.as_str() && {
+            let mut wanted = pattern.split('/');
+            let mut actual = path.split('/');
+            loop {
+                match (wanted.next(), actual.next()) {
+                    (None, None) => break true,
+                    (Some("*"), Some(segment)) if !segment.is_empty() => {}
+                    (Some(w), Some(a)) if w == a => {}
+                    _ => break false,
+                }
+            }
+        }
+    })
+}
+
 /// Relit le cookie et confirme la session auprès de la base, puis charge le
 /// compte. Une session dont le compte est désactivé ou a disparu est fermée.
 ///
@@ -351,6 +412,23 @@ impl<S: Send + Sync> FromRequestParts<S> for AdminIdentity {
     }
 }
 
+/// Extracteur : une identité qui peut traiter les alertes — compte `admin` ou
+/// `operator`, ou jeton `write`. Réservé aux gestionnaires inscrits dans
+/// [`OPERATOR_ROUTES`] ; partout ailleurs, c'est [`AdminIdentity`].
+pub struct OperatorIdentity(pub Principal);
+
+impl<S: Send + Sync> FromRequestParts<S> for OperatorIdentity {
+    type Rejection = AuthError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Identity(principal) = Identity::from_request_parts(parts, state).await?;
+        if !principal.can_operate() {
+            return Err(AuthError::operator_required());
+        }
+        Ok(Self(principal))
+    }
+}
+
 /// Extracteur : le compte courant, à condition qu'il soit administrateur.
 /// Réservé aux routes que les jetons ne peuvent pas appeler ; ailleurs,
 /// [`AdminIdentity`] accepte aussi un jeton `write`.
@@ -379,6 +457,40 @@ mod tests {
         assert!(is_self_service("/auth/totp/enroll"));
         assert!(!is_self_service("/targets"));
         assert!(!is_self_service("/api/users"));
+    }
+
+    #[test]
+    fn operators_get_alert_handling_and_nothing_else() {
+        let yes = |m: Method, p: &str| assert!(is_operator_route(&m, p), "{m} {p}");
+        let no = |m: Method, p: &str| assert!(!is_operator_route(&m, p), "{m} {p}");
+        yes(Method::POST, "/alerts/abc123/ack");
+        yes(Method::DELETE, "/api/alerts/abc123/ack");
+        yes(Method::POST, "/alerts/silences");
+        yes(Method::DELETE, "/alerts/silences/4");
+        yes(Method::POST, "/alerts/history/dismiss-resolved");
+        yes(Method::POST, "/alerts/history/9/dismiss");
+        yes(Method::PUT, "/alerts/rules/2/overrides/7");
+        yes(Method::DELETE, "/alerts/rules/2/overrides/7");
+
+        no(Method::PUT, "/alerts/abc123/ack");
+        no(Method::POST, "/alerts//ack");
+        no(Method::POST, "/alerts/abc/ack/extra");
+        no(Method::POST, "/alerts/rules");
+        no(Method::PUT, "/alerts/rules/2");
+        no(Method::DELETE, "/alerts/rules/2");
+        no(Method::POST, "/alerts/rules/2/enable");
+        no(Method::PUT, "/alerts/silences/4");
+        no(Method::POST, "/targets");
+        no(Method::PUT, "/targets/1");
+        no(Method::POST, "/targets/1/probe");
+        no(Method::POST, "/users");
+        no(Method::PUT, "/users/1");
+        no(Method::POST, "/tokens");
+        no(Method::PUT, "/notify/policy");
+        no(Method::POST, "/notify/channels");
+        no(Method::PUT, "/settings");
+        no(Method::POST, "/backup/restore");
+        no(Method::POST, "/status-pages");
     }
 
     #[test]

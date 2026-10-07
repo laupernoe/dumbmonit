@@ -29,7 +29,7 @@
 		description="Schedule a window to mute a device — or all of them — while you work on it."
 	>
 		{#snippet action()}
-			{#if auth.isAdmin}
+			{#if auth.canOperate}
 				<Button variant="primary" onclick={onschedule}>Schedule maintenance</Button>
 			{/if}
 		{/snippet}
@@ -66,7 +66,7 @@
 						<p class="mt-1 text-[0.8125rem] text-ink-2">{silence.comment}</p>
 					{/if}
 				</div>
-				{#if auth.isAdmin}
+				{#if auth.canOperate}
 					<Confirm
 						size="sm"
 						variant="danger"

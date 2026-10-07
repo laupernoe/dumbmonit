@@ -176,7 +176,7 @@
 >
 	{#snippet aside()}
 		{#if !auth.isAdmin}
-			<Plate tone="ghost" label="Viewer — read only" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} />
 		{/if}
 	{/snippet}
 

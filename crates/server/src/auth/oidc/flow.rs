@@ -289,7 +289,9 @@ async fn map_identity(
 ) -> Result<User, FlowError> {
     let issuer = config.issuer.as_str();
     let groups = roles::groups_from_claim(claims.extra.get(&config.groups_claim));
-    let wanted_role = roles::role_for_groups(&groups, &config.admin_groups);
+    let role_for = |current| {
+        roles::role_for_groups(&groups, &config.admin_groups, &config.operator_groups, current)
+    };
 
     let mut user = match users::by_oidc(pool, issuer, &claims.sub).await? {
         Some(user) => user,
@@ -303,7 +305,7 @@ async fn map_identity(
                 if !config.auto_create {
                     return Err(FlowError::NoAccount);
                 }
-                create_account(pool, issuer, claims, wanted_role.unwrap_or(Role::Viewer)).await?
+                create_account(pool, issuer, claims, role_for(None).unwrap_or(Role::Viewer)).await?
             }
         },
     };
@@ -311,7 +313,7 @@ async fn map_identity(
     // Le rôle suit les groupes à chaque connexion — sauf pour le dernier
     // administrateur, qu'une erreur de groupe côté fournisseur ne doit pas
     // pouvoir rétrograder.
-    if let Some(role) = wanted_role
+    if let Some(role) = role_for(Some(user.role))
         && role != user.role
     {
         let last_admin = user.role.is_admin() && users::active_admin_count(pool).await? <= 1;

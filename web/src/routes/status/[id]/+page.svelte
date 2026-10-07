@@ -74,7 +74,7 @@
 >
 	{#snippet actions()}
 		{#if !auth.isAdmin}
-			<Plate tone="ghost" label="Viewer — read only" size="md" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
 		{:else if current}
 			<Button variant="ghost" size="sm" href={`/s/${current.slug}`} target="_blank" rel="noreferrer">
 				Open public page

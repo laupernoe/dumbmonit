@@ -1,7 +1,9 @@
 /**
  * Session state: who is signed in, and what they may do.
  *
- * Accounts have two roles: `admin` (everything) and `viewer` (read only). This
+ * Accounts have three roles: `admin` (everything), `operator` (reads everything
+ * and handles alerts: ack, ignore, snooze — no configuration) and `viewer`
+ * (read only). This
  * store is the single source of truth about the session. The cookie set by the
  * server is `HttpOnly`: the interface can neither read nor forge it, and stores
  * no token. The state is therefore deduced only from `GET /api/auth/status`
@@ -104,6 +106,20 @@ class AuthStore {
 	get isAdmin(): boolean {
 		if (!this.available || !this.configured) return true;
 		return this.user?.role === 'admin';
+	}
+
+	/**
+	 * True when the current user may handle alerts: acknowledge, ignore for a
+	 * device, snooze, clear resolved history. Admins and operators.
+	 */
+	get canOperate(): boolean {
+		if (this.isAdmin) return true;
+		return this.user?.role === 'operator';
+	}
+
+	/** Badge shown on configuration screens the current user cannot change. */
+	get readOnlyLabel(): string {
+		return this.user?.role === 'operator' ? 'Operator — config is admin only' : 'Viewer — read only';
 	}
 
 	/** Name to show for the signed-in account. */

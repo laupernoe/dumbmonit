@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **An operator role, between viewer and admin.** Operators read everything
+  and handle alerts — acknowledge, snooze, ignore a rule for one device,
+  schedule or delete maintenance windows, clear resolved history — but change
+  no configuration: devices, rules, channels, notification policy, status
+  pages, settings, backups, tokens and accounts stay admin only, and an
+  operator can never change a role. Pick it under Settings → Users, or map it
+  from your identity provider with the new *Operator groups* SSO setting
+  (`DUMBMONIT_OIDC_OPERATOR_GROUPS`). The API marks the operations open to
+  operators with `x-roles: [admin, operator]`. See
+  [Users](docs/using/settings.md#users).
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or

@@ -249,6 +249,7 @@ pub struct ConfigView {
     /// l'interface l'explique (les versions antérieures l'activaient).
     auto_create_defaulted: bool,
     admin_groups: Vec<String>,
+    operator_groups: Vec<String>,
     groups_claim: String,
     public_url: String,
     redirect_uri: String,
@@ -269,6 +270,7 @@ fn view(state: &AppState, resolved: oidc::Resolved, origin: &str) -> ConfigView 
         auto_create: config.auto_create,
         auto_create_defaulted: resolved.auto_create_defaulted,
         admin_groups: config.admin_groups,
+        operator_groups: config.operator_groups,
         groups_claim: config.groups_claim,
         public_url: config.public_url,
     }
@@ -301,6 +303,8 @@ pub struct ConfigPayload {
     #[serde(default)]
     admin_groups: Vec<String>,
     #[serde(default)]
+    operator_groups: Vec<String>,
+    #[serde(default)]
     groups_claim: String,
     #[serde(default)]
     public_url: String,
@@ -332,6 +336,7 @@ pub async fn put_config(
         scopes: payload.scopes,
         auto_create: payload.auto_create,
         admin_groups: payload.admin_groups,
+        operator_groups: payload.operator_groups,
         groups_claim: payload.groups_claim,
         public_url: payload.public_url,
     }
