@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **A status banner for your own website.** A published status page now serves
+  `banner.js`, a dependency-free script that shows "2 services are down" on any
+  site, and its public JSON can be read from other origins. Copy-paste
+  integrations for plain HTML, WordPress and PHP live in `integrations/`. See
+  [Website banner](docs/integrations/website-banner.md).
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or

@@ -256,6 +256,11 @@ subscriber emails do too.
   `history` (`date`, `uptime_pct`, `down_minutes`, `incidents` per day), and
   the announcements.
 
+Any website may read that document from the browser (it is sent with
+`Access-Control-Allow-Origin: *` and no cookies). `GET
+/api/public/status/<address>/banner.js` is a ready-made script that turns it
+into a banner: see [Website banner](../integrations/website-banner.md).
+
 The document is cached for 30 seconds on the server; the badges, the feed and
 the embed all read that same cached document, so none of them can say more
 than the page.
