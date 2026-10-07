@@ -5,7 +5,7 @@
 	 * status page.
 	 */
 	import { Check, MailX } from 'lucide-svelte';
-	import { confirmStatusSubscription, toApiError, unsubscribeFromStatus } from '$lib/api';
+	import { confirmStatusSubscription, toApiError, unsubscribeFromStatus } from '#lib/api/index.js';
 
 	interface Props {
 		slug: string;

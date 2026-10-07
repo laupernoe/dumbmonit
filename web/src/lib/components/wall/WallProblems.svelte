@@ -11,9 +11,9 @@
 	 * disagree. Nothing to act on here — a wall is read, not operated — but
 	 * each tile opens its device for whoever walks up with a mouse.
 	 */
-	import type { Sky, SkyRow } from '$lib/components/overview/sky';
-	import { formatRelative } from '$lib/format';
-	import { Plate } from '$lib/ui';
+	import type { Sky, SkyRow } from '#lib/components/overview/sky.js';
+	import { formatRelative } from '#lib/format.js';
+	import { Plate } from '#lib/ui/index.js';
 
 	interface Props {
 		sky: Sky;

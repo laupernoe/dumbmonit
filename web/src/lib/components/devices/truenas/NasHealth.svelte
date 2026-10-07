@@ -9,8 +9,8 @@
 	 * Every block disappears when there is nothing to say: a NAS with no alert
 	 * and every service up shows only its vitals.
 	 */
-	import type { TruenasAlert, TruenasAlertCount, TruenasService, TruenasSystem } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { TruenasAlert, TruenasAlertCount, TruenasService, TruenasSystem } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import {
 		alertPlate,
 		formatAgo,

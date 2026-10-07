@@ -2,8 +2,8 @@
  * Words and tones of the status pages, shared by the public page and the
  * settings section so both say the same thing about the same state.
  */
-import type { Tone } from '$lib/ui/Plate.svelte';
-import type { IncidentKind, IncidentStatus, PublicItemState, PublicOverall, PublicStatus, StatusPageAccent } from '$lib/api';
+import type { Tone } from '#lib/ui/Plate.svelte';
+import type { IncidentKind, IncidentStatus, PublicItemState, PublicOverall, PublicStatus, StatusPageAccent } from '#lib/api/index.js';
 
 export const OVERALL: Record<PublicOverall, { label: string; tone: Tone }> = {
 	operational: { label: 'All systems operational', tone: 'signal' },

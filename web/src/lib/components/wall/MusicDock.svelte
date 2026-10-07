@@ -14,8 +14,8 @@
 	 * nothing plays and nothing is wrong.
 	 */
 	import { RotateCcw, Volume2, VolumeX } from 'lucide-svelte';
-	import type { MusicEmbed } from '$lib/wall/music';
-	import type { Playing } from '$lib/wall/spotify';
+	import type { MusicEmbed } from '#lib/wall/music.js';
+	import type { Playing } from '#lib/wall/spotify.js';
 	import NowPlayingCard from './NowPlayingCard.svelte';
 	import MusicPlayer from './MusicPlayer.svelte';
 

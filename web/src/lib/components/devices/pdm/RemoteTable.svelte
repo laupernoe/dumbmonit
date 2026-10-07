@@ -5,8 +5,8 @@
 	 * message the console itself received, which is the only thing that explains
 	 * the outage.
 	 */
-	import type { PdmRemote } from '$lib/api';
-	import { EmptyState, Plate } from '$lib/ui';
+	import type { PdmRemote } from '#lib/api/index.js';
+	import { EmptyState, Plate } from '#lib/ui/index.js';
 	import {
 		formatAgo,
 		formatBytes,

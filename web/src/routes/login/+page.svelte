@@ -10,15 +10,15 @@
 	 * back, then lands on `/` (or on `?error=oidc&reason=…` here).
 	 */
 	import { page } from '$app/state';
-	import { ApiError } from '$lib/api';
-	import { auth, safeDestination } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, DotField, ErrorNotice, Field, shake } from '$lib/ui';
+	import { ApiError } from '#lib/api/index.js';
+	import { auth, safeDestination } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, DotField, ErrorNotice, Field, shake } from '#lib/ui/index.js';
 	import { KeyRound, Info } from 'lucide-svelte';
 	import { tick } from 'svelte';
-	import Logo from '$lib/components/Logo.svelte';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import Logo from '#lib/components/Logo.svelte';
+	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
+	import Mascot from '#lib/components/Mascot.svelte';
 
 	let username = $state('');
 	let password = $state('');

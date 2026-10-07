@@ -1,18 +1,16 @@
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
-		"allowJs": true,
-		"checkJs": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"moduleResolution": "bundler",
 		// Lets a pure helper (`folders.ts`) import another one by its explicit
 		// `.ts` extension: Node's own ESM resolver — unlike Vite's — needs it to
 		// run `tests/*.test.mjs` with `node --test`, no bundler involved.
+		// (Also set by `$app/tsconfig` since SvelteKit 3; kept explicit on purpose.)
 		"allowImportingTsExtensions": true
-	}
+	},
+	// `tests/*.test.mjs` run under `node --test` and are not type-checked.
+	"include": ["src", "vite.config.ts"],
+	// Paraglide's generated SSR middleware (node:async_hooks): unused by the SPA.
+	"exclude": ["src/lib/paraglide/server.js"]
 }

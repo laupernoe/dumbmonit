@@ -7,9 +7,9 @@
 	 * someone opens a task log or a disk's SMART table.
 	 */
 	import { untrack } from 'svelte';
-	import { getPbsCalendar, getPbsHealth, getPbsJobs, listPbsFailures } from '$lib/api/pbs';
-	import type { PbsCalendar, PbsFailure, PbsHealth, PbsJobs, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getPbsCalendar, getPbsHealth, getPbsJobs, listPbsFailures } from '#lib/api/pbs.js';
+	import type { PbsCalendar, PbsFailure, PbsHealth, PbsJobs, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import BackupCalendar from './BackupCalendar.svelte';
 	import DatastoreHealth from './DatastoreHealth.svelte';

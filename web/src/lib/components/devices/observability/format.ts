@@ -2,8 +2,8 @@
  * Words and numbers for the log and metrics server panel. The server sends
  * the verdicts and raw values; only their presentation is decided here.
  */
-import type { ObservabilityState, ObservabilityUnit } from '$lib/api';
-import type { Tone } from '$lib/ui';
+import type { ObservabilityState, ObservabilityUnit } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
 import { formatBytes } from '../docker/api';
 import { formatSpan } from '../pbs/format';
 

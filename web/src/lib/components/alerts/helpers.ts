@@ -15,10 +15,10 @@ import type {
 	Silence,
 	SilenceSchedule,
 	Target
-} from '$lib/api';
-import { isDistinctiveLabel } from '$lib/metrics';
-import type { Tone } from '$lib/ui';
-import { formatDateTime, formatDuration } from '$lib/format';
+} from '#lib/api/index.js';
+import { isDistinctiveLabel } from '#lib/metrics.js';
+import type { Tone } from '#lib/ui/index.js';
+import { formatDateTime, formatDuration } from '#lib/format.js';
 
 /**
  * The server's ack ceiling (`MAX_ACK_SECS`), in seconds: "until resolved".

@@ -6,10 +6,10 @@
 	 * clicks, never on every probe.
 	 */
 	import { ChevronDown, ChevronUp } from 'lucide-svelte';
-	import { getPbsTaskLog } from '$lib/api/pbs';
-	import type { PbsFailure, PbsTaskLog, TargetId } from '$lib/api';
-	import { toApiError } from '$lib/api';
-	import { Button, Plate } from '$lib/ui';
+	import { getPbsTaskLog } from '#lib/api/pbs.js';
+	import type { PbsFailure, PbsTaskLog, TargetId } from '#lib/api/index.js';
+	import { toApiError } from '#lib/api/index.js';
+	import { Button, Plate } from '#lib/ui/index.js';
 	import { TASK_KIND_LABEL, formatAgo, formatDuration, formatUnix } from './format';
 
 	interface Props {

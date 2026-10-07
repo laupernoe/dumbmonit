@@ -16,9 +16,9 @@
 	 * reports its rows' elements and forwards pointer/keyboard events, and
 	 * draws the insertion line the page tells it to.
 	 */
-	import type { TargetId } from '$lib/api';
-	import type { Serie } from '$lib/components/Chart.svelte';
-	import Faceplate from '$lib/components/Faceplate.svelte';
+	import type { TargetId } from '#lib/api/index.js';
+	import type { Serie } from '#lib/components/Chart.svelte';
+	import Faceplate from '#lib/components/Faceplate.svelte';
 	import type { RackRow } from './rack';
 
 	export interface DropSlot {

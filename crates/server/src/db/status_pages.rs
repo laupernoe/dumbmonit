@@ -38,11 +38,19 @@ pub struct StatusPage {
     /// Base des liens des courriels, vue par l'administrateur (voir la migration).
     #[serde(skip)]
     pub link_origin: String,
+    /// Domaine public : la page est servie à la racine de ce nom d'hôte
+    /// (`crate::status_host`) ; `None` : seulement sous `/s/<slug>`.
+    pub domain: Option<String>,
 }
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
 /// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
-pub const SCENES: [&str; 6] = ["venice", "paris", "tokyo", "newyork", "london", "rome"];
+pub const SCENES: [&str; 26] = [
+    "venice", "paris", "tokyo", "newyork", "london", "rome", "sydney", "dubai", "sanfrancisco",
+    "barcelona", "amsterdam", "istanbul", "rio", "chichenitza", "machupicchu", "greatwall",
+    "petra", "tajmahal", "giza", "babylon", "artemis", "zeus", "halicarnassus", "rhodes",
+    "alexandria", "athens",
+];
 /// Rythmes de changement de scène (plusieurs scènes seulement).
 pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];
 /// Sépare la liste enregistrée (`venice,paris`) en identifiants de scène.
@@ -60,7 +68,7 @@ macro_rules! select_page {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
             "created_at, updated_at, accent, scenes, scene_rotation, footer_text, homepage_url, ",
-            "logo_type, subscribe_channel_id, link_origin FROM status_pages ",
+            "logo_type, subscribe_channel_id, link_origin, domain FROM status_pages ",
             $tail
         )
     };
@@ -83,6 +91,8 @@ pub struct StatusPageInput {
     pub homepage_url: String,
     pub subscribe_channel_id: Option<i64>,
     pub link_origin: String,
+    /// Déjà normalisé et validé (`status_host::normalise_domain`).
+    pub domain: Option<String>,
 }
 
 /// Un service affiché par une page.
@@ -170,8 +180,8 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO status_pages (slug, title, description, published, theme, show_uptime_days,
              accent, scenes, scene_rotation, footer_text, homepage_url,
-             subscribe_channel_id, link_origin)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             subscribe_channel_id, link_origin, domain)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id",
     )
     .bind(&input.slug)
@@ -187,6 +197,7 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
     .bind(&input.link_origin)
+    .bind(&input.domain)
     .fetch_one(pool)
     .await
     .context("création de la page de statut")?;
@@ -199,7 +210,7 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
              slug = ?, title = ?, description = ?, published = ?, theme = ?,
              show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?,
              footer_text = ?, homepage_url = ?, subscribe_channel_id = ?, link_origin = ?,
-             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+             domain = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
     )
     .bind(&input.slug)
@@ -215,11 +226,20 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
     .bind(&input.link_origin)
+    .bind(&input.domain)
     .bind(id)
     .execute(pool)
     .await
     .context("mise à jour de la page de statut")?;
     Ok(result.rows_affected() > 0)
+}
+
+/// Domaines publics enregistrés, avec le slug de la page qu'ils servent.
+pub async fn list_domains(pool: &SqlitePool) -> Result<Vec<(String, String)>> {
+    sqlx::query_as("SELECT domain, slug FROM status_pages WHERE domain IS NOT NULL")
+        .fetch_all(pool)
+        .await
+        .context("liste des domaines des pages de statut")
 }
 
 pub async fn delete_page(pool: &SqlitePool, id: i64) -> Result<bool> {

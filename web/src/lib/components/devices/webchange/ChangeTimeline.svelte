@@ -6,9 +6,9 @@
 	 * disappearing.
 	 */
 	import { goto } from '$app/navigation';
-	import type { WebchangeChange, WebchangeChangeKind } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { EmptyState, Skeleton } from '$lib/ui';
+	import type { WebchangeChange, WebchangeChangeKind } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { EmptyState, Skeleton } from '#lib/ui/index.js';
 	import { Eye, FileDiff, FileMinus, FilePlus } from 'lucide-svelte';
 	import { pagePath, shortenPath } from './format';
 

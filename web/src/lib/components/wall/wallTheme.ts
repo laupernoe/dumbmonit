@@ -1,7 +1,7 @@
 /**
  * The wall's own theme preference: Auto / Day / Night / OLED.
  *
- * Separate from the app-wide `theme` store (`$lib/stores/theme.svelte`),
+ * Separate from the app-wide `theme` store (`#lib/stores/theme.svelte.js`),
  * which only knows Auto/Day/Night — OLED is a wall-only idea (a display left
  * on for days, never the rest of the product). `auto` means "whatever the
  * app is showing"; the other three force a palette for this display only,

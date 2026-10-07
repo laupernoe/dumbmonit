@@ -5,11 +5,11 @@
  *
  * Pure: the page gathers the readings and hands them in with the clock.
  */
-import type { Alert, AlertRule, Silence, Target, TargetId } from "$lib/api";
-import { isDistinctiveLabel } from "$lib/metrics";
-import type { Tone } from "$lib/ui";
-import { parseServerDate } from "$lib/format";
-import { isForecast } from "$lib/components/alerts/helpers";
+import type { Alert, AlertRule, Silence, Target, TargetId } from "#lib/api/index.js";
+import { isDistinctiveLabel } from "#lib/metrics.js";
+import type { Tone } from "#lib/ui/index.js";
+import { parseServerDate } from "#lib/format.js";
+import { isForecast } from "#lib/components/alerts/helpers.js";
 
 export const DAY_MS = 24 * 3600 * 1000;
 export const WEEK_DAYS = 7;

@@ -21,9 +21,9 @@
 		type ApiToken,
 		type ApiTokenScope,
 		type CreatedApiToken
-	} from '$lib/api/tokens';
-	import { formatDateTime, formatRelative, parseServerDate } from '$lib/format';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '$lib/ui';
+	} from '#lib/api/tokens.js';
+	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
+	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	const EXAMPLE_PROMPTS = ['Is everything fine?', 'Silence the NAS for two hours', 'What happened last night?', 'How full is the backup server?'];
 

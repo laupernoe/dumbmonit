@@ -5,7 +5,7 @@
  * force the user's choice and are remembered. The effective theme is applied
  * to `<html>` as a `dark` class, as Tailwind expects.
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 export type ThemePreference = 'auto' | 'light' | 'dark';
 

@@ -7,8 +7,8 @@
 	 * success, the rhythm in words and a thirty-day strip; the tasks above give
 	 * ABB's own view.
 	 */
-	import type { AbbDayCell, AbbDevice, AbbDeviceState, AbbTask, SynologyAbb } from '$lib/api';
-	import { Panel, Plate, type Tone } from '$lib/ui';
+	import type { AbbDayCell, AbbDevice, AbbDeviceState, AbbTask, SynologyAbb } from '#lib/api/index.js';
+	import { Panel, Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatSpan, formatUnix } from '../pbs/format';
 
 	interface Props {

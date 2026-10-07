@@ -16,7 +16,7 @@
 	 * browser; admins only for every change.
 	 */
 	import { page } from '$app/state';
-	import { replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { ExternalLink, Link2, Music2 } from 'lucide-svelte';
 	import {
 		completeSpotifyConnection,
@@ -29,11 +29,11 @@
 		type SpotifyAccount,
 		type SpotifyAuthorization,
 		type WallMusic
-	} from '$lib/api/music';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton } from '$lib/ui';
-	import { formatRelative, parseServerDate } from '$lib/format';
-	import { parseMusicLink } from '$lib/wall/music';
+	} from '#lib/api/music.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { formatRelative, parseServerDate } from '#lib/format.js';
+	import { parseMusicLink } from '#lib/wall/music.js';
 	import SpeakerStatus from './SpeakerStatus.svelte';
 
 	let account = $state<SpotifyAccount | null>(null);
@@ -81,9 +81,9 @@
 		if (!value) return;
 		outcome = value;
 		// Forget it in the address bar: a reload should not say it again.
-		const url = new URL(page.url);
+		const url = new URL(page.url.href);
 		url.searchParams.delete('spotify');
-		replaceState(url, page.state);
+		void goto(url, { shallow: true, replace: true, state: page.state });
 	});
 
 	// --- Connecting ----------------------------------------------------------

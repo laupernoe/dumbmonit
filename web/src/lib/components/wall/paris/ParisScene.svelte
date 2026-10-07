@@ -24,7 +24,7 @@
 	 * tabs pause everything; reduced motion freezes the scene in a still pose.
 	 */
 	import { tick, untrack } from 'svelte';
-	import { reducedMotion } from '$lib/ui';
+	import { reducedMotion } from '#lib/ui/index.js';
 	import WallPigeon from './WallPigeon.svelte';
 	import {
 		STAGE_W,

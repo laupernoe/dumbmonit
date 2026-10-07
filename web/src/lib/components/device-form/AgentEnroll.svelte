@@ -14,8 +14,8 @@
 	 * `crates/agent/src/config.rs` and docs/install/remote-site.md.
 	 */
 	import { untrack } from 'svelte';
-	import { createAgentToken, type CreatedAgentToken } from '$lib/api';
-	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Plate } from '$lib/ui';
+	import { createAgentToken, type CreatedAgentToken } from '#lib/api/index.js';
+	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import AgentChecksums from './AgentChecksums.svelte';
 	import RelayDiagram from './RelayDiagram.svelte';
 

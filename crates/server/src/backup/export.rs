@@ -310,7 +310,7 @@ async fn status_pages(
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
-             accent, scenes, scene_rotation, footer_text, homepage_url
+             accent, scenes, scene_rotation, footer_text, homepage_url, domain
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -354,6 +354,7 @@ async fn status_pages(
             scene_rotation: row.try_get("scene_rotation")?,
             footer_text: row.try_get("footer_text")?,
             homepage_url: row.try_get("homepage_url")?,
+            domain: row.try_get("domain")?,
         });
     }
     Ok(out)

@@ -14,8 +14,8 @@
 		type AlertRule,
 		type RuleOverride,
 		type Target
-	} from '$lib/api';
-	import { Button, Field, Toggle } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { Button, Field, Toggle } from '#lib/ui/index.js';
 	import { clearLabel } from './options';
 
 	interface Props {

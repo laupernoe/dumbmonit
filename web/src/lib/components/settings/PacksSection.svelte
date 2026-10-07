@@ -8,11 +8,11 @@
 	 * "- " line: they are shown as a list, not as one run-on sentence.
 	 */
 	import { ExternalLink, FileUp, Plus, Puzzle, RotateCw, Trash2 } from 'lucide-svelte';
-	import { installPack, listPacks, PACKS_DOC_URL, setPackEnabled, uninstallPack } from '$lib/api/packs';
-	import { toApiError, type PackInstallReport, type PackView } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
+	import { installPack, listPacks, PACKS_DOC_URL, setPackEnabled, uninstallPack } from '#lib/api/packs.js';
+	import { toApiError, type PackInstallReport, type PackView } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 
 	let packs = $state<PackView[]>([]);
 	let loading = $state(true);

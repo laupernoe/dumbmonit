@@ -6,7 +6,7 @@
  * device checks the mail ports from outside, the agent reads the counters on
  * the server itself. `pickAgent` finds which agent runs on the same machine.
  */
-import type { MetricSeries, Target, TargetId } from '$lib/api/types';
+import type { MetricSeries, Target, TargetId } from '#lib/api/types.js';
 
 export interface QueueStat {
 	queue: string;

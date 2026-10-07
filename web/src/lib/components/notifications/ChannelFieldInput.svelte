@@ -7,9 +7,9 @@
 	 * lines, JSON object. That avoids any dance between an empty number field,
 	 * `null` and `0` while the user types.
 	 */
-	import { Field, Toggle } from '$lib/ui';
+	import { Field, Toggle } from '#lib/ui/index.js';
 	import type { KindField } from './kinds';
-	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
+	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 
 	interface Props {
 		field: KindField;

@@ -4,9 +4,9 @@
  * rest of the interface speaks server date strings — hence these local
  * variants. A missing measurement prints nothing rather than a zero.
  */
-import { formatDateTime } from '$lib/format';
-import type { Tone } from '$lib/ui';
-import type { OpnsenseGatewayRow, OpnsenseTunnelRow } from '$lib/api';
+import { formatDateTime } from '#lib/format.js';
+import type { Tone } from '#lib/ui/index.js';
+import type { OpnsenseGatewayRow, OpnsenseTunnelRow } from '#lib/api/index.js';
 
 export function formatUnix(seconds: number | null | undefined): string {
 	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';

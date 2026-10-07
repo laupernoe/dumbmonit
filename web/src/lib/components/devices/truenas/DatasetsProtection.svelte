@@ -7,8 +7,8 @@
 	 * snapshot tasks, failures first. A replication that has been failing for a
 	 * month looks exactly like one that works until the day it is needed.
 	 */
-	import type { TruenasDatasetRow, TruenasScrubRow, TruenasTaskRow } from '$lib/api';
-	import { Button, Plate } from '$lib/ui';
+	import type { TruenasDatasetRow, TruenasScrubRow, TruenasTaskRow } from '#lib/api/index.js';
+	import { Button, Plate } from '#lib/ui/index.js';
 	import {
 		FILL,
 		formatAgo,

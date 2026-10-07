@@ -14,10 +14,10 @@
 		restoreBackup,
 		runLocalBackup,
 		saveBundle
-	} from '$lib/api/backup';
-	import type { BackupEnvelope, BackupStatus, RestoreReport } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
+	} from '#lib/api/backup.js';
+	import type { BackupEnvelope, BackupStatus, RestoreReport } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import {
 		Button,
 		Confirm,
@@ -28,7 +28,7 @@
 		Plate,
 		Skeleton,
 		Toggle
-	} from '$lib/ui';
+	} from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 
 	let status = $state<BackupStatus | null>(null);

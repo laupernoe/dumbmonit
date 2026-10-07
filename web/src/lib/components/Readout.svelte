@@ -4,7 +4,7 @@
 	 * on a shared graticule rule. Three of them make the bulletin's right side.
 	 * Not a card.
 	 */
-	import { CountUp } from '$lib/ui';
+	import { CountUp } from '#lib/ui/index.js';
 
 	interface Props {
 		label: string;

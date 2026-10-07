@@ -5,10 +5,10 @@
 	 * the catalogue we could neither name a kind nor build the form.
 	 */
 	import { BellRing, Plus } from 'lucide-svelte';
-	import { deleteChannel, listChannelKinds, listChannels, testChannel, type Channel } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { deleteChannel, listChannelKinds, listChannels, testChannel, type Channel } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { kindIcon, normalizeKind, type KindInfo } from './kinds';
 	import ChannelForm from './ChannelForm.svelte';
 

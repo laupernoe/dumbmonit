@@ -8,12 +8,12 @@
 	 * Rendered inside the header's action row: the buttons sit with the others,
 	 * the picker takes a full line below them.
 	 */
-	import type { Silence, Target } from '$lib/api';
-	import { createSilence, deleteSilence, listSilences } from '$lib/api';
-	import { Button, Confirm, Plate } from '$lib/ui';
+	import type { Silence, Target } from '#lib/api/index.js';
+	import { createSilence, deleteSilence, listSilences } from '#lib/api/index.js';
+	import { Button, Confirm, Plate } from '#lib/ui/index.js';
 	import { BellOff } from 'lucide-svelte';
-	import { formatDateTime } from '$lib/format';
-	import { quickSilencePayload, scheduleLabel } from '$lib/components/alerts/helpers';
+	import { formatDateTime } from '#lib/format.js';
+	import { quickSilencePayload, scheduleLabel } from '#lib/components/alerts/helpers.js';
 
 	interface Props {
 		target: Target;

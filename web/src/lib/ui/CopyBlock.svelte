@@ -1,7 +1,7 @@
 <script lang="ts">
 	/** A command or token to copy: monospace block with a copy button that confirms. */
 	import { Check, Copy, TextCursorInput } from 'lucide-svelte';
-	import { copyText, selectContents } from '$lib/clipboard';
+	import { copyText, selectContents } from '#lib/clipboard.js';
 
 	interface Props {
 		value: string;

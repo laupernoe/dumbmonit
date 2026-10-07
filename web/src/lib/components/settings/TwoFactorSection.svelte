@@ -9,11 +9,11 @@
 	 */
 	import qrcode from 'qrcode-generator';
 	import { ShieldCheck, ShieldOff } from 'lucide-svelte';
-	import { ApiError, type AuditEntry, type TotpEnrolment, type TotpStatus } from '$lib/api';
-	import { disableTotp, enrolTotp, getTotpStatus, listAuditLog, verifyTotp } from '$lib/api/totp';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { formatDateTime } from '$lib/format';
-	import { Button, CopyBlock, ErrorNotice, Field, Plate, Skeleton } from '$lib/ui';
+	import { ApiError, type AuditEntry, type TotpEnrolment, type TotpStatus } from '#lib/api/index.js';
+	import { disableTotp, enrolTotp, getTotpStatus, listAuditLog, verifyTotp } from '#lib/api/totp.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { formatDateTime } from '#lib/format.js';
+	import { Button, CopyBlock, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 
 	let status = $state<TotpStatus | null>(null);

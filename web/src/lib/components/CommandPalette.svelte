@@ -33,13 +33,13 @@
 		Bot,
 		KeyRound
 	} from 'lucide-svelte';
-	import { listTargets, type Target, type TargetId } from '$lib/api';
-	import { displayState, STATE_LABEL, STATE_TONE, type ProbeStatus } from '$lib/format';
-	import { loadProbeStatuses } from '$lib/metrics';
-	import { palette } from '$lib/stores/palette.svelte';
-	import { theme } from '$lib/stores/theme.svelte';
-	import { Led } from '$lib/ui';
-	import { kindIcon } from '$lib/components/device-form/kinds';
+	import { listTargets, type Target, type TargetId } from '#lib/api/index.js';
+	import { displayState, STATE_LABEL, STATE_TONE, type ProbeStatus } from '#lib/format.js';
+	import { loadProbeStatuses } from '#lib/metrics.js';
+	import { palette } from '#lib/stores/palette.svelte.js';
+	import { theme } from '#lib/stores/theme.svelte.js';
+	import { Led } from '#lib/ui/index.js';
+	import { kindIcon } from '#lib/components/device-form/kinds.js';
 
 	type Group = 'Pages' | 'Actions' | 'Devices';
 

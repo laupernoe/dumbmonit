@@ -6,9 +6,9 @@
 	 * Clicking a row filters the change timeline to that page; clicking the
 	 * selected row again clears the filter.
 	 */
-	import type { WebchangePage } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { EmptyState, Plate, type Tone } from '$lib/ui';
+	import type { WebchangePage } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { EmptyState, Plate, type Tone } from '#lib/ui/index.js';
 	import { ExternalLink, Globe, Search } from 'lucide-svelte';
 	import { pagePath, shortenPath } from './format';
 

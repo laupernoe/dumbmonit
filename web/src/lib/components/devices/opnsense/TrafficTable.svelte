@@ -7,8 +7,8 @@
 	 * feeling that the network is slow; then the DHCP leases, counted — never
 	 * listed, no client address ever reaches DumbMonit.
 	 */
-	import type { OpnsenseDhcp, OpnsenseFirewallRow, OpnsenseInterfaceRow } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { OpnsenseDhcp, OpnsenseFirewallRow, OpnsenseInterfaceRow } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { FILL, fillTone, formatBytes, formatCount, reading } from './format';
 
 	interface Props {

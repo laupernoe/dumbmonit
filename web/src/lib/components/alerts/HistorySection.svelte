@@ -8,14 +8,14 @@
 	 * fetches a longer window here and merges it, so older lines stay while the
 	 * newest keep arriving. Filters and the CSV export work on what is shown.
 	 */
-	import type { AlertHistoryEntry, AlertPhase, AlertRule, AlertSeverity, Target } from '$lib/api';
-	import { dismissAlertHistoryEntry, dismissResolvedAlertHistory, listAlertHistory } from '$lib/api';
-	import type { Tone } from '$lib/ui';
-	import { Button, Confirm, EmptyState, Plate, Toggle } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
-	import Segmented from '$lib/components/devices/Segmented.svelte';
+	import type { AlertHistoryEntry, AlertPhase, AlertRule, AlertSeverity, Target } from '#lib/api/index.js';
+	import { dismissAlertHistoryEntry, dismissResolvedAlertHistory, listAlertHistory } from '#lib/api/index.js';
+	import type { Tone } from '#lib/ui/index.js';
+	import { Button, Confirm, EmptyState, Plate, Toggle } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import { History, Download, X } from 'lucide-svelte';
-	import { formatDateTime, parseServerDate } from '$lib/format';
+	import { formatDateTime, parseServerDate } from '#lib/format.js';
 	import { formatAlertValue, severityTone, severityWord } from './helpers';
 
 	interface Props {

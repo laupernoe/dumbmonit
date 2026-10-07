@@ -4,10 +4,10 @@
 	 * way to remove an address. Pending requests disappear by themselves after
 	 * two days.
 	 */
-	import { deleteStatusSubscriber, listStatusSubscribers, type StatusPage, type StatusSubscriber } from '$lib/api';
-	import { formatDateTime, parseServerDate } from '$lib/format';
-	import { Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	import { deleteStatusSubscriber, listStatusSubscribers, type StatusPage, type StatusSubscriber } from '#lib/api/index.js';
+	import { formatDateTime, parseServerDate } from '#lib/format.js';
+	import { Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 
 	interface Props {
 		page: StatusPage;

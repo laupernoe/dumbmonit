@@ -6,8 +6,8 @@
 	 * up in `Target.tags`. A blank value is never sent: the server then applies
 	 * its own default.
 	 */
-	import type { CollectorOption } from '$lib/api';
-	import { Field, Toggle } from '$lib/ui';
+	import type { CollectorOption } from '#lib/api/index.js';
+	import { Field, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		options: CollectorOption[];

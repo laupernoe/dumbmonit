@@ -10,11 +10,11 @@
 	 * the NAS is never asked.
 	 */
 	import { untrack } from 'svelte';
-	import { getSynologyAbb, getSynologyOverview } from '$lib/api/synology';
-	import type { SynologyAbb, SynologyDisk, SynologyOverview, SynologyPool, SynologyVolume, Target } from '$lib/api';
-	import { ApiError } from '$lib/api';
-	import { formatDuration } from '$lib/format';
-	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '$lib/ui';
+	import { getSynologyAbb, getSynologyOverview } from '#lib/api/synology.js';
+	import type { SynologyAbb, SynologyDisk, SynologyOverview, SynologyPool, SynologyVolume, Target } from '#lib/api/index.js';
+	import { ApiError } from '#lib/api/index.js';
+	import { formatDuration } from '#lib/format.js';
+	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatBytes, formatUnix } from '../pbs/format';
 	import AbbDevices from './AbbDevices.svelte';

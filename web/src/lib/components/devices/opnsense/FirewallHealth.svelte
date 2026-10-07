@@ -17,8 +17,8 @@
 		OpnsenseSystem,
 		OpnsenseTunnelRow,
 		OpnsenseUnbound
-	} from '$lib/api';
-	import { Plate } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import {
 		carpTone,
 		FILL,

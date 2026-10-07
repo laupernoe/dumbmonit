@@ -18,13 +18,13 @@
 		type ChannelMatcher,
 		type ChannelPayload,
 		type QuietHours
-	} from '$lib/api';
-	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import { kindDocUrl, kindIcon, type KindField, type KindInfo } from './kinds';
 	import ChannelFieldInput from './ChannelFieldInput.svelte';
 	import QuietHoursEditor from './QuietHoursEditor.svelte';
 	import MatcherEditor from './MatcherEditor.svelte';
-	import { matcherIsEmpty } from '$lib/components/alerts/helpers';
+	import { matcherIsEmpty } from '#lib/components/alerts/helpers.js';
 
 	interface Props {
 		kinds: KindInfo[];

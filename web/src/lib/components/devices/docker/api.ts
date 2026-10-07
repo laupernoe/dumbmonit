@@ -5,9 +5,9 @@
  * device page and mirror `crates/server/src/api/agent_commands.rs` exactly.
  * Every call goes through the shared `request` helper — no `fetch` here.
  */
-import { ApiError, request } from '$lib/api/client';
-import type { TargetId } from '$lib/api';
-export { getAgentHost, type AgentHost } from '$lib/api';
+import { ApiError, request } from '#lib/api/client.js';
+import type { TargetId } from '#lib/api/index.js';
+export { getAgentHost, type AgentHost } from '#lib/api/index.js';
 
 export type ContainerHealth = 'none' | 'healthy' | 'unhealthy' | 'starting';
 

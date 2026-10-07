@@ -210,6 +210,8 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
             homepage_url: String::new(),
             subscribe_channel_id: None,
             link_origin: String::new(),
+            // La démonstration n'a pas de domaine à elle : la page reste sous `/s/home`.
+            domain: None,
         },
     )
     .await?;

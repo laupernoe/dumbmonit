@@ -4,7 +4,7 @@
  * views in step. The first subscriber starts the poll, the last stops it;
  * a pending command tightens the cadence to five seconds.
  */
-import type { TargetId } from '$lib/api';
+import type { TargetId } from '#lib/api/index.js';
 import {
 	getAgentHost,
 	isPending,

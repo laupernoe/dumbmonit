@@ -3,7 +3,7 @@
  * device straight from `queryInstant` (UniFi, Home Assistant, vSphere): the
  * device itself is never contacted when the page opens.
  */
-import type { MetricSeries } from '$lib/api';
+import type { MetricSeries } from '#lib/api/index.js';
 
 /** One series reduced to its name (prefix removed), labels and last value. */
 export interface Reading {

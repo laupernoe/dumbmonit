@@ -6,7 +6,7 @@
  * it can be unit tested directly with `node --test`, the way
  * `rules-filter.ts` already is — see `web/tests/snooze.test.mjs`.
  */
-import type { Alert, Silence, Target } from '$lib/api';
+import type { Alert, Silence, Target } from '#lib/api/index.js';
 
 /** Snooze presets offered by `SnoozeControl`: a label and a duration in seconds. */
 export const SNOOZE_DURATIONS: { label: string; secs: number }[] = [

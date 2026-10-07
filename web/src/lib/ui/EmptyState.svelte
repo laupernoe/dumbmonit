@@ -5,7 +5,7 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import Mascot from '#lib/components/Mascot.svelte';
 
 	interface Props {
 		title: string;

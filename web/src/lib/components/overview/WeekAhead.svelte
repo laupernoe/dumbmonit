@@ -5,7 +5,7 @@
 	 * something due is a surface with a plate, one line and the device.
 	 */
 	import type { Week, WeekItem } from './week';
-	import { Plate } from '$lib/ui';
+	import { Plate } from '#lib/ui/index.js';
 
 	interface Props {
 		week: Week;

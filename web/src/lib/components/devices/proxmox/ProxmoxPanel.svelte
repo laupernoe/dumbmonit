@@ -9,7 +9,7 @@
 	 * own: an older server, a missing privilege or a cluster without Ceph
 	 * simply leaves that section out, never an error.
 	 */
-	import type { Target } from '$lib/api';
+	import type { Target } from '#lib/api/index.js';
 	import CephPanel from './CephPanel.svelte';
 	import GuestTable from './GuestTable.svelte';
 	import NodesPanel from './NodesPanel.svelte';

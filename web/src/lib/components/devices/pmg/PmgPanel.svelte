@@ -7,9 +7,9 @@
 	 * every minute; the gateway itself is never asked.
 	 */
 	import { untrack } from 'svelte';
-	import { getPmgHealth, getPmgQueues, getPmgTraffic } from '$lib/api/pmg';
-	import type { PmgHealth, PmgQueues, PmgTraffic, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getPmgHealth, getPmgQueues, getPmgTraffic } from '#lib/api/pmg.js';
+	import type { PmgHealth, PmgQueues, PmgTraffic, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import GatewayHealth from './GatewayHealth.svelte';
 	import MailQueues from './MailQueues.svelte';
 	import MailTraffic from './MailTraffic.svelte';

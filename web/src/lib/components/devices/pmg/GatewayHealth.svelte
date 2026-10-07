@@ -8,8 +8,8 @@
 	 * keeps accepting and filtering mail, just with last week's rules, and says
 	 * nothing about it.
 	 */
-	import type { PmgClusterNode, PmgNode, PmgSignature, PmgStoppedService } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { PmgClusterNode, PmgNode, PmgSignature, PmgStoppedService } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { FAMILY_LABEL, formatAgo, formatBytes, formatCount, formatSpan, formatUnix, percentOf, signatureTone } from './format';
 
 	interface Props {

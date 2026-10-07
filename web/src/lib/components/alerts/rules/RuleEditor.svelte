@@ -9,9 +9,9 @@
 	 * overridden, so the server never zeroes a field the editor does not show.
 	 */
 	import { untrack } from 'svelte';
-	import type { AlertRule, Channel, RuleOperator } from '$lib/api';
-	import { ApiError, updateAlertRule } from '$lib/api';
-	import { Button, Field } from '$lib/ui';
+	import type { AlertRule, Channel, RuleOperator } from '#lib/api/index.js';
+	import { ApiError, updateAlertRule } from '#lib/api/index.js';
+	import { Button, Field } from '#lib/ui/index.js';
 	import {
 		ESCALATE_OPTIONS,
 		HOLD_OPTIONS,

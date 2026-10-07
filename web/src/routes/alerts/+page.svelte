@@ -12,7 +12,7 @@
 	 * here and refreshed after each action. The notification sections load
 	 * their own data.
 	 */
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 	import { tick, untrack } from 'svelte';
 	import {
 		listAlertRules,
@@ -30,19 +30,19 @@
 		type SilencePayload,
 		type AlertRulePayload,
 		type CollectorInfo
-	} from '$lib/api';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { readSky } from '$lib/components/overview/sky';
-	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
-	import ScheduleForm from '$lib/components/alerts/ScheduleForm.svelte';
-	import SilencesSection from '$lib/components/alerts/SilencesSection.svelte';
-	import RulesSection from '$lib/components/alerts/RulesSection.svelte';
-	import HistorySection from '$lib/components/alerts/HistorySection.svelte';
-	import ChannelsSection from '$lib/components/notifications/ChannelsSection.svelte';
-	import NotificationPolicySection from '$lib/components/notifications/NotificationPolicySection.svelte';
-	import { rulesByUid, targetsById } from '$lib/components/alerts/helpers';
+	} from '#lib/api/index.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { readSky } from '#lib/components/overview/sky.js';
+	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
+	import ScheduleForm from '#lib/components/alerts/ScheduleForm.svelte';
+	import SilencesSection from '#lib/components/alerts/SilencesSection.svelte';
+	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
+	import HistorySection from '#lib/components/alerts/HistorySection.svelte';
+	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
+	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
+	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
 
 	type Tab = 'now' | 'scheduled' | 'rules' | 'notifications' | 'history';
 	const TABS: { id: Tab; label: string }[] = [

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: dumb-simple monitoring from the homelab to the small business</title>
-<meta name="description" content="Self-hosted monitoring in one container: SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory, an agent for Linux and Windows, uptime checks and quiet alerts. Open source, Apache 2.0. Alpha.">
+<meta name="description" content="Self-hosted monitoring in one container: 50+ integrations (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory), an agent, 22 notification channels, public status pages, an MCP server and quiet alerts. Open source, Apache 2.0. Alpha.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit: dumb-simple monitoring from the homelab to the small business">
-<meta property="og:description" content="One container, one IP address to type in, useful graphs and alerts in under a minute. Open source, Apache 2.0. Alpha.">
+<meta property="og:description" content="One container, one IP address to type in, useful graphs and alerts in under a minute. 50+ integrations, 22 notification channels, status pages. Open source, Apache 2.0. Alpha.">
 <meta property="og:url" content="https://dumbmonit.app/">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
 <meta property="og:image:width" content="1200">
@@ -99,7 +99,7 @@
 <div class="wrap">
 	<div class="notice" role="note">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
-		<p><strong>This is an alpha.</strong> DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href="https://github.com/laupernoe/dumbmonit/issues">tell us what breaks</a>.</p>
+		<p><strong>This is an alpha</strong> (0.1.0-alpha.6 is the current release). DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href="https://github.com/laupernoe/dumbmonit/issues">tell us what breaks</a>.</p>
 	</div>
 </div>
 
@@ -107,14 +107,14 @@
 	<div class="wrap">
 		<div class="section-head">
 			<h2>One way to add anything</h2>
-			<p>Pick a type, read the notice that says what to prepare on the device, fill in only the fields that type needs. SNMP profiles are picked from the device's <code>sysObjectID</code>; defaults do the rest.</p>
+			<p>Pick a type among more than fifty, read the notice that says what to prepare on the device, fill in only the fields that type needs. SNMP profiles are picked from the device's <code>sysObjectID</code>; defaults do the rest.</p>
 		</div>
 
 		<div class="rack">
 			<div class="rack-group">
 				<h3>Network and firewall</h3>
 				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">SNMP v1, v2c and v3</span><span class="what">Switches, routers, NAS, UPS, printers. Interfaces and errors, host resources, UPS battery, printer supplies; five profiles ship and apply themselves.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">SNMP v1, v2c and v3</span><span class="what">Switches, routers, NAS, UPS, printers. Interfaces and errors, host resources, UPS battery, printer supplies; seven profiles ship and apply themselves.</span></li>
 					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">OPNsense <span class="plate plate-advisory">Test instance only</span></span><span class="what">Gateways with round-trip time and loss, the pf state table, VPN tunnels, DHCP leases, CARP, pending updates. Read-only API key.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Network discovery</span><span class="what">Sweep a CIDR range and add everything that answers in one go.</span></li>
 				</ul>
@@ -268,7 +268,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Status pages for the people you serve</h2>
-				<p>Public pages at <code>/s/&lt;name&gt;</code>: groups of services with 90 days of daily history, 30- and 90-day uptime, incident and maintenance announcements, email subscribers with double opt-in, RSS, badges for a README and a compact embed for an intranet.</p>
+				<p>Public pages at <code>/s/&lt;name&gt;</code>: groups of services with 90 days of daily history, 30- and 90-day uptime, incident and maintenance announcements, email subscribers with double opt-in, RSS, badges for a README, a compact embed for an intranet, and an optional city skyline (Venice, Paris, Tokyo, New York, London, Rome) behind the banner.</p>
 				<p>Only the labels you choose leave the server. Device names, addresses and types never appear on the page, in a badge or in an email.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/en/latest/using/status-pages/">Status pages in the documentation</a></p>
 			</div>
@@ -357,7 +357,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 					<li><span>The HTTP API is not frozen and the database schema still changes between alphas.</span></li>
 					<li><span>OPNsense, TrueNAS, Proxmox Datacenter Manager and Mail Gateway need reports from real, long-running installs. Redfish needs a real management controller.</span></li>
 					<li><span>The macOS and FreeBSD agents need someone to run them on real hardware.</span></li>
-					<li><span>The interface is in English; the language picker already offers 8 more, partly translated, and <a href="https://hosted.weblate.org/engage/dumbmonit/">translations are open on Weblate</a>.</span></li>
+					<li><span>The interface is in English; the language picker already offers 8 more (German, Spanish, French, Italian, Portuguese in two variants, Russian, Simplified Chinese), partly translated, and <a href="https://hosted.weblate.org/engage/dumbmonit/">translations are open on Weblate</a>.</span></li>
 					<li><span>What gets built next is decided in the <a href="https://github.com/laupernoe/dumbmonit/issues">GitHub issues</a>, and the <a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">changelog</a> says what changed.</span></li>
 				</ul>
 			</div>

@@ -163,6 +163,11 @@ translated yet — English (`web/messages/en.json`) is the only shipped locale. 
   `web/src/lib/ui/Confirm.svelte` / `ErrorNotice.svelte`) still has plain
   English text and is being extracted progressively; do not block a PR on
   extracting a string outside the area you are already changing.
+- Translators (Weblate) edit `web/messages/<locale>.json` only. Developers add
+  keys in `en.json` (or in transient `web/messages/fragments/<zone>.<locale>.json`
+  files) and run `npm run i18n:merge`; `npm run i18n:check` (part of `npm test`)
+  fails when a locale lacks a key or changes its `{variables}`. Naming rules:
+  `web/messages/README.md`.
 - A locale only appears in the language picker (Settings → Appearance) once
   its `messages/<locale>.json` file exists; with English alone, the picker
   stays hidden.
@@ -194,6 +199,20 @@ motion per page, `prefers-reduced-motion` respected.
 
 **Keep types in sync**: `web/src/lib/api/types.ts` mirrors the Rust structs in
 `crates/server/src/api/*.rs` exactly and is not validated at runtime.
+
+## Releasing
+
+Before tagging `vX.Y.Z`:
+
+1. Move the `Unreleased` section of `CHANGELOG.md` under the new version and date.
+2. Add the release to `web/src/lib/whatsnew/releases.ts` (newest first): the
+   version exactly as the server reports it (`0.1.0-alpha.7`, no `v`), the date
+   and three to five short highlights in English. It feeds the "What's new in
+   vX.Y.Z" window shown once after an update; a version missing from the file
+   shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the
+   `Cargo.toml` version has no entry.
+3. Bump the version in `Cargo.toml`, then tag `vX.Y.Z`; `release.yml` publishes
+   the images, and the window links to the GitHub release of that tag.
 
 ## Licence
 

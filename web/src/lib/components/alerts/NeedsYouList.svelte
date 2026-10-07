@@ -20,10 +20,10 @@
 	 * the server answers), `undoDismiss` lifts that ack, and a `Toast` offers
 	 * the undo for a few seconds either way.
 	 */
-	import type { Alert, Silence, Target } from '$lib/api';
-	import { ackAlert, unackAlert } from '$lib/api';
-	import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from '$lib/components/overview/sky';
-	import { EmptyState, Toast } from '$lib/ui';
+	import type { Alert, Silence, Target } from '#lib/api/index.js';
+	import { ackAlert, unackAlert } from '#lib/api/index.js';
+	import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from '#lib/components/overview/sky.js';
+	import { EmptyState, Toast } from '#lib/ui/index.js';
 	import { CloudSun, ChevronRight } from 'lucide-svelte';
 	import { UNTIL_RESOLVED_SECS } from './helpers';
 	import AlertRow from './AlertRow.svelte';

@@ -3,9 +3,9 @@
  * The API speaks Unix seconds because PBS does; the rest of the interface
  * speaks server date strings, hence these local variants.
  */
-import type { PbsDayState, PbsTaskKind } from '$lib/api';
-import { formatDateTime } from '$lib/format';
-import type { Tone } from '$lib/ui';
+import type { PbsDayState, PbsTaskKind } from '#lib/api/index.js';
+import { formatDateTime } from '#lib/format.js';
+import type { Tone } from '#lib/ui/index.js';
 export { formatAge, formatBytes } from '../docker/api';
 
 export function formatUnix(seconds: number | null | undefined): string {

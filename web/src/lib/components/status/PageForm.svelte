@@ -4,7 +4,7 @@
 	 * title until typed by hand), description, theme, history depth, published
 	 * toggle, the look (logo, accent, footer, link to the organisation's site), the
 	 * optional banner scene(s),
-	 * email subscription, and the service picker — tick devices, name them for
+	 * email subscription, the optional public domain, and the service picker — tick devices, name them for
 	 * the public, group them. Saves the page, its logo, then its services.
 	 */
 	import { untrack } from 'svelte';
@@ -14,6 +14,7 @@
 		deleteStatusPageLogo,
 		setStatusPageItems,
 		statusPageLogoUrl,
+		toApiError,
 		updateStatusPage,
 		uploadStatusPageLogo,
 		type Channel,
@@ -23,9 +24,10 @@
 		type StatusPageSceneRotation,
 		type StatusPageTheme,
 		type Target
-	} from '$lib/api';
-	import { Button, ErrorNotice, Field, Toggle } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { Button, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import { ACCENTS, accentClass, slugify } from './words';
+	import DomainField from './DomainField.svelte';
 	import SceneDefs from './scenes/SceneDefs.svelte';
 	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
 
@@ -62,6 +64,8 @@
 	let footerText = $state(initial?.footer_text ?? '');
 	let homepageUrl = $state(initial?.homepage_url ?? '');
 	let subscribeChannel = $state<number | null>(initial?.subscribe_channel_id ?? null);
+	let domain = $state(initial?.domain ?? '');
+	let domainError = $state<string | null>(null);
 	const smtpChannels = $derived(channels.filter((channel) => channel.kind === 'smtp'));
 
 	// Logo: what is stored, and what this form will do to it on save.
@@ -169,7 +173,11 @@
 		titleError = title.trim() ? null : 'Give the page a title.';
 		slugError = SLUG_RULE.test(slug) ? null : '2 to 40 characters: lowercase letters, digits and hyphens.';
 		homepageError = homepageUrl.trim() === '' || /^https?:\/\/[^\s/]+/i.test(homepageUrl.trim()) ? null : 'Start with http:// or https://.';
-		if (titleError || slugError || homepageError) return;
+		// The server has the full rule; this only catches the usual slips early.
+		const host = domain.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+		domainError =
+			host === '' || /^[a-z0-9.-]+$/i.test(host) ? null : 'The host name only, like status.example.com: no path, port or space.';
+		if (titleError || slugError || homepageError || domainError) return;
 
 		saving = true;
 		try {
@@ -185,7 +193,8 @@
 				scene_rotation: sceneRotation,
 				footer_text: footerText.trim(),
 				homepage_url: homepageUrl.trim(),
-				subscribe_channel_id: subscribeChannel
+				subscribe_channel_id: subscribeChannel,
+				domain: host === '' ? null : host
 			};
 			let saved = page ? await updateStatusPage(page.id, payload) : await createStatusPage(payload);
 			if (pendingLogo) {
@@ -204,7 +213,13 @@
 			const savedItems = await setStatusPageItems(saved.id, items);
 			onsaved({ ...saved, items: savedItems });
 		} catch (cause) {
-			error = cause;
+			// A refused domain (taken, invalid, DumbMonit's own address) belongs under its field.
+			const api = toApiError(cause);
+			if ((api.status === 400 || api.status === 409) && /domain|host name|IP address|punycode|DumbMonit itself/i.test(api.message)) {
+				domainError = api.message;
+			} else {
+				error = cause;
+			}
 		} finally {
 			saving = false;
 		}
@@ -387,6 +402,16 @@
 			{/each}
 		</select>
 	</Field>
+
+	<!-- Public domain -->
+	<DomainField
+		id="{idPrefix}-domain"
+		bind:value={domain}
+		saved={initial?.domain ?? null}
+		error={domainError}
+		disabled={saving}
+		oninput={() => (domainError = null)}
+	/>
 
 	<!-- Service picker -->
 	<fieldset class="grid gap-2" disabled={saving}>

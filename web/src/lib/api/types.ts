@@ -1146,6 +1146,8 @@ export interface StatusPage {
 	logo_type: string | null;
 	/** SMTP channel mailing the subscribers; `null`: no email subscription. */
 	subscribe_channel_id: number | null;
+	/** Public host name serving this page at `/` (`status.example.com`); `null`: none. */
+	domain: string | null;
 	items: StatusPageItem[];
 }
 
@@ -1165,6 +1167,8 @@ export interface StatusPagePayload {
 	homepage_url?: string;
 	/** `null` turns email subscription off. */
 	subscribe_channel_id?: number | null;
+	/** Public host name; `null` or `''` removes it. Omitted: kept. */
+	domain?: string | null;
 }
 
 /** Email subscriber of a status page (admin view; the token never leaves the server). */

@@ -20,5 +20,6 @@ pub mod scheduler;
 pub mod security;
 pub mod state;
 pub mod stats;
+pub mod status_host;
 pub mod tsdb;
 pub mod webchange;

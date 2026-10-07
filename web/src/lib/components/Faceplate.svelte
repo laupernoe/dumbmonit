@@ -5,10 +5,10 @@
 	 * The label grid is identical on every device, everywhere it appears.
 	 * `depth` indents children under their parent, like units in a bay.
 	 */
-	import type { Target } from '$lib/api';
-	import type { TargetState } from '$lib/format';
-	import { STATE_LABEL, STATE_TONE, formatRelative } from '$lib/format';
-	import { Led, Plate, Spotlight } from '$lib/ui';
+	import type { Target } from '#lib/api/index.js';
+	import type { TargetState } from '#lib/format.js';
+	import { STATE_LABEL, STATE_TONE, formatRelative } from '#lib/format.js';
+	import { Led, Plate, Spotlight } from '#lib/ui/index.js';
 	import Chart, { type Serie } from './Chart.svelte';
 	import { ChevronRight, CornerDownRight } from 'lucide-svelte';
 

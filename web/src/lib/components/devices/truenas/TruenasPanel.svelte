@@ -8,9 +8,9 @@
 	 * the NAS is never asked because a page was opened.
 	 */
 	import { untrack } from 'svelte';
-	import { getTruenasHealth, getTruenasProtection, getTruenasStorage } from '$lib/api/truenas';
-	import type { Target, TruenasHealth, TruenasProtection, TruenasStorage } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getTruenasHealth, getTruenasProtection, getTruenasStorage } from '#lib/api/truenas.js';
+	import type { Target, TruenasHealth, TruenasProtection, TruenasStorage } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import DatasetsProtection from './DatasetsProtection.svelte';
 	import NasHealth from './NasHealth.svelte';
 	import PoolsAndDisks from './PoolsAndDisks.svelte';

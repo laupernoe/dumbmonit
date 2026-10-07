@@ -4,7 +4,7 @@
 	 * get it, and the way back into the tour.
 	 */
 	import { BookOpen, GitBranch, Compass } from 'lucide-svelte';
-	import { demo } from '$lib/stores/demo.svelte';
+	import { demo } from '#lib/stores/demo.svelte.js';
 
 	const INSTALL_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/docker/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';

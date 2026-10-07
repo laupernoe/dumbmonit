@@ -18,13 +18,13 @@
 		Channel,
 		Target,
 		CollectorInfo
-	} from '$lib/api';
-	import { listChannels } from '$lib/api';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { Button, Confirm, Field, Panel, Plate, Toggle, EmptyState } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	} from '#lib/api/index.js';
+	import { listChannels } from '#lib/api/index.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { Button, Confirm, Field, Panel, Plate, Toggle, EmptyState } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { SlidersHorizontal, ChevronDown, ChevronUp, Search } from 'lucide-svelte';
-	import { formatDuration } from '$lib/format';
+	import { formatDuration } from '#lib/format.js';
 	import { severityTone, severityWord } from './helpers';
 	import { ruleKinds, isRelevant } from './rules-filter';
 	import RuleEditor from './rules/RuleEditor.svelte';

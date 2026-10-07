@@ -9,7 +9,7 @@
 	 * under `prefers-reduced-motion`). Ids this build does not know are skipped.
 	 */
 	import { fade } from 'svelte/transition';
-	import { reducedMotion } from '$lib/ui';
+	import { reducedMotion } from '#lib/ui/index.js';
 	import SceneDefs from './SceneDefs.svelte';
 	import { ROTATION_MS, SCENE_COMPONENTS, knownScenes } from './registry';
 

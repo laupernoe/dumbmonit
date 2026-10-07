@@ -13,11 +13,11 @@
 		normalizeCollector,
 		type CollectorInfo,
 		type Target
-	} from '$lib/api';
-	import { ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
-	import TargetForm from '$lib/components/device-form/TargetForm.svelte';
-	import SetupNotice from '$lib/components/device-form/SetupNotice.svelte';
-	import { kindIcon } from '$lib/components/device-form/kinds';
+	} from '#lib/api/index.js';
+	import { ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
+	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
+	import { kindIcon } from '#lib/components/device-form/kinds.js';
 
 	const id = $derived(Number(page.params.id));
 

@@ -4,8 +4,10 @@
 	 * server. Polled every 15 s while the page is open.
 	 */
 	import { BookOpen } from 'lucide-svelte';
-	import { getHealth, type ComponentHealth, type Health } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getHealth, type ComponentHealth, type Health } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { whatsNew } from '#lib/stores/whatsnew.svelte.js';
+	import { releaseFor } from '#lib/whatsnew/releases.js';
 
 	let health = $state<Health | null>(null);
 	let loading = $state(true);
@@ -78,6 +80,9 @@
 			<BookOpen class="size-4" aria-hidden="true" />
 			Documentation →
 		</a>
+		{#if health && releaseFor(health.version)}
+			<button type="button" class="font-medium text-signal-ink hover:underline" onclick={() => whatsNew.reopen()}>What's new</button>
+		{/if}
 		<span class="text-ink-2">Open source, Apache 2.0.</span>
 	</div>
 </Panel>

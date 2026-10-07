@@ -6,8 +6,8 @@
 	 * the age of its oldest message — that is the difference between slow mail
 	 * and stuck mail.
 	 */
-	import type { PmgQueue } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { PmgQueue } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { formatCount, formatSpan, QUEUE_HELP, queueLabel, queueTone } from './format';
 
 	interface Props {

@@ -17,7 +17,7 @@ import type {
 	CredentialView,
 	SnmpV3AuthProtocol,
 	SnmpV3PrivacyProtocol
-} from '$lib/api';
+} from '#lib/api/index.js';
 
 export type CredentialDraft = Record<string, string>;
 

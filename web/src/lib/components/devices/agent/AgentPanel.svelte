@@ -9,15 +9,15 @@
 	 * probes accepted. The way back is the re-enrolment window below.
 	 */
 	import { ShieldCheck, ShieldAlert } from 'lucide-svelte';
-	import { allowAgentRebind, getAgentHost, type AgentHost, type Target } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, ErrorNotice, Panel, Plate } from '$lib/ui';
-	import RelayPanel from '$lib/components/devices/relay/RelayPanel.svelte';
-	import MdaemonQueues from '$lib/components/devices/mdaemon/MdaemonQueues.svelte';
+	import { allowAgentRebind, getAgentHost, type AgentHost, type Target } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
+	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
+	import MdaemonQueues from '#lib/components/devices/mdaemon/MdaemonQueues.svelte';
 	import BackupReposPanel from './BackupReposPanel.svelte';
 	import WireguardPanel from './WireguardPanel.svelte';
-	import AppliancePanel from '$lib/components/devices/appliance/AppliancePanel.svelte';
+	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
 	interface Props {
 		target: Target;

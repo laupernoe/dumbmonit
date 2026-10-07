@@ -20,16 +20,16 @@
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar, RadioTower } from 'lucide-svelte';
-	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '$lib/api';
-	import { deviceContext } from '$lib/components/pigeon/deviceContext.svelte';
-	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
-	import CollectorPicker from '$lib/components/device-form/CollectorPicker.svelte';
-	import TargetForm from '$lib/components/device-form/TargetForm.svelte';
-	import AgentEnroll from '$lib/components/device-form/AgentEnroll.svelte';
-	import Discovery from '$lib/components/device-form/Discovery.svelte';
-	import SetupNotice from '$lib/components/device-form/SetupNotice.svelte';
-	import RelayDiagram from '$lib/components/device-form/RelayDiagram.svelte';
-	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '$lib/components/device-form/kinds';
+	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
+	import { deviceContext } from '#lib/components/pigeon/deviceContext.svelte.js';
+	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
+	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
+	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
+	import Discovery from '#lib/components/device-form/Discovery.svelte';
+	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
+	import RelayDiagram from '#lib/components/device-form/RelayDiagram.svelte';
+	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '#lib/components/device-form/kinds.js';
 
 	let collectors = $state<CollectorInfo[]>([]);
 	let targets = $state<Target[]>([]);
@@ -90,7 +90,7 @@
 	const noticeFor = $derived(selected ?? (scanning && snmp ? snmp : null));
 	const guideOpen = $derived(noticeFor !== null && params.get('guide') === '1');
 	/** The view the URL asks for, known before the kinds are loaded: what focus follows. */
-	const viewOf = (p: URLSearchParams) => (p.get('kind') ? 'kind' : p.get('scan') === '1' ? 'scan' : 'picker');
+	const viewOf = (p: Pick<URLSearchParams, 'get'>) => (p.get('kind') ? 'kind' : p.get('scan') === '1' ? 'scan' : 'picker');
 	const urlView = $derived(viewOf(params));
 	/** What is shown: an unknown `?kind=` falls back to the picker once the kinds are in. */
 	const view = $derived(loading ? urlView : selected ? 'kind' : scanning ? 'scan' : 'picker');
@@ -101,15 +101,17 @@
 
 	/** One step inside the page: a new history entry, or the current one rewritten. */
 	function navigate(edit: (p: URLSearchParams) => void, opts: { push: boolean; guide?: boolean; scroll?: boolean }) {
-		const url = new URL(page.url);
+		const url = new URL(page.url.href);
 		edit(url.searchParams);
 		const state: Steps = { depth: opts.push ? depth + 1 : depth, guide: opts.guide ?? false };
-		return goto(`${url.pathname}${url.search}`, {
-			replaceState: !opts.push,
-			keepFocus: true,
-			noScroll: !opts.scroll,
+		// Focus is managed below (afterNavigate); SvelteKit 3 merged `keepFocus`
+		// and `noScroll` into `reset`, so a step that scrolls does it by hand.
+		const done = goto(`${url.pathname}${url.search}`, {
+			replace: !opts.push,
+			reset: false,
 			state: state as App.PageState
 		});
+		return opts.scroll ? done.then(() => window.scrollTo(0, 0)) : done;
 	}
 
 	/** The last choice, so the picker puts the focus back on it. */

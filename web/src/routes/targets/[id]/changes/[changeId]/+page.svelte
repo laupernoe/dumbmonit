@@ -12,13 +12,13 @@
 		webchangeScreenshotUrl,
 		type WebchangeChangeDetail,
 		type WebchangeChangeKind
-	} from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Button, ErrorNotice, PageHeader, Panel, Skeleton } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { Button, ErrorNotice, PageHeader, Panel, Skeleton } from '#lib/ui/index.js';
 	import { FileDiff, FileMinus, FilePlus } from 'lucide-svelte';
-	import CompareSlider from '$lib/components/devices/webchange/CompareSlider.svelte';
-	import DiffView from '$lib/components/devices/webchange/DiffView.svelte';
-	import { pagePath } from '$lib/components/devices/webchange/format';
+	import CompareSlider from '#lib/components/devices/webchange/CompareSlider.svelte';
+	import DiffView from '#lib/components/devices/webchange/DiffView.svelte';
+	import { pagePath } from '#lib/components/devices/webchange/format.js';
 
 	const targetId = $derived(Number(page.params.id));
 	const changeId = $derived(Number(page.params.changeId));

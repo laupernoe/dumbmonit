@@ -5,9 +5,9 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import { AlertTriangle } from 'lucide-svelte';
-	import { toApiError } from '$lib/api';
+	import { toApiError } from '#lib/api/index.js';
 	import Button from './Button.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		error: unknown;

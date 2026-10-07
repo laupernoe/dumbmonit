@@ -16,11 +16,11 @@
 	 * once an alert is already known. The footer keeps the full Ack control
 	 * (a chosen duration, a note) and, on the Alerts page, "Open device".
 	 */
-	import type { Alert, Silence, Target } from '$lib/api';
-	import type { SkyRow } from '$lib/components/overview/sky';
-	import { Button, Menu, Plate } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { formatRelative, formatDateTime } from '$lib/format';
+	import type { Alert, Silence, Target } from '#lib/api/index.js';
+	import type { SkyRow } from '#lib/components/overview/sky.js';
+	import { Button, Menu, Plate } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { alertDetail, coveringSilence, severityTone, severityWord, TONE_BAR } from './helpers';
 	import { X, EllipsisVertical } from 'lucide-svelte';
 	import AckControl from './AckControl.svelte';

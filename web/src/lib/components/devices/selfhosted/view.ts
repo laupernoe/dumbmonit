@@ -9,7 +9,7 @@
  * `dumbmonit_immich_queue_waiting{queue}`… Every state is a word as well as a
  * colour; a fact that was not measured is left out rather than shown as fine.
  */
-import type { MetricSeries } from '$lib/api';
+import type { MetricSeries } from '#lib/api/index.js';
 import { formatBytes } from '../docker/api';
 import { formatSpan } from '../pbs/format';
 

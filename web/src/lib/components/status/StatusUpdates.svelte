@@ -6,7 +6,7 @@
 	 * no one who follows it.
 	 */
 	import { Mail, Rss } from 'lucide-svelte';
-	import { subscribeToStatus, toApiError } from '$lib/api';
+	import { subscribeToStatus, toApiError } from '#lib/api/index.js';
 
 	interface Props {
 		slug: string;

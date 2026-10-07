@@ -4,8 +4,8 @@
 	 * log and metrics servers (verdicts in sentences, figures, details), fed
 	 * by the server's `/targets/{id}/backend` view.
 	 */
-	import { getBackendOverview } from '$lib/api/backends';
-	import type { Target } from '$lib/api';
+	import { getBackendOverview } from '#lib/api/backends.js';
+	import type { Target } from '#lib/api/index.js';
 	import ObservabilityPanel from '../observability/ObservabilityPanel.svelte';
 
 	interface Props {

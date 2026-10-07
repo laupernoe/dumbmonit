@@ -8,8 +8,8 @@
 	 * the group's summary — last success, last failure, size, snapshots,
 	 * retention — in words, never colour alone.
 	 */
-	import type { PbsCalendar, PbsCalendarDay, PbsCalendarGroup } from '$lib/api';
-	import { Plate, type Tone } from '$lib/ui';
+	import type { PbsCalendar, PbsCalendarDay, PbsCalendarGroup } from '#lib/api/index.js';
+	import { Plate, type Tone } from '#lib/ui/index.js';
 	import {
 		DAY_BG,
 		DAY_WORD,

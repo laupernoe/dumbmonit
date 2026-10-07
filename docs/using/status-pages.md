@@ -51,8 +51,12 @@ opening it to arbitrary code:
 ### Scene
 
 The **Scene** setting draws a city skyline behind the banner. There is none by
-default. Pick up to six, in the order you want them: Venice, Paris, Tokyo, New
-York, London or Rome. With more than one, **Rotation** decides when the page
+default. Pick as many as you like, in the order you want them. Cities: Venice, Paris,
+Tokyo, New York, London, Rome, Sydney, Dubai, San Francisco, Barcelona,
+Amsterdam, Istanbul and Rio de Janeiro. The new seven wonders: Chichén Itzá,
+Machu Picchu, the Great Wall, Petra and the Taj Mahal (Rio's Christ the
+Redeemer is in the Rio scene). The ancient wonders: Giza, Babylon, Ephesus,
+Olympia, Halicarnassus, Rhodes and Alexandria, plus the Athens Acropolis. With more than one, **Rotation** decides when the page
 moves to the next: at every visit (default), every minute, every ten minutes or
 every hour. The scenes are a closed set of drawings shipped with DumbMonit —
 nothing is uploaded or interpreted.
@@ -153,7 +157,9 @@ own recipients are not. Without one, the page offers its RSS feed only.
   twice within ten minutes: the page cannot be turned into a mail cannon.
 - The editor lists subscribers (confirmed or pending) and removes any of them.
 
-The links in these emails are built from the **public URL** of the
+The links in these emails point at the page's [custom domain](#custom-domain)
+when it has one (`https://status.example.com/`). Otherwise they are built from
+the **public URL** of the
 [notification policy](../alerting/notifications.md) (or `DUMBMONIT_PUBLIC_URL`); without one, from
 the address you used when you last saved the page — never from a visitor's
 request.
@@ -216,10 +222,107 @@ DumbMonit a third-party page may frame; everything else (the confirmation and
 unsubscribe pages included) answers with `frame-ancestors 'none'` and
 `X-Frame-Options: DENY`.
 
+### Custom domain
+
+A page can have its own address, like `status.example.com`, the way Uptime
+Kuma does it. Type the name in the editor's **Public domain** field (the
+**i** next to it sums up the steps) and save. When a request reaches DumbMonit
+with that name in its `Host` header, DumbMonit shows the page at the root `/`,
+and nothing else: on that name the sign-in screen, the settings, the API, the
+agents' endpoints, the metrics and the other status pages all answer
+`404 Not found`, even for someone signed in, and no session cookie is read or
+set. Only the page, its embed, its confirmation and unsubscribe pages, its
+badges, feed and JSON document, and the interface's own files (`/_app/`,
+icons) are served.
+
+The name is stored in lower case, without `https://` or a trailing slash; a
+port, a path or an IP address is refused. Two pages cannot share a name, and
+the address you use to reach DumbMonit itself (or its public URL) cannot be a
+page's domain — saving it would lock you out. Clear the field to remove the
+domain; the page stays at `/s/<address>` either way.
+
+To set it up:
+
+1. **DNS.** Create the record for the name (or the public hostname of a
+   Cloudflare Tunnel), pointing at your reverse proxy.
+2. **Proxy.** Send the name to DumbMonit's address, for example
+   `http://dumbmonit:8080`, **without rewriting the path**: the proxy forwards
+   `/`, not `/s/<address>`.
+3. **Host header.** Pass the original `Host` header on: it is how DumbMonit
+   tells the page's domain from its own address. DumbMonit reads only `Host`;
+   `X-Forwarded-Host` counts only from a proxy listed in
+   `DUMBMONIT_TRUSTED_PROXIES`.
+4. **HTTPS** is handled by the proxy. DumbMonit links to
+   `https://<domain>/` in subscriber emails, the RSS feed and the editor's
+   **Share** panel.
+
+Traefik (Docker labels) — the `Host` header is passed on by default:
+
+```yaml
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.status.rule=Host(`status.example.com`)
+  - traefik.http.routers.status.entrypoints=websecure
+  - traefik.http.routers.status.tls.certresolver=letsencrypt
+  - traefik.http.services.status.loadbalancer.server.port=8080
+```
+
+Nginx Proxy Manager — add a **Proxy Host** with the domain
+`status.example.com`, scheme `http`, forward hostname `dumbmonit`, port `8080`,
+and an SSL certificate. Nothing else: it passes `Host` on by default. Leave
+the **Custom locations** empty.
+
+Cloudflare Tunnel — add a **Public hostname** `status.example.com` with the
+service `http://dumbmonit:8080` and no path. The tunnel keeps the visitor's
+`Host`; leave **HTTP Host Header** in the advanced settings empty.
+
+Caddy — `reverse_proxy` passes `Host` on and Caddy fetches the certificate:
+
+```caddyfile
+status.example.com {
+    reverse_proxy dumbmonit:8080
+}
+```
+
+Nginx — `proxy_pass` sends the upstream's name unless told otherwise, so set
+the header:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name status.example.com;
+    # ssl_certificate … ;
+
+    location / {
+        proxy_pass http://dumbmonit:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**Troubleshooting.**
+
+- *The domain shows DumbMonit's sign-in screen or dashboard*: the `Host`
+  header did not reach DumbMonit — the proxy replaced it with the upstream's
+  name (`dumbmonit:8080`). Add `proxy_set_header Host $host;` (Nginx), remove a
+  custom **HTTP Host Header** (Cloudflare Tunnel), or remove a `Host`
+  rewrite middleware (Traefik). Nothing private is exposed: the dashboard
+  still asks for a password.
+- *A bare `Not found` on the domain*: the proxy rewrites the path (it sends
+  `/s/<address>` or adds a prefix), or the domain in the editor does not match
+  the name in the browser exactly. Forward the path untouched.
+- *The page says it does not exist*: the page is still a draft — publish it.
+- *You can no longer reach DumbMonit's interface*: you are browsing through
+  the page's domain. Use DumbMonit's own address, or clear the page's
+  **Public domain**.
+
 ### Behind a reverse proxy
 
-If DumbMonit itself is private, you can expose only the status page. With
-Caddy, for example:
+A [custom domain](#custom-domain) is the simplest way to expose only the
+status page. If you prefer to keep the `/s/<address>` path on a public name,
+filter the paths in the proxy instead. With Caddy, for example:
 
 ```caddyfile
 status.example.com {

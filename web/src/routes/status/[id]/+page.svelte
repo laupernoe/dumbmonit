@@ -7,12 +7,12 @@
 	import { goto } from '$app/navigation';
 	import { page as route } from '$app/state';
 	import { ExternalLink } from 'lucide-svelte';
-	import { getStatusPage, listChannels, listTargets, type Channel, type StatusPage, type Target } from '$lib/api';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
-	import PageForm from '$lib/components/status/PageForm.svelte';
-	import SharePanel from '$lib/components/status/SharePanel.svelte';
-	import SubscribersPanel from '$lib/components/status/SubscribersPanel.svelte';
+	import { getStatusPage, listChannels, listTargets, type Channel, type StatusPage, type Target } from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import PageForm from '#lib/components/status/PageForm.svelte';
+	import SharePanel from '#lib/components/status/SharePanel.svelte';
+	import SubscribersPanel from '#lib/components/status/SubscribersPanel.svelte';
 
 	const isNew = $derived(route.params.id === 'new');
 	const id = $derived(isNew ? null : Number(route.params.id));

@@ -7,8 +7,8 @@
 	 * puts it first (the server sorts unhealthy pools and failing disks to the
 	 * top).
 	 */
-	import type { TruenasDiskRow, TruenasPoolRow } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { TruenasDiskRow, TruenasPoolRow } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import {
 		FILL,
 		formatBytes,

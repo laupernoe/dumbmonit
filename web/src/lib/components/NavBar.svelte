@@ -11,10 +11,10 @@
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { RollingNumber, bump, reducedMotion } from '$lib/ui';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { palette } from '$lib/stores/palette.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { palette } from '#lib/stores/palette.svelte.js';
 	import Logo from './Logo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 

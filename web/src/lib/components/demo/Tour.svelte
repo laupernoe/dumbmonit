@@ -9,9 +9,9 @@
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { X, ArrowLeft, ArrowRight } from 'lucide-svelte';
-	import { listTargets } from '$lib/api';
-	import { Button } from '$lib/ui';
-	import { demo } from '$lib/stores/demo.svelte';
+	import { listTargets } from '#lib/api/index.js';
+	import { Button } from '#lib/ui/index.js';
+	import { demo } from '#lib/stores/demo.svelte.js';
 
 	interface Step {
 		title: string;
@@ -120,7 +120,12 @@
 		if (target) {
 			const [path, hash] = target.split('#');
 			if (page.url.pathname !== path) {
-				await goto(target, { keepFocus: true, noScroll: false });
+				// Scroll to the top of the new page, focus stays on the tour (SvelteKit 3
+				// merged `keepFocus`/`noScroll` into `reset`); the anchor is scrolled to below.
+				await goto(target, { reset: false });
+				const into = hash ? document.getElementById(hash) : null;
+				if (into) into.scrollIntoView();
+				else window.scrollTo(0, 0);
 			} else if (hash && window.location.hash !== `#${hash}`) {
 				window.location.hash = hash;
 			}

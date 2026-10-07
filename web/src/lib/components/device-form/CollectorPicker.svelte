@@ -11,8 +11,8 @@
 	 * words and the agent shortcuts are ours.
 	 */
 	import { Check, ChevronDown, Search } from 'lucide-svelte';
-	import type { CollectorInfo } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { CollectorInfo } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { filterGroups, groupCollectors, type KindChoice, type KindGroup } from './kinds';
 
 	interface Props {

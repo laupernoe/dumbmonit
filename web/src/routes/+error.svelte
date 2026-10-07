@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Compass } from 'lucide-svelte';
-	import { Button, EmptyState } from '$lib/ui';
+	import { Button, EmptyState } from '#lib/ui/index.js';
 
 	const notFound = $derived(page.status === 404);
 </script>

@@ -1,3 +1,5 @@
+import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
@@ -8,7 +10,21 @@ const PROXY = { target: 'http://localhost:8080', changeOrigin: true };
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
-		sveltekit(),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			// Le binaire Rust embarque un site statique : pas de serveur Node en production.
+			// `fallback` active le mode SPA, indispensable pour les routes dynamiques
+			// comme /targets/42 qui sont résolues côté client.
+			adapter: adapter({
+				pages: 'build',
+				assets: 'build',
+				fallback: 'index.html',
+				precompress: false,
+				strict: false
+			}),
+			// Aucune page n'est pré-rendue par défaut : tout dépend de l'API au runtime.
+			prerender: { entries: [] }
+		}),
 		// i18n : compile messages/{locale}.json en fonctions ES tree-shakées
 		// (src/lib/paraglide, généré — jamais commité). Pas de routage par URL :
 		// la langue est détectée côté client (localStorage, puis la langue du

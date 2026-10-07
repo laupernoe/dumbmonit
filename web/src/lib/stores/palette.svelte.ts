@@ -5,7 +5,7 @@
  * itself agree on one open flag. The palette component is mounted once in the
  * root layout; anything can call `palette.open()`.
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 class Palette {
 	isOpen = $state(false);

@@ -6,9 +6,9 @@
 	 * warning in itself. There is no alert to silence, so the only action is to
 	 * open the device.
 	 */
-	import type { SkyRow } from '$lib/components/overview/sky';
-	import { Button, Plate } from '$lib/ui';
-	import { formatRelative, formatDateTime } from '$lib/format';
+	import type { SkyRow } from '#lib/components/overview/sky.js';
+	import { Button, Plate } from '#lib/ui/index.js';
+	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { TONE_BAR } from './helpers';
 
 	interface Props {

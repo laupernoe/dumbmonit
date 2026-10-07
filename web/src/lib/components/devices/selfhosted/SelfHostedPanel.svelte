@@ -7,8 +7,8 @@
 	 * every minute — opening the page never calls the application.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import Figure from '../Figure.svelte';
 	import { TITLES, buildView, overall, type AppView, type CheckState } from './view';

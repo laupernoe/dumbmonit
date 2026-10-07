@@ -41,21 +41,21 @@
 		type AlertRule,
 		type Target,
 		type TargetId
-	} from '$lib/api';
-	import { formatRelative, type ProbeStatus } from '$lib/format';
-	import { loadProbeStatuses } from '$lib/metrics';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { theme, type ThemePreference } from '$lib/stores/theme.svelte';
-	import { palette } from '$lib/stores/palette.svelte';
-	import { Button, Plate, Skeleton, ErrorNotice } from '$lib/ui';
-	import { readSky, skyCondition } from '$lib/components/overview/sky';
-	import ParisScene from '$lib/components/wall/paris/ParisScene.svelte';
-	import type { SceneMood, SceneTheme } from '$lib/components/wall/paris/daylight';
-	import WallProblems from '$lib/components/wall/WallProblems.svelte';
-	import WallDevices from '$lib/components/wall/WallDevices.svelte';
-	import WallThemeControl from '$lib/components/wall/WallThemeControl.svelte';
-	import MusicControl from '$lib/components/wall/MusicControl.svelte';
-	import MusicDock from '$lib/components/wall/MusicDock.svelte';
+	} from '#lib/api/index.js';
+	import { formatRelative, type ProbeStatus } from '#lib/format.js';
+	import { loadProbeStatuses } from '#lib/metrics.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
+	import { palette } from '#lib/stores/palette.svelte.js';
+	import { Button, Plate, Skeleton, ErrorNotice } from '#lib/ui/index.js';
+	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
+	import ParisScene from '#lib/components/wall/paris/ParisScene.svelte';
+	import type { SceneMood, SceneTheme } from '#lib/components/wall/paris/daylight.js';
+	import WallProblems from '#lib/components/wall/WallProblems.svelte';
+	import WallDevices from '#lib/components/wall/WallDevices.svelte';
+	import WallThemeControl from '#lib/components/wall/WallThemeControl.svelte';
+	import MusicControl from '#lib/components/wall/MusicControl.svelte';
+	import MusicDock from '#lib/components/wall/MusicDock.svelte';
 	import {
 		readWallTheme,
 		writeWallTheme,
@@ -66,11 +66,11 @@
 		OLED_SHIFT_OFFSETS,
 		OLED_SHIFT_INTERVAL_MS,
 		type WallThemeChoice
-	} from '$lib/components/wall/wallTheme';
-	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '$lib/api/music';
-	import { parseMusicLink } from '$lib/wall/music';
-	import { cardVisible, displaySpeakerName, pickPlaying } from '$lib/wall/spotify';
-	import { WallSpeaker } from '$lib/wall/speaker.svelte';
+	} from '#lib/components/wall/wallTheme.js';
+	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '#lib/api/music.js';
+	import { parseMusicLink } from '#lib/wall/music.js';
+	import { cardVisible, displaySpeakerName, pickPlaying } from '#lib/wall/spotify.js';
+	import { WallSpeaker } from '#lib/wall/speaker.svelte.js';
 
 	const REFRESH_MS = 20_000;
 

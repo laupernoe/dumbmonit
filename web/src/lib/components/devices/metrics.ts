@@ -2,13 +2,13 @@
  * Device metrics for the detail page: loaded with counters turned into rates,
  * then sorted into the sections the page folds them into.
  *
- * `$lib/metrics` charts every family raw, which is right for gauges but reads
+ * `#lib/metrics.js` charts every family raw, which is right for gauges but reads
  * as a staircase for counters (interface octets, disk bytes). Here the counter
  * families are asked as `rate()` — VictoriaMetrics keeps the name with
  * `keep_metric_names`, so the two answers fold back into one list of groups.
  */
-import { queryRange, type MetricSeries, type TargetId } from '$lib/api';
-import type { Serie } from '$lib/components/Chart.svelte';
+import { queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
+import type { Serie } from '#lib/components/Chart.svelte';
 
 /** A curve with the labels it came from, so sections can sort it by label. */
 export interface DeviceSerie extends Serie {
@@ -37,7 +37,7 @@ const COUNTER =
 const COUNTER_SELECTOR =
 	'dumbmonit_(.+_(octets|packets|errors|discards)_(in|out)|disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples|(victoriametrics|victorialogs|loki|graylog)_.+_total)';
 
-/** About 300 points per chart, as in `$lib/metrics`. */
+/** About 300 points per chart, as in `#lib/metrics.js`. */
 function stepFor(seconds: number): number {
 	return Math.max(10, Math.round(seconds / 300));
 }

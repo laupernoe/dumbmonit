@@ -5,7 +5,7 @@
  * `crates/collectors/src/client_devices.rs`), so this one parser serves
  * every one of them: nothing here names a product.
  */
-import type { MetricSeries } from '$lib/api';
+import type { MetricSeries } from '#lib/api/index.js';
 
 export interface ClientDevice {
 	/** Label `device`: the most descriptive id the collector could give it. */

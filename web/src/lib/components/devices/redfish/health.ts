@@ -4,8 +4,8 @@
  * server against the thresholds the controller declares for that very sensor.
  * No temperature, speed or percentage is written in this file.
  */
-import type { RedfishFan, RedfishLimit, RedfishOverview, RedfishTemperature } from '$lib/api';
-import type { Tone } from '$lib/ui';
+import type { RedfishFan, RedfishLimit, RedfishOverview, RedfishTemperature } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
 
 export interface Verdict {
 	tone: Tone;

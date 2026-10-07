@@ -3,21 +3,28 @@
 	import type { Component } from 'svelte';
 	import { page } from '$app/state';
 	import { goto, onNavigate } from '$app/navigation';
-	import { theme } from '$lib/stores/theme.svelte';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { palette } from '$lib/stores/palette.svelte';
-	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '$lib/stores/auth.svelte';
-	import NavBar from '$lib/components/NavBar.svelte';
-	import VersionTag from '$lib/components/VersionTag.svelte';
-	import Pip from '$lib/components/pigeon/Pip.svelte';
-	import Logo from '$lib/components/Logo.svelte';
-	import DemoBanner from '$lib/components/demo/DemoBanner.svelte';
-	import DemoNotice from '$lib/components/demo/DemoNotice.svelte';
-	import Tour from '$lib/components/demo/Tour.svelte';
-	import { demo } from '$lib/stores/demo.svelte';
-	import { reducedMotion } from '$lib/ui';
+	import { theme } from '#lib/stores/theme.svelte.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { palette } from '#lib/stores/palette.svelte.js';
+	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '#lib/stores/auth.svelte.js';
+	import NavBar from '#lib/components/NavBar.svelte';
+	import VersionTag from '#lib/components/VersionTag.svelte';
+	import Pip from '#lib/components/pigeon/Pip.svelte';
+	import Logo from '#lib/components/Logo.svelte';
+	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
+	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
+	import Tour from '#lib/components/demo/Tour.svelte';
+	import WhatsNew from '#lib/components/WhatsNew.svelte';
+	import { demo } from '#lib/stores/demo.svelte.js';
+	import { reducedMotion } from '#lib/ui/index.js';
+	import { hostedStatusSlug } from '#lib/status-host.js';
+	import PublicStatusPage from '#lib/components/status/PublicStatusPage.svelte';
 
 	let { children } = $props();
+
+	// On a status page's own public domain the server answers nothing but that
+	// page: no session, no nav, no command palette — `/` shows the page itself.
+	const statusHost = hostedStatusSlug;
 
 	// The command palette (Ctrl/⌘ K) is not mounted on `/wall`, a full-screen
 	// kiosk display that owns its own Escape handling and has no use for it,
@@ -26,13 +33,13 @@
 	const onWall = $derived(page.url.pathname.startsWith('/wall'));
 	let CommandPalette = $state<Component | null>(null);
 	$effect(() => {
-		if (onWall || CommandPalette || !palette.isOpen) return;
-		void import('$lib/components/CommandPalette.svelte').then((mod) => {
+		if (statusHost || onWall || CommandPalette || !palette.isOpen) return;
+		void import('#lib/components/CommandPalette.svelte').then((mod) => {
 			CommandPalette = mod.default;
 		});
 	});
 	$effect(() => {
-		if (onWall) return;
+		if (statusHost || onWall) return;
 		function onKeydown(event: KeyboardEvent) {
 			if (!palette.matches(event)) return;
 			event.preventDefault();
@@ -51,6 +58,7 @@
 	// Session state is established once at startup; the global 401 handler is
 	// installed here too, so no page has to know authentication exists.
 	$effect(() => {
+		if (statusHost) return;
 		void auth.init();
 	});
 
@@ -64,24 +72,27 @@
 		if (isStandaloneRoute(path)) return;
 
 		if (!auth.available) {
-			if (isPublicRoute(path)) void goto('/', { replaceState: true });
+			if (isPublicRoute(path)) void goto('/', { replace: true });
 			return;
 		}
 		if (!auth.configured) {
-			if (path !== '/setup') void goto('/setup', { replaceState: true });
+			if (path !== '/setup') void goto('/setup', { replace: true });
 			return;
 		}
 		if (!auth.authenticated) {
 			if (path === '/setup') {
-				void goto('/login', { replaceState: true });
+				void goto('/login', { replace: true });
 			} else if (!isPublicRoute(path)) {
 				const target = path + page.url.search;
-				void goto(`/login?redirect=${encodeURIComponent(target)}`, { replaceState: true });
+				void goto(`/login?redirect=${encodeURIComponent(target)}`, { replace: true });
 			}
 			return;
 		}
 		if (isPublicRoute(path)) {
-			void goto(safeDestination(page.url.searchParams.get('redirect')), { replaceState: true });
+			// `goto` rejects a path that matches no route since SvelteKit 3: land on `/` then.
+			void goto(safeDestination(page.url.searchParams.get('redirect')), { replace: true }).catch(
+				() => goto('/', { replace: true })
+			);
 		}
 	});
 
@@ -119,7 +130,7 @@
 
 	// The alert count is shared by the whole app; it only polls once a session exists.
 	$effect(() => {
-		if (!auth.canUseApi) return;
+		if (statusHost || !auth.canUseApi) return;
 		return alertsStore.startPolling();
 	});
 </script>
@@ -129,10 +140,16 @@
 </svelte:head>
 
 <div class="flex min-h-full flex-col">
-	{#if !onWall}
+	{#if !onWall && !statusHost}
 		<VersionTag />
 	{/if}
-	{#if publicPath}
+	{#if statusHost}
+		{#if page.url.pathname === '/'}
+			<PublicStatusPage slug={statusHost} />
+		{:else}
+			{@render children()}
+		{/if}
+	{:else if publicPath}
 		{@render children()}
 	{:else if !auth.canUseApi}
 		<main class="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16">
@@ -154,6 +171,9 @@
 		{/if}
 		{#if !onWall}
 			<Pip />
+			{#if !auth.demo}
+				<WhatsNew />
+			{/if}
 		{/if}
 		{#if auth.demo}
 			<Tour />

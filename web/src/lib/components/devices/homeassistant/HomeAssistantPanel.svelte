@@ -6,8 +6,8 @@
 	 * page never connects to Home Assistant.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, type Tone } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, type Tone } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import { formatCount } from '../truenas/format';
 	import { humanize, readings, selector, type Reading } from '../instant';

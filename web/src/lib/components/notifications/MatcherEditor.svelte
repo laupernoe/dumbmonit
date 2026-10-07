@@ -19,9 +19,9 @@
 		type ChannelMatcher,
 		type MatchCondition,
 		type MatchPreview
-	} from '$lib/api';
-	import { Field, Plate, Toggle } from '$lib/ui';
-	import { matcherIsEmpty, matcherSentence } from '$lib/components/alerts/helpers';
+	} from '#lib/api/index.js';
+	import { Field, Plate, Toggle } from '#lib/ui/index.js';
+	import { matcherIsEmpty, matcherSentence } from '#lib/components/alerts/helpers.js';
 
 	interface Props {
 		value: ChannelMatcher | null;

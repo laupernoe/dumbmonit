@@ -14,10 +14,10 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { ArrowRight, RefreshCw, X } from 'lucide-svelte';
-	import { palette } from '$lib/stores/palette.svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, reducedMotion } from '$lib/ui';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import { palette } from '#lib/stores/palette.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, reducedMotion } from '#lib/ui/index.js';
+	import Mascot from '#lib/components/Mascot.svelte';
 	import { deviceContext } from './deviceContext.svelte';
 	import { AREA_TIPS, areaForPath, hidePipForGood, pipHidden, storeNextTip, takeTipIndex, type Tip } from './tips';
 

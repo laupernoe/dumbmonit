@@ -4,9 +4,9 @@
 	 * The latest message comes first; the earlier ones fold under "Earlier
 	 * updates" so a long incident does not push the services off screen.
 	 */
-	import type { PublicIncident } from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Plate, Tilt } from '$lib/ui';
+	import type { PublicIncident } from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { Plate, Tilt } from '#lib/ui/index.js';
 	import { INCIDENT_STATUS, KIND_LABEL, isClosed } from './words';
 
 	interface Props {

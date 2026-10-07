@@ -15,10 +15,10 @@
 	 * `onchanged` so it can refresh whatever list the alert lives in. Hidden for
 	 * viewers: they read the acknowledgement, they cannot make one.
 	 */
-	import type { Alert } from '$lib/api';
-	import { ackAlert, unackAlert } from '$lib/api';
-	import { Button } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	import type { Alert } from '#lib/api/index.js';
+	import { ackAlert, unackAlert } from '#lib/api/index.js';
+	import { Button } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Check } from 'lucide-svelte';
 	import { UNTIL_RESOLVED_SECS } from './helpers';
 

@@ -8,9 +8,9 @@
 	 * server itself is never asked, and none of its data is ever read.
 	 */
 	import { untrack } from 'svelte';
-	import { getObservabilityOverview } from '$lib/api/observability';
-	import type { ObservabilityOverview, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getObservabilityOverview } from '#lib/api/observability.js';
+	import type { ObservabilityOverview, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatUnix } from '../pbs/format';
 	import { TITLES, formatValue, stateTone, stateWord } from './format';

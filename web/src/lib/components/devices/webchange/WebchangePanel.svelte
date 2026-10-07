@@ -16,10 +16,10 @@
 		type Target,
 		type WebchangeChange,
 		type WebchangePage
-	} from '$lib/api';
-	import { formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { Eye, RefreshCw } from 'lucide-svelte';
 	import PagesTable from './PagesTable.svelte';
 	import ChangeTimeline from './ChangeTimeline.svelte';

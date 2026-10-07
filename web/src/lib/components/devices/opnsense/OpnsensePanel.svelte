@@ -8,9 +8,9 @@
 	 * never asked because a page was opened.
 	 */
 	import { untrack } from 'svelte';
-	import { getOpnsenseGateways, getOpnsenseHealth, getOpnsenseTraffic } from '$lib/api/opnsense';
-	import type { OpnsenseGateways, OpnsenseHealth, OpnsenseTraffic, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getOpnsenseGateways, getOpnsenseHealth, getOpnsenseTraffic } from '#lib/api/opnsense.js';
+	import type { OpnsenseGateways, OpnsenseHealth, OpnsenseTraffic, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import FirewallHealth from './FirewallHealth.svelte';
 	import TrafficTable from './TrafficTable.svelte';
 	import WanGateways from './WanGateways.svelte';

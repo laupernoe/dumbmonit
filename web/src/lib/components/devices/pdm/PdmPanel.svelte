@@ -7,9 +7,9 @@
 	 * console nor the clusters it manages are queried when the page opens.
 	 */
 	import { untrack } from 'svelte';
-	import { getPdmHealth, getPdmRemotes, listPdmFailures } from '$lib/api/pdm';
-	import type { PdmFailure, PdmHealth, PdmRemotes, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getPdmHealth, getPdmRemotes, listPdmFailures } from '#lib/api/pdm.js';
+	import type { PdmFailure, PdmHealth, PdmRemotes, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ConsoleHealth from './ConsoleHealth.svelte';
 	import EstateSummary from './EstateSummary.svelte';
 	import FailureList from './FailureList.svelte';

@@ -15,11 +15,11 @@
 		listStatusPages,
 		type Incident,
 		type StatusPage
-	} from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, Confirm, CopyBlock, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
-	import IncidentsPanel from '$lib/components/status/IncidentsPanel.svelte';
+	} from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, Confirm, CopyBlock, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import IncidentsPanel from '#lib/components/status/IncidentsPanel.svelte';
 
 	let pages = $state<StatusPage[]>([]);
 	let incidents = $state<Incident[]>([]);

@@ -5,7 +5,7 @@
 	 * handled by OptionsFields and never appear here.
 	 */
 	import { X } from 'lucide-svelte';
-	import { Field } from '$lib/ui';
+	import { Field } from '#lib/ui/index.js';
 
 	interface Props {
 		tags: Record<string, string>;

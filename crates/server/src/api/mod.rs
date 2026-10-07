@@ -31,7 +31,7 @@ mod push;
 mod redfish;
 mod relay;
 mod security;
-mod spa;
+pub(crate) mod spa;
 mod status_pages;
 mod synology;
 mod targets;
@@ -254,6 +254,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         ))
         // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
         .layer(middleware::from_fn(openapi::version_header))
+        // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
+        // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
+        // que ses refus les portent aussi.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::status_host::guard))
         .layer(middleware::from_fn(security_headers))
         // Le span ne porte que le chemin : la chaîne de requête d'une route peut
         // contenir un code d'autorisation OIDC ou un jeton — rien de tout cela
@@ -358,13 +362,25 @@ fn is_embeddable(path: &str) -> bool {
 /// L'interface est une application monopage : encadrée dans une page tierce,
 /// elle se prête au détournement de clic. Seules les pages de statut publiques
 /// (`/s/…`) sont faites pour être intégrées ailleurs ; elles restent encadrables.
+///
+/// Sur le domaine public d'une page (`crate::status_host`), la racine est la
+/// page elle-même : encadrable comme `/s/<slug>`, et nulle part la politique de
+/// l'interface (musique du mur) n'est servie.
 async fn security_headers(mut request: Request, next: Next) -> Response {
-    let embeddable = is_embeddable(request.uri().path());
+    let path_embeddable = is_embeddable(request.uri().path());
+    let root = request.uri().path() == "/";
     // Un nonce par réponse : 128 bits d'aléa, inutilisables une seconde fois.
     let nonce = hex::encode(rand::random::<[u8; 16]>());
     request.extensions_mut().insert(spa::Nonce(nonce.clone()));
 
     let mut response = next.run(request).await;
+    let status_host = response.extensions().get::<crate::status_host::StatusHost>().is_some();
+    // Sur un domaine de page, seul ce qui a été servi est encadrable : un refus
+    // (`/s/<autre slug>`, par exemple) garde `DENY`.
+    let embeddable = match status_host {
+        true => response.status().is_success() && (root || path_embeddable),
+        false => path_embeddable,
+    };
     let headers = response.headers_mut();
     headers.insert("x-content-type-options", HeaderValue::from_static("nosniff"));
     headers.insert("referrer-policy", HeaderValue::from_static("same-origin"));
@@ -372,6 +388,13 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
         // Une page de statut est faite pour être intégrée dans l'intranet de
         // quelqu'un : lui interdire d'être encadrée la rendrait inutile.
         true => format!("{CSP_BASE}; {CSP_IMG_SRC}; script-src 'self' 'nonce-{nonce}'"),
+        false if status_host => {
+            headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+            format!(
+                "{CSP_BASE}; {CSP_IMG_SRC}; script-src 'self' 'nonce-{nonce}'; \
+                 frame-ancestors 'none'"
+            )
+        }
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
             format!(

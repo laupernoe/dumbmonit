@@ -1,7 +1,7 @@
 <script lang="ts">
 	/** Cycles auto → light → dark. The icon shows what is applied right now. */
 	import { Sun, Moon, SunMoon } from 'lucide-svelte';
-	import { theme, type ThemePreference } from '$lib/stores/theme.svelte';
+	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
 
 	const ORDER: ThemePreference[] = ['auto', 'light', 'dark'];
 	const LABEL: Record<ThemePreference, string> = { auto: 'Theme: system', light: 'Theme: day', dark: 'Theme: night' };
