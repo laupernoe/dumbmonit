@@ -8,6 +8,7 @@
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { whatsNew } from '#lib/stores/whatsnew.svelte.js';
 	import { releaseFor } from '#lib/whatsnew/releases.js';
+	import UpdateNotice from '#lib/components/settings/UpdateNotice.svelte';
 
 	let health = $state<Health | null>(null);
 	let loading = $state(true);
@@ -74,6 +75,8 @@
 			{/each}
 		</dl>
 	{/if}
+
+	<UpdateNotice onSeeWhatsNew={() => whatsNew.reopen()} />
 
 	<div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-4 text-sm">
 		<a href="https://dumbmonit.readthedocs.io/en/latest/" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 font-medium text-signal-ink hover:underline">

@@ -196,6 +196,7 @@ nav:
       - Add your first device: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Backup and restore: install/backup.md
+      - Update: install/update.md
       - Run a demo instance: install/demo.md
   - Devices:
       - Overview: devices/index.md

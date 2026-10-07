@@ -344,6 +344,7 @@ them, and a proxy default without the nonce leaves a blank page.
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/health` | public | Server version and the state of its dependencies. Always `200`: a failing component is in the body. |
+| `GET` | `/api/update` | session or token | Running version, latest release, `update_available`; the server asks GitHub once a day at most. `POST /api/update/check` looks now, `PUT /api/update/settings` turns the check on or off. See [Update](../install/update.md). |
 
 ```json
 {"status":"ok","version":"0.1.0","database":{"ok":true},"victoria":{"ok":true,"embedded":true}}
