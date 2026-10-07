@@ -96,7 +96,7 @@ FROM --platform=$BUILDPLATFORM ghcr.io/rust-cross/cargo-zigbuild:0.23.4@sha256:d
 # L'image embarque un rustc plus ancien que ce qu'exigent nos dépendances
 # (sysinfo demande 1.95) : la chaîne est donc installée explicitement, à une
 # version fixe, pour que l'agent livré ne dépende pas de la date de construction.
-ARG RUST_TOOLCHAIN=1.98.0
+ARG RUST_TOOLCHAIN=1.99.0
 ARG AGENT_TARGETS="x86_64-unknown-linux-musl aarch64-unknown-linux-musl x86_64-pc-windows-gnu x86_64-unknown-freebsd"
 RUN rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal \
       --target $(echo "$AGENT_TARGETS" | tr ' ' ',') \
@@ -194,7 +194,7 @@ COPY --from=agent /agents /
 # sur la machine de construction : on choisit ici celui de la plateforme
 # demandée (TARGETARCH vaut `amd64` ou `arm64`).
 # ---------------------------------------------------------------------------
-FROM alpine:3.21@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507 AS agent-pick
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS agent-pick
 ARG TARGETARCH
 COPY --from=agent /agents /agents
 RUN case "$TARGETARCH" in \
@@ -225,7 +225,7 @@ ENTRYPOINT ["/dumbmonit-agent"]
 # externe n'est désignée (DUMBMONIT_VM_URL) — un seul conteneur suffit.
 # Version épinglée : le serveur en connaît les options.
 # ---------------------------------------------------------------------------
-FROM victoriametrics/victoria-metrics:v1.152.0@sha256:86ca5fdb6d87d56ba047b044039019ba2bd9042b36e35f6ea34e437b6c825cef AS victoriametrics
+FROM victoriametrics/victoria-metrics:v1.153.0@sha256:5eff7af5341e401471002f58d106d399e614a62f3d240f2dbc21901e49eed5dd AS victoriametrics
 
 # ---------------------------------------------------------------------------
 # Image finale : les deux binaires et rien d'autre.
