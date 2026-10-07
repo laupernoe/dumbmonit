@@ -22,6 +22,7 @@ pub mod secret;
 pub mod services;
 pub mod smtp;
 pub mod template;
+pub mod webpush;
 
 use std::sync::Arc;
 
@@ -79,6 +80,7 @@ pub fn build(
         "pushover" => Arc::new(push::Pushover::new(http.clone(), config)?),
         "pushbullet" => Arc::new(push::Pushbullet::new(http.clone(), config)?),
         "bark" => Arc::new(push::Bark::new(http.clone(), config)?),
+        webpush::KIND => Arc::new(webpush::WebPush::new(config)?),
         "signal" => Arc::new(push::Signal::new(http.clone(), config)?),
         "twilio" => Arc::new(push::Twilio::new(http.clone(), config)?),
         "apprise" => Arc::new(gateway::Apprise::new(http.clone(), config)?),
@@ -170,6 +172,54 @@ pub async fn deliver(
             report(Some(error.to_string()))
         }
     }
+}
+
+/// Comme [`deliver`], pour un appelant qui a la base sous la main (le moteur
+/// d'alerte) : c'est ce qui permet au canal Web Push, dont les destinataires
+/// sont des abonnements en base, de partir par le même chemin que les autres.
+pub async fn deliver_stored(
+    store: webpush::Store<'_>,
+    http: &reqwest::Client,
+    config: &ChannelConfig,
+    message: &Message,
+) -> DeliveryReport {
+    if config.kind != webpush::KIND {
+        return deliver(http, config, message).await;
+    }
+    let report = |error: Option<String>| DeliveryReport {
+        channel_id: config.id,
+        channel_name: config.name.clone(),
+        error,
+    };
+    if sending_disabled() {
+        return report(Some(DISABLED_MESSAGE.to_string()));
+    }
+    match webpush::deliver(store, config, message).await {
+        Ok(outcome) => {
+            debug!(channel = %config.name, delivered = outcome.delivered, "push notification sent");
+            report(None)
+        }
+        Err(error) => {
+            warn!(channel = %config.name, kind = %config.kind, %error, "notification failed");
+            report(Some(error.to_string()))
+        }
+    }
+}
+
+/// Comme [`test_channel`], avec la base : voir [`deliver_stored`].
+pub async fn test_channel_stored(
+    store: webpush::Store<'_>,
+    http: &reqwest::Client,
+    config: &ChannelConfig,
+) -> Result<(), NotifyError> {
+    if config.kind != webpush::KIND {
+        return test_channel(http, config).await;
+    }
+    build(http, config)?;
+    if sending_disabled() {
+        return Ok(());
+    }
+    webpush::deliver(store, config, &message::test_message(&config.name)).await.map(|_| ())
 }
 
 /// Envoie un message sur plusieurs canaux.

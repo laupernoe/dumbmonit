@@ -29,6 +29,7 @@ pub const CHANNEL_KINDS: &[&str] = &[
     "pushover",
     "pushbullet",
     "bark",
+    "webpush",
     // Passerelles, domotique et messagerie
     "apprise",
     "homeassistant",

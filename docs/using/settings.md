@@ -61,6 +61,16 @@ Admins also find the **security log** in this section: sign-ins and failures,
 password and two-factor changes, token and account changes, with the client
 address. It keeps the last 5 000 entries.
 
+## Push notifications
+
+Native notifications on this phone or computer, even with DumbMonit closed:
+**Enable on this device**, then **Send a test**. Every account manages its own
+devices here (viewers too); which alerts reach them is set by a **Web Push**
+channel in Alerts → Notifications. The **i** button sums up the requirements:
+HTTPS (or localhost), Home Screen installation on iPhone and iPad, and the
+push service domains the server must reach. Full guide:
+[Push notifications (PWA)](push-notifications.md).
+
 ## Users
 
 Admins only. The accounts that can sign in, and their role:

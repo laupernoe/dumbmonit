@@ -93,6 +93,16 @@ regex = "1"
 roxmltree = "0.20"
 tokio-tungstenite = { version = "0.29", default-features = false, features = ["connect"] }
 
+# Notifications Web Push (RFC 8030/8291/8188) : chiffrement `aes128gcm` du
+# message pour le navigateur, en RustCrypto pur (pas d'OpenSSL, compatible musl),
+# et requête `http` 1.x que reqwest envoie telle quelle. Les fonctions par défaut
+# (`vapid`, `serialization`) sont écartées : la signature VAPID (RFC 8292) est
+# faite ici avec `p256`, sans tirer `jwt-simple` et sa pile cryptographique.
+# `p256` reste en 0.13 tant que `web-push-native` expose ses clés dans cette
+# version : une 0.14 donnerait des types que son constructeur refuse.
+web-push-native = { version = "0.5", default-features = false }
+p256 = { version = "0.13", features = ["ecdsa"] }
+
 [target.'cfg(unix)'.dependencies]
 # SIGTERM vers le VictoriaMetrics embarqué : tokio ne sait envoyer que SIGKILL.
 libc = "0.2"
