@@ -106,6 +106,7 @@ pub fn routes() -> Router<AppState> {
 pub fn public_routes() -> Router<AppState> {
     Router::new()
         .route("/public/status/{slug}", get(public_status))
+        .route("/public/status/{slug}/banner.js", get(public_banner_js))
         .route("/public/status/{slug}/badge.svg", get(public_badge))
         .route("/public/status/{slug}/rss", get(public_rss))
         .route("/public/status/{slug}/uptime.svg", get(badges::page_uptime))
@@ -1002,7 +1003,30 @@ pub async fn public_status(
     Path(slug): Path<String>,
 ) -> ApiResult<Response> {
     let body = load_public(&state, &slug).await?;
-    Ok(([(header::CACHE_CONTROL, "public, max-age=30")], Json(Value::clone(&body))).into_response())
+    // Document public et sans cookie : lisible depuis le site de n'importe qui
+    // (bandeau d'état). Pas de `Allow-Credentials`, donc aucune session jointe.
+    Ok((
+        [
+            (header::CACHE_CONTROL, "public, max-age=30"),
+            (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
+        ],
+        Json(Value::clone(&body)),
+    )
+        .into_response())
+}
+
+/// Script du bandeau d'état, à inclure par un `<script>` sur un site tiers.
+/// Statique : il déduit l'adresse du document de sa propre URL.
+async fn public_banner_js() -> Response {
+    (
+        [
+            (header::CONTENT_TYPE, "application/javascript; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=3600"),
+            (header::CROSS_ORIGIN_RESOURCE_POLICY, "cross-origin"),
+        ],
+        include_str!("../../assets/banner.js"),
+    )
+        .into_response()
 }
 
 /// Où en est chaque cible, lu dans VictoriaMetrics. Vide si la base de séries
