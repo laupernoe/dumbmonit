@@ -69,19 +69,23 @@ fn from_row(row: &SqliteRow) -> Result<StoredSchedule> {
 }
 
 pub async fn list(pool: &SqlitePool) -> Result<Vec<StoredSchedule>> {
-    let rows = sqlx::query(&format!("SELECT {COLUMNS} FROM report_schedules ORDER BY id"))
-        .fetch_all(pool)
-        .await
-        .context("lecture des rapports planifiés")?;
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {COLUMNS} FROM report_schedules ORDER BY id"
+    )))
+    .fetch_all(pool)
+    .await
+    .context("lecture des rapports planifiés")?;
     rows.iter().map(from_row).collect()
 }
 
 pub async fn get(pool: &SqlitePool, id: i64) -> Result<Option<StoredSchedule>> {
-    let row = sqlx::query(&format!("SELECT {COLUMNS} FROM report_schedules WHERE id = ?"))
-        .bind(id)
-        .fetch_optional(pool)
-        .await
-        .context("lecture du rapport planifié")?;
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT {COLUMNS} FROM report_schedules WHERE id = ?"
+    )))
+    .bind(id)
+    .fetch_optional(pool)
+    .await
+    .context("lecture du rapport planifié")?;
     row.as_ref().map(from_row).transpose()
 }
 

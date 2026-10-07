@@ -159,9 +159,8 @@ pub async fn deliver(
     let channel = resolve_channel(state, stored).await?;
     let smtp = Smtp::new(&channel).map_err(|error| error.to_string())?;
 
-    let data = collect::collect(state, &stored.name, calendar.frequency, now)
-        .await
-        .map_err(|error| {
+    let data =
+        collect::collect(state, &stored.name, calendar.frequency, now).await.map_err(|error| {
             warn!(%error, "report: data collection failed");
             "Cannot gather the report data.".to_string()
         })?;

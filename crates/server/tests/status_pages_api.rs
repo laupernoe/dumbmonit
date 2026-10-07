@@ -104,7 +104,9 @@ async fn page_lifecycle_and_public_document() {
     assert_eq!(groups[0]["items"][0]["label"], "Internet");
     assert_eq!(groups[0]["items"][0]["state"], "unknown");
     assert!(groups[0]["items"][0]["uptime_24h"].is_null(), "no metrics without VictoriaMetrics");
-    assert_eq!(groups[0]["items"][0]["history"].as_array().unwrap().len(), 90);
+    // Fenêtre adaptative : un appareil tout neuf ne montre que le minimum (7 jours).
+    assert_eq!(groups[0]["items"][0]["history"].as_array().unwrap().len(), 7);
+    assert_eq!(doc["page"]["history_days"], 7);
     assert_no_key(doc, &["id", "target_id", "page_id", "address", "kind_label", "credential"], "");
     let text = doc.to_string();
     assert!(!text.contains("10.0.0.5"), "address leaked: {text}");
