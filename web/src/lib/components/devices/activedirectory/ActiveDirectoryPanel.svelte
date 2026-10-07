@@ -9,10 +9,10 @@
 	 * controller is never asked because a page was opened.
 	 */
 	import { untrack } from 'svelte';
-	import { getAdOverview } from '$lib/api/activedirectory';
-	import type { AdFindingSeverity, AdOverview, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
-	import type { Tone } from '$lib/ui';
+	import { getAdOverview } from '#lib/api/activedirectory.js';
+	import type { AdFindingSeverity, AdOverview, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import type { Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatCount, formatSpan, formatUnix, plural } from '../truenas/format';
 
 	interface Props {

@@ -3,8 +3,8 @@
  * The API speaks Unix seconds because PMG does; the rest of the interface
  * speaks server date strings, hence these local variants.
  */
-import { formatDateTime } from '$lib/format';
-import type { Tone } from '$lib/ui';
+import { formatDateTime } from '#lib/format.js';
+import type { Tone } from '#lib/ui/index.js';
 export { formatBytes } from '../docker/api';
 
 export function formatUnix(seconds: number | null | undefined): string {

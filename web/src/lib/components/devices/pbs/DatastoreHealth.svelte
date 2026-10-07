@@ -6,10 +6,10 @@
 	 * full SMART table fetched from PBS on demand.
 	 */
 	import { ChevronDown, ChevronUp } from 'lucide-svelte';
-	import { getPbsDiskSmart } from '$lib/api/pbs';
-	import type { PbsDatastore, PbsDisk, PbsDiskSmart, PbsZpool, TargetId } from '$lib/api';
-	import { toApiError } from '$lib/api';
-	import { Button, Plate, type Tone } from '$lib/ui';
+	import { getPbsDiskSmart } from '#lib/api/pbs.js';
+	import type { PbsDatastore, PbsDisk, PbsDiskSmart, PbsZpool, TargetId } from '#lib/api/index.js';
+	import { toApiError } from '#lib/api/index.js';
+	import { Button, Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatBytes, formatSpan, formatUnix, percentOf } from './format';
 
 	interface Props {

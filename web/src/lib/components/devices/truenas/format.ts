@@ -5,9 +5,9 @@
  * hence these local variants. A missing measurement prints nothing rather
  * than a zero.
  */
-import { formatDateTime } from '$lib/format';
-import type { Tone } from '$lib/ui';
-import type { TruenasPoolRow, TruenasScan, TruenasTaskRow, TruenasVdev } from '$lib/api';
+import { formatDateTime } from '#lib/format.js';
+import type { Tone } from '#lib/ui/index.js';
+import type { TruenasPoolRow, TruenasScan, TruenasTaskRow, TruenasVdev } from '#lib/api/index.js';
 
 export type Plating = { tone: Tone; label: string };
 

@@ -8,9 +8,9 @@
 	 * (always healthy ones, given the order) folds into "and N more".
 	 */
 	import { AlertTriangle, CircleAlert, CircleCheck, CircleDashed, Info } from 'lucide-svelte';
-	import type { Sky } from '$lib/components/overview/sky';
-	import type { Target, TargetId } from '$lib/api';
-	import { displayState, STATE_LABEL, type ProbeStatus, type TargetState } from '$lib/format';
+	import type { Sky } from '#lib/components/overview/sky.js';
+	import type { Target, TargetId } from '#lib/api/index.js';
+	import { displayState, STATE_LABEL, type ProbeStatus, type TargetState } from '#lib/format.js';
 
 	interface Props {
 		targets: Target[];

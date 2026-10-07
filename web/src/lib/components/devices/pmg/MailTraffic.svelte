@@ -7,8 +7,8 @@
 	 *
 	 * Counts only. No subject, sender or message body ever reaches DumbMonit.
 	 */
-	import type { PmgQuarantine, PmgRecentPoint, PmgTraffic, PmgVirus } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { PmgQuarantine, PmgRecentPoint, PmgTraffic, PmgVirus } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { formatBytes, formatCount, formatSpan } from './format';
 
 	interface Props {

@@ -9,8 +9,8 @@
 	 * off, a privilege the token does not have, or a server with no such thing.
 	 * An absent block means "not read", never "all clear".
 	 */
-	import type { PbsCertificate, PbsPackage, PbsService, PbsTrafficRule } from '$lib/api';
-	import { Plate, type Tone } from '$lib/ui';
+	import type { PbsCertificate, PbsPackage, PbsService, PbsTrafficRule } from '#lib/api/index.js';
+	import { Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatBytes, formatUnix } from './format';
 
 	interface Props {

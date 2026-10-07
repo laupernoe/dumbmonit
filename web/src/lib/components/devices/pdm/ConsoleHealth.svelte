@@ -5,8 +5,8 @@
 	 * of it is optional — a token without Sys.Audit reads none of it, and the
 	 * section then says so instead of showing zeros.
 	 */
-	import type { PdmHealth } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { PdmHealth } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { daysUntil, formatBytes, formatCount, formatPercent, formatSpan, formatUnix } from './format';
 
 	interface Props {

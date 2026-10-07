@@ -5,11 +5,11 @@
 	 * link to the full breakdown on the device page.
 	 */
 	import { ShieldAlert, ExternalLink } from 'lucide-svelte';
-	import { getSecuritySummary } from '$lib/api/security';
-	import type { SecurityGrade, SecuritySummaryDevice } from '$lib/api';
-	import { formatRelative, formatDateTime } from '$lib/format';
-	import { EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '$lib/ui';
-	import { GRADE_TONE, GRADE_WORD, GRADES, SUPPORTED_SECURITY_KINDS } from '$lib/components/devices/securityFormat';
+	import { getSecuritySummary } from '#lib/api/security.js';
+	import type { SecurityGrade, SecuritySummaryDevice } from '#lib/api/index.js';
+	import { formatRelative, formatDateTime } from '#lib/format.js';
+	import { EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { GRADE_TONE, GRADE_WORD, GRADES, SUPPORTED_SECURITY_KINDS } from '#lib/components/devices/securityFormat.js';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/security-score/';
 

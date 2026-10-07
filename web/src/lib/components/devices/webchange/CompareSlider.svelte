@@ -5,7 +5,7 @@
 	 * `role="slider"` (arrow keys, Home/End). The reduced-motion query only
 	 * drops the handle's settle animation — dragging itself is never animated.
 	 */
-	import { reducedMotion } from '$lib/ui';
+	import { reducedMotion } from '#lib/ui/index.js';
 	import { MoveHorizontal } from 'lucide-svelte';
 	import { clampPercent, stepPercent } from './format';
 

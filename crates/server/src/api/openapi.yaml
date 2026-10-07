@@ -1597,8 +1597,8 @@ paths:
       summary: Replace a status page
       description: >-
         A full replacement: `title` is required and every omitted field goes back
-        to its default — except `accent`, `footer_text`, `homepage_url` and
-        `subscribe_channel_id`, which keep their stored value when omitted.
+        to its default — except `accent`, `footer_text`, `homepage_url`,
+        `subscribe_channel_id` and `domain`, which keep their stored value when omitted.
       x-token-scope: write
       requestBody:
         required: true
@@ -4945,6 +4945,7 @@ components:
         homepage_url: { type: string }
         logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
+        domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
         items:
           type: array
           items: { $ref: "#/components/schemas/StatusPageItem" }
@@ -4979,6 +4980,13 @@ components:
         footer_text: { type: string, maxLength: 280 }
         homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
+        domain:
+          type: [string, "null"]
+          description: >-
+            Public host name (`status.example.com`), lowercased; a scheme or trailing
+            slash is stripped, a port or path is refused. Unique across pages and
+            never the address of DumbMonit itself (409 / 400). `null` or `""`
+            removes it. Requests whose `Host` is this name only reach this page.
     LogoUpload:
       type: object
       required: [data]

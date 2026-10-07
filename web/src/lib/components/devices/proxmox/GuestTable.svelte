@@ -14,12 +14,12 @@
 	 * still here — as "unknown", which is exactly what they are.
 	 */
 	import { page } from '$app/state';
-	import { queryRange, type MetricSeries, type ProxmoxGuest, type Target } from '$lib/api';
-	import { listProxmoxGuests } from '$lib/api/proxmox';
-	import { formatDuration } from '$lib/format';
-	import { RANGES, type RangeId } from '$lib/metrics';
-	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '$lib/ui';
-	import Chart, { type Serie } from '$lib/components/Chart.svelte';
+	import { queryRange, type MetricSeries, type ProxmoxGuest, type Target } from '#lib/api/index.js';
+	import { listProxmoxGuests } from '#lib/api/proxmox.js';
+	import { formatDuration } from '#lib/format.js';
+	import { RANGES, type RangeId } from '#lib/metrics.js';
+	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
+	import Chart, { type Serie } from '#lib/components/Chart.svelte';
 	import FoldSection from '../FoldSection.svelte';
 	import Segmented from '../Segmented.svelte';
 	import { formatRate } from '../metrics';

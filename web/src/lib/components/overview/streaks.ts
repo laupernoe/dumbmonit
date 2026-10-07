@@ -7,9 +7,9 @@
  * Pure, like the briefing: history, devices, rules, the unreachable ones and
  * the clock come in; figures come out. Nothing when the history is empty.
  */
-import type { AlertHistoryEntry, AlertRule, Target, TargetId } from "$lib/api";
-import type { Tone } from "$lib/ui";
-import { parseServerDate } from "$lib/format";
+import type { AlertHistoryEntry, AlertRule, Target, TargetId } from "#lib/api/index.js";
+import type { Tone } from "#lib/ui/index.js";
+import { parseServerDate } from "#lib/format.js";
 import { isDownRule } from "./briefing";
 
 export interface Streak {

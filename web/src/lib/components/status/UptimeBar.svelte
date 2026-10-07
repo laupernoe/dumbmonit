@@ -8,8 +8,8 @@
 	 * move between days, so a keyboard user does not tab through 90 squares to
 	 * reach the next service. A flex row keeps 90 days inside a phone's width.
 	 */
-	import type { PublicDayBucket } from '$lib/api';
-	import { formatPercent } from '$lib/format';
+	import type { PublicDayBucket } from '#lib/api/index.js';
+	import { formatPercent } from '#lib/format.js';
 	import { dayTone, formatDowntime } from './words';
 
 	interface Props {

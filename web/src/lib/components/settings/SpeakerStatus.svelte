@@ -19,10 +19,10 @@
 		setSpeakerName,
 		type WallReport,
 		type WallSpeaker
-	} from '$lib/api/music';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ErrorNotice, Field, Led, Plate, Skeleton } from '$lib/ui';
-	import { formatRelative } from '$lib/format';
+	} from '#lib/api/music.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ErrorNotice, Field, Led, Plate, Skeleton } from '#lib/ui/index.js';
+	import { formatRelative } from '#lib/format.js';
 
 	interface Props {
 		/** Called with the new name after a rename, so the section can say it. */

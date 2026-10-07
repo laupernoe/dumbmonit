@@ -14,18 +14,18 @@
 		type Target,
 		type TargetId,
 		type TargetPayload
-	} from '$lib/api';
-	import { displayState } from '$lib/format';
-	import { loadSparklines } from '$lib/metrics';
-	import type { Serie } from '$lib/components/Chart.svelte';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '$lib/ui';
-	import RackList from '$lib/components/devices/RackList.svelte';
-	import type { ReorderControls } from '$lib/components/devices/RackList.svelte';
-	import FolderHeader from '$lib/components/devices/FolderHeader.svelte';
-	import Segmented from '$lib/components/devices/Segmented.svelte';
-	import { nearestRow, needsAttention } from '$lib/components/devices/rack';
+	} from '#lib/api/index.js';
+	import { displayState } from '#lib/format.js';
+	import { loadSparklines } from '#lib/metrics.js';
+	import type { Serie } from '#lib/components/Chart.svelte';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
+	import RackList from '#lib/components/devices/RackList.svelte';
+	import type { ReorderControls } from '#lib/components/devices/RackList.svelte';
+	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import { nearestRow, needsAttention } from '#lib/components/devices/rack.js';
 	import {
 		buildFolders,
 		compareFolderSections,
@@ -35,7 +35,7 @@
 		reorderScope,
 		rootOf,
 		worstState
-	} from '$lib/components/devices/folders';
+	} from '#lib/components/devices/folders.js';
 	import { FolderPlus, Plus, Search } from 'lucide-svelte';
 
 	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';

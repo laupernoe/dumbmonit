@@ -7,8 +7,8 @@
 	 * product name. A panel embeds it with nothing beyond the target.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { buildClientDevices, type ClientDevice } from './clientDevices';
 	import { formatAgo, formatUnix } from './pbs/format';
 

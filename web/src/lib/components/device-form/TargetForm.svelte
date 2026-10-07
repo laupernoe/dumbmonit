@@ -17,12 +17,12 @@
 		type CredentialView,
 		type Target,
 		type TargetPayload
-	} from '$lib/api';
-	import { knownFolders } from '$lib/components/devices/folders';
+	} from '#lib/api/index.js';
+	import { knownFolders } from '#lib/components/devices/folders.js';
 	import { groupOptions } from './option-groups';
-	import { listRelays } from '$lib/api/relay';
-	import type { RelayAgent } from '$lib/api/types';
-	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '$lib/ui';
+	import { listRelays } from '#lib/api/relay.js';
+	import type { RelayAgent } from '#lib/api/types.js';
+	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import CredentialFields from './CredentialFields.svelte';
 	import OptionsFields from './OptionsFields.svelte';
 	import TagsEditor from './TagsEditor.svelte';

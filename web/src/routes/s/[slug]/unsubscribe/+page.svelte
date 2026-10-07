@@ -5,7 +5,7 @@
 	 * the API directly and never show this page.
 	 */
 	import { page } from '$app/state';
-	import SubscriptionAction from '$lib/components/status/SubscriptionAction.svelte';
+	import SubscriptionAction from '#lib/components/status/SubscriptionAction.svelte';
 </script>
 
 <SubscriptionAction

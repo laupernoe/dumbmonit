@@ -7,8 +7,8 @@
  * (a 15 min hold, a 30 min reminder); it is kept as an extra option so that
  * opening the editor and saving changes nothing.
  */
-import type { AlertRule, AlertRulePayload, AlertSeverity } from '$lib/api';
-import { formatDuration } from '$lib/format';
+import type { AlertRule, AlertRulePayload, AlertSeverity } from '#lib/api/index.js';
+import { formatDuration } from '#lib/format.js';
 
 /** The bulletin's severity ladder, as the select shows it. */
 export type SeverityWord = 'info' | 'advisory' | 'warning';

@@ -9,7 +9,7 @@
  * `info` is `null` once the page unmounts or has nothing selected yet, so
  * Pip falls back to its generic device tips.
  */
-import type { CollectorInfo } from '$lib/api';
+import type { CollectorInfo } from '#lib/api/index.js';
 
 class DeviceContext {
 	info = $state<CollectorInfo | null>(null);

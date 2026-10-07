@@ -11,11 +11,11 @@
 	 * is nothing to summarise, and the Containers section says so below.
 	 */
 	import { Container } from 'lucide-svelte';
-	import type { Target } from '$lib/api';
-	import { formatRelative } from '$lib/format';
-	import { Button, Plate, Toggle, type Tone } from '$lib/ui';
+	import type { Target } from '#lib/api/index.js';
+	import { formatRelative } from '#lib/format.js';
+	import { Button, Plate, Toggle, type Tone } from '#lib/ui/index.js';
 	import { openFold } from '../fold.svelte';
-	import { toApiError } from '$lib/api/client';
+	import { toApiError } from '#lib/api/client.js';
 	import { commandContainer, commandLabel, type CommandStatus, type ContainerPolicy, type ContainerView } from './api';
 	import { fleetFor } from './fleet.svelte';
 

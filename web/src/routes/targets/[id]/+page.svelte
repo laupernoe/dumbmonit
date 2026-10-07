@@ -24,7 +24,7 @@
 		type ProbeReport,
 		type Target,
 		type TargetPayload
-	} from '$lib/api';
+	} from '#lib/api/index.js';
 	import {
 		displayState,
 		formatDateTime,
@@ -37,7 +37,7 @@
 		STATE_LABEL,
 		STATE_TONE,
 		type ProbeStatus
-	} from '$lib/format';
+	} from '#lib/format.js';
 	import {
 		HISTORY_SLOTS,
 		loadProbeStatuses,
@@ -48,17 +48,17 @@
 		type HistorySlot,
 		type RangeId,
 		type UptimeSummary
-	} from '$lib/metrics';
-	import Chart, { type Serie } from '$lib/components/Chart.svelte';
-	import Readout from '$lib/components/Readout.svelte';
-	import Figure from '$lib/components/devices/Figure.svelte';
-	import Segmented from '$lib/components/devices/Segmented.svelte';
-	import UptimeBar from '$lib/components/devices/UptimeBar.svelte';
-	import DeviceTimeline from '$lib/components/devices/DeviceTimeline.svelte';
-	import FoldSection from '$lib/components/devices/FoldSection.svelte';
-	import SecurityCard from '$lib/components/devices/SecurityCard.svelte';
-	import { hasKindPanel, loadKindPanel, type KindPanel } from '$lib/components/devices/kinds';
-	import FoldRow from '$lib/components/devices/FoldRow.svelte';
+	} from '#lib/metrics.js';
+	import Chart, { type Serie } from '#lib/components/Chart.svelte';
+	import Readout from '#lib/components/Readout.svelte';
+	import Figure from '#lib/components/devices/Figure.svelte';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
+	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
+	import FoldSection from '#lib/components/devices/FoldSection.svelte';
+	import SecurityCard from '#lib/components/devices/SecurityCard.svelte';
+	import { hasKindPanel, loadKindPanel, type KindPanel } from '#lib/components/devices/kinds.js';
+	import FoldRow from '#lib/components/devices/FoldRow.svelte';
 	import {
 		formatRate,
 		isVirtualInterface,
@@ -67,13 +67,13 @@
 		sectionize,
 		type DeviceMetricGroup,
 		type MetricRow
-	} from '$lib/components/devices/metrics';
-	import SilenceControl from '$lib/components/devices/SilenceControl.svelte';
-	import { deviceContext } from '$lib/components/pigeon/deviceContext.svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import DockerPanel from '$lib/components/devices/docker/DockerPanel.svelte';
-	import DockerStrip from '$lib/components/devices/docker/DockerStrip.svelte';
-	import PlakarPanel from '$lib/components/devices/docker/PlakarPanel.svelte';
+	} from '#lib/components/devices/metrics.js';
+	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
+	import { deviceContext } from '#lib/components/pigeon/deviceContext.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
+	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
+	import PlakarPanel from '#lib/components/devices/docker/PlakarPanel.svelte';
 	import {
 		Button,
 		Confirm,
@@ -86,7 +86,7 @@
 		Toggle,
 		confetti,
 		type Tone
-	} from '$lib/ui';
+	} from '#lib/ui/index.js';
 	import { Activity, ArrowUpRight, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -182,7 +182,7 @@
 
 	function setRange(next: RangeId) {
 		if (next === range) return;
-		void goto(`/targets/${id}?range=${next}`, { replaceState: true, keepFocus: true, noScroll: true });
+		void goto(`/targets/${id}?range=${next}`, { replace: true, reset: false });
 	}
 
 	// --- Device metrics -------------------------------------------------------

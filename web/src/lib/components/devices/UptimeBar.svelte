@@ -5,8 +5,8 @@
 	 * as one failed, ghost when nothing was measured. Each slot names its time
 	 * and state in a tooltip; the whole bar has one readable summary.
 	 */
-	import { formatDateTime, formatFailureReason } from '$lib/format';
-	import type { HistorySlot } from '$lib/metrics';
+	import { formatDateTime, formatFailureReason } from '#lib/format.js';
+	import type { HistorySlot } from '#lib/metrics.js';
 
 	interface Props {
 		slots: HistorySlot[];

@@ -8,9 +8,9 @@
 	 * renames in place, and delete asks with the same two-step inline
 	 * `Confirm` used elsewhere — no browser prompt or confirm dialog.
 	 */
-	import type { TargetState } from '$lib/format';
-	import { STATE_LABEL, STATE_TONE } from '$lib/format';
-	import { Confirm, Menu, Plate } from '$lib/ui';
+	import type { TargetState } from '#lib/format.js';
+	import { STATE_LABEL, STATE_TONE } from '#lib/format.js';
+	import { Confirm, Menu, Plate } from '#lib/ui/index.js';
 	import { ChevronDown, EllipsisVertical, FolderOpen, GripVertical } from 'lucide-svelte';
 
 	interface Props {

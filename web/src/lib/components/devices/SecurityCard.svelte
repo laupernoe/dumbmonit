@@ -8,10 +8,10 @@
 	 */
 	import { untrack } from 'svelte';
 	import { ChevronRight, ExternalLink } from 'lucide-svelte';
-	import { getTargetSecurity } from '$lib/api/security';
-	import { ApiError, type SecurityCheck, type SecurityReport, type Target } from '$lib/api';
-	import { formatRelative, formatDateTime } from '$lib/format';
-	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import { getTargetSecurity } from '#lib/api/security.js';
+	import { ApiError, type SecurityCheck, type SecurityReport, type Target } from '#lib/api/index.js';
+	import { formatRelative, formatDateTime } from '#lib/format.js';
+	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import { CATEGORY_WORD, GRADE_TONE, GRADE_WORD, SEVERITY_WORD, severityTone } from './securityFormat';
 
 	interface Props {

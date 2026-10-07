@@ -13,7 +13,7 @@
 	 * and the app's own policy (`same-origin`) would otherwise send nothing.
 	 */
 	import { ChevronDown, ChevronUp, Music2, Square } from 'lucide-svelte';
-	import { embedSrc, type MusicEmbed } from '$lib/wall/music';
+	import { embedSrc, type MusicEmbed } from '#lib/wall/music.js';
 
 	interface Props {
 		embed: MusicEmbed;

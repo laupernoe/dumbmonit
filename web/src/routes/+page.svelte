@@ -35,24 +35,24 @@
 		type AlertHistoryEntry,
 		type OnboardingState,
 		type Silence
-	} from '$lib/api';
-	import type { Alert } from '$lib/api';
-	import { displayState, formatRelative } from '$lib/format';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '$lib/ui';
-	import SkyScene, { type PigeonMood } from '$lib/components/overview/SkyScene.svelte';
-	import DidYouKnow from '$lib/components/overview/DidYouKnow.svelte';
-	import Briefing from '$lib/components/overview/Briefing.svelte';
-	import WeekAhead from '$lib/components/overview/WeekAhead.svelte';
-	import Streaks from '$lib/components/overview/Streaks.svelte';
-	import FirstRun from '$lib/components/overview/FirstRun.svelte';
-	import { readSky, skyCondition } from '$lib/components/overview/sky';
-	import { buildBriefing } from '$lib/components/overview/briefing';
-	import { buildWeek } from '$lib/components/overview/week';
-	import { computeStreaks } from '$lib/components/overview/streaks';
-	import { readLastVisit, writeLastVisit } from '$lib/components/overview/lastVisit';
-	import NeedsYouList from '$lib/components/alerts/NeedsYouList.svelte';
+	} from '#lib/api/index.js';
+	import type { Alert } from '#lib/api/index.js';
+	import { displayState, formatRelative } from '#lib/format.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '#lib/ui/index.js';
+	import SkyScene, { type PigeonMood } from '#lib/components/overview/SkyScene.svelte';
+	import DidYouKnow from '#lib/components/overview/DidYouKnow.svelte';
+	import Briefing from '#lib/components/overview/Briefing.svelte';
+	import WeekAhead from '#lib/components/overview/WeekAhead.svelte';
+	import Streaks from '#lib/components/overview/Streaks.svelte';
+	import FirstRun from '#lib/components/overview/FirstRun.svelte';
+	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
+	import { buildBriefing } from '#lib/components/overview/briefing.js';
+	import { buildWeek } from '#lib/components/overview/week.js';
+	import { computeStreaks } from '#lib/components/overview/streaks.js';
+	import { readLastVisit, writeLastVisit } from '#lib/components/overview/lastVisit.js';
+	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
 
 	const DAY_MS = 24 * 3600 * 1000;
 	const HISTORY_DAYS = 7;

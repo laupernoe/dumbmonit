@@ -4,7 +4,7 @@
 	 * federated cluster and backup server. A figure the console did not give
 	 * shows an em dash — a monitoring page must never display a zero it made up.
 	 */
-	import type { PdmEstate } from '$lib/api';
+	import type { PdmEstate } from '#lib/api/index.js';
 	import { formatBytes, formatCount, formatPercent } from './format';
 
 	interface Props {

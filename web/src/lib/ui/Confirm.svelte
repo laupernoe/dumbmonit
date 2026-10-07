@@ -5,7 +5,7 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import Button from './Button.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		children: Snippet;

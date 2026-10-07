@@ -10,11 +10,11 @@
 	 * row folds again: one status line, the switches, actions and the
 	 * container's own charts only once it is opened.
 	 */
-	import type { Target } from '$lib/api';
-	import { fetchAgentChecksums, unixSha256Argument } from '$lib/api/agent_files';
-	import { formatDuration, formatRelative } from '$lib/format';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, Skeleton, Toggle, type Tone } from '$lib/ui';
-	import Chart from '$lib/components/Chart.svelte';
+	import type { Target } from '#lib/api/index.js';
+	import { fetchAgentChecksums, unixSha256Argument } from '#lib/api/agent_files.js';
+	import { formatDuration, formatRelative } from '#lib/format.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
+	import Chart from '#lib/components/Chart.svelte';
 	import FoldSection from '../FoldSection.svelte';
 	import FoldRow from '../FoldRow.svelte';
 	import type { DeviceMetricGroup } from '../metrics';

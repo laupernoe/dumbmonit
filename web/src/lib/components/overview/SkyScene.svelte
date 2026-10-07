@@ -33,7 +33,7 @@
 	export type PigeonMood = 'fly' | 'sleep' | 'startle' | 'celebrate';
 
 	import { onDestroy } from 'svelte';
-	import { reducedMotion } from '$lib/ui/motion';
+	import { reducedMotion } from '#lib/ui/motion.js';
 
 	interface Props {
 		condition: SkyCondition;

@@ -4,11 +4,11 @@
 	 * is "Active now"; otherwise it is "Scheduled". Removing one is a two-step
 	 * confirm — a silence that vanishes by accident lets a real alert through.
 	 */
-	import type { Silence, Target } from '$lib/api';
-	import { Confirm, EmptyState, Plate, Button } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	import type { Silence, Target } from '#lib/api/index.js';
+	import { Confirm, EmptyState, Plate, Button } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { CalendarClock } from 'lucide-svelte';
-	import { formatDateTime } from '$lib/format';
+	import { formatDateTime } from '#lib/format.js';
 	import { scheduleLabel, silenceScope } from './helpers';
 
 	interface Props {

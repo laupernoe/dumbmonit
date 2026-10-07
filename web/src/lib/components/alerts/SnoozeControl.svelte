@@ -11,10 +11,10 @@
 	 * Calls the API itself (like `AckControl`) and tells the page through
 	 * `onchanged` so it can refresh. Hidden for viewers.
 	 */
-	import type { Alert, Silence, Target } from '$lib/api';
-	import { createSilence, deleteSilence } from '$lib/api';
-	import { Button } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	import type { Alert, Silence, Target } from '#lib/api/index.js';
+	import { createSilence, deleteSilence } from '#lib/api/index.js';
+	import { Button } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { BellOff } from 'lucide-svelte';
 	import { SNOOZE_DURATIONS, coveringSilence, snoozePayload } from './helpers';
 

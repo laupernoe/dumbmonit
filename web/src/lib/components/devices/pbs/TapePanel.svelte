@@ -8,8 +8,8 @@
 	 * Shown only when the server actually has tape hardware or tape jobs; the
 	 * probe returns nothing at all otherwise.
 	 */
-	import type { PbsTape, PbsTapeJob } from '$lib/api';
-	import { Plate, type Tone } from '$lib/ui';
+	import type { PbsTape, PbsTapeJob } from '#lib/api/index.js';
+	import { Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatBytes, formatUnix } from './format';
 
 	interface Props {

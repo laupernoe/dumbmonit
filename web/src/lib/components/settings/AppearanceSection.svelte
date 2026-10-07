@@ -6,10 +6,10 @@
 	 */
 	import { Check, Moon, Sun, SunMoon } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { theme, type ThemePreference } from '$lib/stores/theme.svelte';
-	import { Button, Panel } from '$lib/ui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale, locales, setLocale, type Locale } from '$lib/paraglide/runtime.js';
+	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
+	import { Button, Panel } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale, locales, setLocale, type Locale } from '#lib/paraglide/runtime.js';
 
 	// A name for each shipped locale, in that locale's own language where we
 	// can tell (Intl knows), falling back to English. Only locales with a

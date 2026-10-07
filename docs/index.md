@@ -26,7 +26,7 @@ windows are scheduled.
 
 | Source | What you get |
 |---|---|
-| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, routers, NAS, UPS, printers. Five profiles ship with the product and are applied automatically from the device's `sysObjectID`. A network scan adds everything that answers in one go. |
+| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, routers, NAS, UPS, printers. Seven profiles ship with the product and are applied automatically from the device's `sysObjectID`. A network scan adds everything that answers in one go. |
 | [Proxmox VE](devices/proxmox.md) | Nodes, virtual machines and containers, storages, cluster quorum, and the age of the last successful backup per machine. |
 | [Proxmox Backup Server](devices/pbs.md) | Datastore usage and fill-up forecast, deduplication, age and verification of each machine's last snapshot, failed tasks, garbage collection. |
 | [Synology DSM](devices/synology.md) | Volumes, disks and their SMART health, temperature, load, through the NAS web API. |

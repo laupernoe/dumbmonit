@@ -66,9 +66,9 @@ import {
 	RadioTower,
 	Clock
 } from 'lucide-svelte';
-import type { CollectorInfo } from '$lib/api';
-import { isPackKind } from '$lib/api/packs';
-import { isUptimeKind, PUSH_KIND } from '$lib/format';
+import type { CollectorInfo } from '#lib/api/index.js';
+import { isPackKind } from '#lib/api/packs.js';
+import { isUptimeKind, PUSH_KIND } from '#lib/format.js';
 
 const KIND_ICON: Record<string, typeof LucideIcon> = {
 	snmp: Network,

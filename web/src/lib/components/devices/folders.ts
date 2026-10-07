@@ -11,8 +11,8 @@
  * partitions that flat list into folders without touching that order, since a
  * stable partition keeps each folder's internal order exactly as computed.
  */
-import type { Target, TargetId } from '$lib/api';
-import type { TargetState } from '$lib/format';
+import type { Target, TargetId } from '#lib/api/index.js';
+import type { TargetState } from '#lib/format.js';
 // Explicit extension: this module is also loaded straight by Node (`npm test`),
 // whose ESM resolver — unlike Vite's — requires it for a relative import.
 import { RANK, buildRack, needsAttention, type RackRow } from './rack.ts';

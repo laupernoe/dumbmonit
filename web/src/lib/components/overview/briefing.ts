@@ -13,10 +13,10 @@ import type {
   AlertSeverity,
   Target,
   TargetId,
-} from "$lib/api";
-import type { Tone } from "$lib/ui";
-import { parseServerDate } from "$lib/format";
-import { severityRank, severityTone } from "$lib/components/alerts/helpers";
+} from "#lib/api/index.js";
+import type { Tone } from "#lib/ui/index.js";
+import { parseServerDate } from "#lib/format.js";
+import { severityRank, severityTone } from "#lib/components/alerts/helpers.js";
 
 export interface BriefingInput {
   /** Phase transitions, any range: the window is cut here. */

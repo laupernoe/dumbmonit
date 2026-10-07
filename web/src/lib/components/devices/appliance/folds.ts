@@ -5,8 +5,8 @@
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
-import type { MetricSeries } from '$lib/api';
-import type { Tone } from '$lib/ui';
+import type { MetricSeries } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
 import { formatAge, formatBytes } from '../docker/api';
 
 export interface Figure {

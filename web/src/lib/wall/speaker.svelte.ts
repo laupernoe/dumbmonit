@@ -19,9 +19,9 @@
  * Only what waiting cannot fix (no DRM, no Premium) stops for good, until
  * "Try again".
  */
-import { ApiError } from '$lib/api/client';
-import { getSpotifyToken, playOnSpeaker, reportSpeaker } from '$lib/api/music';
-import type { NowPlaying, SpeakerReportBody } from '$lib/api/music';
+import { ApiError } from '#lib/api/client.js';
+import { getSpotifyToken, playOnSpeaker, reportSpeaker } from '#lib/api/music.js';
+import type { NowPlaying, SpeakerReportBody } from '#lib/api/music.js';
 import {
 	SDK_URL,
 	autoplayAllowed,

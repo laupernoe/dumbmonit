@@ -5,9 +5,9 @@
 	 * here; when the server runs unprotected there is nothing to change either.
 	 */
 	import { LogOut } from 'lucide-svelte';
-	import { ApiError, changePassword } from '$lib/api';
-	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '$lib/stores/auth.svelte';
-	import { Button, ErrorNotice, Field, Panel, Plate } from '$lib/ui';
+	import { ApiError, changePassword } from '#lib/api/index.js';
+	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '#lib/stores/auth.svelte.js';
+	import { Button, ErrorNotice, Field, Panel, Plate } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import TwoFactorSection from './TwoFactorSection.svelte';
 

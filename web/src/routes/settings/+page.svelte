@@ -13,19 +13,19 @@
 	 */
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { PageHeader } from '$lib/ui';
-	import { m } from '$lib/paraglide/messages.js';
-	import SecuritySection from '$lib/components/settings/SecuritySection.svelte';
-	import UsersSection from '$lib/components/settings/UsersSection.svelte';
-	import SsoSection from '$lib/components/settings/SsoSection.svelte';
-	import AgentsSection from '$lib/components/settings/AgentsSection.svelte';
-	import AssistantSection from '$lib/components/settings/AssistantSection.svelte';
-	import AppearanceSection from '$lib/components/settings/AppearanceSection.svelte';
-	import BackupSection from '$lib/components/settings/BackupSection.svelte';
-	import PacksSection from '$lib/components/settings/PacksSection.svelte';
-	import AboutSection from '$lib/components/settings/AboutSection.svelte';
-	import MusicSection from '$lib/components/settings/MusicSection.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { PageHeader } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
+	import UsersSection from '#lib/components/settings/UsersSection.svelte';
+	import SsoSection from '#lib/components/settings/SsoSection.svelte';
+	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
+	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
+	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
+	import BackupSection from '#lib/components/settings/BackupSection.svelte';
+	import PacksSection from '#lib/components/settings/PacksSection.svelte';
+	import AboutSection from '#lib/components/settings/AboutSection.svelte';
+	import MusicSection from '#lib/components/settings/MusicSection.svelte';
 
 	/** Sections that used to live here, and where they went. */
 	const MOVED: Record<string, string> = {
@@ -101,7 +101,7 @@
 		if (!hash || !column) return;
 		const moved = MOVED[hash];
 		if (moved) {
-			void goto(moved, { replaceState: true });
+			void goto(moved, { replace: true });
 			return;
 		}
 		const land = () => document.getElementById(hash)?.scrollIntoView();

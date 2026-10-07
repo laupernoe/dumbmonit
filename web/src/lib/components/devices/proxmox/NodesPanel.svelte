@@ -19,10 +19,10 @@
 	 * Rows come from `GET /api/targets/{id}/proxmox/nodes`, assembled
 	 * server-side from the last probe.
 	 */
-	import { listProxmoxNodes } from '$lib/api/proxmox';
-	import type { ProxmoxNode, ProxmoxNodes, Target } from '$lib/api';
-	import { formatDuration } from '$lib/format';
-	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '$lib/ui';
+	import { listProxmoxNodes } from '#lib/api/proxmox.js';
+	import type { ProxmoxNode, ProxmoxNodes, Target } from '#lib/api/index.js';
+	import { formatDuration } from '#lib/format.js';
+	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import FoldSection from '../FoldSection.svelte';
 	import { FILL, fillTone, formatBytes, formatPercent } from './format';
 

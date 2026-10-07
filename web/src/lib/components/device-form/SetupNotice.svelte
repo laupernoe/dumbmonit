@@ -13,8 +13,8 @@
 	 * how to put it away.
 	 */
 	import { ExternalLink, X } from 'lucide-svelte';
-	import type { CollectorInfo } from '$lib/api';
-	import { CopyBlock, Panel, Plate } from '$lib/ui';
+	import type { CollectorInfo } from '#lib/api/index.js';
+	import { CopyBlock, Panel, Plate } from '#lib/ui/index.js';
 	import { kindIcon } from './kinds';
 
 	interface Props {

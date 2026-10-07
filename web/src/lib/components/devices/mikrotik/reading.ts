@@ -3,7 +3,7 @@
  * panel shows. The router itself is never asked: these are the values the
  * last probe wrote, read back through the metrics API.
  */
-import type { MetricSeries } from '$lib/api';
+import type { MetricSeries } from '#lib/api/index.js';
 
 export interface Sensor {
 	name: string;

@@ -10,13 +10,13 @@
 	 * that only its prefix is ever displayed.
 	 */
 	import { ArrowRight, Cpu, KeyRound, RadioTower } from 'lucide-svelte';
-	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '$lib/api';
-	import { listRelays } from '$lib/api/relay';
-	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '$lib/format';
-	import { alertsStore } from '$lib/stores/alerts.svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
-	import AgentChecksums from '$lib/components/device-form/AgentChecksums.svelte';
+	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
+	import { listRelays } from '#lib/api/relay.js';
+	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '#lib/format.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
 
 	// --- The agents themselves -----------------------------------------------
 

@@ -5,8 +5,8 @@
 	 * window). Emits `null` when quiet hours are off.
 	 */
 	import { untrack } from 'svelte';
-	import type { QuietHours } from '$lib/api';
-	import { Field, Toggle } from '$lib/ui';
+	import type { QuietHours } from '#lib/api/index.js';
+	import { Field, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		value: QuietHours | null;

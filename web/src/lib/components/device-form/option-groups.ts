@@ -11,7 +11,7 @@
  * Grouping is skipped entirely below `MIN_OPTIONS_TO_GROUP`: a handful of
  * settings already reads fine as one list, headings would only add noise.
  */
-import type { CollectorOption } from '$lib/api';
+import type { CollectorOption } from '#lib/api/index.js';
 
 export interface OptionGroup {
 	/** Empty: render with no sub-heading (grouping did not help, or wasn't needed). */

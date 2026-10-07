@@ -6,8 +6,8 @@
 	 * measurement; opening the page never connects to vCenter or the host.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, type Tone } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, type Tone } from '#lib/ui/index.js';
 	import { formatBytes, formatCount, formatSpan } from '../truenas/format';
 	import { formatPercent, readings, selector, type Reading } from '../instant';
 

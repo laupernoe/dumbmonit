@@ -5,8 +5,8 @@
 	 * the console collected. The task log itself lives on the instance — open it
 	 * there, or add that cluster as its own device.
 	 */
-	import type { PdmFailure } from '$lib/api';
-	import { Button, Plate } from '$lib/ui';
+	import type { PdmFailure } from '#lib/api/index.js';
+	import { Button, Plate } from '#lib/ui/index.js';
 	import { TASK_KIND_LABEL, formatAgo, formatDuration, formatUnix } from './format';
 
 	interface Props {

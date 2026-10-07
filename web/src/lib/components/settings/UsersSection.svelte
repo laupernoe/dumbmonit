@@ -16,12 +16,12 @@
 		type CreateUserPayload,
 		type Role,
 		type User
-	} from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
-	import { resetUserTotp } from '$lib/api/totp';
+	import { resetUserTotp } from '#lib/api/totp.js';
 
 	let users = $state<User[]>([]);
 	let loading = $state(true);

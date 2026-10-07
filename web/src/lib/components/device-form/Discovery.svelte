@@ -6,8 +6,8 @@
 	 * its own outcome. Rows already monitored are greyed out.
 	 */
 	import { Radar } from 'lucide-svelte';
-	import { ApiError, createTarget, type DiscoveredDevice } from '$lib/api';
-	import { Button, ClickSpark, EmptyState, ErrorNotice, Field, Plate, Skeleton } from '$lib/ui';
+	import { ApiError, createTarget, type DiscoveredDevice } from '#lib/api/index.js';
+	import { Button, ClickSpark, EmptyState, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import { scanNetwork } from './discovery';
 	import { DEFAULT_INTERVAL, SNMP_KIND } from './kinds';
 

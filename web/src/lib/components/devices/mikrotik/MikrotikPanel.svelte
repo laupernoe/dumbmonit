@@ -6,8 +6,8 @@
 	 * is a word as well as a colour, and an unknown value reads "—".
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatBytes } from '../docker/api';
 	import { formatSpan } from '../pbs/format';

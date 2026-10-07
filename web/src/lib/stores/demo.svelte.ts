@@ -5,7 +5,7 @@
  * client hands the message here, so a refused click always says why — even
  * on the paths whose caller would otherwise swallow the error.
  */
-import { setDemoRefusalHandler } from '$lib/api';
+import { setDemoRefusalHandler } from '#lib/api/index.js';
 
 const TOUR_SEEN_KEY = 'dumbmonit.demo.tourSeen';
 

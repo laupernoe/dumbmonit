@@ -11,10 +11,10 @@
 	 * rule is reversible and cheap to undo, so a toast would be overkill, but
 	 * a silent, permanent-feeling action deserves a beat before it is gone.
 	 */
-	import type { AlertRule, RuleOverride, Target } from '$lib/api';
-	import { deleteRuleOverride, listRuleOverrides, putRuleOverride } from '$lib/api';
-	import { Button, Confirm } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	import type { AlertRule, RuleOverride, Target } from '#lib/api/index.js';
+	import { deleteRuleOverride, listRuleOverrides, putRuleOverride } from '#lib/api/index.js';
+	import { Button, Confirm } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { EyeOff } from 'lucide-svelte';
 
 	interface Props {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isDistinctiveLabel } from '$lib/metrics';
+	import { isDistinctiveLabel } from '#lib/metrics.js';
 	/**
 	 * The story of this device's alerts: what is firing now, then the moments
 	 * that mattered — a rule starting to fire, a rule going quiet. The dot
@@ -16,7 +16,7 @@
 	 * The history route has no per-device filter, so a generous window is read
 	 * and filtered here; the rules are read for their names and units.
 	 */
-	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule, RuleOverride, Silence, Target } from '$lib/api';
+	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule, RuleOverride, Silence, Target } from '#lib/api/index.js';
 	import {
 		ackAlert,
 		deleteRuleOverride,
@@ -25,22 +25,22 @@
 		listRuleOverrides,
 		listSilences,
 		unackAlert
-	} from '$lib/api';
-	import type { Tone } from '$lib/ui';
-	import { Button, ErrorNotice, Plate, Skeleton, Toast } from '$lib/ui';
-	import { auth } from '$lib/stores/auth.svelte';
+	} from '#lib/api/index.js';
+	import type { Tone } from '#lib/ui/index.js';
+	import { Button, ErrorNotice, Plate, Skeleton, Toast } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { X } from 'lucide-svelte';
-	import { formatDateTime, formatRelative } from '$lib/format';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import {
 		alertDetail,
 		formatAlertValue,
 		severityTone,
 		severityWord,
 		UNTIL_RESOLVED_SECS
-	} from '$lib/components/alerts/helpers';
-	import AckControl from '$lib/components/alerts/AckControl.svelte';
-	import SnoozeControl from '$lib/components/alerts/SnoozeControl.svelte';
-	import IgnoreControl from '$lib/components/alerts/IgnoreControl.svelte';
+	} from '#lib/components/alerts/helpers.js';
+	import AckControl from '#lib/components/alerts/AckControl.svelte';
+	import SnoozeControl from '#lib/components/alerts/SnoozeControl.svelte';
+	import IgnoreControl from '#lib/components/alerts/IgnoreControl.svelte';
 
 	interface Props {
 		targetId: number;

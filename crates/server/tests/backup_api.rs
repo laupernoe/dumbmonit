@@ -667,3 +667,25 @@ async fn la_route_de_sauvegarde_locale_ecrit_tout_de_suite() {
     assert_eq!(body["last_run"]["ok"], true, "{body}");
     assert!(body["total_bytes"].as_i64().unwrap() > 0);
 }
+
+#[tokio::test]
+async fn le_domaine_public_dune_page_traverse_le_lot() {
+    let source = setup(SECRET_A).await;
+    let (status, body) = source
+        .request(
+            "POST",
+            "/api/status-pages",
+            Some(json!({ "title": "Acme", "slug": "acme", "domain": "status.acme.example" })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    let bundle = source.export(PHRASE).await;
+
+    let target = setup(SECRET_B).await;
+    let (status, report) = target.restore(&bundle, PHRASE, true).await;
+    assert_eq!(status, StatusCode::OK, "restore refused: {report}");
+    let (_, pages) = target.request("GET", "/api/status-pages", None).await;
+    let page = pages.as_array().and_then(|pages| pages.first()).expect("restored page");
+    assert_eq!(page["slug"], "acme");
+    assert_eq!(page["domain"], "status.acme.example");
+}

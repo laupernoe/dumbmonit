@@ -17,7 +17,7 @@
  * names no kind is treated as universal as a whole, even if another
  * alternative does name one.
  */
-import type { AlertRule } from '$lib/api';
+import type { AlertRule } from '#lib/api/index.js';
 
 function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -5,8 +5,8 @@
  * units that need attention rise to the top, then names sort alphabetically:
  * on a wall screen the trouble is always at the top of the rack.
  */
-import type { Target, TargetId } from '$lib/api';
-import type { TargetState } from '$lib/format';
+import type { Target, TargetId } from '#lib/api/index.js';
+import type { TargetState } from '#lib/format.js';
 
 export interface RackRow {
 	target: Target;

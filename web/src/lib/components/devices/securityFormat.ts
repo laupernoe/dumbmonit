@@ -2,8 +2,8 @@
  * Shared words and tones for the security score (device card and the
  * `/security` overview): kept in one place so the two never drift.
  */
-import type { SecurityCategory, SecurityGrade, SecuritySeverity } from '$lib/api';
-import type { Tone } from '$lib/ui';
+import type { SecurityCategory, SecurityGrade, SecuritySeverity } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
 
 export const GRADE_WORD: Record<SecurityGrade, string> = {
 	A: 'Strong',

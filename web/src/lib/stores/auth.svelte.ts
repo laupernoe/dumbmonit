@@ -17,7 +17,7 @@ import {
 	setupAccount as apiSetupAccount,
 	type OidcStatus,
 	type User
-} from '$lib/api';
+} from '#lib/api/index.js';
 
 /**
  * Minimum length required for a password.

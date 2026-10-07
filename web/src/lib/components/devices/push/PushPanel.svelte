@@ -6,10 +6,10 @@
 	 * land any time.
 	 */
 	import { untrack } from 'svelte';
-	import { getPushMonitor, regeneratePushToken } from '$lib/api/push';
-	import type { PushMonitor, Target } from '$lib/api';
-	import { formatDateTime, formatDuration, formatRelative } from '$lib/format';
-	import { Confirm, CopyBlock, ErrorNotice, Panel, Plate, Skeleton, type Tone } from '$lib/ui';
+	import { getPushMonitor, regeneratePushToken } from '#lib/api/push.js';
+	import type { PushMonitor, Target } from '#lib/api/index.js';
+	import { formatDateTime, formatDuration, formatRelative } from '#lib/format.js';
+	import { Confirm, CopyBlock, ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 
 	interface Props {
 		target: Target;

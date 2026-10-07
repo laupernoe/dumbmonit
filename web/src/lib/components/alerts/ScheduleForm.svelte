@@ -10,8 +10,8 @@
 	 * validate the obvious mistakes here so the operator hears them without a
 	 * round trip.
 	 */
-	import type { NthWeekday, Target, SilencePayload } from '$lib/api';
-	import { Button, Field, Panel } from '$lib/ui';
+	import type { NthWeekday, Target, SilencePayload } from '#lib/api/index.js';
+	import { Button, Field, Panel } from '#lib/ui/index.js';
 
 	interface Props {
 		targets: Target[];

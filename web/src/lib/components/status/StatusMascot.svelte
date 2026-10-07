@@ -21,9 +21,9 @@
 	 * `prefers-reduced-motion`: no flight, no loop — the pigeon just sits in
 	 * the scene with the mood that matches the state.
 	 */
-	import type { Tone } from '$lib/ui';
-	import { reducedMotion } from '$lib/ui';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import type { Tone } from '#lib/ui/index.js';
+	import { reducedMotion } from '#lib/ui/index.js';
+	import Mascot from '#lib/components/Mascot.svelte';
 
 	interface Props {
 		/** The page's overall banner tone — decides the scene. */

@@ -16,9 +16,9 @@
 		type IncidentSeverity,
 		type IncidentStatus,
 		type StatusPage
-	} from '$lib/api';
-	import { formatDateTime, formatRelative } from '$lib/format';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import { INCIDENT_STATUS, KIND_LABEL, STATUSES_FOR, isClosed } from './words';
 
 	interface Props {

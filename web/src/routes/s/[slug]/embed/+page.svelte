@@ -10,11 +10,11 @@
 	 */
 	import { page } from '$app/state';
 	import { ExternalLink } from 'lucide-svelte';
-	import { getPublicStatus, toApiError, type PublicStatus } from '$lib/api';
-	import { theme } from '$lib/stores/theme.svelte';
-	import { Plate, Skeleton } from '$lib/ui';
-	import UptimeBar from '$lib/components/status/UptimeBar.svelte';
-	import { ITEM_STATE, accentClass, overallBanner } from '$lib/components/status/words';
+	import { getPublicStatus, toApiError, type PublicStatus } from '#lib/api/index.js';
+	import { theme } from '#lib/stores/theme.svelte.js';
+	import { Plate, Skeleton } from '#lib/ui/index.js';
+	import UptimeBar from '#lib/components/status/UptimeBar.svelte';
+	import { ITEM_STATE, accentClass, overallBanner } from '#lib/components/status/words.js';
 
 	const REFRESH_MS = 60_000;
 

@@ -5,8 +5,8 @@
 	 * next run. A failed last run gets a red plate and the error text; a
 	 * disabled job a ghost one. Failures sort first, the server does that.
 	 */
-	import type { PbsJob } from '$lib/api';
-	import { Plate, type Tone } from '$lib/ui';
+	import type { PbsJob } from '#lib/api/index.js';
+	import { Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAgo, formatUnix, jobKindLabel } from './format';
 
 	interface Props {

@@ -14,10 +14,10 @@
 	 */
 	import { Radar, Server, Bell, Send, X } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { updateOnboarding, type OnboardingState, type OnboardingStep } from '$lib/api';
+	import { updateOnboarding, type OnboardingState, type OnboardingStep } from '#lib/api/index.js';
 	import { untrack } from 'svelte';
-	import { Button, ClickSpark, Plate, confetti } from '$lib/ui';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import { Button, ClickSpark, Plate, confetti } from '#lib/ui/index.js';
+	import Mascot from '#lib/components/Mascot.svelte';
 
 	interface Props {
 		/**

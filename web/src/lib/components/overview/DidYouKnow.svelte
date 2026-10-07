@@ -12,10 +12,10 @@
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { ArrowRight, RefreshCw, X } from 'lucide-svelte';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { palette } from '$lib/stores/palette.svelte';
-	import { Button, reducedMotion } from '$lib/ui';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { palette } from '#lib/stores/palette.svelte.js';
+	import { Button, reducedMotion } from '#lib/ui/index.js';
+	import Mascot from '#lib/components/Mascot.svelte';
 	import { TIPS, hideTips, storeNextTip, takeTipIndex, tipsHidden } from './tips';
 
 	const tips = $derived(TIPS.filter((tip) => auth.isAdmin || !tip.admin));

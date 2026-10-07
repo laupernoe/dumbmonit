@@ -8,7 +8,7 @@
 	 * same figure there. Reading the version never requires a session: the
 	 * health endpoint behind it is public.
 	 */
-	import { getHealth } from '$lib/api';
+	import { getHealth } from '#lib/api/index.js';
 
 	let version = $state<{ number: string; build?: string } | null>(null);
 	$effect(() => {

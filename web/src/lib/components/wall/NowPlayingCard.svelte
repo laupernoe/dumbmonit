@@ -6,8 +6,8 @@
 	 * Folds into a pill; the wall decides when it shows at all.
 	 */
 	import { ChevronDown, ChevronUp, Disc3 } from 'lucide-svelte';
-	import { Led } from '$lib/ui';
-	import { deviceLabel, formatTime, progressAt, type Playing } from '$lib/wall/spotify';
+	import { Led } from '#lib/ui/index.js';
+	import { deviceLabel, formatTime, progressAt, type Playing } from '#lib/wall/spotify.js';
 
 	interface Props {
 		playing: Playing;

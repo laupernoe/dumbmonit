@@ -8,9 +8,9 @@
 	 * token pasted whole into "Token ID" is split into its two fields. On edit
 	 * every field starts empty and stays optional: blank keeps what is saved.
 	 */
-	import type { CredentialField, CredentialView } from '$lib/api';
-	import { Field } from '$lib/ui';
-	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
+	import type { CredentialField, CredentialView } from '#lib/api/index.js';
+	import { Field } from '#lib/ui/index.js';
+	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 	import { sanitizeSecret, splitPastedToken, type CredentialDraft, type CredentialErrors } from './credentials';
 
 	interface Props {

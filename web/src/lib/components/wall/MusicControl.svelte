@@ -11,10 +11,10 @@
 	 */
 	import { tick } from 'svelte';
 	import { Music2, Play, RotateCcw } from 'lucide-svelte';
-	import type { SpotifyNow } from '$lib/api/music';
-	import { Button, Led, Toggle } from '$lib/ui';
-	import { parseMusicLink, type MusicEmbed } from '$lib/wall/music';
-	import type { WallSpeaker } from '$lib/wall/speaker.svelte';
+	import type { SpotifyNow } from '#lib/api/music.js';
+	import { Button, Led, Toggle } from '#lib/ui/index.js';
+	import { parseMusicLink, type MusicEmbed } from '#lib/wall/music.js';
+	import type { WallSpeaker } from '#lib/wall/speaker.svelte.js';
 
 	interface Props {
 		/** The link the walls play, or null. */

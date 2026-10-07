@@ -4,7 +4,7 @@
 	 * next to the colour so an inserted or deleted line never reads by colour
 	 * alone, and a collapsed run of unchanged lines folds into one notice.
 	 */
-	import type { WebchangeDiffLine } from '$lib/api';
+	import type { WebchangeDiffLine } from '#lib/api/index.js';
 	import { skipLabel } from './format';
 
 	interface Props {

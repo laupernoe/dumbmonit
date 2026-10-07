@@ -13,9 +13,9 @@
 		testOidcDiscovery,
 		type OidcConfig,
 		type OidcTestReport
-	} from '$lib/api';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
+	} from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 
 	let config = $state<OidcConfig | null>(null);

@@ -6,7 +6,7 @@
 	 * (`sha256sum dumbmonit-agent-linux-x86_64`) when the server is reached over
 	 * plain HTTP. Nothing is shown when the image carries no binaries.
 	 */
-	import { fetchAgentChecksums, type AgentChecksum } from '$lib/api/agent_files';
+	import { fetchAgentChecksums, type AgentChecksum } from '#lib/api/agent_files.js';
 
 	let checksums = $state<AgentChecksum[]>([]);
 

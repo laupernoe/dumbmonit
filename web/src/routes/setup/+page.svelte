@@ -6,13 +6,13 @@
 	 * account also opens the session, and the layout guard then moves to the
 	 * overview by itself.
 	 */
-	import { ApiError } from '$lib/api';
-	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, DotField, ErrorNotice, Field } from '$lib/ui';
-	import Logo from '$lib/components/Logo.svelte';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import PasswordInput from '$lib/components/settings/PasswordInput.svelte';
-	import Mascot from '$lib/components/Mascot.svelte';
+	import { ApiError } from '#lib/api/index.js';
+	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, DotField, ErrorNotice, Field } from '#lib/ui/index.js';
+	import Logo from '#lib/components/Logo.svelte';
+	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
+	import Mascot from '#lib/components/Mascot.svelte';
 
 	let setupCode = $state('');
 	let codeError = $state<string | null>(null);

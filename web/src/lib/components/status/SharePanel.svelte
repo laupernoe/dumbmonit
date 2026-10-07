@@ -4,9 +4,9 @@
 	 * or one service) and the iframe snippet of the compact embed. Everything
 	 * here reads the public document, so it says no more than the page does.
 	 */
-	import type { StatusPage } from '$lib/api';
-	import { statusBadgeBase } from '$lib/api';
-	import { CopyBlock, Field, Panel, Plate } from '$lib/ui';
+	import type { StatusPage } from '#lib/api/index.js';
+	import { statusBadgeBase } from '#lib/api/index.js';
+	import { CopyBlock, Field, Panel, Plate } from '#lib/ui/index.js';
 	import { slugify } from './words';
 
 	interface Props {
@@ -40,14 +40,17 @@
 		});
 	});
 
-	const origin = typeof window === 'undefined' ? '' : window.location.origin;
+	// A page with its own public domain is shared from there; otherwise from here.
+	const origin = $derived(
+		page.domain ? `https://${page.domain}` : typeof window === 'undefined' ? '' : window.location.origin
+	);
 	const windows = $derived(WINDOWS.filter((d) => d <= page.show_uptime_days));
 	const badgeUrl = $derived.by(() => {
 		const base = `${origin}${statusBadgeBase(page.slug, component || undefined)}`;
 		if (kind === 'uptime') return `${base}/uptime.svg?days=${days}`;
 		return `${base}/${kind}.svg`;
 	});
-	const pageUrl = $derived(`${origin}/s/${page.slug}`);
+	const pageUrl = $derived(page.domain ? `${origin}/` : `${origin}/s/${page.slug}`);
 	const alt = $derived(
 		`${component ? (components.find((c) => c.key === component)?.label ?? 'Service') : page.title} ${KINDS.find((k) => k.value === kind)?.label.toLowerCase()}`
 	);

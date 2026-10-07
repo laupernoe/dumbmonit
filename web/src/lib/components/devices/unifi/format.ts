@@ -3,7 +3,7 @@
  * `unifi_device_state` 0 online, 1 offline, 2 pending, 3 updating, 4 adopting,
  * 5 adoption failed, 6 isolated, 7 other.
  */
-import type { Tone } from '$lib/ui';
+import type { Tone } from '#lib/ui/index.js';
 import type { Reading } from '../instant';
 
 export interface UnifiDevice {

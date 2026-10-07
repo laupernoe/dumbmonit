@@ -305,6 +305,9 @@ pub struct BundleStatusPage {
     pub footer_text: String,
     #[serde(default)]
     pub homepage_url: String,
+    /// Domaine public (depuis la migration 0042) ; absent : aucun.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
 }
 
 fn default_accent() -> String {

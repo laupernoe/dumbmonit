@@ -13,8 +13,8 @@
 	import { tick } from 'svelte';
 	import { Sun, Moon, SunMoon, Contrast } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { Button, Toggle } from '$lib/ui';
-	import type { WallThemeChoice } from '$lib/components/wall/wallTheme';
+	import { Button, Toggle } from '#lib/ui/index.js';
+	import type { WallThemeChoice } from '#lib/components/wall/wallTheme.js';
 
 	interface Props {
 		value: WallThemeChoice;

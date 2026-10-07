@@ -117,11 +117,15 @@ pub async fn offers_subscription(state: &AppState, page: &StatusPage) -> bool {
     channel_of(state, page).await.is_some()
 }
 
-/// Base des liens des courriels : l'URL publique réglée, sinon l'origine vue
-/// par l'administrateur quand il a enregistré la page. Jamais l'en-tête `Host`
-/// d'une requête publique : un tiers pourrait faire envoyer par l'instance un
-/// courriel dont les liens mènent chez lui.
+/// Base des liens des courriels : le domaine public de la page s'il y en a un
+/// (servi en HTTPS par le mandataire), sinon l'URL publique réglée, sinon
+/// l'origine vue par l'administrateur quand il a enregistré la page. Jamais
+/// l'en-tête `Host` d'une requête publique : un tiers pourrait faire envoyer par
+/// l'instance un courriel dont les liens mènent chez lui.
 async fn link_base(state: &AppState, page: &StatusPage) -> Option<String> {
+    if let Some(domain) = page.domain.as_deref() {
+        return Some(format!("https://{domain}"));
+    }
     let global = crate::notify::policy_store::load_global(&state.pool).await.ok();
     let env_url = crate::config::env_var("DUMBMONIT_PUBLIC_URL");
     if let Some(url) = global.and_then(|global| global.public_url(env_url.as_deref())) {
@@ -129,6 +133,16 @@ async fn link_base(state: &AppState, page: &StatusPage) -> Option<String> {
     }
     let origin = page.link_origin.trim().trim_end_matches('/');
     (!origin.is_empty()).then(|| origin.to_string())
+}
+
+/// Adresse de la page sous `base` : la racine de son domaine public, sinon
+/// `/s/<slug>`. Les pages de confirmation et de désabonnement restent sous
+/// `/s/<slug>/…`, servies aussi sur le domaine public.
+fn page_url(base: &str, page: &StatusPage) -> String {
+    match page.domain {
+        Some(_) => format!("{base}/"),
+        None => format!("{base}/s/{}", page.slug),
+    }
 }
 
 fn new_token() -> String {
@@ -245,9 +259,9 @@ pub async fn subscribe(
         "Someone, hopefully you, asked to receive incident and maintenance updates from \
          {title} by email.\n\nConfirm the subscription:\n{confirm}\n\n\
          If you did not ask for this, ignore this message: without confirmation, the \
-         address is forgotten within two days.\n\n-- \n{title}\n{base}/s/{slug}\n",
+         address is forgotten within two days.\n\n-- \n{title}\n{home}\n",
         title = page.title,
-        slug = page.slug,
+        home = page_url(&base, &page),
     );
     tokio::spawn(async move {
         let result = match Smtp::new(&channel) {
@@ -383,7 +397,7 @@ async fn announce_now(
         let kind = if incident.kind == "maintenance" { "Maintenance" } else { "Incident" };
         let status = status_word(&incident.status);
         let subject = format!("[{}] {kind}: {} ({status})", page.title, incident.title);
-        let page_url = format!("{base}/s/{}", page.slug);
+        let page_url = page_url(&base, &page);
         let mut sent = 0usize;
         for subscriber in &subscribers {
             let unsubscribe_page =

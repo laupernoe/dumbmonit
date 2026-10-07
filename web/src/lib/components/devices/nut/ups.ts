@@ -3,8 +3,8 @@
  * The collector writes one series per UPS (label `ups`); here they become one
  * record each, with a state in words decided from the `ups.status` flags.
  */
-import type { MetricSeries } from '$lib/api';
-import type { Tone } from '$lib/ui';
+import type { MetricSeries } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
 
 export interface UpsReading {
 	name: string;

@@ -3,9 +3,9 @@
  * The API speaks Unix seconds because PDM does; the rest of the interface
  * speaks server date strings, hence these local variants.
  */
-import type { PdmTaskKind } from '$lib/api';
-import { formatDateTime } from '$lib/format';
-import type { Tone } from '$lib/ui';
+import type { PdmTaskKind } from '#lib/api/index.js';
+import { formatDateTime } from '#lib/format.js';
+import type { Tone } from '#lib/ui/index.js';
 export { formatBytes } from '../docker/api';
 
 export function formatUnix(seconds: number | null | undefined): string {

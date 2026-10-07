@@ -8,7 +8,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import uPlot from 'uplot';
-	import { theme } from '$lib/stores/theme.svelte';
+	import { theme } from '#lib/stores/theme.svelte.js';
 
 	export interface Serie {
 		label: string;

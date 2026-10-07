@@ -15,8 +15,8 @@
 	 * they are shown below this panel (see `queues.ts` for how the agent is found).
 	 */
 	import { untrack } from 'svelte';
-	import { listTargets, queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import { listTargets, queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import MdaemonQueues from './MdaemonQueues.svelte';
 	import { REPORTING_QUERY, pickAgent } from './queues';
 

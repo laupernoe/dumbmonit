@@ -7,10 +7,10 @@
  * evaluates anything. So the sky is composed from devices *and* alerts —
  * an unreachable device is a warning row even when no rule has noticed.
  */
-import type { Alert, AlertRule, Target, TargetId } from '$lib/api';
-import type { Tone } from '$lib/ui';
-import { displayState, formatFailureReason, type ProbeStatus, type TargetState } from '$lib/format';
-import { isForecast, severityRank, severityTone, severityWord } from '$lib/components/alerts/helpers';
+import type { Alert, AlertRule, Target, TargetId } from '#lib/api/index.js';
+import type { Tone } from '#lib/ui/index.js';
+import { displayState, formatFailureReason, type ProbeStatus, type TargetState } from '#lib/format.js';
+import { isForecast, severityRank, severityTone, severityWord } from '#lib/components/alerts/helpers.js';
 
 export interface SkyInput {
 	targets: Target[];

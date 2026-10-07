@@ -9,10 +9,10 @@
  * the tab is hidden (a background tab, a minimised window) and catches up
  * with one immediate refresh as soon as it is visible again.
  */
-import { browser } from '$app/environment';
-import { listAlerts, listTargets, type Alert, type Target } from '$lib/api';
-import { displayState, type ProbeStatus } from '$lib/format';
-import { loadProbeStatuses } from '$lib/metrics';
+import { browser } from '$app/env';
+import { listAlerts, listTargets, type Alert, type Target } from '#lib/api/index.js';
+import { displayState, type ProbeStatus } from '#lib/format.js';
+import { loadProbeStatuses } from '#lib/metrics.js';
 
 const INTERVAL_MS = 30_000;
 

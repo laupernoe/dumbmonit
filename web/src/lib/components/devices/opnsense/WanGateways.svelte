@@ -7,8 +7,8 @@
 	 *
 	 * The server sorts the outages first, so the list reads top-down.
 	 */
-	import type { OpnsenseGatewayRow, OpnsenseWanAddress } from '$lib/api';
-	import { Plate } from '$lib/ui';
+	import type { OpnsenseGatewayRow, OpnsenseWanAddress } from '#lib/api/index.js';
+	import { Plate } from '#lib/ui/index.js';
 	import { gatewayTone, reading } from './format';
 
 	interface Props {

@@ -10,9 +10,9 @@
 	 * controller is never asked.
 	 */
 	import { untrack } from 'svelte';
-	import { getRedfishOverview } from '$lib/api/redfish';
-	import type { RedfishOverview, Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '$lib/ui';
+	import { getRedfishOverview } from '#lib/api/redfish.js';
+	import type { RedfishOverview, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatBytes, formatUnix } from '../pbs/format';
 	import {

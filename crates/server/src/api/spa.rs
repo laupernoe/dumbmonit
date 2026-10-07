@@ -13,6 +13,12 @@ use rust_embed::Embed;
 #[folder = "../../web/build/"]
 struct Assets;
 
+/// Vrai si `path` (sans `/` initial) est une ressource du build, hors pages
+/// HTML : ce qu'un domaine de page de statut peut servir à sa racine.
+pub fn is_build_asset(path: &str) -> bool {
+    !path.ends_with(".html") && Assets::get(path).is_some()
+}
+
 /// Nonce de la politique de contenu, posé par `security_headers` sur la requête.
 ///
 /// Le build de l'interface contient deux scripts en ligne : le choix du thème
@@ -30,8 +36,11 @@ pub struct Nonce(pub String);
 pub async fn serve(request: Request<Body>) -> Response {
     let path = request.uri().path().trim_start_matches('/');
     let nonce = request.extensions().get::<Nonce>().map(|nonce| nonce.0.clone());
+    let page =
+        request.extensions().get::<crate::status_host::StatusHost>().map(|host| host.slug.clone());
+    let html = Html { nonce: nonce.as_deref(), status_page: page.as_deref() };
 
-    if let Some(response) = respond_with(path, nonce.as_deref()) {
+    if let Some(response) = respond_with(path, &html) {
         return response;
     }
 
@@ -42,7 +51,7 @@ pub async fn serve(request: Request<Body>) -> Response {
         return (StatusCode::NOT_FOUND, "Resource not found.").into_response();
     }
 
-    respond_with("index.html", nonce.as_deref()).unwrap_or_else(|| {
+    respond_with("index.html", &html).unwrap_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             "Web interface missing from this image: build `web/` before the binary.",
@@ -51,7 +60,15 @@ pub async fn serve(request: Request<Body>) -> Response {
     })
 }
 
-fn respond_with(path: &str, nonce: Option<&str>) -> Option<Response> {
+/// Ce qui s'ajoute à une page HTML servie.
+struct Html<'a> {
+    nonce: Option<&'a str>,
+    /// Slug de la page de statut dont c'est le domaine public : l'interface
+    /// l'affiche à la racine (voir `crate::status_host`).
+    status_page: Option<&'a str>,
+}
+
+fn respond_with(path: &str, html: &Html<'_>) -> Option<Response> {
     let path = if path.is_empty() { "index.html" } else { path };
     let asset = Assets::get(path)?;
 
@@ -68,9 +85,17 @@ fn respond_with(path: &str, nonce: Option<&str>) -> Option<Response> {
 
     // Seule la page porte des scripts en ligne ; les ressources de `_app/` sont
     // des fichiers servis tels quels, et les toucher invaliderait leur empreinte.
-    let body = match (path.ends_with(".html"), nonce) {
-        (true, Some(nonce)) => Body::from(with_nonce(&asset.data, nonce)),
-        _ => Body::from(asset.data.into_owned()),
+    let body = if path.ends_with(".html") {
+        let mut page = asset.data.into_owned();
+        if let Some(nonce) = html.nonce {
+            page = with_nonce(&page, nonce);
+        }
+        if let Some(slug) = html.status_page {
+            page = with_status_page(&page, slug);
+        }
+        Body::from(page)
+    } else {
+        Body::from(asset.data.into_owned())
     };
     response.body(body).ok()
 }
@@ -86,6 +111,26 @@ fn with_nonce(html: &[u8], nonce: &str) -> Vec<u8> {
         return html.to_vec();
     };
     text.replace("<script", &format!("<script nonce=\"{nonce}\"")).into_bytes()
+}
+
+/// Annonce à l'interface la page de statut à afficher à la racine, par une
+/// balise `<meta>` : lue avant tout appel réseau, sans script en ligne de plus.
+/// Le slug ne contient que `[a-z0-9-]` ; tout autre contenu est ignoré.
+fn with_status_page(html: &[u8], slug: &str) -> Vec<u8> {
+    let safe = !slug.is_empty()
+        && slug.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    let Ok(text) = std::str::from_utf8(html) else {
+        return html.to_vec();
+    };
+    if !safe {
+        return html.to_vec();
+    }
+    text.replacen(
+        "</head>",
+        &format!("<meta name=\"dumbmonit-status-page\" content=\"{slug}\"></head>"),
+        1,
+    )
+    .into_bytes()
 }
 
 /// Répond aux requêtes d'API inconnues.
@@ -125,6 +170,19 @@ mod tests {
             "un script sans nonce afficherait une page blanche"
         );
         assert!(!text.contains("<script>"), "il reste une balise sans nonce");
+    }
+
+    #[test]
+    fn a_status_domain_names_its_page_in_the_head() {
+        let page = index();
+        let served = with_status_page(&page, "acme");
+        let text = std::str::from_utf8(&served).expect("utf-8");
+        assert_eq!(
+            text.matches("<meta name=\"dumbmonit-status-page\" content=\"acme\">").count(),
+            1
+        );
+        // Un slug qui ne serait pas le nôtre ne touche pas à la page.
+        assert_eq!(with_status_page(&page, "a\"><script>"), page);
     }
 
     #[test]

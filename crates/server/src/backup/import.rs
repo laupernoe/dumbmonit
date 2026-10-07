@@ -135,6 +135,8 @@ pub async fn restore(
 
     if apply {
         tx.commit().await.context("validation de la restauration")?;
+        // Les domaines publics des pages ont pu changer.
+        crate::status_host::invalidate();
     } else {
         tx.rollback().await.context("annulation de la simulation")?;
     }
@@ -822,9 +824,41 @@ async fn restore_status_pages(
             } else {
                 "visit"
             };
+        // Domaine : revalidé (sauvegarde éditée à la main), et abandonné avec une
+        // note s'il désigne déjà une autre page de cette instance.
+        let mut domain = match page.domain.as_deref() {
+            None => None,
+            Some(raw) => match crate::status_host::normalise_domain(raw) {
+                Ok(domain) => domain,
+                Err(_) => {
+                    report.notes.push(format!(
+                        "Status page \"{}\": the domain {raw} is not valid and was left out.",
+                        page.slug
+                    ));
+                    None
+                }
+            },
+        };
+        if let Some(name) = domain.as_deref() {
+            let taken: Option<(String,)> =
+                sqlx::query_as("SELECT slug FROM status_pages WHERE domain = ? AND slug != ?")
+                    .bind(name)
+                    .bind(&page.slug)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("recherche du domaine d'une page de statut")?;
+            if let Some((other,)) = taken {
+                report.notes.push(format!(
+                    "Status page \"{}\": the domain {name} is already used by \"{other}\" \
+                     and was left out.",
+                    page.slug
+                ));
+                domain = None;
+            }
+        }
         let existing = sqlx::query(
             "SELECT id, title, description, published, theme, show_uptime_days,
-                 accent, scenes, scene_rotation, footer_text, homepage_url
+                 accent, scenes, scene_rotation, footer_text, homepage_url, domain
              FROM status_pages WHERE slug = ?",
         )
         .bind(&page.slug)
@@ -844,13 +878,14 @@ async fn restore_status_pages(
                     && row.try_get::<String, _>("scenes")? == scenes
                     && row.try_get::<String, _>("scene_rotation")? == scene_rotation
                     && row.try_get::<String, _>("footer_text")? == page.footer_text
-                    && row.try_get::<String, _>("homepage_url")? == page.homepage_url;
+                    && row.try_get::<String, _>("homepage_url")? == page.homepage_url
+                    && row.try_get::<Option<String>, _>("domain")? == domain;
                 if !same {
                     sqlx::query(
                         "UPDATE status_pages SET title = ?, description = ?, published = ?,
                              theme = ?, show_uptime_days = ?, accent = ?, scenes = ?,
                              scene_rotation = ?, footer_text = ?, homepage_url = ?,
-                             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                             domain = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
                          WHERE id = ?",
                     )
                     .bind(&page.title)
@@ -863,6 +898,7 @@ async fn restore_status_pages(
                     .bind(scene_rotation)
                     .bind(&page.footer_text)
                     .bind(&page.homepage_url)
+                    .bind(&domain)
                     .bind(id)
                     .execute(&mut **tx)
                     .await
@@ -874,8 +910,8 @@ async fn restore_status_pages(
                 let row = sqlx::query(
                     "INSERT INTO status_pages
                          (slug, title, description, published, theme, show_uptime_days,
-                          accent, scenes, scene_rotation, footer_text, homepage_url)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                          accent, scenes, scene_rotation, footer_text, homepage_url, domain)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
                 )
                 .bind(&page.slug)
                 .bind(&page.title)
@@ -888,6 +924,7 @@ async fn restore_status_pages(
                 .bind(scene_rotation)
                 .bind(&page.footer_text)
                 .bind(&page.homepage_url)
+                .bind(&domain)
                 .fetch_one(&mut **tx)
                 .await
                 .context("création de la page de statut")?;

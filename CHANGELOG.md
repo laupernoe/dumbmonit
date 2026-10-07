@@ -7,11 +7,23 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **A custom domain for a status page.** The page editor's **Public domain**
+  field (for example `status.example.com`) makes DumbMonit show that page at
+  the root of the name when your reverse proxy (Traefik, Nginx Proxy Manager,
+  Caddy, Nginx, Cloudflare Tunnel) sends it there with the original `Host`
+  header. Nothing else of DumbMonit answers on that name — no sign-in, no API,
+  no other page — and subscriber emails, the RSS feed and the share snippets
+  link to it. Kept in backups. See
+  [Custom domain](docs/using/status-pages.md#custom-domain).
+
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or
   hour when there are several. Both settings are kept in backups. See
   [Status pages](docs/using/status-pages.md#scene).
+- **A "What's new" window after an update.** The first screen after an
+  upgrade lists the headline changes of the new version once, with a link to
+  the full release notes; **Settings → About** reopens it.
 
 ## 0.1.0-alpha.6 — 2026-10-06
 

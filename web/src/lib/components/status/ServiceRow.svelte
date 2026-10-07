@@ -3,9 +3,9 @@
 	 * One public service: state plate + name, the daily history bar, then the
 	 * uptime readouts (24 h / 7 d / 30 d / 90 d) and the latency. Stacks on phones.
 	 */
-	import type { PublicStatusItem } from '$lib/api';
-	import { formatPercent } from '$lib/format';
-	import { Plate } from '$lib/ui';
+	import type { PublicStatusItem } from '#lib/api/index.js';
+	import { formatPercent } from '#lib/format.js';
+	import { Plate } from '#lib/ui/index.js';
 	import UptimeBar from './UptimeBar.svelte';
 	import { ITEM_STATE } from './words';
 

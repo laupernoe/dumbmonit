@@ -5,8 +5,8 @@
 	 * Shown only when there is something to say — an agent that neither
 	 * relays nor is assigned any device stays quiet.
 	 */
-	import { getAgentHost, listTargets, type AgentHost, type Target } from '$lib/api';
-	import { Panel, Plate } from '$lib/ui';
+	import { getAgentHost, listTargets, type AgentHost, type Target } from '#lib/api/index.js';
+	import { Panel, Plate } from '#lib/ui/index.js';
 
 	interface Props {
 		target: Target;

@@ -8,9 +8,9 @@
 	 * MDaemon, or an agent too old to read the counters, shows no empty box.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type TargetId } from '$lib/api';
-	import { formatDuration } from '$lib/format';
-	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import { queryInstant, type TargetId } from '#lib/api/index.js';
+	import { formatDuration } from '#lib/format.js';
+	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import {
 		EMPTY_COUNTERS,
 		PROTOCOL_LABELS,

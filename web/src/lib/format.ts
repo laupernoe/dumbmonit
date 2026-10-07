@@ -1,5 +1,5 @@
 /** Shared presentation helpers: dates, durations, states. */
-import type { Target } from '$lib/api';
+import type { Target } from '#lib/api/index.js';
 
 /**
  * Converts a server timestamp into a `Date`.

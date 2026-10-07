@@ -5,9 +5,9 @@
  * (the target identifier), set by the server pipeline. Everything about a
  * device can therefore be fetched with a single query.
  */
-import { queryInstant, queryRange, type MetricSeries, type TargetId } from '$lib/api';
-import type { Serie } from '$lib/components/Chart.svelte';
-import type { ProbeStatus } from '$lib/format';
+import { queryInstant, queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
+import type { Serie } from '#lib/components/Chart.svelte';
+import type { ProbeStatus } from '#lib/format.js';
 
 /** Ranges offered in the selector of a device's detail page. */
 export const RANGES = [

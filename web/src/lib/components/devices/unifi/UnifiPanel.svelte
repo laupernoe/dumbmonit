@@ -6,8 +6,8 @@
 	 * page never connects to the controller.
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import { formatCount, formatSpan } from '../truenas/format';
 	import { formatPercent, readings, selector } from '../instant';

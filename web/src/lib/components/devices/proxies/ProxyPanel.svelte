@@ -4,8 +4,8 @@
 	 * same panel as the log and metrics servers (verdicts in sentences,
 	 * figures, details), fed by the server's `/targets/{id}/proxy` view.
 	 */
-	import { getProxyOverview } from '$lib/api/proxies';
-	import type { Target } from '$lib/api';
+	import { getProxyOverview } from '#lib/api/proxies.js';
+	import type { Target } from '#lib/api/index.js';
 	import ObservabilityPanel from '../observability/ObservabilityPanel.svelte';
 
 	interface Props {

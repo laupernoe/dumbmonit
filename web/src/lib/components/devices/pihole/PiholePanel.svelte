@@ -9,8 +9,8 @@
 	 * as a colour, and an unknown value reads "—".
 	 */
 	import { untrack } from 'svelte';
-	import { queryInstant, type MetricSeries, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate } from '$lib/ui';
+	import { queryInstant, type MetricSeries, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatSpan } from '../pbs/format';
 

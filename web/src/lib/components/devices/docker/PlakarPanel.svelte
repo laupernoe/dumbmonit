@@ -16,8 +16,8 @@
 	 */
 	import { untrack } from 'svelte';
 	import { ExternalLink } from 'lucide-svelte';
-	import { queryInstant, type Target } from '$lib/api';
-	import { ErrorNotice, Panel, Plate, type Tone } from '$lib/ui';
+	import { queryInstant, type Target } from '#lib/api/index.js';
+	import { ErrorNotice, Panel, Plate, type Tone } from '#lib/ui/index.js';
 	import { formatAge, formatBytes } from './api';
 
 	const GUIDE_URL = 'https://dumbmonit.readthedocs.io/en/latest/devices/agent/#plakar-backups';

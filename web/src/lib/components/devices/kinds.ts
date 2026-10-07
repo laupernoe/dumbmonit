@@ -13,7 +13,7 @@
  * skeleton until it settles.
  */
 import type { Component } from 'svelte';
-import type { Target } from '$lib/api/types';
+import type { Target } from '#lib/api/types.js';
 
 export type KindPanel = Component<{ target: Target }>;
 type PanelLoader = () => Promise<{ default: KindPanel }>;

@@ -8,7 +8,7 @@
  * notifier reads "no recipient". The API types do not declare them yet, so
  * they are read here, defensively, and defaulted for older servers.
  */
-import type { ChannelField, ChannelKindInfo } from '$lib/api';
+import type { ChannelField, ChannelKindInfo } from '#lib/api/index.js';
 import type { Icon as LucideIcon } from 'lucide-svelte';
 import {
 	Bell,

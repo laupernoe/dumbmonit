@@ -5,7 +5,7 @@
 	 * only colours the margin — so nothing here is read by colour alone.
 	 */
 	import type { Sentence } from './briefing';
-	import type { Tone } from '$lib/ui';
+	import type { Tone } from '#lib/ui/index.js';
 
 	interface Props {
 		sentences: Sentence[];

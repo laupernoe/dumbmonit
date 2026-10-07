@@ -13,10 +13,10 @@
 		updateNotificationPolicy,
 		type Channel,
 		type NotificationPolicy
-	} from '$lib/api';
-	import { auth } from '$lib/stores/auth.svelte';
-	import { Button, ClickSpark, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '$lib/ui';
-	import { matcherIsEmpty, matcherSentence } from '$lib/components/alerts/helpers';
+	} from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Button, ClickSpark, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { matcherIsEmpty, matcherSentence } from '#lib/components/alerts/helpers.js';
 
 	let policy = $state<NotificationPolicy | null>(null);
 	let channels = $state<Channel[]>([]);

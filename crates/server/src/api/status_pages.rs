@@ -167,6 +167,16 @@ pub struct StatusPagePayload {
     /// SMTP qui envoie les courriels aux abonnés.
     #[serde(default)]
     pub subscribe_channel_id: Option<Value>,
+    /// Absent : inchangé ; `null` ou `""` : pas de domaine ; sinon le nom
+    /// d'hôte public de la page (`crate::status_host`).
+    #[serde(default, deserialize_with = "present")]
+    pub domain: Option<Value>,
+}
+
+/// Distingue un champ absent (`None`, par `default`) d'un `null` explicite
+/// (`Some(Value::Null)`) : serde confond sinon les deux.
+fn present<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
+    Value::deserialize(deserializer).map(Some)
 }
 
 impl StatusPagePayload {
@@ -281,6 +291,19 @@ impl StatusPagePayload {
                 Some(id)
             }
         };
+        let domain = match self.domain {
+            None => existing.and_then(|page| page.domain.clone()),
+            Some(Value::Null) => None,
+            Some(Value::String(raw)) => {
+                crate::status_host::normalise_domain(&raw).map_err(ApiError::BadRequest)?
+            }
+            Some(_) => {
+                return Err(ApiError::BadRequest("domain must be a host name or null.".into()));
+            }
+        };
+        if let Some(domain) = &domain {
+            check_not_admin_host(state, domain, &origin).await?;
+        }
         Ok(StatusPageInput {
             slug,
             title,
@@ -295,8 +318,31 @@ impl StatusPagePayload {
             homepage_url,
             subscribe_channel_id,
             link_origin: origin,
+            domain,
         })
     }
+}
+
+/// Refuse un domaine qui est aussi l'adresse de l'administration : l'URL
+/// publique réglée, ou l'hôte par lequel l'administrateur enregistre la page.
+/// Sans cela, l'enregistrement fermerait l'interface à celui qui l'utilise.
+async fn check_not_admin_host(state: &AppState, domain: &str, origin: &str) -> ApiResult<()> {
+    let global = crate::notify::policy_store::load_global(&state.pool).await.ok();
+    let env_url = crate::config::env_var("DUMBMONIT_PUBLIC_URL");
+    let public_url = global.and_then(|global| global.public_url(env_url.as_deref()));
+    let admin_hosts = [public_url.as_deref(), Some(origin)]
+        .into_iter()
+        .flatten()
+        .filter_map(crate::status_host::host_of_url);
+    for host in admin_hosts {
+        if host == domain {
+            return Err(ApiError::BadRequest(format!(
+                "{domain} is the address of DumbMonit itself: on a status page domain only \
+                 the page is reachable, so pick another name (for example status.{domain})."
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Valide la liste de scènes : jeu fermé [`SCENES`], sans doublon, au plus une
@@ -381,11 +427,13 @@ fn incident_not_found(id: i64) -> ApiError {
     ApiError::NotFound(format!("Incident {id} not found."))
 }
 
-/// Traduit la violation d'unicité du slug en conflit lisible.
+/// Traduit la violation d'unicité du slug ou du domaine en conflit lisible.
 fn duplicate_slug_to_conflict(error: anyhow::Error) -> ApiError {
     let text = format!("{error:#}");
     if text.contains("UNIQUE constraint failed: status_pages.slug") {
         ApiError::Conflict("Another page already uses this slug.".into())
+    } else if text.contains("UNIQUE constraint failed: status_pages.domain") {
+        ApiError::Conflict("Another page already uses this domain.".into())
     } else {
         ApiError::Internal(error)
     }
@@ -433,6 +481,7 @@ pub async fn create_page(
         .map_err(duplicate_slug_to_conflict)?;
     let page =
         db::status_pages::get_page(&state.pool, id).await?.ok_or_else(|| page_not_found(id))?;
+    invalidate_cache();
     tracing::info!(slug = %page.slug, "status page created");
     Ok((StatusCode::CREATED, Json(page_view(&state, page).await?)))
 }
@@ -957,6 +1006,8 @@ static CACHE: LazyLock<Mutex<HashMap<String, CachedStatus>>> =
 /// l'annonce d'un incident soit visible sans attendre.
 fn invalidate_cache() {
     CACHE.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clear();
+    // Le domaine ou le slug d'une page a pu changer.
+    crate::status_host::invalidate();
 }
 
 fn public_not_found() -> ApiError {
@@ -1584,8 +1635,13 @@ pub async fn public_rss(
     headers: HeaderMap,
 ) -> ApiResult<Response> {
     let body = load_public(&state, &slug).await?;
-    let origin = public_origin(&headers);
-    let link = format!("{origin}/s/{slug}");
+    // Le domaine public de la page s'il y en a un ; sinon l'origine de la requête.
+    let domain =
+        db::status_pages::get_page_by_slug(&state.pool, &slug).await?.and_then(|page| page.domain);
+    let link = match domain {
+        Some(domain) => format!("https://{domain}/"),
+        None => format!("{}/s/{slug}", public_origin(&headers)),
+    };
     let title = body.pointer("/page/title").and_then(Value::as_str).unwrap_or("Status");
     let description = body.pointer("/page/description").and_then(Value::as_str).unwrap_or("");
 

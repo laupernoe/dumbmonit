@@ -12,9 +12,9 @@
 	 *
 	 * Rows come from `GET /api/targets/{id}/proxmox/ceph`.
 	 */
-	import { readProxmoxCeph } from '$lib/api/proxmox';
-	import type { ProxmoxCeph, Target } from '$lib/api';
-	import { ErrorNotice, Led, Plate, Skeleton } from '$lib/ui';
+	import { readProxmoxCeph } from '#lib/api/proxmox.js';
+	import type { ProxmoxCeph, Target } from '#lib/api/index.js';
+	import { ErrorNotice, Led, Plate, Skeleton } from '#lib/ui/index.js';
 	import FoldSection from '../FoldSection.svelte';
 	import { FILL, cephHealth, fillTone, formatBytes, formatPercent } from './format';
 
