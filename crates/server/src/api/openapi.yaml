@@ -185,6 +185,72 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Health" }
 
+  /api/update:
+    get:
+      operationId: getUpdate
+      tags: [Health]
+      summary: Whether a newer release exists
+      description: >-
+        The server asks the public GitHub releases API for the latest release at most once
+        every 24 hours (cached in memory) and compares it with the running version, pre-releases
+        such as `0.1.0-alpha.7` included. Nothing is sent but an anonymous request. Disabled by
+        `DUMBMONIT_UPDATE_CHECK=off` or by `PUT /api/update/settings`; `latest` stays empty then.
+        Nothing is ever installed automatically.
+      x-token-scope: read
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateInfo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/update/check:
+    post:
+      operationId: checkUpdateNow
+      tags: [Health]
+      summary: Look for a new release now
+      description: Bypasses the 24-hour cache. At most once a minute; `409` with the wait otherwise.
+      x-token-scope: write
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
+      responses:
+        "200":
+          description: Update state after the check.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateInfo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/update/settings:
+    put:
+      operationId: setUpdateCheck
+      tags: [Health]
+      summary: Turn the update check on or off
+      description: Ignored while `DUMBMONIT_UPDATE_CHECK=off` is set (`locked_by_env`).
+      x-token-scope: write
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: Update state with the new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateInfo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/openapi.json:
     get:
       operationId: getOpenApi
@@ -4243,6 +4309,19 @@ components:
         database: { $ref: "#/components/schemas/ComponentHealth" }
         victoria: { $ref: "#/components/schemas/ComponentHealth" }
         demo: { type: boolean, description: 'Demonstration mode, every write refused.' }
+    UpdateInfo:
+      type: object
+      required: [current, update_available, enabled, locked_by_env]
+      properties:
+        current: { type: string, description: Running version. }
+        latest: { type: [string, "null"], description: Latest release known; null before the first successful check. }
+        release_url: { type: [string, "null"], description: GitHub page of that release. }
+        notes: { type: [string, "null"], description: Release notes, shortened. }
+        update_available: { type: boolean }
+        checked_at: { type: [string, "null"], description: "Last successful check, UTC without suffix." }
+        enabled: { type: boolean, description: The check is active. }
+        locked_by_env: { type: boolean, description: Turned off by DUMBMONIT_UPDATE_CHECK=off; the setting cannot override it. }
+        error: { type: [string, "null"], description: Why the last check failed. }
     ComponentHealth:
       type: object
       required: [ok]

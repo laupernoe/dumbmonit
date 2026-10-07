@@ -39,6 +39,7 @@ mod targets;
 mod tokens;
 mod totp;
 mod truenas;
+mod update;
 mod users;
 mod webchange;
 mod webpush;
@@ -163,6 +164,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(security::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
         .merge(webpush::routes())
+        // Mise à jour guidée : dernière version publiée (`update.rs`).
+        .merge(update::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(

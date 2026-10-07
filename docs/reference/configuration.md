@@ -28,6 +28,7 @@ configuration file to mount.
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period. Values below 10 are raised to 10. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Retention of alert history, in days. |
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | Scheduled local backups of the database. `0`, `false`, `no` or `off` to stop writing them. See [Backup and restore](../install/backup.md#scheduled-local-backups). |
+| `DUMBMONIT_UPDATE_CHECK` | `1` | `off` stops the daily look at the latest GitHub release (air-gapped instances). See [Update](../install/update.md). |
 | `DUMBMONIT_BACKUP_DIR` | `<data dir>/backups` | Where the scheduled backups are written. Point it at a second volume to survive losing the first. |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
 | `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |

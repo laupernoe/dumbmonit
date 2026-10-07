@@ -9,6 +9,7 @@
 	 * health endpoint behind it is public.
 	 */
 	import { getHealth } from '#lib/api/index.js';
+	import UpdatePill from '#lib/components/UpdatePill.svelte';
 
 	let version = $state<{ number: string; build?: string } | null>(null);
 	$effect(() => {
@@ -28,3 +29,5 @@
 		>v{version.number}{#if version.build}<span class="font-mono"> · {version.build}</span>{/if}</a
 	>
 {/if}
+
+<UpdatePill />

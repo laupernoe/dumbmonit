@@ -3404,3 +3404,25 @@ export interface PushTestReport {
 	removed: number;
 	message: string;
 }
+
+// --- Updates ----------------------------------------------------------------
+
+/** `GET /api/update`: mirrors `UpdateInfo` in `crates/server/src/update.rs`. */
+export interface UpdateInfo {
+	/** Running version. */
+	current: string;
+	/** Latest release known; null before the first successful check. */
+	latest: string | null;
+	release_url: string | null;
+	/** Release notes, shortened by the server. */
+	notes: string | null;
+	update_available: boolean;
+	/** Last successful check, server timestamp (UTC without suffix). */
+	checked_at: string | null;
+	/** The check is active. */
+	enabled: boolean;
+	/** Turned off by `DUMBMONIT_UPDATE_CHECK=off`: the switch cannot override it. */
+	locked_by_env: boolean;
+	/** Why the last check failed. */
+	error: string | null;
+}
