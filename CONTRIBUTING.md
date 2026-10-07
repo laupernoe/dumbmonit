@@ -170,6 +170,41 @@ translated yet — English (`web/messages/en.json`) is the only shipped locale. 
 See `docs/development.md` for the Weblate component settings (file mask,
 format, base file).
 
+### Translating the documentation
+
+The docs (MkDocs, published on Read the Docs) are multilingual through the
+[`mkdocs-static-i18n`](https://github.com/ultrabug/mkdocs-static-i18n) plugin,
+with the same languages as the UI: `fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`,
+`zh-Hans` (English is the source). A translation is a sibling file with the
+locale before the extension:
+
+```
+docs/index.md                  English (source)
+docs/index.fr.md               French
+docs/install/docker.zh-Hans.md Simplified Chinese
+```
+
+- A page without a translation is served in English under the language's
+  URL, with a notice at the top; the language selector in the header lists
+  the languages by their native names. Nothing breaks when a page is missing.
+- Translate prose, headings, table cells, image alt text, link text and the
+  comments inside code blocks. Leave commands, code, environment variables,
+  paths, URLs and link targets untouched; keep links to other pages as in
+  English (`../devices/agent.md`), the plugin points them to the translated
+  page when there is one.
+- Other pages link to heading anchors, so give each translated heading an
+  explicit id equal to the English slug: `## Première installation {#first-start}`.
+  `mkdocs build --strict` fails on a broken anchor.
+- Navigation titles of the top-level sections are translated in
+  `mkdocs.yml` (`nav_translations` of each language); the title of a page is
+  its translated first heading.
+- `scripts/docs-i18n-status.sh` lists, per language, the pages translated and
+  missing. Check the build with
+  `docker run --rm -v "$PWD:/docs" -w /docs python:3-slim sh -c "pip install -q -r docs/requirements.txt && mkdocs build --strict"`.
+- Weblate is not used for the docs: it is built for key/value files (the UI's
+  JSON), and its Markdown support is weak for whole pages with admonitions,
+  tabs and attribute lists. Translate by pull request instead.
+
 ## Conventions
 
 **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/):
