@@ -15,6 +15,7 @@
 	import type { Icon as LucideIcon } from 'lucide-svelte';
 	import { Button, Toggle } from '#lib/ui/index.js';
 	import type { WallThemeChoice } from '#lib/components/wall/wallTheme.js';
+	import { WALL_CITIES, type WallCityChoice } from '#lib/components/wall/wallCity.js';
 
 	interface Props {
 		value: WallThemeChoice;
@@ -24,9 +25,11 @@
 		open: boolean;
 		onchange: (value: WallThemeChoice) => void;
 		onnightdim: (value: boolean) => void;
+		city: WallCityChoice;
+		oncity: (value: WallCityChoice) => void;
 	}
 
-	let { value, forced, nightDim, open = $bindable(), onchange, onnightdim }: Props = $props();
+	let { value, forced, nightDim, open = $bindable(), onchange, onnightdim, city, oncity }: Props = $props();
 
 	let root = $state<HTMLDivElement | null>(null);
 
@@ -120,6 +123,21 @@
 						<span class="text-[0.75rem] text-ink-2">{option.hint}</span>
 					</button>
 				{/each}
+			</div>
+
+			<div class="mt-3 border-t border-line pt-3">
+				<p class="text-sm font-semibold text-ink">City</p>
+				<div class="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="City">
+					{#each [{ value: 'auto', label: 'Auto' }, ...WALL_CITIES] as option (option.value)}
+						<button
+							type="button"
+							role="radio"
+							aria-checked={city === option.value}
+							class={`rounded-[var(--radius-plate)] border px-2.5 py-1 text-[0.8125rem] transition-colors ${city === option.value ? 'border-signal bg-signal-soft font-semibold text-ink' : 'border-line text-ink-2 hover:bg-surface-2'}`}
+							onclick={() => oncity(option.value as WallCityChoice)}>{option.label}</button
+						>
+					{/each}
+				</div>
 			</div>
 
 			{#if effective === 'oled'}
