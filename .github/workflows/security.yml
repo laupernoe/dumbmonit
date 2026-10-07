@@ -33,7 +33,7 @@ jobs:
           - name: agent
             image: ghcr.io/laupernoe/dumbmonit-agent:edge
     steps:
-      - uses: aquasecurity/trivy-action@v0.33.1
+      - uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ matrix.image }}
           format: sarif
