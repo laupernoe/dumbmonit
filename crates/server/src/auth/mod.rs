@@ -1,6 +1,6 @@
 //! Authentification de l'instance.
 //!
-//! Des comptes, deux rôles (`admin`, `viewer`), une session par navigateur, et une
+//! Des comptes, trois rôles (`admin`, `operator`, `viewer`), une session par navigateur, et une
 //! connexion déléguée à un fournisseur OpenID Connect quand une équipe en a un. Il
 //! n'y a volontairement ni inscription libre, ni récupération par courriel, ni
 //! permission fine — chaque écran de configuration en plus dégraderait la
@@ -284,6 +284,11 @@ impl AuthError {
     /// Le refus opposé à un lecteur qui tente une écriture.
     pub fn admin_required() -> Self {
         Self::Forbidden("Admin role required.".into())
+    }
+
+    /// Le refus opposé à un lecteur qui tente de traiter une alerte.
+    pub fn operator_required() -> Self {
+        Self::Forbidden("Operator or admin role required.".into())
     }
 }
 

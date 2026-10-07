@@ -30,6 +30,7 @@
 		scopes: '',
 		auto_create: false,
 		admin_groups: '',
+		operator_groups: '',
 		groups_claim: '',
 		public_url: ''
 	});
@@ -45,6 +46,7 @@
 			scopes: next.scopes,
 			auto_create: next.auto_create,
 			admin_groups: next.admin_groups.join(', '),
+			operator_groups: (next.operator_groups ?? []).join(', '),
 			groups_claim: next.groups_claim,
 			// Prefilled from the browser: it is the address people use to reach this page.
 			public_url: next.public_url || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -111,6 +113,7 @@
 				scopes: form.scopes.trim(),
 				auto_create: form.auto_create,
 				admin_groups: form.admin_groups.split(',').map((g) => g.trim()).filter(Boolean),
+				operator_groups: form.operator_groups.split(',').map((g) => g.trim()).filter(Boolean),
 				groups_claim: form.groups_claim.trim(),
 				public_url: form.public_url.trim()
 			});
@@ -230,8 +233,11 @@
 					<Field label="Groups claim" for="sso-groups-claim" help="Name of the token claim that lists the user's groups.">
 						<input id="sso-groups-claim" type="text" class="input" bind:value={form.groups_claim} placeholder="groups" autocomplete="off" spellcheck="false" disabled={saving} />
 					</Field>
-					<Field label="Admin groups" for="sso-admin-groups" help="Comma separated. Members become admins, everyone else a viewer — re-evaluated at each sign-in. Empty: roles are managed here." class="sm:col-span-2">
+					<Field label="Admin groups" for="sso-admin-groups" help="Comma separated. Members become admins, everyone else a viewer (or an operator, below) — re-evaluated at each sign-in. Both lists empty: roles are managed here." class="sm:col-span-2">
 						<input id="sso-admin-groups" type="text" class="input" bind:value={form.admin_groups} placeholder="dumbmonit-admins, ops" autocomplete="off" disabled={saving} />
+					</Field>
+					<Field label="Operator groups" for="sso-operator-groups" help="Comma separated. Members who are not admins become operators: they handle alerts (acknowledge, ignore, snooze) but change no configuration." class="sm:col-span-2">
+						<input id="sso-operator-groups" type="text" class="input" bind:value={form.operator_groups} placeholder="noc, on-call" autocomplete="off" disabled={saving} />
 					</Field>
 					<div class="sm:col-span-2">
 						<Field label="Create accounts on first sign-in" for="sso-auto-create" inline help="Off by default. Off: only accounts already linked, or matched by a provider-verified email that equals their username, can sign in. A local admin with a password is never linked automatically.">

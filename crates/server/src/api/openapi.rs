@@ -89,7 +89,7 @@ mod tests {
     use std::path::Path;
 
     use super::*;
-    use crate::auth::middleware::TOKEN_DENIED;
+    use crate::auth::middleware::{TOKEN_DENIED, is_operator_route};
 
     /// Routes que la spécification ne décrit volontairement pas :
     ///
@@ -299,6 +299,41 @@ mod tests {
             "dérive entre le routeur et openapi.yaml :\n{}",
             problems.join("\n")
         );
+    }
+
+    /// `x-roles: [admin, operator]` est posé exactement sur les écritures que le
+    /// garde ouvre aux opérateurs (`OPERATOR_ROUTES`) : la documentation ne
+    /// promet rien de plus, et n'oublie rien.
+    #[test]
+    fn the_operator_operations_match_the_guard() {
+        let spec = spec_value();
+        let mut problems = Vec::new();
+        for (path, item) in spec["paths"].as_object().expect("paths") {
+            // Un paramètre de chemin devient un segment quelconque, non vide.
+            let concrete: String = path
+                .split('/')
+                .map(|segment| if segment.starts_with('{') { "x" } else { segment })
+                .collect::<Vec<_>>()
+                .join("/");
+            for method in METHODS {
+                let Some(op) = item.get(method) else { continue };
+                let roles: Vec<&str> = op["x-roles"]
+                    .as_array()
+                    .map(|roles| roles.iter().filter_map(Value::as_str).collect())
+                    .unwrap_or_default();
+                let documented = roles.contains(&"operator");
+                let http = axum::http::Method::from_bytes(method.to_uppercase().as_bytes())
+                    .expect("méthode");
+                let guarded = method != "get" && is_operator_route(&http, &concrete);
+                if documented != guarded {
+                    problems.push(format!(
+                        "{} {path} : x-roles {roles:?}, garde opérateur {guarded}",
+                        method.to_uppercase()
+                    ));
+                }
+            }
+        }
+        assert!(problems.is_empty(), "{}", problems.join("\n"));
     }
 
     #[test]

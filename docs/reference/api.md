@@ -138,7 +138,7 @@ can never mint another one — let alone a more powerful one.
   changes): a token nobody uses any more is one to revoke.
 - **Bound to its creator.** A token remembers the account that created it. If
   that account is disabled, its tokens are refused (`401`); if it is demoted to
-  viewer, its `write` tokens act as `read` tokens; if it is deleted, its tokens
+  operator or viewer, its `write` tokens act as `read` tokens; if it is deleted, its tokens
   are revoked.
 - **Revocation** is immediate: the next call gets `401`.
 - **Logged.** Every write made with a token is written to the server log with
@@ -223,7 +223,7 @@ Every error is JSON: `{"error": "message"}`, written for a person.
 |---|---|
 | `400` | The request is malformed or a value is invalid; the message names it. |
 | `401` | No valid session or token: missing, unknown, revoked or expired token (with `WWW-Authenticate: Bearer`), or a token whose creator is disabled. |
-| `403` | Authenticated, but not allowed: a viewer or a `read` token on a write route, a token on an account, token or backup route, a token used from a network it is not allowed from, a cookie write without `X-Requested-With`, or any write on the public demo (with `"demo": true`). |
+| `403` | Authenticated, but not allowed: a viewer, an operator outside alert handling, or a `read` token on a write route, a token on an account, token or backup route, a token used from a network it is not allowed from, a cookie write without `X-Requested-With`, or any write on the public demo (with `"demo": true`). |
 | `404` | The id does not exist. A path under `/api` that matches no route answers `404 {"error": "Unknown API route: …"}` rather than the web UI's HTML. |
 | `405` | The method does not exist on that path (`GET /api/mcp`, for instance). |
 | `409` | A conflict with the current state (a duplicate, a command already running…). |
@@ -254,8 +254,15 @@ instead, with its own error codes.
 ## Accounts, sign-in and tokens
 
 In the tables below, *session* means a session cookie **or** an API token;
-*admin* means an administrator session or a `write` token; *session only*
+*admin* means an administrator session or a `write` token; *operator* means
+an operator or administrator session, or a `write` token; *session only*
 means a session cookie, never a token.
+
+**Roles.** A `viewer` account makes every `GET`. An `operator` makes the same
+reads plus the alert-handling writes marked *operator* in this page (and
+`x-roles: [admin, operator]` in the OpenAPI document): acknowledge, snooze
+(maintenance windows), ignore a rule for a device, clear resolved history.
+Every other write is admin only and answers `403` to an operator.
 
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
@@ -265,7 +272,7 @@ means a session cookie, never a token.
 | `POST` | `/api/auth/login/totp` | public | `{"pending": "…", "code": "123456"}` — the ticket from the first step and a code (or a recovery code). `204` with the session cookie. |
 | `GET` | `/api/auth/oidc/start` | public | Redirects the browser to the identity provider. |
 | `GET` | `/api/auth/oidc/callback` | public | Return from the provider (`code`, `state`): opens the session and redirects to the UI. |
-| `GET` | `/api/auth/me` | session only | The current account: `id`, `username`, `display_name`, `role` (`admin`, `viewer`), `auth` (`password`, `oidc`), `disabled`, `totp_enabled`, `created_at`, `last_login_at`. |
+| `GET` | `/api/auth/me` | session only | The current account: `id`, `username`, `display_name`, `role` (`admin`, `operator`, `viewer`), `auth` (`password`, `oidc`), `disabled`, `totp_enabled`, `created_at`, `last_login_at`. |
 | `POST` | `/api/auth/logout` | session only | Ends the session and clears the cookie. |
 | `POST` | `/api/auth/password` | session only | `{"current_password": "…", "new_password": "…"}`. Signs out every other session. |
 | `GET` | `/api/auth/totp` | session only | Two-factor state of the current account: `enabled`, `pending`, `recovery_codes_left`. |
@@ -543,10 +550,10 @@ a firewall, since they carry every measurement of every device.
 |---|---|---|
 | `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused devices are never listed. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Phase transitions. `since` is RFC 3339, default the last seven days; `limit` must be positive. `dismissed` (default `false`) excludes entries cleared with the two routes below; nothing is ever destroyed by a clear, only hidden from the default view. |
-| `POST` | `/api/alerts/history/{id}/dismiss` | Clears one `resolved` entry from the default history view. `204`. `404` on an unknown id or a still-active transition. Admin only; audited. |
-| `POST` | `/api/alerts/history/dismiss-resolved` | Clears every not-yet-cleared `resolved` entry at once ("Clear all resolved"). Returns `{"dismissed": <count>}`. Admin only; audited. |
-| `POST` | `/api/alerts/{fingerprint}/ack` | Acknowledge: `{"duration_secs": 14400, "note": "…"}` or `{"until": "2026-09-22T18:00:00Z"}` (one of the two; neither means 4 hours, at most 30 days). `{"until": null}` lifts it. Returns the alert. Admin only; audited. |
-| `DELETE` | `/api/alerts/{fingerprint}/ack` | Lift the acknowledgement. Returns the alert. |
+| `POST` | `/api/alerts/history/{id}/dismiss` | Clears one `resolved` entry from the default history view. `204`. `404` on an unknown id or a still-active transition. Operator; audited. |
+| `POST` | `/api/alerts/history/dismiss-resolved` | Clears every not-yet-cleared `resolved` entry at once ("Clear all resolved"). Returns `{"dismissed": <count>}`. Operator; audited. |
+| `POST` | `/api/alerts/{fingerprint}/ack` | Acknowledge: `{"duration_secs": 14400, "note": "…"}` or `{"until": "2026-09-22T18:00:00Z"}` (one of the two; neither means 4 hours, at most 30 days). `{"until": null}` lifts it. Returns the alert. Operator; audited. |
+| `DELETE` | `/api/alerts/{fingerprint}/ack` | Lift the acknowledgement. Returns the alert. Operator. |
 
 An active alert:
 
@@ -629,8 +636,8 @@ Creating one needs at least `name` and `query`; `kind` (`threshold`,
 | Method | Route | Purpose |
 |---|---|---|
 | `GET` | `/api/alerts/silences` | Every window, with `active_now`, `active_until` and `next_start_at` (RFC 3339, computed by the server). |
-| `POST` | `/api/alerts/silences` | Create. `201`. |
-| `DELETE` | `/api/alerts/silences/{id}` | `204`. |
+| `POST` | `/api/alerts/silences` | Create. `201`. Operator. |
+| `DELETE` | `/api/alerts/silences/{id}` | `204`. Operator. |
 
 ```json
 {
@@ -665,8 +672,8 @@ good, reversibly, without disabling the rule for anyone else.
 |---|---|---|
 | `GET` | `/api/alerts/overrides?target_id=4` | Every override, or those of one device: `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
 | `GET` | `/api/alerts/rules/{id}/overrides` | The overrides of one rule. |
-| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — each field optional; `null` means "as the rule". Creates or replaces. |
-| `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. |
+| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — each field optional; `null` means "as the rule". Creates or replaces. An operator may only send `{"enabled": false}` (ignore); the device's threshold overrides, if any, are kept. |
+| `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. For an operator, only lifts the ignore: threshold overrides stay. |
 
 ## Notification policy
 

@@ -117,7 +117,7 @@
 <Panel id="notifications-channels" title="Channels" description="Where DumbMonit tells you when something needs attention." padded={false}>
 	{#snippet aside()}
 		{#if !auth.isAdmin}
-			<Plate tone="ghost" label="Viewer — read only" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} />
 		{:else if !loading && !error && form === null && channels.length > 0}
 			<ClickSpark>
 				<Button variant="primary" size="sm" onclick={() => (form = 'new')}>

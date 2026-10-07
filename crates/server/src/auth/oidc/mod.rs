@@ -53,6 +53,10 @@ pub struct OidcConfig {
     #[serde(default)]
     pub auto_create: bool,
     pub admin_groups: Vec<String>,
+    /// Groupes qui donnent le rôle `operator`. Absent d'un réglage enregistré
+    /// avant son apparition : vide.
+    #[serde(default)]
+    pub operator_groups: Vec<String>,
     pub groups_claim: String,
     pub public_url: String,
 }
@@ -83,14 +87,8 @@ impl OidcConfig {
             self.groups_claim = DEFAULT_GROUPS_CLAIM.to_string();
         }
         self.groups_claim = self.groups_claim.trim().to_string();
-        self.admin_groups = self
-            .admin_groups
-            .iter()
-            .flat_map(|group| group.split(','))
-            .map(str::trim)
-            .filter(|group| !group.is_empty())
-            .map(str::to_string)
-            .collect();
+        self.admin_groups = split_groups(&self.admin_groups);
+        self.operator_groups = split_groups(&self.operator_groups);
         self
     }
 
@@ -99,6 +97,18 @@ impl OidcConfig {
         let base = if self.public_url.is_empty() { request_origin } else { &self.public_url };
         format!("{}{CALLBACK_PATH}", base.trim_end_matches('/'))
     }
+}
+
+/// Une liste de groupes saisie à la main : éléments séparés par des virgules,
+/// espaces et entrées vides retirés.
+fn split_groups(groups: &[String]) -> Vec<String> {
+    groups
+        .iter()
+        .flat_map(|group| group.split(','))
+        .map(str::trim)
+        .filter(|group| !group.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
 /// Variables d'environnement lues au démarrage.
@@ -122,6 +132,7 @@ impl OidcEnv {
             scopes: var("DUMBMONIT_OIDC_SCOPES"),
             auto_create: flag(&auto_create),
             admin_groups: vec![var("DUMBMONIT_OIDC_ADMIN_GROUPS")],
+            operator_groups: vec![var("DUMBMONIT_OIDC_OPERATOR_GROUPS")],
             groups_claim: var("DUMBMONIT_OIDC_GROUPS_CLAIM"),
             public_url: var("DUMBMONIT_PUBLIC_URL"),
         }
@@ -223,6 +234,7 @@ mod tests {
             scopes: "".into(),
             auto_create: true,
             admin_groups: vec!["ops, admins".into(), "".into(), "sre".into()],
+            operator_groups: vec!["noc, ".into()],
             groups_claim: "".into(),
             public_url: "https://monit.example.org/".into(),
         }
@@ -232,6 +244,7 @@ mod tests {
         assert_eq!(config.scopes, DEFAULT_SCOPES);
         assert_eq!(config.groups_claim, DEFAULT_GROUPS_CLAIM);
         assert_eq!(config.admin_groups, vec!["ops", "admins", "sre"]);
+        assert_eq!(config.operator_groups, vec!["noc"]);
         assert_eq!(
             config.redirect_uri("http://ignored"),
             "https://monit.example.org/api/auth/oidc/callback"

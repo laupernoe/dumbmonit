@@ -237,7 +237,7 @@ can relay.
   `DUMBMONIT_TRUSTED_PROXIES`, otherwise every call seems to come from the
   proxy and a network restriction refuses them all.
 - **Bound to its creator.** A token stops working when the account that created
-  it is disabled, loses its write power when that account becomes a viewer, and
+  it is disabled, loses its write power when that account is no longer an admin, and
   is revoked when that account is deleted.
 - **Nothing secret comes back.** The tools never return device credentials
   (only their kind), channel secrets, heartbeat URLs or tokens. `add_device`

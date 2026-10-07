@@ -92,7 +92,7 @@
 	}
 </script>
 
-{#if auth.isAdmin && rule && target}
+{#if auth.canOperate && rule && target}
 	<div class="flex flex-col items-start gap-1 sm:items-end">
 		{#if ignored}
 			<Button size="sm" variant="ghost" loading={busy} onclick={unignore}>Stop ignoring</Button>

@@ -296,7 +296,7 @@
 			<span class="tnum text-[0.8125rem] text-ink-2" aria-live="polite">
 				{filtered.length} of {all.length}
 			</span>
-			{#if auth.isAdmin && resolvedCount > 0}
+			{#if auth.canOperate && resolvedCount > 0}
 				<Confirm
 					variant="secondary"
 					size="sm"
@@ -371,7 +371,7 @@
 									{/if}
 									{#if entry.dismissed || clearedIds.has(entry.id)}
 										<Plate tone="ghost" label="Cleared" bare />
-									{:else if auth.isAdmin && entry.to_phase === 'resolved'}
+									{:else if auth.canOperate && entry.to_phase === 'resolved'}
 										<Button
 											size="sm"
 											variant="ghost"
