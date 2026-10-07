@@ -21,4 +21,5 @@ pub mod security;
 pub mod state;
 pub mod stats;
 pub mod tsdb;
+pub mod update;
 pub mod webchange;
