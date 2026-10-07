@@ -700,6 +700,19 @@ good, reversibly, without disabling the rule for anyone else.
 The exact keys per kind come from `/api/notify/kinds` and are documented in
 [Notification channels](../notifications.md).
 
+### Web Push devices
+
+The devices of the **signed-in account** (session only, viewers included; API
+tokens get `401`). A `webpush` channel sends to them; see
+[Push notifications (PWA)](../using/push-notifications.md).
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/api/webpush` | `{"public_key": "…", "devices": […]}`: the VAPID public key (base64url, the `applicationServerKey` to subscribe with) and the account's devices — `id`, `device` (`Firefox on Android`), `push_service` (host), `fingerprint` (first 16 hex characters of SHA-256 of the endpoint), `created_at`, `last_success_at`, `last_error`. The endpoint, the browser keys and the private key are never returned. |
+| `POST` | `/api/webpush/subscriptions` | `PushSubscription.toJSON()`: `{"endpoint": "https://…", "keys": {"p256dh": "…", "auth": "…"}}`. `201` with the device. The endpoint must be HTTPS on a public address: private, loopback and link-local addresses get `400`. The same endpoint again replaces its row. |
+| `DELETE` | `/api/webpush/subscriptions/{id}` | `204`; `404` for a device of another account. |
+| `POST` | `/api/webpush/test` | `{}` or `{"id": 3}`. Sends a test notification: `{"ok", "delivered", "failed", "removed", "message"}`. Subscriptions answered with `404`/`410` are removed. |
+
 ## Status pages and incidents
 
 | Method | Route | Auth | Purpose |

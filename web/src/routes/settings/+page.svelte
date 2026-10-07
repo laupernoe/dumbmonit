@@ -26,6 +26,7 @@
 	import PacksSection from '$lib/components/settings/PacksSection.svelte';
 	import AboutSection from '$lib/components/settings/AboutSection.svelte';
 	import MusicSection from '$lib/components/settings/MusicSection.svelte';
+	import PushSection from '$lib/components/settings/PushSection.svelte';
 
 	/** Sections that used to live here, and where they went. */
 	const MOVED: Record<string, string> = {
@@ -50,6 +51,7 @@
 			label: null,
 			items: [
 				{ id: 'security', label: m["settings.section.security"]() },
+				{ id: 'push', label: 'Push notifications' },
 				...(showAccounts
 					? [
 							{ id: 'users', label: m["settings.section.users"]() },
@@ -189,6 +191,7 @@
 
 	<div bind:this={column} class="grid min-w-0 gap-6 [&_section[id]]:scroll-mt-14 sm:[&_section[id]]:scroll-mt-28 lg:[&_section[id]]:scroll-mt-20">
 		<div class="min-w-0 rise-in" style="--rise-delay: 0ms"><SecuritySection /></div>
+		<div class="min-w-0 rise-in" style="--rise-delay: 20ms"><PushSection /></div>
 		{#if showAccounts}
 			<div class="min-w-0 rise-in" style="--rise-delay: 40ms"><UsersSection /></div>
 			<div class="min-w-0 rise-in" style="--rise-delay: 80ms"><SsoSection /></div>

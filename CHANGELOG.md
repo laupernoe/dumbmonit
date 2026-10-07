@@ -7,11 +7,31 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Push notifications on phones and computers, without an app.** A new
+  **Web Push** channel sends alerts as native notifications through the
+  browser's push service, even with DumbMonit closed. Each account enables
+  its own devices in **Settings → Push notifications** (*Enable on this
+  device*, *Send a test*, list of subscribed devices); on iPhone and iPad,
+  add DumbMonit to the Home Screen first. HTTPS is required. The server's
+  VAPID key pair is generated at first start and stored encrypted, messages
+  are end-to-end encrypted (RFC 8291), subscription addresses must be HTTPS
+  on public IPs, and subscriptions the push service reports as gone (404/410)
+  are removed. The interface gains a service worker that only shows
+  notifications and caches nothing. See
+  [Push notifications (PWA)](docs/using/push-notifications.md).
 - **A city scene behind the status page banner.** The page editor's **Scene**
   setting takes up to six of Venice, Paris, Tokyo, New York, London and Rome
   (none by default), with a rotation of every visit, minute, ten minutes or
   hour when there are several. Both settings are kept in backups. See
   [Status pages](docs/using/status-pages.md#scene).
+
+### Fixed
+
+- **Every channel type can be saved.** The database still only accepted the
+  first seven channel types (Discord, ntfy, Gotify, Telegram, Slack, webhook,
+  email): saving a Matrix, Teams, Pushover or other channel failed with an
+  internal error. The table is rebuilt without that list at upgrade; existing
+  channels and queued notifications are kept.
 
 ## 0.1.0-alpha.6 — 2026-10-06
 

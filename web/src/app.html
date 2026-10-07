@@ -9,9 +9,10 @@
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
 		<!--
 			Installable on a phone home screen: a manifest and the icons it names,
-			derived from the favicon. Deliberately no service worker — a monitoring
-			screen that serves yesterday's build after an upgrade is worse than no
-			icon at all.
+			derived from the favicon. The service worker (static/sw.js, registered
+			from Settings → Push notifications) only shows push notifications: it
+			has no fetch handler and caches nothing — a monitoring screen that
+			serves yesterday's build after an upgrade is worse than no icon at all.
 		-->
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />

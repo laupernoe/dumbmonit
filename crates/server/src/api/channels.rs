@@ -252,7 +252,8 @@ pub async fn test(
     // geste manuel et isolé. Le coût — une poignée de millisecondes pour monter le
     // contexte TLS — est sans conséquence à cette fréquence.
     let http = notify::http_client();
-    let result = notify::test_channel(&http, &config).await;
+    let store = notify::webpush::Store { pool: &state.pool, cipher: &state.cipher };
+    let result = notify::test_channel_stored(store, &http, &config).await;
     let error = result.as_ref().err().map(ToString::to_string);
 
     // Le résultat est consigné comme celui d'un envoi réel : c'est ce que

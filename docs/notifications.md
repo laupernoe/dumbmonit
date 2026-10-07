@@ -554,6 +554,36 @@ for a warning, `timeSensitive` for a critical alert. The `critical` level, which
 breaks through "Do Not Disturb", is never chosen automatically — set it explicitly if
 you want it.
 
+### Web Push
+
+Native notifications on your phones and computers, straight from your own
+DumbMonit, with no app to install and no third-party account: the browser
+(installed as an app or not) receives the alerts even with every tab closed.
+
+1. On each phone or computer, open DumbMonit and go to **Settings → Push
+   notifications → Enable on this device**, then **Send a test**. On iPhone and
+   iPad, first add DumbMonit to the Home Screen. The step-by-step guide is in
+   [Push notifications (PWA)](using/push-notifications.md).
+2. Create a **Web Push** channel here. It has no secret: its recipients are the
+   devices subscribed in step 1.
+
+- **Settings** — `users` (optional; one account per line, empty: every
+  subscribed device of every account), `urgency` (`high` by default, `normal`
+  or `low`), `ttl` (seconds the push service keeps the message for a device
+  that is off, default `86400`), `contact` (optional `mailto:` or `https:`
+  address given to push services; empty: `DUMBMONIT_PUBLIC_URL` when it is
+  HTTPS, otherwise the project page)
+- **Secrets** — none. The server's VAPID key pair is generated at first start
+  and stored encrypted; the private key never leaves the server.
+
+The notification title is the severity and the device (`Critical · nas01`), the
+body a short summary; a tap opens the **Alerts** page. DumbMonit needs outbound
+HTTPS to the push services (`fcm.googleapis.com`, `*.notify.windows.com`,
+`updates.push.services.mozilla.com`, `*.push.apple.com`); messages are
+end-to-end encrypted, those services cannot read them. A subscription the push
+service reports as gone (HTTP 404 or 410, for example after the app was
+removed) is deleted automatically.
+
 ### Apprise
 
 Apprise is a **gateway**: with a single configuration it gives access to dozens of

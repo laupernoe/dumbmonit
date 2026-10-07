@@ -40,6 +40,7 @@ mod totp;
 mod truenas;
 mod users;
 mod webchange;
+mod webpush;
 
 pub use error::{ApiError, ApiResult};
 pub use openapi::API_VERSION;
@@ -157,6 +158,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(music::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
+        // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
+        .merge(webpush::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(
