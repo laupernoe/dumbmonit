@@ -37,4 +37,4 @@ ssh "${ssh_opts[@]}" "$host" "cd '$dir' && \
   (docker image inspect dumbmonit-devenv >/dev/null 2>&1 || docker build -t dumbmonit-devenv --target builder .) && \
   docker run --rm -e CARGO_INCREMENTAL=0 -v \"\$PWD:/build\" -w /build \
     -v dumbmonit-cargo:/usr/local/cargo/registry -v dumbmonit-target:/build/target \
-    dumbmonit-devenv sh -c '$cmd'"
+    dumbmonit-devenv sh -c 'rustup component add rustfmt clippy >/dev/null 2>&1; $cmd'"
