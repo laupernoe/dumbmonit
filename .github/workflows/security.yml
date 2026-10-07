@@ -35,10 +35,10 @@ jobs:
     steps:
       - name: Scan
         run: |
-          docker run --rm -v "$PWD:/out" aquasec/trivy:0.65.0 image \
+          docker run --rm -v "$PWD:/out" aquasec/trivy:0.65.0@sha256:a22415a38938a56c379387a8163fcb0ce38b10ace73e593475d3658d578b2436 image \
             --format sarif --output /out/trivy-${{ matrix.name }}.sarif \
             --severity CRITICAL,HIGH --ignore-unfixed ${{ matrix.image }}
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3
         if: always() && hashFiles(format('trivy-{0}.sarif', matrix.name)) != ''
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
@@ -53,15 +53,15 @@ jobs:
       security-events: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: ossf/scorecard-action@v2.4.2
+      - uses: ossf/scorecard-action@05b42c624433fc40578a4040d5cf5e36ddca8cde # v2.4.2
         with:
           results_file: scorecard.sarif
           results_format: sarif
           publish_results: true
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3
         with:
           sarif_file: scorecard.sarif
           category: scorecard
