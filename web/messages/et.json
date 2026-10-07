@@ -15,7 +15,7 @@
  "settings.section.music": "Ajajoone muusika",
  "settings.section.about": "Rakenduse teave",
  "settings.hint.notifications_lead": "Otsid kanaleid ja segamisvaba aja seadistusi? Leiad nad jaotisest",
- "settings.hint.notifications_link": "",
+ "settings.hint.notifications_link": "Alarmid → Teavitused",
  "settings.hint.status_lead": "Avalikud lehed on jaotises",
  "settings.hint.status_link": "Olek",
  "settings.appearance.language_label": "Keel",
