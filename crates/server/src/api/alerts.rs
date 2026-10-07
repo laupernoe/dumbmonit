@@ -29,7 +29,7 @@ use crate::api::channels;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
-use crate::auth::middleware::AdminIdentity;
+use crate::auth::middleware::OperatorIdentity;
 use crate::db;
 use crate::notify::policy_store;
 use crate::state::AppState;
@@ -161,6 +161,14 @@ pub struct OverridePayload {
     pub threshold: Option<f64>,
     pub clear_threshold: Option<f64>,
     pub enabled: Option<bool>,
+}
+
+impl OverridePayload {
+    /// Le seul geste de surcharge ouvert à un opérateur : `enabled: false`, sans
+    /// seuil.
+    pub fn is_ignore(&self) -> bool {
+        self.enabled == Some(false) && self.threshold.is_none() && self.clear_threshold.is_none()
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -617,10 +625,23 @@ pub async fn list_all_overrides(
 /// Pose (ou remplace) la surcharge d'une règle pour un équipement.
 pub async fn put_override(
     State(state): State<AppState>,
+    OperatorIdentity(principal): OperatorIdentity,
     Path((id, target_id)): Path<(i64, i64)>,
-    Json(payload): Json<OverridePayload>,
+    Json(mut payload): Json<OverridePayload>,
 ) -> ApiResult<Json<RuleOverride>> {
+    // Un opérateur peut « ignorer » une règle pour un équipement, rien de plus :
+    // un seuil est de la configuration. Les seuils déjà surchargés par un
+    // administrateur sont conservés tels quels.
     let rule = rule_by_id(&state.pool, id).await?;
+    if !principal.is_admin() {
+        if !payload.is_ignore() {
+            return Err(operator_override_refused());
+        }
+        if let Some(current) = current_override(&state, &rule.uid, target_id).await? {
+            payload.threshold = current.threshold;
+            payload.clear_threshold = current.clear_threshold;
+        }
+    }
     if !target_exists(&state, target_id).await? {
         return Err(ApiError::BadRequest(format!("Device {target_id} does not exist.")));
     }
@@ -645,14 +666,49 @@ pub async fn put_override(
 
 pub async fn delete_override(
     State(state): State<AppState>,
+    OperatorIdentity(principal): OperatorIdentity,
     Path((id, target_id)): Path<(i64, i64)>,
 ) -> ApiResult<StatusCode> {
     let rule = rule_by_id(&state.pool, id).await?;
+    // Un opérateur ne lève qu'un « ignorer » : les seuils surchargés par un
+    // administrateur restent en place, seul `enabled` est retiré.
+    if !principal.is_admin()
+        && let Some(current) = current_override(&state, &rule.uid, target_id).await?
+        && (current.threshold.is_some() || current.clear_threshold.is_some())
+    {
+        if current.enabled.is_none() {
+            return Err(ApiError::NotFound(format!(
+                "Rule {id} is not ignored for device {target_id}."
+            )));
+        }
+        policy_store::upsert_override(&state.pool, &RuleOverride { enabled: None, ..current })
+            .await?;
+        return Ok(StatusCode::NO_CONTENT);
+    }
     if policy_store::delete_override(&state.pool, &rule.uid, target_id).await? {
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err(ApiError::NotFound(format!("No override of rule {id} for device {target_id}.")))
     }
+}
+
+async fn current_override(
+    state: &AppState,
+    rule_uid: &str,
+    target_id: i64,
+) -> ApiResult<Option<RuleOverride>> {
+    Ok(policy_store::list_overrides(&state.pool, Some(rule_uid), Some(target_id))
+        .await?
+        .into_iter()
+        .next())
+}
+
+fn operator_override_refused() -> ApiError {
+    ApiError::Forbidden(
+        "Operators can only ignore a rule for a device or undo that; changing thresholds \
+         requires the admin role."
+            .into(),
+    )
 }
 
 async fn target_exists(state: &AppState, target_id: i64) -> ApiResult<bool> {
@@ -1118,7 +1174,7 @@ fn alert_not_found(fingerprint: &str) -> ApiError {
 /// `POST /alerts/{fingerprint}/ack` : « je sais, ne me le rappelle plus ».
 pub async fn ack_alert(
     State(state): State<AppState>,
-    AdminIdentity(principal): AdminIdentity,
+    OperatorIdentity(principal): OperatorIdentity,
     ClientIp(ip): ClientIp,
     Path(fingerprint): Path<String>,
     payload: Option<Json<AckPayload>>,
@@ -1138,7 +1194,7 @@ pub async fn ack_alert(
 /// `DELETE /alerts/{fingerprint}/ack` : lève l'acquittement.
 pub async fn unack_alert(
     State(state): State<AppState>,
-    AdminIdentity(principal): AdminIdentity,
+    OperatorIdentity(principal): OperatorIdentity,
     ClientIp(ip): ClientIp,
     Path(fingerprint): Path<String>,
 ) -> ApiResult<Json<ActiveAlertView>> {
@@ -1231,7 +1287,7 @@ pub async fn history(
 /// (non proposée ici) l'effacerait pour de bon.
 pub async fn dismiss_history_entry(
     State(state): State<AppState>,
-    AdminIdentity(principal): AdminIdentity,
+    OperatorIdentity(principal): OperatorIdentity,
     ClientIp(ip): ClientIp,
     Path(id): Path<i64>,
 ) -> ApiResult<StatusCode> {
@@ -1260,7 +1316,7 @@ pub struct DismissedCount {
 /// `POST /alerts/history/dismiss-resolved` : « j'ai tout vu, nettoie ».
 pub async fn dismiss_resolved_history(
     State(state): State<AppState>,
-    AdminIdentity(principal): AdminIdentity,
+    OperatorIdentity(principal): OperatorIdentity,
     ClientIp(ip): ClientIp,
 ) -> ApiResult<Json<DismissedCount>> {
     let updated = sqlx::query(

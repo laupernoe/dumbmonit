@@ -97,7 +97,7 @@
 				</Button>
 			</ClickSpark>
 		{:else}
-			<Plate tone="ghost" label="Viewer — read only" size="md" />
+			<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
 		{/if}
 	{/snippet}
 </PageHeader>

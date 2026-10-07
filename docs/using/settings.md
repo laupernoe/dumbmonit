@@ -63,9 +63,20 @@ address. It keeps the last 5 000 entries.
 
 ## Users
 
-Admins only. The accounts that can sign in, and their role: **admin**
-(everything) or **viewer** (read only — every page opens, every control that
-would change something is hidden). **Add user** asks for a username, an
+Admins only. The accounts that can sign in, and their role:
+
+| Role | Reads everything | Handles alerts (ack, snooze, ignore, maintenance windows, clear history) | Changes configuration (devices, rules, channels, status pages, settings, backups, tokens, accounts) |
+|---|---|---|---|
+| **Viewer** | yes | no | no |
+| **Operator** | yes | yes | no |
+| **Admin** | yes | yes | yes |
+
+A viewer sees every page with every control that would change something
+hidden. An operator is the on-call role: the alert controls are there, the
+configuration screens read *Operator — config is admin only*. Only an admin
+creates accounts or changes a role — an operator cannot promote anyone,
+themselves included. The *Users*, *Single sign-on* and security log sections
+stay admin only. **Add user** asks for a username, an
 optional display name, a role and a password; the button beside the password
 field makes up a random one. The password is shown once, to hand over.
 
@@ -103,9 +114,13 @@ person gets an account. It is **off by default**: only accounts that already
 exist can sign in until you turn it on.
 
 **Roles.** *Admin groups* lists the groups whose members become admins;
-everyone else is a viewer. Leave it empty to keep managing roles under
-**Users**. Roles are re-evaluated at each sign-in, except that the last active
-admin is never demoted.
+*Operator groups* the groups whose other members become operators; everyone
+else is a viewer. Leave both empty to keep managing roles under **Users**.
+With only *Operator groups* filled in, the groups never touch the admin role:
+admins stay admins, the others become operators or viewers. Roles are
+re-evaluated at each sign-in, except that the last active admin is never
+demoted. The matching environment variables are `DUMBMONIT_OIDC_ADMIN_GROUPS`
+and `DUMBMONIT_OIDC_OPERATOR_GROUPS`.
 
 **Which account a sign-in lands on.** The identity is remembered by its
 provider subject after the first sign-in. On a first sign-in:

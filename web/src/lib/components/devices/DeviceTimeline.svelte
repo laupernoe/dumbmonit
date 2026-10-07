@@ -380,7 +380,7 @@
 					<AckControl {alert} onchanged={onackchange} />
 					<SnoozeControl {alert} {target} {silences} onchanged={() => onackchange?.(alert)} />
 					<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => onackchange?.(alert)} />
-					{#if auth.isAdmin && !alert.acked}
+					{#if auth.canOperate && !alert.acked}
 						<Button
 							size="sm"
 							variant="ghost"

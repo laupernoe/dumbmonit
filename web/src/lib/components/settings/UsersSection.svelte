@@ -2,7 +2,8 @@
 	/**
 	 * Settings → Users: the accounts that can sign in, and their role.
 	 *
-	 * Two roles only: admin (everything) and viewer (read only). The server keeps
+	 * Three roles: admin (everything), operator (handles alerts — ack, ignore,
+	 * snooze — but changes no configuration) and viewer (read only). The server keeps
 	 * at least one active admin; the disabled controls here just reflect that
 	 * rule so nobody discovers it through an error.
 	 */
@@ -67,6 +68,8 @@
 	// --- Add ------------------------------------------------------------------
 
 	let adding = $state(false);
+	const ROLE_LABELS: Record<Role, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer' };
+
 	let draft = $state({ username: '', display_name: '', role: 'viewer' as Role, password: '' });
 	let draftErrors = $state<{ username?: string; password?: string }>({});
 	let creating = $state(false);
@@ -207,7 +210,7 @@
 	}
 </script>
 
-<Panel id="users" title="Users" description="Who can sign in. Admins change things; viewers only look." padded={false}>
+<Panel id="users" title="Users" description="Who can sign in. Admins change things; operators handle alerts; viewers only look." padded={false}>
 	{#snippet aside()}
 		{#if !loading && !error && !adding}
 			<Button variant="secondary" size="sm" onclick={openAdd}>
@@ -242,6 +245,7 @@
 					<Field label="Role" for="new-role">
 						<select id="new-role" class="input" bind:value={draft.role} disabled={creating}>
 							<option value="viewer">Viewer — read only</option>
+							<option value="operator">Operator — handles alerts, no configuration</option>
 							<option value="admin">Admin — can change everything</option>
 						</select>
 					</Field>
@@ -332,7 +336,7 @@
 									{#if user.display_name.trim()}
 										<span class="text-sm text-ink-2">{user.username}</span>
 									{/if}
-									<Plate tone={user.role === 'admin' ? 'signal' : 'ghost'} bare label={user.role === 'admin' ? 'Admin' : 'Viewer'} />
+									<Plate tone={user.role === 'admin' ? 'signal' : user.role === 'operator' ? 'info' : 'ghost'} bare label={ROLE_LABELS[user.role] ?? user.role} />
 									<Plate tone="info" bare label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : 'Password'} title={user.auth === 'oidc' ? 'Signs in through the identity provider' : 'Signs in with a password'} />
 									{#if user.totp_enabled}<Plate tone="signal" bare label="2FA" title="Two-factor authentication is on" />{/if}
 									{#if user.disabled}<Plate tone="muted" label="Disabled" />{/if}
@@ -373,6 +377,7 @@
 								<Field label="Role" for={`edit-role-${user.id}`} help={lastAdmin ? 'The last admin keeps the admin role until another one exists.' : undefined}>
 									<select id={`edit-role-${user.id}`} class="input" bind:value={edit.role} disabled={saving || lastAdmin} title={lastAdmin ? 'Promote another user first.' : undefined}>
 										<option value="viewer">Viewer — read only</option>
+										<option value="operator">Operator — handles alerts, no configuration</option>
 										<option value="admin">Admin — can change everything</option>
 									</select>
 								</Field>

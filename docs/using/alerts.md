@@ -20,8 +20,8 @@ always agree on what needs you.
 ## Getting rid of an alert
 
 A firing alert is not binary — "fix it" or "live with the noise forever".
-Four actions, for four different situations, all admin-only (a viewer sees
-the state but cannot change it):
+Four actions, for four different situations, open to admins and operators
+(a viewer sees the state but cannot change it):
 
 - **Acknowledge** ("I'm on it") is for one alert you are actively working on:
   "I know, stop reminding me for 4 h". The menu offers 1 h, 4 h, 24 h or
@@ -97,7 +97,15 @@ Links: `/alerts#notifications` opens the tab, `/alerts#notifications-policy`
 scrolls to the policy panel. The former Settings links
 (`/settings#notifications`, `/settings#notifications-policy`) forward here.
 
-## Viewers
+## Operators and viewers
+
+An **operator** handles alerts without touching the configuration: they
+acknowledge, snooze, ignore a rule for one device, schedule or delete
+maintenance windows and clear resolved history. Rules, channels and the
+notification policy stay read-only for them, marked *Operator — config is
+admin only*. Ignoring is the only per-device override an operator can make;
+thresholds remain an admin's call, and an operator's *Ignore* or *Stop
+ignoring* keeps any threshold an admin set for that device.
 
 A viewer sees every tab but no control: the page shows *Viewer — read only*
 where an admin would find the buttons.

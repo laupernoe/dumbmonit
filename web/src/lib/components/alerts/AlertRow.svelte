@@ -102,7 +102,7 @@
 					since {formatRelative(row.since)}
 				</span>
 			{/if}
-			{#if auth.isAdmin && !acked}
+			{#if auth.canOperate && !acked}
 				<Menu label="More actions for this alert">
 					{#snippet trigger({ toggle, open })}
 						<Button

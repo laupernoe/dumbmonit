@@ -53,11 +53,22 @@ info:
     Each operation carries `x-token-scope`: `public` (no authentication),
     `read`, `write` or `none` (session only).
 
+    ## Roles
+
+    Accounts have one of three roles. **`viewer`** reads every `GET`.
+    **`operator`** reads the same and handles alerts — the operations marked
+    `x-roles: [admin, operator]`: acknowledge, ignore a rule for one device
+    (an override with `enabled: false` only, no threshold), snooze
+    (maintenance windows) and clear resolved history. **`admin`** does
+    everything. Every other write is admin only, and an operator can never
+    manage accounts or roles.
+
     ## Errors
 
     Every error body is JSON: `{"error": "message"}` — `400` bad request,
     `401` no valid session or token (with `WWW-Authenticate: Bearer` for a
-    token), `403` not allowed (viewer or `read` token on a write route, missing
+    token), `403` not allowed (viewer, operator outside alert handling, or
+    `read` token on a write route, missing
     anti-CSRF header, token on a session-only route, token used from a network
     it is not allowed from), `404` unknown id, `409` conflict, `429` rate
     limited (with `Retry-After`), `500` otherwise. An unknown path under `/api`
@@ -1051,6 +1062,7 @@ paths:
         Marks every not-yet-cleared `resolved` transition as dismissed: they
         leave the default history view, the rows stay in the database.
       x-token-scope: write
+      x-roles: [admin, operator]
       responses:
         "200":
           description: How many entries were cleared.
@@ -1076,6 +1088,7 @@ paths:
         needs attention. The row stays in the database, only hidden from the
         default history view.
       x-token-scope: write
+      x-roles: [admin, operator]
       responses:
         "204": { description: Entry cleared. }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -1097,6 +1110,7 @@ paths:
         neither means 4 hours, at most 30 days). `{"until": null}` lifts the
         acknowledgement. The resolution is still notified. Audited.
       x-token-scope: write
+      x-roles: [admin, operator]
       requestBody:
         required: false
         content:
@@ -1117,6 +1131,7 @@ paths:
       tags: [Alerts]
       summary: Lift an acknowledgement
       x-token-scope: write
+      x-roles: [admin, operator]
       responses:
         "200":
           description: The alert.
@@ -1279,6 +1294,7 @@ paths:
       summary: Create or replace an override for one device
       description: Each field is optional; `null` means "as the rule". An empty override is removed.
       x-token-scope: write
+      x-roles: [admin, operator]
       requestBody:
         required: true
         content:
@@ -1299,6 +1315,7 @@ paths:
       tags: [Rules]
       summary: Remove an override
       x-token-scope: write
+      x-roles: [admin, operator]
       responses:
         "204": { description: Override removed. }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -1326,6 +1343,7 @@ paths:
       tags: [Silences]
       summary: Create a maintenance window
       x-token-scope: write
+      x-roles: [admin, operator]
       requestBody:
         required: true
         content:
@@ -1356,6 +1374,7 @@ paths:
       tags: [Silences]
       summary: Delete a maintenance window
       x-token-scope: write
+      x-roles: [admin, operator]
       responses:
         "204": { description: Window deleted. }
         "401": { $ref: "#/components/responses/Unauthorized" }
@@ -3965,7 +3984,8 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
     Forbidden:
       description: >-
-        Not allowed: viewer or `read` token on a write operation, token on a
+        Not allowed: viewer, operator outside alert handling, or `read` token
+        on a write operation, token on a
         session-only operation or from a network it is not allowed from,
         missing `X-Requested-With: DumbMonit` on a cookie write.
       content:
@@ -4033,7 +4053,11 @@ components:
     # ----------------------------------------------------------- comptes
     Role:
       type: string
-      enum: [admin, viewer]
+      enum: [admin, operator, viewer]
+      description: >-
+        `admin` does everything; `operator` reads everything and handles
+        alerts (operations marked `x-roles: [admin, operator]`); `viewer`
+        reads.
     User:
       type: object
       required: [id, username, display_name, role, auth, disabled, totp_enabled, created_at]
@@ -4153,6 +4177,10 @@ components:
         admin_groups:
           type: array
           items: { type: string }
+        operator_groups:
+          type: array
+          items: { type: string }
+          description: Members who are not in an admin group become operators.
         groups_claim: { type: string }
         public_url: { type: string }
         redirect_uri: { type: string }
@@ -4169,6 +4197,10 @@ components:
         admin_groups:
           type: array
           items: { type: string }
+        operator_groups:
+          type: array
+          items: { type: string }
+          description: Members who are not in an admin group become operators.
         groups_claim: { type: string }
         public_url: { type: string }
     OidcTestRequest:

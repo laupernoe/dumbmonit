@@ -1,6 +1,7 @@
 //! Comptes utilisateurs : lecture et écriture de la table `users`.
 //!
-//! Deux rôles, pas un de plus : `admin` fait tout, `viewer` regarde. Il n'y a ni
+//! Trois rôles, ordonnés : `viewer` regarde, `operator` regarde et traite les
+//! alertes (acquitter, ignorer, mettre en sourdine), `admin` fait tout. Il n'y a ni
 //! permission fine, ni groupe local — quand une équipe a besoin de plus, c'est le
 //! fournisseur d'identité qui décide, par ses groupes (voir `oidc`).
 
@@ -14,6 +15,7 @@ use sqlx::{Row, SqlitePool};
 #[serde(rename_all = "lowercase")]
 pub enum Role {
     Admin,
+    Operator,
     Viewer,
 }
 
@@ -21,6 +23,7 @@ impl Role {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Admin => "admin",
+            Self::Operator => "operator",
             Self::Viewer => "viewer",
         }
     }
@@ -28,6 +31,7 @@ impl Role {
     pub fn parse(value: &str) -> Option<Self> {
         match value {
             "admin" => Some(Self::Admin),
+            "operator" => Some(Self::Operator),
             "viewer" => Some(Self::Viewer),
             _ => None,
         }
@@ -35,6 +39,12 @@ impl Role {
 
     pub fn is_admin(self) -> bool {
         matches!(self, Self::Admin)
+    }
+
+    /// Peut traiter les alertes : opérateur ou administrateur. Ce que cela
+    /// ouvre exactement est la liste `OPERATOR_ROUTES` du garde d'API.
+    pub fn can_operate(self) -> bool {
+        matches!(self, Self::Admin | Self::Operator)
     }
 }
 
@@ -430,7 +440,7 @@ mod tests {
 
     #[test]
     fn roles_round_trip_through_their_text_form() {
-        for role in [Role::Admin, Role::Viewer] {
+        for role in [Role::Admin, Role::Operator, Role::Viewer] {
             assert_eq!(Role::parse(role.as_str()), Some(role));
         }
         assert_eq!(Role::parse("root"), None);
