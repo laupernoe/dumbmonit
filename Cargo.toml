@@ -5,7 +5,7 @@ members = ["crates/agent", "crates/collectors", "crates/pack", "crates/proto", "
 [workspace.package]
 version = "0.1.0-alpha.6"
 edition = "2024"
-rust-version = "1.88"  # let-chains (stabilisés en 1.88)
+rust-version = "1.95"  # sysinfo 0.39 exige 1.95 (let-chains dès 1.88) ; relever la version laisse le résolveur MSRV-aware prendre les dernières versions
 license = "Apache-2.0"
 repository = "https://github.com/laupernoe/dumbmonit"
 
