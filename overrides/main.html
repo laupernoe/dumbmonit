@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{#- Shown on a page that is not translated yet: the i18n plugin serves the
+    English page in its place (fallback_to_default). -#}
+{% set fallback_notice = {
+  "fr": "Cette page n'est pas encore traduite : voici la version anglaise.",
+  "de": "Diese Seite ist noch nicht übersetzt: hier die englische Fassung.",
+  "es": "Esta página aún no está traducida: se muestra la versión en inglés.",
+  "it": "Questa pagina non è ancora tradotta: ecco la versione inglese.",
+  "pt": "Esta página ainda não foi traduzida: apresenta-se a versão em inglês.",
+  "pt-BR": "Esta página ainda não foi traduzida: aqui está a versão em inglês.",
+  "ru": "Эта страница ещё не переведена: показана английская версия.",
+  "zh-Hans": "此页面尚未翻译，以下为英文版本。"
+} %}
+
+{% block content %}
+  {% if i18n_page_locale is defined and i18n_file_locale != i18n_page_locale and i18n_page_locale in fallback_notice %}
+    <div class="admonition info" lang="{{ i18n_page_locale }}">
+      <p class="admonition-title">{{ fallback_notice[i18n_page_locale] }}</p>
+    </div>
+  {% endif %}
+  {{ super() }}
+{% endblock %}
