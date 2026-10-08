@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Device metrics for the detail page: loaded with counters turned into rates,
  * then sorted into the sections the page folds them into.
@@ -224,27 +225,27 @@ function essentialsOf(groups: DeviceMetricGroup[]): DeviceMetricGroup[] {
 	const charts: DeviceMetricGroup[] = [];
 
 	const cpu = pick(groups, 'dumbmonit_cpu_usage_percent');
-	if (cpu) charts.push(withSeries(cpu, cpu.series, { title: 'CPU usage' }));
+	if (cpu) charts.push(withSeries(cpu, cpu.series, { title: m.devices_metrics_cpu() }));
 
 	const loads = (['1', '5', '15'] as const)
-		.map((m) => ({ m, group: pick(groups, `dumbmonit_load_average_${m}`) }))
-		.filter((x): x is { m: '1' | '5' | '15'; group: DeviceMetricGroup } => x.group !== undefined);
+		.map((n) => ({ n, group: pick(groups, `dumbmonit_load_average_${n}`) }))
+		.filter((x): x is { n: '1' | '5' | '15'; group: DeviceMetricGroup } => x.group !== undefined);
 	if (loads.length > 0) {
 		charts.push({
 			name: 'dumbmonit_load_average',
-			title: 'Load average',
+			title: m.devices_metrics_load(),
 			unit: '',
-			series: loads.flatMap(({ m, group }) =>
-				group.series.map((s) => ({ ...s, label: `${m} min` }))
+			series: loads.flatMap(({ n, group }) =>
+				group.series.map((s) => ({ ...s, label: m.devices_metrics_load_min({ n }) }))
 			)
 		});
 	}
 
 	const memory = pick(groups, 'dumbmonit_memory_used_percent');
-	if (memory) charts.push(withSeries(memory, memory.series, { title: 'Memory used' }));
+	if (memory) charts.push(withSeries(memory, memory.series, { title: m.devices_metrics_memory() }));
 
 	const fs = pick(groups, 'dumbmonit_filesystem_used_percent');
-	if (fs) charts.push(withSeries(fs, fs.series, { title: 'Filesystems used' }));
+	if (fs) charts.push(withSeries(fs, fs.series, { title: m.devices_metrics_fs() }));
 
 	const octetsIn = pick(groups, 'dumbmonit_if_octets_in');
 	const octetsOut = pick(groups, 'dumbmonit_if_octets_out');
@@ -254,9 +255,9 @@ function essentialsOf(groups: DeviceMetricGroup[]): DeviceMetricGroup[] {
 		const kept = all.some(physical) ? all.filter(physical) : all;
 		const series = kept.map((s) => ({
 			...s,
-			label: `${s.label} ${s.labels.__name__?.endsWith('_out') ? 'out' : 'in'}`
+			label: `${s.label} ${s.labels.__name__?.endsWith('_out') ? m.devices_metrics_out() : m.devices_metrics_in()}`
 		}));
-		charts.push({ name: 'dumbmonit_if_octets', title: 'Network throughput', unit: 'B/s', series });
+		charts.push({ name: 'dumbmonit_if_octets', title: m.devices_metrics_net(), unit: 'B/s', series });
 	}
 
 	return charts;
@@ -289,18 +290,22 @@ function rowsBy(groups: DeviceMetricGroup[], key: string): Map<string, DeviceMet
  */
 function pairInOut(groups: DeviceMetricGroup[]): DeviceMetricGroup[] {
 	// Inside an interface row "Interface octets" is just "Throughput".
-	const TITLES: Record<string, string> = { octets: 'Throughput', packets: 'Packets', errors: 'Errors' };
+	const TITLES: Record<string, string> = {
+		octets: m.devices_metrics_throughput(),
+		packets: m.devices_metrics_packets(),
+		errors: m.devices_metrics_errors()
+	};
 	const ORDER = ['octets', 'packets', 'errors'];
 	const paired = new Map<string, DeviceMetricGroup>();
 	for (const g of groups) {
-		const m = g.name.match(/_([a-z]+)_(in|out)$/);
-		if (!m) {
+		const match = g.name.match(/_([a-z]+)_(in|out)$/);
+		if (!match) {
 			paired.set(g.name, g);
 			continue;
 		}
-		const [, kind, dir] = m;
+		const [, kind, dir] = match;
 		const stem = g.name.replace(/_(in|out)$/, '');
-		const series = g.series.map((s) => ({ ...s, label: dir }));
+		const series = g.series.map((s) => ({ ...s, label: dir === 'in' ? m.devices_metrics_in() : m.devices_metrics_out() }));
 		const known = paired.get(stem);
 		if (known) known.series.push(...series);
 		else paired.set(stem, { ...g, name: stem, title: TITLES[kind] ?? titleFor(stem), series });

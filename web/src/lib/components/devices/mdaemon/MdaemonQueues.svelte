@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * MDaemon's queues, sessions and 24-hour message totals, read by the Windows
 	 * agent from MDaemon's performance counters. Mounted on the MDaemon device
@@ -73,76 +74,76 @@
 	const flagged = $derived(reading.queues.filter((q) => attention(q.queue, q.messages) || q.frozen).length);
 	const description = $derived(
 		agentName
-			? `Read from MDaemon's performance counters by the agent on ${agentName}.`
-			: "Read from MDaemon's performance counters by this agent."
+			? m.devices_mdq_desc_agent({ agent: agentName })
+			: m.devices_mdq_desc()
 	);
 </script>
 
 {#if !loading && (reading.queues.length > 0 || error)}
-<Panel title="Mail queues" {description} padded={false} class="rise-in">
+<Panel title={m.devices_mdq_title()} {description} padded={false} class="rise-in">
 	{#snippet aside()}
 		{#if reading.running === false}
-			<Plate tone="warning" label="MDaemon not running" />
+			<Plate tone="warning" label={m.devices_mdq_not_running()} />
 		{:else if flagged === 0}
-			<Plate tone="signal" label="Queues flowing" />
+			<Plate tone="signal" label={m.devices_mdq_flowing()} />
 		{:else}
-			<Plate tone="advisory" label={flagged === 1 ? '1 queue to look at' : `${flagged} queues to look at`} />
+			<Plate tone="advisory" label={flagged === 1 ? m.devices_mdq_flagged_one({ count: flagged }) : m.devices_mdq_flagged_other({ count: flagged })} />
 		{/if}
 	{/snippet}
 	{#if error}
-		<div class="px-5 py-4">
-			<ErrorNotice {error} title="Could not load the MDaemon queues" onretry={() => void load()} />
+		<div class="px-4 py-4 sm:px-5">
+			<ErrorNotice {error} title={m.devices_mdq_error()} onretry={() => void load()} />
 		</div>
 	{:else}
 		<ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
 			{#each reading.queues as q (q.queue)}
 				{@const flag = attention(q.queue, q.messages)}
-				<li class="flex flex-col gap-1 border-b border-line px-5 py-3">
+				<li class="flex flex-col gap-1 border-b border-line px-4 py-3 sm:px-5">
 					<span class="text-sm text-ink-2">{QUEUE_LABELS[q.queue] ?? q.queue}</span>
 					<span class="tnum text-lg font-semibold text-ink">{q.messages.toLocaleString('en')}</span>
 					{#if q.frozen}
-						<Plate tone="advisory" label="Frozen" />
+						<Plate tone="advisory" label={m.devices_mdq_frozen()} />
 					{:else if flag}
-						<Plate tone="advisory" label={q.queue === 'bad' ? 'Needs an admin' : 'High'} />
+						<Plate tone="advisory" label={q.queue === 'bad' ? m.devices_mdq_needs_admin() : m.devices_mdq_high()} />
 					{/if}
 				</li>
 			{/each}
 		</ul>
 
-		<dl class="grid grid-cols-1 gap-x-6 gap-y-1 px-5 py-4 text-sm sm:grid-cols-2">
+		<dl class="grid grid-cols-1 gap-x-6 gap-y-1 px-4 py-4 text-sm sm:grid-cols-2 sm:px-5">
 			{#each reading.sessions as s (s.protocol)}
 				<div class="flex justify-between gap-3 border-b border-line py-1">
-					<dt class="text-ink-2">Active sessions, {PROTOCOL_LABELS[s.protocol] ?? s.protocol}</dt>
+					<dt class="text-ink-2">{m.devices_mdq_sessions({ protocol: PROTOCOL_LABELS[s.protocol] ?? s.protocol })}</dt>
 					<dd class="tnum font-medium text-ink">{s.value.toLocaleString('en')}</dd>
 				</div>
 			{/each}
-			{#each reading.messages24h as m (m.protocol)}
+			{#each reading.messages24h as m2 (m2.protocol)}
 				<div class="flex justify-between gap-3 border-b border-line py-1">
-					<dt class="text-ink-2">Messages in 24 h, {PROTOCOL_LABELS[m.protocol] ?? m.protocol}</dt>
-					<dd class="tnum font-medium text-ink">{m.value.toLocaleString('en')}</dd>
+					<dt class="text-ink-2">{m.devices_mdq_messages24({ protocol: PROTOCOL_LABELS[m2.protocol] ?? m2.protocol })}</dt>
+					<dd class="tnum font-medium text-ink">{m2.value.toLocaleString('en')}</dd>
 				</div>
 			{/each}
 			{#each reading.filtered24h as f (`${f.filter}:${f.verdict}`)}
 				<div class="flex justify-between gap-3 border-b border-line py-1">
 					<dt class="text-ink-2">
-						{f.filter === 'dnsbl' ? 'DNSBL' : f.filter === 'virus' ? 'Viruses' : 'Spam'} {f.verdict} in 24 h
+						{f.filter === 'dnsbl' ? m.devices_mdq_filtered_dnsbl({ verdict: f.verdict }) : f.filter === 'virus' ? m.devices_mdq_filtered_virus({ verdict: f.verdict }) : m.devices_mdq_filtered_spam({ verdict: f.verdict })}
 					</dt>
 					<dd class="tnum font-medium text-ink">{f.value.toLocaleString('en')}</dd>
 				</div>
 			{/each}
 			{#if reading.uptimeSeconds !== null}
 				<div class="flex justify-between gap-3 border-b border-line py-1">
-					<dt class="text-ink-2">MDaemon up for</dt>
+					<dt class="text-ink-2">{m.devices_mdq_uptime()}</dt>
 					<dd class="tnum font-medium text-ink">{formatDuration(reading.uptimeSeconds)}</dd>
 				</div>
 			{/if}
 		</dl>
 
 		{#if reading.inactive.length > 0}
-			<div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line px-5 py-3 text-sm">
-				<Plate tone="muted" label="Inactive" />
+			<div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line px-4 py-3 text-sm sm:px-5">
+				<Plate tone="muted" label={m.devices_mdq_inactive()} />
 				<span class="text-ink-2">
-					{reading.inactive.map((s) => SERVER_LABELS[s] ?? s).join(', ')}: turned off in MDaemon, or not licensed.
+					{m.devices_mdq_inactive_note({ servers: reading.inactive.map((s) => SERVER_LABELS[s] ?? s).join(', ') })}
 				</span>
 			</div>
 		{/if}
