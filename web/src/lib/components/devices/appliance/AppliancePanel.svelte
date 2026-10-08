@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The state of a commercial appliance or service as its last probe left it
 	 * (pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos), or of a Hyper-V
@@ -70,11 +71,11 @@
 {#if fold && !loading && (error || view)}
 	<Panel title={view?.title ?? fold.title} description={view?.description ?? ''} padded={false} class="rise-in">
 		{#snippet aside()}
-			{#if view}<Plate tone={view.verdict.tone} label={view.verdict.tone === 'signal' ? 'Healthy' : 'Needs attention'} />{/if}
+			{#if view}<Plate tone={view.verdict.tone} label={view.verdict.tone === 'signal' ? m.devices_appliance_healthy() : m.devices_appliance_attention()} />{/if}
 		{/snippet}
 		{#if error}
 			<div class="px-5 py-4">
-				<ErrorNotice {error} title={`Could not load the ${fold.title.toLowerCase()}`} onretry={() => void load()} />
+				<ErrorNotice {error} title={m.devices_appliance_err_title({ name: fold.title.toLowerCase() })} onretry={() => void load()} />
 			</div>
 		{:else if view}
 			<p class={`px-5 pt-4 text-sm ${VERDICT_INK[view.verdict.tone]}`}>{view.verdict.text}</p>

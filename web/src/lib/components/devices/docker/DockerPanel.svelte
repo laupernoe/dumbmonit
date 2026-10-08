@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Containers of an agent device: one compact row per container with its
 	 * state, image, policy switches and the two actions the agent can carry out
@@ -59,28 +60,38 @@
 	const summary = $derived.by(() => {
 		if (fleet.loading || fleet.error || fleet.containers.length === 0) return undefined;
 		const total = fleet.containers.length;
-		const parts = [`${total}`, `${fleet.running} running`];
-		if (fleet.running < total) parts.push(`${total - fleet.running} stopped`);
-		if (fleet.updates > 0) parts.push(`${fleet.updates} ${fleet.updates === 1 ? 'update' : 'updates'} available`);
+		const parts = [`${total}`, m.devices_docker_running({ count: fleet.running })];
+		if (fleet.running < total) parts.push(m.devices_docker_stopped_n({ count: total - fleet.running }));
+		if (fleet.updates > 0) {
+			parts.push(
+				fleet.updates === 1
+					? m.devices_docker_updates_one({ count: fleet.updates })
+					: m.devices_docker_updates_other({ count: fleet.updates })
+			);
+		}
 		return parts.join(' · ');
 	});
 
 	/** The tiny status line of a folded row. */
 	function statusLine(c: ContainerView): string {
 		const parts: string[] = [];
-		if (c.up && c.uptime_seconds !== null) parts.push(`up ${formatDuration(c.uptime_seconds)}`);
-		parts.push(`${c.restart_count} ${c.restart_count === 1 ? 'restart' : 'restarts'}`);
-		if (c.image_age_seconds !== null) parts.push(`image ${formatDuration(c.image_age_seconds)} old`);
+		if (c.up && c.uptime_seconds !== null) parts.push(m.devices_docker_up_for({ duration: formatDuration(c.uptime_seconds) }));
+		parts.push(
+			c.restart_count === 1
+				? m.devices_docker_restarts_one({ count: c.restart_count })
+				: m.devices_docker_restarts_other({ count: c.restart_count })
+		);
+		if (c.image_age_seconds !== null) parts.push(m.devices_docker_image_old({ duration: formatDuration(c.image_age_seconds) }));
 		return parts.join(' · ');
 	}
 
 	// --- Presentation -----------------------------------------------------------
 
 	function stateOf(c: ContainerView): { tone: 'signal' | 'advisory' | 'warning'; word: string; blink: boolean } {
-		if (!c.up) return { tone: 'warning', word: 'Stopped', blink: true };
-		if (c.health === 'unhealthy') return { tone: 'warning', word: 'Unhealthy', blink: true };
-		if (c.health === 'starting') return { tone: 'advisory', word: 'Starting', blink: false };
-		return { tone: 'signal', word: 'Running', blink: false };
+		if (!c.up) return { tone: 'warning', word: m.devices_docker_state_stopped(), blink: true };
+		if (c.health === 'unhealthy') return { tone: 'warning', word: m.devices_docker_state_unhealthy(), blink: true };
+		if (c.health === 'starting') return { tone: 'advisory', word: m.devices_docker_state_starting(), blink: false };
+		return { tone: 'signal', word: m.devices_docker_state_running(), blink: false };
 	}
 
 	const STATUS_TONE: Record<CommandStatus, Tone> = {
@@ -92,12 +103,24 @@
 		expired: 'advisory'
 	};
 	const STATUS_WORD: Record<CommandStatus, string> = {
-		queued: 'Queued',
-		running: 'Running…',
-		done: 'Done',
-		failed: 'Failed',
-		cancelled: 'Cancelled',
-		expired: 'Expired'
+		get queued() {
+			return m.devices_docker_status_queued();
+		},
+		get running() {
+			return m.devices_docker_status_running();
+		},
+		get done() {
+			return m.devices_docker_status_done();
+		},
+		get failed() {
+			return m.devices_docker_status_failed();
+		},
+		get cancelled() {
+			return m.devices_docker_status_cancelled();
+		},
+		get expired() {
+			return m.devices_docker_status_expired();
+		}
 	};
 
 	/**
@@ -108,8 +131,8 @@
 	/** Why not, in one clause: an agent that said "no", or one that said nothing. */
 	const whyNot = $derived(
 		fleet.agent?.commands_supported === false && fleet.agent.agent_version
-			? `agent ${fleet.agent.agent_version} reports actions disabled (commands: false) or predates the command channel`
-			: 'no agent has reported its capabilities yet'
+			? m.devices_docker_why_disabled({ version: fleet.agent.agent_version })
+			: m.devices_docker_why_unknown()
 	);
 	// The token is not known here: the placeholder points at Settings → Agents.
 	const origin = typeof window === 'undefined' ? 'http://server:8080' : window.location.origin;
@@ -181,28 +204,26 @@
 	}
 </script>
 
-<FoldSection kind="containers" title="Containers" {summary} class="rise-in">
+<FoldSection kind="containers" title={m.devices_docker_title()} {summary} class="rise-in">
 	{#if fleet.error}
-		<div class="px-5 py-4">
-			<ErrorNotice error={fleet.error} title="Could not load the containers" onretry={() => void fleet.load()} />
+		<div class="px-4 py-4 sm:px-5">
+			<ErrorNotice error={fleet.error} title={m.devices_docker_err_load()} onretry={() => void fleet.load()} />
 		</div>
 	{:else if fleet.loading}
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading containers">
+		<div class="flex flex-col gap-3 px-4 py-4 sm:px-5" aria-busy="true" aria-label={m.devices_docker_loading()}>
 			<Skeleton class="h-12 w-full" rows={3} />
 		</div>
 	{:else if fleet.containers.length === 0}
-		<p class="px-5 py-4 text-sm text-ink-2">No Docker on this machine, or the agent cannot reach its socket (add the agent to the docker group or run it as root).</p>
+		<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_docker_none()}</p>
 	{:else}
 		{#if !canAct}
-			<div class="mx-5 mt-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-2.5" role="status">
-				<Plate tone="advisory" label="Actions unavailable" />
+			<div class="mx-4 mt-4 rounded-lg sm:mx-5 border border-advisory/35 bg-advisory-soft px-3 py-2.5" role="status">
+				<Plate tone="advisory" label={m.devices_docker_unavailable()} />
 				<p class="mt-1.5 text-sm leading-relaxed text-ink">
-					This agent cannot run commands — {whyNot}. Reinstall it with the current installer
-					(token from Settings → Agents, <code class="font-mono text-[0.8125rem]">commands: true</code>);
-					restart, update and the policies below stay off until it reports back.
+					{m.devices_docker_unavailable_body({ why: whyNot })}
 				</p>
 				<div class="mt-2">
-					<CopyBlock value={installHint} label="Copy the install command" />
+					<CopyBlock value={installHint} label={m.devices_docker_copy_install()} />
 				</div>
 			</div>
 		{/if}
@@ -219,7 +240,7 @@
 							<span class="truncate font-semibold text-ink">{c.name}</span>
 							<Plate tone={s.tone} label={s.word} bare />
 							{#if c.update_available === true}
-								<Plate tone="info" label="Update available" bare />
+								<Plate tone="info" label={m.devices_docker_update_available()} bare />
 							{/if}
 						</span>
 						<span class="tnum truncate text-[0.8125rem] text-ink-2">{statusLine(c)}</span>
@@ -235,13 +256,13 @@
 					<!-- Policy switches and actions -->
 					<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 						<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-5">
-							<div class="flex items-center gap-2">
-								<Toggle id={`restart-${target.id}-${c.name}`} checked={c.policy.auto_restart} disabled={saving || !canAct} label="Restart if down" onchange={(v) => void savePolicy(c, { auto_restart: v })} />
-								<label for={`restart-${target.id}-${c.name}`} class="text-sm text-ink">Restart if down</label>
+							<div class="flex min-h-10 items-center gap-2 sm:min-h-0">
+								<Toggle id={`restart-${target.id}-${c.name}`} checked={c.policy.auto_restart} disabled={saving || !canAct} label={m.devices_docker_restart_if_down()} onchange={(v) => void savePolicy(c, { auto_restart: v })} />
+								<label for={`restart-${target.id}-${c.name}`} class="text-sm text-ink">{m.devices_docker_restart_if_down()}</label>
 							</div>
-							<div class="flex items-center gap-2">
-								<Toggle id={`update-${target.id}-${c.name}`} checked={c.policy.auto_update} disabled={saving || !canAct} label="Auto-update in maintenance windows" onchange={(v) => void savePolicy(c, { auto_update: v })} />
-								<label for={`update-${target.id}-${c.name}`} class="text-sm text-ink">Auto-update in maintenance windows</label>
+							<div class="flex min-h-10 items-center gap-2 sm:min-h-0">
+								<Toggle id={`update-${target.id}-${c.name}`} checked={c.policy.auto_update} disabled={saving || !canAct} label={m.devices_docker_auto_update()} onchange={(v) => void savePolicy(c, { auto_update: v })} />
+								<label for={`update-${target.id}-${c.name}`} class="text-sm text-ink">{m.devices_docker_auto_update()}</label>
 							</div>
 						</div>
 						<div class="flex flex-wrap items-center gap-2" aria-live="polite">
@@ -249,19 +270,19 @@
 								<Plate tone={STATUS_TONE[c.last_command.status]} label={`${commandLabel(c.last_command.kind)} · ${STATUS_WORD[c.last_command.status]}`} pulse={c.last_command.status === 'running'} title={c.last_command.created_at} />
 								{#if c.last_command.result}
 									<Button size="sm" variant="ghost" onclick={() => (showResult = { ...showResult, [c.name]: !showResult[c.name] })} aria-expanded={showResult[c.name] ?? false}>
-										{showResult[c.name] ? 'Hide result' : 'Show result'}
+										{showResult[c.name] ? m.devices_docker_hide_result() : m.devices_docker_show_result()}
 									</Button>
 								{/if}
 							{/if}
 							{#if c.last_command?.status === 'queued'}
 								{@const queued = c.last_command}
-								<Button size="sm" variant="ghost" onclick={() => void cancel(queued, c)} loading={cancelling[queued.id] ?? false} title="Pull the command back before the agent picks it up">Cancel</Button>
+								<Button size="sm" variant="ghost" onclick={() => void cancel(queued, c)} loading={cancelling[queued.id] ?? false} title={m.devices_docker_cancel_title()}>{m.devices_docker_cancel()}</Button>
 							{/if}
 							{#if canAct}
-								<Confirm size="sm" variant="secondary" confirmLabel="Restart now?" onconfirm={() => act(c, 'restart')} loading={acting[c.name] ?? false} disabled={working}>Restart</Confirm>
-								<Confirm size="sm" variant="secondary" confirmLabel="Pull and replace?" onconfirm={() => act(c, 'update')} loading={acting[c.name] ?? false} disabled={working}>Update now</Confirm>
+								<Confirm size="sm" variant="secondary" confirmLabel={m.devices_docker_restart_confirm()} onconfirm={() => act(c, 'restart')} loading={acting[c.name] ?? false} disabled={working}>{m.devices_docker_restart()}</Confirm>
+								<Confirm size="sm" variant="secondary" confirmLabel={m.devices_docker_update_confirm()} onconfirm={() => act(c, 'update')} loading={acting[c.name] ?? false} disabled={working}>{m.devices_docker_update_now()}</Confirm>
 							{:else}
-								<span class="text-sm text-ink-2">Restart and update need an agent that runs commands.</span>
+								<span class="text-sm text-ink-2">{m.devices_docker_needs_agent()}</span>
 							{/if}
 						</div>
 					</div>
@@ -270,14 +291,14 @@
 						<pre class="tnum max-h-64 overflow-auto rounded-lg bg-surface-2 px-3 py-2 text-xs whitespace-pre-wrap text-ink">{c.last_command.result}</pre>
 					{/if}
 					{#if rowError[c.name]}
-						<ErrorNotice error={rowError[c.name]} title="The action could not be sent" />
+						<ErrorNotice error={rowError[c.name]} title={m.devices_docker_err_action()} />
 					{/if}
 
 					<!-- The container's own charts, over the page's range -->
 					{#if loadingMetrics && charts.length === 0}
 						<Skeleton class="h-32 w-full rounded-[var(--radius-card)]" />
 					{:else if charts.length === 0}
-						<p class="text-sm text-ink-2">No metric for this container in this range.</p>
+						<p class="text-sm text-ink-2">{m.devices_docker_no_metric()}</p>
 					{:else}
 						<div class="grid gap-3 lg:grid-cols-2">
 							{#each charts as chart (chart.name)}
@@ -296,21 +317,21 @@
 		</ul>
 
 		<!-- History of what was asked of the agent -->
-		<div class="graticule border-t border-line px-5 py-4">
-			<h3 class="text-sm font-semibold text-ink">Recent actions</h3>
+		<div class="graticule border-t border-line px-4 py-4 sm:px-5">
+			<h3 class="text-sm font-semibold text-ink">{m.devices_docker_recent()}</h3>
 			{#if fleet.commands.length === 0}
-				<p class="mt-1 text-sm text-ink-2">Nothing yet. Open a container and restart or update it.</p>
+				<p class="mt-1 text-sm text-ink-2">{m.devices_docker_recent_none()}</p>
 			{:else}
 				<ul class="mt-2 flex flex-col gap-1.5" aria-live="polite">
 					{#each recent as command (command.id)}
 						<li class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
 							<Plate tone={STATUS_TONE[command.status]} label={STATUS_WORD[command.status]} pulse={command.status === 'running'} />
 							<span class="text-ink">{commandLabel(command.kind)} <span class="font-semibold break-all">{commandContainer(command)}</span></span>
-							<span class="text-ink-2">by {command.requested_by ?? 'unknown'}</span>
+							<span class="text-ink-2">{m.devices_docker_by({ name: command.requested_by ?? m.devices_docker_by_unknown() })}</span>
 							<span class="text-ink-3" aria-hidden="true">·</span>
 							<span class="tnum text-ink-2" title={command.created_at}>{formatRelative(command.created_at)}</span>
 							{#if command.status === 'queued'}
-								<Button size="sm" variant="ghost" onclick={() => void cancel(command)} loading={cancelling[command.id] ?? false}>Cancel</Button>
+								<Button size="sm" variant="ghost" onclick={() => void cancel(command)} loading={cancelling[command.id] ?? false}>{m.devices_docker_cancel()}</Button>
 							{/if}
 							{#if command.result && !isPending(command)}
 								<span class="min-w-0 basis-full truncate text-ink-2" title={command.result}>{command.result.split('\n').at(-1)}</span>
@@ -319,8 +340,8 @@
 					{/each}
 				</ul>
 				{#if fleet.commands.length > 5}
-					<Button size="sm" variant="ghost" class="mt-2" onclick={() => (showAllCommands = !showAllCommands)}>
-						{showAllCommands ? 'Show fewer' : `Show all (${fleet.commands.length})`}
+					<Button size="sm" variant="ghost" class="mt-2 min-h-10 sm:min-h-0" onclick={() => (showAllCommands = !showAllCommands)}>
+						{showAllCommands ? m.devices_docker_show_fewer() : m.devices_docker_show_all({ count: fleet.commands.length })}
 					</Button>
 				{/if}
 			{/if}

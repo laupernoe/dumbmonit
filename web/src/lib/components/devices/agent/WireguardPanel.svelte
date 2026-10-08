@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * WireGuard tunnels seen by the agent (`wg show all dump`): one block per
 	 * interface, one line per peer with the time since its last handshake.
@@ -48,15 +49,15 @@
 	let error = $state<unknown>(null);
 
 	function plateOf(p: PeerStat): { tone: Tone; label: string } {
-		if (p.age === null) return { tone: 'ghost', label: 'No reading' };
+		if (p.age === null) return { tone: 'ghost', label: m.devices_wg_no_reading() };
 		if (!p.handshake) {
 			return p.keepalive > 0 && p.age > SILENT_AFTER
-				? { tone: 'warning', label: `Never connected (${formatAge(p.age)} watched)` }
-				: { tone: 'ghost', label: 'Never connected' };
+				? { tone: 'warning', label: m.devices_wg_never_watched({ age: formatAge(p.age) }) }
+				: { tone: 'ghost', label: m.devices_wg_never() };
 		}
-		if (p.age <= CONNECTED_WITHIN) return { tone: 'signal', label: `Connected · ${formatAge(p.age)} ago` };
-		if (p.keepalive > 0 && p.age > SILENT_AFTER) return { tone: 'warning', label: `Silent for ${formatAge(p.age)}` };
-		return { tone: 'muted', label: `Idle · last handshake ${formatAge(p.age)} ago` };
+		if (p.age <= CONNECTED_WITHIN) return { tone: 'signal', label: m.devices_wg_connected({ age: formatAge(p.age) }) };
+		if (p.keepalive > 0 && p.age > SILENT_AFTER) return { tone: 'warning', label: m.devices_wg_silent_for({ age: formatAge(p.age) }) };
+		return { tone: 'muted', label: m.devices_wg_idle({ age: formatAge(p.age) }) };
 	}
 
 	function shortKey(key: string): string {
@@ -142,38 +143,38 @@
 </script>
 
 {#if !loading && (error || interfaces.length > 0)}
-	<Panel title="WireGuard" description="Tunnels on this machine, read with wg show." padded={false} class="rise-in">
+	<Panel title={m.devices_wg_title()} description={m.devices_wg_description()} padded={false} class="rise-in">
 		{#snippet aside()}
 			{#if silent > 0}
-				<Plate tone="warning" label={silent === 1 ? '1 tunnel silent' : `${silent} tunnels silent`} />
+				<Plate tone="warning" label={silent === 1 ? m.devices_wg_silent_one() : m.devices_wg_silent_other({ count: silent })} />
 			{:else if interfaces.length > 0}
-				<Plate tone="signal" label="Tunnels up" />
+				<Plate tone="signal" label={m.devices_wg_up()} />
 			{/if}
 		{/snippet}
 		{#if error}
 			<div class="px-5 py-4">
-				<ErrorNotice {error} title="Could not load the tunnels" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.devices_wg_err_title()} onretry={() => void load()} />
 			</div>
 		{:else}
 			<ul class="divide-y divide-line">
 				{#each interfaces as i (i.name)}
-					<li class="px-5 py-4">
+					<li class="px-4 py-4 sm:px-5">
 						<p class="font-mono font-semibold text-ink">{i.name}</p>
 						{#if i.peers.length === 0}
-							<p class="mt-1 text-sm text-ink-2">No peer configured on this interface.</p>
+							<p class="mt-1 text-sm text-ink-2">{m.devices_wg_no_peers()}</p>
 						{:else}
 							<ul class="mt-2 flex flex-col gap-2">
 								{#each i.peers as p (p.key)}
 									{@const plate = plateOf(p)}
 									<li class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
 										<Plate tone={plate.tone} label={plate.label} />
-										<span class="min-w-0 text-sm text-ink break-all">{p.name ?? (p.allowedIps || 'no allowed IPs')}</span>
+										<span class="min-w-0 text-sm text-ink break-all">{p.name ?? (p.allowedIps || m.devices_wg_no_ips())}</span>
 										<span class="font-mono text-xs text-ink-3" title={p.key}>{shortKey(p.key)}</span>
 										{#if p.rx !== null && p.tx !== null}
 											<span class="tnum text-sm text-ink-2">{`↓ ${formatBytes(p.rx)} · ↑ ${formatBytes(p.tx)}`}</span>
 										{/if}
 										{#if p.keepalive > 0}
-											<span class="text-sm text-ink-2">{`keepalive ${p.keepalive} s`}</span>
+											<span class="text-sm text-ink-2">{m.devices_wg_keepalive({ seconds: p.keepalive })}</span>
 										{/if}
 									</li>
 								{/each}
@@ -183,7 +184,7 @@
 				{/each}
 			</ul>
 			<p class="border-t border-line px-5 py-3 text-sm text-ink-2">
-				Only peers with a persistent keepalive raise an alert when they stay silent for 15 minutes; the others may idle for days.
+				{m.devices_wg_note()}
 			</p>
 		{/if}
 	</Panel>

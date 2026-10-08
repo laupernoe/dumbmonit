@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Device detail: one large faceplate band, the alert timeline of this device, then
 	 * the instruments — availability for a service; for a device, the essentials
@@ -233,7 +234,7 @@
 	const availability = $derived(
 		summary ? (range === '7d' ? summary.availability.week : summary.availability.day) : null
 	);
-	const availabilityWindow = $derived(range === '7d' ? 'last 7 days' : 'last 24 hours');
+	const availabilityWindow = $derived(range === '7d' ? m.devices_target_window_7d() : m.devices_target_window_24h());
 	function availabilityTone(value: number | null): 'ink' | 'signal' | 'advisory' | 'warning' {
 		if (value === null) return 'ink';
 		if (value >= 99) return 'signal';
@@ -246,10 +247,10 @@
 		const days = summary?.certExpiryDays ?? null;
 		if (days === null) return null;
 		const whole = Math.round(days);
-		if (whole < 0) return { tone: 'warning' as Tone, label: `Certificate expired ${-whole} d ago` };
+		if (whole < 0) return { tone: 'warning' as Tone, label: m.devices_target_cert_expired({ days: -whole }) };
 		return {
 			tone: (whole < 14 ? 'advisory' : 'signal') as Tone,
-			label: `Certificate expires in ${whole} d`
+			label: m.devices_target_cert_expires({ days: whole })
 		};
 	});
 
@@ -475,22 +476,22 @@
 	});
 </script>
 
-<svelte:head><title>{target?.name ?? 'Device'} — DumbMonit</title></svelte:head>
+<svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
 
 <nav class="mb-4 text-sm">
-	<a href="/targets" class="inline-flex items-center gap-1 text-ink-2 hover:text-ink hover:underline">← Devices</a>
+	<a href="/targets" class="inline-flex items-center gap-1 text-ink-2 hover:text-ink hover:underline">{m.devices_target_back()}</a>
 </nav>
 
 {#if missing}
-	<EmptyState icon={ServerOff} title="This device no longer exists." description="It was removed, or the link is out of date.">
+	<EmptyState icon={ServerOff} title={m.devices_target_gone_title()} description={m.devices_target_gone_desc()}>
 		{#snippet action()}
-			<Button variant="secondary" href="/targets">Back to devices</Button>
+			<Button variant="secondary" href="/targets">{m.devices_target_back_btn()}</Button>
 		{/snippet}
 	</EmptyState>
 {:else if error}
-	<ErrorNotice {error} title="Could not load this device" onretry={() => void loadTarget()} />
+	<ErrorNotice {error} title={m.devices_target_err_load()} onretry={() => void loadTarget()} />
 {:else if loading || !target}
-	<div class="flex flex-col gap-6" aria-busy="true" aria-label="Loading device">
+	<div class="flex flex-col gap-6" aria-busy="true" aria-label={m.devices_target_loading()}>
 		<Skeleton class="h-40 w-full rounded-[var(--radius-card)]" />
 		<Skeleton class="h-10 w-64" />
 		<div class="grid gap-4 lg:grid-cols-2">
@@ -514,11 +515,11 @@
 						<span class="text-ink-3" aria-hidden="true">·</span>
 						<span class="tnum break-all" title={target.address}>{shortAddress}</span>
 						<span class="text-ink-3" aria-hidden="true">·</span>
-						<span class="tnum">every {formatDuration(target.interval_secs)}</span>
+						<span class="tnum">{m.devices_target_every({ interval: formatDuration(target.interval_secs) })}</span>
 						{#if target.parent_id !== null}
 							<span class="text-ink-3" aria-hidden="true">·</span>
 							<a href={`/targets/${target.parent_id}`} class="inline-flex items-center gap-1 hover:text-ink hover:underline">
-								Behind {parent?.name ?? `device #${target.parent_id}`}
+								{m.devices_target_behind({ name: parent?.name ?? m.devices_target_behind_unknown({ id: target.parent_id }) })}
 								<ArrowUpRight class="size-3.5" aria-hidden="true" />
 							</a>
 						{/if}
@@ -527,9 +528,9 @@
 							<a
 								href={`/targets/${target.via_agent}`}
 								class="inline-flex items-center gap-1 hover:text-ink hover:underline"
-								title="Probed by this relay agent, from its own network"
+								title={m.devices_target_via_title()}
 							>
-								via {relay?.name ?? `agent #${target.via_agent}`}
+								{m.devices_target_via({ name: relay?.name ?? m.devices_target_via_unknown({ id: target.via_agent }) })}
 								<ArrowUpRight class="size-3.5" aria-hidden="true" />
 							</a>
 						{/if}
@@ -555,9 +556,9 @@
 							{:else if stateNow === 'down'}
 								<span class="text-warning-ink">{formatFailureReason(summary?.status?.reason)}</span>
 								<span class="text-ink-3" aria-hidden="true">·</span>
-								Last seen {formatRelative(target.last_probe_at)}
+								{m.devices_target_last_seen({ when: formatRelative(target.last_probe_at) })}
 							{:else}
-								Last seen {formatRelative(target.last_probe_at)}
+								{m.devices_target_last_seen({ when: formatRelative(target.last_probe_at) })}
 							{/if}
 						</p>
 					</div>
@@ -567,18 +568,18 @@
 			<div class="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
 				<Button variant="secondary" onclick={probe} loading={probing}>
 					<Activity class="size-4" aria-hidden="true" />
-					Probe now
+					{m.devices_target_probe_now()}
 				</Button>
 				{#if auth.isAdmin}
 					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
 						<Pencil class="size-4" aria-hidden="true" />
-						Edit
+						{m.devices_target_edit()}
 					</Button>
 					<div class="inline-flex h-10 items-center gap-2 rounded-lg border border-line px-3">
 						<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
-						<label for="device-enabled" class="text-sm font-semibold text-ink">Enabled</label>
+						<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
 					</div>
-					<Confirm size="md" confirmLabel="Delete for good?" onconfirm={remove} loading={deleting}>Delete</Confirm>
+					<Confirm size="md" confirmLabel={m.devices_target_delete_confirm()} onconfirm={remove} loading={deleting}>{m.devices_target_delete()}</Confirm>
 					<SilenceControl {target} {refreshKey} />
 				{:else}
 					{#if auth.canOperate}
@@ -592,27 +593,27 @@
 		<div aria-live="polite" class="empty:hidden">
 			{#if probeResult}
 				<div class="mt-4 flex flex-wrap items-center gap-2">
-					<Plate tone="signal" label={`Probe done · ${probeResult.sample_count} samples, ${probeResult.series.length} series`} size="md" />
+					<Plate tone="signal" label={m.devices_target_probe_done({ samples: probeResult.sample_count, series: probeResult.series.length })} size="md" />
 					{#if probeResult.sample_count === 0}
-						<span class="text-sm text-ink-2">The device answered but produced no measurement — the profile may not fit this hardware.</span>
+						<span class="text-sm text-ink-2">{m.devices_target_probe_empty()}</span>
 					{/if}
 				</div>
 			{/if}
 		</div>
 		{#if probeError}
-			<ErrorNotice error={probeError} title="The probe failed" onretry={probe} class="mt-4" />
+			<ErrorNotice error={probeError} title={m.devices_target_err_probe()} onretry={probe} class="mt-4" />
 		{/if}
 		{#if enabledError}
-			<ErrorNotice error={enabledError} title="Could not change the enabled state" class="mt-4" />
+			<ErrorNotice error={enabledError} title={m.devices_target_err_enabled()} class="mt-4" />
 		{/if}
 		{#if deleteError}
-			<ErrorNotice error={deleteError} title="Could not delete this device" class="mt-4" />
+			<ErrorNotice error={deleteError} title={m.devices_target_err_delete()} class="mt-4" />
 		{/if}
 		{#if collector?.setup.doc_url && target.last_error}
 			<p class="mt-3 text-sm text-ink-2">
-				Check the device is reachable and its credentials are right, then probe again.
+				{m.devices_target_check_reachable()}
 				<a href={collector.setup.doc_url} class="inline-flex items-center gap-1 text-ink hover:underline" target="_blank" rel="noreferrer">
-					Setup notes for {kindLabel}
+					{m.devices_target_setup_notes({ kind: kindLabel })}
 					<ExternalLink class="size-3.5" aria-hidden="true" />
 				</a>
 			</p>
@@ -626,7 +627,7 @@
 
 	<!-- The story of this device: what fires now, what fired before -->
 	<section class="mt-6" aria-labelledby="device-alerts">
-		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">Alerts on this device</h2>
+		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">{m.devices_target_alerts_heading()}</h2>
 		<DeviceTimeline
 		targetId={id}
 		target={target ?? undefined}
@@ -638,14 +639,14 @@
 
 	<!-- Backups the agent watches; the containers sit with the metrics below -->
 	{#if target.kind === 'agent'}
-		<section class="mt-6" aria-label="Backups">
+		<section class="mt-6" aria-label={m.devices_target_backups()}>
 			<PlakarPanel {target} />
 		</section>
 	{/if}
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind)}
-		<section class="mt-6" aria-label="Device details">
+		<section class="mt-6" aria-label={m.devices_target_details()}>
 			{#if kindPanelComponent && kindPanelLoadedFor === target.kind}
 				{@const Panel = kindPanelComponent}
 				<Panel {target} />
@@ -660,17 +661,17 @@
 	<section class="mt-8" aria-labelledby="device-metrics">
 		<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
 			<h2 id="device-metrics" class="text-base font-semibold tracking-tight text-ink">
-				{service ? 'Availability' : 'Metrics'}
+				{service ? m.devices_target_availability() : m.devices_target_metrics()}
 				<!-- A service's figures each name their own window (24 h, last hour, the range):
 				     the heading does not claim one for all of them. -->
-				{#if !service}<span class="ml-1 font-normal text-ink-2">last {rangeLabel}</span>{/if}
+				{#if !service}<span class="ml-1 font-normal text-ink-2">{m.devices_target_last_range({ range: rangeLabel })}</span>{/if}
 			</h2>
-			<Segmented options={rangeOptions} value={range} onchange={setRange} label="Time range" size="sm" />
+			<Segmented options={rangeOptions} value={range} onchange={setRange} label={m.devices_target_time_range()} size="sm" />
 		</div>
 
 		{#if service}
 			{#if uptimeError}
-				<ErrorNotice error={uptimeError} title="Could not load the availability" onretry={() => void loadUptime()} />
+				<ErrorNotice error={uptimeError} title={m.devices_target_err_availability()} onretry={() => void loadUptime()} />
 			{:else if loadingUptime}
 				<div class="grid gap-4" aria-busy="true">
 					<Skeleton class="h-20 w-full" />
@@ -678,55 +679,55 @@
 					<Skeleton class="h-64 w-full rounded-[var(--radius-card)]" />
 				</div>
 			{:else}
-				<div class="graticule grid grid-cols-3 gap-4 pb-1">
+				<div class="graticule grid grid-cols-1 gap-4 pb-1 sm:grid-cols-3">
 					<Figure
-						label="Availability"
+						label={m.devices_target_availability()}
 						value={availability === null ? null : formatPercent(availability)}
 						tone={availabilityTone(availability)}
 						hint={availabilityWindow}
 					/>
 					<Figure
-						label="Response time"
+						label={m.devices_target_response_time()}
 						value={summary?.responseSeconds == null ? null : formatLatency(summary.responseSeconds)}
-						hint="average, last hour"
+						hint={m.devices_target_avg_hour()}
 					/>
-					<Readout label="Checks" value={checks} hint={`last ${rangeLabel}`} />
+					<Readout label={m.devices_target_checks()} value={checks} hint={m.devices_target_last_range({ range: rangeLabel })} />
 				</div>
 
-				<Panel title="History" description={`${HISTORY_SLOTS} slots over the last ${rangeLabel}, oldest on the left.`} class="mt-6">
+				<Panel title={m.devices_target_history()} description={m.devices_target_history_desc({ slots: HISTORY_SLOTS, range: rangeLabel })} class="mt-6">
 					<UptimeBar slots={history} reason={summary?.status?.reason ?? null} />
 				</Panel>
 
-				<Panel title="Response time" class="mt-4">
+				<Panel title={m.devices_target_response_time()} class="mt-4">
 					{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
 					{#if responseTimes.length > 0}
 						<Chart series={responseTimes} unit="ms" height={220} />
 					{:else}
-						<EmptyState title="No check in this range yet." description="Probe now to check the service right away.">
+						<EmptyState title={m.devices_target_no_check_title()} description={m.devices_target_no_check_desc()}>
 							{#snippet action()}
-								<Button variant="secondary" size="sm" onclick={probe} loading={probing}>Probe now</Button>
+								<Button variant="secondary" size="sm" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
 							{/snippet}
 						</EmptyState>
 					{/if}
 				</Panel>
 			{/if}
 		{:else if metricsError}
-			<ErrorNotice error={metricsError} title="Could not load the metrics" onretry={() => void loadMetrics()} />
+			<ErrorNotice error={metricsError} title={m.devices_target_err_metrics()} onretry={() => void loadMetrics()} />
 		{:else if loadingMetrics}
 			<div class="grid gap-4 lg:grid-cols-2" aria-busy="true">
 				<Skeleton class="h-72 w-full rounded-[var(--radius-card)]" rows={2} />
 			</div>
 		{:else if groups.length === 0 && target.kind !== 'agent'}
-			<EmptyState title="No data in this range yet." description="Data appears after the first successful probe. Probe now to check the device answers.">
+			<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
 				{#snippet action()}
-					<Button variant="secondary" onclick={probe} loading={probing}>Probe now</Button>
+					<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
 				{/snippet}
 			</EmptyState>
 		{:else}
 			<div class="flex flex-col gap-4">
 				<!-- Essentials: the handful of charts that answer "is it fine?" -->
 				{#if sections.essentials.length > 0}
-					<FoldSection kind="essentials" title="Essentials" defaultOpen summary={`${sections.essentials.length} charts`} class="rise-in">
+					<FoldSection kind="essentials" title={m.devices_target_essentials()} defaultOpen summary={sections.essentials.length === 1 ? m.devices_target_charts_one({ count: 1 }) : m.devices_target_charts_other({ count: sections.essentials.length })} class="rise-in">
 						<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
 							{#each sections.essentials as group, i (group.name)}
 								<div class="rise-in" style="--rise-delay: {Math.min(i, 8) * 40}ms">
@@ -750,8 +751,8 @@
 				{#if sections.interfaces.length > 0}
 					<FoldSection
 						kind="interfaces"
-						title="Network interfaces"
-						summary={physicalCount < sections.interfaces.length ? `${sections.interfaces.length} · ${physicalCount} physical` : `${sections.interfaces.length}`}
+						title={m.devices_target_interfaces()}
+						summary={physicalCount < sections.interfaces.length ? m.devices_target_interfaces_summary({ count: sections.interfaces.length, physical: physicalCount }) : `${sections.interfaces.length}`}
 						class="rise-in"
 					>
 						<ul class="divide-y divide-line">
@@ -761,7 +762,7 @@
 										<span class="flex min-w-0 items-center gap-2">
 											<span class="truncate font-semibold text-ink">{row.key}</span>
 											{#if isVirtualInterface(row.key)}
-												<Plate tone="ghost" bare label="virtual" />
+												<Plate tone="ghost" bare label={m.devices_target_virtual()} />
 											{/if}
 										</span>
 										<span class="tnum truncate text-[0.8125rem] text-ink-2">{interfaceLine(row)}</span>
@@ -787,20 +788,20 @@
 				{#if sections.other.length > 0}
 					<FoldSection
 						kind="other"
-						title="Everything else"
+						title={m.devices_target_everything_else()}
 						defaultOpen={sections.essentials.length === 0}
-						summary={otherQuery.trim() ? `${otherShown.length} of ${sections.other.length} families` : `${sections.other.length} families`}
+						summary={otherQuery.trim() ? m.devices_target_families_filtered({ shown: otherShown.length, total: sections.other.length }) : sections.other.length === 1 ? m.devices_target_families_one({ count: 1 }) : m.devices_target_families_other({ count: sections.other.length })}
 						class="rise-in"
 					>
 						{#snippet aside()}
 							<label class="relative block w-full sm:w-56">
-								<span class="sr-only">Search metric families</span>
+								<span class="sr-only">{m.devices_target_search_families()}</span>
 								<Search class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-								<input class="input h-8 w-full text-sm" style="padding-left: 2rem" type="search" placeholder="Filter families" bind:value={otherQuery} />
+								<input class="input h-10 w-full text-sm" style="padding-left: 2rem" type="search" placeholder={m.devices_target_filter_families()} bind:value={otherQuery} />
 							</label>
 						{/snippet}
 						{#if otherShown.length === 0}
-							<p class="px-5 py-4 text-sm text-ink-2">No family matches "{otherQuery}".</p>
+							<p class="px-5 py-4 text-sm text-ink-2">{m.devices_target_no_family({ query: otherQuery })}</p>
 						{:else}
 							<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
 								{#each otherShown as group (group.name)}
@@ -818,9 +819,9 @@
 				{/if}
 
 				{#if groups.length === 0}
-					<EmptyState title="No data in this range yet." description="Data appears after the first successful probe. Probe now to check the device answers.">
+					<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
 						{#snippet action()}
-							<Button variant="secondary" onclick={probe} loading={probing}>Probe now</Button>
+							<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
 						{/snippet}
 					</EmptyState>
 				{/if}

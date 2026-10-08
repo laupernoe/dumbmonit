@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Quiet this device: "Silence 1 h" creates a one-off window starting now;
 	 * "Silence until…" unfolds a small picker for a custom end. While a window
@@ -52,7 +53,7 @@
 
 	function untilLabel(silence: Silence): string {
 		return silence.schedule.kind === 'once'
-			? `until ${formatDateTime(silence.schedule.ends_at)}`
+			? m.devices_silence_until({ when: formatDateTime(silence.schedule.ends_at) })
 			: `· ${scheduleLabel(silence.schedule)}`;
 	}
 
@@ -77,13 +78,13 @@
 			const payload = quickSilencePayload(target);
 			await createSilence({
 				...payload,
-				name: `Silence · ${target.name}`,
+				name: m.devices_silence_name({ name: target.name }),
 				schedule: { ...payload.schedule, ends_at: endsAt.toISOString() }
 			});
 			picking = false;
 			await load();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not silence this device.';
+			error = cause instanceof Error ? cause.message : m.devices_silence_err_create();
 		} finally {
 			busy = false;
 		}
@@ -97,11 +98,11 @@
 		event.preventDefault();
 		const end = new Date(until);
 		if (Number.isNaN(end.getTime())) {
-			error = 'Pick a date and time.';
+			error = m.devices_silence_err_pick();
 			return;
 		}
 		if (end.getTime() <= Date.now() + 60_000) {
-			error = 'The end must be at least a minute from now.';
+			error = m.devices_silence_err_future();
 			return;
 		}
 		void silenceFor(end);
@@ -114,7 +115,7 @@
 			await deleteSilence(silence.id);
 			await load();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not lift the silence.';
+			error = cause instanceof Error ? cause.message : m.devices_silence_err_lift();
 		} finally {
 			busy = false;
 		}
@@ -133,30 +134,30 @@
 
 {#if own}
 	<div class="inline-flex h-10 items-center gap-2 rounded-lg border border-advisory/40 bg-advisory-soft pr-1 pl-3">
-		<Plate tone="advisory" label={`Silenced ${untilLabel(own)}`} bare class="!bg-transparent !px-0" />
-		<Confirm size="sm" variant="secondary" confirmLabel="Lift now?" loading={busy} onconfirm={() => lift(own)}>Lift</Confirm>
+		<Plate tone="advisory" label={m.devices_silence_silenced({ until: untilLabel(own) })} bare class="!bg-transparent !px-0" />
+		<Confirm size="sm" variant="secondary" confirmLabel={m.devices_silence_lift_confirm()} loading={busy} onconfirm={() => lift(own)}>{m.devices_silence_lift()}</Confirm>
 	</div>
 {:else}
 	{#if global}
-		<Plate tone="advisory" label={`All devices silenced ${untilLabel(global)}`} size="md" />
+		<Plate tone="advisory" label={m.devices_silence_all({ until: untilLabel(global) })} size="md" />
 	{/if}
 	<Button variant="secondary" onclick={silenceOneHour} loading={busy && !picking} disabled={picking}>
 		<BellOff class="size-4" aria-hidden="true" />
-		Silence 1 h
+		{m.devices_silence_one_hour()}
 	</Button>
 	{#if !picking}
-		<Button variant="ghost" onclick={openPicker} disabled={busy}>Silence until…</Button>
+		<Button variant="ghost" onclick={openPicker} disabled={busy}>{m.devices_silence_pick_until()}</Button>
 	{/if}
 {/if}
 
 {#if picking && !own}
-	<form class="flex basis-full flex-wrap items-end gap-3" onsubmit={submitPicker} aria-label="Silence until">
+	<form class="flex basis-full flex-wrap items-end gap-3" onsubmit={submitPicker} aria-label={m.devices_silence_until_label()}>
 		<div class="grid gap-1.5">
-			<label for="silence-until" class="text-sm font-semibold text-ink">Silence until</label>
+			<label for="silence-until" class="text-sm font-semibold text-ink">{m.devices_silence_until_label()}</label>
 			<input id="silence-until" type="datetime-local" class="input tnum" bind:value={until} bind:this={pickerInput} required />
 		</div>
-		<Button type="submit" variant="secondary" loading={busy}>Silence</Button>
-		<Button type="button" variant="ghost" disabled={busy} onclick={() => (picking = false)}>Cancel</Button>
+		<Button type="submit" variant="secondary" loading={busy}>{m.devices_silence_submit()}</Button>
+		<Button type="button" variant="ghost" disabled={busy} onclick={() => (picking = false)}>{m.devices_cancel()}</Button>
 	</form>
 {/if}
 
