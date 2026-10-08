@@ -4,6 +4,7 @@
  * a newer server never breaks an older UI.
  */
 import type { Component } from 'svelte';
+import { m } from '#lib/paraglide/messages.js';
 import VeniceScene from './VeniceScene.svelte';
 import ParisScene from './ParisScene.svelte';
 import TokyoScene from './TokyoScene.svelte';
@@ -62,39 +63,39 @@ export const SCENE_COMPONENTS: Record<string, Component> = {
 
 /** Labels for the editor, in display order: cities, then the new wonders, then the ancient ones. */
 export const SCENE_CHOICES: { value: string; label: string }[] = [
-	{ value: 'venice', label: 'Venice' },
-	{ value: 'paris', label: 'Paris' },
-	{ value: 'tokyo', label: 'Tokyo' },
-	{ value: 'newyork', label: 'New York' },
-	{ value: 'london', label: 'London' },
-	{ value: 'rome', label: 'Rome' },
-	{ value: 'sydney', label: 'Sydney' },
-	{ value: 'dubai', label: 'Dubai' },
-	{ value: 'sanfrancisco', label: 'San Francisco' },
-	{ value: 'barcelona', label: 'Barcelona' },
-	{ value: 'amsterdam', label: 'Amsterdam' },
-	{ value: 'istanbul', label: 'Istanbul' },
-	{ value: 'rio', label: 'Rio de Janeiro' },
-	{ value: 'chichenitza', label: 'Chichén Itzá' },
-	{ value: 'machupicchu', label: 'Machu Picchu' },
-	{ value: 'greatwall', label: 'Great Wall' },
-	{ value: 'petra', label: 'Petra' },
-	{ value: 'tajmahal', label: 'Taj Mahal' },
-	{ value: 'giza', label: 'Giza' },
-	{ value: 'babylon', label: 'Babylon' },
-	{ value: 'artemis', label: 'Ephesus' },
-	{ value: 'zeus', label: 'Olympia' },
-	{ value: 'halicarnassus', label: 'Halicarnassus' },
-	{ value: 'rhodes', label: 'Rhodes' },
-	{ value: 'alexandria', label: 'Alexandria' },
-	{ value: 'athens', label: 'Athens' }
+	{ value: 'venice', get label() { return m.status_scene_venice(); } },
+	{ value: 'paris', get label() { return m.status_scene_paris(); } },
+	{ value: 'tokyo', get label() { return m.status_scene_tokyo(); } },
+	{ value: 'newyork', get label() { return m.status_scene_newyork(); } },
+	{ value: 'london', get label() { return m.status_scene_london(); } },
+	{ value: 'rome', get label() { return m.status_scene_rome(); } },
+	{ value: 'sydney', get label() { return m.status_scene_sydney(); } },
+	{ value: 'dubai', get label() { return m.status_scene_dubai(); } },
+	{ value: 'sanfrancisco', get label() { return m.status_scene_sanfrancisco(); } },
+	{ value: 'barcelona', get label() { return m.status_scene_barcelona(); } },
+	{ value: 'amsterdam', get label() { return m.status_scene_amsterdam(); } },
+	{ value: 'istanbul', get label() { return m.status_scene_istanbul(); } },
+	{ value: 'rio', get label() { return m.status_scene_rio(); } },
+	{ value: 'chichenitza', get label() { return m.status_scene_chichenitza(); } },
+	{ value: 'machupicchu', get label() { return m.status_scene_machupicchu(); } },
+	{ value: 'greatwall', get label() { return m.status_scene_greatwall(); } },
+	{ value: 'petra', get label() { return m.status_scene_petra(); } },
+	{ value: 'tajmahal', get label() { return m.status_scene_tajmahal(); } },
+	{ value: 'giza', get label() { return m.status_scene_giza(); } },
+	{ value: 'babylon', get label() { return m.status_scene_babylon(); } },
+	{ value: 'artemis', get label() { return m.status_scene_artemis(); } },
+	{ value: 'zeus', get label() { return m.status_scene_zeus(); } },
+	{ value: 'halicarnassus', get label() { return m.status_scene_halicarnassus(); } },
+	{ value: 'rhodes', get label() { return m.status_scene_rhodes(); } },
+	{ value: 'alexandria', get label() { return m.status_scene_alexandria(); } },
+	{ value: 'athens', get label() { return m.status_scene_athens(); } }
 ];
 
 export const SCENE_ROTATIONS: { value: string; label: string }[] = [
-	{ value: 'visit', label: 'On each visit' },
-	{ value: '1m', label: 'Every minute' },
-	{ value: '10m', label: 'Every 10 minutes' },
-	{ value: '1h', label: 'Every hour' }
+	{ value: 'visit', get label() { return m.status_scene_rotation_visit(); } },
+	{ value: '1m', get label() { return m.status_scene_rotation_1m(); } },
+	{ value: '10m', get label() { return m.status_scene_rotation_10m(); } },
+	{ value: '1h', get label() { return m.status_scene_rotation_1h(); } }
 ];
 
 /** The ids of `scenes` this build can draw, order kept, duplicates dropped. */

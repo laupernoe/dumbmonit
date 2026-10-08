@@ -2,14 +2,15 @@
  * Words and tones of the status pages, shared by the public page and the
  * settings section so both say the same thing about the same state.
  */
+import { m } from '#lib/paraglide/messages.js';
 import type { Tone } from '#lib/ui/Plate.svelte';
 import type { IncidentKind, IncidentStatus, PublicItemState, PublicOverall, PublicStatus, StatusPageAccent } from '#lib/api/index.js';
 
 export const OVERALL: Record<PublicOverall, { label: string; tone: Tone }> = {
-	operational: { label: 'All systems operational', tone: 'signal' },
-	degraded: { label: 'Partial outage', tone: 'advisory' },
-	major: { label: 'Major outage', tone: 'warning' },
-	maintenance: { label: 'Scheduled maintenance', tone: 'info' }
+	operational: { get label() { return m.status_words_overall_operational(); }, tone: 'signal' },
+	degraded: { get label() { return m.status_words_overall_partial(); }, tone: 'advisory' },
+	major: { get label() { return m.status_words_overall_major(); }, tone: 'warning' },
+	maintenance: { get label() { return m.status_words_overall_maintenance(); }, tone: 'info' }
 };
 
 /** What the top banner of a public page says: the plate word, the headline, the tone. */
@@ -28,36 +29,36 @@ export interface Banner {
  * any service down reads "Incident in progress", toned by its impact.
  */
 export function overallBanner(status: PublicStatus): Banner {
-	if (status.overall === 'maintenance') return { plate: 'Maintenance', ...OVERALL.maintenance };
+	if (status.overall === 'maintenance') return { plate: m.status_words_kind_maintenance(), ...OVERALL.maintenance };
 	const items = status.groups.flatMap((group) => group.items);
 	const down = items.filter((item) => item.state === 'down').length;
 	const degraded = items.filter((item) => item.state === 'degraded').length;
-	if (down > 0 && down === items.length) return { plate: 'Outage', ...OVERALL.major };
-	if (down > 0 || degraded > 0) return { plate: 'Degraded', ...OVERALL.degraded };
+	if (down > 0 && down === items.length) return { plate: m.status_words_plate_outage(), ...OVERALL.major };
+	if (down > 0 || degraded > 0) return { plate: m.status_words_item_degraded(), ...OVERALL.degraded };
 	const open = status.incidents.filter((incident) => !isClosed(incident.status));
 	if (open.length > 0) {
 		const major = open.some((incident) => incident.severity === 'major');
-		return { plate: 'Incident', label: 'Incident in progress', tone: major ? 'warning' : 'advisory' };
+		return { plate: m.status_words_kind_incident(), label: m.status_words_incident_in_progress(), tone: major ? 'warning' : 'advisory' };
 	}
-	return { plate: 'Operational', ...OVERALL.operational };
+	return { plate: m.status_words_item_up(), ...OVERALL.operational };
 }
 
 export const ITEM_STATE: Record<PublicItemState, { label: string; tone: Tone }> = {
-	up: { label: 'Operational', tone: 'signal' },
-	degraded: { label: 'Degraded', tone: 'advisory' },
-	down: { label: 'Down', tone: 'warning' },
-	maintenance: { label: 'Maintenance', tone: 'info' },
-	unknown: { label: 'No data', tone: 'ghost' }
+	up: { get label() { return m.status_words_item_up(); }, tone: 'signal' },
+	degraded: { get label() { return m.status_words_item_degraded(); }, tone: 'advisory' },
+	down: { get label() { return m.status_words_item_down(); }, tone: 'warning' },
+	maintenance: { get label() { return m.status_words_kind_maintenance(); }, tone: 'info' },
+	unknown: { get label() { return m.status_words_item_no_data(); }, tone: 'ghost' }
 };
 
 export const INCIDENT_STATUS: Record<IncidentStatus, { label: string; tone: Tone }> = {
-	investigating: { label: 'Investigating', tone: 'warning' },
-	identified: { label: 'Identified', tone: 'advisory' },
-	monitoring: { label: 'Monitoring', tone: 'info' },
-	resolved: { label: 'Resolved', tone: 'signal' },
-	scheduled: { label: 'Scheduled', tone: 'info' },
-	in_progress: { label: 'In progress', tone: 'info' },
-	completed: { label: 'Completed', tone: 'signal' }
+	investigating: { get label() { return m.status_words_st_investigating(); }, tone: 'warning' },
+	identified: { get label() { return m.status_words_st_identified(); }, tone: 'advisory' },
+	monitoring: { get label() { return m.status_words_st_monitoring(); }, tone: 'info' },
+	resolved: { get label() { return m.status_words_st_resolved(); }, tone: 'signal' },
+	scheduled: { get label() { return m.status_words_st_scheduled(); }, tone: 'info' },
+	in_progress: { get label() { return m.status_words_st_in_progress(); }, tone: 'info' },
+	completed: { get label() { return m.status_words_st_completed(); }, tone: 'signal' }
 };
 
 /** Statuses an incident or a maintenance can move through, in order. */
@@ -71,8 +72,12 @@ export function isClosed(status: IncidentStatus): boolean {
 }
 
 export const KIND_LABEL: Record<IncidentKind, string> = {
-	incident: 'Incident',
-	maintenance: 'Maintenance'
+	get incident() {
+		return m.status_words_kind_incident();
+	},
+	get maintenance() {
+		return m.status_words_kind_maintenance();
+	}
 };
 
 /** Tone of a day in the history bar, from its uptime. */
@@ -85,12 +90,12 @@ export function dayTone(uptime: number | null): 'signal' | 'advisory' | 'warning
 
 /** Accents a page can pick, with the word the editor shows. */
 export const ACCENTS: { value: StatusPageAccent; label: string }[] = [
-	{ value: 'default', label: 'Ink (default)' },
-	{ value: 'blue', label: 'Blue' },
-	{ value: 'teal', label: 'Teal' },
-	{ value: 'violet', label: 'Violet' },
-	{ value: 'rose', label: 'Rose' },
-	{ value: 'amber', label: 'Amber' }
+	{ value: 'default', get label() { return m.status_words_accent_default(); } },
+	{ value: 'blue', get label() { return m.status_words_accent_blue(); } },
+	{ value: 'teal', get label() { return m.status_words_accent_teal(); } },
+	{ value: 'violet', get label() { return m.status_words_accent_violet(); } },
+	{ value: 'rose', get label() { return m.status_words_accent_rose(); } },
+	{ value: 'amber', get label() { return m.status_words_accent_amber(); } }
 ];
 
 /** Class carrying a page's accent tokens (`app.css`); unknown values fall back to the ink. */
@@ -109,12 +114,14 @@ export function homepageHost(url: string): string {
 
 /** "No downtime", "12 min down", "2 h 05 min down" — for one day of the history bar. */
 export function formatDowntime(minutes: number | null | undefined): string {
-	if (minutes == null || !Number.isFinite(minutes)) return 'downtime unknown';
-	if (minutes <= 0) return 'no downtime';
-	if (minutes < 60) return `${minutes} min down`;
+	if (minutes == null || !Number.isFinite(minutes)) return m.status_words_downtime_unknown();
+	if (minutes <= 0) return m.status_words_downtime_none();
+	if (minutes < 60) return m.status_words_downtime_minutes({ minutes });
 	const hours = Math.floor(minutes / 60);
 	const rest = minutes % 60;
-	return rest === 0 ? `${hours} h down` : `${hours} h ${String(rest).padStart(2, '0')} min down`;
+	return rest === 0
+		? m.status_words_downtime_hours({ hours })
+		: m.status_words_downtime_hours_minutes({ hours, minutes: String(rest).padStart(2, '0') });
 }
 
 /** Derives a URL slug from a title, the same way the server does. */

@@ -6,6 +6,7 @@
 	 * is created inline too: title, kind, severity or window, page, first
 	 * message.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { Megaphone, Send } from 'lucide-svelte';
 	import {
 		addIncidentUpdate,
@@ -34,8 +35,8 @@
 	const pageTitle = $derived(new Map(pages.map((p) => [p.id, p.title])));
 
 	function scope(incident: Incident): string {
-		if (incident.page_id === null) return 'All pages';
-		return pageTitle.get(incident.page_id) ?? 'Deleted page';
+		if (incident.page_id === null) return m.status_incidents_all_pages();
+		return pageTitle.get(incident.page_id) ?? m.status_incidents_deleted_page();
 	}
 
 	// --- New announcement --------------------------------------------------------
@@ -76,11 +77,11 @@
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
 		createError = null;
-		titleError = title.trim() ? null : 'Give the announcement a title.';
+		titleError = title.trim() ? null : m.status_incidents_title_required();
 		windowError = null;
 		if (kind === 'maintenance') {
-			if (!startsAt || !endsAt) windowError = 'A maintenance window needs a start and an end.';
-			else if (new Date(endsAt) <= new Date(startsAt)) windowError = 'The end must come after the start.';
+			if (!startsAt || !endsAt) windowError = m.status_incidents_window_required();
+			else if (new Date(endsAt) <= new Date(startsAt)) windowError = m.status_incidents_window_order();
 		}
 		if (titleError || windowError) return;
 		saving = true;
@@ -126,7 +127,7 @@
 	async function postUpdate(event: SubmitEvent, incident: Incident) {
 		event.preventDefault();
 		if (!updateBody.trim()) {
-			updateError = new Error('Write a message.');
+			updateError = new Error(m.status_incidents_message_required());
 			return;
 		}
 		posting = true;
@@ -149,7 +150,7 @@
 		closing = incident.id;
 		closeError = null;
 		const status: IncidentStatus = incident.kind === 'maintenance' ? 'completed' : 'resolved';
-		const message = incident.kind === 'maintenance' ? 'Maintenance completed.' : 'This incident has been resolved.';
+		const message = incident.kind === 'maintenance' ? m.status_incidents_maintenance_completed() : m.status_incidents_incident_resolved();
 		try {
 			replace(await addIncidentUpdate(incident.id, { status, body: message }));
 		} catch (cause) {
@@ -199,37 +200,37 @@
 			<div class="flex flex-wrap items-center gap-1.5">
 				{#if !closed}
 					<Button variant="secondary" size="sm" onclick={() => (updating === incident.id ? (updating = null) : startUpdate(incident))}>
-						{updating === incident.id ? 'Cancel' : 'Post update'}
+						{updating === incident.id ? m.status_incidents_cancel() : m.status_incidents_post_update()}
 					</Button>
 					<Button variant="ghost" size="sm" loading={closing === incident.id} onclick={() => close(incident)}>
-						{incident.kind === 'maintenance' ? 'Complete' : 'Resolve'}
+						{incident.kind === 'maintenance' ? m.status_incidents_complete() : m.status_incidents_resolve()}
 					</Button>
 				{:else}
-					<Confirm confirmLabel="Delete for good?" loading={deleting === incident.id} onconfirm={() => remove(incident)}>Delete</Confirm>
+					<Confirm confirmLabel={m.status_incidents_delete_confirm()} loading={deleting === incident.id} onconfirm={() => remove(incident)}>{m.status_incidents_delete()}</Confirm>
 				{/if}
 			</div>
 		</div>
 		{#if closeError?.id === incident.id}
-			<ErrorNotice error={closeError.cause} title="Could not update the announcement" class="mt-3" />
+			<ErrorNotice error={closeError.cause} title={m.status_incidents_update_error()} class="mt-3" />
 		{/if}
 		{#if updating === incident.id}
 			<form class="mt-3 grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-start" onsubmit={(event) => postUpdate(event, incident)} novalidate>
-				<Field label="Status" for="inc-{incident.id}-status">
+				<Field label={m.status_incidents_status()} for="inc-{incident.id}-status">
 					<select id="inc-{incident.id}-status" class="input" bind:value={updateStatus} disabled={posting}>
 						{#each STATUSES_FOR[incident.kind] as choice (choice)}
 							<option value={choice}>{INCIDENT_STATUS[choice].label}</option>
 						{/each}
 					</select>
 				</Field>
-				<Field label="Message" for="inc-{incident.id}-body" required>
-					<textarea id="inc-{incident.id}-body" class="input min-h-10" rows="2" bind:value={updateBody} placeholder="What visitors should know." maxlength="4000" disabled={posting}></textarea>
+				<Field label={m.status_incidents_message()} for="inc-{incident.id}-body" required>
+					<textarea id="inc-{incident.id}-body" class="input min-h-10" rows="2" bind:value={updateBody} placeholder={m.status_incidents_message_placeholder()} maxlength="4000" disabled={posting}></textarea>
 				</Field>
 				<Button type="submit" variant="secondary" class="sm:mt-[1.625rem]" loading={posting}>
 					<Send class="size-4" aria-hidden="true" />
-					Post
+					{m.status_incidents_post()}
 				</Button>
 				{#if updateError}
-					<div class="sm:col-span-3"><ErrorNotice error={updateError} title="Could not post the update" /></div>
+					<div class="sm:col-span-3"><ErrorNotice error={updateError} title={m.status_incidents_post_error()} /></div>
 				{/if}
 			</form>
 		{/if}
@@ -239,87 +240,87 @@
 <div class="grid gap-4">
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div>
-			<p class="text-sm font-semibold text-ink">Incidents and maintenance</p>
-			<p class="text-[0.8125rem] text-ink-2">Announcements shown at the top of a page — or of every page.</p>
+			<p class="text-sm font-semibold text-ink">{m.status_incidents_heading()}</p>
+			<p class="text-[0.8125rem] text-ink-2">{m.status_incidents_lead()}</p>
 		</div>
 		<Button variant="secondary" size="sm" onclick={() => {
 			creating = !creating;
 			if (!creating) resetForm();
 		}}>
 			<Megaphone class="size-4" aria-hidden="true" />
-			{creating ? 'Cancel' : 'New announcement'}
+			{creating ? m.status_incidents_cancel() : m.status_incidents_new()}
 		</Button>
 	</div>
 
 	{#if creating}
 		<form class="grid gap-3 rounded-[var(--radius-card)] border border-line bg-canvas-deep/40 p-4" onsubmit={create} novalidate>
 			<div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
-				<Field label="Title" for="inc-new-title" error={titleError} required>
-					<input id="inc-new-title" type="text" class="input" bind:value={title} oninput={() => (titleError = null)} placeholder="NAS unreachable" maxlength="160" disabled={saving} aria-invalid={titleError ? 'true' : undefined} />
+				<Field label={m.status_incidents_field_title()} for="inc-new-title" error={titleError} required>
+					<input id="inc-new-title" type="text" class="input" bind:value={title} oninput={() => (titleError = null)} placeholder={m.status_incidents_title_placeholder()} maxlength="160" disabled={saving} aria-invalid={titleError ? 'true' : undefined} />
 				</Field>
-				<Field label="Kind" for="inc-new-kind">
+				<Field label={m.status_incidents_kind()} for="inc-new-kind">
 					<select id="inc-new-kind" class="input" bind:value={kind} disabled={saving}>
-						<option value="incident">Incident</option>
-						<option value="maintenance">Maintenance</option>
+						<option value="incident">{m.status_words_kind_incident()}</option>
+						<option value="maintenance">{m.status_words_kind_maintenance()}</option>
 					</select>
 				</Field>
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2">
 				{#if kind === 'incident'}
-					<Field label="Impact" for="inc-new-severity">
+					<Field label={m.status_incidents_impact()} for="inc-new-severity">
 						<select id="inc-new-severity" class="input" bind:value={severity} disabled={saving}>
-							<option value="minor">Minor — some services affected</option>
-							<option value="major">Major — the page shows an outage</option>
+							<option value="minor">{m.status_incidents_impact_minor()}</option>
+							<option value="major">{m.status_incidents_impact_major()}</option>
 						</select>
 					</Field>
 				{:else}
-					<Field label="Starts" for="inc-new-starts" error={windowError} required>
+					<Field label={m.status_incidents_starts()} for="inc-new-starts" error={windowError} required>
 						<input id="inc-new-starts" type="datetime-local" class="input tnum" bind:value={startsAt} oninput={() => (windowError = null)} disabled={saving} />
 					</Field>
-					<Field label="Ends" for="inc-new-ends" required>
+					<Field label={m.status_incidents_ends()} for="inc-new-ends" required>
 						<input id="inc-new-ends" type="datetime-local" class="input tnum" bind:value={endsAt} oninput={() => (windowError = null)} disabled={saving} />
 					</Field>
 				{/if}
-				<Field label="Shown on" for="inc-new-page">
+				<Field label={m.status_incidents_shown_on()} for="inc-new-page">
 					<select id="inc-new-page" class="input" bind:value={pageId} disabled={saving}>
-						<option value="">All pages</option>
+						<option value="">{m.status_incidents_all_pages()}</option>
 						{#each pages as p (p.id)}
 							<option value={String(p.id)}>{p.title}</option>
 						{/each}
 					</select>
 				</Field>
 			</div>
-			<Field label="First message" for="inc-new-body" help="Optional. What visitors read under the title.">
-				<textarea id="inc-new-body" class="input min-h-10" rows="2" bind:value={body} placeholder={kind === 'incident' ? 'We are looking into it.' : 'Firmware upgrade on the router; expect a short outage.'} maxlength="4000" disabled={saving}></textarea>
+			<Field label={m.status_incidents_first_message()} for="inc-new-body" help={m.status_incidents_first_message_help()}>
+				<textarea id="inc-new-body" class="input min-h-10" rows="2" bind:value={body} placeholder={kind === 'incident' ? m.status_incidents_body_placeholder_incident() : m.status_incidents_body_placeholder_maintenance()} maxlength="4000" disabled={saving}></textarea>
 			</Field>
 			{#if createError}
-				<ErrorNotice error={createError} title="Could not create the announcement" />
+				<ErrorNotice error={createError} title={m.status_incidents_create_error()} />
 			{/if}
 			<div>
 				<Button type="submit" variant="secondary" loading={saving}>
 					<Megaphone class="size-4" aria-hidden="true" />
-					{kind === 'incident' ? 'Open incident' : 'Schedule maintenance'}
+					{kind === 'incident' ? m.status_incidents_open_incident() : m.status_incidents_schedule_maintenance()}
 				</Button>
 			</div>
 		</form>
 	{/if}
 
 	{#if incidents.length === 0}
-		<EmptyState icon={Megaphone} title="No announcement." description="Open an incident when something breaks, or schedule a maintenance window ahead of time." tone="signal" />
+		<EmptyState icon={Megaphone} title={m.status_incidents_empty_title()} description={m.status_incidents_empty_description()} tone="signal" />
 	{:else}
 		{#if open.length > 0}
-			<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list" aria-label="Open announcements">
+			<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list" aria-label={m.status_incidents_open_aria()}>
 				{#each open as incident (incident.id)}
 					{@render row(incident)}
 				{/each}
 			</ul>
 		{:else}
-			<p class="text-sm text-ink-2">Nothing open right now.</p>
+			<p class="text-sm text-ink-2">{m.status_incidents_nothing_open()}</p>
 		{/if}
 		{#if past.length > 0}
 			<details class="group">
-				<summary class="cursor-pointer text-sm font-semibold text-ink-2 hover:text-ink">{past.length} past announcement{past.length > 1 ? 's' : ''}</summary>
-				<ul class="mt-2 divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list" aria-label="Past announcements">
+				<summary class="cursor-pointer text-sm font-semibold text-ink-2 hover:text-ink">{m.status_incidents_past({ count: past.length })}</summary>
+				<ul class="mt-2 divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list" aria-label={m.status_incidents_past_aria()}>
 					{#each past as incident (incident.id)}
 						{@render row(incident)}
 					{/each}

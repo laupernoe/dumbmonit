@@ -5,6 +5,7 @@
 	 * at `/` and nothing else. The "i" button opens the setup notes (click pins
 	 * them, hover peeks); once saved, the resulting address is shown as a link.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { ExternalLink, Info } from 'lucide-svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/status-pages/#custom-domain';
@@ -35,11 +36,11 @@
 
 <div class="grid gap-1.5">
 	<div class="flex items-center gap-1.5">
-		<label for={id} class="block text-sm font-semibold text-ink">Public domain</label>
+		<label for={id} class="block text-sm font-semibold text-ink">{m.status_domain_label()}</label>
 		<button
 			type="button"
 			class="inline-flex size-6 items-center justify-center rounded-full text-ink-3 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-			aria-label="How a public domain works"
+			aria-label={m.status_domain_info_aria()}
 			aria-expanded={open}
 			aria-controls="{id}-info"
 			onclick={() => (pinned = !pinned)}
@@ -57,27 +58,20 @@
 			role="note"
 		>
 			<p>
-				<strong class="text-ink">What it does.</strong> Visitors who open this address see this status page
-				straight away, at the root. Nothing else of DumbMonit answers there: no sign-in, no settings, no other
-				page.
+				<strong class="text-ink">{m.status_domain_what_title()}</strong> {m.status_domain_what_body()}
 			</p>
 			<ol class="grid list-decimal gap-1 pl-5">
-				<li>Create the DNS record for the name (or the public hostname of a Cloudflare Tunnel), pointing at your reverse proxy.</li>
+				<li>{m.status_domain_step_dns()}</li>
 				<li>
-					In the proxy, send the name to the address of DumbMonit, for example
-					<code class="font-mono text-ink">http://dumbmonit:8080</code>, without rewriting the path.
+					{m.status_domain_step_proxy({ url: 'http://dumbmonit:8080' })}
 				</li>
 				<li>
-					Pass the original <code class="font-mono text-ink">Host</code> header on. Nginx Proxy Manager, Traefik,
-					Caddy and Cloudflare Tunnel do it by default; with plain Nginx add
-					<code class="font-mono text-ink">proxy_set_header Host $host;</code>.
+					{m.status_domain_step_host({ header: 'Host', directive: 'proxy_set_header Host $host;' })}
 				</li>
 			</ol>
 			<p>
-				HTTPS is handled by your proxy: links in emails and feeds use <code class="font-mono text-ink">https://</code>.
-				If the domain shows the DumbMonit sign-in screen instead of the page, the proxy is not passing the Host
-				header on; a bare "Not found" means it rewrites the path.
-				<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink" href={DOCS_URL} target="_blank" rel="noreferrer">Examples for each proxy</a>
+				{m.status_domain_https({ scheme: 'https://' })}
+				<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink" href={DOCS_URL} target="_blank" rel="noreferrer">{m.status_domain_examples()}</a>
 			</p>
 		</div>
 	{/if}
@@ -102,15 +96,15 @@
 			<p class="text-[0.8125rem] font-medium text-warning-ink" role="alert">{error}</p>
 		{:else if saved}
 			<p class="text-[0.8125rem] text-ink-2">
-				Live at
+				{m.status_domain_live_at()}
 				<a class="inline-flex items-center gap-1 font-mono font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink" href={`https://${saved}/`} target="_blank" rel="noreferrer">
 					https://{saved}/
 					<ExternalLink class="size-3" aria-hidden="true" />
 				</a>
-				once your proxy sends it here.
+				{m.status_domain_live_when()}
 			</p>
 		{:else}
-			<p class="text-[0.8125rem] text-ink-2">Optional. Your own address for this page, served through your reverse proxy.</p>
+			<p class="text-[0.8125rem] text-ink-2">{m.status_domain_help()}</p>
 		{/if}
 	</div>
 </div>

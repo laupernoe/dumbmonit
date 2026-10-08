@@ -4,6 +4,7 @@
 	 * way to remove an address. Pending requests disappear by themselves after
 	 * two days.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { deleteStatusSubscriber, listStatusSubscribers, type StatusPage, type StatusSubscriber } from '#lib/api/index.js';
 	import { formatDateTime, parseServerDate } from '#lib/format.js';
 	import { Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
@@ -54,25 +55,25 @@
 	}
 </script>
 
-<Panel title="Subscribers" description={`${confirmed} confirmed · ${subscribers.length - confirmed} pending`}>
+<Panel title={m.status_subscribers_title()} description={m.status_subscribers_summary({ confirmed, pending: subscribers.length - confirmed })}>
 	{#if error}
-		<ErrorNotice {error} title="Could not load the subscribers" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.status_subscribers_load_error()} onretry={() => void load()} />
 	{:else if loading}
 		<Skeleton class="h-16 w-full" />
 	{:else if subscribers.length === 0}
-		<EmptyState title="Nobody has subscribed yet." description="Visitors subscribe from the bottom of the public page." />
+		<EmptyState title={m.status_subscribers_empty_title()} description={m.status_subscribers_empty_description()} />
 	{:else}
 		<ul class="divide-y divide-line" role="list">
 			{#each subscribers as subscriber (subscriber.id)}
 				<li class="flex flex-wrap items-center justify-between gap-2 py-2.5">
 					<div class="flex min-w-0 items-center gap-3">
-						<Plate tone={subscriber.confirmed_at ? 'signal' : 'ghost'} label={subscriber.confirmed_at ? 'Confirmed' : 'Pending'} />
+						<Plate tone={subscriber.confirmed_at ? 'signal' : 'ghost'} label={subscriber.confirmed_at ? m.status_subscribers_confirmed() : m.status_subscribers_pending()} />
 						<span class="truncate text-sm text-ink">{subscriber.email}</span>
 					</div>
 					<div class="flex items-center gap-3">
-						<span class="text-[0.8125rem] text-ink-3">since {when(subscriber.confirmed_at ?? subscriber.created_at)}</span>
+						<span class="text-[0.8125rem] text-ink-3">{m.status_subscribers_since({ date: when(subscriber.confirmed_at ?? subscriber.created_at) })}</span>
 						{#if auth.isAdmin}
-							<Confirm confirmLabel="Remove this address?" onconfirm={() => remove(subscriber)}>Remove</Confirm>
+							<Confirm confirmLabel={m.status_subscribers_remove_confirm()} onconfirm={() => remove(subscriber)}>{m.status_subscribers_remove()}</Confirm>
 						{/if}
 					</div>
 				</li>

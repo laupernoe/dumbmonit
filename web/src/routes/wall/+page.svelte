@@ -28,7 +28,9 @@
 	 * Theme: Auto / Day / Night / OLED per display (`?theme=` forces one),
 	 * with burn-in care and optional night dimming on OLED.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { untrack } from 'svelte';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { AlertTriangle, CircleAlert, CircleCheck, CircleDashed, X } from 'lucide-svelte';
@@ -454,16 +456,16 @@
 
 	type HeadTone = 'signal' | 'warning' | 'advisory' | 'ghost';
 	const status = $derived.by((): { tone: HeadTone; text: string } => {
-		if (sky.counts.devices === 0) return { tone: 'ghost', text: 'Nothing to watch yet' };
+		if (sky.counts.devices === 0) return { tone: 'ghost', text: m.wall_status_empty() };
 		if (sky.attention > 0) {
 			const severe = sky.counts.warnings > 0 || sky.counts.unreachable > 0;
 			return {
 				tone: severe ? 'warning' : 'advisory',
-				text: `${sky.attention} ${sky.attention === 1 ? 'problem' : 'problems'}`
+				text: sky.attention === 1 ? m.wall_status_problem_one() : m.wall_status_problems({ count: sky.attention })
 			};
 		}
-		if (sky.counts.reporting === 0) return { tone: 'ghost', text: 'Waiting for reports' };
-		return { tone: 'signal', text: 'All good' };
+		if (sky.counts.reporting === 0) return { tone: 'ghost', text: m.wall_status_waiting() };
+		return { tone: 'signal', text: m.wall_status_ok() };
 	});
 	const STATUS_ICON = {
 		signal: CircleCheck,
@@ -496,15 +498,15 @@
 	}
 
 	const clock = $derived(
-		now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+		now.toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit', hour12: false })
 	);
 	const dateLabel = $derived(
-		now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+		now.toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 	);
 	const updatedLabel = $derived.by(() => {
-		if (!lastChecked) return 'Waiting for the first check…';
+		if (!lastChecked) return m.wall_updated_waiting();
 		const seconds = Math.max(0, Math.round((now.getTime() - lastChecked.getTime()) / 1000));
-		return seconds < 60 ? `Updated ${seconds} s ago` : `Updated ${formatRelative(lastChecked)}`;
+		return seconds < 60 ? m.wall_updated_seconds({ seconds }) : m.wall_updated_relative({ when: formatRelative(lastChecked) });
 	});
 	const progress = $derived(
 		lastChecked ? Math.min(1, (now.getTime() - lastChecked.getTime()) / REFRESH_MS) : 0
@@ -513,7 +515,7 @@
 	const firstLoad = $derived(loading && targets.length === 0);
 </script>
 
-<svelte:head><title>Wall · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.wall_page_title()}</title></svelte:head>
 <svelte:window onkeydown={onKeydown} />
 
 <div class="wall fixed inset-0 z-40 bg-canvas text-ink" data-wall-theme={oledActive ? 'oled' : undefined}>
@@ -543,7 +545,7 @@
 					<div class="max-w-xl rounded-[var(--radius-card)] bg-surface p-2 shadow-float">
 						<ErrorNotice
 							{error}
-							title="Could not load the wall"
+							title={m.wall_load_error()}
 							onretry={() => {
 								loading = true;
 								void load();
@@ -551,7 +553,7 @@
 						/>
 					</div>
 					<div class="mt-4">
-						<Button variant="secondary" onclick={exit}>Back to the overview</Button>
+						<Button variant="secondary" onclick={exit}>{m.wall_back()}</Button>
 					</div>
 				</div>
 			{:else if firstLoad}
@@ -590,7 +592,7 @@
 					{updatedLabel}
 				</p>
 				{#if error && targets.length > 0}
-					<p class="mt-1 text-base text-warning-ink" role="status">Last refresh failed, showing the previous state.</p>
+					<p class="mt-1 text-base text-warning-ink" role="status">{m.wall_refresh_failed()}</p>
 				{/if}
 
 				{#if musicVisible}
@@ -614,7 +616,7 @@
 		</div>
 
 		<!-- Tools, top right; Music and Theme show on hover, focus or touch. -->
-		<div class="wall-tools absolute top-3 right-3 z-10 flex items-center rounded-xl bg-surface/85 p-1 shadow-lift lg:top-4 lg:right-4">
+		<div class="wall-tools absolute top-3 right-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end rounded-xl bg-surface/85 p-1 shadow-lift lg:top-4 lg:right-4">
 			<WallThemeControl
 				value={wallTheme}
 				forced={forcedWallTheme}
@@ -639,10 +641,10 @@
 				onspeaker={setSpeakerOn}
 				onretry={() => void speaker.start(speakerName, { retry: true })}
 			/>
-			<Button variant="ghost" size="sm" onclick={exit} aria-label="Exit wall mode">
+			<Button variant="ghost" size="sm" onclick={exit} aria-label={m.wall_exit_aria()} class="min-h-10 lg:min-h-0">
 				<X class="size-4" aria-hidden="true" />
-				Exit
-				<kbd class="ml-1 rounded-md border border-line bg-surface-2 px-1.5 text-[0.6875rem] text-ink-3">esc</kbd>
+				{m.wall_exit()}
+				<kbd class="ml-1 max-sm:hidden rounded-md border border-line bg-surface-2 px-1.5 text-[0.6875rem] text-ink-3">esc</kbd>
 			</Button>
 		</div>
 
