@@ -1069,10 +1069,7 @@ pub async fn public_status(
     // Document public et sans cookie : lisible depuis le site de n'importe qui
     // (bandeau d'état). Pas de `Allow-Credentials`, donc aucune session jointe.
     Ok((
-        [
-            (header::CACHE_CONTROL, "public, max-age=30"),
-            (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
-        ],
+        [(header::CACHE_CONTROL, "public, max-age=30"), (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")],
         Json(Value::clone(&body)),
     )
         .into_response())
