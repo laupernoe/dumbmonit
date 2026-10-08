@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Credential drafting: the flat form state and its translation to the API.
  *
@@ -54,7 +55,7 @@ export function kindFromLabel(label: string | undefined, fallback: string): stri
 
 /** The family to show first: what the target uses, else the server's first. */
 export function initialView(views: CredentialView[], savedLabel: string | undefined): CredentialView {
-	const first = views[0] ?? { kind: 'none', label: 'No authentication', help: '', fields: [] };
+	const first = views[0] ?? { kind: 'none', label: m.deviceform_cred_no_auth(), help: '', fields: [] };
 	const kind = kindFromLabel(savedLabel, first.kind);
 	return views.find((view) => view.kind === kind) ?? first;
 }
@@ -139,7 +140,7 @@ export function toCredential(view: CredentialView, draft: CredentialDraft): Cred
 export type CredentialErrors = Record<string, string>;
 
 function requiredMessage(field: CredentialField): string {
-	return `Enter the ${field.label.toLowerCase()}.`;
+	return m.deviceform_cred_required({ label: field.label });
 }
 
 export function validateCredential(view: CredentialView, draft: CredentialDraft): CredentialErrors {
@@ -149,7 +150,7 @@ export function validateCredential(view: CredentialView, draft: CredentialDraft)
 		if (field.required && !current) {
 			errors[field.key] = requiredMessage(field);
 		} else if (field.key === 'token_id' && current && !/^[^@!=\s]+@[^@!=\s]+![^@!=\s]+$/.test(current)) {
-			errors[field.key] = 'Expected user@realm!name, exactly as Proxmox shows it.';
+			errors[field.key] = m.deviceform_cred_token_format();
 		}
 	}
 	return errors;

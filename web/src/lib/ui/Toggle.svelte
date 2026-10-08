@@ -17,7 +17,7 @@
 	aria-checked={checked}
 	aria-label={label}
 	{disabled}
-	class={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 disabled:opacity-50 ${checked ? 'border-signal bg-signal' : 'border-line-strong bg-surface-2'}`}
+	class={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors before:absolute before:-inset-2 before:content-[''] duration-200 disabled:opacity-50 ${checked ? 'border-signal bg-signal' : 'border-line-strong bg-surface-2'}`}
 	onclick={() => {
 		checked = !checked;
 		onchange?.(checked);

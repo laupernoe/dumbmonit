@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Sub-headings for a long "More options" list (device edit form).
  *
@@ -19,7 +20,7 @@ export interface OptionGroup {
 	options: CollectorOption[];
 }
 
-const FALLBACK_LABEL = 'More settings';
+const FALLBACK_LABEL = m.deviceform_options_more_settings();
 const MIN_OPTIONS_TO_GROUP = 6;
 
 function titleCase(word: string): string {

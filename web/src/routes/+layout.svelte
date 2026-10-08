@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	import '../app.css';
 	import type { Component } from 'svelte';
 	import { page } from '$app/state';
@@ -155,7 +156,7 @@
 		<main class="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16">
 			<Logo class="size-10 animate-pulse" />
 			<p class="text-sm text-ink-2">
-				{auth.checked ? 'Taking you to sign in…' : 'Checking your session…'}
+				{auth.checked ? m.app_layout_signing_in() : m.app_layout_checking()}
 			</p>
 		</main>
 	{:else}

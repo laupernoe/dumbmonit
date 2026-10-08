@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Presentation knowledge about collector kinds.
  *
@@ -236,89 +237,89 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		// (`crates/agent/src/relay.rs`) runs this server's probes from the
 		// agent's network. Listed here so "remote site" finds it.
 		id: 'relay',
-		label: 'Another network (remote site)',
-		summary: 'An agent at a second site, a client’s office or behind a NAT probes the devices there for this server. Outbound only.',
-		next: 'Install the agent on any machine at the remote site, then switch it to relay mode. Add the devices of that site as usual, with their local address, and pick the agent under More options → Reached through.',
+		label: m.deviceform_feature_relay_label(),
+		summary: m.deviceform_feature_relay_summary(),
+		next: m.deviceform_feature_relay_next(),
 		keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network probe proxy satellite outpost',
 		icon: RadioTower
 	},
 	{
 		id: 'docker',
-		label: 'Docker containers',
-		summary: 'State, health, restarts and image updates of every container, with restart and update from here.',
-		next: 'The agent reads the containers from the Docker socket. Install it on the machine that runs Docker: they appear on that machine’s page.',
+		label: m.deviceform_feature_docker_label(),
+		summary: m.deviceform_feature_docker_summary(),
+		next: m.deviceform_feature_docker_next(),
 		keywords: 'docker container compose image update restart portainer',
 		icon: Container
 	},
 	{
 		id: 'plakar',
-		label: 'Plakar backups',
-		summary: 'Age, count and state of the snapshots in each kloset, found without any setup.',
-		next: 'The agent finds Plakar and its klosets on its own. Install it on the machine that runs the backups: the Backups panel appears on its page.',
+		label: m.deviceform_feature_plakar_label(),
+		summary: m.deviceform_feature_plakar_summary(),
+		next: m.deviceform_feature_plakar_next(),
 		keywords: 'plakar backup snapshot kloset restore',
 		icon: DatabaseBackup
 	},
 	{
 		id: 'backups',
-		label: 'restic / Borg backups',
-		summary: 'Age of the last snapshot of each repository, and whether it can still be read.',
-		next: 'Install the agent on a machine that can open the repositories, then list them under “restic_repos:” or “borg_repos:” in its agent.yaml, with a password file. The password never leaves the machine.',
+		label: m.deviceform_feature_backups_label(),
+		summary: m.deviceform_feature_backups_summary(),
+		next: m.deviceform_feature_backups_next(),
 		keywords: 'restic borg borgbackup borgmatic backup snapshot archive repository repo',
 		icon: ArchiveRestore
 	},
 	{
 		id: 'wireguard',
-		label: 'WireGuard tunnels',
-		summary: 'Every peer of every interface: time since its last handshake, traffic, and tunnels gone silent.',
-		next: 'The agent reads the tunnels with wg show, on Linux: install it on the machine that runs WireGuard. Peers with a persistent keepalive alert when they go silent.',
+		label: m.deviceform_feature_wireguard_label(),
+		summary: m.deviceform_feature_wireguard_summary(),
+		next: m.deviceform_feature_wireguard_next(),
 		keywords: 'wireguard wg vpn tunnel peer handshake site-to-site wg-quick wg-easy',
 		icon: Waypoints
 	},
 	{
 		id: 'hyperv',
-		label: 'Hyper-V hosts',
-		summary: 'Virtual machines in critical health, the host’s real CPU load with its guests, memory of each VM and virtual disk errors.',
-		next: 'Install the agent on the Hyper-V host (Windows Server or Windows with the Hyper-V role): it finds the vmms service and reads Hyper-V’s performance counters on its own. The Hyper-V panel appears on that machine’s page.',
+		label: m.deviceform_feature_hyperv_label(),
+		summary: m.deviceform_feature_hyperv_summary(),
+		next: m.deviceform_feature_hyperv_next(),
 		keywords: 'hyper-v hyperv microsoft windows server virtualization virtual machine vm vhdx vmms host hypervisor',
 		icon: Boxes
 	},
 	{
 		id: 'services',
-		label: 'System services',
-		summary: 'systemd units, Windows services, launchd and rc.d services, running or stopped.',
-		next: 'Install the agent, then name the services to watch under “services:” in its agent.yaml. Failed systemd units are reported without any list.',
+		label: m.deviceform_feature_services_label(),
+		summary: m.deviceform_feature_services_summary(),
+		next: m.deviceform_feature_services_next(),
 		keywords: 'service systemd systemctl unit daemon windows service launchd rc.d nginx sshd',
 		icon: Cog
 	},
 	{
 		id: 'disks',
-		label: 'Disk health (SMART)',
-		summary: 'Wear, reallocated and pending sectors, temperature: a drive warns weeks before it fails.',
-		next: 'The agent reads SMART with smartctl: install smartmontools on the machine. The installed service has the rights it needs; sleeping disks are never woken.',
+		label: m.deviceform_feature_disks_label(),
+		summary: m.deviceform_feature_disks_summary(),
+		next: m.deviceform_feature_disks_next(),
 		keywords: 'disk drive smart hdd ssd nvme health smartctl smartmontools wear',
 		icon: Disc3
 	},
 	{
 		id: 'zfs',
-		label: 'ZFS pools',
-		summary: 'Pool state, fill, device errors and the age of the last scrub.',
-		next: 'The agent reads the pools with zpool, on Linux, FreeBSD or TrueNAS. Install it on the machine that holds them.',
+		label: m.deviceform_feature_zfs_label(),
+		summary: m.deviceform_feature_zfs_summary(),
+		next: m.deviceform_feature_zfs_next(),
 		keywords: 'zfs zpool pool scrub openzfs storage raid',
 		icon: Layers
 	},
 	{
 		id: 'sensors',
-		label: 'Temperatures and fans',
-		summary: 'The machine’s own temperature probes against their critical point, and fan speeds.',
-		next: 'The agent reads the probes the system exposes, on Linux, macOS and FreeBSD; fan speeds on Linux only. Windows exposes none.',
+		label: m.deviceform_feature_sensors_label(),
+		summary: m.deviceform_feature_sensors_summary(),
+		next: m.deviceform_feature_sensors_next(),
 		keywords: 'temperature fan sensor hwmon heat cooling rpm',
 		icon: Thermometer
 	},
 	{
 		id: 'updates',
-		label: 'Updates and reboots',
-		summary: 'Pending and security updates, a reboot waiting, failed units, SELinux mode.',
-		next: 'The agent reads them with dnf or apt, on Fedora, RHEL, Debian and Ubuntu families.',
+		label: m.deviceform_feature_updates_label(),
+		summary: m.deviceform_feature_updates_summary(),
+		next: m.deviceform_feature_updates_next(),
 		keywords: 'update upgrade patch security reboot dnf apt selinux os',
 		icon: PackageCheck
 	}
@@ -386,11 +387,11 @@ function kindChoice(c: CollectorInfo, groupTitle: string): KindChoice {
  * a kind added by a newer server) lands in "Other" untouched.
  */
 export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
-	const DEVICES = 'Devices on the network';
-	const AGENT = 'On a machine, with the agent';
-	const SERVICES = 'Services and checks';
-	const PACKS = 'Community packs';
-	const OTHER = 'Other';
+	const DEVICES = m.deviceform_group_devices();
+	const AGENT = m.deviceform_group_agent();
+	const SERVICES = m.deviceform_group_services();
+	const PACKS = m.deviceform_group_packs();
+	const OTHER = m.deviceform_group_other();
 	const devices = collectors
 		.filter((c) => DEVICE_KINDS.includes(c.kind))
 		.sort((a, b) => DEVICE_KINDS.indexOf(a.kind) - DEVICE_KINDS.indexOf(b.kind))
@@ -431,10 +432,10 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && !isService(c.kind) && !isPackKind(c.kind))
 		.map((c) => kindChoice(c, OTHER));
 	const groups: KindGroup[] = [
-		{ id: 'devices', title: DEVICES, hint: 'Read over the network, nothing to install.', choices: devices },
-		{ id: 'agent', title: AGENT, hint: 'One small agent on the machine reports all of this.', choices: agentChoices },
-		{ id: 'services', title: SERVICES, hint: 'Probed from this server, as a client would; heartbeats call in instead.', choices: services },
-		{ id: 'packs', title: PACKS, hint: 'Added by integration packs, managed under Settings.', choices: packs },
+		{ id: 'devices', title: DEVICES, hint: m.deviceform_group_devices_hint(), choices: devices },
+		{ id: 'agent', title: AGENT, hint: m.deviceform_group_agent_hint(), choices: agentChoices },
+		{ id: 'services', title: SERVICES, hint: m.deviceform_group_services_hint(), choices: services },
+		{ id: 'packs', title: PACKS, hint: m.deviceform_group_packs_hint(), choices: packs },
 		{ id: 'other', title: OTHER, hint: '', choices: other }
 	];
 	return groups.filter((group) => group.choices.length > 0);
@@ -459,11 +460,11 @@ export const SNMP_KIND = 'snmp';
 
 /** Check intervals offered by the form. The server default is 60 s. */
 export const INTERVALS = [
-	{ value: 30, label: '30 s' },
-	{ value: 60, label: '1 min' },
-	{ value: 120, label: '2 min' },
-	{ value: 300, label: '5 min' },
-	{ value: 900, label: '15 min' }
+	{ value: 30, label: m.deviceform_interval_seconds({ value: 30 }) },
+	{ value: 60, label: m.deviceform_interval_minutes({ value: 1 }) },
+	{ value: 120, label: m.deviceform_interval_minutes({ value: 2 }) },
+	{ value: 300, label: m.deviceform_interval_minutes({ value: 5 }) },
+	{ value: 900, label: m.deviceform_interval_minutes({ value: 15 }) }
 ] as const;
 
 export const DEFAULT_INTERVAL = 60;

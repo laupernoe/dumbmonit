@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Slim strip above the navigation in the public demo: what this is, where to
 	 * get it, and the way back into the tour.
@@ -10,7 +11,7 @@
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	const link =
-		'inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';
+		'inline-flex h-10 items-center sm:h-7 gap-1.5 rounded-md px-2 font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';
 </script>
 
 <div class="border-b border-line bg-advisory-soft text-[0.8125rem]">
@@ -18,22 +19,22 @@
 		<p class="flex min-w-0 items-center gap-2 text-ink">
 			<span class="inline-flex items-center gap-1.5 rounded-full border border-advisory/40 px-2 py-0.5 text-[0.6875rem] font-bold tracking-wide text-advisory-ink uppercase">
 				<span class="size-1.5 rounded-full bg-advisory" aria-hidden="true"></span>
-				Live demo
+				{m.demo_banner_live()}
 			</span>
-			<span class="truncate">Read-only, fictional data</span>
+			<span class="truncate">{m.demo_banner_readonly()}</span>
 		</p>
-		<nav aria-label="Demo" class="ml-auto flex items-center gap-1">
+		<nav aria-label={m.demo_banner_nav()} class="ml-auto flex items-center gap-1">
 			<button type="button" class={link} onclick={() => demo.openTour()} data-tour-trigger>
 				<Compass class="size-3.5" aria-hidden="true" />
-				Take the tour
+				{m.demo_banner_tour()}
 			</button>
 			<a class={link} href={INSTALL_URL} target="_blank" rel="noopener">
 				<BookOpen class="size-3.5" aria-hidden="true" />
-				Install it
+				{m.demo_banner_install()}
 			</a>
 			<a class={link} href={GITHUB_URL} target="_blank" rel="noopener">
 				<GitBranch class="size-3.5" aria-hidden="true" />
-				GitHub
+				{m.demo_banner_github()}
 			</a>
 		</nav>
 	</div>

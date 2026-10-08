@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The demo's answer to a refused change: the server's 403 message, shown
 	 * wherever the click happened. Polite live region, dismissable, fades after
@@ -22,11 +23,11 @@
 		<div class="pointer-events-auto flex max-w-md items-start gap-3 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 text-sm text-ink shadow-float">
 			<Lock class="mt-0.5 size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
 			<div class="min-w-0">
-				<p class="font-semibold">Read-only demo</p>
+				<p class="font-semibold">{m.demo_notice_title()}</p>
 				<p class="mt-0.5 text-ink-2">{demo.notice}</p>
-				<a class="mt-1 inline-block font-semibold text-signal-ink hover:underline" href={INSTALL_URL} target="_blank" rel="noopener">Install it</a>
+				<a class="mt-1 inline-block font-semibold text-signal-ink hover:underline" href={INSTALL_URL} target="_blank" rel="noopener">{m.demo_notice_install()}</a>
 			</div>
-			<button type="button" class="-mt-1 -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink" aria-label="Dismiss" onclick={() => demo.dismissNotice()}>
+			<button type="button" class="-mt-1 -mr-2 inline-flex size-10 shrink-0 sm:size-8 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink" aria-label={m.demo_notice_dismiss()} onclick={() => demo.dismissNotice()}>
 				<X class="size-4" aria-hidden="true" />
 			</button>
 		</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Sign in with a username and password, or through the identity provider
 	 * when single sign-on is configured.
@@ -61,21 +62,21 @@
 	const cameFromElsewhere = $derived(destination !== '/');
 
 	// The provider bounces back here with a short reason when SSO fails.
-	const SSO_REASONS: Record<string, { title: string; detail: string }> = {
-		not_configured: { title: 'Single sign-on is not set up.', detail: 'Sign in with a password, or ask an administrator to configure the provider.' },
-		provider_unreachable: { title: 'The identity provider did not answer.', detail: 'Check that it is running and reachable from the DumbMonit server, then try again.' },
-		denied: { title: 'The identity provider refused the sign-in.', detail: 'You cancelled, or your account is not allowed to use this application.' },
-		state: { title: 'This sign-in attempt expired.', detail: 'Start again from this page. Attempts are valid for ten minutes.' },
-		exchange: { title: 'The provider refused the sign-in code.', detail: 'Usually a wrong client secret or redirect URI. Check the single sign-on settings.' },
-		invalid_token: { title: 'The identity token could not be verified.', detail: 'Check the issuer URL and client id in the single sign-on settings.' },
-		no_account: { title: 'No account for this identity.', detail: 'Ask an administrator to create a user with your username or email, or to enable automatic accounts.' },
-		disabled: { title: 'This account is disabled.', detail: 'Ask an administrator to enable it again.' },
-		internal: { title: 'Something went wrong on the server.', detail: 'Check the server logs for details.' }
+	const SSO_REASONS: Record<string, () => { title: string; detail: string }> = {
+		not_configured: () => ({ title: m.auth_login_sso_not_configured_title(), detail: m.auth_login_sso_not_configured_detail() }),
+		provider_unreachable: () => ({ title: m.auth_login_sso_provider_unreachable_title(), detail: m.auth_login_sso_provider_unreachable_detail() }),
+		denied: () => ({ title: m.auth_login_sso_denied_title(), detail: m.auth_login_sso_denied_detail() }),
+		state: () => ({ title: m.auth_login_sso_state_title(), detail: m.auth_login_sso_state_detail() }),
+		exchange: () => ({ title: m.auth_login_sso_exchange_title(), detail: m.auth_login_sso_exchange_detail() }),
+		invalid_token: () => ({ title: m.auth_login_sso_invalid_token_title(), detail: m.auth_login_sso_invalid_token_detail() }),
+		no_account: () => ({ title: m.auth_login_sso_no_account_title(), detail: m.auth_login_sso_no_account_detail() }),
+		disabled: () => ({ title: m.auth_login_sso_disabled_title(), detail: m.auth_login_sso_disabled_detail() }),
+		internal: () => ({ title: m.auth_login_sso_internal_title(), detail: m.auth_login_sso_internal_detail() })
 	};
 	const ssoFailure = $derived.by(() => {
 		if (page.url.searchParams.get('error') !== 'oidc') return null;
 		const reason = page.url.searchParams.get('reason') ?? 'internal';
-		return SSO_REASONS[reason] ?? SSO_REASONS.internal;
+		return (SSO_REASONS[reason] ?? SSO_REASONS.internal)();
 	});
 
 	const ssoHref = $derived(
@@ -92,8 +93,8 @@
 		failure = null;
 		localError = null;
 		usernameError = null;
-		if (!username.trim()) usernameError = 'Enter your username.';
-		if (!password) localError = 'Enter your password.';
+		if (!username.trim()) usernameError = m.auth_login_username_required();
+		if (!password) localError = m.auth_login_password_required();
 		if (usernameError || localError) return;
 
 		sending = true;
@@ -105,30 +106,28 @@
 		} catch (cause) {
 			if (cause instanceof ApiError && cause.status === 401) {
 				failure = {
-					title: 'Wrong username or password.',
-					error: new ApiError('Check Caps Lock and your keyboard layout.', 400)
+					title: m.auth_login_wrong_title(),
+					error: new ApiError(m.auth_login_wrong_detail(), 400)
 				};
 			} else if (cause instanceof ApiError && cause.status === 429) {
 				const seconds = retryDelay(cause.message);
 				retryIn = seconds ?? 30;
 				failure = {
-					title: 'Too many attempts.',
+					title: m.auth_login_too_many(),
 					error: new ApiError(
-						seconds !== null
-							? `Sign-in is paused for ${seconds} s to protect the instance from automated guessing.`
-							: 'Sign-in is paused for a moment to protect the instance from automated guessing.',
+						seconds !== null ? m.auth_login_paused_seconds({ seconds }) : m.auth_login_paused(),
 						429
 					)
 				};
 			} else if (cause instanceof ApiError && cause.status === 409) {
 				failure = {
-					title: 'No account exists yet.',
-					error: new ApiError('This instance still needs its first admin account.', 400)
+					title: m.auth_login_no_account_title(),
+					error: new ApiError(m.auth_login_no_account_detail(), 400)
 				};
 				// The status changed under us: the guard will move to /setup.
 				await auth.refresh();
 			} else {
-				failure = { title: 'Could not sign in', error: cause };
+				failure = { title: m.auth_login_failed(), error: cause };
 			}
 		} finally {
 			sending = false;
@@ -140,7 +139,7 @@
 		failure = null;
 		codeError = null;
 		if (!code.trim()) {
-			codeError = 'Enter the code from your authenticator app.';
+			codeError = m.auth_login_code_required();
 			return;
 		}
 		if (pending === null) return;
@@ -154,16 +153,16 @@
 					// The pending token is gone: back to the password step.
 					pending = null;
 					code = '';
-					failure = { title: 'Start again.', error: new ApiError(cause.message, 400) };
+					failure = { title: m.auth_login_start_again(), error: new ApiError(cause.message, 400) };
 				} else {
 					codeError = cause.message;
 				}
 			} else if (cause instanceof ApiError && cause.status === 429) {
 				const seconds = retryDelay(cause.message);
 				retryIn = seconds ?? 30;
-				failure = { title: 'Too many attempts.', error: new ApiError(cause.message, 429) };
+				failure = { title: m.auth_login_too_many(), error: new ApiError(cause.message, 429) };
 			} else {
-				failure = { title: 'Could not sign in', error: cause };
+				failure = { title: m.auth_login_failed(), error: cause };
 			}
 		} finally {
 			sending = false;
@@ -178,7 +177,7 @@
 	}
 </script>
 
-<svelte:head><title>Sign in · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.auth_login_page_title()}</title></svelte:head>
 
 <div class="relative min-h-screen overflow-hidden bg-canvas">
 	<DotField opacity={1} dotSpacing={13} />
@@ -197,13 +196,13 @@
 			</div>
 
 			{#if pending !== null}
-				<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">One more step.</h1>
+				<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">{m.auth_login_step_title()}</h1>
 				<p class="mt-2 text-sm text-ink-2">
-					Enter the six-digit code from your authenticator app, or one of your recovery codes.
+					{m.auth_login_step_intro()}
 				</p>
 
 				<form class="mt-6 grid gap-4" onsubmit={submitCode} novalidate>
-					<Field label="Verification code" for="totp-code" error={codeError}>
+					<Field label={m.auth_login_code_label()} for="totp-code" error={codeError}>
 						<!-- svelte-ignore a11y_autofocus -->
 						<input
 							id="totp-code"
@@ -228,23 +227,23 @@
 					<ClickSpark class="w-full">
 						<Button type="submit" variant="primary" size="lg" class="w-full" loading={sending} disabled={retryIn > 0}>
 							{#if retryIn > 0}
-								<span class="tnum">Try again in {retryIn} s</span>
+								<span class="tnum">{m.auth_login_retry_in({ seconds: retryIn })}</span>
 							{:else}
-								Verify
+								{m.auth_login_verify()}
 							{/if}
 						</Button>
 					</ClickSpark>
 					<Button type="button" variant="ghost" size="sm" class="justify-self-start" onclick={backToPassword}>
-						Back to password
+						{m.auth_login_back()}
 					</Button>
 				</form>
 			{:else}
-			<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">Welcome back.</h1>
+			<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">{m.auth_login_title()}</h1>
 			<p class="mt-2 text-sm text-ink-2">
 				{#if cameFromElsewhere}
-					Sign in to get back to where you were.
+					{m.auth_login_intro_return()}
 				{:else}
-					Sign in to see how your network is doing.
+					{m.auth_login_intro()}
 				{/if}
 			</p>
 
@@ -259,12 +258,12 @@
 					<!-- A full navigation, not a SvelteKit route: the server redirects to the provider. -->
 					<Button href={ssoHref} variant="secondary" size="lg" class="w-full" data-sveltekit-reload>
 						<KeyRound class="size-4" aria-hidden="true" />
-						Continue with {auth.oidc.provider_name}
+						{m.auth_login_sso_button({ provider: auth.oidc.provider_name })}
 					</Button>
 				</div>
 				<div class="mt-5 flex items-center gap-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase" aria-hidden="true">
 					<span class="h-px flex-1 bg-line"></span>
-					or
+					{m.auth_login_or()}
 					<span class="h-px flex-1 bg-line"></span>
 				</div>
 			{/if}
@@ -273,15 +272,15 @@
 				<div class="mt-5 rounded-lg border border-advisory/40 bg-advisory-soft px-4 py-3 text-sm text-ink">
 					<p class="flex items-center gap-2 font-semibold">
 						<Info class="size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
-						Live demo — sign in with <span class="font-mono">demo</span> / <span class="font-mono">demo</span>.
+						{m.auth_login_demo_hint()}
 					</p>
-					<p class="mt-1 text-ink-2">Read-only, fictional data.</p>
-					<Button variant="secondary" size="sm" class="mt-3" onclick={() => void useDemoAccount()}>Sign in to the demo</Button>
+					<p class="mt-1 text-ink-2">{m.auth_login_demo_readonly()}</p>
+					<Button variant="secondary" size="sm" class="mt-3" onclick={() => void useDemoAccount()}>{m.auth_login_demo_button()}</Button>
 				</div>
 			{/if}
 
 			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
-				<Field label="Username" for="username" error={usernameError}>
+				<Field label={m.auth_login_username()} for="username" error={usernameError}>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
 						id="username"
@@ -298,7 +297,7 @@
 					/>
 				</Field>
 
-				<Field label="Password" for="password" error={localError}>
+				<Field label={m.auth_login_password()} for="password" error={localError}>
 					<PasswordInput
 						id="password"
 						bind:value={password}
@@ -316,21 +315,21 @@
 				<ClickSpark class="w-full">
 					<Button type="submit" variant="primary" size="lg" class="w-full" loading={sending} disabled={retryIn > 0}>
 						{#if retryIn > 0}
-							<span class="tnum">Try again in {retryIn} s</span>
+							<span class="tnum">{m.auth_login_retry_in({ seconds: retryIn })}</span>
 						{:else}
-							Sign in
+							{m.auth_login_submit()}
 						{/if}
 					</Button>
 				</ClickSpark>
 			</form>
 
 			<p class="mt-5 text-[0.8125rem] text-ink-2">
-				Lost the password? It cannot be recovered from here: reset it on the machine that runs DumbMonit.
+				{m.auth_login_lost()}
 			</p>
 			{/if}
 		</section>
 
-		<p class="mt-6 text-[0.8125rem] text-ink-2">DumbMonit · open source, Apache 2.0</p>
+		<p class="mt-6 text-[0.8125rem] text-ink-2">{m.auth_footer()}</p>
 	</main>
 </div>
 

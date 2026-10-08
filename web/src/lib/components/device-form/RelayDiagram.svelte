@@ -9,6 +9,8 @@
 	 * lines while the diagram is on screen; under reduced motion the arrows
 	 * alone carry the direction.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
+
 	interface Props {
 		/** Inside a control that already says it in words: hidden from assistive tech. */
 		decorative?: boolean;
@@ -20,9 +22,9 @@
 
 	/** Probes from the agent to each device: a line, its angle and length for the packet. */
 	const DEVICES = [
-		{ label: 'Switch', y: 33 },
-		{ label: 'NAS', y: 64 },
-		{ label: 'Proxmox', y: 95 }
+		{ label: m.deviceform_relay_switch(), y: 33 },
+		{ label: m.deviceform_relay_nas(), y: 64 },
+		{ label: m.deviceform_relay_proxmox(), y: 95 }
 	].map((d, i) => {
 		const dx = 240 - 204;
 		const dy = d.y - 64;
@@ -42,7 +44,7 @@
 	aria-hidden={decorative ? 'true' : undefined}
 	aria-label={decorative
 		? undefined
-		: 'A relay agent inside the remote site probes the switch, NAS and hypervisor there, and sends the results out to this DumbMonit server over HTTPS. Nothing connects in to the site.'}
+		: m.deviceform_relay_aria()}
 >
 	<defs>
 		<marker id={`${uid}-head`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -58,18 +60,18 @@
 		<rect x="4" y="44" width="84" height="40" rx="6" class="unit" />
 		<circle cx="15" cy="58" r="3" class="led" />
 		<text x="23" y="61.5" class="t-strong">DumbMonit</text>
-		<text x="23" y="75" class="t-soft">this server</text>
+		<text x="23" y="75" class="t-soft">{m.deviceform_relay_this_server()}</text>
 	</g>
 
 	<!-- The remote site, behind its NAT -->
 	<rect x="124" y="5" width="192" height="118" rx="11" class="site" />
-	<text x="134" y="19" class="t-tape">Remote site</text>
-	<text x="307" y="19" text-anchor="end" class="t-faint">behind NAT</text>
+	<text x="134" y="19" class="t-tape">{m.deviceform_relay_remote_site()}</text>
+	<text x="307" y="19" text-anchor="end" class="t-faint">{m.deviceform_relay_behind_nat()}</text>
 
 	<!-- Outbound link: agent → server -->
 	<line x1="140" y1="64" x2="90" y2="64" class="link link--signal" marker-end={`url(#${uid}-head-signal)`} />
 	<text x="106" y="57" text-anchor="middle" class="t-faint">HTTPS</text>
-	<text x="106" y="78" text-anchor="middle" class="t-faint">out</text>
+	<text x="106" y="78" text-anchor="middle" class="t-faint">{m.deviceform_relay_out()}</text>
 	<g transform="translate(138 64) rotate(180)">
 		<circle r="2.4" class="packet packet--signal" style="--len: 42px; --delay: 0ms" />
 		<circle r="2.4" class="packet packet--signal" style="--len: 42px; --delay: 800ms" />
@@ -80,8 +82,8 @@
 		<line x1="172" y1="48" x2="172" y2="36" class="mast" />
 		<path d="M166 34a8 8 0 0 1 12 0M162.5 30a13 13 0 0 1 19 0" class="waves" />
 		<rect x="140" y="48" width="64" height="32" rx="6" class="unit unit--relay" />
-		<text x="172" y="61.5" text-anchor="middle" class="t-strong">Relay</text>
-		<text x="172" y="74" text-anchor="middle" class="t-soft">agent</text>
+		<text x="172" y="61.5" text-anchor="middle" class="t-strong">{m.deviceform_relay_relay()}</text>
+		<text x="172" y="74" text-anchor="middle" class="t-soft">{m.deviceform_relay_agent()}</text>
 	</g>
 
 	<!-- Probes: agent → devices of the site -->

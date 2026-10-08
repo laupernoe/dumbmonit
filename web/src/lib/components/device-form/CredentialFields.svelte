@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Credential entry, rendered from the server's field descriptions.
 	 *
@@ -29,12 +30,12 @@
 	/** Something the form did on the user's behalf, worth a word. */
 	let note = $state('');
 
-	const keepNote = $derived(editing ? 'Leave blank to keep the saved credentials.' : undefined);
+	const keepNote = $derived(editing ? m.deviceform_cred_keep() : undefined);
 
 	/** Readable names for the protocol values SNMP v3 selects carry. */
 	function choiceLabel(value: string): string {
-		const m = /^(sha|aes)(\d+)$/.exec(value);
-		if (m) return `${m[1].toUpperCase()}-${m[2]}`;
+		const match = /^(sha|aes)(\d+)$/.exec(value);
+		if (match) return `${match[1].toUpperCase()}-${match[2]}`;
 		return value.length <= 4 ? value.toUpperCase() : value;
 	}
 
@@ -54,7 +55,7 @@
 			const parts = splitPastedToken(raw);
 			if (parts) {
 				draft = { ...draft, token_id: parts.token_id, secret: parts.secret };
-				note = 'That was the whole token: the part after "=" was moved to Secret.';
+				note = m.deviceform_cred_note_token();
 				return;
 			}
 		}
@@ -78,7 +79,7 @@
 		const start = input?.selectionStart ?? current.length;
 		const end = input?.selectionEnd ?? current.length;
 		draft = { ...draft, [field.key]: current.slice(0, start) + clean + current.slice(end) };
-		note = 'Pasted value cleaned up: surrounding spaces, quotes or line breaks were removed.';
+		note = m.deviceform_cred_note_paste();
 	}
 
 	function blur(field: CredentialField) {
@@ -89,7 +90,7 @@
 
 <div class="grid gap-4">
 	{#if views.length > 1}
-		<Field label="Authentication" for="credential-kind" help={selected.help || undefined}>
+		<Field label={m.deviceform_cred_auth_label()} for="credential-kind" help={selected.help || undefined}>
 			<select
 				id="credential-kind"
 				class="input"
@@ -155,7 +156,7 @@
 			{/each}
 		</div>
 	{:else if views.length > 1}
-		<p class="text-sm text-ink-2">Nothing is sent to the device: it answers without credentials.</p>
+		<p class="text-sm text-ink-2">{m.deviceform_cred_none()}</p>
 	{/if}
 
 	{#if note}
