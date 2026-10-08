@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The live notice next to the form: what to prepare on the device itself.
 	 *
@@ -15,6 +16,7 @@
 	import { ExternalLink, X } from 'lucide-svelte';
 	import type { CollectorInfo } from '#lib/api/index.js';
 	import { CopyBlock, Panel, Plate } from '#lib/ui/index.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { kindIcon } from './kinds';
 
 	interface Props {
@@ -26,7 +28,7 @@
 	let { collector, onclose }: Props = $props();
 
 	const setup = $derived(collector?.setup ?? null);
-	const title = $derived(setup?.title || (collector ? `Prepare ${collector.label}` : 'What to prepare'));
+	const title = $derived(setup?.title || (collector ? m.deviceform_setup_title({ label: collector.label }) : m.deviceform_setup_title_empty()));
 	const Icon = $derived(collector ? kindIcon(collector.kind) : null);
 
 	/** Short human list of the credential families the kind accepts. */
@@ -34,8 +36,8 @@
 		if (!collector) return '';
 		const labels = collector.credentials.map((view) => view.label);
 		if (labels.length === 0) return '';
-		if (labels.length === 1 && collector.credentials[0].kind === 'none') return 'No credentials needed';
-		return labels.join(' or ');
+		if (labels.length === 1 && collector.credentials[0].kind === 'none') return m.deviceform_setup_no_credentials();
+		return new Intl.ListFormat(getLocale(), { type: 'disjunction' }).format(labels);
 	});
 
 	/** Splits a step into its sentence and the lines to copy, if any. */
@@ -58,8 +60,8 @@
 				<button
 					type="button"
 					onclick={onclose}
-					aria-label="Close the setup guide"
-					title="Close (Esc)"
+					aria-label={m.deviceform_setup_close_aria()}
+					title={m.deviceform_setup_close_title()}
 					class="flex size-9 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
 				>
 					<X class="size-[1.125rem]" aria-hidden="true" />
@@ -70,8 +72,7 @@
 
 	{#if !collector}
 		<p class="text-sm leading-relaxed text-ink-2">
-			Pick a type to start. This panel tells you what to prepare on the device itself — usually
-			enabling SNMP or creating a read-only token.
+			{m.deviceform_setup_pick()}
 		</p>
 	{:else}
 		{#if setup && setup.steps.length > 0}
@@ -88,7 +89,7 @@
 						<div class="grid min-w-0 flex-1 gap-2">
 							<span class="text-sm leading-relaxed text-ink">{text}</span>
 							{#if copy}
-								<CopyBlock value={copy} label="Copy" />
+								<CopyBlock value={copy} label={m.deviceform_setup_copy()} />
 							{/if}
 						</div>
 					</li>
@@ -96,29 +97,28 @@
 			</ol>
 		{:else}
 			<p class="text-sm leading-relaxed text-ink-2">
-				This server has no setup notes for this type. Enter its address and, if it asks for them,
-				read-only credentials. The vendor documentation explains how to allow reading its metrics.
+				{m.deviceform_setup_no_notes()}
 			</p>
 		{/if}
 
 		{#if setup?.warning}
 			<div class="mt-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-2.5">
-				<Plate tone="advisory" label="Good to know" />
+				<Plate tone="advisory" label={m.deviceform_setup_good_to_know()} />
 				<p class="mt-1.5 text-sm leading-relaxed text-ink">{setup.warning}</p>
 			</div>
 		{/if}
 
 		<dl class="graticule mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 pb-3 text-sm">
 			{#if collector.address_hint}
-				<dt class="text-ink-3">Address</dt>
+				<dt class="text-ink-3">{m.deviceform_setup_address()}</dt>
 				<dd class="tnum font-mono text-[0.8125rem] text-ink-2">{collector.address_hint}</dd>
 			{/if}
 			{#if collector.default_port > 0}
-				<dt class="text-ink-3">Default port</dt>
+				<dt class="text-ink-3">{m.deviceform_setup_default_port()}</dt>
 				<dd class="tnum text-ink-2">{collector.default_port}</dd>
 			{/if}
 			{#if credentialSummary}
-				<dt class="text-ink-3">Access</dt>
+				<dt class="text-ink-3">{m.deviceform_setup_access()}</dt>
 				<dd class="text-ink-2">{credentialSummary}</dd>
 			{/if}
 		</dl>
@@ -130,7 +130,7 @@
 				rel="noreferrer noopener"
 				class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-signal-ink hover:underline"
 			>
-				Documentation
+				{m.deviceform_setup_documentation()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>
 		{/if}

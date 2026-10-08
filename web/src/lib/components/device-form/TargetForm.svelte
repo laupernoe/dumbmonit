@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The device form, shared by "Add a device" and "Edit".
 	 *
@@ -142,15 +143,15 @@
 	/** On edit an untouched credential is simply not sent: the server keeps it. */
 	const sendCredential = $derived(!editing || credentialChanged || destinationChanged);
 
-	const nameError = $derived(name.trim() ? null : 'Give this device a name.');
-	const addressError = $derived(address.trim() ? null : 'Enter the address to reach it.');
+	const nameError = $derived(name.trim() ? null : m.deviceform_form_name_required());
+	const addressError = $derived(address.trim() ? null : m.deviceform_form_address_required());
 	const credentialErrors = $derived<CredentialErrors>(sendCredential ? validateCredential(credential, draft) : {});
 	const optionErrors = $derived.by(() => {
 		const errors: Record<string, string> = {};
 		for (const option of options) {
 			if (!option.required) continue;
 			if ((tags[option.key] ?? '').trim() || option.default.trim()) continue;
-			errors[option.key] = `${option.label} is required for this type.`;
+			errors[option.key] = m.deviceform_form_option_required({ label: option.label });
 		}
 		return errors;
 	});
@@ -175,8 +176,8 @@
 	// --- Submit ---------------------------------------------------------------
 	const addressHelp = $derived.by(() => {
 		const parts: string[] = [];
-		if (collector.address_hint) parts.push(`Example: ${collector.address_hint}.`);
-		if (collector.default_port > 0) parts.push(`Add :port to use another port than ${collector.default_port}.`);
+		if (collector.address_hint) parts.push(m.deviceform_form_address_example({ example: collector.address_hint }));
+		if (collector.default_port > 0) parts.push(m.deviceform_form_address_port({ port: collector.default_port }));
 		return parts.join(' ') || undefined;
 	});
 
@@ -207,7 +208,7 @@
 		viaAgent !== null && relays.some((r) => r.id === viaAgent && !r.relay)
 	);
 	function relayLabel(relay: RelayAgent): string {
-		return relay.site ? `${relay.name} (site ${relay.site})` : relay.name;
+		return relay.site ? m.deviceform_form_relay_site({ name: relay.name, site: relay.site }) : relay.name;
 	}
 
 	function buildPayload(): TargetPayload {
@@ -249,20 +250,20 @@
 
 <form onsubmit={submit} class="grid gap-5" novalidate>
 	<div class="grid gap-4 sm:grid-cols-2">
-		<Field label="Name" for="target-name" required error={shown('name', nameError)} help="How it appears in lists and alerts.">
+		<Field label={m.deviceform_form_name_label()} for="target-name" required error={shown('name', nameError)} help={m.deviceform_form_name_help()}>
 			<input
 				id="target-name"
 				class="input"
 				type="text"
 				autocomplete="off"
 				bind:value={name}
-				placeholder={suggestName(address) || 'Core switch'}
+				placeholder={suggestName(address) || m.deviceform_form_name_placeholder()}
 				aria-invalid={shown('name', nameError) ? 'true' : undefined}
 				onblur={() => touch('name')}
 			/>
 		</Field>
 
-		<Field label="Address" for="target-address" required error={shown('address', addressError)} help={addressHelp}>
+		<Field label={m.deviceform_form_address_label()} for="target-address" required error={shown('address', addressError)} help={addressHelp}>
 			<div class="relative">
 				<input
 					id="target-address"
@@ -271,7 +272,7 @@
 					autocomplete="off"
 					spellcheck="false"
 					bind:value={address}
-					placeholder={collector.address_hint || 'hostname or IP'}
+					placeholder={collector.address_hint || m.deviceform_form_address_placeholder()}
 					aria-invalid={shown('address', addressError) ? 'true' : undefined}
 					onblur={() => {
 						touch('address');
@@ -316,7 +317,7 @@
 			onclick={() => (more = !more)}
 		>
 			<ChevronDown class={`size-4 transition-transform duration-200 ${more ? 'rotate-180' : ''}`} aria-hidden="true" />
-			More options
+			{m.deviceform_form_more_options()}
 		</button>
 	</div>
 
@@ -325,8 +326,8 @@
 			{#if moreOptions.length > 0}
 				<div class="grid gap-4">
 					<div class="grid gap-1">
-						<p class="text-sm font-semibold text-ink">More {collector.label} settings</p>
-						<p class="text-[0.8125rem] text-ink-2">Blank fields use the server's defaults.</p>
+						<p class="text-sm font-semibold text-ink">{m.deviceform_form_more_settings({ label: collector.label })}</p>
+						<p class="text-[0.8125rem] text-ink-2">{m.deviceform_form_blank_defaults()}</p>
 					</div>
 					{#each moreOptionGroups as group (group.label || '_ungrouped')}
 						<div class="grid gap-2">
@@ -340,25 +341,25 @@
 			{/if}
 
 			<div class="grid gap-4 sm:grid-cols-2">
-				<Field label="Check interval" for="target-interval" help="How often DumbMonit reads this device.">
+				<Field label={m.deviceform_form_interval_label()} for="target-interval" help={m.deviceform_form_interval_help()}>
 					<select id="target-interval" class="input tnum" bind:value={intervalSecs}>
 						{#each INTERVALS as option (option.value)}
 							<option value={option.value}>{option.label}</option>
 						{/each}
 						{#if !INTERVALS.some((o) => o.value === intervalSecs)}
-							<option value={intervalSecs}>{intervalSecs} s</option>
+							<option value={intervalSecs}>{m.deviceform_interval_seconds({ value: intervalSecs })}</option>
 						{/if}
 					</select>
 				</Field>
 
-				<Field label="Folder" for="target-group" help="Groups this device under a collapsible section on the devices page. Blank: no folder.">
+				<Field label={m.deviceform_form_folder_label()} for="target-group" help={m.deviceform_form_folder_help()}>
 					<input
 						id="target-group"
 						class="input"
 						list="target-group-choices"
 						maxlength="60"
 						bind:value={groupName}
-						placeholder="No folder"
+						placeholder={m.deviceform_form_folder_placeholder()}
 					/>
 					<datalist id="target-group-choices">
 						{#each folderChoices as choice (choice)}<option value={choice}></option>{/each}
@@ -366,12 +367,12 @@
 				</Field>
 
 				<Field
-					label="Parent device"
+					label={m.deviceform_form_parent_label()}
 					for="target-parent"
-					help="If the parent goes down, alerts from this device are suppressed instead of sent."
+					help={m.deviceform_form_parent_help()}
 				>
 					<select id="target-parent" class="input" bind:value={parentId}>
-						<option value={null}>None</option>
+						<option value={null}>{m.deviceform_form_parent_none()}</option>
 						{#each parentCandidates as candidate (candidate.id)}
 							<option value={candidate.id}>{candidate.name}</option>
 						{/each}
@@ -380,49 +381,49 @@
 
 				{#if canRelay && (relayCandidates.length > 0 || viaAgent !== null)}
 					<Field
-						label="Reached through"
+						label={m.deviceform_form_relay_label()}
 						for="target-relay"
 						help={relayNotReady
-							? 'This agent has not enabled relay mode (relay: true): probes sent to it will time out until it does.'
-							: 'Direct: the server probes the device. An agent: the agent probes it from its own network and reports back — for devices on another site.'}
+							? m.deviceform_form_relay_not_ready()
+							: m.deviceform_form_relay_help()}
 					>
 						<select id="target-relay" class="input" bind:value={viaAgent}>
-							<option value={null}>Direct</option>
+							<option value={null}>{m.deviceform_form_relay_direct()}</option>
 							{#each relayCandidates as relay (relay.id)}
-								<option value={relay.id}>{relayLabel(relay)}{relay.relay ? '' : ' — relay off'}</option>
+								<option value={relay.id}>{relay.relay ? relayLabel(relay) : m.deviceform_form_relay_off({ label: relayLabel(relay) })}</option>
 							{/each}
 							{#if viaAgent !== null && !relayCandidates.some((r) => r.id === viaAgent)}
-								<option value={viaAgent}>Agent #{viaAgent}</option>
+								<option value={viaAgent}>{m.deviceform_form_relay_agent_n({ id: viaAgent })}</option>
 							{/if}
 						</select>
 					</Field>
 				{:else if canRelay && relaysRead && !editing}
 					<!-- No relay yet: say once that a device on another network is reachable too. -->
 					<p class="text-[0.8125rem] leading-relaxed text-ink-2 sm:col-span-2">
-						On another network, behind a NAT or at a client’s? An agent there can probe it for this server.
-						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">Watch a remote site</a>
+						{m.deviceform_form_remote_hint()}
+						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{m.deviceform_form_remote_link()}</a>
 					</p>
 				{/if}
 			</div>
 
 			<TagsEditor tags={freeTags} reserved={optionKeys} onchange={setFreeTags} />
 
-			<Field label="Enabled" for="target-enabled" inline help="A paused device is not checked and raises no alerts.">
-				<Toggle id="target-enabled" bind:checked={enabled} label="Enabled" />
+			<Field label={m.deviceform_form_enabled_label()} for="target-enabled" inline help={m.deviceform_form_enabled_help()}>
+				<Toggle id="target-enabled" bind:checked={enabled} label={m.deviceform_form_enabled_label()} />
 			</Field>
 		</div>
 	{/if}
 
 	{#if serverError}
-		<ErrorNotice error={serverError} title={editing ? 'Could not save the changes' : 'Could not add the device'} />
+		<ErrorNotice error={serverError} title={editing ? m.deviceform_form_save_error() : m.deviceform_form_add_error()} />
 	{/if}
 
 	<div class="flex flex-wrap items-center gap-2 pt-1">
 		<ClickSpark>
 			<Button type="submit" variant="primary" loading={saving} disabled={!valid}>
-				{editing ? 'Save changes' : 'Add device'}
+				{editing ? m.deviceform_form_save() : m.deviceform_form_add()}
 			</Button>
 		</ClickSpark>
-		<Button variant="ghost" href={cancelHref}>Cancel</Button>
+		<Button variant="ghost" href={cancelHref}>{m.deviceform_form_cancel()}</Button>
 	</div>
 </form>

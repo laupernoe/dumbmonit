@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Severity / status plate: icon + word, never colour alone.
 	 * Tones follow the meteorological ladder — info, advisory, warning — plus
@@ -37,12 +38,12 @@
 	}: Props = $props();
 
 	const DEFAULT_LABEL: Record<Tone, string> = {
-		signal: 'Reporting',
-		info: 'Info',
-		advisory: 'Advisory',
-		warning: 'Warning',
-		ghost: 'Unknown',
-		muted: 'Suppressed'
+		signal: m.app_ui_tone_signal(),
+		info: m.app_ui_tone_info(),
+		advisory: m.app_ui_tone_advisory(),
+		warning: m.app_ui_tone_warning(),
+		ghost: m.app_ui_tone_ghost(),
+		muted: m.app_ui_tone_muted()
 	};
 
 	const ICON = {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * First run: create the admin account that protects the instance.
 	 *
@@ -29,10 +30,10 @@
 	const remaining = $derived(Math.max(0, PASSWORD_MIN_LENGTH - [...password].length));
 	const lengthHelp = $derived(
 		password.length === 0
-			? `At least ${PASSWORD_MIN_LENGTH} characters.`
+			? m.auth_setup_length_empty({ min: PASSWORD_MIN_LENGTH })
 			: remaining > 0
-				? `${remaining} more character${remaining === 1 ? '' : 's'} to reach ${PASSWORD_MIN_LENGTH}.`
-				: 'Long enough. A whole phrase is safer and easier to remember than a complicated word.'
+				? m.auth_setup_length_remaining({ count: remaining, min: PASSWORD_MIN_LENGTH })
+				: m.auth_setup_length_ok()
 	);
 
 	async function submit(event: SubmitEvent) {
@@ -40,10 +41,10 @@
 		failure = null;
 		const name = username.trim();
 		const code = setupCode.trim();
-		codeError = code ? null : 'Enter the setup code printed in the server logs.';
-		usernameError = !name ? 'Choose a username.' : /\s/.test(name) ? 'The username cannot contain spaces.' : null;
+		codeError = code ? null : m.auth_setup_code_required();
+		usernameError = !name ? m.auth_setup_username_required() : /\s/.test(name) ? m.auth_setup_username_spaces() : null;
 		passwordError = validatePassword(password);
-		confirmError = !passwordError && password !== confirmation ? 'The two passwords do not match. Type the confirmation again.' : null;
+		confirmError = !passwordError && password !== confirmation ? m.auth_setup_mismatch() : null;
 		if (codeError || usernameError || passwordError || confirmError) return;
 
 		sending = true;
@@ -54,15 +55,15 @@
 		} catch (cause) {
 			if (cause instanceof ApiError && cause.status === 409) {
 				failure = {
-					title: 'This instance already has an admin.',
-					error: new ApiError('Sign in with that account, then manage users from Settings.', 400)
+					title: m.auth_setup_exists_title(),
+					error: new ApiError(m.auth_setup_exists_detail(), 400)
 				};
 				// The guard will move to the sign-in screen once the status is re-read.
 				await auth.refresh();
 			} else if (cause instanceof ApiError && cause.status === 401) {
-				codeError = 'This is not the setup code the server printed. Check the latest one in its logs: it changes at every restart.';
+				codeError = m.auth_setup_code_wrong();
 			} else {
-				failure = { title: 'Could not create the account', error: cause };
+				failure = { title: m.auth_setup_failed(), error: cause };
 			}
 		} finally {
 			sending = false;
@@ -70,7 +71,7 @@
 	}
 </script>
 
-<svelte:head><title>Create the admin account · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.auth_setup_page_title()}</title></svelte:head>
 
 <div class="relative min-h-screen overflow-hidden bg-canvas">
 	<DotField opacity={1} dotSpacing={13} />
@@ -88,17 +89,17 @@
 				<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>
 			</div>
 
-			<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">Let's create your account.</h1>
+			<h1 id="gate-title" class="display mt-6 text-[1.75rem] text-ink sm:text-3xl">{m.auth_setup_title()}</h1>
 			<p class="mt-2 text-sm text-ink-2">
-				This first account is the administrator. Use a password phrase you'll remember — at least {PASSWORD_MIN_LENGTH} characters.
+				{m.auth_setup_intro({ min: PASSWORD_MIN_LENGTH })}
 			</p>
 
 			<form class="mt-6 grid gap-4" onsubmit={submit} novalidate>
 				<Field
-					label="Setup code"
+					label={m.auth_setup_code_label()}
 					for="setup-code"
 					error={codeError}
-					help="Printed in the server logs at startup (docker compose logs dumbmonit). It proves you run this server."
+					help={m.auth_setup_code_help()}
 				>
 					<input
 						id="setup-code"
@@ -115,7 +116,7 @@
 					/>
 				</Field>
 
-				<Field label="Username" for="username" error={usernameError}>
+				<Field label={m.auth_login_username()} for="username" error={usernameError}>
 					<input
 						id="username"
 						type="text"
@@ -130,7 +131,7 @@
 					/>
 				</Field>
 
-				<Field label="Password" for="new-password" error={passwordError} help={lengthHelp}>
+				<Field label={m.auth_login_password()} for="new-password" error={passwordError} help={lengthHelp}>
 					<PasswordInput
 						id="new-password"
 						bind:value={password}
@@ -141,7 +142,7 @@
 					/>
 				</Field>
 
-				<Field label="Confirm password" for="confirm-password" error={confirmError}>
+				<Field label={m.auth_setup_confirm()} for="confirm-password" error={confirmError}>
 					<PasswordInput
 						id="confirm-password"
 						bind:value={confirmation}
@@ -158,17 +159,17 @@
 
 				<ClickSpark class="w-full">
 					<Button type="submit" variant="primary" size="lg" class="w-full" loading={sending}>
-						Create account and continue
+						{m.auth_setup_submit()}
 					</Button>
 				</ClickSpark>
 			</form>
 
 			<p class="mt-5 text-[0.8125rem] text-ink-2">
-				Write the password down somewhere safe. It cannot be recovered from the interface, only reset on the machine that runs DumbMonit. You can add more users and single sign-on later, from Settings.
+				{m.auth_setup_note()}
 			</p>
 		</section>
 
-		<p class="mt-6 text-[0.8125rem] text-ink-2">DumbMonit · open source, Apache 2.0</p>
+		<p class="mt-6 text-[0.8125rem] text-ink-2">{m.auth_footer()}</p>
 	</main>
 </div>
 
