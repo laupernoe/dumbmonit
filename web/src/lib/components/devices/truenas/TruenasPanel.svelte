@@ -11,6 +11,7 @@
 	import { getTruenasHealth, getTruenasProtection, getTruenasStorage } from '#lib/api/truenas.js';
 	import type { Target, TruenasHealth, TruenasProtection, TruenasStorage } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import DatasetsProtection from './DatasetsProtection.svelte';
 	import NasHealth from './NasHealth.svelte';
 	import PoolsAndDisks from './PoolsAndDisks.svelte';
@@ -82,20 +83,20 @@
 </script>
 
 {#if error}
-	<Panel title="NAS" class="rise-in">
-		<ErrorNotice {error} title="Could not load the NAS details" onretry={() => void load()} />
+	<Panel title={m.devicesb_truenas_panel_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_truenas_panel_error()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="NAS" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the NAS">
+	<Panel title={m.devicesb_truenas_panel_title()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_truenas_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
 		<Panel
-			title="Pools and disks"
-			description="What ZFS says about each pool, and the disks under them. A mirror that lost a disk keeps serving every file: this is where it shows."
+			title={m.devicesb_truenas_panel_pools_title()}
+			description={m.devicesb_truenas_panel_pools_description()}
 			padded={false}
 			class="rise-in"
 		>
@@ -103,11 +104,13 @@
 				{#if unhealthyPools > 0}
 					<Plate
 						tone="warning"
-						label={`${formatCount(unhealthyPools)} ${unhealthyPools === 1 ? 'pool' : 'pools'} degraded`}
+						label={unhealthyPools === 1
+							? m.devicesb_truenas_panel_pools_degraded_one({ count: formatCount(unhealthyPools) })
+							: m.devicesb_truenas_panel_pools_degraded_other({ count: formatCount(unhealthyPools) })}
 					/>
 				{:else if probedAt !== null}
 					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>
-						read {formatAgo(probedAt)}
+						{m.devicesb_truenas_panel_read({ ago: formatAgo(probedAt) })}
 					</span>
 				{/if}
 			{/snippet}
@@ -115,8 +118,8 @@
 		</Panel>
 
 		<Panel
-			title="Datasets and protection"
-			description="Datasets against their quotas, the last scrub of each pool, and the replication and snapshot tasks that keep a second copy."
+			title={m.devicesb_truenas_panel_protection_title()}
+			description={m.devicesb_truenas_panel_protection_description()}
 			padded={false}
 			class="rise-in"
 		>
@@ -124,12 +127,15 @@
 				{#if failedTasks > 0}
 					<Plate
 						tone="warning"
-						label={`${formatCount(failedTasks)} ${failedTasks === 1 ? 'task' : 'tasks'} failed`}
+						label={failedTasks === 1
+							? m.devicesb_truenas_panel_tasks_failed_one({ count: formatCount(failedTasks) })
+							: m.devicesb_truenas_panel_tasks_failed_other({ count: formatCount(failedTasks) })}
 					/>
 				{:else if snapshotsTotal !== null}
 					<span class="tnum text-[0.75rem] text-ink-3">
-						{formatCount(snapshotsTotal)}
-						{snapshotsTotal === 1 ? 'snapshot' : 'snapshots'}
+						{snapshotsTotal === 1
+							? m.devicesb_truenas_panel_snapshots_one({ count: formatCount(snapshotsTotal) })
+							: m.devicesb_truenas_panel_snapshots_other({ count: formatCount(snapshotsTotal) })}
 					</span>
 				{/if}
 			{/snippet}
@@ -141,10 +147,10 @@
 		</Panel>
 
 		<Panel
-			title="NAS health"
+			title={m.devicesb_truenas_panel_health_title()}
 			description={health?.version
-				? `TrueNAS's own alerts, the services set to start at boot, and the machine. TrueNAS ${health.version}.`
-				: "TrueNAS's own alerts, the services set to start at boot, and the machine."}
+				? m.devicesb_truenas_panel_health_description_version({ version: health.version })
+				: m.devicesb_truenas_panel_health_description()}
 			padded={false}
 			class="rise-in"
 		>
@@ -152,14 +158,18 @@
 				{#if seriousAlerts > 0}
 					<Plate
 						tone="warning"
-						label={`${formatCount(seriousAlerts)} ${seriousAlerts === 1 ? 'alert' : 'alerts'}`}
+						label={seriousAlerts === 1
+							? m.devicesb_truenas_panel_alerts_one({ count: formatCount(seriousAlerts) })
+							: m.devicesb_truenas_panel_alerts_other({ count: formatCount(seriousAlerts) })}
 					/>
 				{:else if stoppedServices.length > 0}
-					<Plate tone="warning" label={`${formatCount(stoppedServices.length)} stopped`} />
+					<Plate tone="warning" label={m.devicesb_truenas_panel_stopped({ count: formatCount(stoppedServices.length) })} />
 				{:else if warningAlerts > 0}
 					<Plate
 						tone="advisory"
-						label={`${formatCount(warningAlerts)} ${warningAlerts === 1 ? 'warning' : 'warnings'}`}
+						label={warningAlerts === 1
+							? m.devicesb_truenas_panel_warnings_one({ count: formatCount(warningAlerts) })
+							: m.devicesb_truenas_panel_warnings_other({ count: formatCount(warningAlerts) })}
 					/>
 				{/if}
 			{/snippet}

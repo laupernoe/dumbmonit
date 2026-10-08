@@ -19,6 +19,7 @@
 		OpnsenseUnbound
 	} from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		carpTone,
 		FILL,
@@ -68,16 +69,16 @@
 </script>
 
 {#if empty}
-	<p class="px-5 py-4 text-sm text-ink-2">The firewall has not been read yet.</p>
+	<p class="px-4 sm:px-5 py-4 text-sm text-ink-2">{m.devicesb_opnsense_health_not_read()}</p>
 {:else}
 	<div class="flex flex-col divide-y divide-line">
 		{#if stoppedServices.length > 0}
-			<div class="flex flex-col gap-2 px-5 py-4">
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Stopped services</p>
+			<div class="flex flex-col gap-2 px-4 sm:px-5 py-4">
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_opnsense_health_stopped_services()}</p>
 				<ul class="flex flex-col gap-1">
 					{#each stoppedServices as service (service.name)}
 						<li class="flex flex-wrap items-center gap-2 text-sm">
-							<Plate tone="warning" label="Stopped" />
+							<Plate tone="warning" label={m.devicesb_opnsense_health_stopped()} />
 							<span class="font-semibold text-ink">{service.name}</span>
 							{#if service.description}
 								<span class="text-[0.8125rem] text-ink-2">{service.description}</span>
@@ -89,8 +90,8 @@
 		{/if}
 
 		{#if tunnels.length > 0}
-			<div class="flex flex-col gap-2 px-5 py-4">
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">VPN tunnels</p>
+			<div class="flex flex-col gap-2 px-4 sm:px-5 py-4">
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_opnsense_health_vpn_tunnels()}</p>
 				<ul class="flex flex-col gap-1.5">
 					{#each tunnels as row (`${row.kind}/${row.name}`)}
 						{@const plate = tunnelTone(row)}
@@ -107,25 +108,25 @@
 							<span class="font-semibold text-ink">{row.name}</span>
 							{#if peers !== null && peersTotal !== null}
 								<span class="tnum text-[0.8125rem] text-ink-2">
-									{formatCount(peers)} of {formatCount(peersTotal)} peers connected
+									{m.devicesb_opnsense_health_peers_connected({ connected: formatCount(peers), total: formatCount(peersTotal) })}
 								</span>
 							{:else if peersTotal !== null}
 								<span class="tnum text-[0.8125rem] text-ink-2">
-									{formatCount(peersTotal)} {peersTotal === 1 ? 'peer' : 'peers'}
+									{m.devicesb_opnsense_health_peers_total({ count: formatCount(peersTotal) })}
 								</span>
 							{:else if peers !== null}
 								<span class="tnum text-[0.8125rem] text-ink-2">
-									{formatCount(peers)} connected
+									{m.devicesb_opnsense_health_connected({ count: formatCount(peers) })}
 								</span>
 							{/if}
 							{#if handshake !== null}
 								<span class="tnum text-[0.8125rem] {row.silent ? 'text-advisory-ink' : 'text-ink-3'}">
-									last handshake {formatSpan(handshake)} ago
+									{m.devicesb_opnsense_health_last_handshake({ span: formatSpan(handshake) })}
 								</span>
 							{/if}
 							{#if bytesIn !== null || bytesOut !== null}
 								<span class="tnum text-[0.8125rem] text-ink-3">
-									{formatBytes(bytesIn)} in · {formatBytes(bytesOut)} out
+									{m.devicesb_opnsense_health_bytes_in_out({ in: formatBytes(bytesIn), out: formatBytes(bytesOut) })}
 								</span>
 							{/if}
 							{#if row.detail}
@@ -138,21 +139,20 @@
 		{/if}
 
 		{#if carp}
-			<div class="flex flex-col gap-2 px-5 py-4">
+			<div class="flex flex-col gap-2 px-4 sm:px-5 py-4">
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">CARP</p>
 					{#if carp.maintenance_mode}
-						<Plate tone="warning" label="Maintenance mode" />
+						<Plate tone="warning" label={m.devicesb_opnsense_health_maintenance_mode()} />
 					{:else if carp.enabled}
-						<Plate tone="signal" label="Enabled" />
+						<Plate tone="signal" label={m.devicesb_opnsense_health_enabled()} />
 					{:else}
-						<Plate tone="ghost" label="Disabled" />
+						<Plate tone="ghost" label={m.devicesb_opnsense_health_disabled()} />
 					{/if}
 				</div>
 				{#if carp.maintenance_mode}
 					<p class="text-[0.8125rem] text-warning-ink">
-						This firewall has handed over on purpose. Until maintenance mode is lifted, the pair is
-						running on one machine.
+						{m.devicesb_opnsense_health_carp_maintenance_notice()}
 					</p>
 				{/if}
 				{#if carp.vips.length > 0}
@@ -163,7 +163,7 @@
 								<Plate tone={plate.tone} label={plate.label} />
 								{#if vip.interface}<span class="font-medium text-ink">{vip.interface}</span>{/if}
 								{#if vip.vhid}
-									<span class="tnum text-[0.8125rem] text-ink-3">vhid {vip.vhid}</span>
+									<span class="tnum text-[0.8125rem] text-ink-3">{m.devicesb_opnsense_health_vhid({ vhid: vip.vhid })}</span>
 								{/if}
 								{#if vip.address}
 									<span class="tnum text-[0.8125rem] break-all text-ink-2">{vip.address}</span>
@@ -177,36 +177,35 @@
 
 		{#if firmware}
 			{@const pending = reading(firmware.updates_pending)}
-			<div class="flex flex-col gap-2 px-5 py-4">
+			<div class="flex flex-col gap-2 px-4 sm:px-5 py-4">
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Firmware</p>
+					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_opnsense_health_firmware()}</p>
 					{#if firmware.reboot_required}
-						<Plate tone="warning" label="Reboot pending" />
+						<Plate tone="warning" label={m.devicesb_opnsense_health_reboot_pending()} />
 					{/if}
 					{#if firmware.upgrade_available}
-						<Plate tone="advisory" label="Update available" />
+						<Plate tone="advisory" label={m.devicesb_opnsense_health_update_available()} />
 					{/if}
 					{#if firmware.connection_ok === false}
-						<Plate tone="advisory" label="Mirror unreachable" />
+						<Plate tone="advisory" label={m.devicesb_opnsense_health_mirror_unreachable()} />
 					{/if}
 					{#if !firmware.checked}
-						<Plate tone="info" label="Never checked" />
+						<Plate tone="info" label={m.devicesb_opnsense_health_never_checked()} />
 					{/if}
 				</div>
 				<p class="tnum flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-ink-2">
-					{#if firmware.version}<span>running {firmware.version}</span>{/if}
-					{#if firmware.checked && firmware.latest}<span>latest {firmware.latest}</span>{/if}
+					{#if firmware.version}<span>{m.devicesb_opnsense_health_running({ version: firmware.version })}</span>{/if}
+					{#if firmware.checked && firmware.latest}<span>{m.devicesb_opnsense_health_latest({ version: firmware.latest })}</span>{/if}
 					{#if pending !== null}
 						<span>
-							{formatCount(pending)} package {pending === 1 ? 'update' : 'updates'} pending
+							{m.devicesb_opnsense_health_updates_pending({ count: formatCount(pending) })}
 						</span>
 					{/if}
-					{#if firmware.last_check}<span>checked {firmware.last_check}</span>{/if}
+					{#if firmware.last_check}<span>{m.devicesb_opnsense_health_checked({ date: firmware.last_check })}</span>{/if}
 				</p>
 				{#if !firmware.checked}
 					<p class="text-[0.8125rem] text-ink-3">
-						The firewall has not checked for updates yet, or has just installed one. Run a
-						check from System → Firmware; DumbMonit never starts one itself.
+						{m.devicesb_opnsense_health_firmware_unchecked()}
 					</p>
 				{:else if firmware.status_message}
 					<p class="text-[0.8125rem] break-words text-ink-3">{firmware.status_message}</p>
@@ -218,20 +217,20 @@
 			{@const queries = reading(unbound.queries)}
 			{@const hits = reading(unbound.cache_hit_percent)}
 			{@const blocklist = reading(unbound.blocklist_size)}
-			<div class="flex flex-col gap-2 px-5 py-4">
+			<div class="flex flex-col gap-2 px-4 sm:px-5 py-4">
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Resolver</p>
+					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_opnsense_health_resolver()}</p>
 					{#if unbound.running}
-						<Plate tone="signal" label="Running" />
+						<Plate tone="signal" label={m.devicesb_opnsense_health_running_state()} />
 					{:else}
-						<Plate tone="warning" label="Stopped" />
+						<Plate tone="warning" label={m.devicesb_opnsense_health_stopped()} />
 					{/if}
 				</div>
 				{#if queries !== null || hits !== null || blocklist !== null}
 					<p class="tnum flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-ink-2">
-						{#if queries !== null}<span>{formatCount(queries)} queries</span>{/if}
-						{#if hits !== null}<span>{hits.toFixed(0)} % served from cache</span>{/if}
-						{#if blocklist !== null}<span>{formatCount(blocklist)} blocklist entries</span>{/if}
+						{#if queries !== null}<span>{m.devicesb_opnsense_health_queries({ count: formatCount(queries) })}</span>{/if}
+						{#if hits !== null}<span>{m.devicesb_opnsense_health_cache_hits({ percent: hits.toFixed(0) })}</span>{/if}
+						{#if blocklist !== null}<span>{m.devicesb_opnsense_health_blocklist({ count: formatCount(blocklist) })}</span>{/if}
 					</p>
 				{/if}
 			</div>
@@ -242,35 +241,39 @@
 			{@const cpu = reading(system.cpu_percent)}
 			{@const cpuCount = reading(system.cpu_count)}
 			{@const mbuf = reading(system.mbuf_used_percent)}
-			<div class="flex flex-col gap-3 px-5 py-4">
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Machine</p>
+			<div class="flex flex-col gap-3 px-4 sm:px-5 py-4">
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_opnsense_health_machine()}</p>
 				<p class="tnum flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-ink-2">
-					{#if uptime !== null}<span>up {formatSpan(uptime)}</span>{/if}
+					{#if uptime !== null}<span>{m.devicesb_opnsense_health_up({ span: formatSpan(uptime) })}</span>{/if}
 					{#if system.load.length > 0}
-						<span title="Load averages over 1, 5 and 15 minutes">
-							load {system.load.map((value) => value.toFixed(2)).join(' · ')}
+						<span title={m.devicesb_opnsense_health_load_title()}>
+							{m.devicesb_opnsense_health_load({ values: system.load.map((value) => value.toFixed(2)).join(' · ') })}
 						</span>
 					{/if}
 					{#if cpu !== null}
-						<span>cpu {cpu.toFixed(0)} %{cpuCount !== null ? ` of ${formatCount(cpuCount)}` : ''}</span>
+						<span>
+							{cpuCount !== null
+								? m.devicesb_opnsense_health_cpu_of({ percent: cpu.toFixed(0), count: formatCount(cpuCount) })
+								: m.devicesb_opnsense_health_cpu({ percent: cpu.toFixed(0) })}
+						</span>
 					{/if}
 					{#if memoryPercent !== null}
 						<span>
-							memory {memoryPercent.toFixed(0)} %{system.memory_total_bytes !== null
-								? ` of ${formatBytes(system.memory_total_bytes)}`
-								: ''}
+							{system.memory_total_bytes !== null
+								? m.devicesb_opnsense_health_memory_of({ percent: memoryPercent.toFixed(0), total: formatBytes(system.memory_total_bytes) })
+								: m.devicesb_opnsense_health_memory({ percent: memoryPercent.toFixed(0) })}
 						</span>
 					{/if}
 					{#if swapPercent !== null}
 						<span>
-							swap {swapPercent.toFixed(0)} %{system.swap_total_bytes !== null
-								? ` of ${formatBytes(system.swap_total_bytes)}`
-								: ''}
+							{system.swap_total_bytes !== null
+								? m.devicesb_opnsense_health_swap_of({ percent: swapPercent.toFixed(0), total: formatBytes(system.swap_total_bytes) })
+								: m.devicesb_opnsense_health_swap({ percent: swapPercent.toFixed(0) })}
 						</span>
 					{/if}
 					{#if mbuf !== null}
-						<span title="FreeBSD network buffers: a firewall that exhausts them stops routing">
-							network buffers {mbuf.toFixed(0)} %
+						<span title={m.devicesb_opnsense_health_mbuf_title()}>
+							{m.devicesb_opnsense_health_mbuf({ percent: mbuf.toFixed(0) })}
 						</span>
 					{/if}
 				</p>
@@ -297,7 +300,7 @@
 										aria-valuemin="0"
 										aria-valuemax="100"
 										aria-valuenow={Math.round(used)}
-										aria-label={`${disk.device} usage`}
+										aria-label={m.devicesb_opnsense_health_disk_usage({ device: disk.device })}
 									>
 										<span
 											class={`block h-full rounded-full ${FILL[tone]}`}
@@ -305,9 +308,9 @@
 										></span>
 									</span>
 									<span class="tnum text-[0.8125rem] text-ink-2">
-										{used.toFixed(0)} %{disk.total_bytes !== null
-											? ` of ${formatBytes(disk.total_bytes)}`
-											: ''}
+										{disk.total_bytes !== null
+										? m.devicesb_opnsense_health_disk_percent_of({ percent: used.toFixed(0), total: formatBytes(disk.total_bytes) })
+										: m.devicesb_opnsense_health_disk_percent({ percent: used.toFixed(0) })}
 									</span>
 								{:else if disk.total_bytes !== null}
 									<span class="tnum text-[0.8125rem] text-ink-2">

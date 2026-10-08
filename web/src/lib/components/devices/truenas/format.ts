@@ -6,36 +6,47 @@
  * than a zero.
  */
 import { formatDateTime } from '#lib/format.js';
+import { m } from '#lib/paraglide/messages.js';
 import type { Tone } from '#lib/ui/index.js';
 import type { TruenasPoolRow, TruenasScan, TruenasTaskRow, TruenasVdev } from '#lib/api/index.js';
 
 export type Plating = { tone: Tone; label: string };
 
 export function formatUnix(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
+		return m.devicesb_truenas_format_never();
+	}
 	return formatDateTime(new Date(seconds * 1000));
 }
 
 /** Whole-unit span: "40 s", "12 min", "3 h", "5 d". */
 export function formatSpan(seconds: number): string {
-	if (seconds < 60) return `${Math.round(seconds)} s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	if (seconds < 60) return m.devicesb_truenas_format_span_s({ count: Math.round(seconds) });
+	if (seconds < 3600) {
+		return m.devicesb_truenas_format_span_min({ count: Math.round(seconds / 60) });
+	}
 	if (seconds < 86400) {
 		const hours = Math.floor(seconds / 3600);
 		const minutes = Math.round((seconds % 3600) / 60);
-		return minutes > 0 && hours < 10 ? `${hours} h ${minutes} min` : `${hours} h`;
+		return minutes > 0 && hours < 10
+			? m.devicesb_truenas_format_span_h_min({ hours, minutes })
+			: m.devicesb_truenas_format_span_h({ count: hours });
 	}
 	const days = Math.round(seconds / 86400);
-	return `${days} ${days === 1 ? 'day' : 'days'}`;
+	return days === 1
+		? m.devicesb_truenas_format_span_day_one({ count: days })
+		: m.devicesb_truenas_format_span_day_other({ count: days });
 }
 
 /** "3 h ago", or "never". Negative ages (the future) read as "in 2 h". */
 export function formatAgo(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
+		return m.devicesb_truenas_format_never();
+	}
 	const delta = Math.round(Date.now() / 1000 - seconds);
-	if (delta < 0) return `in ${formatSpan(-delta)}`;
-	if (delta < 45) return 'just now';
-	return `${formatSpan(delta)} ago`;
+	if (delta < 0) return m.devicesb_truenas_format_in_span({ span: formatSpan(-delta) });
+	if (delta < 45) return m.devicesb_truenas_format_just_now();
+	return m.devicesb_truenas_format_span_ago({ span: formatSpan(delta) });
 }
 
 /** A plain count, grouped: "1 204". */
@@ -91,12 +102,12 @@ export function plural(count: number, one: string, many = `${one}s`): string {
 export function poolPlate(pool: TruenasPoolRow): Plating {
 	const status = pool.status.toUpperCase();
 	if (status === 'ONLINE') {
-		if (!pool.healthy) return { tone: 'warning', label: 'Unhealthy' };
-		if (pool.warning) return { tone: 'advisory', label: 'Needs attention' };
-		return { tone: 'signal', label: 'Healthy' };
+		if (!pool.healthy) return { tone: 'warning', label: m.devicesb_truenas_format_pool_unhealthy() };
+		if (pool.warning) return { tone: 'advisory', label: m.devicesb_truenas_format_pool_attention() };
+		return { tone: 'signal', label: m.devicesb_truenas_format_pool_healthy() };
 	}
-	if (status === 'DEGRADED') return { tone: 'warning', label: 'Degraded' };
-	if (!status) return { tone: 'ghost', label: 'Unknown' };
+	if (status === 'DEGRADED') return { tone: 'warning', label: m.devicesb_truenas_format_pool_degraded() };
+	if (!status) return { tone: 'ghost', label: m.devicesb_truenas_format_unknown() };
 	return { tone: 'warning', label: titleCase(status) };
 }
 
@@ -106,33 +117,68 @@ export function scanLabel(
 	percent: number | null,
 	secondsLeft: number | null
 ): string {
-	const name = fn ? titleCase(fn) : 'Scan';
+	const upper = fn ? fn.toUpperCase() : '';
+	const name =
+		upper === 'SCRUB'
+			? m.devicesb_truenas_format_scan_scrub()
+			: upper === 'RESILVER'
+				? m.devicesb_truenas_format_scan_resilver()
+				: fn
+					? titleCase(fn)
+					: m.devicesb_truenas_format_scan_generic();
 	const pct = reading(percent);
 	const left = reading(secondsLeft);
-	let label = pct !== null ? `${name} ${pct.toFixed(0)} %` : `${name} running`;
-	if (left !== null && left > 0) label += `, ~${formatSpan(left)} left`;
-	return label;
+	const span = left !== null && left > 0 ? formatSpan(left) : null;
+	if (pct !== null) {
+		const percentText = pct.toFixed(0);
+		return span !== null
+			? m.devicesb_truenas_format_scan_percent_left({ name, percent: percentText, span })
+			: m.devicesb_truenas_format_scan_percent({ name, percent: percentText });
+	}
+	return span !== null
+		? m.devicesb_truenas_format_scan_running_left({ name, span })
+		: m.devicesb_truenas_format_scan_running({ name });
 }
 
 export function runningScan(scan: TruenasScan | null): TruenasScan | null {
 	return scan && scan.state.toUpperCase() === 'SCANNING' ? scan : null;
 }
 
-const ROLE_LABEL: Record<string, string> = {
-	data: 'data',
-	log: 'log',
-	cache: 'cache',
-	spare: 'spare',
-	special: 'special',
-	dedup: 'dedup'
-};
+function roleLabel(role: string): string {
+	switch (role) {
+		case 'data':
+			return m.devicesb_truenas_format_role_data();
+		case 'log':
+			return m.devicesb_truenas_format_role_log();
+		case 'cache':
+			return m.devicesb_truenas_format_role_cache();
+		case 'spare':
+			return m.devicesb_truenas_format_role_spare();
+		case 'special':
+			return m.devicesb_truenas_format_role_special();
+		case 'dedup':
+			return m.devicesb_truenas_format_role_dedup();
+		default:
+			return role;
+	}
+}
+
+function disksWords(count: number): string {
+	return count === 1
+		? m.devicesb_truenas_format_disks_one({ count: formatCount(count) })
+		: m.devicesb_truenas_format_disks_other({ count: formatCount(count) });
+}
 
 function vdevWords(kind: string, disks: number): string {
 	const upper = kind.toUpperCase();
 	if (upper === 'DISK' || upper === 'STRIPE') {
-		return disks > 1 ? `${disks} disks` : 'single disk';
+		return disks > 1
+			? m.devicesb_truenas_format_disks_other({ count: formatCount(disks) })
+			: m.devicesb_truenas_format_single_disk();
 	}
-	return disks > 0 ? `${upper} (${plural(disks, 'disk')})` : upper;
+	return disks > 0
+		? m.devicesb_truenas_format_kind_disks({ kind: upper, disks: disksWords(disks) })
+		: upper;
 }
 
 /**
@@ -154,9 +200,12 @@ export function vdevLayout(vdevs: TruenasVdev[]): string[] {
 	);
 	return ordered.map((group) => {
 		const words = vdevWords(group.kind, group.disks);
-		const counted = group.count > 1 ? `${group.count} × ${words}` : words;
+		const counted =
+			group.count > 1
+				? m.devicesb_truenas_format_vdev_counted({ count: group.count, words })
+				: words;
 		if (group.role === 'data') return counted;
-		return `${ROLE_LABEL[group.role] ?? group.role}: ${counted}`;
+		return m.devicesb_truenas_format_vdev_role({ role: roleLabel(group.role), words: counted });
 	});
 }
 
@@ -165,17 +214,24 @@ export function alertPlate(level: string): Plating {
 	const upper = level.toUpperCase();
 	switch (upper) {
 		case 'INFO':
+			return { tone: 'info', label: m.devicesb_truenas_format_level_info() };
 		case 'NOTICE':
-			return { tone: 'info', label: titleCase(upper) };
+			return { tone: 'info', label: m.devicesb_truenas_format_level_notice() };
 		case 'WARNING':
-			return { tone: 'advisory', label: 'Warning' };
+			return { tone: 'advisory', label: m.devicesb_truenas_format_level_warning() };
 		case 'ERROR':
+			return { tone: 'warning', label: m.devicesb_truenas_format_level_error() };
 		case 'CRITICAL':
+			return { tone: 'warning', label: m.devicesb_truenas_format_level_critical() };
 		case 'ALERT':
+			return { tone: 'warning', label: m.devicesb_truenas_format_level_alert() };
 		case 'EMERGENCY':
-			return { tone: 'warning', label: titleCase(upper) };
+			return { tone: 'warning', label: m.devicesb_truenas_format_level_emergency() };
 		default:
-			return { tone: 'ghost', label: upper ? titleCase(upper) : 'Unknown' };
+			return {
+				tone: 'ghost',
+				label: upper ? titleCase(upper) : m.devicesb_truenas_format_unknown()
+			};
 	}
 }
 
@@ -189,31 +245,31 @@ export const SERIOUS_LEVELS = ['ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY'];
 export function taskPlate(task: TruenasTaskRow): Plating {
 	switch (task.state.toUpperCase()) {
 		case 'FINISHED':
-			return { tone: 'signal', label: 'OK' };
+			return { tone: 'signal', label: m.devicesb_truenas_format_task_ok() };
 		case 'ERROR':
 			return task.failed
-				? { tone: 'warning', label: 'Failed' }
-				: { tone: 'ghost', label: 'Failed' };
+				? { tone: 'warning', label: m.devicesb_truenas_format_task_failed() }
+				: { tone: 'ghost', label: m.devicesb_truenas_format_task_failed() };
 		case 'RUNNING':
-			return { tone: 'info', label: 'Running' };
+			return { tone: 'info', label: m.devicesb_truenas_format_task_running() };
 		case 'WAITING':
-			return { tone: 'info', label: 'Waiting' };
+			return { tone: 'info', label: m.devicesb_truenas_format_task_waiting() };
 		case 'PENDING':
-			return { tone: 'ghost', label: 'Never run' };
+			return { tone: 'ghost', label: m.devicesb_truenas_format_task_never_run() };
 		case 'HOLD':
-			return { tone: 'advisory', label: 'On hold' };
+			return { tone: 'advisory', label: m.devicesb_truenas_format_task_on_hold() };
 		default:
-			return { tone: 'ghost', label: task.state ? titleCase(task.state) : 'Unknown' };
+			return {
+				tone: 'ghost',
+				label: task.state ? titleCase(task.state) : m.devicesb_truenas_format_unknown()
+			};
 	}
 }
 
-export const TASK_KIND_LABEL: Record<string, string> = {
-	replication: 'Replication',
-	snapshot: 'Snapshots'
-};
-
 export function taskKindLabel(kind: string): string {
-	return TASK_KIND_LABEL[kind] ?? kind;
+	if (kind === 'replication') return m.devicesb_truenas_format_kind_replication();
+	if (kind === 'snapshot') return m.devicesb_truenas_format_kind_snapshots();
+	return kind;
 }
 
 /** Fill colours of the usage bars. */

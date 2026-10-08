@@ -20,6 +20,7 @@
 	import { RANGES, type RangeId } from '#lib/metrics.js';
 	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import FoldSection from '../FoldSection.svelte';
 	import Segmented from '../Segmented.svelte';
 	import { formatRate } from '../metrics';
@@ -85,7 +86,7 @@
 	const nodes = $derived([...new Set(guests.map((g) => g.node))].sort((a, b) => a.localeCompare(b, 'en')));
 
 	const nodeOptions = $derived([
-		{ id: 'all', label: 'All nodes', count: guests.length },
+		{ id: 'all', label: m.devicesb_proxmox_guests_all_nodes(), count: guests.length },
 		...nodes.map((node) => ({ id: node, label: node, count: guests.filter((g) => g.node === node).length }))
 	]);
 
@@ -93,7 +94,7 @@
 	// service); the filter only appears once there is more than one.
 	const pools = $derived([...new Set(guests.map((g) => g.pool).filter((p): p is string => !!p))].sort((a, b) => a.localeCompare(b, 'en')));
 	const poolOptions = $derived([
-		{ id: 'all', label: 'All pools', count: guests.length },
+		{ id: 'all', label: m.devicesb_proxmox_guests_all_pools(), count: guests.length },
 		...pools.map((pool) => ({ id: pool, label: pool, count: guests.filter((g) => g.pool === pool).length }))
 	]);
 
@@ -121,11 +122,11 @@
 	const statusOptions = $derived.by(() => {
 		const count = (bucket: StatusFilter) => guests.filter((g) => statusBucket(g) === bucket).length;
 		const options: { id: StatusFilter; label: string; count?: number }[] = [
-			{ id: 'all', label: 'All' },
-			{ id: 'running', label: 'Running', count: count('running') },
-			{ id: 'stopped', label: 'Stopped', count: count('stopped') }
+			{ id: 'all', label: m.devicesb_proxmox_guests_filter_all() },
+			{ id: 'running', label: m.devicesb_proxmox_guests_running(), count: count('running') },
+			{ id: 'stopped', label: m.devicesb_proxmox_guests_stopped(), count: count('stopped') }
 		];
-		if (count('other') > 0) options.push({ id: 'other', label: 'Other', count: count('other') });
+		if (count('other') > 0) options.push({ id: 'other', label: m.devicesb_proxmox_guests_other(), count: count('other') });
 		return options;
 	});
 
@@ -195,10 +196,10 @@
 		if (loading || error || guests.length === 0) return undefined;
 		const running = guests.filter((g) => g.status === 'running').length;
 		const stopped = guests.filter((g) => g.status === 'stopped').length;
-		const parts = [`${guests.length}`, `${running} running`];
-		if (stopped > 0) parts.push(`${stopped} stopped`);
+		const parts = [`${guests.length}`, m.devicesb_proxmox_guests_summary_running({ count: running })];
+		if (stopped > 0) parts.push(m.devicesb_proxmox_guests_summary_stopped({ count: stopped }));
 		const other = guests.length - running - stopped;
-		if (other > 0) parts.push(`${other} other`);
+		if (other > 0) parts.push(m.devicesb_proxmox_guests_summary_other({ count: other }));
 		return parts.join(' · ');
 	});
 
@@ -210,17 +211,17 @@
 	function statusLook(g: ProxmoxGuest): StatusLook {
 		switch (g.status) {
 			case 'running':
-				return { tone: 'signal', word: 'Running', blink: false };
+				return { tone: 'signal', word: m.devicesb_proxmox_guests_running(), blink: false };
 			case 'stopped':
-				return { tone: 'warning', word: 'Stopped', blink: false };
+				return { tone: 'warning', word: m.devicesb_proxmox_guests_stopped(), blink: false };
 			case 'paused':
-				return { tone: 'advisory', word: 'Paused', blink: false };
+				return { tone: 'advisory', word: m.devicesb_proxmox_guests_paused(), blink: false };
 			case 'suspended':
-				return { tone: 'advisory', word: 'Suspended', blink: false };
+				return { tone: 'advisory', word: m.devicesb_proxmox_guests_suspended(), blink: false };
 			case 'template':
-				return { tone: 'ghost', word: 'Template', blink: false };
+				return { tone: 'ghost', word: m.devicesb_proxmox_guests_template(), blink: false };
 			default:
-				return { tone: 'ghost', word: 'Unknown', blink: false };
+				return { tone: 'ghost', word: m.devicesb_proxmox_guests_unknown(), blink: false };
 		}
 	}
 
@@ -234,10 +235,10 @@
 	/** "2.1 d" for a backup age; "never" when nothing is known. */
 	function backupWord(g: ProxmoxGuest): { text: string; tone: 'ink' | 'advisory' | 'warning' } {
 		if (g.status === 'template') return { text: '—', tone: 'ink' };
-		if (g.last_backup_age_seconds === null) return { text: 'none known', tone: 'warning' };
+		if (g.last_backup_age_seconds === null) return { text: m.devicesb_proxmox_guests_backup_none(), tone: 'warning' };
 		const age = g.last_backup_age_seconds;
 		return {
-			text: `${formatDuration(age)} ago`,
+			text: m.devicesb_proxmox_guests_backup_ago({ age: formatDuration(age) }),
 			tone: age > 7 * 86400 ? 'warning' : age > 2 * 86400 ? 'advisory' : 'ink'
 		};
 	}
@@ -246,20 +247,20 @@
 
 	/** What the disk cell says when usage is unknown. */
 	function diskNote(g: ProxmoxGuest): string {
-		if (g.kind !== 'qemu' || g.status !== 'running') return 'size only';
-		if (g.agent === false) return 'size only · agent not answering';
-		return 'size only · needs guest agent';
+		if (g.kind !== 'qemu' || g.status !== 'running') return m.devicesb_proxmox_guests_size_only();
+		if (g.agent === false) return m.devicesb_proxmox_guests_size_only_agent_silent();
+		return m.devicesb_proxmox_guests_size_only_needs_agent();
 	}
 
-	const COLUMNS: { key: SortKey; label: string; align: 'left' | 'right'; class?: string }[] = [
-		{ key: 'status', label: 'Status', align: 'left' },
-		{ key: 'name', label: 'Guest', align: 'left' },
-		{ key: 'cpu', label: 'CPU', align: 'left', class: 'w-28' },
-		{ key: 'memory', label: 'Memory', align: 'left', class: 'w-40' },
-		{ key: 'disk', label: 'Disk', align: 'left', class: 'w-44' },
-		{ key: 'net', label: 'Network', align: 'right' },
-		{ key: 'uptime', label: 'Uptime', align: 'right' },
-		{ key: 'backup', label: 'Last backup', align: 'right' }
+	const COLUMNS: { key: SortKey; label: () => string; align: 'left' | 'right'; class?: string }[] = [
+		{ key: 'status', label: () => m.devicesb_proxmox_guests_col_status(), align: 'left' },
+		{ key: 'name', label: () => m.devicesb_proxmox_guests_col_guest(), align: 'left' },
+		{ key: 'cpu', label: () => m.devicesb_proxmox_guests_col_cpu(), align: 'left', class: 'w-28' },
+		{ key: 'memory', label: () => m.devicesb_proxmox_guests_col_memory(), align: 'left', class: 'w-40' },
+		{ key: 'disk', label: () => m.devicesb_proxmox_guests_col_disk(), align: 'left', class: 'w-44' },
+		{ key: 'net', label: () => m.devicesb_proxmox_guests_col_network(), align: 'right' },
+		{ key: 'uptime', label: () => m.devicesb_proxmox_guests_col_uptime(), align: 'right' },
+		{ key: 'backup', label: () => m.devicesb_proxmox_guests_col_backup(), align: 'right' }
 	];
 
 	// --- Row detail: sparklines over the page's range ---------------------------
@@ -307,9 +308,9 @@
 			]);
 			if (signal.aborted) return;
 			detail = {
-				cpu: toSerie('CPU', cpu),
-				memory: toSerie('Memory', memory),
-				network: [...toSerie('in', netIn), ...toSerie('out', netOut)]
+				cpu: toSerie(m.devicesb_proxmox_guests_col_cpu(), cpu),
+				memory: toSerie(m.devicesb_proxmox_guests_col_memory(), memory),
+				network: [...toSerie(m.devicesb_proxmox_guests_net_in(), netIn), ...toSerie(m.devicesb_proxmox_guests_net_out(), netOut)]
 			};
 		} catch (cause) {
 			if (!signal.aborted) detailError = cause;
@@ -334,35 +335,35 @@
 	}
 </script>
 
-<FoldSection kind="proxmox-guests" title="Guests" {summary} defaultOpen={true} class="rise-in">
+<FoldSection kind="proxmox-guests" title={m.devicesb_proxmox_guests_title()} {summary} defaultOpen={true} class="rise-in">
 	{#snippet aside()}
 		{#if !loading && !error && guests.length > 0}
 			<div class="flex flex-wrap items-center gap-2">
 				{#if nodes.length > 1}
-					<Segmented options={nodeOptions} value={nodeFilter} onchange={(v) => (nodeFilter = v)} label="Node" size="sm" />
+					<Segmented options={nodeOptions} value={nodeFilter} onchange={(v) => (nodeFilter = v)} label={m.devicesb_proxmox_guests_filter_node()} size="sm" />
 				{/if}
 				{#if pools.length > 1}
-					<Segmented options={poolOptions} value={poolFilter} onchange={(v) => (poolFilter = v)} label="Pool" size="sm" />
+					<Segmented options={poolOptions} value={poolFilter} onchange={(v) => (poolFilter = v)} label={m.devicesb_proxmox_guests_filter_pool()} size="sm" />
 				{/if}
-				<Segmented options={statusOptions} value={statusFilter} onchange={(v) => (statusFilter = v)} label="Status" size="sm" />
+				<Segmented options={statusOptions} value={statusFilter} onchange={(v) => (statusFilter = v)} label={m.devicesb_proxmox_guests_col_status()} size="sm" />
 			</div>
 		{/if}
 	{/snippet}
 
 	{#if error}
 		<div class="px-5 py-4">
-			<ErrorNotice {error} title="Could not load the guests" onretry={() => void load()} />
+			<ErrorNotice {error} title={m.devicesb_proxmox_guests_load_error()} onretry={() => void load()} />
 		</div>
 	{:else if loading}
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading guests">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_proxmox_guests_loading()}>
 			<Skeleton class="h-10 w-full" rows={4} />
 		</div>
 	{:else if guests.length === 0}
 		<div class="px-5 py-4">
-			<EmptyState title="No guest known yet." description="VMs and containers appear after the first successful probe. Probe now if the device was just added." />
+			<EmptyState title={m.devicesb_proxmox_guests_empty_title()} description={m.devicesb_proxmox_guests_empty_desc()} />
 		</div>
 	{:else if shown.length === 0}
-		<p class="px-5 py-4 text-sm text-ink-2">No guest matches this filter.</p>
+		<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_proxmox_guests_no_match()}</p>
 	{:else}
 		<div class="overflow-x-auto">
 			<table class="w-full min-w-[56rem] border-collapse text-sm">
@@ -371,15 +372,15 @@
 						{#each COLUMNS as column (column.key)}
 							{@const active = sortKey === column.key}
 							<th scope="col" class={`px-3 py-2 font-semibold first:pl-5 last:pr-5 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.class ?? ''}`} aria-sort={active ? (sortAsc ? 'ascending' : 'descending') : 'none'}>
-								<button type="button" class={`inline-flex items-center gap-1 rounded hover:text-ink ${active ? 'text-ink' : ''}`} onclick={() => setSort(column.key)}>
-									{column.label}
+								<button type="button" class={`inline-flex min-h-10 items-center gap-1 rounded hover:text-ink ${active ? 'text-ink' : ''}`} onclick={() => setSort(column.key)}>
+									{column.label()}
 									{#if active}
 										{#if sortAsc}<ArrowUp class="size-3" aria-hidden="true" />{:else}<ArrowDown class="size-3" aria-hidden="true" />{/if}
 									{/if}
 								</button>
 							</th>
 						{/each}
-						<th scope="col" class="px-3 py-2 pr-5 text-right font-semibold">HA</th>
+						<th scope="col" class="px-3 py-2 pr-5 text-right font-semibold">{m.devicesb_proxmox_guests_col_ha()}</th>
 					</tr>
 				</thead>
 				{#each groups as [node, rows] (node)}
@@ -388,10 +389,10 @@
 					<tbody class="border-b border-line last:border-b-0">
 						<tr class="bg-surface-2/60">
 							<th scope="rowgroup" colspan={COLUMNS.length + 1} class="px-5 py-1.5 text-left">
-								<button type="button" class="inline-flex items-center gap-2 text-[0.8125rem] font-semibold text-ink hover:text-signal-ink" aria-expanded={!closed} onclick={() => (closedNodes = { ...closedNodes, [node]: !closed })}>
+								<button type="button" class="inline-flex min-h-10 items-center gap-2 text-[0.8125rem] font-semibold text-ink hover:text-signal-ink" aria-expanded={!closed} onclick={() => (closedNodes = { ...closedNodes, [node]: !closed })}>
 									<ChevronRight class={`size-3.5 shrink-0 text-ink-3 transition-transform duration-200 ease-out-expo ${closed ? '' : 'rotate-90'}`} aria-hidden="true" />
 									<span>{node}</span>
-									<span class="tnum font-normal text-ink-2">{rows.length} {rows.length === 1 ? 'guest' : 'guests'} · {running} running</span>
+									<span class="tnum font-normal text-ink-2">{rows.length === 1 ? m.devicesb_proxmox_guests_node_summary_one({ count: rows.length, running }) : m.devicesb_proxmox_guests_node_summary_other({ count: rows.length, running })}</span>
 								</button>
 							</th>
 						</tr>
@@ -402,20 +403,20 @@
 								{@const backup = backupWord(g)}
 								<tr class={`rise-in border-t border-line/60 ${open ? 'bg-surface-2/40' : 'hover:bg-surface-2/40'}`} style="--rise-delay: {Math.min(i, 8) * 30}ms">
 									<td class="px-3 py-2 pl-5 align-middle">
-										<button type="button" class="inline-flex items-center gap-2 whitespace-nowrap text-left" aria-expanded={open} aria-controls={`guest-${target.id}-${g.vmid}`} onclick={() => toggleRow(g.vmid)}>
+										<button type="button" class="inline-flex min-h-10 items-center gap-2 whitespace-nowrap text-left" aria-expanded={open} aria-controls={`guest-${target.id}-${g.vmid}`} onclick={() => toggleRow(g.vmid)}>
 											<ChevronRight class={`size-3.5 shrink-0 text-ink-3 transition-transform duration-200 ease-out-expo ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
 											<Led tone={look.tone} blink={look.blink} label={look.word} size="sm" />
 											<Plate tone={look.tone} label={look.word} bare size="sm" />
 										</button>
 									</td>
 									<td class="px-3 py-2 align-middle">
-										<button type="button" class="flex min-w-0 flex-col text-left" onclick={() => toggleRow(g.vmid)}>
+										<button type="button" class="flex min-h-10 min-w-0 flex-col justify-center text-left" onclick={() => toggleRow(g.vmid)}>
 											<span class="flex min-w-0 items-center gap-1.5">
 												<span class="truncate font-semibold text-ink">{g.name}</span>
-												{#if g.lock}<Plate tone="advisory" label={`locked: ${g.lock}`} bare size="sm" />{/if}
+												{#if g.lock}<Plate tone="advisory" label={m.devicesb_proxmox_guests_locked({ lock: g.lock })} bare size="sm" />{/if}
 											</span>
 											<span class="tnum text-[0.75rem] text-ink-2">
-												{g.kind === 'lxc' ? 'CT' : 'VM'} {g.vmid}{#if g.pool}{` · ${g.pool}`}{/if}
+												{g.kind === 'lxc' ? m.devicesb_proxmox_guests_kind_ct({ vmid: g.vmid }) : m.devicesb_proxmox_guests_kind_vm({ vmid: g.vmid })}{#if g.pool}{` · ${g.pool}`}{/if}
 											</span>
 										</button>
 									</td>
@@ -423,13 +424,13 @@
 										{#if g.cpu_percent !== null}
 											{@const tone = fillTone(g.cpu_percent)}
 											<div class="flex flex-col gap-1">
-												<span class="tnum text-ink">{formatPercent(g.cpu_percent)}<span class="text-ink-3">{' '}of {g.cpu_count ?? '?'}{g.cpu_count === 1 ? ' core' : ' cores'}</span></span>
-												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.cpu_percent)} aria-label="CPU">
+												<span class="tnum text-ink">{formatPercent(g.cpu_percent)}<span class="text-ink-3">{' '}{g.cpu_count === 1 ? m.devicesb_proxmox_guests_cpu_of_one({ count: g.cpu_count }) : m.devicesb_proxmox_guests_cpu_of_other({ count: g.cpu_count ?? '?' })}</span></span>
+												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.cpu_percent)} aria-label={m.devicesb_proxmox_guests_col_cpu()}>
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.cpu_percent)}%"></div>
 												</div>
 											</div>
 										{:else}
-											<span class="text-ink-3">—{#if g.cpu_count !== null}<span class="text-[0.75rem]">{' '}· {g.cpu_count} {g.cpu_count === 1 ? 'core' : 'cores'}</span>{/if}</span>
+											<span class="text-ink-3">—{#if g.cpu_count !== null}<span class="text-[0.75rem]">{' '}· {g.cpu_count === 1 ? m.devicesb_proxmox_guests_cores_one({ count: g.cpu_count }) : m.devicesb_proxmox_guests_cores_other({ count: g.cpu_count })}</span>{/if}</span>
 										{/if}
 									</td>
 									<td class="px-3 py-2 align-middle">
@@ -438,15 +439,15 @@
 											{@const overhead = hostOverhead(g)}
 											<div class="flex flex-col gap-1">
 												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.memory_used_bytes)}<span class="text-ink-3">{' '}/ {formatBytes(g.memory_total_bytes)}</span></span>
-												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.memory_percent ?? 0)} aria-label="Memory">
+												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.memory_percent ?? 0)} aria-label={m.devicesb_proxmox_guests_col_memory()}>
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.memory_percent ?? 0)}%"></div>
 												</div>
 												{#if overhead !== null}
 													<span
 														class="tnum whitespace-nowrap text-[0.75rem] text-ink-3"
-														title={`${formatBytes(g.memory_host_bytes)} occupied on the host — ${formatBytes(overhead)} more than the guest sees`}
+														title={m.devicesb_proxmox_guests_overhead_title({ host: formatBytes(g.memory_host_bytes), extra: formatBytes(overhead) })}
 													>
-														+{formatBytes(overhead)} on host
+														{m.devicesb_proxmox_guests_overhead({ extra: formatBytes(overhead) })}
 													</span>
 												{/if}
 											</div>
@@ -459,7 +460,7 @@
 											{@const tone = fillTone(g.disk_percent)}
 											<div class="flex flex-col gap-1">
 												<span class="tnum whitespace-nowrap text-ink">{formatBytes(g.disk_used_bytes)}<span class="text-ink-3">{' '}/ {formatBytes(g.disk_total_bytes)}</span> <span class="text-ink-2">{formatPercent(g.disk_percent)}</span></span>
-												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.disk_percent ?? 0)} aria-label="Disk">
+												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(g.disk_percent ?? 0)} aria-label={m.devicesb_proxmox_guests_col_disk()}>
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, g.disk_percent ?? 0)}%"></div>
 												</div>
 											</div>
@@ -494,31 +495,39 @@
 										<td colspan={COLUMNS.length + 1} class="px-5 pt-1 pb-4">
 											<div class="flex flex-wrap items-baseline justify-between gap-2">
 												<p class="text-sm text-ink-2">
-													<span class="font-semibold text-ink">{g.name}</span> · {g.kind === 'lxc' ? 'container' : 'virtual machine'} {g.vmid} on {g.node}
-													{#if g.pool}{` · pool ${g.pool}`}{/if}
+													<span class="font-semibold text-ink">{g.name}</span> · {g.kind === 'lxc'
+														? m.devicesb_proxmox_guests_detail_ct({ vmid: g.vmid, node: g.node })
+														: m.devicesb_proxmox_guests_detail_vm({ vmid: g.vmid, node: g.node })}
+													{#if g.pool}{` · ${m.devicesb_proxmox_guests_detail_pool({ pool: g.pool })}`}{/if}
 													{#if g.os}{' '}· {g.os}{/if}
 													{#if g.ip}{' '}· {g.ip}{/if}
-													{#if g.lock}{' '}· locked by a {g.lock} operation{/if}
-													{#if g.balloon_bytes !== null}{' '}· balloon {formatBytes(g.balloon_bytes)}{/if}
+													{#if g.lock}{' '}· {m.devicesb_proxmox_guests_detail_locked({ lock: g.lock })}{/if}
+													{#if g.balloon_bytes !== null}{' '}· {m.devicesb_proxmox_guests_detail_balloon({ size: formatBytes(g.balloon_bytes) })}{/if}
 													{#if g.memory_host_bytes !== null}
-														· {formatBytes(g.memory_host_bytes)} on the host{#if hostOverhead(g) !== null}, {formatBytes(hostOverhead(g))} more than the guest sees{/if}
+														{' '}· {hostOverhead(g) !== null
+															? m.devicesb_proxmox_guests_detail_host_extra({ host: formatBytes(g.memory_host_bytes), extra: formatBytes(hostOverhead(g)) })
+															: m.devicesb_proxmox_guests_detail_host({ host: formatBytes(g.memory_host_bytes) })}
 													{/if}
 													{#if g.kind === 'qemu' && g.status === 'running'}
-														· guest agent {g.agent === true ? 'answering' : g.agent === false ? 'enabled but silent' : 'not enabled'}
+														{' '}· {g.agent === true
+															? m.devicesb_proxmox_guests_detail_agent_ok()
+															: g.agent === false
+																? m.devicesb_proxmox_guests_detail_agent_silent()
+																: m.devicesb_proxmox_guests_detail_agent_off()}
 													{/if}
 													{#if g.disk_read_bps !== null || g.disk_write_bps !== null}
-														· disk I/O {formatRate(g.disk_read_bps, 'B/s')} read, {formatRate(g.disk_write_bps, 'B/s')} write
+														{' '}· {m.devicesb_proxmox_guests_detail_disk_io({ read: formatRate(g.disk_read_bps, 'B/s'), write: formatRate(g.disk_write_bps, 'B/s') })}
 													{/if}
 												</p>
-												<span class="text-[0.75rem] text-ink-3">last {rangeLabel}</span>
+												<span class="text-[0.75rem] text-ink-3">{m.devicesb_proxmox_guests_detail_range({ range: rangeLabel })}</span>
 											</div>
 											{#if detailError}
-												<div class="mt-2"><ErrorNotice error={detailError} title="Could not load the charts" /></div>
+												<div class="mt-2"><ErrorNotice error={detailError} title={m.devicesb_proxmox_guests_charts_error()} /></div>
 											{:else if detailLoading && !detail}
 												<Skeleton class="mt-2 h-28 w-full rounded-[var(--radius-card)]" />
 											{:else if detail}
 												<div class="mt-2 grid gap-3 md:grid-cols-3">
-													{#each [['CPU', detail.cpu, '%'], ['Memory', detail.memory, '%'], ['Network', detail.network, 'B/s']] as [title, series, unit] (title)}
+													{#each [[m.devicesb_proxmox_guests_col_cpu(), detail.cpu, '%'], [m.devicesb_proxmox_guests_col_memory(), detail.memory, '%'], [m.devicesb_proxmox_guests_col_network(), detail.network, 'B/s']] as [title, series, unit] (title)}
 														<div class="rounded-lg border border-line bg-surface px-3 pt-2 pb-1">
 															<div class="flex items-center justify-between gap-2">
 																<span class="text-sm font-semibold text-ink">{title}</span>
@@ -527,7 +536,7 @@
 															{#if (series as Serie[]).some((s) => s.points.length > 0)}
 																<Chart series={series as Serie[]} unit={unit as string} height={120} />
 															{:else}
-																<p class="py-6 text-center text-sm text-ink-3">No point in this range.</p>
+																<p class="py-6 text-center text-sm text-ink-3">{m.devicesb_proxmox_guests_no_points()}</p>
 															{/if}
 														</div>
 													{/each}

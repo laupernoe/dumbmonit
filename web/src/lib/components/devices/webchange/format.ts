@@ -32,10 +32,25 @@ export function shortenPath(path: string, max = 40): string {
 	return `${path.slice(0, head)}${ellipsis}${path.slice(path.length - tail)}`;
 }
 
+/** Wording of a collapsed run, per plural form. */
+export interface SkipWords {
+	one: (count: number) => string;
+	other: (count: number) => string;
+}
+
+/**
+ * The plain-English fallback, used where no translation is injected (this module
+ * is pure, so it cannot import the message catalogue; the UI passes its own).
+ */
+const PLAIN_SKIP: SkipWords = {
+	one: (n) => `⋯ ${n} unchanged line`,
+	other: (n) => `⋯ ${n} unchanged lines`
+};
+
 /** Wording for a collapsed `skip` diff line: "⋯ 42 unchanged lines". */
-export function skipLabel(count: number | null): string {
+export function skipLabel(count: number | null, words: SkipWords = PLAIN_SKIP): string {
 	const n = count ?? 0;
-	return `⋯ ${n} unchanged ${n === 1 ? 'line' : 'lines'}`;
+	return n === 1 ? words.one(n) : words.other(n);
 }
 
 /** Clamps a slider position to the 0–100 range (percent from the left edge). */

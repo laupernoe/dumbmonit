@@ -5,6 +5,8 @@
  * means a number read here and a number read there are the same number.
  */
 /** The tones a Led accepts — a narrower set than Plate's. */
+import { m } from '#lib/paraglide/messages.js';
+
 type SignalTone = 'signal' | 'advisory' | 'warning' | 'info' | 'ghost';
 
 /** "1.2 GiB" style, binary units as Proxmox prints them. */
@@ -46,5 +48,5 @@ export function cephHealth(level: number | null, status: string | null): { tone:
 	if (level === 0) return { tone: 'signal', word: status ?? 'HEALTH_OK' };
 	if (level === 1) return { tone: 'advisory', word: status ?? 'HEALTH_WARN' };
 	if (level === 2) return { tone: 'warning', word: status ?? 'HEALTH_ERR' };
-	return { tone: 'ghost', word: status ?? 'Unknown' };
+	return { tone: 'ghost', word: status ?? m.devicesb_proxmox_format_unknown() };
 }

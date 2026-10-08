@@ -15,6 +15,7 @@
 	import { readProxmoxCeph } from '#lib/api/proxmox.js';
 	import type { ProxmoxCeph, Target } from '#lib/api/index.js';
 	import { ErrorNotice, Led, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import FoldSection from '../FoldSection.svelte';
 	import { FILL, cephHealth, fillTone, formatBytes, formatPercent } from './format';
 
@@ -58,8 +59,8 @@
 	const summary = $derived.by(() => {
 		if (!ceph?.available) return undefined;
 		const parts = [health.word];
-		if (ceph.osds_total !== null) parts.push(`${ceph.osds_up ?? 0}/${ceph.osds_total} OSDs up`);
-		if (ceph.used_percent !== null) parts.push(`${formatPercent(ceph.used_percent)} used`);
+		if (ceph.osds_total !== null) parts.push(m.devicesb_proxmox_ceph_summary_osds({ up: ceph.osds_up ?? 0, total: ceph.osds_total }));
+		if (ceph.used_percent !== null) parts.push(m.devicesb_proxmox_ceph_summary_used({ percent: formatPercent(ceph.used_percent) }));
 		return parts.join(' · ');
 	});
 
@@ -73,12 +74,12 @@
 </script>
 
 {#if loading && !ceph}
-	<section class="rounded-[var(--radius-card)] border border-line bg-surface px-5 py-4 shadow-lift" aria-busy="true" aria-label="Loading Ceph">
+	<section class="rounded-[var(--radius-card)] border border-line bg-surface px-5 py-4 shadow-lift" aria-busy="true" aria-label={m.devicesb_proxmox_ceph_loading()}>
 		<Skeleton class="h-16 w-full" rows={1} />
 	</section>
 {:else if error}
 	<section class="rounded-[var(--radius-card)] border border-line bg-surface px-5 py-4 shadow-lift">
-		<ErrorNotice {error} title="Could not load Ceph" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.devicesb_proxmox_ceph_load_error()} onretry={() => void load()} />
 	</section>
 {:else if ceph?.available}
 	<FoldSection kind="proxmox-ceph" title="Ceph" {summary} defaultOpen={true} class="rise-in">
@@ -89,27 +90,27 @@
 			</div>
 		{/snippet}
 
-		<div class="flex flex-col gap-4 px-4 py-4 sm:px-5">
+		<div class="flex min-w-0 flex-col gap-4 px-4 py-4 sm:px-5">
 			<!-- What the health line does not say. -->
 			{#if ceph.flags.length > 0 || ceph.muted_checks.length > 0}
 				<ul class="flex flex-col gap-1 text-sm">
 					{#if ceph.flags.length > 0}
 						<li class="flex flex-wrap items-center gap-2">
-							<Plate tone="advisory" label="Flags set" bare size="sm" />
-							<span class="text-ink-2">{ceph.flags.join(', ')} — rebalancing or scrubbing is held back while these are on.</span>
+							<Plate tone="advisory" label={m.devicesb_proxmox_ceph_flags_set()} bare size="sm" />
+							<span class="text-ink-2">{m.devicesb_proxmox_ceph_flags_note({ flags: ceph.flags.join(', ') })}</span>
 						</li>
 					{/if}
 					{#if ceph.muted_checks.length > 0}
 						<li class="flex flex-wrap items-center gap-2">
-							<Plate tone="advisory" label="Muted checks" bare size="sm" />
-							<span class="text-ink-2">{ceph.muted_checks.join(', ')} — muted, so they no longer show in the health status.</span>
+							<Plate tone="advisory" label={m.devicesb_proxmox_ceph_muted_checks()} bare size="sm" />
+							<span class="text-ink-2">{m.devicesb_proxmox_ceph_muted_note({ checks: ceph.muted_checks.join(', ') })}</span>
 						</li>
 					{/if}
 				</ul>
 			{/if}
 
 			<div class="grid gap-3 sm:grid-cols-3">
-				{#each [['Capacity', ceph.bytes_total === null ? '—' : `${formatBytes(ceph.bytes_used)} / ${formatBytes(ceph.bytes_total)}`, formatPercent(ceph.used_percent)], ['OSDs', ceph.osds_total === null ? '—' : `${ceph.osds_up ?? 0} up · ${ceph.osds_in ?? 0} in · ${ceph.osds_total} total`, osdsDown > 0 ? `${osdsDown} down` : osdsOut > 0 ? `${osdsOut} out` : 'all in'], ['Pools', `${ceph.pools.length}`, ceph.filesystems.length > 0 ? `CephFS: ${ceph.filesystems.join(', ')}` : 'no CephFS']] as [title, value, note] (title)}
+				{#each [[m.devicesb_proxmox_ceph_capacity(), ceph.bytes_total === null ? '—' : `${formatBytes(ceph.bytes_used)} / ${formatBytes(ceph.bytes_total)}`, formatPercent(ceph.used_percent)], [m.devicesb_proxmox_ceph_osds(), ceph.osds_total === null ? '—' : m.devicesb_proxmox_ceph_osd_counts({ up: ceph.osds_up ?? 0, joined: ceph.osds_in ?? 0, total: ceph.osds_total }), osdsDown > 0 ? m.devicesb_proxmox_ceph_osds_down({ count: osdsDown }) : osdsOut > 0 ? m.devicesb_proxmox_ceph_osds_out({ count: osdsOut }) : m.devicesb_proxmox_ceph_osds_all_in()], [m.devicesb_proxmox_ceph_pools(), `${ceph.pools.length}`, ceph.filesystems.length > 0 ? m.devicesb_proxmox_ceph_cephfs({ names: ceph.filesystems.join(', ') }) : m.devicesb_proxmox_ceph_no_cephfs()]] as [title, value, note] (title)}
 					<div class="rounded-lg border border-line bg-surface-2/40 px-3 py-2">
 						<span class="text-[0.75rem] uppercase tracking-wide text-ink-3">{title}</span>
 						<p class="tnum mt-1 text-sm text-ink">{value}</p>
@@ -121,21 +122,21 @@
 			{#if ceph.osds.length > 0}
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-[40rem] border-collapse text-sm">
-						<caption class="sr-only">Ceph OSDs</caption>
+						<caption class="sr-only">{m.devicesb_proxmox_ceph_osds_caption()}</caption>
 						<thead>
 							<tr class="border-b border-line text-left text-[0.75rem] uppercase tracking-wide text-ink-3">
-								<th scope="col" class="py-2 pr-3 font-semibold">OSD</th>
-								<th scope="col" class="py-2 pr-3 font-semibold">Host</th>
-								<th scope="col" class="py-2 pr-3 font-semibold">Class</th>
-								<th scope="col" class="py-2 pr-3 font-semibold">Usage</th>
-								<th scope="col" class="py-2 pr-3 text-right font-semibold">Apply</th>
-								<th scope="col" class="py-2 text-right font-semibold">Commit</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_osd()}</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_host()}</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_class()}</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_usage()}</th>
+								<th scope="col" class="py-2 pr-3 text-right font-semibold">{m.devicesb_proxmox_ceph_th_apply()}</th>
+								<th scope="col" class="py-2 text-right font-semibold">{m.devicesb_proxmox_ceph_th_commit()}</th>
 							</tr>
 						</thead>
 						<tbody>
 							{#each ceph.osds as osd (osd.name)}
 								{@const tone = fillTone(osd.used_percent, 85, 75)}
-								{@const state = !osd.up ? { tone: 'warning' as const, word: 'Down' } : !osd.in ? { tone: 'advisory' as const, word: 'Out' } : { tone: 'signal' as const, word: 'Up' }}
+								{@const state = !osd.up ? { tone: 'warning' as const, word: m.devicesb_proxmox_ceph_osd_down() } : !osd.in ? { tone: 'advisory' as const, word: m.devicesb_proxmox_ceph_osd_out() } : { tone: 'signal' as const, word: m.devicesb_proxmox_ceph_osd_up() }}
 								<tr class="border-t border-line/60">
 									<td class="py-2 pr-3">
 										<span class="inline-flex items-center gap-2 whitespace-nowrap">
@@ -149,8 +150,8 @@
 									<td class="py-2 pr-3">
 										{#if osd.used_percent !== null}
 											<div class="flex min-w-[8rem] flex-col gap-1">
-												<span class="tnum whitespace-nowrap text-ink">{formatPercent(osd.used_percent)}<span class="text-ink-3">{' '}of {formatBytes(osd.total_bytes)}</span></span>
-												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(osd.used_percent)} aria-label={`${osd.name} usage`}>
+												<span class="tnum whitespace-nowrap text-ink">{formatPercent(osd.used_percent)}<span class="text-ink-3">{' '}{m.devicesb_proxmox_ceph_of_total({ total: formatBytes(osd.total_bytes) })}</span></span>
+												<div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(osd.used_percent)} aria-label={m.devicesb_proxmox_ceph_usage_aria({ name: osd.name })}>
 													<div class={`h-full rounded-full ${FILL[tone]}`} style="width: {Math.min(100, osd.used_percent)}%"></div>
 												</div>
 											</div>
@@ -170,14 +171,14 @@
 			{#if ceph.pools.length > 0}
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-[34rem] border-collapse text-sm">
-						<caption class="sr-only">Ceph pools</caption>
+						<caption class="sr-only">{m.devicesb_proxmox_ceph_pools_caption()}</caption>
 						<thead>
 							<tr class="border-b border-line text-left text-[0.75rem] uppercase tracking-wide text-ink-3">
-								<th scope="col" class="py-2 pr-3 font-semibold">Pool</th>
-								<th scope="col" class="py-2 pr-3 font-semibold">Used</th>
-								<th scope="col" class="py-2 pr-3 text-right font-semibold">Replicas</th>
-								<th scope="col" class="py-2 pr-3 text-right font-semibold">PGs</th>
-								<th scope="col" class="py-2 text-right font-semibold">Autoscale</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_pool()}</th>
+								<th scope="col" class="py-2 pr-3 font-semibold">{m.devicesb_proxmox_ceph_th_used()}</th>
+								<th scope="col" class="py-2 pr-3 text-right font-semibold">{m.devicesb_proxmox_ceph_th_replicas()}</th>
+								<th scope="col" class="py-2 pr-3 text-right font-semibold">{m.devicesb_proxmox_ceph_th_pgs()}</th>
+								<th scope="col" class="py-2 text-right font-semibold">{m.devicesb_proxmox_ceph_th_autoscale()}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -188,7 +189,7 @@
 									<td class={`tnum py-2 pr-3 ${tone === 'warning' ? 'text-warning-ink' : tone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`}>
 										{formatPercent(pool.used_percent)}<span class="text-ink-3">{' '}· {formatBytes(pool.used_bytes)}</span>
 									</td>
-									<td class="tnum py-2 pr-3 text-right text-ink-2">{pool.size === null ? '—' : `${pool.size}`}<span class="text-ink-3">{pool.min_size === null ? '' : ` (min ${pool.min_size})`}</span></td>
+									<td class="tnum py-2 pr-3 text-right text-ink-2">{pool.size === null ? '—' : `${pool.size}`}<span class="text-ink-3">{pool.min_size === null ? '' : ` ${m.devicesb_proxmox_ceph_min_size({ min: pool.min_size })}`}</span></td>
 									<td class="tnum py-2 pr-3 text-right text-ink-2">
 										{pool.pg_num === null ? '—' : pool.pg_num}
 										{#if pool.pg_num_optimal !== null && pool.pg_num !== null && pool.pg_num_optimal !== pool.pg_num}

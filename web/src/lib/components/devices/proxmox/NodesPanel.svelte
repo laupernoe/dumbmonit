@@ -23,6 +23,7 @@
 	import type { ProxmoxNode, ProxmoxNodes, Target } from '#lib/api/index.js';
 	import { formatDuration } from '#lib/format.js';
 	import { EmptyState, ErrorNotice, Led, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import FoldSection from '../FoldSection.svelte';
 	import { FILL, fillTone, formatBytes, formatPercent } from './format';
 
@@ -76,9 +77,14 @@
 	const summary = $derived.by(() => {
 		if (loading || error || nodes.length === 0) return undefined;
 		const online = nodes.filter((n) => n.up).length;
-		const parts = [`${nodes.length} ${nodes.length === 1 ? 'node' : 'nodes'}`, `${online} online`];
-		if (troubled > 0) parts.push(`${troubled} needing attention`);
-		if (awaitingReboot > 0) parts.push(`${awaitingReboot} awaiting reboot`);
+		const parts = [
+			nodes.length === 1
+				? m.devicesb_proxmox_nodes_count_one({ count: nodes.length })
+				: m.devicesb_proxmox_nodes_count_other({ count: nodes.length }),
+			m.devicesb_proxmox_nodes_online_count({ count: online })
+		];
+		if (troubled > 0) parts.push(m.devicesb_proxmox_nodes_attention({ count: troubled }));
+		if (awaitingReboot > 0) parts.push(m.devicesb_proxmox_nodes_awaiting_reboot({ count: awaitingReboot }));
 		return parts.join(' · ');
 	});
 
@@ -90,8 +96,8 @@
 	const fencing = $derived.by((): { tone: Tone; label: string } | null => {
 		const state = cluster.fencing_state;
 		if (!state) return null;
-		if (cluster.fencing_armed) return { tone: 'signal', label: 'HA fencing armed' };
-		return { tone: 'info', label: `HA fencing ${state}` };
+		if (cluster.fencing_armed) return { tone: 'signal', label: m.devicesb_proxmox_nodes_fencing_armed() };
+		return { tone: 'info', label: m.devicesb_proxmox_nodes_fencing_state({ state }) };
 	});
 
 	/** Every version seen, to spot the node left behind on an older release. */
@@ -103,18 +109,18 @@
 	}
 	function meters(node: ProxmoxNode): Meter[] {
 		return [
-			{ label: 'CPU', value: node.cpu_percent },
-			{ label: 'Memory', value: node.memory_percent },
-			{ label: 'Root FS', value: node.rootfs_percent }
+			{ label: m.devicesb_proxmox_nodes_meter_cpu(), value: node.cpu_percent },
+			{ label: m.devicesb_proxmox_nodes_meter_memory(), value: node.memory_percent },
+			{ label: m.devicesb_proxmox_nodes_meter_rootfs(), value: node.rootfs_percent }
 		];
 	}
 </script>
 
-<FoldSection kind="proxmox-nodes" title="Nodes" {summary} defaultOpen={true} class="rise-in">
+<FoldSection kind="proxmox-nodes" title={m.devicesb_proxmox_nodes_title()} {summary} defaultOpen={true} class="rise-in">
 	{#snippet aside()}
 		{#if !loading && !error}
 			{#if versions.length > 1}
-				<Plate tone="advisory" label={`Mixed versions: ${versions.join(', ')}`} size="sm" />
+				<Plate tone="advisory" label={m.devicesb_proxmox_nodes_mixed_versions({ versions: versions.join(', ') })} size="sm" />
 			{/if}
 			{#if fencing}
 				<Plate tone={fencing.tone} label={fencing.label} size="sm" />
@@ -124,15 +130,15 @@
 
 	{#if error}
 		<div class="px-5 py-4">
-			<ErrorNotice {error} title="Could not load the nodes" onretry={() => void load()} />
+			<ErrorNotice {error} title={m.devicesb_proxmox_nodes_load_error()} onretry={() => void load()} />
 		</div>
 	{:else if loading}
-		<div class="px-5 py-4" aria-busy="true" aria-label="Loading nodes">
+		<div class="px-5 py-4" aria-busy="true" aria-label={m.devicesb_proxmox_nodes_loading()}>
 			<Skeleton class="h-24 w-full" rows={2} />
 		</div>
 	{:else if nodes.length === 0}
 		<div class="px-5 py-4">
-			<EmptyState title="No node known yet." description="Nodes appear after the first successful probe." />
+			<EmptyState title={m.devicesb_proxmox_nodes_empty_title()} description={m.devicesb_proxmox_nodes_empty_desc()} />
 		</div>
 	{:else}
 		<div class="grid gap-3 px-4 py-4 sm:px-5 md:grid-cols-2">
@@ -141,12 +147,12 @@
 				{@const offline = node.interfaces_offline}
 				<article class="rise-in rounded-[var(--radius-card)] border border-line bg-surface-2/40 px-4 py-3" style="--rise-delay: {Math.min(i, 8) * 40}ms">
 					<header class="flex flex-wrap items-center gap-x-2 gap-y-1">
-						<Led tone={node.up ? 'signal' : 'warning'} label={node.up ? 'Online' : 'Offline'} size="sm" />
+						<Led tone={node.up ? 'signal' : 'warning'} label={node.up ? m.devicesb_proxmox_nodes_online() : m.devicesb_proxmox_nodes_offline()} size="sm" />
 						<h4 class="text-sm font-semibold text-ink">{node.name}</h4>
-						<Plate tone={node.up ? 'signal' : 'warning'} label={node.up ? 'Online' : 'Offline'} bare size="sm" />
+						<Plate tone={node.up ? 'signal' : 'warning'} label={node.up ? m.devicesb_proxmox_nodes_online() : m.devicesb_proxmox_nodes_offline()} bare size="sm" />
 						<span class="ml-auto tnum text-[0.75rem] text-ink-3">
-							{#if node.version}PVE {node.version}{/if}
-							{#if node.uptime_seconds !== null}{' '}· up {formatDuration(node.uptime_seconds)}{/if}
+							{#if node.version}{m.devicesb_proxmox_nodes_pve_version({ version: node.version })}{/if}
+							{#if node.uptime_seconds !== null}{' '}· {m.devicesb_proxmox_nodes_uptime({ duration: formatDuration(node.uptime_seconds) })}{/if}
 						</span>
 					</header>
 
@@ -166,10 +172,10 @@
 						{#if node.cpu_iowait_percent !== null || (node.ksm_shared_bytes ?? 0) > 0}
 							<p class="tnum mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.75rem] text-ink-3">
 								{#if node.cpu_iowait_percent !== null}
-									<span title="CPU time spent waiting on storage">I/O wait {formatPercent(node.cpu_iowait_percent)}</span>
+									<span title={m.devicesb_proxmox_nodes_iowait_title()}>{m.devicesb_proxmox_nodes_iowait({ percent: formatPercent(node.cpu_iowait_percent) })}</span>
 								{/if}
 								{#if (node.ksm_shared_bytes ?? 0) > 0}
-									<span title="Memory reclaimed by sharing identical pages between guests">KSM sharing {formatBytes(node.ksm_shared_bytes)}</span>
+									<span title={m.devicesb_proxmox_nodes_ksm_title()}>{m.devicesb_proxmox_nodes_ksm({ size: formatBytes(node.ksm_shared_bytes) })}</span>
 								{/if}
 							</p>
 						{/if}
@@ -179,28 +185,28 @@
 						<ul class="mt-3 flex flex-col gap-1 text-sm">
 							{#if node.reboot_required}
 								<li class="flex flex-wrap items-center gap-2">
-									<Plate tone="advisory" label="Reboot required" bare size="sm" />
+									<Plate tone="advisory" label={m.devicesb_proxmox_nodes_reboot_required()} bare size="sm" />
 									<span class="tnum text-ink-2">
-										running kernel {node.kernel_running ?? '—'}, {node.kernel_installed ?? '—'} installed
+										{m.devicesb_proxmox_nodes_kernel({ running: node.kernel_running ?? '—', installed: node.kernel_installed ?? '—' })}
 									</span>
 								</li>
 							{/if}
 							{#if (node.packages_upgradable ?? 0) > 0}
 								{@const count = node.packages_upgradable ?? 0}
 								<li class="flex flex-wrap items-center gap-2">
-									<Plate tone="advisory" label="Updates pending" bare size="sm" />
-									<span class="text-ink-2">{count} Proxmox {count === 1 ? 'package' : 'packages'} upgradable</span>
+									<Plate tone="advisory" label={m.devicesb_proxmox_nodes_updates_pending()} bare size="sm" />
+									<span class="text-ink-2">{count === 1 ? m.devicesb_proxmox_nodes_packages_one({ count }) : m.devicesb_proxmox_nodes_packages_other({ count })}</span>
 								</li>
 							{/if}
 							{#if down.length > 0}
 								<li class="flex flex-wrap items-center gap-2">
-									<Plate tone="warning" label="Service down" bare size="sm" />
+									<Plate tone="warning" label={m.devicesb_proxmox_nodes_service_down()} bare size="sm" />
 									<span class="text-ink-2">{down.join(', ')}</span>
 								</li>
 							{/if}
 							{#if offline.length > 0}
 								<li class="flex flex-wrap items-center gap-2">
-									<Plate tone="warning" label="Interface down" bare size="sm" />
+									<Plate tone="warning" label={m.devicesb_proxmox_nodes_interface_down()} bare size="sm" />
 									<span class="text-ink-2">{offline.join(', ')}</span>
 								</li>
 							{/if}
@@ -208,13 +214,14 @@
 					{/if}
 
 					{#if node.thin_pools.length > 0 || node.volume_groups.length > 0}
-						<table class="mt-3 w-full border-collapse text-[0.8125rem]">
+						<div class="mt-3 overflow-x-auto">
+						<table class="w-full min-w-[20rem] border-collapse text-[0.8125rem]">
 							<thead>
 								<tr class="text-left text-[0.7rem] uppercase tracking-wide text-ink-3">
-									<th scope="col" class="py-1 font-semibold">Storage</th>
-									<th scope="col" class="py-1 text-right font-semibold">Size</th>
-									<th scope="col" class="py-1 text-right font-semibold">Used</th>
-									<th scope="col" class="py-1 text-right font-semibold">Metadata</th>
+									<th scope="col" class="py-1 font-semibold">{m.devicesb_proxmox_nodes_th_storage()}</th>
+									<th scope="col" class="py-1 text-right font-semibold">{m.devicesb_proxmox_nodes_th_size()}</th>
+									<th scope="col" class="py-1 text-right font-semibold">{m.devicesb_proxmox_nodes_th_used()}</th>
+									<th scope="col" class="py-1 text-right font-semibold">{m.devicesb_proxmox_nodes_th_metadata()}</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -224,7 +231,7 @@
 									<tr class="border-t border-line/60">
 										<td class="py-1 text-ink">
 											{pool.vg}/{pool.name}
-											<span class="text-ink-3"> thin pool</span>
+											<span class="text-ink-3"> {m.devicesb_proxmox_nodes_thin_pool()}</span>
 										</td>
 										<td class="tnum py-1 text-right text-ink-2">{formatBytes(pool.size_bytes)}</td>
 										<td class={`tnum py-1 text-right ${dataTone === 'warning' ? 'text-warning-ink' : dataTone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`}>{formatPercent(pool.used_percent)}</td>
@@ -235,7 +242,7 @@
 									<tr class="border-t border-line/60">
 										<td class="py-1 text-ink">
 											{group.name}
-											<span class="text-ink-3">volume group</span>
+											<span class="text-ink-3">{m.devicesb_proxmox_nodes_volume_group()}</span>
 										</td>
 										<td class="tnum py-1 text-right text-ink-2">{formatBytes(group.size_bytes)}</td>
 										<!--
@@ -250,6 +257,7 @@
 								{/each}
 							</tbody>
 						</table>
+						</div>
 					{/if}
 				</article>
 			{/each}
