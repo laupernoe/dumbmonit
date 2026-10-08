@@ -7,6 +7,8 @@
 	import { untrack } from 'svelte';
 	import type { QuietHours } from '#lib/api/index.js';
 	import { Field, Toggle } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	interface Props {
 		value: QuietHours | null;
@@ -17,15 +19,15 @@
 
 	let { value, onchange, idPrefix = 'quiet', disabled = false }: Props = $props();
 
-	const DAYS = [
-		{ index: 0, label: 'Mon' },
-		{ index: 1, label: 'Tue' },
-		{ index: 2, label: 'Wed' },
-		{ index: 3, label: 'Thu' },
-		{ index: 4, label: 'Fri' },
-		{ index: 5, label: 'Sat' },
-		{ index: 6, label: 'Sun' }
-	];
+	/** Short weekday names in the UI language (2024-01-01 is a Monday). */
+	const DAYS = $derived(
+		[0, 1, 2, 3, 4, 5, 6].map((index) => ({
+			index,
+			label: new Intl.DateTimeFormat(getLocale(), { weekday: 'short', timeZone: 'UTC' }).format(
+				new Date(Date.UTC(2024, 0, 1 + index))
+			)
+		}))
+	);
 
 	function toClock(minute: number): string {
 		const pad = (n: number) => String(n).padStart(2, '0');
@@ -72,22 +74,22 @@
 
 	const problem = $derived.by(() => {
 		if (!enabled) return null;
-		if (days.length === 0) return 'Pick at least one day.';
+		if (days.length === 0) return m.notifications_quiet_error_days();
 		const s = clockToMinutes(start);
 		const e = clockToMinutes(end);
-		if (s === null || e === null) return 'Enter the start and end as HH:MM.';
-		if (s === e) return 'The start and end must differ.';
+		if (s === null || e === null) return m.notifications_quiet_error_format();
+		if (s === e) return m.notifications_quiet_error_differ();
 		return null;
 	});
 </script>
 
 <div class="grid gap-3">
-	<Field label="Quiet hours" for={`${idPrefix}-on`} inline help="Only Warning-level alerts come through during quiet hours; the rest waits and arrives as one digest when they end.">
+	<Field label={m.notifications_quiet_title()} for={`${idPrefix}-on`} inline help={m.notifications_quiet_help()}>
 		<Toggle
 			id={`${idPrefix}-on`}
 			checked={enabled}
 			{disabled}
-			label="Quiet hours"
+			label={m.notifications_quiet_title()}
 			onchange={(next) => {
 				enabled = next;
 				emit();
@@ -98,12 +100,12 @@
 	{#if enabled}
 		<div class="grid gap-3 pl-1">
 			<div>
-				<span class="mb-1.5 block text-sm font-semibold text-ink">Days</span>
+				<span class="mb-1.5 block text-sm font-semibold text-ink">{m.notifications_quiet_days()}</span>
 				<div class="flex flex-wrap gap-2">
 					{#each DAYS as day (day.index)}
 						<button
 							type="button"
-							class={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${days.includes(day.index) ? 'border-signal bg-signal-soft text-signal-ink' : 'border-line-strong bg-surface text-ink-2 hover:text-ink'}`}
+							class={`min-h-10 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${days.includes(day.index) ? 'border-signal bg-signal-soft text-signal-ink' : 'border-line-strong bg-surface text-ink-2 hover:text-ink'}`}
 							aria-pressed={days.includes(day.index)}
 							{disabled}
 							onclick={() => toggleDay(day.index)}
@@ -114,10 +116,10 @@
 				</div>
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2">
-				<Field label="From" for={`${idPrefix}-start`} help="Your local time. A span past midnight belongs to the day it starts on.">
+				<Field label={m.notifications_quiet_from()} for={`${idPrefix}-start`} help={m.notifications_quiet_from_help()}>
 					<input id={`${idPrefix}-start`} type="time" class="input tnum" bind:value={start} {disabled} onchange={emit} />
 				</Field>
-				<Field label="To" for={`${idPrefix}-end`}>
+				<Field label={m.notifications_quiet_to()} for={`${idPrefix}-end`}>
 					<input id={`${idPrefix}-end`} type="time" class="input tnum" bind:value={end} {disabled} onchange={emit} />
 				</Field>
 			</div>

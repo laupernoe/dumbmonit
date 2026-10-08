@@ -3052,5 +3052,1410 @@
 	"wall_theme_title": "Тема на этом экране",
 	"wall_updated_relative": "Обновлено: {when}",
 	"wall_updated_seconds": "Обновлено {seconds} с назад",
-	"wall_updated_waiting": "Ожидание первой проверки…"
+	"wall_updated_waiting": "Ожидание первой проверки…",
+	"alerts_ack_button": "Подтвердить",
+	"alerts_ack_error_ack": "Не удалось подтвердить оповещение.",
+	"alerts_ack_error_unack": "Не удалось снять подтверждение.",
+	"alerts_ack_hint": "Напоминания приостановлены; о устранении вы всё равно узнаете. Enter = {hours} ч.",
+	"alerts_ack_hours": "{hours} ч",
+	"alerts_ack_menu_label": "Подтвердить на",
+	"alerts_ack_note_label": "Заметка",
+	"alerts_ack_note_placeholder": "Заметка (необязательно): чем вы заняты",
+	"alerts_ack_stop_reminding": "Не напоминать в течение",
+	"alerts_ack_unack": "Снять подтверждение",
+	"alerts_ack_until_resolved": "До устранения",
+	"alerts_device_last_report": "последний отчёт {when}",
+	"alerts_device_never_reported": "ни разу не отвечал",
+	"alerts_form_cancel": "Отмена",
+	"alerts_form_comment": "Комментарий",
+	"alerts_form_comment_help": "Необязательно. Зачем нужно это окно.",
+	"alerts_form_comment_placeholder": "Плановое обновление прошивки",
+	"alerts_form_day": "День",
+	"alerts_form_days": "Дни",
+	"alerts_form_description": "Отключите оповещения для одного устройства или для всех на выбранное время.",
+	"alerts_form_device_help": "Оставьте пустым, чтобы охватить все устройства.",
+	"alerts_form_each_month": "Каждый месяц",
+	"alerts_form_end": "Конец",
+	"alerts_form_error_daily": "Укажите ежедневное начало и конец в формате ЧЧ:ММ.",
+	"alerts_form_error_daily_differ": "Ежедневные начало и конец должны различаться.",
+	"alerts_form_error_dates": "Укажите корректные начало и конец.",
+	"alerts_form_error_days": "Выберите хотя бы один день недели.",
+	"alerts_form_error_month_days": "Укажите дни месяца числами от 1 до 31, например «1, 15».",
+	"alerts_form_error_name": "Дайте окну название: позже оно объяснит, почему эти оповещения молчали.",
+	"alerts_form_error_order": "Конец окна должен быть позже его начала.",
+	"alerts_form_error_schedule": "Не удалось запланировать окно.",
+	"alerts_form_error_start": "Укажите начало в формате ЧЧ:ММ.",
+	"alerts_form_for": "На",
+	"alerts_form_for_help": "Реальное время: окно в 2 ч длится 2 ч, даже в ночь перевода часов.",
+	"alerts_form_from": "С",
+	"alerts_form_local_time_help": "Местное время в часовом поясе ниже.",
+	"alerts_form_month_days": "Дни месяца",
+	"alerts_form_month_days_help": "Один или несколько, от 1 до 31, через запятую. Месяц без такого дня пропускается.",
+	"alerts_form_monthly": "Ежемесячно",
+	"alerts_form_name": "Название",
+	"alerts_form_name_help": "Показывается в списке и в истории.",
+	"alerts_form_name_placeholder": "Перезагрузка NAS по воскресеньям",
+	"alerts_form_on_date": "В определённую дату",
+	"alerts_form_on_weekday": "В определённый день недели",
+	"alerts_form_one_off": "Однократно",
+	"alerts_form_rank_fifth": "Пятый",
+	"alerts_form_rank_first": "Первый",
+	"alerts_form_rank_fourth": "Четвёртый",
+	"alerts_form_rank_last": "Последний",
+	"alerts_form_rank_second": "Второй",
+	"alerts_form_rank_third": "Третий",
+	"alerts_form_start": "Начало",
+	"alerts_form_submit": "Запланировать",
+	"alerts_form_timezone": "Часовой пояс",
+	"alerts_form_timezone_help": "Имя IANA, например Europe/Paris. Окно сохраняет местное время при переходе на летнее и зимнее время.",
+	"alerts_form_to": "До",
+	"alerts_form_weekly": "Еженедельно",
+	"alerts_form_when": "Когда",
+	"alerts_form_which": "Какой именно",
+	"alerts_form_which_help": "Месяц без такого дня (например, без пятого воскресенья) пропускается.",
+	"alerts_history_clear_all": "Очистить все устранённые",
+	"alerts_history_clear_confirm": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Очистить {count}?",
+				"countPlural=few": "Очистить {count}?",
+				"countPlural=many": "Очистить {count}?",
+				"countPlural=other": "Очистить {count}?"
+			}
+		}
+	],
+	"alerts_history_cleared": "Очищено",
+	"alerts_history_count": "{shown} из {total}",
+	"alerts_history_deleted_device": "(удалённое устройство)",
+	"alerts_history_device": "Устройство",
+	"alerts_history_empty_description": "Здесь появятся изменения состояния оповещений, когда правила начнут срабатывать и устраняться.",
+	"alerts_history_empty_title": "Истории пока нет.",
+	"alerts_history_error_clear": "Не удалось очистить эту запись.",
+	"alerts_history_error_clear_all": "Не удалось очистить устранённые записи.",
+	"alerts_history_error_cleared": "Не удалось загрузить очищенные записи.",
+	"alerts_history_error_more": "Не удалось загрузить больше истории.",
+	"alerts_history_everything": "Это всё за последние {days} дн.",
+	"alerts_history_export": "Экспорт в CSV",
+	"alerts_history_filter_all": "Все",
+	"alerts_history_load_more": "Загрузить ещё",
+	"alerts_history_nomatch_description": "Расширьте фильтры, чтобы снова увидеть журнал.",
+	"alerts_history_nomatch_title": "Ничего не подходит под эти фильтры.",
+	"alerts_history_not_sent": "Не отправлено · {reason}",
+	"alerts_history_notified": "Уведомлено",
+	"alerts_history_only_notified": "Только с уведомлением",
+	"alerts_history_phase_firing": "Сработало",
+	"alerts_history_phase_ok": "В норме",
+	"alerts_history_phase_pending": "Нарастает",
+	"alerts_history_phase_resolved": "Устранено",
+	"alerts_history_quiet": "тишина",
+	"alerts_history_severity": "Серьёзность",
+	"alerts_history_show_cleared": "Показать очищенные",
+	"alerts_history_today": "Сегодня",
+	"alerts_history_yesterday": "Вчера",
+	"alerts_ignore_button": "Никогда для этого устройства",
+	"alerts_ignore_confirm": "Больше никогда?",
+	"alerts_ignore_done": "Игнорируется на {device}.",
+	"alerts_ignore_error": "Не удалось игнорировать это правило для устройства.",
+	"alerts_ignore_error_undo": "Не удалось перестать игнорировать это правило.",
+	"alerts_ignore_stop": "Перестать игнорировать",
+	"alerts_ignore_undo": "Отменить",
+	"alerts_matcher_except": ", кроме: {items}",
+	"alerts_matcher_except_devices": "устройства {phrase}",
+	"alerts_matcher_except_rule": "правило {rule}",
+	"alerts_matcher_floor_critical": "только тревоги",
+	"alerts_matcher_floor_info": "все оповещения",
+	"alerts_matcher_floor_warning": "предупреждения и выше",
+	"alerts_matcher_from_all": "от всех устройств",
+	"alerts_matcher_from_devices": "от устройств {devices}",
+	"alerts_matcher_of_kind": "типа {kinds}",
+	"alerts_matcher_only_rule": ", только для правила {rule}",
+	"alerts_matcher_only_rules": ", только для правил {rules}",
+	"alerts_matcher_sentence": "Этот канал получает {floor} {scope}{rules}{exceptions}.",
+	"alerts_matcher_tagged": "с тегом {tags}",
+	"alerts_needs_dismiss_error": "Не удалось отклонить это оповещение.",
+	"alerts_needs_dismissed": "Отклонённые",
+	"alerts_needs_dismissed_hint": "Известные проблемы: напоминания приостановлены, пока не закончится подтверждение или оповещение не будет устранено.",
+	"alerts_needs_empty_no_devices": "Пока нечего отслеживать.",
+	"alerts_needs_empty_quiet": "Ничего не требует вашего внимания.",
+	"alerts_needs_no_device": "Нет устройства",
+	"alerts_needs_quiet_all_reporting": "Все устройства передают данные, ни одно правило не срабатывает.",
+	"alerts_needs_quiet_checked": "{text} Проверено: {when}.",
+	"alerts_needs_quiet_no_devices": "Добавьте устройство, и его первый отчёт появится здесь.",
+	"alerts_needs_quiet_waiting_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ни одно правило не срабатывает. {count} устройство всё ещё ждёт первого отчёта.",
+				"countPlural=few": "Ни одно правило не срабатывает. {count} устройства всё ещё ждут первого отчёта.",
+				"countPlural=many": "Ни одно правило не срабатывает. {count} устройств всё ещё ждут первого отчёта.",
+				"countPlural=other": "Ни одно правило не срабатывает. {count} устройства всё ещё ждут первого отчёта."
+			}
+		}
+	],
+	"alerts_needs_quiet_waiting_one": "Ни одно правило не срабатывает. Одно устройство всё ещё ждёт первого отчёта.",
+	"alerts_needs_snoozed": "Отложенные",
+	"alerts_needs_snoozed_hint": "Скрыты на время: напоминаний не будет, пока не закончится срок или оповещение не будет устранено.",
+	"alerts_needs_toast_dismissed": "Отклонено.",
+	"alerts_nth_1": "1-й ({day})",
+	"alerts_nth_2": "2-й ({day})",
+	"alerts_nth_3": "3-й ({day})",
+	"alerts_nth_last": "последний ({day})",
+	"alerts_nth_other": "{n}-й ({day})",
+	"alerts_over_add": "Добавить исключение",
+	"alerts_over_clear": "{label} {value}",
+	"alerts_over_device_id": "устройство {id}",
+	"alerts_over_error_clear_number": "Порог возврата должен быть числом.",
+	"alerts_over_error_devices": "Не удалось загрузить устройства.",
+	"alerts_over_error_empty": "Задайте порог, порог возврата или отключите правило для этого устройства.",
+	"alerts_over_error_pick": "Выберите устройство.",
+	"alerts_over_error_remove": "Не удалось удалить исключение.",
+	"alerts_over_error_save": "Не удалось сохранить исключение.",
+	"alerts_over_in_unit": "В {unit}.",
+	"alerts_over_no_change": "без изменений",
+	"alerts_over_none": "Нет. Исключение меняет порог, порог возврата или отключает это правило для одного устройства.",
+	"alerts_over_none_placeholder": "Нет",
+	"alerts_over_pick_device": "Выберите устройство",
+	"alerts_over_rule_off": "правило отключено",
+	"alerts_over_save": "Сохранить исключение",
+	"alerts_over_threshold": "порог {value}",
+	"alerts_over_title": "Исключения для устройств",
+	"alerts_over_turn_off": "Отключить это правило для устройства",
+	"alerts_page_description": "Что сработало сейчас, что запланировано молчать, правила за этим и куда приходят уведомления.",
+	"alerts_page_error_change_rule": "Не удалось изменить правило.",
+	"alerts_page_error_delete_rule": "Не удалось удалить правило.",
+	"alerts_page_error_load": "Не удалось загрузить оповещения",
+	"alerts_page_error_refresh_rules": "Не удалось обновить правила.",
+	"alerts_page_error_refresh_windows": "Не удалось обновить окна обслуживания.",
+	"alerts_page_error_remove_window": "Не удалось удалить окно обслуживания.",
+	"alerts_page_sections": "Разделы оповещений",
+	"alerts_page_tab_history": "История",
+	"alerts_page_tab_notifications": "Уведомления",
+	"alerts_page_tab_now": "Сейчас",
+	"alerts_page_tab_rules": "Правила",
+	"alerts_page_tab_scheduled": "Запланированные",
+	"alerts_page_title": "Оповещения",
+	"alerts_row_acked": "Подтверждено{by}{until}{note}. Напоминания приостановлены; о решении вы всё равно узнаете.",
+	"alerts_row_acked_by": " пользователем {name}",
+	"alerts_row_acked_note": " — {note}",
+	"alerts_row_also": "Также {list}",
+	"alerts_row_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Также {list} · ещё {count}",
+				"countPlural=few": "Также {list} · ещё {count}",
+				"countPlural=many": "Также {list} · ещё {count}",
+				"countPlural=other": "Также {list} · ещё {count}"
+			}
+		}
+	],
+	"alerts_row_aria": "{plate}: {rule}",
+	"alerts_row_aria_on": "{plate}: {rule} на {device}",
+	"alerts_row_dismiss": "Скрыть",
+	"alerts_row_learning": "Молчит первые {days} дней обучения базовой линии.",
+	"alerts_row_learning_suppressed": "Молчит, пока изучает нормальное поведение.",
+	"alerts_row_more": "Другие действия",
+	"alerts_row_more_menu": "Другие действия для этого оповещения",
+	"alerts_row_open_device": "Открыть устройство",
+	"alerts_row_since": "с {when}",
+	"alerts_row_snoozed": "Отложено{until}. Тишина до этого момента или до решения.",
+	"alerts_row_suppressed_by": "Подавлено из-за {parent} — вероятно, это следствие, а не отдельная проблема.",
+	"alerts_row_until": " до {time}",
+	"alerts_rules_after_hours": "Через {hours} ч",
+	"alerts_rules_all_channels": "все включённые каналы",
+	"alerts_rules_all_kinds": "Все типы",
+	"alerts_rules_anomaly_summary": "чувствительность k = {k} · сглаживание α = {alpha} · минимум {samples} отсчётов · нижняя граница {abs} абс. / {rel} отн.",
+	"alerts_rules_baseline_anomaly": "отклонение от базовой линии",
+	"alerts_rules_builtin": "Встроенное",
+	"alerts_rules_channel_id": "канал №{id}",
+	"alerts_rules_clear_above": "Возврат выше",
+	"alerts_rules_clear_below": "Возврат ниже",
+	"alerts_rules_create": "Создать правило",
+	"alerts_rules_current_value": "{value} (текущее)",
+	"alerts_rules_delete": "Удалить",
+	"alerts_rules_delete_confirm": "Удалить?",
+	"alerts_rules_disable_aria": "Отключить {name}",
+	"alerts_rules_disabled": "Отключено",
+	"alerts_rules_edit": "Изменить",
+	"alerts_rules_edit_all_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Все включённые каналы (сейчас: {count})",
+				"countPlural=few": "Все включённые каналы (сейчас: {count})",
+				"countPlural=many": "Все включённые каналы (сейчас: {count})",
+				"countPlural=other": "Все включённые каналы (сейчас: {count})"
+			}
+		}
+	],
+	"alerts_rules_edit_all_none": "Все включённые каналы — сейчас ни один не включён, поэтому ничего не отправляется",
+	"alerts_rules_edit_all_one": "Все включённые каналы (сейчас: {name})",
+	"alerts_rules_edit_aria": "Изменить {name}",
+	"alerts_rules_edit_channel_disabled": "отключён",
+	"alerts_rules_edit_channels_error": "Не удалось загрузить каналы ({error}). Список остаётся без изменений: {state}",
+	"alerts_rules_edit_channels_state_all": "все включённые каналы.",
+	"alerts_rules_edit_channels_state_n": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} выбранный канал.",
+				"countPlural=few": "{count} выбранных канала.",
+				"countPlural=many": "{count} выбранных каналов.",
+				"countPlural=other": "{count} выбранных канала."
+			}
+		}
+	],
+	"alerts_rules_edit_clear_help": "Необязательно. После срабатывания оповещение снимается только за этим значением, поэтому показания около порога не вызывают «дребезга».",
+	"alerts_rules_edit_description": "Описание",
+	"alerts_rules_edit_detection": "Обнаружение",
+	"alerts_rules_edit_detection_help": "Параметры отклонения от базовой линии поставляются вместе с правилом и здесь не редактируются.",
+	"alerts_rules_edit_error_clear_above": "Порог возврата должен быть выше порога: срабатывание ниже одного, возврат выше другого.",
+	"alerts_rules_edit_error_clear_below": "Порог возврата должен быть ниже порога: срабатывание выше одного, возврат ниже другого.",
+	"alerts_rules_edit_error_clear_number": "Порог возврата должен быть числом или оставаться пустым.",
+	"alerts_rules_edit_error_query": "Запрос обязателен — без него правило ничего не отслеживает.",
+	"alerts_rules_edit_error_save": "Не удалось сохранить правило.",
+	"alerts_rules_edit_escalate": "Повысить срочность через",
+	"alerts_rules_edit_escalate_help": "Повышает серьёзность на один уровень, если оповещение всё ещё активно.",
+	"alerts_rules_edit_hold_anomaly_help": "Как долго отклонение должно сохраняться до срабатывания.",
+	"alerts_rules_edit_hold_help": "Как долго условие должно выполняться до срабатывания.",
+	"alerts_rules_edit_no_channel": "Каналов пока нет — ничего не отправляется. {link}.",
+	"alerts_rules_edit_no_channel_link": "Добавьте в разделе «Уведомления»",
+	"alerts_rules_edit_none_ticked": "Ничего не отмечено: {label}.",
+	"alerts_rules_edit_notify_via": "Уведомлять через",
+	"alerts_rules_edit_only_ticked": "Уведомления получают только отмеченные каналы.",
+	"alerts_rules_edit_op_gt": "> выше",
+	"alerts_rules_edit_op_gte": "≥ не меньше",
+	"alerts_rules_edit_op_lt": "< ниже",
+	"alerts_rules_edit_op_lte": "≤ не больше",
+	"alerts_rules_edit_query_help": "MetricsQL, вычисляется для каждого устройства.",
+	"alerts_rules_edit_repeat": "Повторять каждые",
+	"alerts_rules_edit_repeat_help": "Напоминание, пока оповещение остаётся активным.",
+	"alerts_rules_edit_save": "Сохранить изменения",
+	"alerts_rules_empty_description": "Добавьте правило, чтобы следить за метрикой, или дождитесь появления встроенных правил.",
+	"alerts_rules_empty_title": "Правил пока нет.",
+	"alerts_rules_enable_aria": "Включить {name}",
+	"alerts_rules_enabled": "Включено",
+	"alerts_rules_error_create": "Не удалось создать правило.",
+	"alerts_rules_error_hold": "Время удержания должно быть целым числом секунд.",
+	"alerts_rules_error_name": "У правила должно быть имя.",
+	"alerts_rules_error_query": "Запрос MetricsQL обязателен — без него правило ничего не отслеживает.",
+	"alerts_rules_error_threshold": "Порог должен быть числом.",
+	"alerts_rules_escalates": "повышает срочность через {duration}",
+	"alerts_rules_every_hour": "Каждый час",
+	"alerts_rules_every_hours": "Каждые {hours} ч",
+	"alerts_rules_filter_kind": "Фильтр по типу",
+	"alerts_rules_firing_now": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Сейчас срабатывает: {count}",
+				"countPlural=few": "Сейчас срабатывает: {count}",
+				"countPlural=many": "Сейчас срабатывает: {count}",
+				"countPlural=other": "Сейчас срабатывает: {count}"
+			}
+		}
+	],
+	"alerts_rules_for": "в течение {duration}",
+	"alerts_rules_hide_query": "Скрыть запрос",
+	"alerts_rules_hold_for": "Удерживать",
+	"alerts_rules_hold_for_help": "Сколько секунд условие должно выполняться до срабатывания.",
+	"alerts_rules_ignored_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Игнорируется на {count} устройстве",
+				"countPlural=few": "Игнорируется на {count} устройствах",
+				"countPlural=many": "Игнорируется на {count} устройствах",
+				"countPlural=other": "Игнорируется на {count} устройствах"
+			}
+		}
+	],
+	"alerts_rules_ignored_one": "Игнорируется на 1 устройстве",
+	"alerts_rules_immediately": "сразу",
+	"alerts_rules_immediately_cap": "Сразу",
+	"alerts_rules_name_placeholder": "Процессор перегружен",
+	"alerts_rules_new": "Новое правило",
+	"alerts_rules_new_description": "Пороговое правило, следящее за одним запросом MetricsQL. Каналы и напоминания можно настроить после создания.",
+	"alerts_rules_nomatch_description": "Попробуйте другой запрос или другой тип.",
+	"alerts_rules_nomatch_title": "Подходящих правил нет.",
+	"alerts_rules_notifies": "уведомляет: {channels}",
+	"alerts_rules_off": "Выкл.",
+	"alerts_rules_op_gt": "выше {amount}",
+	"alerts_rules_op_gte": "не меньше {amount}",
+	"alerts_rules_op_lt": "ниже {amount}",
+	"alerts_rules_op_lte": "не больше {amount}",
+	"alerts_rules_operator": "Оператор",
+	"alerts_rules_query": "Запрос",
+	"alerts_rules_query_help": "MetricsQL, например dumbmonit_cpu_usage_percent",
+	"alerts_rules_repeats": "повторяется каждые {duration}",
+	"alerts_rules_saved": "Сохранено",
+	"alerts_rules_search_label": "Поиск правил",
+	"alerts_rules_search_placeholder": "Поиск по имени, описанию или запросу",
+	"alerts_rules_show_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Показать {count} встроенное правило",
+				"countPlural=few": "Показать {count} встроенных правила",
+				"countPlural=many": "Показать все {count} встроенных правил",
+				"countPlural=other": "Показать {count} встроенных правила"
+			}
+		}
+	],
+	"alerts_rules_show_fewer": "Показать меньше правил",
+	"alerts_rules_show_query": "Показать запрос",
+	"alerts_rules_threshold": "Порог",
+	"alerts_schedule_day_of_month": "{day}-е число",
+	"alerts_schedule_monthly": "{when} {start} на {duration}, ежемесячно · {zone}",
+	"alerts_schedule_no_day": "Нет дней",
+	"alerts_schedule_weekly": "{days} {span}, еженедельно · {zone}",
+	"alerts_scope_all_devices": "Все устройства",
+	"alerts_scope_device": "Устройство {id}",
+	"alerts_severity_advisory": "Предупреждение",
+	"alerts_severity_info": "Инфо",
+	"alerts_severity_warning": "Тревога",
+	"alerts_silences_active_now": "Активно сейчас",
+	"alerts_silences_empty_description": "Запланируйте окно, чтобы отключить оповещения для устройства или для всех, пока вы с ними работаете.",
+	"alerts_silences_empty_title": "Обслуживание не запланировано.",
+	"alerts_silences_next": "следующее: {when}",
+	"alerts_silences_remove": "Удалить",
+	"alerts_silences_remove_confirm": "Удалить?",
+	"alerts_silences_schedule": "Запланировать обслуживание",
+	"alerts_silences_scheduled": "Запланировано",
+	"alerts_silences_until": "до {when}",
+	"alerts_snooze_button": "Отложить",
+	"alerts_snooze_error": "Не удалось отложить это оповещение.",
+	"alerts_snooze_error_lift": "Не удалось снять отложение.",
+	"alerts_snooze_hide_for": "Скрыть на",
+	"alerts_snooze_hint": "Уведомлений не будет, пока время не истечёт или оповещение не будет решено.",
+	"alerts_snooze_lift": "Вернуть",
+	"alerts_snooze_menu_label": "Отложить на",
+	"alerts_span_day": "1 день",
+	"alerts_span_days": "{days} дн.",
+	"alerts_span_h": "{hours} ч",
+	"alerts_span_hm": "{hours} ч {minutes}",
+	"alerts_span_min": "{minutes} мин",
+	"alerts_span_s": "{seconds} с",
+	"notifications_channels_add": "Добавить канал",
+	"notifications_channels_description": "Куда DumbMonit сообщает, что что-то требует внимания.",
+	"notifications_channels_disabled": "Отключён",
+	"notifications_channels_edit": "Изменить",
+	"notifications_channels_empty_admin": "Добавьте Discord, Telegram, почту или один из 20 других сервисов, чтобы получать оповещения там, где вам удобно.",
+	"notifications_channels_empty_title": "Каналов пока нет.",
+	"notifications_channels_empty_viewer": "Администратор может добавить Discord, Telegram, почту или один из 20 других сервисов.",
+	"notifications_channels_enabled": "Включён",
+	"notifications_channels_error_action": "Не удалось выполнить действие",
+	"notifications_channels_error_load": "Не удалось загрузить каналы",
+	"notifications_channels_last_error": "Последняя ошибка: {error}",
+	"notifications_channels_last_sent": "Последняя отправка {when}",
+	"notifications_channels_policy_advisory_up": "Предупреждение и выше",
+	"notifications_channels_policy_interval": "то же оповещение не чаще раза в {minutes} мин",
+	"notifications_channels_policy_no_recoveries": "без уведомлений о восстановлении",
+	"notifications_channels_policy_quiet": "тишина {start}–{end}",
+	"notifications_channels_policy_warning_only": "Только Тревога",
+	"notifications_channels_remove": "Удалить",
+	"notifications_channels_remove_confirm": "Удалить навсегда?",
+	"notifications_channels_send_test": "Отправить тест",
+	"notifications_channels_test_failed": "Тест не удался",
+	"notifications_channels_test_ok": "Тестовое сообщение отправлено",
+	"notifications_channels_title": "Каналы",
+	"notifications_field_default": "По умолчанию ({value})",
+	"notifications_field_list_hint": "По одному элементу в строке.",
+	"notifications_field_object_hint": "Объект JSON.",
+	"notifications_form_change_type": "Сменить тип",
+	"notifications_form_change_type_title": "Сменить тип канала",
+	"notifications_form_clear_secrets": "Удалить сохранённые секреты",
+	"notifications_form_clear_secrets_help": "Удаляет сохранённое; канал не будет работать, пока не введены новые секреты.",
+	"notifications_form_delivery": "Доставка",
+	"notifications_form_delivery_hide": "Скрыть параметры доставки",
+	"notifications_form_delivery_hint": "— что получает этот канал и когда",
+	"notifications_form_delivery_show": "Параметры доставки",
+	"notifications_form_documentation": "Документация",
+	"notifications_form_edit_title": "Изменить «{name}»",
+	"notifications_form_enabled_help": "Отключённый канал сохраняет настройки, но ничего не получает.",
+	"notifications_form_error_invalid": "Недопустимое значение.",
+	"notifications_form_error_json": "Должен быть корректный объект JSON, например \"key\": \"value\".",
+	"notifications_form_error_json_object": "Должен быть объект JSON, а не список или простое значение.",
+	"notifications_form_error_name": "Дайте каналу имя: вы будете выбирать его в правилах оповещений.",
+	"notifications_form_error_number": "Должно быть числом.",
+	"notifications_form_error_required": "Это поле обязательно.",
+	"notifications_form_error_save": "Не удалось сохранить канал",
+	"notifications_form_error_secret_required": "Этот секрет обязателен.",
+	"notifications_form_floor_critical": "Только Тревога",
+	"notifications_form_floor_info": "Всё (Инфо и выше)",
+	"notifications_form_floor_warning": "Предупреждение и выше",
+	"notifications_form_interval": "Повтор того же оповещения не раньше чем через",
+	"notifications_form_interval_current": "{seconds} с (текущее)",
+	"notifications_form_interval_help": "Напоминания и повторные срабатывания одного оповещения идут не чаще этого интервала.",
+	"notifications_form_keep_type": "Оставить текущий тип",
+	"notifications_form_name_help": "Показывается в списке каналов и выбирается в правилах оповещений.",
+	"notifications_form_name_placeholder": "Семейный чат",
+	"notifications_form_name_placeholder_kind": "{kind} — семья",
+	"notifications_form_new_title": "Новый канал {kind}",
+	"notifications_form_no_match": "Нет типов каналов, подходящих под «{query}».",
+	"notifications_form_no_minimum": "Без минимума",
+	"notifications_form_pick_hint": "Выберите сервис. Дальше будут только нужные ему поля.",
+	"notifications_form_pick_title": "Куда отправлять оповещения?",
+	"notifications_form_resolved": "Сообщать, когда проблема исчезла",
+	"notifications_form_resolved_help": "Выкл.: канал получает только о проблемах, но не о восстановлении.",
+	"notifications_form_search_label": "Поиск типов каналов",
+	"notifications_form_search_placeholder": "Поиск: Discord, почта, вебхук…",
+	"notifications_form_secrets": "Секреты",
+	"notifications_form_secrets_destination_changed": "Адрес назначения изменился: введите секреты заново, сохранённые не отправляются на новый адрес.",
+	"notifications_form_secrets_keep": "Оставьте пустым, чтобы сохранить текущий секрет.",
+	"notifications_form_secrets_note": "Хранятся в зашифрованном виде и больше не показываются.",
+	"notifications_form_secrets_saved": "Для этого канала секрет уже сохранён.",
+	"notifications_form_send": "Отправлять",
+	"notifications_form_send_help": "Оповещения ниже этого уровня в канал не попадают.",
+	"notifications_form_settings": "Настройки",
+	"notifications_matcher_add": "Добавить условие",
+	"notifications_matcher_checking": "Проверяем, какие устройства подходят…",
+	"notifications_matcher_count": "{matched} из {total} устройств",
+	"notifications_matcher_error_preview": "Не удалось показать предпросмотр фильтра.",
+	"notifications_matcher_except": "Кроме",
+	"notifications_matcher_field": "Поле",
+	"notifications_matcher_field_kind": "тип устройства",
+	"notifications_matcher_field_rule": "правило",
+	"notifications_matcher_field_tag": "тег",
+	"notifications_matcher_help": "Выкл.: канал получает всё выше своего порога важности. Вкл.: только подходящее по тегу, типу устройства или правилу.",
+	"notifications_matcher_mode": "Включить или исключить",
+	"notifications_matcher_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "и ещё {count}",
+				"countPlural=few": "и ещё {count}",
+				"countPlural=many": "и ещё {count}",
+				"countPlural=other": "и ещё {count}"
+			}
+		}
+	],
+	"notifications_matcher_none": "Сейчас ни одно устройство не подходит — этот канал молчал бы.",
+	"notifications_matcher_only": "Только",
+	"notifications_matcher_only_some": "Только некоторые оповещения",
+	"notifications_matcher_remove": "Удалить это условие",
+	"notifications_matcher_rules_note": "Условия по правилам относятся к оповещениям, а не к устройствам: счётчик выше их не учитывает.",
+	"notifications_matcher_tag_name": "Имя тега",
+	"notifications_matcher_value": "Значение",
+	"notifications_policy_also_tell": "Также сообщить",
+	"notifications_policy_also_tell_help": "Один дополнительный шаг, отправляется один раз. Собственный порог важности и тихие часы канала его не задерживают.",
+	"notifications_policy_cap": "Сообщений на канал в час",
+	"notifications_policy_cap_help": "После лимита оповещения ждут и приходят одной сводкой. Пусто: без лимита.",
+	"notifications_policy_cap_placeholder": "Без лимита",
+	"notifications_policy_daily": "ежедневно",
+	"notifications_policy_description": "Как DumbMonit не засыпает вас уведомлениями: одно сообщение на всплеск, лимит в час и тишина для «мигающих» оповещений.",
+	"notifications_policy_error_cap": "Лимит в час должен быть целым числом; оставьте пустым, чтобы не ограничивать.",
+	"notifications_policy_error_escalate": "Выберите канал для уведомления, если никто не подтвердил, или установите задержку «Не эскалировать».",
+	"notifications_policy_error_flap": "Для обнаружения «мигания» нужно не менее 2 смен состояния.",
+	"notifications_policy_error_load": "Не удалось загрузить политику уведомлений",
+	"notifications_policy_error_save": "Не удалось сохранить политику",
+	"notifications_policy_error_url": "Публичный URL должен начинаться с http:// или https://.",
+	"notifications_policy_escalate_after": "Через {span}",
+	"notifications_policy_escalate_help": "Отсчёт идёт с момента, когда первое сообщение действительно отправлено, а не с срабатывания оповещения.",
+	"notifications_policy_escalate_label": "Если никто не подтвердил",
+	"notifications_policy_escalate_never": "Не эскалировать",
+	"notifications_policy_escalate_off": "Никого не уведомляют повторно: неподтверждённое оповещение остаётся в своих каналах.",
+	"notifications_policy_escalate_on": "Если никто не подтвердит оповещение в течение {minutes} мин после отправки первого сообщения, оно будет дополнительно отправлено в {name} — один раз. Подтверждение или восстановление останавливает этот шаг.",
+	"notifications_policy_everything": "Всё",
+	"notifications_policy_fewer": "Меньше параметров",
+	"notifications_policy_flap": "Придерживать «мигающие» оповещения",
+	"notifications_policy_flap_changes": "Смены состояния",
+	"notifications_policy_flap_changes_help": "Срабатывания и восстановления считаются вместе.",
+	"notifications_policy_flap_help": "Оповещение, которое то срабатывает, то снимается, отправляет одно уведомление о «мигании», а затем на время замолкает.",
+	"notifications_policy_flap_hint": "— обнаружение «мигания»",
+	"notifications_policy_flap_hold": "Затем придерживать",
+	"notifications_policy_flap_within": "За",
+	"notifications_policy_group": "Группировать оповещения в течение",
+	"notifications_policy_group_help": "Оповещения, сработавшие в этом окне, уходят одним сообщением на канал: «3 оповещения на 2 устройствах».",
+	"notifications_policy_more": "Больше параметров",
+	"notifications_policy_no_channel": "Нет канала",
+	"notifications_policy_per_channel": "По каналам",
+	"notifications_policy_per_channel_note": "Что получает каждый канал и его тихие часы настраиваются в самом канале («Изменить», затем «Параметры доставки»).",
+	"notifications_policy_quiet": "тишина {days} {start}–{end}",
+	"notifications_policy_saved": "Сохранено",
+	"notifications_policy_send_now": "Отправлять сразу",
+	"notifications_policy_that_channel": "этот канал",
+	"notifications_policy_title": "Политика уведомлений",
+	"notifications_policy_url": "Публичный URL",
+	"notifications_policy_url_help": "Используется для ссылки «Открыть в DumbMonit» в каждом сообщении. Оставьте пустым, чтобы использовать DUMBMONIT_PUBLIC_URL.",
+	"notifications_quiet_days": "Дни",
+	"notifications_quiet_error_days": "Выберите хотя бы один день.",
+	"notifications_quiet_error_differ": "Начало и конец должны различаться.",
+	"notifications_quiet_error_format": "Укажите начало и конец в формате ЧЧ:ММ.",
+	"notifications_quiet_from": "С",
+	"notifications_quiet_from_help": "Ваше местное время. Интервал через полночь относится к дню, в который он начинается.",
+	"notifications_quiet_help": "В тихие часы проходят только оповещения уровня «Тревога»; остальные ждут и приходят одной сводкой по окончании.",
+	"notifications_quiet_title": "Тихие часы",
+	"notifications_quiet_to": "До",
+	"overview_brief_a_rule": "Правило",
+	"overview_brief_also": "Алерты также возникали и исчезали на: {names}.",
+	"overview_brief_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Алерты также возникали и исчезали на: {names} и ещё {count}.",
+				"countPlural=few": "Алерты также возникали и исчезали на: {names} и ещё {count}.",
+				"countPlural=many": "Алерты также возникали и исчезали на: {names} и ещё {count}.",
+				"countPlural=other": "Алерты также возникали и исчезали на: {names} и ещё {count}."
+			}
+		}
+	],
+	"overview_brief_and_others": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} и ещё {count}",
+				"countPlural=few": "{names} и ещё {count}",
+				"countPlural=many": "{names} и ещё {count}",
+				"countPlural=other": "{names} и ещё {count}"
+			}
+		}
+	],
+	"overview_brief_device_n": "Устройство {id}",
+	"overview_brief_dissolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} алерт возник и исчез, не успев сработать.",
+				"countPlural=few": "{count} алерта возникли и исчезли, не успев сработать.",
+				"countPlural=many": "{count} алертов возникли и исчезли, не успев сработать.",
+				"countPlural=other": "{count} алертов возникли и исчезли, не успев сработать."
+			}
+		}
+	],
+	"overview_brief_dissolved_mostly": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} алерт возник и исчез, не успев сработать (в основном {rule} на {device}).",
+				"countPlural=few": "{count} алерта возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
+				"countPlural=many": "{count} алертов возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
+				"countPlural=other": "{count} алертов возникли и исчезли, не успев сработать (в основном {rule} на {device})."
+			}
+		}
+	],
+	"overview_brief_down_whole": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{subject} недоступно всё это время.",
+				"countPlural=few": "{subject} недоступны всё это время.",
+				"countPlural=many": "{subject} недоступны всё это время.",
+				"countPlural=other": "{subject} недоступны всё это время."
+			}
+		}
+	],
+	"overview_brief_dropped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} пропало и вернулось.",
+				"countPlural=few": "{name} пропадало {count} раза и вернулось.",
+				"countPlural=many": "{name} пропадало {count} раз и вернулось.",
+				"countPlural=other": "{name} пропадало {count} раз и вернулось."
+			}
+		}
+	],
+	"overview_brief_dropped_many": "{names} пропадали и вернулись.",
+	"overview_brief_head_first": "За последние 24 ч",
+	"overview_brief_head_since": "С {when}",
+	"overview_brief_intro": "Впервые здесь? Вот что голубь знает на данный момент.",
+	"overview_brief_kept_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство продолжало отправлять данные.",
+				"countPlural=few": "{count} устройства продолжали отправлять данные.",
+				"countPlural=many": "{count} устройств продолжали отправлять данные.",
+				"countPlural=other": "{count} устройств продолжали отправлять данные."
+			}
+		}
+	],
+	"overview_brief_lead": "{head} — {parts}.",
+	"overview_brief_learning_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} ещё изучают базовый уровень: сработали бы один раз.",
+				"countPlural=few": "{names} ещё изучают базовый уровень: сработали бы {count} раза.",
+				"countPlural=many": "{names} ещё изучают базовый уровень: сработали бы {count} раз.",
+				"countPlural=other": "{names} ещё изучают базовый уровень: сработали бы {count} раз."
+			}
+		}
+	],
+	"overview_brief_learning_one": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} ещё изучает базовый уровень: сработало бы один раз.",
+				"countPlural=few": "{names} ещё изучает базовый уровень: сработало бы {count} раза.",
+				"countPlural=many": "{names} ещё изучает базовый уровень: сработало бы {count} раз.",
+				"countPlural=other": "{names} ещё изучает базовый уровень: сработало бы {count} раз."
+			}
+		}
+	],
+	"overview_brief_n_alerts_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} алерт устранён сам",
+				"countPlural=few": "{count} алерта устранены сами",
+				"countPlural=many": "{count} алертов устранены сами",
+				"countPlural=other": "{count} алертов устранены сами"
+			}
+		}
+	],
+	"overview_brief_n_fired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "сработал {count} алерт",
+				"countPlural=few": "сработало {count} алерта",
+				"countPlural=many": "сработало {count} алертов",
+				"countPlural=other": "сработало {count} алертов"
+			}
+		}
+	],
+	"overview_brief_n_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устранён сам",
+				"countPlural=few": "{count} устранены сами",
+				"countPlural=many": "{count} устранены сами",
+				"countPlural=other": "{count} устранены сами"
+			}
+		}
+	],
+	"overview_brief_n_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} всё ещё активен",
+				"countPlural=few": "{count} всё ещё активны",
+				"countPlural=many": "{count} всё ещё активны",
+				"countPlural=other": "{count} всё ещё активны"
+			}
+		}
+	],
+	"overview_brief_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство недоступно",
+				"countPlural=few": "{count} устройства недоступны",
+				"countPlural=many": "{count} устройств недоступны",
+				"countPlural=other": "{count} устройств недоступны"
+			}
+		}
+	],
+	"overview_brief_nothing_no_channel": "Ничего не отправлено: канал уведомлений ещё не настроен.",
+	"overview_brief_nothing_sent": "Ничего не отправлено.",
+	"overview_brief_nothing_to_channel": "В {channel} ничего не отправлено.",
+	"overview_brief_nothing_to_channels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ничего не отправлено в ваш канал.",
+				"countPlural=few": "Ничего не отправлено в ваши {count} канала.",
+				"countPlural=many": "Ничего не отправлено в ваши {count} каналов.",
+				"countPlural=other": "Ничего не отправлено в ваши {count} каналов."
+			}
+		}
+	],
+	"overview_brief_notified": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Отправлено {count} уведомление.",
+				"countPlural=few": "Отправлено {count} уведомления.",
+				"countPlural=many": "Отправлено {count} уведомлений.",
+				"countPlural=other": "Отправлено {count} уведомлений."
+			}
+		}
+	],
+	"overview_brief_notified_to": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Отправлено {count} уведомление в {channel}.",
+				"countPlural=few": "Отправлено {count} уведомления в {channel}.",
+				"countPlural=many": "Отправлено {count} уведомлений в {channel}.",
+				"countPlural=other": "Отправлено {count} уведомлений в {channel}."
+			}
+		}
+	],
+	"overview_brief_on_device": "{device}: {phrases}.",
+	"overview_brief_phrase_fired_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} сработало и устранилось само",
+				"countPlural=few": "{name} сработало {count} раза и устранилось само",
+				"countPlural=many": "{name} сработало {count} раз и устранилось само",
+				"countPlural=other": "{name} сработало {count} раз и устранилось само"
+			}
+		}
+	],
+	"overview_brief_phrase_resolved": "{name} устранилось само",
+	"overview_brief_phrase_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} сработало и всё ещё активно",
+				"countPlural=few": "{name} сработало {count} раза и всё ещё активно",
+				"countPlural=many": "{name} сработало {count} раз и всё ещё активно",
+				"countPlural=other": "{name} сработало {count} раз и всё ещё активно"
+			}
+		}
+	],
+	"overview_brief_quiet_away": "Пока вас не было, ничего не произошло.",
+	"overview_brief_quiet_first": "За последние 24 ч ничего не произошло.",
+	"overview_brief_the_server": "сервер",
+	"overview_brief_went_down": "{name} стало недоступно {when} и остаётся таким.",
+	"overview_first_all_done": "Все три шага выполнены. Это руководство больше не появится.",
+	"overview_first_channel_action": "Добавить канал",
+	"overview_first_channel_text": "Почта, ntfy, Discord, Telegram, PagerDuty — то, что вы и так читаете. Пока всё в порядке, ничего не отправляется.",
+	"overview_first_channel_title": "Подключите способ получать уведомления",
+	"overview_first_demo": "Добавить демо-устройство",
+	"overview_first_device_action": "Добавить устройство",
+	"overview_first_device_text": "Коммутатор, NAS, гипервизор или сайт. Введите адрес, остальное определится само.",
+	"overview_first_device_title": "Добавьте первое устройство",
+	"overview_first_done": "Готово",
+	"overview_first_error": "Не удалось сохранить. Повторите попытку чуть позже.",
+	"overview_first_error_detail": "Не удалось сохранить: {message}",
+	"overview_first_hurry": "Спешите? Просканируйте диапазон сети и разом добавьте всё, что отвечает по SNMP.",
+	"overview_first_intro": "Три шага, и у голубя появится за чем следить.",
+	"overview_first_scan": "Просканировать мою сеть",
+	"overview_first_skip_guide": "Пропустить руководство",
+	"overview_first_skip_step": "Пропустить этот шаг",
+	"overview_first_skip_step_aria": "Пропустить шаг {n}: {title}",
+	"overview_first_skipped": "Пропущено",
+	"overview_first_step": "Шаг {n}",
+	"overview_first_test_action": "Отправить тест",
+	"overview_first_test_text": "Отправьте тест из канала. Шаг станет зелёным, когда сообщение действительно уйдёт.",
+	"overview_first_test_title": "Проверьте, что сообщение доходит",
+	"overview_first_title": "Ваши первые пять минут",
+	"overview_page_checked": "Проверено {when}",
+	"overview_page_empty_text": "Добавьте коммутатор, NAS, гипервизор или сайт, и уже через минуту он начнёт присылать данные.",
+	"overview_page_empty_title": "Устройств пока нет",
+	"overview_page_error_load": "Не удалось загрузить обзор",
+	"overview_page_error_refresh": "Не удалось обновить оповещения.",
+	"overview_page_history_note": "Данные из истории оповещений за прошедшую неделю.",
+	"overview_page_last_days": "Последние {days} дн.",
+	"overview_page_mark_read": "Отметить как прочитанное",
+	"overview_page_needs_you": "Требует вас",
+	"overview_page_or": "Или {agent}, или {relay} через один из них.",
+	"overview_page_or_agent": "установить агент на машине",
+	"overview_page_or_relay": "следить за удалённой площадкой",
+	"overview_page_since": "С вашего последнего визита",
+	"overview_page_title": "Обзор",
+	"overview_page_week": "Предстоящая неделя",
+	"overview_scene_asleep": "{label}, голубь спит",
+	"overview_scene_cloudy": "Небольшая облачность",
+	"overview_scene_overcast": "Пасмурно",
+	"overview_scene_storm": "Гроза",
+	"overview_sky_clear": "Ясное небо",
+	"overview_sky_n_acked": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} подтверждено",
+				"countPlural=few": "{count} подтверждено",
+				"countPlural=many": "{count} подтверждено",
+				"countPlural=other": "{count} подтверждено"
+			}
+		}
+	],
+	"overview_sky_n_advisories": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} предупреждение",
+				"countPlural=few": "{count} предупреждения",
+				"countPlural=many": "{count} предупреждений",
+				"countPlural=other": "{count} предупреждения"
+			}
+		}
+	],
+	"overview_sky_n_building": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} нарастает",
+				"countPlural=few": "{count} нарастают",
+				"countPlural=many": "{count} нарастают",
+				"countPlural=other": "{count} нарастают"
+			}
+		}
+	],
+	"overview_sky_n_info": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} инфо",
+				"countPlural=few": "{count} инфо",
+				"countPlural=many": "{count} инфо",
+				"countPlural=other": "{count} инфо"
+			}
+		}
+	],
+	"overview_sky_n_misconfigured": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} настроен неверно",
+				"countPlural=few": "{count} настроены неверно",
+				"countPlural=many": "{count} настроены неверно",
+				"countPlural=other": "{count} настроены неверно"
+			}
+		}
+	],
+	"overview_sky_n_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} на связи",
+				"countPlural=few": "{count} на связи",
+				"countPlural=many": "{count} на связи",
+				"countPlural=other": "{count} на связи"
+			}
+		}
+	],
+	"overview_sky_n_snoozed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} отложено",
+				"countPlural=few": "{count} отложено",
+				"countPlural=many": "{count} отложено",
+				"countPlural=other": "{count} отложено"
+			}
+		}
+	],
+	"overview_sky_n_suppressed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} подавлено родителем",
+				"countPlural=few": "{count} подавлено родителем",
+				"countPlural=many": "{count} подавлено родителем",
+				"countPlural=other": "{count} подавлено родителем"
+			}
+		}
+	],
+	"overview_sky_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} недоступно",
+				"countPlural=few": "{count} недоступно",
+				"countPlural=many": "{count} недоступно",
+				"countPlural=other": "{count} недоступно"
+			}
+		}
+	],
+	"overview_sky_n_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} в ожидании",
+				"countPlural=few": "{count} в ожидании",
+				"countPlural=many": "{count} в ожидании",
+				"countPlural=other": "{count} в ожидании"
+			}
+		}
+	],
+	"overview_sky_n_warnings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} тревога",
+				"countPlural=few": "{count} тревоги",
+				"countPlural=many": "{count} тревог",
+				"countPlural=other": "{count} тревоги"
+			}
+		}
+	],
+	"overview_sky_nothing": "Пока не за чем следить",
+	"overview_sky_plate_acked": "Подтверждено",
+	"overview_sky_plate_building": "Нарастает",
+	"overview_sky_plate_down": "Недоступен",
+	"overview_sky_plate_learning": "Обучение",
+	"overview_sky_plate_misconfigured": "Неверно настроен",
+	"overview_sky_plate_snoozed": "Отложено",
+	"overview_sky_plate_suppressed": "Подавлено родителем",
+	"overview_sky_plate_unreachable": "Недоступен",
+	"overview_sky_sentence": "{parts}.",
+	"overview_sky_waiting": "Ожидание первых данных",
+	"overview_streaks_d_h": "{days} дн. {hours} ч",
+	"overview_streaks_fewest": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "меньше всего алертов: {count} событие за {days} дн.",
+				"countPlural=few": "меньше всего алертов: {count} события за {days} дн.",
+				"countPlural=many": "меньше всего алертов: {count} событий за {days} дн.",
+				"countPlural=other": "меньше всего алертов: {count} событий за {days} дн."
+			}
+		}
+	],
+	"overview_streaks_h_min": "{hours} ч {minutes} мин",
+	"overview_streaks_many_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} и ещё {count} недоступны",
+				"countPlural=few": "{name} и ещё {count} недоступны",
+				"countPlural=many": "{name} и ещё {count} недоступны",
+				"countPlural=other": "{name} и ещё {count} недоступны"
+			}
+		}
+	],
+	"overview_streaks_most": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} событие алерта (начало, срабатывание или устранение) за {days} дн.",
+				"countPlural=few": "{count} события алерта (начало, срабатывание или устранение) за {days} дн.",
+				"countPlural=many": "{count} событий алерта (начало, срабатывание или устранение) за {days} дн.",
+				"countPlural=other": "{count} событий алерта (начало, срабатывание или устранение) за {days} дн."
+			}
+		}
+	],
+	"overview_streaks_no_alert": "ни одного алерта за {days} дн.",
+	"overview_streaks_no_alert_like": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "ни одного алерта за {days} дн., как и ещё у {count}",
+				"countPlural=few": "ни одного алерта за {days} дн., как и ещё у {count}",
+				"countPlural=many": "ни одного алерта за {days} дн., как и ещё у {count}",
+				"countPlural=other": "ни одного алерта за {days} дн., как и ещё у {count}"
+			}
+		}
+	],
+	"overview_streaks_noisiest": "Больше всего алертов",
+	"overview_streaks_none_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "ни одно устройство не было недоступно за {count} день",
+				"countPlural=few": "ни одно устройство не было недоступно за {count} дня",
+				"countPlural=many": "ни одно устройство не было недоступно за {count} дней",
+				"countPlural=other": "ни одно устройство не было недоступно за {count} дней"
+			}
+		}
+	],
+	"overview_streaks_not_now": "Сейчас нет",
+	"overview_streaks_one_unreachable": "{name} недоступно",
+	"overview_streaks_over": "более {days} дн.",
+	"overview_streaks_quietest": "Самое спокойное устройство",
+	"overview_streaks_reporting": "Всё на связи",
+	"overview_streaks_reporting_for": "Всё на связи уже",
+	"overview_streaks_since_outage": "ни одно устройство не было недоступно с последнего сбоя",
+	"overview_streaks_under_minute": "меньше минуты",
+	"overview_tip_agent_action": "Установить агент",
+	"overview_tip_agent_text": "Службы, состояние дисков, температуры, ожидающие обновления, контейнеры Docker, которые можно перезапустить или обновить отсюда, резервные копии Plakar, restic и Borg. Одна команда на Linux, Windows, macOS или FreeBSD.",
+	"overview_tip_agent_title": "Агент видит, что происходит внутри машины.",
+	"overview_tip_api_action": "Создать токен API",
+	"overview_tip_api_text": "Токен с ограниченными правами (чтение или чтение и запись) открывает её для ваших скриптов, а уже работающие Prometheus или Grafana могут читать измерения с тем же токеном.",
+	"overview_tip_api_title": "У всего здесь есть HTTP API.",
+	"overview_tip_mcp_action": "Подключить ассистента",
+	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor или любой клиент MCP может спросить DumbMonit, как дела, а с токеном на запись, ещё и заглушить устройство или запустить проверку.",
+	"overview_tip_mcp_title": "Этот бюллетень может читать ИИ-ассистент.",
+	"overview_tip_packs_action": "Пакеты интеграций",
+	"overview_tip_packs_text": "Пакет интеграции — это тип устройства, описанный в YAML: что спрашивать у устройства, какие значения хранить и когда поднимать оповещение.",
+	"overview_tip_packs_title": "DumbMonit можно научить новому устройству.",
+	"overview_tip_palette_action": "Открыть палитру",
+	"overview_tip_palette_text": "Палитра команд переходит к любому устройству, странице или действию, не отрывая рук от клавиатуры.",
+	"overview_tip_palette_title": "Любая страница и действие — в одном шорткате.",
+	"overview_tip_relay_action": "Следить за удалённой площадкой",
+	"overview_tip_relay_text": "Установите его на машине на второй площадке, в офисе клиента или за NAT: он опрашивает там коммутаторы, NAS и гипервизоры для этого сервера. Только исходящие соединения — открывать ничего не нужно.",
+	"overview_tip_relay_title": "Агент может следить за другой сетью.",
+	"overview_tip_status_action": "Создать страницу статуса",
+	"overview_tip_status_text": "Публичная страница статуса показывает выбранные вами сервисы, их аптайм и ваши объявления — достаточно поделиться ссылкой вместо ответов на вопрос «оно упало?».",
+	"overview_tip_status_title": "Сообщайте раньше, чем спросят.",
+	"overview_tip_wall_action": "Открыть режим стены",
+	"overview_tip_wall_text": "Режим стены показывает небо и то, что требует вашего внимания, на весь экран, читаемо через всю комнату, и не даёт экрану гаснуть.",
+	"overview_tip_wall_title": "Бюллетень подходит для телевизора.",
+	"overview_tips_another": "Другой совет",
+	"overview_tips_hide": "Скрыть эти советы",
+	"overview_tips_hide_title": "Скрыть эти советы (в этом браузере)",
+	"overview_tips_label": "Знаете ли вы?",
+	"overview_tips_prefix": "Знаете ли вы? {title}",
+	"overview_week_cert_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Сертификат истёк {count} день назад",
+				"countPlural=few": "Сертификат истёк {count} дня назад",
+				"countPlural=many": "Сертификат истёк {count} дней назад",
+				"countPlural=other": "Сертификат истёк {count} дней назад"
+			}
+		}
+	],
+	"overview_week_cert_expires": "Сертификат истекает",
+	"overview_week_cert_expires_today": "Сертификат истекает сегодня",
+	"overview_week_days_short": "{days} дн.",
+	"overview_week_filling": "Заполняется с такой скоростью",
+	"overview_week_filling_series": "Заполняется с такой скоростью: {series}",
+	"overview_week_from": "{scope}, с {time}",
+	"overview_week_full": "Будет заполнено с такой скоростью",
+	"overview_week_full_series": "Будет заполнено с такой скоростью: {series}",
+	"overview_week_later": "Позже:",
+	"overview_week_later_certs": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} сертификат через {when}",
+				"countPlural=few": "{count} сертификата через {when}",
+				"countPlural=many": "{count} сертификатов через {when}",
+				"countPlural=other": "{count} сертификатов через {when}"
+			}
+		}
+	],
+	"overview_week_later_disks": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} диск заполнится в течение {days} дн.",
+				"countPlural=few": "{count} диска заполнятся в течение {days} дн.",
+				"countPlural=many": "{count} дисков заполнятся в течение {days} дн.",
+				"countPlural=other": "{count} дисков заполнятся в течение {days} дн."
+			}
+		}
+	],
+	"overview_week_later_windows": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} окно обслуживания в течение {days} дн.",
+				"countPlural=few": "{count} окна обслуживания в течение {days} дн.",
+				"countPlural=many": "{count} окон обслуживания в течение {days} дн.",
+				"countPlural=other": "{count} окон обслуживания в течение {days} дн."
+			}
+		}
+	],
+	"overview_week_maintenance": "Обслуживание",
+	"overview_week_maintenance_all": "Обслуживание всех устройств",
+	"overview_week_maintenance_device": "Обслуживание устройства {id}",
+	"overview_week_nothing_due": "Ничего нет",
+	"overview_week_plate_certificate": "Сертификат",
+	"overview_week_plate_forecast": "Прогноз",
+	"overview_week_plate_scheduled": "По плану",
+	"overview_week_plate_warning": "Предупреждение",
+	"overview_week_quiet": "Впереди спокойная неделя: ни сертификатов, ни дисков, ни обслуживания.",
+	"overview_week_range": "{scope}, {start}–{end}",
+	"overview_week_series_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} и ещё {count}",
+				"countPlural=few": "{names} и ещё {count}",
+				"countPlural=many": "{names} и ещё {count}",
+				"countPlural=other": "{names} и ещё {count}"
+			}
+		}
+	],
+	"overview_week_today": "Сегодня",
+	"overview_week_tomorrow": "Завтра",
+	"overview_week_until": "{scope} до {when}",
+	"overview_when_dated": "{date} {time}",
+	"overview_when_yesterday": "вчера {time}"
 }

@@ -26,6 +26,7 @@
 	import { EmptyState, Toast } from '#lib/ui/index.js';
 	import { CloudSun, ChevronRight } from 'lucide-svelte';
 	import { UNTIL_RESOLVED_SECS } from './helpers';
+	import { m } from '#lib/paraglide/messages.js';
 	import AlertRow from './AlertRow.svelte';
 	import DeviceRow from './DeviceRow.svelte';
 
@@ -109,7 +110,7 @@
 		} catch (cause) {
 			dismissing = new Set(dismissing);
 			dismissing.delete(alert.fingerprint);
-			toast = { error: cause instanceof Error ? cause.message : 'Could not dismiss this alert.' };
+			toast = { error: cause instanceof Error ? cause.message : m.alerts_needs_dismiss_error() };
 		}
 	}
 
@@ -142,11 +143,13 @@
 		const { waiting, devices } = sky.counts;
 		const base =
 			devices === 0
-				? 'Add a device and its first report shows up here.'
+				? m.alerts_needs_quiet_no_devices()
 				: waiting > 0
-					? `No rule is firing. ${waiting === 1 ? 'One device is' : `${waiting} devices are`} still waiting for a first report.`
-					: 'Every device is reporting and no rule is firing.';
-		return checkedLabel ? `${base} Checked ${checkedLabel}.` : base;
+					? waiting === 1
+						? m.alerts_needs_quiet_waiting_one()
+						: m.alerts_needs_quiet_waiting_many({ count: waiting })
+					: m.alerts_needs_quiet_all_reporting();
+		return checkedLabel ? m.alerts_needs_quiet_checked({ text: base, when: checkedLabel }) : base;
 	});
 
 	/** Rows gathered per device, keeping the ordered stream within each group. */
@@ -167,7 +170,11 @@
 			if (!group) {
 				group = {
 					key,
-					name: target?.name ?? (targetId === null ? 'No device' : `Device ${targetId}`),
+					name:
+						target?.name ??
+						(targetId === null
+							? m.alerts_needs_no_device()
+							: m.alerts_scope_device({ id: targetId })),
 					target,
 					items: []
 				};
@@ -199,11 +206,11 @@
 	{#if snoozedRows.length > 0}
 		<div class={rows.length > 0 ? 'mt-6' : ''}>
 			<h3 class="label-tape mb-2 flex items-center gap-2">
-				Snoozed
+				{m.alerts_needs_snoozed()}
 				<span class="tnum font-normal text-ink-3">· {snoozedRows.length}</span>
 			</h3>
 			<p class="mb-2 text-[0.8125rem] text-ink-2">
-				Hidden for a while: no reminder until the window ends or the alert resolves.
+				{m.alerts_needs_snoozed_hint()}
 			</p>
 			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 				{#each snoozedRows as folded, i (folded.row.key)}
@@ -229,12 +236,12 @@
 					class={`size-3.5 shrink-0 transition-transform ${dismissedOpen ? 'rotate-90' : ''}`}
 					aria-hidden="true"
 				/>
-				Dismissed
+				{m.alerts_needs_dismissed()}
 				<span class="tnum font-normal text-ink-3">· {ackedRows.length}</span>
 			</button>
 			{#if dismissedOpen}
 				<p class="mb-2 text-[0.8125rem] text-ink-2">
-					Known problems: reminders are paused until the acknowledgement ends or the alert resolves.
+					{m.alerts_needs_dismissed_hint()}
 				</p>
 				<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 					{#each ackedRows as folded, i (folded.row.key)}
@@ -253,7 +260,9 @@
 		tone="signal"
 		icon={mascot ? undefined : CloudSun}
 		{mascot}
-		title={sky.counts.devices === 0 ? 'Nothing to watch yet.' : 'Nothing needs you.'}
+		title={sky.counts.devices === 0
+			? m.alerts_needs_empty_no_devices()
+			: m.alerts_needs_empty_quiet()}
 		description={quietDescription}
 	/>
 {:else if grouped}
@@ -297,8 +306,8 @@
 	{#if 'fingerprint' in toast}
 		{@const fingerprint = toast.fingerprint}
 		<Toast
-			message="Dismissed."
-			actionLabel="Undo"
+			message={m.alerts_needs_toast_dismissed()}
+			actionLabel={m.alerts_ignore_undo()}
 			onaction={() => void undoDismiss(fingerprint)}
 			onclose={() => (toast = null)}
 		/>

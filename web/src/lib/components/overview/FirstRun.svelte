@@ -18,6 +18,7 @@
 	import { untrack } from 'svelte';
 	import { Button, ClickSpark, Plate, confetti } from '#lib/ui/index.js';
 	import Mascot from '#lib/components/Mascot.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		/**
@@ -46,27 +47,27 @@
 		{
 			id: 'device',
 			icon: Server,
-			title: 'Add your first device',
-			text: 'A switch, a NAS, a hypervisor or a website. Type an address and the rest is detected.',
-			action: 'Add a device',
+			title: m.overview_first_device_title(),
+			text: m.overview_first_device_text(),
+			action: m.overview_first_device_action(),
 			href: '/targets/new',
 			done: guide.has_target
 		},
 		{
 			id: 'channel',
 			icon: Bell,
-			title: 'Connect a way to be told',
-			text: 'Email, ntfy, Discord, Telegram, PagerDuty — whatever you already read. Nothing is sent until something is wrong.',
-			action: 'Add a channel',
+			title: m.overview_first_channel_title(),
+			text: m.overview_first_channel_text(),
+			action: m.overview_first_channel_action(),
 			href: '/alerts#notifications-channels',
 			done: guide.has_channel
 		},
 		{
 			id: 'test',
 			icon: Send,
-			title: 'Check a message arrives',
-			text: 'Send a test from the channel. This step turns green once one really leaves.',
-			action: 'Send a test',
+			title: m.overview_first_test_title(),
+			text: m.overview_first_test_text(),
+			action: m.overview_first_test_action(),
 			href: '/alerts#notifications-channels',
 			done: guide.notification_confirmed
 		}
@@ -103,8 +104,8 @@
 		} catch (cause) {
 			failure =
 				cause instanceof Error
-					? `Could not save that: ${cause.message}`
-					: 'Could not save that. Try again in a moment.';
+					? m.overview_first_error_detail({ message: cause.message })
+					: m.overview_first_error();
 		} finally {
 			saving = null;
 		}
@@ -130,18 +131,18 @@
 			<Mascot mood="watch" class="hidden size-11 shrink-0 sm:block" />
 			<div class="min-w-0">
 				<h2 id="first-run-title" class="text-base font-semibold tracking-tight text-ink">
-					Your first five minutes
+					{m.overview_first_title()}
 				</h2>
 				<p class="mt-0.5 text-sm text-ink-2">
 					{#if remaining === 0}
-						All three done. This guide will not come back.
+						{m.overview_first_all_done()}
 					{:else}
-						Three steps, and the pigeon has something to watch.
+						{m.overview_first_intro()}
 					{/if}
 				</p>
 			</div>
 		</div>
-		<Button variant="ghost" size="sm" onclick={skip} loading={saving === 'skip'}>Skip the guide</Button>
+		<Button variant="ghost" size="sm" onclick={skip} loading={saving === 'skip'}>{m.overview_first_skip_guide()}</Button>
 	</header>
 
 	<ol class="divide-y divide-line">
@@ -164,14 +165,14 @@
 
 				<div class="min-w-0 flex-1 basis-56">
 					<p class="flex flex-wrap items-center gap-x-2 gap-y-1">
-						<span class="tnum text-[0.8125rem] text-ink-3">Step {index + 1}</span>
+						<span class="tnum text-[0.8125rem] text-ink-3">{m.overview_first_step({ n: index + 1 })}</span>
 						<span class={`text-[0.9375rem] font-semibold ${step.done || active ? 'text-ink' : 'text-ink-2'}`}>
 							{step.title}
 						</span>
 						{#if step.done}
-							<Plate tone="signal" label="Done" draw />
+							<Plate tone="signal" label={m.overview_first_done()} draw />
 						{:else if off}
-							<Plate tone="ghost" label="Skipped" />
+							<Plate tone="ghost" label={m.overview_first_skipped()} />
 						{/if}
 					</p>
 					<p class="mt-0.5 text-[0.8125rem] text-ink-2">{step.text}</p>
@@ -191,8 +192,8 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							aria-label={`Skip step ${index + 1}: ${step.title}`}
-							title="Skip this step"
+							aria-label={m.overview_first_skip_step_aria({ n: index + 1, title: step.title })}
+							title={m.overview_first_skip_step()}
 							loading={saving === step.id}
 							onclick={() => dismiss(step)}
 						>
@@ -206,15 +207,15 @@
 
 	<footer class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-canvas px-5 py-3">
 		<p class="min-w-0 flex-1 basis-64 text-[0.8125rem] text-ink-2">
-			In a hurry? Scan a network range and add everything that answers SNMP in one go.
+			{m.overview_first_hurry()}
 		</p>
 		<div class="flex flex-wrap items-center gap-1">
 			<Button variant="secondary" size="sm" href="/targets/new?scan=1">
 				<Radar class="size-4" aria-hidden="true" />
-				Scan my network
+				{m.overview_first_scan()}
 			</Button>
 			{#if hasDemo}
-				<Button variant="ghost" size="sm" href="/targets/new?kind=dummy">Add a demo device</Button>
+				<Button variant="ghost" size="sm" href="/targets/new?kind=dummy">{m.overview_first_demo()}</Button>
 			{/if}
 		</div>
 	</footer>

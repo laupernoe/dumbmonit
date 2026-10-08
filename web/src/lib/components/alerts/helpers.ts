@@ -19,6 +19,8 @@ import type {
 import { isDistinctiveLabel } from '#lib/metrics.js';
 import type { Tone } from '#lib/ui/index.js';
 import { formatDateTime, formatDuration } from '#lib/format.js';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 
 /**
  * The server's ack ceiling (`MAX_ACK_SECS`), in seconds: "until resolved".
@@ -49,9 +51,9 @@ export const TONE_BAR: Record<Tone, string> = {
 
 /** The word shown on the plate for a severity, following the ladder. */
 export function severityWord(severity: AlertSeverity): string {
-	if (severity === 'critical') return 'Warning';
-	if (severity === 'warning') return 'Advisory';
-	return 'Info';
+	if (severity === 'critical') return m.alerts_severity_warning();
+	if (severity === 'warning') return m.alerts_severity_advisory();
+	return m.alerts_severity_info();
 }
 
 /** Rank used to sort firing alerts: critical first, then warning, then info. */
@@ -115,34 +117,50 @@ export function targetsById(targets: Target[]): Map<number, Target> {
 	return new Map(targets.map((target) => [target.id, target]));
 }
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+/** Short weekday name in the UI language (0 = Monday), from Intl, never hand-written. */
+export function dayName(weekday: number): string {
+	if (weekday < 0 || weekday > 6) return '?';
+	// 2024-01-01 was a Monday.
+	return new Date(Date.UTC(2024, 0, 1 + weekday)).toLocaleDateString(getLocale(), {
+		weekday: 'short',
+		timeZone: 'UTC'
+	});
+}
+
+/** A list joined the way the UI language does: "a, b and c" / "a, b or c". */
+function listOf(parts: string[], type: 'conjunction' | 'disjunction'): string {
+	return new Intl.ListFormat(getLocale(), { style: 'long', type }).format(parts);
+}
 
 /** "02:00" from minutes since midnight. */
 function minutesToClock(minutes: number): string {
 	const h = Math.floor(minutes / 60) % 24;
-	const m = minutes % 60;
-	return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+	const min = minutes % 60;
+	return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
 /** "2 h 30" from a number of minutes, the way a window's length reads. */
 function minutesToSpan(minutes: number): string {
 	if (minutes % 1440 === 0 && minutes >= 1440) {
 		const days = minutes / 1440;
-		return days === 1 ? '1 day' : `${days} days`;
+		return days === 1 ? m.alerts_span_day() : m.alerts_span_days({ days });
 	}
-	const h = Math.floor(minutes / 60);
-	const m = minutes % 60;
-	if (h === 0) return `${m} min`;
-	return m === 0 ? `${h} h` : `${h} h ${m}`;
+	const hours = Math.floor(minutes / 60);
+	const mins = minutes % 60;
+	if (hours === 0) return m.alerts_span_min({ minutes: mins });
+	return mins === 0
+		? m.alerts_span_h({ hours })
+		: m.alerts_span_hm({ hours, minutes: mins });
 }
-
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th'];
 
 /** "1st Sunday", "last Friday". */
 function nthLabel(nth: number, weekday: number): string {
-	const day = DAY_NAMES[weekday] ?? '?';
-	if (nth < 0) return `last ${day}`;
-	return `${ORDINALS[nth] ?? `${nth}th`} ${day}`;
+	const day = dayName(weekday);
+	if (nth < 0) return m.alerts_nth_last({ day });
+	if (nth === 1) return m.alerts_nth_1({ day });
+	if (nth === 2) return m.alerts_nth_2({ day });
+	if (nth === 3) return m.alerts_nth_3({ day });
+	return m.alerts_nth_other({ n: nth, day });
 }
 
 /** The zone a recurring window is read in: its IANA name, or its fixed offset. */
@@ -163,27 +181,37 @@ export function scheduleLabel(schedule: SilenceSchedule): string {
 	}
 	if (schedule.kind === 'monthly') {
 		const when = [
-			...schedule.days.filter((day) => day >= 1 && day <= 31).map((day) => `day ${day}`),
+			...schedule.days
+				.filter((day) => day >= 1 && day <= 31)
+				.map((day) => m.alerts_schedule_day_of_month({ day })),
 			...schedule.nth_weekdays.map((entry) => nthLabel(entry.nth, entry.weekday))
 		].join(', ');
 		const start = minutesToClock(schedule.start_minute);
-		return `${when || 'No day'} ${start} for ${minutesToSpan(schedule.duration_minutes)}, monthly · ${zoneLabel(schedule)}`;
+		return m.alerts_schedule_monthly({
+			when: when || m.alerts_schedule_no_day(),
+			start,
+			duration: minutesToSpan(schedule.duration_minutes),
+			zone: zoneLabel(schedule)
+		});
 	}
 	const days = [...schedule.days]
 		.filter((day) => day >= 0 && day <= 6)
 		.sort((a, b) => a - b)
-		.map((day) => DAY_NAMES[day])
+		.map((day) => dayName(day))
 		.join(', ');
 	const span = `${minutesToClock(schedule.start_minute)}–${minutesToClock(schedule.end_minute)}`;
-	return `${days || 'No day'} ${span}, weekly · ${zoneLabel(schedule)}`;
+	return m.alerts_schedule_weekly({
+		days: days || m.alerts_schedule_no_day(),
+		span,
+		zone: zoneLabel(schedule)
+	});
 }
 
 // --- Channel routing filters -------------------------------------------------
 
 /** Joins a list the way a sentence does: "a, b and c". */
 function joinAnd(parts: string[]): string {
-	if (parts.length <= 1) return parts[0] ?? '';
-	return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+	return listOf(parts, 'conjunction');
 }
 
 /** Phrases for the device-level conditions, one per field: "tagged site=cellar or site=attic". */
@@ -199,9 +227,16 @@ function devicePhrases(conditions: MatchCondition[]): string[] {
 	}
 	const phrases: string[] = [];
 	for (const [key, values] of byTag) {
-		phrases.push(`tagged ${values.map((value) => `${key}=${value}`).join(' or ')}`);
+		phrases.push(
+			m.alerts_matcher_tagged({
+				tags: listOf(
+					values.map((value) => `${key}=${value}`),
+					'disjunction'
+				)
+			})
+		);
 	}
-	if (kinds.length > 0) phrases.push(`of kind ${kinds.join(' or ')}`);
+	if (kinds.length > 0) phrases.push(m.alerts_matcher_of_kind({ kinds: listOf(kinds, 'disjunction') }));
 	return phrases;
 }
 
@@ -226,10 +261,10 @@ export function matcherSentence(
 ): string {
 	const floor =
 		minSeverity === 'critical'
-			? 'warnings only'
+			? m.alerts_matcher_floor_critical()
 			: minSeverity === 'warning'
-				? 'advisories and above'
-				: 'every alert';
+				? m.alerts_matcher_floor_warning()
+				: m.alerts_matcher_floor_info();
 
 	const include = matcher?.include ?? [];
 	const exclude = matcher?.exclude ?? [];
@@ -238,23 +273,28 @@ export function matcherSentence(
 	const excludedDevices = devicePhrases(exclude);
 	const excludedRules = ruleValues(exclude);
 
-	let sentence = `This channel receives ${floor}`;
-	sentence += devices.length > 0 ? ` from devices ${joinAnd(devices)}` : ' from every device';
-	if (rules.length > 0) {
-		sentence += `, only for the rule${rules.length > 1 ? 's' : ''} ${joinAnd(rules)}`;
-	}
+	const scope =
+		devices.length > 0
+			? m.alerts_matcher_from_devices({ devices: joinAnd(devices) })
+			: m.alerts_matcher_from_all();
+	const onlyRules =
+		rules.length === 0
+			? ''
+			: rules.length > 1
+				? m.alerts_matcher_only_rules({ rules: joinAnd(rules) })
+				: m.alerts_matcher_only_rule({ rule: rules[0] });
 	const except = [
-		...excludedDevices.map((phrase) => `devices ${phrase}`),
-		...excludedRules.map((rule) => `the rule ${rule}`)
+		...excludedDevices.map((phrase) => m.alerts_matcher_except_devices({ phrase })),
+		...excludedRules.map((rule) => m.alerts_matcher_except_rule({ rule }))
 	];
-	if (except.length > 0) sentence += `, except ${joinAnd(except)}`;
-	return `${sentence}.`;
+	const exceptions = except.length > 0 ? m.alerts_matcher_except({ items: joinAnd(except) }) : '';
+	return m.alerts_matcher_sentence({ floor, scope, rules: onlyRules, exceptions });
 }
 
 /** Where a silence applies: a device name, or every device. */
 export function silenceScope(silence: Silence, targets: Map<number, Target>): string {
-	if (silence.target_id === null) return 'All devices';
-	return targets.get(silence.target_id)?.name ?? `Device ${silence.target_id}`;
+	if (silence.target_id === null) return m.alerts_scope_all_devices();
+	return targets.get(silence.target_id)?.name ?? m.alerts_scope_device({ id: silence.target_id });
 }
 
 /**

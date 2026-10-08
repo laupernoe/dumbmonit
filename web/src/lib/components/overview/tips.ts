@@ -9,6 +9,7 @@
  */
 import type { Icon as LucideIcon } from 'lucide-svelte';
 import { Bot, Command, Cpu, Globe, KeyRound, Puzzle, RadioTower, Tv } from 'lucide-svelte';
+import { m } from '#lib/paraglide/messages.js';
 
 export interface Tip {
 	id: string;
@@ -24,80 +25,83 @@ export interface Tip {
 	admin: boolean;
 }
 
-export const TIPS: Tip[] = [
+/** The tips in the UI language; a function so a locale switch is followed. */
+export function getTips(): Tip[] {
+	return [
 	{
 		id: 'relay',
 		icon: RadioTower,
-		title: 'An agent can watch another network.',
-		text: 'Put one on a machine at a second site, a client’s office or behind a NAT: it probes the switches, NAS and hypervisors there for this server. Outbound only — nothing to open on that side.',
-		action: 'Watch a remote site',
+		title: m.overview_tip_relay_title(),
+		text: m.overview_tip_relay_text(),
+		action: m.overview_tip_relay_action(),
 		href: '/targets/new?kind=agent&via=relay',
 		admin: true
 	},
 	{
 		id: 'mcp',
 		icon: Bot,
-		title: 'An AI assistant can read this bulletin.',
-		text: 'Claude, ChatGPT, Cursor or any MCP client can ask DumbMonit how things are — and, with a write token, silence a device or run a probe.',
-		action: 'Connect an assistant',
+		title: m.overview_tip_mcp_title(),
+		text: m.overview_tip_mcp_text(),
+		action: m.overview_tip_mcp_action(),
 		href: '/settings#assistant',
 		admin: true
 	},
 	{
 		id: 'agent',
 		icon: Cpu,
-		title: 'The agent sees inside a machine.',
-		text: 'Services, disk health, temperatures, updates waiting, Docker containers you can restart or update from here, Plakar, restic and Borg backups. One command on Linux, Windows, macOS or FreeBSD.',
-		action: 'Install an agent',
+		title: m.overview_tip_agent_title(),
+		text: m.overview_tip_agent_text(),
+		action: m.overview_tip_agent_action(),
 		href: '/targets/new?kind=agent',
 		admin: true
 	},
 	{
 		id: 'api',
 		icon: KeyRound,
-		title: 'Everything here has an HTTP API.',
-		text: 'A scoped token (read, or read and write) opens it to your scripts, and a Prometheus or Grafana you already run can read the measurements with the same token.',
-		action: 'Create an API token',
+		title: m.overview_tip_api_title(),
+		text: m.overview_tip_api_text(),
+		action: m.overview_tip_api_action(),
 		href: '/settings#assistant',
 		admin: true
 	},
 	{
 		id: 'wall',
 		icon: Tv,
-		title: 'The bulletin fits a TV.',
-		text: 'Wall mode shows the sky and what needs you, full screen and readable across the room, and keeps the screen awake.',
-		action: 'Open wall mode',
+		title: m.overview_tip_wall_title(),
+		text: m.overview_tip_wall_text(),
+		action: m.overview_tip_wall_action(),
 		href: '/wall',
 		admin: false
 	},
 	{
 		id: 'status',
 		icon: Globe,
-		title: 'Tell people before they ask.',
-		text: 'A public status page shows the services you pick, their uptime and your announcements — a link to share instead of answering “is it down?”.',
-		action: 'Create a status page',
+		title: m.overview_tip_status_title(),
+		text: m.overview_tip_status_text(),
+		action: m.overview_tip_status_action(),
 		href: '/status',
 		admin: true
 	},
 	{
 		id: 'packs',
 		icon: Puzzle,
-		title: 'DumbMonit can learn a new device.',
-		text: 'An integration pack is a device type written in YAML: what to ask the device, which numbers to keep, when to alert.',
-		action: 'Integration packs',
+		title: m.overview_tip_packs_title(),
+		text: m.overview_tip_packs_text(),
+		action: m.overview_tip_packs_action(),
 		href: '/settings#packs',
 		admin: true
 	},
 	{
 		id: 'palette',
 		icon: Command,
-		title: 'Every page and action is one shortcut away.',
-		text: 'The command palette jumps to any device, page or action without leaving the keyboard.',
-		action: 'Open the palette',
+		title: m.overview_tip_palette_title(),
+		text: m.overview_tip_palette_text(),
+		action: m.overview_tip_palette_action(),
 		href: 'palette',
 		admin: false
 	}
-];
+	];
+}
 
 const HIDDEN_KEY = 'dumbmonit-tips-hidden';
 const NEXT_KEY = 'dumbmonit-tip-next';

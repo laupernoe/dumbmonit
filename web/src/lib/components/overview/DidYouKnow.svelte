@@ -16,9 +16,10 @@
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { Button, reducedMotion } from '#lib/ui/index.js';
 	import Mascot from '#lib/components/Mascot.svelte';
-	import { TIPS, hideTips, storeNextTip, takeTipIndex, tipsHidden } from './tips';
+	import { getTips, hideTips, storeNextTip, takeTipIndex, tipsHidden } from './tips';
+	import { m } from '#lib/paraglide/messages.js';
 
-	const tips = $derived(TIPS.filter((tip) => auth.isAdmin || !tip.admin));
+	const tips = $derived(getTips().filter((tip) => auth.isAdmin || !tip.admin));
 
 	let index = $state<number | null>(null);
 	let hidden = $state(true);
@@ -53,7 +54,7 @@
 
 {#if !hidden && tip}
 	<aside
-		aria-label="Did you know?"
+		aria-label={m.overview_tips_label()}
 		class="relative flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift sm:flex-row sm:items-center sm:gap-4 sm:py-2.5 sm:pr-2.5"
 	>
 		<div class="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
@@ -63,7 +64,7 @@
 			<div class="grid min-w-0 flex-1" aria-live="polite">
 				{#key tip.id}
 					<p class="[grid-area:1/1] text-sm leading-snug text-ink-2" in:fly={enter()}>
-						<span class="font-semibold text-ink">Did you know? {tip.title}</span>
+						<span class="font-semibold text-ink">{m.overview_tips_prefix({ title: tip.title })}</span>
 						{tip.text}
 					</p>
 				{/key}
@@ -83,17 +84,17 @@
 				</Button>
 			{/if}
 			{#if tips.length > 1}
-				<Button variant="ghost" size="sm" onclick={another} aria-label="Another tip" title="Another tip">
+				<Button variant="ghost" size="sm" onclick={another} aria-label={m.overview_tips_another()} title={m.overview_tips_another()}>
 					<RefreshCw class="size-4" aria-hidden="true" />
-					<span class="hidden lg:inline">Another tip</span>
+					<span class="hidden lg:inline">{m.overview_tips_another()}</span>
 				</Button>
 			{/if}
 			<button
 				type="button"
-				class="inline-flex size-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+				class="inline-flex size-10 items-center justify-center rounded-lg sm:size-8 text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
 				onclick={dismiss}
-				aria-label="Hide these tips"
-				title="Hide these tips (in this browser)"
+				aria-label={m.overview_tips_hide()}
+				title={m.overview_tips_hide_title()}
 			>
 				<X class="size-4" aria-hidden="true" />
 			</button>

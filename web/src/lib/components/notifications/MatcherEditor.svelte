@@ -22,6 +22,7 @@
 	} from '#lib/api/index.js';
 	import { Field, Plate, Toggle } from '#lib/ui/index.js';
 	import { matcherIsEmpty, matcherSentence } from '#lib/components/alerts/helpers.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		value: ChannelMatcher | null;
@@ -118,7 +119,7 @@
 					if (cause instanceof DOMException && cause.name === 'AbortError') return;
 					preview = null;
 					previewError =
-						cause instanceof Error ? cause.message : 'Could not preview this filter.';
+						cause instanceof Error ? cause.message : m.notifications_matcher_error_preview();
 				});
 		}, 400);
 		return () => {
@@ -135,16 +136,16 @@
 
 <div class="grid gap-3">
 	<Field
-		label="Only some alerts"
+		label={m.notifications_matcher_only_some()}
 		for="channel-matcher-on"
 		inline
-		help="Off: the channel receives everything above its severity floor. On: only what matches, by tag, device kind or rule."
+		help={m.notifications_matcher_help()}
 	>
 		<Toggle
 			id="channel-matcher-on"
 			checked={enabled}
 			{disabled}
-			label="Only some alerts"
+			label={m.notifications_matcher_only_some()}
 			onchange={(next) => {
 				enabled = next;
 				if (next && rows.length === 0) addRow();
@@ -158,58 +159,58 @@
 			{#each rows as row, index (index)}
 				<div class="flex flex-wrap items-end gap-2">
 					<label class="grid gap-1 text-[0.8125rem] font-semibold text-ink">
-						<span class="sr-only">Include or exclude</span>
+						<span class="sr-only">{m.notifications_matcher_mode()}</span>
 						<select
-							class="input w-[7.5rem]"
+							class="input w-[7.5rem] max-sm:h-10"
 							bind:value={row.mode}
 							{disabled}
 							onchange={emit}
-							aria-label="Include or exclude"
+							aria-label={m.notifications_matcher_mode()}
 						>
-							<option value="include">Only</option>
-							<option value="exclude">Except</option>
+							<option value="include">{m.notifications_matcher_only()}</option>
+							<option value="exclude">{m.notifications_matcher_except()}</option>
 						</select>
 					</label>
 					<label class="grid gap-1 text-[0.8125rem] font-semibold text-ink">
-						<span class="sr-only">Field</span>
+						<span class="sr-only">{m.notifications_matcher_field()}</span>
 						<select
-							class="input w-[8.5rem]"
+							class="input w-[8.5rem] max-sm:h-10"
 							bind:value={row.field}
 							{disabled}
 							onchange={emit}
-							aria-label="Field"
+							aria-label={m.notifications_matcher_field()}
 						>
-							<option value="tag">tag</option>
-							<option value="kind">device kind</option>
-							<option value="rule">rule</option>
+							<option value="tag">{m.notifications_matcher_field_tag()}</option>
+							<option value="kind">{m.notifications_matcher_field_kind()}</option>
+							<option value="rule">{m.notifications_matcher_field_rule()}</option>
 						</select>
 					</label>
 					{#if row.field === 'tag'}
 						<input
-							class="input w-[9rem]"
+							class="input w-[9rem] max-sm:h-10"
 							bind:value={row.key}
 							{disabled}
 							placeholder="site"
 							autocomplete="off"
-							aria-label="Tag name"
+							aria-label={m.notifications_matcher_tag_name()}
 							oninput={emit}
 						/>
 						<span class="pb-2 text-ink-3" aria-hidden="true">=</span>
 					{/if}
 					<input
-						class="input min-w-[9rem] flex-1"
+						class="input min-w-[9rem] flex-1 max-sm:h-10"
 						bind:value={row.value}
 						{disabled}
 						placeholder={row.field === 'tag' ? 'cellar' : row.field === 'kind' ? 'synology' : 'disk_full'}
 						autocomplete="off"
-						aria-label="Value"
+						aria-label={m.notifications_matcher_value()}
 						oninput={emit}
 					/>
 					<button
 						type="button"
-						class="rounded-lg border border-line-strong p-2 text-ink-2 transition hover:text-ink"
+						class="inline-flex size-10 items-center justify-center rounded-lg border border-line-strong text-ink-2 transition hover:text-ink sm:size-auto sm:p-2"
 						{disabled}
-						aria-label="Remove this condition"
+						aria-label={m.notifications_matcher_remove()}
 						onclick={() => removeRow(index)}
 					>
 						<X class="size-4" aria-hidden="true" />
@@ -219,12 +220,12 @@
 
 			<button
 				type="button"
-				class="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-ink"
+				class="inline-flex min-h-10 w-fit items-center gap-1.5 text-sm font-semibold text-ink sm:min-h-0"
 				{disabled}
 				onclick={addRow}
 			>
 				<Plus class="size-4" aria-hidden="true" />
-				Add a condition
+				{m.notifications_matcher_add()}
 			</button>
 
 			<div class="rounded-lg border border-line bg-surface-2 p-3">
@@ -237,27 +238,27 @@
 					<div class="mt-2 flex flex-wrap items-center gap-2">
 						<Plate
 							tone={preview.matched === 0 ? 'warning' : 'signal'}
-							label={`${preview.matched} of ${preview.total} devices`}
+							label={m.notifications_matcher_count({ matched: preview.matched, total: preview.total })}
 						/>
 						{#if preview.matched === 0}
 							<span class="text-[0.8125rem] text-ink-2">
-								No device matches today — this channel would stay silent.
+								{m.notifications_matcher_none()}
 							</span>
 						{:else}
 							<span class="text-[0.8125rem] text-ink-2">
 								{matchedNames.slice(0, 6).join(', ')}{matchedNames.length > 6
-									? ` and ${matchedNames.length - 6} more`
+									? m.notifications_matcher_more({ count: matchedNames.length - 6 })
 									: ''}
 							</span>
 						{/if}
 					</div>
 					{#if preview.rules.length > 0 || preview.excluded_rules.length > 0}
 						<p class="mt-1.5 text-[0.8125rem] text-ink-2">
-							Rule conditions apply to alerts, not devices: the count above ignores them.
+							{m.notifications_matcher_rules_note()}
 						</p>
 					{/if}
 				{:else}
-					<p class="mt-1.5 text-[0.8125rem] text-ink-3">Checking which devices match…</p>
+					<p class="mt-1.5 text-[0.8125rem] text-ink-3">{m.notifications_matcher_checking()}</p>
 				{/if}
 			</div>
 		</div>
