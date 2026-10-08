@@ -8,6 +8,7 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import Figure from '../Figure.svelte';
 	import { NUT_QUERY_NAMES, extraFlags, foldUps, formatAge, formatRuntime, verdict, type UpsReading } from './ups';
 
@@ -67,38 +68,40 @@
 </script>
 
 {#if error}
-	<Panel title="UPS" class="rise-in">
-		<ErrorNotice {error} title="Could not load the UPS readings" onretry={() => void load()} />
+	<Panel title={m.devicesb_nut_panel_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_nut_panel_error_title()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="UPS" padded={false} class="rise-in">
-		<div class="px-5 py-4" aria-busy="true" aria-label="Loading the UPS readings">
+	<Panel title={m.devicesb_nut_panel_title()} padded={false} class="rise-in">
+		<div class="px-5 py-4" aria-busy="true" aria-label={m.devicesb_nut_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={2} />
 		</div>
 	</Panel>
 {:else}
 	<Panel
-		title={readings.length > 1 ? `${readings.length} UPS` : 'UPS'}
-		description="As the NUT server last reported them."
+		title={readings.length > 1
+			? m.devicesb_nut_panel_title_many({ count: readings.length })
+			: m.devicesb_nut_panel_title()}
+		description={m.devicesb_nut_panel_description()}
 		padded={false}
 		class="rise-in"
 	>
 		{#snippet aside()}
 			{#if readings.length > 0}
 				{#if troubled === 0}
-					<Plate tone="signal" label={readings.length === 1 ? 'On mains' : 'All on mains'} />
+					<Plate tone="signal" label={readings.length === 1 ? m.devicesb_nut_panel_on_mains_one() : m.devicesb_nut_panel_on_mains_all()} />
 				{:else}
-					<Plate tone="warning" label={troubled === 1 ? '1 needs attention' : `${troubled} need attention`} />
+					<Plate tone="warning" label={m.devicesb_nut_panel_attention({ count: troubled })} />
 				{/if}
 			{/if}
 		{/snippet}
 		{#if readings.length === 0}
-			<p class="px-5 py-4 text-sm text-ink-2">Waiting for the first probe: the NUT server has not been read yet.</p>
+			<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_nut_panel_waiting()}</p>
 		{:else}
 			<ul class="divide-y divide-line">
 				{#each readings as r (r.name)}
 					{@const state = verdict(r)}
-					<li class="flex flex-col gap-3 px-5 py-4">
+					<li class="flex flex-col gap-3 px-4 py-4 sm:px-5">
 						<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 							<span class="text-sm font-semibold text-ink break-all">{r.name}</span>
 							<Plate tone={state.tone} label={state.word} />
@@ -111,24 +114,24 @@
 						</div>
 						{#if r.stale}
 							<p class="text-sm text-ink-2">
-								{r.driverConnected
-									? 'The NUT server answers but has no fresh data from this UPS: check its cable and the UPS itself.'
-									: 'The NUT driver for this UPS is not running on the server: check its cable, then restart the driver.'}
+								{r.driverConnected ? m.devicesb_nut_panel_stale_no_data() : m.devicesb_nut_panel_stale_driver()}
 							</p>
 						{:else}
-							<div class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-5">
-								<Figure label="Charge" value={percent(r.charge)} tone={r.flags.has('LB') ? 'warning' : 'ink'} />
-								<Figure label="Runtime left" value={formatRuntime(r.runtime)} />
-								<Figure label="Load" value={percent(r.load)} tone={r.load !== null && r.load > 80 ? 'advisory' : 'ink'} />
-								<Figure label="Input" value={volts(r.inputVoltage)} tone={r.flags.has('OB') ? 'warning' : 'ink'} />
+							<div class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5 sm:gap-x-6">
+								<Figure label={m.devicesb_nut_panel_charge()} value={percent(r.charge)} tone={r.flags.has('LB') ? 'warning' : 'ink'} />
+								<Figure label={m.devicesb_nut_panel_runtime_left()} value={formatRuntime(r.runtime)} />
+								<Figure label={m.devicesb_nut_panel_load()} value={percent(r.load)} tone={r.load !== null && r.load > 80 ? 'advisory' : 'ink'} />
+								<Figure label={m.devicesb_nut_panel_input()} value={volts(r.inputVoltage)} tone={r.flags.has('OB') ? 'warning' : 'ink'} />
 								<Figure
-									label={r.batteryAgeSource === 'manufactured' ? 'Battery made' : 'Battery age'}
+									label={r.batteryAgeSource === 'manufactured'
+										? m.devicesb_nut_panel_battery_made()
+										: m.devicesb_nut_panel_battery_age()}
 									value={formatAge(r.batteryAge)}
-									hint={r.batteryAgeSource === 'manufactured' ? 'since manufacture' : undefined}
+									hint={r.batteryAgeSource === 'manufactured' ? m.devicesb_nut_panel_since_manufacture() : undefined}
 								/>
 							</div>
 							{#if r.selfTestResult}
-								<p class="text-[0.8125rem] text-ink-2">Last self-test: {r.selfTestResult}.</p>
+								<p class="text-[0.8125rem] text-ink-2">{m.devicesb_nut_panel_self_test({ result: r.selfTestResult })}</p>
 							{/if}
 						{/if}
 					</li>

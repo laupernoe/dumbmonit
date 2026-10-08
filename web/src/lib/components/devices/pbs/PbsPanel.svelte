@@ -10,6 +10,7 @@
 	import { getPbsCalendar, getPbsHealth, getPbsJobs, listPbsFailures } from '#lib/api/pbs.js';
 	import type { PbsCalendar, PbsFailure, PbsHealth, PbsJobs, Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import BackupCalendar from './BackupCalendar.svelte';
 	import DatastoreHealth from './DatastoreHealth.svelte';
@@ -87,42 +88,42 @@
 </script>
 
 {#if error}
-	<Panel title="Backups" class="rise-in">
-		<ErrorNotice {error} title="Could not load the backup server details" onretry={() => void load()} />
+	<Panel title={m.devicesb_pbs_panel_backups()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_pbs_panel_error()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="Backups" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading backups">
+	<Panel title={m.devicesb_pbs_panel_backups()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_pbs_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
 		<Panel
-			title="Failures"
-			description={`Every task that failed in the last ${DAYS} days: backups, syncs, verifications, prunes and garbage collections.`}
+			title={m.devicesb_pbs_panel_failures()}
+			description={m.devicesb_pbs_panel_failures_desc({ days: DAYS })}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if failures.length > 0}
-					<Plate tone="warning" label={`${failures.length} failed ${failures.length === 1 ? 'task' : 'tasks'}`} />
+					<Plate tone="warning" label={m.devicesb_pbs_panel_failed_tasks({ count: failures.length })} />
 				{:else}
-					<Plate tone="signal" label="All clear" />
+					<Plate tone="signal" label={m.devicesb_pbs_panel_all_clear()} />
 				{/if}
 			{/snippet}
 			<FailureList targetId={target.id} {failures} days={DAYS} />
 		</Panel>
 
 		<Panel
-			title="Backup calendar"
-			description={`One dot per day and per backed-up machine, last ${DAYS} days.`}
+			title={m.devicesb_pbs_panel_calendar()}
+			description={m.devicesb_pbs_panel_calendar_desc({ days: DAYS })}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if probedAt !== null}
-					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>read {formatAgo(probedAt)}</span>
+					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>{m.devicesb_pbs_panel_read_ago({ ago: formatAgo(probedAt) })}</span>
 				{/if}
 			{/snippet}
 			{#if calendar}
@@ -131,14 +132,14 @@
 		</Panel>
 
 		<Panel
-			title="Jobs"
-			description="Sync, verify and prune jobs and the garbage collection of each datastore."
+			title={m.devicesb_pbs_panel_jobs()}
+			description={m.devicesb_pbs_panel_jobs_desc()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if failingJobs > 0}
-					<Plate tone="warning" label={`${failingJobs} failing`} />
+					<Plate tone="warning" label={m.devicesb_pbs_tape_failing({ count: failingJobs })} />
 				{/if}
 			{/snippet}
 			<JobTable jobs={jobs?.jobs ?? []} />
@@ -146,14 +147,14 @@
 
 		{#if health?.tape}
 			<Panel
-				title="Tape"
-				description="The offline copy: tape backup jobs, media pools, drives and the tapes themselves."
+				title={m.devicesb_pbs_panel_tape()}
+				description={m.devicesb_pbs_panel_tape_desc()}
 				padded={false}
 				class="rise-in"
 			>
 				{#snippet aside()}
 					{#if failingTapeJobs > 0}
-						<Plate tone="warning" label={`${failingTapeJobs} failing`} />
+						<Plate tone="warning" label={m.devicesb_pbs_tape_failing({ count: failingTapeJobs })} />
 					{/if}
 				{/snippet}
 				<TapePanel tape={health.tape} />
@@ -161,8 +162,8 @@
 		{/if}
 
 		<Panel
-			title="Datastores and disks"
-			description={health?.version ? `Proxmox Backup Server ${health.version}.` : undefined}
+			title={m.devicesb_pbs_panel_datastores()}
+			description={health?.version ? m.devicesb_pbs_panel_version_desc({ version: health.version }) : undefined}
 			padded={false}
 			class="rise-in"
 		>
@@ -175,14 +176,14 @@
 		</Panel>
 
 		<Panel
-			title="Server"
-			description="Services, package versions, certificate and traffic limits of the backup server itself."
+			title={m.devicesb_pbs_panel_server()}
+			description={m.devicesb_pbs_panel_server_desc()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if stoppedServices > 0}
-					<Plate tone="warning" label={`${stoppedServices} service${stoppedServices === 1 ? '' : 's'} stopped`} />
+					<Plate tone="warning" label={m.devicesb_pbs_panel_services_stopped({ count: stoppedServices })} />
 				{/if}
 			{/snippet}
 			<NodeHealth

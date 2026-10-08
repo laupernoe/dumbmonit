@@ -11,6 +11,7 @@
 	import { getOpnsenseGateways, getOpnsenseHealth, getOpnsenseTraffic } from '#lib/api/opnsense.js';
 	import type { OpnsenseGateways, OpnsenseHealth, OpnsenseTraffic, Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import FirewallHealth from './FirewallHealth.svelte';
 	import TrafficTable from './TrafficTable.svelte';
 	import WanGateways from './WanGateways.svelte';
@@ -71,20 +72,20 @@
 </script>
 
 {#if error}
-	<Panel title="Firewall" class="rise-in">
-		<ErrorNotice {error} title="Could not load the firewall details" onretry={() => void load()} />
+	<Panel title={m.devicesb_opnsense_panel_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_opnsense_panel_error_title()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="Firewall" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the firewall">
+	<Panel title={m.devicesb_opnsense_panel_title()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-4 sm:px-5 py-4" aria-busy="true" aria-label={m.devicesb_opnsense_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
 		<Panel
-			title="WAN and gateways"
-			description="What each link out of the house is doing, as dpinger sees it. A backup line that died weeks ago shows up here and nowhere else."
+			title={m.devicesb_opnsense_panel_wan_title()}
+			description={m.devicesb_opnsense_panel_wan_description()}
 			padded={false}
 			class="rise-in"
 		>
@@ -92,14 +93,13 @@
 				{#if gateways && gateways.down > 0}
 					<Plate
 						tone="warning"
-						label={`${gateways.down} gateway${gateways.down === 1 ? '' : 's'} down`}
+						label={m.devicesb_opnsense_panel_gateways_down({ count: gateways.down })}
 					/>
 				{:else if gateways && gateways.degraded > 0}
-					<Plate tone="advisory" label={`${gateways.degraded} degraded`} />
+					<Plate tone="advisory" label={m.devicesb_opnsense_panel_degraded({ count: gateways.degraded })} />
 				{:else if gateways}
 					<span class="tnum text-[0.75rem] text-ink-3">
-						{formatCount(gateways.gateways.length)}
-						{gateways.gateways.length === 1 ? 'gateway' : 'gateways'}
+						{m.devicesb_opnsense_panel_gateway_count({ count: formatCount(gateways.gateways.length) })}
 					</span>
 				{/if}
 			{/snippet}
@@ -110,17 +110,17 @@
 		</Panel>
 
 		<Panel
-			title="Traffic and state table"
-			description="The connections the firewall is tracking, the interface counters, and how many DHCP leases are out. Leases are counted, never listed."
+			title={m.devicesb_opnsense_panel_traffic_title()}
+			description={m.devicesb_opnsense_panel_traffic_description()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if traffic?.firewall?.busy}
-					<Plate tone="warning" label="State table filling up" />
+					<Plate tone="warning" label={m.devicesb_opnsense_panel_state_filling()} />
 				{:else if probedAt !== null}
 					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>
-						read {formatAgo(probedAt)}
+						{m.devicesb_opnsense_panel_read_ago({ ago: formatAgo(probedAt) })}
 					</span>
 				{/if}
 			{/snippet}
@@ -132,27 +132,27 @@
 		</Panel>
 
 		<Panel
-			title="Firewall health"
+			title={m.devicesb_opnsense_panel_health_title()}
 			description={firmwareVersion
-				? `Services, VPN tunnels, CARP, firmware and the machine itself. OPNsense ${firmwareVersion}.`
-				: 'Services, VPN tunnels, CARP, firmware and the machine itself.'}
+				? m.devicesb_opnsense_panel_health_description_version({ version: firmwareVersion })
+				: m.devicesb_opnsense_panel_health_description()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if stoppedServices.length > 0}
-					<Plate tone="warning" label={`${stoppedServices.length} stopped`} />
+					<Plate tone="warning" label={m.devicesb_opnsense_panel_stopped({ count: stoppedServices.length })} />
 				{:else if tunnelsDown > 0}
 					<Plate
 						tone="warning"
-						label={`${tunnelsDown} tunnel${tunnelsDown === 1 ? '' : 's'} down`}
+						label={m.devicesb_opnsense_panel_tunnels_down({ count: tunnelsDown })}
 					/>
 				{:else if health?.carp?.maintenance_mode}
-					<Plate tone="warning" label="Maintenance mode" />
+					<Plate tone="warning" label={m.devicesb_opnsense_panel_maintenance()} />
 				{:else if health?.firmware?.reboot_required}
-					<Plate tone="warning" label="Reboot pending" />
+					<Plate tone="warning" label={m.devicesb_opnsense_panel_reboot_pending()} />
 				{:else if health?.firmware?.upgrade_available}
-					<Plate tone="advisory" label="Update available" />
+					<Plate tone="advisory" label={m.devicesb_opnsense_panel_update_available()} />
 				{/if}
 			{/snippet}
 			<FirewallHealth

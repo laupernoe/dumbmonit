@@ -10,6 +10,7 @@
 	import { getPdmHealth, getPdmRemotes, listPdmFailures } from '#lib/api/pdm.js';
 	import type { PdmFailure, PdmHealth, PdmRemotes, Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import ConsoleHealth from './ConsoleHealth.svelte';
 	import EstateSummary from './EstateSummary.svelte';
 	import FailureList from './FailureList.svelte';
@@ -71,33 +72,33 @@
 </script>
 
 {#if error}
-	<Panel title="Datacenter" class="rise-in">
-		<ErrorNotice {error} title="Could not load the datacenter console details" onretry={() => void load()} />
+	<Panel title={m.devicesb_pdm_panel_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_pdm_panel_error_title()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="Datacenter" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the datacenter">
+	<Panel title={m.devicesb_pdm_panel_title()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_pdm_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
 		<Panel
-			title="Federated instances"
-			description="Every Proxmox VE cluster and backup server this console manages, the ones it cannot reach first."
+			title={m.devicesb_pdm_panel_federated_title()}
+			description={m.devicesb_pdm_panel_federated_description()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if unreachable > 0}
-					<Plate tone="warning" label={`${unreachable} unreachable`} />
+					<Plate tone="warning" label={m.devicesb_pdm_panel_unreachable({ count: unreachable })} />
 				{:else if behind > 0}
-					<Plate tone="info" label={`${behind} behind`} />
+					<Plate tone="info" label={m.devicesb_pdm_panel_behind({ count: behind })} />
 				{:else if list.length > 0}
-					<Plate tone="signal" label="All reachable" />
+					<Plate tone="signal" label={m.devicesb_pdm_panel_all_reachable()} />
 				{/if}
 				{#if probedAt !== null}
-					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>read {formatAgo(probedAt)}</span>
+					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>{m.devicesb_pdm_panel_read_ago({ ago: formatAgo(probedAt) })}</span>
 				{/if}
 			{/snippet}
 			{#if remotes}
@@ -107,26 +108,26 @@
 		</Panel>
 
 		<Panel
-			title="Failures"
-			description={`Every task that failed across the estate in the last ${DAYS} days.`}
+			title={m.devicesb_pdm_panel_failures_title()}
+			description={m.devicesb_pdm_panel_failures_description({ days: DAYS })}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if failures.length > 0}
-					<Plate tone="warning" label={`${failures.length} failed ${failures.length === 1 ? 'task' : 'tasks'}`} />
+					<Plate tone="warning" label={m.devicesb_pdm_panel_failed_tasks({ count: failures.length })} />
 				{:else}
-					<Plate tone="signal" label="All clear" />
+					<Plate tone="signal" label={m.devicesb_pdm_panel_all_clear()} />
 				{/if}
 			{/snippet}
 			<FailureList {failures} days={DAYS} />
 		</Panel>
 
 		<Panel
-			title="Console host"
+			title={m.devicesb_pdm_panel_host_title()}
 			description={remotes?.version
-				? `Proxmox Datacenter Manager ${remotes.version}.`
-				: 'The machine that runs the console itself.'}
+				? m.devicesb_pdm_panel_host_description_version({ version: remotes.version })
+				: m.devicesb_pdm_panel_host_description()}
 			padded={false}
 			class="rise-in"
 		>

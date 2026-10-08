@@ -11,6 +11,7 @@
 	 */
 	import type { PbsCertificate, PbsPackage, PbsService, PbsTrafficRule } from '#lib/api/index.js';
 	import { Plate, type Tone } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatAgo, formatBytes, formatUnix } from './format';
 
 	interface Props {
@@ -39,25 +40,25 @@
 	);
 
 	function servicePlate(service: PbsService): { tone: Tone; label: string } {
-		if (service.running) return { tone: 'signal', label: 'Running' };
-		if (REQUIRED.includes(service.service)) return { tone: 'warning', label: 'Stopped' };
-		if (service.enabled === false) return { tone: 'ghost', label: 'Stopped, disabled' };
-		return { tone: 'advisory', label: 'Stopped' };
+		if (service.running) return { tone: 'signal', label: m.devicesb_pbs_node_running() };
+		if (REQUIRED.includes(service.service)) return { tone: 'warning', label: m.devicesb_pbs_node_stopped() };
+		if (service.enabled === false) return { tone: 'ghost', label: m.devicesb_pbs_node_stopped_disabled() };
+		return { tone: 'advisory', label: m.devicesb_pbs_node_stopped() };
 	}
 
 	function packagePlate(entry: PbsPackage): { tone: Tone; label: string } {
-		if (entry.restart_pending) return { tone: 'advisory', label: 'Restart pending' };
-		if (entry.upgradable) return { tone: 'info', label: 'Update available' };
-		return { tone: 'signal', label: 'Up to date' };
+		if (entry.restart_pending) return { tone: 'advisory', label: m.devicesb_pbs_node_restart_pending() };
+		if (entry.upgradable) return { tone: 'info', label: m.devicesb_pbs_node_update_available() };
+		return { tone: 'signal', label: m.devicesb_pbs_node_up_to_date() };
 	}
 
 	function certificatePlate(certificate: PbsCertificate): { tone: Tone; label: string } {
-		if (certificate.not_after === null) return { tone: 'ghost', label: 'No expiry date' };
+		if (certificate.not_after === null) return { tone: 'ghost', label: m.devicesb_pbs_node_no_expiry() };
 		const left = certificate.not_after - Date.now() / 1000;
-		if (left <= 0) return { tone: 'warning', label: 'Expired' };
-		if (left < 21 * 86_400) return { tone: 'warning', label: `Expires ${formatAgo(certificate.not_after)}` };
-		if (left < 60 * 86_400) return { tone: 'advisory', label: `Expires ${formatAgo(certificate.not_after)}` };
-		return { tone: 'signal', label: `Valid until ${formatUnix(certificate.not_after)}` };
+		if (left <= 0) return { tone: 'warning', label: m.devicesb_pbs_node_expired() };
+		if (left < 21 * 86_400) return { tone: 'warning', label: m.devicesb_pbs_node_expires({ ago: formatAgo(certificate.not_after) }) };
+		if (left < 60 * 86_400) return { tone: 'advisory', label: m.devicesb_pbs_node_expires({ ago: formatAgo(certificate.not_after) }) };
+		return { tone: 'signal', label: m.devicesb_pbs_node_valid_until({ date: formatUnix(certificate.not_after) }) };
 	}
 
 	/** The `CN=` of a multi-line X.509 name, or the whole thing if there is none. */
@@ -72,7 +73,9 @@
 
 	/** "100 MB/s", or "no limit" when the rule does not cap that direction. */
 	function rate(bytes: number | null): string {
-		return bytes === null ? 'no limit' : `${formatBytes(bytes)}/s`;
+		return bytes === null
+			? m.devicesb_pbs_node_no_limit()
+			: m.devicesb_pbs_node_per_second({ size: formatBytes(bytes) });
 	}
 
 	const hasAnything = $derived(
@@ -82,33 +85,31 @@
 
 {#if !hasAnything}
 	<p class="px-5 py-4 text-sm text-ink-2">
-		Nothing read about the server itself yet. The units, package versions and traffic rules need
-		Sys.Audit on <span class="font-mono">/system</span>; the certificate needs Sys.Modify, so that
-		one is off unless you turn it on in the device options.
+		{m.devicesb_pbs_node_empty()}
 	</p>
 {:else}
 	<div class="divide-y divide-line">
 		{#if services.length > 0}
 			<section>
-				<div class="flex flex-wrap items-center gap-2 px-5 pt-3">
-					<p class="text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">Services</p>
+				<div class="flex flex-wrap items-center gap-2 px-4 pt-3 sm:px-5">
+					<p class="text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">{m.devicesb_pbs_node_services_heading()}</p>
 					{#if stoppedRequired > 0}
-						<Plate tone="warning" label={`${stoppedRequired} stopped`} />
+						<Plate tone="warning" label={m.devicesb_pbs_node_services_stopped({ count: stoppedRequired })} />
 					{:else}
-						<Plate tone="signal" label="All required services running" bare />
+						<Plate tone="signal" label={m.devicesb_pbs_node_services_all_running()} bare />
 					{/if}
 				</div>
 				<ul class="mt-1 divide-y divide-line">
 					{#each sortedServices as service (service.service)}
 						{@const plate = servicePlate(service)}
-						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2">
+						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-5">
 							<span class="font-mono text-[0.8125rem] font-semibold text-ink">{service.service}</span>
 							<Plate tone={plate.tone} label={plate.label} />
 							{#if service.description}
 								<span class="min-w-0 truncate text-[0.8125rem] text-ink-2">{service.description}</span>
 							{/if}
 							{#if service.enabled === false}
-								<span class="text-[0.75rem] text-ink-3">not started at boot</span>
+								<span class="text-[0.75rem] text-ink-3">{m.devicesb_pbs_node_not_started_at_boot()}</span>
 							{/if}
 						</li>
 					{/each}
@@ -118,19 +119,19 @@
 
 		{#if packages.length > 0}
 			<section>
-				<p class="px-5 pt-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
-					Versions
+				<p class="px-4 pt-3 sm:px-5 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
+					{m.devicesb_pbs_node_versions_heading()}
 				</p>
 				<ul class="mt-1 divide-y divide-line">
 					{#each packages as entry (entry.package)}
 						{@const plate = packagePlate(entry)}
-						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2">
+						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-5">
 							<span class="font-mono text-[0.8125rem] font-semibold text-ink">{entry.package}</span>
 							<Plate tone={plate.tone} label={plate.label} />
 							<span class="tnum flex flex-wrap gap-x-3 text-[0.8125rem] text-ink-2">
-								{#if entry.installed}<span>installed {entry.installed}</span>{/if}
-								{#if entry.upgradable && entry.available}<span>available {entry.available}</span>{/if}
-								{#if entry.running}<span>running {entry.running}</span>{/if}
+								{#if entry.installed}<span>{m.devicesb_pbs_node_installed({ version: entry.installed })}</span>{/if}
+								{#if entry.upgradable && entry.available}<span>{m.devicesb_pbs_node_available({ version: entry.available })}</span>{/if}
+								{#if entry.running}<span>{m.devicesb_pbs_node_running_version({ version: entry.running })}</span>{/if}
 							</span>
 						</li>
 					{/each}
@@ -140,20 +141,20 @@
 
 		{#if certificates.length > 0}
 			<section>
-				<p class="px-5 pt-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
-					Certificates
+				<p class="px-4 pt-3 sm:px-5 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
+					{m.devicesb_pbs_node_certs_heading()}
 				</p>
 				<ul class="mt-1 divide-y divide-line">
 					{#each certificates as certificate (certificate.filename)}
 						{@const plate = certificatePlate(certificate)}
-						<li class="px-5 py-2">
+						<li class="px-4 py-2 sm:px-5">
 							<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 								<span class="font-mono text-[0.8125rem] font-semibold text-ink">
 									{certificate.filename}
 								</span>
 								<Plate tone={plate.tone} label={plate.label} />
 								<span class="min-w-0 truncate text-[0.8125rem] text-ink-2">
-									{commonName(certificate.subject)} · issued by {commonName(certificate.issuer)}
+									{m.devicesb_pbs_node_cert_names({ subject: commonName(certificate.subject), issuer: commonName(certificate.issuer) })}
 								</span>
 							</div>
 							{#if certificate.san.length > 0}
@@ -167,32 +168,35 @@
 
 		{#if traffic.length > 0}
 			<section>
-				<p class="px-5 pt-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
-					Traffic limits
+				<p class="px-4 pt-3 sm:px-5 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
+					{m.devicesb_pbs_node_traffic_heading()}
 				</p>
 				<ul class="mt-1 divide-y divide-line">
 					{#each traffic as rule (rule.name)}
-						<li class="px-5 py-2">
+						<li class="px-4 py-2 sm:px-5">
 							<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 								<span class="font-semibold text-ink">{rule.name}</span>
 								<span class="tnum text-[0.8125rem] text-ink-2">
-									in {rate(rule.limit_in_bytes)} · out {rate(rule.limit_out_bytes)}
+									{m.devicesb_pbs_node_traffic_line({ in: rate(rule.limit_in_bytes), out: rate(rule.limit_out_bytes) })}
 								</span>
 								{#if (rule.rate_in_bytes ?? 0) > 0 || (rule.rate_out_bytes ?? 0) > 0}
 									<Plate
 										tone="info"
-										label={`now ${formatBytes(rule.rate_in_bytes ?? 0)}/s in, ${formatBytes(rule.rate_out_bytes ?? 0)}/s out`}
+										label={m.devicesb_pbs_node_traffic_now({ in: formatBytes(rule.rate_in_bytes ?? 0), out: formatBytes(rule.rate_out_bytes ?? 0) })}
 										bare
 									/>
 								{:else}
-									<span class="text-[0.75rem] text-ink-3">idle</span>
+									<span class="text-[0.75rem] text-ink-3">{m.devicesb_pbs_node_traffic_idle()}</span>
 								{/if}
 							</div>
 							<p class="mt-0.5 text-[0.75rem] text-ink-3">
-								{rule.comment ? `${rule.comment} · ` : ''}{rule.networks.join(', ') || 'every network'}{rule.timeframe.length >
-								0
-									? ` · ${rule.timeframe.join(', ')}`
-									: ''}
+								{[
+									rule.comment,
+									rule.networks.join(', ') || m.devicesb_pbs_node_every_network(),
+									rule.timeframe.join(', ')
+								]
+									.filter(Boolean)
+									.join(' · ')}
 							</p>
 						</li>
 					{/each}
