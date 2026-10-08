@@ -6,6 +6,7 @@
 	 * drops the handle's settle animation — dragging itself is never animated.
 	 */
 	import { reducedMotion } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { MoveHorizontal } from 'lucide-svelte';
 	import { clampPercent, stepPercent } from './format';
 
@@ -77,8 +78,8 @@
 		aria-valuemin={0}
 		aria-valuemax={100}
 		aria-orientation="horizontal"
-		aria-label="Before/after comparison position"
-		class={`absolute top-1/2 flex size-9 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-lift outline-none focus-visible:ring-2 focus-visible:ring-signal active:scale-95 ${reducedMotion() ? '' : 'transition-transform duration-150 ease-out-expo'}`}
+		aria-label={m.devicesb_webchange_slider_label()}
+		class={`absolute top-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-lift outline-none focus-visible:ring-2 focus-visible:ring-signal active:scale-95 ${reducedMotion() ? '' : 'transition-transform duration-150 ease-out-expo'}`}
 		style={`left: ${percent}%`}
 		onpointerdown={startDrag}
 		onkeydown={onKeydown}
@@ -87,9 +88,9 @@
 	</div>
 
 	<span class="pointer-events-none absolute top-2 left-2 rounded-[var(--radius-plate)] border border-line bg-surface/90 px-2 py-0.5 text-[0.75rem] font-semibold text-ink-2 backdrop-blur-sm">
-		Before
+		{m.devicesb_webchange_slider_before()}
 	</span>
 	<span class="pointer-events-none absolute top-2 right-2 rounded-[var(--radius-plate)] border border-line bg-surface/90 px-2 py-0.5 text-[0.75rem] font-semibold text-ink-2 backdrop-blur-sm">
-		After
+		{m.devicesb_webchange_slider_after()}
 	</span>
 </div>

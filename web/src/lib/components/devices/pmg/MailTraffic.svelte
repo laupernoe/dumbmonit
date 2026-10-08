@@ -9,6 +9,8 @@
 	 */
 	import type { PmgQuarantine, PmgRecentPoint, PmgTraffic, PmgVirus } from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { formatBytes, formatCount, formatSpan } from './format';
 
 	interface Props {
@@ -39,49 +41,56 @@
 	}
 
 	function sliceTitle(point: PmgRecentPoint): string {
-		const when = new Date(point.time * 1000).toLocaleTimeString('en-GB', {
+		const when = new Date(point.time * 1000).toLocaleTimeString(getLocale(), {
 			hour: '2-digit',
 			minute: '2-digit'
 		});
-		const span = point.timespan > 0 ? ` (${formatSpan(point.timespan)})` : '';
-		return `${when}${span}: ${formatCount(point.count_in)} in, ${formatCount(point.count_out)} out, ${formatCount(point.spam_in)} spam, ${formatCount(point.virus_in)} virus`;
+		const counts = {
+			received: formatCount(point.count_in),
+			sent: formatCount(point.count_out),
+			spam: formatCount(point.spam_in),
+			virus: formatCount(point.virus_in)
+		};
+		return point.timespan > 0
+			? m.devicesb_pmg_traffic_slice_title_span({ when, span: formatSpan(point.timespan), ...counts })
+			: m.devicesb_pmg_traffic_slice_title({ when, ...counts });
 	}
 </script>
 
 <div class="flex flex-col gap-5 px-5 py-4">
 	{#if mail}
-		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 [&>div]:min-w-0">
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">In</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_in()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(mail.count_in)}</p>
 				{#if mail.bytes_in !== null}
 					<p class="tnum text-[0.75rem] text-ink-3">{formatBytes(mail.bytes_in)}</p>
 				{/if}
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Out</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_out()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(mail.count_out)}</p>
 				{#if mail.bytes_out !== null}
 					<p class="tnum text-[0.75rem] text-ink-3">{formatBytes(mail.bytes_out)}</p>
 				{/if}
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Spam</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_spam()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(mail.spam_in)}</p>
 				{#if junkPercent !== null}
-					<p class="tnum text-[0.75rem] text-ink-3">{junkPercent.toFixed(1)} % junk</p>
+					<p class="tnum text-[0.75rem] text-ink-3">{m.devicesb_pmg_traffic_junk({ percent: junkPercent.toFixed(1) })}</p>
 				{/if}
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Viruses</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_viruses()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(mail.virus_in)}</p>
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Bounces</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_bounces()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(mail.bounces_in)}</p>
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Avg. processing</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_avg_processing()}</p>
 				<p class="tnum text-xl font-semibold text-ink">
 					{mail.avg_processing_seconds === null ? '—' : `${mail.avg_processing_seconds.toFixed(2)} s`}
 				</p>
@@ -90,19 +99,22 @@
 
 		{#if mail.greylisted !== null || mail.rbl_rejects !== null || mail.spf_rejects !== null || mail.pregreet_rejects !== null}
 			<p class="text-[0.8125rem] text-ink-2">
-				Rejected before delivery today:
-				{formatCount(mail.greylisted)} greylisted · {formatCount(mail.rbl_rejects)} by blocklist ·
-				{formatCount(mail.spf_rejects)} by SPF · {formatCount(mail.pregreet_rejects)} for pregreeting.
+				{m.devicesb_pmg_traffic_rejected({
+					greylisted: formatCount(mail.greylisted),
+					rbl: formatCount(mail.rbl_rejects),
+					spf: formatCount(mail.spf_rejects),
+					pregreet: formatCount(mail.pregreet_rejects)
+				})}
 			</p>
 		{/if}
 	{:else}
-		<p class="text-sm text-ink-2">No mail statistics yet: the gateway has not been read, or it has seen no mail today.</p>
+		<p class="text-sm text-ink-2">{m.devicesb_pmg_traffic_no_stats()}</p>
 	{/if}
 
 	{#if traffic.recent.length > 0 && peak > 0}
 		<div>
-			<p class="mb-2 text-[0.75rem] tracking-wide text-ink-3 uppercase">Recent traffic</p>
-			<div class="flex h-20 items-end gap-px" role="img" aria-label="Mail volume over the recent window">
+			<p class="mb-2 text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_recent()}</p>
+			<div class="flex h-20 items-end gap-px" role="img" aria-label={m.devicesb_pmg_traffic_chart_aria()}>
 				{#each traffic.recent as point (point.time)}
 					<div
 						class="min-w-[2px] flex-1 rounded-t-[2px] bg-info"
@@ -112,7 +124,7 @@
 				{/each}
 			</div>
 			<p class="tnum mt-1 text-[0.75rem] text-ink-3">
-				peak {formatCount(peak)} messages per slice
+				{m.devicesb_pmg_traffic_peak({ count: formatCount(peak) })}
 			</p>
 		</div>
 	{/if}
@@ -120,17 +132,17 @@
 	{#if quarantine}
 		<div class="grid gap-4 border-t border-line pt-4 sm:grid-cols-3">
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Spam quarantine</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_spam_quarantine()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(quarantine.spam_count)}</p>
 				<p class="tnum text-[0.75rem] text-ink-3">
 					{quarantine.spam_bytes === null ? '—' : formatBytes(quarantine.spam_bytes)}
 					{#if quarantine.spam_avg_level !== null}
-						· avg level {quarantine.spam_avg_level.toFixed(1)}
+						· {m.devicesb_pmg_traffic_avg_level({ level: quarantine.spam_avg_level.toFixed(1) })}
 					{/if}
 				</p>
 			</div>
 			<div>
-				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Virus quarantine</p>
+				<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_virus_quarantine()}</p>
 				<p class="tnum text-xl font-semibold text-ink">{formatCount(quarantine.virus_count)}</p>
 				<p class="tnum text-[0.75rem] text-ink-3">
 					{quarantine.virus_bytes === null ? '—' : formatBytes(quarantine.virus_bytes)}
@@ -138,7 +150,7 @@
 			</div>
 			{#if quarantine.attachment_count !== null}
 				<div>
-					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Attachment quarantine</p>
+					<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_attachment_quarantine()}</p>
 					<p class="tnum text-xl font-semibold text-ink">{formatCount(quarantine.attachment_count)}</p>
 				</div>
 			{/if}
@@ -147,7 +159,7 @@
 
 	{#if viruses.length > 0}
 		<div class="border-t border-line pt-4">
-			<p class="mb-2 text-[0.75rem] tracking-wide text-ink-3 uppercase">Viruses caught today</p>
+			<p class="mb-2 text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_pmg_traffic_viruses_today()}</p>
 			<ul class="flex flex-wrap gap-2">
 				{#each viruses as virus (virus.name)}
 					<li>

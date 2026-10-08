@@ -11,6 +11,7 @@
 	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import Figure from '../Figure.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { TITLES, buildView, overall, type AppView, type CheckState } from './view';
 
 	/** Kinds whose devices page also shows the client-devices table. */
@@ -60,24 +61,24 @@
 	}
 
 	function word(level: CheckState | null | undefined): string {
-		if (level === 'warning') return 'Failing';
-		if (level === 'advisory') return 'Attention';
-		if (level === 'ok') return 'OK';
-		return 'Unknown';
+		if (level === 'warning') return m.devicesb_selfhosted_panel_word_failing();
+		if (level === 'advisory') return m.devicesb_selfhosted_panel_word_attention();
+		if (level === 'ok') return m.devicesb_selfhosted_panel_word_ok();
+		return m.devicesb_selfhosted_panel_word_unknown();
 	}
 
-	const title = $derived(TITLES[target.kind] ?? 'Application');
-	const description = $derived(view?.version ? `Version ${view.version}` : undefined);
+	const title = $derived(TITLES[target.kind] ?? m.devicesb_selfhosted_panel_application());
+	const description = $derived(view?.version ? m.devicesb_selfhosted_panel_version({ version: view.version }) : undefined);
 	const verdict = $derived(view ? overall(view) : null);
 </script>
 
 {#if error}
 	<Panel {title} class="rise-in">
-		<ErrorNotice {error} title="Could not load the application's health" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.devicesb_selfhosted_panel_load_error()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
 	<Panel {title} padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the application's health">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_selfhosted_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
@@ -90,14 +91,14 @@
 				{/if}
 			{/snippet}
 			{#if !view.measured}
-				<p class="px-5 py-4 text-sm text-ink-2">Waiting for the first probe: the application has not been read yet.</p>
+				<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_selfhosted_panel_waiting()}</p>
 			{:else}
 				<div class="flex flex-col divide-y divide-line">
 					{#if view.checks.length > 0}
 						<ul class="flex flex-col gap-2 px-5 py-4">
 							{#each view.checks as item, i (i)}
 								<li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
-									<span class="shrink-0 sm:w-24">
+									<span class="shrink-0 sm:w-28">
 										<Plate tone={tone(item.state)} label={word(item.state)} />
 									</span>
 									<span class="min-w-0 text-sm text-ink"><span class="font-semibold">{item.label}.</span>{' '}{item.detail}</span>

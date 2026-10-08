@@ -3,6 +3,7 @@
  * `unifi_device_state` 0 online, 1 offline, 2 pending, 3 updating, 4 adopting,
  * 5 adoption failed, 6 isolated, 7 other.
  */
+import { m } from '#lib/paraglide/messages.js';
 import type { Tone } from '#lib/ui/index.js';
 import type { Reading } from '../instant';
 
@@ -37,31 +38,61 @@ export interface UnifiView {
 	counts: Record<string, number>;
 }
 
-const STATES: [string, Tone][] = [
-	['Online', 'signal'],
-	['Offline', 'warning'],
-	['Waiting for adoption', 'info'],
-	['Updating', 'info'],
-	['Adopting', 'info'],
-	['Adoption failed', 'warning'],
-	['Isolated', 'warning'],
-	['Unknown', 'ghost']
-];
+const STATE_TONES: Tone[] = ['signal', 'warning', 'info', 'info', 'info', 'warning', 'warning', 'ghost'];
 
 export function stateWord(code: number | null): string {
-	return code === null ? 'Unknown' : (STATES[code]?.[0] ?? 'Unknown');
+	switch (code) {
+		case 0:
+			return m.devicesb_unifi_format_state_online();
+		case 1:
+			return m.devicesb_unifi_format_state_offline();
+		case 2:
+			return m.devicesb_unifi_format_state_pending();
+		case 3:
+			return m.devicesb_unifi_format_state_updating();
+		case 4:
+			return m.devicesb_unifi_format_state_adopting();
+		case 5:
+			return m.devicesb_unifi_format_state_adoption_failed();
+		case 6:
+			return m.devicesb_unifi_format_state_isolated();
+		default:
+			return m.devicesb_unifi_format_state_unknown();
+	}
 }
 
 export function stateTone(code: number | null): Tone {
-	return code === null ? 'ghost' : (STATES[code]?.[1] ?? 'ghost');
+	return code === null ? 'ghost' : (STATE_TONES[code] ?? 'ghost');
 }
 
-export const TYPE_WORD: Record<string, string> = {
-	gateway: 'Gateway',
-	switch: 'Switch',
-	access_point: 'Access point',
-	other: 'Device'
-};
+export function typeWord(type: string): string {
+	switch (type) {
+		case 'gateway':
+			return m.devicesb_unifi_format_type_gateway();
+		case 'switch':
+			return m.devicesb_unifi_format_type_switch();
+		case 'access_point':
+			return m.devicesb_unifi_format_type_access_point();
+		default:
+			return m.devicesb_unifi_format_type_device();
+	}
+}
+
+/** Client connection kinds: "Wi-Fi", "Wired", "Guests", "VPN". */
+export function clientTypeWord(type: string): string {
+	switch (type) {
+		case 'wireless':
+			return 'Wi-Fi';
+		case 'wired':
+			return m.devicesb_unifi_format_clients_wired();
+		case 'guest':
+			return m.devicesb_unifi_format_clients_guests();
+		case 'vpn':
+			return 'VPN';
+		default:
+			return type;
+	}
+}
 
 const TYPE_RANK: Record<string, number> = { gateway: 0, switch: 1, access_point: 2, other: 3 };
 
@@ -81,13 +112,23 @@ export function sortDevices(devices: UnifiDevice[]): UnifiDevice[] {
 	);
 }
 
-export const SUBSYSTEM_WORD: Record<string, string> = {
-	wlan: 'Wi-Fi',
-	wan: 'WAN',
-	www: 'Internet',
-	lan: 'LAN',
-	vpn: 'VPN'
-};
+/** Subsystem names: only "www" has a word of its own; the rest are acronyms. */
+export function subsystemWord(name: string): string {
+	switch (name) {
+		case 'wlan':
+			return 'Wi-Fi';
+		case 'wan':
+			return 'WAN';
+		case 'www':
+			return m.devicesb_unifi_format_subsystem_internet();
+		case 'lan':
+			return 'LAN';
+		case 'vpn':
+			return 'VPN';
+		default:
+			return name;
+	}
+}
 
 export function emptyView(): UnifiView {
 	return {

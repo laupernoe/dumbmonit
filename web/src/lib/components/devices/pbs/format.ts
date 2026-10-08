@@ -6,57 +6,72 @@
 import type { PbsDayState, PbsTaskKind } from '#lib/api/index.js';
 import { formatDateTime } from '#lib/format.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 export { formatAge, formatBytes } from '../docker/api';
 
 export function formatUnix(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_pbs_format_never();
 	return formatDateTime(new Date(seconds * 1000));
 }
 
 /** "3 h ago", or "never". Negative ages (the future) read as "in 2 h". */
 export function formatAgo(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_pbs_format_never();
 	const delta = Math.round(Date.now() / 1000 - seconds);
-	if (delta < 0) return `in ${formatSpan(-delta)}`;
-	if (delta < 45) return 'just now';
-	return `${formatSpan(delta)} ago`;
+	if (delta < 0) return m.devicesb_pbs_format_in_span({ span: formatSpan(-delta) });
+	if (delta < 45) return m.devicesb_pbs_format_just_now();
+	return m.devicesb_pbs_format_ago({ span: formatSpan(delta) });
 }
 
 /** Whole-unit span: "40 s", "12 min", "3 h", "5 d". */
 export function formatSpan(seconds: number): string {
-	if (seconds < 60) return `${Math.round(seconds)} s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	if (seconds < 60) return m.devicesb_pbs_format_span_s({ n: Math.round(seconds) });
+	if (seconds < 3600) return m.devicesb_pbs_format_span_min({ n: Math.round(seconds / 60) });
 	if (seconds < 86400) {
 		const hours = Math.floor(seconds / 3600);
 		const minutes = Math.round((seconds % 3600) / 60);
-		return minutes > 0 && hours < 10 ? `${hours} h ${minutes} min` : `${hours} h`;
+		return minutes > 0 && hours < 10
+			? m.devicesb_pbs_format_span_h_min({ h: hours, min: minutes })
+			: m.devicesb_pbs_format_span_h({ n: hours });
 	}
-	return `${Math.round(seconds / 86400)} d`;
+	return m.devicesb_pbs_format_span_d({ n: Math.round(seconds / 86400) });
 }
 
 export function formatDuration(start: number, end: number | null): string {
-	if (end === null) return 'running';
+	if (end === null) return m.devicesb_pbs_format_running();
 	return formatSpan(Math.max(0, end - start));
 }
 
-export const TASK_KIND_LABEL: Record<PbsTaskKind, string> = {
-	backup: 'Backup',
-	sync: 'Sync',
-	verify: 'Verify',
-	prune: 'Prune',
-	gc: 'Garbage collection',
-	other: 'Task'
-};
-
-export const JOB_KIND_LABEL: Record<string, string> = {
-	sync: 'Sync',
-	verify: 'Verify',
-	prune: 'Prune',
-	gc: 'Garbage collection'
-};
+export function taskKindLabel(kind: PbsTaskKind): string {
+	switch (kind) {
+		case 'backup':
+			return m.devicesb_pbs_format_task_backup();
+		case 'sync':
+			return m.devicesb_pbs_format_task_sync();
+		case 'verify':
+			return m.devicesb_pbs_format_task_verify();
+		case 'prune':
+			return m.devicesb_pbs_format_task_prune();
+		case 'gc':
+			return m.devicesb_pbs_format_task_gc();
+		default:
+			return m.devicesb_pbs_format_task_other();
+	}
+}
 
 export function jobKindLabel(kind: string): string {
-	return JOB_KIND_LABEL[kind] ?? kind;
+	switch (kind) {
+		case 'sync':
+			return m.devicesb_pbs_format_task_sync();
+		case 'verify':
+			return m.devicesb_pbs_format_task_verify();
+		case 'prune':
+			return m.devicesb_pbs_format_task_prune();
+		case 'gc':
+			return m.devicesb_pbs_format_task_gc();
+		default:
+			return kind;
+	}
 }
 
 export const DAY_TONE: Record<PbsDayState, Tone> = {
@@ -67,13 +82,20 @@ export const DAY_TONE: Record<PbsDayState, Tone> = {
 	none: 'ghost'
 };
 
-export const DAY_WORD: Record<PbsDayState, string> = {
-	ok: 'Backed up',
-	verify_failed: 'Backed up, verification failed',
-	failed: 'Backup failed',
-	running: 'Backup running',
-	none: 'No backup'
-};
+export function dayWord(state: PbsDayState): string {
+	switch (state) {
+		case 'ok':
+			return m.devicesb_pbs_format_day_ok();
+		case 'verify_failed':
+			return m.devicesb_pbs_format_day_verify_failed();
+		case 'failed':
+			return m.devicesb_pbs_format_day_failed();
+		case 'running':
+			return m.devicesb_pbs_format_day_running();
+		default:
+			return m.devicesb_pbs_format_day_none();
+	}
+}
 
 /** Tailwind background class of a day dot: token colours only, never raw palette. */
 export const DAY_BG: Record<PbsDayState, string> = {

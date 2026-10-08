@@ -5,6 +5,7 @@
 	 * shows an em dash — a monitoring page must never display a zero it made up.
 	 */
 	import type { PdmEstate } from '#lib/api/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatBytes, formatCount, formatPercent } from './format';
 
 	interface Props {
@@ -28,18 +29,51 @@
 	}
 
 	const cells = $derived([
-		{ label: 'Instances', value: formatCount(estate.remotes), note: unreachable > 0 ? `${unreachable} unreachable` : null },
-		{ label: 'Nodes online', value: formatCount(estate.nodes_online), note: estate.nodes_offline ? `${estate.nodes_offline} offline` : null },
-		{ label: 'Guests running', value: formatCount(guestsRunning), note: guestsStopped === null ? null : `${guestsStopped} stopped` },
-		{ label: 'Cores', value: formatCount(estate.cpu_total_cores), note: estate.cpu_used_cores === null ? null : `${estate.cpu_used_cores.toFixed(1)} in use` },
-		{ label: 'Memory', value: formatPercent(percent(estate.memory_used_bytes, estate.memory_total_bytes)), note: `${formatBytes(estate.memory_used_bytes)} of ${formatBytes(estate.memory_total_bytes)}` },
-		{ label: 'Storage', value: formatPercent(percent(estate.storage_used_bytes, estate.storage_total_bytes)), note: `${formatBytes(estate.storage_used_bytes)} of ${formatBytes(estate.storage_total_bytes)}` }
+		{
+			label: m.devicesb_pdm_estate_instances(),
+			value: formatCount(estate.remotes),
+			note: unreachable > 0 ? m.devicesb_pdm_estate_unreachable({ count: unreachable }) : null
+		},
+		{
+			label: m.devicesb_pdm_estate_nodes_online(),
+			value: formatCount(estate.nodes_online),
+			note: estate.nodes_offline ? m.devicesb_pdm_estate_offline({ count: estate.nodes_offline }) : null
+		},
+		{
+			label: m.devicesb_pdm_estate_guests_running(),
+			value: formatCount(guestsRunning),
+			note: guestsStopped === null ? null : m.devicesb_pdm_estate_stopped({ count: guestsStopped })
+		},
+		{
+			label: m.devicesb_pdm_estate_cores(),
+			value: formatCount(estate.cpu_total_cores),
+			note:
+				estate.cpu_used_cores === null
+					? null
+					: m.devicesb_pdm_estate_in_use({ count: estate.cpu_used_cores.toFixed(1) })
+		},
+		{
+			label: m.devicesb_pdm_estate_memory(),
+			value: formatPercent(percent(estate.memory_used_bytes, estate.memory_total_bytes)),
+			note: m.devicesb_pdm_estate_of_total({
+				used: formatBytes(estate.memory_used_bytes),
+				total: formatBytes(estate.memory_total_bytes)
+			})
+		},
+		{
+			label: m.devicesb_pdm_estate_storage(),
+			value: formatPercent(percent(estate.storage_used_bytes, estate.storage_total_bytes)),
+			note: m.devicesb_pdm_estate_of_total({
+				used: formatBytes(estate.storage_used_bytes),
+				total: formatBytes(estate.storage_total_bytes)
+			})
+		}
 	]);
 </script>
 
 <dl class="grid grid-cols-2 gap-px border-b border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
 	{#each cells as cell (cell.label)}
-		<div class="bg-surface px-4 py-3">
+		<div class="bg-surface px-3 py-3 sm:px-4">
 			<dt class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{cell.label}</dt>
 			<dd class="tnum mt-0.5 text-xl font-semibold text-ink">{cell.value}</dd>
 			{#if cell.note}

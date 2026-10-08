@@ -5,33 +5,36 @@
  * variants. A missing measurement prints nothing rather than a zero.
  */
 import { formatDateTime } from '#lib/format.js';
+import { m } from '#lib/paraglide/messages.js';
 import type { Tone } from '#lib/ui/index.js';
 import type { OpnsenseGatewayRow, OpnsenseTunnelRow } from '#lib/api/index.js';
 
 export function formatUnix(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_opnsense_format_never();
 	return formatDateTime(new Date(seconds * 1000));
 }
 
 /** Whole-unit span: "40 s", "12 min", "3 h", "5 d". */
 export function formatSpan(seconds: number): string {
-	if (seconds < 60) return `${Math.round(seconds)} s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	if (seconds < 60) return m.devicesb_opnsense_format_seconds({ n: Math.round(seconds) });
+	if (seconds < 3600) return m.devicesb_opnsense_format_minutes({ n: Math.round(seconds / 60) });
 	if (seconds < 86400) {
 		const hours = Math.floor(seconds / 3600);
 		const minutes = Math.round((seconds % 3600) / 60);
-		return minutes > 0 && hours < 10 ? `${hours} h ${minutes} min` : `${hours} h`;
+		return minutes > 0 && hours < 10
+			? m.devicesb_opnsense_format_hours_minutes({ h: hours, m: minutes })
+			: m.devicesb_opnsense_format_hours({ h: hours });
 	}
-	return `${Math.round(seconds / 86400)} d`;
+	return m.devicesb_opnsense_format_days({ n: Math.round(seconds / 86400) });
 }
 
 /** "3 h ago", or "never". Negative ages (the future) read as "in 2 h". */
 export function formatAgo(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_opnsense_format_never();
 	const delta = Math.round(Date.now() / 1000 - seconds);
-	if (delta < 0) return `in ${formatSpan(-delta)}`;
-	if (delta < 45) return 'just now';
-	return `${formatSpan(delta)} ago`;
+	if (delta < 0) return m.devicesb_opnsense_format_in({ span: formatSpan(-delta) });
+	if (delta < 45) return m.devicesb_opnsense_format_just_now();
+	return m.devicesb_opnsense_format_ago({ span: formatSpan(delta) });
 }
 
 /** A plain count, grouped: "1 204". */
@@ -77,31 +80,31 @@ export function reading(value: number | null | undefined): number | null {
 export function gatewayTone(gateway: OpnsenseGatewayRow): { tone: Tone; label: string } {
 	switch (gateway.status) {
 		case 'online':
-			return { tone: 'signal', label: 'Online' };
+			return { tone: 'signal', label: m.devicesb_opnsense_format_gw_online() };
 		case 'down':
-			return { tone: 'warning', label: 'Down' };
+			return { tone: 'warning', label: m.devicesb_opnsense_status_down() };
 		case 'force_down':
-			return { tone: 'warning', label: 'Forced down' };
+			return { tone: 'warning', label: m.devicesb_opnsense_format_gw_forced_down() };
 		case 'loss':
-			return { tone: 'advisory', label: 'Packet loss' };
+			return { tone: 'advisory', label: m.devicesb_opnsense_format_gw_packet_loss() };
 		case 'delay':
-			return { tone: 'advisory', label: 'Latency' };
+			return { tone: 'advisory', label: m.devicesb_opnsense_format_gw_latency() };
 		case 'delay+loss':
 		case 'loss+delay':
-			return { tone: 'advisory', label: 'Loss and latency' };
+			return { tone: 'advisory', label: m.devicesb_opnsense_format_gw_loss_latency() };
 		default:
 			return gateway.monitored
-				? { tone: 'ghost', label: gateway.status || 'Unknown' }
-				: { tone: 'ghost', label: 'Not monitored' };
+				? { tone: 'ghost', label: gateway.status || m.devicesb_opnsense_status_unknown() }
+				: { tone: 'ghost', label: m.devicesb_opnsense_format_gw_not_monitored() };
 	}
 }
 
 /** Tunnel plate: carrying a session, silent, or with no session at all. */
 export function tunnelTone(tunnel: OpnsenseTunnelRow): { tone: Tone; label: string } {
-	if (tunnel.down) return { tone: 'warning', label: 'Down' };
-	if (tunnel.up === null) return { tone: 'ghost', label: 'Unknown' };
-	if (tunnel.silent) return { tone: 'advisory', label: 'Silent' };
-	return { tone: 'signal', label: 'Up' };
+	if (tunnel.down) return { tone: 'warning', label: m.devicesb_opnsense_status_down() };
+	if (tunnel.up === null) return { tone: 'ghost', label: m.devicesb_opnsense_status_unknown() };
+	if (tunnel.silent) return { tone: 'advisory', label: m.devicesb_opnsense_format_tunnel_silent() };
+	return { tone: 'signal', label: m.devicesb_opnsense_status_up() };
 }
 
 /** How each VPN technology is written on screen. */
@@ -125,7 +128,7 @@ export function carpTone(status: string): { tone: Tone; label: string } {
 		case 'DISABLED':
 			return { tone: 'ghost', label: 'DISABLED' };
 		default:
-			return { tone: 'advisory', label: status.toUpperCase() || 'UNKNOWN' };
+			return { tone: 'advisory', label: status.toUpperCase() || m.devicesb_opnsense_format_carp_unknown() };
 	}
 }
 

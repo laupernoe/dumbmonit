@@ -11,6 +11,8 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type MetricSeries, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import Figure from '../Figure.svelte';
 	import { formatSpan } from '../pbs/format';
 
@@ -54,7 +56,20 @@
 		messageTypes: []
 	};
 
-	const COMPONENTS: Record<string, string> = { core: 'Core', web: 'Web interface', ftl: 'FTL', docker: 'Docker image' };
+	function componentName(key: string): string {
+		switch (key) {
+			case 'core':
+				return m.devicesb_pihole_panel_comp_core();
+			case 'web':
+				return m.devicesb_pihole_panel_comp_web();
+			case 'ftl':
+				return m.devicesb_pihole_panel_comp_ftl();
+			case 'docker':
+				return m.devicesb_pihole_panel_comp_docker();
+			default:
+				return key;
+		}
+	}
 
 	/** Eight days: the threshold of the built-in rule. */
 	const GRAVITY_STALE = 8 * 86_400;
@@ -151,7 +166,7 @@
 	});
 
 	function count(value: number | null): string | null {
-		return value === null ? null : Math.round(value).toLocaleString('en');
+		return value === null ? null : Math.round(value).toLocaleString(getLocale());
 	}
 
 	function percent(value: number | null): string | null {
@@ -168,80 +183,89 @@
 	const gravityStale = $derived(reading.gravityAge !== null && reading.gravityAge > GRAVITY_STALE);
 	const blockingWord = $derived(
 		reading.blocking === null
-			? 'Unknown'
+			? m.devicesb_pihole_panel_blocking_unknown()
 			: reading.blocking
-				? 'Blocking'
+				? m.devicesb_pihole_panel_blocking_on()
 				: reading.timer !== null
-					? `Paused, back in ${formatSpan(reading.timer)}`
-					: 'Not blocking'
+					? m.devicesb_pihole_panel_blocking_paused({ span: formatSpan(reading.timer) })
+					: m.devicesb_pihole_panel_blocking_off()
 	);
 </script>
 
 {#if !loading && (hasAnything || error)}
-	<Panel title="Pi-hole" description="Last 24 hours, as Pi-hole counts them." padded={false} class="rise-in">
+	<Panel title="Pi-hole" description={m.devicesb_pihole_panel_description()} padded={false} class="rise-in">
 		{#snippet aside()}
 			{#if reading.blocking !== null}
 				<Plate tone={reading.blocking ? 'signal' : 'advisory'} label={blockingWord} size="md" />
 			{/if}
 		{/snippet}
 		{#if error}
-			<div class="px-5 py-4">
-				<ErrorNotice {error} title="Could not load Pi-hole's figures" onretry={() => void load()} />
+			<div class="px-4 py-4 sm:px-5">
+				<ErrorNotice {error} title={m.devicesb_pihole_panel_error_title()} onretry={() => void load()} />
 			</div>
 		{:else}
-			<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-5 pt-4 pb-2 sm:grid-cols-4">
-				<Figure label="Queries" value={count(reading.queries)} />
-				<Figure label="Blocked" value={count(reading.blocked)} hint={reading.percent !== null ? `${percent(reading.percent)} of queries` : undefined} />
-				<Figure label="Active clients" value={count(reading.clientsActive)} />
+			<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-4 pt-4 pb-2 sm:grid-cols-4 sm:px-5">
+				<Figure label={m.devicesb_pihole_panel_fig_queries()} value={count(reading.queries)} />
+				<Figure label={m.devicesb_pihole_panel_fig_blocked()} value={count(reading.blocked)} hint={reading.percent !== null ? m.devicesb_pihole_panel_fig_blocked_hint({ percent: percent(reading.percent) ?? '' }) : undefined} />
+				<Figure label={m.devicesb_pihole_panel_fig_clients()} value={count(reading.clientsActive)} />
 				<Figure
-					label="Upstream failures"
+					label={m.devicesb_pihole_panel_fig_servfail()}
 					value={count(reading.servfail)}
 					tone={reading.servfail !== null && reading.servfail > 0 ? 'advisory' : 'ink'}
-					hint="SERVFAIL answers"
+					hint={m.devicesb_pihole_panel_fig_servfail_hint()}
 				/>
 			</div>
 
 			<ul class="divide-y divide-line border-t border-line text-sm">
-				<li class="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:gap-x-3">
-					<Plate tone={reading.gravityAge === null ? 'ghost' : gravityStale ? 'advisory' : 'signal'} label={reading.gravityAge === null ? 'Unknown' : gravityStale ? 'Stale' : 'Up to date'} />
-					<span class="font-medium text-ink">Blocklists</span>
-					<span class="tnum text-ink-2 sm:ml-auto">
-						{reading.gravityDomains !== null ? `${count(reading.gravityDomains)} domains` : '—'}{reading.gravityAge !== null ? `, rebuilt ${formatSpan(reading.gravityAge)} ago` : ''}
+				<li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:px-5 sm:items-center sm:gap-x-3">
+					<Plate tone={reading.gravityAge === null ? 'ghost' : gravityStale ? 'advisory' : 'signal'} label={reading.gravityAge === null ? m.devicesb_pihole_panel_gravity_unknown() : gravityStale ? m.devicesb_pihole_panel_gravity_stale() : m.devicesb_pihole_panel_gravity_ok()} />
+					<span class="font-medium text-ink">{m.devicesb_pihole_panel_blocklists()}</span>
+					<span class="tnum break-words text-ink-2 sm:ml-auto sm:text-right">
+						{[
+							reading.gravityDomains !== null ? m.devicesb_pihole_panel_gravity_domains({ count: count(reading.gravityDomains) ?? '' }) : '',
+							reading.gravityAge !== null ? m.devicesb_pihole_panel_gravity_rebuilt({ span: formatSpan(reading.gravityAge) }) : ''
+						]
+							.filter(Boolean)
+							.join(', ') || '—'}
 					</span>
 				</li>
-				<li class="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:gap-x-3">
+				<li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:px-5 sm:items-center sm:gap-x-3">
 					{#if reading.updates === null}
-						<Plate tone="ghost" label="Not checked yet" />
+						<Plate tone="ghost" label={m.devicesb_pihole_panel_ver_not_checked()} />
 					{:else if reading.updates > 0}
-						<Plate tone="info" label="Update available" />
+						<Plate tone="info" label={m.devicesb_pihole_panel_ver_update()} />
 					{:else}
-						<Plate tone="signal" label="Up to date" />
+						<Plate tone="signal" label={m.devicesb_pihole_panel_ver_ok()} />
 					{/if}
-					<span class="font-medium text-ink">Versions</span>
-					<span class="tnum text-ink-2 sm:ml-auto">
+					<span class="font-medium text-ink">{m.devicesb_pihole_panel_versions()}</span>
+					<span class="tnum break-words text-ink-2 sm:ml-auto sm:text-right">
 						{#if reading.versions.length > 0}
 							{reading.versions
-								.map((v) => `${COMPONENTS[v.name] ?? v.name} ${v.version}${reading.outdated.includes(v.name) ? ' (newer available)' : ''}`)
+								.map((v) =>
+									reading.outdated.includes(v.name)
+										? m.devicesb_pihole_panel_ver_newer({ component: componentName(v.name), version: v.version })
+										: m.devicesb_pihole_panel_ver_plain({ component: componentName(v.name), version: v.version })
+								)
 								.join(' · ')}
 						{:else}
 							—
 						{/if}
 					</span>
 				</li>
-				<li class="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:gap-x-3">
+				<li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:px-5 sm:items-center sm:gap-x-3">
 					{#if reading.messages === null}
-						<Plate tone="ghost" label="Unknown" />
+						<Plate tone="ghost" label={m.devicesb_pihole_panel_msg_unknown()} />
 					{:else if reading.messages > 0}
-						<Plate tone="info" label={reading.messages === 1 ? '1 message' : `${reading.messages} messages`} />
+						<Plate tone="info" label={m.devicesb_pihole_panel_msg_count({ count: reading.messages })} />
 					{:else}
-						<Plate tone="signal" label="No message" />
+						<Plate tone="signal" label={m.devicesb_pihole_panel_msg_none()} />
 					{/if}
-					<span class="font-medium text-ink">Diagnosis</span>
-					<span class="text-ink-2 sm:ml-auto">
+					<span class="font-medium text-ink">{m.devicesb_pihole_panel_diagnosis()}</span>
+					<span class="break-words text-ink-2 sm:ml-auto sm:text-right">
 						{#if reading.messageTypes.length > 0}
 							{reading.messageTypes.map((m) => (m.count > 1 ? `${typeWord(m.type)} (${m.count})` : typeWord(m.type))).join(' · ')}
 						{:else if reading.messages === 0}
-							Nothing listed on Pi-hole's diagnosis page.
+							{m.devicesb_pihole_panel_msg_nothing()}
 						{:else}
 							—
 						{/if}

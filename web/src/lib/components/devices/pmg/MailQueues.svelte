@@ -8,7 +8,8 @@
 	 */
 	import type { PmgQueue } from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
-	import { formatCount, formatSpan, QUEUE_HELP, queueLabel, queueTone } from './format';
+	import { m } from '#lib/paraglide/messages.js';
+	import { formatCount, formatSpan, queueHelp, queueLabel, queueTone } from './format';
 
 	interface Props {
 		queues: PmgQueue[];
@@ -18,10 +19,7 @@
 </script>
 
 {#if queues.length === 0}
-	<p class="px-5 py-4 text-sm text-ink-2">
-		No queue reported. Either the gateway has not been read yet, or the "Watch the mail queues"
-		option is off.
-	</p>
+	<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_pmg_queues_empty()}</p>
 {:else}
 	<div class="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
 		{#each queues as queue (queue.queue)}
@@ -34,20 +32,22 @@
 				<p class="tnum text-2xl font-semibold text-ink">
 					{formatCount(queue.messages)}
 					<span class="text-sm font-normal text-ink-3">
-						{queue.messages === 1 ? 'message' : 'messages'}
+						{queue.messages === 1 ? m.devicesb_pmg_queues_message_one() : m.devicesb_pmg_queues_message_other()}
 					</span>
 				</p>
 				{#if queue.oldest_age_seconds !== null}
 					<p class="tnum text-[0.8125rem] text-ink-2">
-						oldest waiting at least {formatSpan(queue.oldest_age_seconds)}
+						{m.devicesb_pmg_queues_oldest({ span: formatSpan(queue.oldest_age_seconds) })}
 					</p>
 				{/if}
 				{#if queue.domains > 0}
 					<p class="text-[0.8125rem] text-ink-3">
-						{formatCount(queue.domains)} destination {queue.domains === 1 ? 'domain' : 'domains'}
+						{queue.domains === 1
+							? m.devicesb_pmg_queues_domains_one({ count: formatCount(queue.domains) })
+							: m.devicesb_pmg_queues_domains_other({ count: formatCount(queue.domains) })}
 					</p>
 				{/if}
-				<p class="text-[0.75rem] text-ink-3">{QUEUE_HELP[queue.queue] ?? ''}</p>
+				<p class="text-[0.75rem] text-ink-3">{queueHelp(queue.queue)}</p>
 				{#if queue.top_domains.length > 0}
 					<ul class="mt-1 flex flex-col gap-0.5 border-t border-line pt-2">
 						{#each queue.top_domains.slice(0, 4) as domain (domain.domain)}
