@@ -5,6 +5,7 @@
  */
 import type { MetricSeries } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 
 export interface UpsReading {
 	name: string;
@@ -147,20 +148,20 @@ export interface Verdict {
 
 /** The one-word state of a UPS, the worst first. */
 export function verdict(r: UpsReading): Verdict {
-	if (r.stale) return { tone: 'advisory', word: r.driverConnected ? 'No fresh data' : 'Driver stopped' };
+	if (r.stale) return { tone: 'advisory', word: r.driverConnected ? m.devicesb_nut_ups_state_no_fresh_data() : m.devicesb_nut_ups_state_driver_stopped() };
 	const f = r.flags;
-	if (f.has('FSD')) return { tone: 'warning', word: 'Shutting down' };
-	if (f.has('OB') && f.has('LB')) return { tone: 'warning', word: 'Battery low' };
-	if (f.has('OB')) return { tone: 'warning', word: 'On battery' };
-	if (f.has('LB')) return { tone: 'warning', word: 'Battery low' };
-	if (f.has('OVER')) return { tone: 'warning', word: 'Overloaded' };
-	if (f.has('OFF')) return { tone: 'warning', word: 'Output off' };
-	if (f.has('RB')) return { tone: 'advisory', word: 'Replace battery' };
-	if (f.has('BYPASS')) return { tone: 'advisory', word: 'On bypass' };
-	if (f.has('ALARM')) return { tone: 'advisory', word: 'Alarm' };
-	if (f.has('CAL')) return { tone: 'info', word: 'Calibrating' };
-	if (f.has('OL')) return { tone: 'signal', word: f.has('CHRG') ? 'On mains, charging' : 'On mains' };
-	return { tone: 'ghost', word: r.status ?? 'Unknown' };
+	if (f.has('FSD')) return { tone: 'warning', word: m.devicesb_nut_ups_state_shutting_down() };
+	if (f.has('OB') && f.has('LB')) return { tone: 'warning', word: m.devicesb_nut_ups_state_battery_low() };
+	if (f.has('OB')) return { tone: 'warning', word: m.devicesb_nut_ups_state_on_battery() };
+	if (f.has('LB')) return { tone: 'warning', word: m.devicesb_nut_ups_state_battery_low() };
+	if (f.has('OVER')) return { tone: 'warning', word: m.devicesb_nut_ups_state_overloaded() };
+	if (f.has('OFF')) return { tone: 'warning', word: m.devicesb_nut_ups_state_output_off() };
+	if (f.has('RB')) return { tone: 'advisory', word: m.devicesb_nut_ups_state_replace_battery() };
+	if (f.has('BYPASS')) return { tone: 'advisory', word: m.devicesb_nut_ups_state_on_bypass() };
+	if (f.has('ALARM')) return { tone: 'advisory', word: m.devicesb_nut_ups_state_alarm() };
+	if (f.has('CAL')) return { tone: 'info', word: m.devicesb_nut_ups_state_calibrating() };
+	if (f.has('OL')) return { tone: 'signal', word: f.has('CHRG') ? m.devicesb_nut_ups_state_on_mains_charging() : m.devicesb_nut_ups_state_on_mains() };
+	return { tone: 'ghost', word: r.status ?? m.devicesb_nut_ups_state_unknown() };
 }
 
 /** Other flags worth a plate next to the main state. */
@@ -170,28 +171,30 @@ export function extraFlags(r: UpsReading): Verdict[] {
 	const add = (flag: string, tone: Tone, word: string) => {
 		if (r.flags.has(flag) && word !== main) out.push({ tone, word });
 	};
-	add('RB', 'advisory', 'Replace battery');
-	add('BYPASS', 'advisory', 'On bypass');
-	add('OVER', 'warning', 'Overloaded');
-	add('ALARM', 'advisory', 'Alarm');
-	if (r.selfTestFailed) out.push({ tone: 'advisory', word: 'Self-test failed' });
+	add('RB', 'advisory', m.devicesb_nut_ups_state_replace_battery());
+	add('BYPASS', 'advisory', m.devicesb_nut_ups_state_on_bypass());
+	add('OVER', 'warning', m.devicesb_nut_ups_state_overloaded());
+	add('ALARM', 'advisory', m.devicesb_nut_ups_state_alarm());
+	if (r.selfTestFailed) out.push({ tone: 'advisory', word: m.devicesb_nut_ups_state_self_test_failed() });
 	return out;
 }
 
 export function formatRuntime(seconds: number | null): string | null {
 	if (seconds === null) return null;
-	if (seconds < 60) return `${Math.round(seconds)} s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	if (seconds < 60) return m.devicesb_nut_ups_format_seconds({ n: Math.round(seconds) });
+	if (seconds < 3600) return m.devicesb_nut_ups_format_minutes({ n: Math.round(seconds / 60) });
 	const h = Math.floor(seconds / 3600);
-	const m = Math.round((seconds % 3600) / 60);
-	return m === 0 ? `${h} h` : `${h} h ${m} min`;
+	const mins = Math.round((seconds % 3600) / 60);
+	return mins === 0
+		? m.devicesb_nut_ups_format_hours({ h })
+		: m.devicesb_nut_ups_format_hours_minutes({ h, m: mins });
 }
 
 export function formatAge(seconds: number | null): string | null {
 	if (seconds === null) return null;
 	const days = seconds / 86400;
-	if (days < 60) return `${Math.round(days)} days`;
+	if (days < 60) return m.devicesb_nut_ups_format_days({ n: Math.round(days) });
 	const years = days / 365.25;
-	if (years < 2) return `${Math.round(days / 30.44)} months`;
-	return `${years.toFixed(1)} years`;
+	if (years < 2) return m.devicesb_nut_ups_format_months({ n: Math.round(days / 30.44) });
+	return m.devicesb_nut_ups_format_years({ n: years.toFixed(1) });
 }

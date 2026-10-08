@@ -6,6 +6,7 @@
  */
 import type { RedfishFan, RedfishLimit, RedfishOverview, RedfishTemperature } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 
 export interface Verdict {
 	tone: Tone;
@@ -25,10 +26,19 @@ export function toneOf(health: number | null): Tone {
 	return 'signal';
 }
 
+export type WordSet = 'component' | 'overall' | 'redundancy' | 'failable';
+
+function wordsOf(set: WordSet): [string, string, string] {
+	if (set === 'overall') return [m.devicesb_redfish_health_healthy(), m.devicesb_redfish_health_degraded(), m.devicesb_redfish_health_critical()];
+	if (set === 'redundancy') return [m.devicesb_redfish_health_redundant(), m.devicesb_redfish_health_redundancy_degraded(), m.devicesb_redfish_health_redundancy_lost()];
+	if (set === 'failable') return [m.devicesb_redfish_health_ok(), m.devicesb_redfish_health_degraded(), m.devicesb_redfish_health_failed()];
+	return [m.devicesb_redfish_health_ok(), m.devicesb_redfish_health_degraded(), m.devicesb_redfish_health_critical()];
+}
+
 /** A component's own health, in words: "OK", "Degraded", "Critical". */
-export function healthPlate(health: number | null, words: [string, string, string] = ['OK', 'Degraded', 'Critical']): Verdict {
-	if (health === null) return { tone: 'ghost', label: 'Unknown' };
-	return { tone: toneOf(health), label: words[Math.min(2, Math.max(0, Math.round(health)))] };
+export function healthPlate(health: number | null, set: WordSet = 'component'): Verdict {
+	if (health === null) return { tone: 'ghost', label: m.devicesb_redfish_health_unknown() };
+	return { tone: toneOf(health), label: wordsOf(set)[Math.min(2, Math.max(0, Math.round(health)))] };
 }
 
 export function limitRank(limit: RedfishLimit | null): number {
@@ -56,24 +66,22 @@ export function fanFloor(fan: RedfishFan): string | null {
  * says something is wrong.
  */
 export function temperatureVerdict(t: RedfishTemperature): Verdict | null {
-	if (t.limit === 'critical') return { tone: 'warning', label: 'Above critical' };
-	if ((t.health ?? 0) >= 2) return { tone: 'warning', label: 'Critical' };
-	if (t.limit === 'caution') return { tone: 'advisory', label: 'Near its limit' };
-	if ((t.health ?? 0) >= 1) return { tone: 'advisory', label: 'Degraded' };
-	if (t.limit === 'within') return { tone: 'signal', label: 'Within limits' };
+	if (t.limit === 'critical') return { tone: 'warning', label: m.devicesb_redfish_health_above_critical() };
+	if ((t.health ?? 0) >= 2) return { tone: 'warning', label: m.devicesb_redfish_health_critical() };
+	if (t.limit === 'caution') return { tone: 'advisory', label: m.devicesb_redfish_health_near_limit() };
+	if ((t.health ?? 0) >= 1) return { tone: 'advisory', label: m.devicesb_redfish_health_degraded() };
+	if (t.limit === 'within') return { tone: 'signal', label: m.devicesb_redfish_health_within_limits() };
 	return null;
 }
 
 export function fanVerdict(fan: RedfishFan): Verdict | null {
-	if ((fan.health ?? 0) >= 2) return { tone: 'warning', label: 'Failed' };
-	if (fan.limit === 'critical') return { tone: 'warning', label: 'Below its minimum' };
-	if ((fan.health ?? 0) >= 1) return { tone: 'advisory', label: 'Degraded' };
-	if (fan.limit === 'within') return { tone: 'signal', label: 'Within limits' };
-	if (fan.health === 0) return { tone: 'signal', label: 'OK' };
+	if ((fan.health ?? 0) >= 2) return { tone: 'warning', label: m.devicesb_redfish_health_failed() };
+	if (fan.limit === 'critical') return { tone: 'warning', label: m.devicesb_redfish_health_below_minimum() };
+	if ((fan.health ?? 0) >= 1) return { tone: 'advisory', label: m.devicesb_redfish_health_degraded() };
+	if (fan.limit === 'within') return { tone: 'signal', label: m.devicesb_redfish_health_within_limits() };
+	if (fan.health === 0) return { tone: 'signal', label: m.devicesb_redfish_health_ok() };
 	return null;
 }
-
-export const REDUNDANCY_WORDS: [string, string, string] = ['Redundant', 'Redundancy degraded', 'Redundancy lost'];
 
 /** Several chassis or systems: their names become worth printing. */
 export function where(list: { chassis?: string; system?: string }[]): boolean {
@@ -89,34 +97,34 @@ export function assess(view: RedfishOverview): { severity: number | null; concer
 	const add = (severity: number | null, text: string) => {
 		if (severity !== null && severity >= 1) concerns.push({ severity: severity >= 2 ? 2 : 1, text });
 	};
-	const word = (h: number | null) => ((h ?? 0) >= 2 ? 'critical' : 'degraded');
+	const crit = (h: number | null) => (h ?? 0) >= 2;
 
 	for (const t of view.temperatures) {
 		if (t.limit === 'critical') {
-			add(2, `${t.sensor} is at ${celsius(t.celsius)}, at or above its critical threshold of ${celsius(t.upper_critical_celsius)}.`);
+			add(2, m.devicesb_redfish_concern_temp_critical({ sensor: t.sensor, value: celsius(t.celsius), threshold: celsius(t.upper_critical_celsius) }));
 		} else if (t.limit === 'caution') {
-			add(1, `${t.sensor} is at ${celsius(t.celsius)}, past its caution threshold of ${celsius(t.upper_caution_celsius)}.`);
-		} else add(t.health, `${t.sensor} is reported ${word(t.health)} by the controller.`);
+			add(1, m.devicesb_redfish_concern_temp_caution({ sensor: t.sensor, value: celsius(t.celsius), threshold: celsius(t.upper_caution_celsius) }));
+		} else add(t.health, crit(t.health) ? m.devicesb_redfish_concern_sensor_critical({ sensor: t.sensor }) : m.devicesb_redfish_concern_sensor_degraded({ sensor: t.sensor }));
 	}
 	for (const f of view.fans) {
-		if ((f.health ?? 0) >= 2) add(2, `${f.fan} has failed (${fanSpeed(f)}).`);
-		else if (f.limit === 'critical') add(2, `${f.fan} turns at ${fanSpeed(f)}, below its minimum of ${fanFloor(f)}.`);
-		else add(f.health, `${f.fan} is reported degraded.`);
+		if (crit(f.health)) add(2, m.devicesb_redfish_concern_fan_failed({ fan: f.fan, speed: fanSpeed(f) }));
+		else if (f.limit === 'critical') add(2, m.devicesb_redfish_concern_fan_low({ fan: f.fan, speed: fanSpeed(f), floor: fanFloor(f) ?? '—' }));
+		else add(f.health, m.devicesb_redfish_concern_fan_degraded({ fan: f.fan }));
 	}
-	for (const g of view.fan_redundancy) add(g.health, `Fan redundancy (${g.group}) is ${(g.health ?? 0) >= 2 ? 'lost' : 'degraded'}.`);
-	for (const g of view.power_redundancy) add(g.health, `Power supply redundancy (${g.group}) is ${(g.health ?? 0) >= 2 ? 'lost' : 'degraded'}.`);
-	for (const p of view.power_supplies) add(p.health, `${p.psu} is ${(p.health ?? 0) >= 2 ? 'failed' : 'degraded'}.`);
+	for (const g of view.fan_redundancy) add(g.health, crit(g.health) ? m.devicesb_redfish_concern_fan_red_lost({ group: g.group }) : m.devicesb_redfish_concern_fan_red_degraded({ group: g.group }));
+	for (const g of view.power_redundancy) add(g.health, crit(g.health) ? m.devicesb_redfish_concern_power_red_lost({ group: g.group }) : m.devicesb_redfish_concern_power_red_degraded({ group: g.group }));
+	for (const p of view.power_supplies) add(p.health, crit(p.health) ? m.devicesb_redfish_concern_psu_failed({ psu: p.psu }) : m.devicesb_redfish_concern_psu_degraded({ psu: p.psu }));
 	for (const d of view.drives) {
-		if (d.failure_predicted) add(2, `${d.drive} predicts its own failure.`);
-		else add(d.health, `${d.drive} is ${word(d.health)}.`);
+		if (d.failure_predicted) add(2, m.devicesb_redfish_concern_drive_predicted({ drive: d.drive }));
+		else add(d.health, crit(d.health) ? m.devicesb_redfish_concern_drive_critical({ drive: d.drive }) : m.devicesb_redfish_concern_drive_degraded({ drive: d.drive }));
 	}
-	for (const s of view.storage) add(s.health, `Storage controller ${s.storage} is ${word(s.health)}.`);
+	for (const s of view.storage) add(s.health, crit(s.health) ? m.devicesb_redfish_concern_storage_critical({ storage: s.storage }) : m.devicesb_redfish_concern_storage_degraded({ storage: s.storage }));
 	for (const s of view.systems) {
-		add(s.memory_health, `Memory is reported ${word(s.memory_health)}.`);
-		add(s.processor_health, `Processors are reported ${word(s.processor_health)}.`);
+		add(s.memory_health, crit(s.memory_health) ? m.devicesb_redfish_concern_memory_critical() : m.devicesb_redfish_concern_memory_degraded());
+		add(s.processor_health, crit(s.processor_health) ? m.devicesb_redfish_concern_cpu_critical() : m.devicesb_redfish_concern_cpu_degraded());
 	}
-	for (const m of view.managers) add(m.health, `The management controller ${m.id} is ${word(m.health)}.`);
-	for (const v of view.voltages) add(v.health, `${v.sensor} is reported ${word(v.health)}.`);
+	for (const mgr of view.managers) add(mgr.health, crit(mgr.health) ? m.devicesb_redfish_concern_manager_critical({ id: mgr.id }) : m.devicesb_redfish_concern_manager_degraded({ id: mgr.id }));
+	for (const v of view.voltages) add(v.health, crit(v.health) ? m.devicesb_redfish_concern_voltage_critical({ sensor: v.sensor }) : m.devicesb_redfish_concern_voltage_degraded({ sensor: v.sensor }));
 
 	const healths = [
 		...view.systems.flatMap((s) => [s.health, s.health_rollup]),
@@ -129,8 +137,8 @@ export function assess(view: RedfishOverview): { severity: number | null; concer
 	// instead of leaving a red word unexplained.
 	if (severity !== null && severity >= 1 && !concerns.some((c) => c.severity >= severity)) {
 		const who = view.systems.find((s) => (s.health_rollup ?? s.health ?? 0) >= severity)?.id ??
-			view.chassis.find((c) => (c.health_rollup ?? c.health ?? 0) >= severity)?.id ?? 'the server';
-		add(severity, `The controller rolls up ${who} as ${word(severity)} without naming a component DumbMonit reads: see its own event log.`);
+			view.chassis.find((c) => (c.health_rollup ?? c.health ?? 0) >= severity)?.id ?? m.devicesb_redfish_concern_the_server();
+		add(severity, severity >= 2 ? m.devicesb_redfish_concern_rollup_critical({ who }) : m.devicesb_redfish_concern_rollup_degraded({ who }));
 	}
 	concerns.sort((a, b) => b.severity - a.severity);
 	return { severity, concerns };

@@ -13,6 +13,7 @@
 	import GatewayHealth from './GatewayHealth.svelte';
 	import MailQueues from './MailQueues.svelte';
 	import MailTraffic from './MailTraffic.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatAgo, formatCount, formatUnix } from './format';
 
 	interface Props {
@@ -69,29 +70,29 @@
 </script>
 
 {#if error}
-	<Panel title="Mail gateway" class="rise-in">
-		<ErrorNotice {error} title="Could not load the mail gateway details" onretry={() => void load()} />
+	<Panel title={m.devicesb_pmg_panel_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devicesb_pmg_panel_load_error()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="Mail gateway" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the mail gateway">
+	<Panel title={m.devicesb_pmg_panel_title()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_pmg_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
 		<Panel
-			title="Mail queues"
-			description="What Postfix is holding right now. A deferred queue that keeps growing is the first sign that mail is stuck."
+			title={m.devicesb_pmg_panel_queues_title()}
+			description={m.devicesb_pmg_panel_queues_desc()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if queues?.stuck}
-					<Plate tone="warning" label="Mail stuck" />
+					<Plate tone="warning" label={m.devicesb_pmg_panel_mail_stuck()} />
 				{:else if queues}
 					<span class="tnum text-[0.75rem] text-ink-3">
-						{formatCount(queues.total_messages)} queued
+						{m.devicesb_pmg_panel_queued({ count: formatCount(queues.total_messages) })}
 					</span>
 				{/if}
 			{/snippet}
@@ -99,14 +100,14 @@
 		</Panel>
 
 		<Panel
-			title="Mail filtered today"
-			description="Counted since midnight on the gateway, plus what is waiting in the quarantines. Counts only: no message is ever read."
+			title={m.devicesb_pmg_panel_filtered_title()}
+			description={m.devicesb_pmg_panel_filtered_desc()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if probedAt !== null}
-					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>read {formatAgo(probedAt)}</span>
+					<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(probedAt)}>{m.devicesb_pmg_panel_read_ago({ ago: formatAgo(probedAt) })}</span>
 				{/if}
 			{/snippet}
 			{#if traffic}
@@ -115,18 +116,18 @@
 		</Panel>
 
 		<Panel
-			title="Gateway"
+			title={m.devicesb_pmg_panel_gateway_title()}
 			description={health?.version
-				? `Services, signature databases, certificates and cluster. Proxmox Mail Gateway ${health.version}.`
-				: 'Services, signature databases, certificates and cluster.'}
+				? m.devicesb_pmg_panel_gateway_desc_version({ version: health.version })
+				: m.devicesb_pmg_panel_gateway_desc()}
 			padded={false}
 			class="rise-in"
 		>
 			{#snippet aside()}
 				{#if staleSignatures > 0}
-					<Plate tone="warning" label={`${staleSignatures} out of date`} />
+					<Plate tone="warning" label={m.devicesb_pmg_panel_out_of_date({ count: staleSignatures })} />
 				{:else if stoppedServices.length > 0}
-					<Plate tone="warning" label={`${stoppedServices.length} stopped`} />
+					<Plate tone="warning" label={m.devicesb_pmg_panel_stopped({ count: stoppedServices.length })} />
 				{/if}
 			{/snippet}
 			<GatewayHealth

@@ -4,10 +4,11 @@
  */
 import type { ObservabilityState, ObservabilityUnit } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 import { formatBytes } from '../docker/api';
 import { formatSpan } from '../pbs/format';
 
-/** Panel title per kind; an unknown kind keeps a neutral title. */
+/** Product names per kind (proper nouns, not translated); an unknown kind keeps a neutral title. */
 export const TITLES: Record<string, string> = {
 	victoriametrics: 'VictoriaMetrics',
 	victorialogs: 'VictoriaLogs',
@@ -19,9 +20,14 @@ export const TITLES: Record<string, string> = {
 	crowdsec: 'CrowdSec',
 	traefik: 'Traefik',
 	caddy: 'Caddy',
-	npm: 'Nginx Proxy Manager',
-	domain: 'Domain'
+	npm: 'Nginx Proxy Manager'
 };
+
+/** The product name of a kind, or a neutral word translated at call time. */
+export function kindTitle(kind: string): string {
+	if (kind === 'domain') return m.devicesb_observability_format_domain();
+	return TITLES[kind] ?? m.devicesb_observability_format_server();
+}
 
 export function stateTone(state: ObservabilityState | null): Tone {
 	if (state === 'warning') return 'warning';
@@ -31,10 +37,10 @@ export function stateTone(state: ObservabilityState | null): Tone {
 }
 
 export function stateWord(state: ObservabilityState | null): string {
-	if (state === 'warning') return 'Failing';
-	if (state === 'advisory') return 'Attention';
-	if (state === 'ok') return 'OK';
-	return 'Unknown';
+	if (state === 'warning') return m.devicesb_observability_format_failing();
+	if (state === 'advisory') return m.devicesb_observability_format_attention();
+	if (state === 'ok') return m.devicesb_observability_format_ok();
+	return m.devicesb_observability_format_unknown();
 }
 
 /** A count with thin grouping: 12 480, 3.2 k/s stays readable at a glance. */

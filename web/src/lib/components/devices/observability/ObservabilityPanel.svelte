@@ -13,7 +13,8 @@
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatUnix } from '../pbs/format';
-	import { TITLES, formatValue, stateTone, stateWord } from './format';
+	import { m } from '#lib/paraglide/messages.js';
+	import { kindTitle, formatValue, stateTone, stateWord } from './format';
 
 	interface Props {
 		target: Target;
@@ -52,8 +53,10 @@
 		};
 	});
 
-	const title = $derived(`${TITLES[target.kind] ?? 'Server'} health`);
-	const description = $derived(view?.version ? `Version ${view.version}` : undefined);
+	const title = $derived(m.devicesb_observability_panel_title({ name: kindTitle(target.kind) }));
+	const description = $derived(
+		view?.version ? m.devicesb_observability_panel_version({ version: view.version }) : undefined
+	);
 	/** Problems first, in the server's order otherwise. */
 	const RANK = { warning: 0, advisory: 1, ok: 2 } as const;
 	const checks = $derived([...(view?.checks ?? [])].sort((a, b) => (RANK[a.state] ?? 3) - (RANK[b.state] ?? 3)));
@@ -61,11 +64,11 @@
 
 {#if error}
 	<Panel {title} class="rise-in">
-		<ErrorNotice {error} title="Could not load the server's health" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.devicesb_observability_panel_error_title()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
 	<Panel {title} padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the server's health">
+		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label={m.devicesb_observability_panel_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
@@ -76,28 +79,28 @@
 				<span class="flex flex-wrap items-center justify-end gap-2">
 					{#if view?.sampled_at !== null}
 						<Plate tone={stateTone(view?.state ?? null)} label={stateWord(view?.state ?? null)} size="md" />
-						<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(view?.sampled_at)}>read {formatAgo(view?.sampled_at)}</span>
+						<span class="tnum text-[0.75rem] text-ink-3" title={formatUnix(view?.sampled_at)}>{m.devicesb_observability_panel_read_ago({ ago: formatAgo(view?.sampled_at) })}</span>
 					{/if}
 				</span>
 			{/snippet}
 			{#if view.sampled_at === null}
-				<p class="px-5 py-4 text-sm text-ink-2">Waiting for the first probe: the server has not been read yet.</p>
+				<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_observability_panel_waiting()}</p>
 			{:else}
 				<div class="flex flex-col divide-y divide-line">
 					{#if checks.length > 0}
-						<ul class="flex flex-col gap-2 px-5 py-4">
+						<ul class="flex flex-col gap-3 px-4 py-4 sm:gap-2 sm:px-5">
 							{#each checks as item, i (i)}
 								<li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
 									<span class="shrink-0 sm:w-24">
 										<Plate tone={stateTone(item.state)} label={stateWord(item.state)} />
 									</span>
-									<span class="min-w-0 text-sm text-ink"><span class="font-semibold">{item.label}.</span> {item.detail}</span>
+									<span class="min-w-0 text-sm break-words text-ink"><span class="font-semibold">{item.label}.</span> {item.detail}</span>
 								</li>
 							{/each}
 						</ul>
 					{/if}
 					{#if view.figures.length > 0}
-						<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-5 pt-4 pb-2 sm:grid-cols-4">
+						<div class="grid grid-cols-2 gap-x-4 gap-y-3 px-4 pt-4 pb-2 sm:gap-x-6 sm:px-5 sm:grid-cols-4">
 							{#each view.figures as figure (figure.label)}
 								<Figure label={figure.label} value={formatValue(figure.value, figure.unit)} />
 							{/each}
@@ -113,7 +116,7 @@
 					<Panel title={breakdown.title} description={breakdown.note || undefined} padded={false} class="rise-in">
 						<ul class="divide-y divide-line">
 							{#each breakdown.rows as row, i (i)}
-								<li class="flex items-center gap-3 px-5 py-2.5">
+								<li class="flex min-h-10 items-center gap-3 px-4 py-2.5 sm:px-5">
 									<p class="min-w-0 flex-1 truncate text-sm text-ink" title={row.label}>{row.label}</p>
 									{#if row.value !== null}
 										<span class="tnum text-sm text-ink">{formatValue(row.value, row.unit) ?? '—'}</span>

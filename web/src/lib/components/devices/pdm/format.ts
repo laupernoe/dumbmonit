@@ -6,36 +6,39 @@
 import type { PdmTaskKind } from '#lib/api/index.js';
 import { formatDateTime } from '#lib/format.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 export { formatBytes } from '../docker/api';
 
 export function formatUnix(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_pdm_format_never();
 	return formatDateTime(new Date(seconds * 1000));
 }
 
 /** "3 h ago", or "never". Negative ages (the future) read as "in 2 h". */
 export function formatAgo(seconds: number | null | undefined): string {
-	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'never';
+	if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return m.devicesb_pdm_format_never();
 	const delta = Math.round(Date.now() / 1000 - seconds);
-	if (delta < 0) return `in ${formatSpan(-delta)}`;
-	if (delta < 45) return 'just now';
-	return `${formatSpan(delta)} ago`;
+	if (delta < 0) return m.devicesb_pdm_format_in({ span: formatSpan(-delta) });
+	if (delta < 45) return m.devicesb_pdm_format_just_now();
+	return m.devicesb_pdm_format_ago({ span: formatSpan(delta) });
 }
 
 /** Whole-unit span: "40 s", "12 min", "3 h", "5 d". */
 export function formatSpan(seconds: number): string {
-	if (seconds < 60) return `${Math.round(seconds)} s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+	if (seconds < 60) return m.devicesb_pdm_format_seconds({ n: Math.round(seconds) });
+	if (seconds < 3600) return m.devicesb_pdm_format_minutes({ n: Math.round(seconds / 60) });
 	if (seconds < 86400) {
 		const hours = Math.floor(seconds / 3600);
 		const minutes = Math.round((seconds % 3600) / 60);
-		return minutes > 0 && hours < 10 ? `${hours} h ${minutes} min` : `${hours} h`;
+		return minutes > 0 && hours < 10
+			? m.devicesb_pdm_format_hours_minutes({ h: hours, m: minutes })
+			: m.devicesb_pdm_format_hours({ h: hours });
 	}
-	return `${Math.round(seconds / 86400)} d`;
+	return m.devicesb_pdm_format_days({ n: Math.round(seconds / 86400) });
 }
 
 export function formatDuration(start: number, end: number | null): string {
-	if (end === null) return 'running';
+	if (end === null) return m.devicesb_pdm_format_running();
 	return formatSpan(Math.max(0, end - start));
 }
 
@@ -54,27 +57,38 @@ export function daysUntil(seconds: number | null | undefined): number | null {
 	return Math.floor((seconds - Date.now() / 1000) / 86400);
 }
 
-export const REMOTE_KIND_LABEL: Record<string, string> = {
-	pve: 'Proxmox VE',
-	pbs: 'Backup Server'
-};
-
 export function remoteKindLabel(kind: string | null): string {
-	if (!kind) return 'Instance';
-	return REMOTE_KIND_LABEL[kind] ?? kind;
+	if (!kind) return m.devicesb_pdm_format_remote_instance();
+	if (kind === 'pve') return 'Proxmox VE';
+	if (kind === 'pbs') return m.devicesb_pdm_format_remote_pbs();
+	return kind;
 }
 
-export const TASK_KIND_LABEL: Record<PdmTaskKind, string> = {
-	backup: 'Backup',
-	migrate: 'Migration',
-	sync: 'Sync',
-	verify: 'Verify',
-	prune: 'Prune',
-	gc: 'Garbage collection',
-	replication: 'Replication',
-	update: 'Update',
-	other: 'Task'
-};
+/** The label of a task kind, or `null` for a kind this build does not know. */
+export function taskKindLabel(kind: PdmTaskKind): string | null {
+	switch (kind) {
+		case 'backup':
+			return m.devicesb_pdm_format_task_backup();
+		case 'migrate':
+			return m.devicesb_pdm_format_task_migrate();
+		case 'sync':
+			return m.devicesb_pdm_format_task_sync();
+		case 'verify':
+			return m.devicesb_pdm_format_task_verify();
+		case 'prune':
+			return m.devicesb_pdm_format_task_prune();
+		case 'gc':
+			return m.devicesb_pdm_format_task_gc();
+		case 'replication':
+			return m.devicesb_pdm_format_task_replication();
+		case 'update':
+			return m.devicesb_pdm_format_task_update();
+		case 'other':
+			return m.devicesb_pdm_format_task_other();
+		default:
+			return null;
+	}
+}
 
 /** Tone and word for an instance, so status is never colour alone. */
 export function remoteState(remote: {
@@ -82,24 +96,26 @@ export function remoteState(remote: {
 	tasks_failed: number;
 	version_behind: boolean;
 }): { tone: Tone; word: string } {
-	if (!remote.reachable) return { tone: 'warning', word: 'Unreachable' };
+	if (!remote.reachable) return { tone: 'warning', word: m.devicesb_pdm_format_unreachable() };
 	if (remote.tasks_failed > 0) {
-		const plural = remote.tasks_failed === 1 ? 'task' : 'tasks';
-		return { tone: 'advisory', word: `${remote.tasks_failed} failed ${plural}` };
+		return {
+			tone: 'advisory',
+			word: m.devicesb_pdm_format_failed_tasks({ count: remote.tasks_failed })
+		};
 	}
-	if (remote.version_behind) return { tone: 'info', word: 'Version behind' };
-	return { tone: 'signal', word: 'Reachable' };
+	if (remote.version_behind) return { tone: 'info', word: m.devicesb_pdm_format_version_behind() };
+	return { tone: 'signal', word: m.devicesb_pdm_format_reachable() };
 }
 
 /** Tone and word for a subscription state, or `null` when the console is silent. */
 export function subscriptionState(state: string | null): { tone: Tone; word: string } | null {
 	switch (state) {
 		case 'active':
-			return { tone: 'signal', word: 'Subscribed' };
+			return { tone: 'signal', word: m.devicesb_pdm_format_sub_active() };
 		case 'mixed':
-			return { tone: 'info', word: 'Partly subscribed' };
+			return { tone: 'info', word: m.devicesb_pdm_format_sub_mixed() };
 		case 'none':
-			return { tone: 'muted', word: 'No subscription' };
+			return { tone: 'muted', word: m.devicesb_pdm_format_sub_none() };
 		default:
 			return null;
 	}

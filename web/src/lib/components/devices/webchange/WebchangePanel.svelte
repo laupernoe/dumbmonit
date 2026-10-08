@@ -20,6 +20,7 @@
 	import { formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { Eye, RefreshCw } from 'lucide-svelte';
 	import PagesTable from './PagesTable.svelte';
 	import ChangeTimeline from './ChangeTimeline.svelte';
@@ -124,52 +125,57 @@
 
 <div class="flex flex-col gap-6">
 	<Panel
-		title="Website changes"
-		description={`${pages.length} ${pages.length === 1 ? 'page' : 'pages'} watched · last change ${lastChanged ? formatRelative(lastChanged) : 'never'}`}
+		title={m.devicesb_webchange_panel_title()}
+		description={(pages.length === 1
+			? m.devicesb_webchange_panel_summary_one
+			: m.devicesb_webchange_panel_summary_other)({
+			count: pages.length,
+			when: lastChanged ? formatRelative(lastChanged) : m.devicesb_webchange_panel_never()
+		})}
 		class="rise-in"
 	>
 		{#snippet aside()}
 			{#if changes.length > 0 && selectedUrl === null}
 				<Button variant="primary" href={`/targets/${target.id}/changes/${changes[0].id}`}>
 					<Eye class="size-4" aria-hidden="true" />
-					See the latest change
+					{m.devicesb_webchange_panel_latest()}
 				</Button>
 			{/if}
 			{#if auth.isAdmin}
 				<Button variant="secondary" onclick={checkNow} loading={checking}>
 					<RefreshCw class="size-4" aria-hidden="true" />
-					Check now
+					{m.devicesb_webchange_panel_check_now()}
 				</Button>
 			{/if}
 		{/snippet}
 		{#if checkError}
-			<ErrorNotice error={checkError} title="Could not start the check" onretry={checkNow} class="mb-3" />
+			<ErrorNotice error={checkError} title={m.devicesb_webchange_panel_check_error()} onretry={checkNow} class="mb-3" />
 		{:else if justChecked}
-			<Plate tone="signal" label="Check queued · refreshing shortly" size="md" />
+			<Plate tone="signal" label={m.devicesb_webchange_panel_queued()} size="md" />
 		{/if}
 		{#if !screenshotsAvailable}
 			<p class="text-[0.8125rem] text-ink-2">
-				No headless browser is configured: screenshots are skipped, text changes are still detected. See the
+				{m.devicesb_webchange_panel_no_browser()}
 				<a
 					href="https://dumbmonit.readthedocs.io/en/latest/devices/webchange/"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="text-ink underline"
 				>
-					setup guide
-				</a>.
+					{m.devicesb_webchange_panel_setup_guide()}
+				</a>
 			</p>
 		{/if}
 	</Panel>
 
 	<!-- A single page is the device's own address, already in the header -->
 	{#if loadingPages || pagesError || pages.length > 1}
-	<Panel title="Pages" padded={false} class="rise-in">
+	<Panel title={m.devicesb_webchange_panel_pages()} padded={false} class="rise-in">
 		<div class="px-5 py-4">
 			{#if pagesError}
-				<ErrorNotice error={pagesError} title="Could not load the watched pages" onretry={() => void loadPages()} />
+				<ErrorNotice error={pagesError} title={m.devicesb_webchange_panel_pages_error()} onretry={() => void loadPages()} />
 			{:else if loadingPages}
-				<div class="flex flex-col gap-3" aria-busy="true" aria-label="Loading pages">
+				<div class="flex flex-col gap-3" aria-busy="true" aria-label={m.devicesb_webchange_panel_pages_loading()}>
 					<Skeleton class="h-10 w-full" rows={3} />
 				</div>
 			{:else}
@@ -180,19 +186,21 @@
 	{/if}
 
 	<Panel
-		title="Change timeline"
-		description={selectedUrl ? `Filtered to ${selectedUrl}` : 'Every page, newest first.'}
+		title={m.devicesb_webchange_panel_timeline()}
+		description={selectedUrl
+			? m.devicesb_webchange_panel_filtered({ url: selectedUrl })
+			: m.devicesb_webchange_panel_every_page()}
 		padded={false}
 		class="rise-in"
 	>
 		{#snippet aside()}
 			{#if selectedUrl}
-				<Button variant="ghost" size="sm" onclick={() => selectUrl(null)}>Clear filter</Button>
+				<Button variant="ghost" size="sm" class="min-h-10 sm:min-h-0" onclick={() => selectUrl(null)}>{m.devicesb_webchange_panel_clear_filter()}</Button>
 			{/if}
 		{/snippet}
 		<div class="px-3 py-2">
 			{#if changesError}
-				<ErrorNotice error={changesError} title="Could not load the changes" onretry={() => void loadChanges()} class="m-2" />
+				<ErrorNotice error={changesError} title={m.devicesb_webchange_panel_changes_error()} onretry={() => void loadChanges()} class="m-2" />
 			{:else}
 				<ChangeTimeline targetId={target.id} {changes} loading={loadingChanges} pageCount={pages.length} filteredUrl={selectedUrl} />
 			{/if}

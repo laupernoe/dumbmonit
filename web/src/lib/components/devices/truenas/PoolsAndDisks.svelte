@@ -9,6 +9,7 @@
 	 */
 	import type { TruenasDiskRow, TruenasPoolRow } from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		FILL,
 		formatBytes,
@@ -34,22 +35,40 @@
 		if (!status) return null;
 		switch (status.toUpperCase()) {
 			case 'SUCCESS':
-				return 'passed';
+				return m.devicesb_truenas_pools_smart_passed();
 			case 'RUNNING':
-				return 'running';
+				return m.devicesb_truenas_pools_smart_running();
 			case 'ABORTED':
-				return 'aborted';
+				return m.devicesb_truenas_pools_smart_aborted();
 			case 'FAILED':
-				return 'failed';
+				return m.devicesb_truenas_pools_smart_failed_word();
 			default:
 				return status.toLowerCase();
 		}
+	}
+
+	/** "3 read errors", "1 checksum error". */
+	function errorWords(kind: string, count: number): string {
+		const n = formatCount(count);
+		if (kind === 'read') {
+			return count === 1
+				? m.devicesb_truenas_pools_errors_read_one({ count: n })
+				: m.devicesb_truenas_pools_errors_read_other({ count: n });
+		}
+		if (kind === 'write') {
+			return count === 1
+				? m.devicesb_truenas_pools_errors_write_one({ count: n })
+				: m.devicesb_truenas_pools_errors_write_other({ count: n });
+		}
+		return count === 1
+			? m.devicesb_truenas_pools_errors_checksum_one({ count: n })
+			: m.devicesb_truenas_pools_errors_checksum_other({ count: n });
 	}
 </script>
 
 {#if pools.length === 0}
 	<p class="px-5 py-4 text-sm text-ink-2">
-		No pool reported yet. Either the NAS has not been read yet, or the key cannot see its pools.
+		{m.devicesb_truenas_pools_empty()}
 	</p>
 {:else}
 	<ul class="flex flex-col divide-y divide-line">
@@ -77,7 +96,7 @@
 						<Plate tone="info" label={scanLabel(scan.function, scan.percent, scan.seconds_left)} />
 					{/if}
 					{#if pool.full}
-						<Plate tone="advisory" label="Over 80 % full" />
+						<Plate tone="advisory" label={m.devicesb_truenas_pools_full()} />
 					{/if}
 				</div>
 
@@ -85,11 +104,13 @@
 					<ul class="flex flex-col gap-1">
 						{#each pool.unhealthy_devices as device, index (`${device.name}/${index}`)}
 							<li class="flex flex-wrap items-center gap-2 text-sm">
-								<Plate tone="warning" label={titleCase(device.status || 'unknown')} />
+								<Plate tone="warning" label={device.status ? titleCase(device.status) : m.devicesb_truenas_format_unknown()} />
 								<span class="tnum font-semibold text-warning-ink">
-									{device.name} — {device.status || 'UNKNOWN'}{device.role
-										? `, ${device.role} vdev`
-										: ''}
+									{#if device.role}
+										{m.devicesb_truenas_pools_device_role({ name: device.name, status: device.status || 'UNKNOWN', role: device.role })}
+									{:else}
+										{m.devicesb_truenas_pools_device({ name: device.name, status: device.status || 'UNKNOWN' })}
+									{/if}
 								</span>
 							</li>
 						{/each}
@@ -109,7 +130,7 @@
 							aria-valuemin="0"
 							aria-valuemax="100"
 							aria-valuenow={Math.round(used)}
-							aria-label={`${pool.name} usage`}
+							aria-label={m.devicesb_truenas_pools_usage({ name: pool.name })}
 						>
 							<div
 								class={`h-full rounded-full ${FILL[tone]}`}
@@ -117,7 +138,11 @@
 							></div>
 						</div>
 						<span class="tnum text-[0.8125rem] text-ink-2">
-							{used.toFixed(0)} %{#if reading(pool.allocated_bytes) !== null && reading(pool.size_bytes) !== null}{' — '}{formatBytes(pool.allocated_bytes)} of {formatBytes(pool.size_bytes)}{/if}
+							{#if reading(pool.allocated_bytes) !== null && reading(pool.size_bytes) !== null}
+								{m.devicesb_truenas_pools_used_of({ percent: used.toFixed(0), used: formatBytes(pool.allocated_bytes), total: formatBytes(pool.size_bytes) })}
+							{:else}
+								{m.devicesb_truenas_pools_used({ percent: used.toFixed(0) })}
+							{/if}
 						</span>
 					</div>
 				{:else if reading(pool.size_bytes) !== null}
@@ -128,8 +153,8 @@
 					<p class="tnum flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-ink-3">
 						{#each layout as words (words)}<span>{words}</span>{/each}
 						{#if fragmentation !== null}
-							<span title="Free-space fragmentation, as ZFS measures it">
-								{fragmentation.toFixed(0)} % fragmented
+							<span title={m.devicesb_truenas_pools_fragmented_title()}>
+								{m.devicesb_truenas_pools_fragmented({ percent: fragmentation.toFixed(0) })}
 							</span>
 						{/if}
 					</p>
@@ -137,11 +162,11 @@
 
 				{#if errors.length > 0}
 					<p class="tnum flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-warning-ink">
-						<Plate tone="warning" label="Disk errors" />
+						<Plate tone="warning" label={m.devicesb_truenas_pools_disk_errors()} />
 						{#each errors as entry (entry.word)}
-							<span>{formatCount(entry.count)} {entry.word} {entry.count === 1 ? 'error' : 'errors'}</span>
+							<span>{errorWords(entry.word, entry.count)}</span>
 						{/each}
-						<span class="text-ink-3">since the last zpool clear</span>
+						<span class="text-ink-3">{m.devicesb_truenas_pools_since_clear()}</span>
 					</p>
 				{/if}
 			</li>
@@ -150,10 +175,10 @@
 {/if}
 
 <div class="flex flex-col gap-2 border-t border-line px-5 py-4">
-	<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">Disks</p>
+	<p class="text-[0.75rem] tracking-wide text-ink-3 uppercase">{m.devicesb_truenas_pools_disks()}</p>
 	{#if disks.length === 0}
 		<p class="text-sm text-ink-2">
-			No disk reported. Disks appear after the first successful read of the NAS.
+			{m.devicesb_truenas_pools_no_disks()}
 		</p>
 	{:else}
 		<ul class="flex flex-col divide-y divide-line">
@@ -173,22 +198,26 @@
 					<div class="tnum flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-ink-2">
 						{#if disk.kind}<span class="text-ink-3">{disk.kind}</span>{/if}
 						{#if reading(disk.size_bytes) !== null}<span>{formatBytes(disk.size_bytes)}</span>{/if}
-						{#if disk.pool}<span>in <span class="text-ink">{disk.pool}</span></span>{/if}
+						{#if disk.pool}<span class="text-ink">{m.devicesb_truenas_pools_in_pool({ pool: disk.pool })}</span>{/if}
 						{#if temperature !== null}
 							<span class={disk.hot ? 'text-advisory-ink' : ''}>{Math.round(temperature)} °C</span>
 						{/if}
 						{#if disk.smart_last_test || smart}
 							<span class="text-ink-3">
-								last SMART test{disk.smart_last_test ? ` ${disk.smart_last_test.toLowerCase()}` : ''}{smart
-									? `: ${smart}`
-									: ''}
+								{#if disk.smart_last_test && smart}
+									{m.devicesb_truenas_pools_smart_test_status({ test: disk.smart_last_test.toLowerCase(), status: smart })}
+								{:else if disk.smart_last_test}
+									{m.devicesb_truenas_pools_smart_test({ test: disk.smart_last_test.toLowerCase() })}
+								{:else if smart}
+									{m.devicesb_truenas_pools_smart_status({ status: smart })}
+								{/if}
 							</span>
 						{/if}
 					</div>
 					{#if disk.smart_failed || disk.hot}
 						<div class="flex shrink-0 flex-wrap items-center gap-2">
-							{#if disk.smart_failed}<Plate tone="warning" label="SMART failed" />{/if}
-							{#if disk.hot}<Plate tone="advisory" label="Hot" />{/if}
+							{#if disk.smart_failed}<Plate tone="warning" label={m.devicesb_truenas_pools_smart_failed()} />{/if}
+							{#if disk.hot}<Plate tone="advisory" label={m.devicesb_truenas_pools_hot()} />{/if}
 						</div>
 					{/if}
 				</li>
