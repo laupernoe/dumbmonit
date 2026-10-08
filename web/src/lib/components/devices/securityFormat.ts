@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Shared words and tones for the security score (device card and the
  * `/security` overview): kept in one place so the two never drift.
@@ -5,12 +6,23 @@
 import type { SecurityCategory, SecurityGrade, SecuritySeverity } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
 
+// Getters: the words follow the active language at read time.
 export const GRADE_WORD: Record<SecurityGrade, string> = {
-	A: 'Strong',
-	B: 'Good',
-	C: 'Fair',
-	D: 'Weak',
-	F: 'Poor'
+	get A() {
+		return m.devices_grade_A();
+	},
+	get B() {
+		return m.devices_grade_B();
+	},
+	get C() {
+		return m.devices_grade_C();
+	},
+	get D() {
+		return m.devices_grade_D();
+	},
+	get F() {
+		return m.devices_grade_F();
+	}
 };
 
 /** A/B read as healthy, C sits on the advisory rung, D/F are a warning. */
@@ -25,19 +37,39 @@ export const GRADE_TONE: Record<SecurityGrade, Tone> = {
 export const GRADES: SecurityGrade[] = ['A', 'B', 'C', 'D', 'F'];
 
 export const SEVERITY_WORD: Record<SecuritySeverity, string> = {
-	critical: 'Critical',
-	high: 'High',
-	medium: 'Medium',
-	low: 'Low'
+	get critical() {
+		return m.devices_severity_critical();
+	},
+	get high() {
+		return m.devices_severity_high();
+	},
+	get medium() {
+		return m.devices_severity_medium();
+	},
+	get low() {
+		return m.devices_severity_low();
+	}
 };
 
 export const CATEGORY_WORD: Record<SecurityCategory, string> = {
-	exposure: 'Exposure',
-	patching: 'Patching',
-	authentication: 'Authentication',
-	encryption: 'Encryption',
-	backup: 'Backup',
-	configuration: 'Configuration'
+	get exposure() {
+		return m.devices_category_exposure();
+	},
+	get patching() {
+		return m.devices_category_patching();
+	},
+	get authentication() {
+		return m.devices_category_authentication();
+	},
+	get encryption() {
+		return m.devices_category_encryption();
+	},
+	get backup() {
+		return m.devices_category_backup();
+	},
+	get configuration() {
+		return m.devices_category_configuration();
+	}
 };
 
 export function severityTone(severity: SecuritySeverity): Tone {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The rack itself: one faceplate per row, children indented under their
 	 * parent, entrance staggered 30 ms apart; each LED flickers
@@ -53,7 +54,7 @@
 	let { rows, sparklines, kindLabels, reorder = null }: Props = $props();
 </script>
 
-<ol class="flex flex-col gap-2" aria-label="Devices">
+<ol class="flex flex-col gap-2" aria-label={m.devices_rack_aria()}>
 	{#each rows as row, i (row.target.id)}
 		{@const id = row.target.id}
 		{@const slot = reorder?.dropSlot?.id === id ? reorder.dropSlot : null}
@@ -95,7 +96,7 @@
 					class={`min-w-0 flex-1 rounded-[var(--radius-card)] ${isDragging ? 'opacity-40 cursor-grabbing [&_a]:cursor-grabbing' : 'cursor-grab [&_a]:cursor-grab'} ${isPicked ? 'ring-2 ring-signal' : ''}`}
 					role="button"
 					tabindex="0"
-					aria-label={`${row.target.name}. Press space to pick up and reorder with the arrow keys, or press and drag.`}
+					aria-label={m.devices_rack_row_aria({ name: row.target.name })}
 					aria-pressed={isPicked}
 					onpointerdown={(e) => reorder.onRowPointerDown(id, e)}
 					onkeydown={(e) => reorder.onRowKeyDown(id, e)}

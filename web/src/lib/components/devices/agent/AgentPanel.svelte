@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Agent panel of a device: which machine the agent describes, and — the part
 	 * that matters for security — whether this registration is bound to that one
@@ -41,22 +42,20 @@
 		return () => controller.abort();
 	});
 
-	const BINDING = {
+	const BINDING = $derived({
 		bound: {
 			tone: 'signal' as const,
 			icon: ShieldCheck,
-			label: 'Bound',
-			detail:
-				'This agent holds a secret of its own. No other machine can push measurements in its name, or pick up its container commands.'
+			label: m.devices_agent_bound(),
+			detail: m.devices_agent_bound_detail()
 		},
 		unbound: {
 			tone: 'warning' as const,
 			icon: ShieldAlert,
-			label: 'Not bound — re-enrol this host',
-			detail:
-				'This host was enrolled before agent binding and never bound to its agent, so the server now refuses its measurements, container commands and relayed probes. Allow re-enrolment, then restart the agent: its next batch binds the host.'
+			label: m.devices_agent_unbound(),
+			detail: m.devices_agent_unbound_detail()
 		}
-	};
+	});
 
 	/** An unknown state from a newer server reads as "not bound", never as safe. */
 	const binding = $derived(host ? (BINDING[host.binding as keyof typeof BINDING] ?? BINDING.unbound) : null);
@@ -83,28 +82,28 @@
 
 {#if host && binding}
 	{@const Icon = binding.icon}
-	<Panel title="Agent" description="The machine as its agent describes it, and how the server knows it is really this one.">
+	<Panel title={m.devices_agent_title()} description={m.devices_agent_description()}>
 		{#snippet aside()}
 			<Plate tone={binding.tone} label={binding.label} />
 		{/snippet}
 
 		<dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
-			<dt class="text-ink-2">Machine</dt>
+			<dt class="text-ink-2">{m.devices_agent_machine()}</dt>
 			<dd class="text-ink">{host.hostname}</dd>
-			<dt class="text-ink-2">System</dt>
+			<dt class="text-ink-2">{m.devices_agent_system()}</dt>
 			<dd class="text-ink">{host.os_version ?? host.os}{host.arch ? ` · ${host.arch}` : ''}</dd>
-			<dt class="text-ink-2">Agent</dt>
+			<dt class="text-ink-2">{m.devices_agent_agent()}</dt>
 			<dd class="text-ink">{host.agent_version}</dd>
-			<dt class="text-ink-2">Last batch</dt>
+			<dt class="text-ink-2">{m.devices_agent_last_batch()}</dt>
 			<dd class="text-ink">
 				<time class="tnum" title={formatDateTime(host.last_seen_at)}>{formatRelative(host.last_seen_at)}</time>
 			</dd>
-			<dt class="text-ink-2">Binding</dt>
+			<dt class="text-ink-2">{m.devices_agent_binding()}</dt>
 			<dd class="text-ink">
 				{#if host.bound_at}
-					Bound <time class="tnum" title={formatDateTime(host.bound_at)}>{formatRelative(host.bound_at)}</time>
+					<time class="tnum" title={formatDateTime(host.bound_at)}>{m.devices_agent_bound_when({ when: formatRelative(host.bound_at) })}</time>
 				{:else}
-					Not bound
+					{m.devices_agent_not_bound()}
 				{/if}
 			</dd>
 		</dl>
@@ -115,32 +114,29 @@
 		</p>
 		{#if unbound && !host.binding_supported}
 			<p class="mt-2 text-sm text-ink-2">
-				The installed agent ({host.agent_version}) is too old to be bound: re-run the install command on this host as well.
+				{m.devices_agent_too_old({ version: host.agent_version })}
 			</p>
 		{/if}
 
 		{#if window_}
 			<p class="mt-3 rounded-[var(--radius-card)] border border-advisory/40 bg-surface px-3 py-2 text-sm text-ink">
-				Re-enrolment is open until
-				<time class="tnum" title={formatDateTime(window_)}>{formatDateTime(window_)}</time>. The next batch
-				from an agent with a valid token will bind this machine again.
+				{m.devices_agent_window_open({ until: formatDateTime(window_) })}
 			</p>
 		{:else if auth.isAdmin}
 			<div class="mt-3 flex flex-wrap items-center gap-3">
-				<Confirm variant={unbound ? 'secondary' : 'danger'} confirmLabel="Open the window?" loading={rebinding} onconfirm={rebind}>Allow re-enrolment</Confirm>
+				<Confirm variant={unbound ? 'secondary' : 'danger'} confirmLabel={m.devices_agent_open_confirm()} loading={rebinding} onconfirm={rebind}>{m.devices_agent_allow_rebind()}</Confirm>
 				<p class="text-sm text-ink-2">
 					{#if unbound}
-						Opens a one-hour window during which this host's agent binds itself at its next batch.
+						{m.devices_agent_rebind_hint_unbound()}
 					{:else}
-						Use this after reinstalling the machine, or when the agent lost the secret it had. It opens a short
-						window during which the agent binds itself again.
+						{m.devices_agent_rebind_hint_bound()}
 					{/if}
 				</p>
 			</div>
 		{/if}
 
 		{#if rebindError}
-			<ErrorNotice error={rebindError} title="Could not open the re-enrolment window" class="mt-3" />
+			<ErrorNotice error={rebindError} title={m.devices_agent_err_rebind()} class="mt-3" />
 		{/if}
 	</Panel>
 {/if}

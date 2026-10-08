@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * A Kubernetes cluster as its last probe left it: one sentence saying what
 	 * is wrong, the counts, then only what needs attention — nodes not ready or
@@ -185,8 +186,8 @@
 		};
 	});
 
-	function plural(n: number, one: string, many: string): string {
-		return `${n} ${n === 1 ? one : many}`;
+	function plural(n: number, one: () => string, many: () => string): string {
+		return n === 1 ? one() : many();
 	}
 
 	/** The one sentence at the top: what is wrong, worst first, or that nothing is. */
@@ -196,66 +197,79 @@
 		const crash = cluster.pods.filter((p) => p.crashlooping).length;
 		const pending = cluster.pods.filter((p) => p.pending).length;
 		const problems: string[] = [];
-		if (notReady > 0) problems.push(`${plural(notReady, 'node', 'nodes')} not ready`);
-		if (crash > 0) problems.push(`${plural(crash, 'pod', 'pods')} crash looping`);
-		if (pending > 0) problems.push(`${plural(pending, 'pod', 'pods')} pending`);
-		if (cluster.workloads.length > 0) problems.push(`${plural(cluster.workloads.length, 'workload', 'workloads')} missing replicas`);
-		if (cluster.stuckClaims.length > 0) problems.push(`${plural(cluster.stuckClaims.length, 'volume claim', 'volume claims')} not bound`);
+		if (notReady > 0) problems.push(plural(notReady, () => m.devices_k8s_nodes_notready_one({ count: notReady }), () => m.devices_k8s_nodes_notready_other({ count: notReady })));
+		if (crash > 0) problems.push(plural(crash, () => m.devices_k8s_pods_crash_one({ count: crash }), () => m.devices_k8s_pods_crash_other({ count: crash })));
+		if (pending > 0) problems.push(plural(pending, () => m.devices_k8s_pods_pending_one({ count: pending }), () => m.devices_k8s_pods_pending_other({ count: pending })));
+		if (cluster.workloads.length > 0) problems.push(plural(cluster.workloads.length, () => m.devices_k8s_workloads_missing_one({ count: cluster!.workloads.length }), () => m.devices_k8s_workloads_missing_other({ count: cluster!.workloads.length })));
+		if (cluster.stuckClaims.length > 0) problems.push(plural(cluster.stuckClaims.length, () => m.devices_k8s_claims_unbound_one({ count: cluster!.stuckClaims.length }), () => m.devices_k8s_claims_unbound_other({ count: cluster!.stuckClaims.length })));
 		const pressured = cluster.nodes.filter((n) => n.pressures.length > 0).length;
-		if (pressured > 0) problems.push(`${plural(pressured, 'node', 'nodes')} under pressure`);
-		if (problems.length === 0) return { tone: 'signal', text: 'Every node is ready and every workload has its replicas.' };
+		if (pressured > 0) problems.push(plural(pressured, () => m.devices_k8s_nodes_pressure_one({ count: pressured }), () => m.devices_k8s_nodes_pressure_other({ count: pressured })));
+		if (problems.length === 0) return { tone: 'signal', text: m.devices_k8s_healthy_text() };
 		const text = problems.join(', ');
 		return { tone: notReady > 0 || crash > 0 ? 'warning' : 'advisory', text: `${text.charAt(0).toUpperCase()}${text.slice(1)}.` };
 	});
 
 	function podPlate(p: PodStat): { tone: Tone; label: string } {
-		if (p.crashlooping) return { tone: 'warning', label: 'Crash looping' };
+		if (p.crashlooping) return { tone: 'warning', label: m.devices_k8s_pod_crash() };
 		if (p.blocked) return { tone: 'warning', label: p.blocked };
-		if (p.pending) return { tone: 'advisory', label: 'Pending' };
-		return { tone: 'advisory', label: 'Not ready' };
+		if (p.pending) return { tone: 'advisory', label: m.devices_k8s_pod_pending() };
+		return { tone: 'advisory', label: m.devices_k8s_pod_notready() };
 	}
 
-	const PRESSURE_WORD: Record<string, string> = { memory: 'Memory pressure', disk: 'Disk pressure', pid: 'PID pressure', network: 'Network unavailable' };
+	const PRESSURE_WORD: Record<string, string> = {
+		get memory() {
+			return m.devices_k8s_pressure_memory();
+		},
+		get disk() {
+			return m.devices_k8s_pressure_disk();
+		},
+		get pid() {
+			return m.devices_k8s_pressure_pid();
+		},
+		get network() {
+			return m.devices_k8s_pressure_network();
+		}
+	};
 </script>
 
 {#if !loading && (error || cluster)}
-	<Panel title="Cluster" description={cluster?.version ? `Kubernetes ${cluster.version}, read from its API server.` : 'Read from its API server.'} padded={false} class="rise-in">
+	<Panel title={m.devices_k8s_title()} description={cluster?.version ? m.devices_k8s_desc_version({ version: cluster.version }) : m.devices_k8s_desc()} padded={false} class="rise-in">
 		{#snippet aside()}
-			{#if verdict}<Plate tone={verdict.tone} label={verdict.tone === 'signal' ? 'Healthy' : 'Needs attention'} />{/if}
+			{#if verdict}<Plate tone={verdict.tone} label={verdict.tone === 'signal' ? m.devices_k8s_healthy() : m.devices_k8s_attention()} />{/if}
 		{/snippet}
 		{#if error}
-			<div class="px-5 py-4">
-				<ErrorNotice {error} title="Could not load the cluster" onretry={() => void load()} />
+			<div class="px-4 sm:px-5 py-4">
+				<ErrorNotice {error} title={m.devices_k8s_error()} onretry={() => void load()} />
 			</div>
 		{:else if cluster}
 			{#if verdict}
-				<p class={`px-5 pt-4 text-sm ${verdict.tone === 'signal' ? 'text-ink-2' : verdict.tone === 'warning' ? 'text-warning-ink' : 'text-advisory-ink'}`}>{verdict.text}</p>
+				<p class={`px-4 sm:px-5 pt-4 text-sm ${verdict.tone === 'signal' ? 'text-ink-2' : verdict.tone === 'warning' ? 'text-warning-ink' : 'text-advisory-ink'}`}>{verdict.text}</p>
 			{/if}
-			<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-5 pt-4 sm:grid-cols-4">
-				<Figure label="Nodes ready" value={cluster.totals.nodes !== undefined ? `${cluster.totals.nodes_ready ?? 0}/${cluster.totals.nodes}` : null} tone={(cluster.totals.nodes_ready ?? 0) < (cluster.totals.nodes ?? 0) ? 'warning' : 'ink'} />
-				<Figure label="Pods running" value={cluster.totals.pods !== undefined ? `${cluster.totals.pods_running ?? 0}/${cluster.totals.pods}` : null} />
-				<Figure label="Workloads short" value={String(cluster.workloads.length)} tone={cluster.workloads.length > 0 ? 'advisory' : 'ink'} />
-				<Figure label="Warnings, last hour" value={cluster.totals.warning_events !== undefined ? String(cluster.totals.warning_events) : null} />
+			<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-4 sm:px-5 pt-4 sm:grid-cols-4">
+				<Figure label={m.devices_k8s_fig_nodes()} value={cluster.totals.nodes !== undefined ? `${cluster.totals.nodes_ready ?? 0}/${cluster.totals.nodes}` : null} tone={(cluster.totals.nodes_ready ?? 0) < (cluster.totals.nodes ?? 0) ? 'warning' : 'ink'} />
+				<Figure label={m.devices_k8s_fig_pods()} value={cluster.totals.pods !== undefined ? `${cluster.totals.pods_running ?? 0}/${cluster.totals.pods}` : null} />
+				<Figure label={m.devices_k8s_fig_short()} value={String(cluster.workloads.length)} tone={cluster.workloads.length > 0 ? 'advisory' : 'ink'} />
+				<Figure label={m.devices_k8s_fig_warnings()} value={cluster.totals.warning_events !== undefined ? String(cluster.totals.warning_events) : null} />
 			</div>
 
-			<section class="border-t border-line px-5 py-4">
-				<h3 class="label-tape">Nodes</h3>
+			<section class="border-t border-line px-4 sm:px-5 py-4">
+				<h3 class="label-tape">{m.devices_k8s_nodes()}</h3>
 				<ul class="mt-2 flex flex-col gap-2">
 					{#each cluster.nodes as n (n.name)}
 						<li class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
-							<Plate tone={n.ready === false ? 'warning' : n.ready ? 'signal' : 'ghost'} label={n.ready === false ? 'Not ready' : n.ready ? 'Ready' : 'Unknown'} />
+							<Plate tone={n.ready === false ? 'warning' : n.ready ? 'signal' : 'ghost'} label={n.ready === false ? m.devices_k8s_pod_notready() : n.ready ? m.devices_k8s_node_ready() : m.devices_k8s_node_unknown()} />
 							<span class="min-w-0 text-sm font-semibold text-ink break-all">{n.name}</span>
 							{#each n.pressures as p (p)}<Plate tone="advisory" label={PRESSURE_WORD[p] ?? p} bare />{/each}
-							{#if n.cordoned}<Plate tone="muted" label="Cordoned" bare />{/if}
-							{#if n.kubelet}<span class="text-sm text-ink-2">{`kubelet ${n.kubelet}`}</span>{/if}
+							{#if n.cordoned}<Plate tone="muted" label={m.devices_k8s_cordoned()} bare />{/if}
+							{#if n.kubelet}<span class="text-sm text-ink-2">{m.devices_k8s_kubelet({ version: n.kubelet })}</span>{/if}
 						</li>
 					{/each}
 				</ul>
 			</section>
 
 			{#if cluster.pods.length > 0}
-				<section class="border-t border-line px-5 py-4">
-					<h3 class="label-tape">Pods needing attention</h3>
+				<section class="border-t border-line px-4 sm:px-5 py-4">
+					<h3 class="label-tape">{m.devices_k8s_pods_heading()}</h3>
 					<ul class="mt-2 flex flex-col gap-2">
 						{#each cluster.pods as p (`${p.namespace}/${p.pod}`)}
 							{@const plate = podPlate(p)}
@@ -263,7 +277,7 @@
 								<Plate tone={plate.tone} label={plate.label} />
 								<span class="min-w-0 text-sm text-ink break-all">{`${p.namespace}/${p.pod}`}</span>
 								{#if p.restarts !== null && p.restarts > 0}
-									<span class="tnum text-sm text-ink-2">{plural(p.restarts, 'restart', 'restarts')}</span>
+									<span class="tnum text-sm text-ink-2">{plural(p.restarts, () => m.devices_k8s_restarts_one({ count: p.restarts ?? 0 }), () => m.devices_k8s_restarts_other({ count: p.restarts ?? 0 }))}</span>
 								{/if}
 							</li>
 						{/each}
@@ -272,12 +286,12 @@
 			{/if}
 
 			{#if cluster.workloads.length > 0}
-				<section class="border-t border-line px-5 py-4">
-					<h3 class="label-tape">Workloads missing replicas</h3>
+				<section class="border-t border-line px-4 sm:px-5 py-4">
+					<h3 class="label-tape">{m.devices_k8s_workloads_heading()}</h3>
 					<ul class="mt-2 flex flex-col gap-2">
 						{#each cluster.workloads as w (`${w.kind}/${w.namespace}/${w.name}`)}
 							<li class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
-								<Plate tone="advisory" label={`${w.ready}/${w.desired} ready`} />
+								<Plate tone="advisory" label={m.devices_k8s_ready_ratio({ ready: w.ready, desired: w.desired })} />
 								<span class="min-w-0 text-sm text-ink break-all">{`${w.namespace}/${w.name}`}</span>
 								<span class="text-sm text-ink-2">{w.kind}</span>
 							</li>
@@ -287,12 +301,12 @@
 			{/if}
 
 			{#if cluster.stuckClaims.length > 0}
-				<section class="border-t border-line px-5 py-4">
-					<h3 class="label-tape">Volume claims not bound</h3>
+				<section class="border-t border-line px-4 sm:px-5 py-4">
+					<h3 class="label-tape">{m.devices_k8s_claims_heading()}</h3>
 					<ul class="mt-2 flex flex-col gap-2">
 						{#each cluster.stuckClaims as c (`${c.namespace}/${c.pvc}`)}
 							<li class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
-								<Plate tone="advisory" label="Pending" />
+								<Plate tone="advisory" label={m.devices_k8s_pod_pending()} />
 								<span class="min-w-0 text-sm text-ink break-all">{`${c.namespace}/${c.pvc}`}</span>
 							</li>
 						{/each}
@@ -301,8 +315,8 @@
 			{/if}
 
 			{#if cluster.reasons.length > 0}
-				<section class="border-t border-line px-5 py-4">
-					<h3 class="label-tape">Warning events, last hour</h3>
+				<section class="border-t border-line px-4 sm:px-5 py-4">
+					<h3 class="label-tape">{m.devices_k8s_events_heading()}</h3>
 					<p class="tnum mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-2">
 						{#each cluster.reasons as r (r.reason)}
 							<span><span class="text-ink">{r.reason}</span>{` ×${r.count}`}</span>

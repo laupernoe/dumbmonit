@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 /**
  * Folders: a flat, non-nested grouping of top-level devices on `/targets`.
  *
@@ -88,7 +89,7 @@ export function buildFolders(
 
 	const sections = [...buckets.entries()].map(([key, bucketRows]) => ({
 		key,
-		label: key || 'No folder',
+		label: key || m.devices_folders_none(),
 		rows: bucketRows
 	}));
 

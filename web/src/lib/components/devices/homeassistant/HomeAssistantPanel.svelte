@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Home Assistant: whether the core runs, then what needs a hand — low
 	 * batteries, updates, open repairs, unavailable entities — then the
@@ -182,40 +183,40 @@
 {#if !loading && (hasAnything || error)}
 	<Panel
 		title="Home Assistant"
-		description={view.version ? `Version ${view.version}` : undefined}
+		description={view.version ? m.devices_ha_version({ version: view.version }) : undefined}
 		padded={false}
 		class="rise-in"
 	>
 		{#snippet aside()}
 			{#if view.recovery}
-				<Plate tone="warning" label="Recovery mode" />
+				<Plate tone="warning" label={m.devices_ha_recovery()} />
 			{:else if view.running === false}
-				<Plate tone="warning" label="Not running" />
+				<Plate tone="warning" label={m.devices_ha_not_running()} />
 			{:else if view.running}
-				<Plate tone="signal" label="Running" />
+				<Plate tone="signal" label={m.devices_ha_running()} />
 			{/if}
 		{/snippet}
 		{#if error}
-			<div class="px-5 py-4">
-				<ErrorNotice {error} title="Could not load Home Assistant" onretry={() => void load()} />
+			<div class="px-4 py-4 sm:px-5">
+				<ErrorNotice {error} title={m.devices_ha_err()} onretry={() => void load()} />
 			</div>
 		{:else}
-			<div class="flex flex-wrap gap-x-6 gap-y-1 px-5 py-3 text-sm text-ink-2 tnum">
-				<span><span class="font-medium text-ink">{formatCount(totals.total)}</span>{' '}entities</span>
-				<span><span class="font-medium text-ink">{formatCount(totals.unavailable)}</span>{' '}unavailable</span>
-				<span><span class="font-medium text-ink">{formatCount(totals.unknown)}</span>{' '}unknown</span>
+			<div class="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm text-ink-2 tnum sm:px-5">
+				<span><span class="font-medium text-ink">{formatCount(totals.total)}</span>{' '}{m.devices_ha_entities()}</span>
+				<span><span class="font-medium text-ink">{formatCount(totals.unavailable)}</span>{' '}{m.devices_ha_unavailable()}</span>
+				<span><span class="font-medium text-ink">{formatCount(totals.unknown)}</span>{' '}{m.devices_ha_unknown()}</span>
 				{#if view.batteries !== null}
-					<span><span class="font-medium text-ink">{formatCount(view.low.length)}</span>{` of ${formatCount(view.batteries)} batteries low`}</span>
+					<span>{m.devices_ha_batteries({ low: formatCount(view.low.length), total: formatCount(view.batteries) })}</span>
 				{/if}
 			</div>
 
 			{#if attention === 0}
-				<p class="border-t border-line px-5 py-4 text-sm text-ink-2">Nothing needs attention: no low battery, no update waiting, no open repair.</p>
+				<p class="border-t border-line px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_ha_all_ok()}</p>
 			{/if}
 
 			{#if view.repairs && view.repairs.length > 0}
-				<div class="border-t border-line px-5 py-4">
-					<h3 class="text-sm font-semibold text-ink">Repairs</h3>
+				<div class="border-t border-line px-4 py-4 sm:px-5">
+					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_repairs()}</h3>
 					<ul class="mt-2 flex flex-col gap-2">
 						{#each view.repairs as r (`${r.domain}:${r.issue}`)}
 							<li class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -229,12 +230,12 @@
 			{/if}
 
 			{#if view.low.length > 0}
-				<div class="border-t border-line px-5 py-4">
-					<h3 class="text-sm font-semibold text-ink">Low batteries</h3>
+				<div class="border-t border-line px-4 py-4 sm:px-5">
+					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_low_batteries()}</h3>
 					<ul class="mt-2 flex flex-col gap-1.5">
 						{#each view.low as b (b.entity)}
 							<li class="flex items-baseline gap-3 text-sm">
-								<span class="tnum w-12 shrink-0 font-medium text-warning-ink">{b.level > 0 ? `${Math.round(b.level)}%` : 'Low'}</span>
+								<span class="tnum w-12 shrink-0 font-medium text-warning-ink">{b.level > 0 ? `${Math.round(b.level)}%` : m.devices_ha_low()}</span>
 								<span class="min-w-0 truncate text-ink" title={b.entity}>{b.name}</span>
 							</li>
 						{/each}
@@ -243,8 +244,8 @@
 			{/if}
 
 			{#if view.updates.length > 0}
-				<div class="border-t border-line px-5 py-4">
-					<h3 class="text-sm font-semibold text-ink">Updates waiting</h3>
+				<div class="border-t border-line px-4 py-4 sm:px-5">
+					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_updates()}</h3>
 					<ul class="mt-2 flex flex-col gap-1.5">
 						{#each view.updates as u (u.entity)}
 							<li class="flex flex-wrap items-baseline gap-x-3 text-sm">
@@ -257,8 +258,8 @@
 			{/if}
 
 			{#if view.unavailable.length > 0}
-				<div class="border-t border-line px-5 py-4">
-					<h3 class="text-sm font-semibold text-ink">Unavailable entities</h3>
+				<div class="border-t border-line px-4 py-4 sm:px-5">
+					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_unavailable_entities()}</h3>
 					<ul class="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
 						{#each view.unavailable as e (e.entity)}
 							<li class="min-w-0 truncate text-sm">
@@ -267,22 +268,23 @@
 						{/each}
 					</ul>
 					{#if view.unavailable.length >= 50}
-						<p class="mt-2 text-[0.8rem] text-ink-3">Only the first 50 are named; the counts below include them all.</p>
+						<p class="mt-2 text-[0.8rem] text-ink-3">{m.devices_ha_first_50()}</p>
 					{/if}
 				</div>
 			{/if}
 
 			{#if view.domains.length > 0}
-				<div class="border-t border-line px-5 py-4">
-					<h3 class="text-sm font-semibold text-ink">Entities by domain</h3>
+				<div class="border-t border-line px-4 py-4 sm:px-5">
+					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_by_domain()}</h3>
 					{#if problemDomains.length > 0}
-						<table class="mt-2 w-full text-sm">
+						<div class="mt-2 overflow-x-auto">
+						<table class="w-full text-sm">
 							<thead>
 								<tr class="text-left text-[0.75rem] text-ink-3">
-									<th class="py-1 font-normal">Domain</th>
-									<th class="py-1 text-right font-normal">Entities</th>
-									<th class="py-1 text-right font-normal">Unavailable</th>
-									<th class="py-1 text-right font-normal">Unknown</th>
+									<th class="py-1 font-normal">{m.devices_ha_col_domain()}</th>
+									<th class="py-1 text-right font-normal">{m.devices_ha_col_entities()}</th>
+									<th class="py-1 text-right font-normal">{m.devices_ha_col_unavailable()}</th>
+									<th class="py-1 text-right font-normal">{m.devices_ha_col_unknown()}</th>
 								</tr>
 							</thead>
 							<tbody class="tnum">
@@ -296,10 +298,11 @@
 								{/each}
 							</tbody>
 						</table>
+						</div>
 					{/if}
 					{#if quietDomains.length > 0}
 						<p class="mt-2 text-[0.8rem] text-ink-3">
-							{`All available: ${quietDomains.map((d) => `${d.name} (${formatCount(d.total)})`).join(', ')}.`}
+							{m.devices_ha_all_available({ list: quietDomains.map((d) => `${d.name} (${formatCount(d.total)})`).join(', ') })}
 						</p>
 					{/if}
 				</div>

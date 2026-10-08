@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Slotted availability history: one thin bar per slot, oldest on the left,
 	 * now on the right. Teal when every check in the slot passed, red as soon
@@ -22,11 +23,11 @@
 		down: 'bg-warning',
 		none: 'ghost-cell bg-ghost'
 	};
-	const WORD: Record<HistorySlot['state'], string> = {
-		up: 'Up',
-		down: 'Down',
-		none: 'No check'
-	};
+	const WORD = $derived<Record<HistorySlot['state'], string>>({
+		up: m.devices_uptime_up(),
+		down: m.devices_uptime_down(),
+		none: m.devices_uptime_none()
+	});
 
 	const down = $derived(slots.filter((s) => s.state === 'down').length);
 	const up = $derived(slots.filter((s) => s.state === 'up').length);
@@ -34,8 +35,8 @@
 
 	function tooltip(slot: HistorySlot): string {
 		const when = formatDateTime(new Date(slot.ts * 1000));
-		if (slot.state === 'down') return `${when} · Down · ${formatFailureReason(reason)}`;
-		return `${when} · ${WORD[slot.state]}`;
+		if (slot.state === 'down') return m.devices_uptime_slot_down({ when, reason: formatFailureReason(reason) });
+		return m.devices_uptime_slot({ when, state: WORD[slot.state] });
 	}
 </script>
 
@@ -43,7 +44,7 @@
 	<div
 		class="flex h-9 items-stretch gap-[2px]"
 		role="img"
-		aria-label={`${up} slots up, ${down} down, ${slots.length - up - down} without a check`}
+		aria-label={m.devices_uptime_aria({ up, down, none: slots.length - up - down })}
 	>
 		{#each slots as slot (slot.ts)}
 			<div
@@ -55,10 +56,10 @@
 	<div class="mt-1.5 flex items-center justify-between gap-3 text-[0.75rem] text-ink-2">
 		<span class="tnum truncate">{from}</span>
 		<span class="flex items-center gap-3">
-			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-signal" aria-hidden="true"></span>Up</span>
-			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-warning" aria-hidden="true"></span>Down</span>
-			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-ghost" aria-hidden="true"></span>No check</span>
+			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-signal" aria-hidden="true"></span>{WORD.up}</span>
+			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-warning" aria-hidden="true"></span>{WORD.down}</span>
+			<span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-1.5 rounded-[1px] bg-ghost" aria-hidden="true"></span>{WORD.none}</span>
 		</span>
-		<span>now</span>
+		<span>{m.devices_uptime_now()}</span>
 	</div>
 </div>
