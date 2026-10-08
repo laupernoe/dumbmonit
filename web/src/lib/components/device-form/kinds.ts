@@ -1,4 +1,5 @@
 import { m } from '#lib/paraglide/messages.js';
+import { kindLabel } from '#lib/kind-label.js';
 /**
  * Presentation knowledge about collector kinds.
  *
@@ -366,7 +367,7 @@ function kindChoice(c: CollectorInfo, groupTitle: string): KindChoice {
 		id: c.kind,
 		kind: c.kind,
 		feature: null,
-		label: c.label,
+		label: kindLabel(c.kind, c.label),
 		summary: c.summary,
 		icon: kindIcon(c.kind),
 		pack: isPackKind(c.kind),

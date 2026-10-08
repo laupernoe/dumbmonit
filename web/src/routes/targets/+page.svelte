@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Devices — the rack.
@@ -586,7 +587,7 @@
 	async function loadKinds(signal?: AbortSignal) {
 		try {
 			const collectors = await listCollectors(signal);
-			kindLabels = new Map(collectors.map((c) => [c.kind, c.label]));
+			kindLabels = new Map(collectors.map((c) => [c.kind, kindLabel(c.kind, c.label)]));
 		} catch {
 			// The raw kind is a fine label until the server describes it.
 		}

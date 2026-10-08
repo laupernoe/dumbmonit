@@ -22,7 +22,7 @@ Paste this before `</body>`, with your server address and the page's address:
 |---|---|---|
 | `data-position` | `top`, `bottom` | `top` |
 | `data-show` | `issues` (only when something is wrong), `always` | `issues` |
-| `data-lang` | `en`, `fr` | page language, else `en` |
+| `data-lang` | `en`, `fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans` | page language, else `en` |
 
 The script has no dependencies, draws inside a Shadow DOM so your styles do not
 touch it, follows the visitor's light or dark preference and can be dismissed

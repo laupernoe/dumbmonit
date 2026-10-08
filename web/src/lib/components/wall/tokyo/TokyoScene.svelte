@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The wall's living backdrop, Tokyo edition: a low-rise rooftop under power
 	 * lines, Tokyo Tower and the Skytree over a dense sea of small buildings,
@@ -419,7 +421,7 @@
 	});
 
 	const gastonSign = $derived(
-		trouble ? `${problems} ${problems === 1 ? 'PROBLEM' : 'PROBLEMS'}` : null
+		trouble ? m.wall_scene_sign_problems({ count: problems }).toLocaleUpperCase(getLocale()) : null
 	);
 	const gastonEyes = $derived(startled ? 'startled' : 'open');
 	const wires = WIRES.map((w) => wirePath(w));

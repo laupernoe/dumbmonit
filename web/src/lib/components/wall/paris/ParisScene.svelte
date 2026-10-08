@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The wall's living backdrop: a Paris rooftop, the Eiffel Tower, and the
 	 * DumbMonit pigeons going about their day.
@@ -368,7 +370,7 @@
 		});
 	});
 
-	const gastonSign = $derived(trouble ? `${problems} ${problems === 1 ? 'PROBLEM' : 'PROBLEMS'}` : null);
+	const gastonSign = $derived(trouble ? m.wall_scene_sign_problems({ count: problems }).toLocaleUpperCase(getLocale()) : null);
 	const gastonEyes = $derived(startled ? 'startled' : 'open');
 </script>
 
