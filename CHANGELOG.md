@@ -639,8 +639,7 @@ All notable changes to this project are documented here. The format follows
   `DUMBMONIT_RESET_PASSWORD` as what it does — remove every account and
   session, leaving devices, rules and channels alone. The API reference gains
   the MCP endpoint, which was undocumented, and several corrected payloads.
-  `PRODUCT.md` no longer says "two containers" or "a single password"; the
-  README feature list gains alert acknowledgement, the second factor, the audit
+  The README feature list gains alert acknowledgement, the second factor, the audit
   log and the scoped REST API tokens, and its "known gaps" list no longer names
   three things that have since shipped.
 

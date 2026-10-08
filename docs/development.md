@@ -70,8 +70,7 @@ Conventions: Svelte 5 runes only (`$props`, `$state`, `$derived`, `$effect`,
 snippets, `onclick`). All network access goes through `src/lib/api/`;
 components never `fetch`. Types in `api/types.ts` mirror the Rust structs
 exactly and must be kept in sync with `crates/server/src/api/*.rs`. The design
-system (tokens in `src/app.css`, primitives in `src/lib/ui/`) is documented in
-`DESIGN.md`; the product context in `PRODUCT.md`. Never run two `vite build`s
+system lives in `src/app.css` (tokens) and `src/lib/ui/` (primitives). Never run two `vite build`s
 at once: they wipe `.svelte-kit/output`.
 
 ## Translations (Weblate)
