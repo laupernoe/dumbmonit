@@ -226,9 +226,7 @@ existing style, keep it consistent within a file. The web UI, its copy, its code
 and everything the user sees are in English. Commit messages, issues and PR
 discussions are in English.
 
-**Web UI rules** live in [DESIGN.md](DESIGN.md) (tokens, components,
-composition rules, what is refused) and [PRODUCT.md](PRODUCT.md) (who it is for,
-principles). In short: Svelte 5 runes only, all network access through
+**Web UI rules**: Svelte 5 runes only, all network access through
 `src/lib/api/`, token colours only, status is never colour alone, one authored
 motion per page, `prefers-reduced-motion` respected.
 
