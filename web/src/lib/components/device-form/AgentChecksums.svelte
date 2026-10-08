@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * SHA-256 checksums of the agent binaries this server ships, shown next to the
 	 * install command. The installer verifies the download against them on its
@@ -24,7 +25,7 @@
 {#if checksums.length > 0}
 	<details class="group rounded-lg border border-line bg-canvas-deep px-3 py-2 text-sm">
 		<summary class="cursor-pointer select-none text-ink-2">
-			Binary checksums (SHA-256) — the installer verifies the download against these
+			{m.deviceform_checksums_summary()}
 		</summary>
 		<dl class="mt-2 grid gap-1.5">
 			{#each checksums as entry (entry.file)}

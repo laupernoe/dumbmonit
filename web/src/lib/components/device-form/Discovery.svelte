@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Scan my network: find SNMP devices on a CIDR and add the ticked ones.
 	 *
@@ -89,7 +90,7 @@
 				});
 				rows = { ...rows, [device.address]: { status: 'added' } };
 			} catch (cause) {
-				const message = cause instanceof Error ? cause.message : 'Unknown error.';
+				const message = cause instanceof Error ? cause.message : m.deviceform_discovery_unknown_error();
 				rows = { ...rows, [device.address]: { status: 'failed', message } };
 			}
 		}
@@ -99,7 +100,7 @@
 
 <div class="grid gap-5">
 	<form onsubmit={scan} class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)_auto] sm:items-end">
-		<Field label="Network range" for="scan-cidr" help="In CIDR notation. Up to 4096 addresses per scan.">
+		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={m.deviceform_discovery_range_help()}>
 			<input
 				id="scan-cidr"
 				class="input font-mono text-[0.8125rem]"
@@ -110,45 +111,44 @@
 				bind:value={cidr}
 			/>
 		</Field>
-		<Field label="SNMP community" for="scan-community" help="Tried on every address.">
+		<Field label={m.deviceform_discovery_community_label()} for="scan-community" help={m.deviceform_discovery_community_help()}>
 			<input id="scan-community" class="input" type="text" autocomplete="off" bind:value={community} placeholder="public" />
 		</Field>
 		<div class="sm:pb-[1.625rem]">
 			<Button type="submit" variant="secondary" loading={scanning} disabled={!cidrValid} class="w-full sm:w-auto">
 				<Radar class="size-4" aria-hidden="true" />
-				{scanning ? 'Scanning' : 'Scan'}
+				{scanning ? m.deviceform_discovery_scanning() : m.deviceform_discovery_scan()}
 			</Button>
 		</div>
 	</form>
 
 	<div aria-live="polite" class="grid gap-4">
 		{#if scanning}
-			<p class="text-sm text-ink-2">Scanning <span class="font-mono">{cidr.trim()}</span>. A /24 takes a few seconds.</p>
+			<p class="text-sm text-ink-2">{m.deviceform_discovery_scanning_note({ cidr: cidr.trim() })}</p>
 			<div class="grid gap-2">
 				<Skeleton class="h-14 w-full" rows={3} />
 			</div>
 		{:else if unavailable}
 			<EmptyState
-				title="This server cannot scan networks yet"
-				description="Update the server to scan, or pick a type on the left and add devices one by one."
+				title={m.deviceform_discovery_unavailable_title()}
+				description={m.deviceform_discovery_unavailable_desc()}
 			/>
 		{:else if scanError}
-			<ErrorNotice error={scanError} title="The scan failed" onretry={() => void scan()} />
+			<ErrorNotice error={scanError} title={m.deviceform_discovery_failed_title()} onretry={() => void scan()} />
 		{:else if scanned && devices.length === 0}
 			<EmptyState
-				title={`Nothing answered on ${cidr.trim()}`}
-				description="Check the range and the community, and make sure SNMP is enabled on the devices — the panel on the right explains how."
+				title={m.deviceform_discovery_none_title({ cidr: cidr.trim() })}
+				description={m.deviceform_discovery_none_desc()}
 			/>
 		{:else if devices.length > 0}
 			<div class="flex flex-wrap items-center justify-between gap-2">
 				<p class="text-sm text-ink-2">
-					<span class="tnum font-semibold text-ink">{devices.length}</span>
-					{devices.length === 1 ? 'device' : 'devices'} found{#if scannedCount !== null}
-						<span class="tnum"> · {scannedCount} addresses probed</span>{/if}
+					<span class="tnum">{m.deviceform_discovery_found({ count: devices.length })}</span>{#if scannedCount !== null}
+						<span class="tnum"> · {m.deviceform_discovery_probed({ count: scannedCount })}</span>{/if}
 				</p>
 				{#if selectable.length > 1}
 					<Button size="sm" variant="ghost" onclick={toggleAll} disabled={adding}>
-						{selectedCount === selectable.length ? 'Untick all' : 'Tick all'}
+						{selectedCount === selectable.length ? m.deviceform_discovery_untick_all() : m.deviceform_discovery_tick_all()}
 					</Button>
 				{/if}
 			</div>
@@ -158,14 +158,16 @@
 					{@const row = rows[device.address] ?? { status: 'idle' }}
 					{@const done = device.already_added || row.status === 'added'}
 					<li class={`flex items-center gap-3 px-4 py-3 ${done ? 'ghost-cell' : ''}`}>
-						<input
-							type="checkbox"
-							class="size-4 shrink-0 accent-[var(--c-signal)]"
-							checked={!done && selection.has(device.address)}
-							disabled={done || adding}
-							onchange={() => toggle(device.address)}
-							aria-label={`Add ${device.name ?? device.sysname ?? device.address}`}
-						/>
+						<label class="-m-3 flex shrink-0 cursor-pointer items-center p-3">
+							<input
+								type="checkbox"
+								class="size-5 shrink-0 accent-[var(--c-signal)]"
+								checked={!done && selection.has(device.address)}
+								disabled={done || adding}
+								onchange={() => toggle(device.address)}
+								aria-label={m.deviceform_discovery_add_aria({ name: device.name ?? device.sysname ?? device.address })}
+							/>
+						</label>
 						<div class="min-w-0 flex-1">
 							<p class={`truncate text-sm font-semibold ${done ? 'text-ink-2' : 'text-ink'}`}>
 								{device.name ?? device.sysname ?? device.address}
@@ -179,13 +181,13 @@
 								<Plate tone="ghost" bare label={device.profile_id} class="hidden sm:inline-flex" />
 							{/if}
 							{#if device.already_added}
-								<Plate tone="ghost" label="Already added" />
+								<Plate tone="ghost" label={m.deviceform_discovery_already()} />
 							{:else if row.status === 'adding'}
-								<Plate tone="info" label="Adding" pulse />
+								<Plate tone="info" label={m.deviceform_discovery_adding()} pulse />
 							{:else if row.status === 'added'}
-								<Plate tone="signal" label="Added" />
+								<Plate tone="signal" label={m.deviceform_discovery_added()} />
 							{:else if row.status === 'failed'}
-								<Plate tone="warning" label="Failed" title={row.message} />
+								<Plate tone="warning" label={m.deviceform_discovery_failed()} title={row.message} />
 							{/if}
 						</div>
 					</li>
@@ -199,9 +201,11 @@
 
 			{#if addedCount > 0 && !adding}
 				<p class="text-sm text-ink" role="status">
-					<span class="tnum font-semibold">{addedCount}</span>
-					{addedCount === 1 ? 'device' : 'devices'} added{#if failedCount > 0}, <span class="tnum">{failedCount}</span> failed{/if}. Profiles are
-					detected on the first check.
+					{#if failedCount > 0}
+						{m.deviceform_discovery_added_failed_note({ count: addedCount, failed: failedCount })}
+					{:else}
+						{m.deviceform_discovery_added_note({ count: addedCount })}
+					{/if}
 				</p>
 			{/if}
 
@@ -209,18 +213,17 @@
 				{#if selectable.length > 0}
 					<ClickSpark>
 						<Button variant="primary" loading={adding} disabled={selectedCount === 0} onclick={addSelected}>
-							Add {selectedCount === 1 ? '1 device' : `${selectedCount} devices`}
+							{m.deviceform_discovery_add_n({ count: selectedCount })}
 						</Button>
 					</ClickSpark>
 				{/if}
 				{#if addedCount > 0}
-					<Button variant={selectable.length > 0 ? 'ghost' : 'secondary'} href="/targets">See devices</Button>
+					<Button variant={selectable.length > 0 ? 'ghost' : 'secondary'} href="/targets">{m.deviceform_discovery_see_devices()}</Button>
 				{/if}
 			</div>
 		{:else}
 			<p class="text-sm leading-relaxed text-ink-2">
-				Enter your local network range and scan. DumbMonit looks for devices answering SNMP with the
-				community above, then lets you add them all at once.
+				{m.deviceform_discovery_intro()}
 			</p>
 		{/if}
 	</div>

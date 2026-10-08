@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Step 1 of adding anything: what do you want to watch?
 	 *
@@ -105,22 +106,22 @@
 			type="search"
 			class="input"
 			style="padding-left: 2.25rem"
-			placeholder="Search: switch, NAS, Docker, backup, website…"
+			placeholder={m.deviceform_picker_search_placeholder()}
 			bind:value={query}
 			onkeydown={onsearchkey}
 			autocomplete="off"
 			spellcheck="false"
-			aria-label="Search what to monitor"
+			aria-label={m.deviceform_picker_search_label()}
 		/>
 	</div>
 
 	{#if flat.length === 0}
 		<div class="rounded-[var(--radius-card)] border border-dashed border-line px-4 py-6 text-center">
-			<p class="text-sm text-ink">Nothing here matches “{query.trim()}”.</p>
+			<p class="text-sm text-ink">{m.deviceform_picker_no_match({ query: query.trim() })}</p>
 			{#if empty}{@render empty(query.trim())}{/if}
 		</div>
 	{:else}
-		<div bind:this={host} role="radiogroup" aria-label="What to monitor" class="grid gap-5">
+		<div bind:this={host} role="radiogroup" aria-label={m.deviceform_picker_group_label()} class="grid gap-5">
 			{#each visible as group (group.id)}
 				{@const items = shown(group)}
 				{@const isExpanded = searching || expanded.has(group.id)}
@@ -159,7 +160,7 @@
 									<span class="min-w-0 flex-1 pr-5">
 										<span class="flex flex-wrap items-center gap-x-2 gap-y-1">
 											<span class="text-[0.9375rem] leading-tight font-semibold text-ink">{choice.label}</span>
-											{#if choice.pack}<Plate tone="info" label="Pack" title="Added by an integration pack" />{/if}
+											{#if choice.pack}<Plate tone="info" label={m.deviceform_picker_pack()} title={m.deviceform_picker_pack_title()} />{/if}
 										</span>
 										{#if choice.summary}
 											<span class="mt-1 line-clamp-2 text-[0.8125rem] leading-snug text-ink-2">{choice.summary}</span>
@@ -185,7 +186,7 @@
 							onclick={() => toggleExpanded(group.id)}
 						>
 							<ChevronDown class={`size-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
-							{isExpanded ? 'Show less' : `Show all ${group.choices.length}`}
+							{isExpanded ? m.deviceform_picker_show_less() : m.deviceform_picker_show_all({ count: group.choices.length })}
 						</button>
 					{/if}
 				</section>
