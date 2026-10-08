@@ -223,7 +223,8 @@ pub fn assemble(input: Inputs<'_>) -> ReportData {
     let previous_incident_count =
         incidents.iter().filter(|i| overlaps(i, period.previous_start, period.start)).count();
 
-    let mut per_device: HashMap<i64, Vec<(DateTime<Utc>, DateTime<Utc>)>> = HashMap::new();
+    type Span = (DateTime<Utc>, DateTime<Utc>);
+    let mut per_device: HashMap<i64, Vec<Span>> = HashMap::new();
     let mut counts: HashMap<i64, usize> = HashMap::new();
     for incident in &in_period {
         if let Some(id) = incident.target_id {

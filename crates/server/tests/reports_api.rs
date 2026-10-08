@@ -40,7 +40,7 @@ async fn un_rapport_a_des_valeurs_par_defaut_hebdomadaires() {
     assert_eq!(reply.body["hour"], 8);
     assert_eq!(reply.body["timezone"], "UTC");
     assert_eq!(reply.body["enabled"], true);
-    assert_eq!(reply.body["recipients"], json!(["ops@example.org"]), "normalised");
+    assert_eq!(reply.body["recipients"], json!(["Ops@example.org"]), "normalised");
     assert!(reply.body["last_sent_at"].is_null(), "never sent yet");
     assert!(reply.body["next_run_at"].is_string(), "next run announced");
 
