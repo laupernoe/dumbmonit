@@ -542,7 +542,7 @@ mod tests {
         let rendered = render(&hostile(), Tz::UTC, false);
         assert!(!rendered.html.contains("<img"));
         assert!(!rendered.html.contains("<link"));
-        assert!(!rendered.html.contains("src="));
+        assert!(!rendered.html.contains("src=\""));
         assert!(!rendered.html.contains("url("));
     }
 

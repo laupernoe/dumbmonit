@@ -2172,6 +2172,22 @@ paths:
         "200": { $ref: "#/components/responses/Svg" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/public/status/{slug}/banner.js:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatusBannerScript
+      tags: [Public status]
+      summary: Script of the status banner for third-party websites
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: JavaScript, to include with a script tag.
+          content:
+            application/javascript:
+              schema: { type: string }
+
   /api/public/status/{slug}/rss:
     parameters:
       - $ref: "#/components/parameters/Slug"

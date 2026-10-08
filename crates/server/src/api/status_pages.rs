@@ -16,7 +16,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode, header};
+use axum::http::{HeaderMap, HeaderName, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
@@ -1082,7 +1082,7 @@ async fn public_banner_js() -> Response {
         [
             (header::CONTENT_TYPE, "application/javascript; charset=utf-8"),
             (header::CACHE_CONTROL, "public, max-age=3600"),
-            (header::CROSS_ORIGIN_RESOURCE_POLICY, "cross-origin"),
+            (HeaderName::from_static("cross-origin-resource-policy"), "cross-origin"),
         ],
         include_str!("../../assets/banner.js"),
     )
