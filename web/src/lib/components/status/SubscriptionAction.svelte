@@ -4,6 +4,7 @@
 	 * button, then a plain sentence saying what happened and a way back to the
 	 * status page.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { Check, MailX } from 'lucide-svelte';
 	import { confirmStatusSubscription, toApiError, unsubscribeFromStatus } from '#lib/api/index.js';
 
@@ -22,16 +23,16 @@
 	const copy = $derived(
 		action === 'confirm'
 			? {
-					title: 'Confirm your subscription',
-					lead: 'Press the button to receive incident and maintenance updates from this status page by email.',
-					button: 'Confirm subscription',
-					done: 'You are subscribed. Every message has a link to unsubscribe.'
+					title: m.status_action_confirm_title(),
+					lead: m.status_action_confirm_lead(),
+					button: m.status_action_confirm_button(),
+					done: m.status_action_confirm_done()
 				}
 			: {
-					title: 'Unsubscribe',
-					lead: 'Press the button to stop receiving updates from this status page.',
-					button: 'Unsubscribe',
-					done: 'You are unsubscribed. No more emails will be sent to this address.'
+					title: m.status_action_unsub_title(),
+					lead: m.status_action_unsub_lead(),
+					button: m.status_action_unsub_button(),
+					done: m.status_action_unsub_done()
 				}
 	);
 
@@ -44,7 +45,7 @@
 			done = true;
 		} catch (cause) {
 			const apiError = toApiError(cause);
-			error = apiError.status === 404 ? 'This link is no longer valid. Subscribe again from the status page.' : apiError.message;
+			error = apiError.status === 404 ? m.status_action_link_invalid() : apiError.message;
 		} finally {
 			busy = false;
 		}
@@ -54,7 +55,7 @@
 </script>
 
 <svelte:head>
-	<title>{copy.title} · Status</title>
+	<title>{m.status_action_page_title({ title: copy.title })}</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -62,7 +63,7 @@
 	<div class="w-full max-w-md rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-lift">
 		<h1 class="display text-2xl text-ink">{copy.title}</h1>
 		{#if !token}
-			<p class="mt-3 text-sm text-ink-2" role="alert">This link is incomplete. Open it again from the email you received.</p>
+			<p class="mt-3 text-sm text-ink-2" role="alert">{m.status_action_link_incomplete()}</p>
 		{:else if done}
 			<p class="mt-3 flex items-start gap-2 text-sm text-ink" role="status">
 				<Check class="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
@@ -77,14 +78,14 @@
 				disabled={busy}
 			>
 				{#if action === 'unsubscribe'}<MailX class="size-4" aria-hidden="true" />{:else}<Check class="size-4" aria-hidden="true" />{/if}
-				{busy ? 'Working…' : copy.button}
+				{busy ? m.status_action_working() : copy.button}
 			</button>
 			{#if error}
 				<p class="mt-3 text-sm text-warning-ink" role="alert">{error}</p>
 			{/if}
 		{/if}
 		<p class="mt-6 text-sm">
-			<a class="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href={back}>Back to the status page</a>
+			<a class="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href={back}>{m.status_action_back()}</a>
 		</p>
 	</div>
 </main>

@@ -5,6 +5,7 @@
 	 * whether the address was new, pending or already subscribed — the page tells
 	 * no one who follows it.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { Mail, Rss } from 'lucide-svelte';
 	import { subscribeToStatus, toApiError } from '#lib/api/index.js';
 
@@ -26,7 +27,7 @@
 		event.preventDefault();
 		error = null;
 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-			error = 'Enter a valid email address.';
+			error = m.status_updates_invalid_email();
 			return;
 		}
 		sending = true;
@@ -36,7 +37,7 @@
 			email = '';
 		} catch (cause) {
 			const apiError = toApiError(cause);
-			error = apiError.status === 429 ? 'Too many requests from here. Try again in a few minutes.' : apiError.message;
+			error = apiError.status === 429 ? m.status_updates_rate_limited() : apiError.message;
 		} finally {
 			sending = false;
 		}
@@ -44,9 +45,9 @@
 </script>
 
 <section class="rise-in mt-10 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-4 shadow-lift sm:px-5" style="--rise-delay: 200ms" aria-labelledby="updates">
-	<h2 id="updates" class="text-base font-semibold tracking-tight text-ink">Get updates</h2>
+	<h2 id="updates" class="text-base font-semibold tracking-tight text-ink">{m.status_updates_title()}</h2>
 	{#if subscribe}
-		<p class="mt-0.5 text-[0.8125rem] text-ink-2">An email when an incident or a maintenance is announced or changes. Unsubscribe from any message.</p>
+		<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.status_updates_email_lead()}</p>
 		{#if done}
 			<p class="mt-3 flex items-start gap-2 text-sm text-ink" role="status">
 				<Mail class="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
@@ -54,7 +55,7 @@
 			</p>
 		{:else}
 			<form class="mt-3 flex flex-col gap-2 sm:flex-row" onsubmit={submit} novalidate>
-				<label for="subscribe-email" class="sr-only">Email address</label>
+				<label for="subscribe-email" class="sr-only">{m.status_updates_email_label()}</label>
 				<input
 					id="subscribe-email"
 					type="email"
@@ -73,7 +74,7 @@
 					disabled={sending}
 				>
 					<Mail class="size-4" aria-hidden="true" />
-					{sending ? 'Sending…' : 'Subscribe'}
+					{sending ? m.status_updates_sending() : m.status_updates_subscribe()}
 				</button>
 			</form>
 			{#if error}
@@ -84,7 +85,7 @@
 	<p class={`${subscribe ? 'mt-3' : 'mt-2'} text-sm text-ink-2`}>
 		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={rss}>
 			<Rss class="size-4" aria-hidden="true" />
-			RSS feed of incidents
+			{m.status_updates_rss()}
 		</a>
 	</p>
 </section>

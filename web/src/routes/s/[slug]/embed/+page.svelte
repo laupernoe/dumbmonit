@@ -8,6 +8,7 @@
 	 * `?theme=light|dark` lets the host page match its own light; without it the
 	 * page's setting applies. `?history=0` hides the bars.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { page } from '$app/state';
 	import { ExternalLink } from 'lucide-svelte';
 	import { getPublicStatus, toApiError, type PublicStatus } from '#lib/api/index.js';
@@ -62,17 +63,17 @@
 </script>
 
 <svelte:head>
-	<title>{status ? `${status.page.title} · Status` : 'Status'}</title>
+	<title>{status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <div class={`min-h-full bg-surface p-3 text-ink ${accentClass(status?.page.accent)}`}>
 	{#if error}
 		<p class="text-sm text-ink-2" role="alert">
-			{notFound ? 'This status page does not exist.' : 'Status unavailable right now.'}
+			{notFound ? m.status_embed_not_found() : m.status_embed_unavailable()}
 		</p>
 	{:else if !status || !banner}
-		<div class="grid gap-2" aria-busy="true" aria-label="Loading">
+		<div class="grid gap-2" aria-busy="true" aria-label={m.status_public_loading()}>
 			<Skeleton class="h-6 w-1/2" />
 			<Skeleton class="h-10 w-full" />
 		</div>
@@ -90,9 +91,9 @@
 				target="_blank"
 				rel="noopener"
 			>
-				Full status
+				{m.status_embed_full()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
-				<span class="sr-only">(opens in a new tab)</span>
+				<span class="sr-only">{m.status_embed_new_tab()}</span>
 			</a>
 		</div>
 

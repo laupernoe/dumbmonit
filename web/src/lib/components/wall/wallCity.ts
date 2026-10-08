@@ -4,6 +4,7 @@
  * browser; a `?city=` on a shared link overrides it without saving.
  */
 import type { Component } from 'svelte';
+import { m } from '#lib/paraglide/messages.js';
 import ParisScene from '#lib/components/wall/paris/ParisScene.svelte';
 import LondonScene from '#lib/components/wall/london/LondonScene.svelte';
 import NewYorkScene from '#lib/components/wall/newyork/NewYorkScene.svelte';
@@ -13,12 +14,12 @@ import RomeScene from '#lib/components/wall/rome/RomeScene.svelte';
 export type WallCity = 'paris' | 'london' | 'newyork' | 'tokyo' | 'rome';
 export type WallCityChoice = 'auto' | WallCity;
 
-export const WALL_CITIES: { value: WallCity; label: string; scene: Component<any> }[] = [
-	{ value: 'paris', label: 'Paris', scene: ParisScene },
-	{ value: 'london', label: 'London', scene: LondonScene },
-	{ value: 'newyork', label: 'New York', scene: NewYorkScene },
-	{ value: 'tokyo', label: 'Tokyo', scene: TokyoScene },
-	{ value: 'rome', label: 'Rome', scene: RomeScene }
+export const WALL_CITIES: { value: WallCity; readonly label: string; scene: Component<any> }[] = [
+	{ value: 'paris', get label() { return m.wall_city_paris(); }, scene: ParisScene },
+	{ value: 'london', get label() { return m.wall_city_london(); }, scene: LondonScene },
+	{ value: 'newyork', get label() { return m.wall_city_newyork(); }, scene: NewYorkScene },
+	{ value: 'tokyo', get label() { return m.wall_city_tokyo(); }, scene: TokyoScene },
+	{ value: 'rome', get label() { return m.wall_city_rome(); }, scene: RomeScene }
 ];
 
 const STORAGE_KEY = 'dumbmonit-wall-city';

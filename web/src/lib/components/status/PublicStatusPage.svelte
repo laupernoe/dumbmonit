@@ -12,6 +12,8 @@
 	 * theme follows the page setting (`light` / `dark`) or the visitor's system;
 	 * the accent is one of a closed set of tokens, never free-form CSS.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { CalendarClock, ExternalLink, Megaphone, Moon, Sun } from 'lucide-svelte';
 	import { getPublicStatus, toApiError, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
 	import { formatDateTime, formatPercent, formatRelative, parseServerDate } from '#lib/format.js';
@@ -91,8 +93,8 @@
 	);
 
 	// "Past incidents" grouped by the day they started, newest day first.
-	const dayFormat = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 	const pastByDay = $derived.by(() => {
+		const dayFormat = new Intl.DateTimeFormat(getLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 		const groups = new Map<string, { label: string; incidents: PublicIncident[] }>();
 		for (const incident of past) {
 			const date = parseServerDate(incident.starts_at);
@@ -146,29 +148,30 @@
 		const down = count('down');
 		const maintenance = count('maintenance');
 		const affected = degraded + down + maintenance;
-		let headline = `All ${items.length} services operational`;
-		if (items.length === 1 && affected === 0) headline = '1 service operational';
+		let headline = m.status_public_tally_all({ count: items.length });
+		if (items.length === 1 && affected === 0) headline = m.status_public_tally_one();
 		if (affected > 0) {
+			const args = { affected, total: items.length };
 			const only = [
-				[down, 'down'],
-				[degraded, 'degraded'],
-				[maintenance, 'in maintenance']
-			].filter(([n]) => (n as number) > 0);
-			headline =
-				only.length === 1
-					? `${affected} of ${items.length} service${items.length > 1 ? 's' : ''} ${only[0][1]}`
-					: `${affected} of ${items.length} services affected`;
+				[down, () => m.status_public_tally_down(args)],
+				[degraded, () => m.status_public_tally_degraded(args)],
+				[maintenance, () => m.status_public_tally_maintenance(args)]
+			] as const;
+			const present = only.filter(([n]) => n > 0);
+			headline = present.length === 1 ? present[0][1]() : m.status_public_tally_affected(args);
 		}
 		return {
 			total: items.length,
 			headline,
-			detail: `${up} operational · ${down} down${values.length ? ` · ${formatPercent(values.reduce((a, b) => a + b, 0) / values.length)} over ${window} days` : ''}`
+			detail: values.length
+				? m.status_public_tally_detail_uptime({ up, down, uptime: formatPercent(values.reduce((a, b) => a + b, 0) / values.length), days: window })
+				: m.status_public_tally_detail({ up, down })
 		};
 	});
 </script>
 
 <svelte:head>
-	<title>{status ? `${status.page.title} · Status` : 'Status'}</title>
+	<title>{status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -176,7 +179,7 @@
 	{#if active.length > 0}
 		<section class="rise-in mt-8" style="--rise-delay: 80ms" aria-labelledby="announcements">
 			<h2 id="announcements" class="text-base font-semibold tracking-tight text-ink">
-				{active.length === 1 ? 'Current announcement' : 'Current announcements'}
+				{active.length === 1 ? m.status_public_announcement_one() : m.status_public_announcement_many()}
 			</h2>
 			<div class="mt-3 grid gap-3">
 				{#each active as incident (incident.kind + incident.starts_at + incident.title)}
@@ -191,11 +194,11 @@
 	{#if status}
 		<section class="rise-in mt-8" style="--rise-delay: 120ms" aria-labelledby="services">
 			<div class="flex items-baseline justify-between gap-3">
-				<h2 id="services" class="text-base font-semibold tracking-tight text-ink">Services</h2>
-				<p class="text-[0.8125rem] text-ink-2">Uptime over the last <span class="tnum">{days}</span> days</p>
+				<h2 id="services" class="text-base font-semibold tracking-tight text-ink">{m.status_public_services()}</h2>
+				<p class="text-[0.8125rem] text-ink-2">{m.status_public_uptime_last({ days })}</p>
 			</div>
 			{#if serviceCount === 0}
-				<EmptyState class="mt-3" icon={Megaphone} title="No service listed yet." description="This page has nothing to show for now." />
+				<EmptyState class="mt-3" icon={Megaphone} title={m.status_public_no_service_title()} description={m.status_public_no_service_description()} />
 			{:else}
 				<div class={`mt-3 grid ${compact ? 'gap-3' : 'gap-4'}`}>
 					{#each status.groups as group (group.name)}
@@ -218,10 +221,10 @@
 
 {#snippet pastIncidents()}
 	<section class="rise-in mt-10" style="--rise-delay: 160ms" aria-labelledby="past">
-		<h2 id="past" class="text-base font-semibold tracking-tight text-ink">Past incidents</h2>
-		<p class="mt-0.5 text-[0.8125rem] text-ink-2">Last 30 days.</p>
+		<h2 id="past" class="text-base font-semibold tracking-tight text-ink">{m.status_public_past()}</h2>
+		<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.status_public_last_30()}</p>
 		{#if pastByDay.length === 0}
-			<EmptyState class="mt-3" icon={CalendarClock} title="No incident in the last 30 days." tone="signal" />
+			<EmptyState class="mt-3" icon={CalendarClock} title={m.status_public_no_incident()} tone="signal" />
 		{:else}
 			<div class="mt-3 grid gap-5">
 				{#each pastByDay as day (day.label)}
@@ -246,7 +249,7 @@
 		{/if}
 		<p class="flex items-center gap-2">
 			<Logo class="size-5" />
-			<span>Powered by <a class="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink" href="https://github.com/laupernoe/dumbmonit" rel="noreferrer">DumbMonit</a></span>
+			<span>{m.status_public_powered_by()} <a class="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink" href="https://github.com/laupernoe/dumbmonit" rel="noreferrer">DumbMonit</a></span>
 		</p>
 	</footer>
 {/snippet}
@@ -274,22 +277,22 @@
 					</div>
 					<div class="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2">
 						{#if lastChecked}
-							<span class="hidden sm:inline">Checked <time class="tnum" datetime={lastChecked.toISOString()} title={formatDateTime(lastChecked)}>{formatRelative(lastChecked)}</time></span>
+							<span class="hidden sm:inline">{m.status_public_checked()} <time class="tnum" datetime={lastChecked.toISOString()} title={formatDateTime(lastChecked)}>{formatRelative(lastChecked)}</time></span>
 						{/if}
 						{#if status.page.homepage_url}
-							<a class="inline-flex items-center gap-1 font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink" href={status.page.homepage_url} rel="noopener noreferrer nofollow">
+							<a class="inline-flex min-h-10 items-center gap-1 font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={status.page.homepage_url} rel="noopener noreferrer nofollow">
 								{homepageHost(status.page.homepage_url)}
 								<ExternalLink class="size-3" aria-hidden="true" />
 							</a>
 						{/if}
-						<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink" href={`/api/public/status/${encodeURIComponent(status.page.slug)}/rss`}>RSS</a>
+						<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={`/api/public/status/${encodeURIComponent(status.page.slug)}/rss`}>{m.status_public_rss()}</a>
 						{#if status.page.subscribe}
-							<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink" href="#updates">Email</a>
+							<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href="#updates">{m.status_public_email()}</a>
 						{/if}
 					</div>
 				</header>
 
-				<section class="rise-in mt-8 max-w-[21rem] sm:mt-12 sm:max-w-md" aria-live="polite" aria-label="Current status">
+				<section class="rise-in mt-8 max-w-[21rem] sm:mt-12 sm:max-w-md" aria-live="polite" aria-label={m.status_public_current_status()}>
 					<Plate tone={bannerTone} size="md" label={banner.plate} />
 					<p class="display mt-3 text-3xl text-balance text-ink sm:text-5xl">
 						{labelHead}<span class={TONE_WORD[bannerTone] ?? 'text-ink'}>{labelTail}</span>
@@ -317,11 +320,11 @@
 	{:else}
 		<main class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
 			{#if error && notFound}
-				<EmptyState mascot="dizzy" title="This status page does not exist." description="Check the link you were given, or ask whoever runs this DumbMonit for the right one." />
+				<EmptyState mascot="dizzy" title={m.status_public_not_found_title()} description={m.status_public_not_found_description()} />
 			{:else if error}
-				<ErrorNotice {error} title="Could not load the status page" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.status_public_load_error()} onretry={() => void load()} />
 			{:else if loading || !status || !banner}
-				<div class="grid gap-6" aria-busy="true" aria-label="Loading">
+				<div class="grid gap-6" aria-busy="true" aria-label={m.status_public_loading()}>
 					<Skeleton class="h-9 w-2/3" />
 					<Skeleton class="h-20 w-full" />
 					<Skeleton class="h-28 w-full" />
@@ -342,7 +345,7 @@
 					</div>
 					{#if status.page.homepage_url}
 						<a
-							class="inline-flex items-center gap-1.5 rounded-md py-1 text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+							class="inline-flex min-h-10 items-center gap-1.5 rounded-md py-1 text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
 							href={status.page.homepage_url}
 							rel="noopener noreferrer nofollow"
 						>
@@ -353,11 +356,11 @@
 					{#if simple}
 						<button
 							type="button"
-							class="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm font-semibold text-ink hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+							class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm font-semibold text-ink hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
 							onclick={() => theme.toggle()}
-							aria-label={theme.resolved === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme'}
+							aria-label={theme.resolved === 'dark' ? m.status_public_switch_light() : m.status_public_switch_dark()}
 						>
-							{#if theme.resolved === 'dark'}<Sun class="size-4" aria-hidden="true" />Light{:else}<Moon class="size-4" aria-hidden="true" />Dark{/if}
+							{#if theme.resolved === 'dark'}<Sun class="size-4" aria-hidden="true" />{m.status_public_light()}{:else}<Moon class="size-4" aria-hidden="true" />{m.status_public_dark()}{/if}
 						</button>
 					{/if}
 				</header>
@@ -376,7 +379,7 @@
 					</div>
 					{#if lastChecked}
 						<p class="text-[0.8125rem] text-ink-2">
-							Checked <time class="tnum" datetime={lastChecked.toISOString()} title={formatDateTime(lastChecked)}>{formatRelative(lastChecked)}</time>
+							{m.status_public_checked()} <time class="tnum" datetime={lastChecked.toISOString()} title={formatDateTime(lastChecked)}>{formatRelative(lastChecked)}</time>
 						</p>
 					{/if}
 				</section>
