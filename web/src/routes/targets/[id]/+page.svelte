@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Device detail: one large faceplate band, the alert timeline of this device, then
@@ -140,7 +141,7 @@
 	const missing = $derived(error instanceof ApiError && error.status === 404);
 	const service = $derived(target !== null && isUptimeKind(target.kind));
 	const collector = $derived(collectors.find((c) => c.kind === target?.kind) ?? null);
-	const kindLabel = $derived(collector?.label ?? target?.kind ?? '');
+	const kindLabel = $derived(target ? kindLabelOf(target.kind, collector?.label) : '');
 
 	// Pip reads this device's own setup notice straight from the collector
 	// description already fetched above, instead of guessing at one.

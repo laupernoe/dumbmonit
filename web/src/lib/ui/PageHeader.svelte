@@ -28,5 +28,5 @@
 		{/if}
 		{#if description}<p class="mt-1.5 max-w-2xl text-sm text-ink-2 sm:text-[0.9375rem]">{description}</p>{/if}
 	</div>
-	{#if actions}<div class="flex shrink-0 items-center gap-2">{@render actions()}</div>{/if}
+	{#if actions}<div class="flex max-w-full flex-wrap items-center gap-2">{@render actions()}</div>{/if}
 </div>

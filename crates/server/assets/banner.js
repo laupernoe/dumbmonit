@@ -1,6 +1,6 @@
 /* DumbMonit status banner. Usage:
    <script async src="https://HOST/api/public/status/SLUG/banner.js"
-     data-position="top|bottom" data-show="issues|always" data-lang="en|fr"></script> */
+     data-position="top|bottom" data-show="issues|always" data-lang="en|fr|de|es|it|pt|pt-BR|ru|zh-Hans"></script> */
 (function () {
   var s = document.currentScript;
   if (!s || !s.src) return;
@@ -8,14 +8,20 @@
   var d = s.dataset;
   var bottom = d.position === "bottom";
   var always = d.show === "always";
-  var fr = (d.lang || document.documentElement.lang || "en").slice(0, 2) === "fr";
-  var T = fr
-    ? { ok: "Tous les systèmes sont opérationnels", maint: "Maintenance en cours",
-        one: "1 service est en panne", many: " services sont en panne",
-        deg: "Incident en cours", close: "Fermer", more: "Détails" }
-    : { ok: "All systems operational", maint: "Maintenance in progress",
-        one: "1 service is down", many: " services are down",
-        deg: "Incident in progress", close: "Dismiss", more: "Details" };
+  var L = (d.lang || document.documentElement.lang || "en").toLowerCase();
+  var I = {
+    en: ["All systems operational", "Maintenance in progress", "1 service is down", " services are down", "Incident in progress", "Dismiss", "Details"],
+    fr: ["Tous les systèmes sont opérationnels", "Maintenance en cours", "1 service est en panne", " services sont en panne", "Incident en cours", "Fermer", "Détails"],
+    de: ["Alle Systeme laufen", "Wartung läuft", "1 Dienst ist ausgefallen", " Dienste sind ausgefallen", "Störung aktiv", "Schließen", "Details"],
+    es: ["Todos los sistemas funcionan", "Mantenimiento en curso", "1 servicio caído", " servicios caídos", "Incidente en curso", "Cerrar", "Detalles"],
+    it: ["Tutti i sistemi sono operativi", "Manutenzione in corso", "1 servizio non funziona", " servizi non funzionano", "Incidente in corso", "Chiudi", "Dettagli"],
+    pt: ["Todos os sistemas estão operacionais", "Manutenção em curso", "1 serviço está em baixo", " serviços estão em baixo", "Incidente em curso", "Fechar", "Detalhes"],
+    "pt-br": ["Todos os sistemas estão operacionais", "Manutenção em andamento", "1 serviço está fora do ar", " serviços estão fora do ar", "Incidente em andamento", "Fechar", "Detalhes"],
+    ru: ["Все системы работают", "Идут технические работы", "1 сервис недоступен", " сервисов недоступны", "Идёт инцидент", "Закрыть", "Подробнее"],
+    zh: ["所有系统运行正常", "正在维护", "1 项服务已中断", " 项服务已中断", "正在处理事件", "关闭", "详情"]
+  };
+  var t = I[L] || I[L.slice(0, 2)] || I.en;
+  var T = { ok: t[0], maint: t[1], one: t[2], many: t[3], deg: t[4], close: t[5], more: t[6] };
   var key = "dmt-banner-" + api;
   try { if (sessionStorage.getItem(key) === "1") return; } catch (e) {}
 

@@ -26,6 +26,7 @@
 	import { SlidersHorizontal, ChevronDown, ChevronUp, Search } from 'lucide-svelte';
 	import { formatDuration } from '#lib/format.js';
 	import { severityTone, severityWord } from './helpers';
+	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { ruleKinds, isRelevant } from './rules-filter';
@@ -84,7 +85,7 @@
 	const ownedKinds = $derived(new Set(targets.map((t) => t.kind)));
 
 	function kindLabel(kind: string): string {
-		return collectors.find((c) => c.kind === kind)?.label ?? kind;
+		return kindLabelOf(kind, collectors.find((c) => c.kind === kind)?.label);
 	}
 
 	/** Kinds actually referenced by at least one rule — the select's options. */

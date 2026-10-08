@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The wall's living backdrop: a London rooftop, Big Ben and Westminster,
 	 * Tower Bridge, the London Eye, and the DumbMonit pigeons going about their
@@ -380,7 +382,7 @@
 		});
 	});
 
-	const winstonSign = $derived(trouble ? `${problems} ${problems === 1 ? 'PROBLEM' : 'PROBLEMS'}` : null);
+	const winstonSign = $derived(trouble ? m.wall_scene_sign_problems({ count: problems }).toLocaleUpperCase(getLocale()) : null);
 	const winstonEyes = $derived(startled ? 'startled' : 'open');
 	const clockGlow = $derived(lit || chiming);
 </script>
