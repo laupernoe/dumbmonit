@@ -7,6 +7,7 @@
 	 * email subscription, the optional public domain, and the service picker — tick devices, name them for
 	 * the public, group them. Saves the page, its logo, then its services.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { untrack } from 'svelte';
 	import { Check, X } from 'lucide-svelte';
 	import {
@@ -87,11 +88,11 @@
 		event.currentTarget.value = '';
 		if (!file) return;
 		if (!LOGO_TYPES.includes(file.type)) {
-			logoError = 'Use a PNG, JPEG or WebP image.';
+			logoError = m.status_form_logo_type();
 			return;
 		}
 		if (file.size > MAX_LOGO_BYTES) {
-			logoError = `The logo is limited to ${MAX_LOGO_BYTES / 1024} KiB.`;
+			logoError = m.status_form_logo_size({ kib: MAX_LOGO_BYTES / 1024 });
 			return;
 		}
 		const reader = new FileReader();
@@ -99,7 +100,7 @@
 			pendingLogo = typeof reader.result === 'string' ? reader.result : null;
 			removeLogo = false;
 		};
-		reader.onerror = () => (logoError = 'The file could not be read.');
+		reader.onerror = () => (logoError = m.status_form_logo_read());
 		reader.readAsDataURL(file);
 	}
 
@@ -172,13 +173,13 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		error = null;
-		titleError = title.trim() ? null : 'Give the page a title.';
-		slugError = SLUG_RULE.test(slug) ? null : '2 to 40 characters: lowercase letters, digits and hyphens.';
-		homepageError = homepageUrl.trim() === '' || /^https?:\/\/[^\s/]+/i.test(homepageUrl.trim()) ? null : 'Start with http:// or https://.';
+		titleError = title.trim() ? null : m.status_form_title_required();
+		slugError = SLUG_RULE.test(slug) ? null : m.status_form_slug_rule();
+		homepageError = homepageUrl.trim() === '' || /^https?:\/\/[^\s/]+/i.test(homepageUrl.trim()) ? null : m.status_form_homepage_rule();
 		// The server has the full rule; this only catches the usual slips early.
 		const host = domain.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
 		domainError =
-			host === '' || /^[a-z0-9.-]+$/i.test(host) ? null : 'The host name only, like status.example.com: no path, port or space.';
+			host === '' || /^[a-z0-9.-]+$/i.test(host) ? null : m.status_form_domain_rule();
 		if (titleError || slugError || homepageError || domainError) return;
 
 		saving = true;
@@ -233,20 +234,20 @@
 
 <form class="grid gap-4" onsubmit={submit} novalidate>
 	<div class="grid gap-4 sm:grid-cols-2">
-		<Field label="Title" for="{idPrefix}-title" error={titleError} required>
+		<Field label={m.status_form_title()} for="{idPrefix}-title" error={titleError} required>
 			<input
 				id="{idPrefix}-title"
 				type="text"
 				class="input"
 				bind:value={title}
 				oninput={onTitleInput}
-				placeholder="Home lab"
+				placeholder={m.status_form_title_placeholder()}
 				maxlength="120"
 				disabled={saving}
 				aria-invalid={titleError ? 'true' : undefined}
 			/>
 		</Field>
-		<Field label="Address" for="{idPrefix}-slug" error={slugError} help={slug ? `Public URL: /s/${slug}` : 'Lowercase letters, digits and hyphens.'} required>
+		<Field label={m.status_form_address()} for="{idPrefix}-slug" error={slugError} help={slug ? m.status_form_address_url({ url: `/s/${slug}` }) : m.status_form_address_help()} required>
 			<input
 				id="{idPrefix}-slug"
 				type="text"
@@ -265,59 +266,59 @@
 			/>
 		</Field>
 	</div>
-	<Field label="Description" for="{idPrefix}-description" help="One sentence under the title. Optional.">
-		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder="What is up at home, at a glance." disabled={saving} />
+	<Field label={m.status_form_description()} for="{idPrefix}-description" help={m.status_form_description_help()}>
+		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} disabled={saving} />
 	</Field>
 	<div class="grid gap-4 sm:grid-cols-3">
-		<Field label="Theme" for="{idPrefix}-theme">
+		<Field label={m.status_form_theme()} for="{idPrefix}-theme">
 			<select id="{idPrefix}-theme" class="input" bind:value={theme} disabled={saving}>
-				<option value="auto">Follow the visitor's system</option>
-				<option value="light">Day</option>
-				<option value="dark">Night</option>
+				<option value="auto">{m.status_form_theme_auto()}</option>
+				<option value="light">{m.status_form_theme_day()}</option>
+				<option value="dark">{m.status_form_theme_night()}</option>
 			</select>
 		</Field>
-		<Field label="History" for="{idPrefix}-days" help="Longest window. The page shows as many days as its data covers, from 7 up to this.">
+		<Field label={m.status_form_history()} for="{idPrefix}-days" help={m.status_form_history_help()}>
 			<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
 				{#each HISTORY_CHOICES as choice (choice)}
-					<option value={choice}>{choice} days</option>
+					<option value={choice}>{m.status_share_days({ days: choice })}</option>
 				{/each}
 			</select>
 		</Field>
-		<Field label="Published" for="{idPrefix}-published" inline help={published ? 'Anyone with the link can see it.' : 'Draft: answers 404 to visitors.'}>
-			<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label="Published" />
+		<Field label={m.status_form_published()} for="{idPrefix}-published" inline help={published ? m.status_form_published_on() : m.status_form_published_off()}>
+			<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label={m.status_form_published()} />
 		</Field>
 	</div>
 
 	<!-- Look -->
 	<fieldset class="grid gap-4" disabled={saving}>
-		<legend class="text-sm font-semibold text-ink">Look</legend>
+		<legend class="text-sm font-semibold text-ink">{m.status_form_look()}</legend>
 		<div class="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
 			<div class="grid gap-2">
-				<span class="text-sm text-ink" id="{idPrefix}-logo-label">Logo</span>
+				<span class="text-sm text-ink" id="{idPrefix}-logo-label">{m.status_form_logo()}</span>
 				<div class="flex items-center gap-3">
 					<div class="flex size-16 items-center justify-center overflow-hidden rounded-lg border border-dashed border-line-strong bg-canvas-deep">
 						{#if logoPreview}
-							<img src={logoPreview} alt="Logo preview" class="size-full object-contain" />
+							<img src={logoPreview} alt={m.status_form_logo_preview()} class="size-full object-contain" />
 						{:else}
-							<span class="text-[0.6875rem] text-ink-3">None</span>
+							<span class="text-[0.6875rem] text-ink-3">{m.status_form_logo_none()}</span>
 						{/if}
 					</div>
 					<div class="grid gap-1.5">
 						<label class="inline-flex cursor-pointer items-center rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">
-							{logoPreview ? 'Replace' : 'Upload'}
+							{logoPreview ? m.status_form_logo_replace() : m.status_form_logo_upload()}
 							<input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" onchange={pickLogo} aria-labelledby="{idPrefix}-logo-label" />
 						</label>
 						{#if logoPreview}
-							<Button variant="ghost" size="sm" onclick={dropLogo}>Remove</Button>
+							<Button variant="ghost" size="sm" onclick={dropLogo}>{m.status_form_logo_remove()}</Button>
 						{/if}
 					</div>
 				</div>
-				<p class="text-[0.8125rem] text-ink-2">PNG, JPEG or WebP, up to 256 KiB. Square works best.</p>
+				<p class="text-[0.8125rem] text-ink-2">{m.status_form_logo_help()}</p>
 				{#if logoError}<p class="text-[0.8125rem] text-warning-ink" role="alert">{logoError}</p>{/if}
 			</div>
 			<div class="grid gap-4">
 				<div class="grid gap-2">
-					<span class="text-sm text-ink" id="{idPrefix}-accent-label">Accent</span>
+					<span class="text-sm text-ink" id="{idPrefix}-accent-label">{m.status_form_accent()}</span>
 					<div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="{idPrefix}-accent-label">
 						{#each ACCENTS as option (option.value)}
 							<label class={`inline-flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm ${accent === option.value ? 'border-ink bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'} ${accentClass(option.value)}`}>
@@ -327,27 +328,27 @@
 							</label>
 						{/each}
 					</div>
-					<p class="text-[0.8125rem] text-ink-2">Links, the top rule and the subscribe button. Each accent stays readable by day and by night.</p>
+					<p class="text-[0.8125rem] text-ink-2">{m.status_form_accent_help()}</p>
 				</div>
-				<Field label="Organisation website" for="{idPrefix}-homepage" error={homepageError} help="Optional link shown next to the title.">
+				<Field label={m.status_form_homepage()} for="{idPrefix}-homepage" error={homepageError} help={m.status_form_homepage_help()}>
 					<input id="{idPrefix}-homepage" type="url" class="input" bind:value={homepageUrl} maxlength="300" placeholder="https://example.org" disabled={saving} oninput={() => (homepageError = null)} />
 				</Field>
 			</div>
 		</div>
-		<Field label="Footer text" for="{idPrefix}-footer" help="Plain text under the page, up to 280 characters: who runs it, how to reach them.">
+		<Field label={m.status_form_footer()} for="{idPrefix}-footer" help={m.status_form_footer_help()}>
 			<textarea id="{idPrefix}-footer" class="input min-h-16" bind:value={footerText} maxlength="280" rows="2" disabled={saving}></textarea>
 		</Field>
 	</fieldset>
 
-	<Field label="Simple mode" for="{idPrefix}-simple" inline help="A plain page: no scene, no mascot, no animation. Light or dark follows the visitor's system, with a toggle.">
-		<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label="Simple mode" />
+	<Field label={m.status_form_simple()} for="{idPrefix}-simple" inline help={m.status_form_simple_help()}>
+		<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label={m.status_form_simple()} />
 	</Field>
 
 	<!-- Scene -->
 	<fieldset class="grid gap-3" disabled={saving || simple}>
-		<legend class="text-sm font-semibold text-ink">Scene</legend>
+		<legend class="text-sm font-semibold text-ink">{m.status_form_scene()}</legend>
 		<p class="text-[0.8125rem] text-ink-2">
-			An optional illustrated city behind the title of the public page. New pages start on Paris; untick it for a plain page. Ignored in simple mode. Tick several to alternate between them.
+			{m.status_form_scene_help()}
 		</p>
 		<SceneDefs />
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -369,7 +370,7 @@
 					<span class="flex items-center justify-between gap-2 px-0.5 text-sm text-ink">
 						{choice.label}
 						{#if rank >= 0}
-							<span class="inline-flex min-w-5 items-center justify-center rounded-full bg-ink px-1.5 text-[0.6875rem] font-semibold text-canvas" aria-label={scenes.length > 1 ? `Position ${rank + 1}` : 'Selected'}>
+							<span class="inline-flex min-w-5 items-center justify-center rounded-full bg-ink px-1.5 text-[0.6875rem] font-semibold text-canvas" aria-label={scenes.length > 1 ? m.status_form_scene_position({ position: rank + 1 }) : m.status_form_scene_selected()}>
 								{scenes.length > 1 ? rank + 1 : '✓'}
 							</span>
 						{/if}
@@ -378,7 +379,7 @@
 			{/each}
 		</div>
 		{#if scenes.length > 1}
-			<Field label="Change scene" for="{idPrefix}-rotation" help="With several scenes ticked, which one a visitor sees and when it changes. They follow the order in which you ticked them.">
+			<Field label={m.status_form_rotation()} for="{idPrefix}-rotation" help={m.status_form_rotation_help()}>
 				<select id="{idPrefix}-rotation" class="input" bind:value={sceneRotation} disabled={saving}>
 					{#each SCENE_ROTATIONS as option (option.value)}
 						<option value={option.value}>{option.label}</option>
@@ -390,11 +391,9 @@
 
 	<!-- Email subscription -->
 	<Field
-		label="Email subscribers"
+		label={m.status_form_subscribers()}
 		for="{idPrefix}-subscribe"
-		help={smtpChannels.length === 0
-			? 'Add an email (SMTP) channel under Notifications to let visitors subscribe. Until then the page offers its RSS feed.'
-			: 'Visitors confirm their address by email, and every update carries a one-click unsubscribe link.'}
+		help={smtpChannels.length === 0 ? m.status_form_subscribers_no_channel() : m.status_form_subscribers_help()}
 	>
 		<select
 			id="{idPrefix}-subscribe"
@@ -403,9 +402,9 @@
 			onchange={(event) => (subscribeChannel = event.currentTarget.value === '' ? null : Number(event.currentTarget.value))}
 			disabled={saving || (smtpChannels.length === 0 && subscribeChannel === null)}
 		>
-			<option value="">Off — RSS only</option>
+			<option value="">{m.status_form_subscribers_off()}</option>
 			{#each smtpChannels as channel (channel.id)}
-				<option value={String(channel.id)}>Send through “{channel.name}”{channel.enabled ? '' : ' (disabled)'}</option>
+				<option value={String(channel.id)}>{channel.enabled ? m.status_form_subscribers_via({ name: channel.name }) : m.status_form_subscribers_via_disabled({ name: channel.name })}</option>
 			{/each}
 		</select>
 	</Field>
@@ -422,10 +421,10 @@
 
 	<!-- Service picker -->
 	<fieldset class="grid gap-2" disabled={saving}>
-		<legend class="text-sm font-semibold text-ink">Services</legend>
-		<p class="text-[0.8125rem] text-ink-2">Tick the devices to show. The label is what visitors read; a group heads a block of services.</p>
+		<legend class="text-sm font-semibold text-ink">{m.status_form_services()}</legend>
+		<p class="text-[0.8125rem] text-ink-2">{m.status_form_services_help()}</p>
 		{#if sortedTargets.length === 0}
-			<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-2">No device yet. Add one on the Devices page first.</p>
+			<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-2">{m.status_form_services_empty()}</p>
 		{:else}
 			<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 				{#each sortedTargets as target (target.id)}
@@ -453,21 +452,21 @@
 									oninput={(event) => setPick(target.id, { label: event.currentTarget.value })}
 									placeholder={target.name}
 									maxlength="80"
-									aria-label={`Public label of ${target.name}`}
+									aria-label={m.status_form_pick_label_aria({ name: target.name })}
 								/>
 								<input
 									type="text"
 									class="input"
 									value={pick.group}
 									oninput={(event) => setPick(target.id, { group: event.currentTarget.value })}
-									placeholder="Group (optional)"
+									placeholder={m.status_form_pick_group()}
 									maxlength="60"
 									list="{idPrefix}-groups"
-									aria-label={`Group of ${target.name}`}
+									aria-label={m.status_form_pick_group_aria({ name: target.name })}
 								/>
 								<div class="flex gap-1">
-									<Button variant="ghost" size="sm" onclick={() => move(target.id, -1)} disabled={order.indexOf(target.id) <= 0}>Up</Button>
-									<Button variant="ghost" size="sm" onclick={() => move(target.id, 1)} disabled={order.indexOf(target.id) >= order.length - 1}>Down</Button>
+									<Button variant="ghost" size="sm" onclick={() => move(target.id, -1)} disabled={order.indexOf(target.id) <= 0}>{m.status_form_up()}</Button>
+									<Button variant="ghost" size="sm" onclick={() => move(target.id, 1)} disabled={order.indexOf(target.id) >= order.length - 1}>{m.status_form_down()}</Button>
 								</div>
 							</div>
 						{/if}
@@ -479,24 +478,24 @@
 			</datalist>
 			{#if order.length > 0}
 				<p class="text-[0.8125rem] text-ink-2">
-					Shown in this order: {order.map((id) => picks.get(id)?.label || targetById.get(id)?.name || id).join(', ')}.
+					{m.status_form_order({ names: order.map((id) => picks.get(id)?.label || targetById.get(id)?.name || id).join(', ') })}
 				</p>
 			{/if}
 		{/if}
 	</fieldset>
 
 	{#if error}
-		<ErrorNotice {error} title={page ? 'Could not save the page' : 'Could not create the page'} />
+		<ErrorNotice {error} title={page ? m.status_form_save_error() : m.status_form_create_error()} />
 	{/if}
 
 	<div class="flex flex-wrap items-center gap-2">
 		<Button type="submit" variant="primary" loading={saving}>
 			<Check class="size-4" aria-hidden="true" />
-			{page ? 'Save changes' : 'Create page'}
+			{page ? m.status_form_save() : m.status_form_create()}
 		</Button>
 		<Button variant="ghost" onclick={oncancel} disabled={saving}>
 			<X class="size-4" aria-hidden="true" />
-			Cancel
+			{m.status_incidents_cancel()}
 		</Button>
 	</div>
 </form>

@@ -10,6 +10,7 @@
 	 * (not this panel) nudges the whole layout a few pixels every few minutes
 	 * and can dim further at night.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { tick } from 'svelte';
 	import { Sun, Moon, SunMoon, Contrast } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
@@ -33,11 +34,11 @@
 
 	let root = $state<HTMLDivElement | null>(null);
 
-	const OPTIONS: { value: WallThemeChoice; label: string; hint: string; icon: typeof LucideIcon }[] = [
-		{ value: 'auto', label: 'Auto', hint: 'Follows the rest of DumbMonit.', icon: SunMoon },
-		{ value: 'light', label: 'Day', hint: 'Chart paper, navy ink.', icon: Sun },
-		{ value: 'dark', label: 'Night', hint: 'Radar composite, cyan signal.', icon: Moon },
-		{ value: 'oled', label: 'OLED', hint: 'True black, dimmed text, burn-in care.', icon: Contrast }
+	const OPTIONS: { value: WallThemeChoice; readonly label: string; readonly hint: string; icon: typeof LucideIcon }[] = [
+		{ value: 'auto', get label() { return m.wall_theme_auto(); }, get hint() { return m.wall_theme_auto_hint(); }, icon: SunMoon },
+		{ value: 'light', get label() { return m.wall_theme_day(); }, get hint() { return m.wall_theme_day_hint(); }, icon: Sun },
+		{ value: 'dark', get label() { return m.wall_theme_night(); }, get hint() { return m.wall_theme_night_hint(); }, icon: Moon },
+		{ value: 'oled', get label() { return m.wall_theme_oled(); }, get hint() { return m.wall_theme_oled_hint(); }, icon: Contrast }
 	];
 
 	const effective = $derived(forced ?? value);
@@ -84,10 +85,10 @@
 		onclick={toggle}
 		aria-expanded={open}
 		aria-controls="wall-theme-panel"
-		class="theme-toggle {open ? 'is-open' : ''}"
+		class="theme-toggle min-h-10 lg:min-h-0 {open ? 'is-open' : ''}"
 	>
 		<Icon class="size-4" aria-hidden="true" />
-		Theme
+		{m.wall_theme_button()}
 	</Button>
 
 	{#if open}
@@ -95,15 +96,15 @@
 			id="wall-theme-panel"
 			class="absolute top-full right-0 z-20 mt-2 w-[min(calc(100vw-2rem),22rem)] rounded-[var(--radius-card)] border border-line bg-surface p-4 text-left shadow-float"
 			role="dialog"
-			aria-label="Theme for this wall"
+			aria-label={m.wall_theme_dialog()}
 		>
-			<p class="text-sm font-semibold text-ink">Theme on this display</p>
+			<p class="text-sm font-semibold text-ink">{m.wall_theme_title()}</p>
 			{#if forced}
 				<p class="mt-1 text-[0.8125rem] text-ink-2">
-					A link set this one for right now; it is not saved here.
+					{m.wall_theme_forced()}
 				</p>
 			{/if}
-			<div class="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Theme">
+			<div class="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label={m.wall_theme_button()}>
 				{#each OPTIONS as option, i (option.value)}
 					{@const selected = value === option.value}
 					{@const OptionIcon = option.icon}
@@ -126,14 +127,14 @@
 			</div>
 
 			<div class="mt-3 border-t border-line pt-3">
-				<p class="text-sm font-semibold text-ink">City</p>
-				<div class="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="City">
-					{#each [{ value: 'auto', label: 'Auto' }, ...WALL_CITIES] as option (option.value)}
+				<p class="text-sm font-semibold text-ink">{m.wall_city_title()}</p>
+				<div class="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label={m.wall_city_title()}>
+					{#each [{ value: 'auto', label: m.wall_theme_auto() }, ...WALL_CITIES] as option (option.value)}
 						<button
 							type="button"
 							role="radio"
 							aria-checked={city === option.value}
-							class={`rounded-[var(--radius-plate)] border px-2.5 py-1 text-[0.8125rem] transition-colors ${city === option.value ? 'border-signal bg-signal-soft font-semibold text-ink' : 'border-line text-ink-2 hover:bg-surface-2'}`}
+							class={`min-h-10 rounded-[var(--radius-plate)] border px-3 py-1 text-[0.8125rem] transition-colors sm:min-h-0 sm:px-2.5 ${city === option.value ? 'border-signal bg-signal-soft font-semibold text-ink' : 'border-line text-ink-2 hover:bg-surface-2'}`}
 							onclick={() => oncity(option.value as WallCityChoice)}>{option.label}</button
 						>
 					{/each}
@@ -143,10 +144,10 @@
 			{#if effective === 'oled'}
 				<div class="mt-3 flex items-start justify-between gap-3 border-t border-line pt-3">
 					<div class="min-w-0">
-						<p class="text-sm font-semibold text-ink">Dim at night</p>
-						<p class="mt-0.5 text-[0.75rem] text-ink-2">Darkens further from 22:00 to 07:00.</p>
+						<p class="text-sm font-semibold text-ink">{m.wall_theme_dim()}</p>
+						<p class="mt-0.5 text-[0.75rem] text-ink-2">{m.wall_theme_dim_hint()}</p>
 					</div>
-					<Toggle checked={nightDim} onchange={onnightdim} label="Dim this display at night" />
+					<Toggle checked={nightDim} onchange={onnightdim} label={m.wall_theme_dim_label()} />
 				</div>
 			{/if}
 		</div>

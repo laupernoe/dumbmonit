@@ -9,6 +9,7 @@
 	 *   missing when it cannot, whether Spotify lists it, "Play here" (moves
 	 *   the account's playback to this display), and a switch to keep it off.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { tick } from 'svelte';
 	import { Music2, Play, RotateCcw } from 'lucide-svelte';
 	import type { SpotifyNow } from '#lib/api/music.js';
@@ -56,7 +57,7 @@
 		try {
 			await speaker.playHere();
 		} catch (cause) {
-			playError = cause instanceof Error ? cause.message : 'Spotify did not start playing here.';
+			playError = cause instanceof Error ? cause.message : m.wall_music_play_error();
 		} finally {
 			playing = false;
 		}
@@ -92,7 +93,7 @@
 			await onsave(draft.trim());
 			open = false;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not send the link.';
+			error = cause instanceof Error ? cause.message : m.wall_music_send_error();
 		} finally {
 			busy = false;
 		}
@@ -105,7 +106,7 @@
 			draft = '';
 			open = false;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not stop the music.';
+			error = cause instanceof Error ? cause.message : m.wall_music_stop_error();
 		} finally {
 			busy = false;
 		}
@@ -129,35 +130,33 @@
 		if (status === 'off') {
 			return {
 				tone: 'ghost',
-				word: 'Not connected',
-				detail: isAdmin
-					? 'Connect a Spotify account in Settings → Wall music to play from your phone.'
-					: 'An admin can connect a Spotify account in Settings → Wall music.'
+				word: m.wall_music_state_off(),
+				detail: isAdmin ? m.wall_music_state_off_admin() : m.wall_music_state_off_user()
 			};
 		}
 		if (status === 'expired') {
-			return { tone: 'advisory', word: 'Reconnect needed', detail: spotify?.error ?? null };
+			return { tone: 'advisory', word: m.wall_music_state_expired(), detail: spotify?.error ?? null };
 		}
-		if (!speakerOn) return { tone: 'ghost', word: 'Off on this display', detail: 'Now playing still shows.' };
+		if (!speakerOn) return { tone: 'ghost', word: m.wall_music_state_disabled(), detail: m.wall_music_state_disabled_detail() };
 		switch (speaker.phase) {
 			case 'unsupported':
-				return { tone: 'advisory', word: 'Unavailable here', detail: [speaker.problem, speaker.fix].filter(Boolean).join(' ') };
+				return { tone: 'advisory', word: m.wall_music_state_unsupported(), detail: [speaker.problem, speaker.fix].filter(Boolean).join(' ') };
 			case 'error':
-				return { tone: 'warning', word: 'Stopped', detail: [speaker.problem, speaker.fix].filter(Boolean).join(' ') };
+				return { tone: 'warning', word: m.wall_music_state_error(), detail: [speaker.problem, speaker.fix].filter(Boolean).join(' ') };
 			case 'ready':
 				if (!speaker.activated) {
-					return { tone: 'advisory', word: 'Sound locked', detail: 'Tap anywhere on the wall once, then pick it in Spotify.' };
+					return { tone: 'advisory', word: m.wall_music_state_locked(), detail: m.wall_music_state_locked_detail() };
 				}
 				if (speaker.listed === false) {
-					return { tone: 'advisory', word: 'Not listed yet', detail: 'Spotify does not list this display yet; it reconnects by itself in a minute or two.' };
+					return { tone: 'advisory', word: m.wall_music_state_unlisted(), detail: m.wall_music_state_unlisted_detail() };
 				}
 				return {
 					tone: 'signal',
-					word: 'Ready',
-					detail: `In Spotify on a phone signed in to the same account: Devices → ${speakerName}. Or play here from this panel.`
+					word: m.wall_music_state_ready(),
+					detail: m.wall_music_state_ready_detail({ name: speakerName })
 				};
 			default:
-				return { tone: 'ghost', word: 'Starting…', detail: null };
+				return { tone: 'ghost', word: m.wall_music_state_starting(), detail: null };
 		}
 	});
 </script>
@@ -170,10 +169,10 @@
 		onclick={toggle}
 		aria-expanded={open}
 		aria-controls="wall-music-panel"
-		class="music-toggle {open ? 'is-open' : ''}"
+		class="music-toggle min-h-10 lg:min-h-0 {open ? 'is-open' : ''}"
 	>
 		<Music2 class="size-4" aria-hidden="true" />
-		Music
+		{m.wall_music_button()}
 		{#if embed}<span class="sr-only">: {embed.label} {embed.kind}</span>{/if}
 	</Button>
 
@@ -182,10 +181,10 @@
 			id="wall-music-panel"
 			class="absolute top-full right-0 z-20 mt-2 max-h-[calc(100dvh-6rem)] w-[min(calc(100vw-2rem),26rem)] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface p-4 text-left shadow-float"
 			role="dialog"
-			aria-label="Music on the walls"
+			aria-label={m.wall_music_dialog()}
 		>
 			<form onsubmit={submit} novalidate>
-				<label for="wall-music-link" class="block text-sm font-semibold text-ink">Play a link on the walls</label>
+				<label for="wall-music-link" class="block text-sm font-semibold text-ink">{m.wall_music_link_label()}</label>
 				<input
 					bind:this={input}
 					bind:value={draft}
@@ -205,18 +204,17 @@
 					<p id="wall-music-help" class="mt-1.5 text-[0.8125rem] font-medium text-warning-ink" role="alert">{error}</p>
 				{:else}
 					<p id="wall-music-help" class="mt-1.5 text-[0.8125rem] text-ink-2">
-						A Spotify, Deezer or YouTube (Music) link to a track, album, playlist or video. Every wall plays it, in
-						the service's own player. Deezer and YouTube have no remote like Spotify Connect: a link is the way.
-						{#if !isAdmin}Only an admin can change it.{/if}
+						{m.wall_music_link_help()}
+						{#if !isAdmin}{m.wall_music_admin_only()}{/if}
 					</p>
 				{/if}
 				{#if isAdmin}
 					<div class="mt-3 flex items-center justify-end gap-2">
 						{#if link}
-							<Button variant="ghost" size="sm" class="mr-auto" onclick={() => void clear()} disabled={busy}>Stop</Button>
+							<Button variant="ghost" size="sm" class="mr-auto" onclick={() => void clear()} disabled={busy}>{m.wall_music_stop()}</Button>
 						{/if}
-						<Button variant="ghost" size="sm" onclick={() => (open = false)}>Cancel</Button>
-						<Button variant="primary" size="sm" type="submit" loading={busy}>Play on the wall</Button>
+						<Button variant="ghost" size="sm" onclick={() => (open = false)}>{m.wall_music_cancel()}</Button>
+						<Button variant="primary" size="sm" type="submit" loading={busy}>{m.wall_music_play_wall()}</Button>
 					</div>
 				{/if}
 			</form>
@@ -224,7 +222,7 @@
 			<div class="mt-4 border-t border-line pt-4">
 				<div class="flex items-start justify-between gap-3">
 					<div class="min-w-0">
-						<p class="text-sm font-semibold text-ink">Spotify speaker</p>
+						<p class="text-sm font-semibold text-ink">{m.wall_music_speaker()}</p>
 						<p class="mt-1 flex items-center gap-2 text-[0.8125rem] font-semibold text-ink">
 							<Led tone={speakerLine.tone} size="sm" />
 							{speakerLine.word}
@@ -234,7 +232,7 @@
 						<Toggle
 							checked={speakerOn}
 							onchange={(checked: boolean) => onspeaker(checked)}
-							label="Use this display as a Spotify speaker"
+							label={m.wall_music_speaker_label()}
 						/>
 					{/if}
 				</div>
@@ -244,7 +242,7 @@
 				{#if speakerOn && spotify?.status === 'connected' && speaker.phase === 'ready'}
 					<Button variant="secondary" size="sm" class="mt-2" onclick={() => void playHere()} loading={playing}>
 						<Play class="size-3.5" aria-hidden="true" />
-						Play here
+						{m.wall_music_play_here()}
 					</Button>
 					{#if playError}
 						<p class="mt-1.5 text-[0.8125rem] font-medium text-warning-ink" role="alert">{playError}</p>
@@ -253,11 +251,11 @@
 				{#if speakerOn && spotify?.status === 'connected' && (speaker.phase === 'error' || speaker.phase === 'unsupported')}
 					<Button variant="ghost" size="sm" class="mt-2 -ml-3" onclick={onretry}>
 						<RotateCcw class="size-3.5" aria-hidden="true" />
-						Try again
+						{m.wall_music_retry()}
 					</Button>
 				{/if}
 				{#if isAdmin}
-					<p class="mt-2 text-[0.8125rem]"><a href="/settings#music" class="font-semibold text-ink hover:underline">Settings → Wall music</a></p>
+					<p class="mt-2 text-[0.8125rem]"><a href="/settings#music" class="font-semibold text-ink hover:underline">{m.wall_music_settings()}</a></p>
 				{/if}
 			</div>
 		</div>

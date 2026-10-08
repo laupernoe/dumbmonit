@@ -13,6 +13,7 @@
 	 * folds into a pill (remembered by this display); nothing shows when
 	 * nothing plays and nothing is wrong.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { RotateCcw, Volume2, VolumeX } from 'lucide-svelte';
 	import type { MusicEmbed } from '#lib/wall/music.js';
 	import type { Playing } from '#lib/wall/spotify.js';
@@ -72,7 +73,7 @@
 {#if playing || embed || needsTap || trouble}
 	<div
 		class="music-dock pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-end justify-between gap-2 sm:inset-x-4 sm:bottom-4 lg:inset-x-5 lg:bottom-5 2xl:inset-x-6 2xl:bottom-6"
-		aria-label="Music"
+		aria-label={m.wall_music_button()}
 		role="region"
 	>
 		<div class="flex min-w-0 max-w-full flex-col items-start gap-2 {folded.card ? '' : 'basis-full sm:basis-auto'} sm:max-w-[min(100%,40rem)] 2xl:max-w-[46rem]">
@@ -107,8 +108,8 @@
 					<Volume2 class="size-4 sm:size-5" aria-hidden="true" />
 				</span>
 				<span class="min-w-0">
-					<span class="block text-sm font-semibold text-ink sm:text-base">Tap to enable sound</span>
-					<span class="block text-[0.75rem] text-ink-2 sm:text-[0.8125rem]">Then pick “{speakerName}” under Devices in Spotify</span>
+					<span class="block text-sm font-semibold text-ink sm:text-base">{m.wall_dock_enable()}</span>
+					<span class="block text-[0.75rem] text-ink-2 sm:text-[0.8125rem]">{m.wall_dock_enable_hint({ name: speakerName })}</span>
 				</span>
 			</button>
 		{:else if trouble}
@@ -120,8 +121,8 @@
 					aria-expanded="false"
 				>
 					<VolumeX class="size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
-					<span class="truncate font-semibold text-ink">Not a speaker here</span>
-					<span class="text-ink-2">· Why</span>
+					<span class="truncate font-semibold text-ink">{m.wall_dock_trouble_pill()}</span>
+					<span class="text-ink-2">· {m.wall_dock_why()}</span>
 				</button>
 			{:else}
 				<div
@@ -130,7 +131,7 @@
 				>
 					<p class="flex items-center gap-2 text-sm font-semibold text-ink">
 						<VolumeX class="size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
-						Spotify can’t play on this display
+						{m.wall_dock_trouble_title()}
 					</p>
 					<p class="mt-1 text-[0.8125rem] text-ink">{trouble.problem}</p>
 					{#if trouble.fix}
@@ -138,14 +139,14 @@
 					{/if}
 					<div class="mt-2 flex flex-wrap items-center gap-1.5">
 						{#if trouble.retrying}
-							<span class="text-[0.75rem] text-ink-2">Trying again by itself…</span>
+							<span class="text-[0.75rem] text-ink-2">{m.wall_dock_retrying()}</span>
 						{:else if onretry}
 							<button type="button" class="tool" onclick={onretry}>
 								<RotateCcw class="size-3.5" aria-hidden="true" />
-								Try again
+								{m.wall_music_retry()}
 							</button>
 						{/if}
-						<button type="button" class="tool ml-auto" onclick={() => toggle('trouble')} aria-expanded="true">Hide</button>
+						<button type="button" class="tool ml-auto" onclick={() => toggle('trouble')} aria-expanded="true">{m.wall_dock_hide()}</button>
 					</div>
 				</div>
 			{/if}
@@ -158,8 +159,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		height: 1.75rem;
-		padding: 0 0.625rem;
+		height: 2.5rem;
+		padding: 0 0.875rem;
 		border: 1px solid var(--c-line);
 		border-radius: 999px;
 		background: var(--c-surface);
@@ -169,5 +170,11 @@
 	}
 	.tool:hover {
 		color: var(--c-ink);
+	}
+	@media (min-width: 640px) {
+		.tool {
+			height: 1.75rem;
+			padding: 0 0.625rem;
+		}
 	}
 </style>

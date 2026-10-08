@@ -8,6 +8,8 @@
 	 * move between days, so a keyboard user does not tab through 90 squares to
 	 * reach the next service. A flex row keeps 90 days inside a phone's width.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import type { PublicDayBucket } from '#lib/api/index.js';
 	import { formatPercent } from '#lib/format.js';
 	import { dayTone, formatDowntime } from './words';
@@ -35,17 +37,17 @@
 	let buttons: HTMLButtonElement[] = $state([]);
 
 	// The bucket dates are UTC days: show them as such, without a time.
-	const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 	function formatDay(date: string): string {
+		const dateFormat = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 		const parsed = new Date(`${date}T00:00:00Z`);
 		return Number.isNaN(parsed.getTime()) ? date : dateFormat.format(parsed);
 	}
 
 	function describe(day: PublicDayBucket): string {
-		if (day.uptime_pct === null) return `${formatDay(day.date)}: no data`;
+		if (day.uptime_pct === null) return m.status_uptime_bar_day_no_data({ date: formatDay(day.date) });
 		const down = formatDowntime(day.down_minutes);
-		const incidents = day.incidents === 0 ? '' : ` · ${day.incidents} incident${day.incidents > 1 ? 's' : ''}`;
-		return `${formatDay(day.date)}: ${formatPercent(day.uptime_pct)} uptime · ${down}${incidents}`;
+		const incidents = day.incidents === 0 ? '' : ` · ${m.status_uptime_bar_incidents({ count: day.incidents })}`;
+		return `${m.status_uptime_bar_day({ date: formatDay(day.date), uptime: formatPercent(day.uptime_pct), down })}${incidents}`;
 	}
 
 	function move(to: number) {
@@ -88,7 +90,7 @@
 <div class="relative">
 	<ul
 		class={`flex items-stretch gap-px sm:gap-0.5 ${compact ? 'h-5' : 'h-8'}`}
-		aria-label={`${label}: uptime per day over ${history.length} days. Use the arrow keys to move between days.`}
+		aria-label={m.status_uptime_bar_label({ label, days: history.length })}
 		onmouseleave={() => (active = null)}
 	>
 		{#each history as day, index (day.date)}
@@ -109,7 +111,7 @@
 					onkeydown={(event) => onkeydown(event, index)}
 				>
 					{#if day.incidents > 0}
-						<span class="sr-only">Incident</span>
+						<span class="sr-only">{m.status_words_kind_incident()}</span>
 					{/if}
 				</button>
 			</li>
@@ -117,11 +119,11 @@
 	</ul>
 	{#if !compact}
 		<div class="mt-1 flex justify-between gap-2 text-[0.6875rem] text-ink-3" aria-hidden="true">
-			<span class="tnum shrink-0">{first ? `${history.length} days ago` : ''}</span>
+			<span class="tnum shrink-0">{first ? m.status_uptime_bar_days_ago({ days: history.length }) : ''}</span>
 			<span class="tnum min-h-4 truncate text-center text-ink-2">
 				{#if active !== null && history[active]}{describe(history[active])}{/if}
 			</span>
-			<span class="tnum shrink-0">{last ? 'Today' : ''}</span>
+			<span class="tnum shrink-0">{last ? m.status_uptime_bar_today() : ''}</span>
 		</div>
 	{/if}
 </div>
