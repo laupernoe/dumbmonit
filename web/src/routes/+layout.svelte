@@ -141,7 +141,7 @@
 </svelte:head>
 
 <div class="flex min-h-full flex-col">
-	{#if !onWall && !statusHost}
+	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status')}
 		<VersionTag />
 	{/if}
 	{#if statusHost}

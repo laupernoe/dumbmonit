@@ -8,6 +8,7 @@
 	 * The browser side (permission, service worker, subscription) lives in
 	 * `$lib/push`; the server side in `$lib/api/webpush`.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { BellRing, Info, Send, Smartphone } from 'lucide-svelte';
 	import type { PushDevice, PushOverview } from '#lib/api/index.js';
 	import { deletePushDevice, getPushOverview, savePushSubscription, sendPushTest } from '#lib/api/webpush.js';
@@ -67,7 +68,7 @@
 			const saved = await savePushSubscription(subscription.toJSON());
 			here = saved.fingerprint;
 			overview = { ...overview, devices: [saved, ...overview.devices.filter((d) => d.id !== saved.id)] };
-			notice = { ok: true, text: 'This device will receive push notifications. Send a test to check.' };
+			notice = { ok: true, text: m.settings_push_enabled_notice() };
 		} catch (cause) {
 			actionError = cause;
 		} finally {
@@ -113,15 +114,15 @@
 	}
 </script>
 
-<Panel id="push" title="Push notifications" description="Alerts as native notifications on this phone or computer, even with DumbMonit closed. No app to install.">
+<Panel id="push" title={m.settings_push_title()} description={m.settings_push_description()}>
 	{#snippet aside()}
 		<button
 			type="button"
 			class="inline-flex size-8 items-center justify-center rounded-full border border-line text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 			aria-expanded={helpOpen}
 			aria-controls="push-help"
-			aria-label="How push notifications work"
-			title="How push notifications work"
+			aria-label={m.settings_push_help_label()}
+			title={m.settings_push_help_label()}
 			onclick={() => (helpOpen = !helpOpen)}
 		>
 			<Info class="size-4" aria-hidden="true" />
@@ -131,43 +132,43 @@
 	{#if helpOpen}
 		<div id="push-help" class="mb-4 rounded-lg border border-line bg-canvas-deep px-4 py-3 text-[0.8125rem] leading-relaxed text-ink-2">
 			<ul class="list-disc space-y-1 pl-4">
-				<li><span class="font-semibold text-ink">HTTPS is required.</span> Browsers only offer push on a secure origin: put DumbMonit behind a reverse proxy with a certificate. <code class="font-mono">http://localhost</code> also works, for testing on the server itself.</li>
-				<li><span class="font-semibold text-ink">iPhone and iPad</span> (iOS 16.4 or later): open DumbMonit in Safari, Share → <em>Add to Home Screen</em>, open it from the Home Screen icon, then enable push here.</li>
-				<li><span class="font-semibold text-ink">Android, Windows, macOS, Linux:</span> works in Chrome, Edge, Firefox and Safari. Installing the app (address bar → <em>Install</em>) is optional but keeps it one tap away.</li>
-				<li><span class="font-semibold text-ink">Domains:</span> the server sends to the browser vendor's push service, so it needs outbound HTTPS to <code class="font-mono">fcm.googleapis.com</code> (Chrome, Edge on Android), <code class="font-mono">*.notify.windows.com</code> (Edge), <code class="font-mono">updates.push.services.mozilla.com</code> (Firefox) and <code class="font-mono">*.push.apple.com</code> (Safari). Messages are end-to-end encrypted: those services cannot read them.</li>
-				<li>Which alerts arrive is decided by a <a href="/alerts#notifications" class="font-semibold text-ink hover:underline">Web Push channel</a> in Alerts → Notifications.</li>
+				<li><span class="font-semibold text-ink">{m.settings_push_help_https_lead()}</span> {m.settings_push_help_https_body()}</li>
+				<li><span class="font-semibold text-ink">{m.settings_push_help_ios_lead()}</span> {m.settings_push_help_ios_body()}</li>
+				<li><span class="font-semibold text-ink">{m.settings_push_help_desktop_lead()}</span> {m.settings_push_help_desktop_body()}</li>
+				<li><span class="font-semibold text-ink">{m.settings_push_help_domains_lead()}</span> {m.settings_push_help_domains_body()}</li>
+				<li><a href="/alerts#notifications" class="font-semibold text-ink hover:underline">{m.settings_push_help_channel()}</a></li>
 			</ul>
-			<a href="https://dumbmonit.readthedocs.io/en/latest/using/push-notifications/" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-signal-ink hover:underline">Full guide →</a>
+			<a href="https://dumbmonit.readthedocs.io/en/latest/using/push-notifications/" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-signal-ink hover:underline">{m.settings_push_help_guide()}</a>
 		</div>
 	{/if}
 
 	{#if loadError}
-		<ErrorNotice error={loadError} title="Could not read push notifications" onretry={() => void load()} />
+		<ErrorNotice error={loadError} title={m.settings_push_load_error()} onretry={() => void load()} />
 	{:else if !overview}
 		<Skeleton class="h-10 w-full" rows={2} />
 	{:else}
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<div class="min-w-0">
-				<p class="text-sm font-semibold text-ink">This device</p>
+				<p class="text-sm font-semibold text-ink">{m.settings_push_this_device()}</p>
 				<div class="mt-1 flex flex-wrap items-center gap-2 text-[0.8125rem] text-ink-2">
 					{#if support.state === 'insecure'}
-						<Plate tone="advisory" label="Needs HTTPS" />
-						<span>Open DumbMonit over HTTPS (or on localhost) to enable push. This address is <code class="font-mono">{origin}</code>.</span>
+						<Plate tone="advisory" label={m.settings_push_plate_https()} />
+						<span>{m.settings_push_text_https({ origin })}</span>
 					{:else if support.state === 'ios-install'}
-						<Plate tone="advisory" label="Install first" />
-						<span>On iPhone and iPad, add DumbMonit to the Home Screen (Share → Add to Home Screen), open it from there, then come back here.</span>
+						<Plate tone="advisory" label={m.settings_push_plate_install()} />
+						<span>{m.settings_push_text_install()}</span>
 					{:else if support.state === 'unsupported'}
-						<Plate tone="muted" label="Not supported" />
-						<span>This browser cannot receive push notifications. Try a recent Chrome, Edge, Firefox or Safari.</span>
+						<Plate tone="muted" label={m.settings_push_plate_unsupported()} />
+						<span>{m.settings_push_text_unsupported()}</span>
 					{:else if support.permission === 'denied'}
-						<Plate tone="warning" label="Blocked" />
-						<span>Notifications are blocked for this site. Allow them in the browser's site settings, then reload.</span>
+						<Plate tone="warning" label={m.settings_push_plate_blocked()} />
+						<span>{m.settings_push_text_blocked()}</span>
 					{:else if thisDevice}
-						<Plate tone="signal" label="Enabled" />
-						<span>{thisDevice.device}{#if isStandalone()} · installed app{/if}</span>
+						<Plate tone="signal" label={m.settings_push_plate_enabled()} />
+						<span>{isStandalone() ? m.settings_push_device_installed({ device: thisDevice.device }) : thisDevice.device}</span>
 					{:else}
-						<Plate tone="ghost" label="Off" />
-						<span>Not receiving push notifications yet.</span>
+						<Plate tone="ghost" label={m.settings_push_plate_off()} />
+						<span>{m.settings_push_text_off()}</span>
 					{/if}
 				</div>
 			</div>
@@ -175,13 +176,13 @@
 				{#if support.state === 'ready' && support.permission !== 'denied' && !thisDevice}
 					<Button size="sm" variant="primary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => void enable()}>
 						<BellRing class="size-4" aria-hidden="true" />
-						Enable on this device
+						{m.settings_push_enable()}
 					</Button>
 				{/if}
 				{#if overview.devices.length > 0}
 					<Button size="sm" variant="secondary" loading={busy === 'test'} disabled={busy !== null} onclick={() => void test()}>
 						<Send class="size-4" aria-hidden="true" />
-						Send a test
+						{m.settings_push_test()}
 					</Button>
 				{/if}
 			</div>
@@ -191,13 +192,13 @@
 			<p class={`mt-3 text-[0.8125rem] ${notice.ok ? 'text-signal-ink' : 'text-warning-ink'}`} role="status">{notice.text}</p>
 		{/if}
 		{#if actionError}
-			<div class="mt-3"><ErrorNotice error={actionError} title="Push notifications could not be updated" /></div>
+			<div class="mt-3"><ErrorNotice error={actionError} title={m.settings_push_action_error()} /></div>
 		{/if}
 
 		<div class="mt-5 border-t border-line pt-4">
-			<p class="text-sm font-semibold text-ink">Subscribed devices</p>
+			<p class="text-sm font-semibold text-ink">{m.settings_push_subscribed()}</p>
 			{#if overview.devices.length === 0}
-				<p class="mt-1 text-[0.8125rem] text-ink-2">None yet. Enable push on each phone or computer that should ring.</p>
+				<p class="mt-1 text-[0.8125rem] text-ink-2">{m.settings_push_none()}</p>
 			{:else}
 				<ul class="mt-2 divide-y divide-line rounded-lg border border-line">
 					{#each overview.devices as device (device.id)}
@@ -206,20 +207,21 @@
 								<Smartphone class="mt-0.5 size-4 shrink-0 text-ink-3" aria-hidden="true" />
 								<div class="min-w-0">
 									<p class="text-sm text-ink">
-										{device.device || 'Browser'}
-										{#if device.fingerprint === here}<span class="ml-1 text-[0.75rem] font-semibold text-signal-ink">(this device)</span>{/if}
+										{device.device || m.settings_push_browser()}
+										{#if device.fingerprint === here}<span class="ml-1 text-[0.75rem] font-semibold text-signal-ink">{m.settings_push_this_device_tag()}</span>{/if}
 									</p>
 									<p class="text-[0.75rem] text-ink-2">
-										{device.push_service} · added {formatDateTime(device.created_at)}
-										{#if device.last_success_at} · last delivered {formatRelative(device.last_success_at)}{/if}
+										{device.last_success_at
+											? m.settings_push_meta_delivered({ service: device.push_service, date: formatDateTime(device.created_at), when: formatRelative(device.last_success_at) })
+											: m.settings_push_meta_added({ service: device.push_service, date: formatDateTime(device.created_at) })}
 									</p>
 									{#if device.last_error}
-										<p class="mt-0.5 text-[0.75rem] break-words text-warning-ink">Last attempt failed: {device.last_error}</p>
+										<p class="mt-0.5 text-[0.75rem] break-words text-warning-ink">{m.settings_push_last_failed({ error: device.last_error })}</p>
 									{/if}
 								</div>
 							</div>
-							<Confirm confirmLabel="Remove this device?" loading={busy === device.id} disabled={busy !== null && busy !== device.id} onconfirm={() => remove(device)}>
-								Remove
+							<Confirm confirmLabel={m.settings_push_remove_confirm()} loading={busy === device.id} disabled={busy !== null && busy !== device.id} onconfirm={() => remove(device)}>
+								{m.settings_push_remove()}
 							</Confirm>
 						</li>
 					{/each}

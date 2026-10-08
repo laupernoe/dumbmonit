@@ -14,6 +14,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { ArrowRight, RefreshCw, X } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, reducedMotion } from '#lib/ui/index.js';
@@ -33,8 +34,8 @@
 		if (!info || !info.setup.title) return null;
 		return {
 			id: `setup:${info.kind}`,
-			text: info.setup.steps.length > 0 ? `${info.setup.title}: ${info.setup.steps[0]}` : info.setup.title,
-			action: info.setup.doc_url ? `${info.label} guide` : undefined,
+			text: () => (info.setup.steps.length > 0 ? `${info.setup.title}: ${info.setup.steps[0]}` : info.setup.title),
+			action: info.setup.doc_url ? () => m.tips_pip_guide({ label: info.label }) : undefined,
 			href: info.setup.doc_url || undefined
 		};
 	});
@@ -110,18 +111,18 @@
 	<div class="pointer-events-none fixed bottom-[4.75rem] left-3 z-20 flex flex-col items-start gap-2 sm:bottom-3">
 		{#if open && tip}
 			<div
-				class="pip-bubble pointer-events-auto max-w-[min(20rem,calc(100vw-5.5rem))] rounded-[var(--radius-card)] border border-line bg-surface p-3 text-sm shadow-lift"
+				class="pip-bubble pointer-events-auto max-w-[min(20rem,calc(100vw-6rem))] max-sm:max-h-[40dvh] max-sm:overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface p-3 text-sm shadow-lift"
 				role="note"
-				aria-label="A tip from Pip"
+				aria-label={m.tips_pip_bubble_aria()}
 			>
 				<div class="flex items-start justify-between gap-2">
-					<p class="min-w-0 leading-snug text-ink-2">{tip.text}</p>
+					<p class="min-w-0 leading-snug text-ink-2">{tip.text()}</p>
 					<button
 						type="button"
 						class="-mt-1 -mr-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
 						onclick={close}
-						aria-label="Close this tip"
-						title="Close"
+						aria-label={m.tips_pip_close_tip_aria()}
+						title={m.tips_pip_close_tip_title()}
 					>
 						<X class="size-3.5" aria-hidden="true" />
 					</button>
@@ -129,23 +130,23 @@
 				<div class="mt-2 flex flex-wrap items-center gap-1.5">
 					{#if tip.action && tip.href === 'palette'}
 						<Button variant="secondary" size="sm" onclick={() => palette.open()}>
-							{tip.action}
+							{tip.action()}
 							<span class="tnum text-ink-3">{palette.shortcutLabel}</span>
 						</Button>
 					{:else if tip.action && tip.href}
 						<Button variant="secondary" size="sm" href={tip.href} target={tip.href.startsWith('http') ? '_blank' : undefined} rel={tip.href.startsWith('http') ? 'noopener' : undefined}>
-							{tip.action}
+							{tip.action()}
 							<ArrowRight class="size-3.5" aria-hidden="true" />
 						</Button>
 					{/if}
 					{#if list.length > 1}
-						<Button variant="ghost" size="sm" onclick={another} aria-label="Another tip" title="Another tip">
+						<Button variant="ghost" size="sm" onclick={another} aria-label={m.tips_pip_another()} title={m.tips_pip_another()}>
 							<RefreshCw class="size-3.5" aria-hidden="true" />
 						</Button>
 					{/if}
 				</div>
 				<button type="button" class="mt-2 block text-[0.75rem] text-ink-3 underline-offset-2 hover:underline" onclick={quiet}>
-					Don't show tips again
+					{m.tips_pip_quiet()}
 				</button>
 			</div>
 		{/if}
@@ -154,9 +155,9 @@
 			type="button"
 			class="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-line bg-surface shadow-lift transition-transform hover:scale-105 active:scale-95"
 			onclick={toggle}
-			aria-label={open ? 'Close Pip' : "Pip has a tip"}
+			aria-label={open ? m.tips_pip_close_pip() : m.tips_pip_open()}
 			aria-expanded={open}
-			title={open ? 'Close Pip' : 'Pip has a tip'}
+			title={open ? m.tips_pip_close_pip() : m.tips_pip_open()}
 		>
 			<Mascot class="size-8" mood={open ? 'happy' : 'watch'} />
 		</button>

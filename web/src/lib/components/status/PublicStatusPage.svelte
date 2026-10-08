@@ -12,6 +12,7 @@
 	 * theme follows the page setting (`light` / `dark`) or the visitor's system;
 	 * the accent is one of a closed set of tokens, never free-form CSS.
 	 */
+	import VersionTag from '#lib/components/VersionTag.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { CalendarClock, ExternalLink, Megaphone, Moon, Sun } from 'lucide-svelte';
@@ -251,6 +252,7 @@
 			<Logo class="size-5" />
 			<span>{m.status_public_powered_by()} <a class="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink" href="https://github.com/laupernoe/dumbmonit" rel="noreferrer">DumbMonit</a></span>
 		</p>
+		<VersionTag inline />
 	</footer>
 {/snippet}
 

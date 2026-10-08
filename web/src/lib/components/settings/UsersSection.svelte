@@ -23,6 +23,7 @@
 	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import { resetUserTotp } from '#lib/api/totp.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	let users = $state<User[]>([]);
 	let loading = $state(true);
@@ -68,7 +69,11 @@
 	// --- Add ------------------------------------------------------------------
 
 	let adding = $state(false);
-	const ROLE_LABELS: Record<Role, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer' };
+	const ROLE_LABELS: Record<Role, () => string> = {
+		admin: () => m.settings_users_role_admin(),
+		operator: () => m.settings_users_role_operator(),
+		viewer: () => m.settings_users_role_viewer()
+	};
 
 	let draft = $state({ username: '', display_name: '', role: 'viewer' as Role, password: '' });
 	let draftErrors = $state<{ username?: string; password?: string }>({});
@@ -89,14 +94,14 @@
 		createError = null;
 		const found: typeof draftErrors = {};
 		const username = draft.username.trim();
-		if (!username) found.username = 'Enter a username.';
-		else if (/\s/.test(username)) found.username = 'The username cannot contain spaces.';
+		if (!username) found.username = m.settings_users_err_username();
+		else if (/\s/.test(username)) found.username = m.settings_users_err_spaces();
 		const password = draft.password;
 		if (password) {
 			const problem = validatePassword(password);
 			if (problem) found.password = problem;
 		} else if (!auth.oidc.enabled) {
-			found.password = 'Set a password: single sign-on is not enabled, so this user could not sign in otherwise.';
+			found.password = m.settings_users_err_password();
 		}
 		draftErrors = found;
 		if (Object.keys(found).length > 0) return;
@@ -210,21 +215,21 @@
 	}
 </script>
 
-<Panel id="users" title="Users" description="Who can sign in. Admins change things; operators handle alerts; viewers only look." padded={false}>
+<Panel id="users" title={m.settings_users_title()} description={m.settings_users_description()} padded={false}>
 	{#snippet aside()}
 		{#if !loading && !error && !adding}
 			<Button variant="secondary" size="sm" onclick={openAdd}>
 				<UserPlus class="size-4" aria-hidden="true" />
-				Add user
+				{m.settings_users_add()}
 			</Button>
 		{/if}
 	{/snippet}
 
 	<div class="px-5 py-4">
 		{#if adding}
-			<form class="rise-in mb-4 rounded-[var(--radius-card)] border border-line-strong bg-surface-2/40 p-4" onsubmit={submitAdd} novalidate aria-label="New user">
+			<form class="rise-in mb-4 rounded-[var(--radius-card)] border border-line-strong bg-surface-2/40 p-4" onsubmit={submitAdd} novalidate aria-label={m.settings_users_new_aria()}>
 				<div class="grid gap-4 sm:grid-cols-2">
-					<Field label="Username" for="new-username" error={draftErrors.username} required>
+					<Field label={m.settings_users_username()} for="new-username" error={draftErrors.username} required>
 						<input
 							id="new-username"
 							type="text"
@@ -239,23 +244,23 @@
 							oninput={() => (draftErrors = { ...draftErrors, username: undefined })}
 						/>
 					</Field>
-					<Field label="Display name" for="new-display-name" help="Optional. Shown in the top bar instead of the username.">
+					<Field label={m.settings_users_display_name()} for="new-display-name" help={m.settings_users_display_help()}>
 						<input id="new-display-name" type="text" class="input" bind:value={draft.display_name} placeholder="Jane Doe" autocomplete="off" disabled={creating} />
 					</Field>
-					<Field label="Role" for="new-role">
+					<Field label={m.settings_users_role()} for="new-role">
 						<select id="new-role" class="input" bind:value={draft.role} disabled={creating}>
-							<option value="viewer">Viewer — read only</option>
-							<option value="operator">Operator — handles alerts, no configuration</option>
-							<option value="admin">Admin — can change everything</option>
+							<option value="viewer">{m.settings_users_role_viewer_option()}</option>
+							<option value="operator">{m.settings_users_role_operator_option()}</option>
+							<option value="admin">{m.settings_users_role_admin_option()}</option>
 						</select>
 					</Field>
 					<Field
-						label="Password"
+						label={m.settings_users_password()}
 						for="new-password"
 						error={draftErrors.password}
 						help={auth.oidc.enabled
-							? `At least ${PASSWORD_MIN_LENGTH} characters. Leave empty for a user who signs in with ${auth.oidc.provider_name} only.`
-							: `At least ${PASSWORD_MIN_LENGTH} characters. Shown once after creation.`}
+							? m.settings_users_password_help_sso({ min: PASSWORD_MIN_LENGTH, provider: auth.oidc.provider_name })
+							: m.settings_users_password_help({ min: PASSWORD_MIN_LENGTH })}
 					>
 						<div class="flex gap-2">
 							<PasswordInput
@@ -267,19 +272,19 @@
 								invalid={!!draftErrors.password}
 								oninput={() => (draftErrors = { ...draftErrors, password: undefined })}
 							/>
-							<Button variant="ghost" onclick={() => (draft.password = generatePassword())} disabled={creating} title="Generate a random password">
+							<Button variant="ghost" onclick={() => (draft.password = generatePassword())} disabled={creating} title={m.settings_users_generate_title()}>
 								<RefreshCw class="size-4" aria-hidden="true" />
-								Generate
+								{m.settings_users_generate()}
 							</Button>
 						</div>
 					</Field>
 				</div>
 				{#if createError}
-					<ErrorNotice error={createError} title="Could not create the user" class="mt-3" />
+					<ErrorNotice error={createError} title={m.settings_users_create_error()} class="mt-3" />
 				{/if}
 				<div class="mt-4 flex flex-wrap items-center gap-2">
-					<Button type="submit" variant="primary" loading={creating}>Create user</Button>
-					<Button variant="ghost" onclick={() => (adding = false)} disabled={creating}>Cancel</Button>
+					<Button type="submit" variant="primary" loading={creating}>{m.settings_users_create()}</Button>
+					<Button variant="ghost" onclick={() => (adding = false)} disabled={creating}>{m.settings_users_cancel()}</Button>
 				</div>
 			</form>
 		{/if}
@@ -289,13 +294,13 @@
 				<div class="rise-in mb-4 rounded-[var(--radius-card)] border border-advisory/40 bg-surface p-4">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<div class="flex flex-wrap items-center gap-2">
-							<p class="font-semibold text-ink">User “{created.user.username}” created</p>
-							<Plate tone="advisory" label="Password shown once — hand it over now" />
+							<p class="font-semibold text-ink">{m.settings_users_created({ username: created.user.username })}</p>
+							<Plate tone="advisory" label={m.settings_users_created_shown()} />
 						</div>
-						<Button variant="ghost" size="sm" onclick={() => (created = null)}>Done</Button>
+						<Button variant="ghost" size="sm" onclick={() => (created = null)}>{m.settings_users_done()}</Button>
 					</div>
 					<div class="mt-3">
-						<CopyBlock value={created.password} label="Copy password" secret />
+						<CopyBlock value={created.password} label={m.settings_users_copy_password()} secret />
 					</div>
 				</div>
 			{/if}
@@ -303,24 +308,24 @@
 				<div class="rise-in mb-4 rounded-[var(--radius-card)] border border-advisory/40 bg-surface p-4">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<div class="flex flex-wrap items-center gap-2">
-							<p class="font-semibold text-ink">Password reset for “{resetShown.user.username}”</p>
-							<Plate tone="advisory" label="Shown once — their other sessions were signed out" />
+							<p class="font-semibold text-ink">{m.settings_users_reset_title({ username: resetShown.user.username })}</p>
+							<Plate tone="advisory" label={m.settings_users_reset_shown()} />
 						</div>
-						<Button variant="ghost" size="sm" onclick={() => (resetShown = null)}>Done</Button>
+						<Button variant="ghost" size="sm" onclick={() => (resetShown = null)}>{m.settings_users_done()}</Button>
 					</div>
 					<div class="mt-3">
-						<CopyBlock value={resetShown.password} label="Copy password" secret />
+						<CopyBlock value={resetShown.password} label={m.settings_users_copy_password()} secret />
 					</div>
 				</div>
 			{/if}
 		</div>
 
 		{#if error}
-			<ErrorNotice {error} title="Could not load the users" onretry={() => void load()} />
+			<ErrorNotice {error} title={m.settings_users_load_error()} onretry={() => void load()} />
 		{:else if loading}
 			<Skeleton class="h-16 w-full" rows={2} />
 		{:else if users.length === 0}
-			<EmptyState icon={Users} title="No users." description="Add the first account to sign in." />
+			<EmptyState icon={Users} title={m.settings_users_empty_title()} description={m.settings_users_empty_description()} />
 		{:else}
 			<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 				{#each users as user (user.id)}
@@ -336,78 +341,80 @@
 									{#if user.display_name.trim()}
 										<span class="text-sm text-ink-2">{user.username}</span>
 									{/if}
-									<Plate tone={user.role === 'admin' ? 'signal' : user.role === 'operator' ? 'info' : 'ghost'} bare label={ROLE_LABELS[user.role] ?? user.role} />
-									<Plate tone="info" bare label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : 'Password'} title={user.auth === 'oidc' ? 'Signs in through the identity provider' : 'Signs in with a password'} />
-									{#if user.totp_enabled}<Plate tone="signal" bare label="2FA" title="Two-factor authentication is on" />{/if}
-									{#if user.disabled}<Plate tone="muted" label="Disabled" />{/if}
-									{#if me}<span class="text-[0.75rem] font-semibold text-ink-3">you</span>{/if}
+									<Plate tone={user.role === 'admin' ? 'signal' : user.role === 'operator' ? 'info' : 'ghost'} bare label={ROLE_LABELS[user.role]?.() ?? user.role} />
+									<Plate tone="info" bare label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : m.settings_users_auth_password()} title={user.auth === 'oidc' ? m.settings_users_auth_sso_title() : m.settings_users_auth_password_title()} />
+									{#if user.totp_enabled}<Plate tone="signal" bare label="2FA" title={m.settings_users_2fa_title()} />{/if}
+									{#if user.disabled}<Plate tone="muted" label={m.settings_users_disabled()} />{/if}
+									{#if me}<span class="text-[0.75rem] font-semibold text-ink-3">{m.settings_users_you()}</span>{/if}
 								</div>
 								<p class="mt-1 text-sm text-ink-2">
-									Last sign-in <time class="tnum" title={formatDateTime(user.last_login_at)}>{user.last_login_at ? formatRelative(user.last_login_at) : 'never'}</time>
-									· Created <time class="tnum" title={formatDateTime(user.created_at)}>{formatRelative(user.created_at)}</time>
+									<span class="tnum" title={`${formatDateTime(user.last_login_at)} · ${formatDateTime(user.created_at)}`}>{m.settings_users_last_seen({
+										last: user.last_login_at ? formatRelative(user.last_login_at) : m.settings_users_never(),
+										created: formatRelative(user.created_at)
+									})}</span>
 								</p>
 							</div>
 							{#if !editing}
 								<div class="flex flex-wrap items-center gap-2">
-									<Button variant="ghost" size="sm" disabled={busy} onclick={() => openEdit(user)} aria-label={`Edit ${user.username}`}>Edit</Button>
+									<Button variant="ghost" size="sm" disabled={busy} onclick={() => openEdit(user)} aria-label={m.settings_users_edit_aria({ username: user.username })}>{m.settings_users_edit()}</Button>
 									<div
 										class="inline-flex h-8 items-center gap-2 rounded-lg border border-line px-2.5"
-										title={lastAdmin ? 'The last admin cannot be disabled. Promote another user first.' : me ? 'You cannot disable your own account.' : undefined}
+										title={lastAdmin ? m.settings_users_no_disable_last() : me ? m.settings_users_no_disable_self() : undefined}
 									>
 										<Toggle id={`user-enabled-${user.id}`} checked={!user.disabled} disabled={busy || lastAdmin || me} onchange={(v) => void setDisabled(user, !v)} />
-										<label for={`user-enabled-${user.id}`} class="text-[0.8125rem] font-semibold text-ink">Enabled</label>
+										<label for={`user-enabled-${user.id}`} class="text-[0.8125rem] font-semibold text-ink">{m.settings_users_enabled()}</label>
 									</div>
 									{#if user.totp_enabled && !me}
-										<span title="Removes their authenticator and recovery codes, and signs them out: the password alone will sign them in again.">
-											<Confirm confirmLabel="Reset two-factor?" variant="secondary" loading={busy} onconfirm={() => resetTotp(user)}>Reset 2FA</Confirm>
+										<span title={m.settings_users_reset2fa_title()}>
+											<Confirm confirmLabel={m.settings_users_reset2fa_confirm()} variant="secondary" loading={busy} onconfirm={() => resetTotp(user)}>{m.settings_users_reset2fa()}</Confirm>
 										</span>
 									{/if}
-									<span title={lastAdmin ? 'The last admin cannot be deleted. Promote another user first.' : me ? 'You cannot delete your own account.' : undefined}>
-										<Confirm confirmLabel="Delete for good?" loading={busy} disabled={lastAdmin || me} onconfirm={() => remove(user)}>Delete</Confirm>
+									<span title={lastAdmin ? m.settings_users_no_delete_last() : me ? m.settings_users_no_delete_self() : undefined}>
+										<Confirm confirmLabel={m.settings_users_delete_confirm()} loading={busy} disabled={lastAdmin || me} onconfirm={() => remove(user)}>{m.settings_users_delete()}</Confirm>
 									</span>
 								</div>
 							{/if}
 						</div>
 
 						{#if editing}
-							<form class="rise-in mt-3 grid gap-4 rounded-[var(--radius-card)] border border-line-strong bg-surface-2/40 p-4 sm:grid-cols-2" onsubmit={(e) => submitEdit(e, user)} novalidate aria-label={`Edit ${user.username}`}>
-								<Field label="Display name" for={`edit-name-${user.id}`}>
+							<form class="rise-in mt-3 grid gap-4 rounded-[var(--radius-card)] border border-line-strong bg-surface-2/40 p-4 sm:grid-cols-2" onsubmit={(e) => submitEdit(e, user)} novalidate aria-label={m.settings_users_edit_aria({ username: user.username })}>
+								<Field label={m.settings_users_display_name()} for={`edit-name-${user.id}`}>
 									<input id={`edit-name-${user.id}`} type="text" class="input" bind:value={edit.display_name} autocomplete="off" disabled={saving} />
 								</Field>
-								<Field label="Role" for={`edit-role-${user.id}`} help={lastAdmin ? 'The last admin keeps the admin role until another one exists.' : undefined}>
-									<select id={`edit-role-${user.id}`} class="input" bind:value={edit.role} disabled={saving || lastAdmin} title={lastAdmin ? 'Promote another user first.' : undefined}>
-										<option value="viewer">Viewer — read only</option>
-										<option value="operator">Operator — handles alerts, no configuration</option>
-										<option value="admin">Admin — can change everything</option>
+								<Field label={m.settings_users_role()} for={`edit-role-${user.id}`} help={lastAdmin ? m.settings_users_role_last_admin_help() : undefined}>
+									<select id={`edit-role-${user.id}`} class="input" bind:value={edit.role} disabled={saving || lastAdmin} title={lastAdmin ? m.settings_users_promote_first() : undefined}>
+										<option value="viewer">{m.settings_users_role_viewer_option()}</option>
+										<option value="operator">{m.settings_users_role_operator_option()}</option>
+										<option value="admin">{m.settings_users_role_admin_option()}</option>
 									</select>
 								</Field>
 								<Field
-									label="Reset password"
+									label={m.settings_users_reset_password()}
 									for={`edit-password-${user.id}`}
 									error={editPasswordError}
-									help={user.auth === 'oidc' ? 'Leave empty to keep this account on single sign-on only.' : 'Leave empty to keep the current password. A new one signs the user out everywhere.'}
+									help={user.auth === 'oidc' ? m.settings_users_reset_help_sso() : m.settings_users_reset_help()}
 									class="sm:col-span-2"
 								>
 									<div class="flex gap-2">
 										<PasswordInput id={`edit-password-${user.id}`} class="min-w-0 flex-1" bind:value={edit.password} autocomplete="new-password" disabled={saving} invalid={!!editPasswordError} oninput={() => (editPasswordError = null)} />
-										<Button variant="ghost" onclick={() => (edit.password = generatePassword())} disabled={saving} title="Generate a random password">
+										<Button variant="ghost" onclick={() => (edit.password = generatePassword())} disabled={saving} title={m.settings_users_generate_title()}>
 											<RefreshCw class="size-4" aria-hidden="true" />
-											Generate
+											{m.settings_users_generate()}
 										</Button>
 									</div>
 								</Field>
 								{#if editError}
-									<div class="sm:col-span-2"><ErrorNotice error={editError} title="Could not save the user" /></div>
+									<div class="sm:col-span-2"><ErrorNotice error={editError} title={m.settings_users_save_error()} /></div>
 								{/if}
 								<div class="flex flex-wrap items-center gap-2 sm:col-span-2">
-									<Button type="submit" variant="secondary" loading={saving}>Save changes</Button>
-									<Button variant="ghost" onclick={() => (editingId = null)} disabled={saving}>Cancel</Button>
+									<Button type="submit" variant="secondary" loading={saving}>{m.settings_users_save()}</Button>
+									<Button variant="ghost" onclick={() => (editingId = null)} disabled={saving}>{m.settings_users_cancel()}</Button>
 								</div>
 							</form>
 						{/if}
 
 						{#if rowError?.id === user.id}
-							<ErrorNotice error={rowError.cause} title="Could not update the user" class="mt-3" />
+							<ErrorNotice error={rowError.cause} title={m.settings_users_update_error()} class="mt-3" />
 						{/if}
 					</li>
 				{/each}

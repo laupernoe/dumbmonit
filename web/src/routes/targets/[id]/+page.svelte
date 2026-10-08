@@ -479,7 +479,7 @@
 <svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
 
 <nav class="mb-4 text-sm">
-	<a href="/targets" class="inline-flex items-center gap-1 text-ink-2 hover:text-ink hover:underline">{m.devices_target_back()}</a>
+	<a href="/targets" class="inline-flex min-h-10 items-center gap-1 text-ink-2 hover:text-ink hover:underline sm:min-h-0">{m.devices_target_back()}</a>
 </nav>
 
 {#if missing}
@@ -565,7 +565,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
+			<div class="flex min-w-0 max-w-full flex-wrap items-center gap-2 max-sm:[&_a]:h-auto max-sm:[&_a]:min-h-10 max-sm:[&_a]:whitespace-normal max-sm:[&_a]:py-1.5 lg:shrink-0 lg:justify-end">
 				<Button variant="secondary" onclick={probe} loading={probing}>
 					<Activity class="size-4" aria-hidden="true" />
 					{m.devices_target_probe_now()}
@@ -612,7 +612,7 @@
 		{#if collector?.setup.doc_url && target.last_error}
 			<p class="mt-3 text-sm text-ink-2">
 				{m.devices_target_check_reachable()}
-				<a href={collector.setup.doc_url} class="inline-flex items-center gap-1 text-ink hover:underline" target="_blank" rel="noreferrer">
+				<a href={collector.setup.doc_url} class="inline-flex min-h-10 items-center gap-1 text-ink hover:underline sm:min-h-0" target="_blank" rel="noreferrer">
 					{m.devices_target_setup_notes({ kind: kindLabel })}
 					<ExternalLink class="size-3.5" aria-hidden="true" />
 				</a>
@@ -659,7 +659,7 @@
 	<!-- Instruments: a website-change watcher already says everything in its own panel -->
 	{#if target.kind !== 'webchange'}
 	<section class="mt-8" aria-labelledby="device-metrics">
-		<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+		<div class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3">
 			<h2 id="device-metrics" class="text-base font-semibold tracking-tight text-ink">
 				{service ? m.devices_target_availability() : m.devices_target_metrics()}
 				<!-- A service's figures each name their own window (24 h, last hour, the range):

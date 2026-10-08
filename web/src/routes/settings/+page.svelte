@@ -52,7 +52,7 @@
 			label: null,
 			items: [
 				{ id: 'security', label: m["settings.section.security"]() },
-				{ id: 'push', label: 'Push notifications' },
+				{ id: 'push', label: m.settings_nav_push() },
 				...(showAccounts
 					? [
 							{ id: 'users', label: m["settings.section.users"]() },
@@ -149,7 +149,7 @@
 			<li class="shrink-0">
 				<a
 					href="#{section.id}"
-					class={`inline-flex h-8 items-center rounded-full border px-3 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors ${visible === section.id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
+					class={`inline-flex h-10 items-center rounded-full sm:h-8 border px-3 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors ${visible === section.id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
 					aria-current={visible === section.id ? 'location' : undefined}
 				>
 					{section.label}

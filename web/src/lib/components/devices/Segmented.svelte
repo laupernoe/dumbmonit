@@ -25,7 +25,7 @@
 <div
 	role="group"
 	aria-label={label}
-	class={`inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-line-strong bg-surface-2 p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0/0.04)] ${className}`}
+	class={`inline-flex max-w-full min-w-0 items-center gap-0.5 overflow-x-auto rounded-lg border border-line-strong bg-surface-2 p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0/0.04)] ${className}`}
 >
 	{#each options as option (option.id)}
 		{@const active = option.id === value}
@@ -33,7 +33,7 @@
 			type="button"
 			aria-pressed={active}
 			onclick={() => onchange(option.id)}
-			class={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[6px] font-semibold transition-[background-color,color,box-shadow] duration-200 ease-out-expo ${size === 'sm' ? 'h-7 px-2.5 text-[0.8125rem]' : 'h-8 px-3 text-sm'} ${active ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+			class={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[6px] font-semibold transition-[background-color,color,box-shadow] duration-200 ease-out-expo ${size === 'sm' ? 'h-7 px-2.5 text-[0.8125rem] max-sm:h-10' : 'h-8 px-3 text-sm max-sm:h-10'} ${active ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 		>
 			{option.label}
 			{#if option.count !== undefined}

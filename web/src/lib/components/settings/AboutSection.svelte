@@ -4,6 +4,7 @@
 	 * server. Polled every 15 s while the page is open.
 	 */
 	import { BookOpen } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getHealth, type ComponentHealth, type Health } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { whatsNew } from '#lib/stores/whatsnew.svelte.js';
@@ -36,40 +37,40 @@
 		};
 	});
 
-	const COMPONENTS: { key: 'database' | 'victoria'; name: string; role: string }[] = [
-		{ key: 'database', name: 'Database', role: 'Device setup and alert history.' },
-		{ key: 'victoria', name: 'VictoriaMetrics', role: 'Every measurement shown in the charts.' }
+	const COMPONENTS: { key: 'database' | 'victoria'; name: () => string; role: () => string }[] = [
+		{ key: 'database', name: () => m.settings_about_database(), role: () => m.settings_about_database_role() },
+		{ key: 'victoria', name: () => 'VictoriaMetrics', role: () => m.settings_about_victoria_role() }
 	];
 </script>
 
-<Panel id="about" title="About">
+<Panel id="about" title={m.settings_about_title()}>
 	{#if error}
-		<ErrorNotice {error} title="Could not reach the server" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.settings_about_error_title()} onretry={() => void load()} />
 	{:else if loading && !health}
 		<Skeleton class="h-5 w-40" />
 		<div class="mt-4 grid gap-2"><Skeleton class="h-12 w-full" rows={2} /></div>
 	{:else if health}
 		<dl class="grid gap-y-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-x-6">
-			<dt class="font-semibold text-ink">Version</dt>
+			<dt class="font-semibold text-ink">{m.settings_about_version()}</dt>
 			<dd class="tnum text-ink-2">
-				{health.version}{#if health.build}<span class="text-ink-3"> · build <span class="font-mono">{health.build}</span></span>{/if}
+				{health.version}{#if health.build}<span class="text-ink-3"> · {m.settings_about_build()} <span class="font-mono">{health.build}</span></span>{/if}
 			</dd>
 
 			{#each COMPONENTS as component (component.key)}
 				{@const state: ComponentHealth = health[component.key]}
-				<dt class="font-semibold text-ink">{component.name}</dt>
+				<dt class="font-semibold text-ink">{component.name()}</dt>
 				<dd class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
 						{#if state.ok}
-							<Plate tone="signal" label="Reporting" />
+							<Plate tone="signal" label={m.settings_about_reporting()} />
 						{:else}
-							<Plate tone="warning" label="Warning" />
+							<Plate tone="warning" label={m.settings_about_warning()} />
 						{/if}
-						<span class="text-ink-2">{component.role}</span>
+						<span class="text-ink-2">{component.role()}</span>
 					</div>
 					{#if !state.ok}
-						<p class="mt-1 break-words text-warning-ink">{state.error ?? 'Component unreachable.'}</p>
-						<p class="mt-0.5 text-ink-2">Check that its container is running, then read its logs with <code class="rounded-md border border-line bg-canvas-deep px-1 py-0.5 font-mono text-[0.8125rem]">docker compose logs</code>.</p>
+						<p class="mt-1 break-words text-warning-ink">{state.error ?? m.settings_about_unreachable()}</p>
+						<p class="mt-0.5 text-ink-2">{m.settings_about_check_logs()}</p>
 					{/if}
 				</dd>
 			{/each}
@@ -81,11 +82,11 @@
 	<div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-4 text-sm">
 		<a href="https://dumbmonit.readthedocs.io/en/latest/" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 font-medium text-signal-ink hover:underline">
 			<BookOpen class="size-4" aria-hidden="true" />
-			Documentation →
+			{m.settings_about_docs()}
 		</a>
 		{#if health && releaseFor(health.version)}
-			<button type="button" class="font-medium text-signal-ink hover:underline" onclick={() => whatsNew.reopen()}>What's new</button>
+			<button type="button" class="font-medium text-signal-ink hover:underline" onclick={() => whatsNew.reopen()}>{m.settings_about_whats_new()}</button>
 		{/if}
-		<span class="text-ink-2">Open source, Apache 2.0.</span>
+		<span class="text-ink-2">{m.settings_about_license()}</span>
 	</div>
 </Panel>

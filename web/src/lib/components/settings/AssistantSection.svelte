@@ -8,6 +8,8 @@
 	 * anything; they carry the real token only while it is on screen.
 	 */
 	import { Bot, FileJson, KeyRound } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import {
 		API_DOCS_URL,
 		ASSISTANT_DOCS_URL,
@@ -25,7 +27,7 @@
 	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
 	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
-	const EXAMPLE_PROMPTS = ['Is everything fine?', 'Silence the NAS for two hours', 'What happened last night?', 'How full is the backup server?'];
+	const EXAMPLE_PROMPTS = [m.settings_assistant_prompt_fine(), m.settings_assistant_prompt_silence(), m.settings_assistant_prompt_night(), m.settings_assistant_prompt_backup()];
 
 	let tokens = $state<ApiToken[]>([]);
 	let loading = $state(true);
@@ -67,7 +69,7 @@
 		event.preventDefault();
 		createError = null;
 		if (!name.trim()) {
-			nameError = 'Name the token, for example after the assistant or the machine it runs on.';
+			nameError = m.settings_assistant_name_required();
 			return;
 		}
 		nameError = null;
@@ -115,16 +117,17 @@
 	/** "in 3 months", "in 12 d", "in 5 h": how long a token still has. */
 	function remaining(value: string): string {
 		const date = parseServerDate(value);
-		if (!date) return 'at an unknown date';
+		if (!date) return m.settings_assistant_remaining_unknown();
+		const rtf = new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' });
 		const ms = date.getTime() - Date.now();
-		if (ms <= 0) return 'now';
+		if (ms <= 0) return rtf.format(0, 'second');
 		const hours = Math.round(ms / 3_600_000);
-		if (hours < 24) return `in ${Math.max(hours, 1)} h`;
+		if (hours < 24) return rtf.format(Math.max(hours, 1), 'hour');
 		const days = Math.round(ms / DAY);
-		if (days < 60) return `in ${days} d`;
+		if (days < 60) return rtf.format(days, 'day');
 		const months = Math.round(days / 30);
-		if (months < 24) return `in ${months} months`;
-		return `in ${Math.round(days / 365)} years`;
+		if (months < 24) return rtf.format(months, 'month');
+		return rtf.format(Math.round(days / 365), 'year');
 	}
 
 	/** Expiring within a week: worth a glance before it breaks a script. */
@@ -140,7 +143,7 @@
 		{ id: 'claude-code', label: 'Claude Code' },
 		{ id: 'claude-desktop', label: 'Claude Desktop' },
 		{ id: 'vscode', label: 'VS Code' },
-		{ id: 'cursor', label: 'Cursor / other' },
+		{ id: 'cursor', label: m.settings_assistant_client_other() },
 		{ id: 'chatgpt', label: 'ChatGPT' }
 	];
 	let client = $state<Client>('claude-code');
@@ -196,13 +199,13 @@
 
 <Panel
 	id="assistant"
-	title="API & assistants"
-	description="One kind of token for both: let Claude, ChatGPT, Cursor or any MCP client ask DumbMonit how things are, or call the REST API from a script. A read token can only look; a write token can also change things — silence a device, run a probe, add or edit devices, rules and channels."
+	title={m.settings_assistant_title()}
+	description={m.settings_assistant_description()}
 	padded={false}
 >
 	<div class="px-5 py-4">
-		<p class="text-sm text-ink-2">Once connected, try asking:</p>
-		<ul class="mt-2 flex flex-wrap gap-2" aria-label="Example prompts">
+		<p class="text-sm text-ink-2">{m.settings_assistant_try_asking()}</p>
+		<ul class="mt-2 flex flex-wrap gap-2" aria-label={m.settings_assistant_prompts_aria()}>
 			{#each EXAMPLE_PROMPTS as prompt (prompt)}
 				<li class="rounded-lg border border-line bg-canvas-deep px-2.5 py-1 text-sm text-ink">“{prompt}”</li>
 			{/each}
@@ -210,13 +213,13 @@
 
 		<!-- Create -->
 		<form class="mt-5 grid gap-4 sm:grid-cols-2" onsubmit={create} novalidate>
-			<Field label="New token" for="api-token-name" error={nameError} help="Only used to recognise the token in this list.">
+			<Field label={m.settings_assistant_new_token()} for="api-token-name" error={nameError} help={m.settings_assistant_new_token_help()}>
 				<input
 					id="api-token-name"
 					type="text"
 					class="input"
 					bind:value={name}
-					placeholder="Claude on my laptop"
+					placeholder={m.settings_assistant_name_placeholder()}
 					autocomplete="off"
 					maxlength="80"
 					disabled={creating}
@@ -225,9 +228,9 @@
 				/>
 			</Field>
 			<fieldset class="grid min-w-0 gap-1.5" disabled={creating}>
-				<legend class="mb-1.5 block text-sm font-semibold text-ink">Scope</legend>
-				<div class="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-line bg-canvas-deep p-1" role="radiogroup" aria-label="Token scope">
-					{#each [{ value: 'read', label: 'Read' }, { value: 'write', label: 'Read and write' }] as option (option.value)}
+				<legend class="mb-1.5 block text-sm font-semibold text-ink">{m.settings_assistant_scope()}</legend>
+				<div class="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-line bg-canvas-deep p-1" role="radiogroup" aria-label={m.settings_assistant_scope_aria()}>
+					{#each [{ value: 'read', label: m.settings_assistant_scope_read() }, { value: 'write', label: m.settings_assistant_scope_write() }] as option (option.value)}
 						<label
 							class={`cursor-pointer rounded-md px-3 py-1.5 text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal ${scope === option.value ? 'bg-surface font-semibold text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 						>
@@ -237,10 +240,10 @@
 					{/each}
 				</div>
 				<p class="text-[0.8125rem] text-ink-2">
-					{scope === 'read' ? 'Can never change anything.' : 'Can change everything except accounts, tokens and backups.'}
+					{scope === 'read' ? m.settings_assistant_scope_read_note() : m.settings_assistant_scope_write_note()}
 				</p>
 			</fieldset>
-			<Field label="Expires" for="api-token-expiry" help="An expired token stops working; create a new one then.">
+			<Field label={m.settings_assistant_expires()} for="api-token-expiry" help={m.settings_assistant_expires_help()}>
 				<select id="api-token-expiry" class="input" bind:value={expiry} disabled={creating}>
 					{#each TOKEN_EXPIRY_CHOICES as choice (choice.label)}
 						<option value={choice.days === null ? 'never' : String(choice.days)}>{choice.label}</option>
@@ -248,9 +251,9 @@
 				</select>
 			</Field>
 			<Field
-				label="Allowed networks"
+				label={m.settings_assistant_networks()}
 				for="api-token-networks"
-				help="Optional. Addresses or CIDR ranges, separated by commas or spaces. Empty: usable from anywhere."
+				help={m.settings_assistant_networks_help()}
 			>
 				<input
 					id="api-token-networks"
@@ -266,12 +269,12 @@
 			<div class="sm:col-span-2">
 				<Button type="submit" variant="secondary" loading={creating}>
 					<KeyRound class="size-4" aria-hidden="true" />
-					Create token
+					{m.settings_assistant_create()}
 				</Button>
 			</div>
 		</form>
 		{#if createError}
-			<ErrorNotice error={createError} title="Could not create the token" class="mt-3" />
+			<ErrorNotice error={createError} title={m.settings_assistant_create_error()} class="mt-3" />
 		{/if}
 
 		<div aria-live="polite">
@@ -279,19 +282,19 @@
 				<div class="rise-in mt-4 rounded-[var(--radius-card)] border border-advisory/40 bg-surface p-4">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<div class="flex min-w-0 flex-wrap items-center gap-2">
-							<p class="font-semibold text-ink">Token “{created.name}” created</p>
-							<Plate tone="advisory" label="Shown once — copy it now" />
-							<Plate tone={created.scope === 'write' ? 'info' : 'ghost'} label={created.scope === 'write' ? 'Read and write' : 'Read only'} bare />
+							<p class="font-semibold text-ink">{m.settings_assistant_created_title({ name: created.name })}</p>
+							<Plate tone="advisory" label={m.settings_assistant_shown_once()} />
+							<Plate tone={created.scope === 'write' ? 'info' : 'ghost'} label={created.scope === 'write' ? m.settings_assistant_scope_write() : m.settings_assistant_scope_read_only()} bare />
 						</div>
-						<Button variant="ghost" size="sm" onclick={() => (created = null)}>I've copied it</Button>
+						<Button variant="ghost" size="sm" onclick={() => (created = null)}>{m.settings_assistant_copied()}</Button>
 					</div>
 					<div class="mt-3">
-						<CopyBlock value={created.secret} label="Copy token" secret />
+						<CopyBlock value={created.secret} label={m.settings_assistant_copy_token()} secret />
 					</div>
 					<p class="mt-2 text-sm text-ink-2">
-						{created.expires_at ? `Expires ${formatDateTime(created.expires_at)}.` : 'Never expires.'}
-						{created.allowed_networks.length > 0 ? `Usable only from ${created.allowed_networks.join(', ')}.` : 'Usable from any address.'}
-						The snippets below now carry this token. Treat it like a password.
+						{created.expires_at ? m.settings_assistant_created_expires({ date: formatDateTime(created.expires_at) }) : m.settings_assistant_created_never()}
+						{created.allowed_networks.length > 0 ? m.settings_assistant_created_networks({ networks: created.allowed_networks.join(', ') }) : m.settings_assistant_created_any()}
+						{m.settings_assistant_created_note()}
 					</p>
 				</div>
 			{/if}
@@ -300,8 +303,8 @@
 		<!-- Connection snippets -->
 		<div class="mt-6">
 			<div class="flex flex-wrap items-center justify-between gap-2">
-				<p class="text-sm font-semibold text-ink">Connect an assistant (MCP)</p>
-				<div class="flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-canvas-deep p-1" role="tablist" aria-label="Assistant">
+				<p class="text-sm font-semibold text-ink">{m.settings_assistant_connect_title()}</p>
+				<div class="flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-canvas-deep p-1" role="tablist" aria-label={m.settings_assistant_assistant_aria()}>
 					{#each CLIENTS as option (option.id)}
 						<button
 							type="button"
@@ -323,93 +326,93 @@
 			<div id="assistant-snippets" role="tabpanel" aria-labelledby={`assistant-tab-${client}`} class="mt-3 grid min-w-0 gap-4">
 				{#if client === 'claude-code'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">One command in a terminal:</p>
-						<CopyBlock value={claudeCommand} label="Copy command" secret={live} />
+						<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_one_command()}</p>
+						<CopyBlock value={claudeCommand} label={m.settings_assistant_copy_command()} secret={live} />
 					</div>
 				{:else if client === 'claude-desktop'}
 					<div>
 						<p class="mb-1.5 text-sm text-ink-2">
-							Add to <code class={codeClass}>claude_desktop_config.json</code> (Settings → Developer → Edit Config), then restart Claude Desktop. It needs Node.js: <code class={codeClass}>mcp-remote</code> bridges the desktop app to this server.
+							{m.settings_assistant_desktop_text()}
 						</p>
-						<CopyBlock value={claudeDesktop} label="Copy JSON" secret={live} />
+						<CopyBlock value={claudeDesktop} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 					{#if !isHttps}
-						<p class="text-sm text-ink-2">This page is served over plain HTTP, so the snippet includes <code class={codeClass}>--allow-http</code>. Keep that to your own network.</p>
+						<p class="text-sm text-ink-2">{m.settings_assistant_http_warning()}</p>
 					{/if}
 				{:else if client === 'vscode'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">Add to <code class={codeClass}>.vscode/mcp.json</code> in a workspace (or run “MCP: Add Server” and choose HTTP):</p>
-						<CopyBlock value={vscodeJson} label="Copy JSON" secret={live} />
+						<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_vscode_text()}</p>
+						<CopyBlock value={vscodeJson} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 				{:else if client === 'cursor'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">Cursor (<code class={codeClass}>.cursor/mcp.json</code>) and most other MCP clients accept this shape — a Streamable HTTP server with a bearer header:</p>
-						<CopyBlock value={cursorJson} label="Copy JSON" secret={live} />
+						<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_cursor_text()}</p>
+						<CopyBlock value={cursorJson} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 				{:else}
 					<div class="grid min-w-0 gap-3">
 						<p class="text-sm text-ink-2">
-							In ChatGPT, open Settings → Connectors → Create (developer mode), then fill in the MCP server URL and the authorization header. ChatGPT connects from OpenAI's servers, so the URL must be reachable from the internet over HTTPS.
+							{m.settings_assistant_chatgpt_text()}
 						</p>
 						{#if !isHttps}
-							<Plate tone="advisory" label="This page is not served over HTTPS: put DumbMonit behind a reverse proxy with TLS before exposing it." />
+							<Plate tone="advisory" label={m.settings_assistant_chatgpt_https_warning()} />
 						{/if}
 						<div>
-							<p class="mb-1.5 text-sm text-ink-2">MCP server URL</p>
-							<CopyBlock value={url} label="Copy URL" />
+							<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_mcp_url()}</p>
+							<CopyBlock value={url} label={m.settings_assistant_copy_url()} />
 						</div>
 						<div>
-							<p class="mb-1.5 text-sm text-ink-2">Authorization header</p>
-							<CopyBlock value={bearer} label="Copy header" secret={live} />
+							<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_auth_header()}</p>
+							<CopyBlock value={bearer} label={m.settings_assistant_copy_header()} secret={live} />
 						</div>
 					</div>
 				{/if}
 				<p class="text-sm text-ink-2">
-					The server speaks MCP over Streamable HTTP, without sessions. Every client, the tools and the security notes: <a class={linkClass} href={ASSISTANT_DOCS_URL} target="_blank" rel="noreferrer">Connect an assistant</a>.
+					{m.settings_assistant_mcp_note()} <a class={linkClass} href={ASSISTANT_DOCS_URL} target="_blank" rel="noreferrer">{m.settings_assistant_mcp_link()}</a>
 				</p>
 			</div>
 		</div>
 
 		<!-- REST API access -->
 		<div class="mt-6">
-			<p class="text-sm font-semibold text-ink">REST API</p>
+			<p class="text-sm font-semibold text-ink">{m.settings_assistant_rest_title()}</p>
 			<p class="mt-1 text-sm text-ink-2">
-				The same token opens the REST API to scripts and dashboards: send it as a bearer header instead of a session cookie — no anti-CSRF header needed. A read token maps to a viewer, a write token to an administrator, except that no token can manage accounts, sign-in settings, tokens or backups.
+				{m.settings_assistant_rest_text()}
 			</p>
 			<div class="mt-3 grid min-w-0 gap-3">
 				<div>
-					<p class="mb-1.5 text-sm text-ink-2">Read — every device:</p>
-					<CopyBlock value={curlRead} label="Copy command" secret={live} />
+					<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_rest_read()}</p>
+					<CopyBlock value={curlRead} label={m.settings_assistant_copy_command()} secret={live} />
 				</div>
 				<div>
-					<p class="mb-1.5 text-sm text-ink-2">Write — probe device 1 now (needs a write token):</p>
-					<CopyBlock value={curlWrite} label="Copy command" secret={live} />
+					<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_rest_write()}</p>
+					<CopyBlock value={curlWrite} label={m.settings_assistant_copy_command()} secret={live} />
 				</div>
 			</div>
 			<div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-2">
 				<a class={`inline-flex items-center gap-1.5 ${linkClass}`} href={OPENAPI_PATH} target="_blank" rel="noreferrer">
 					<FileJson class="size-4 shrink-0" aria-hidden="true" />
-					OpenAPI description
+					{m.settings_assistant_openapi()}
 				</a>
-				<a class={linkClass} href={API_DOCS_URL} target="_blank" rel="noreferrer">HTTP API reference</a>
+				<a class={linkClass} href={API_DOCS_URL} target="_blank" rel="noreferrer">{m.settings_assistant_api_reference()}</a>
 			</div>
 			<p class="mt-2 text-sm text-ink-2">
-				The OpenAPI file loads in Swagger UI, Postman or Insomnia, and generates clients. Calls from another web origin work with a bearer token only, never with a session.
+				{m.settings_assistant_openapi_note()}
 			</p>
 			<p class="mt-2 text-sm text-ink-2">
-				A Prometheus or Grafana you already run can read this instance with a read token — <code class={codeClass}>/metrics</code> for the server's own health, <code class={codeClass}>/federate</code> for the measurements, <code class={codeClass}>/prometheus</code> as a Grafana data source: see <a class={linkClass} href="https://dumbmonit.readthedocs.io/en/latest/reference/metrics/#scraping-dumbmonit" target="_blank" rel="noreferrer">Scraping DumbMonit</a>.
+				{m.settings_assistant_prometheus_text()} <a class={linkClass} href="https://dumbmonit.readthedocs.io/en/latest/reference/metrics/#scraping-dumbmonit" target="_blank" rel="noreferrer">{m.settings_assistant_prometheus_link()}</a>
 			</p>
 		</div>
 
 		<!-- Token list -->
 		<div class="mt-6">
-			<p class="mb-2 text-sm font-semibold text-ink">Tokens</p>
+			<p class="mb-2 text-sm font-semibold text-ink">{m.settings_assistant_tokens_title()}</p>
 			{#if error}
-				<ErrorNotice {error} title="Could not load the tokens" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.settings_assistant_load_error()} onretry={() => void load()} />
 			{:else if loading}
 				<Skeleton class="h-14 w-full" />
 			{:else if tokens.length === 0}
-				<EmptyState icon={Bot} title="No token yet." description="Create one above, then paste the snippet into your assistant or script." />
+				<EmptyState icon={Bot} title={m.settings_assistant_empty_title()} description={m.settings_assistant_empty_description()} />
 			{:else}
 				<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 					{#each tokens as item (item.id)}
@@ -421,48 +424,45 @@
 									<div class="flex flex-wrap items-center gap-2">
 										<span class={`min-w-0 break-words font-semibold ${inactive ? 'text-ink-2' : 'text-ink'}`}>{item.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{item.prefix}…</code>
-										<Plate tone={item.scope === 'write' ? 'info' : 'ghost'} label={item.scope === 'write' ? 'Read and write' : 'Read only'} bare />
+										<Plate tone={item.scope === 'write' ? 'info' : 'ghost'} label={item.scope === 'write' ? m.settings_assistant_scope_write() : m.settings_assistant_scope_read_only()} bare />
 										{#if revoked}
-											<Plate tone="ghost" label="Revoked" />
+											<Plate tone="ghost" label={m.settings_assistant_revoked()} />
 										{:else if item.expired}
-											<Plate tone="ghost" label="Expired" />
+											<Plate tone="ghost" label={m.settings_assistant_expired()} />
 										{:else if expiresSoon(item)}
-											<Plate tone="advisory" label={`Expires ${remaining(item.expires_at ?? '')}`} />
+											<Plate tone="advisory" label={m.settings_assistant_expires_in_plate({ when: remaining(item.expires_at ?? '') })} />
 										{/if}
 									</div>
 									<p class="mt-1 text-sm text-ink-2">
-										Created <time class="tnum" title={formatDateTime(item.created_at)}>{formatRelative(item.created_at)}</time>{#if item.created_by}&nbsp;by {item.created_by}{/if}
+										<time class="tnum" title={formatDateTime(item.created_at)}>{item.created_by ? m.settings_assistant_created_by({ when: formatRelative(item.created_at), user: item.created_by }) : m.settings_assistant_created_at({ when: formatRelative(item.created_at) })}</time>
 										·
 										{#if item.expires_at === null}
-											Never expires
+											{m.settings_assistant_never_expires()}
 										{:else if item.expired}
-											Expired <time class="tnum" title={formatDateTime(item.expires_at)}>{formatRelative(item.expires_at)}</time>
+											<time class="tnum" title={formatDateTime(item.expires_at)}>{m.settings_assistant_expired_at({ when: formatRelative(item.expires_at) })}</time>
 										{:else}
-											Expires <time class="tnum" title={formatDateTime(item.expires_at)}>{remaining(item.expires_at)}</time>
+											<time class="tnum" title={formatDateTime(item.expires_at)}>{m.settings_assistant_expires_at({ when: remaining(item.expires_at) })}</time>
 										{/if}
 										{#if revoked}
-											· Revoked <time class="tnum" title={formatDateTime(item.revoked_at)}>{formatRelative(item.revoked_at)}</time>
+											· <time class="tnum" title={formatDateTime(item.revoked_at)}>{m.settings_assistant_revoked_at({ when: formatRelative(item.revoked_at) })}</time>
 										{/if}
 									</p>
 									<p class="mt-0.5 text-sm text-ink-2">
-										Last used <time class="tnum" title={formatDateTime(item.last_used_at)}>{formatRelative(item.last_used_at)}</time>{#if item.last_used_ip}&nbsp;from <span class="font-mono text-[0.8125rem]">{item.last_used_ip}</span>{/if}
+										<time class="tnum" title={formatDateTime(item.last_used_at)}>{item.last_used_ip ? m.settings_assistant_last_used_from({ when: formatRelative(item.last_used_at), ip: item.last_used_ip }) : m.settings_assistant_last_used({ when: formatRelative(item.last_used_at) })}</time>
 										·
 										{#if item.allowed_networks.length === 0}
-											Any network
+											{m.settings_assistant_any_network()}
 										{:else}
-											Only from
-											{#each item.allowed_networks as network, index (network)}
-												<code class="font-mono text-[0.8125rem] break-all">{network}</code>{index < item.allowed_networks.length - 1 ? ', ' : ''}
-											{/each}
+											<span class="break-all">{m.settings_assistant_only_from({ networks: item.allowed_networks.join(', ') })}</span>
 										{/if}
 									</p>
 								</div>
 								{#if !revoked}
-									<Confirm confirmLabel="Revoke for good?" loading={revoking === item.id} onconfirm={() => revoke(item)}>Revoke</Confirm>
+									<Confirm confirmLabel={m.settings_assistant_revoke_confirm()} loading={revoking === item.id} onconfirm={() => revoke(item)}>{m.settings_assistant_revoke()}</Confirm>
 								{/if}
 							</div>
 							{#if revokeError?.id === item.id}
-								<ErrorNotice error={revokeError.cause} title="Could not revoke the token" class="mt-3" />
+								<ErrorNotice error={revokeError.cause} title={m.settings_assistant_revoke_error()} class="mt-3" />
 							{/if}
 						</li>
 					{/each}

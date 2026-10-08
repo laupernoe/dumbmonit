@@ -5,6 +5,7 @@
 	 * Bind `value`; everything else is passed through to the `<input>`.
 	 */
 	import { Eye, EyeOff } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		value: string;
@@ -63,9 +64,9 @@
 		class="absolute top-1/2 right-1.5 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-50"
 		onclick={() => (shown = !shown)}
 		{disabled}
-		aria-label={shown ? 'Hide password' : 'Show password'}
+		aria-label={shown ? m.settings_password_hide() : m.settings_password_show()}
 		aria-pressed={shown}
-		title={shown ? 'Hide password' : 'Show password'}
+		title={shown ? m.settings_password_hide() : m.settings_password_show()}
 	>
 		{#if shown}<EyeOff class="size-4" aria-hidden="true" />{:else}<Eye class="size-4" aria-hidden="true" />{/if}
 	</button>

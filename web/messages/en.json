@@ -3024,6 +3024,309 @@
 	"devicesb_webchange_timeline_view": "View",
 	"devicesb_webchange_timeline_watching_one": "Watching 1 page.",
 	"devicesb_webchange_timeline_watching_other": "Watching {count} pages.",
+	"misc2_browser_on": "{browser} on {system}",
+	"misc2_browser_unknown": "A browser",
+	"misc2_folds_container_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} container stopped",
+				"countPlural=other": "{count} containers stopped"
+			}
+		}
+	],
+	"misc2_folds_device_awaiting_approval": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device awaiting approval",
+				"countPlural=other": "{count} devices awaiting approval"
+			}
+		}
+	],
+	"misc2_folds_disk_disabled_or_missing": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disk disabled or missing",
+				"countPlural=other": "{count} disks disabled or missing"
+			}
+		}
+	],
+	"misc2_folds_disk_with_read_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disk with read errors",
+				"countPlural=other": "{count} disks with read errors"
+			}
+		}
+	],
+	"misc2_folds_error_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} error",
+				"countPlural=other": "{count} errors"
+			}
+		}
+	],
+	"misc2_folds_gateway_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} gateway down",
+				"countPlural=other": "{count} gateways down"
+			}
+		}
+	],
+	"misc2_folds_gateway_losing_packets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} gateway losing packets",
+				"countPlural=other": "{count} gateways losing packets"
+			}
+		}
+	],
+	"misc2_folds_interface_without_link": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} interface without link",
+				"countPlural=other": "{count} interfaces without link"
+			}
+		}
+	],
+	"misc2_folds_ipsec_tunnel_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} IPsec tunnel down",
+				"countPlural=other": "{count} IPsec tunnels down"
+			}
+		}
+	],
+	"misc2_folds_job_ended_with_a_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} job ended with a warning",
+				"countPlural=other": "{count} jobs ended with a warning"
+			}
+		}
+	],
+	"misc2_folds_job_failed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} job failed",
+				"countPlural=other": "{count} jobs failed"
+			}
+		}
+	],
+	"misc2_folds_licence_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} licence expired",
+				"countPlural=other": "{count} licences expired"
+			}
+		}
+	],
+	"misc2_folds_member_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} member",
+				"countPlural=other": "{count} members"
+			}
+		}
+	],
+	"misc2_folds_node_key_expiring_within_14_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} node key expiring within 14 days",
+				"countPlural=other": "{count} node keys expiring within 14 days"
+			}
+		}
+	],
+	"misc2_folds_repository_nearly_full": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} repository nearly full",
+				"countPlural=other": "{count} repositories nearly full"
+			}
+		}
+	],
+	"misc2_folds_service_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} service stopped",
+				"countPlural=other": "{count} services stopped"
+			}
+		}
+	],
+	"misc2_folds_upstream_server_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} upstream server down",
+				"countPlural=other": "{count} upstream servers down"
+			}
+		}
+	],
+	"misc2_folds_virtual_disk_with_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} virtual disk with errors",
+				"countPlural=other": "{count} virtual disks with errors"
+			}
+		}
+	],
+	"misc2_folds_virtual_machine_in_critical_health": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} virtual machine in critical health",
+				"countPlural=other": "{count} virtual machines in critical health"
+			}
+		}
+	],
+	"misc2_folds_watched_device_offline": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} watched device offline",
+				"countPlural=other": "{count} watched devices offline"
+			}
+		}
+	],
+	"misc2_mascot_aria": "DumbMonit, the pigeon",
 	"misc_ago": "{span} ago",
 	"misc_device_amplifier": "an amplifier",
 	"misc_device_cast_speaker": "a cast speaker",
@@ -4060,6 +4363,872 @@
 	"settings.section.security": "Account & security",
 	"settings.section.sso": "Single sign-on",
 	"settings.section.users": "Users",
+	"settings_2fa_action_agent_token_created": "Agent token created",
+	"settings_2fa_action_agent_token_revoked": "Agent token revoked",
+	"settings_2fa_action_login": "Signed in",
+	"settings_2fa_action_login_failed": "Sign-in failed",
+	"settings_2fa_action_password_changed": "Password changed",
+	"settings_2fa_action_token_created": "API token created",
+	"settings_2fa_action_token_revoked": "API token revoked",
+	"settings_2fa_action_totp_disabled": "Two-factor disabled",
+	"settings_2fa_action_totp_enabled": "Two-factor enabled",
+	"settings_2fa_action_totp_failed": "Wrong verification code",
+	"settings_2fa_action_totp_recovery_used": "Recovery code used",
+	"settings_2fa_action_totp_reset": "Two-factor reset by an admin",
+	"settings_2fa_action_user_created": "User created",
+	"settings_2fa_action_user_deleted": "User deleted",
+	"settings_2fa_action_user_updated": "User updated",
+	"settings_2fa_cancel": "Cancel",
+	"settings_2fa_cant_scan": "Can't scan? Type the key instead",
+	"settings_2fa_code_label": "Code from the app",
+	"settings_2fa_col_event": "Event",
+	"settings_2fa_col_from": "From",
+	"settings_2fa_col_subject": "Subject",
+	"settings_2fa_col_when": "When",
+	"settings_2fa_col_who": "Who",
+	"settings_2fa_confirm_enable": "Confirm and enable",
+	"settings_2fa_confirm_error": "Could not confirm",
+	"settings_2fa_continue": "Continue",
+	"settings_2fa_continue_error": "Could not continue",
+	"settings_2fa_copy_codes": "Copy codes",
+	"settings_2fa_copy_key": "Copy key",
+	"settings_2fa_disable": "Disable",
+	"settings_2fa_disable_button": "Disable two-factor authentication",
+	"settings_2fa_enabled": "Enabled",
+	"settings_2fa_err_code": "Enter the code shown by the app.",
+	"settings_2fa_err_password": "Enter your password to prove it is you.",
+	"settings_2fa_err_wrong_password": "Wrong password.",
+	"settings_2fa_hide_log": "Hide security log",
+	"settings_2fa_intro": "A six-digit code from an authenticator app is asked after your password. Recovery codes cover a lost phone.",
+	"settings_2fa_is_on": "Two-factor authentication is on",
+	"settings_2fa_key_details": "Account: {account} · Issuer: {issuer} · time-based, SHA-1, 6 digits, 30 s.",
+	"settings_2fa_load_error": "Could not read the two-factor status",
+	"settings_2fa_log_empty": "Nothing recorded yet.",
+	"settings_2fa_log_error": "Could not read the security log",
+	"settings_2fa_off": "Off",
+	"settings_2fa_pw_disable": "Your password, to disable two-factor authentication",
+	"settings_2fa_pw_start": "Your password, to start",
+	"settings_2fa_qr_label": "QR code to scan with an authenticator app",
+	"settings_2fa_recovery_left": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} recovery code left.",
+				"countPlural=other": "{count} recovery codes left."
+			}
+		}
+	],
+	"settings_2fa_recovery_none": "Disable and set up again to get new ones.",
+	"settings_2fa_save_codes": "Save these recovery codes somewhere safe. Each one signs you in once if you lose your phone; they are shown only now.",
+	"settings_2fa_saved": "I saved them",
+	"settings_2fa_setup": "Set up",
+	"settings_2fa_show_log": "Show security log",
+	"settings_2fa_step1": "1. Scan the code with an authenticator app (Aegis, FreeOTP, Google Authenticator, 1Password…).",
+	"settings_2fa_step2": "2. Enter the six-digit code the app shows to confirm.",
+	"settings_2fa_title": "Two-factor authentication",
+	"settings_about_build": "build",
+	"settings_about_check_logs": "Check that its container is running, then read its logs with `docker compose logs`.",
+	"settings_about_database": "Database",
+	"settings_about_database_role": "Device setup and alert history.",
+	"settings_about_docs": "Documentation →",
+	"settings_about_error_title": "Could not reach the server",
+	"settings_about_license": "Open source, Apache 2.0.",
+	"settings_about_reporting": "Reporting",
+	"settings_about_title": "About",
+	"settings_about_unreachable": "Component unreachable.",
+	"settings_about_version": "Version",
+	"settings_about_victoria_role": "Every measurement shown in the charts.",
+	"settings_about_warning": "Warning",
+	"settings_about_whats_new": "What's new",
+	"settings_agents_copied": "I've copied it",
+	"settings_agents_copy_command": "Copy command",
+	"settings_agents_copy_token": "Copy token",
+	"settings_agents_create": "Create token",
+	"settings_agents_create_error": "Could not create the token",
+	"settings_agents_created_at": "Created {when}",
+	"settings_agents_created_title": "Token “{name}” created",
+	"settings_agents_days_invalid": "The number of days must be a whole number, one or more.",
+	"settings_agents_description": "An agent is one small program on a Linux, Windows, macOS or FreeBSD machine: it reports the system, disks, services, Docker containers and backups, and lets you restart or update a container from here. In relay mode it also probes, for this server, the devices of its own network — a second site, a client, anything behind a NAT — and only ever connects out.",
+	"settings_agents_empty_description": "Create one, then run the install command on the machine.",
+	"settings_agents_empty_title": "No token yet.",
+	"settings_agents_enrols_no_more": "Enrols no more",
+	"settings_agents_expires": "Stops enrolling after",
+	"settings_agents_expires_help": "Days. Machines already enrolled keep reporting; leave empty for no deadline.",
+	"settings_agents_install": "Install an agent",
+	"settings_agents_install_linux": "Install on Linux",
+	"settings_agents_install_windows": "Install on Windows (PowerShell)",
+	"settings_agents_last_report": "Last report {when}",
+	"settings_agents_last_used": "Last used {when}",
+	"settings_agents_list_aria": "Agents reporting to this server",
+	"settings_agents_load_error": "Could not load the tokens",
+	"settings_agents_machines": "Machines it may enrol",
+	"settings_agents_machines_help": "Leave empty for no limit.",
+	"settings_agents_machines_invalid": "The number of machines must be a whole number, one or more.",
+	"settings_agents_name_placeholder": "File server",
+	"settings_agents_name_required": "Name the token, for example after the machine it will enrol.",
+	"settings_agents_new_token": "New token",
+	"settings_agents_new_token_help": "Only used to recognise the token in this list.",
+	"settings_agents_no_deadline": "No deadline",
+	"settings_agents_no_limit": "No limit",
+	"settings_agents_none": "No agent has reported to this server yet.",
+	"settings_agents_probes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "probes {count} device",
+				"countPlural=other": "probes {count} devices"
+			}
+		}
+	],
+	"settings_agents_relay_label": "Relay",
+	"settings_agents_relay_label_site": "Relay · {site}",
+	"settings_agents_relay_off": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Relay off — {count} device waiting",
+				"countPlural=other": "Relay off — {count} devices waiting"
+			}
+		}
+	],
+	"settings_agents_relay_off_title": "Set relay: true on this agent so it picks up their probes",
+	"settings_agents_relay_title": "Relay mode: it probes devices of its own network for this server",
+	"settings_agents_reusable": "Reusable for a fleet",
+	"settings_agents_reusable_help": "Off, the token enrols one machine and then enrols nothing more — the right default for a single install. On, it can go into a playbook or an image.",
+	"settings_agents_revoke": "Revoke",
+	"settings_agents_revoke_confirm": "Revoke for good?",
+	"settings_agents_revoke_error": "Could not revoke the token",
+	"settings_agents_revoked": "Revoked",
+	"settings_agents_revoked_at": "Revoked {when}",
+	"settings_agents_scope_fleet": "Fleet · {uses} enrolled",
+	"settings_agents_scope_fleet_ratio": "Fleet · {uses}/{max} enrolled",
+	"settings_agents_scope_single": "Single use",
+	"settings_agents_scope_single_used": "Single use · used",
+	"settings_agents_shown_once": "Shown once — copy it now",
+	"settings_agents_spent_note": "Machines enrolled with it keep reporting; it just cannot let a new one in.",
+	"settings_agents_stops_at": "Stops enrolling {when}",
+	"settings_agents_title": "Agents",
+	"settings_agents_token": "Token",
+	"settings_agents_tokens_intro": "Adding a device of type agent makes a single-use token for you. Create one here for a fleet, a playbook or a machine image.",
+	"settings_agents_tokens_title": "Enrolment tokens",
+	"settings_agents_watch_remote": "Watch a remote site",
+	"settings_agents_watches_own": "Watches its own machine",
+	"settings_appearance_day": "Day",
+	"settings_appearance_day_hint": "Chart paper, navy ink.",
+	"settings_appearance_description": "Both themes are first-class. System follows your device and switches with it.",
+	"settings_appearance_night": "Night",
+	"settings_appearance_night_hint": "Radar composite, cyan signal.",
+	"settings_appearance_system": "System",
+	"settings_appearance_system_hint": "Follows your device.",
+	"settings_appearance_theme": "Theme",
+	"settings_appearance_title": "Appearance",
+	"settings_appearance_wall_description": "The bulletin alone, full screen, for a monitor in the room. Press Esc to leave; ⌘K / Ctrl K opens it from anywhere.",
+	"settings_appearance_wall_open": "Open wall mode",
+	"settings_appearance_wall_title": "Wall mode",
+	"settings_assistant_any_network": "Any network",
+	"settings_assistant_api_reference": "HTTP API reference",
+	"settings_assistant_assistant_aria": "Assistant",
+	"settings_assistant_auth_header": "Authorization header",
+	"settings_assistant_chatgpt_https_warning": "This page is not served over HTTPS: put DumbMonit behind a reverse proxy with TLS before exposing it.",
+	"settings_assistant_chatgpt_text": "In ChatGPT, open Settings → Connectors → Create (developer mode), then fill in the MCP server URL and the authorization header. ChatGPT connects from OpenAI's servers, so the URL must be reachable from the internet over HTTPS.",
+	"settings_assistant_client_other": "Cursor / other",
+	"settings_assistant_connect_title": "Connect an assistant (MCP)",
+	"settings_assistant_copied": "I've copied it",
+	"settings_assistant_copy_command": "Copy command",
+	"settings_assistant_copy_header": "Copy header",
+	"settings_assistant_copy_json": "Copy JSON",
+	"settings_assistant_copy_token": "Copy token",
+	"settings_assistant_copy_url": "Copy URL",
+	"settings_assistant_create": "Create token",
+	"settings_assistant_create_error": "Could not create the token",
+	"settings_assistant_created_any": "Usable from any address.",
+	"settings_assistant_created_at": "Created {when}",
+	"settings_assistant_created_by": "Created {when} by {user}",
+	"settings_assistant_created_expires": "Expires {date}.",
+	"settings_assistant_created_networks": "Usable only from {networks}.",
+	"settings_assistant_created_never": "Never expires.",
+	"settings_assistant_created_note": "The snippets below now carry this token. Treat it like a password.",
+	"settings_assistant_created_title": "Token “{name}” created",
+	"settings_assistant_cursor_text": "Cursor (.cursor/mcp.json) and most other MCP clients accept this shape — a Streamable HTTP server with a bearer header:",
+	"settings_assistant_description": "One kind of token for both: let Claude, ChatGPT, Cursor or any MCP client ask DumbMonit how things are, or call the REST API from a script. A read token can only look; a write token can also change things — silence a device, run a probe, add or edit devices, rules and channels.",
+	"settings_assistant_desktop_text": "Add to claude_desktop_config.json (Settings → Developer → Edit Config), then restart Claude Desktop. It needs Node.js: mcp-remote bridges the desktop app to this server.",
+	"settings_assistant_empty_description": "Create one above, then paste the snippet into your assistant or script.",
+	"settings_assistant_empty_title": "No token yet.",
+	"settings_assistant_expired": "Expired",
+	"settings_assistant_expired_at": "Expired {when}",
+	"settings_assistant_expires": "Expires",
+	"settings_assistant_expires_at": "Expires {when}",
+	"settings_assistant_expires_help": "An expired token stops working; create a new one then.",
+	"settings_assistant_expires_in_plate": "Expires {when}",
+	"settings_assistant_http_warning": "This page is served over plain HTTP, so the snippet includes --allow-http. Keep that to your own network.",
+	"settings_assistant_last_used": "Last used {when}",
+	"settings_assistant_last_used_from": "Last used {when} from {ip}",
+	"settings_assistant_load_error": "Could not load the tokens",
+	"settings_assistant_mcp_link": "Connect an assistant",
+	"settings_assistant_mcp_note": "The server speaks MCP over Streamable HTTP, without sessions. Every client, the tools and the security notes:",
+	"settings_assistant_mcp_url": "MCP server URL",
+	"settings_assistant_name_placeholder": "Claude on my laptop",
+	"settings_assistant_name_required": "Name the token, for example after the assistant or the machine it runs on.",
+	"settings_assistant_networks": "Allowed networks",
+	"settings_assistant_networks_help": "Optional. Addresses or CIDR ranges, separated by commas or spaces. Empty: usable from anywhere.",
+	"settings_assistant_never_expires": "Never expires",
+	"settings_assistant_new_token": "New token",
+	"settings_assistant_new_token_help": "Only used to recognise the token in this list.",
+	"settings_assistant_one_command": "One command in a terminal:",
+	"settings_assistant_only_from": "Only from {networks}",
+	"settings_assistant_openapi": "OpenAPI description",
+	"settings_assistant_openapi_note": "The OpenAPI file loads in Swagger UI, Postman or Insomnia, and generates clients. Calls from another web origin work with a bearer token only, never with a session.",
+	"settings_assistant_prometheus_link": "Scraping DumbMonit",
+	"settings_assistant_prometheus_text": "A Prometheus or Grafana you already run can read this instance with a read token — /metrics for the server's own health, /federate for the measurements, /prometheus as a Grafana data source: see",
+	"settings_assistant_prompt_backup": "How full is the backup server?",
+	"settings_assistant_prompt_fine": "Is everything fine?",
+	"settings_assistant_prompt_night": "What happened last night?",
+	"settings_assistant_prompt_silence": "Silence the NAS for two hours",
+	"settings_assistant_prompts_aria": "Example prompts",
+	"settings_assistant_remaining_unknown": "at an unknown date",
+	"settings_assistant_rest_read": "Read — every device:",
+	"settings_assistant_rest_text": "The same token opens the REST API to scripts and dashboards: send it as a bearer header instead of a session cookie — no anti-CSRF header needed. A read token maps to a viewer, a write token to an administrator, except that no token can manage accounts, sign-in settings, tokens or backups.",
+	"settings_assistant_rest_title": "REST API",
+	"settings_assistant_rest_write": "Write — probe device 1 now (needs a write token):",
+	"settings_assistant_revoke": "Revoke",
+	"settings_assistant_revoke_confirm": "Revoke for good?",
+	"settings_assistant_revoke_error": "Could not revoke the token",
+	"settings_assistant_revoked": "Revoked",
+	"settings_assistant_revoked_at": "Revoked {when}",
+	"settings_assistant_scope": "Scope",
+	"settings_assistant_scope_aria": "Token scope",
+	"settings_assistant_scope_read": "Read",
+	"settings_assistant_scope_read_note": "Can never change anything.",
+	"settings_assistant_scope_read_only": "Read only",
+	"settings_assistant_scope_write": "Read and write",
+	"settings_assistant_scope_write_note": "Can change everything except accounts, tokens and backups.",
+	"settings_assistant_shown_once": "Shown once — copy it now",
+	"settings_assistant_title": "API & assistants",
+	"settings_assistant_tokens_title": "Tokens",
+	"settings_assistant_try_asking": "Once connected, try asking:",
+	"settings_assistant_vscode_text": "Add to .vscode/mcp.json in a workspace (or run “MCP: Add Server” and choose HTTP):",
+	"settings_backup_accounts_help": "Off by default. Without them, restored accounts exist but cannot sign in until an administrator sets a password.",
+	"settings_backup_accounts_label": "Include account passwords and 2FA secrets",
+	"settings_backup_admin_only_description": "A backup holds every credential of this instance.",
+	"settings_backup_admin_only_title": "Only an administrator can export or restore.",
+	"settings_backup_apply": "Restore for real",
+	"settings_backup_apply_confirm": "Write these changes?",
+	"settings_backup_back_up_now": "Back up now",
+	"settings_backup_bundle_file": "Bundle file",
+	"settings_backup_bundle_meta": "Written {when} by DumbMonit {source} · format version {version}",
+	"settings_backup_check": "Check this backup",
+	"settings_backup_col_created": "Created",
+	"settings_backup_col_section": "Section",
+	"settings_backup_col_unchanged": "Unchanged",
+	"settings_backup_col_updated": "Updated",
+	"settings_backup_description": "Export this instance as one encrypted file, restore it onto a fresh one, and keep a daily copy of the database next to it.",
+	"settings_backup_disabled": "Disabled",
+	"settings_backup_download": "Download the bundle",
+	"settings_backup_downloaded": "Downloaded — keep the passphrase with it",
+	"settings_backup_dry_run": "Dry run — nothing was written",
+	"settings_backup_export_error": "Could not export the backup",
+	"settings_backup_export_excluded": "Not included: metrics history, alert state and history, the audit log, open sessions — and the instance secret, on purpose.",
+	"settings_backup_export_intro": "One file, format version {version}. It contains every credential of this instance in a form the passphrase alone protects: store it where you store passwords, not next to the backups of your films.",
+	"settings_backup_export_title": "Export the configuration",
+	"settings_backup_identical": "{count} already identical",
+	"settings_backup_kept": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} kept · {size} in total.",
+				"countPlural=other": "{count} kept · {size} in total."
+			}
+		}
+	],
+	"settings_backup_last_fail": "Last run failed",
+	"settings_backup_last_ok": "Last run succeeded",
+	"settings_backup_none_yet": "No backup has run yet.",
+	"settings_backup_not_backup": "This file is not a DumbMonit backup.",
+	"settings_backup_not_json": "This file could not be read as JSON. Pick the bundle you downloaded.",
+	"settings_backup_passphrase": "Passphrase",
+	"settings_backup_passphrase_confirm": "Confirm passphrase",
+	"settings_backup_passphrase_help": "At least {min} characters. There is no way to recover a bundle whose passphrase is lost.",
+	"settings_backup_passphrase_mismatch": "The two passphrases do not match. Type the confirmation again.",
+	"settings_backup_passphrase_short": "At least {min} characters. Three words is enough, and you will need them again to restore.",
+	"settings_backup_plate_every": "Every {hours} h · keep {keep}",
+	"settings_backup_read_error": "Could not read the backup state",
+	"settings_backup_restore_error": "Could not read the backup",
+	"settings_backup_restore_intro": "Checked first, applied only if you ask. Restoring never deletes anything: it creates what is missing and updates what differs, matching devices on their kind and address. Accounts that already exist here are left untouched.",
+	"settings_backup_restore_passphrase": "Passphrase of this bundle",
+	"settings_backup_restore_title": "Restore a bundle",
+	"settings_backup_restored": "Restored",
+	"settings_backup_schedule_env_secret": "The secret comes from the environment, so it is not copied here.",
+	"settings_backup_schedule_intro_key": "An online, consistent copy of the database is written to {directory}, with a copy of secret.key beside it.",
+	"settings_backup_schedule_intro_nokey": "An online, consistent copy of the database is written to {directory}.",
+	"settings_backup_schedule_same_volume": "They live in the same volume as the database: they undo a mistake, not a lost disk.",
+	"settings_backup_scheduled_title": "Scheduled local backups",
+	"settings_backup_secret_bundle": "The bundle below is the exception: its secrets are re-encrypted with the passphrase you choose, so it restores onto a fresh instance that has its own secret.",
+	"settings_backup_secret_env": "This server reads its secret from DUMBMONIT_SECRET, so there is no file to copy. Keep that value in your password manager: without it, a copy of the database restores an instance that cannot talk to anything.",
+	"settings_backup_secret_file": "Device passwords, SNMP communities and channel secrets are encrypted with a key derived from {path}. A copy of the database without that file restores an instance that cannot talk to anything — and the server refuses to start rather than pretend otherwise. Back it up with the database.",
+	"settings_backup_secret_title": "The instance secret is what decrypts your credentials",
+	"settings_backup_title": "Backup",
+	"settings_backup_to_create": "{count} to create",
+	"settings_backup_to_update": "{count} to update",
+	"settings_backup_without_key": "Without the key",
+	"settings_backup_write_error": "Could not write the backup",
+	"settings_music_account": "Account",
+	"settings_music_admin_only": "An admin can connect a Spotify account here.",
+	"settings_music_app": "App (Client ID)",
+	"settings_music_connect_button": "Connect Spotify",
+	"settings_music_connect_heading": "Spotify Connect",
+	"settings_music_connect_intro": "The wall becomes a speaker named {name}: in the Spotify app on your phone, open Devices and pick it, the sound comes out of the display. The wall also shows what plays on the account wherever it plays — the TV's app, a cast speaker, your laptop.",
+	"settings_music_connected_at": "Connected",
+	"settings_music_connected_default": "Connected",
+	"settings_music_copy_redirect": "Copy redirect URI",
+	"settings_music_description": "Start music from your phone and hear it on the wall display, or send it a Spotify, Deezer or YouTube link.",
+	"settings_music_disconnect": "Disconnect",
+	"settings_music_disconnect_confirm": "Disconnect Spotify?",
+	"settings_music_disconnect_error": "Could not disconnect",
+	"settings_music_err_client_id": "Paste the Client ID from your app’s page in the Spotify Developer Dashboard (32 letters and digits).",
+	"settings_music_expired": "Spotify ended the connection. Connect again below: the Client ID is kept.",
+	"settings_music_expired_reason": "Spotify ended the connection ({reason}). Connect again below: the Client ID is kept.",
+	"settings_music_finish": "Finish connecting",
+	"settings_music_finish_error": "Could not finish the connection",
+	"settings_music_link_heading": "Play a link on the walls",
+	"settings_music_link_intro": "Without Premium, or for Deezer and YouTube — which have no Connect-style remote on the web — send a link from any screen, your phone included: every wall plays it in the service's own player. A browser not signed in to Spotify or Deezer on the wall plays 30-second previews.",
+	"settings_music_link_label": "Link to play on the walls",
+	"settings_music_load_error": "Could not load the music settings",
+	"settings_music_missing": "This server does not offer wall music yet: update DumbMonit.",
+	"settings_music_missing_scopes": "Spotify did not grant {scopes}: reconnect and accept every permission.",
+	"settings_music_needs_1": "Spotify Premium, on the account that owns the app. A personal app (development mode) admits up to five accounts: add others under User Management.",
+	"settings_music_needs_2": "The phone must be signed in to the same Spotify account as the one connected here: a browser speaker is only listed for its own account — not for other members of a Family plan, and not found on the network like a smart speaker.",
+	"settings_music_needs_3": "For the wall to be a speaker, its browser must open DumbMonit over HTTPS (or as localhost on the display itself) and have working DRM (Widevine): Chrome, Edge or Firefox on a computer, Chromium with Widevine on a Raspberry Pi. Most smart-TV and kiosk browsers cannot — the wall says so on screen, and the walls below show it here.",
+	"settings_music_needs_4": "Browsers keep a page silent until it is touched: tap or press a key on the wall once after it loads (or start the kiosk browser with --autoplay-policy=no-user-gesture-required).",
+	"settings_music_needs_5": "“Now playing” works without any of that: the server asks Spotify what plays, every few seconds, even over plain HTTP.",
+	"settings_music_needs_6": "Spotify ends a connection six months after it was approved: connect again before the date shown.",
+	"settings_music_needs_heading": "What it needs",
+	"settings_music_not_connected": "Spotify is not connected",
+	"settings_music_nothing_playing": "Nothing is playing on this account.",
+	"settings_music_nothing_sent": "Nothing is sent to the walls. An admin can send a link.",
+	"settings_music_now_artists": " — {artists}",
+	"settings_music_now_device": ", on {device}",
+	"settings_music_now_line": "{status}: {title}{artists}{device}",
+	"settings_music_on_walls": "On the walls",
+	"settings_music_open_spotify": "Open Spotify",
+	"settings_music_outcome_connected": "Spotify is connected.",
+	"settings_music_outcome_denied": "Spotify did not grant access. Start again and choose “Agree”.",
+	"settings_music_outcome_exchange": "Spotify refused to complete the connection. Check that the redirect URI below is registered in your app, exactly.",
+	"settings_music_outcome_hint": "Start again below; nothing was changed.",
+	"settings_music_outcome_internal": "The connection could not be saved. Check the server logs.",
+	"settings_music_outcome_session": "Your DumbMonit session was not the one that started the connection. Sign in, then start again.",
+	"settings_music_outcome_state": "This approval was unknown, expired or already used. Start again from “Connect Spotify”.",
+	"settings_music_outcome_unknown": "The connection did not complete.",
+	"settings_music_plate_connected": "Spotify connected",
+	"settings_music_plate_off": "Spotify off",
+	"settings_music_plate_reconnect": "Reconnect Spotify",
+	"settings_music_play_on_wall": "Play on the wall",
+	"settings_music_reconnect_by": "Reconnect by",
+	"settings_music_reconnect_note": "Spotify ends connections after six months.",
+	"settings_music_redirect_insecure": "DumbMonit is served over plain HTTP, and Spotify only accepts https:// or this 127.0.0.1 address. Nothing answers there: after approving, your browser shows an error page — copy its address, it carries the code. Served over HTTPS, the redirect would be direct.",
+	"settings_music_redirect_secure": "Spotify comes straight back to this page.",
+	"settings_music_right_now": "Right now",
+	"settings_music_send_error": "Could not send the link",
+	"settings_music_sent_by": "sent by {name}",
+	"settings_music_start_error": "Could not start the connection",
+	"settings_music_status_paused": "Paused",
+	"settings_music_status_playing": "Playing",
+	"settings_music_step1_after": "(any name). Tick Web API and Web Playback SDK, and add this redirect URI:",
+	"settings_music_step1_before": "1. Create an app in the",
+	"settings_music_step1_link": "Spotify Developer Dashboard",
+	"settings_music_step2_help": "On the app's page, under Basic Information. There is no secret to copy: DumbMonit uses PKCE.",
+	"settings_music_step2_label": "2. Paste its Client ID",
+	"settings_music_step3": "3. Approve on Spotify, then come back here.",
+	"settings_music_step4_help": "It starts with {uri}?code= — valid ten minutes, once.",
+	"settings_music_step4_label": "4. Paste the address of the page you landed on",
+	"settings_music_stop": "Stop",
+	"settings_music_title": "Wall music",
+	"settings_nav_push": "Push notifications",
+	"settings_packs_add_device": "Add a {label}",
+	"settings_packs_admin_only_description": "A pack decides what this server asks your devices.",
+	"settings_packs_admin_only_title": "Only an administrator can manage integration packs.",
+	"settings_packs_admins_only": "Administrators only",
+	"settings_packs_change_error": "Could not change this pack",
+	"settings_packs_choose": "Choose pack.yaml",
+	"settings_packs_description": "Device types written in YAML: what to ask a device, which numbers to keep, when to alert. Installing one adds it to the devices you can watch.",
+	"settings_packs_disable_pack": "Disable {label}",
+	"settings_packs_disabled": "Disabled",
+	"settings_packs_docs": "Pack documentation",
+	"settings_packs_empty_description": "Paste a pack.yaml below, or upload one. Packs you install appear under Community packs when you add a device.",
+	"settings_packs_empty_title": "No pack installed yet.",
+	"settings_packs_enable_pack": "Enable {label}",
+	"settings_packs_enabled": "Enabled",
+	"settings_packs_file_too_big": "This file is larger than 1 MB: a pack.yaml is a few kilobytes.",
+	"settings_packs_file_unreadable": "This file could not be read as text.",
+	"settings_packs_hint_conflict": "Two device types cannot share a name: change the pack’s id.",
+	"settings_packs_hint_enable": "Install a corrected version of this pack, then enable it again.",
+	"settings_packs_hint_uninstall": "Disabling keeps those devices and their history; uninstalling needs them gone.",
+	"settings_packs_install_button": "Install the pack",
+	"settings_packs_install_error": "Could not install this pack",
+	"settings_packs_install_heading": "Install a pack",
+	"settings_packs_install_intro": "Paste its pack.yaml or upload the file. The pack is checked before anything is saved; installing a newer version of an installed pack updates it and keeps it on or off. Its requests only ever go to the devices that use it.",
+	"settings_packs_installed": "installed {when}",
+	"settings_packs_installed_heading": "Installed packs",
+	"settings_packs_installed_notes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Installed, with {count} note from the checker",
+				"countPlural=other": "Installed, with {count} notes from the checker"
+			}
+		}
+	],
+	"settings_packs_invalid": "Invalid — inactive",
+	"settings_packs_list_error": "Could not list the integration packs",
+	"settings_packs_loaded": "Loaded {name}",
+	"settings_packs_n_devices": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device",
+				"countPlural=other": "{count} devices"
+			}
+		}
+	],
+	"settings_packs_n_metrics": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} metric",
+				"countPlural=other": "{count} metrics"
+			}
+		}
+	],
+	"settings_packs_n_rules": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert rule",
+				"countPlural=other": "{count} alert rules"
+			}
+		}
+	],
+	"settings_packs_n_snmp": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} SNMP profile",
+				"countPlural=other": "{count} SNMP profiles"
+			}
+		}
+	],
+	"settings_packs_note": "Note",
+	"settings_packs_outcome_created": "Installed",
+	"settings_packs_outcome_unchanged": "Already installed — nothing changed",
+	"settings_packs_outcome_updated": "Updated",
+	"settings_packs_restart": "Restart DumbMonit to use its SNMP profiles: they are read when the server starts. Everything else in the pack works already.",
+	"settings_packs_rules_added": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert rule added",
+				"countPlural=other": "{count} alert rules added"
+			}
+		}
+	],
+	"settings_packs_title": "Integration packs",
+	"settings_packs_uninstall": "Uninstall",
+	"settings_packs_uninstall_confirm": "Uninstall for good?",
+	"settings_packs_upload_label": "Upload a file",
+	"settings_packs_val_headline": "This pack cannot be installed.",
+	"settings_packs_val_link": "Pack format",
+	"settings_packs_val_link_tail": "explains each field.",
+	"settings_packs_val_note": "Nothing was saved. Fix these points in the YAML, then install again.",
+	"settings_packs_yaml_label": "Pack YAML",
+	"settings_password_hide": "Hide password",
+	"settings_password_show": "Show password",
+	"settings_push_action_error": "Push notifications could not be updated",
+	"settings_push_browser": "Browser",
+	"settings_push_description": "Alerts as native notifications on this phone or computer, even with DumbMonit closed. No app to install.",
+	"settings_push_device_installed": "{device} · installed app",
+	"settings_push_enable": "Enable on this device",
+	"settings_push_enabled_notice": "This device will receive push notifications. Send a test to check.",
+	"settings_push_help_channel": "Which alerts arrive is decided by a Web Push channel in Alerts → Notifications.",
+	"settings_push_help_desktop_body": "works in Chrome, Edge, Firefox and Safari. Installing the app (address bar → Install) is optional but keeps it one tap away.",
+	"settings_push_help_desktop_lead": "Android, Windows, macOS, Linux:",
+	"settings_push_help_domains_body": "the server sends to the browser vendor's push service, so it needs outbound HTTPS to fcm.googleapis.com (Chrome, Edge on Android), *.notify.windows.com (Edge), updates.push.services.mozilla.com (Firefox) and *.push.apple.com (Safari). Messages are end-to-end encrypted: those services cannot read them.",
+	"settings_push_help_domains_lead": "Domains:",
+	"settings_push_help_guide": "Full guide →",
+	"settings_push_help_https_body": "Browsers only offer push on a secure origin: put DumbMonit behind a reverse proxy with a certificate. http://localhost also works, for testing on the server itself.",
+	"settings_push_help_https_lead": "HTTPS is required.",
+	"settings_push_help_ios_body": "open DumbMonit in Safari, Share → Add to Home Screen, open it from the Home Screen icon, then enable push here.",
+	"settings_push_help_ios_lead": "iPhone and iPad (iOS 16.4 or later):",
+	"settings_push_help_label": "How push notifications work",
+	"settings_push_last_failed": "Last attempt failed: {error}",
+	"settings_push_load_error": "Could not read push notifications",
+	"settings_push_meta_added": "{service} · added {date}",
+	"settings_push_meta_delivered": "{service} · added {date} · last delivered {when}",
+	"settings_push_none": "None yet. Enable push on each phone or computer that should ring.",
+	"settings_push_plate_blocked": "Blocked",
+	"settings_push_plate_enabled": "Enabled",
+	"settings_push_plate_https": "Needs HTTPS",
+	"settings_push_plate_install": "Install first",
+	"settings_push_plate_off": "Off",
+	"settings_push_plate_unsupported": "Not supported",
+	"settings_push_remove": "Remove",
+	"settings_push_remove_confirm": "Remove this device?",
+	"settings_push_subscribed": "Subscribed devices",
+	"settings_push_test": "Send a test",
+	"settings_push_text_blocked": "Notifications are blocked for this site. Allow them in the browser's site settings, then reload.",
+	"settings_push_text_https": "Open DumbMonit over HTTPS (or on localhost) to enable push. This address is {origin}.",
+	"settings_push_text_install": "On iPhone and iPad, add DumbMonit to the Home Screen (Share → Add to Home Screen), open it from there, then come back here.",
+	"settings_push_text_off": "Not receiving push notifications yet.",
+	"settings_push_text_unsupported": "This browser cannot receive push notifications. Try a recent Chrome, Edge, Firefox or Safari.",
+	"settings_push_this_device": "This device",
+	"settings_push_this_device_tag": "(this device)",
+	"settings_push_title": "Push notifications",
+	"settings_report_cancel": "Cancel",
+	"settings_report_channel": "Email channel",
+	"settings_report_channel_default": "First enabled email channel",
+	"settings_report_channel_disabled": "{name} (disabled)",
+	"settings_report_channel_help": "Only its mail server is used; its own recipients are ignored.",
+	"settings_report_create": "Create report",
+	"settings_report_day": "Day",
+	"settings_report_day_of_month": "Day of the month",
+	"settings_report_day_of_month_help": "1 to 28.",
+	"settings_report_default_name": "Team report",
+	"settings_report_delete": "Delete",
+	"settings_report_delete_confirm": "Delete for good?",
+	"settings_report_dirty": "Unsaved changes: save before sending a preview.",
+	"settings_report_freq_daily": "Daily",
+	"settings_report_freq_monthly": "Monthly",
+	"settings_report_freq_weekly": "Weekly",
+	"settings_report_frequency": "Frequency",
+	"settings_report_hour": "Hour",
+	"settings_report_last_failed": "Last send failed: {error}",
+	"settings_report_last_sent": "Last sent {when}",
+	"settings_report_name": "Name",
+	"settings_report_name_help": "Only shown in this list.",
+	"settings_report_never_sent": "Never sent",
+	"settings_report_next": "Next report {when}",
+	"settings_report_off": "Off",
+	"settings_report_preview_error": "Could not send the preview",
+	"settings_report_preview_failed": "Preview sent to {sent}, failed for {failed}.",
+	"settings_report_preview_sent": [
+		{
+			"declarations": [
+				"input sent",
+				"local sentPlural = sent: plural"
+			],
+			"selectors": [
+				"sentPlural"
+			],
+			"match": {
+				"sentPlural=one": "Preview sent to {sent} recipient.",
+				"sentPlural=other": "Preview sent to {sent} recipients."
+			}
+		}
+	],
+	"settings_report_recipients": "Recipients",
+	"settings_report_recipients_help": "One per line, or separated by commas. Up to {max}; they do not have to be DumbMonit users. {count} entered.",
+	"settings_report_recipients_max": [
+		{
+			"declarations": [
+				"input max",
+				"local maxPlural = max: plural"
+			],
+			"selectors": [
+				"maxPlural"
+			],
+			"match": {
+				"maxPlural=one": "At most {max} recipient.",
+				"maxPlural=other": "At most {max} recipients."
+			}
+		}
+	],
+	"settings_report_recipients_required": "Add at least one address before turning the report on.",
+	"settings_report_save": "Save",
+	"settings_report_save_error": "Could not save the report",
+	"settings_report_saved": "Saved.",
+	"settings_report_send": "Send reports",
+	"settings_report_send_preview": "Send a preview",
+	"settings_report_timezone": "Timezone",
+	"settings_report_timezone_help": "An IANA name such as Europe/Paris. Daylight saving time is followed.",
+	"settings_reports_add": "Add a report",
+	"settings_reports_description": "A short email for the team: how the infrastructure did over the last day, week or month.",
+	"settings_reports_empty_description": "Weekly by default, on Monday morning, in your timezone.",
+	"settings_reports_empty_title": "No report yet.",
+	"settings_reports_info_availability": "Availability over the period, overall, by group and by device, computed like on a status page.",
+	"settings_reports_info_compare": "How all of it compares with the previous period of the same length.",
+	"settings_reports_info_footer": "Plain tables, no remote image. Each recipient gets their own email. The period is the last 24 hours, 7 days or 30 days before sending.",
+	"settings_reports_info_incidents": "The incidents of the period: when each started, how long it lasted, on which device.",
+	"settings_reports_info_label": "What does a report contain?",
+	"settings_reports_info_title": "What a report contains",
+	"settings_reports_info_unstable": "The five least stable devices.",
+	"settings_reports_load_error": "Could not load the reports",
+	"settings_reports_no_channel_link": "Add one in Alerts → Notifications.",
+	"settings_reports_no_channel_plate": "No email channel",
+	"settings_reports_no_channel_text": "Reports are sent through an email (SMTP) channel.",
+	"settings_reports_read_more": "Read more",
+	"settings_reports_setup": "Set up a report",
+	"settings_reports_title": "Reports",
+	"settings_security_change": "Change password",
+	"settings_security_change_error": "Could not change the password",
+	"settings_security_changed": "Password changed — your other sessions were signed out",
+	"settings_security_confirm_label": "Confirm new password",
+	"settings_security_current_label": "Current password",
+	"settings_security_default_provider": "your identity provider",
+	"settings_security_description": "Your account and this session.",
+	"settings_security_description_user": "Your account: {username}.",
+	"settings_security_err_current": "Enter the current password to prove it is you.",
+	"settings_security_err_current_wrong": "Current password is wrong.",
+	"settings_security_err_mismatch": "The two new passwords do not match. Type the confirmation again.",
+	"settings_security_err_same": "The new password is the same as the current one. Choose a different one.",
+	"settings_security_managed_by": "Managed by {provider}",
+	"settings_security_new_help": "At least {min} characters. A whole phrase is safer than a complicated word.",
+	"settings_security_new_label": "New password",
+	"settings_security_no_protection": "This instance has no password protection.",
+	"settings_security_oidc_note": "You sign in through the identity provider: there is no DumbMonit password to change.",
+	"settings_security_session_hint": "Sign out on this device. Other sessions stay open.",
+	"settings_security_session_title": "This session",
+	"settings_security_sign_out": "Sign out",
+	"settings_security_title": "Account & security",
+	"settings_speaker_account": "Account",
+	"settings_speaker_account_note": "— the phone must be signed in to this Spotify account to see the wall.",
+	"settings_speaker_browser_default": "A browser",
+	"settings_speaker_connected": "Connected",
+	"settings_speaker_device_playing": "{name} (playing)",
+	"settings_speaker_err_name": "A speaker name is at most 64 characters.",
+	"settings_speaker_heading": "Speaker",
+	"settings_speaker_in_devices": "In Spotify’s devices",
+	"settings_speaker_listed_as": "Listed in Spotify as {name}.",
+	"settings_speaker_listed_no": "Not right now",
+	"settings_speaker_listed_yes": "Yes — phones on this account can pick it",
+	"settings_speaker_lists": "Spotify lists: {devices}",
+	"settings_speaker_lists_none": "Spotify lists no device on this account right now.",
+	"settings_speaker_missing": "This server does not report the speaker yet: update DumbMonit.",
+	"settings_speaker_name_help": "What phones list under Devices. Every wall uses it; add ?speaker=Kitchen to one wall's address to name that one alone. Empty: “DumbMonit Wall”.",
+	"settings_speaker_name_label": "Name in Spotify",
+	"settings_speaker_phase_connecting": "Connecting",
+	"settings_speaker_phase_error": "Stopped",
+	"settings_speaker_phase_locked": "Ready, sound locked",
+	"settings_speaker_phase_not_listed": "Not listed by Spotify",
+	"settings_speaker_phase_off": "Off on this display",
+	"settings_speaker_phase_ready": "Ready",
+	"settings_speaker_phase_unsupported": "Cannot play here",
+	"settings_speaker_premium": "Premium",
+	"settings_speaker_premium_no": "No — the wall cannot be a speaker",
+	"settings_speaker_premium_unknown": "Not known yet (a wall tells when it connects)",
+	"settings_speaker_premium_yes": "Yes",
+	"settings_speaker_read_error": "Could not read the speaker",
+	"settings_speaker_refresh": "Refresh",
+	"settings_speaker_refresh_aria": "Refresh the speaker status",
+	"settings_speaker_rename": "Rename",
+	"settings_speaker_rename_error": "Could not rename the speaker.",
+	"settings_speaker_test_fail": "Spotify did not start playing.",
+	"settings_speaker_test_hint": "Plays the account on “{name}”, resuming what played last.",
+	"settings_speaker_test_ok": "Spotify now plays on “{name}”: listen to the wall. Nothing to hear? Tap the wall once to unlock its sound.",
+	"settings_speaker_test_sound": "Test sound",
+	"settings_speaker_wall_meta": "· as “{name}” · {when}",
+	"settings_speaker_walls": "Walls",
+	"settings_speaker_walls_none": "No wall has reported in the last fifteen minutes. Open /wall on the display (signed in, viewer accounts included) and it shows up here within a minute.",
+	"settings_sso_admin_groups": "Admin groups",
+	"settings_sso_admin_groups_help": "Comma separated. Members become admins, everyone else a viewer (or an operator, below) — re-evaluated at each sign-in. Both lists empty: roles are managed here.",
+	"settings_sso_alg_warning": "This provider does not list RS256 or ES256: DumbMonit only accepts those signatures.",
+	"settings_sso_autocreate_env_hint": "Set DUMBMONIT_OIDC_AUTO_CREATE=true, or turn it on under More options and save.",
+	"settings_sso_autocreate_help": "Off by default. Off: only accounts already linked, or matched by a provider-verified email that equals their username, can sign in. A local admin with a password is never linked automatically.",
+	"settings_sso_autocreate_label": "Create accounts on first sign-in",
+	"settings_sso_autocreate_off_body": "New identities are not given an account on first sign-in: this setting was never chosen, and it now defaults to off (earlier versions turned it on). Only accounts already linked, or matched by a provider-verified email, can sign in.",
+	"settings_sso_autocreate_plate": "Account creation off",
+	"settings_sso_autocreate_ui_hint": "Turn it on under More options if you want it.",
+	"settings_sso_client_id": "Client id",
+	"settings_sso_client_secret": "Client secret",
+	"settings_sso_description": "Let people sign in through your OpenID Connect provider — Authentik, Keycloak, Authelia, Pocket ID and the like.",
+	"settings_sso_discovery_failed": "Discovery failed",
+	"settings_sso_discovery_ok": "Discovery OK",
+	"settings_sso_err_client_id": "Enter the client id registered at the provider.",
+	"settings_sso_err_issuer": "Enter the issuer URL, for example https://id.example.org/application/o/dumbmonit/.",
+	"settings_sso_err_secret": "Enter the client secret from the provider.",
+	"settings_sso_err_url": "Enter a full URL, starting with http:// or https://.",
+	"settings_sso_forget": "Forget saved settings",
+	"settings_sso_found": "Provider found",
+	"settings_sso_groups_claim": "Groups claim",
+	"settings_sso_groups_claim_help": "Name of the token claim that lists the user's groups.",
+	"settings_sso_issuer": "Issuer URL",
+	"settings_sso_issuer_help": "Discovery is read from the issuer URL followed by /.well-known/openid-configuration.",
+	"settings_sso_load_error": "Could not load the single sign-on settings",
+	"settings_sso_more": "More options",
+	"settings_sso_no_answer": "The provider did not answer.",
+	"settings_sso_note_env": "These values come from environment variables. Saving here replaces them for good: what is saved wins, and the variables only apply while nothing is saved.",
+	"settings_sso_note_none": "Nothing configured yet. Fill this in, or set the DUMBMONIT_OIDC_* environment variables — what is saved here wins.",
+	"settings_sso_note_settings": "Saved settings apply. Environment variables (DUMBMONIT_OIDC_*) only apply while nothing is saved here.",
+	"settings_sso_off": "Off",
+	"settings_sso_on": "On — {provider}",
+	"settings_sso_operator_groups": "Operator groups",
+	"settings_sso_operator_groups_help": "Comma separated. Members who are not admins become operators: they handle alerts (acknowledge, ignore, snooze) but change no configuration.",
+	"settings_sso_provider_help": "Label of the sign-in button: “Continue with …”.",
+	"settings_sso_provider_name": "Provider name",
+	"settings_sso_public_url": "Public URL",
+	"settings_sso_public_url_help": "How browsers reach DumbMonit. Used to build the redirect URI below.",
+	"settings_sso_redirect_copy": "Copy redirect URI",
+	"settings_sso_redirect_heading": "Register this redirect URI at your provider",
+	"settings_sso_row_authorization": "Authorization",
+	"settings_sso_row_issuer": "Issuer",
+	"settings_sso_row_keys": "Keys",
+	"settings_sso_row_scopes": "Scopes",
+	"settings_sso_row_signing": "Signing",
+	"settings_sso_row_token": "Token",
+	"settings_sso_save": "Save changes",
+	"settings_sso_save_error": "Could not save the settings",
+	"settings_sso_saved": "Saved",
+	"settings_sso_scopes": "Scopes",
+	"settings_sso_scopes_help": "Space separated. Add the scope that carries your groups claim if your provider needs one.",
+	"settings_sso_secret_help": "Stored encrypted, never shown again.",
+	"settings_sso_secret_stored": "A secret is stored. Leave empty to keep it.",
+	"settings_sso_test": "Test discovery",
+	"settings_sso_test_error": "Could not run the test",
+	"settings_sso_title": "Single sign-on",
+	"settings_sso_turn_off": "Turn single sign-on off?",
+	"settings_sso_use_env": "Use environment values?",
+	"settings_update_available": "Update available: v{version}",
+	"settings_update_backup_body": "Settings → Backup, and keep a copy of /data/secret.key (without it, stored passwords and tokens cannot be decrypted).",
+	"settings_update_backup_lead": "Back up first.",
+	"settings_update_check_error": "Could not look for updates: {error}",
+	"settings_update_check_now": "Check now",
+	"settings_update_checked": "Checked {when}",
+	"settings_update_copy_command": "Copy command",
+	"settings_update_data_kept": "Your data lives in the /data volume and is kept. The page reloads itself once the server is back.",
+	"settings_update_guide": "Update guide →",
+	"settings_update_how": "How to update",
+	"settings_update_last_failed": "Last attempt failed: {error}",
+	"settings_update_looking": "Looking for updates…",
+	"settings_update_off": "Update check is off.",
+	"settings_update_off_env": "Update check is off (DUMBMONIT_UPDATE_CHECK=off).",
+	"settings_update_off_releases": "Check the releases page for new versions.",
+	"settings_update_pull_body": "from the folder that holds your docker-compose.yml:",
+	"settings_update_pull_lead": "Pull the new image and restart",
+	"settings_update_read_error": "Could not read update status",
+	"settings_update_release_notes": "Release notes →",
+	"settings_update_toggle": "Check for new versions",
+	"settings_update_toggle_help": "Check for new versions. The server makes one anonymous request to the public GitHub API (api.github.com) at most once a day; nothing about your instance is sent. Turn off on air-gapped networks, or set DUMBMONIT_UPDATE_CHECK=off.",
+	"settings_update_up_to_date": "You are up to date.",
+	"settings_update_whats_new": "See what's new",
+	"settings_users_2fa_title": "Two-factor authentication is on",
+	"settings_users_add": "Add user",
+	"settings_users_auth_password": "Password",
+	"settings_users_auth_password_title": "Signs in with a password",
+	"settings_users_auth_sso_title": "Signs in through the identity provider",
+	"settings_users_cancel": "Cancel",
+	"settings_users_copy_password": "Copy password",
+	"settings_users_create": "Create user",
+	"settings_users_create_error": "Could not create the user",
+	"settings_users_created": "User “{username}” created",
+	"settings_users_created_shown": "Password shown once — hand it over now",
+	"settings_users_delete": "Delete",
+	"settings_users_delete_confirm": "Delete for good?",
+	"settings_users_description": "Who can sign in. Admins change things; operators handle alerts; viewers only look.",
+	"settings_users_disabled": "Disabled",
+	"settings_users_display_help": "Optional. Shown in the top bar instead of the username.",
+	"settings_users_display_name": "Display name",
+	"settings_users_done": "Done",
+	"settings_users_edit": "Edit",
+	"settings_users_edit_aria": "Edit {username}",
+	"settings_users_empty_description": "Add the first account to sign in.",
+	"settings_users_empty_title": "No users.",
+	"settings_users_enabled": "Enabled",
+	"settings_users_err_password": "Set a password: single sign-on is not enabled, so this user could not sign in otherwise.",
+	"settings_users_err_spaces": "The username cannot contain spaces.",
+	"settings_users_err_username": "Enter a username.",
+	"settings_users_generate": "Generate",
+	"settings_users_generate_title": "Generate a random password",
+	"settings_users_last_seen": "Last sign-in {last} · Created {created}",
+	"settings_users_load_error": "Could not load the users",
+	"settings_users_never": "never",
+	"settings_users_new_aria": "New user",
+	"settings_users_no_delete_last": "The last admin cannot be deleted. Promote another user first.",
+	"settings_users_no_delete_self": "You cannot delete your own account.",
+	"settings_users_no_disable_last": "The last admin cannot be disabled. Promote another user first.",
+	"settings_users_no_disable_self": "You cannot disable your own account.",
+	"settings_users_password": "Password",
+	"settings_users_password_help": "At least {min} characters. Shown once after creation.",
+	"settings_users_password_help_sso": "At least {min} characters. Leave empty for a user who signs in with {provider} only.",
+	"settings_users_promote_first": "Promote another user first.",
+	"settings_users_reset2fa": "Reset 2FA",
+	"settings_users_reset2fa_confirm": "Reset two-factor?",
+	"settings_users_reset2fa_title": "Removes their authenticator and recovery codes, and signs them out: the password alone will sign them in again.",
+	"settings_users_reset_help": "Leave empty to keep the current password. A new one signs the user out everywhere.",
+	"settings_users_reset_help_sso": "Leave empty to keep this account on single sign-on only.",
+	"settings_users_reset_password": "Reset password",
+	"settings_users_reset_shown": "Shown once — their other sessions were signed out",
+	"settings_users_reset_title": "Password reset for “{username}”",
+	"settings_users_role": "Role",
+	"settings_users_role_admin": "Admin",
+	"settings_users_role_admin_option": "Admin — can change everything",
+	"settings_users_role_last_admin_help": "The last admin keeps the admin role until another one exists.",
+	"settings_users_role_operator": "Operator",
+	"settings_users_role_operator_option": "Operator — handles alerts, no configuration",
+	"settings_users_role_viewer": "Viewer",
+	"settings_users_role_viewer_option": "Viewer — read only",
+	"settings_users_save": "Save changes",
+	"settings_users_save_error": "Could not save the user",
+	"settings_users_title": "Users",
+	"settings_users_update_error": "Could not update the user",
+	"settings_users_username": "Username",
+	"settings_users_you": "you",
 	"status_action_back": "Back to the status page",
 	"status_action_confirm_button": "Confirm subscription",
 	"status_action_confirm_done": "You are subscribed. Every message has a link to unsubscribe.",
@@ -4253,13 +5422,69 @@
 	"status_public_services": "Services",
 	"status_public_switch_dark": "Switch to the dark theme",
 	"status_public_switch_light": "Switch to the light theme",
-	"status_public_tally_affected": "{affected} of {total} services affected",
+	"status_public_tally_affected": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "{affected} of {total} services affected",
+				"affectedPlural=other": "{affected} of {total} services affected"
+			}
+		}
+	],
 	"status_public_tally_all": "All {count} services operational",
-	"status_public_tally_degraded": "{affected} of {total} services degraded",
+	"status_public_tally_degraded": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "{affected} of {total} services degraded",
+				"affectedPlural=other": "{affected} of {total} services degraded"
+			}
+		}
+	],
 	"status_public_tally_detail": "{up} operational · {down} down",
 	"status_public_tally_detail_uptime": "{up} operational · {down} down · {uptime} over {days} days",
-	"status_public_tally_down": "{affected} of {total} services down",
-	"status_public_tally_maintenance": "{affected} of {total} services in maintenance",
+	"status_public_tally_down": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "{affected} of {total} services down",
+				"affectedPlural=other": "{affected} of {total} services down"
+			}
+		}
+	],
+	"status_public_tally_maintenance": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "{affected} of {total} services in maintenance",
+				"affectedPlural=other": "{affected} of {total} services in maintenance"
+			}
+		}
+	],
 	"status_public_tally_one": "1 service operational",
 	"status_public_title": "Status",
 	"status_public_title_with_page": "{title} · Status",
@@ -4377,6 +5602,62 @@
 	"status_words_st_monitoring": "Monitoring",
 	"status_words_st_resolved": "Resolved",
 	"status_words_st_scheduled": "Scheduled",
+	"tips_alerts_clear_history": "\"Clear all resolved\" sweeps the closed alerts out of your history in one go, once you are done reading them.",
+	"tips_alerts_ignore_device": "A rule firing on a device that will just never comply? Ignore that rule for that one device — the rule still watches everywhere else.",
+	"tips_alerts_learning": "A new baseline rule stays silent for its first 14 days: it is still learning what normal looks like for this device before it dares to alert on it.",
+	"tips_alerts_snooze": "Snoozing an alert buys it a fixed window of quiet; it comes back on its own once that window ends — no need to remember to re-enable it.",
+	"tips_alerts_suppressed": "An alert marked \"suppressed\" is not being ignored — its parent is already down, and I am not paging you twice for the same outage.",
+	"tips_device_docker": "On an agent with Docker, you can restart or update a container from right here — no terminal required.",
+	"tips_device_probe_now": "\"Probe now\" asks this device right now, live, instead of waiting for its next scheduled check — the fastest way to find out why it has gone quiet.",
+	"tips_device_secrets": "Credentials never come back once saved. Editing this device without touching the password field just keeps the one already stored — nothing round-trips to your screen.",
+	"tips_device_silence": "Expecting noise — a reboot, a firmware update? Silence this device for a while and its alerts stay quiet without disabling the checks themselves.",
+	"tips_device_timeline": "The timeline below the faceplate is this device’s whole story: every alert that opened and closed on it, in order.",
+	"tips_devices_folders": "Drag a device into a folder to group it — a site, a rack, a client. Double-click a folder’s name to rename it in place.",
+	"tips_devices_network_scan": "Scanning the network finds what is already answering before you type a single IP address by hand.",
+	"tips_devices_network_scan_action": "Scan my network",
+	"tips_devices_parent_child": "A VM or container under its hypervisor inherits trouble quietly: if the host is down, its guests are marked suppressed instead of each paging you separately.",
+	"tips_devices_rack_order": "The rack sorts itself: trouble floats to the top, everything else keeps the order you gave it. Children sit indented under their parent, always.",
+	"tips_devices_relay_agent": "An agent can watch a whole second network for you — a client’s office, a site behind a NAT — reporting home over an outbound connection only.",
+	"tips_devices_relay_agent_action": "Watch a remote site",
+	"tips_general_about_me": "I am a pigeon. I live in your monitoring tool. I have made my peace with this.",
+	"tips_general_docs": "Longer explanations live on Read the Docs — this bulletin keeps its own screens short on purpose.",
+	"tips_general_docs_action": "Read the docs",
+	"tips_general_palette_everywhere": "The keyboard shortcut for the command palette still works even with the hint gone from the nav — Ctrl K, or ⌘K on a Mac.",
+	"tips_general_palette_everywhere_action": "Open the palette",
+	"tips_general_quiet_option": "If I am more than you want, the × below puts me away for this visit — or tell me to stop for good and I will not bring it up again.",
+	"tips_general_security_score": "Every device gets a security score from what it actually exposes — not a guess, a reading.",
+	"tips_general_security_score_action": "Open Security",
+	"tips_overview_briefing": "This page is a briefing, not a dashboard: a sky, \"since you last looked\" in sentences, and \"needs you\" as tiles. No device list here on purpose — that lives on Devices.",
+	"tips_overview_briefing_action": "See the devices",
+	"tips_overview_last_7_days": "\"Last 7 days\" boils the week down to three numbers: how long everything stayed up, the quietest device, and the one that paged you the most. Petty, but fair.",
+	"tips_overview_palette_anywhere": "Ctrl K or ⌘K opens the command palette from anywhere, even here, even mid-scroll. No menu diving required.",
+	"tips_overview_palette_anywhere_action": "Open the palette",
+	"tips_overview_sky_weather": "I live the weather with you up there: I nap on the wire on a quiet night, startle when something breaks, and loop in confetti once the sky clears. Try breaking something. (Please don’t.)",
+	"tips_overview_week_ahead": "\"The week ahead\" shows what is due on its day — a maintenance window, a renewal. A quiet week shrinks to one line so it never begs for attention it does not need.",
+	"tips_pip_another": "Another tip",
+	"tips_pip_bubble_aria": "A tip from Pip",
+	"tips_pip_close_pip": "Close Pip",
+	"tips_pip_close_tip_aria": "Close this tip",
+	"tips_pip_close_tip_title": "Close",
+	"tips_pip_guide": "{label} guide",
+	"tips_pip_open": "Pip has a tip",
+	"tips_pip_quiet": "Don't show tips again",
+	"tips_settings_2fa": "Two-factor authentication is one QR code away, right in Account & security — worth it for the one account that can see every credential on this server.",
+	"tips_settings_2fa_action": "Account & security",
+	"tips_settings_assistant": "Claude, ChatGPT or any MCP client can read this bulletin — and with a write token, silence a device or run a probe for you.",
+	"tips_settings_assistant_action": "Connect an assistant",
+	"tips_settings_backup": "The backup bundle is encrypted, but it still holds every credential this server knows. Keep `/data/secret.key` as carefully as the bundle itself.",
+	"tips_settings_backup_action": "Back up this instance",
+	"tips_settings_packs": "A device type is just a YAML file — an integration pack. Install one to teach me a device I do not already know.",
+	"tips_settings_packs_action": "Integration packs",
+	"tips_settings_wall_appearance": "Wall mode is tuned in Appearance — including an OLED-friendly night theme for a screen that never turns off.",
+	"tips_settings_wall_appearance_action": "Open wall mode",
+	"tips_status_embed": "Add `/embed` to a status page’s link and it drops into an iframe neatly — handy for an internal wiki or a company intranet.",
+	"tips_status_incidents": "Posting an incident update here keeps everyone off your chat, politely. Maintenance windows show as planned, not as a surprise outage.",
+	"tips_status_public_page": "A status page answers \"is it down?\" before anyone has to ask — pick the services, share the link, done.",
+	"tips_status_public_page_action": "Create a status page",
+	"tips_status_subscribe": "Visitors can subscribe to a status page for email updates; the unsubscribe link in every one of those emails works without them signing in anywhere.",
+	"tips_status_theme_param": "A status page accepts `?theme=light` or `?theme=dark` in its URL, so an embed can match the page that hosts it instead of guessing.",
 	"ui.confirm.default_label": "Are you sure?",
 	"ui.error_notice.default_title": "Something went wrong",
 	"ui.error_notice.retry": "Try again",

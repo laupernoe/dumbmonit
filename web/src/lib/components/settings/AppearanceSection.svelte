@@ -25,15 +25,15 @@
 
 	interface Option {
 		value: ThemePreference;
-		label: string;
-		hint: string;
+		label: () => string;
+		hint: () => string;
 		icon: typeof LucideIcon;
 	}
 
 	const OPTIONS: Option[] = [
-		{ value: 'auto', label: 'System', hint: 'Follows your device.', icon: SunMoon },
-		{ value: 'light', label: 'Day', hint: 'Chart paper, navy ink.', icon: Sun },
-		{ value: 'dark', label: 'Night', hint: 'Radar composite, cyan signal.', icon: Moon }
+		{ value: 'auto', label: () => m.settings_appearance_system(), hint: () => m.settings_appearance_system_hint(), icon: SunMoon },
+		{ value: 'light', label: () => m.settings_appearance_day(), hint: () => m.settings_appearance_day_hint(), icon: Sun },
+		{ value: 'dark', label: () => m.settings_appearance_night(), hint: () => m.settings_appearance_night_hint(), icon: Moon }
 	];
 
 	// Day and night palette, as in app.css.
@@ -68,8 +68,8 @@
 	</span>
 {/snippet}
 
-<Panel id="appearance" title="Appearance" description="Both themes are first-class. System follows your device and switches with it.">
-	<div class="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
+<Panel id="appearance" title={m.settings_appearance_title()} description={m.settings_appearance_description()}>
+	<div class="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
 		{#each OPTIONS as option, i (option.value)}
 			{@const selected = theme.preference === option.value}
 			{@const Icon = option.icon}
@@ -87,8 +87,8 @@
 				<span class="flex items-center gap-2">
 					<Icon class="size-4 shrink-0 text-ink-2" aria-hidden="true" />
 					<span class="min-w-0 flex-1">
-						<span class="block text-sm font-semibold text-ink">{option.label}</span>
-						<span class="block text-[0.8125rem] text-ink-2">{option.hint}</span>
+						<span class="block text-sm font-semibold text-ink">{option.label()}</span>
+						<span class="block text-[0.8125rem] text-ink-2">{option.hint()}</span>
 					</span>
 					{#if selected}<Check class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />{/if}
 				</span>
@@ -114,11 +114,11 @@
 
 	<div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
 		<div class="min-w-0">
-			<p class="text-sm font-semibold text-ink">Wall mode</p>
+			<p class="text-sm font-semibold text-ink">{m.settings_appearance_wall_title()}</p>
 			<p class="text-[0.8125rem] text-ink-2">
-				The bulletin alone, full screen, for a monitor in the room. Press Esc to leave; ⌘K / Ctrl K opens it from anywhere.
+				{m.settings_appearance_wall_description()}
 			</p>
 		</div>
-		<Button href="/wall" variant="secondary" size="sm">Open wall mode</Button>
+		<Button href="/wall" variant="secondary" size="sm">{m.settings_appearance_wall_open()}</Button>
 	</div>
 </Panel>
