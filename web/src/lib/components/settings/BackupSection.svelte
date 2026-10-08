@@ -8,6 +8,7 @@
 	 * decrypts device credentials on this server is `/data/secret.key`.
 	 */
 	import { Archive, Download, HardDriveDownload, KeyRound, Upload } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		exportBackup,
 		getBackupStatus,
@@ -84,10 +85,10 @@
 		exported = false;
 		const found: typeof exportErrors = {};
 		if (passphrase.length < minLength) {
-			found.passphrase = `At least ${minLength} characters. Three words is enough, and you will need them again to restore.`;
+			found.passphrase = m.settings_backup_passphrase_short({ min: minLength });
 		}
 		if (!found.passphrase && passphrase !== confirmation) {
-			found.confirmation = 'The two passphrases do not match. Type the confirmation again.';
+			found.confirmation = m.settings_backup_passphrase_mismatch();
 		}
 		exportErrors = found;
 		if (Object.keys(found).length > 0) return;
@@ -128,13 +129,13 @@
 		try {
 			const parsed = JSON.parse(await file.text());
 			if (!parsed || typeof parsed !== 'object' || parsed.format !== 'dumbmonit-backup') {
-				bundleError = 'This file is not a DumbMonit backup.';
+				bundleError = m.settings_backup_not_backup();
 				return;
 			}
 			bundle = parsed as BackupEnvelope;
 			bundleName = file.name;
 		} catch {
-			bundleError = 'This file could not be read as JSON. Pick the bundle you downloaded.';
+			bundleError = m.settings_backup_not_json();
 		}
 	}
 
@@ -189,8 +190,8 @@
 
 <Panel
 	id="backup"
-	title="Backup"
-	description="Export this instance as one encrypted file, restore it onto a fresh one, and keep a daily copy of the database next to it."
+	title={m.settings_backup_title()}
+ description={m.settings_backup_description()}
 >
 	{#snippet aside()}
 		{#if !auth.isAdmin}
@@ -199,14 +200,14 @@
 	{/snippet}
 
 	{#if error}
-		<ErrorNotice {error} title="Could not read the backup state" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.settings_backup_read_error()} onretry={() => void load()} />
 	{:else if loading}
 		<Skeleton class="h-32 w-full" />
 	{:else if !auth.isAdmin}
 		<EmptyState
 			icon={Archive}
-			title="Only an administrator can export or restore."
-			description="A backup holds every credential of this instance."
+			title={m.settings_backup_admin_only_title()}
+			description={m.settings_backup_admin_only_description()}
 		/>
 	{:else if status}
 		<div class="grid gap-8">
@@ -215,25 +216,18 @@
 				<div class="flex items-start gap-3">
 					<KeyRound class="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
 					<div class="min-w-0">
-						<p class="font-semibold text-ink">The instance secret is what decrypts your credentials</p>
+						<p class="font-semibold text-ink">{m.settings_backup_secret_title()}</p>
 						{#if status.secret_source === 'file'}
 							<p class="mt-1 text-sm text-ink-2">
-								Device passwords, SNMP communities and channel secrets are encrypted with a key
-								derived from <code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem]">{status.secret_path}</code>.
-								A copy of the database <strong>without that file</strong> restores an instance that
-								cannot talk to anything — and the server refuses to start rather than pretend
-								otherwise. Back it up with the database.
+								{m.settings_backup_secret_file({ path: status.secret_path })}
 							</p>
 						{:else}
 							<p class="mt-1 text-sm text-ink-2">
-								This server reads its secret from <code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem]">DUMBMONIT_SECRET</code>,
-								so there is no file to copy. Keep that value in your password manager: without it, a
-								copy of the database restores an instance that cannot talk to anything.
+								{m.settings_backup_secret_env()}
 							</p>
 						{/if}
 						<p class="mt-2 text-sm text-ink-2">
-							The bundle below is the exception: its secrets are re-encrypted with the passphrase you
-							choose, so it restores onto a fresh instance that has its own secret.
+							{m.settings_backup_secret_bundle()}
 						</p>
 					</div>
 				</div>
@@ -241,11 +235,9 @@
 
 			<!-- Export -->
 			<section>
-				<h3 class="font-semibold text-ink">Export the configuration</h3>
+				<h3 class="font-semibold text-ink">{m.settings_backup_export_title()}</h3>
 				<p class="mt-1 text-sm text-ink-2">
-					One file, format version {status.bundle_version}. It contains <strong>every credential of
-					this instance</strong> in a form the passphrase alone protects: store it where you store
-					passwords, not next to the backups of your films.
+					{m.settings_backup_export_intro({ version: status.bundle_version })}
 				</p>
 
 				<ul class="mt-3 grid gap-1 text-sm text-ink-2 sm:grid-cols-2">
@@ -257,16 +249,15 @@
 					{/each}
 				</ul>
 				<p class="mt-2 text-sm text-ink-3">
-					Not included: metrics history, alert state and history, the audit log, open sessions — and
-					the instance secret, on purpose.
+					{m.settings_backup_export_excluded()}
 				</p>
 
 				<form class="mt-4 grid max-w-md gap-4" onsubmit={download} novalidate>
 					<Field
-						label="Passphrase"
-						for="backup-passphrase"
+						label={m.settings_backup_passphrase()}
+ for="backup-passphrase"
 						error={exportErrors.passphrase}
-						help={`At least ${minLength} characters. There is no way to recover a bundle whose passphrase is lost.`}
+						help={m.settings_backup_passphrase_help({ min: minLength })}
 					>
 						<PasswordInput
 							id="backup-passphrase"
@@ -277,7 +268,7 @@
 							oninput={() => (exportErrors = { ...exportErrors, passphrase: undefined })}
 						/>
 					</Field>
-					<Field label="Confirm passphrase" for="backup-passphrase-2" error={exportErrors.confirmation}>
+					<Field label={m.settings_backup_passphrase_confirm()} for="backup-passphrase-2" error={exportErrors.confirmation}>
 						<PasswordInput
 							id="backup-passphrase-2"
 							bind:value={confirmation}
@@ -288,25 +279,26 @@
 						/>
 					</Field>
 					<Field
-						label="Include account passwords and 2FA secrets"
+						label={m.settings_backup_accounts_label()}
 						for="backup-accounts"
 						inline
-						help="Off by default. Without them, restored accounts exist but cannot sign in until an administrator sets a password."
+						help={m.settings_backup_accounts_help()}
 					>
 						<Toggle id="backup-accounts" bind:checked={withAccounts} disabled={exporting} />
 					</Field>
 
 					{#if exportError}
-						<ErrorNotice error={exportError} title="Could not export the backup" />
+						<ErrorNotice error={exportError} title={m.settings_backup_export_error()} />
 					{/if}
 
 					<div class="flex flex-wrap items-center gap-3" aria-live="polite">
 						<Button type="submit" variant="primary" loading={exporting}>
 							<Download class="size-4" aria-hidden="true" />
-							Download the bundle
+							{m.settings_backup_download()}
+
 						</Button>
 						{#if exported}
-							<Plate tone="signal" label="Downloaded — keep the passphrase with it" />
+							<Plate tone="signal" label={m.settings_backup_downloaded()} />
 						{/if}
 					</div>
 				</form>
@@ -314,15 +306,13 @@
 
 			<!-- Restore -->
 			<section class="border-t border-line pt-6">
-				<h3 class="font-semibold text-ink">Restore a bundle</h3>
+				<h3 class="font-semibold text-ink">{m.settings_backup_restore_title()}</h3>
 				<p class="mt-1 text-sm text-ink-2">
-					Checked first, applied only if you ask. Restoring never deletes anything: it creates what
-					is missing and updates what differs, matching devices on their kind and address. Accounts
-					that already exist here are left untouched.
+					{m.settings_backup_restore_intro()}
 				</p>
 
 				<div class="mt-4 grid max-w-md gap-4">
-					<Field label="Bundle file" for="backup-file" error={bundleError}>
+					<Field label={m.settings_backup_bundle_file()} for="backup-file" error={bundleError}>
 						<input
 							id="backup-file"
 							type="file"
@@ -337,8 +327,7 @@
 						<div class="rounded-[var(--radius-card)] border border-line bg-surface-2 p-3 text-sm">
 							<p class="font-semibold text-ink">{bundleName}</p>
 							<p class="mt-1 text-ink-2">
-								Written <time class="tnum" title={formatDateTime(bundle.created_at)}>{formatRelative(bundle.created_at)}</time>
-								by DumbMonit {bundle.source_version} · format version {bundle.version}
+								<time class="tnum" title={formatDateTime(bundle.created_at)}>{m.settings_backup_bundle_meta({ when: formatRelative(bundle.created_at), source: bundle.source_version, version: bundle.version })}</time>
 							</p>
 							{#if summaryEntries.length > 0}
 								<p class="mt-1 text-ink-3">
@@ -347,7 +336,7 @@
 							{/if}
 						</div>
 
-						<Field label="Passphrase of this bundle" for="restore-passphrase">
+						<Field label={m.settings_backup_restore_passphrase()} for="restore-passphrase">
 							<PasswordInput
 								id="restore-passphrase"
 								bind:value={restorePassphrase}
@@ -359,13 +348,14 @@
 						<div>
 							<Button variant="secondary" loading={checking} onclick={check} disabled={applying}>
 								<Upload class="size-4" aria-hidden="true" />
-								Check this backup
+								{m.settings_backup_check()}
+
 							</Button>
 						</div>
 					{/if}
 
 					{#if restoreError}
-						<ErrorNotice error={restoreError} title="Could not read the backup" />
+						<ErrorNotice error={restoreError} title={m.settings_backup_restore_error()} />
 					{/if}
 				</div>
 
@@ -373,14 +363,12 @@
 					<div class="mt-4 rounded-[var(--radius-card)] border border-line bg-surface p-4" aria-live="polite">
 						<div class="flex flex-wrap items-center gap-2">
 							{#if report.applied}
-								<Plate tone="signal" label="Restored" />
+								<Plate tone="signal" label={m.settings_backup_restored()} />
 							{:else}
-								<Plate tone="info" label="Dry run — nothing was written" />
+								<Plate tone="info" label={m.settings_backup_dry_run()} />
 							{/if}
 							<p class="text-sm text-ink-2">
-								<span class="tnum font-semibold text-ink">{report.created}</span> to create ·
-								<span class="tnum font-semibold text-ink">{report.updated}</span> to update ·
-								<span class="tnum font-semibold text-ink">{report.skipped}</span> already identical
+								<span class="tnum">{m.settings_backup_to_create({ count: report.created })}</span> · <span class="tnum">{m.settings_backup_to_update({ count: report.updated })}</span> · <span class="tnum">{m.settings_backup_identical({ count: report.skipped })}</span>
 							</p>
 						</div>
 
@@ -388,10 +376,10 @@
 							<table class="w-full min-w-[26rem] text-sm">
 								<thead>
 									<tr class="text-left text-ink-3">
-										<th class="py-1 font-medium">Section</th>
-										<th class="py-1 text-right font-medium">Created</th>
-										<th class="py-1 text-right font-medium">Updated</th>
-										<th class="py-1 text-right font-medium">Unchanged</th>
+										<th class="py-1 font-medium">{m.settings_backup_col_section()}</th>
+										<th class="py-1 text-right font-medium">{m.settings_backup_col_created()}</th>
+										<th class="py-1 text-right font-medium">{m.settings_backup_col_updated()}</th>
+										<th class="py-1 text-right font-medium">{m.settings_backup_col_unchanged()}</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -428,11 +416,12 @@
 								<Confirm
 									variant="secondary"
 									size="md"
-									confirmLabel="Write these changes?"
+									confirmLabel={m.settings_backup_apply_confirm()}
 									loading={applying}
 									onconfirm={apply}
 								>
-									Restore for real
+									{m.settings_backup_apply()}
+
 								</Confirm>
 							</div>
 						{/if}
@@ -443,20 +432,19 @@
 			<!-- Scheduled local backups -->
 			<section class="border-t border-line pt-6">
 				<div class="flex flex-wrap items-center justify-between gap-2">
-					<h3 class="font-semibold text-ink">Scheduled local backups</h3>
+					<h3 class="font-semibold text-ink">{m.settings_backup_scheduled_title()}</h3>
 					{#if status.schedule.enabled}
-						<Plate tone="signal" label="Every {status.schedule.interval_hours} h · keep {status.schedule.keep}" />
+						<Plate tone="signal" label={m.settings_backup_plate_every({ hours: status.schedule.interval_hours, keep: status.schedule.keep })} />
 					{:else}
-						<Plate tone="ghost" label="Disabled" />
+						<Plate tone="ghost" label={m.settings_backup_disabled()} />
 					{/if}
 				</div>
 				<p class="mt-1 text-sm text-ink-2">
-					An online, consistent copy of the database written to
-					<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem]">{status.schedule.directory}</code>{#if status.schedule.includes_secret_key}, with a copy of <code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem]">secret.key</code> beside it{/if}.
-					They live in the same volume as the database: they undo a mistake, not a lost disk.
-					{#if !status.schedule.includes_secret_key}
-						The secret comes from the environment, so it is not copied here.
-					{/if}
+					{status.schedule.includes_secret_key ? m.settings_backup_schedule_intro_key({ directory: status.schedule.directory }) : m.settings_backup_schedule_intro_nokey({ directory: status.schedule.directory })}
+						{m.settings_backup_schedule_same_volume()}
+						{#if !status.schedule.includes_secret_key}
+							{m.settings_backup_schedule_env_secret()}
+						{/if}
 				</p>
 
 				{#if status.schedule.directory_error}
@@ -467,7 +455,7 @@
 					{#if status.schedule.last_run}
 						{@const run = status.schedule.last_run}
 						<div class="flex flex-wrap items-center gap-2">
-							<Plate tone={run.ok ? 'signal' : 'warning'} label={run.ok ? 'Last run succeeded' : 'Last run failed'} />
+							<Plate tone={run.ok ? 'signal' : 'warning'} label={run.ok ? m.settings_backup_last_ok() : m.settings_backup_last_fail()} />
 							<span class="text-ink-2">
 								<time class="tnum" title={formatDateTime(run.at)}>{formatRelative(run.at)}</time>
 								{#if run.ok}· {bytes(run.bytes)}{/if}
@@ -477,7 +465,7 @@
 							<p class="mt-1 text-warning">{run.error}</p>
 						{/if}
 					{:else}
-						<p class="text-ink-2">No backup has run yet.</p>
+						<p class="text-ink-2">{m.settings_backup_none_yet()}</p>
 					{/if}
 				</div>
 
@@ -489,24 +477,25 @@
 								<span class="tnum text-ink-2">{bytes(file.bytes)}</span>
 								<time class="tnum text-ink-3" title={formatDateTime(file.at)}>{formatRelative(file.at)}</time>
 								{#if !file.with_secret && status.schedule.includes_secret_key}
-									<Plate tone="warning" label="Without the key" />
+									<Plate tone="warning" label={m.settings_backup_without_key()} />
 								{/if}
 							</li>
 						{/each}
 					</ul>
 					<p class="mt-2 text-sm text-ink-3">
-						{status.schedule.files.length} kept · {bytes(status.schedule.total_bytes)} in total.
+						{m.settings_backup_kept({ count: status.schedule.files.length, size: bytes(status.schedule.total_bytes) })}
 					</p>
 				{/if}
 
 				{#if runError}
-					<ErrorNotice error={runError} title="Could not write the backup" class="mt-3" />
+					<ErrorNotice error={runError} title={m.settings_backup_write_error()} class="mt-3" />
 				{/if}
 
 				<div class="mt-3">
 					<Button variant="secondary" loading={running} onclick={runNow}>
 						<HardDriveDownload class="size-4" aria-hidden="true" />
-						Back up now
+						{m.settings_backup_back_up_now()}
+
 					</Button>
 				</div>
 			</section>

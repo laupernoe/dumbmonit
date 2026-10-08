@@ -11,6 +11,7 @@
 	import { getHealth } from '#lib/api/index.js';
 	import UpdatePill from '#lib/components/UpdatePill.svelte';
 
+	let { inline = false }: { inline?: boolean } = $props();
 	let version = $state<{ number: string; build?: string } | null>(null);
 	$effect(() => {
 		const controller = new AbortController();
@@ -24,10 +25,10 @@
 {#if version}
 	<a
 		href="/settings#about"
-		class="tnum fixed right-3 bottom-3 z-20 hidden rounded-md px-1.5 py-0.5 text-[0.6875rem] font-medium text-ink-3/70 opacity-70 transition-opacity hover:text-ink-2 hover:opacity-100 sm:block"
+		class={`tnum rounded-md px-1.5 py-0.5 text-[0.6875rem] font-medium transition-opacity hover:text-ink-2 hover:opacity-100 ${inline ? 'text-ink-3' : 'fixed right-3 bottom-3 z-20 hidden text-ink-3/70 opacity-70 sm:block'}`}
 		title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
 		>v{version.number}{#if version.build}<span class="font-mono"> · {version.build}</span>{/if}</a
 	>
 {/if}
 
-<UpdatePill />
+{#if !inline}<UpdatePill />{/if}

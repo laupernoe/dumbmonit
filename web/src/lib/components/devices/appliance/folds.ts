@@ -7,6 +7,7 @@
  */
 import type { MetricSeries } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
+import { m } from '#lib/paraglide/messages.js';
 import { formatAge, formatBytes } from '../docker/api';
 
 export interface Figure {
@@ -76,10 +77,6 @@ function byLabel(ps: Point[], name: string, label: string): Map<string, Point> {
 	return out;
 }
 
-function plural(n: number, one: string, many: string): string {
-	return `${n} ${n === 1 ? one : many}`;
-}
-
 function percent(value: number | null): string | null {
 	return value === null ? null : `${Math.round(value)}%`;
 }
@@ -133,10 +130,10 @@ function pfsense(series: MetricSeries[]): ApplianceView {
 	const down = gateways.filter((g) => g.plate === 'Down').length;
 	const lossy = gateways.filter((g) => g.plate === 'Losing packets').length;
 	const problems = [];
-	if (down > 0) problems.push({ text: `${plural(down, 'gateway', 'gateways')} down`, severe: true });
-	if (lossy > 0) problems.push({ text: `${plural(lossy, 'gateway', 'gateways')} losing packets`, severe: false });
-	if (interfaces.length > 0) problems.push({ text: `${plural(interfaces.length, 'interface', 'interfaces')} without link`, severe: false });
-	if (services.length > 0) problems.push({ text: `${plural(services.length, 'service', 'services')} stopped`, severe: false });
+	if (down > 0) problems.push({ text: m.misc2_folds_gateway_down({ count: down }), severe: true });
+	if (lossy > 0) problems.push({ text: m.misc2_folds_gateway_losing_packets({ count: lossy }), severe: false });
+	if (interfaces.length > 0) problems.push({ text: m.misc2_folds_interface_without_link({ count: interfaces.length }), severe: false });
+	if (services.length > 0) problems.push({ text: m.misc2_folds_service_stopped({ count: services.length }), severe: false });
 	const disk = single(ps, 'disk_used_percent');
 	if (disk !== null && disk > 90) problems.push({ text: 'disk nearly full', severe: false });
 	const update = single(ps, 'restapi_update_available');
@@ -206,13 +203,13 @@ function unraid(series: MetricSeries[], now: number): ApplianceView {
 	const cacheFull = disks.filter((d) => d.role === 'cache' && (used.get(d.name)?.value ?? 0) > 90).length;
 	const problems = [];
 	if (started !== null && started < 1) problems.push({ text: `the array is ${state ?? 'stopped'}`, severe: true });
-	if (bad > 0) problems.push({ text: `${plural(bad, 'disk', 'disks')} disabled or missing`, severe: true });
+	if (bad > 0) problems.push({ text: m.misc2_folds_disk_disabled_or_missing({ count: bad }), severe: true });
 	const withErrors = disks.filter((d) => d.tone === 'advisory').length;
-	if (withErrors > 0) problems.push({ text: `${plural(withErrors, 'disk', 'disks')} with read errors`, severe: false });
+	if (withErrors > 0) problems.push({ text: m.misc2_folds_disk_with_read_errors({ count: withErrors }), severe: false });
 	if (parityOk !== null && parityOk < 1) problems.push({ text: 'the last parity check found errors', severe: false });
 	if (parityAge !== null && parityAge > 40 * 86400) problems.push({ text: 'no parity check for over 40 days', severe: false });
 	if (cacheFull > 0) problems.push({ text: 'cache nearly full', severe: false });
-	if (containers.length > 0) problems.push({ text: `${plural(containers.length, 'container', 'containers')} stopped`, severe: false });
+	if (containers.length > 0) problems.push({ text: m.misc2_folds_container_stopped({ count: containers.length }), severe: false });
 	const parityText =
 		parityRunning !== null && parityRunning >= 1
 			? `Running${progress !== null ? `, ${Math.round(progress)}%` : ''}`
@@ -278,9 +275,9 @@ function veeam(series: MetricSeries[]): ApplianceView {
 	const warningCount = jobs.filter((j) => j.plate === 'Warning').length;
 	const full = repositories.filter((r) => r.tone === 'warning').length;
 	const problems = [];
-	if (failedCount > 0) problems.push({ text: `${plural(failedCount, 'job', 'jobs')} failed`, severe: true });
-	if (warningCount > 0) problems.push({ text: `${plural(warningCount, 'job', 'jobs')} ended with a warning`, severe: false });
-	if (full > 0) problems.push({ text: `${plural(full, 'repository', 'repositories')} nearly full`, severe: false });
+	if (failedCount > 0) problems.push({ text: m.misc2_folds_job_failed({ count: failedCount }), severe: true });
+	if (warningCount > 0) problems.push({ text: m.misc2_folds_job_ended_with_a_warning({ count: warningCount }), severe: false });
+	if (full > 0) problems.push({ text: m.misc2_folds_repository_nearly_full({ count: full }), severe: false });
 	if (expiry !== null && expiry < 30 * 86400) problems.push({ text: `the license expires ${days(expiry)}`, severe: expiry < 0 });
 	return {
 		title: 'Backups',
@@ -343,9 +340,9 @@ function tailscale(series: MetricSeries[]): ApplianceView {
 	const pending = single(ps, 'devices_unauthorized') ?? 0;
 	const expiring = [...keys.values()].filter((k) => k.value < 14 * 86400).length;
 	const problems = [];
-	if (down > 0) problems.push({ text: `${plural(down, 'watched device', 'watched devices')} offline`, severe: true });
-	if (pending > 0) problems.push({ text: `${plural(pending, 'device', 'devices')} awaiting approval`, severe: false });
-	if (expiring > 0) problems.push({ text: `${plural(expiring, 'node key', 'node keys')} expiring within 14 days`, severe: false });
+	if (down > 0) problems.push({ text: m.misc2_folds_watched_device_offline({ count: down }), severe: true });
+	if (pending > 0) problems.push({ text: m.misc2_folds_device_awaiting_approval({ count: pending }), severe: false });
+	if (expiring > 0) problems.push({ text: m.misc2_folds_node_key_expiring_within_14_days({ count: expiring }), severe: false });
 	return {
 		title: 'Tailnet',
 		description: 'Read from the Tailscale API.',
@@ -385,12 +382,12 @@ function fortigate(series: MetricSeries[]): ApplianceView {
 	const latest = ps.find((p) => p.name === 'firmware_latest_info')?.labels.version ?? null;
 	const tunnelsDown = tunnels.filter((t) => t.tone === 'warning').length;
 	const problems = [];
-	if (tunnelsDown > 0) problems.push({ text: `${plural(tunnelsDown, 'IPsec tunnel', 'IPsec tunnels')} down`, severe: true });
-	if (interfaces.length > 0) problems.push({ text: `${plural(interfaces.length, 'interface', 'interfaces')} without link`, severe: false });
+	if (tunnelsDown > 0) problems.push({ text: m.misc2_folds_ipsec_tunnel_down({ count: tunnelsDown }), severe: true });
+	if (interfaces.length > 0) problems.push({ text: m.misc2_folds_interface_without_link({ count: interfaces.length }), severe: false });
 	if (inSync !== null && inSync < 1) problems.push({ text: 'the HA cluster is out of sync', severe: false });
 	if (memory !== null && memory > 85) problems.push({ text: 'memory near conserve mode', severe: true });
 	const expired = licenses.filter((l) => l.tone === 'warning').length;
-	if (expired > 0) problems.push({ text: `${plural(expired, 'licence', 'licences')} expired`, severe: false });
+	if (expired > 0) problems.push({ text: m.misc2_folds_licence_expired({ count: expired }), severe: false });
 	return {
 		title: 'Firewall',
 		description: info ? `${info.model || 'FortiGate'} ${info.hostname ? `"${info.hostname}" ` : ''}running FortiOS ${info.version}.` : 'Read through the FortiOS REST API.',
@@ -401,7 +398,7 @@ function fortigate(series: MetricSeries[]): ApplianceView {
 			{ label: 'Sessions', value: single(ps, 'sessions') !== null ? String(single(ps, 'sessions')) : null },
 			{
 				label: 'HA',
-				value: members === null || members === 0 ? 'Standalone' : inSync === null ? plural(members, 'member', 'members') : inSync >= 1 ? 'In sync' : 'Out of sync',
+				value: members === null || members === 0 ? 'Standalone' : inSync === null ? m.misc2_folds_member_count({ count: members }) : inSync >= 1 ? 'In sync' : 'Out of sync',
 				tone: inSync !== null && inSync < 1 ? 'advisory' : 'ink'
 			}
 		],
@@ -447,7 +444,7 @@ function sophos(series: MetricSeries[]): ApplianceView {
 	return {
 		title: 'Firewall',
 		description: api ? `Sophos Firewall, XML API ${api}. Tunnel, HA and licence states are not in this API.` : 'Sophos Firewall, read through its XML API.',
-		verdict: verdict(down > 0 ? [{ text: `${plural(down, 'interface', 'interfaces')} without link`, severe: false }] : [], 'Every interface in a zone has its link.'),
+		verdict: verdict(down > 0 ? [{ text: m.misc2_folds_interface_without_link({ count: down }), severe: false }] : [], 'Every interface in a zone has its link.'),
 		figures: [
 			{ label: 'Interfaces', value: single(ps, 'interfaces') !== null ? String(single(ps, 'interfaces')) : null },
 			{ label: 'Without link', value: String(down), tone: down > 0 ? 'advisory' : 'ink' },
@@ -483,7 +480,7 @@ function nginx(series: MetricSeries[]): ApplianceView {
 		description: versionInfo ? `Nginx, ${versionInfo.labels.server}.` : 'Nginx, read through stub_status.',
 		verdict:
 			upstreams.length > 0
-				? verdict(down > 0 ? [{ text: `${plural(down, 'upstream server', 'upstream servers')} down`, severe: false }] : [], 'Every upstream server answers its health check.')
+				? verdict(down > 0 ? [{ text: m.misc2_folds_upstream_server_down({ count: down }), severe: false }] : [], 'Every upstream server answers its health check.')
 				: { tone: 'signal', text: 'Reporting connections and requests.' },
 		figures: [
 			{ label: 'Active connections', value: active !== null ? String(active) : null },
@@ -548,7 +545,7 @@ function hyperv(series: MetricSeries[]): ApplianceView {
 			key: name,
 			name,
 			tone: err > 0 ? 'advisory' : 'muted',
-			plate: err > 0 ? plural(err, 'error', 'errors') : `${formatBytes(p.value + (write.get(name)?.value ?? 0))}/s`,
+			plate: err > 0 ? m.misc2_folds_error_count({ count: err }) : `${formatBytes(p.value + (write.get(name)?.value ?? 0))}/s`,
 			details: lat !== null ? [`${(lat * 1000).toFixed(1)} ms latency`] : []
 		};
 	});
@@ -556,10 +553,10 @@ function hyperv(series: MetricSeries[]): ApplianceView {
 	const critical = single(ps, 'vms_health_critical') ?? 0;
 	const cpu = single(ps, 'host_cpu_percent');
 	const problems = [];
-	if (critical > 0) problems.push({ text: `${plural(critical, 'virtual machine', 'virtual machines')} in critical health`, severe: true });
+	if (critical > 0) problems.push({ text: m.misc2_folds_virtual_machine_in_critical_health({ count: critical }), severe: true });
 	if (cpu !== null && cpu > 90) problems.push({ text: 'the host CPU is saturated', severe: false });
 	const withErrors = disks.filter((d) => d.tone === 'advisory').length;
-	if (withErrors > 0) problems.push({ text: `${plural(withErrors, 'virtual disk', 'virtual disks')} with errors`, severe: false });
+	if (withErrors > 0) problems.push({ text: m.misc2_folds_virtual_disk_with_errors({ count: withErrors }), severe: false });
 	const ok = single(ps, 'vms_health_ok');
 	return {
 		title: 'Hyper-V',

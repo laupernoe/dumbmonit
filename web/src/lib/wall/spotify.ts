@@ -186,10 +186,19 @@ export function autoplayAllowed(env: AutoplayEnv): boolean {
 }
 
 /** "Chrome 130 on Linux", "Firefox 131 on Windows", "Samsung Internet 25 on Tizen": to recognise a display. */
-export function browserLabel(userAgent: string): string {
+export interface BrowserLabelText {
+	/** Name used when the browser is not recognised. */
+	unknown: string;
+	/** "Chrome 130" + "Linux" as one phrase. */
+	on: (browser: string, system: string) => string;
+}
+
+const BROWSER_TEXT: BrowserLabelText = { unknown: 'A browser', on: (browser, system) => `${browser} on ${system}` };
+
+export function browserLabel(userAgent: string, text: BrowserLabelText = BROWSER_TEXT): string {
 	const ua = userAgent || '';
 	const version = (pattern: RegExp) => ua.match(pattern)?.[1]?.split('.')[0] ?? '';
-	let browser = 'A browser';
+	let browser = text.unknown;
 	if (/SamsungBrowser\//.test(ua)) browser = `Samsung Internet ${version(/SamsungBrowser\/([\d.]+)/)}`;
 	else if (/Edg\//.test(ua)) browser = `Edge ${version(/Edg\/([\d.]+)/)}`;
 	else if (/OPR\//.test(ua)) browser = `Opera ${version(/OPR\/([\d.]+)/)}`;
@@ -205,7 +214,7 @@ export function browserLabel(userAgent: string): string {
 	else if (/iPhone|iPad/.test(ua)) system = 'iOS';
 	else if (/Mac OS X/.test(ua)) system = 'macOS';
 	else if (/Linux/.test(ua)) system = 'Linux';
-	return `${browser.trim()}${system ? ` on ${system}` : ''}`;
+	return system ? text.on(browser.trim(), system) : browser.trim();
 }
 
 /**

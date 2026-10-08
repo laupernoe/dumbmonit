@@ -369,7 +369,7 @@ export class WallSpeaker {
 			activated: this.activated,
 			device_id: this.deviceId,
 			problem: this.problem,
-			browser: browserLabel(navigator.userAgent),
+			browser: browserLabel(navigator.userAgent, { unknown: m.misc2_browser_unknown(), on: (browser, system) => m.misc2_browser_on({ browser, system }) }),
 			premium: this.#premium
 		};
 		const generation = this.#generation;

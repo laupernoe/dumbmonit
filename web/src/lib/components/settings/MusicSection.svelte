@@ -36,6 +36,7 @@
 	import { parseMusicLink } from '#lib/wall/music.js';
 	import { musicErrorText } from '#lib/wall/messages.js';
 	import SpeakerStatus from './SpeakerStatus.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	let account = $state<SpotifyAccount | null>(null);
 	let wall = $state<WallMusic | null>(null);
@@ -68,13 +69,13 @@
 
 	// --- Coming back from Spotify (`/settings?spotify=<outcome>#music`) ---------
 
-	const OUTCOME: Record<string, string> = {
-		connected: 'Spotify is connected.',
-		denied: 'Spotify did not grant access. Start again and choose “Agree”.',
-		state: 'This approval was unknown, expired or already used. Start again from “Connect Spotify”.',
-		session: 'Your DumbMonit session was not the one that started the connection. Sign in, then start again.',
-		exchange: 'Spotify refused to complete the connection. Check that the redirect URI below is registered in your app, exactly.',
-		internal: 'The connection could not be saved. Check the server logs.'
+	const OUTCOME: Record<string, () => string> = {
+		connected: () => m.settings_music_outcome_connected(),
+		denied: () => m.settings_music_outcome_denied(),
+		state: () => m.settings_music_outcome_state(),
+		session: () => m.settings_music_outcome_session(),
+		exchange: () => m.settings_music_outcome_exchange(),
+		internal: () => m.settings_music_outcome_internal()
 	};
 	let outcome = $state<string | null>(null);
 	$effect(() => {
@@ -109,7 +110,7 @@
 		startError = null;
 		const id = clientId.trim();
 		if (!/^[A-Za-z0-9]{16,64}$/.test(id)) {
-			clientIdError = 'Paste the Client ID from your app’s page in the Spotify Developer Dashboard (32 letters and digits).';
+			clientIdError = m.settings_music_err_client_id();
 			return;
 		}
 		clientIdError = null;
@@ -219,23 +220,23 @@
 
 <Panel
 	id="music"
-	title="Wall music"
-	description="Start music from your phone and hear it on the wall display, or send it a Spotify, Deezer or YouTube link."
+	title={m.settings_music_title()}
+	description={m.settings_music_description()}
 >
 	{#snippet aside()}
 		{#if account?.status === 'connected'}
-			<Plate tone="signal" label="Spotify connected" />
+			<Plate tone="signal" label={m.settings_music_plate_connected()} />
 		{:else if account?.status === 'expired'}
-			<Plate tone="advisory" label="Reconnect Spotify" />
+			<Plate tone="advisory" label={m.settings_music_plate_reconnect()} />
 		{:else if account}
-			<Plate tone="ghost" label="Spotify off" />
+			<Plate tone="ghost" label={m.settings_music_plate_off()} />
 		{/if}
 	{/snippet}
 
 	{#if missing}
-		<p class="text-sm text-ink-2">This server does not offer wall music yet: update DumbMonit.</p>
+		<p class="text-sm text-ink-2">{m.settings_music_missing()}</p>
 	{:else if error}
-		<ErrorNotice {error} title="Could not load the music settings" onretry={() => void load()} />
+		<ErrorNotice {error} title={m.settings_music_load_error()} onretry={() => void load()} />
 	{:else if loading || !account}
 		<Skeleton class="h-10 w-full" rows={5} />
 	{:else}
@@ -243,12 +244,12 @@
 			{#if outcome}
 				<div aria-live="polite">
 					{#if outcome === 'connected'}
-						<Plate tone="signal" label={OUTCOME.connected} size="md" />
+						<Plate tone="signal" label={OUTCOME.connected()} size="md" />
 					{:else}
 						<ErrorNotice
-							title="Spotify is not connected"
-							error={new Error(OUTCOME[outcome] ?? 'The connection did not complete.')}
-							hint="Start again below; nothing was changed."
+							title={m.settings_music_not_connected()}
+							error={new Error(OUTCOME[outcome]?.() ?? m.settings_music_outcome_unknown())}
+							hint={m.settings_music_outcome_hint()}
 						/>
 					{/if}
 				</div>
@@ -256,88 +257,88 @@
 
 			<!-- Spotify Connect -->
 			<section aria-labelledby="music-spotify">
-				<h3 id="music-spotify" class="text-sm font-semibold text-ink">Spotify Connect</h3>
+				<h3 id="music-spotify" class="text-sm font-semibold text-ink">{m.settings_music_connect_heading()}</h3>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">
-					The wall becomes a speaker named <strong class="font-semibold text-ink">{account.speaker_name}</strong>: in the
-					Spotify app on your phone, open <em>Devices</em> and pick it, the sound comes out of the display. The wall also
-					shows what plays on the account wherever it plays — the TV's app, a cast speaker, your laptop.
+					{m.settings_music_connect_intro({ name: account.speaker_name })}
 				</p>
 
 				{#if account.status === 'connected'}
 					<dl class="mt-3 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
-						<dt class="text-ink-2">Account</dt>
-						<dd class="text-ink">{account.account_name ?? 'Connected'}</dd>
-						<dt class="text-ink-2">App (Client ID)</dt>
+						<dt class="text-ink-2">{m.settings_music_account()}</dt>
+						<dd class="text-ink">{account.account_name ?? m.settings_music_connected_default()}</dd>
+						<dt class="text-ink-2">{m.settings_music_app()}</dt>
 						<dd class="min-w-0 truncate font-mono text-[0.8125rem] text-ink">{account.client_id}</dd>
 						{#if account.connected_at}
-							<dt class="text-ink-2">Connected</dt>
+							<dt class="text-ink-2">{m.settings_music_connected_at()}</dt>
 							<dd class="text-ink">{formatRelative(account.connected_at)}</dd>
 						{/if}
 						{#if account.reconnect_by}
-							<dt class="text-ink-2">Reconnect by</dt>
-							<dd class="text-ink">{serverDay(account.reconnect_by)} <span class="text-ink-2">— Spotify ends connections after six months.</span></dd>
+							<dt class="text-ink-2">{m.settings_music_reconnect_by()}</dt>
+							<dd class="text-ink">{serverDay(account.reconnect_by)} <span class="text-ink-2">— {m.settings_music_reconnect_note()}</span></dd>
 						{/if}
-						<dt class="text-ink-2">Right now</dt>
+						<dt class="text-ink-2">{m.settings_music_right_now()}</dt>
 						<dd class="min-w-0 text-ink">
 							{#if playingNow}
-								{playingNow.playing ? 'Playing' : 'Paused'}: {playingNow.title}{playingNow.artists.length ? ` — ${playingNow.artists.join(', ')}` : ''}{playingNow.device_name ? `, on ${playingNow.device_name}` : ''}
+								{m.settings_music_now_line({
+									status: playingNow.playing ? m.settings_music_status_playing() : m.settings_music_status_paused(),
+									title: playingNow.title,
+									artists: playingNow.artists.length ? m.settings_music_now_artists({ artists: playingNow.artists.join(', ') }) : '',
+									device: playingNow.device_name ? m.settings_music_now_device({ device: playingNow.device_name }) : ''
+								})}
 							{:else if wall?.spotify.error}
 								<span class="text-advisory-ink">{wall.spotify.error}</span>
 							{:else}
-								Nothing is playing on this account.
+								{m.settings_music_nothing_playing()}
 							{/if}
 						</dd>
 					</dl>
 					{#if account.missing_scopes.length > 0}
 						<p class="mt-3 text-sm text-advisory-ink">
-							Spotify did not grant {account.missing_scopes.join(', ')}: reconnect and accept every permission.
+							{m.settings_music_missing_scopes({ scopes: account.missing_scopes.join(', ') })}
 						</p>
 					{/if}
 					<SpeakerStatus onrenamed={(name) => account && (account = { ...account, speaker_name: name })} />
 					{#if auth.isAdmin}
 						<div class="mt-4 flex flex-wrap items-center gap-2">
-							<Confirm variant="secondary" size="md" confirmLabel="Disconnect Spotify?" loading={disconnecting} onconfirm={disconnect}>
-								Disconnect
+							<Confirm variant="secondary" size="md" confirmLabel={m.settings_music_disconnect_confirm()} loading={disconnecting} onconfirm={disconnect}>
+								{m.settings_music_disconnect()}
 							</Confirm>
 						</div>
 						{#if disconnectError}
-							<ErrorNotice class="mt-3" error={disconnectError} title="Could not disconnect" />
+							<ErrorNotice class="mt-3" error={disconnectError} title={m.settings_music_disconnect_error()} />
 						{/if}
 					{/if}
 				{:else if account.status === 'expired'}
 					<p class="mt-3 text-sm text-advisory-ink">
-						Spotify ended the connection{account.last_error ? ` (${account.last_error})` : ''}. Connect again below: the
-						Client ID is kept.
+						{account.last_error ? m.settings_music_expired_reason({ reason: account.last_error }) : m.settings_music_expired()}
 					</p>
 				{/if}
 
 				{#if account.status !== 'connected'}
 					{#if !auth.isAdmin}
-						<p class="mt-3 text-sm text-ink-2">An admin can connect a Spotify account here.</p>
+						<p class="mt-3 text-sm text-ink-2">{m.settings_music_admin_only()}</p>
 					{:else}
 						<ol class="mt-4 grid gap-4 text-sm text-ink">
 							<li class="grid gap-1.5">
 								<p>
-									<span class="font-semibold">1. Create an app</span> in the
+									<span class="font-semibold">{m.settings_music_step1_before()}</span>
 									<a class="inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline" href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">
-										Spotify Developer Dashboard<ExternalLink class="size-3.5" aria-hidden="true" />
+										{m.settings_music_step1_link()}<ExternalLink class="size-3.5" aria-hidden="true" />
 									</a>
-									(any name). Tick <em>Web API</em> and <em>Web Playback SDK</em>, and add this redirect URI:
+									{m.settings_music_step1_after()}
 								</p>
-								<CopyBlock value={redirectUri} label="Copy redirect URI" />
+								<CopyBlock value={redirectUri} label={m.settings_music_copy_redirect()} />
 								<p class="text-[0.8125rem] text-ink-2">
 									{#if secure}
-										Spotify comes straight back to this page.
+										{m.settings_music_redirect_secure()}
 									{:else}
-										DumbMonit is served over plain HTTP, and Spotify only accepts https:// or this 127.0.0.1 address. Nothing
-										answers there: after approving, your browser shows an error page — copy its address, it carries the
-										code. Served over HTTPS, the redirect would be direct.
+										{m.settings_music_redirect_insecure()}
 									{/if}
 								</p>
 							</li>
 							<li>
 								<form class="grid gap-2" onsubmit={connect} novalidate>
-									<Field label="2. Paste its Client ID" for="music-client-id" error={clientIdError} help="On the app's page, under Basic Information. There is no secret to copy: DumbMonit uses PKCE.">
+									<Field label={m.settings_music_step2_label()} for="music-client-id" error={clientIdError} help={m.settings_music_step2_help()}>
 										<input
 											id="music-client-id"
 											class="input font-mono"
@@ -353,30 +354,30 @@
 									<div>
 										<Button type="submit" variant="primary" loading={starting}>
 											<Music2 class="size-4" aria-hidden="true" />
-											Connect Spotify
+											{m.settings_music_connect_button()}
 										</Button>
 									</div>
 									{#if startError}
-										<ErrorNotice error={startError} title="Could not start the connection" />
+										<ErrorNotice error={startError} title={m.settings_music_start_error()} />
 									{/if}
 								</form>
 							</li>
 							{#if authorization}
 								<li class="grid gap-2 rounded-[var(--radius-card)] border border-line bg-canvas-deep p-4">
 									<p>
-										<span class="font-semibold">3. Approve on Spotify</span>, then come back here.
+										<span class="font-semibold">{m.settings_music_step3()}</span>
 									</p>
 									<div>
 										<Button variant="secondary" href={authorization.authorize_url} target="_blank" rel="noopener noreferrer">
-											Open Spotify
+											{m.settings_music_open_spotify()}
 											<ExternalLink class="size-4" aria-hidden="true" />
 										</Button>
 									</div>
 									<form class="grid gap-2" onsubmit={finish} novalidate>
 										<Field
-											label="4. Paste the address of the page you landed on"
+											label={m.settings_music_step4_label()}
 											for="music-landing"
-											help="It starts with {authorization.redirect_uri}?code= — valid ten minutes, once."
+											help={m.settings_music_step4_help({ uri: authorization.redirect_uri })}
 										>
 											<input
 												id="music-landing"
@@ -389,10 +390,10 @@
 											/>
 										</Field>
 										<div>
-											<Button type="submit" variant="secondary" loading={finishing} disabled={!landing.trim()}>Finish connecting</Button>
+											<Button type="submit" variant="secondary" loading={finishing} disabled={!landing.trim()}>{m.settings_music_finish()}</Button>
 										</div>
 										{#if finishError}
-											<ErrorNotice error={finishError} title="Could not finish the connection" />
+											<ErrorNotice error={finishError} title={m.settings_music_finish_error()} />
 										{/if}
 									</form>
 								</li>
@@ -402,40 +403,38 @@
 				{/if}
 
 				<details class="mt-4 rounded-[var(--radius-card)] border border-line">
-					<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">What it needs</summary>
+					<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">{m.settings_music_needs_heading()}</summary>
 					<ul class="grid list-disc gap-1.5 border-t border-line py-3 pr-4 pl-8 text-[0.8125rem] text-ink-2">
-						<li>Spotify Premium, on the account that owns the app. A personal app (development mode) admits up to five accounts: add others under <em>User Management</em>.</li>
-						<li>The phone must be signed in to the <strong class="font-semibold text-ink">same Spotify account</strong> as the one connected here: a browser speaker is only listed for its own account — not for other members of a Family plan, and not found on the network like a smart speaker.</li>
-						<li>For the wall to be a speaker, its browser must open DumbMonit over HTTPS (or as localhost on the display itself) and have working DRM (Widevine): Chrome, Edge or Firefox on a computer, Chromium with Widevine on a Raspberry Pi. Most smart-TV and kiosk browsers cannot — the wall says so on screen, and the walls below show it here.</li>
-						<li>Browsers keep a page silent until it is touched: tap or press a key on the wall once after it loads (or start the kiosk browser with <code class="font-mono">--autoplay-policy=no-user-gesture-required</code>).</li>
-						<li>“Now playing” works without any of that: the server asks Spotify what plays, every few seconds, even over plain HTTP.</li>
-						<li>Spotify ends a connection six months after it was approved: connect again before the date shown.</li>
+						<li>{m.settings_music_needs_1()}</li>
+						<li>{m.settings_music_needs_2()}</li>
+						<li>{m.settings_music_needs_3()}</li>
+						<li>{m.settings_music_needs_4()}</li>
+						<li>{m.settings_music_needs_5()}</li>
+						<li>{m.settings_music_needs_6()}</li>
 					</ul>
 				</details>
 			</section>
 
 			<!-- A link for every wall -->
 			<section aria-labelledby="music-link" class="border-t border-line pt-5">
-				<h3 id="music-link" class="text-sm font-semibold text-ink">Play a link on the walls</h3>
+				<h3 id="music-link" class="text-sm font-semibold text-ink">{m.settings_music_link_heading()}</h3>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">
-					Without Premium, or for Deezer and YouTube — which have no Connect-style remote on the web — send a link from
-					any screen, your phone included: every wall plays it in the service's own player. A browser not signed in to
-					Spotify or Deezer on the wall plays 30-second previews.
+					{m.settings_music_link_intro()}
 				</p>
 				{#if current && wall?.link}
 					<div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
-						<Plate tone="signal" label="On the walls" />
+						<Plate tone="signal" label={m.settings_music_on_walls()} />
 						<span class="min-w-0 truncate text-ink">{current.label} {current.kind}</span>
-						<span class="text-ink-2">· sent by {wall.link.set_by}</span>
+						<span class="text-ink-2">· {m.settings_music_sent_by({ name: wall.link.set_by })}</span>
 						{#if auth.isAdmin}
-							<Button variant="ghost" size="sm" onclick={() => void stop()} loading={stopping}>Stop</Button>
+							<Button variant="ghost" size="sm" onclick={() => void stop()} loading={stopping}>{m.settings_music_stop()}</Button>
 						{/if}
 					</div>
 				{/if}
 				{#if auth.isAdmin}
 					<form class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start" onsubmit={send} novalidate>
 						<div class="min-w-0 flex-1">
-							<label for="music-wall-link" class="sr-only">Link to play on the walls</label>
+							<label for="music-wall-link" class="sr-only">{m.settings_music_link_label()}</label>
 							<input
 								id="music-wall-link"
 								class="input"
@@ -456,14 +455,14 @@
 						</div>
 						<Button type="submit" variant="secondary" loading={sending}>
 							<Link2 class="size-4" aria-hidden="true" />
-							Play on the wall
+							{m.settings_music_play_on_wall()}
 						</Button>
 					</form>
 					{#if sendError}
-						<ErrorNotice class="mt-3" error={sendError} title="Could not send the link" />
+						<ErrorNotice class="mt-3" error={sendError} title={m.settings_music_send_error()} />
 					{/if}
 				{:else if !current}
-					<p class="mt-3 text-sm text-ink-2">Nothing is sent to the walls. An admin can send a link.</p>
+					<p class="mt-3 text-sm text-ink-2">{m.settings_music_nothing_sent()}</p>
 				{/if}
 			</section>
 		</div>

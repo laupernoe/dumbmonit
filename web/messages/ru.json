@@ -3052,6 +3052,349 @@
 	"devicesb_webchange_timeline_view": "Открыть",
 	"devicesb_webchange_timeline_watching_one": "Отслеживается 1 страница.",
 	"devicesb_webchange_timeline_watching_other": "Отслеживается страниц: {count}.",
+	"misc2_browser_on": "{browser} в {system}",
+	"misc2_browser_unknown": "Браузер",
+	"misc2_folds_container_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} контейнер остановлен",
+				"countPlural=few": "{count} контейнера остановлены",
+				"countPlural=many": "{count} контейнеров остановлено",
+				"countPlural=other": "{count} контейнеров остановлено"
+			}
+		}
+	],
+	"misc2_folds_device_awaiting_approval": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство ожидает подтверждения",
+				"countPlural=few": "{count} устройства ожидают подтверждения",
+				"countPlural=many": "{count} устройств ожидают подтверждения",
+				"countPlural=other": "{count} устройств ожидают подтверждения"
+			}
+		}
+	],
+	"misc2_folds_disk_disabled_or_missing": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} диск отключён или отсутствует",
+				"countPlural=few": "{count} диска отключены или отсутствуют",
+				"countPlural=many": "{count} дисков отключены или отсутствуют",
+				"countPlural=other": "{count} дисков отключены или отсутствуют"
+			}
+		}
+	],
+	"misc2_folds_disk_with_read_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} диск с ошибками чтения",
+				"countPlural=few": "{count} диска с ошибками чтения",
+				"countPlural=many": "{count} дисков с ошибками чтения",
+				"countPlural=other": "{count} дисков с ошибками чтения"
+			}
+		}
+	],
+	"misc2_folds_error_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ошибка",
+				"countPlural=few": "{count} ошибки",
+				"countPlural=many": "{count} ошибок",
+				"countPlural=other": "{count} ошибок"
+			}
+		}
+	],
+	"misc2_folds_gateway_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} шлюз недоступен",
+				"countPlural=few": "{count} шлюза недоступны",
+				"countPlural=many": "{count} шлюзов недоступны",
+				"countPlural=other": "{count} шлюзов недоступны"
+			}
+		}
+	],
+	"misc2_folds_gateway_losing_packets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} шлюз теряет пакеты",
+				"countPlural=few": "{count} шлюза теряют пакеты",
+				"countPlural=many": "{count} шлюзов теряют пакеты",
+				"countPlural=other": "{count} шлюзов теряют пакеты"
+			}
+		}
+	],
+	"misc2_folds_interface_without_link": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} интерфейс без связи",
+				"countPlural=few": "{count} интерфейса без связи",
+				"countPlural=many": "{count} интерфейсов без связи",
+				"countPlural=other": "{count} интерфейсов без связи"
+			}
+		}
+	],
+	"misc2_folds_ipsec_tunnel_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} туннель IPsec недоступен",
+				"countPlural=few": "{count} туннеля IPsec недоступны",
+				"countPlural=many": "{count} туннелей IPsec недоступны",
+				"countPlural=other": "{count} туннелей IPsec недоступны"
+			}
+		}
+	],
+	"misc2_folds_job_ended_with_a_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} задание завершилось с предупреждением",
+				"countPlural=few": "{count} задания завершились с предупреждением",
+				"countPlural=many": "{count} заданий завершились с предупреждением",
+				"countPlural=other": "{count} заданий завершились с предупреждением"
+			}
+		}
+	],
+	"misc2_folds_job_failed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} задание завершилось с ошибкой",
+				"countPlural=few": "{count} задания завершились с ошибкой",
+				"countPlural=many": "{count} заданий завершились с ошибкой",
+				"countPlural=other": "{count} заданий завершились с ошибкой"
+			}
+		}
+	],
+	"misc2_folds_licence_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} лицензия истекла",
+				"countPlural=few": "{count} лицензии истекли",
+				"countPlural=many": "{count} лицензий истекло",
+				"countPlural=other": "{count} лицензий истекло"
+			}
+		}
+	],
+	"misc2_folds_member_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} участник",
+				"countPlural=few": "{count} участника",
+				"countPlural=many": "{count} участников",
+				"countPlural=other": "{count} участников"
+			}
+		}
+	],
+	"misc2_folds_node_key_expiring_within_14_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ключ узла истекает в течение 14 дней",
+				"countPlural=few": "{count} ключа узла истекают в течение 14 дней",
+				"countPlural=many": "{count} ключей узла истекают в течение 14 дней",
+				"countPlural=other": "{count} ключей узла истекают в течение 14 дней"
+			}
+		}
+	],
+	"misc2_folds_repository_nearly_full": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} репозиторий почти заполнен",
+				"countPlural=few": "{count} репозитория почти заполнены",
+				"countPlural=many": "{count} репозиториев почти заполнено",
+				"countPlural=other": "{count} репозиториев почти заполнено"
+			}
+		}
+	],
+	"misc2_folds_service_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} служба остановлена",
+				"countPlural=few": "{count} службы остановлены",
+				"countPlural=many": "{count} служб остановлено",
+				"countPlural=other": "{count} служб остановлено"
+			}
+		}
+	],
+	"misc2_folds_upstream_server_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} upstream-сервер недоступен",
+				"countPlural=few": "{count} upstream-сервера недоступны",
+				"countPlural=many": "{count} upstream-серверов недоступны",
+				"countPlural=other": "{count} upstream-серверов недоступны"
+			}
+		}
+	],
+	"misc2_folds_virtual_disk_with_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} виртуальный диск с ошибками",
+				"countPlural=few": "{count} виртуальных диска с ошибками",
+				"countPlural=many": "{count} виртуальных дисков с ошибками",
+				"countPlural=other": "{count} виртуальных дисков с ошибками"
+			}
+		}
+	],
+	"misc2_folds_virtual_machine_in_critical_health": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} виртуальная машина в критическом состоянии",
+				"countPlural=few": "{count} виртуальные машины в критическом состоянии",
+				"countPlural=many": "{count} виртуальных машин в критическом состоянии",
+				"countPlural=other": "{count} виртуальных машин в критическом состоянии"
+			}
+		}
+	],
+	"misc2_folds_watched_device_offline": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} наблюдаемое устройство не в сети",
+				"countPlural=few": "{count} наблюдаемых устройства не в сети",
+				"countPlural=many": "{count} наблюдаемых устройств не в сети",
+				"countPlural=other": "{count} наблюдаемых устройств не в сети"
+			}
+		}
+	],
+	"misc2_mascot_aria": "DumbMonit, голубь",
 	"misc_ago": "{span} назад",
 	"misc_device_amplifier": "усилителе",
 	"misc_device_cast_speaker": "колонке с Cast",
@@ -4170,6 +4513,896 @@
 	"settings.section.security": "Учётная запись и безопасность",
 	"settings.section.sso": "Единый вход",
 	"settings.section.users": "Пользователи",
+	"settings_2fa_action_agent_token_created": "Токен агента создан",
+	"settings_2fa_action_agent_token_revoked": "Токен агента отозван",
+	"settings_2fa_action_login": "Вход выполнен",
+	"settings_2fa_action_login_failed": "Не удалось войти",
+	"settings_2fa_action_password_changed": "Пароль изменён",
+	"settings_2fa_action_token_created": "Токен API создан",
+	"settings_2fa_action_token_revoked": "Токен API отозван",
+	"settings_2fa_action_totp_disabled": "Двухфакторная отключена",
+	"settings_2fa_action_totp_enabled": "Двухфакторная включена",
+	"settings_2fa_action_totp_failed": "Неверный код подтверждения",
+	"settings_2fa_action_totp_recovery_used": "Использован код восстановления",
+	"settings_2fa_action_totp_reset": "Двухфакторная сброшена администратором",
+	"settings_2fa_action_user_created": "Пользователь создан",
+	"settings_2fa_action_user_deleted": "Пользователь удалён",
+	"settings_2fa_action_user_updated": "Пользователь обновлён",
+	"settings_2fa_cancel": "Отмена",
+	"settings_2fa_cant_scan": "Не получается отсканировать? Введите ключ вручную",
+	"settings_2fa_code_label": "Код из приложения",
+	"settings_2fa_col_event": "Событие",
+	"settings_2fa_col_from": "Откуда",
+	"settings_2fa_col_subject": "Объект",
+	"settings_2fa_col_when": "Когда",
+	"settings_2fa_col_who": "Кто",
+	"settings_2fa_confirm_enable": "Подтвердить и включить",
+	"settings_2fa_confirm_error": "Не удалось подтвердить",
+	"settings_2fa_continue": "Продолжить",
+	"settings_2fa_continue_error": "Не удалось продолжить",
+	"settings_2fa_copy_codes": "Скопировать коды",
+	"settings_2fa_copy_key": "Скопировать ключ",
+	"settings_2fa_disable": "Отключить",
+	"settings_2fa_disable_button": "Отключить двухфакторную аутентификацию",
+	"settings_2fa_enabled": "Включена",
+	"settings_2fa_err_code": "Введите код, показанный в приложении.",
+	"settings_2fa_err_password": "Введите пароль, чтобы подтвердить, что это вы.",
+	"settings_2fa_err_wrong_password": "Неверный пароль.",
+	"settings_2fa_hide_log": "Скрыть журнал безопасности",
+	"settings_2fa_intro": "После пароля запрашивается шестизначный код из приложения-аутентификатора. Коды восстановления выручат при потере телефона.",
+	"settings_2fa_is_on": "Двухфакторная аутентификация включена",
+	"settings_2fa_key_details": "Аккаунт: {account} · Издатель: {issuer} · по времени, SHA-1, 6 цифр, 30 с.",
+	"settings_2fa_load_error": "Не удалось прочитать состояние двухфакторной аутентификации",
+	"settings_2fa_log_empty": "Пока ничего не записано.",
+	"settings_2fa_log_error": "Не удалось прочитать журнал безопасности",
+	"settings_2fa_off": "Выключена",
+	"settings_2fa_pw_disable": "Ваш пароль, чтобы отключить двухфакторную аутентификацию",
+	"settings_2fa_pw_start": "Ваш пароль, чтобы начать",
+	"settings_2fa_qr_label": "QR-код для сканирования приложением-аутентификатором",
+	"settings_2fa_recovery_left": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Остался {count} код восстановления.",
+				"countPlural=few": "Осталось {count} кода восстановления.",
+				"countPlural=many": "Осталось {count} кодов восстановления.",
+				"countPlural=other": "Осталось {count} кода восстановления."
+			}
+		}
+	],
+	"settings_2fa_recovery_none": "Отключите и настройте заново, чтобы получить новые.",
+	"settings_2fa_save_codes": "Сохраните эти коды восстановления в надёжном месте. Каждый позволит войти один раз, если вы потеряете телефон; показываются они только сейчас.",
+	"settings_2fa_saved": "Я сохранил(а) их",
+	"settings_2fa_setup": "Настроить",
+	"settings_2fa_show_log": "Показать журнал безопасности",
+	"settings_2fa_step1": "1. Отсканируйте код приложением-аутентификатором (Aegis, FreeOTP, Google Authenticator, 1Password…).",
+	"settings_2fa_step2": "2. Введите шестизначный код из приложения для подтверждения.",
+	"settings_2fa_title": "Двухфакторная аутентификация",
+	"settings_about_build": "сборка",
+	"settings_about_check_logs": "Убедитесь, что его контейнер запущен, затем прочитайте журналы командой `docker compose logs`.",
+	"settings_about_database": "База данных",
+	"settings_about_database_role": "Настройка устройств и история оповещений.",
+	"settings_about_docs": "Документация →",
+	"settings_about_error_title": "Не удалось связаться с сервером",
+	"settings_about_license": "Открытый исходный код, Apache 2.0.",
+	"settings_about_reporting": "Работает",
+	"settings_about_title": "О программе",
+	"settings_about_unreachable": "Компонент недоступен.",
+	"settings_about_version": "Версия",
+	"settings_about_victoria_role": "Все измерения, показанные на графиках.",
+	"settings_about_warning": "Предупреждение",
+	"settings_about_whats_new": "Что нового",
+	"settings_agents_copied": "Я скопировал",
+	"settings_agents_copy_command": "Скопировать команду",
+	"settings_agents_copy_token": "Скопировать токен",
+	"settings_agents_create": "Создать токен",
+	"settings_agents_create_error": "Не удалось создать токен",
+	"settings_agents_created_at": "Создан {when}",
+	"settings_agents_created_title": "Токен «{name}» создан",
+	"settings_agents_days_invalid": "Число дней должно быть целым числом не меньше одного.",
+	"settings_agents_description": "Агент — небольшая программа на машине с Linux, Windows, macOS или FreeBSD: она сообщает о системе, дисках, службах, контейнерах Docker и резервных копиях и позволяет перезапустить или обновить контейнер отсюда. В режиме ретранслятора она также опрашивает для этого сервера устройства своей сети — второй площадки, клиента, всего за NAT — и только устанавливает исходящие соединения.",
+	"settings_agents_empty_description": "Создайте токен, затем выполните команду установки на машине.",
+	"settings_agents_empty_title": "Токенов пока нет.",
+	"settings_agents_enrols_no_more": "Больше не регистрирует",
+	"settings_agents_expires": "Перестаёт регистрировать через",
+	"settings_agents_expires_help": "В днях. Уже зарегистрированные машины продолжают отчитываться; оставьте пустым, чтобы не ограничивать срок.",
+	"settings_agents_install": "Установить агент",
+	"settings_agents_install_linux": "Установка на Linux",
+	"settings_agents_install_windows": "Установка на Windows (PowerShell)",
+	"settings_agents_last_report": "Последний отчёт {when}",
+	"settings_agents_last_used": "Последнее использование {when}",
+	"settings_agents_list_aria": "Агенты, отчитывающиеся перед этим сервером",
+	"settings_agents_load_error": "Не удалось загрузить токены",
+	"settings_agents_machines": "Сколько машин можно зарегистрировать",
+	"settings_agents_machines_help": "Оставьте пустым, чтобы не ограничивать.",
+	"settings_agents_machines_invalid": "Число машин должно быть целым числом не меньше одного.",
+	"settings_agents_name_placeholder": "Файловый сервер",
+	"settings_agents_name_required": "Назовите токен, например по имени машины, которую он зарегистрирует.",
+	"settings_agents_new_token": "Новый токен",
+	"settings_agents_new_token_help": "Нужно только чтобы узнавать токен в этом списке.",
+	"settings_agents_no_deadline": "Без срока",
+	"settings_agents_no_limit": "Без ограничения",
+	"settings_agents_none": "Ни один агент пока не отчитывался перед этим сервером.",
+	"settings_agents_probes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "опрашивает {count} устройство",
+				"countPlural=few": "опрашивает {count} устройства",
+				"countPlural=many": "опрашивает {count} устройств",
+				"countPlural=other": "опрашивает {count} устройства"
+			}
+		}
+	],
+	"settings_agents_relay_label": "Ретранслятор",
+	"settings_agents_relay_label_site": "Ретранслятор · {site}",
+	"settings_agents_relay_off": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ретранслятор выключен — ожидает {count} устройство",
+				"countPlural=few": "Ретранслятор выключен — ожидают {count} устройства",
+				"countPlural=many": "Ретранслятор выключен — ожидают {count} устройств",
+				"countPlural=other": "Ретранслятор выключен — ожидают {count} устройства"
+			}
+		}
+	],
+	"settings_agents_relay_off_title": "Задайте relay: true для этого агента, чтобы он взял на себя их опрос",
+	"settings_agents_relay_title": "Режим ретранслятора: опрашивает для этого сервера устройства своей сети",
+	"settings_agents_reusable": "Многоразовый для парка машин",
+	"settings_agents_reusable_help": "Выключено: токен регистрирует одну машину и больше ничего — правильное значение по умолчанию для единичной установки. Включено: его можно использовать в плейбуке или образе.",
+	"settings_agents_revoke": "Отозвать",
+	"settings_agents_revoke_confirm": "Отозвать навсегда?",
+	"settings_agents_revoke_error": "Не удалось отозвать токен",
+	"settings_agents_revoked": "Отозван",
+	"settings_agents_revoked_at": "Отозван {when}",
+	"settings_agents_scope_fleet": "Парк · зарегистрировано: {uses}",
+	"settings_agents_scope_fleet_ratio": "Парк · зарегистрировано: {uses}/{max}",
+	"settings_agents_scope_single": "Одноразовый",
+	"settings_agents_scope_single_used": "Одноразовый · использован",
+	"settings_agents_shown_once": "Показывается один раз — скопируйте сейчас",
+	"settings_agents_spent_note": "Машины, зарегистрированные с его помощью, продолжают отчитываться; он просто не может принять новую.",
+	"settings_agents_stops_at": "Перестанет регистрировать {when}",
+	"settings_agents_title": "Агенты",
+	"settings_agents_token": "Токен",
+	"settings_agents_tokens_intro": "Добавление устройства типа «агент» автоматически создаёт одноразовый токен. Создайте токен здесь для парка машин, плейбука или образа машины.",
+	"settings_agents_tokens_title": "Токены регистрации",
+	"settings_agents_watch_remote": "Следить за удалённой площадкой",
+	"settings_agents_watches_own": "Следит за собственной машиной",
+	"settings_appearance_day": "День",
+	"settings_appearance_day_hint": "Миллиметровка, тёмно-синие чернила.",
+	"settings_appearance_description": "Обе темы равноправны. «Система» следует за устройством и переключается вместе с ним.",
+	"settings_appearance_night": "Ночь",
+	"settings_appearance_night_hint": "Радарная картинка, бирюзовый сигнал.",
+	"settings_appearance_system": "Система",
+	"settings_appearance_system_hint": "Следует за устройством.",
+	"settings_appearance_theme": "Тема",
+	"settings_appearance_title": "Внешний вид",
+	"settings_appearance_wall_description": "Только сводка на весь экран, для монитора в комнате. Esc — выйти; ⌘K / Ctrl K открывает режим откуда угодно.",
+	"settings_appearance_wall_open": "Открыть режим стенда",
+	"settings_appearance_wall_title": "Режим стенда",
+	"settings_assistant_any_network": "Любая сеть",
+	"settings_assistant_api_reference": "Справочник по HTTP API",
+	"settings_assistant_assistant_aria": "Ассистент",
+	"settings_assistant_auth_header": "Заголовок авторизации",
+	"settings_assistant_chatgpt_https_warning": "Эта страница отдаётся не по HTTPS: перед публикацией поставьте DumbMonit за обратный прокси с TLS.",
+	"settings_assistant_chatgpt_text": "В ChatGPT откройте Настройки → Коннекторы → Создать (режим разработчика) и укажите URL MCP-сервера и заголовок авторизации. ChatGPT подключается с серверов OpenAI, поэтому URL должен быть доступен из интернета по HTTPS.",
+	"settings_assistant_client_other": "Cursor / другие",
+	"settings_assistant_connect_title": "Подключить ассистента (MCP)",
+	"settings_assistant_copied": "Я скопировал",
+	"settings_assistant_copy_command": "Скопировать команду",
+	"settings_assistant_copy_header": "Скопировать заголовок",
+	"settings_assistant_copy_json": "Скопировать JSON",
+	"settings_assistant_copy_token": "Скопировать токен",
+	"settings_assistant_copy_url": "Скопировать URL",
+	"settings_assistant_create": "Создать токен",
+	"settings_assistant_create_error": "Не удалось создать токен",
+	"settings_assistant_created_any": "Можно использовать с любого адреса.",
+	"settings_assistant_created_at": "Создан {when}",
+	"settings_assistant_created_by": "Создан {when}, автор: {user}",
+	"settings_assistant_created_expires": "Действует до {date}.",
+	"settings_assistant_created_networks": "Можно использовать только с {networks}.",
+	"settings_assistant_created_never": "Бессрочный.",
+	"settings_assistant_created_note": "Приведённые ниже фрагменты теперь содержат этот токен. Обращайтесь с ним как с паролем.",
+	"settings_assistant_created_title": "Токен «{name}» создан",
+	"settings_assistant_cursor_text": "Cursor (.cursor/mcp.json) и большинство других MCP-клиентов принимают такой формат — сервер Streamable HTTP с заголовком bearer:",
+	"settings_assistant_description": "Один тип токена для обоих случаев: позвольте Claude, ChatGPT, Cursor или любому MCP-клиенту спрашивать DumbMonit о состоянии дел либо вызывайте REST API из скрипта. Токен для чтения может только смотреть; токен для записи может и менять — заглушать устройство, запускать опрос, добавлять и редактировать устройства, правила и каналы.",
+	"settings_assistant_desktop_text": "Добавьте в claude_desktop_config.json (Настройки → Разработчик → Изменить конфигурацию), затем перезапустите Claude Desktop. Нужен Node.js: mcp-remote соединяет настольное приложение с этим сервером.",
+	"settings_assistant_empty_description": "Создайте токен выше, затем вставьте фрагмент в ассистента или скрипт.",
+	"settings_assistant_empty_title": "Токенов пока нет.",
+	"settings_assistant_expired": "Истёк",
+	"settings_assistant_expired_at": "Истёк {when}",
+	"settings_assistant_expires": "Срок действия",
+	"settings_assistant_expires_at": "Истекает {when}",
+	"settings_assistant_expires_help": "Просроченный токен перестаёт работать; тогда создайте новый.",
+	"settings_assistant_expires_in_plate": "Истекает {when}",
+	"settings_assistant_http_warning": "Эта страница отдаётся по обычному HTTP, поэтому во фрагмент добавлен --allow-http. Используйте его только в своей сети.",
+	"settings_assistant_last_used": "Последнее использование {when}",
+	"settings_assistant_last_used_from": "Последнее использование {when} с {ip}",
+	"settings_assistant_load_error": "Не удалось загрузить токены",
+	"settings_assistant_mcp_link": "Подключение ассистента",
+	"settings_assistant_mcp_note": "Сервер работает по MCP через Streamable HTTP, без сессий. Все клиенты, инструменты и заметки по безопасности:",
+	"settings_assistant_mcp_url": "URL MCP-сервера",
+	"settings_assistant_name_placeholder": "Claude на моём ноутбуке",
+	"settings_assistant_name_required": "Назовите токен, например по имени ассистента или машины, где он работает.",
+	"settings_assistant_networks": "Разрешённые сети",
+	"settings_assistant_networks_help": "Необязательно. Адреса или диапазоны CIDR через запятую или пробел. Пусто: можно использовать откуда угодно.",
+	"settings_assistant_never_expires": "Бессрочный",
+	"settings_assistant_new_token": "Новый токен",
+	"settings_assistant_new_token_help": "Нужно только чтобы узнавать токен в этом списке.",
+	"settings_assistant_one_command": "Одна команда в терминале:",
+	"settings_assistant_only_from": "Только с {networks}",
+	"settings_assistant_openapi": "Описание OpenAPI",
+	"settings_assistant_openapi_note": "Файл OpenAPI загружается в Swagger UI, Postman или Insomnia и позволяет генерировать клиентов. Запросы с другого веб-источника работают только с токеном bearer, но не с сессией.",
+	"settings_assistant_prometheus_link": "Сбор метрик DumbMonit",
+	"settings_assistant_prometheus_text": "Уже работающий у вас Prometheus или Grafana может читать этот экземпляр с токеном для чтения — /metrics для состояния самого сервера, /federate для измерений, /prometheus как источник данных Grafana: см.",
+	"settings_assistant_prompt_backup": "Насколько заполнен сервер резервного копирования?",
+	"settings_assistant_prompt_fine": "Всё в порядке?",
+	"settings_assistant_prompt_night": "Что произошло прошлой ночью?",
+	"settings_assistant_prompt_silence": "Заглуши NAS на два часа",
+	"settings_assistant_prompts_aria": "Примеры запросов",
+	"settings_assistant_remaining_unknown": "в неизвестную дату",
+	"settings_assistant_rest_read": "Чтение — все устройства:",
+	"settings_assistant_rest_text": "Тот же токен открывает REST API для скриптов и дашбордов: передавайте его в заголовке bearer вместо cookie сессии — заголовок анти-CSRF не нужен. Токен для чтения соответствует наблюдателю, токен для записи — администратору, но ни один токен не может управлять учётными записями, настройками входа, токенами и резервными копиями.",
+	"settings_assistant_rest_title": "REST API",
+	"settings_assistant_rest_write": "Запись — опросить устройство 1 сейчас (нужен токен для записи):",
+	"settings_assistant_revoke": "Отозвать",
+	"settings_assistant_revoke_confirm": "Отозвать навсегда?",
+	"settings_assistant_revoke_error": "Не удалось отозвать токен",
+	"settings_assistant_revoked": "Отозван",
+	"settings_assistant_revoked_at": "Отозван {when}",
+	"settings_assistant_scope": "Права",
+	"settings_assistant_scope_aria": "Права токена",
+	"settings_assistant_scope_read": "Чтение",
+	"settings_assistant_scope_read_note": "Никогда ничего не меняет.",
+	"settings_assistant_scope_read_only": "Только чтение",
+	"settings_assistant_scope_write": "Чтение и запись",
+	"settings_assistant_scope_write_note": "Может менять всё, кроме учётных записей, токенов и резервных копий.",
+	"settings_assistant_shown_once": "Показывается один раз — скопируйте сейчас",
+	"settings_assistant_title": "API и ассистенты",
+	"settings_assistant_tokens_title": "Токены",
+	"settings_assistant_try_asking": "После подключения попробуйте спросить:",
+	"settings_assistant_vscode_text": "Добавьте в .vscode/mcp.json в рабочей области (или выполните «MCP: Add Server» и выберите HTTP):",
+	"settings_backup_accounts_help": "По умолчанию выключено. Без них восстановленные учётные записи существуют, но не могут войти, пока администратор не задаст пароль.",
+	"settings_backup_accounts_label": "Включить пароли учётных записей и секреты 2FA",
+	"settings_backup_admin_only_description": "Резервная копия содержит все учётные данные этого экземпляра.",
+	"settings_backup_admin_only_title": "Экспортировать и восстанавливать может только администратор.",
+	"settings_backup_apply": "Восстановить по-настоящему",
+	"settings_backup_apply_confirm": "Записать эти изменения?",
+	"settings_backup_back_up_now": "Создать копию сейчас",
+	"settings_backup_bundle_file": "Файл пакета",
+	"settings_backup_bundle_meta": "Создан {when} в DumbMonit {source} · версия формата {version}",
+	"settings_backup_check": "Проверить эту копию",
+	"settings_backup_col_created": "Создано",
+	"settings_backup_col_section": "Раздел",
+	"settings_backup_col_unchanged": "Без изменений",
+	"settings_backup_col_updated": "Обновлено",
+	"settings_backup_description": "Экспортируйте этот экземпляр в один зашифрованный файл, восстановите его на новом и храните рядом ежедневную копию базы данных.",
+	"settings_backup_disabled": "Отключено",
+	"settings_backup_download": "Скачать пакет",
+	"settings_backup_downloaded": "Скачано — храните парольную фразу вместе с ним",
+	"settings_backup_dry_run": "Пробный запуск — ничего не записано",
+	"settings_backup_export_error": "Не удалось экспортировать резервную копию",
+	"settings_backup_export_excluded": "Не входят: история метрик, состояние и история оповещений, журнал аудита, открытые сессии — и, намеренно, секрет экземпляра.",
+	"settings_backup_export_intro": "Один файл, версия формата {version}. Он содержит все учётные данные этого экземпляра в виде, защищённом только парольной фразой: храните его там же, где храните пароли, а не рядом с резервными копиями ваших фильмов.",
+	"settings_backup_export_title": "Экспорт конфигурации",
+	"settings_backup_identical": "уже совпадает: {count}",
+	"settings_backup_kept": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Хранится {count} · {size} всего.",
+				"countPlural=few": "Хранится {count} · {size} всего.",
+				"countPlural=many": "Хранится {count} · {size} всего.",
+				"countPlural=other": "Хранится {count} · {size} всего."
+			}
+		}
+	],
+	"settings_backup_last_fail": "Последний запуск завершился ошибкой",
+	"settings_backup_last_ok": "Последний запуск успешен",
+	"settings_backup_none_yet": "Резервное копирование ещё не запускалось.",
+	"settings_backup_not_backup": "Этот файл не является резервной копией DumbMonit.",
+	"settings_backup_not_json": "Не удалось прочитать этот файл как JSON. Выберите пакет, который вы скачали.",
+	"settings_backup_passphrase": "Парольная фраза",
+	"settings_backup_passphrase_confirm": "Подтвердите парольную фразу",
+	"settings_backup_passphrase_help": "Не менее {min} символов. Пакет с потерянной парольной фразой восстановить невозможно.",
+	"settings_backup_passphrase_mismatch": "Парольные фразы не совпадают. Введите подтверждение ещё раз.",
+	"settings_backup_passphrase_short": "Не менее {min} символов. Достаточно трёх слов, и они понадобятся снова при восстановлении.",
+	"settings_backup_plate_every": "Каждые {hours} ч · хранить {keep}",
+	"settings_backup_read_error": "Не удалось получить состояние резервных копий",
+	"settings_backup_restore_error": "Не удалось прочитать резервную копию",
+	"settings_backup_restore_intro": "Сначала проверка, применение — только по вашему запросу. Восстановление ничего не удаляет: оно создаёт недостающее и обновляет отличающееся, сопоставляя устройства по типу и адресу. Уже существующие здесь учётные записи не затрагиваются.",
+	"settings_backup_restore_passphrase": "Парольная фраза этого пакета",
+	"settings_backup_restore_title": "Восстановление из пакета",
+	"settings_backup_restored": "Восстановлено",
+	"settings_backup_schedule_env_secret": "Секрет берётся из окружения, поэтому здесь он не копируется.",
+	"settings_backup_schedule_intro_key": "Согласованная онлайн-копия базы данных записывается в {directory}, рядом с копией secret.key.",
+	"settings_backup_schedule_intro_nokey": "Согласованная онлайн-копия базы данных записывается в {directory}.",
+	"settings_backup_schedule_same_volume": "Они лежат в том же томе, что и база данных: они исправят ошибку, но не потерю диска.",
+	"settings_backup_scheduled_title": "Локальные резервные копии по расписанию",
+	"settings_backup_secret_bundle": "Пакет ниже — исключение: его секреты перешифровываются выбранной вами парольной фразой, поэтому его можно восстановить на новом экземпляре с собственным секретом.",
+	"settings_backup_secret_env": "Этот сервер читает свой секрет из DUMBMONIT_SECRET, поэтому копировать файл не нужно. Сохраните это значение в менеджере паролей: без него копия базы данных восстановит экземпляр, который ни с чем не может связаться.",
+	"settings_backup_secret_file": "Пароли устройств, SNMP-сообщества и секреты каналов шифруются ключом, производным от {path}. Копия базы данных без этого файла восстановит экземпляр, который ни с чем не может связаться, — а сервер откажется запускаться, а не будет притворяться. Сохраняйте его вместе с базой данных.",
+	"settings_backup_secret_title": "Секрет экземпляра — это то, что расшифровывает ваши учётные данные",
+	"settings_backup_title": "Резервное копирование",
+	"settings_backup_to_create": "создать: {count}",
+	"settings_backup_to_update": "обновить: {count}",
+	"settings_backup_without_key": "Без ключа",
+	"settings_backup_write_error": "Не удалось записать резервную копию",
+	"settings_music_account": "Аккаунт",
+	"settings_music_admin_only": "Подключить аккаунт Spotify здесь может администратор.",
+	"settings_music_app": "Приложение (Client ID)",
+	"settings_music_connect_button": "Подключить Spotify",
+	"settings_music_connect_heading": "Spotify Connect",
+	"settings_music_connect_intro": "Стенд становится колонкой с именем {name}: в приложении Spotify на телефоне откройте «Устройства» и выберите её, звук пойдёт с экрана. Стенд также показывает, что играет на аккаунте где угодно — в приложении телевизора, на cast-колонке, на ноутбуке.",
+	"settings_music_connected_at": "Подключено",
+	"settings_music_connected_default": "Подключён",
+	"settings_music_copy_redirect": "Скопировать URI перенаправления",
+	"settings_music_description": "Запускайте музыку с телефона и слушайте её на экране стенда или отправьте ему ссылку Spotify, Deezer или YouTube.",
+	"settings_music_disconnect": "Отключить",
+	"settings_music_disconnect_confirm": "Отключить Spotify?",
+	"settings_music_disconnect_error": "Не удалось отключить",
+	"settings_music_err_client_id": "Вставьте Client ID со страницы вашего приложения в Spotify Developer Dashboard (32 буквы и цифры).",
+	"settings_music_expired": "Spotify завершил подключение. Подключитесь заново ниже: Client ID сохранён.",
+	"settings_music_expired_reason": "Spotify завершил подключение ({reason}). Подключитесь заново ниже: Client ID сохранён.",
+	"settings_music_finish": "Завершить подключение",
+	"settings_music_finish_error": "Не удалось завершить подключение",
+	"settings_music_link_heading": "Воспроизвести ссылку на стендах",
+	"settings_music_link_intro": "Без Premium, а также для Deezer и YouTube — у которых в вебе нет пульта вроде Connect — отправьте ссылку с любого экрана, в том числе с телефона: каждый стенд воспроизведёт её в собственном плеере сервиса. Браузер стенда без входа в Spotify или Deezer играет 30-секундные фрагменты.",
+	"settings_music_link_label": "Ссылка для воспроизведения на стендах",
+	"settings_music_load_error": "Не удалось загрузить настройки музыки",
+	"settings_music_missing": "Этот сервер пока не поддерживает музыку на стенде: обновите DumbMonit.",
+	"settings_music_missing_scopes": "Spotify не предоставил: {scopes}. Подключитесь заново и примите все разрешения.",
+	"settings_music_needs_1": "Spotify Premium на аккаунте-владельце приложения. Личное приложение (режим разработки) допускает до пяти аккаунтов: другие добавляются в User Management.",
+	"settings_music_needs_2": "Телефон должен быть авторизован в том же аккаунте Spotify, что подключён здесь: колонка в браузере показывается только для своего аккаунта — не для других участников семейного плана — и не находится в сети, как умная колонка.",
+	"settings_music_needs_3": "Чтобы стенд был колонкой, его браузер должен открывать DumbMonit по HTTPS (или как localhost на самом экране) и поддерживать DRM (Widevine): Chrome, Edge или Firefox на компьютере, Chromium с Widevine на Raspberry Pi. Большинство браузеров смарт-ТВ и киосков не могут — стенд сообщает об этом на экране, а стенды ниже показывают это здесь.",
+	"settings_music_needs_4": "Браузеры не воспроизводят звук, пока страницы не коснутся: один раз коснитесь стенда или нажмите клавишу после загрузки (или запустите браузер киоска с --autoplay-policy=no-user-gesture-required).",
+	"settings_music_needs_5": "«Сейчас играет» работает и без всего этого: сервер каждые несколько секунд спрашивает у Spotify, что играет, даже по обычному HTTP.",
+	"settings_music_needs_6": "Spotify завершает подключение через шесть месяцев после подтверждения: подключитесь заново до указанной даты.",
+	"settings_music_needs_heading": "Что для этого нужно",
+	"settings_music_not_connected": "Spotify не подключён",
+	"settings_music_nothing_playing": "На этом аккаунте ничего не играет.",
+	"settings_music_nothing_sent": "На стенды ничего не отправлено. Ссылку может отправить администратор.",
+	"settings_music_now_artists": " — {artists}",
+	"settings_music_now_device": ", на устройстве {device}",
+	"settings_music_now_line": "{status}: {title}{artists}{device}",
+	"settings_music_on_walls": "На стендах",
+	"settings_music_open_spotify": "Открыть Spotify",
+	"settings_music_outcome_connected": "Spotify подключён.",
+	"settings_music_outcome_denied": "Spotify не предоставил доступ. Начните заново и выберите «Принимаю».",
+	"settings_music_outcome_exchange": "Spotify отказался завершить подключение. Проверьте, что URI перенаправления ниже зарегистрирован в вашем приложении в точности так же.",
+	"settings_music_outcome_hint": "Начните заново ниже; ничего не изменено.",
+	"settings_music_outcome_internal": "Не удалось сохранить подключение. Проверьте журналы сервера.",
+	"settings_music_outcome_session": "Ваш сеанс DumbMonit — не тот, что начал подключение. Войдите и начните заново.",
+	"settings_music_outcome_state": "Это подтверждение неизвестно, просрочено или уже использовано. Начните заново с «Подключить Spotify».",
+	"settings_music_outcome_unknown": "Подключение не завершено.",
+	"settings_music_plate_connected": "Spotify подключён",
+	"settings_music_plate_off": "Spotify выключен",
+	"settings_music_plate_reconnect": "Переподключите Spotify",
+	"settings_music_play_on_wall": "Воспроизвести на стенде",
+	"settings_music_reconnect_by": "Переподключить до",
+	"settings_music_reconnect_note": "Spotify завершает подключения через шесть месяцев.",
+	"settings_music_redirect_insecure": "DumbMonit отдаётся по обычному HTTP, а Spotify принимает только https:// или этот адрес 127.0.0.1. Там ничего не отвечает: после подтверждения браузер покажет страницу ошибки — скопируйте её адрес, в нём находится код. По HTTPS перенаправление было бы прямым.",
+	"settings_music_redirect_secure": "Spotify возвращается прямо на эту страницу.",
+	"settings_music_right_now": "Сейчас",
+	"settings_music_send_error": "Не удалось отправить ссылку",
+	"settings_music_sent_by": "отправил(а) {name}",
+	"settings_music_start_error": "Не удалось начать подключение",
+	"settings_music_status_paused": "Пауза",
+	"settings_music_status_playing": "Играет",
+	"settings_music_step1_after": "(любое имя). Отметьте Web API и Web Playback SDK и добавьте этот URI перенаправления:",
+	"settings_music_step1_before": "1. Создайте приложение в",
+	"settings_music_step1_link": "Spotify Developer Dashboard",
+	"settings_music_step2_help": "На странице приложения в разделе Basic Information. Копировать секрет не нужно: DumbMonit использует PKCE.",
+	"settings_music_step2_label": "2. Вставьте его Client ID",
+	"settings_music_step3": "3. Подтвердите в Spotify и вернитесь сюда.",
+	"settings_music_step4_help": "Начинается с {uri}?code= — действует десять минут, один раз.",
+	"settings_music_step4_label": "4. Вставьте адрес страницы, на которую вы попали",
+	"settings_music_stop": "Остановить",
+	"settings_music_title": "Музыка на стенде",
+	"settings_nav_push": "Push-уведомления",
+	"settings_packs_add_device": "Добавить: {label}",
+	"settings_packs_admin_only_description": "Пакет определяет, что этот сервер запрашивает у ваших устройств.",
+	"settings_packs_admin_only_title": "Управлять пакетами интеграций может только администратор.",
+	"settings_packs_admins_only": "Только для администраторов",
+	"settings_packs_change_error": "Не удалось изменить этот пакет",
+	"settings_packs_choose": "Выбрать pack.yaml",
+	"settings_packs_description": "Типы устройств, описанные в YAML: что запрашивать у устройства, какие значения хранить, когда оповещать. Установленный пакет добавляется к устройствам, которые можно наблюдать.",
+	"settings_packs_disable_pack": "Отключить {label}",
+	"settings_packs_disabled": "Отключён",
+	"settings_packs_docs": "Документация по пакетам",
+	"settings_packs_empty_description": "Вставьте pack.yaml ниже или загрузите файл. Установленные пакеты появляются в разделе «Пакеты сообщества» при добавлении устройства.",
+	"settings_packs_empty_title": "Пока не установлено ни одного пакета.",
+	"settings_packs_enable_pack": "Включить {label}",
+	"settings_packs_enabled": "Включён",
+	"settings_packs_file_too_big": "Файл больше 1 МБ: pack.yaml занимает несколько килобайт.",
+	"settings_packs_file_unreadable": "Не удалось прочитать файл как текст.",
+	"settings_packs_hint_conflict": "Два типа устройств не могут иметь одно имя: измените id пакета.",
+	"settings_packs_hint_enable": "Установите исправленную версию этого пакета и включите его снова.",
+	"settings_packs_hint_uninstall": "Отключение сохраняет эти устройства и их историю; для удаления пакета их нужно убрать.",
+	"settings_packs_install_button": "Установить пакет",
+	"settings_packs_install_error": "Не удалось установить этот пакет",
+	"settings_packs_install_heading": "Установить пакет",
+	"settings_packs_install_intro": "Вставьте его pack.yaml или загрузите файл. Пакет проверяется до сохранения; установка более новой версии уже установленного пакета обновляет его и сохраняет состояние «включён/выключен». Его запросы идут только на устройства, которые его используют.",
+	"settings_packs_installed": "установлено {when}",
+	"settings_packs_installed_heading": "Установленные пакеты",
+	"settings_packs_installed_notes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Установлено, замечаний проверки: {count}",
+				"countPlural=few": "Установлено, замечаний проверки: {count}",
+				"countPlural=many": "Установлено, замечаний проверки: {count}",
+				"countPlural=other": "Установлено, замечаний проверки: {count}"
+			}
+		}
+	],
+	"settings_packs_invalid": "Недопустим — неактивен",
+	"settings_packs_list_error": "Не удалось получить список пакетов интеграций",
+	"settings_packs_loaded": "Загружено: {name}",
+	"settings_packs_n_devices": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство",
+				"countPlural=few": "{count} устройства",
+				"countPlural=many": "{count} устройств",
+				"countPlural=other": "{count} устройства"
+			}
+		}
+	],
+	"settings_packs_n_metrics": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} метрика",
+				"countPlural=few": "{count} метрики",
+				"countPlural=many": "{count} метрик",
+				"countPlural=other": "{count} метрики"
+			}
+		}
+	],
+	"settings_packs_n_rules": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} правило оповещения",
+				"countPlural=few": "{count} правила оповещений",
+				"countPlural=many": "{count} правил оповещений",
+				"countPlural=other": "{count} правила оповещений"
+			}
+		}
+	],
+	"settings_packs_n_snmp": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} профиль SNMP",
+				"countPlural=few": "{count} профиля SNMP",
+				"countPlural=many": "{count} профилей SNMP",
+				"countPlural=other": "{count} профиля SNMP"
+			}
+		}
+	],
+	"settings_packs_note": "Заметка",
+	"settings_packs_outcome_created": "Установлено",
+	"settings_packs_outcome_unchanged": "Уже установлено — ничего не изменилось",
+	"settings_packs_outcome_updated": "Обновлено",
+	"settings_packs_restart": "Перезапустите DumbMonit, чтобы использовать его профили SNMP: они читаются при запуске сервера. Всё остальное в пакете уже работает.",
+	"settings_packs_rules_added": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "добавлено правил оповещений: {count}",
+				"countPlural=few": "добавлено правил оповещений: {count}",
+				"countPlural=many": "добавлено правил оповещений: {count}",
+				"countPlural=other": "добавлено правил оповещений: {count}"
+			}
+		}
+	],
+	"settings_packs_title": "Пакеты интеграций",
+	"settings_packs_uninstall": "Удалить",
+	"settings_packs_uninstall_confirm": "Удалить навсегда?",
+	"settings_packs_upload_label": "Загрузить файл",
+	"settings_packs_val_headline": "Этот пакет невозможно установить.",
+	"settings_packs_val_link": "Формат пакета",
+	"settings_packs_val_link_tail": "описывает каждое поле.",
+	"settings_packs_val_note": "Ничего не сохранено. Исправьте эти пункты в YAML и установите снова.",
+	"settings_packs_yaml_label": "YAML пакета",
+	"settings_password_hide": "Скрыть пароль",
+	"settings_password_show": "Показать пароль",
+	"settings_push_action_error": "Не удалось обновить push-уведомления",
+	"settings_push_browser": "Браузер",
+	"settings_push_description": "Оповещения в виде системных уведомлений на этом телефоне или компьютере, даже когда DumbMonit закрыт. Устанавливать приложение не нужно.",
+	"settings_push_device_installed": "{device} · установленное приложение",
+	"settings_push_enable": "Включить на этом устройстве",
+	"settings_push_enabled_notice": "Это устройство будет получать push-уведомления. Отправьте тест, чтобы проверить.",
+	"settings_push_help_channel": "Какие оповещения приходят, определяет канал Web Push в разделе «Оповещения» → «Уведомления».",
+	"settings_push_help_desktop_body": "работает в Chrome, Edge, Firefox и Safari. Установка приложения (адресная строка → «Установить») необязательна, но делает его доступным одним касанием.",
+	"settings_push_help_desktop_lead": "Android, Windows, macOS, Linux:",
+	"settings_push_help_domains_body": "сервер отправляет данные в push-службу производителя браузера, поэтому ему нужен исходящий HTTPS к fcm.googleapis.com (Chrome, Edge на Android), *.notify.windows.com (Edge), updates.push.services.mozilla.com (Firefox) и *.push.apple.com (Safari). Сообщения сквозно зашифрованы: эти службы не могут их прочитать.",
+	"settings_push_help_domains_lead": "Домены:",
+	"settings_push_help_guide": "Полное руководство →",
+	"settings_push_help_https_body": "Браузеры предлагают push только на защищённом источнике: поставьте DumbMonit за обратный прокси с сертификатом. http://localhost тоже подходит для проверки на самом сервере.",
+	"settings_push_help_https_lead": "Требуется HTTPS.",
+	"settings_push_help_ios_body": "откройте DumbMonit в Safari, нажмите «Поделиться» → «На экран “Домой”», запустите его с иконки на экране «Домой» и включите push здесь.",
+	"settings_push_help_ios_lead": "iPhone и iPad (iOS 16.4 или новее):",
+	"settings_push_help_label": "Как работают push-уведомления",
+	"settings_push_last_failed": "Последняя попытка не удалась: {error}",
+	"settings_push_load_error": "Не удалось получить данные push-уведомлений",
+	"settings_push_meta_added": "{service} · добавлено {date}",
+	"settings_push_meta_delivered": "{service} · добавлено {date} · последняя доставка {when}",
+	"settings_push_none": "Пока нет. Включите push на каждом телефоне или компьютере, который должен подавать сигнал.",
+	"settings_push_plate_blocked": "Заблокировано",
+	"settings_push_plate_enabled": "Включено",
+	"settings_push_plate_https": "Нужен HTTPS",
+	"settings_push_plate_install": "Сначала установите",
+	"settings_push_plate_off": "Выключено",
+	"settings_push_plate_unsupported": "Не поддерживается",
+	"settings_push_remove": "Удалить",
+	"settings_push_remove_confirm": "Удалить это устройство?",
+	"settings_push_subscribed": "Подписанные устройства",
+	"settings_push_test": "Отправить тест",
+	"settings_push_text_blocked": "Уведомления для этого сайта заблокированы. Разрешите их в настройках сайта в браузере и перезагрузите страницу.",
+	"settings_push_text_https": "Откройте DumbMonit по HTTPS (или на localhost), чтобы включить push. Сейчас адрес: {origin}.",
+	"settings_push_text_install": "На iPhone и iPad добавьте DumbMonit на экран «Домой» («Поделиться» → «На экран “Домой”»), откройте его оттуда и вернитесь сюда.",
+	"settings_push_text_off": "Push-уведомления пока не приходят.",
+	"settings_push_text_unsupported": "Этот браузер не может получать push-уведомления. Попробуйте свежую версию Chrome, Edge, Firefox или Safari.",
+	"settings_push_this_device": "Это устройство",
+	"settings_push_this_device_tag": "(это устройство)",
+	"settings_push_title": "Push-уведомления",
+	"settings_report_cancel": "Отмена",
+	"settings_report_channel": "Канал электронной почты",
+	"settings_report_channel_default": "Первый включённый канал электронной почты",
+	"settings_report_channel_disabled": "{name} (отключён)",
+	"settings_report_channel_help": "Используется только его почтовый сервер; собственные получатели канала игнорируются.",
+	"settings_report_create": "Создать отчёт",
+	"settings_report_day": "День",
+	"settings_report_day_of_month": "День месяца",
+	"settings_report_day_of_month_help": "От 1 до 28.",
+	"settings_report_default_name": "Отчёт для команды",
+	"settings_report_delete": "Удалить",
+	"settings_report_delete_confirm": "Удалить навсегда?",
+	"settings_report_dirty": "Есть несохранённые изменения: сохраните перед отправкой предпросмотра.",
+	"settings_report_freq_daily": "Ежедневно",
+	"settings_report_freq_monthly": "Ежемесячно",
+	"settings_report_freq_weekly": "Еженедельно",
+	"settings_report_frequency": "Периодичность",
+	"settings_report_hour": "Час",
+	"settings_report_last_failed": "Последняя отправка не удалась: {error}",
+	"settings_report_last_sent": "Последняя отправка {when}",
+	"settings_report_name": "Название",
+	"settings_report_name_help": "Показывается только в этом списке.",
+	"settings_report_never_sent": "Ещё не отправлялся",
+	"settings_report_next": "Следующий отчёт {when}",
+	"settings_report_off": "Выключен",
+	"settings_report_preview_error": "Не удалось отправить предпросмотр",
+	"settings_report_preview_failed": "Предпросмотр отправлен: {sent}, не удалось: {failed}.",
+	"settings_report_preview_sent": [
+		{
+			"declarations": [
+				"input sent",
+				"local sentPlural = sent: plural"
+			],
+			"selectors": [
+				"sentPlural"
+			],
+			"match": {
+				"sentPlural=one": "Предпросмотр отправлен {sent} получателю.",
+				"sentPlural=few": "Предпросмотр отправлен {sent} получателям.",
+				"sentPlural=many": "Предпросмотр отправлен {sent} получателям.",
+				"sentPlural=other": "Предпросмотр отправлен {sent} получателя."
+			}
+		}
+	],
+	"settings_report_recipients": "Получатели",
+	"settings_report_recipients_help": "По одному в строке или через запятую. Не более {max}; они не обязаны быть пользователями DumbMonit. Введено: {count}.",
+	"settings_report_recipients_max": [
+		{
+			"declarations": [
+				"input max",
+				"local maxPlural = max: plural"
+			],
+			"selectors": [
+				"maxPlural"
+			],
+			"match": {
+				"maxPlural=one": "Не более {max} получателя.",
+				"maxPlural=few": "Не более {max} получателей.",
+				"maxPlural=many": "Не более {max} получателей.",
+				"maxPlural=other": "Не более {max} получателя."
+			}
+		}
+	],
+	"settings_report_recipients_required": "Добавьте хотя бы один адрес, прежде чем включать отчёт.",
+	"settings_report_save": "Сохранить",
+	"settings_report_save_error": "Не удалось сохранить отчёт",
+	"settings_report_saved": "Сохранено.",
+	"settings_report_send": "Отправлять отчёты",
+	"settings_report_send_preview": "Отправить предпросмотр",
+	"settings_report_timezone": "Часовой пояс",
+	"settings_report_timezone_help": "Название IANA, например Europe/Paris. Переход на летнее время учитывается.",
+	"settings_reports_add": "Добавить отчёт",
+	"settings_reports_description": "Короткое письмо для команды: как работала инфраструктура за последние сутки, неделю или месяц.",
+	"settings_reports_empty_description": "По умолчанию еженедельно, в понедельник утром, в вашем часовом поясе.",
+	"settings_reports_empty_title": "Отчётов пока нет.",
+	"settings_reports_info_availability": "Доступность за период: общая, по группам и по устройствам, рассчитанная как на странице статуса.",
+	"settings_reports_info_compare": "Как всё это соотносится с предыдущим периодом такой же длины.",
+	"settings_reports_info_footer": "Простые таблицы, без внешних изображений. Каждый получатель получает собственное письмо. Период — последние 24 часа, 7 или 30 дней перед отправкой.",
+	"settings_reports_info_incidents": "Инциденты за период: когда начался каждый, как долго длился, на каком устройстве.",
+	"settings_reports_info_label": "Что содержит отчёт?",
+	"settings_reports_info_title": "Содержимое отчёта",
+	"settings_reports_info_unstable": "Пять наименее стабильных устройств.",
+	"settings_reports_load_error": "Не удалось загрузить отчёты",
+	"settings_reports_no_channel_link": "Добавьте его в разделе «Оповещения» → «Уведомления».",
+	"settings_reports_no_channel_plate": "Нет канала электронной почты",
+	"settings_reports_no_channel_text": "Отчёты отправляются через канал электронной почты (SMTP).",
+	"settings_reports_read_more": "Подробнее",
+	"settings_reports_setup": "Настроить отчёт",
+	"settings_reports_title": "Отчёты",
+	"settings_security_change": "Сменить пароль",
+	"settings_security_change_error": "Не удалось сменить пароль",
+	"settings_security_changed": "Пароль изменён — остальные ваши сеансы завершены",
+	"settings_security_confirm_label": "Подтвердите новый пароль",
+	"settings_security_current_label": "Текущий пароль",
+	"settings_security_default_provider": "ваш провайдер идентификации",
+	"settings_security_description": "Ваш аккаунт и этот сеанс.",
+	"settings_security_description_user": "Ваш аккаунт: {username}.",
+	"settings_security_err_current": "Введите текущий пароль, чтобы подтвердить, что это вы.",
+	"settings_security_err_current_wrong": "Текущий пароль неверен.",
+	"settings_security_err_mismatch": "Два новых пароля не совпадают. Введите подтверждение ещё раз.",
+	"settings_security_err_same": "Новый пароль совпадает с текущим. Выберите другой.",
+	"settings_security_managed_by": "Управляется через {provider}",
+	"settings_security_new_help": "Не менее {min} символов. Целая фраза надёжнее, чем сложное слово.",
+	"settings_security_new_label": "Новый пароль",
+	"settings_security_no_protection": "Этот экземпляр не защищён паролем.",
+	"settings_security_oidc_note": "Вы входите через провайдера идентификации: пароля DumbMonit для смены нет.",
+	"settings_security_session_hint": "Выйти на этом устройстве. Остальные сеансы остаются открытыми.",
+	"settings_security_session_title": "Этот сеанс",
+	"settings_security_sign_out": "Выйти",
+	"settings_security_title": "Аккаунт и безопасность",
+	"settings_speaker_account": "Аккаунт",
+	"settings_speaker_account_note": "— чтобы увидеть стенд, телефон должен быть авторизован в этом аккаунте Spotify.",
+	"settings_speaker_browser_default": "Браузер",
+	"settings_speaker_connected": "Подключён",
+	"settings_speaker_device_playing": "{name} (играет)",
+	"settings_speaker_err_name": "Имя колонки — не более 64 символов.",
+	"settings_speaker_heading": "Колонка",
+	"settings_speaker_in_devices": "В устройствах Spotify",
+	"settings_speaker_listed_as": "В Spotify отображается как {name}.",
+	"settings_speaker_listed_no": "Сейчас нет",
+	"settings_speaker_listed_yes": "Да — телефоны с этим аккаунтом могут её выбрать",
+	"settings_speaker_lists": "Spotify показывает: {devices}",
+	"settings_speaker_lists_none": "Сейчас Spotify не показывает ни одного устройства на этом аккаунте.",
+	"settings_speaker_missing": "Этот сервер пока не сообщает о колонке: обновите DumbMonit.",
+	"settings_speaker_name_help": "То, что телефоны показывают в «Устройствах». Его используют все стенды; добавьте ?speaker=Кухня к адресу одного стенда, чтобы назвать только его. Пусто: «DumbMonit Wall».",
+	"settings_speaker_name_label": "Название в Spotify",
+	"settings_speaker_phase_connecting": "Подключается",
+	"settings_speaker_phase_error": "Остановлен",
+	"settings_speaker_phase_locked": "Готов, звук заблокирован",
+	"settings_speaker_phase_not_listed": "Spotify не показывает",
+	"settings_speaker_phase_off": "Выключено на этом экране",
+	"settings_speaker_phase_ready": "Готов",
+	"settings_speaker_phase_unsupported": "Здесь воспроизведение невозможно",
+	"settings_speaker_premium": "Premium",
+	"settings_speaker_premium_no": "Нет — стенд не может быть колонкой",
+	"settings_speaker_premium_unknown": "Пока неизвестно (стенд сообщит при подключении)",
+	"settings_speaker_premium_yes": "Да",
+	"settings_speaker_read_error": "Не удалось прочитать данные колонки",
+	"settings_speaker_refresh": "Обновить",
+	"settings_speaker_refresh_aria": "Обновить состояние колонки",
+	"settings_speaker_rename": "Переименовать",
+	"settings_speaker_rename_error": "Не удалось переименовать колонку.",
+	"settings_speaker_test_fail": "Spotify не начал воспроизведение.",
+	"settings_speaker_test_hint": "Запускает воспроизведение аккаунта на «{name}», продолжая последнее, что играло.",
+	"settings_speaker_test_ok": "Spotify теперь играет на «{name}»: слушайте стенд. Ничего не слышно? Коснитесь стенда один раз, чтобы разблокировать звук.",
+	"settings_speaker_test_sound": "Проверить звук",
+	"settings_speaker_wall_meta": "· как «{name}» · {when}",
+	"settings_speaker_walls": "Стенды",
+	"settings_speaker_walls_none": "За последние пятнадцать минут ни один стенд не сообщал о себе. Откройте /wall на экране (после входа, подойдут и аккаунты-наблюдатели), и он появится здесь в течение минуты.",
+	"settings_sso_admin_groups": "Группы администраторов",
+	"settings_sso_admin_groups_help": "Через запятую. Участники становятся администраторами, остальные — наблюдателями (или операторами, см. ниже); проверяется при каждом входе. Если оба списка пусты, роли управляются здесь.",
+	"settings_sso_alg_warning": "Этот провайдер не заявляет RS256 или ES256: DumbMonit принимает только такие подписи.",
+	"settings_sso_autocreate_env_hint": "Задайте DUMBMONIT_OIDC_AUTO_CREATE=true или включите это в «Дополнительных параметрах» и сохраните.",
+	"settings_sso_autocreate_help": "По умолчанию выключено. Выключено: войти могут только уже связанные учётные записи или те, чей подтверждённый провайдером email совпадает с именем пользователя. Локальный администратор с паролем никогда не связывается автоматически.",
+	"settings_sso_autocreate_label": "Создавать учётные записи при первом входе",
+	"settings_sso_autocreate_off_body": "Новым идентичностям при первом входе учётная запись не создаётся: этот параметр не выбирался и теперь по умолчанию выключен (в прежних версиях был включён). Войти могут только уже связанные учётные записи или совпавшие по подтверждённому провайдером email.",
+	"settings_sso_autocreate_plate": "Создание учётных записей выключено",
+	"settings_sso_autocreate_ui_hint": "Включите это в «Дополнительных параметрах», если нужно.",
+	"settings_sso_client_id": "ID клиента",
+	"settings_sso_client_secret": "Секрет клиента",
+	"settings_sso_description": "Позвольте пользователям входить через вашего провайдера OpenID Connect — Authentik, Keycloak, Authelia, Pocket ID и подобных.",
+	"settings_sso_discovery_failed": "Ошибка discovery",
+	"settings_sso_discovery_ok": "Discovery успешно",
+	"settings_sso_err_client_id": "Введите ID клиента, зарегистрированный у провайдера.",
+	"settings_sso_err_issuer": "Введите URL издателя, например https://id.example.org/application/o/dumbmonit/.",
+	"settings_sso_err_secret": "Введите секрет клиента от провайдера.",
+	"settings_sso_err_url": "Введите полный URL, начинающийся с http:// или https://.",
+	"settings_sso_forget": "Забыть сохранённые настройки",
+	"settings_sso_found": "Провайдер найден",
+	"settings_sso_groups_claim": "Claim групп",
+	"settings_sso_groups_claim_help": "Имя claim токена, перечисляющего группы пользователя.",
+	"settings_sso_issuer": "URL издателя (issuer)",
+	"settings_sso_issuer_help": "Discovery читается по URL издателя с добавлением /.well-known/openid-configuration.",
+	"settings_sso_load_error": "Не удалось загрузить настройки единого входа",
+	"settings_sso_more": "Дополнительные параметры",
+	"settings_sso_no_answer": "Провайдер не ответил.",
+	"settings_sso_note_env": "Эти значения взяты из переменных окружения. Сохранение здесь заменяет их насовсем: сохранённое имеет приоритет, а переменные действуют, только пока ничего не сохранено.",
+	"settings_sso_note_none": "Пока ничего не настроено. Заполните форму или задайте переменные окружения DUMBMONIT_OIDC_* — сохранённое здесь имеет приоритет.",
+	"settings_sso_note_settings": "Действуют сохранённые настройки. Переменные окружения (DUMBMONIT_OIDC_*) работают, только пока здесь ничего не сохранено.",
+	"settings_sso_off": "Выключен",
+	"settings_sso_on": "Включён — {provider}",
+	"settings_sso_operator_groups": "Группы операторов",
+	"settings_sso_operator_groups_help": "Через запятую. Участники, не являющиеся администраторами, становятся операторами: они работают с оповещениями (подтверждают, игнорируют, откладывают), но не меняют конфигурацию.",
+	"settings_sso_provider_help": "Подпись кнопки входа: «Продолжить через …».",
+	"settings_sso_provider_name": "Название провайдера",
+	"settings_sso_public_url": "Публичный URL",
+	"settings_sso_public_url_help": "Как браузеры обращаются к DumbMonit. Используется для построения URI перенаправления ниже.",
+	"settings_sso_redirect_copy": "Скопировать URI перенаправления",
+	"settings_sso_redirect_heading": "Зарегистрируйте этот URI перенаправления у вашего провайдера",
+	"settings_sso_row_authorization": "Авторизация",
+	"settings_sso_row_issuer": "Издатель",
+	"settings_sso_row_keys": "Ключи",
+	"settings_sso_row_scopes": "Scopes",
+	"settings_sso_row_signing": "Подпись",
+	"settings_sso_row_token": "Токен",
+	"settings_sso_save": "Сохранить изменения",
+	"settings_sso_save_error": "Не удалось сохранить настройки",
+	"settings_sso_saved": "Сохранено",
+	"settings_sso_scopes": "Scopes",
+	"settings_sso_scopes_help": "Через пробел. Добавьте scope с claim групп, если этого требует ваш провайдер.",
+	"settings_sso_secret_help": "Хранится в зашифрованном виде и больше не показывается.",
+	"settings_sso_secret_stored": "Секрет сохранён. Оставьте пустым, чтобы сохранить его.",
+	"settings_sso_test": "Проверить discovery",
+	"settings_sso_test_error": "Не удалось выполнить проверку",
+	"settings_sso_title": "Единый вход",
+	"settings_sso_turn_off": "Отключить единый вход?",
+	"settings_sso_use_env": "Использовать значения из окружения?",
+	"settings_update_available": "Доступно обновление: v{version}",
+	"settings_update_backup_body": "Настройки → Резервная копия, и сохраните копию /data/secret.key (без неё сохранённые пароли и токены не расшифровать).",
+	"settings_update_backup_lead": "Сначала сделайте резервную копию.",
+	"settings_update_check_error": "Не удалось проверить обновления: {error}",
+	"settings_update_check_now": "Проверить сейчас",
+	"settings_update_checked": "Проверено {when}",
+	"settings_update_copy_command": "Скопировать команду",
+	"settings_update_data_kept": "Ваши данные хранятся в томе /data и сохраняются. Страница перезагрузится сама, когда сервер снова заработает.",
+	"settings_update_guide": "Руководство по обновлению →",
+	"settings_update_how": "Как обновить",
+	"settings_update_last_failed": "Последняя попытка не удалась: {error}",
+	"settings_update_looking": "Поиск обновлений…",
+	"settings_update_off": "Проверка обновлений выключена.",
+	"settings_update_off_env": "Проверка обновлений выключена (DUMBMONIT_UPDATE_CHECK=off).",
+	"settings_update_off_releases": "Новые версии смотрите на странице релизов.",
+	"settings_update_pull_body": "из папки, где лежит ваш docker-compose.yml:",
+	"settings_update_pull_lead": "Загрузите новый образ и перезапустите",
+	"settings_update_read_error": "Не удалось получить состояние обновлений",
+	"settings_update_release_notes": "Примечания к релизу →",
+	"settings_update_toggle": "Проверять наличие новых версий",
+	"settings_update_toggle_help": "Проверять наличие новых версий. Сервер делает не более одного анонимного запроса в сутки к публичному API GitHub (api.github.com); никакие данные о вашем экземпляре не передаются. Отключите в изолированных сетях или задайте DUMBMONIT_UPDATE_CHECK=off.",
+	"settings_update_up_to_date": "У вас последняя версия.",
+	"settings_update_whats_new": "Что нового",
+	"settings_users_2fa_title": "Двухфакторная аутентификация включена",
+	"settings_users_add": "Добавить пользователя",
+	"settings_users_auth_password": "Пароль",
+	"settings_users_auth_password_title": "Входит по паролю",
+	"settings_users_auth_sso_title": "Входит через провайдера идентификации",
+	"settings_users_cancel": "Отмена",
+	"settings_users_copy_password": "Скопировать пароль",
+	"settings_users_create": "Создать пользователя",
+	"settings_users_create_error": "Не удалось создать пользователя",
+	"settings_users_created": "Пользователь «{username}» создан",
+	"settings_users_created_shown": "Пароль показан один раз — передайте его сейчас",
+	"settings_users_delete": "Удалить",
+	"settings_users_delete_confirm": "Удалить навсегда?",
+	"settings_users_description": "Кто может войти. Администраторы меняют настройки, операторы работают с оповещениями, наблюдатели только смотрят.",
+	"settings_users_disabled": "Отключён",
+	"settings_users_display_help": "Необязательно. Показывается в верхней панели вместо имени пользователя.",
+	"settings_users_display_name": "Отображаемое имя",
+	"settings_users_done": "Готово",
+	"settings_users_edit": "Изменить",
+	"settings_users_edit_aria": "Изменить {username}",
+	"settings_users_empty_description": "Добавьте первую учётную запись для входа.",
+	"settings_users_empty_title": "Нет пользователей.",
+	"settings_users_enabled": "Включён",
+	"settings_users_err_password": "Задайте пароль: единый вход не включён, иначе этот пользователь не сможет войти.",
+	"settings_users_err_spaces": "Имя пользователя не может содержать пробелы.",
+	"settings_users_err_username": "Введите имя пользователя.",
+	"settings_users_generate": "Сгенерировать",
+	"settings_users_generate_title": "Сгенерировать случайный пароль",
+	"settings_users_last_seen": "Последний вход: {last} · Создан: {created}",
+	"settings_users_load_error": "Не удалось загрузить пользователей",
+	"settings_users_never": "никогда",
+	"settings_users_new_aria": "Новый пользователь",
+	"settings_users_no_delete_last": "Последнего администратора нельзя удалить. Сначала повысьте другого пользователя.",
+	"settings_users_no_delete_self": "Нельзя удалить собственную учётную запись.",
+	"settings_users_no_disable_last": "Последнего администратора нельзя отключить. Сначала повысьте другого пользователя.",
+	"settings_users_no_disable_self": "Нельзя отключить собственную учётную запись.",
+	"settings_users_password": "Пароль",
+	"settings_users_password_help": "Не менее {min} символов. Показывается один раз после создания.",
+	"settings_users_password_help_sso": "Не менее {min} символов. Оставьте пустым для пользователя, который входит только через {provider}.",
+	"settings_users_promote_first": "Сначала повысьте другого пользователя.",
+	"settings_users_reset2fa": "Сбросить 2FA",
+	"settings_users_reset2fa_confirm": "Сбросить двухфакторную?",
+	"settings_users_reset2fa_title": "Удаляет аутентификатор и коды восстановления и завершает сеансы: для входа снова хватит одного пароля.",
+	"settings_users_reset_help": "Оставьте пустым, чтобы сохранить текущий пароль. Новый пароль завершит все сеансы пользователя.",
+	"settings_users_reset_help_sso": "Оставьте пустым, чтобы учётная запись входила только через единый вход.",
+	"settings_users_reset_password": "Сбросить пароль",
+	"settings_users_reset_shown": "Показано один раз — остальные сеансы пользователя завершены",
+	"settings_users_reset_title": "Пароль для «{username}» сброшен",
+	"settings_users_role": "Роль",
+	"settings_users_role_admin": "Администратор",
+	"settings_users_role_admin_option": "Администратор — может менять всё",
+	"settings_users_role_last_admin_help": "Последний администратор сохраняет роль, пока не появится другой.",
+	"settings_users_role_operator": "Оператор",
+	"settings_users_role_operator_option": "Оператор — работает с оповещениями, без настройки",
+	"settings_users_role_viewer": "Наблюдатель",
+	"settings_users_role_viewer_option": "Наблюдатель — только чтение",
+	"settings_users_save": "Сохранить изменения",
+	"settings_users_save_error": "Не удалось сохранить пользователя",
+	"settings_users_title": "Пользователи",
+	"settings_users_update_error": "Не удалось обновить пользователя",
+	"settings_users_username": "Имя пользователя",
+	"settings_users_you": "вы",
 	"status_action_back": "Вернуться на страницу статуса",
 	"status_action_confirm_button": "Подтвердить подписку",
 	"status_action_confirm_done": "Вы подписаны. В каждом письме есть ссылка для отписки.",
@@ -4363,13 +5596,77 @@
 	"status_public_services": "Сервисы",
 	"status_public_switch_dark": "Переключить на тёмную тему",
 	"status_public_switch_light": "Переключить на светлую тему",
-	"status_public_tally_affected": "затронуто сервисов: {affected} из {total}",
+	"status_public_tally_affected": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "затронуто сервисов: {affected} из {total}",
+				"affectedPlural=few": "затронуто сервисов: {affected} из {total}",
+				"affectedPlural=many": "затронуто сервисов: {affected} из {total}",
+				"affectedPlural=other": "затронуто сервисов: {affected} из {total}"
+			}
+		}
+	],
 	"status_public_tally_all": "Все сервисы ({count}) работают",
-	"status_public_tally_degraded": "{affected} из {total} сервисов работают с деградацией",
+	"status_public_tally_degraded": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "работают с деградацией: {affected} из {total} сервисов",
+				"affectedPlural=few": "работают с деградацией: {affected} из {total} сервисов",
+				"affectedPlural=many": "работают с деградацией: {affected} из {total} сервисов",
+				"affectedPlural=other": "работают с деградацией: {affected} из {total} сервисов"
+			}
+		}
+	],
 	"status_public_tally_detail": "работает: {up} · недоступно: {down}",
 	"status_public_tally_detail_uptime": "работает: {up} · недоступно: {down} · {uptime} за {days} дн.",
-	"status_public_tally_down": "{affected} из {total} сервисов недоступны",
-	"status_public_tally_maintenance": "{affected} из {total} сервисов на обслуживании",
+	"status_public_tally_down": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "недоступно сервисов: {affected} из {total}",
+				"affectedPlural=few": "недоступно сервисов: {affected} из {total}",
+				"affectedPlural=many": "недоступно сервисов: {affected} из {total}",
+				"affectedPlural=other": "недоступно сервисов: {affected} из {total}"
+			}
+		}
+	],
+	"status_public_tally_maintenance": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "на обслуживании сервисов: {affected} из {total}",
+				"affectedPlural=few": "на обслуживании сервисов: {affected} из {total}",
+				"affectedPlural=many": "на обслуживании сервисов: {affected} из {total}",
+				"affectedPlural=other": "на обслуживании сервисов: {affected} из {total}"
+			}
+		}
+	],
 	"status_public_tally_one": "1 сервис работает",
 	"status_public_title": "Статус",
 	"status_public_title_with_page": "{title} · Статус",
@@ -4487,6 +5784,62 @@
 	"status_words_st_monitoring": "Наблюдение",
 	"status_words_st_resolved": "Устранено",
 	"status_words_st_scheduled": "Запланировано",
+	"tips_alerts_clear_history": "«Очистить все устранённые» одним действием убирает закрытые оповещения из истории, когда вы закончили их читать.",
+	"tips_alerts_ignore_device": "Правило срабатывает на устройстве, которое никогда не подчинится? Игнорируйте это правило только для него — везде в остальных местах оно продолжит следить.",
+	"tips_alerts_learning": "Новое правило базовой линии молчит первые 14 дней: оно ещё учится понимать, что для этого устройства нормально, прежде чем осмелится поднимать тревогу.",
+	"tips_alerts_snooze": "Откладывание оповещения даёт ему фиксированное окно тишины; по его окончании оно вернётся само — не нужно помнить о повторном включении.",
+	"tips_alerts_suppressed": "Оповещение с пометкой «подавлено» не игнорируется: его родитель уже недоступен, и я не буду тревожить вас дважды из-за одного и того же сбоя.",
+	"tips_device_docker": "На агенте с Docker можно перезапустить или обновить контейнер прямо отсюда — терминал не нужен.",
+	"tips_device_probe_now": "«Опросить сейчас» запрашивает это устройство немедленно, не дожидаясь следующей плановой проверки — самый быстрый способ понять, почему оно замолчало.",
+	"tips_device_secrets": "Учётные данные никогда не возвращаются после сохранения. Если изменить это устройство, не трогая поле пароля, сохранённый пароль останется прежним — на ваш экран ничего не отправляется.",
+	"tips_device_silence": "Ожидается шум — перезагрузка, обновление прошивки? Отключите оповещения для этого устройства на время: они замолчат, а сами проверки продолжатся.",
+	"tips_device_timeline": "Хронология под лицевой панелью — вся история этого устройства: каждое оповещение, которое открывалось и закрывалось, по порядку.",
+	"tips_devices_folders": "Перетащите устройство в папку, чтобы сгруппировать его: площадка, стойка, клиент. Дважды щёлкните имя папки, чтобы переименовать её на месте.",
+	"tips_devices_network_scan": "Сканирование сети находит то, что уже отвечает, ещё до того, как вы вручную введёте хоть один IP-адрес.",
+	"tips_devices_network_scan_action": "Сканировать мою сеть",
+	"tips_devices_parent_child": "ВМ или контейнер под своим гипервизором тихо наследует проблемы: если хост недоступен, его гости помечаются как подавленные, а не тревожат вас по отдельности.",
+	"tips_devices_rack_order": "Стойка сортируется сама: проблемы поднимаются наверх, остальное сохраняет заданный вами порядок. Дочерние устройства всегда стоят со сдвигом под родителем.",
+	"tips_devices_relay_agent": "Агент может следить за целой второй сетью: офисом клиента, площадкой за NAT — и сообщает данные только по исходящему соединению.",
+	"tips_devices_relay_agent_action": "Следить за удалённой площадкой",
+	"tips_general_about_me": "Я голубь. Я живу в вашем инструменте мониторинга. Я с этим смирился.",
+	"tips_general_docs": "Более подробные объяснения находятся на Read the Docs — эта сводка намеренно делает свои экраны короткими.",
+	"tips_general_docs_action": "Читать документацию",
+	"tips_general_palette_everywhere": "Сочетание клавиш для палитры команд работает, даже если подсказка исчезла из навигации: Ctrl K, а на Mac — ⌘K.",
+	"tips_general_palette_everywhere_action": "Открыть палитру",
+	"tips_general_quiet_option": "Если меня слишком много, крестик × ниже уберёт меня на этот визит — или скажите мне замолчать насовсем, и я больше не заговорю об этом.",
+	"tips_general_security_score": "Каждое устройство получает оценку безопасности по тому, что оно реально открывает, — не догадку, а измерение.",
+	"tips_general_security_score_action": "Открыть «Безопасность»",
+	"tips_overview_briefing": "Эта страница — сводка, а не дашборд: небо, «с момента вашего прошлого визита» в виде предложений и «нужно ваше внимание» в виде плиток. Списка устройств здесь нет намеренно — он в разделе «Устройства».",
+	"tips_overview_briefing_action": "Открыть устройства",
+	"tips_overview_last_7_days": "«Последние 7 дней» сводят неделю к трём числам: как долго всё работало, самое спокойное устройство и то, что тревожило вас чаще всех. Мелочно, но справедливо.",
+	"tips_overview_palette_anywhere": "Ctrl K или ⌘K открывает палитру команд откуда угодно — даже здесь, даже посреди прокрутки. Не нужно рыться в меню.",
+	"tips_overview_palette_anywhere_action": "Открыть палитру",
+	"tips_overview_sky_weather": "Я переживаю погоду вместе с вами: в тихую ночь дремлю на проводе, вздрагиваю, когда что-то ломается, и сыплю конфетти, когда небо проясняется. Попробуйте что-нибудь сломать. (Нет, лучше не надо.)",
+	"tips_overview_week_ahead": "«Ближайшая неделя» показывает, что запланировано на каждый день: окно обслуживания, продление. Спокойная неделя сжимается до одной строки и не просит внимания, которое ей не нужно.",
+	"tips_pip_another": "Другой совет",
+	"tips_pip_bubble_aria": "Совет от Pip",
+	"tips_pip_close_pip": "Закрыть Pip",
+	"tips_pip_close_tip_aria": "Закрыть этот совет",
+	"tips_pip_close_tip_title": "Закрыть",
+	"tips_pip_guide": "Руководство: {label}",
+	"tips_pip_open": "У Pip есть совет",
+	"tips_pip_quiet": "Больше не показывать советы",
+	"tips_settings_2fa": "Двухфакторная аутентификация — всего в одном QR-коде отсюда, в разделе «Аккаунт и безопасность». Она того стоит для единственной учётной записи, видящей все учётные данные этого сервера.",
+	"tips_settings_2fa_action": "Аккаунт и безопасность",
+	"tips_settings_assistant": "Claude, ChatGPT или любой MCP-клиент может читать эту сводку, а с токеном на запись — отключать оповещения устройства или запускать опрос за вас.",
+	"tips_settings_assistant_action": "Подключить ассистента",
+	"tips_settings_backup": "Пакет резервной копии зашифрован, но всё равно содержит все учётные данные, известные этому серверу. Берегите `/data/secret.key` так же тщательно, как сам пакет.",
+	"tips_settings_backup_action": "Сделать резервную копию этого экземпляра",
+	"tips_settings_packs": "Тип устройства — это просто YAML-файл, пакет интеграции. Установите его, чтобы научить меня устройству, которого я ещё не знаю.",
+	"tips_settings_packs_action": "Пакеты интеграции",
+	"tips_settings_wall_appearance": "Настенный режим настраивается в разделе «Внешний вид», в том числе тёмная тема для OLED — для экрана, который никогда не выключается.",
+	"tips_settings_wall_appearance_action": "Открыть настенный режим",
+	"tips_status_embed": "Добавьте `/embed` к ссылке на страницу статуса, и она аккуратно встроится во фрейм — удобно для внутренней вики или корпоративного интранета.",
+	"tips_status_incidents": "Публикация обновления об инциденте здесь вежливо избавляет ваш чат от лишних вопросов. Окна обслуживания отображаются как плановые, а не как неожиданный сбой.",
+	"tips_status_public_page": "Страница статуса отвечает на вопрос «оно упало?» раньше, чем его зададут: выберите сервисы, поделитесь ссылкой — и готово.",
+	"tips_status_public_page_action": "Создать страницу статуса",
+	"tips_status_subscribe": "Посетители могут подписаться на страницу статуса и получать обновления по электронной почте; ссылка для отписки в каждом письме работает без входа куда-либо.",
+	"tips_status_theme_param": "Страница статуса принимает `?theme=light` или `?theme=dark` в адресе, чтобы встроенный вариант подстраивался под страницу-хозяина, а не гадал.",
 	"ui.confirm.default_label": "Ты уверен?",
 	"ui.error_notice.default_title": "Что-то пошло не так",
 	"ui.error_notice.retry": "Попробовать снова",

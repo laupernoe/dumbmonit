@@ -3024,6 +3024,309 @@
 	"devicesb_webchange_timeline_view": "Ver",
 	"devicesb_webchange_timeline_watching_one": "Vigilando 1 página.",
 	"devicesb_webchange_timeline_watching_other": "Vigilando {count} páginas.",
+	"misc2_browser_on": "{browser} en {system}",
+	"misc2_browser_unknown": "Un navegador",
+	"misc2_folds_container_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} contenedor detenido",
+				"countPlural=other": "{count} contenedores detenidos"
+			}
+		}
+	],
+	"misc2_folds_device_awaiting_approval": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo pendiente de aprobación",
+				"countPlural=other": "{count} dispositivos pendientes de aprobación"
+			}
+		}
+	],
+	"misc2_folds_disk_disabled_or_missing": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disco deshabilitado o ausente",
+				"countPlural=other": "{count} discos deshabilitados o ausentes"
+			}
+		}
+	],
+	"misc2_folds_disk_with_read_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disco con errores de lectura",
+				"countPlural=other": "{count} discos con errores de lectura"
+			}
+		}
+	],
+	"misc2_folds_error_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} error",
+				"countPlural=other": "{count} errores"
+			}
+		}
+	],
+	"misc2_folds_gateway_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} puerta de enlace caída",
+				"countPlural=other": "{count} puertas de enlace caídas"
+			}
+		}
+	],
+	"misc2_folds_gateway_losing_packets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} puerta de enlace pierde paquetes",
+				"countPlural=other": "{count} puertas de enlace pierden paquetes"
+			}
+		}
+	],
+	"misc2_folds_interface_without_link": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} interfaz sin enlace",
+				"countPlural=other": "{count} interfaces sin enlace"
+			}
+		}
+	],
+	"misc2_folds_ipsec_tunnel_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} túnel IPsec caído",
+				"countPlural=other": "{count} túneles IPsec caídos"
+			}
+		}
+	],
+	"misc2_folds_job_ended_with_a_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} trabajo terminó con una advertencia",
+				"countPlural=other": "{count} trabajos terminaron con una advertencia"
+			}
+		}
+	],
+	"misc2_folds_job_failed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} trabajo fallido",
+				"countPlural=other": "{count} trabajos fallidos"
+			}
+		}
+	],
+	"misc2_folds_licence_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} licencia caducada",
+				"countPlural=other": "{count} licencias caducadas"
+			}
+		}
+	],
+	"misc2_folds_member_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} miembro",
+				"countPlural=other": "{count} miembros"
+			}
+		}
+	],
+	"misc2_folds_node_key_expiring_within_14_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} clave de nodo caduca en 14 días",
+				"countPlural=other": "{count} claves de nodo caducan en 14 días"
+			}
+		}
+	],
+	"misc2_folds_repository_nearly_full": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} repositorio casi lleno",
+				"countPlural=other": "{count} repositorios casi llenos"
+			}
+		}
+	],
+	"misc2_folds_service_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} servicio detenido",
+				"countPlural=other": "{count} servicios detenidos"
+			}
+		}
+	],
+	"misc2_folds_upstream_server_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} servidor upstream caído",
+				"countPlural=other": "{count} servidores upstream caídos"
+			}
+		}
+	],
+	"misc2_folds_virtual_disk_with_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disco virtual con errores",
+				"countPlural=other": "{count} discos virtuales con errores"
+			}
+		}
+	],
+	"misc2_folds_virtual_machine_in_critical_health": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} máquina virtual en estado crítico",
+				"countPlural=other": "{count} máquinas virtuales en estado crítico"
+			}
+		}
+	],
+	"misc2_folds_watched_device_offline": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo vigilado sin conexión",
+				"countPlural=other": "{count} dispositivos vigilados sin conexión"
+			}
+		}
+	],
+	"misc2_mascot_aria": "DumbMonit, la paloma",
 	"misc_ago": "hace {span}",
 	"misc_device_amplifier": "un amplificador",
 	"misc_device_cast_speaker": "un altavoz Cast",
@@ -4060,6 +4363,872 @@
 	"settings.section.security": "Cuenta y seguridad",
 	"settings.section.sso": "Inicio de sesión único",
 	"settings.section.users": "Usuarios",
+	"settings_2fa_action_agent_token_created": "Token de agente creado",
+	"settings_2fa_action_agent_token_revoked": "Token de agente revocado",
+	"settings_2fa_action_login": "Sesión iniciada",
+	"settings_2fa_action_login_failed": "Inicio de sesión fallido",
+	"settings_2fa_action_password_changed": "Contraseña cambiada",
+	"settings_2fa_action_token_created": "Token de API creado",
+	"settings_2fa_action_token_revoked": "Token de API revocado",
+	"settings_2fa_action_totp_disabled": "Doble factor desactivado",
+	"settings_2fa_action_totp_enabled": "Doble factor activado",
+	"settings_2fa_action_totp_failed": "Código de verificación incorrecto",
+	"settings_2fa_action_totp_recovery_used": "Código de recuperación usado",
+	"settings_2fa_action_totp_reset": "Doble factor restablecido por un administrador",
+	"settings_2fa_action_user_created": "Usuario creado",
+	"settings_2fa_action_user_deleted": "Usuario eliminado",
+	"settings_2fa_action_user_updated": "Usuario actualizado",
+	"settings_2fa_cancel": "Cancelar",
+	"settings_2fa_cant_scan": "¿No puedes escanear? Escribe la clave",
+	"settings_2fa_code_label": "Código de la app",
+	"settings_2fa_col_event": "Evento",
+	"settings_2fa_col_from": "Desde",
+	"settings_2fa_col_subject": "Sujeto",
+	"settings_2fa_col_when": "Cuándo",
+	"settings_2fa_col_who": "Quién",
+	"settings_2fa_confirm_enable": "Confirmar y activar",
+	"settings_2fa_confirm_error": "No se pudo confirmar",
+	"settings_2fa_continue": "Continuar",
+	"settings_2fa_continue_error": "No se pudo continuar",
+	"settings_2fa_copy_codes": "Copiar códigos",
+	"settings_2fa_copy_key": "Copiar clave",
+	"settings_2fa_disable": "Desactivar",
+	"settings_2fa_disable_button": "Desactivar la autenticación de dos factores",
+	"settings_2fa_enabled": "Activada",
+	"settings_2fa_err_code": "Introduce el código que muestra la app.",
+	"settings_2fa_err_password": "Introduce tu contraseña para demostrar que eres tú.",
+	"settings_2fa_err_wrong_password": "Contraseña incorrecta.",
+	"settings_2fa_hide_log": "Ocultar el registro de seguridad",
+	"settings_2fa_intro": "Tras tu contraseña se pide un código de seis dígitos de una app de autenticación. Los códigos de recuperación cubren la pérdida del teléfono.",
+	"settings_2fa_is_on": "La autenticación de dos factores está activada",
+	"settings_2fa_key_details": "Cuenta: {account} · Emisor: {issuer} · basado en tiempo, SHA-1, 6 dígitos, 30 s.",
+	"settings_2fa_load_error": "No se pudo leer el estado de la autenticación de dos factores",
+	"settings_2fa_log_empty": "Aún no hay nada registrado.",
+	"settings_2fa_log_error": "No se pudo leer el registro de seguridad",
+	"settings_2fa_off": "Desactivada",
+	"settings_2fa_pw_disable": "Tu contraseña, para desactivar la autenticación de dos factores",
+	"settings_2fa_pw_start": "Tu contraseña, para empezar",
+	"settings_2fa_qr_label": "Código QR para escanear con una app de autenticación",
+	"settings_2fa_recovery_left": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Queda {count} código de recuperación.",
+				"countPlural=other": "Quedan {count} códigos de recuperación."
+			}
+		}
+	],
+	"settings_2fa_recovery_none": "Desactívala y vuelve a configurarla para obtener nuevos.",
+	"settings_2fa_save_codes": "Guarda estos códigos de recuperación en un lugar seguro. Cada uno te permite iniciar sesión una vez si pierdes el teléfono; solo se muestran ahora.",
+	"settings_2fa_saved": "Ya los guardé",
+	"settings_2fa_setup": "Configurar",
+	"settings_2fa_show_log": "Mostrar el registro de seguridad",
+	"settings_2fa_step1": "1. Escanea el código con una app de autenticación (Aegis, FreeOTP, Google Authenticator, 1Password…).",
+	"settings_2fa_step2": "2. Introduce el código de seis dígitos que muestra la app para confirmar.",
+	"settings_2fa_title": "Autenticación de dos factores",
+	"settings_about_build": "compilación",
+	"settings_about_check_logs": "Comprueba que su contenedor esté en marcha y lee sus registros con `docker compose logs`.",
+	"settings_about_database": "Base de datos",
+	"settings_about_database_role": "Configuración de los dispositivos e historial de alertas.",
+	"settings_about_docs": "Documentación →",
+	"settings_about_error_title": "No se pudo contactar con el servidor",
+	"settings_about_license": "Código abierto, Apache 2.0.",
+	"settings_about_reporting": "Informando",
+	"settings_about_title": "Acerca de",
+	"settings_about_unreachable": "Componente inaccesible.",
+	"settings_about_version": "Versión",
+	"settings_about_victoria_role": "Todas las mediciones que se muestran en los gráficos.",
+	"settings_about_warning": "Advertencia",
+	"settings_about_whats_new": "Novedades",
+	"settings_agents_copied": "Ya lo he copiado",
+	"settings_agents_copy_command": "Copiar comando",
+	"settings_agents_copy_token": "Copiar token",
+	"settings_agents_create": "Crear token",
+	"settings_agents_create_error": "No se pudo crear el token",
+	"settings_agents_created_at": "Creado {when}",
+	"settings_agents_created_title": "Token «{name}» creado",
+	"settings_agents_days_invalid": "El número de días debe ser un número entero, uno o más.",
+	"settings_agents_description": "Un agente es un pequeño programa en una máquina Linux, Windows, macOS o FreeBSD: informa del sistema, los discos, los servicios, los contenedores Docker y las copias de seguridad, y permite reiniciar o actualizar un contenedor desde aquí. En modo relé también sondea, para este servidor, los dispositivos de su propia red — una segunda sede, un cliente, cualquier cosa tras un NAT — y solo establece conexiones salientes.",
+	"settings_agents_empty_description": "Cree uno y ejecute después el comando de instalación en la máquina.",
+	"settings_agents_empty_title": "Aún no hay tokens.",
+	"settings_agents_enrols_no_more": "Ya no registra",
+	"settings_agents_expires": "Deja de registrar tras",
+	"settings_agents_expires_help": "En días. Las máquinas ya registradas siguen informando; déjelo vacío para no poner plazo.",
+	"settings_agents_install": "Instalar un agente",
+	"settings_agents_install_linux": "Instalar en Linux",
+	"settings_agents_install_windows": "Instalar en Windows (PowerShell)",
+	"settings_agents_last_report": "Último informe {when}",
+	"settings_agents_last_used": "Último uso {when}",
+	"settings_agents_list_aria": "Agentes que informan a este servidor",
+	"settings_agents_load_error": "No se pudieron cargar los tokens",
+	"settings_agents_machines": "Máquinas que puede registrar",
+	"settings_agents_machines_help": "Déjelo vacío para no limitar.",
+	"settings_agents_machines_invalid": "El número de máquinas debe ser un número entero, uno o más.",
+	"settings_agents_name_placeholder": "Servidor de archivos",
+	"settings_agents_name_required": "Ponga nombre al token, por ejemplo el de la máquina que registrará.",
+	"settings_agents_new_token": "Nuevo token",
+	"settings_agents_new_token_help": "Solo sirve para reconocer el token en esta lista.",
+	"settings_agents_no_deadline": "Sin plazo",
+	"settings_agents_no_limit": "Sin límite",
+	"settings_agents_none": "Ningún agente ha informado todavía a este servidor.",
+	"settings_agents_probes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "sondea {count} dispositivo",
+				"countPlural=other": "sondea {count} dispositivos"
+			}
+		}
+	],
+	"settings_agents_relay_label": "Relé",
+	"settings_agents_relay_label_site": "Relé · {site}",
+	"settings_agents_relay_off": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Relé desactivado — {count} dispositivo en espera",
+				"countPlural=other": "Relé desactivado — {count} dispositivos en espera"
+			}
+		}
+	],
+	"settings_agents_relay_off_title": "Defina relay: true en este agente para que se encargue de sus sondeos",
+	"settings_agents_relay_title": "Modo relé: sondea para este servidor los dispositivos de su propia red",
+	"settings_agents_reusable": "Reutilizable para una flota",
+	"settings_agents_reusable_help": "Desactivado, el token registra una máquina y nada más — el valor correcto para una instalación única. Activado, puede ir en un playbook o en una imagen.",
+	"settings_agents_revoke": "Revocar",
+	"settings_agents_revoke_confirm": "¿Revocar definitivamente?",
+	"settings_agents_revoke_error": "No se pudo revocar el token",
+	"settings_agents_revoked": "Revocado",
+	"settings_agents_revoked_at": "Revocado {when}",
+	"settings_agents_scope_fleet": "Flota · {uses} registrados",
+	"settings_agents_scope_fleet_ratio": "Flota · {uses}/{max} registrados",
+	"settings_agents_scope_single": "Un solo uso",
+	"settings_agents_scope_single_used": "Un solo uso · usado",
+	"settings_agents_shown_once": "Se muestra una sola vez — cópielo ahora",
+	"settings_agents_spent_note": "Las máquinas registradas con él siguen informando; simplemente no puede admitir una nueva.",
+	"settings_agents_stops_at": "Deja de registrar {when}",
+	"settings_agents_title": "Agentes",
+	"settings_agents_token": "Token",
+	"settings_agents_tokens_intro": "Añadir un dispositivo de tipo agente crea un token de un solo uso para usted. Cree uno aquí para una flota, un playbook o una imagen de máquina.",
+	"settings_agents_tokens_title": "Tokens de registro",
+	"settings_agents_watch_remote": "Vigilar una sede remota",
+	"settings_agents_watches_own": "Vigila su propia máquina",
+	"settings_appearance_day": "Día",
+	"settings_appearance_day_hint": "Papel de gráfico, tinta azul marino.",
+	"settings_appearance_description": "Ambos temas son de primera clase. «Sistema» sigue tu dispositivo y cambia con él.",
+	"settings_appearance_night": "Noche",
+	"settings_appearance_night_hint": "Imagen de radar, señal cian.",
+	"settings_appearance_system": "Sistema",
+	"settings_appearance_system_hint": "Sigue tu dispositivo.",
+	"settings_appearance_theme": "Tema",
+	"settings_appearance_title": "Apariencia",
+	"settings_appearance_wall_description": "Solo el boletín, a pantalla completa, para un monitor en la sala. Esc para salir; ⌘K / Ctrl K lo abre desde cualquier sitio.",
+	"settings_appearance_wall_open": "Abrir modo pared",
+	"settings_appearance_wall_title": "Modo pared",
+	"settings_assistant_any_network": "Cualquier red",
+	"settings_assistant_api_reference": "Referencia de la API HTTP",
+	"settings_assistant_assistant_aria": "Asistente",
+	"settings_assistant_auth_header": "Cabecera de autorización",
+	"settings_assistant_chatgpt_https_warning": "Esta página no se sirve por HTTPS: ponga DumbMonit detrás de un proxy inverso con TLS antes de exponerlo.",
+	"settings_assistant_chatgpt_text": "En ChatGPT, abra Ajustes → Conectores → Crear (modo desarrollador) y rellene la URL del servidor MCP y la cabecera de autorización. ChatGPT se conecta desde los servidores de OpenAI, por lo que la URL debe ser accesible desde Internet por HTTPS.",
+	"settings_assistant_client_other": "Cursor / otros",
+	"settings_assistant_connect_title": "Conectar un asistente (MCP)",
+	"settings_assistant_copied": "Ya lo he copiado",
+	"settings_assistant_copy_command": "Copiar comando",
+	"settings_assistant_copy_header": "Copiar cabecera",
+	"settings_assistant_copy_json": "Copiar JSON",
+	"settings_assistant_copy_token": "Copiar token",
+	"settings_assistant_copy_url": "Copiar URL",
+	"settings_assistant_create": "Crear token",
+	"settings_assistant_create_error": "No se pudo crear el token",
+	"settings_assistant_created_any": "Utilizable desde cualquier dirección.",
+	"settings_assistant_created_at": "Creado {when}",
+	"settings_assistant_created_by": "Creado {when} por {user}",
+	"settings_assistant_created_expires": "Caduca el {date}.",
+	"settings_assistant_created_networks": "Utilizable solo desde {networks}.",
+	"settings_assistant_created_never": "No caduca nunca.",
+	"settings_assistant_created_note": "Los fragmentos de abajo llevan ahora este token. Trátelo como una contraseña.",
+	"settings_assistant_created_title": "Token «{name}» creado",
+	"settings_assistant_cursor_text": "Cursor (.cursor/mcp.json) y la mayoría de los demás clientes MCP aceptan esta forma — un servidor Streamable HTTP con cabecera bearer:",
+	"settings_assistant_description": "Un solo tipo de token para ambos: deje que Claude, ChatGPT, Cursor o cualquier cliente MCP pregunte a DumbMonit cómo van las cosas, o llame a la API REST desde un script. Un token de lectura solo puede mirar; uno de escritura también puede cambiar cosas — silenciar un dispositivo, lanzar un sondeo, añadir o editar dispositivos, reglas y canales.",
+	"settings_assistant_desktop_text": "Añádalo a claude_desktop_config.json (Ajustes → Desarrollador → Editar configuración) y reinicie Claude Desktop. Requiere Node.js: mcp-remote conecta la aplicación de escritorio con este servidor.",
+	"settings_assistant_empty_description": "Cree uno arriba y pegue después el fragmento en su asistente o script.",
+	"settings_assistant_empty_title": "Aún no hay tokens.",
+	"settings_assistant_expired": "Caducado",
+	"settings_assistant_expired_at": "Caducó {when}",
+	"settings_assistant_expires": "Caduca",
+	"settings_assistant_expires_at": "Caduca {when}",
+	"settings_assistant_expires_help": "Un token caducado deja de funcionar; cree entonces uno nuevo.",
+	"settings_assistant_expires_in_plate": "Caduca {when}",
+	"settings_assistant_http_warning": "Esta página se sirve por HTTP simple, así que el fragmento incluye --allow-http. Limítelo a su propia red.",
+	"settings_assistant_last_used": "Último uso {when}",
+	"settings_assistant_last_used_from": "Último uso {when} desde {ip}",
+	"settings_assistant_load_error": "No se pudieron cargar los tokens",
+	"settings_assistant_mcp_link": "Conectar un asistente",
+	"settings_assistant_mcp_note": "El servidor habla MCP sobre Streamable HTTP, sin sesiones. Todos los clientes, las herramientas y las notas de seguridad:",
+	"settings_assistant_mcp_url": "URL del servidor MCP",
+	"settings_assistant_name_placeholder": "Claude en mi portátil",
+	"settings_assistant_name_required": "Ponga nombre al token, por ejemplo el del asistente o la máquina donde se ejecuta.",
+	"settings_assistant_networks": "Redes permitidas",
+	"settings_assistant_networks_help": "Opcional. Direcciones o rangos CIDR, separados por comas o espacios. Vacío: utilizable desde cualquier lugar.",
+	"settings_assistant_never_expires": "No caduca nunca",
+	"settings_assistant_new_token": "Nuevo token",
+	"settings_assistant_new_token_help": "Solo sirve para reconocer el token en esta lista.",
+	"settings_assistant_one_command": "Un comando en un terminal:",
+	"settings_assistant_only_from": "Solo desde {networks}",
+	"settings_assistant_openapi": "Descripción OpenAPI",
+	"settings_assistant_openapi_note": "El archivo OpenAPI se carga en Swagger UI, Postman o Insomnia y genera clientes. Las llamadas desde otro origen web funcionan solo con un token bearer, nunca con una sesión.",
+	"settings_assistant_prometheus_link": "Recopilar métricas de DumbMonit",
+	"settings_assistant_prometheus_text": "Un Prometheus o Grafana que ya tenga puede leer esta instancia con un token de lectura — /metrics para la salud del propio servidor, /federate para las mediciones, /prometheus como origen de datos de Grafana: consulte",
+	"settings_assistant_prompt_backup": "¿Cuánto espacio queda en el servidor de copias?",
+	"settings_assistant_prompt_fine": "¿Está todo bien?",
+	"settings_assistant_prompt_night": "¿Qué pasó anoche?",
+	"settings_assistant_prompt_silence": "Silencia el NAS durante dos horas",
+	"settings_assistant_prompts_aria": "Ejemplos de preguntas",
+	"settings_assistant_remaining_unknown": "en una fecha desconocida",
+	"settings_assistant_rest_read": "Lectura — todos los dispositivos:",
+	"settings_assistant_rest_text": "El mismo token abre la API REST a scripts y paneles: envíelo como cabecera bearer en lugar de una cookie de sesión — no hace falta cabecera anti-CSRF. Un token de lectura equivale a un lector, uno de escritura a un administrador, salvo que ningún token puede gestionar cuentas, ajustes de inicio de sesión, tokens ni copias de seguridad.",
+	"settings_assistant_rest_title": "API REST",
+	"settings_assistant_rest_write": "Escritura — sondear ahora el dispositivo 1 (requiere un token de escritura):",
+	"settings_assistant_revoke": "Revocar",
+	"settings_assistant_revoke_confirm": "¿Revocar definitivamente?",
+	"settings_assistant_revoke_error": "No se pudo revocar el token",
+	"settings_assistant_revoked": "Revocado",
+	"settings_assistant_revoked_at": "Revocado {when}",
+	"settings_assistant_scope": "Alcance",
+	"settings_assistant_scope_aria": "Alcance del token",
+	"settings_assistant_scope_read": "Lectura",
+	"settings_assistant_scope_read_note": "Nunca puede cambiar nada.",
+	"settings_assistant_scope_read_only": "Solo lectura",
+	"settings_assistant_scope_write": "Lectura y escritura",
+	"settings_assistant_scope_write_note": "Puede cambiar todo salvo cuentas, tokens y copias de seguridad.",
+	"settings_assistant_shown_once": "Se muestra una sola vez — cópielo ahora",
+	"settings_assistant_title": "API y asistentes",
+	"settings_assistant_tokens_title": "Tokens",
+	"settings_assistant_try_asking": "Una vez conectado, pruebe a preguntar:",
+	"settings_assistant_vscode_text": "Añádalo a .vscode/mcp.json en un espacio de trabajo (o ejecute «MCP: Add Server» y elija HTTP):",
+	"settings_backup_accounts_help": "Desactivado por defecto. Sin ellos, las cuentas restauradas existen pero no pueden iniciar sesión hasta que un administrador establezca una contraseña.",
+	"settings_backup_accounts_label": "Incluir contraseñas de cuentas y secretos 2FA",
+	"settings_backup_admin_only_description": "Una copia de seguridad contiene todas las credenciales de esta instancia.",
+	"settings_backup_admin_only_title": "Solo un administrador puede exportar o restaurar.",
+	"settings_backup_apply": "Restaurar de verdad",
+	"settings_backup_apply_confirm": "¿Escribir estos cambios?",
+	"settings_backup_back_up_now": "Hacer copia ahora",
+	"settings_backup_bundle_file": "Archivo del paquete",
+	"settings_backup_bundle_meta": "Escrito {when} por DumbMonit {source} · versión de formato {version}",
+	"settings_backup_check": "Comprobar esta copia de seguridad",
+	"settings_backup_col_created": "Creados",
+	"settings_backup_col_section": "Sección",
+	"settings_backup_col_unchanged": "Sin cambios",
+	"settings_backup_col_updated": "Actualizados",
+	"settings_backup_description": "Exporte esta instancia en un único archivo cifrado, restáurela en una nueva y conserve a su lado una copia diaria de la base de datos.",
+	"settings_backup_disabled": "Desactivadas",
+	"settings_backup_download": "Descargar el paquete",
+	"settings_backup_downloaded": "Descargado — guarde la frase de contraseña con él",
+	"settings_backup_dry_run": "Simulación — no se escribió nada",
+	"settings_backup_export_error": "No se pudo exportar la copia de seguridad",
+	"settings_backup_export_excluded": "No incluido: historial de métricas, estado e historial de alertas, el registro de auditoría, sesiones abiertas — y el secreto de la instancia, a propósito.",
+	"settings_backup_export_intro": "Un archivo, versión de formato {version}. Contiene todas las credenciales de esta instancia de una forma que solo protege la frase de contraseña: guárdelo donde guarda sus contraseñas, no junto a las copias de sus películas.",
+	"settings_backup_export_title": "Exportar la configuración",
+	"settings_backup_identical": "{count} ya idénticos",
+	"settings_backup_kept": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} conservada · {size} en total.",
+				"countPlural=other": "{count} conservadas · {size} en total."
+			}
+		}
+	],
+	"settings_backup_last_fail": "La última ejecución falló",
+	"settings_backup_last_ok": "La última ejecución tuvo éxito",
+	"settings_backup_none_yet": "Aún no se ha ejecutado ninguna copia de seguridad.",
+	"settings_backup_not_backup": "Este archivo no es una copia de seguridad de DumbMonit.",
+	"settings_backup_not_json": "No se pudo leer este archivo como JSON. Elija el paquete que descargó.",
+	"settings_backup_passphrase": "Frase de contraseña",
+	"settings_backup_passphrase_confirm": "Confirmar frase de contraseña",
+	"settings_backup_passphrase_help": "Al menos {min} caracteres. No hay forma de recuperar un paquete cuya frase de contraseña se ha perdido.",
+	"settings_backup_passphrase_mismatch": "Las dos frases de contraseña no coinciden. Escriba de nuevo la confirmación.",
+	"settings_backup_passphrase_short": "Al menos {min} caracteres. Tres palabras bastan, y las necesitará de nuevo para restaurar.",
+	"settings_backup_plate_every": "Cada {hours} h · conservar {keep}",
+	"settings_backup_read_error": "No se pudo leer el estado de las copias de seguridad",
+	"settings_backup_restore_error": "No se pudo leer la copia de seguridad",
+	"settings_backup_restore_intro": "Se comprueba primero y se aplica solo si lo pide. Restaurar nunca elimina nada: crea lo que falta y actualiza lo que difiere, emparejando los dispositivos por tipo y dirección. Las cuentas que ya existen aquí no se tocan.",
+	"settings_backup_restore_passphrase": "Frase de contraseña de este paquete",
+	"settings_backup_restore_title": "Restaurar un paquete",
+	"settings_backup_restored": "Restaurado",
+	"settings_backup_schedule_env_secret": "El secreto proviene del entorno, por lo que no se copia aquí.",
+	"settings_backup_schedule_intro_key": "Una copia en línea y coherente de la base de datos se escribe en {directory}, con una copia de secret.key al lado.",
+	"settings_backup_schedule_intro_nokey": "Una copia en línea y coherente de la base de datos se escribe en {directory}.",
+	"settings_backup_schedule_same_volume": "Están en el mismo volumen que la base de datos: deshacen un error, no la pérdida de un disco.",
+	"settings_backup_scheduled_title": "Copias locales programadas",
+	"settings_backup_secret_bundle": "El paquete de abajo es la excepción: sus secretos se vuelven a cifrar con la frase de contraseña que elija, de modo que se restaura en una instancia nueva que tiene su propio secreto.",
+	"settings_backup_secret_env": "Este servidor lee su secreto de DUMBMONIT_SECRET, así que no hay ningún archivo que copiar. Guarde ese valor en su gestor de contraseñas: sin él, una copia de la base de datos restaura una instancia que no puede comunicarse con nada.",
+	"settings_backup_secret_file": "Las contraseñas de dispositivos, las comunidades SNMP y los secretos de los canales se cifran con una clave derivada de {path}. Una copia de la base de datos sin ese archivo restaura una instancia que no puede comunicarse con nada — y el servidor se niega a arrancar en lugar de fingir lo contrario. Cópielo junto con la base de datos.",
+	"settings_backup_secret_title": "El secreto de la instancia es lo que descifra sus credenciales",
+	"settings_backup_title": "Copia de seguridad",
+	"settings_backup_to_create": "{count} por crear",
+	"settings_backup_to_update": "{count} por actualizar",
+	"settings_backup_without_key": "Sin la clave",
+	"settings_backup_write_error": "No se pudo escribir la copia de seguridad",
+	"settings_music_account": "Cuenta",
+	"settings_music_admin_only": "Un administrador puede conectar aquí una cuenta de Spotify.",
+	"settings_music_app": "App (Client ID)",
+	"settings_music_connect_button": "Conectar Spotify",
+	"settings_music_connect_heading": "Spotify Connect",
+	"settings_music_connect_intro": "El muro se convierte en un altavoz llamado {name}: en la app de Spotify del móvil, abre Dispositivos y elígelo; el sonido sale de la pantalla. La pared también muestra lo que suena en la cuenta, donde sea: la app de la tele, un altavoz con cast, tu portátil.",
+	"settings_music_connected_at": "Conectado",
+	"settings_music_connected_default": "Conectado",
+	"settings_music_copy_redirect": "Copiar URI de redirección",
+	"settings_music_description": "Inicia música desde el móvil y escúchala en la pantalla de pared, o envíale un enlace de Spotify, Deezer o YouTube.",
+	"settings_music_disconnect": "Desconectar",
+	"settings_music_disconnect_confirm": "¿Desconectar Spotify?",
+	"settings_music_disconnect_error": "No se pudo desconectar",
+	"settings_music_err_client_id": "Pega el Client ID de la página de tu app en el Spotify Developer Dashboard (32 letras y dígitos).",
+	"settings_music_expired": "Spotify terminó la conexión. Conecta de nuevo abajo: el Client ID se conserva.",
+	"settings_music_expired_reason": "Spotify terminó la conexión ({reason}). Conecta de nuevo abajo: el Client ID se conserva.",
+	"settings_music_finish": "Terminar de conectar",
+	"settings_music_finish_error": "No se pudo terminar la conexión",
+	"settings_music_link_heading": "Reproducir un enlace en las paredes",
+	"settings_music_link_intro": "Sin Premium, o para Deezer y YouTube —que no tienen un mando tipo Connect en la web—, envía un enlace desde cualquier pantalla, incluido el móvil: cada pared lo reproduce en el reproductor del servicio. Un navegador sin sesión de Spotify o Deezer en la pared reproduce fragmentos de 30 segundos.",
+	"settings_music_link_label": "Enlace para reproducir en las paredes",
+	"settings_music_load_error": "No se pudieron cargar los ajustes de música",
+	"settings_music_missing": "Este servidor aún no ofrece música de pared: actualiza DumbMonit.",
+	"settings_music_missing_scopes": "Spotify no concedió {scopes}: reconecta y acepta todos los permisos.",
+	"settings_music_needs_1": "Spotify Premium, en la cuenta propietaria de la app. Una app personal (modo desarrollo) admite hasta cinco cuentas: añade otras en User Management.",
+	"settings_music_needs_2": "El móvil debe tener la sesión iniciada en la misma cuenta de Spotify que la conectada aquí: un altavoz de navegador solo aparece para su propia cuenta, no para otros miembros de un plan Familiar, y no se encuentra en la red como un altavoz inteligente.",
+	"settings_music_needs_3": "Para que la pared sea un altavoz, su navegador debe abrir DumbMonit por HTTPS (o como localhost en la propia pantalla) y tener DRM funcional (Widevine): Chrome, Edge o Firefox en un ordenador, Chromium con Widevine en una Raspberry Pi. La mayoría de los navegadores de smart TV y quioscos no pueden: la pared lo indica en pantalla y las paredes de abajo lo muestran aquí.",
+	"settings_music_needs_4": "Los navegadores mantienen una página en silencio hasta que se toca: toca o pulsa una tecla en la pared una vez cargada (o inicia el navegador de quiosco con --autoplay-policy=no-user-gesture-required).",
+	"settings_music_needs_5": "«Reproduciendo ahora» funciona sin nada de eso: el servidor pregunta a Spotify qué suena cada pocos segundos, incluso por HTTP simple.",
+	"settings_music_needs_6": "Spotify termina una conexión seis meses después de aprobarla: conecta de nuevo antes de la fecha indicada.",
+	"settings_music_needs_heading": "Qué necesita",
+	"settings_music_not_connected": "Spotify no está conectado",
+	"settings_music_nothing_playing": "No suena nada en esta cuenta.",
+	"settings_music_nothing_sent": "No se envía nada a las paredes. Un administrador puede enviar un enlace.",
+	"settings_music_now_artists": " — {artists}",
+	"settings_music_now_device": ", en {device}",
+	"settings_music_now_line": "{status}: {title}{artists}{device}",
+	"settings_music_on_walls": "En las paredes",
+	"settings_music_open_spotify": "Abrir Spotify",
+	"settings_music_outcome_connected": "Spotify está conectado.",
+	"settings_music_outcome_denied": "Spotify no concedió el acceso. Empieza de nuevo y elige «Aceptar».",
+	"settings_music_outcome_exchange": "Spotify se negó a completar la conexión. Comprueba que el URI de redirección de abajo esté registrado exactamente igual en tu app.",
+	"settings_music_outcome_hint": "Empieza de nuevo abajo; no se cambió nada.",
+	"settings_music_outcome_internal": "No se pudo guardar la conexión. Revisa los registros del servidor.",
+	"settings_music_outcome_session": "Tu sesión de DumbMonit no es la que inició la conexión. Inicia sesión y empieza de nuevo.",
+	"settings_music_outcome_state": "Esta aprobación era desconocida, había caducado o ya se usó. Empieza de nuevo desde «Conectar Spotify».",
+	"settings_music_outcome_unknown": "La conexión no se completó.",
+	"settings_music_plate_connected": "Spotify conectado",
+	"settings_music_plate_off": "Spotify desactivado",
+	"settings_music_plate_reconnect": "Reconecta Spotify",
+	"settings_music_play_on_wall": "Reproducir en la pared",
+	"settings_music_reconnect_by": "Reconectar antes del",
+	"settings_music_reconnect_note": "Spotify termina las conexiones tras seis meses.",
+	"settings_music_redirect_insecure": "DumbMonit se sirve por HTTP simple y Spotify solo acepta https:// o esta dirección 127.0.0.1. Nada responde allí: tras aprobar, tu navegador muestra una página de error; copia su dirección, lleva el código. Servido por HTTPS, la redirección sería directa.",
+	"settings_music_redirect_secure": "Spotify vuelve directamente a esta página.",
+	"settings_music_right_now": "Ahora mismo",
+	"settings_music_send_error": "No se pudo enviar el enlace",
+	"settings_music_sent_by": "enviado por {name}",
+	"settings_music_start_error": "No se pudo iniciar la conexión",
+	"settings_music_status_paused": "En pausa",
+	"settings_music_status_playing": "Reproduciendo",
+	"settings_music_step1_after": "(cualquier nombre). Marca Web API y Web Playback SDK y añade este URI de redirección:",
+	"settings_music_step1_before": "1. Crea una app en el",
+	"settings_music_step1_link": "Spotify Developer Dashboard",
+	"settings_music_step2_help": "En la página de la app, en Basic Information. No hay secreto que copiar: DumbMonit usa PKCE.",
+	"settings_music_step2_label": "2. Pega su Client ID",
+	"settings_music_step3": "3. Aprueba en Spotify y vuelve aquí.",
+	"settings_music_step4_help": "Empieza por {uri}?code= — válida diez minutos, una sola vez.",
+	"settings_music_step4_label": "4. Pega la dirección de la página a la que llegaste",
+	"settings_music_stop": "Detener",
+	"settings_music_title": "Música de pared",
+	"settings_nav_push": "Notificaciones push",
+	"settings_packs_add_device": "Añadir: {label}",
+	"settings_packs_admin_only_description": "Un paquete decide qué pregunta este servidor a tus dispositivos.",
+	"settings_packs_admin_only_title": "Solo un administrador puede gestionar los paquetes de integración.",
+	"settings_packs_admins_only": "Solo administradores",
+	"settings_packs_change_error": "No se pudo modificar este paquete",
+	"settings_packs_choose": "Elegir pack.yaml",
+	"settings_packs_description": "Tipos de dispositivo escritos en YAML: qué preguntar a un dispositivo, qué cifras conservar y cuándo alertar. Instalar uno lo añade a los dispositivos que puedes vigilar.",
+	"settings_packs_disable_pack": "Desactivar {label}",
+	"settings_packs_disabled": "Desactivado",
+	"settings_packs_docs": "Documentación de los paquetes",
+	"settings_packs_empty_description": "Pega un pack.yaml abajo o sube uno. Los paquetes que instales aparecen en Paquetes de la comunidad al añadir un dispositivo.",
+	"settings_packs_empty_title": "Aún no hay ningún paquete instalado.",
+	"settings_packs_enable_pack": "Activar {label}",
+	"settings_packs_enabled": "Activado",
+	"settings_packs_file_too_big": "Este archivo supera 1 MB: un pack.yaml ocupa unos pocos kilobytes.",
+	"settings_packs_file_unreadable": "No se pudo leer este archivo como texto.",
+	"settings_packs_hint_conflict": "Dos tipos de dispositivo no pueden compartir nombre: cambia el id del paquete.",
+	"settings_packs_hint_enable": "Instala una versión corregida de este paquete y vuelve a activarlo.",
+	"settings_packs_hint_uninstall": "Desactivar conserva esos dispositivos y su historial; desinstalar exige eliminarlos.",
+	"settings_packs_install_button": "Instalar el paquete",
+	"settings_packs_install_error": "No se pudo instalar este paquete",
+	"settings_packs_install_heading": "Instalar un paquete",
+	"settings_packs_install_intro": "Pega su pack.yaml o sube el archivo. El paquete se comprueba antes de guardar nada; instalar una versión más reciente de un paquete instalado lo actualiza y mantiene su estado activado o desactivado. Sus peticiones solo van a los dispositivos que lo usan.",
+	"settings_packs_installed": "instalado {when}",
+	"settings_packs_installed_heading": "Paquetes instalados",
+	"settings_packs_installed_notes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Instalado, con {count} nota del verificador",
+				"countPlural=other": "Instalado, con {count} notas del verificador"
+			}
+		}
+	],
+	"settings_packs_invalid": "No válido — inactivo",
+	"settings_packs_list_error": "No se pudieron listar los paquetes de integración",
+	"settings_packs_loaded": "{name} cargado",
+	"settings_packs_n_devices": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo",
+				"countPlural=other": "{count} dispositivos"
+			}
+		}
+	],
+	"settings_packs_n_metrics": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} métrica",
+				"countPlural=other": "{count} métricas"
+			}
+		}
+	],
+	"settings_packs_n_rules": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} regla de alerta",
+				"countPlural=other": "{count} reglas de alerta"
+			}
+		}
+	],
+	"settings_packs_n_snmp": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} perfil SNMP",
+				"countPlural=other": "{count} perfiles SNMP"
+			}
+		}
+	],
+	"settings_packs_note": "Nota",
+	"settings_packs_outcome_created": "Instalado",
+	"settings_packs_outcome_unchanged": "Ya instalado: no ha cambiado nada",
+	"settings_packs_outcome_updated": "Actualizado",
+	"settings_packs_restart": "Reinicia DumbMonit para usar sus perfiles SNMP: se leen al iniciar el servidor. Todo lo demás del paquete ya funciona.",
+	"settings_packs_rules_added": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} regla de alerta añadida",
+				"countPlural=other": "{count} reglas de alerta añadidas"
+			}
+		}
+	],
+	"settings_packs_title": "Paquetes de integración",
+	"settings_packs_uninstall": "Desinstalar",
+	"settings_packs_uninstall_confirm": "¿Desinstalar definitivamente?",
+	"settings_packs_upload_label": "Subir un archivo",
+	"settings_packs_val_headline": "Este paquete no se puede instalar.",
+	"settings_packs_val_link": "Formato de los paquetes",
+	"settings_packs_val_link_tail": "explica cada campo.",
+	"settings_packs_val_note": "No se guardó nada. Corrige estos puntos en el YAML y vuelve a instalar.",
+	"settings_packs_yaml_label": "YAML del paquete",
+	"settings_password_hide": "Ocultar contraseña",
+	"settings_password_show": "Mostrar contraseña",
+	"settings_push_action_error": "No se pudieron actualizar las notificaciones push",
+	"settings_push_browser": "Navegador",
+	"settings_push_description": "Las alertas como notificaciones nativas en este teléfono u ordenador, incluso con DumbMonit cerrado. Sin instalar ninguna aplicación.",
+	"settings_push_device_installed": "{device} · aplicación instalada",
+	"settings_push_enable": "Activar en este dispositivo",
+	"settings_push_enabled_notice": "Este dispositivo recibirá notificaciones push. Envíe una prueba para comprobarlo.",
+	"settings_push_help_channel": "Qué alertas llegan lo decide un canal Web Push en Alertas → Notificaciones.",
+	"settings_push_help_desktop_body": "funciona en Chrome, Edge, Firefox y Safari. Instalar la aplicación (barra de direcciones → Instalar) es opcional, pero la deja a un toque.",
+	"settings_push_help_desktop_lead": "Android, Windows, macOS, Linux:",
+	"settings_push_help_domains_body": "el servidor envía al servicio push del fabricante del navegador, por lo que necesita HTTPS saliente hacia fcm.googleapis.com (Chrome, Edge en Android), *.notify.windows.com (Edge), updates.push.services.mozilla.com (Firefox) y *.push.apple.com (Safari). Los mensajes van cifrados de extremo a extremo: esos servicios no pueden leerlos.",
+	"settings_push_help_domains_lead": "Dominios:",
+	"settings_push_help_guide": "Guía completa →",
+	"settings_push_help_https_body": "Los navegadores solo ofrecen push en un origen seguro: ponga DumbMonit detrás de un proxy inverso con certificado. http://localhost también funciona, para probar en el propio servidor.",
+	"settings_push_help_https_lead": "Se requiere HTTPS.",
+	"settings_push_help_ios_body": "abra DumbMonit en Safari, Compartir → Añadir a pantalla de inicio, ábralo desde el icono de la pantalla de inicio y active aquí el push.",
+	"settings_push_help_ios_lead": "iPhone y iPad (iOS 16.4 o posterior):",
+	"settings_push_help_label": "Cómo funcionan las notificaciones push",
+	"settings_push_last_failed": "El último intento falló: {error}",
+	"settings_push_load_error": "No se pudieron leer las notificaciones push",
+	"settings_push_meta_added": "{service} · añadido el {date}",
+	"settings_push_meta_delivered": "{service} · añadido el {date} · última entrega {when}",
+	"settings_push_none": "Ninguno todavía. Active el push en cada teléfono u ordenador que deba sonar.",
+	"settings_push_plate_blocked": "Bloqueadas",
+	"settings_push_plate_enabled": "Activadas",
+	"settings_push_plate_https": "Requiere HTTPS",
+	"settings_push_plate_install": "Instalar primero",
+	"settings_push_plate_off": "Desactivadas",
+	"settings_push_plate_unsupported": "No compatible",
+	"settings_push_remove": "Quitar",
+	"settings_push_remove_confirm": "¿Quitar este dispositivo?",
+	"settings_push_subscribed": "Dispositivos suscritos",
+	"settings_push_test": "Enviar una prueba",
+	"settings_push_text_blocked": "Las notificaciones están bloqueadas para este sitio. Permítalas en la configuración del sitio del navegador y recargue.",
+	"settings_push_text_https": "Abra DumbMonit por HTTPS (o en localhost) para activar el push. Esta dirección es {origin}.",
+	"settings_push_text_install": "En iPhone y iPad, añada DumbMonit a la pantalla de inicio (Compartir → Añadir a pantalla de inicio), ábralo desde allí y vuelva aquí.",
+	"settings_push_text_off": "Aún no recibe notificaciones push.",
+	"settings_push_text_unsupported": "Este navegador no puede recibir notificaciones push. Pruebe una versión reciente de Chrome, Edge, Firefox o Safari.",
+	"settings_push_this_device": "Este dispositivo",
+	"settings_push_this_device_tag": "(este dispositivo)",
+	"settings_push_title": "Notificaciones push",
+	"settings_report_cancel": "Cancelar",
+	"settings_report_channel": "Canal de correo",
+	"settings_report_channel_default": "Primer canal de correo activado",
+	"settings_report_channel_disabled": "{name} (desactivado)",
+	"settings_report_channel_help": "Solo se usa su servidor de correo; sus propios destinatarios se ignoran.",
+	"settings_report_create": "Crear informe",
+	"settings_report_day": "Día",
+	"settings_report_day_of_month": "Día del mes",
+	"settings_report_day_of_month_help": "De 1 a 28.",
+	"settings_report_default_name": "Informe del equipo",
+	"settings_report_delete": "Eliminar",
+	"settings_report_delete_confirm": "¿Eliminar definitivamente?",
+	"settings_report_dirty": "Cambios sin guardar: guarde antes de enviar una vista previa.",
+	"settings_report_freq_daily": "Diario",
+	"settings_report_freq_monthly": "Mensual",
+	"settings_report_freq_weekly": "Semanal",
+	"settings_report_frequency": "Frecuencia",
+	"settings_report_hour": "Hora",
+	"settings_report_last_failed": "El último envío falló: {error}",
+	"settings_report_last_sent": "Último envío {when}",
+	"settings_report_name": "Nombre",
+	"settings_report_name_help": "Solo se muestra en esta lista.",
+	"settings_report_never_sent": "Nunca enviado",
+	"settings_report_next": "Próximo informe {when}",
+	"settings_report_off": "Desactivado",
+	"settings_report_preview_error": "No se pudo enviar la vista previa",
+	"settings_report_preview_failed": "Vista previa enviada a {sent}, fallida para {failed}.",
+	"settings_report_preview_sent": [
+		{
+			"declarations": [
+				"input sent",
+				"local sentPlural = sent: plural"
+			],
+			"selectors": [
+				"sentPlural"
+			],
+			"match": {
+				"sentPlural=one": "Vista previa enviada a {sent} destinatario.",
+				"sentPlural=other": "Vista previa enviada a {sent} destinatarios."
+			}
+		}
+	],
+	"settings_report_recipients": "Destinatarios",
+	"settings_report_recipients_help": "Uno por línea o separados por comas. Hasta {max}; no tienen que ser usuarios de DumbMonit. {count} introducidos.",
+	"settings_report_recipients_max": [
+		{
+			"declarations": [
+				"input max",
+				"local maxPlural = max: plural"
+			],
+			"selectors": [
+				"maxPlural"
+			],
+			"match": {
+				"maxPlural=one": "Como máximo {max} destinatario.",
+				"maxPlural=other": "Como máximo {max} destinatarios."
+			}
+		}
+	],
+	"settings_report_recipients_required": "Añada al menos una dirección antes de activar el informe.",
+	"settings_report_save": "Guardar",
+	"settings_report_save_error": "No se pudo guardar el informe",
+	"settings_report_saved": "Guardado.",
+	"settings_report_send": "Enviar informes",
+	"settings_report_send_preview": "Enviar una vista previa",
+	"settings_report_timezone": "Zona horaria",
+	"settings_report_timezone_help": "Un nombre IANA como Europe/Paris. Se sigue el horario de verano.",
+	"settings_reports_add": "Añadir un informe",
+	"settings_reports_description": "Un correo breve para el equipo: cómo se comportó la infraestructura durante el último día, semana o mes.",
+	"settings_reports_empty_description": "Semanal por defecto, el lunes por la mañana, en su zona horaria.",
+	"settings_reports_empty_title": "Aún no hay informes.",
+	"settings_reports_info_availability": "La disponibilidad durante el periodo, global, por grupo y por dispositivo, calculada como en una página de estado.",
+	"settings_reports_info_compare": "Cómo se compara todo con el periodo anterior de la misma duración.",
+	"settings_reports_info_footer": "Tablas sencillas, sin imágenes remotas. Cada destinatario recibe su propio correo. El periodo son las 24 horas, 7 días o 30 días anteriores al envío.",
+	"settings_reports_info_incidents": "Los incidentes del periodo: cuándo empezó cada uno, cuánto duró y en qué dispositivo.",
+	"settings_reports_info_label": "¿Qué contiene un informe?",
+	"settings_reports_info_title": "Contenido de un informe",
+	"settings_reports_info_unstable": "Los cinco dispositivos menos estables.",
+	"settings_reports_load_error": "No se pudieron cargar los informes",
+	"settings_reports_no_channel_link": "Añada uno en Alertas → Notificaciones.",
+	"settings_reports_no_channel_plate": "Sin canal de correo",
+	"settings_reports_no_channel_text": "Los informes se envían a través de un canal de correo (SMTP).",
+	"settings_reports_read_more": "Más información",
+	"settings_reports_setup": "Configurar un informe",
+	"settings_reports_title": "Informes",
+	"settings_security_change": "Cambiar contraseña",
+	"settings_security_change_error": "No se pudo cambiar la contraseña",
+	"settings_security_changed": "Contraseña cambiada: tus otras sesiones se han cerrado",
+	"settings_security_confirm_label": "Confirmar nueva contraseña",
+	"settings_security_current_label": "Contraseña actual",
+	"settings_security_default_provider": "tu proveedor de identidad",
+	"settings_security_description": "Tu cuenta y esta sesión.",
+	"settings_security_description_user": "Tu cuenta: {username}.",
+	"settings_security_err_current": "Introduce la contraseña actual para demostrar que eres tú.",
+	"settings_security_err_current_wrong": "La contraseña actual es incorrecta.",
+	"settings_security_err_mismatch": "Las dos contraseñas nuevas no coinciden. Escribe la confirmación de nuevo.",
+	"settings_security_err_same": "La nueva contraseña es igual a la actual. Elige otra distinta.",
+	"settings_security_managed_by": "Gestionado por {provider}",
+	"settings_security_new_help": "Al menos {min} caracteres. Una frase entera es más segura que una palabra complicada.",
+	"settings_security_new_label": "Nueva contraseña",
+	"settings_security_no_protection": "Esta instancia no tiene protección por contraseña.",
+	"settings_security_oidc_note": "Inicias sesión mediante el proveedor de identidad: no hay contraseña de DumbMonit que cambiar.",
+	"settings_security_session_hint": "Cierra sesión en este dispositivo. Las otras sesiones siguen abiertas.",
+	"settings_security_session_title": "Esta sesión",
+	"settings_security_sign_out": "Cerrar sesión",
+	"settings_security_title": "Cuenta y seguridad",
+	"settings_speaker_account": "Cuenta",
+	"settings_speaker_account_note": "— el móvil debe tener la sesión iniciada en esta cuenta de Spotify para ver la pared.",
+	"settings_speaker_browser_default": "Un navegador",
+	"settings_speaker_connected": "Conectado",
+	"settings_speaker_device_playing": "{name} (reproduciendo)",
+	"settings_speaker_err_name": "El nombre de un altavoz tiene como máximo 64 caracteres.",
+	"settings_speaker_heading": "Altavoz",
+	"settings_speaker_in_devices": "En los dispositivos de Spotify",
+	"settings_speaker_listed_as": "Aparece en Spotify como {name}.",
+	"settings_speaker_listed_no": "Ahora mismo no",
+	"settings_speaker_listed_yes": "Sí: los móviles de esta cuenta pueden elegirlo",
+	"settings_speaker_lists": "Spotify lista: {devices}",
+	"settings_speaker_lists_none": "Spotify no lista ningún dispositivo en esta cuenta ahora mismo.",
+	"settings_speaker_missing": "Este servidor aún no informa del altavoz: actualiza DumbMonit.",
+	"settings_speaker_name_help": "Lo que los móviles listan en Dispositivos. Todas las paredes lo usan; añade ?speaker=Cocina a la dirección de una pared para nombrar solo esa. Vacío: «DumbMonit Wall».",
+	"settings_speaker_name_label": "Nombre en Spotify",
+	"settings_speaker_phase_connecting": "Conectando",
+	"settings_speaker_phase_error": "Detenida",
+	"settings_speaker_phase_locked": "Lista, sonido bloqueado",
+	"settings_speaker_phase_not_listed": "No aparece en Spotify",
+	"settings_speaker_phase_off": "Desactivada en esta pantalla",
+	"settings_speaker_phase_ready": "Lista",
+	"settings_speaker_phase_unsupported": "No puede reproducir aquí",
+	"settings_speaker_premium": "Premium",
+	"settings_speaker_premium_no": "No: la pared no puede ser un altavoz",
+	"settings_speaker_premium_unknown": "Aún no se sabe (una pared lo indica al conectarse)",
+	"settings_speaker_premium_yes": "Sí",
+	"settings_speaker_read_error": "No se pudo leer el altavoz",
+	"settings_speaker_refresh": "Actualizar",
+	"settings_speaker_refresh_aria": "Actualizar el estado del altavoz",
+	"settings_speaker_rename": "Renombrar",
+	"settings_speaker_rename_error": "No se pudo renombrar el altavoz.",
+	"settings_speaker_test_fail": "Spotify no comenzó a reproducir.",
+	"settings_speaker_test_hint": "Reproduce la cuenta en «{name}», retomando lo último que sonaba.",
+	"settings_speaker_test_ok": "Spotify suena ahora en «{name}»: escucha la pared. ¿No oyes nada? Toca la pared una vez para desbloquear el sonido.",
+	"settings_speaker_test_sound": "Probar sonido",
+	"settings_speaker_wall_meta": "· como «{name}» · {when}",
+	"settings_speaker_walls": "Paredes",
+	"settings_speaker_walls_none": "Ninguna pared se ha comunicado en los últimos quince minutos. Abre /wall en la pantalla (con sesión iniciada, también cuentas de lector) y aparecerá aquí en menos de un minuto.",
+	"settings_sso_admin_groups": "Grupos de administradores",
+	"settings_sso_admin_groups_help": "Separados por comas. Los miembros pasan a ser administradores, el resto lectores (u operadores, abajo): se reevalúa en cada inicio de sesión. Con ambas listas vacías, los roles se gestionan aquí.",
+	"settings_sso_alg_warning": "Este proveedor no indica RS256 ni ES256: DumbMonit solo acepta esas firmas.",
+	"settings_sso_autocreate_env_hint": "Define DUMBMONIT_OIDC_AUTO_CREATE=true o actívalo en Más opciones y guarda.",
+	"settings_sso_autocreate_help": "Desactivado por defecto. Desactivado: solo pueden iniciar sesión las cuentas ya vinculadas o cuyo correo verificado por el proveedor coincide con su nombre de usuario. Un administrador local con contraseña nunca se vincula automáticamente.",
+	"settings_sso_autocreate_label": "Crear cuentas en el primer inicio de sesión",
+	"settings_sso_autocreate_off_body": "A las identidades nuevas no se les crea una cuenta en el primer inicio de sesión: este ajuste nunca se eligió y ahora está desactivado por defecto (versiones anteriores lo activaban). Solo pueden iniciar sesión las cuentas ya vinculadas o las que coinciden con un correo verificado por el proveedor.",
+	"settings_sso_autocreate_plate": "Creación de cuentas desactivada",
+	"settings_sso_autocreate_ui_hint": "Actívalo en Más opciones si lo quieres.",
+	"settings_sso_client_id": "ID de cliente",
+	"settings_sso_client_secret": "Secreto de cliente",
+	"settings_sso_description": "Permite que las personas inicien sesión con tu proveedor OpenID Connect: Authentik, Keycloak, Authelia, Pocket ID y similares.",
+	"settings_sso_discovery_failed": "Falló el descubrimiento",
+	"settings_sso_discovery_ok": "Descubrimiento correcto",
+	"settings_sso_err_client_id": "Introduce el ID de cliente registrado en el proveedor.",
+	"settings_sso_err_issuer": "Introduce la URL del emisor, por ejemplo https://id.example.org/application/o/dumbmonit/.",
+	"settings_sso_err_secret": "Introduce el secreto de cliente del proveedor.",
+	"settings_sso_err_url": "Introduce una URL completa que empiece por http:// o https://.",
+	"settings_sso_forget": "Olvidar los ajustes guardados",
+	"settings_sso_found": "Proveedor encontrado",
+	"settings_sso_groups_claim": "Claim de grupos",
+	"settings_sso_groups_claim_help": "Nombre del claim del token que lista los grupos del usuario.",
+	"settings_sso_issuer": "URL del emisor",
+	"settings_sso_issuer_help": "El descubrimiento se lee de la URL del emisor seguida de /.well-known/openid-configuration.",
+	"settings_sso_load_error": "No se pudieron cargar los ajustes del inicio de sesión único",
+	"settings_sso_more": "Más opciones",
+	"settings_sso_no_answer": "El proveedor no respondió.",
+	"settings_sso_note_env": "Estos valores provienen de variables de entorno. Guardar aquí las sustituye para siempre: lo guardado prevalece y las variables solo se aplican mientras no haya nada guardado.",
+	"settings_sso_note_none": "Aún no hay nada configurado. Rellena esto o define las variables de entorno DUMBMONIT_OIDC_*: lo guardado aquí prevalece.",
+	"settings_sso_note_settings": "Se aplican los ajustes guardados. Las variables de entorno (DUMBMONIT_OIDC_*) solo se aplican mientras no haya nada guardado aquí.",
+	"settings_sso_off": "Desactivado",
+	"settings_sso_on": "Activado — {provider}",
+	"settings_sso_operator_groups": "Grupos de operadores",
+	"settings_sso_operator_groups_help": "Separados por comas. Los miembros que no son administradores pasan a ser operadores: gestionan alertas (reconocer, ignorar, posponer) pero no cambian la configuración.",
+	"settings_sso_provider_help": "Etiqueta del botón de inicio de sesión: «Continuar con …».",
+	"settings_sso_provider_name": "Nombre del proveedor",
+	"settings_sso_public_url": "URL pública",
+	"settings_sso_public_url_help": "Cómo llegan los navegadores a DumbMonit. Se usa para construir el URI de redirección de abajo.",
+	"settings_sso_redirect_copy": "Copiar URI de redirección",
+	"settings_sso_redirect_heading": "Registra este URI de redirección en tu proveedor",
+	"settings_sso_row_authorization": "Autorización",
+	"settings_sso_row_issuer": "Emisor",
+	"settings_sso_row_keys": "Claves",
+	"settings_sso_row_scopes": "Ámbitos",
+	"settings_sso_row_signing": "Firma",
+	"settings_sso_row_token": "Token",
+	"settings_sso_save": "Guardar cambios",
+	"settings_sso_save_error": "No se pudieron guardar los ajustes",
+	"settings_sso_saved": "Guardado",
+	"settings_sso_scopes": "Ámbitos (scopes)",
+	"settings_sso_scopes_help": "Separados por espacios. Añade el ámbito que lleva tu claim de grupos si tu proveedor lo necesita.",
+	"settings_sso_secret_help": "Se guarda cifrado y no se vuelve a mostrar.",
+	"settings_sso_secret_stored": "Hay un secreto guardado. Déjalo vacío para conservarlo.",
+	"settings_sso_test": "Probar el descubrimiento",
+	"settings_sso_test_error": "No se pudo ejecutar la prueba",
+	"settings_sso_title": "Inicio de sesión único",
+	"settings_sso_turn_off": "¿Desactivar el inicio de sesión único?",
+	"settings_sso_use_env": "¿Usar los valores del entorno?",
+	"settings_update_available": "Actualización disponible: v{version}",
+	"settings_update_backup_body": "Ajustes → Copia de seguridad, y conserve una copia de /data/secret.key (sin ella, las contraseñas y los tokens almacenados no se pueden descifrar).",
+	"settings_update_backup_lead": "Haga una copia de seguridad primero.",
+	"settings_update_check_error": "No se pudo buscar actualizaciones: {error}",
+	"settings_update_check_now": "Comprobar ahora",
+	"settings_update_checked": "Comprobado {when}",
+	"settings_update_copy_command": "Copiar comando",
+	"settings_update_data_kept": "Sus datos están en el volumen /data y se conservan. La página se recarga sola cuando el servidor vuelve.",
+	"settings_update_guide": "Guía de actualización →",
+	"settings_update_how": "Cómo actualizar",
+	"settings_update_last_failed": "El último intento falló: {error}",
+	"settings_update_looking": "Buscando actualizaciones…",
+	"settings_update_off": "La comprobación de actualizaciones está desactivada.",
+	"settings_update_off_env": "La comprobación de actualizaciones está desactivada (DUMBMONIT_UPDATE_CHECK=off).",
+	"settings_update_off_releases": "Consulte la página de versiones para ver las novedades.",
+	"settings_update_pull_body": "desde la carpeta que contiene su docker-compose.yml:",
+	"settings_update_pull_lead": "Descargue la nueva imagen y reinicie",
+	"settings_update_read_error": "No se pudo leer el estado de las actualizaciones",
+	"settings_update_release_notes": "Notas de la versión →",
+	"settings_update_toggle": "Buscar nuevas versiones",
+	"settings_update_toggle_help": "Buscar nuevas versiones. El servidor hace como máximo una petición anónima al día a la API pública de GitHub (api.github.com); no se envía nada de su instancia. Desactívelo en redes aisladas o defina DUMBMONIT_UPDATE_CHECK=off.",
+	"settings_update_up_to_date": "Está al día.",
+	"settings_update_whats_new": "Ver las novedades",
+	"settings_users_2fa_title": "La autenticación de dos factores está activada",
+	"settings_users_add": "Añadir usuario",
+	"settings_users_auth_password": "Contraseña",
+	"settings_users_auth_password_title": "Inicia sesión con contraseña",
+	"settings_users_auth_sso_title": "Inicia sesión mediante el proveedor de identidad",
+	"settings_users_cancel": "Cancelar",
+	"settings_users_copy_password": "Copiar contraseña",
+	"settings_users_create": "Crear usuario",
+	"settings_users_create_error": "No se pudo crear el usuario",
+	"settings_users_created": "Usuario «{username}» creado",
+	"settings_users_created_shown": "Contraseña mostrada una sola vez: entrégala ahora",
+	"settings_users_delete": "Eliminar",
+	"settings_users_delete_confirm": "¿Eliminar definitivamente?",
+	"settings_users_description": "Quién puede iniciar sesión. Los administradores cambian cosas; los operadores gestionan alertas; los lectores solo miran.",
+	"settings_users_disabled": "Desactivado",
+	"settings_users_display_help": "Opcional. Se muestra en la barra superior en lugar del nombre de usuario.",
+	"settings_users_display_name": "Nombre para mostrar",
+	"settings_users_done": "Hecho",
+	"settings_users_edit": "Editar",
+	"settings_users_edit_aria": "Editar {username}",
+	"settings_users_empty_description": "Añade la primera cuenta para iniciar sesión.",
+	"settings_users_empty_title": "No hay usuarios.",
+	"settings_users_enabled": "Activado",
+	"settings_users_err_password": "Define una contraseña: el inicio de sesión único no está activado y, de lo contrario, este usuario no podría iniciar sesión.",
+	"settings_users_err_spaces": "El nombre de usuario no puede contener espacios.",
+	"settings_users_err_username": "Introduce un nombre de usuario.",
+	"settings_users_generate": "Generar",
+	"settings_users_generate_title": "Generar una contraseña aleatoria",
+	"settings_users_last_seen": "Último inicio de sesión {last} · Creado {created}",
+	"settings_users_load_error": "No se pudieron cargar los usuarios",
+	"settings_users_never": "nunca",
+	"settings_users_new_aria": "Nuevo usuario",
+	"settings_users_no_delete_last": "El último administrador no se puede eliminar. Asciende antes a otro usuario.",
+	"settings_users_no_delete_self": "No puedes eliminar tu propia cuenta.",
+	"settings_users_no_disable_last": "El último administrador no se puede desactivar. Asciende antes a otro usuario.",
+	"settings_users_no_disable_self": "No puedes desactivar tu propia cuenta.",
+	"settings_users_password": "Contraseña",
+	"settings_users_password_help": "Al menos {min} caracteres. Se muestra una sola vez tras la creación.",
+	"settings_users_password_help_sso": "Al menos {min} caracteres. Déjalo vacío para un usuario que solo inicia sesión con {provider}.",
+	"settings_users_promote_first": "Asciende antes a otro usuario.",
+	"settings_users_reset2fa": "Restablecer 2FA",
+	"settings_users_reset2fa_confirm": "¿Restablecer el doble factor?",
+	"settings_users_reset2fa_title": "Elimina su autenticador y sus códigos de recuperación y cierra su sesión: bastará la contraseña para volver a entrar.",
+	"settings_users_reset_help": "Déjalo vacío para conservar la contraseña actual. Una nueva cierra la sesión del usuario en todas partes.",
+	"settings_users_reset_help_sso": "Déjalo vacío para que esta cuenta siga solo con inicio de sesión único.",
+	"settings_users_reset_password": "Restablecer contraseña",
+	"settings_users_reset_shown": "Se muestra una sola vez: sus otras sesiones se han cerrado",
+	"settings_users_reset_title": "Contraseña restablecida para «{username}»",
+	"settings_users_role": "Rol",
+	"settings_users_role_admin": "Administrador",
+	"settings_users_role_admin_option": "Administrador — puede cambiarlo todo",
+	"settings_users_role_last_admin_help": "El último administrador conserva el rol hasta que exista otro.",
+	"settings_users_role_operator": "Operador",
+	"settings_users_role_operator_option": "Operador — gestiona alertas, sin configuración",
+	"settings_users_role_viewer": "Lector",
+	"settings_users_role_viewer_option": "Lector — solo lectura",
+	"settings_users_save": "Guardar cambios",
+	"settings_users_save_error": "No se pudo guardar el usuario",
+	"settings_users_title": "Usuarios",
+	"settings_users_update_error": "No se pudo actualizar el usuario",
+	"settings_users_username": "Nombre de usuario",
+	"settings_users_you": "tú",
 	"status_action_back": "Volver a la página de estado",
 	"status_action_confirm_button": "Confirmar suscripción",
 	"status_action_confirm_done": "Estás suscrito. Cada mensaje incluye un enlace para darte de baja.",
@@ -4253,13 +5422,69 @@
 	"status_public_services": "Servicios",
 	"status_public_switch_dark": "Cambiar al tema oscuro",
 	"status_public_switch_light": "Cambiar al tema claro",
-	"status_public_tally_affected": "{affected} de {total} servicios afectados",
+	"status_public_tally_affected": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "Servicios afectados: {affected} de {total}",
+				"affectedPlural=other": "Servicios afectados: {affected} de {total}"
+			}
+		}
+	],
 	"status_public_tally_all": "Los {count} servicios están operativos",
-	"status_public_tally_degraded": "{affected} de {total} servicios degradados",
-	"status_public_tally_detail": "{up} operativos · {down} caídos",
-	"status_public_tally_detail_uptime": "{up} operativos · {down} caídos · {uptime} en {days} días",
-	"status_public_tally_down": "{affected} de {total} servicios caídos",
-	"status_public_tally_maintenance": "{affected} de {total} servicios en mantenimiento",
+	"status_public_tally_degraded": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "Servicios degradados: {affected} de {total}",
+				"affectedPlural=other": "Servicios degradados: {affected} de {total}"
+			}
+		}
+	],
+	"status_public_tally_detail": "Operativos: {up} · Caídos: {down}",
+	"status_public_tally_detail_uptime": "Operativos: {up} · Caídos: {down} · {uptime} en {days} días",
+	"status_public_tally_down": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "Servicios caídos: {affected} de {total}",
+				"affectedPlural=other": "Servicios caídos: {affected} de {total}"
+			}
+		}
+	],
+	"status_public_tally_maintenance": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=one": "Servicios en mantenimiento: {affected} de {total}",
+				"affectedPlural=other": "Servicios en mantenimiento: {affected} de {total}"
+			}
+		}
+	],
 	"status_public_tally_one": "1 servicio operativo",
 	"status_public_title": "Estado",
 	"status_public_title_with_page": "{title} · Estado",
@@ -4377,6 +5602,62 @@
 	"status_words_st_monitoring": "En observación",
 	"status_words_st_resolved": "Resuelto",
 	"status_words_st_scheduled": "Programado",
+	"tips_alerts_clear_history": "«Borrar todas las resueltas» barre de una vez las alertas cerradas de tu historial, cuando ya las hayas leído.",
+	"tips_alerts_ignore_device": "¿Una regla salta en un dispositivo que nunca va a cumplir? Ignora esa regla solo para ese dispositivo: en todos los demás sigue vigilando.",
+	"tips_alerts_learning": "Una regla de línea base nueva permanece en silencio sus primeros 14 días: aún está aprendiendo qué es lo normal para este dispositivo antes de atreverse a avisar.",
+	"tips_alerts_snooze": "Posponer una alerta le da una ventana fija de calma; vuelve sola cuando termina, sin que tengas que acordarte de reactivarla.",
+	"tips_alerts_suppressed": "Una alerta marcada como «suprimida» no se está ignorando: su padre ya está caído y no te aviso dos veces por la misma caída.",
+	"tips_device_docker": "En un agente con Docker puedes reiniciar o actualizar un contenedor desde aquí mismo, sin terminal.",
+	"tips_device_probe_now": "«Sondear ahora» consulta este dispositivo en este instante, en directo, sin esperar a la siguiente comprobación programada: la forma más rápida de saber por qué se ha quedado callado.",
+	"tips_device_secrets": "Las credenciales nunca vuelven una vez guardadas. Editar este dispositivo sin tocar el campo de la contraseña conserva la ya almacenada: nada regresa a tu pantalla.",
+	"tips_device_silence": "¿Esperas ruido —un reinicio, una actualización de firmware—? Silencia este dispositivo un rato y sus alertas se callarán sin desactivar las comprobaciones.",
+	"tips_device_timeline": "La línea de tiempo bajo el frontal es toda la historia de este dispositivo: cada alerta que se abrió y se cerró, en orden.",
+	"tips_devices_folders": "Arrastra un dispositivo a una carpeta para agruparlo: un sitio, un rack, un cliente. Haz doble clic en el nombre de una carpeta para renombrarla ahí mismo.",
+	"tips_devices_network_scan": "Escanear la red encuentra lo que ya responde antes de que teclees una sola dirección IP a mano.",
+	"tips_devices_network_scan_action": "Escanear mi red",
+	"tips_devices_parent_child": "Una VM o un contenedor bajo su hipervisor hereda los problemas en silencio: si el host está caído, sus invitados se marcan como suprimidos en lugar de avisarte cada uno por separado.",
+	"tips_devices_rack_order": "El rack se ordena solo: los problemas suben arriba y lo demás conserva el orden que le diste. Los hijos siempre quedan sangrados bajo su padre.",
+	"tips_devices_relay_agent": "Un agente puede vigilar por ti toda una segunda red —la oficina de un cliente, un sitio detrás de un NAT— y reportar solo mediante una conexión saliente.",
+	"tips_devices_relay_agent_action": "Vigilar un sitio remoto",
+	"tips_general_about_me": "Soy una paloma. Vivo en tu herramienta de monitorización. He hecho las paces con ello.",
+	"tips_general_docs": "Las explicaciones más largas viven en Read the Docs: este boletín mantiene sus pantallas cortas a propósito.",
+	"tips_general_docs_action": "Leer la documentación",
+	"tips_general_palette_everywhere": "El atajo de teclado de la paleta de comandos sigue funcionando aunque la pista haya desaparecido de la barra de navegación: Ctrl K, o ⌘K en Mac.",
+	"tips_general_palette_everywhere_action": "Abrir la paleta",
+	"tips_general_quiet_option": "Si te parezco demasiado, la × de abajo me guarda por esta visita; o dime que pare para siempre y no volveré a sacar el tema.",
+	"tips_general_security_score": "Cada dispositivo recibe una puntuación de seguridad según lo que realmente expone: no una suposición, una lectura.",
+	"tips_general_security_score_action": "Abrir Seguridad",
+	"tips_overview_briefing": "Esta página es un boletín, no un panel: un cielo, «desde tu última visita» en frases y «te necesita» en tarjetas. Aquí no hay lista de dispositivos a propósito: está en Dispositivos.",
+	"tips_overview_briefing_action": "Ver los dispositivos",
+	"tips_overview_last_7_days": "«Últimos 7 días» resume la semana en tres números: cuánto tiempo estuvo todo activo, el dispositivo más tranquilo y el que más te avisó. Mezquino, pero justo.",
+	"tips_overview_palette_anywhere": "Ctrl K o ⌘K abre la paleta de comandos desde cualquier sitio, incluso aquí, incluso a mitad de un scroll. Sin bucear por los menús.",
+	"tips_overview_palette_anywhere_action": "Abrir la paleta",
+	"tips_overview_sky_weather": "Vivo el tiempo contigo ahí arriba: echo una siesta en el cable en una noche tranquila, me sobresalto cuando algo se rompe y lanzo confeti cuando el cielo se despeja. Prueba a romper algo. (Mejor no.)",
+	"tips_overview_week_ahead": "«La semana que viene» muestra lo que toca cada día: una ventana de mantenimiento, una renovación. Una semana tranquila se reduce a una línea para no pedir una atención que no necesita.",
+	"tips_pip_another": "Otro consejo",
+	"tips_pip_bubble_aria": "Un consejo de Pip",
+	"tips_pip_close_pip": "Cerrar a Pip",
+	"tips_pip_close_tip_aria": "Cerrar este consejo",
+	"tips_pip_close_tip_title": "Cerrar",
+	"tips_pip_guide": "Guía de {label}",
+	"tips_pip_open": "Pip tiene un consejo",
+	"tips_pip_quiet": "No volver a mostrar consejos",
+	"tips_settings_2fa": "La autenticación en dos pasos está a un código QR de distancia, en Cuenta y seguridad: merece la pena para la única cuenta que ve todas las credenciales de este servidor.",
+	"tips_settings_2fa_action": "Cuenta y seguridad",
+	"tips_settings_assistant": "Claude, ChatGPT o cualquier cliente MCP puede leer este boletín y, con un token de escritura, silenciar un dispositivo o lanzar un sondeo por ti.",
+	"tips_settings_assistant_action": "Conectar un asistente",
+	"tips_settings_backup": "El paquete de copia de seguridad está cifrado, pero aun así contiene todas las credenciales que conoce este servidor. Guarda `/data/secret.key` con tanto cuidado como el propio paquete.",
+	"tips_settings_backup_action": "Hacer copia de esta instancia",
+	"tips_settings_packs": "Un tipo de dispositivo es solo un archivo YAML: un paquete de integración. Instala uno para enseñarme un dispositivo que todavía no conozco.",
+	"tips_settings_packs_action": "Paquetes de integración",
+	"tips_settings_wall_appearance": "El modo pared se ajusta en Apariencia, incluido un tema nocturno apto para OLED para una pantalla que nunca se apaga.",
+	"tips_settings_wall_appearance_action": "Abrir el modo pared",
+	"tips_status_embed": "Añade `/embed` al enlace de una página de estado y se integra limpiamente en un iframe: práctico para una wiki interna o una intranet de empresa.",
+	"tips_status_incidents": "Publicar aquí una actualización de incidente mantiene a todos fuera de tu chat, con educación. Las ventanas de mantenimiento aparecen como planificadas, no como una caída sorpresa.",
+	"tips_status_public_page": "Una página de estado responde a «¿está caído?» antes de que nadie tenga que preguntar: elige los servicios, comparte el enlace y listo.",
+	"tips_status_public_page_action": "Crear una página de estado",
+	"tips_status_subscribe": "Los visitantes pueden suscribirse a una página de estado para recibir actualizaciones por correo; el enlace para darse de baja en cada uno de esos correos funciona sin iniciar sesión en ningún sitio.",
+	"tips_status_theme_param": "Una página de estado acepta `?theme=light` o `?theme=dark` en su URL, para que una incrustación coincida con la página que la aloja en vez de adivinar.",
 	"ui.confirm.default_label": "¿Seguro?",
 	"ui.error_notice.default_title": "Algo salió mal",
 	"ui.error_notice.retry": "Intentar de nuevo",

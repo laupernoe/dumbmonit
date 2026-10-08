@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The DumbMonit pigeon: round, slate-blue, googly eyes, orange beak and feet,
 	 * a green chest patch. Drawn as geometry so it stays crisp at 16px and 400px.
@@ -41,7 +42,7 @@
 	const shiftR = $derived(`translate(${pupils.r[0] - R[0]}px, ${pupils.r[1] - R[1]}px)`);
 </script>
 
-<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${flap ? 'mascot-flap' : ''} ${className}`} role="img" aria-label="DumbMonit, the pigeon">
+<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${flap ? 'mascot-flap' : ''} ${className}`} role="img" aria-label={m.misc2_mascot_aria()}>
 	<!-- feet -->
 	<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" fill="#e97b3a" stroke="#1e2640" stroke-width="12" stroke-linejoin="round" />
 	<!-- body -->

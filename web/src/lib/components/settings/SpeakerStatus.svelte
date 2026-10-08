@@ -23,6 +23,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, Field, Led, Plate, Skeleton } from '#lib/ui/index.js';
 	import { formatRelative } from '#lib/format.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		/** Called with the new name after a rename, so the section can say it. */
@@ -74,7 +75,7 @@
 		event.preventDefault();
 		const name = draftName.trim();
 		if (name.length > 64) {
-			nameError = 'A speaker name is at most 64 characters.';
+			nameError = m.settings_speaker_err_name();
 			return;
 		}
 		saving = true;
@@ -86,7 +87,7 @@
 			if (status) status = { ...status, speaker_name: saved.speaker_name };
 			onrenamed?.(saved.speaker_name);
 		} catch (cause) {
-			nameError = cause instanceof Error ? cause.message : 'Could not rename the speaker.';
+			nameError = cause instanceof Error ? cause.message : m.settings_speaker_rename_error();
 		} finally {
 			saving = false;
 		}
@@ -104,11 +105,11 @@
 			const played = await playOnSpeaker(deviceId);
 			testResult = {
 				ok: true,
-				message: `Spotify now plays on “${played.speaker_name}”: listen to the wall. Nothing to hear? Tap the wall once to unlock its sound.`
+				message: m.settings_speaker_test_ok({ name: played.speaker_name })
 			};
 			void load();
 		} catch (cause) {
-			testResult = { ok: false, message: cause instanceof Error ? cause.message : 'Spotify did not start playing.' };
+			testResult = { ok: false, message: cause instanceof Error ? cause.message : m.settings_speaker_test_fail() };
 		} finally {
 			testing = null;
 		}
@@ -121,39 +122,39 @@
 	function wallLine(wall: WallReport): { tone: Tone; word: string } {
 		switch (wall.phase) {
 			case 'ready':
-				if (wall.listed === false) return { tone: 'advisory', word: 'Not listed by Spotify' };
-				return wall.activated ? { tone: 'signal', word: 'Ready' } : { tone: 'advisory', word: 'Ready, sound locked' };
+				if (wall.listed === false) return { tone: 'advisory', word: m.settings_speaker_phase_not_listed() };
+				return wall.activated ? { tone: 'signal', word: m.settings_speaker_phase_ready() } : { tone: 'advisory', word: m.settings_speaker_phase_locked() };
 			case 'starting':
-				return { tone: 'ghost', word: 'Connecting' };
+				return { tone: 'ghost', word: m.settings_speaker_phase_connecting() };
 			case 'unsupported':
-				return { tone: 'warning', word: 'Cannot play here' };
+				return { tone: 'warning', word: m.settings_speaker_phase_unsupported() };
 			case 'error':
-				return { tone: 'warning', word: 'Stopped' };
+				return { tone: 'warning', word: m.settings_speaker_phase_error() };
 			default:
-				return { tone: 'ghost', word: 'Off on this display' };
+				return { tone: 'ghost', word: m.settings_speaker_phase_off() };
 		}
 	}
 
 	const premium = $derived.by((): { tone: Tone; word: string } => {
-		if (status?.premium === true) return { tone: 'signal', word: 'Yes' };
-		if (status?.premium === false) return { tone: 'warning', word: 'No — the wall cannot be a speaker' };
-		return { tone: 'ghost', word: 'Not known yet (a wall tells when it connects)' };
+		if (status?.premium === true) return { tone: 'signal', word: m.settings_speaker_premium_yes() };
+		if (status?.premium === false) return { tone: 'warning', word: m.settings_speaker_premium_no() };
+		return { tone: 'ghost', word: m.settings_speaker_premium_unknown() };
 	});
 </script>
 
 <section aria-labelledby="music-speaker" class="mt-5 rounded-[var(--radius-card)] border border-line p-4">
 	<div class="flex flex-wrap items-center justify-between gap-2">
-		<h4 id="music-speaker" class="text-sm font-semibold text-ink">Speaker</h4>
-		<Button variant="ghost" size="sm" onclick={() => void load()} aria-label="Refresh the speaker status">
+		<h4 id="music-speaker" class="text-sm font-semibold text-ink">{m.settings_speaker_heading()}</h4>
+		<Button variant="ghost" size="sm" onclick={() => void load()} aria-label={m.settings_speaker_refresh_aria()}>
 			<RefreshCw class="size-3.5" aria-hidden="true" />
-			Refresh
+			{m.settings_speaker_refresh()}
 		</Button>
 	</div>
 
 	{#if missing}
-		<p class="mt-2 text-sm text-ink-2">This server does not report the speaker yet: update DumbMonit.</p>
+		<p class="mt-2 text-sm text-ink-2">{m.settings_speaker_missing()}</p>
 	{:else if error && !status}
-		<ErrorNotice class="mt-2" {error} title="Could not read the speaker" onretry={() => void load()} />
+		<ErrorNotice class="mt-2" {error} title={m.settings_speaker_read_error()} onretry={() => void load()} />
 	{:else if loading || !status}
 		<Skeleton class="mt-2 h-8 w-full" rows={3} />
 	{:else}
@@ -161,10 +162,10 @@
 			<form class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end" onsubmit={rename} novalidate>
 				<div class="min-w-0 flex-1">
 					<Field
-						label="Name in Spotify"
+						label={m.settings_speaker_name_label()}
 						for="music-speaker-name"
 						error={nameError}
-						help="What phones list under Devices. Every wall uses it; add ?speaker=Kitchen to one wall's address to name that one alone. Empty: “DumbMonit Wall”."
+						help={m.settings_speaker_name_help()}
 					>
 						<input
 							id="music-speaker-name"
@@ -180,45 +181,44 @@
 						/>
 					</Field>
 				</div>
-				<Button type="submit" variant="secondary" loading={saving} disabled={!editing}>Rename</Button>
+				<Button type="submit" variant="secondary" loading={saving} disabled={!editing}>{m.settings_speaker_rename()}</Button>
 			</form>
 		{:else}
-			<p class="mt-2 text-sm text-ink">Listed in Spotify as <strong class="font-semibold">{status.speaker_name}</strong>.</p>
+			<p class="mt-2 text-sm text-ink">{m.settings_speaker_listed_as({ name: status.speaker_name })}</p>
 		{/if}
 
 		<dl class="mt-3 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
-			<dt class="text-ink-2">Account</dt>
+			<dt class="text-ink-2">{m.settings_speaker_account()}</dt>
 			<dd class="text-ink">
-				{status.account_name ?? 'Connected'}
-				<span class="text-ink-2">— the phone must be signed in to this Spotify account to see the wall.</span>
+				{status.account_name ?? m.settings_speaker_connected()}
+				<span class="text-ink-2">{m.settings_speaker_account_note()}</span>
 			</dd>
-			<dt class="text-ink-2">Premium</dt>
+			<dt class="text-ink-2">{m.settings_speaker_premium()}</dt>
 			<dd class="flex items-center gap-2 text-ink"><Led tone={premium.tone} size="sm" />{premium.word}</dd>
-			<dt class="text-ink-2">In Spotify’s devices</dt>
+			<dt class="text-ink-2">{m.settings_speaker_in_devices()}</dt>
 			<dd class="min-w-0 text-ink">
 				{#if status.error}
 					<span class="text-advisory-ink">{status.error}</span>
 				{:else}
 					<span class="flex items-center gap-2">
 						<Led tone={status.listed ? 'signal' : 'advisory'} size="sm" />
-						{status.listed ? 'Yes — phones on this account can pick it' : 'Not right now'}
+						{status.listed ? m.settings_speaker_listed_yes() : m.settings_speaker_listed_no()}
 					</span>
 					{#if status.devices.length > 0}
 						<span class="mt-0.5 block text-[0.8125rem] text-ink-2">
-							Spotify lists: {status.devices.map((d) => `${d.name}${d.is_active ? ' (playing)' : ''}`).join(', ')}
+							{m.settings_speaker_lists({ devices: status.devices.map((d) => (d.is_active ? m.settings_speaker_device_playing({ name: d.name }) : d.name)).join(', ') })}
 						</span>
 					{:else}
-						<span class="mt-0.5 block text-[0.8125rem] text-ink-2">Spotify lists no device on this account right now.</span>
+						<span class="mt-0.5 block text-[0.8125rem] text-ink-2">{m.settings_speaker_lists_none()}</span>
 					{/if}
 				{/if}
 			</dd>
 		</dl>
 
-		<h5 class="mt-4 text-[0.8125rem] font-semibold text-ink">Walls</h5>
+		<h5 class="mt-4 text-[0.8125rem] font-semibold text-ink">{m.settings_speaker_walls()}</h5>
 		{#if status.walls.length === 0}
 			<p class="mt-1 text-[0.8125rem] text-ink-2">
-				No wall has reported in the last fifteen minutes. Open <a class="font-semibold text-ink hover:underline" href="/wall">/wall</a> on the
-				display (signed in, viewer accounts included) and it shows up here within a minute.
+				{m.settings_speaker_walls_none()}
 			</p>
 		{:else}
 			<ul class="mt-1 grid gap-2">
@@ -227,8 +227,8 @@
 					<li class="grid gap-1 rounded-[var(--radius-card)] border border-line px-3 py-2 text-[0.8125rem]">
 						<div class="flex flex-wrap items-center gap-2">
 							<Plate tone={line.tone} label={line.word} />
-							<span class="font-semibold text-ink">{wall.browser ?? 'A browser'}</span>
-							<span class="text-ink-2">· as “{wall.name}” · {formatRelative(wall.seen_at)}</span>
+							<span class="font-semibold text-ink">{wall.browser ?? m.settings_speaker_browser_default()}</span>
+							<span class="text-ink-2">{m.settings_speaker_wall_meta({ name: wall.name, when: formatRelative(wall.seen_at) })}</span>
 							{#if wall.phase === 'ready' && wall.device_id}
 								<Button
 									variant="ghost"
@@ -238,7 +238,7 @@
 									onclick={() => void test(wall.device_id, wall.display)}
 								>
 									<Play class="size-3.5" aria-hidden="true" />
-									Test sound
+									{m.settings_speaker_test_sound()}
 								</Button>
 							{/if}
 						</div>
@@ -253,9 +253,9 @@
 		<div class="mt-4 flex flex-wrap items-center gap-2">
 			<Button variant="secondary" size="md" loading={testing === 'speaker'} onclick={() => void test(null, 'speaker')}>
 				<Play class="size-4" aria-hidden="true" />
-				Test sound
+				{m.settings_speaker_test_sound()}
 			</Button>
-			<span class="text-[0.8125rem] text-ink-2">Plays the account on “{status.speaker_name}”, resuming what played last.</span>
+			<span class="text-[0.8125rem] text-ink-2">{m.settings_speaker_test_hint({ name: status.speaker_name })}</span>
 		</div>
 		{#if testResult}
 			<p class="mt-2 text-[0.8125rem] font-medium {testResult.ok ? 'text-ink' : 'text-warning-ink'}" role="status">{testResult.message}</p>

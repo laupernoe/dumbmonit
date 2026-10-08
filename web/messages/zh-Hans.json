@@ -3010,6 +3010,289 @@
 	"devicesb_webchange_timeline_view": "查看",
 	"devicesb_webchange_timeline_watching_one": "正在监控 1 个页面。",
 	"devicesb_webchange_timeline_watching_other": "正在监控 {count} 个页面。",
+	"misc2_browser_on": "{system} 上的 {browser}",
+	"misc2_browser_unknown": "某个浏览器",
+	"misc2_folds_container_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个容器已停止"
+			}
+		}
+	],
+	"misc2_folds_device_awaiting_approval": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台设备等待批准"
+			}
+		}
+	],
+	"misc2_folds_disk_disabled_or_missing": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 块磁盘已禁用或缺失"
+			}
+		}
+	],
+	"misc2_folds_disk_with_read_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 块磁盘有读取错误"
+			}
+		}
+	],
+	"misc2_folds_error_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个错误"
+			}
+		}
+	],
+	"misc2_folds_gateway_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个网关宕机"
+			}
+		}
+	],
+	"misc2_folds_gateway_losing_packets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个网关丢包"
+			}
+		}
+	],
+	"misc2_folds_interface_without_link": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个接口无链路"
+			}
+		}
+	],
+	"misc2_folds_ipsec_tunnel_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条 IPsec 隧道中断"
+			}
+		}
+	],
+	"misc2_folds_job_ended_with_a_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个作业带警告结束"
+			}
+		}
+	],
+	"misc2_folds_job_failed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个作业失败"
+			}
+		}
+	],
+	"misc2_folds_licence_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个许可证已过期"
+			}
+		}
+	],
+	"misc2_folds_member_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个成员"
+			}
+		}
+	],
+	"misc2_folds_node_key_expiring_within_14_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个节点密钥将在 14 天内到期"
+			}
+		}
+	],
+	"misc2_folds_repository_nearly_full": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个存储库接近已满"
+			}
+		}
+	],
+	"misc2_folds_service_stopped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 项服务已停止"
+			}
+		}
+	],
+	"misc2_folds_upstream_server_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台上游服务器宕机"
+			}
+		}
+	],
+	"misc2_folds_virtual_disk_with_errors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个虚拟磁盘有错误"
+			}
+		}
+	],
+	"misc2_folds_virtual_machine_in_critical_health": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台虚拟机处于严重状态"
+			}
+		}
+	],
+	"misc2_folds_watched_device_offline": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台受监视设备离线"
+			}
+		}
+	],
+	"misc2_mascot_aria": "DumbMonit，那只鸽子",
 	"misc_ago": "{span}前",
 	"misc_device_amplifier": "功放",
 	"misc_device_cast_speaker": "支持投射的音箱",
@@ -3992,6 +4275,860 @@
 	"settings.section.security": "账户和安全",
 	"settings.section.sso": "单点登录",
 	"settings.section.users": "用户",
+	"settings_2fa_action_agent_token_created": "已创建代理令牌",
+	"settings_2fa_action_agent_token_revoked": "已撤销代理令牌",
+	"settings_2fa_action_login": "已登录",
+	"settings_2fa_action_login_failed": "登录失败",
+	"settings_2fa_action_password_changed": "密码已更改",
+	"settings_2fa_action_token_created": "已创建 API 令牌",
+	"settings_2fa_action_token_revoked": "已撤销 API 令牌",
+	"settings_2fa_action_totp_disabled": "双重验证已停用",
+	"settings_2fa_action_totp_enabled": "双重验证已启用",
+	"settings_2fa_action_totp_failed": "验证码错误",
+	"settings_2fa_action_totp_recovery_used": "已使用恢复码",
+	"settings_2fa_action_totp_reset": "管理员已重置双重验证",
+	"settings_2fa_action_user_created": "已创建用户",
+	"settings_2fa_action_user_deleted": "已删除用户",
+	"settings_2fa_action_user_updated": "已更新用户",
+	"settings_2fa_cancel": "取消",
+	"settings_2fa_cant_scan": "无法扫描？请改为输入密钥",
+	"settings_2fa_code_label": "应用中的代码",
+	"settings_2fa_col_event": "事件",
+	"settings_2fa_col_from": "来源",
+	"settings_2fa_col_subject": "对象",
+	"settings_2fa_col_when": "时间",
+	"settings_2fa_col_who": "操作者",
+	"settings_2fa_confirm_enable": "确认并启用",
+	"settings_2fa_confirm_error": "无法确认",
+	"settings_2fa_continue": "继续",
+	"settings_2fa_continue_error": "无法继续",
+	"settings_2fa_copy_codes": "复制恢复码",
+	"settings_2fa_copy_key": "复制密钥",
+	"settings_2fa_disable": "停用",
+	"settings_2fa_disable_button": "停用双重身份验证",
+	"settings_2fa_enabled": "已启用",
+	"settings_2fa_err_code": "请输入应用显示的代码。",
+	"settings_2fa_err_password": "请输入密码以确认是您本人。",
+	"settings_2fa_err_wrong_password": "密码错误。",
+	"settings_2fa_hide_log": "隐藏安全日志",
+	"settings_2fa_intro": "输入密码后需要验证器应用生成的六位数代码。恢复码可在手机丢失时使用。",
+	"settings_2fa_is_on": "双重身份验证已开启",
+	"settings_2fa_key_details": "账户：{account} · 签发者：{issuer} · 基于时间，SHA-1，6 位，30 秒。",
+	"settings_2fa_load_error": "无法读取双重身份验证状态",
+	"settings_2fa_log_empty": "尚无记录。",
+	"settings_2fa_log_error": "无法读取安全日志",
+	"settings_2fa_off": "未启用",
+	"settings_2fa_pw_disable": "您的密码，用于停用双重身份验证",
+	"settings_2fa_pw_start": "您的密码，用于开始",
+	"settings_2fa_qr_label": "用验证器应用扫描的二维码",
+	"settings_2fa_recovery_left": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "剩余 {count} 个恢复码。"
+			}
+		}
+	],
+	"settings_2fa_recovery_none": "停用后重新设置即可获得新的恢复码。",
+	"settings_2fa_save_codes": "请将这些恢复码保存在安全的地方。手机丢失时，每个恢复码可登录一次；它们只显示这一次。",
+	"settings_2fa_saved": "我已保存",
+	"settings_2fa_setup": "设置",
+	"settings_2fa_show_log": "显示安全日志",
+	"settings_2fa_step1": "1. 用验证器应用（Aegis、FreeOTP、Google Authenticator、1Password 等）扫描二维码。",
+	"settings_2fa_step2": "2. 输入应用显示的六位数代码以确认。",
+	"settings_2fa_title": "双重身份验证",
+	"settings_about_build": "构建",
+	"settings_about_check_logs": "请检查其容器是否在运行，然后用 `docker compose logs` 查看日志。",
+	"settings_about_database": "数据库",
+	"settings_about_database_role": "设备配置和告警历史。",
+	"settings_about_docs": "文档 →",
+	"settings_about_error_title": "无法连接到服务器",
+	"settings_about_license": "开源，Apache 2.0。",
+	"settings_about_reporting": "正常上报",
+	"settings_about_title": "关于",
+	"settings_about_unreachable": "组件无法访问。",
+	"settings_about_version": "版本",
+	"settings_about_victoria_role": "图表中显示的所有测量数据。",
+	"settings_about_warning": "警告",
+	"settings_about_whats_new": "新功能",
+	"settings_agents_copied": "我已复制",
+	"settings_agents_copy_command": "复制命令",
+	"settings_agents_copy_token": "复制令牌",
+	"settings_agents_create": "创建令牌",
+	"settings_agents_create_error": "无法创建令牌",
+	"settings_agents_created_at": "创建于 {when}",
+	"settings_agents_created_title": "令牌“{name}”已创建",
+	"settings_agents_days_invalid": "天数必须是不小于 1 的整数。",
+	"settings_agents_description": "代理是运行在 Linux、Windows、macOS 或 FreeBSD 机器上的小程序：它上报系统、磁盘、服务、Docker 容器和备份，并允许您在此重启或更新容器。在中继模式下，它还会代此服务器探测其所在网络中的设备——第二个站点、客户现场、任何位于 NAT 之后的设备——且只发起出站连接。",
+	"settings_agents_empty_description": "请先创建一个，然后在机器上运行安装命令。",
+	"settings_agents_empty_title": "暂无令牌。",
+	"settings_agents_enrols_no_more": "不再注册",
+	"settings_agents_expires": "此后停止注册",
+	"settings_agents_expires_help": "单位：天。已注册的机器会继续上报；留空表示无期限。",
+	"settings_agents_install": "安装代理",
+	"settings_agents_install_linux": "在 Linux 上安装",
+	"settings_agents_install_windows": "在 Windows 上安装（PowerShell）",
+	"settings_agents_last_report": "上次上报 {when}",
+	"settings_agents_last_used": "上次使用 {when}",
+	"settings_agents_list_aria": "向此服务器上报的代理",
+	"settings_agents_load_error": "无法加载令牌",
+	"settings_agents_machines": "可注册的机器数",
+	"settings_agents_machines_help": "留空表示不限制。",
+	"settings_agents_machines_invalid": "机器数必须是不小于 1 的整数。",
+	"settings_agents_name_placeholder": "文件服务器",
+	"settings_agents_name_required": "请为令牌命名，例如使用它将注册的机器名称。",
+	"settings_agents_new_token": "新令牌",
+	"settings_agents_new_token_help": "仅用于在此列表中识别该令牌。",
+	"settings_agents_no_deadline": "无期限",
+	"settings_agents_no_limit": "不限制",
+	"settings_agents_none": "尚无代理向此服务器上报。",
+	"settings_agents_probes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "探测 {count} 台设备"
+			}
+		}
+	],
+	"settings_agents_relay_label": "中继",
+	"settings_agents_relay_label_site": "中继 · {site}",
+	"settings_agents_relay_off": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "中继已关闭 — {count} 台设备等待中"
+			}
+		}
+	],
+	"settings_agents_relay_off_title": "在此代理上设置 relay: true，使其接手这些设备的探测",
+	"settings_agents_relay_title": "中继模式：代此服务器探测其所在网络中的设备",
+	"settings_agents_reusable": "可用于一批机器",
+	"settings_agents_reusable_help": "关闭时，令牌只能注册一台机器，之后不再注册任何机器——这是单次安装的合理默认值。开启后，可将其用于 Playbook 或镜像。",
+	"settings_agents_revoke": "吊销",
+	"settings_agents_revoke_confirm": "永久吊销？",
+	"settings_agents_revoke_error": "无法吊销令牌",
+	"settings_agents_revoked": "已吊销",
+	"settings_agents_revoked_at": "吊销于 {when}",
+	"settings_agents_scope_fleet": "机群 · 已注册 {uses}",
+	"settings_agents_scope_fleet_ratio": "机群 · 已注册 {uses}/{max}",
+	"settings_agents_scope_single": "一次性",
+	"settings_agents_scope_single_used": "一次性 · 已使用",
+	"settings_agents_shown_once": "仅显示一次 — 请立即复制",
+	"settings_agents_spent_note": "用它注册的机器会继续上报，只是它无法再接纳新机器。",
+	"settings_agents_stops_at": "停止注册 {when}",
+	"settings_agents_title": "代理",
+	"settings_agents_token": "令牌",
+	"settings_agents_tokens_intro": "添加代理类型的设备时会自动为您创建一个一次性令牌。如需用于一批机器、Playbook 或机器镜像，请在此创建。",
+	"settings_agents_tokens_title": "注册令牌",
+	"settings_agents_watch_remote": "监控远程站点",
+	"settings_agents_watches_own": "监控自身所在机器",
+	"settings_appearance_day": "白天",
+	"settings_appearance_day_hint": "图表纸，藏青墨水。",
+	"settings_appearance_description": "两种主题同样精心设计。“跟随系统”会随设备自动切换。",
+	"settings_appearance_night": "夜间",
+	"settings_appearance_night_hint": "雷达合成图，青色信号。",
+	"settings_appearance_system": "跟随系统",
+	"settings_appearance_system_hint": "跟随您的设备。",
+	"settings_appearance_theme": "主题",
+	"settings_appearance_title": "外观",
+	"settings_appearance_wall_description": "仅显示全屏简报，适合放在房间里的显示器上。按 Esc 退出；⌘K / Ctrl K 可随时打开。",
+	"settings_appearance_wall_open": "打开墙面模式",
+	"settings_appearance_wall_title": "墙面模式",
+	"settings_assistant_any_network": "任意网络",
+	"settings_assistant_api_reference": "HTTP API 参考",
+	"settings_assistant_assistant_aria": "助手",
+	"settings_assistant_auth_header": "授权请求头",
+	"settings_assistant_chatgpt_https_warning": "此页面未通过 HTTPS 提供：在对外开放前，请将 DumbMonit 置于支持 TLS 的反向代理之后。",
+	"settings_assistant_chatgpt_text": "在 ChatGPT 中，打开“设置 → 连接器 → 创建”（开发者模式），然后填写 MCP 服务器 URL 和授权请求头。ChatGPT 从 OpenAI 的服务器发起连接，因此该 URL 必须能通过 HTTPS 从互联网访问。",
+	"settings_assistant_client_other": "Cursor / 其他",
+	"settings_assistant_connect_title": "连接助手（MCP）",
+	"settings_assistant_copied": "我已复制",
+	"settings_assistant_copy_command": "复制命令",
+	"settings_assistant_copy_header": "复制请求头",
+	"settings_assistant_copy_json": "复制 JSON",
+	"settings_assistant_copy_token": "复制令牌",
+	"settings_assistant_copy_url": "复制 URL",
+	"settings_assistant_create": "创建令牌",
+	"settings_assistant_create_error": "无法创建令牌",
+	"settings_assistant_created_any": "可从任意地址使用。",
+	"settings_assistant_created_at": "创建于 {when}",
+	"settings_assistant_created_by": "由 {user} 创建于 {when}",
+	"settings_assistant_created_expires": "有效期至 {date}。",
+	"settings_assistant_created_networks": "仅可从 {networks} 使用。",
+	"settings_assistant_created_never": "永不过期。",
+	"settings_assistant_created_note": "下方的代码片段现已包含此令牌。请像对待密码一样对待它。",
+	"settings_assistant_created_title": "令牌“{name}”已创建",
+	"settings_assistant_cursor_text": "Cursor（.cursor/mcp.json）和大多数其他 MCP 客户端都接受这种格式——带 bearer 请求头的 Streamable HTTP 服务器：",
+	"settings_assistant_description": "两种用途共用一种令牌：让 Claude、ChatGPT、Cursor 或任何 MCP 客户端向 DumbMonit 询问状况，或在脚本中调用 REST API。只读令牌只能查看；读写令牌还能做出更改——静音设备、运行探测、添加或编辑设备、规则和渠道。",
+	"settings_assistant_desktop_text": "添加到 claude_desktop_config.json（设置 → 开发者 → 编辑配置），然后重启 Claude Desktop。需要 Node.js：mcp-remote 负责把桌面应用桥接到此服务器。",
+	"settings_assistant_empty_description": "请先在上方创建一个，然后将代码片段粘贴到您的助手或脚本中。",
+	"settings_assistant_empty_title": "暂无令牌。",
+	"settings_assistant_expired": "已过期",
+	"settings_assistant_expired_at": "过期于 {when}",
+	"settings_assistant_expires": "有效期",
+	"settings_assistant_expires_at": "{when}过期",
+	"settings_assistant_expires_help": "过期的令牌将失效，届时请创建新的令牌。",
+	"settings_assistant_expires_in_plate": "{when}过期",
+	"settings_assistant_http_warning": "此页面通过明文 HTTP 提供，因此代码片段包含 --allow-http。请仅在您自己的网络中使用。",
+	"settings_assistant_last_used": "上次使用 {when}",
+	"settings_assistant_last_used_from": "上次使用 {when}，来自 {ip}",
+	"settings_assistant_load_error": "无法加载令牌",
+	"settings_assistant_mcp_link": "连接助手",
+	"settings_assistant_mcp_note": "服务器通过 Streamable HTTP 提供 MCP，无会话。所有客户端、工具和安全说明：",
+	"settings_assistant_mcp_url": "MCP 服务器 URL",
+	"settings_assistant_name_placeholder": "我笔记本上的 Claude",
+	"settings_assistant_name_required": "请为令牌命名，例如使用助手或其运行所在机器的名称。",
+	"settings_assistant_networks": "允许的网络",
+	"settings_assistant_networks_help": "可选。地址或 CIDR 范围，用逗号或空格分隔。留空：可从任何位置使用。",
+	"settings_assistant_never_expires": "永不过期",
+	"settings_assistant_new_token": "新令牌",
+	"settings_assistant_new_token_help": "仅用于在此列表中识别该令牌。",
+	"settings_assistant_one_command": "在终端中执行一条命令：",
+	"settings_assistant_only_from": "仅限 {networks}",
+	"settings_assistant_openapi": "OpenAPI 描述",
+	"settings_assistant_openapi_note": "OpenAPI 文件可在 Swagger UI、Postman 或 Insomnia 中加载，并可用于生成客户端。来自其他网页源的调用只能使用 bearer 令牌，不能使用会话。",
+	"settings_assistant_prometheus_link": "抓取 DumbMonit 指标",
+	"settings_assistant_prometheus_text": "您已在运行的 Prometheus 或 Grafana 可以用只读令牌读取此实例——/metrics 提供服务器自身健康状况，/federate 提供测量数据，/prometheus 可作为 Grafana 数据源：参见",
+	"settings_assistant_prompt_backup": "备份服务器的使用率是多少？",
+	"settings_assistant_prompt_fine": "一切正常吗？",
+	"settings_assistant_prompt_night": "昨晚发生了什么？",
+	"settings_assistant_prompt_silence": "将 NAS 静音两小时",
+	"settings_assistant_prompts_aria": "示例提问",
+	"settings_assistant_remaining_unknown": "在未知日期",
+	"settings_assistant_rest_read": "读取 — 所有设备：",
+	"settings_assistant_rest_text": "同一个令牌可让脚本和仪表盘访问 REST API：以 bearer 请求头发送，而不是会话 Cookie，无需 CSRF 请求头。只读令牌对应查看者，读写令牌对应管理员，但任何令牌都不能管理账户、登录设置、令牌或备份。",
+	"settings_assistant_rest_title": "REST API",
+	"settings_assistant_rest_write": "写入 — 立即探测设备 1（需要读写令牌）：",
+	"settings_assistant_revoke": "吊销",
+	"settings_assistant_revoke_confirm": "永久吊销？",
+	"settings_assistant_revoke_error": "无法吊销令牌",
+	"settings_assistant_revoked": "已吊销",
+	"settings_assistant_revoked_at": "吊销于 {when}",
+	"settings_assistant_scope": "权限范围",
+	"settings_assistant_scope_aria": "令牌权限范围",
+	"settings_assistant_scope_read": "只读",
+	"settings_assistant_scope_read_note": "永远无法更改任何内容。",
+	"settings_assistant_scope_read_only": "仅读",
+	"settings_assistant_scope_write": "读写",
+	"settings_assistant_scope_write_note": "可更改除账户、令牌和备份之外的所有内容。",
+	"settings_assistant_shown_once": "仅显示一次 — 请立即复制",
+	"settings_assistant_title": "API 与助手",
+	"settings_assistant_tokens_title": "令牌",
+	"settings_assistant_try_asking": "连接后，可以试着问：",
+	"settings_assistant_vscode_text": "添加到工作区的 .vscode/mcp.json（或运行“MCP: Add Server”并选择 HTTP）：",
+	"settings_backup_accounts_help": "默认关闭。不包含时，恢复的账户虽然存在，但在管理员设置密码之前无法登录。",
+	"settings_backup_accounts_label": "包含账户密码和 2FA 密钥",
+	"settings_backup_admin_only_description": "备份包含此实例的所有凭据。",
+	"settings_backup_admin_only_title": "只有管理员可以导出或恢复。",
+	"settings_backup_apply": "正式恢复",
+	"settings_backup_apply_confirm": "写入这些更改？",
+	"settings_backup_back_up_now": "立即备份",
+	"settings_backup_bundle_file": "备份包文件",
+	"settings_backup_bundle_meta": "由 DumbMonit {source} 写入于 {when} · 格式版本 {version}",
+	"settings_backup_check": "检查此备份",
+	"settings_backup_col_created": "已创建",
+	"settings_backup_col_section": "部分",
+	"settings_backup_col_unchanged": "未变化",
+	"settings_backup_col_updated": "已更新",
+	"settings_backup_description": "将此实例导出为一个加密文件，在全新实例上恢复，并在旁边保留每日的数据库副本。",
+	"settings_backup_disabled": "已禁用",
+	"settings_backup_download": "下载备份包",
+	"settings_backup_downloaded": "已下载 — 请妥善保管口令",
+	"settings_backup_dry_run": "试运行 — 未写入任何内容",
+	"settings_backup_export_error": "无法导出备份",
+	"settings_backup_export_excluded": "不包含：指标历史、告警状态与历史、审计日志、已打开的会话——以及实例密钥（有意如此）。",
+	"settings_backup_export_intro": "单个文件，格式版本 {version}。它包含此实例的所有凭据，仅由口令保护：请把它存放在保存密码的地方，而不是和您的影片备份放在一起。",
+	"settings_backup_export_title": "导出配置",
+	"settings_backup_identical": "{count} 项已一致",
+	"settings_backup_kept": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "保留 {count} 份 · 共 {size}。"
+			}
+		}
+	],
+	"settings_backup_last_fail": "上次运行失败",
+	"settings_backup_last_ok": "上次运行成功",
+	"settings_backup_none_yet": "尚未运行过任何备份。",
+	"settings_backup_not_backup": "此文件不是 DumbMonit 备份。",
+	"settings_backup_not_json": "无法将此文件解析为 JSON。请选择您下载的备份包。",
+	"settings_backup_passphrase": "口令",
+	"settings_backup_passphrase_confirm": "确认口令",
+	"settings_backup_passphrase_help": "至少 {min} 个字符。口令丢失后无法找回备份包。",
+	"settings_backup_passphrase_mismatch": "两次输入的口令不一致。请重新输入确认口令。",
+	"settings_backup_passphrase_short": "至少 {min} 个字符。三个单词就够了，恢复时还会再用到。",
+	"settings_backup_plate_every": "每 {hours} 小时 · 保留 {keep} 份",
+	"settings_backup_read_error": "无法读取备份状态",
+	"settings_backup_restore_error": "无法读取备份",
+	"settings_backup_restore_intro": "先检查，只有您确认后才会应用。恢复绝不会删除任何内容：只创建缺失的项目并更新有差异的项目，设备按类型和地址匹配。此处已存在的账户保持不变。",
+	"settings_backup_restore_passphrase": "此备份包的口令",
+	"settings_backup_restore_title": "恢复备份包",
+	"settings_backup_restored": "已恢复",
+	"settings_backup_schedule_env_secret": "密钥来自环境变量，因此不会在此复制。",
+	"settings_backup_schedule_intro_key": "数据库的在线一致性副本会写入 {directory}，旁边附带 secret.key 的副本。",
+	"settings_backup_schedule_intro_nokey": "数据库的在线一致性副本会写入 {directory}。",
+	"settings_backup_schedule_same_volume": "它们与数据库位于同一卷：可撤销误操作，但无法应对磁盘损坏。",
+	"settings_backup_scheduled_title": "计划的本地备份",
+	"settings_backup_secret_bundle": "下方的备份包是例外：其中的密钥会用您选择的口令重新加密，因此可以恢复到拥有自己密钥的全新实例上。",
+	"settings_backup_secret_env": "此服务器从 DUMBMONIT_SECRET 读取密钥，因此没有文件可复制。请把该值保存在密码管理器中：没有它，数据库副本恢复出的实例将无法与任何设备通信。",
+	"settings_backup_secret_file": "设备密码、SNMP 团体字符串和渠道密钥都使用由 {path} 派生的密钥加密。没有该文件的数据库副本恢复出的实例将无法与任何设备通信——服务器会拒绝启动而不是假装正常。请将它与数据库一起备份。",
+	"settings_backup_secret_title": "实例密钥用于解密您的凭据",
+	"settings_backup_title": "备份",
+	"settings_backup_to_create": "待创建 {count}",
+	"settings_backup_to_update": "待更新 {count}",
+	"settings_backup_without_key": "不含密钥",
+	"settings_backup_write_error": "无法写入备份",
+	"settings_music_account": "账户",
+	"settings_music_admin_only": "管理员可在此连接 Spotify 账户。",
+	"settings_music_app": "应用（Client ID）",
+	"settings_music_connect_button": "连接 Spotify",
+	"settings_music_connect_heading": "Spotify Connect",
+	"settings_music_connect_intro": "墙面显示屏会变成名为 {name} 的音箱：在手机的 Spotify 应用中打开“设备”并选择它，声音就会从显示屏发出。墙面还会显示该账户在任何地方播放的内容 — 电视应用、投屏音箱、您的笔记本电脑。",
+	"settings_music_connected_at": "连接时间",
+	"settings_music_connected_default": "已连接",
+	"settings_music_copy_redirect": "复制重定向 URI",
+	"settings_music_description": "用手机开始播放音乐，并在墙面显示屏上收听，或向其发送 Spotify、Deezer 或 YouTube 链接。",
+	"settings_music_disconnect": "断开连接",
+	"settings_music_disconnect_confirm": "断开 Spotify？",
+	"settings_music_disconnect_error": "无法断开连接",
+	"settings_music_err_client_id": "请粘贴 Spotify Developer Dashboard 中您的应用页面上的 Client ID（32 个字母和数字）。",
+	"settings_music_expired": "Spotify 已终止连接。请在下方重新连接：Client ID 会保留。",
+	"settings_music_expired_reason": "Spotify 已终止连接（{reason}）。请在下方重新连接：Client ID 会保留。",
+	"settings_music_finish": "完成连接",
+	"settings_music_finish_error": "无法完成连接",
+	"settings_music_link_heading": "在墙面上播放链接",
+	"settings_music_link_intro": "没有 Premium 时，或对于在网页上没有 Connect 式遥控的 Deezer 和 YouTube — 可在任何屏幕（包括手机）上发送链接：每个墙面都会在该服务自己的播放器中播放。墙面浏览器未登录 Spotify 或 Deezer 时只会播放 30 秒试听。",
+	"settings_music_link_label": "要在墙面上播放的链接",
+	"settings_music_load_error": "无法加载音乐设置",
+	"settings_music_missing": "此服务器暂不支持墙面音乐：请更新 DumbMonit。",
+	"settings_music_missing_scopes": "Spotify 未授予 {scopes}：请重新连接并接受所有权限。",
+	"settings_music_needs_1": "拥有该应用的账户需要 Spotify Premium。个人应用（开发模式）最多允许五个账户：其他账户请在 User Management 中添加。",
+	"settings_music_needs_2": "手机必须登录与此处连接相同的 Spotify 账户：浏览器音箱只会对其所属账户显示 — 家庭套餐的其他成员看不到，也不会像智能音箱那样在网络中被发现。",
+	"settings_music_needs_3": "要让墙面成为音箱，其浏览器必须通过 HTTPS（或在显示屏本机上以 localhost）打开 DumbMonit，并具备可用的 DRM（Widevine）：电脑上的 Chrome、Edge 或 Firefox，Raspberry Pi 上带 Widevine 的 Chromium。大多数智能电视和展台浏览器无法做到 — 墙面会在屏幕上说明，下方的墙面列表也会在此显示。",
+	"settings_music_needs_4": "浏览器在页面被触碰之前会保持静音：墙面加载后请点击一次或按任意键（或使用 --autoplay-policy=no-user-gesture-required 启动展台浏览器）。",
+	"settings_music_needs_5": "“正在播放”不需要以上任何条件：服务器每隔几秒向 Spotify 查询播放内容，即使是普通 HTTP 也可以。",
+	"settings_music_needs_6": "Spotify 会在授权六个月后终止连接：请在所示日期之前重新连接。",
+	"settings_music_needs_heading": "所需条件",
+	"settings_music_not_connected": "Spotify 未连接",
+	"settings_music_nothing_playing": "此账户当前没有播放内容。",
+	"settings_music_nothing_sent": "没有向墙面发送任何内容。管理员可以发送链接。",
+	"settings_music_now_artists": " — {artists}",
+	"settings_music_now_device": "，设备：{device}",
+	"settings_music_now_line": "{status}：{title}{artists}{device}",
+	"settings_music_on_walls": "墙面上",
+	"settings_music_open_spotify": "打开 Spotify",
+	"settings_music_outcome_connected": "Spotify 已连接。",
+	"settings_music_outcome_denied": "Spotify 未授予访问权限。请重新开始并选择“同意”。",
+	"settings_music_outcome_exchange": "Spotify 拒绝完成连接。请检查下方的重定向 URI 是否已在您的应用中原样注册。",
+	"settings_music_outcome_hint": "请在下方重新开始；未做任何更改。",
+	"settings_music_outcome_internal": "无法保存连接。请查看服务器日志。",
+	"settings_music_outcome_session": "您当前的 DumbMonit 会话与发起连接的会话不同。请登录后重新开始。",
+	"settings_music_outcome_state": "此授权未知、已过期或已被使用。请从“连接 Spotify”重新开始。",
+	"settings_music_outcome_unknown": "连接未完成。",
+	"settings_music_plate_connected": "Spotify 已连接",
+	"settings_music_plate_off": "Spotify 未启用",
+	"settings_music_plate_reconnect": "请重新连接 Spotify",
+	"settings_music_play_on_wall": "在墙面上播放",
+	"settings_music_reconnect_by": "重新连接截止",
+	"settings_music_reconnect_note": "Spotify 会在六个月后终止连接。",
+	"settings_music_redirect_insecure": "DumbMonit 通过普通 HTTP 提供服务，而 Spotify 只接受 https:// 或此 127.0.0.1 地址。那里没有服务响应：授权后浏览器会显示错误页面 — 请复制其地址，其中包含授权码。若通过 HTTPS 提供服务，重定向将直接完成。",
+	"settings_music_redirect_secure": "Spotify 会直接返回此页面。",
+	"settings_music_right_now": "当前",
+	"settings_music_send_error": "无法发送链接",
+	"settings_music_sent_by": "由 {name} 发送",
+	"settings_music_start_error": "无法开始连接",
+	"settings_music_status_paused": "已暂停",
+	"settings_music_status_playing": "正在播放",
+	"settings_music_step1_after": "中创建应用（名称任意）。勾选 Web API 和 Web Playback SDK，并添加此重定向 URI：",
+	"settings_music_step1_before": "1. 在",
+	"settings_music_step1_link": "Spotify Developer Dashboard",
+	"settings_music_step2_help": "在应用页面的 Basic Information 下。无需复制密钥：DumbMonit 使用 PKCE。",
+	"settings_music_step2_label": "2. 粘贴其 Client ID",
+	"settings_music_step3": "3. 在 Spotify 上授权，然后回到这里。",
+	"settings_music_step4_help": "以 {uri}?code= 开头 — 有效期十分钟，仅可使用一次。",
+	"settings_music_step4_label": "4. 粘贴您最终到达页面的地址",
+	"settings_music_stop": "停止",
+	"settings_music_title": "墙面音乐",
+	"settings_nav_push": "推送通知",
+	"settings_packs_add_device": "添加 {label}",
+	"settings_packs_admin_only_description": "集成包决定此服务器向您的设备询问什么。",
+	"settings_packs_admin_only_title": "只有管理员才能管理集成包。",
+	"settings_packs_admins_only": "仅限管理员",
+	"settings_packs_change_error": "无法更改此集成包",
+	"settings_packs_choose": "选择 pack.yaml",
+	"settings_packs_description": "用 YAML 编写的设备类型：向设备询问什么、保留哪些数值、何时告警。安装后会将其加入可监控的设备中。",
+	"settings_packs_disable_pack": "停用 {label}",
+	"settings_packs_disabled": "已停用",
+	"settings_packs_docs": "集成包文档",
+	"settings_packs_empty_description": "在下方粘贴 pack.yaml 或上传文件。安装的集成包会在添加设备时显示在“社区集成包”下。",
+	"settings_packs_empty_title": "尚未安装任何集成包。",
+	"settings_packs_enable_pack": "启用 {label}",
+	"settings_packs_enabled": "已启用",
+	"settings_packs_file_too_big": "该文件超过 1 MB：pack.yaml 通常只有几 KB。",
+	"settings_packs_file_unreadable": "无法将此文件作为文本读取。",
+	"settings_packs_hint_conflict": "两种设备类型不能同名：请更改集成包的 id。",
+	"settings_packs_hint_enable": "请安装此集成包的修正版本，然后重新启用。",
+	"settings_packs_hint_uninstall": "停用会保留这些设备及其历史；卸载则要求先删除它们。",
+	"settings_packs_install_button": "安装集成包",
+	"settings_packs_install_error": "无法安装此集成包",
+	"settings_packs_install_heading": "安装集成包",
+	"settings_packs_install_intro": "粘贴其 pack.yaml 或上传文件。保存前会先检查集成包；安装已安装包的新版本会更新它并保持开/关状态。它的请求只会发送给使用它的设备。",
+	"settings_packs_installed": "安装于 {when}",
+	"settings_packs_installed_heading": "已安装的集成包",
+	"settings_packs_installed_notes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已安装，检查器给出 {count} 条提示"
+			}
+		}
+	],
+	"settings_packs_invalid": "无效 — 未激活",
+	"settings_packs_list_error": "无法列出集成包",
+	"settings_packs_loaded": "已加载 {name}",
+	"settings_packs_n_devices": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台设备"
+			}
+		}
+	],
+	"settings_packs_n_metrics": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 项指标"
+			}
+		}
+	],
+	"settings_packs_n_rules": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条告警规则"
+			}
+		}
+	],
+	"settings_packs_n_snmp": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个 SNMP 配置文件"
+			}
+		}
+	],
+	"settings_packs_note": "提示",
+	"settings_packs_outcome_created": "已安装",
+	"settings_packs_outcome_unchanged": "已安装 — 无任何更改",
+	"settings_packs_outcome_updated": "已更新",
+	"settings_packs_restart": "请重启 DumbMonit 以使用其 SNMP 配置文件：它们在服务器启动时读取。集成包的其余部分已可使用。",
+	"settings_packs_rules_added": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已添加 {count} 条告警规则"
+			}
+		}
+	],
+	"settings_packs_title": "集成包",
+	"settings_packs_uninstall": "卸载",
+	"settings_packs_uninstall_confirm": "永久卸载？",
+	"settings_packs_upload_label": "上传文件",
+	"settings_packs_val_headline": "无法安装此集成包。",
+	"settings_packs_val_link": "集成包格式",
+	"settings_packs_val_link_tail": "详细说明了每个字段。",
+	"settings_packs_val_note": "未保存任何内容。请修正 YAML 中的这些问题，然后重新安装。",
+	"settings_packs_yaml_label": "集成包 YAML",
+	"settings_password_hide": "隐藏密码",
+	"settings_password_show": "显示密码",
+	"settings_push_action_error": "无法更新推送通知",
+	"settings_push_browser": "浏览器",
+	"settings_push_description": "以系统原生通知的形式在此手机或电脑上接收告警，即使 DumbMonit 已关闭。无需安装应用。",
+	"settings_push_device_installed": "{device} · 已安装的应用",
+	"settings_push_enable": "在此设备上启用",
+	"settings_push_enabled_notice": "此设备将接收推送通知。发送一条测试进行验证。",
+	"settings_push_help_channel": "接收哪些告警由“告警 → 通知”中的 Web Push 渠道决定。",
+	"settings_push_help_desktop_body": "适用于 Chrome、Edge、Firefox 和 Safari。安装应用（地址栏 → 安装）是可选的，但能让它一点即达。",
+	"settings_push_help_desktop_lead": "Android、Windows、macOS、Linux：",
+	"settings_push_help_domains_body": "服务器会向浏览器厂商的推送服务发送消息，因此需要对 fcm.googleapis.com（Chrome、Android 上的 Edge）、*.notify.windows.com（Edge）、updates.push.services.mozilla.com（Firefox）和 *.push.apple.com（Safari）的出站 HTTPS 访问。消息为端到端加密，这些服务无法读取。",
+	"settings_push_help_domains_lead": "域名：",
+	"settings_push_help_guide": "完整指南 →",
+	"settings_push_help_https_body": "浏览器仅在安全来源上提供推送：请将 DumbMonit 置于带证书的反向代理之后。http://localhost 也可用，便于在服务器本机上测试。",
+	"settings_push_help_https_lead": "需要 HTTPS。",
+	"settings_push_help_ios_body": "在 Safari 中打开 DumbMonit，点按“分享”→“添加到主屏幕”，从主屏幕图标打开它，然后在此启用推送。",
+	"settings_push_help_ios_lead": "iPhone 和 iPad（iOS 16.4 或更高版本）：",
+	"settings_push_help_label": "推送通知的工作原理",
+	"settings_push_last_failed": "上次尝试失败：{error}",
+	"settings_push_load_error": "无法读取推送通知",
+	"settings_push_meta_added": "{service} · 添加于 {date}",
+	"settings_push_meta_delivered": "{service} · 添加于 {date} · 上次送达 {when}",
+	"settings_push_none": "暂无。请在每台需要提醒的手机或电脑上启用推送。",
+	"settings_push_plate_blocked": "已阻止",
+	"settings_push_plate_enabled": "已启用",
+	"settings_push_plate_https": "需要 HTTPS",
+	"settings_push_plate_install": "请先安装",
+	"settings_push_plate_off": "未启用",
+	"settings_push_plate_unsupported": "不支持",
+	"settings_push_remove": "移除",
+	"settings_push_remove_confirm": "移除此设备？",
+	"settings_push_subscribed": "已订阅的设备",
+	"settings_push_test": "发送测试",
+	"settings_push_text_blocked": "此网站的通知已被阻止。请在浏览器的网站设置中允许通知，然后刷新页面。",
+	"settings_push_text_https": "请通过 HTTPS（或在 localhost 上）打开 DumbMonit 以启用推送。当前地址为 {origin}。",
+	"settings_push_text_install": "在 iPhone 和 iPad 上，请将 DumbMonit 添加到主屏幕（分享 → 添加到主屏幕），从主屏幕打开后再回到此处。",
+	"settings_push_text_off": "尚未接收推送通知。",
+	"settings_push_text_unsupported": "此浏览器无法接收推送通知。请尝试较新版本的 Chrome、Edge、Firefox 或 Safari。",
+	"settings_push_this_device": "此设备",
+	"settings_push_this_device_tag": "（此设备）",
+	"settings_push_title": "推送通知",
+	"settings_report_cancel": "取消",
+	"settings_report_channel": "邮件渠道",
+	"settings_report_channel_default": "第一个已启用的邮件渠道",
+	"settings_report_channel_disabled": "{name}（已禁用）",
+	"settings_report_channel_help": "仅使用其邮件服务器；其自身的收件人将被忽略。",
+	"settings_report_create": "创建报告",
+	"settings_report_day": "日",
+	"settings_report_day_of_month": "每月日期",
+	"settings_report_day_of_month_help": "1 至 28。",
+	"settings_report_default_name": "团队报告",
+	"settings_report_delete": "删除",
+	"settings_report_delete_confirm": "永久删除？",
+	"settings_report_dirty": "有未保存的更改：请先保存再发送预览。",
+	"settings_report_freq_daily": "每日",
+	"settings_report_freq_monthly": "每月",
+	"settings_report_freq_weekly": "每周",
+	"settings_report_frequency": "频率",
+	"settings_report_hour": "时间",
+	"settings_report_last_failed": "上次发送失败：{error}",
+	"settings_report_last_sent": "上次发送 {when}",
+	"settings_report_name": "名称",
+	"settings_report_name_help": "仅在此列表中显示。",
+	"settings_report_never_sent": "从未发送",
+	"settings_report_next": "下一份报告 {when}",
+	"settings_report_off": "已关闭",
+	"settings_report_preview_error": "无法发送预览",
+	"settings_report_preview_failed": "预览已发送给 {sent} 位，{failed} 位失败。",
+	"settings_report_preview_sent": [
+		{
+			"declarations": [
+				"input sent",
+				"local sentPlural = sent: plural"
+			],
+			"selectors": [
+				"sentPlural"
+			],
+			"match": {
+				"sentPlural=other": "预览已发送给 {sent} 位收件人。"
+			}
+		}
+	],
+	"settings_report_recipients": "收件人",
+	"settings_report_recipients_help": "每行一个，或用逗号分隔。最多 {max} 个；不必是 DumbMonit 用户。已输入 {count} 个。",
+	"settings_report_recipients_max": [
+		{
+			"declarations": [
+				"input max",
+				"local maxPlural = max: plural"
+			],
+			"selectors": [
+				"maxPlural"
+			],
+			"match": {
+				"maxPlural=other": "最多 {max} 个收件人。"
+			}
+		}
+	],
+	"settings_report_recipients_required": "启用报告前请至少添加一个地址。",
+	"settings_report_save": "保存",
+	"settings_report_save_error": "无法保存报告",
+	"settings_report_saved": "已保存。",
+	"settings_report_send": "发送报告",
+	"settings_report_send_preview": "发送预览",
+	"settings_report_timezone": "时区",
+	"settings_report_timezone_help": "IANA 名称，例如 Europe/Paris。会跟随夏令时。",
+	"settings_reports_add": "添加报告",
+	"settings_reports_description": "给团队的简短邮件：基础设施在过去一天、一周或一个月的表现。",
+	"settings_reports_empty_description": "默认每周发送，周一早晨，按您的时区。",
+	"settings_reports_empty_title": "暂无报告。",
+	"settings_reports_info_availability": "该时段的可用性（整体、按分组、按设备），计算方式与状态页相同。",
+	"settings_reports_info_compare": "以上各项与上一个等长时段相比的变化。",
+	"settings_reports_info_footer": "纯表格，不含远程图片。每位收件人会收到各自的邮件。统计时段为发送前的最近 24 小时、7 天或 30 天。",
+	"settings_reports_info_incidents": "该时段内的事件：每次事件的开始时间、持续时长及所涉设备。",
+	"settings_reports_info_label": "报告包含什么？",
+	"settings_reports_info_title": "报告的内容",
+	"settings_reports_info_unstable": "最不稳定的五台设备。",
+	"settings_reports_load_error": "无法加载报告",
+	"settings_reports_no_channel_link": "请在“告警 → 通知”中添加。",
+	"settings_reports_no_channel_plate": "没有邮件渠道",
+	"settings_reports_no_channel_text": "报告通过邮件（SMTP）渠道发送。",
+	"settings_reports_read_more": "了解更多",
+	"settings_reports_setup": "设置报告",
+	"settings_reports_title": "报告",
+	"settings_security_change": "更改密码",
+	"settings_security_change_error": "无法更改密码",
+	"settings_security_changed": "密码已更改 — 您的其他会话已退出",
+	"settings_security_confirm_label": "确认新密码",
+	"settings_security_current_label": "当前密码",
+	"settings_security_default_provider": "您的身份提供商",
+	"settings_security_description": "您的账户和当前会话。",
+	"settings_security_description_user": "您的账户：{username}。",
+	"settings_security_err_current": "请输入当前密码以确认是您本人。",
+	"settings_security_err_current_wrong": "当前密码不正确。",
+	"settings_security_err_mismatch": "两次输入的新密码不一致，请重新输入确认密码。",
+	"settings_security_err_same": "新密码与当前密码相同，请选择另一个。",
+	"settings_security_managed_by": "由 {provider} 管理",
+	"settings_security_new_help": "至少 {min} 个字符。整句话比复杂的单词更安全。",
+	"settings_security_new_label": "新密码",
+	"settings_security_no_protection": "此实例未设置密码保护。",
+	"settings_security_oidc_note": "您通过身份提供商登录：没有可更改的 DumbMonit 密码。",
+	"settings_security_session_hint": "在此设备上退出。其他会话保持打开。",
+	"settings_security_session_title": "当前会话",
+	"settings_security_sign_out": "退出登录",
+	"settings_security_title": "账户与安全",
+	"settings_speaker_account": "账户",
+	"settings_speaker_account_note": "— 手机必须登录此 Spotify 账户才能看到墙面。",
+	"settings_speaker_browser_default": "某个浏览器",
+	"settings_speaker_connected": "已连接",
+	"settings_speaker_device_playing": "{name}（正在播放）",
+	"settings_speaker_err_name": "音箱名称最多 64 个字符。",
+	"settings_speaker_heading": "音箱",
+	"settings_speaker_in_devices": "在 Spotify 设备中",
+	"settings_speaker_listed_as": "在 Spotify 中显示为 {name}。",
+	"settings_speaker_listed_no": "目前没有",
+	"settings_speaker_listed_yes": "是 — 使用此账户的手机可以选择它",
+	"settings_speaker_lists": "Spotify 列出：{devices}",
+	"settings_speaker_lists_none": "Spotify 目前没有列出此账户上的任何设备。",
+	"settings_speaker_missing": "此服务器尚未报告音箱状态：请更新 DumbMonit。",
+	"settings_speaker_name_help": "手机在“设备”下显示的名称。所有墙面共用；在某个墙面地址后加上 ?speaker=Kitchen 可只为该墙面命名。留空则为“DumbMonit Wall”。",
+	"settings_speaker_name_label": "在 Spotify 中的名称",
+	"settings_speaker_phase_connecting": "正在连接",
+	"settings_speaker_phase_error": "已停止",
+	"settings_speaker_phase_locked": "就绪，声音被锁定",
+	"settings_speaker_phase_not_listed": "Spotify 未列出",
+	"settings_speaker_phase_off": "此显示屏上已关闭",
+	"settings_speaker_phase_ready": "就绪",
+	"settings_speaker_phase_unsupported": "无法在此播放",
+	"settings_speaker_premium": "Premium",
+	"settings_speaker_premium_no": "否 — 墙面无法成为音箱",
+	"settings_speaker_premium_unknown": "尚未知晓（墙面连接时会告知）",
+	"settings_speaker_premium_yes": "是",
+	"settings_speaker_read_error": "无法读取音箱",
+	"settings_speaker_refresh": "刷新",
+	"settings_speaker_refresh_aria": "刷新音箱状态",
+	"settings_speaker_rename": "重命名",
+	"settings_speaker_rename_error": "无法重命名音箱。",
+	"settings_speaker_test_fail": "Spotify 未开始播放。",
+	"settings_speaker_test_hint": "在“{name}”上播放该账户，并继续上次播放的内容。",
+	"settings_speaker_test_ok": "Spotify 现在正在“{name}”上播放：请听墙面。没有声音？点击墙面一次以解锁声音。",
+	"settings_speaker_test_sound": "测试声音",
+	"settings_speaker_wall_meta": "· 名称“{name}” · {when}",
+	"settings_speaker_walls": "墙面",
+	"settings_speaker_walls_none": "过去十五分钟内没有墙面上报。请在显示屏上打开 /wall（需已登录，查看者账户也可以），一分钟内就会出现在这里。",
+	"settings_sso_admin_groups": "管理员群组",
+	"settings_sso_admin_groups_help": "以逗号分隔。成员成为管理员，其他人成为查看者（或下方的操作员）— 每次登录时重新评估。两个列表都为空时，角色在此处管理。",
+	"settings_sso_alg_warning": "该提供商未列出 RS256 或 ES256：DumbMonit 仅接受这些签名。",
+	"settings_sso_autocreate_env_hint": "设置 DUMBMONIT_OIDC_AUTO_CREATE=true，或在“更多选项”中开启并保存。",
+	"settings_sso_autocreate_help": "默认关闭。关闭时：只有已关联的账户，或提供商已验证邮箱与用户名一致的账户才能登录。带密码的本地管理员永远不会被自动关联。",
+	"settings_sso_autocreate_label": "首次登录时创建账户",
+	"settings_sso_autocreate_off_body": "新身份在首次登录时不会获得账户：此设置从未被选择，现在默认关闭（早期版本默认开启）。只有已关联的账户，或与提供商已验证邮箱匹配的账户才能登录。",
+	"settings_sso_autocreate_plate": "账户自动创建已关闭",
+	"settings_sso_autocreate_ui_hint": "如有需要，请在“更多选项”中开启。",
+	"settings_sso_client_id": "客户端 ID",
+	"settings_sso_client_secret": "客户端密钥",
+	"settings_sso_description": "让用户通过您的 OpenID Connect 提供商登录 — Authentik、Keycloak、Authelia、Pocket ID 等。",
+	"settings_sso_discovery_failed": "发现失败",
+	"settings_sso_discovery_ok": "发现成功",
+	"settings_sso_err_client_id": "请输入在提供商处注册的客户端 ID。",
+	"settings_sso_err_issuer": "请输入颁发者 URL，例如 https://id.example.org/application/o/dumbmonit/。",
+	"settings_sso_err_secret": "请输入提供商的客户端密钥。",
+	"settings_sso_err_url": "请输入以 http:// 或 https:// 开头的完整 URL。",
+	"settings_sso_forget": "清除已保存的设置",
+	"settings_sso_found": "已找到提供商",
+	"settings_sso_groups_claim": "群组声明",
+	"settings_sso_groups_claim_help": "列出用户所属群组的令牌声明名称。",
+	"settings_sso_issuer": "颁发者 URL",
+	"settings_sso_issuer_help": "发现文档从颁发者 URL 加上 /.well-known/openid-configuration 读取。",
+	"settings_sso_load_error": "无法加载单点登录设置",
+	"settings_sso_more": "更多选项",
+	"settings_sso_no_answer": "提供商没有响应。",
+	"settings_sso_note_env": "这些值来自环境变量。在此保存将永久取代它们：已保存的设置优先，变量仅在没有保存设置时生效。",
+	"settings_sso_note_none": "尚未配置。请填写此表单，或设置 DUMBMONIT_OIDC_* 环境变量 — 此处保存的设置优先。",
+	"settings_sso_note_settings": "已保存的设置生效。环境变量（DUMBMONIT_OIDC_*）仅在此处没有保存设置时生效。",
+	"settings_sso_off": "未启用",
+	"settings_sso_on": "已启用 — {provider}",
+	"settings_sso_operator_groups": "操作员群组",
+	"settings_sso_operator_groups_help": "以逗号分隔。非管理员成员成为操作员：他们处理告警（确认、忽略、暂缓），但不能更改配置。",
+	"settings_sso_provider_help": "登录按钮的文字：“使用 … 继续”。",
+	"settings_sso_provider_name": "提供商名称",
+	"settings_sso_public_url": "公开 URL",
+	"settings_sso_public_url_help": "浏览器访问 DumbMonit 的地址。用于生成下方的重定向 URI。",
+	"settings_sso_redirect_copy": "复制重定向 URI",
+	"settings_sso_redirect_heading": "在您的提供商处注册此重定向 URI",
+	"settings_sso_row_authorization": "授权",
+	"settings_sso_row_issuer": "颁发者",
+	"settings_sso_row_keys": "密钥",
+	"settings_sso_row_scopes": "范围",
+	"settings_sso_row_signing": "签名",
+	"settings_sso_row_token": "令牌",
+	"settings_sso_save": "保存更改",
+	"settings_sso_save_error": "无法保存设置",
+	"settings_sso_saved": "已保存",
+	"settings_sso_scopes": "范围（scopes）",
+	"settings_sso_scopes_help": "以空格分隔。如果您的提供商需要，请添加携带群组声明的 scope。",
+	"settings_sso_secret_help": "加密存储，不会再次显示。",
+	"settings_sso_secret_stored": "已保存密钥。留空则保持不变。",
+	"settings_sso_test": "测试发现",
+	"settings_sso_test_error": "无法运行测试",
+	"settings_sso_title": "单点登录",
+	"settings_sso_turn_off": "关闭单点登录？",
+	"settings_sso_use_env": "改用环境变量的值？",
+	"settings_update_available": "有可用更新：v{version}",
+	"settings_update_backup_body": "设置 → 备份，并保留 /data/secret.key 的副本（没有它，已存储的密码和令牌将无法解密）。",
+	"settings_update_backup_lead": "请先备份。",
+	"settings_update_check_error": "无法检查更新：{error}",
+	"settings_update_check_now": "立即检查",
+	"settings_update_checked": "检查于 {when}",
+	"settings_update_copy_command": "复制命令",
+	"settings_update_data_kept": "您的数据位于 /data 卷中，会被保留。服务器恢复后页面会自动刷新。",
+	"settings_update_guide": "更新指南 →",
+	"settings_update_how": "如何更新",
+	"settings_update_last_failed": "上次尝试失败：{error}",
+	"settings_update_looking": "正在检查更新…",
+	"settings_update_off": "更新检查已关闭。",
+	"settings_update_off_env": "更新检查已关闭（DUMBMONIT_UPDATE_CHECK=off）。",
+	"settings_update_off_releases": "请查看发布页面以获取新版本。",
+	"settings_update_pull_body": "在存放 docker-compose.yml 的文件夹中执行：",
+	"settings_update_pull_lead": "拉取新镜像并重启",
+	"settings_update_read_error": "无法读取更新状态",
+	"settings_update_release_notes": "发布说明 →",
+	"settings_update_toggle": "检查新版本",
+	"settings_update_toggle_help": "检查新版本。服务器每天最多向公开的 GitHub API（api.github.com）发送一次匿名请求，不会发送任何有关您实例的信息。在隔离网络中请关闭，或设置 DUMBMONIT_UPDATE_CHECK=off。",
+	"settings_update_up_to_date": "已是最新版本。",
+	"settings_update_whats_new": "查看新增内容",
+	"settings_users_2fa_title": "双重身份验证已开启",
+	"settings_users_add": "添加用户",
+	"settings_users_auth_password": "密码",
+	"settings_users_auth_password_title": "使用密码登录",
+	"settings_users_auth_sso_title": "通过身份提供商登录",
+	"settings_users_cancel": "取消",
+	"settings_users_copy_password": "复制密码",
+	"settings_users_create": "创建用户",
+	"settings_users_create_error": "无法创建用户",
+	"settings_users_created": "已创建用户“{username}”",
+	"settings_users_created_shown": "密码仅显示一次 — 请立即交给对方",
+	"settings_users_delete": "删除",
+	"settings_users_delete_confirm": "永久删除？",
+	"settings_users_description": "谁可以登录。管理员可更改设置；操作员处理告警；查看者只能查看。",
+	"settings_users_disabled": "已停用",
+	"settings_users_display_help": "可选。在顶栏中代替用户名显示。",
+	"settings_users_display_name": "显示名称",
+	"settings_users_done": "完成",
+	"settings_users_edit": "编辑",
+	"settings_users_edit_aria": "编辑 {username}",
+	"settings_users_empty_description": "添加第一个账户以登录。",
+	"settings_users_empty_title": "没有用户。",
+	"settings_users_enabled": "已启用",
+	"settings_users_err_password": "请设置密码：未启用单点登录，否则该用户无法登录。",
+	"settings_users_err_spaces": "用户名不能包含空格。",
+	"settings_users_err_username": "请输入用户名。",
+	"settings_users_generate": "生成",
+	"settings_users_generate_title": "生成随机密码",
+	"settings_users_last_seen": "上次登录 {last} · 创建于 {created}",
+	"settings_users_load_error": "无法加载用户",
+	"settings_users_never": "从未",
+	"settings_users_new_aria": "新用户",
+	"settings_users_no_delete_last": "最后一位管理员无法删除。请先提升另一位用户。",
+	"settings_users_no_delete_self": "您不能删除自己的账户。",
+	"settings_users_no_disable_last": "最后一位管理员无法停用。请先提升另一位用户。",
+	"settings_users_no_disable_self": "您不能停用自己的账户。",
+	"settings_users_password": "密码",
+	"settings_users_password_help": "至少 {min} 个字符。创建后只显示一次。",
+	"settings_users_password_help_sso": "至少 {min} 个字符。若用户仅通过 {provider} 登录，请留空。",
+	"settings_users_promote_first": "请先提升另一位用户。",
+	"settings_users_reset2fa": "重置 2FA",
+	"settings_users_reset2fa_confirm": "重置双重验证？",
+	"settings_users_reset2fa_title": "移除其验证器和恢复码并将其退出登录：之后仅凭密码即可再次登录。",
+	"settings_users_reset_help": "留空则保留当前密码。设置新密码会使该用户在所有地方退出登录。",
+	"settings_users_reset_help_sso": "留空则此账户仅使用单点登录。",
+	"settings_users_reset_password": "重置密码",
+	"settings_users_reset_shown": "仅显示一次 — 该用户的其他会话已退出",
+	"settings_users_reset_title": "已重置“{username}”的密码",
+	"settings_users_role": "角色",
+	"settings_users_role_admin": "管理员",
+	"settings_users_role_admin_option": "管理员 — 可更改一切",
+	"settings_users_role_last_admin_help": "在出现另一位管理员之前，最后一位管理员保留管理员角色。",
+	"settings_users_role_operator": "操作员",
+	"settings_users_role_operator_option": "操作员 — 处理告警，不能配置",
+	"settings_users_role_viewer": "查看者",
+	"settings_users_role_viewer_option": "查看者 — 只读",
+	"settings_users_save": "保存更改",
+	"settings_users_save_error": "无法保存用户",
+	"settings_users_title": "用户",
+	"settings_users_update_error": "无法更新用户",
+	"settings_users_username": "用户名",
+	"settings_users_you": "你",
 	"status_action_back": "返回状态页",
 	"status_action_confirm_button": "确认订阅",
 	"status_action_confirm_done": "您已订阅。每封邮件都包含退订链接。",
@@ -4185,13 +5322,65 @@
 	"status_public_services": "服务",
 	"status_public_switch_dark": "切换到深色主题",
 	"status_public_switch_light": "切换到浅色主题",
-	"status_public_tally_affected": "{total} 项服务中有 {affected} 项受影响",
+	"status_public_tally_affected": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=other": "{total} 项服务中有 {affected} 项受影响"
+			}
+		}
+	],
 	"status_public_tally_all": "全部 {count} 项服务运行正常",
-	"status_public_tally_degraded": "{total} 项服务中有 {affected} 项性能下降",
+	"status_public_tally_degraded": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=other": "{total} 项服务中有 {affected} 项性能下降"
+			}
+		}
+	],
 	"status_public_tally_detail": "正常 {up} · 宕机 {down}",
 	"status_public_tally_detail_uptime": "正常 {up} · 宕机 {down} · {days} 天可用率 {uptime}",
-	"status_public_tally_down": "{total} 项服务中有 {affected} 项宕机",
-	"status_public_tally_maintenance": "{total} 项服务中有 {affected} 项正在维护",
+	"status_public_tally_down": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=other": "{total} 项服务中有 {affected} 项宕机"
+			}
+		}
+	],
+	"status_public_tally_maintenance": [
+		{
+			"declarations": [
+				"input affected",
+				"local affectedPlural = affected: plural"
+			],
+			"selectors": [
+				"affectedPlural"
+			],
+			"match": {
+				"affectedPlural=other": "{total} 项服务中有 {affected} 项正在维护"
+			}
+		}
+	],
 	"status_public_tally_one": "1 项服务运行正常",
 	"status_public_title": "状态",
 	"status_public_title_with_page": "{title} · 状态",
@@ -4309,6 +5498,62 @@
 	"status_words_st_monitoring": "观察中",
 	"status_words_st_resolved": "已解决",
 	"status_words_st_scheduled": "已计划",
+	"tips_alerts_clear_history": "“清除所有已解决项”可在你读完之后，一次性把已关闭的告警从历史记录中清走。",
+	"tips_alerts_ignore_device": "某条规则总在一台永远不合规的设备上触发？只对这一台设备忽略该规则即可——其他地方它仍然照常监视。",
+	"tips_alerts_learning": "新的基线规则在最初 14 天内保持静默：它还在学习这台设备的正常状态，之后才敢发出告警。",
+	"tips_alerts_snooze": "暂停一条告警会给它一段固定的安静时间；时间结束后它会自动恢复，无需你记得重新启用。",
+	"tips_alerts_suppressed": "标记为“已抑制”的告警并没有被忽略：它的父设备已经宕机，我不会为同一次故障提醒你两次。",
+	"tips_device_docker": "在装有 Docker 的代理上，你可以直接在这里重启或更新容器，无需终端。",
+	"tips_device_probe_now": "“立即探测”会马上实时询问这台设备，而不用等待下一次定时检查——这是查明它为何沉默的最快办法。",
+	"tips_device_secrets": "凭据一旦保存就不会再返回。编辑这台设备时如果不动密码栏，就会保留已存的密码——没有任何内容会回传到你的屏幕。",
+	"tips_device_silence": "预计会有动静，比如重启或固件更新？可以让这台设备静音一段时间：它的告警会安静下来，而检查本身不会被关闭。",
+	"tips_device_timeline": "面板下方的时间线是这台设备的完整经历：每一条触发并关闭的告警，按顺序排列。",
+	"tips_devices_folders": "把设备拖进文件夹即可分组，比如一个站点、一个机架或一个客户。双击文件夹名称可就地重命名。",
+	"tips_devices_network_scan": "扫描网络可以在你手动输入任何 IP 地址之前，先找出已经在响应的设备。",
+	"tips_devices_network_scan_action": "扫描我的网络",
+	"tips_devices_parent_child": "挂在虚拟化主机下的虚拟机或容器会静默继承其故障：主机宕机时，其下的客户机会被标记为已抑制，而不是各自单独向你告警。",
+	"tips_devices_rack_order": "机架会自动排序：有问题的设备浮到最上面，其余保持你设定的顺序。子设备始终缩进显示在父设备下方。",
+	"tips_devices_relay_agent": "代理可以替你监控整个另一张网络，比如客户的办公室或 NAT 后面的站点，并且只通过出站连接回报。",
+	"tips_devices_relay_agent_action": "监控远程站点",
+	"tips_general_about_me": "我是一只鸽子。我住在你的监控工具里。我已经接受了这件事。",
+	"tips_general_docs": "更详细的说明都在 Read the Docs 上——这份简报有意让自己的页面保持简短。",
+	"tips_general_docs_action": "阅读文档",
+	"tips_general_palette_everywhere": "即使导航栏里的提示不见了，命令面板的快捷键依然有效——按 Ctrl K，Mac 上按 ⌘K。",
+	"tips_general_palette_everywhere_action": "打开命令面板",
+	"tips_general_quiet_option": "如果我太烦人，点下面的 × 可以让我这次先退下；也可以让我彻底闭嘴，我就不再提了。",
+	"tips_general_security_score": "每台设备都会根据其实际暴露的内容获得一个安全评分——不是猜测，而是实测。",
+	"tips_general_security_score_action": "打开“安全”",
+	"tips_overview_briefing": "这个页面是简报，而不是仪表盘：一片天空、用句子写成的“自你上次查看以来”，以及作为卡片的“需要你处理”。这里刻意没有设备列表——它在“设备”页。",
+	"tips_overview_briefing_action": "查看设备",
+	"tips_overview_last_7_days": "“最近 7 天”把一周浓缩成三个数字：一切正常运行了多久、最安静的设备，以及告警你最多次的那台。有点计较，但很公平。",
+	"tips_overview_palette_anywhere": "按 Ctrl K 或 ⌘K 可在任何地方打开命令面板，哪怕在这里、哪怕正在滚动。不必再翻找菜单。",
+	"tips_overview_palette_anywhere_action": "打开命令面板",
+	"tips_overview_sky_weather": "我会陪你一起感受那片天气：夜里平静时在电线上打盹，出问题时吓一跳，天空放晴后撒彩带。你可以试着弄坏点什么。（还是别了。）",
+	"tips_overview_week_ahead": "“未来一周”会在对应的日期显示待办事项，例如维护窗口或续期。平静的一周只会缩成一行，绝不会索取不必要的注意力。",
+	"tips_pip_another": "换一条提示",
+	"tips_pip_bubble_aria": "Pip 的小提示",
+	"tips_pip_close_pip": "关闭 Pip",
+	"tips_pip_close_tip_aria": "关闭此提示",
+	"tips_pip_close_tip_title": "关闭",
+	"tips_pip_guide": "{label} 指南",
+	"tips_pip_open": "Pip 有个提示",
+	"tips_pip_quiet": "不再显示提示",
+	"tips_settings_2fa": "两步验证只需扫一个二维码，就在“账户与安全”里——对这台服务器上唯一能看到所有凭据的账户来说很值得。",
+	"tips_settings_2fa_action": "账户与安全",
+	"tips_settings_assistant": "Claude、ChatGPT 或任何 MCP 客户端都能读取这份简报；有了写入令牌，还能替你让设备静音或运行探测。",
+	"tips_settings_assistant_action": "连接助手",
+	"tips_settings_backup": "备份包是加密的，但仍包含这台服务器所知的全部凭据。请像保管备份包本身一样仔细保管 `/data/secret.key`。",
+	"tips_settings_backup_action": "备份此实例",
+	"tips_settings_packs": "设备类型其实就是一个 YAML 文件，即集成包。安装一个，就能教会我认识尚不了解的设备。",
+	"tips_settings_packs_action": "集成包",
+	"tips_settings_wall_appearance": "墙面模式可在“外观”中调整，包括适合 OLED 的夜间主题，用于永不熄屏的显示器。",
+	"tips_settings_wall_appearance_action": "打开墙面模式",
+	"tips_status_embed": "在状态页链接后加上 `/embed`，它就能整齐地嵌入 iframe——很适合内部 Wiki 或公司内网。",
+	"tips_status_incidents": "在这里发布事件更新，可以礼貌地让大家别来刷你的聊天窗口。维护窗口会显示为计划内，而不是突发的故障。",
+	"tips_status_public_page": "状态页会在别人开口之前就回答“是不是挂了？”——选好服务、分享链接，就完成了。",
+	"tips_status_public_page_action": "创建状态页",
+	"tips_status_subscribe": "访客可以订阅状态页以接收邮件更新；每封邮件里的退订链接无需登录任何地方即可使用。",
+	"tips_status_theme_param": "状态页的 URL 支持 `?theme=light` 或 `?theme=dark`，这样嵌入的页面可以与宿主页面保持一致，而不是靠猜。",
 	"ui.confirm.default_label": "确定吗？",
 	"ui.error_notice.default_title": "出错了",
 	"ui.error_notice.retry": "重试",

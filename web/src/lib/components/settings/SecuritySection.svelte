@@ -5,6 +5,7 @@
 	 * here; when the server runs unprotected there is nothing to change either.
 	 */
 	import { LogOut } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { ApiError, changePassword } from '#lib/api/index.js';
 	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, Field, Panel, Plate } from '#lib/ui/index.js';
@@ -26,11 +27,11 @@
 		changed = false;
 
 		const found: typeof errors = {};
-		if (!current) found.current = 'Enter the current password to prove it is you.';
+		if (!current) found.current = m.settings_security_err_current();
 		const problem = validatePassword(next);
 		if (problem) found.next = problem;
-		else if (next === current) found.next = 'The new password is the same as the current one. Choose a different one.';
-		if (!found.next && next !== confirmation) found.confirmation = 'The two new passwords do not match. Type the confirmation again.';
+		else if (next === current) found.next = m.settings_security_err_same();
+		if (!found.next && next !== confirmation) found.confirmation = m.settings_security_err_mismatch();
 		errors = found;
 		if (Object.keys(found).length > 0) return;
 
@@ -43,7 +44,7 @@
 			changed = true;
 		} catch (cause) {
 			if (cause instanceof ApiError && cause.status === 401) {
-				errors = { current: 'Current password is wrong.' };
+				errors = { current: m.settings_security_err_current_wrong() };
 			} else {
 				apiError = cause;
 			}
@@ -59,17 +60,17 @@
 	}
 </script>
 
-<Panel id="security" title="Account &amp; security" description={auth.user ? `Your account: ${auth.user.username}.` : 'Your account and this session.'}>
+<Panel id="security" title={m.settings_security_title()} description={auth.user ? m.settings_security_description_user({ username: auth.user.username }) : m.settings_security_description()}>
 	{#if !auth.available}
-		<Plate tone="info" size="md" label="This instance has no password protection." />
+		<Plate tone="info" size="md" label={m.settings_security_no_protection()} />
 	{:else if auth.user?.auth === 'oidc'}
 		<div class="flex flex-wrap items-center gap-3">
-			<Plate tone="info" size="md" label={`Managed by ${auth.oidc.provider_name || 'your identity provider'}`} />
-			<p class="text-sm text-ink-2">You sign in through the identity provider: there is no DumbMonit password to change.</p>
+			<Plate tone="info" size="md" label={m.settings_security_managed_by({ provider: auth.oidc.provider_name || m.settings_security_default_provider() })} />
+			<p class="text-sm text-ink-2">{m.settings_security_oidc_note()}</p>
 		</div>
 	{:else}
 		<form class="grid max-w-md gap-4" onsubmit={submit} novalidate>
-			<Field label="Current password" for="current-password" error={errors.current}>
+			<Field label={m.settings_security_current_label()} for="current-password" error={errors.current}>
 				<PasswordInput
 					id="current-password"
 					bind:value={current}
@@ -79,7 +80,7 @@
 					oninput={() => (errors = { ...errors, current: undefined })}
 				/>
 			</Field>
-			<Field label="New password" for="next-password" error={errors.next} help={`At least ${PASSWORD_MIN_LENGTH} characters. A whole phrase is safer than a complicated word.`}>
+			<Field label={m.settings_security_new_label()} for="next-password" error={errors.next} help={m.settings_security_new_help({ min: PASSWORD_MIN_LENGTH })}>
 				<PasswordInput
 					id="next-password"
 					bind:value={next}
@@ -89,7 +90,7 @@
 					oninput={() => (errors = { ...errors, next: undefined })}
 				/>
 			</Field>
-			<Field label="Confirm new password" for="confirm-next-password" error={errors.confirmation}>
+			<Field label={m.settings_security_confirm_label()} for="confirm-next-password" error={errors.confirmation}>
 				<PasswordInput
 					id="confirm-next-password"
 					bind:value={confirmation}
@@ -101,13 +102,13 @@
 			</Field>
 
 			{#if apiError}
-				<ErrorNotice error={apiError} title="Could not change the password" />
+				<ErrorNotice error={apiError} title={m.settings_security_change_error()} />
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-3" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>Change password</Button>
+				<Button type="submit" variant="secondary" loading={saving}>{m.settings_security_change()}</Button>
 				{#if changed}
-					<Plate tone="signal" label="Password changed — your other sessions were signed out" />
+					<Plate tone="signal" label={m.settings_security_changed()} />
 				{/if}
 			</div>
 		</form>
@@ -118,12 +119,12 @@
 	{#if auth.available}
 		<div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
 			<div>
-				<p class="text-sm font-semibold text-ink">This session</p>
-				<p class="mt-0.5 text-[0.8125rem] text-ink-2">Sign out on this device. Other sessions stay open.</p>
+				<p class="text-sm font-semibold text-ink">{m.settings_security_session_title()}</p>
+				<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.settings_security_session_hint()}</p>
 			</div>
 			<Button variant="secondary" loading={signingOut} onclick={() => void signOut()}>
 				<LogOut class="size-4" aria-hidden="true" />
-				Sign out
+				{m.settings_security_sign_out()}
 			</Button>
 		</div>
 	{/if}

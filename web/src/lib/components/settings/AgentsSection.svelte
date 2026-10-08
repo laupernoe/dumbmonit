@@ -10,6 +10,7 @@
 	 * that only its prefix is ever displayed.
 	 */
 	import { ArrowRight, Cpu, KeyRound, RadioTower } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
 	import { listRelays } from '#lib/api/relay.js';
 	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '#lib/format.js';
@@ -41,10 +42,6 @@
 		const seen = agent.last_seen_at ? parseServerDate(agent.last_seen_at) : null;
 		if (!seen) return 'pending';
 		return Date.now() - seen.getTime() < 3 * 60_000 ? 'online' : 'offline';
-	}
-
-	function devices(n: number): string {
-		return `${n} device${n === 1 ? '' : 's'}`;
 	}
 
 	let tokens = $state<AgentToken[]>([]);
@@ -90,12 +87,12 @@
 	let scopeError = $state<string | null>(null);
 
 	/** A number the user typed, or `null` for "left blank". Rejects nonsense. */
-	function count(raw: string, what: string): number | null | 'error' {
+	function count(raw: string, message: string): number | null | 'error' {
 		const text = raw.trim();
 		if (!text) return null;
 		const value = Number(text);
 		if (!Number.isInteger(value) || value < 1) {
-			scopeError = `${what} must be a whole number, one or more.`;
+			scopeError = message;
 			return 'error';
 		}
 		return value;
@@ -106,12 +103,12 @@
 		createError = null;
 		scopeError = null;
 		if (!name.trim()) {
-			nameError = 'Name the token, for example after the machine it will enrol.';
+			nameError = m.settings_agents_name_required();
 			return;
 		}
 		nameError = null;
-		const uses = reusable ? count(maxUses, 'The number of machines') : null;
-		const days = count(expiresInDays, 'The number of days');
+		const uses = reusable ? count(maxUses, m.settings_agents_machines_invalid()) : null;
+		const days = count(expiresInDays, m.settings_agents_days_invalid());
 		if (uses === 'error' || days === 'error') return;
 		creating = true;
 		try {
@@ -137,9 +134,9 @@
 
 	/** What a token can still do, in the fewest words that stay true. */
 	function scopeLabel(token: AgentToken): string {
-		if (token.max_uses === null) return `Fleet · ${token.uses} enrolled`;
-		if (token.max_uses === 1) return token.uses > 0 ? 'Single use · used' : 'Single use';
-		return `Fleet · ${token.uses}/${token.max_uses} enrolled`;
+		if (token.max_uses === null) return m.settings_agents_scope_fleet({ uses: token.uses });
+		if (token.max_uses === 1) return token.uses > 0 ? m.settings_agents_scope_single_used() : m.settings_agents_scope_single();
+		return m.settings_agents_scope_fleet_ratio({ uses: token.uses, max: token.max_uses });
 	}
 
 	/** True once the token can no longer enrol, for any reason short of revocation. */
@@ -170,8 +167,8 @@
 
 <Panel
 	id="agents"
-	title="Agents"
-	description="An agent is one small program on a Linux, Windows, macOS or FreeBSD machine: it reports the system, disks, services, Docker containers and backups, and lets you restart or update a container from here. In relay mode it also probes, for this server, the devices of its own network — a second site, a client, anything behind a NAT — and only ever connects out."
+	title={m.settings_agents_title()}
+	description={m.settings_agents_description()}
 	padded={false}
 >
 	{#snippet aside()}
@@ -184,9 +181,9 @@
 	{#if agents !== null}
 		<div class="border-b border-line px-5 py-4">
 			{#if agents.length === 0}
-				<p class="text-sm text-ink-2">No agent has reported to this server yet.</p>
+				<p class="text-sm text-ink-2">{m.settings_agents_none()}</p>
 			{:else}
-				<ul class="grid gap-1.5" role="list" aria-label="Agents reporting to this server">
+				<ul class="grid gap-1.5" role="list" aria-label={m.settings_agents_list_aria()}>
 					{#each agents as agent (agent.id)}
 						{@const state = agentState(agent)}
 						<li>
@@ -198,18 +195,18 @@
 								<span class="min-w-0 truncate font-semibold text-ink">{agent.name}</span>
 								<Plate tone={STATE_TONE[state] === 'ghost' ? 'ghost' : STATE_TONE[state]} label={STATE_LABEL[state]} bare />
 								{#if agent.relay}
-									<Plate tone="info" title="Relay mode: it probes devices of its own network for this server">
+									<Plate tone="info" title={m.settings_agents_relay_title()}>
 										<RadioTower class="size-3.5" aria-hidden="true" />
-										Relay{agent.site ? ` · ${agent.site}` : ''}
+										{agent.site ? m.settings_agents_relay_label_site({ site: agent.site }) : m.settings_agents_relay_label()}
 									</Plate>
-									<span class="text-[0.8125rem] text-ink-2">probes {devices(agent.relayed)}</span>
+									<span class="text-[0.8125rem] text-ink-2">{m.settings_agents_probes({ count: agent.relayed })}</span>
 								{:else if agent.relayed > 0}
-									<Plate tone="advisory" label={`Relay off — ${devices(agent.relayed)} waiting`} title="Set relay: true on this agent so it picks up their probes" />
+									<Plate tone="advisory" label={m.settings_agents_relay_off({ count: agent.relayed })} title={m.settings_agents_relay_off_title()} />
 								{:else}
-									<span class="text-[0.8125rem] text-ink-2">Watches its own machine</span>
+									<span class="text-[0.8125rem] text-ink-2">{m.settings_agents_watches_own()}</span>
 								{/if}
 								<span class="tnum ml-auto text-[0.8125rem] text-ink-2">
-									Last report <time title={formatDateTime(agent.last_seen_at)}>{formatRelative(agent.last_seen_at)}</time>
+									<time title={formatDateTime(agent.last_seen_at)}>{m.settings_agents_last_report({ when: formatRelative(agent.last_seen_at) })}</time>
 								</span>
 							</a>
 						</li>
@@ -220,11 +217,11 @@
 				<div class="mt-3 flex flex-wrap gap-2">
 					<Button variant="secondary" size="sm" href="/targets/new?kind=agent">
 						<Cpu class="size-4" aria-hidden="true" />
-						Install an agent
+						{m.settings_agents_install()}
 					</Button>
 					<Button variant="ghost" size="sm" href="/targets/new?kind=agent&via=relay">
 						<RadioTower class="size-4" aria-hidden="true" />
-						Watch a remote site
+						{m.settings_agents_watch_remote()}
 						<ArrowRight class="size-3.5" aria-hidden="true" />
 					</Button>
 				</div>
@@ -233,19 +230,19 @@
 	{/if}
 
 	<div class="px-5 py-4">
-		<h3 class="text-sm font-semibold text-ink">Enrolment tokens</h3>
+		<h3 class="text-sm font-semibold text-ink">{m.settings_agents_tokens_title()}</h3>
 		<p class="mt-0.5 mb-3 text-sm text-ink-2">
-			Adding a device of type agent makes a single-use token for you. Create one here for a fleet, a playbook or a machine image.
+			{m.settings_agents_tokens_intro()}
 		</p>
 		{#if auth.isAdmin}
 		<form class="flex flex-col gap-3 sm:flex-row sm:items-start" onsubmit={create} novalidate>
-			<Field label="New token" for="token-name" error={nameError} class="flex-1" help="Only used to recognise the token in this list.">
+			<Field label={m.settings_agents_new_token()} for="token-name" error={nameError} class="flex-1" help={m.settings_agents_new_token_help()}>
 				<input
 					id="token-name"
 					type="text"
 					class="input"
 					bind:value={name}
-					placeholder="File server"
+					placeholder={m.settings_agents_name_placeholder()}
 					autocomplete="off"
 					disabled={creating}
 					aria-invalid={nameError ? 'true' : undefined}
@@ -255,29 +252,28 @@
 			<!-- Offset by the label height so the button sits level with the input. -->
 			<Button type="submit" variant="secondary" class="sm:mt-[1.625rem]" loading={creating}>
 				<KeyRound class="size-4" aria-hidden="true" />
-				Create token
+				{m.settings_agents_create()}
 			</Button>
 		</form>
 
 		<div class="mt-3 flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-canvas-deep px-4 py-3">
 			<div class="flex items-start gap-3">
-				<Toggle id="token-reusable" bind:checked={reusable} label="Reusable for a fleet" />
+				<Toggle id="token-reusable" bind:checked={reusable} label={m.settings_agents_reusable()} />
 				<div class="min-w-0">
-					<label for="token-reusable" class="text-sm font-semibold text-ink">Reusable for a fleet</label>
+					<label for="token-reusable" class="text-sm font-semibold text-ink">{m.settings_agents_reusable()}</label>
 					<p class="text-sm text-ink-2">
-						Off, the token enrols one machine and then enrols nothing more — the right default for a single
-						install. On, it can go into a playbook or an image.
+						{m.settings_agents_reusable_help()}
 					</p>
 				</div>
 			</div>
 			<div class="flex flex-col gap-3 sm:flex-row">
 				{#if reusable}
-					<Field label="Machines it may enrol" for="token-max-uses" class="flex-1" help="Leave empty for no limit.">
-						<input id="token-max-uses" type="number" min="1" step="1" class="input" bind:value={maxUses} placeholder="No limit" disabled={creating} />
+					<Field label={m.settings_agents_machines()} for="token-max-uses" class="flex-1" help={m.settings_agents_machines_help()}>
+						<input id="token-max-uses" type="number" min="1" step="1" class="input" bind:value={maxUses} placeholder={m.settings_agents_no_limit()} disabled={creating} />
 					</Field>
 				{/if}
-				<Field label="Stops enrolling after" for="token-expires" class="flex-1" help="Days. Machines already enrolled keep reporting; leave empty for no deadline.">
-					<input id="token-expires" type="number" min="1" step="1" class="input" bind:value={expiresInDays} placeholder="No deadline" disabled={creating} />
+				<Field label={m.settings_agents_expires()} for="token-expires" class="flex-1" help={m.settings_agents_expires_help()}>
+					<input id="token-expires" type="number" min="1" step="1" class="input" bind:value={expiresInDays} placeholder={m.settings_agents_no_deadline()} disabled={creating} />
 				</Field>
 			</div>
 			{#if scopeError}
@@ -286,7 +282,7 @@
 		</div>
 
 		{#if createError}
-			<ErrorNotice error={createError} title="Could not create the token" class="mt-3" />
+			<ErrorNotice error={createError} title={m.settings_agents_create_error()} class="mt-3" />
 		{/if}
 		{/if}
 
@@ -295,26 +291,26 @@
 				<div class="rise-in mt-4 rounded-[var(--radius-card)] border border-advisory/40 bg-surface p-4">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<div class="flex flex-wrap items-center gap-2">
-							<p class="font-semibold text-ink">Token “{created.name}” created</p>
-							<Plate tone="advisory" label="Shown once — copy it now" />
+							<p class="font-semibold text-ink">{m.settings_agents_created_title({ name: created.name })}</p>
+							<Plate tone="advisory" label={m.settings_agents_shown_once()} />
 						</div>
-						<Button variant="ghost" size="sm" onclick={() => (created = null)}>I've copied it</Button>
+						<Button variant="ghost" size="sm" onclick={() => (created = null)}>{m.settings_agents_copied()}</Button>
 					</div>
 					<div class="mt-4 grid gap-4">
 						<div>
-							<p class="mb-1.5 text-sm font-semibold text-ink">Token</p>
-							<CopyBlock value={created.secret} label="Copy token" secret />
+							<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_token()}</p>
+							<CopyBlock value={created.secret} label={m.settings_agents_copy_token()} secret />
 						</div>
 						{#if created.install_linux}
 							<div>
-								<p class="mb-1.5 text-sm font-semibold text-ink">Install on Linux</p>
-								<CopyBlock value={created.install_linux} label="Copy command" />
+								<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_install_linux()}</p>
+								<CopyBlock value={created.install_linux} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
 						{#if created.install_windows}
 							<div>
-								<p class="mb-1.5 text-sm font-semibold text-ink">Install on Windows (PowerShell)</p>
-								<CopyBlock value={created.install_windows} label="Copy command" />
+								<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_install_windows()}</p>
+								<CopyBlock value={created.install_windows} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
 						<AgentChecksums />
@@ -325,11 +321,11 @@
 
 		<div class={auth.isAdmin ? 'mt-4' : ''}>
 			{#if error}
-				<ErrorNotice {error} title="Could not load the tokens" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.settings_agents_load_error()} onretry={() => void load()} />
 			{:else if loading}
 				<Skeleton class="h-14 w-full" />
 			{:else if tokens.length === 0}
-				<EmptyState icon={Cpu} title="No token yet." description="Create one, then run the install command on the machine." />
+				<EmptyState icon={Cpu} title={m.settings_agents_empty_title()} description={m.settings_agents_empty_description()} />
 			{:else}
 				<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 					{#each tokens as token (token.id)}
@@ -340,34 +336,34 @@
 									<div class="flex flex-wrap items-center gap-2">
 										<span class={`font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
-										{#if revoked}<Plate tone="ghost" label="Revoked" />{/if}
+										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
-											{#if spent(token)}<Plate tone="advisory" label="Enrols no more" />{/if}
+											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}
 										{/if}
 									</div>
 									<p class="mt-1 text-sm text-ink-2">
-										Created <time class="tnum" title={formatDateTime(token.created_at)}>{formatRelative(token.created_at)}</time>
-										· Last used <time class="tnum" title={formatDateTime(token.last_used_at)}>{formatRelative(token.last_used_at)}</time>
+										<time class="tnum" title={formatDateTime(token.created_at)}>{m.settings_agents_created_at({ when: formatRelative(token.created_at) })}</time>
+										· <time class="tnum" title={formatDateTime(token.last_used_at)}>{m.settings_agents_last_used({ when: formatRelative(token.last_used_at) })}</time>
 										{#if token.expires_at}
-											· Stops enrolling <time class="tnum" title={formatDateTime(token.expires_at)}>{formatRelative(token.expires_at)}</time>
+											· <time class="tnum" title={formatDateTime(token.expires_at)}>{m.settings_agents_stops_at({ when: formatRelative(token.expires_at) })}</time>
 										{/if}
 										{#if revoked}
-											· Revoked <time class="tnum" title={formatDateTime(token.revoked_at)}>{formatRelative(token.revoked_at)}</time>
+											· <time class="tnum" title={formatDateTime(token.revoked_at)}>{m.settings_agents_revoked_at({ when: formatRelative(token.revoked_at) })}</time>
 										{/if}
 									</p>
 									{#if !revoked && spent(token)}
 										<p class="mt-1 text-sm text-ink-2">
-											Machines enrolled with it keep reporting; it just cannot let a new one in.
+											{m.settings_agents_spent_note()}
 										</p>
 									{/if}
 								</div>
 								{#if !revoked && auth.isAdmin}
-									<Confirm confirmLabel="Revoke for good?" loading={revoking === token.id} onconfirm={() => revoke(token)}>Revoke</Confirm>
+									<Confirm confirmLabel={m.settings_agents_revoke_confirm()} loading={revoking === token.id} onconfirm={() => revoke(token)}>{m.settings_agents_revoke()}</Confirm>
 								{/if}
 							</div>
 							{#if revokeError?.id === token.id}
-								<ErrorNotice error={revokeError.cause} title="Could not revoke the token" class="mt-3" />
+								<ErrorNotice error={revokeError.cause} title={m.settings_agents_revoke_error()} class="mt-3" />
 							{/if}
 						</li>
 					{/each}

@@ -16,14 +16,16 @@
  * about it.
  */
 
+import { m } from '#lib/paraglide/messages.js';
+
 export type Area = 'overview' | 'devices' | 'device' | 'alerts' | 'settings' | 'status' | 'general';
 
 export interface Tip {
 	id: string;
 	/** What Pip says, one or two short sentences. */
-	text: string;
+	text: () => string;
 	/** Button label; omitted for a tip that is just advice or a joke. */
-	action?: string;
+	action?: () => string;
 	href?: string;
 	/** Only offered to admins: a viewer could not follow it through. */
 	admin?: boolean;
@@ -33,53 +35,53 @@ export const AREA_TIPS: Record<Area, Tip[]> = {
 	overview: [
 		{
 			id: 'briefing',
-			text: 'This page is a briefing, not a dashboard: a sky, "since you last looked" in sentences, and "needs you" as tiles. No device list here on purpose — that lives on Devices.',
-			action: 'See the devices',
+			text: () => m.tips_overview_briefing(),
+			action: () => m.tips_overview_briefing_action(),
 			href: '/targets'
 		},
 		{
 			id: 'week-ahead',
-			text: '"The week ahead" shows what is due on its day — a maintenance window, a renewal. A quiet week shrinks to one line so it never begs for attention it does not need.'
+			text: () => m.tips_overview_week_ahead()
 		},
 		{
 			id: 'sky-weather',
-			text: 'I live the weather with you up there: I nap on the wire on a quiet night, startle when something breaks, and loop in confetti once the sky clears. Try breaking something. (Please don’t.)'
+			text: () => m.tips_overview_sky_weather()
 		},
 		{
 			id: 'palette-anywhere',
-			text: 'Ctrl K or ⌘K opens the command palette from anywhere, even here, even mid-scroll. No menu diving required.',
-			action: 'Open the palette',
+			text: () => m.tips_overview_palette_anywhere(),
+			action: () => m.tips_overview_palette_anywhere_action(),
 			href: 'palette'
 		},
 		{
 			id: 'last-7-days',
-			text: '"Last 7 days" boils the week down to three numbers: how long everything stayed up, the quietest device, and the one that paged you the most. Petty, but fair.'
+			text: () => m.tips_overview_last_7_days()
 		}
 	],
 	devices: [
 		{
 			id: 'rack-order',
-			text: 'The rack sorts itself: trouble floats to the top, everything else keeps the order you gave it. Children sit indented under their parent, always.'
+			text: () => m.tips_devices_rack_order()
 		},
 		{
 			id: 'folders',
-			text: 'Drag a device into a folder to group it — a site, a rack, a client. Double-click a folder’s name to rename it in place.'
+			text: () => m.tips_devices_folders()
 		},
 		{
 			id: 'parent-child',
-			text: 'A VM or container under its hypervisor inherits trouble quietly: if the host is down, its guests are marked suppressed instead of each paging you separately.'
+			text: () => m.tips_devices_parent_child()
 		},
 		{
 			id: 'network-scan',
-			text: 'Scanning the network finds what is already answering before you type a single IP address by hand.',
-			action: 'Scan my network',
+			text: () => m.tips_devices_network_scan(),
+			action: () => m.tips_devices_network_scan_action(),
 			href: '/targets/new?scan=1',
 			admin: true
 		},
 		{
 			id: 'relay-agent',
-			text: 'An agent can watch a whole second network for you — a client’s office, a site behind a NAT — reporting home over an outbound connection only.',
-			action: 'Watch a remote site',
+			text: () => m.tips_devices_relay_agent(),
+			action: () => m.tips_devices_relay_agent_action(),
 			href: '/targets/new?kind=agent&via=relay',
 			admin: true
 		}
@@ -87,134 +89,134 @@ export const AREA_TIPS: Record<Area, Tip[]> = {
 	device: [
 		{
 			id: 'probe-now',
-			text: '"Probe now" asks this device right now, live, instead of waiting for its next scheduled check — the fastest way to find out why it has gone quiet.'
+			text: () => m.tips_device_probe_now()
 		},
 		{
 			id: 'silence',
-			text: 'Expecting noise — a reboot, a firmware update? Silence this device for a while and its alerts stay quiet without disabling the checks themselves.'
+			text: () => m.tips_device_silence()
 		},
 		{
 			id: 'secrets',
-			text: 'Credentials never come back once saved. Editing this device without touching the password field just keeps the one already stored — nothing round-trips to your screen.'
+			text: () => m.tips_device_secrets()
 		},
 		{
 			id: 'timeline',
-			text: 'The timeline below the faceplate is this device’s whole story: every alert that opened and closed on it, in order.'
+			text: () => m.tips_device_timeline()
 		},
 		{
 			id: 'docker',
-			text: 'On an agent with Docker, you can restart or update a container from right here — no terminal required.'
+			text: () => m.tips_device_docker()
 		}
 	],
 	alerts: [
 		{
 			id: 'suppressed',
-			text: 'An alert marked "suppressed" is not being ignored — its parent is already down, and I am not paging you twice for the same outage.'
+			text: () => m.tips_alerts_suppressed()
 		},
 		{
 			id: 'learning',
-			text: 'A new baseline rule stays silent for its first 14 days: it is still learning what normal looks like for this device before it dares to alert on it.'
+			text: () => m.tips_alerts_learning()
 		},
 		{
 			id: 'snooze',
-			text: 'Snoozing an alert buys it a fixed window of quiet; it comes back on its own once that window ends — no need to remember to re-enable it.'
+			text: () => m.tips_alerts_snooze()
 		},
 		{
 			id: 'ignore-device',
-			text: 'A rule firing on a device that will just never comply? Ignore that rule for that one device — the rule still watches everywhere else.'
+			text: () => m.tips_alerts_ignore_device()
 		},
 		{
 			id: 'clear-history',
-			text: '"Clear all resolved" sweeps the closed alerts out of your history in one go, once you are done reading them.'
+			text: () => m.tips_alerts_clear_history()
 		}
 	],
 	settings: [
 		{
 			id: 'packs',
-			text: 'A device type is just a YAML file — an integration pack. Install one to teach me a device I do not already know.',
-			action: 'Integration packs',
+			text: () => m.tips_settings_packs(),
+			action: () => m.tips_settings_packs_action(),
 			href: '/settings#packs',
 			admin: true
 		},
 		{
 			id: 'assistant',
-			text: 'Claude, ChatGPT or any MCP client can read this bulletin — and with a write token, silence a device or run a probe for you.',
-			action: 'Connect an assistant',
+			text: () => m.tips_settings_assistant(),
+			action: () => m.tips_settings_assistant_action(),
 			href: '/settings#assistant',
 			admin: true
 		},
 		{
 			id: '2fa',
-			text: 'Two-factor authentication is one QR code away, right in Account & security — worth it for the one account that can see every credential on this server.',
-			action: 'Account & security',
+			text: () => m.tips_settings_2fa(),
+			action: () => m.tips_settings_2fa_action(),
 			href: '/settings#security'
 		},
 		{
 			id: 'backup',
-			text: 'The backup bundle is encrypted, but it still holds every credential this server knows. Keep `/data/secret.key` as carefully as the bundle itself.',
-			action: 'Back up this instance',
+			text: () => m.tips_settings_backup(),
+			action: () => m.tips_settings_backup_action(),
 			href: '/settings#backup',
 			admin: true
 		},
 		{
 			id: 'wall-appearance',
-			text: 'Wall mode is tuned in Appearance — including an OLED-friendly night theme for a screen that never turns off.',
-			action: 'Open wall mode',
+			text: () => m.tips_settings_wall_appearance(),
+			action: () => m.tips_settings_wall_appearance_action(),
 			href: '/wall'
 		}
 	],
 	status: [
 		{
 			id: 'public-page',
-			text: 'A status page answers "is it down?" before anyone has to ask — pick the services, share the link, done.',
-			action: 'Create a status page',
+			text: () => m.tips_status_public_page(),
+			action: () => m.tips_status_public_page_action(),
 			href: '/status',
 			admin: true
 		},
 		{
 			id: 'embed',
-			text: 'Add `/embed` to a status page’s link and it drops into an iframe neatly — handy for an internal wiki or a company intranet.'
+			text: () => m.tips_status_embed()
 		},
 		{
 			id: 'incidents',
-			text: 'Posting an incident update here keeps everyone off your chat, politely. Maintenance windows show as planned, not as a surprise outage.',
+			text: () => m.tips_status_incidents(),
 			admin: true
 		},
 		{
 			id: 'subscribe',
-			text: 'Visitors can subscribe to a status page for email updates; the unsubscribe link in every one of those emails works without them signing in anywhere.'
+			text: () => m.tips_status_subscribe()
 		},
 		{
 			id: 'theme-param',
-			text: 'A status page accepts `?theme=light` or `?theme=dark` in its URL, so an embed can match the page that hosts it instead of guessing.'
+			text: () => m.tips_status_theme_param()
 		}
 	],
 	general: [
 		{
 			id: 'palette-everywhere',
-			text: 'The keyboard shortcut for the command palette still works even with the hint gone from the nav — Ctrl K, or ⌘K on a Mac.',
-			action: 'Open the palette',
+			text: () => m.tips_general_palette_everywhere(),
+			action: () => m.tips_general_palette_everywhere_action(),
 			href: 'palette'
 		},
 		{
 			id: 'docs',
-			text: 'Longer explanations live on Read the Docs — this bulletin keeps its own screens short on purpose.',
-			action: 'Read the docs',
+			text: () => m.tips_general_docs(),
+			action: () => m.tips_general_docs_action(),
 			href: 'https://dumbmonit.readthedocs.io/en/latest/'
 		},
 		{
 			id: 'security-score',
-			text: 'Every device gets a security score from what it actually exposes — not a guess, a reading.',
-			action: 'Open Security',
+			text: () => m.tips_general_security_score(),
+			action: () => m.tips_general_security_score_action(),
 			href: '/security'
 		},
 		{
 			id: 'about-me',
-			text: 'I am a pigeon. I live in your monitoring tool. I have made my peace with this.'
+			text: () => m.tips_general_about_me()
 		},
 		{
 			id: 'quiet-option',
-			text: 'If I am more than you want, the × below puts me away for this visit — or tell me to stop for good and I will not bring it up again.'
+			text: () => m.tips_general_quiet_option()
 		}
 	]
 };
