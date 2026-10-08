@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Add a device — the one way to add anything.
 	 *
@@ -203,22 +204,22 @@
 	const relaying = $derived(feature?.id === 'relay');
 	const selectedSummary = $derived(
 		relaying
-			? 'An agent on that network probes its devices for this server.'
+			? m.deviceform_new_summary_relay()
 			: feature
-				? 'Comes through the agent: install it on the machine.'
+				? m.deviceform_new_summary_agent()
 				: (selected?.summary ?? '')
 	);
-	const crumb = $derived(view === 'kind' ? selectedLabel : view === 'scan' ? 'Scan my network' : null);
+	const crumb = $derived(view === 'kind' ? selectedLabel : view === 'scan' ? m.deviceform_new_scan() : null);
 	const description = $derived(
 		view === 'picker'
-			? 'Pick what to watch. The next step asks for the few fields it needs.'
+			? m.deviceform_new_desc_picker()
 			: view === 'scan'
-				? 'Finds SNMP devices on a network range and adds them in one go.'
+				? m.deviceform_new_desc_scan()
 				: relaying
-					? 'One agent at the other site, and its devices report through it.'
+					? m.deviceform_new_desc_relay()
 					: selected?.kind === AGENT_KIND
-						? 'One command on the machine, and it reports on its own.'
-						: 'Tell DumbMonit where it is and how to read it.'
+						? m.deviceform_new_desc_agent()
+						: m.deviceform_new_desc_form()
 	);
 
 	const doorClass =
@@ -236,7 +237,7 @@
 	}}
 />
 
-<svelte:head><title>{crumb ? `${crumb} · ` : ''}Add a device · DumbMonit</title></svelte:head>
+<svelte:head><title>{crumb ? m.deviceform_new_page_title_crumb({ crumb }) : m.deviceform_new_page_title()}</title></svelte:head>
 
 {#snippet stamp()}
 	{#if selected && SelectedIcon}
@@ -248,12 +249,12 @@
 {/snippet}
 
 <!-- Where am I: every level above the current one is a link. -->
-<nav aria-label="Breadcrumb" class="mb-2">
+<nav aria-label={m.deviceform_new_breadcrumb()} class="mb-2">
 	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2">
 		<li class="flex">
 			<a href="/targets" class="inline-flex items-center gap-1 rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
 				<ArrowLeft class="size-3.5" aria-hidden="true" />
-				Devices
+				{m.deviceform_new_devices()}
 			</a>
 		</li>
 		<li aria-hidden="true"><ChevronRight class="size-3.5 text-ink-3" /></li>
@@ -267,23 +268,23 @@
 					}}
 					class="rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
 				>
-					Add a device
+					{m.deviceform_new_add()}
 				</a>
 			</li>
 			<li aria-hidden="true"><ChevronRight class="size-3.5 text-ink-3" /></li>
 			<li aria-current="page" class="max-w-[16rem] truncate font-semibold text-ink">{crumb}</li>
 		{:else}
-			<li aria-current="page" class="font-semibold text-ink">Add a device</li>
+			<li aria-current="page" class="font-semibold text-ink">{m.deviceform_new_add()}</li>
 		{/if}
 	</ol>
 </nav>
 
-<PageHeader title="Add a device" {description} />
+<PageHeader title={m.deviceform_new_add()} {description} />
 
 {#if view === 'picker'}
 	<!-- The picker ------------------------------------------------------------ -->
 	<section aria-labelledby="step-type" class="min-w-0">
-		<h2 id="step-type" tabindex="-1" class="mb-4 text-lg font-semibold tracking-tight text-ink outline-none">What do you want to watch?</h2>
+		<h2 id="step-type" tabindex="-1" class="mb-4 text-lg font-semibold tracking-tight text-ink outline-none">{m.deviceform_new_step_title()}</h2>
 
 		{#if loading}
 			<div class="grid gap-2 sm:grid-cols-2">
@@ -297,20 +298,20 @@
 			</div>
 		{:else if unavailable}
 			<EmptyState
-				title="This server does not list its device types"
-				description="It is older than this interface. Update the server to add devices from here."
+				title={m.deviceform_new_unavailable_title()}
+				description={m.deviceform_new_unavailable_desc()}
 			/>
 		{:else if error}
-			<ErrorNotice {error} title="Could not load the device types" onretry={() => void load()} />
+			<ErrorNotice {error} title={m.deviceform_new_load_error()} onretry={() => void load()} />
 		{:else if collectors.length === 0}
 			<EmptyState
-				title="No device type is enabled"
-				description="No collector is active on this instance. Check its configuration, then reload this page."
+				title={m.deviceform_new_none_title()}
+				description={m.deviceform_new_none_desc()}
 			/>
 		{:else}
 			{#if requestedKind}
 				<p class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3.5 py-2.5 text-sm text-ink">
-					This server has no device type called <code class="font-mono">{requestedKind}</code>. Pick one below.
+					{m.deviceform_new_unknown_kind({ kind: requestedKind })}
 				</p>
 			{/if}
 			{#if hasAgent || snmp}
@@ -326,9 +327,9 @@
 								<Cpu class="size-5" aria-hidden="true" />
 							</span>
 							<span class="min-w-0 flex-1">
-								<span class="block font-semibold text-ink">Monitor a machine with the agent</span>
+								<span class="block font-semibold text-ink">{m.deviceform_new_door_agent_title()}</span>
 								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-									One command on Linux, Windows, macOS or FreeBSD: system, disks, services, Docker containers and backups.
+									{m.deviceform_new_door_agent_desc()}
 								</span>
 							</span>
 							<ArrowRight class="mt-1 size-4 shrink-0 text-signal-ink transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -340,9 +341,9 @@
 								<Radar class="size-5" aria-hidden="true" />
 							</span>
 							<span class="min-w-0 flex-1">
-								<span class="block font-semibold text-ink">Scan my network</span>
+								<span class="block font-semibold text-ink">{m.deviceform_new_scan()}</span>
 								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-									Give a range like 192.168.1.0/24: every device answering SNMP is listed, ready to add.
+									{m.deviceform_new_door_scan_desc()}
 								</span>
 							</span>
 							<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -363,11 +364,10 @@
 									</span>
 									<span class="min-w-0 flex-1">
 										<span class="block font-semibold text-ink">
-											Watch another network <span class="font-normal text-ink-2">(remote site)</span>
+											{m.deviceform_new_door_relay_title()}
 										</span>
 										<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-											An agent at a second site, a client’s office or behind a NAT probes the switches, NAS and
-											hypervisors there for this server, and only connects out — no VPN, no port to open.
+											{m.deviceform_new_door_relay_desc()}
 										</span>
 									</span>
 									<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -382,24 +382,24 @@
 			{/if}
 			<CollectorPicker {collectors} selected={lastChoice === 'scan' ? null : lastChoice} wide onselect={(kind, via) => select(kind, via)}>
 				{#snippet empty()}
-					<p class="mt-1 text-sm text-ink-2">Most things still fit one of these:</p>
+					<p class="mt-1 text-sm text-ink-2">{m.deviceform_new_empty_lead()}</p>
 					<div class="mt-3 flex flex-wrap justify-center gap-2">
 						{#if snmp}
 							<Button size="sm" variant="secondary" onclick={openScan}>
 								<Radar class="size-4" aria-hidden="true" />
-								Scan my network
+								{m.deviceform_new_scan()}
 							</Button>
 						{/if}
 						{#if has('tcp')}
 							<Button size="sm" variant="secondary" onclick={() => select('tcp')}>
 								<Plug class="size-4" aria-hidden="true" />
-								Any network port
+								{m.deviceform_new_any_port()}
 							</Button>
 						{/if}
 						{#if has('http')}
 							<Button size="sm" variant="secondary" onclick={() => select('http')}>
 								<Globe class="size-4" aria-hidden="true" />
-								A web page
+								{m.deviceform_new_web_page()}
 							</Button>
 						{/if}
 					</div>
@@ -412,7 +412,7 @@
 	<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
 		<Button size="sm" variant="secondary" onclick={toPicker}>
 			<ArrowLeft class="size-4" aria-hidden="true" />
-			All device types
+			{m.deviceform_new_all_types()}
 		</Button>
 		{#if noticeFor}
 			<Button
@@ -424,7 +424,7 @@
 				onclick={guideOpen ? closeGuide : openGuide}
 			>
 				<BookOpen class="size-4" aria-hidden="true" />
-				{guideOpen ? 'Hide setup guide' : 'Setup guide'}
+				{guideOpen ? m.deviceform_new_guide_hide() : m.deviceform_new_guide_show()}
 			</Button>
 		{/if}
 	</div>
@@ -435,7 +435,7 @@
 				<Panel>
 					<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
 						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
-						Scan my network
+						{m.deviceform_new_scan()}
 					</h2>
 					<Discovery />
 				</Panel>
@@ -483,7 +483,7 @@
 			{:else if loading}
 				<Panel><Skeleton class="h-40 w-full" /></Panel>
 			{:else if error}
-				<ErrorNotice {error} title="Could not load the device types" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.deviceform_new_load_error()} onretry={() => void load()} />
 			{/if}
 		</section>
 
@@ -492,7 +492,7 @@
 			<aside
 				id="setup-guide"
 				tabindex="-1"
-				aria-label="Setup guide"
+				aria-label={m.deviceform_new_guide_label()}
 				class="order-first min-w-0 scroll-mt-20 outline-none lg:sticky lg:top-20 lg:order-none lg:col-span-5"
 			>
 				<SetupNotice collector={noticeFor} onclose={closeGuide} />

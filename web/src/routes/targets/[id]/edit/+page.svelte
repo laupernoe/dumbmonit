@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Edit a device. Same form as "Add", seeded from the saved target; the kind
 	 * is fixed and shown as a stamp. Credentials start blank and are only sent
@@ -64,15 +65,15 @@
 	const KindIcon = $derived(target ? kindIcon(target.kind) : null);
 </script>
 
-<svelte:head><title>Edit {target?.name ?? 'device'} · DumbMonit</title></svelte:head>
+<svelte:head><title>{target ? m.deviceform_edit_page_title({ name: target.name }) : m.deviceform_edit_page_title_fallback()}</title></svelte:head>
 
 <PageHeader
-	title={target ? `Edit ${target.name}` : 'Edit device'}
-	back={{ href: `/targets/${id}`, label: target?.name ?? 'Device' }}
+	title={target ? m.deviceform_edit_title({ name: target.name }) : m.deviceform_edit_title_fallback()}
+	back={{ href: `/targets/${id}`, label: target?.name ?? m.deviceform_edit_back_fallback() }}
 />
 
 {#if error}
-	<ErrorNotice {error} title="Could not load this device" onretry={() => void load()} />
+	<ErrorNotice {error} title={m.deviceform_edit_load_error()} onretry={() => void load()} />
 {:else if loading || !target || !collector}
 	<div class="grid items-start gap-6 lg:grid-cols-12">
 		<div class="rounded-[var(--radius-card)] border border-line bg-surface p-5 lg:col-span-7">
@@ -90,7 +91,7 @@
 {:else}
 	<div class="grid items-start gap-6 lg:grid-cols-12">
 		<div class="min-w-0 lg:col-span-7">
-			<Panel title={collector.label} description="Type cannot be changed: remove the device and add it again as another type.">
+			<Panel title={collector.label} description={m.deviceform_edit_type_fixed()}>
 				{#snippet aside()}
 					{#if KindIcon}
 						<Plate tone="ghost" bare>

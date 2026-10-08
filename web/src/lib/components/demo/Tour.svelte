@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The demo's guided tour: eight stops, each one a page and, when it has
 	 * one, an element ringed on it. A modal dialog — focus stays inside, Esc
@@ -36,50 +37,50 @@
 
 	const STEPS: Step[] = [
 		{
-			title: 'The weather, then what needs you',
-			body: 'The overview reads like a forecast: one sentence for the whole estate, and below it only the things worth your attention. A quiet sky means you can close the tab.',
+			title: m.demo_tour_s1_title(),
+			body: m.demo_tour_s1_body(),
 			href: '/',
 			anchor: 'weather'
 		},
 		{
-			title: 'A device, all of it',
-			body: 'This Proxmox cluster shows nodes, guests, storage, replication and backups on one page, from the same API the real collector reads. Every chart has the last seven days.',
+			title: m.demo_tour_s2_title(),
+			body: m.demo_tour_s2_body(),
 			href: proxmoxPage,
 			anchor: 'nav-devices'
 		},
 		{
-			title: 'Alerts without the noise',
-			body: 'Rules come ready-made. A switch that goes down silences everything behind it; seasonal baselines learn what a normal Tuesday looks like; forecasts warn a disk will fill before it does.',
+			title: m.demo_tour_s3_title(),
+			body: m.demo_tour_s3_body(),
 			href: '/alerts#rules',
 			anchor: 'nav-alerts'
 		},
 		{
-			title: 'Notifications, 22 ways',
-			body: 'Email, ntfy, Matrix, Discord, Slack, Telegram, Gotify, webhooks and more — with quiet hours and per-device overrides. The demo never sends anything.',
+			title: m.demo_tour_s4_title(),
+			body: m.demo_tour_s4_body(),
 			href: '/alerts#notifications'
 		},
 		{
-			title: 'Add a device',
-			body: 'Pick a type from the catalogue — hypervisors, NAS, firewalls, servers, printers, websites — and the form asks only for what that type needs. SNMP devices are recognised on their own.',
+			title: m.demo_tour_s5_title(),
+			body: m.demo_tour_s5_body(),
 			href: '/targets/new'
 		},
 		{
-			title: 'The agent',
-			body: 'One small binary for Linux and Windows pushes CPU, disks, services and containers. It can also relay probes from a remote site that the server cannot reach.',
+			title: m.demo_tour_s6_title(),
+			body: m.demo_tour_s6_body(),
 			href: '/settings#agents'
 		},
 		{
-			title: 'Status pages',
-			body: 'Publish a public page for your users, with incidents, uptime badges and email subscriptions — without exposing the rest of the instance.',
+			title: m.demo_tour_s7_title(),
+			body: m.demo_tour_s7_body(),
 			href: '/status',
 			anchor: 'nav-status'
 		},
 		{
-			title: 'Wall mode',
-			body: 'For a screen in the room: the bulletin full screen, readable from across it, with an optional music player. That is the tour — look around, nothing you click can break.',
+			title: m.demo_tour_s8_title(),
+			body: m.demo_tour_s8_body(),
 			href: null,
 			anchor: 'nav-wall',
-			link: { label: 'Open wall mode', href: '/wall' }
+			link: { label: m.demo_tour_s8_link(), href: '/wall' }
 		}
 	];
 
@@ -247,12 +248,12 @@
 	>
 		<div class="flex items-start justify-between gap-3">
 			<p class="tnum text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
-				Tour · {index + 1} of {STEPS.length}
+				{m.demo_tour_progress({ current: index + 1, total: STEPS.length })}
 			</p>
 			<button
 				type="button"
-				class="-mt-1.5 -mr-2 inline-flex size-8 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
-				aria-label="Close the tour"
+				class="-mt-1.5 -mr-2 inline-flex size-10 items-center sm:size-8 justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
+				aria-label={m.demo_tour_close()}
 				onclick={close}
 			>
 				<X class="size-4" aria-hidden="true" />
@@ -273,15 +274,15 @@
 			{#if index > 0}
 				<Button variant="ghost" size="sm" onclick={back}>
 					<ArrowLeft class="size-4" aria-hidden="true" />
-					Back
+					{m.demo_tour_back()}
 				</Button>
 			{/if}
 			<Button variant="primary" size="sm" onclick={next}>
-				{last ? 'Done' : 'Next'}
+				{last ? m.demo_tour_done() : m.demo_tour_next()}
 				{#if !last}<ArrowRight class="size-4" aria-hidden="true" />{/if}
 			</Button>
 		</div>
-		<p class="sr-only">Use the left and right arrow keys to move between steps, Escape to close.</p>
+		<p class="sr-only">{m.demo_tour_keys()}</p>
 	</div>
 {/if}
 

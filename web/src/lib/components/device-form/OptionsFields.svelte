@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Settings specific to a kind, as described by the server.
 	 *
@@ -54,7 +55,7 @@
 						aria-invalid={errors[option.key] ? 'true' : undefined}
 					>
 						{#if !option.required}
-							<option value="">{option.default ? `Default (${option.default})` : 'Default'}</option>
+							<option value="">{option.default ? m.deviceform_options_default_value({ value: option.default }) : m.deviceform_options_default()}</option>
 						{/if}
 						{#each option.choices as choice (choice)}
 							<option value={choice}>{choice}</option>
