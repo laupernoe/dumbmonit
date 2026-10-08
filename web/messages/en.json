@@ -1,5 +1,1312 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"alerts_ack_button": "Ack",
+	"alerts_ack_error_ack": "Could not acknowledge the alert.",
+	"alerts_ack_error_unack": "Could not lift the acknowledgement.",
+	"alerts_ack_hint": "Reminders pause; you are still told when it resolves. Enter = {hours} h.",
+	"alerts_ack_hours": "{hours} h",
+	"alerts_ack_menu_label": "Acknowledge for",
+	"alerts_ack_note_label": "Note",
+	"alerts_ack_note_placeholder": "Note (optional): what you are doing",
+	"alerts_ack_stop_reminding": "Stop reminding me for",
+	"alerts_ack_unack": "Un-ack",
+	"alerts_ack_until_resolved": "Until resolved",
+	"alerts_device_last_report": "last report {when}",
+	"alerts_device_never_reported": "never reported",
+	"alerts_form_cancel": "Cancel",
+	"alerts_form_comment": "Comment",
+	"alerts_form_comment_help": "Optional. Why the window exists.",
+	"alerts_form_comment_placeholder": "Planned firmware upgrade",
+	"alerts_form_day": "Day",
+	"alerts_form_days": "Days",
+	"alerts_form_description": "Mute alerts for a device, or all of them, for a window.",
+	"alerts_form_device_help": "Leave empty to cover every device.",
+	"alerts_form_each_month": "Each month",
+	"alerts_form_end": "End",
+	"alerts_form_error_daily": "Enter the daily start and end as HH:MM.",
+	"alerts_form_error_daily_differ": "The daily start and end must differ.",
+	"alerts_form_error_dates": "Enter a valid start and end.",
+	"alerts_form_error_days": "Pick at least one day of the week.",
+	"alerts_form_error_month_days": "Enter the days of the month as numbers from 1 to 31, for example “1, 15”.",
+	"alerts_form_error_name": "Give the window a name — it explains, later, why these alerts went quiet.",
+	"alerts_form_error_order": "The end of the window must come after its start.",
+	"alerts_form_error_schedule": "Could not schedule the window.",
+	"alerts_form_error_start": "Enter the start as HH:MM.",
+	"alerts_form_for": "For",
+	"alerts_form_for_help": "Real elapsed time: a 2 h window lasts 2 h, even on a clock-change night.",
+	"alerts_form_from": "From",
+	"alerts_form_local_time_help": "Local time in the zone below.",
+	"alerts_form_month_days": "Days of the month",
+	"alerts_form_month_days_help": "One or more, from 1 to 31, separated by commas. A month without that day is skipped.",
+	"alerts_form_monthly": "Monthly",
+	"alerts_form_name": "Name",
+	"alerts_form_name_help": "Shown in the list and in history.",
+	"alerts_form_name_placeholder": "Sunday NAS reboot",
+	"alerts_form_on_date": "On a date",
+	"alerts_form_on_weekday": "On a weekday",
+	"alerts_form_one_off": "One-off",
+	"alerts_form_rank_fifth": "Fifth",
+	"alerts_form_rank_first": "First",
+	"alerts_form_rank_fourth": "Fourth",
+	"alerts_form_rank_last": "Last",
+	"alerts_form_rank_second": "Second",
+	"alerts_form_rank_third": "Third",
+	"alerts_form_start": "Start",
+	"alerts_form_submit": "Schedule",
+	"alerts_form_timezone": "Time zone",
+	"alerts_form_timezone_help": "An IANA name such as Europe/Paris. The window keeps its local hour across daylight-saving changes.",
+	"alerts_form_to": "To",
+	"alerts_form_weekly": "Weekly",
+	"alerts_form_when": "When",
+	"alerts_form_which": "Which one",
+	"alerts_form_which_help": "A month without that one — no fifth Sunday — is skipped.",
+	"alerts_history_clear_all": "Clear all resolved",
+	"alerts_history_clear_confirm": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Clear {count}?",
+				"countPlural=other": "Clear {count}?"
+			}
+		}
+	],
+	"alerts_history_cleared": "Cleared",
+	"alerts_history_count": "{shown} of {total}",
+	"alerts_history_deleted_device": "(deleted device)",
+	"alerts_history_device": "Device",
+	"alerts_history_empty_description": "Alert transitions appear here as rules start firing and resolving.",
+	"alerts_history_empty_title": "No history yet.",
+	"alerts_history_error_clear": "Could not clear this entry.",
+	"alerts_history_error_clear_all": "Could not clear the resolved entries.",
+	"alerts_history_error_cleared": "Could not load the cleared entries.",
+	"alerts_history_error_more": "Could not load more history.",
+	"alerts_history_everything": "That is everything from the last {days} days.",
+	"alerts_history_export": "Export CSV",
+	"alerts_history_filter_all": "All",
+	"alerts_history_load_more": "Load more",
+	"alerts_history_nomatch_description": "Widen the filters to see the log again.",
+	"alerts_history_nomatch_title": "Nothing matches these filters.",
+	"alerts_history_not_sent": "Not sent · {reason}",
+	"alerts_history_notified": "Notified",
+	"alerts_history_only_notified": "Only notified",
+	"alerts_history_phase_firing": "Firing",
+	"alerts_history_phase_ok": "OK",
+	"alerts_history_phase_pending": "Building up",
+	"alerts_history_phase_resolved": "Resolved",
+	"alerts_history_quiet": "quiet",
+	"alerts_history_severity": "Severity",
+	"alerts_history_show_cleared": "Show cleared",
+	"alerts_history_today": "Today",
+	"alerts_history_yesterday": "Yesterday",
+	"alerts_ignore_button": "Never for this device",
+	"alerts_ignore_confirm": "Never again?",
+	"alerts_ignore_done": "Ignored on {device}.",
+	"alerts_ignore_error": "Could not ignore this rule for this device.",
+	"alerts_ignore_error_undo": "Could not stop ignoring this rule.",
+	"alerts_ignore_stop": "Stop ignoring",
+	"alerts_ignore_undo": "Undo",
+	"alerts_matcher_except": ", except {items}",
+	"alerts_matcher_except_devices": "devices {phrase}",
+	"alerts_matcher_except_rule": "the rule {rule}",
+	"alerts_matcher_floor_critical": "warnings only",
+	"alerts_matcher_floor_info": "every alert",
+	"alerts_matcher_floor_warning": "advisories and above",
+	"alerts_matcher_from_all": "from every device",
+	"alerts_matcher_from_devices": "from devices {devices}",
+	"alerts_matcher_of_kind": "of kind {kinds}",
+	"alerts_matcher_only_rule": ", only for the rule {rule}",
+	"alerts_matcher_only_rules": ", only for the rules {rules}",
+	"alerts_matcher_sentence": "This channel receives {floor} {scope}{rules}{exceptions}.",
+	"alerts_matcher_tagged": "tagged {tags}",
+	"alerts_needs_dismiss_error": "Could not dismiss this alert.",
+	"alerts_needs_dismissed": "Dismissed",
+	"alerts_needs_dismissed_hint": "Known problems: reminders are paused until the acknowledgement ends or the alert resolves.",
+	"alerts_needs_empty_no_devices": "Nothing to watch yet.",
+	"alerts_needs_empty_quiet": "Nothing needs you.",
+	"alerts_needs_no_device": "No device",
+	"alerts_needs_quiet_all_reporting": "Every device is reporting and no rule is firing.",
+	"alerts_needs_quiet_checked": "{text} Checked {when}.",
+	"alerts_needs_quiet_no_devices": "Add a device and its first report shows up here.",
+	"alerts_needs_quiet_waiting_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "No rule is firing. One device is still waiting for a first report.",
+				"countPlural=other": "No rule is firing. {count} devices are still waiting for a first report."
+			}
+		}
+	],
+	"alerts_needs_quiet_waiting_one": "No rule is firing. One device is still waiting for a first report.",
+	"alerts_needs_snoozed": "Snoozed",
+	"alerts_needs_snoozed_hint": "Hidden for a while: no reminder until the window ends or the alert resolves.",
+	"alerts_needs_toast_dismissed": "Dismissed.",
+	"alerts_nth_1": "1st {day}",
+	"alerts_nth_2": "2nd {day}",
+	"alerts_nth_3": "3rd {day}",
+	"alerts_nth_last": "last {day}",
+	"alerts_nth_other": "{n}th {day}",
+	"alerts_over_add": "Add override",
+	"alerts_over_clear": "{label} {value}",
+	"alerts_over_device_id": "device {id}",
+	"alerts_over_error_clear_number": "The clear threshold must be a number.",
+	"alerts_over_error_devices": "Could not load the devices.",
+	"alerts_over_error_empty": "Set a threshold, a clear threshold, or turn the rule off for this device.",
+	"alerts_over_error_pick": "Pick a device.",
+	"alerts_over_error_remove": "Could not remove the override.",
+	"alerts_over_error_save": "Could not save the override.",
+	"alerts_over_in_unit": "In {unit}.",
+	"alerts_over_no_change": "no change",
+	"alerts_over_none": "None. Overrides change the threshold, the clear threshold, or turn this rule off for one device.",
+	"alerts_over_none_placeholder": "None",
+	"alerts_over_pick_device": "Pick a device",
+	"alerts_over_rule_off": "rule off",
+	"alerts_over_save": "Save override",
+	"alerts_over_threshold": "threshold {value}",
+	"alerts_over_title": "Per-device overrides",
+	"alerts_over_turn_off": "Turn this rule off for the device",
+	"alerts_page_description": "What is firing now, what is scheduled to stay quiet, the rules behind it, and where you are told.",
+	"alerts_page_error_change_rule": "Could not change the rule.",
+	"alerts_page_error_delete_rule": "Could not delete the rule.",
+	"alerts_page_error_load": "Could not load the alerts",
+	"alerts_page_error_refresh_rules": "Could not refresh the rules.",
+	"alerts_page_error_refresh_windows": "Could not refresh the maintenance windows.",
+	"alerts_page_error_remove_window": "Could not remove the maintenance window.",
+	"alerts_page_sections": "Alert sections",
+	"alerts_page_tab_history": "History",
+	"alerts_page_tab_notifications": "Notifications",
+	"alerts_page_tab_now": "Now",
+	"alerts_page_tab_rules": "Rules",
+	"alerts_page_tab_scheduled": "Scheduled",
+	"alerts_page_title": "Alerts",
+	"alerts_row_acked": "Acked{by}{until}{note}. Reminders paused; you will still hear when it resolves.",
+	"alerts_row_acked_by": " by {name}",
+	"alerts_row_acked_note": " — {note}",
+	"alerts_row_also": "Also {list}",
+	"alerts_row_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Also {list} · +{count} more",
+				"countPlural=other": "Also {list} · +{count} more"
+			}
+		}
+	],
+	"alerts_row_aria": "{plate}: {rule}",
+	"alerts_row_aria_on": "{plate}: {rule} on {device}",
+	"alerts_row_dismiss": "Dismiss",
+	"alerts_row_learning": "Silent for its first {days} days of baseline.",
+	"alerts_row_learning_suppressed": "Silent while it learns the normal shape.",
+	"alerts_row_more": "More actions",
+	"alerts_row_more_menu": "More actions for this alert",
+	"alerts_row_open_device": "Open device",
+	"alerts_row_since": "since {when}",
+	"alerts_row_snoozed": "Snoozed{until}. Quiet until then, or until it resolves.",
+	"alerts_row_suppressed_by": "Suppressed by {parent} — probably a consequence, not a separate problem.",
+	"alerts_row_until": " until {time}",
+	"alerts_rules_after_hours": "After {hours} h",
+	"alerts_rules_all_channels": "all enabled channels",
+	"alerts_rules_all_kinds": "All kinds",
+	"alerts_rules_anomaly_summary": "sensitivity k = {k} · smoothing α = {alpha} · minimum {samples} samples · floor {abs} abs / {rel} rel",
+	"alerts_rules_baseline_anomaly": "baseline anomaly",
+	"alerts_rules_builtin": "Built-in",
+	"alerts_rules_channel_id": "channel #{id}",
+	"alerts_rules_clear_above": "Clear above",
+	"alerts_rules_clear_below": "Clear below",
+	"alerts_rules_create": "Create rule",
+	"alerts_rules_current_value": "{value} (current)",
+	"alerts_rules_delete": "Delete",
+	"alerts_rules_delete_confirm": "Delete?",
+	"alerts_rules_disable_aria": "Disable {name}",
+	"alerts_rules_disabled": "Disabled",
+	"alerts_rules_edit": "Edit",
+	"alerts_rules_edit_all_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "All enabled channels (currently {count})",
+				"countPlural=other": "All enabled channels (currently {count})"
+			}
+		}
+	],
+	"alerts_rules_edit_all_none": "All enabled channels — none is enabled right now, so nothing is sent",
+	"alerts_rules_edit_all_one": "All enabled channels (currently {name})",
+	"alerts_rules_edit_aria": "Edit {name}",
+	"alerts_rules_edit_channel_disabled": "disabled",
+	"alerts_rules_edit_channels_error": "Could not load the channels ({error}). Leaving the list as it is: {state}",
+	"alerts_rules_edit_channels_state_all": "all enabled channels.",
+	"alerts_rules_edit_channels_state_n": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} selected channel.",
+				"countPlural=other": "{count} selected channels."
+			}
+		}
+	],
+	"alerts_rules_edit_clear_help": "Optional. Once firing, the alert only clears past this value, so a reading hovering at the threshold does not flap.",
+	"alerts_rules_edit_description": "Description",
+	"alerts_rules_edit_detection": "Detection",
+	"alerts_rules_edit_detection_help": "Baseline anomaly settings are shipped with the rule and not editable here.",
+	"alerts_rules_edit_error_clear_above": "The clear threshold must be above the threshold: fire below one, clear over the other.",
+	"alerts_rules_edit_error_clear_below": "The clear threshold must be below the threshold: fire above one, clear under the other.",
+	"alerts_rules_edit_error_clear_number": "The clear threshold must be a number, or left empty.",
+	"alerts_rules_edit_error_query": "The query is required — without it the rule watches nothing.",
+	"alerts_rules_edit_error_save": "Could not save the rule.",
+	"alerts_rules_edit_escalate": "Escalate after",
+	"alerts_rules_edit_escalate_help": "Raise the severity one rung if still firing.",
+	"alerts_rules_edit_hold_anomaly_help": "How long the anomaly must last before firing.",
+	"alerts_rules_edit_hold_help": "How long the condition must last before firing.",
+	"alerts_rules_edit_no_channel": "No channel yet — nothing is sent. {link}.",
+	"alerts_rules_edit_no_channel_link": "Add one under Notifications",
+	"alerts_rules_edit_none_ticked": "None ticked: {label}.",
+	"alerts_rules_edit_notify_via": "Notify via",
+	"alerts_rules_edit_only_ticked": "Only the ticked channels are notified.",
+	"alerts_rules_edit_op_gt": "> above",
+	"alerts_rules_edit_op_gte": "≥ at least",
+	"alerts_rules_edit_op_lt": "< below",
+	"alerts_rules_edit_op_lte": "≤ at most",
+	"alerts_rules_edit_query_help": "MetricsQL, evaluated per device.",
+	"alerts_rules_edit_repeat": "Repeat every",
+	"alerts_rules_edit_repeat_help": "Reminder while it keeps firing.",
+	"alerts_rules_edit_save": "Save changes",
+	"alerts_rules_empty_description": "Add a rule to start watching a metric, or wait for the shipped rules to appear.",
+	"alerts_rules_empty_title": "No rules yet.",
+	"alerts_rules_enable_aria": "Enable {name}",
+	"alerts_rules_enabled": "Enabled",
+	"alerts_rules_error_create": "Could not create the rule.",
+	"alerts_rules_error_hold": "Hold time must be a whole number of seconds.",
+	"alerts_rules_error_name": "The rule needs a name.",
+	"alerts_rules_error_query": "The MetricsQL query is required — without it the rule watches nothing.",
+	"alerts_rules_error_threshold": "The threshold must be a number.",
+	"alerts_rules_escalates": "escalates after {duration}",
+	"alerts_rules_every_hour": "Every hour",
+	"alerts_rules_every_hours": "Every {hours} h",
+	"alerts_rules_filter_kind": "Filter by kind",
+	"alerts_rules_firing_now": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} firing now",
+				"countPlural=other": "{count} firing now"
+			}
+		}
+	],
+	"alerts_rules_for": "for {duration}",
+	"alerts_rules_hide_query": "Hide query",
+	"alerts_rules_hold_for": "Hold for",
+	"alerts_rules_hold_for_help": "Seconds the condition must last before firing.",
+	"alerts_rules_ignored_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ignored on {count} device",
+				"countPlural=other": "Ignored on {count} devices"
+			}
+		}
+	],
+	"alerts_rules_ignored_one": "Ignored on 1 device",
+	"alerts_rules_immediately": "immediately",
+	"alerts_rules_immediately_cap": "Immediately",
+	"alerts_rules_name_placeholder": "CPU saturated",
+	"alerts_rules_new": "New rule",
+	"alerts_rules_new_description": "A threshold rule watching one MetricsQL query. Channels and reminders can be tuned once it exists.",
+	"alerts_rules_nomatch_description": "Try a different search term or kind.",
+	"alerts_rules_nomatch_title": "No rules match.",
+	"alerts_rules_notifies": "notifies {channels}",
+	"alerts_rules_off": "Off",
+	"alerts_rules_op_gt": "above {amount}",
+	"alerts_rules_op_gte": "at least {amount}",
+	"alerts_rules_op_lt": "below {amount}",
+	"alerts_rules_op_lte": "at most {amount}",
+	"alerts_rules_operator": "Operator",
+	"alerts_rules_query": "Query",
+	"alerts_rules_query_help": "MetricsQL, e.g. dumbmonit_cpu_usage_percent",
+	"alerts_rules_repeats": "repeats every {duration}",
+	"alerts_rules_saved": "Saved",
+	"alerts_rules_search_label": "Search rules",
+	"alerts_rules_search_placeholder": "Search by name, description or query",
+	"alerts_rules_show_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Show {count} built-in rule",
+				"countPlural=other": "Show all {count} built-in rules"
+			}
+		}
+	],
+	"alerts_rules_show_fewer": "Show fewer rules",
+	"alerts_rules_show_query": "Show query",
+	"alerts_rules_threshold": "Threshold",
+	"alerts_schedule_day_of_month": "day {day}",
+	"alerts_schedule_monthly": "{when} {start} for {duration}, monthly · {zone}",
+	"alerts_schedule_no_day": "No day",
+	"alerts_schedule_weekly": "{days} {span}, weekly · {zone}",
+	"alerts_scope_all_devices": "All devices",
+	"alerts_scope_device": "Device {id}",
+	"alerts_severity_advisory": "Advisory",
+	"alerts_severity_info": "Info",
+	"alerts_severity_warning": "Warning",
+	"alerts_silences_active_now": "Active now",
+	"alerts_silences_empty_description": "Schedule a window to mute a device — or all of them — while you work on it.",
+	"alerts_silences_empty_title": "No maintenance scheduled.",
+	"alerts_silences_next": "next {when}",
+	"alerts_silences_remove": "Remove",
+	"alerts_silences_remove_confirm": "Remove?",
+	"alerts_silences_schedule": "Schedule maintenance",
+	"alerts_silences_scheduled": "Scheduled",
+	"alerts_silences_until": "until {when}",
+	"alerts_snooze_button": "Snooze",
+	"alerts_snooze_error": "Could not snooze this alert.",
+	"alerts_snooze_error_lift": "Could not lift the snooze.",
+	"alerts_snooze_hide_for": "Hide for",
+	"alerts_snooze_hint": "No notification until it ends or the alert resolves.",
+	"alerts_snooze_lift": "Unsnooze",
+	"alerts_snooze_menu_label": "Snooze for",
+	"alerts_span_day": "1 day",
+	"alerts_span_days": "{days} days",
+	"alerts_span_h": "{hours} h",
+	"alerts_span_hm": "{hours} h {minutes}",
+	"alerts_span_min": "{minutes} min",
+	"alerts_span_s": "{seconds} s",
+	"notifications_channels_add": "Add channel",
+	"notifications_channels_description": "Where DumbMonit tells you when something needs attention.",
+	"notifications_channels_disabled": "Disabled",
+	"notifications_channels_edit": "Edit",
+	"notifications_channels_empty_admin": "Add Discord, Telegram, email or one of 20 others to get alerts where you already are.",
+	"notifications_channels_empty_title": "No channel yet.",
+	"notifications_channels_empty_viewer": "An admin can add Discord, Telegram, email or one of 20 others.",
+	"notifications_channels_enabled": "Enabled",
+	"notifications_channels_error_action": "Could not do that",
+	"notifications_channels_error_load": "Could not load the channels",
+	"notifications_channels_last_error": "Last error: {error}",
+	"notifications_channels_last_sent": "Last sent {when}",
+	"notifications_channels_policy_advisory_up": "Advisory and up",
+	"notifications_channels_policy_interval": "same alert every {minutes} min at most",
+	"notifications_channels_policy_no_recoveries": "no recoveries",
+	"notifications_channels_policy_quiet": "quiet {start}–{end}",
+	"notifications_channels_policy_warning_only": "Warning only",
+	"notifications_channels_remove": "Remove",
+	"notifications_channels_remove_confirm": "Remove for good?",
+	"notifications_channels_send_test": "Send test",
+	"notifications_channels_test_failed": "Test failed",
+	"notifications_channels_test_ok": "Test message sent",
+	"notifications_channels_title": "Channels",
+	"notifications_field_default": "Default ({value})",
+	"notifications_field_list_hint": "One entry per line.",
+	"notifications_field_object_hint": "A JSON object.",
+	"notifications_form_change_type": "Change type",
+	"notifications_form_change_type_title": "Change the channel type",
+	"notifications_form_clear_secrets": "Clear the saved secrets",
+	"notifications_form_clear_secrets_help": "Removes what is stored; the channel will fail until new secrets are entered.",
+	"notifications_form_delivery": "Delivery",
+	"notifications_form_delivery_hide": "Hide delivery options",
+	"notifications_form_delivery_hint": "— what this channel hears, and when",
+	"notifications_form_delivery_show": "Delivery options",
+	"notifications_form_documentation": "Documentation",
+	"notifications_form_edit_title": "Edit “{name}”",
+	"notifications_form_enabled_help": "A disabled channel keeps its setup but receives nothing.",
+	"notifications_form_error_invalid": "Invalid value.",
+	"notifications_form_error_json": "Must be a valid JSON object, for example \"key\": \"value\".",
+	"notifications_form_error_json_object": "Must be a JSON object, not a list or a plain value.",
+	"notifications_form_error_name": "Give the channel a name; you will pick it in alert rules.",
+	"notifications_form_error_number": "Must be a number.",
+	"notifications_form_error_required": "This field is required.",
+	"notifications_form_error_save": "Could not save the channel",
+	"notifications_form_error_secret_required": "This secret is required.",
+	"notifications_form_floor_critical": "Warning only",
+	"notifications_form_floor_info": "Everything (Info and up)",
+	"notifications_form_floor_warning": "Advisory and up",
+	"notifications_form_interval": "Same alert again no sooner than",
+	"notifications_form_interval_current": "{seconds} s (current)",
+	"notifications_form_interval_help": "Reminders and re-fires of one alert are spaced out by at least this.",
+	"notifications_form_keep_type": "Keep current type",
+	"notifications_form_name_help": "Shown in the channel list and picked in alert rules.",
+	"notifications_form_name_placeholder": "Family chat",
+	"notifications_form_name_placeholder_kind": "{kind} — family",
+	"notifications_form_new_title": "New {kind} channel",
+	"notifications_form_no_match": "No channel type matches “{query}”.",
+	"notifications_form_no_minimum": "No minimum",
+	"notifications_form_pick_hint": "Pick a service. Only the fields it needs come next.",
+	"notifications_form_pick_title": "Where should alerts go?",
+	"notifications_form_resolved": "Tell me when it clears",
+	"notifications_form_resolved_help": "Off: the channel only hears about problems, never recoveries.",
+	"notifications_form_search_label": "Search channel types",
+	"notifications_form_search_placeholder": "Search Discord, email, webhook…",
+	"notifications_form_secrets": "Secrets",
+	"notifications_form_secrets_destination_changed": "The destination changed: enter the secrets again, saved ones are not sent to a new address.",
+	"notifications_form_secrets_keep": "Leave blank to keep the saved secret.",
+	"notifications_form_secrets_note": "Encrypted at rest and never shown again.",
+	"notifications_form_secrets_saved": "A secret is already saved for this channel.",
+	"notifications_form_send": "Send",
+	"notifications_form_send_help": "Alerts below this level never reach the channel.",
+	"notifications_form_settings": "Settings",
+	"notifications_matcher_add": "Add a condition",
+	"notifications_matcher_checking": "Checking which devices match…",
+	"notifications_matcher_count": "{matched} of {total} devices",
+	"notifications_matcher_error_preview": "Could not preview this filter.",
+	"notifications_matcher_except": "Except",
+	"notifications_matcher_field": "Field",
+	"notifications_matcher_field_kind": "device kind",
+	"notifications_matcher_field_rule": "rule",
+	"notifications_matcher_field_tag": "tag",
+	"notifications_matcher_help": "Off: the channel receives everything above its severity floor. On: only what matches, by tag, device kind or rule.",
+	"notifications_matcher_mode": "Include or exclude",
+	"notifications_matcher_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "and {count} more",
+				"countPlural=other": "and {count} more"
+			}
+		}
+	],
+	"notifications_matcher_none": "No device matches today — this channel would stay silent.",
+	"notifications_matcher_only": "Only",
+	"notifications_matcher_only_some": "Only some alerts",
+	"notifications_matcher_remove": "Remove this condition",
+	"notifications_matcher_rules_note": "Rule conditions apply to alerts, not devices: the count above ignores them.",
+	"notifications_matcher_tag_name": "Tag name",
+	"notifications_matcher_value": "Value",
+	"notifications_policy_also_tell": "Also tell",
+	"notifications_policy_also_tell_help": "One extra hop, sent once. Its own severity floor and quiet hours do not hold it back.",
+	"notifications_policy_cap": "Messages per channel per hour",
+	"notifications_policy_cap_help": "Past the cap, alerts wait and arrive as one digest. Empty: no cap.",
+	"notifications_policy_cap_placeholder": "No cap",
+	"notifications_policy_daily": "daily",
+	"notifications_policy_description": "How DumbMonit keeps notifications few: one message per burst, a cap per hour, and silence for alerts that flap.",
+	"notifications_policy_error_cap": "The hourly cap must be a whole number, or empty for no cap.",
+	"notifications_policy_error_escalate": "Pick the channel to tell when nobody acknowledges, or set the delay to “Never escalate”.",
+	"notifications_policy_error_flap": "Flap detection needs at least 2 state changes.",
+	"notifications_policy_error_load": "Could not load the notification policy",
+	"notifications_policy_error_save": "Could not save the policy",
+	"notifications_policy_error_url": "The public URL must start with http:// or https://.",
+	"notifications_policy_escalate_after": "After {span}",
+	"notifications_policy_escalate_help": "Counted from the moment the first message actually goes out, not from the alert firing.",
+	"notifications_policy_escalate_label": "If nobody acknowledges",
+	"notifications_policy_escalate_never": "Never escalate",
+	"notifications_policy_escalate_off": "Nobody is told twice: an alert nobody acknowledges keeps to its own channels.",
+	"notifications_policy_escalate_on": "If nobody acknowledges within {minutes} min of the first message going out, the alert is also sent to {name} — once. Acknowledging it, or its clearing, stops the hop.",
+	"notifications_policy_everything": "Everything",
+	"notifications_policy_fewer": "Fewer options",
+	"notifications_policy_flap": "Hold alerts that flap",
+	"notifications_policy_flap_changes": "State changes",
+	"notifications_policy_flap_changes_help": "Fires and clears counted together.",
+	"notifications_policy_flap_help": "An alert that fires and clears repeatedly sends one “flapping” notice, then stays silent for a while.",
+	"notifications_policy_flap_hint": "— flap detection",
+	"notifications_policy_flap_hold": "Then hold for",
+	"notifications_policy_flap_within": "Within",
+	"notifications_policy_group": "Group alerts for",
+	"notifications_policy_group_help": "Alerts that fire within this window leave as one message per channel: “3 alerts on 2 devices”.",
+	"notifications_policy_more": "More options",
+	"notifications_policy_no_channel": "No channel",
+	"notifications_policy_per_channel": "Per channel",
+	"notifications_policy_per_channel_note": "What each channel hears, and its quiet hours, are set on the channel itself (Edit, then “Delivery options”).",
+	"notifications_policy_quiet": "quiet {days} {start}–{end}",
+	"notifications_policy_saved": "Saved",
+	"notifications_policy_send_now": "Send right away",
+	"notifications_policy_that_channel": "that channel",
+	"notifications_policy_title": "Notification policy",
+	"notifications_policy_url": "Public URL",
+	"notifications_policy_url_help": "Used for the “Open in DumbMonit” link in every message. Leave empty to use DUMBMONIT_PUBLIC_URL.",
+	"notifications_quiet_days": "Days",
+	"notifications_quiet_error_days": "Pick at least one day.",
+	"notifications_quiet_error_differ": "The start and end must differ.",
+	"notifications_quiet_error_format": "Enter the start and end as HH:MM.",
+	"notifications_quiet_from": "From",
+	"notifications_quiet_from_help": "Your local time. A span past midnight belongs to the day it starts on.",
+	"notifications_quiet_help": "Only Warning-level alerts come through during quiet hours; the rest waits and arrives as one digest when they end.",
+	"notifications_quiet_title": "Quiet hours",
+	"notifications_quiet_to": "To",
+	"overview_brief_a_rule": "A rule",
+	"overview_brief_also": "Alerts also came and went on {names}.",
+	"overview_brief_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Alerts also came and went on {names} and {count} other.",
+				"countPlural=other": "Alerts also came and went on {names} and {count} others."
+			}
+		}
+	],
+	"overview_brief_and_others": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} and {count} other",
+				"countPlural=other": "{names} and {count} others"
+			}
+		}
+	],
+	"overview_brief_device_n": "Device {id}",
+	"overview_brief_dissolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert built up and dissolved before firing.",
+				"countPlural=other": "{count} alerts built up and dissolved before firing."
+			}
+		}
+	],
+	"overview_brief_dissolved_mostly": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert built up and dissolved before firing (mostly {rule} on {device}).",
+				"countPlural=other": "{count} alerts built up and dissolved before firing (mostly {rule} on {device})."
+			}
+		}
+	],
+	"overview_brief_down_whole": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{subject} has been unreachable the whole time.",
+				"countPlural=other": "{subject} have been unreachable the whole time."
+			}
+		}
+	],
+	"overview_brief_dropped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} dropped out and came back.",
+				"countPlural=other": "{name} dropped out {count} times and came back."
+			}
+		}
+	],
+	"overview_brief_dropped_many": "{names} dropped out and came back.",
+	"overview_brief_head_first": "In the last 24 h",
+	"overview_brief_head_since": "Since {when}",
+	"overview_brief_intro": "First time here? Here is what the pigeon knows so far.",
+	"overview_brief_kept_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device kept reporting.",
+				"countPlural=other": "{count} devices kept reporting."
+			}
+		}
+	],
+	"overview_brief_lead": "{head} — {parts}.",
+	"overview_brief_learning_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} are still learning the baseline: they would have fired once.",
+				"countPlural=other": "{names} are still learning the baseline: they would have fired {count} times."
+			}
+		}
+	],
+	"overview_brief_learning_one": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} is still learning the baseline: it would have fired once.",
+				"countPlural=other": "{names} is still learning the baseline: it would have fired {count} times."
+			}
+		}
+	],
+	"overview_brief_n_alerts_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert resolved on its own",
+				"countPlural=other": "{count} alerts resolved on their own"
+			}
+		}
+	],
+	"overview_brief_n_fired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert fired",
+				"countPlural=other": "{count} alerts fired"
+			}
+		}
+	],
+	"overview_brief_n_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} resolved on its own",
+				"countPlural=other": "{count} resolved on their own"
+			}
+		}
+	],
+	"overview_brief_n_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} still firing",
+				"countPlural=other": "{count} still firing"
+			}
+		}
+	],
+	"overview_brief_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device unreachable",
+				"countPlural=other": "{count} devices unreachable"
+			}
+		}
+	],
+	"overview_brief_nothing_no_channel": "Nothing was sent: no notification channel is set up yet.",
+	"overview_brief_nothing_sent": "Nothing was sent.",
+	"overview_brief_nothing_to_channel": "Nothing was sent to {channel}.",
+	"overview_brief_nothing_to_channels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Nothing was sent to your {count} channel.",
+				"countPlural=other": "Nothing was sent to your {count} channels."
+			}
+		}
+	],
+	"overview_brief_notified": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} notification went out.",
+				"countPlural=other": "{count} notifications went out."
+			}
+		}
+	],
+	"overview_brief_notified_to": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} notification went out to {channel}.",
+				"countPlural=other": "{count} notifications went out to {channel}."
+			}
+		}
+	],
+	"overview_brief_on_device": "On {device}, {phrases}.",
+	"overview_brief_phrase_fired_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} fired and resolved on its own",
+				"countPlural=other": "{name} fired {count} times and resolved on its own"
+			}
+		}
+	],
+	"overview_brief_phrase_resolved": "{name} resolved on its own",
+	"overview_brief_phrase_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} fired and is still firing",
+				"countPlural=other": "{name} fired {count} times and is still firing"
+			}
+		}
+	],
+	"overview_brief_quiet_away": "Nothing happened while you were away.",
+	"overview_brief_quiet_first": "Nothing happened in the last 24 h.",
+	"overview_brief_the_server": "the server",
+	"overview_brief_went_down": "{name} went unreachable {when} and still is.",
+	"overview_first_all_done": "All three done. This guide will not come back.",
+	"overview_first_channel_action": "Add a channel",
+	"overview_first_channel_text": "Email, ntfy, Discord, Telegram, PagerDuty — whatever you already read. Nothing is sent until something is wrong.",
+	"overview_first_channel_title": "Connect a way to be told",
+	"overview_first_demo": "Add a demo device",
+	"overview_first_device_action": "Add a device",
+	"overview_first_device_text": "A switch, a NAS, a hypervisor or a website. Type an address and the rest is detected.",
+	"overview_first_device_title": "Add your first device",
+	"overview_first_done": "Done",
+	"overview_first_error": "Could not save that. Try again in a moment.",
+	"overview_first_error_detail": "Could not save that: {message}",
+	"overview_first_hurry": "In a hurry? Scan a network range and add everything that answers SNMP in one go.",
+	"overview_first_intro": "Three steps, and the pigeon has something to watch.",
+	"overview_first_scan": "Scan my network",
+	"overview_first_skip_guide": "Skip the guide",
+	"overview_first_skip_step": "Skip this step",
+	"overview_first_skip_step_aria": "Skip step {n}: {title}",
+	"overview_first_skipped": "Skipped",
+	"overview_first_step": "Step {n}",
+	"overview_first_test_action": "Send a test",
+	"overview_first_test_text": "Send a test from the channel. This step turns green once one really leaves.",
+	"overview_first_test_title": "Check a message arrives",
+	"overview_first_title": "Your first five minutes",
+	"overview_page_checked": "Checked {when}",
+	"overview_page_empty_text": "Add a switch, a NAS, a hypervisor or a website, and it starts reporting within a minute.",
+	"overview_page_empty_title": "No device yet",
+	"overview_page_error_load": "Could not load the overview",
+	"overview_page_error_refresh": "Could not refresh the alerts.",
+	"overview_page_history_note": "Read from the alert history of the past week.",
+	"overview_page_last_days": "Last {days} days",
+	"overview_page_mark_read": "Mark as read",
+	"overview_page_needs_you": "Needs you",
+	"overview_page_or": "Or {agent}, or {relay} through one.",
+	"overview_page_or_agent": "install the agent on a machine",
+	"overview_page_or_relay": "watch a remote site",
+	"overview_page_since": "Since you last looked",
+	"overview_page_title": "Overview",
+	"overview_page_week": "The week ahead",
+	"overview_scene_asleep": "{label}, the pigeon is asleep",
+	"overview_scene_cloudy": "A few clouds",
+	"overview_scene_overcast": "Overcast",
+	"overview_scene_storm": "Storm",
+	"overview_sky_clear": "Clear skies",
+	"overview_sky_n_acked": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} acknowledged",
+				"countPlural=other": "{count} acknowledged"
+			}
+		}
+	],
+	"overview_sky_n_advisories": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} advisory",
+				"countPlural=other": "{count} advisories"
+			}
+		}
+	],
+	"overview_sky_n_building": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} building up",
+				"countPlural=other": "{count} building up"
+			}
+		}
+	],
+	"overview_sky_n_info": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} info",
+				"countPlural=other": "{count} info"
+			}
+		}
+	],
+	"overview_sky_n_misconfigured": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} misconfigured",
+				"countPlural=other": "{count} misconfigured"
+			}
+		}
+	],
+	"overview_sky_n_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} reporting",
+				"countPlural=other": "{count} reporting"
+			}
+		}
+	],
+	"overview_sky_n_snoozed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} snoozed",
+				"countPlural=other": "{count} snoozed"
+			}
+		}
+	],
+	"overview_sky_n_suppressed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} suppressed by parent",
+				"countPlural=other": "{count} suppressed by parent"
+			}
+		}
+	],
+	"overview_sky_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} unreachable",
+				"countPlural=other": "{count} unreachable"
+			}
+		}
+	],
+	"overview_sky_n_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} waiting",
+				"countPlural=other": "{count} waiting"
+			}
+		}
+	],
+	"overview_sky_n_warnings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} warning",
+				"countPlural=other": "{count} warnings"
+			}
+		}
+	],
+	"overview_sky_nothing": "Nothing to watch yet",
+	"overview_sky_plate_acked": "Acknowledged",
+	"overview_sky_plate_building": "Building up",
+	"overview_sky_plate_down": "Down",
+	"overview_sky_plate_learning": "Learning",
+	"overview_sky_plate_misconfigured": "Misconfigured",
+	"overview_sky_plate_snoozed": "Snoozed",
+	"overview_sky_plate_suppressed": "Suppressed by parent",
+	"overview_sky_plate_unreachable": "Unreachable",
+	"overview_sky_sentence": "{parts}.",
+	"overview_sky_waiting": "Waiting for the first reports",
+	"overview_streaks_d_h": "{days} d {hours} h",
+	"overview_streaks_fewest": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "fewest alerts: {count} alert event in {days} days",
+				"countPlural=other": "fewest alerts: {count} alert events in {days} days"
+			}
+		}
+	],
+	"overview_streaks_h_min": "{hours} h {minutes} min",
+	"overview_streaks_many_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} and {count} more is unreachable",
+				"countPlural=other": "{name} and {count} more are unreachable"
+			}
+		}
+	],
+	"overview_streaks_most": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alert event (started, fired or resolved) in {days} days",
+				"countPlural=other": "{count} alert events (started, fired or resolved) in {days} days"
+			}
+		}
+	],
+	"overview_streaks_no_alert": "no alert in {days} days",
+	"overview_streaks_no_alert_like": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "no alert in {days} days, like {count} other",
+				"countPlural=other": "no alert in {days} days, like {count} others"
+			}
+		}
+	],
+	"overview_streaks_noisiest": "Most alerts",
+	"overview_streaks_none_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "no device went unreachable in {count} day",
+				"countPlural=other": "no device went unreachable in {count} days"
+			}
+		}
+	],
+	"overview_streaks_not_now": "Not now",
+	"overview_streaks_one_unreachable": "{name} is unreachable",
+	"overview_streaks_over": "over {days} d",
+	"overview_streaks_quietest": "Quietest device",
+	"overview_streaks_reporting": "Everything reporting",
+	"overview_streaks_reporting_for": "Everything reporting for",
+	"overview_streaks_since_outage": "no device unreachable since the last outage",
+	"overview_streaks_under_minute": "under a minute",
+	"overview_tip_agent_action": "Install an agent",
+	"overview_tip_agent_text": "Services, disk health, temperatures, updates waiting, Docker containers you can restart or update from here, Plakar, restic and Borg backups. One command on Linux, Windows, macOS or FreeBSD.",
+	"overview_tip_agent_title": "The agent sees inside a machine.",
+	"overview_tip_api_action": "Create an API token",
+	"overview_tip_api_text": "A scoped token (read, or read and write) opens it to your scripts, and a Prometheus or Grafana you already run can read the measurements with the same token.",
+	"overview_tip_api_title": "Everything here has an HTTP API.",
+	"overview_tip_mcp_action": "Connect an assistant",
+	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor or any MCP client can ask DumbMonit how things are — and, with a write token, silence a device or run a probe.",
+	"overview_tip_mcp_title": "An AI assistant can read this bulletin.",
+	"overview_tip_packs_action": "Integration packs",
+	"overview_tip_packs_text": "An integration pack is a device type written in YAML: what to ask the device, which numbers to keep, when to alert.",
+	"overview_tip_packs_title": "DumbMonit can learn a new device.",
+	"overview_tip_palette_action": "Open the palette",
+	"overview_tip_palette_text": "The command palette jumps to any device, page or action without leaving the keyboard.",
+	"overview_tip_palette_title": "Every page and action is one shortcut away.",
+	"overview_tip_relay_action": "Watch a remote site",
+	"overview_tip_relay_text": "Put one on a machine at a second site, a client’s office or behind a NAT: it probes the switches, NAS and hypervisors there for this server. Outbound only — nothing to open on that side.",
+	"overview_tip_relay_title": "An agent can watch another network.",
+	"overview_tip_status_action": "Create a status page",
+	"overview_tip_status_text": "A public status page shows the services you pick, their uptime and your announcements — a link to share instead of answering “is it down?”.",
+	"overview_tip_status_title": "Tell people before they ask.",
+	"overview_tip_wall_action": "Open wall mode",
+	"overview_tip_wall_text": "Wall mode shows the sky and what needs you, full screen and readable across the room, and keeps the screen awake.",
+	"overview_tip_wall_title": "The bulletin fits a TV.",
+	"overview_tips_another": "Another tip",
+	"overview_tips_hide": "Hide these tips",
+	"overview_tips_hide_title": "Hide these tips (in this browser)",
+	"overview_tips_label": "Did you know?",
+	"overview_tips_prefix": "Did you know? {title}",
+	"overview_week_cert_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Certificate expired {count} day ago",
+				"countPlural=other": "Certificate expired {count} days ago"
+			}
+		}
+	],
+	"overview_week_cert_expires": "Certificate expires",
+	"overview_week_cert_expires_today": "Certificate expires today",
+	"overview_week_days_short": "{days} d",
+	"overview_week_filling": "Filling up at this rate",
+	"overview_week_filling_series": "Filling up at this rate: {series}",
+	"overview_week_from": "{scope}, from {time}",
+	"overview_week_full": "Full at this rate",
+	"overview_week_full_series": "Full at this rate: {series}",
+	"overview_week_later": "Later:",
+	"overview_week_later_certs": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} certificate in {when}",
+				"countPlural=other": "{count} certificates in {when}"
+			}
+		}
+	],
+	"overview_week_later_disks": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disk filling up within {days} d",
+				"countPlural=other": "{count} disks filling up within {days} d"
+			}
+		}
+	],
+	"overview_week_later_windows": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} maintenance window within {days} d",
+				"countPlural=other": "{count} maintenance windows within {days} d"
+			}
+		}
+	],
+	"overview_week_maintenance": "Maintenance",
+	"overview_week_maintenance_all": "Maintenance on all devices",
+	"overview_week_maintenance_device": "Maintenance on device {id}",
+	"overview_week_nothing_due": "Nothing due",
+	"overview_week_plate_certificate": "Certificate",
+	"overview_week_plate_forecast": "Forecast",
+	"overview_week_plate_scheduled": "Scheduled",
+	"overview_week_plate_warning": "Warning",
+	"overview_week_quiet": "A quiet week ahead: no certificate, disk or maintenance due.",
+	"overview_week_range": "{scope}, {start}–{end}",
+	"overview_week_series_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} and {count} more",
+				"countPlural=other": "{names} and {count} more"
+			}
+		}
+	],
+	"overview_week_today": "Today",
+	"overview_week_tomorrow": "Tomorrow",
+	"overview_week_until": "{scope} until {when}",
+	"overview_when_dated": "{date} {time}",
+	"overview_when_yesterday": "yesterday {time}",
 	"settings.appearance.language_label": "Language",
 	"settings.group.wall_display": "Wall & display",
 	"settings.hint.notifications_lead": "Looking for channels and quiet hours? They live under",

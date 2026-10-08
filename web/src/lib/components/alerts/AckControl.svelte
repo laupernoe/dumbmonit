@@ -20,6 +20,7 @@
 	import { Button } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Check } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { UNTIL_RESOLVED_SECS } from './helpers';
 
 	interface Props {
@@ -30,12 +31,12 @@
 
 	let { alert, onchanged }: Props = $props();
 
-	const DURATIONS: { label: string; secs: number }[] = [
-		{ label: '1 h', secs: 3600 },
-		{ label: '4 h', secs: 4 * 3600 },
-		{ label: '24 h', secs: 24 * 3600 },
-		{ label: 'Until resolved', secs: UNTIL_RESOLVED_SECS }
-	];
+	const DURATIONS: { label: string; secs: number }[] = $derived([
+		{ label: m.alerts_ack_hours({ hours: 1 }), secs: 3600 },
+		{ label: m.alerts_ack_hours({ hours: 4 }), secs: 4 * 3600 },
+		{ label: m.alerts_ack_hours({ hours: 24 }), secs: 24 * 3600 },
+		{ label: m.alerts_ack_until_resolved(), secs: UNTIL_RESOLVED_SECS }
+	]);
 
 	let open = $state(false);
 	let note = $state('');
@@ -67,7 +68,7 @@
 			note = '';
 			onchanged?.(updated);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not acknowledge the alert.';
+			error = cause instanceof Error ? cause.message : m.alerts_ack_error_ack();
 		} finally {
 			busy = false;
 		}
@@ -80,7 +81,7 @@
 			const updated = await unackAlert(alert.fingerprint);
 			onchanged?.(updated);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not lift the acknowledgement.';
+			error = cause instanceof Error ? cause.message : m.alerts_ack_error_unack();
 		} finally {
 			busy = false;
 		}
@@ -107,7 +108,7 @@
 {#if auth.canOperate}
 	<div class="flex flex-col items-start gap-1 sm:items-end" bind:this={root} onkeydown={onkeydown} role="presentation">
 		{#if alert.acked}
-			<Button size="sm" variant="ghost" loading={busy} onclick={unack}>Un-ack</Button>
+			<Button size="sm" variant="ghost" loading={busy} onclick={unack}>{m.alerts_ack_unack()}</Button>
 		{:else}
 			<Button
 				size="sm"
@@ -119,7 +120,7 @@
 				aria-controls={menuId}
 			>
 				<Check class="size-3.5" aria-hidden="true" />
-				Ack
+				{m.alerts_ack_button()}
 			</Button>
 		{/if}
 
@@ -127,18 +128,18 @@
 			<div
 				id={menuId}
 				role="menu"
-				aria-label="Acknowledge for"
+				aria-label={m.alerts_ack_menu_label()}
 				class="w-64 max-w-full rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left shadow-lift"
 			>
 				<p class="px-1 pb-1 text-[0.6875rem] font-semibold tracking-wide text-ink-2 uppercase">
-					Stop reminding me for
+					{m.alerts_ack_stop_reminding()}
 				</p>
 				<div class="grid grid-cols-2 gap-1">
 					{#each DURATIONS as choice (choice.secs)}
 						<button
 							type="button"
 							role="menuitem"
-							class="h-8 rounded-lg border border-line bg-surface px-2 text-[0.8125rem] font-semibold text-ink transition hover:border-ink-3 hover:bg-surface-2 disabled:opacity-50"
+							class="h-10 rounded-lg border border-line bg-surface px-2 text-[0.8125rem] sm:h-8 font-semibold text-ink transition hover:border-ink-3 hover:bg-surface-2 disabled:opacity-50"
 							disabled={busy}
 							onclick={() => void ack(choice.secs)}
 						>
@@ -147,12 +148,12 @@
 					{/each}
 				</div>
 				<label class="mt-2 block">
-					<span class="sr-only">Note</span>
+					<span class="sr-only">{m.alerts_ack_note_label()}</span>
 					<input
 						bind:this={noteInput}
 						bind:value={note}
-						class="input h-8 w-full text-[0.8125rem]"
-						placeholder="Note (optional): what you are doing"
+						class="input h-10 w-full text-[0.8125rem] sm:h-8"
+						placeholder={m.alerts_ack_note_placeholder()}
 						maxlength="200"
 						disabled={busy}
 						onkeydown={(event) => {
@@ -164,7 +165,7 @@
 					/>
 				</label>
 				<p class="mt-1 px-1 text-[0.6875rem] text-ink-3">
-					Reminders pause; you are still told when it resolves. Enter = 4 h.
+					{m.alerts_ack_hint({ hours: 4 })}
 				</p>
 			</div>
 		{/if}

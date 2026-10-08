@@ -34,6 +34,7 @@
 
 	import { onDestroy } from 'svelte';
 	import { reducedMotion } from '#lib/ui/motion.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		condition: SkyCondition;
@@ -177,14 +178,14 @@
 		round: i % 4 === 0
 	}));
 
-	const LABEL: Record<SkyCondition, string> = {
-		clear: 'Clear skies',
-		cloudy: 'A few clouds',
-		overcast: 'Overcast',
-		storm: 'Storm',
-		waiting: 'Waiting for the first reports',
-		empty: 'Nothing to watch yet'
-	};
+	const LABEL: Record<SkyCondition, string> = $derived({
+		clear: m.overview_sky_clear(),
+		cloudy: m.overview_scene_cloudy(),
+		overcast: m.overview_scene_overcast(),
+		storm: m.overview_scene_storm(),
+		waiting: m.overview_sky_waiting(),
+		empty: m.overview_sky_nothing()
+	});
 
 	/** One puffy cloud, 46 wide, its flat base at y=22 in its own frame. */
 	const CLOUD =
@@ -221,7 +222,7 @@
 <div
 	class="sky sky--{condition} sky--{mood} {frame ? '' : 'sky--bare'} {calm ? 'sky--calm' : ''} {poked ? 'sky--poke' : ''} {dizzy ? 'sky--dizzy' : ''} {flashing ? 'sky--flash' : ''} {docVisible ? '' : 'sky--paused'} {className}"
 	role="img"
-	aria-label={mood === 'sleep' ? `${LABEL[condition]}, the pigeon is asleep` : LABEL[condition]}
+	aria-label={mood === 'sleep' ? m.overview_scene_asleep({ label: LABEL[condition] }) : LABEL[condition]}
 	onclick={poke}
 >
 	<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">

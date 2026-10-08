@@ -1,5 +1,1312 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"alerts_ack_button": "Reconocer",
+	"alerts_ack_error_ack": "No se pudo reconocer la alerta.",
+	"alerts_ack_error_unack": "No se pudo quitar el reconocimiento.",
+	"alerts_ack_hint": "Los recordatorios se pausan; se te avisa igualmente al resolverse. Intro = {hours} h.",
+	"alerts_ack_hours": "{hours} h",
+	"alerts_ack_menu_label": "Reconocer durante",
+	"alerts_ack_note_label": "Nota",
+	"alerts_ack_note_placeholder": "Nota (opcional): qué estás haciendo",
+	"alerts_ack_stop_reminding": "No recordármelo durante",
+	"alerts_ack_unack": "Quitar reconocimiento",
+	"alerts_ack_until_resolved": "Hasta que se resuelva",
+	"alerts_device_last_report": "último informe {when}",
+	"alerts_device_never_reported": "nunca ha reportado",
+	"alerts_form_cancel": "Cancelar",
+	"alerts_form_comment": "Comentario",
+	"alerts_form_comment_help": "Opcional. Por qué existe esta ventana.",
+	"alerts_form_comment_placeholder": "Actualización de firmware prevista",
+	"alerts_form_day": "Día",
+	"alerts_form_days": "Días",
+	"alerts_form_description": "Silencia las alertas de un dispositivo, o de todos, durante una ventana.",
+	"alerts_form_device_help": "Déjalo vacío para cubrir todos los dispositivos.",
+	"alerts_form_each_month": "Cada mes",
+	"alerts_form_end": "Fin",
+	"alerts_form_error_daily": "Introduce el inicio y el fin diarios como HH:MM.",
+	"alerts_form_error_daily_differ": "El inicio y el fin diarios deben ser distintos.",
+	"alerts_form_error_dates": "Introduce un inicio y un fin válidos.",
+	"alerts_form_error_days": "Elige al menos un día de la semana.",
+	"alerts_form_error_month_days": "Introduce los días del mes como números del 1 al 31, por ejemplo «1, 15».",
+	"alerts_form_error_name": "Ponle un nombre a la ventana: explicará más tarde por qué estas alertas se silenciaron.",
+	"alerts_form_error_order": "El fin de la ventana debe ser posterior a su inicio.",
+	"alerts_form_error_schedule": "No se pudo programar la ventana.",
+	"alerts_form_error_start": "Introduce el inicio como HH:MM.",
+	"alerts_form_for": "Durante",
+	"alerts_form_for_help": "Tiempo real transcurrido: una ventana de 2 h dura 2 h, incluso en la noche de un cambio de hora.",
+	"alerts_form_from": "Desde",
+	"alerts_form_local_time_help": "Hora local en la zona horaria de abajo.",
+	"alerts_form_month_days": "Días del mes",
+	"alerts_form_month_days_help": "Uno o varios, del 1 al 31, separados por comas. Un mes sin ese día se omite.",
+	"alerts_form_monthly": "Mensual",
+	"alerts_form_name": "Nombre",
+	"alerts_form_name_help": "Se muestra en la lista y en el historial.",
+	"alerts_form_name_placeholder": "Reinicio del NAS el domingo",
+	"alerts_form_on_date": "En una fecha",
+	"alerts_form_on_weekday": "En un día de la semana",
+	"alerts_form_one_off": "Una vez",
+	"alerts_form_rank_fifth": "Quinto",
+	"alerts_form_rank_first": "Primero",
+	"alerts_form_rank_fourth": "Cuarto",
+	"alerts_form_rank_last": "Último",
+	"alerts_form_rank_second": "Segundo",
+	"alerts_form_rank_third": "Tercero",
+	"alerts_form_start": "Inicio",
+	"alerts_form_submit": "Programar",
+	"alerts_form_timezone": "Zona horaria",
+	"alerts_form_timezone_help": "Un nombre IANA como Europe/Paris. La ventana mantiene su hora local con los cambios de horario.",
+	"alerts_form_to": "Hasta",
+	"alerts_form_weekly": "Semanal",
+	"alerts_form_when": "Cuándo",
+	"alerts_form_which": "Cuál",
+	"alerts_form_which_help": "Un mes que no lo tenga (sin quinto domingo) se omite.",
+	"alerts_history_clear_all": "Borrar todas las resueltas",
+	"alerts_history_clear_confirm": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "¿Borrar {count}?",
+				"countPlural=other": "¿Borrar {count}?"
+			}
+		}
+	],
+	"alerts_history_cleared": "Borrada",
+	"alerts_history_count": "{shown} de {total}",
+	"alerts_history_deleted_device": "(dispositivo eliminado)",
+	"alerts_history_device": "Dispositivo",
+	"alerts_history_empty_description": "Los cambios de estado de las alertas aparecerán aquí cuando las reglas se activen y se resuelvan.",
+	"alerts_history_empty_title": "Aún no hay historial.",
+	"alerts_history_error_clear": "No se pudo borrar esta entrada.",
+	"alerts_history_error_clear_all": "No se pudieron borrar las entradas resueltas.",
+	"alerts_history_error_cleared": "No se pudieron cargar las entradas borradas.",
+	"alerts_history_error_more": "No se pudo cargar más historial.",
+	"alerts_history_everything": "Eso es todo lo de los últimos {days} días.",
+	"alerts_history_export": "Exportar CSV",
+	"alerts_history_filter_all": "Todas",
+	"alerts_history_load_more": "Cargar más",
+	"alerts_history_nomatch_description": "Amplía los filtros para volver a ver el registro.",
+	"alerts_history_nomatch_title": "Nada coincide con estos filtros.",
+	"alerts_history_not_sent": "No enviado · {reason}",
+	"alerts_history_notified": "Notificado",
+	"alerts_history_only_notified": "Solo notificadas",
+	"alerts_history_phase_firing": "Activa",
+	"alerts_history_phase_ok": "OK",
+	"alerts_history_phase_pending": "En ascenso",
+	"alerts_history_phase_resolved": "Resuelta",
+	"alerts_history_quiet": "silencio",
+	"alerts_history_severity": "Gravedad",
+	"alerts_history_show_cleared": "Mostrar borradas",
+	"alerts_history_today": "Hoy",
+	"alerts_history_yesterday": "Ayer",
+	"alerts_ignore_button": "Nunca para este dispositivo",
+	"alerts_ignore_confirm": "¿Nunca más?",
+	"alerts_ignore_done": "Ignorada en {device}.",
+	"alerts_ignore_error": "No se pudo ignorar esta regla para este dispositivo.",
+	"alerts_ignore_error_undo": "No se pudo dejar de ignorar esta regla.",
+	"alerts_ignore_stop": "Dejar de ignorar",
+	"alerts_ignore_undo": "Deshacer",
+	"alerts_matcher_except": ", excepto {items}",
+	"alerts_matcher_except_devices": "los dispositivos {phrase}",
+	"alerts_matcher_except_rule": "la regla {rule}",
+	"alerts_matcher_floor_critical": "solo alertas",
+	"alerts_matcher_floor_info": "todas las alertas",
+	"alerts_matcher_floor_warning": "avisos y superiores",
+	"alerts_matcher_from_all": "de todos los dispositivos",
+	"alerts_matcher_from_devices": "de los dispositivos {devices}",
+	"alerts_matcher_of_kind": "de tipo {kinds}",
+	"alerts_matcher_only_rule": ", solo para la regla {rule}",
+	"alerts_matcher_only_rules": ", solo para las reglas {rules}",
+	"alerts_matcher_sentence": "Este canal recibe {floor} {scope}{rules}{exceptions}.",
+	"alerts_matcher_tagged": "con etiqueta {tags}",
+	"alerts_needs_dismiss_error": "No se pudo descartar esta alerta.",
+	"alerts_needs_dismissed": "Descartadas",
+	"alerts_needs_dismissed_hint": "Problemas conocidos: los recordatorios se pausan hasta que termine el reconocimiento o se resuelva la alerta.",
+	"alerts_needs_empty_no_devices": "Aún no hay nada que vigilar.",
+	"alerts_needs_empty_quiet": "Nada te necesita.",
+	"alerts_needs_no_device": "Sin dispositivo",
+	"alerts_needs_quiet_all_reporting": "Todos los dispositivos informan y ninguna regla está activa.",
+	"alerts_needs_quiet_checked": "{text} Comprobado {when}.",
+	"alerts_needs_quiet_no_devices": "Añade un dispositivo y su primer informe aparecerá aquí.",
+	"alerts_needs_quiet_waiting_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ninguna regla está activa. Un dispositivo aún espera un primer informe.",
+				"countPlural=other": "Ninguna regla está activa. {count} dispositivos aún esperan un primer informe."
+			}
+		}
+	],
+	"alerts_needs_quiet_waiting_one": "Ninguna regla está activa. Un dispositivo aún espera un primer informe.",
+	"alerts_needs_snoozed": "Pospuestas",
+	"alerts_needs_snoozed_hint": "Ocultas por un tiempo: sin recordatorio hasta que termine el plazo o se resuelva la alerta.",
+	"alerts_needs_toast_dismissed": "Descartada.",
+	"alerts_nth_1": "1.º {day}",
+	"alerts_nth_2": "2.º {day}",
+	"alerts_nth_3": "3.º {day}",
+	"alerts_nth_last": "último {day}",
+	"alerts_nth_other": "{n}.º {day}",
+	"alerts_over_add": "Añadir excepción",
+	"alerts_over_clear": "{label} {value}",
+	"alerts_over_device_id": "dispositivo {id}",
+	"alerts_over_error_clear_number": "El umbral de recuperación debe ser un número.",
+	"alerts_over_error_devices": "No se pudieron cargar los dispositivos.",
+	"alerts_over_error_empty": "Define un umbral, un umbral de recuperación o desactiva la regla para este dispositivo.",
+	"alerts_over_error_pick": "Elige un dispositivo.",
+	"alerts_over_error_remove": "No se pudo quitar la excepción.",
+	"alerts_over_error_save": "No se pudo guardar la excepción.",
+	"alerts_over_in_unit": "En {unit}.",
+	"alerts_over_no_change": "sin cambios",
+	"alerts_over_none": "Ninguna. Una excepción cambia el umbral, el umbral de recuperación o desactiva esta regla para un dispositivo.",
+	"alerts_over_none_placeholder": "Ninguno",
+	"alerts_over_pick_device": "Elegir un dispositivo",
+	"alerts_over_rule_off": "regla desactivada",
+	"alerts_over_save": "Guardar excepción",
+	"alerts_over_threshold": "umbral {value}",
+	"alerts_over_title": "Excepciones por dispositivo",
+	"alerts_over_turn_off": "Desactivar esta regla para el dispositivo",
+	"alerts_page_description": "Qué está activo ahora, qué está programado para callar, las reglas detrás y dónde se te avisa.",
+	"alerts_page_error_change_rule": "No se pudo cambiar la regla.",
+	"alerts_page_error_delete_rule": "No se pudo eliminar la regla.",
+	"alerts_page_error_load": "No se pudieron cargar las alertas",
+	"alerts_page_error_refresh_rules": "No se pudieron actualizar las reglas.",
+	"alerts_page_error_refresh_windows": "No se pudieron actualizar las ventanas de mantenimiento.",
+	"alerts_page_error_remove_window": "No se pudo quitar la ventana de mantenimiento.",
+	"alerts_page_sections": "Secciones de alertas",
+	"alerts_page_tab_history": "Historial",
+	"alerts_page_tab_notifications": "Notificaciones",
+	"alerts_page_tab_now": "Ahora",
+	"alerts_page_tab_rules": "Reglas",
+	"alerts_page_tab_scheduled": "Programadas",
+	"alerts_page_title": "Alertas",
+	"alerts_row_acked": "Reconocida{by}{until}{note}. Recordatorios en pausa; aun así recibirás aviso cuando se resuelva.",
+	"alerts_row_acked_by": " por {name}",
+	"alerts_row_acked_note": " — {note}",
+	"alerts_row_also": "También {list}",
+	"alerts_row_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "También {list} · +{count} más",
+				"countPlural=other": "También {list} · +{count} más"
+			}
+		}
+	],
+	"alerts_row_aria": "{plate}: {rule}",
+	"alerts_row_aria_on": "{plate}: {rule} en {device}",
+	"alerts_row_dismiss": "Descartar",
+	"alerts_row_learning": "En silencio durante los primeros {days} días de la línea base.",
+	"alerts_row_learning_suppressed": "En silencio mientras aprende el comportamiento normal.",
+	"alerts_row_more": "Más acciones",
+	"alerts_row_more_menu": "Más acciones para esta alerta",
+	"alerts_row_open_device": "Abrir dispositivo",
+	"alerts_row_since": "desde {when}",
+	"alerts_row_snoozed": "Pospuesta{until}. En silencio hasta entonces o hasta que se resuelva.",
+	"alerts_row_suppressed_by": "Suprimida por {parent}: probablemente una consecuencia, no un problema aparte.",
+	"alerts_row_until": " hasta {time}",
+	"alerts_rules_after_hours": "Tras {hours} h",
+	"alerts_rules_all_channels": "todos los canales activados",
+	"alerts_rules_all_kinds": "Todos los tipos",
+	"alerts_rules_anomaly_summary": "sensibilidad k = {k} · suavizado α = {alpha} · mínimo {samples} muestras · mínimo {abs} abs / {rel} rel",
+	"alerts_rules_baseline_anomaly": "anomalía de línea base",
+	"alerts_rules_builtin": "Integrada",
+	"alerts_rules_channel_id": "canal n.º {id}",
+	"alerts_rules_clear_above": "Se recupera por encima de",
+	"alerts_rules_clear_below": "Se recupera por debajo de",
+	"alerts_rules_create": "Crear regla",
+	"alerts_rules_current_value": "{value} (actual)",
+	"alerts_rules_delete": "Eliminar",
+	"alerts_rules_delete_confirm": "¿Eliminar?",
+	"alerts_rules_disable_aria": "Desactivar {name}",
+	"alerts_rules_disabled": "Desactivada",
+	"alerts_rules_edit": "Editar",
+	"alerts_rules_edit_all_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Todos los canales activados (actualmente {count})",
+				"countPlural=other": "Todos los canales activados (actualmente {count})"
+			}
+		}
+	],
+	"alerts_rules_edit_all_none": "Todos los canales activados: ahora no hay ninguno activado, así que no se envía nada",
+	"alerts_rules_edit_all_one": "Todos los canales activados (actualmente {name})",
+	"alerts_rules_edit_aria": "Editar {name}",
+	"alerts_rules_edit_channel_disabled": "desactivado",
+	"alerts_rules_edit_channels_error": "No se pudieron cargar los canales ({error}). La lista se mantiene como está: {state}",
+	"alerts_rules_edit_channels_state_all": "todos los canales activados.",
+	"alerts_rules_edit_channels_state_n": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} canal seleccionado.",
+				"countPlural=other": "{count} canales seleccionados."
+			}
+		}
+	],
+	"alerts_rules_edit_clear_help": "Opcional. Una vez activa, la alerta solo se resuelve más allá de este valor, de modo que una lectura que ronde el umbral no oscile.",
+	"alerts_rules_edit_description": "Descripción",
+	"alerts_rules_edit_detection": "Detección",
+	"alerts_rules_edit_detection_help": "Los ajustes de anomalía de línea base vienen con la regla y no se pueden editar aquí.",
+	"alerts_rules_edit_error_clear_above": "El umbral de recuperación debe estar por encima del umbral: se activa por debajo de uno y se recupera por encima del otro.",
+	"alerts_rules_edit_error_clear_below": "El umbral de recuperación debe estar por debajo del umbral: se activa por encima de uno y se recupera por debajo del otro.",
+	"alerts_rules_edit_error_clear_number": "El umbral de recuperación debe ser un número o quedar vacío.",
+	"alerts_rules_edit_error_query": "La consulta es obligatoria: sin ella la regla no vigila nada.",
+	"alerts_rules_edit_error_save": "No se pudo guardar la regla.",
+	"alerts_rules_edit_escalate": "Escalar tras",
+	"alerts_rules_edit_escalate_help": "Sube la gravedad un nivel si sigue activa.",
+	"alerts_rules_edit_hold_anomaly_help": "Cuánto debe durar la anomalía antes de activarse.",
+	"alerts_rules_edit_hold_help": "Cuánto debe durar la condición antes de activarse.",
+	"alerts_rules_edit_no_channel": "Aún no hay canales: no se envía nada. {link}.",
+	"alerts_rules_edit_no_channel_link": "Añade uno en Notificaciones",
+	"alerts_rules_edit_none_ticked": "Ninguno marcado: {label}.",
+	"alerts_rules_edit_notify_via": "Notificar por",
+	"alerts_rules_edit_only_ticked": "Solo se notifica a los canales marcados.",
+	"alerts_rules_edit_op_gt": "> por encima de",
+	"alerts_rules_edit_op_gte": "≥ al menos",
+	"alerts_rules_edit_op_lt": "< por debajo de",
+	"alerts_rules_edit_op_lte": "≤ como máximo",
+	"alerts_rules_edit_query_help": "MetricsQL, evaluada por dispositivo.",
+	"alerts_rules_edit_repeat": "Repetir cada",
+	"alerts_rules_edit_repeat_help": "Recordatorio mientras siga activa.",
+	"alerts_rules_edit_save": "Guardar cambios",
+	"alerts_rules_empty_description": "Añade una regla para vigilar una métrica o espera a que aparezcan las reglas incluidas.",
+	"alerts_rules_empty_title": "Aún no hay reglas.",
+	"alerts_rules_enable_aria": "Activar {name}",
+	"alerts_rules_enabled": "Activada",
+	"alerts_rules_error_create": "No se pudo crear la regla.",
+	"alerts_rules_error_hold": "El tiempo de espera debe ser un número entero de segundos.",
+	"alerts_rules_error_name": "La regla necesita un nombre.",
+	"alerts_rules_error_query": "La consulta MetricsQL es obligatoria: sin ella la regla no vigila nada.",
+	"alerts_rules_error_threshold": "El umbral debe ser un número.",
+	"alerts_rules_escalates": "escala tras {duration}",
+	"alerts_rules_every_hour": "Cada hora",
+	"alerts_rules_every_hours": "Cada {hours} h",
+	"alerts_rules_filter_kind": "Filtrar por tipo",
+	"alerts_rules_firing_now": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} activas ahora",
+				"countPlural=other": "{count} activas ahora"
+			}
+		}
+	],
+	"alerts_rules_for": "durante {duration}",
+	"alerts_rules_hide_query": "Ocultar consulta",
+	"alerts_rules_hold_for": "Mantener durante",
+	"alerts_rules_hold_for_help": "Segundos que debe durar la condición antes de activarse.",
+	"alerts_rules_ignored_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ignorada en {count} dispositivo",
+				"countPlural=other": "Ignorada en {count} dispositivos"
+			}
+		}
+	],
+	"alerts_rules_ignored_one": "Ignorada en 1 dispositivo",
+	"alerts_rules_immediately": "de inmediato",
+	"alerts_rules_immediately_cap": "De inmediato",
+	"alerts_rules_name_placeholder": "CPU saturada",
+	"alerts_rules_new": "Nueva regla",
+	"alerts_rules_new_description": "Una regla de umbral que vigila una consulta MetricsQL. Los canales y recordatorios se ajustan una vez creada.",
+	"alerts_rules_nomatch_description": "Prueba con otro término de búsqueda u otro tipo.",
+	"alerts_rules_nomatch_title": "Ninguna regla coincide.",
+	"alerts_rules_notifies": "notifica a {channels}",
+	"alerts_rules_off": "Desactivado",
+	"alerts_rules_op_gt": "por encima de {amount}",
+	"alerts_rules_op_gte": "al menos {amount}",
+	"alerts_rules_op_lt": "por debajo de {amount}",
+	"alerts_rules_op_lte": "como máximo {amount}",
+	"alerts_rules_operator": "Operador",
+	"alerts_rules_query": "Consulta",
+	"alerts_rules_query_help": "MetricsQL, p. ej. dumbmonit_cpu_usage_percent",
+	"alerts_rules_repeats": "se repite cada {duration}",
+	"alerts_rules_saved": "Guardada",
+	"alerts_rules_search_label": "Buscar reglas",
+	"alerts_rules_search_placeholder": "Buscar por nombre, descripción o consulta",
+	"alerts_rules_show_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Mostrar {count} regla integrada",
+				"countPlural=other": "Mostrar las {count} reglas integradas"
+			}
+		}
+	],
+	"alerts_rules_show_fewer": "Mostrar menos reglas",
+	"alerts_rules_show_query": "Mostrar consulta",
+	"alerts_rules_threshold": "Umbral",
+	"alerts_schedule_day_of_month": "día {day}",
+	"alerts_schedule_monthly": "{when} {start} durante {duration}, cada mes · {zone}",
+	"alerts_schedule_no_day": "Ningún día",
+	"alerts_schedule_weekly": "{days} {span}, cada semana · {zone}",
+	"alerts_scope_all_devices": "Todos los dispositivos",
+	"alerts_scope_device": "Dispositivo {id}",
+	"alerts_severity_advisory": "Aviso",
+	"alerts_severity_info": "Info",
+	"alerts_severity_warning": "Alerta",
+	"alerts_silences_active_now": "Activa ahora",
+	"alerts_silences_empty_description": "Programa una ventana para silenciar un dispositivo, o todos, mientras trabajas en él.",
+	"alerts_silences_empty_title": "No hay mantenimiento programado.",
+	"alerts_silences_next": "siguiente: {when}",
+	"alerts_silences_remove": "Quitar",
+	"alerts_silences_remove_confirm": "¿Quitar?",
+	"alerts_silences_schedule": "Programar mantenimiento",
+	"alerts_silences_scheduled": "Programada",
+	"alerts_silences_until": "hasta {when}",
+	"alerts_snooze_button": "Posponer",
+	"alerts_snooze_error": "No se pudo posponer esta alerta.",
+	"alerts_snooze_error_lift": "No se pudo quitar el aplazamiento.",
+	"alerts_snooze_hide_for": "Ocultar durante",
+	"alerts_snooze_hint": "Sin notificaciones hasta que termine o la alerta se resuelva.",
+	"alerts_snooze_lift": "Reactivar",
+	"alerts_snooze_menu_label": "Posponer durante",
+	"alerts_span_day": "1 día",
+	"alerts_span_days": "{days} días",
+	"alerts_span_h": "{hours} h",
+	"alerts_span_hm": "{hours} h {minutes}",
+	"alerts_span_min": "{minutes} min",
+	"alerts_span_s": "{seconds} s",
+	"notifications_channels_add": "Añadir canal",
+	"notifications_channels_description": "Dónde te avisa DumbMonit cuando algo requiere atención.",
+	"notifications_channels_disabled": "Desactivado",
+	"notifications_channels_edit": "Editar",
+	"notifications_channels_empty_admin": "Añade Discord, Telegram, correo o uno de otros 20 servicios para recibir alertas donde ya estás.",
+	"notifications_channels_empty_title": "Aún no hay ningún canal.",
+	"notifications_channels_empty_viewer": "Un administrador puede añadir Discord, Telegram, correo o uno de otros 20 servicios.",
+	"notifications_channels_enabled": "Activado",
+	"notifications_channels_error_action": "No se pudo hacer",
+	"notifications_channels_error_load": "No se pudieron cargar los canales",
+	"notifications_channels_last_error": "Último error: {error}",
+	"notifications_channels_last_sent": "Último envío {when}",
+	"notifications_channels_policy_advisory_up": "Aviso y superior",
+	"notifications_channels_policy_interval": "misma alerta como máximo cada {minutes} min",
+	"notifications_channels_policy_no_recoveries": "sin recuperaciones",
+	"notifications_channels_policy_quiet": "silencio {start}–{end}",
+	"notifications_channels_policy_warning_only": "Solo Alerta",
+	"notifications_channels_remove": "Eliminar",
+	"notifications_channels_remove_confirm": "¿Eliminar definitivamente?",
+	"notifications_channels_send_test": "Enviar prueba",
+	"notifications_channels_test_failed": "La prueba falló",
+	"notifications_channels_test_ok": "Mensaje de prueba enviado",
+	"notifications_channels_title": "Canales",
+	"notifications_field_default": "Predeterminado ({value})",
+	"notifications_field_list_hint": "Una entrada por línea.",
+	"notifications_field_object_hint": "Un objeto JSON.",
+	"notifications_form_change_type": "Cambiar tipo",
+	"notifications_form_change_type_title": "Cambiar el tipo de canal",
+	"notifications_form_clear_secrets": "Borrar los secretos guardados",
+	"notifications_form_clear_secrets_help": "Elimina lo almacenado; el canal fallará hasta que se introduzcan secretos nuevos.",
+	"notifications_form_delivery": "Entrega",
+	"notifications_form_delivery_hide": "Ocultar opciones de entrega",
+	"notifications_form_delivery_hint": "— qué recibe este canal, y cuándo",
+	"notifications_form_delivery_show": "Opciones de entrega",
+	"notifications_form_documentation": "Documentación",
+	"notifications_form_edit_title": "Editar «{name}»",
+	"notifications_form_enabled_help": "Un canal desactivado conserva su configuración pero no recibe nada.",
+	"notifications_form_error_invalid": "Valor no válido.",
+	"notifications_form_error_json": "Debe ser un objeto JSON válido, por ejemplo \"key\": \"value\".",
+	"notifications_form_error_json_object": "Debe ser un objeto JSON, no una lista ni un valor simple.",
+	"notifications_form_error_name": "Ponle un nombre al canal; lo elegirás en las reglas de alerta.",
+	"notifications_form_error_number": "Debe ser un número.",
+	"notifications_form_error_required": "Este campo es obligatorio.",
+	"notifications_form_error_save": "No se pudo guardar el canal",
+	"notifications_form_error_secret_required": "Este secreto es obligatorio.",
+	"notifications_form_floor_critical": "Solo Alerta",
+	"notifications_form_floor_info": "Todo (Info y superior)",
+	"notifications_form_floor_warning": "Aviso y superior",
+	"notifications_form_interval": "La misma alerta de nuevo no antes de",
+	"notifications_form_interval_current": "{seconds} s (actual)",
+	"notifications_form_interval_help": "Los recordatorios y reactivaciones de una misma alerta se separan al menos por este tiempo.",
+	"notifications_form_keep_type": "Mantener el tipo actual",
+	"notifications_form_name_help": "Se muestra en la lista de canales y se elige en las reglas de alerta.",
+	"notifications_form_name_placeholder": "Chat familiar",
+	"notifications_form_name_placeholder_kind": "{kind} — familia",
+	"notifications_form_new_title": "Nuevo canal de {kind}",
+	"notifications_form_no_match": "Ningún tipo de canal coincide con «{query}».",
+	"notifications_form_no_minimum": "Sin mínimo",
+	"notifications_form_pick_hint": "Elige un servicio. Después solo aparecen los campos que necesita.",
+	"notifications_form_pick_title": "¿Adónde deben ir las alertas?",
+	"notifications_form_resolved": "Avisarme cuando se resuelva",
+	"notifications_form_resolved_help": "Desactivado: el canal solo recibe problemas, nunca recuperaciones.",
+	"notifications_form_search_label": "Buscar tipos de canal",
+	"notifications_form_search_placeholder": "Buscar Discord, correo, webhook…",
+	"notifications_form_secrets": "Secretos",
+	"notifications_form_secrets_destination_changed": "El destino cambió: introduce los secretos de nuevo, los guardados no se envían a una dirección nueva.",
+	"notifications_form_secrets_keep": "Déjalo vacío para conservar el secreto guardado.",
+	"notifications_form_secrets_note": "Cifrados en reposo y nunca se muestran de nuevo.",
+	"notifications_form_secrets_saved": "Ya hay un secreto guardado para este canal.",
+	"notifications_form_send": "Enviar",
+	"notifications_form_send_help": "Las alertas por debajo de este nivel nunca llegan al canal.",
+	"notifications_form_settings": "Ajustes",
+	"notifications_matcher_add": "Añadir una condición",
+	"notifications_matcher_checking": "Comprobando qué dispositivos coinciden…",
+	"notifications_matcher_count": "{matched} de {total} dispositivos",
+	"notifications_matcher_error_preview": "No se pudo previsualizar este filtro.",
+	"notifications_matcher_except": "Excepto",
+	"notifications_matcher_field": "Campo",
+	"notifications_matcher_field_kind": "tipo de dispositivo",
+	"notifications_matcher_field_rule": "regla",
+	"notifications_matcher_field_tag": "etiqueta",
+	"notifications_matcher_help": "Desactivado: el canal recibe todo lo que supera su umbral de gravedad. Activado: solo lo que coincide, por etiqueta, tipo de dispositivo o regla.",
+	"notifications_matcher_mode": "Incluir o excluir",
+	"notifications_matcher_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "y {count} más",
+				"countPlural=other": "y {count} más"
+			}
+		}
+	],
+	"notifications_matcher_none": "Hoy no coincide ningún dispositivo — este canal quedaría en silencio.",
+	"notifications_matcher_only": "Solo",
+	"notifications_matcher_only_some": "Solo algunas alertas",
+	"notifications_matcher_remove": "Quitar esta condición",
+	"notifications_matcher_rules_note": "Las condiciones de regla se aplican a las alertas, no a los dispositivos: el recuento de arriba las ignora.",
+	"notifications_matcher_tag_name": "Nombre de la etiqueta",
+	"notifications_matcher_value": "Valor",
+	"notifications_policy_also_tell": "Avisar también a",
+	"notifications_policy_also_tell_help": "Un salto adicional, enviado una sola vez. Su propio umbral de gravedad y sus horas de silencio no lo frenan.",
+	"notifications_policy_cap": "Mensajes por canal y hora",
+	"notifications_policy_cap_help": "Pasado el límite, las alertas esperan y llegan en un solo resumen. Vacío: sin límite.",
+	"notifications_policy_cap_placeholder": "Sin límite",
+	"notifications_policy_daily": "a diario",
+	"notifications_policy_description": "Cómo DumbMonit mantiene pocas las notificaciones: un mensaje por ráfaga, un límite por hora y silencio para las alertas que oscilan.",
+	"notifications_policy_error_cap": "El límite por hora debe ser un número entero, o vacío para no tener límite.",
+	"notifications_policy_error_escalate": "Elige el canal al que avisar si nadie reconoce, o pon el retraso en «No escalar nunca».",
+	"notifications_policy_error_flap": "La detección de oscilación necesita al menos 2 cambios de estado.",
+	"notifications_policy_error_load": "No se pudo cargar la política de notificaciones",
+	"notifications_policy_error_save": "No se pudo guardar la política",
+	"notifications_policy_error_url": "La URL pública debe empezar por http:// o https://.",
+	"notifications_policy_escalate_after": "Tras {span}",
+	"notifications_policy_escalate_help": "Se cuenta desde que sale realmente el primer mensaje, no desde que se dispara la alerta.",
+	"notifications_policy_escalate_label": "Si nadie reconoce",
+	"notifications_policy_escalate_never": "No escalar nunca",
+	"notifications_policy_escalate_off": "Nadie recibe un segundo aviso: una alerta sin reconocer se queda en sus propios canales.",
+	"notifications_policy_escalate_on": "Si nadie reconoce en {minutes} min desde que salió el primer mensaje, la alerta también se envía a {name}, una sola vez. Reconocerla, o que se resuelva, detiene el salto.",
+	"notifications_policy_everything": "Todo",
+	"notifications_policy_fewer": "Menos opciones",
+	"notifications_policy_flap": "Retener las alertas que oscilan",
+	"notifications_policy_flap_changes": "Cambios de estado",
+	"notifications_policy_flap_changes_help": "Disparos y resoluciones se cuentan juntos.",
+	"notifications_policy_flap_help": "Una alerta que se dispara y se resuelve repetidamente envía un solo aviso de «oscilación» y luego calla un tiempo.",
+	"notifications_policy_flap_hint": "— detección de oscilación",
+	"notifications_policy_flap_hold": "Luego retener durante",
+	"notifications_policy_flap_within": "En",
+	"notifications_policy_group": "Agrupar alertas durante",
+	"notifications_policy_group_help": "Las alertas que se disparan dentro de esta ventana salen como un solo mensaje por canal: «3 alertas en 2 dispositivos».",
+	"notifications_policy_more": "Más opciones",
+	"notifications_policy_no_channel": "Ningún canal",
+	"notifications_policy_per_channel": "Por canal",
+	"notifications_policy_per_channel_note": "Lo que recibe cada canal y sus horas de silencio se ajustan en el propio canal (Editar, luego «Opciones de entrega»).",
+	"notifications_policy_quiet": "silencio {days} {start}–{end}",
+	"notifications_policy_saved": "Guardado",
+	"notifications_policy_send_now": "Enviar de inmediato",
+	"notifications_policy_that_channel": "ese canal",
+	"notifications_policy_title": "Política de notificaciones",
+	"notifications_policy_url": "URL pública",
+	"notifications_policy_url_help": "Se usa para el enlace «Abrir en DumbMonit» de cada mensaje. Déjalo vacío para usar DUMBMONIT_PUBLIC_URL.",
+	"notifications_quiet_days": "Días",
+	"notifications_quiet_error_days": "Elige al menos un día.",
+	"notifications_quiet_error_differ": "El inicio y el fin deben ser distintos.",
+	"notifications_quiet_error_format": "Introduce el inicio y el fin como HH:MM.",
+	"notifications_quiet_from": "Desde",
+	"notifications_quiet_from_help": "Tu hora local. Un tramo que pasa de medianoche pertenece al día en que empieza.",
+	"notifications_quiet_help": "Durante las horas de silencio solo pasan las alertas de nivel Alerta; el resto espera y llega en un solo resumen al terminar.",
+	"notifications_quiet_title": "Horas de silencio",
+	"notifications_quiet_to": "Hasta",
+	"overview_brief_a_rule": "Una regla",
+	"overview_brief_also": "También hubo alertas que fueron y vinieron en {names}.",
+	"overview_brief_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "También hubo alertas que fueron y vinieron en {names} y {count} más.",
+				"countPlural=other": "También hubo alertas que fueron y vinieron en {names} y {count} más."
+			}
+		}
+	],
+	"overview_brief_and_others": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} y {count} más",
+				"countPlural=other": "{names} y {count} más"
+			}
+		}
+	],
+	"overview_brief_device_n": "Dispositivo {id}",
+	"overview_brief_dissolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta se formó y se disipó antes de activarse.",
+				"countPlural=other": "{count} alertas se formaron y se disiparon antes de activarse."
+			}
+		}
+	],
+	"overview_brief_dissolved_mostly": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta se formó y se disipó antes de activarse (sobre todo {rule} en {device}).",
+				"countPlural=other": "{count} alertas se formaron y se disiparon antes de activarse (sobre todo {rule} en {device})."
+			}
+		}
+	],
+	"overview_brief_down_whole": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{subject} ha estado inalcanzable todo el tiempo.",
+				"countPlural=other": "{subject} han estado inalcanzables todo el tiempo."
+			}
+		}
+	],
+	"overview_brief_dropped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} se cayó y volvió.",
+				"countPlural=other": "{name} se cayó {count} veces y volvió."
+			}
+		}
+	],
+	"overview_brief_dropped_many": "{names} se cayeron y volvieron.",
+	"overview_brief_head_first": "En las últimas 24 h",
+	"overview_brief_head_since": "Desde {when}",
+	"overview_brief_intro": "¿Primera vez por aquí? Esto es lo que sabe la paloma hasta ahora.",
+	"overview_brief_kept_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo siguió reportando.",
+				"countPlural=other": "{count} dispositivos siguieron reportando."
+			}
+		}
+	],
+	"overview_brief_lead": "{head} — {parts}.",
+	"overview_brief_learning_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} aún están aprendiendo la línea base: se habrían activado una vez.",
+				"countPlural=other": "{names} aún están aprendiendo la línea base: se habrían activado {count} veces."
+			}
+		}
+	],
+	"overview_brief_learning_one": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} aún está aprendiendo la línea base: se habría activado una vez.",
+				"countPlural=other": "{names} aún está aprendiendo la línea base: se habría activado {count} veces."
+			}
+		}
+	],
+	"overview_brief_n_alerts_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta se resolvió sola",
+				"countPlural=other": "{count} alertas se resolvieron solas"
+			}
+		}
+	],
+	"overview_brief_n_fired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta se activó",
+				"countPlural=other": "{count} alertas se activaron"
+			}
+		}
+	],
+	"overview_brief_n_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} se resolvió sola",
+				"countPlural=other": "{count} se resolvieron solas"
+			}
+		}
+	],
+	"overview_brief_n_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} sigue activa",
+				"countPlural=other": "{count} siguen activas"
+			}
+		}
+	],
+	"overview_brief_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo inalcanzable",
+				"countPlural=other": "{count} dispositivos inalcanzables"
+			}
+		}
+	],
+	"overview_brief_nothing_no_channel": "No se envió nada: aún no hay ningún canal de notificación configurado.",
+	"overview_brief_nothing_sent": "No se envió nada.",
+	"overview_brief_nothing_to_channel": "No se envió nada a {channel}.",
+	"overview_brief_nothing_to_channels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "No se envió nada a tu canal.",
+				"countPlural=other": "No se envió nada a tus {count} canales."
+			}
+		}
+	],
+	"overview_brief_notified": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Se envió {count} notificación.",
+				"countPlural=other": "Se enviaron {count} notificaciones."
+			}
+		}
+	],
+	"overview_brief_notified_to": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Se envió {count} notificación a {channel}.",
+				"countPlural=other": "Se enviaron {count} notificaciones a {channel}."
+			}
+		}
+	],
+	"overview_brief_on_device": "En {device}: {phrases}.",
+	"overview_brief_phrase_fired_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} se activó y se resolvió sola",
+				"countPlural=other": "{name} se activó {count} veces y se resolvió sola"
+			}
+		}
+	],
+	"overview_brief_phrase_resolved": "{name} se resolvió sola",
+	"overview_brief_phrase_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} se activó y sigue activa",
+				"countPlural=other": "{name} se activó {count} veces y sigue activa"
+			}
+		}
+	],
+	"overview_brief_quiet_away": "No ha pasado nada mientras estabas fuera.",
+	"overview_brief_quiet_first": "No ha pasado nada en las últimas 24 h.",
+	"overview_brief_the_server": "el servidor",
+	"overview_brief_went_down": "{name} dejó de estar accesible {when} y sigue así.",
+	"overview_first_all_done": "Los tres hechos. Esta guía no volverá.",
+	"overview_first_channel_action": "Añadir un canal",
+	"overview_first_channel_text": "Correo, ntfy, Discord, Telegram, PagerDuty — lo que ya lees. No se envía nada hasta que algo falle.",
+	"overview_first_channel_title": "Conecta una forma de enterarte",
+	"overview_first_demo": "Añadir un dispositivo de demostración",
+	"overview_first_device_action": "Añadir un dispositivo",
+	"overview_first_device_text": "Un switch, un NAS, un hipervisor o un sitio web. Escribe una dirección y el resto se detecta.",
+	"overview_first_device_title": "Añade tu primer dispositivo",
+	"overview_first_done": "Hecho",
+	"overview_first_error": "No se pudo guardar. Inténtalo de nuevo en un momento.",
+	"overview_first_error_detail": "No se pudo guardar: {message}",
+	"overview_first_hurry": "¿Con prisa? Escanea un rango de red y añade de una vez todo lo que responda por SNMP.",
+	"overview_first_intro": "Tres pasos y la paloma ya tiene algo que vigilar.",
+	"overview_first_scan": "Escanear mi red",
+	"overview_first_skip_guide": "Omitir la guía",
+	"overview_first_skip_step": "Omitir este paso",
+	"overview_first_skip_step_aria": "Omitir el paso {n}: {title}",
+	"overview_first_skipped": "Omitido",
+	"overview_first_step": "Paso {n}",
+	"overview_first_test_action": "Enviar una prueba",
+	"overview_first_test_text": "Envía una prueba desde el canal. Este paso se pone en verde cuando sale un mensaje de verdad.",
+	"overview_first_test_title": "Comprueba que llega un mensaje",
+	"overview_first_title": "Tus primeros cinco minutos",
+	"overview_page_checked": "Comprobado {when}",
+	"overview_page_empty_text": "Añade un switch, un NAS, un hipervisor o un sitio web y empezará a reportar en un minuto.",
+	"overview_page_empty_title": "Aún no hay dispositivos",
+	"overview_page_error_load": "No se pudo cargar el resumen",
+	"overview_page_error_refresh": "No se pudieron actualizar las alertas.",
+	"overview_page_history_note": "Leído del historial de alertas de la última semana.",
+	"overview_page_last_days": "Últimos {days} días",
+	"overview_page_mark_read": "Marcar como leído",
+	"overview_page_needs_you": "Te necesita",
+	"overview_page_or": "O {agent}, o {relay} a través de uno.",
+	"overview_page_or_agent": "instalar el agente en una máquina",
+	"overview_page_or_relay": "vigilar un sitio remoto",
+	"overview_page_since": "Desde la última vez que miraste",
+	"overview_page_title": "Resumen",
+	"overview_page_week": "La semana que viene",
+	"overview_scene_asleep": "{label}, la paloma duerme",
+	"overview_scene_cloudy": "Algunas nubes",
+	"overview_scene_overcast": "Nublado",
+	"overview_scene_storm": "Tormenta",
+	"overview_sky_clear": "Cielo despejado",
+	"overview_sky_n_acked": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} reconocida",
+				"countPlural=other": "{count} reconocidas"
+			}
+		}
+	],
+	"overview_sky_n_advisories": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} aviso",
+				"countPlural=other": "{count} avisos"
+			}
+		}
+	],
+	"overview_sky_n_building": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en aumento",
+				"countPlural=other": "{count} en aumento"
+			}
+		}
+	],
+	"overview_sky_n_info": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} info",
+				"countPlural=other": "{count} info"
+			}
+		}
+	],
+	"overview_sky_n_misconfigured": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} mal configurado",
+				"countPlural=other": "{count} mal configurados"
+			}
+		}
+	],
+	"overview_sky_n_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} reportando",
+				"countPlural=other": "{count} reportando"
+			}
+		}
+	],
+	"overview_sky_n_snoozed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} pospuesta",
+				"countPlural=other": "{count} pospuestas"
+			}
+		}
+	],
+	"overview_sky_n_suppressed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} suprimida por el padre",
+				"countPlural=other": "{count} suprimidas por el padre"
+			}
+		}
+	],
+	"overview_sky_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} inaccesible",
+				"countPlural=other": "{count} inaccesibles"
+			}
+		}
+	],
+	"overview_sky_n_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en espera",
+				"countPlural=other": "{count} en espera"
+			}
+		}
+	],
+	"overview_sky_n_warnings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta",
+				"countPlural=other": "{count} alertas"
+			}
+		}
+	],
+	"overview_sky_nothing": "Aún no hay nada que vigilar",
+	"overview_sky_plate_acked": "Reconocida",
+	"overview_sky_plate_building": "En aumento",
+	"overview_sky_plate_down": "Caído",
+	"overview_sky_plate_learning": "Aprendiendo",
+	"overview_sky_plate_misconfigured": "Mal configurado",
+	"overview_sky_plate_snoozed": "Pospuesta",
+	"overview_sky_plate_suppressed": "Suprimida por el padre",
+	"overview_sky_plate_unreachable": "Inaccesible",
+	"overview_sky_sentence": "{parts}.",
+	"overview_sky_waiting": "Esperando los primeros informes",
+	"overview_streaks_d_h": "{days} d {hours} h",
+	"overview_streaks_fewest": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "menos alertas: {count} evento de alerta en {days} días",
+				"countPlural=other": "menos alertas: {count} eventos de alerta en {days} días"
+			}
+		}
+	],
+	"overview_streaks_h_min": "{hours} h {minutes} min",
+	"overview_streaks_many_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{name} y {count} más están inalcanzables",
+				"countPlural=other": "{name} y {count} más están inalcanzables"
+			}
+		}
+	],
+	"overview_streaks_most": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} evento de alerta (iniciado, activado o resuelto) en {days} días",
+				"countPlural=other": "{count} eventos de alerta (iniciados, activados o resueltos) en {days} días"
+			}
+		}
+	],
+	"overview_streaks_no_alert": "ninguna alerta en {days} días",
+	"overview_streaks_no_alert_like": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "ninguna alerta en {days} días, como {count} más",
+				"countPlural=other": "ninguna alerta en {days} días, como {count} más"
+			}
+		}
+	],
+	"overview_streaks_noisiest": "Más alertas",
+	"overview_streaks_none_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "ningún dispositivo estuvo inalcanzable en {count} día",
+				"countPlural=other": "ningún dispositivo estuvo inalcanzable en {count} días"
+			}
+		}
+	],
+	"overview_streaks_not_now": "Ahora no",
+	"overview_streaks_one_unreachable": "{name} está inalcanzable",
+	"overview_streaks_over": "más de {days} d",
+	"overview_streaks_quietest": "Dispositivo más tranquilo",
+	"overview_streaks_reporting": "Todo reportando",
+	"overview_streaks_reporting_for": "Todo reportando desde hace",
+	"overview_streaks_since_outage": "ningún dispositivo inalcanzable desde la última caída",
+	"overview_streaks_under_minute": "menos de un minuto",
+	"overview_tip_agent_action": "Instalar un agente",
+	"overview_tip_agent_text": "Servicios, salud de los discos, temperaturas, actualizaciones pendientes, contenedores Docker que puedes reiniciar o actualizar desde aquí, copias de seguridad de Plakar, restic y Borg. Un solo comando en Linux, Windows, macOS o FreeBSD.",
+	"overview_tip_agent_title": "El agente ve dentro de una máquina.",
+	"overview_tip_api_action": "Crear un token de API",
+	"overview_tip_api_text": "Un token con alcance limitado (lectura, o lectura y escritura) la abre a tus scripts, y un Prometheus o Grafana que ya uses puede leer las mediciones con el mismo token.",
+	"overview_tip_api_title": "Todo lo de aquí tiene una API HTTP.",
+	"overview_tip_mcp_action": "Conectar un asistente",
+	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor o cualquier cliente MCP puede preguntar a DumbMonit cómo van las cosas y, con un token de escritura, silenciar un dispositivo o lanzar una sonda.",
+	"overview_tip_mcp_title": "Un asistente de IA puede leer este boletín.",
+	"overview_tip_packs_action": "Paquetes de integración",
+	"overview_tip_packs_text": "Un paquete de integración es un tipo de dispositivo escrito en YAML: qué preguntarle al dispositivo, qué valores guardar y cuándo alertar.",
+	"overview_tip_packs_title": "DumbMonit puede aprender un dispositivo nuevo.",
+	"overview_tip_palette_action": "Abrir la paleta",
+	"overview_tip_palette_text": "La paleta de comandos salta a cualquier dispositivo, página o acción sin soltar el teclado.",
+	"overview_tip_palette_title": "Cada página y acción está a un atajo de distancia.",
+	"overview_tip_relay_action": "Vigilar un sitio remoto",
+	"overview_tip_relay_text": "Pon uno en una máquina de otra sede, de la oficina de un cliente o detrás de un NAT: sondea allí los switches, NAS e hipervisores para este servidor. Solo saliente: no hay nada que abrir en ese lado.",
+	"overview_tip_relay_title": "Un agente puede vigilar otra red.",
+	"overview_tip_status_action": "Crear una página de estado",
+	"overview_tip_status_text": "Una página de estado pública muestra los servicios que elijas, su disponibilidad y tus anuncios: un enlace para compartir en lugar de responder «¿está caído?».",
+	"overview_tip_status_title": "Avisa antes de que pregunten.",
+	"overview_tip_wall_action": "Abrir el modo pared",
+	"overview_tip_wall_text": "El modo pared muestra el cielo y lo que te necesita, a pantalla completa y legible desde el otro lado de la sala, y mantiene la pantalla encendida.",
+	"overview_tip_wall_title": "El boletín cabe en una tele.",
+	"overview_tips_another": "Otro consejo",
+	"overview_tips_hide": "Ocultar estos consejos",
+	"overview_tips_hide_title": "Ocultar estos consejos (en este navegador)",
+	"overview_tips_label": "¿Sabías que…?",
+	"overview_tips_prefix": "¿Sabías que…? {title}",
+	"overview_week_cert_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Certificado caducado hace {count} día",
+				"countPlural=other": "Certificado caducado hace {count} días"
+			}
+		}
+	],
+	"overview_week_cert_expires": "El certificado caduca",
+	"overview_week_cert_expires_today": "El certificado caduca hoy",
+	"overview_week_days_short": "{days} d",
+	"overview_week_filling": "Se llena a este ritmo",
+	"overview_week_filling_series": "Se llena a este ritmo: {series}",
+	"overview_week_from": "{scope}, desde las {time}",
+	"overview_week_full": "Lleno a este ritmo",
+	"overview_week_full_series": "Lleno a este ritmo: {series}",
+	"overview_week_later": "Más adelante:",
+	"overview_week_later_certs": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} certificado en {when}",
+				"countPlural=other": "{count} certificados en {when}"
+			}
+		}
+	],
+	"overview_week_later_disks": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} disco se llena en {days} d",
+				"countPlural=other": "{count} discos se llenan en {days} d"
+			}
+		}
+	],
+	"overview_week_later_windows": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ventana de mantenimiento en {days} d",
+				"countPlural=other": "{count} ventanas de mantenimiento en {days} d"
+			}
+		}
+	],
+	"overview_week_maintenance": "Mantenimiento",
+	"overview_week_maintenance_all": "Mantenimiento en todos los dispositivos",
+	"overview_week_maintenance_device": "Mantenimiento en el dispositivo {id}",
+	"overview_week_nothing_due": "Nada pendiente",
+	"overview_week_plate_certificate": "Certificado",
+	"overview_week_plate_forecast": "Previsión",
+	"overview_week_plate_scheduled": "Programado",
+	"overview_week_plate_warning": "Advertencia",
+	"overview_week_quiet": "Una semana tranquila por delante: ningún certificado, disco ni mantenimiento pendiente.",
+	"overview_week_range": "{scope}, {start}–{end}",
+	"overview_week_series_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{names} y {count} más",
+				"countPlural=other": "{names} y {count} más"
+			}
+		}
+	],
+	"overview_week_today": "Hoy",
+	"overview_week_tomorrow": "Mañana",
+	"overview_week_until": "{scope} hasta {when}",
+	"overview_when_dated": "{date} {time}",
+	"overview_when_yesterday": "ayer {time}",
 	"settings.appearance.language_label": "Idioma",
 	"settings.group.wall_display": "Pared y pantalla",
 	"settings.hint.notifications_lead": "¿Buscas canales y horas de silencio? Están en",

@@ -6,6 +6,7 @@
 	 */
 	import type { Week, WeekItem } from './week';
 	import { Plate } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		week: Week;
@@ -20,7 +21,7 @@
 		{#if entry.target}
 			<a
 				href={`/targets/${entry.target.id}`}
-				class="mt-0.5 block truncate text-[0.8125rem] font-medium text-ink-2 hover:text-ink hover:underline"
+				class="mt-0.5 block truncate py-1 text-[0.8125rem] font-medium text-ink-2 hover:text-ink hover:underline sm:py-0"
 				>{entry.target.name}</a
 			>
 		{/if}
@@ -28,7 +29,7 @@
 {/snippet}
 
 {#if week.empty}
-	<p class="text-[0.9375rem] text-ink-2">A quiet week ahead: no certificate, disk or maintenance due.</p>
+	<p class="text-[0.9375rem] text-ink-2">{m.overview_week_quiet()}</p>
 {:else}
 	<!-- Desktop: one column per day. -->
 	<ol class="hidden gap-2 md:grid md:grid-cols-7">
@@ -55,13 +56,13 @@
 	<ol class="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface md:hidden">
 		{#each week.days as day (day.date.getTime())}
 			<li class="flex min-w-0 gap-4 px-4 py-3">
-				<div class="w-20 shrink-0">
+				<div class="w-16 shrink-0 min-[400px]:w-20">
 					<div class="text-sm font-semibold text-ink">{day.label}</div>
 					<div class="label-tape tnum">{day.dateLabel}</div>
 				</div>
 				<div class="min-w-0 flex-1 space-y-3">
 					{#if day.items.length === 0}
-						<p class="text-[0.8125rem] text-ink-3">Nothing due</p>
+						<p class="text-[0.8125rem] text-ink-3">{m.overview_week_nothing_due()}</p>
 					{:else}
 						{#each day.items as entry (entry.key)}
 							{@render item(entry)}
@@ -75,6 +76,6 @@
 
 {#if week.later}
 	<p class="mt-3 text-[0.9375rem] text-ink-2">
-		<span class="font-medium text-ink">Later:</span> <span class="tnum">{week.later}</span>
+		<span class="font-medium text-ink">{m.overview_week_later()}</span> <span class="tnum">{week.later}</span>
 	</p>
 {/if}

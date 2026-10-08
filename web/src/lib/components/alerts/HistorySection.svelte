@@ -17,6 +17,8 @@
 	import { History, Download, X } from 'lucide-svelte';
 	import { formatDateTime, parseServerDate } from '#lib/format.js';
 	import { formatAlertValue, severityTone, severityWord } from './helpers';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	interface Props {
 		entries: AlertHistoryEntry[];
@@ -34,11 +36,11 @@
 		firing: 'warning',
 		resolved: 'signal'
 	};
-	const PHASE_WORD: Record<AlertPhase, string> = {
-		ok: 'OK',
-		pending: 'Building up',
-		firing: 'Firing',
-		resolved: 'Resolved'
+	const phaseWord = (phase: AlertPhase): string => {
+		if (phase === 'ok') return m.alerts_history_phase_ok();
+		if (phase === 'pending') return m.alerts_history_phase_pending();
+		if (phase === 'firing') return m.alerts_history_phase_firing();
+		return m.alerts_history_phase_resolved();
 	};
 
 	function ruleName(uid: string): string {
@@ -46,8 +48,8 @@
 	}
 	/** A device that no longer exists keeps its rows, labelled as such. */
 	function deviceName(id: number | null): string {
-		if (id === null) return 'All devices';
-		return targets.get(id)?.name ?? '(deleted device)';
+		if (id === null) return m.alerts_scope_all_devices();
+		return targets.get(id)?.name ?? m.alerts_history_deleted_device();
 	}
 
 	// --- Load more ---------------------------------------------------------
@@ -82,7 +84,7 @@
 			extra = await listAlertHistory({ limit: Math.max(limit, PAGE), dismissed: true });
 			clearedLoaded = true;
 		} catch (cause) {
-			loadError = cause instanceof Error ? cause.message : 'Could not load the cleared entries.';
+			loadError = cause instanceof Error ? cause.message : m.alerts_history_error_cleared();
 		} finally {
 			loadingMore = false;
 		}
@@ -95,7 +97,7 @@
 			await dismissAlertHistoryEntry(entry.id);
 			clearedIds = new Set(clearedIds).add(entry.id);
 		} catch (cause) {
-			clearError = cause instanceof Error ? cause.message : 'Could not clear this entry.';
+			clearError = cause instanceof Error ? cause.message : m.alerts_history_error_clear();
 		} finally {
 			clearingId = null;
 		}
@@ -112,7 +114,7 @@
 			}
 			clearedIds = cleared;
 		} catch (cause) {
-			clearError = cause instanceof Error ? cause.message : 'Could not clear the resolved entries.';
+			clearError = cause instanceof Error ? cause.message : m.alerts_history_error_clear_all();
 		} finally {
 			clearingAll = false;
 		}
@@ -129,7 +131,7 @@
 			// Fewer lines than asked: the server has nothing older (within its window).
 			exhausted = older.length < next;
 		} catch (cause) {
-			loadError = cause instanceof Error ? cause.message : 'Could not load more history.';
+			loadError = cause instanceof Error ? cause.message : m.alerts_history_error_more();
 		} finally {
 			loadingMore = false;
 		}
@@ -146,12 +148,12 @@
 	// --- Filters ------------------------------------------------------------
 
 	type SeverityFilter = 'all' | AlertSeverity;
-	const SEVERITY_FILTERS: { id: SeverityFilter; label: string }[] = [
-		{ id: 'all', label: 'All' },
-		{ id: 'info', label: 'Info' },
-		{ id: 'warning', label: 'Advisory' },
-		{ id: 'critical', label: 'Warning' }
-	];
+	const SEVERITY_FILTERS: { id: SeverityFilter; label: string }[] = $derived([
+		{ id: 'all', label: m.alerts_history_filter_all() },
+		{ id: 'info', label: m.alerts_severity_info() },
+		{ id: 'warning', label: m.alerts_severity_advisory() },
+		{ id: 'critical', label: m.alerts_severity_warning() }
+	]);
 
 	let deviceFilter = $state('all');
 	let severityFilter = $state<SeverityFilter>('all');
@@ -163,7 +165,7 @@
 		for (const entry of all) ids.add(entry.target_id);
 		return [...ids]
 			.map((id) => ({ id: id === null ? 'none' : String(id), label: deviceName(id) }))
-			.sort((a, b) => a.label.localeCompare(b.label, 'en'));
+			.sort((a, b) => a.label.localeCompare(b.label, getLocale()));
 	});
 
 	const filtered = $derived(
@@ -187,9 +189,13 @@
 
 	// --- Day groups ---------------------------------------------------------
 
-	const dayFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
-	const dayFormatWithYear = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-	const timeFormat = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+	const dayFormat = $derived(new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short' }));
+	const dayFormatWithYear = $derived(
+		new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric' })
+	);
+	const timeFormat = $derived(
+		new Intl.DateTimeFormat(getLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+	);
 
 	function dayKey(date: Date): string {
 		return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -199,8 +205,8 @@
 		const today = dayKey(now);
 		const yesterday = dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
 		const key = dayKey(date);
-		if (key === today) return 'Today';
-		if (key === yesterday) return 'Yesterday';
+		if (key === today) return m.alerts_history_today();
+		if (key === yesterday) return m.alerts_history_yesterday();
 		return date.getFullYear() === now.getFullYear() ? dayFormat.format(date) : dayFormatWithYear.format(date);
 	}
 	function timeOf(entry: AlertHistoryEntry): string {
@@ -262,16 +268,16 @@
 {#if all.length === 0}
 	<EmptyState
 		icon={History}
-		title="No history yet."
-		description="Alert transitions appear here as rules start firing and resolving."
+		title={m.alerts_history_empty_title()}
+		description={m.alerts_history_empty_description()}
 	/>
 {:else}
 	<!-- Filter row -->
 	<div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-3">
 		<div class="w-full sm:w-56">
-			<label class="sr-only" for="history-device">Device</label>
-			<select id="history-device" class="input !min-h-8 py-0 text-[0.8125rem]" bind:value={deviceFilter}>
-				<option value="all">All devices</option>
+			<label class="sr-only" for="history-device">{m.alerts_history_device()}</label>
+			<select id="history-device" class="input !min-h-10 py-0 text-[0.8125rem] sm:!min-h-8" bind:value={deviceFilter}>
+				<option value="all">{m.alerts_scope_all_devices()}</option>
 				{#each deviceOptions as option (option.id)}
 					<option value={option.id}>{option.label}</option>
 				{/each}
@@ -281,35 +287,35 @@
 			options={SEVERITY_FILTERS}
 			value={severityFilter}
 			onchange={(value) => (severityFilter = value)}
-			label="Severity"
+			label={m.alerts_history_severity()}
 			size="sm"
 		/>
 		<div class="inline-flex items-center gap-2">
 			<Toggle id="history-notified" bind:checked={onlyNotified} />
-			<label for="history-notified" class="text-[0.8125rem] font-medium text-ink">Only notified</label>
+			<label for="history-notified" class="text-[0.8125rem] font-medium text-ink">{m.alerts_history_only_notified()}</label>
 		</div>
 		<div class="inline-flex items-center gap-2">
 			<Toggle id="history-cleared" checked={showCleared} onchange={toggleShowCleared} />
-			<label for="history-cleared" class="text-[0.8125rem] font-medium text-ink">Show cleared</label>
+			<label for="history-cleared" class="text-[0.8125rem] font-medium text-ink">{m.alerts_history_show_cleared()}</label>
 		</div>
-		<div class="ml-auto flex items-center gap-3">
+		<div class="flex flex-wrap items-center gap-3 sm:ml-auto">
 			<span class="tnum text-[0.8125rem] text-ink-2" aria-live="polite">
-				{filtered.length} of {all.length}
+				{m.alerts_history_count({ shown: filtered.length, total: all.length })}
 			</span>
 			{#if auth.canOperate && resolvedCount > 0}
 				<Confirm
 					variant="secondary"
 					size="sm"
-					confirmLabel={`Clear ${resolvedCount}?`}
+					confirmLabel={m.alerts_history_clear_confirm({ count: resolvedCount })}
 					loading={clearingAll}
 					onconfirm={clearAllResolved}
 				>
-					Clear all resolved
+					{m.alerts_history_clear_all()}
 				</Confirm>
 			{/if}
 			<Button variant="secondary" size="sm" onclick={exportCsv} disabled={filtered.length === 0}>
 				<Download class="size-3.5" aria-hidden="true" />
-				Export CSV
+				{m.alerts_history_export()}
 			</Button>
 		</div>
 	</div>
@@ -319,7 +325,7 @@
 	{/if}
 
 	{#if groups.length === 0}
-		<EmptyState icon={History} title="Nothing matches these filters." description="Widen the filters to see the log again." />
+		<EmptyState icon={History} title={m.alerts_history_nomatch_title()} description={m.alerts_history_nomatch_description()} />
 	{:else}
 		<div class="space-y-6">
 			{#each groups as group, gi (group.key)}
@@ -360,24 +366,28 @@
 								<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
 									<Plate tone={severityTone(entry.severity)} label={severityWord(entry.severity)} bare />
 									<div class="flex items-center gap-1.5">
-										<Plate tone={PHASE_TONE[entry.from_phase]} label={PHASE_WORD[entry.from_phase]} bare />
+										<Plate tone={PHASE_TONE[entry.from_phase]} label={phaseWord(entry.from_phase)} bare />
 										<span class="text-ink-3" aria-hidden="true">→</span>
-										<Plate tone={PHASE_TONE[entry.to_phase]} label={PHASE_WORD[entry.to_phase]} bare />
+										<Plate tone={PHASE_TONE[entry.to_phase]} label={phaseWord(entry.to_phase)} bare />
 									</div>
 									{#if entry.notified}
-										<Plate tone="signal" label="Notified" bare />
+										<Plate tone="signal" label={m.alerts_history_notified()} bare />
 									{:else}
-										<Plate tone="ghost" label={`Not sent · ${entry.reason || 'quiet'}`} bare />
+										<Plate
+											tone="ghost"
+											label={m.alerts_history_not_sent({ reason: entry.reason || m.alerts_history_quiet() })}
+											bare
+										/>
 									{/if}
 									{#if entry.dismissed || clearedIds.has(entry.id)}
-										<Plate tone="ghost" label="Cleared" bare />
+										<Plate tone="ghost" label={m.alerts_history_cleared()} bare />
 									{:else if auth.canOperate && entry.to_phase === 'resolved'}
 										<Button
 											size="sm"
 											variant="ghost"
-											class="!h-7 !w-7 !px-0"
-											aria-label="Dismiss"
-											title="Dismiss"
+											class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+											aria-label={m.alerts_row_dismiss()}
+											title={m.alerts_row_dismiss()}
 											loading={clearingId === entry.id}
 											onclick={() => void clearEntry(entry)}
 										>
@@ -395,9 +405,9 @@
 
 	<div class="mt-5 flex flex-wrap items-center gap-3">
 		{#if !exhausted}
-			<Button variant="secondary" size="sm" onclick={loadMore} loading={loadingMore}>Load more</Button>
+			<Button variant="secondary" size="sm" onclick={loadMore} loading={loadingMore}>{m.alerts_history_load_more()}</Button>
 		{:else}
-			<span class="text-[0.8125rem] text-ink-2">That is everything from the last 7 days.</span>
+			<span class="text-[0.8125rem] text-ink-2">{m.alerts_history_everything({ days: 7 })}</span>
 		{/if}
 		{#if loadError}
 			<span class="text-[0.8125rem] font-medium text-warning-ink" role="alert">{loadError}</span>

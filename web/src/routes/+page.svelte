@@ -53,6 +53,7 @@
 	import { computeStreaks } from '#lib/components/overview/streaks.js';
 	import { readLastVisit, writeLastVisit } from '#lib/components/overview/lastVisit.js';
 	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	const DAY_MS = 24 * 3600 * 1000;
 	const HISTORY_DAYS = 7;
@@ -258,7 +259,7 @@
 			const [, refreshedSilences] = await Promise.all([alertsStore.refresh(), listSilences()]);
 			silences = refreshedSilences;
 		} catch (cause) {
-			silenceError = cause instanceof Error ? cause.message : 'Could not refresh the alerts.';
+			silenceError = cause instanceof Error ? cause.message : m.overview_page_error_refresh();
 		}
 	}
 
@@ -291,6 +292,16 @@
 		};
 	});
 
+	/** "Or [install the agent on a machine], or [watch a remote site] through one." cut around its two links. */
+	const orParts = $derived(
+		m
+			.overview_page_or({
+				agent: '\u0000' + m.overview_page_or_agent() + '\u0000',
+				relay: '\u0000' + m.overview_page_or_relay() + '\u0000'
+			})
+			.split('\u0000')
+	);
+
 	const firstLoad = $derived((loading || alertsStore.loading) && targets.length === 0);
 	// This page's own error (the rules read) takes precedence; absent that, a
 	// failure on the shared store (targets, the badge's alerts) is this page's
@@ -298,12 +309,12 @@
 	const pageError = $derived(error ?? (!alertsStore.available ? alertsStore.lastError : null));
 </script>
 
-<svelte:head><title>Overview · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.overview_page_title()} · DumbMonit</title></svelte:head>
 
 {#if pageError && targets.length === 0}
 	<ErrorNotice
 		error={pageError}
-		title="Could not load the overview"
+		title={m.overview_page_error_load()}
 		onretry={() => {
 			loading = true;
 			void load();
@@ -360,7 +371,7 @@
 			-->
 			<div class="absolute top-4 right-4 hidden sm:block">
 				<ClickSpark>
-					<Button variant="primary" href="/targets/new">Add a device</Button>
+					<Button variant="primary" href="/targets/new">{m.overview_first_device_action()}</Button>
 				</ClickSpark>
 			</div>
 		{/if}
@@ -381,7 +392,7 @@
 						<Plate tone={plate.tone} label={plate.label} bare={plate.bare} />
 					{/each}
 					{#if checkedLabel}
-						<span class="tnum text-[0.8125rem] text-ink-2">Checked {checkedLabel}</span>
+						<span class="tnum text-[0.8125rem] text-ink-2">{m.overview_page_checked({ when: checkedLabel })}</span>
 					{/if}
 				</div>
 			{/if}
@@ -406,18 +417,17 @@
 			<!-- The sky above already says there is nothing to watch: one way in is enough. -->
 			<div class="mt-6">
 				<EmptyState
-					title="No device yet"
-					description="Add a switch, a NAS, a hypervisor or a website, and it starts reporting within a minute."
+					title={m.overview_page_empty_title()}
+					description={m.overview_page_empty_text()}
 					mascot="watch"
 				>
 					{#snippet action()}
 						<ClickSpark>
-							<Button variant="primary" href="/targets/new">Add a device</Button>
+							<Button variant="primary" href="/targets/new">{m.overview_first_device_action()}</Button>
 						</ClickSpark>
 						{#if auth.isAdmin}
 							<p class="mt-4 text-sm text-ink-2">
-								Or <a href="/targets/new?kind=agent" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">install the agent on a machine</a>,
-								or <a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">watch a remote site</a> through one.
+								{orParts[0]}<a href="/targets/new?kind=agent" class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[1]}</a>{orParts[2]}<a href="/targets/new?kind=agent&via=relay" class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[3]}</a>{orParts[4]}
 							</p>
 						{/if}
 					{/snippet}
@@ -428,7 +438,7 @@
 		{#if !showGuide}
 			<div class="mt-3 sm:hidden">
 				<ClickSpark>
-					<Button variant="primary" href="/targets/new" class="w-full">Add a device</Button>
+					<Button variant="primary" href="/targets/new" class="w-full">{m.overview_first_device_action()}</Button>
 				</ClickSpark>
 			</div>
 		{/if}
@@ -442,15 +452,15 @@
 		<!-- Since you last looked -->
 		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS}ms`}>
 			<div class="mb-3 flex items-center justify-between gap-3">
-				<h2 class="text-base font-semibold tracking-tight text-ink">Since you last looked</h2>
-				<Button variant="ghost" size="sm" onclick={markRead}>Mark as read</Button>
+				<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_since()}</h2>
+				<Button variant="ghost" size="sm" onclick={markRead} class="max-sm:!h-10">{m.overview_page_mark_read()}</Button>
 			</div>
 			<Briefing sentences={briefing} />
 		</section>
 
 		<!-- Needs you -->
 		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
-			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">Needs you</h2>
+			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_needs_you()}</h2>
 			{#if silenceError}
 				<p class="mb-3 text-[0.8125rem] text-warning-ink" role="alert" aria-live="polite">
 					{silenceError}
@@ -472,7 +482,7 @@
 			</div>
 		{:else}
 			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
-				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">The week ahead</h2>
+				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_week()}</h2>
 				<WeekAhead {week} />
 			</section>
 		{/if}
@@ -481,8 +491,8 @@
 		{#if streaks.length > 0}
 			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 4}ms`}>
 				<div class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-					<h2 class="text-base font-semibold tracking-tight text-ink">Last {HISTORY_DAYS} days</h2>
-					<p class="text-[0.8125rem] text-ink-2">Read from the alert history of the past week.</p>
+					<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_last_days({ days: HISTORY_DAYS })}</h2>
+					<p class="text-[0.8125rem] text-ink-2">{m.overview_page_history_note()}</p>
 				</div>
 				<Streaks {streaks} />
 			</section>
