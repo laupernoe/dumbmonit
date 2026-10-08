@@ -25,20 +25,24 @@ export const RELEASES: Release[] = [
 		date: '2026-10-08',
 		highlights: [
 			{
-				title: 'A city scene on status pages',
-				text: 'Pick up to six of Venice, Paris, Tokyo, New York, London and Rome to sit behind the banner, and rotate them every visit, minute, ten minutes or hour.'
+				title: 'Push notifications and weekly reports',
+				text: 'Alerts as native notifications on your phone or computer, and a weekly summary by e-mail.'
 			},
 			{
-				title: 'Translations are here',
-				text: 'The interface now ships in French, German, Spanish, Italian, Portuguese, Brazilian Portuguese, Russian and Simplified Chinese, with more on Weblate.'
+				title: 'An operator role',
+				text: 'Acknowledge and snooze alerts without being able to change the configuration.'
 			},
 			{
-				title: 'Simpler device pages',
-				text: 'A direct change button, and the security score folded away until you want it.'
+				title: 'Status banner for your own website',
+				text: 'A script, a WordPress plugin and a PHP include show a banner when services are down. Status pages also get a custom domain, a simple mode and 26 city scenes.'
 			},
 			{
-				title: 'Calmer weather',
-				text: 'Alerts you dismissed or snoozed no longer colour the forecast on the overview.'
+				title: 'The wall travels',
+				text: 'Paris, London, New York, Tokyo and Rome behind the wall, chosen automatically from your time zone.'
+			},
+			{
+				title: 'Translated, and better on phones',
+				text: 'The whole interface in eight languages besides English, reworked for small screens, with a button to check for updates.'
 			}
 		]
 	}
