@@ -1,5 +1,6 @@
 /** Shared presentation helpers: dates, durations, states. */
 import type { Target } from '#lib/api/index.js';
+import { m } from '#lib/paraglide/messages.js';
 
 /**
  * Converts a server timestamp into a `Date`.
@@ -25,44 +26,43 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
 /** Absolute date, in the browser's timezone. */
 export function formatDateTime(value: string | Date | null | undefined): string {
 	const date = value instanceof Date ? value : parseServerDate(value);
-	return date ? dateTimeFormat.format(date) : 'never';
+	return date ? dateTimeFormat.format(date) : m.misc_never();
 }
 
 /** Relative duration: "3 min ago". */
 export function formatRelative(value: string | Date | null | undefined): string {
 	const date = value instanceof Date ? value : parseServerDate(value);
-	if (!date) return 'never';
+	if (!date) return m.misc_never();
 
 	const seconds = Math.round((Date.now() - date.getTime()) / 1000);
-	if (seconds < 0) return 'just now';
-	if (seconds < 10) return 'just now';
-	if (seconds < 60) return `${seconds} s ago`;
+	if (seconds < 10) return m.misc_just_now();
+	if (seconds < 60) return m.misc_ago({ span: m.misc_dur_s({ n: seconds }) });
 
 	const minutes = Math.round(seconds / 60);
-	if (minutes < 60) return `${minutes} min ago`;
+	if (minutes < 60) return m.misc_ago({ span: m.misc_dur_min({ n: minutes }) });
 
 	const hours = Math.round(minutes / 60);
-	if (hours < 24) return `${hours} h ago`;
+	if (hours < 24) return m.misc_ago({ span: m.misc_dur_h({ n: hours }) });
 
 	const days = Math.round(hours / 24);
-	if (days < 31) return `${days} d ago`;
+	if (days < 31) return m.misc_ago({ span: m.misc_dur_d({ n: days }) });
 
 	return formatDateTime(date);
 }
 
 /** Readable duration from a number of seconds: "1 min", "2 h", "45 d". */
 export function formatDuration(seconds: number): string {
-	if (seconds < 60) return `${Math.round(seconds * 100) / 100} s`;
+	if (seconds < 60) return m.misc_dur_s({ n: Math.round(seconds * 100) / 100 });
 	if (seconds < 3600) {
 		const minutes = Math.round(seconds / 60);
-		return `${minutes} min`;
+		return m.misc_dur_min({ n: minutes });
 	}
 	if (seconds < 2 * 86400) {
 		const hours = Math.round((seconds / 3600) * 10) / 10;
-		return `${hours} h`;
+		return m.misc_dur_h({ n: hours });
 	}
 	const days = Math.round((seconds / 86400) * 10) / 10;
-	return `${days} d`;
+	return m.misc_dur_d({ n: days });
 }
 
 /**
@@ -147,30 +147,30 @@ export function displayState(target: Target, probe: ProbeStatus | undefined): Ta
 }
 
 /** Labels of the failure reasons emitted by probes (`reason`). */
-const FAILURE_REASON_LABEL: Record<string, string> = {
-	dns: 'Name not found (DNS resolution)',
-	connect: 'Connection refused or host unreachable',
-	timeout: 'Timed out',
-	tls: 'TLS handshake failed or certificate rejected',
-	cert_expired: 'Certificate expired',
-	status: 'Unexpected HTTP status code',
-	keyword: 'Expected keyword missing, or forbidden keyword present',
-	json: 'Unexpected JSON value',
-	body: 'Unreadable response',
-	packet_loss: 'Excessive packet loss',
-	record: 'Expected DNS record missing',
-	auth: 'Credentials refused',
-	protocol: 'The service answered, but not in the expected protocol',
-	query: 'Connected, but the query failed',
-	payload: 'Expected content missing from the answer',
-	missed: 'Heartbeat missed: the job did not call in on time',
-	reported_down: 'The job reported a failure'
+const FAILURE_REASON_LABEL: Record<string, () => string> = {
+	dns: () => m.misc_reason_dns(),
+	connect: () => m.misc_reason_connect(),
+	timeout: () => m.misc_reason_timeout(),
+	tls: () => m.misc_reason_tls(),
+	cert_expired: () => m.misc_reason_cert_expired(),
+	status: () => m.misc_reason_status(),
+	keyword: () => m.misc_reason_keyword(),
+	json: () => m.misc_reason_json(),
+	body: () => m.misc_reason_body(),
+	packet_loss: () => m.misc_reason_packet_loss(),
+	record: () => m.misc_reason_record(),
+	auth: () => m.misc_reason_auth(),
+	protocol: () => m.misc_reason_protocol(),
+	query: () => m.misc_reason_query(),
+	payload: () => m.misc_reason_payload(),
+	missed: () => m.misc_reason_missed(),
+	reported_down: () => m.misc_reason_reported_down()
 };
 
 /** Readable failure reason. An unknown reason is shown as is rather than hidden. */
 export function formatFailureReason(reason: string | null | undefined): string {
-	if (!reason) return 'Unknown reason';
-	return FAILURE_REASON_LABEL[reason] ?? reason;
+	if (!reason) return m.misc_reason_unknown();
+	return FAILURE_REASON_LABEL[reason]?.() ?? reason;
 }
 
 /** Availability percentage: two decimals below 100, integer otherwise. */
@@ -213,14 +213,29 @@ function errorState(target: Target): TargetState {
 	return target.error_kind === 'config' ? 'misconfigured' : 'offline';
 }
 
+// Getters: the words follow the active language at read time.
 export const STATE_LABEL: Record<TargetState, string> = {
-	online: 'Reporting',
-	offline: 'Unreachable',
-	misconfigured: 'Misconfigured',
-	pending: 'Waiting',
-	disabled: 'Disabled',
-	down: 'Down',
-	unknown: 'Unknown'
+	get online() {
+		return m.misc_state_online();
+	},
+	get offline() {
+		return m.misc_state_offline();
+	},
+	get misconfigured() {
+		return m.misc_state_misconfigured();
+	},
+	get pending() {
+		return m.misc_state_pending();
+	},
+	get disabled() {
+		return m.misc_state_disabled();
+	},
+	get down() {
+		return m.misc_state_down();
+	},
+	get unknown() {
+		return m.misc_state_unknown();
+	}
 };
 
 /** Design-system tone of each state, used by dots and badges alike. */

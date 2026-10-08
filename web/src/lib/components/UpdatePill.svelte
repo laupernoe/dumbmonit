@@ -6,6 +6,7 @@
 	 * never get in the way. Mounted by `VersionTag`.
 	 */
 	import { ArrowUpCircle } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getUpdate } from '#lib/api/update.js';
 
 	let latest = $state<string | null>(null);
@@ -22,9 +23,9 @@
 	<a
 		href="/settings#about"
 		class="fixed right-3 bottom-9 z-20 hidden items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 text-[0.75rem] font-medium text-advisory-ink shadow-sm transition-colors hover:border-line-strong sm:inline-flex"
-		title="A newer version is available. Open Settings → About for how to update."
+		title={m.misc_update_title()}
 	>
 		<ArrowUpCircle class="size-3.5" aria-hidden="true" />
-		Update available: v{latest}
+		{m.misc_update_available({ version: latest })}
 	</a>
 {/if}

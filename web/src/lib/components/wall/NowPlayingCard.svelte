@@ -8,7 +8,8 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { ChevronDown, ChevronUp, Disc3 } from 'lucide-svelte';
 	import { Led } from '#lib/ui/index.js';
-	import { deviceLabel, formatTime, progressAt, type Playing } from '#lib/wall/spotify.js';
+	import { formatTime, progressAt, type Playing } from '#lib/wall/spotify.js';
+	import { deviceLabelText } from '#lib/wall/messages.js';
 
 	interface Props {
 		playing: Playing;
@@ -25,7 +26,7 @@
 	const now = $derived(playing.now);
 	const position = $derived(progressAt(now, readAt, clock));
 	const ratio = $derived(now.duration_ms > 0 ? Math.min(1, position / now.duration_ms) : 0);
-	const where = $derived(deviceLabel(now, playing.source, speakerName));
+	const where = $derived(deviceLabelText(now, playing.source, speakerName));
 	const byline = $derived(now.artists.join(', '));
 	const verb = $derived(now.playing ? m.wall_now_playing() : m.wall_now_paused());
 	const track = $derived(byline ? `${now.title} — ${byline}` : now.title);

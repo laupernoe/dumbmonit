@@ -11,6 +11,7 @@
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
@@ -20,13 +21,14 @@
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 
-	const LINKS = [
-		{ href: '/', label: 'Overview', icon: Gauge, exact: true },
-		{ href: '/targets', label: 'Devices', icon: Server, exact: false },
-		{ href: '/alerts', label: 'Alerts', icon: BellRing, exact: false },
-		{ href: '/security', label: 'Security', icon: ShieldCheck, exact: false },
-		{ href: '/status', label: 'Status', icon: Globe, exact: false },
-		{ href: '/settings', label: 'Settings', icon: Settings2, exact: false }
+	// A function: the labels follow the active language at render time.
+	const links = () => [
+		{ href: '/', label: m.misc_nav_overview(), icon: Gauge, exact: true },
+		{ href: '/targets', label: m.misc_nav_devices(), icon: Server, exact: false },
+		{ href: '/alerts', label: m.misc_nav_alerts(), icon: BellRing, exact: false },
+		{ href: '/security', label: m.misc_nav_security(), icon: ShieldCheck, exact: false },
+		{ href: '/status', label: m.misc_nav_status(), icon: Globe, exact: false },
+		{ href: '/settings', label: m.misc_nav_settings(), icon: Settings2, exact: false }
 	];
 
 	function isActive(href: string, exact: boolean): boolean {
@@ -89,13 +91,13 @@
 <header class="vt-nav-top sticky top-0 z-30 hidden border-b border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
 		<div class="flex shrink-0 items-center gap-2">
-			<a href="/" class="flex items-center gap-2.5" aria-label="DumbMonit, overview">
+			<a href="/" class="flex items-center gap-2.5" aria-label={m.misc_nav_home()}>
 				<Logo class="size-7" />
 				<span class="text-[1.05rem] font-bold tracking-tight text-ink">DumbMonit</span>
 			</a>
 		</div>
 
-		<nav aria-label="Main" class="relative">
+		<nav aria-label={m.misc_nav_main()} class="relative">
 			<ul bind:this={list} class="relative flex items-center gap-1">
 				<li
 					class="pointer-events-none absolute top-0 h-full rounded-lg bg-surface-2 transition-[transform,width,opacity] duration-500 ease-spring"
@@ -104,7 +106,7 @@
 					style:opacity={pill.ready ? 1 : 0}
 					aria-hidden="true"
 				></li>
-				{#each LINKS as link (link.href)}
+				{#each links() as link (link.href)}
 					{@const active = isActive(link.href, link.exact)}
 					<li class="relative">
 						<a
@@ -116,7 +118,7 @@
 						>
 							{link.label}
 							{#if link.href === '/alerts' && badge > 0}
-								<span bind:this={badgeTop} in:scale={badgeOut()} out:scale={badgeOut()} class="tnum ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[0.6875rem] font-bold text-white" aria-label={`${badge} active alerts`}><RollingNumber value={badge} /></span>
+								<span bind:this={badgeTop} in:scale={badgeOut()} out:scale={badgeOut()} class="tnum ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[0.6875rem] font-bold text-white" aria-label={m.misc_nav_alerts_badge({ count: badge })}><RollingNumber value={badge} /></span>
 							{/if}
 						</a>
 					</li>
@@ -129,8 +131,8 @@
 				type="button"
 				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 				onclick={() => palette.open()}
-				aria-label="Open the command palette"
-				title={`Command palette (${palette.shortcutLabel})`}
+				aria-label={m.misc_nav_palette_open()}
+				title={m.misc_nav_palette_title({ shortcut: palette.shortcutLabel })}
 			>
 				<Search class="size-4" aria-hidden="true" />
 			</button>
@@ -139,18 +141,18 @@
 				target="_blank"
 				rel="noopener"
 				class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-				title="Documentation (opens in a new tab)"
+				title={m.misc_nav_docs_title()}
 			>
 				<BookOpen class="size-4" aria-hidden="true" />
-				<span class="hidden lg:inline">Docs</span>
-				<span class="sr-only lg:hidden">Documentation, opens in a new tab</span>
+				<span class="hidden lg:inline">{m.misc_nav_docs()}</span>
+				<span class="sr-only lg:hidden">{m.misc_nav_docs_sr()}</span>
 			</a>
 			<a
 				href="/wall"
 				data-tour="nav-wall"
 				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-				aria-label="Wall mode"
-				title="Wall mode: the bulletin full screen, for a monitor in the room"
+				aria-label={m.misc_nav_wall()}
+				title={m.misc_nav_wall_title()}
 			>
 				<Tv class="size-[18px]" aria-hidden="true" />
 			</a>
@@ -158,7 +160,7 @@
 			{#if auth.user}
 				<!-- Who is signed in; the role still decides what the pages offer, it is just
 				     not spelled out here any more. -->
-				<div class="ml-1 hidden items-center pl-2 md:flex" title={`Signed in as ${auth.user.username} (${auth.isAdmin ? 'admin' : auth.canOperate ? 'operator' : 'viewer'})`}>
+				<div class="ml-1 hidden items-center pl-2 md:flex" title={m.misc_nav_signed_in({ name: auth.user.username, role: auth.isAdmin ? m.misc_role_admin() : auth.canOperate ? m.misc_role_operator() : m.misc_role_viewer() })}>
 					<span class="max-w-[10rem] truncate text-[0.8125rem] font-semibold text-ink-2">{auth.displayName}</span>
 				</div>
 			{/if}
@@ -167,8 +169,8 @@
 					type="button"
 					class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 					onclick={() => void auth.logout()}
-					aria-label="Sign out"
-					title="Sign out"
+					aria-label={m.misc_nav_sign_out()}
+					title={m.misc_nav_sign_out()}
 				>
 					<LogOut class="size-[18px]" aria-hidden="true" />
 				</button>
@@ -178,9 +180,9 @@
 </header>
 
 <!-- Phones: the five destinations as thumb-reachable tabs. -->
-<nav aria-label="Main" class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
+<nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
 	<ul class="grid grid-cols-6">
-		{#each LINKS as link (link.href)}
+		{#each links() as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}
 			<li>
 				<a

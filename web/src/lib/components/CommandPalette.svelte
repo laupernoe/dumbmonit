@@ -33,6 +33,7 @@
 		Bot,
 		KeyRound
 	} from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { listTargets, type Target, type TargetId } from '#lib/api/index.js';
 	import { displayState, STATE_LABEL, STATE_TONE, type ProbeStatus } from '#lib/format.js';
 	import { loadProbeStatuses } from '#lib/metrics.js';
@@ -41,7 +42,12 @@
 	import { Led } from '#lib/ui/index.js';
 	import { kindIcon } from '#lib/components/device-form/kinds.js';
 
-	type Group = 'Pages' | 'Actions' | 'Devices';
+	type Group = 'pages' | 'actions' | 'devices';
+	const GROUP_LABEL: Record<Group, () => string> = {
+		pages: () => m.misc_palette_group_pages(),
+		actions: () => m.misc_palette_group_actions(),
+		devices: () => m.misc_palette_group_devices()
+	};
 
 	interface Entry {
 		id: string;
@@ -62,27 +68,29 @@
 
 	const go = (href: string) => () => void goto(href);
 
-	const STATIC: Entry[] = [
-		{ id: 'page:/', group: 'Pages', label: 'Overview', keywords: 'home bulletin sky', icon: Gauge, run: go('/') },
-		{ id: 'page:/targets', group: 'Pages', label: 'Devices', keywords: 'rack targets hosts', icon: Server, run: go('/targets') },
-		{ id: 'page:/alerts', group: 'Pages', label: 'Alerts', keywords: 'needs you warnings advisories', icon: BellRing, run: go('/alerts') },
-		{ id: 'page:/alerts#notifications', group: 'Pages', label: 'Notifications', detail: 'Channels, policy and quiet hours', keywords: 'channels policy quiet hours alerts', icon: BellRing, run: go('/alerts#notifications') },
-		{ id: 'page:/security', group: 'Pages', label: 'Security', detail: 'Security score per device', keywords: 'security score grade pingcastle secure score checks', icon: ShieldCheck, run: go('/security') },
-		{ id: 'page:/status', group: 'Pages', label: 'Status pages', detail: 'Public pages and announcements', keywords: 'public incidents maintenance announcements uptime', icon: Globe, run: go('/status') },
-		{ id: 'page:/settings', group: 'Pages', label: 'Settings', keywords: 'preferences account password users sso agents tokens assistant appearance theme about', icon: Settings2, run: go('/settings') },
-		{ id: 'page:/wall', group: 'Pages', label: 'Wall mode', detail: 'Full-screen bulletin for a wall display', keywords: 'kiosk tv screen', icon: Tv, run: go('/wall') },
-		{ id: 'page:docs', group: 'Pages', label: 'Documentation', keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
-		{ id: 'action:add', group: 'Actions', label: 'Add a device', keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
-		{ id: 'action:scan', group: 'Actions', label: 'Scan my network', keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
-		{ id: 'action:agent', group: 'Actions', label: 'Install an agent', detail: 'Linux, Windows, macOS, FreeBSD or Docker', keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },
-		{ id: 'action:relay', group: 'Actions', label: 'Watch a remote site', detail: 'An agent probes another network for this server', keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network agent', icon: RadioTower, run: go('/targets/new?kind=agent&via=relay') },
-		{ id: 'action:mcp', group: 'Actions', label: 'Connect an AI assistant (MCP)', detail: 'Claude, ChatGPT, Cursor or any MCP client', keywords: 'mcp ai assistant claude chatgpt cursor llm agent model context protocol', icon: Bot, run: go('/settings#assistant') },
-		{ id: 'action:api-token', group: 'Actions', label: 'Create an API token', detail: 'For scripts, the REST API, Prometheus or Grafana', keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings#assistant') },
-		{ id: 'action:maintenance', group: 'Actions', label: 'Schedule maintenance', keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
-		{ id: 'action:channel', group: 'Actions', label: 'Add notification channel', keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/alerts#notifications') },
-		{ id: 'action:status-page', group: 'Actions', label: 'New status page', keywords: 'public status page create', icon: Globe, run: go('/status/new') },
-		{ id: 'action:incident', group: 'Actions', label: 'Announce an incident', keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/status#incidents') },
-		{ id: 'action:theme', group: 'Actions', label: 'Toggle theme', keywords: 'dark light night day', icon: SunMoon, run: () => theme.toggle() }
+	// A function: labels follow the active language when the palette opens.
+	// Search keywords stay in English on purpose (they are matched, not shown).
+	const staticEntries = (): Entry[] => [
+		{ id: 'page:/', group: 'pages', label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: Gauge, run: go('/') },
+		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Server, run: go('/targets') },
+		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, run: go('/alerts') },
+		{ id: 'page:/alerts#notifications', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, run: go('/alerts#notifications') },
+		{ id: 'page:/security', group: 'pages', label: m.misc_nav_security(), detail: m.misc_palette_security_detail(), keywords: 'security score grade pingcastle secure score checks', icon: ShieldCheck, run: go('/security') },
+		{ id: 'page:/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, run: go('/status') },
+		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account password users sso agents tokens assistant appearance theme about', icon: Settings2, run: go('/settings') },
+		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, run: go('/wall') },
+		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
+		{ id: 'action:add', group: 'actions', label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
+		{ id: 'action:scan', group: 'actions', label: m.misc_palette_scan(), keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
+		{ id: 'action:agent', group: 'actions', label: m.misc_palette_agent(), detail: m.misc_palette_agent_detail(), keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },
+		{ id: 'action:relay', group: 'actions', label: m.misc_palette_relay(), detail: m.misc_palette_relay_detail(), keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network agent', icon: RadioTower, run: go('/targets/new?kind=agent&via=relay') },
+		{ id: 'action:mcp', group: 'actions', label: m.misc_palette_mcp(), detail: m.misc_palette_mcp_detail(), keywords: 'mcp ai assistant claude chatgpt cursor llm agent model context protocol', icon: Bot, run: go('/settings#assistant') },
+		{ id: 'action:api-token', group: 'actions', label: m.misc_palette_api_token(), detail: m.misc_palette_api_token_detail(), keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings#assistant') },
+		{ id: 'action:maintenance', group: 'actions', label: m.misc_palette_maintenance(), keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
+		{ id: 'action:channel', group: 'actions', label: m.misc_palette_channel(), keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/alerts#notifications') },
+		{ id: 'action:status-page', group: 'actions', label: m.misc_palette_status_page(), keywords: 'public status page create', icon: Globe, run: go('/status/new') },
+		{ id: 'action:incident', group: 'actions', label: m.misc_palette_incident(), keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/status#incidents') },
+		{ id: 'action:theme', group: 'actions', label: m.misc_palette_theme(), keywords: 'dark light night day', icon: SunMoon, run: () => theme.toggle() }
 	];
 
 	let query = $state('');
@@ -119,7 +127,7 @@
 			const state = displayState(target, probes.get(target.id));
 			return {
 				id: `device:${target.id}`,
-				group: 'Devices',
+				group: 'devices',
 				label: target.name,
 				detail: `${target.kind} · ${target.address}`,
 				keywords: STATE_LABEL[state],
@@ -142,14 +150,14 @@
 	const results = $derived.by(() => {
 		const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 		const groups: { name: Group; entries: Entry[] }[] = [];
-		for (const name of ['Pages', 'Actions', 'Devices'] as Group[]) {
-			const pool = name === 'Devices' ? deviceEntries : STATIC.filter((entry) => entry.group === name);
+		for (const name of ['pages', 'actions', 'devices'] as Group[]) {
+			const pool = name === 'devices' ? deviceEntries : staticEntries().filter((entry) => entry.group === name);
 			const scored = pool
 				.map((entry) => ({ entry, score: score(entry, words) }))
 				.filter((item) => item.score > 0)
 				.sort((a, b) => b.score - a.score);
 			// Pages and actions are a short fixed list, all worth seeing; only devices are capped.
-			const entries = (name === 'Devices' ? scored.slice(0, MAX_PER_GROUP) : scored).map((item) => item.entry);
+			const entries = (name === 'devices' ? scored.slice(0, MAX_PER_GROUP) : scored).map((item) => item.entry);
 			if (entries.length > 0) groups.push({ name, entries });
 		}
 		return groups;
@@ -249,7 +257,7 @@
 	}
 
 	const activeId = $derived(flat[active] ? `palette-option-${flat[active].id}` : undefined);
-	const placeholder = 'Jump to a device, page or action…';
+	const placeholder = $derived(m.misc_palette_placeholder());
 </script>
 
 <svelte:window onkeydown={onWindowKeydown} />
@@ -268,7 +276,7 @@
 			class="palette-panel flex w-full max-w-xl flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-float ring-1 ring-signal/40"
 			role="dialog"
 			aria-modal="true"
-			aria-label="Command palette"
+			aria-label={m.misc_palette_label()}
 		>
 			<div class="flex items-center gap-3 border-b border-line px-4">
 				<Search class="size-[18px] shrink-0 text-ink-3" aria-hidden="true" />
@@ -300,21 +308,21 @@
 				bind:this={list}
 				id="palette-results"
 				role="listbox"
-				aria-label="Results"
+				aria-label={m.misc_palette_results()}
 				class="max-h-[min(60vh,26rem)] overflow-y-auto overscroll-contain py-2"
 			>
 				{#if flat.length === 0}
 					<p class="px-4 py-8 text-center text-sm text-ink-2" aria-live="polite">
 						{#if loadingDevices}
-							Looking up devices…
+							{m.misc_palette_loading()}
 						{:else}
-							Nothing matches “{query}”.
+							{m.misc_palette_empty({ query })}
 						{/if}
 					</p>
 				{:else}
 					{#each results as group (group.name)}
 						<div class="px-2 pt-2 first:pt-0">
-							<div class="label-tape px-2 pb-1.5">{group.name}</div>
+							<div class="label-tape px-2 pb-1.5">{GROUP_LABEL[group.name]()}</div>
 							{#each group.entries as entry (entry.id)}
 								{@const index = flat.indexOf(entry)}
 								{@const selected = index === active}
