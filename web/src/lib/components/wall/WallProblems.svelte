@@ -11,6 +11,7 @@
 	 * disagree. Nothing to act on here — a wall is read, not operated — but
 	 * each tile opens its device for whoever walks up with a mouse.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import type { Sky, SkyRow } from '#lib/components/overview/sky.js';
 	import { formatRelative } from '#lib/format.js';
 	import { Plate } from '#lib/ui/index.js';
@@ -40,7 +41,7 @@
 
 	function what(row: SkyRow): string {
 		if (row.kind === 'device') return row.detail || row.plate;
-		if (row.parent) return `${row.alert.rule_name} · ${row.parent.name} is down`;
+		if (row.parent) return m.wall_problems_parent_down({ rule: row.alert.rule_name, parent: row.parent.name });
 		return row.alert.rule_name;
 	}
 
@@ -56,7 +57,7 @@
 </script>
 
 {#if big.length > 0 || shownSmall.length > 0}
-	<section class="flex min-h-0 flex-col gap-3" aria-label="Problems">
+	<section class="flex min-h-0 flex-col gap-3" aria-label={m.wall_problems_aria()}>
 		{#each big as row (row.key)}
 			{@const link = href(row)}
 			<svelte:element
@@ -86,7 +87,7 @@
 					</li>
 				{/each}
 				{#if hiddenCount > 0}
-					<li class="px-4 text-[1.0625rem] text-ink-2">And {hiddenCount} more on the Alerts page.</li>
+					<li class="px-4 text-[1.0625rem] text-ink-2">{m.wall_problems_more({ count: hiddenCount })}</li>
 				{/if}
 			</ul>
 		{/if}

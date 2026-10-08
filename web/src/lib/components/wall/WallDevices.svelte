@@ -7,6 +7,7 @@
 	 * tone. When there are more devices than the space can show, the tail
 	 * (always healthy ones, given the order) folds into "and N more".
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { AlertTriangle, CircleAlert, CircleCheck, CircleDashed, Info } from 'lucide-svelte';
 	import type { Sky } from '#lib/components/overview/sky.js';
 	import type { Target, TargetId } from '#lib/api/index.js';
@@ -97,7 +98,7 @@
 </script>
 
 <div class="relative min-h-0 flex-1 overflow-hidden" bind:this={box} bind:clientHeight={boxH}>
-	<ul class="devices" class:devices--dense={dense} aria-label="Devices">
+	<ul class="devices" class:devices--dense={dense} aria-label={m.wall_devices_aria()}>
 		{#each shown as chip (chip.id)}
 			{@const Icon = ICON[chip.tone]}
 			<li class="min-w-0" class:wide={chip.word !== null && chip.tone !== 'ghost'} data-chip>
@@ -107,13 +108,13 @@
 					{#if chip.word}
 						<span class="word shrink-0">{chip.word}</span>
 					{:else}
-						<span class="sr-only">Reporting</span>
+						<span class="sr-only">{m.wall_devices_reporting()}</span>
 					{/if}
 				</a>
 			</li>
 		{/each}
 		{#if more > 0}
-			<li class="min-w-0"><span class="chip chip--more">And {more} more, all reporting</span></li>
+			<li class="min-w-0"><span class="chip chip--more">{m.wall_devices_more({ count: more })}</span></li>
 		{/if}
 	</ul>
 </div>

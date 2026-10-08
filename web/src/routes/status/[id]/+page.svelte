@@ -4,6 +4,7 @@
 	 * The form itself (`PageForm`) is unchanged from its inline days; this route
 	 * only loads what it needs and goes back to the list once saved.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { page as route } from '$app/state';
 	import { ExternalLink } from 'lucide-svelte';
@@ -60,24 +61,24 @@
 		void goto('/status');
 	}
 
-	const title = $derived(isNew ? 'New status page' : (current?.title ?? 'Status page'));
+	const title = $derived(isNew ? m.status_edit_new_title() : (current?.title ?? m.status_edit_fallback_title()));
 </script>
 
-<svelte:head><title>{title} · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.status_edit_page_title({ title })}</title></svelte:head>
 
 <PageHeader
 	{title}
 	description={isNew
-		? 'Pick the services to show and the labels visitors will read. The page stays a draft until you publish it.'
-		: 'Change what the page shows; visitors see it within a minute.'}
-	back={{ href: '/status', label: 'Status' }}
+		? m.status_edit_new_description()
+		: m.status_edit_description()}
+	back={{ href: '/status', label: m.status_list_title() }}
 >
 	{#snippet actions()}
 		{#if !auth.isAdmin}
 			<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
 		{:else if current}
 			<Button variant="ghost" size="sm" href={`/s/${current.slug}`} target="_blank" rel="noreferrer">
-				Open public page
+				{m.status_edit_open_public()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</Button>
 		{/if}
@@ -85,7 +86,7 @@
 </PageHeader>
 
 {#if error}
-	<ErrorNotice {error} title={isNew ? 'Could not load the devices' : 'Could not load the page'} onretry={() => void load()} />
+	<ErrorNotice {error} title={isNew ? m.status_edit_load_devices_error() : m.status_edit_load_page_error()} onretry={() => void load()} />
 {:else if loading}
 	<div class="grid gap-3">
 		<Skeleton class="h-10 w-full" />

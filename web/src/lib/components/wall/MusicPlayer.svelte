@@ -12,6 +12,7 @@
 	 * wall's origin as referrer: YouTube refuses to play an embed without one,
 	 * and the app's own policy (`same-origin`) would otherwise send nothing.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { ChevronDown, ChevronUp, Music2, Square } from 'lucide-svelte';
 	import { embedSrc, type MusicEmbed } from '#lib/wall/music.js';
 
@@ -51,7 +52,7 @@
 		>
 			<Music2 class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />
 			<span class="truncate font-semibold text-ink">{embed.label} {embed.kind}</span>
-			<span class="text-ink-2">· Show</span>
+			<span class="text-ink-2">· {m.wall_player_show()}</span>
 			<ChevronUp class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 		</button>
 	{/if}
@@ -59,23 +60,23 @@
 	<figure class="frame m-0 {collapsed ? 'parked' : ''}" inert={collapsed}>
 		<iframe
 			{src}
-			title="{embed.label} player"
+			title={m.wall_player_title({ label: embed.label })}
 			class="block max-w-full border-0 {frameClass}"
 			allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 			referrerpolicy="strict-origin-when-cross-origin"
 			sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation"
 		></iframe>
 		{#if !collapsed}
-			<figcaption class="wall-reveal absolute -top-3 right-2 flex gap-1">
+			<figcaption class="wall-reveal absolute -top-5 right-2 flex gap-1 sm:-top-3">
 				{#if onstop}
-					<button type="button" class="tool" onclick={onstop} aria-label="Stop the music on every wall">
+					<button type="button" class="tool" onclick={onstop} aria-label={m.wall_player_stop_aria()}>
 						<Square class="size-3.5" aria-hidden="true" />
-						Stop
+						{m.wall_music_stop()}
 					</button>
 				{/if}
-				<button type="button" class="tool" onclick={ontoggle} aria-expanded="true" aria-label="Fold the player">
+				<button type="button" class="tool" onclick={ontoggle} aria-expanded="true" aria-label={m.wall_player_fold_aria()}>
 					<ChevronDown class="size-3.5" aria-hidden="true" />
-					Fold
+					{m.wall_player_fold()}
 				</button>
 			</figcaption>
 		{/if}
@@ -113,8 +114,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		height: 1.5rem;
-		padding: 0 0.5rem;
+		height: 2.5rem;
+		padding: 0 0.75rem;
 		border: 1px solid var(--c-line);
 		border-radius: 999px;
 		background: var(--c-surface);
@@ -125,5 +126,11 @@
 	}
 	.tool:hover {
 		color: var(--c-ink);
+	}
+	@media (min-width: 640px) {
+		.tool {
+			height: 1.5rem;
+			padding: 0 0.5rem;
+		}
 	}
 </style>

@@ -4,6 +4,7 @@
 	 * The latest message comes first; the earlier ones fold under "Earlier
 	 * updates" so a long incident does not push the services off screen.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PublicIncident } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { Plate, Tilt } from '#lib/ui/index.js';
@@ -31,7 +32,7 @@
 		<Plate tone={isMaintenance ? 'info' : closed ? 'ghost' : incident.severity === 'major' ? 'warning' : 'advisory'} label={KIND_LABEL[incident.kind]} bare />
 		<Plate tone={status.tone} label={status.label} />
 		{#if !isMaintenance && !compact}
-			<span class="text-[0.8125rem] text-ink-2">{incident.severity === 'major' ? 'Major impact' : 'Minor impact'}</span>
+			<span class="text-[0.8125rem] text-ink-2">{incident.severity === 'major' ? m.status_incident_card_impact_major() : m.status_incident_card_impact_minor()}</span>
 		{/if}
 	</div>
 	<h3 class={`mt-2 font-semibold tracking-tight text-ink ${compact ? 'text-base' : 'text-lg'}`}>{incident.title}</h3>
@@ -42,9 +43,9 @@
 				→ <time class="tnum" datetime={incident.ends_at}>{formatDateTime(incident.ends_at)}</time>
 			{/if}
 		{:else}
-			Started <time class="tnum" datetime={incident.starts_at} title={formatDateTime(incident.starts_at)}>{formatRelative(incident.starts_at)}</time>
+			{m.status_incident_card_started()} <time class="tnum" datetime={incident.starts_at} title={formatDateTime(incident.starts_at)}>{formatRelative(incident.starts_at)}</time>
 			{#if incident.ends_at}
-				· resolved <time class="tnum" datetime={incident.ends_at} title={formatDateTime(incident.ends_at)}>{formatRelative(incident.ends_at)}</time>
+				· {m.status_incident_card_resolved()} <time class="tnum" datetime={incident.ends_at} title={formatDateTime(incident.ends_at)}>{formatRelative(incident.ends_at)}</time>
 			{/if}
 		{/if}
 	</p>
@@ -62,7 +63,7 @@
 	{#if earlier.length > 0}
 		<details class="mt-2 group">
 			<summary class="cursor-pointer text-[0.8125rem] text-ink-2 hover:text-ink">
-				{earlier.length} earlier update{earlier.length > 1 ? 's' : ''}
+				{m.status_incident_card_earlier({ count: earlier.length })}
 			</summary>
 			<ol class="mt-2 space-y-3 border-l-2 border-line pl-3">
 				{#each earlier as update (update.created_at + update.status)}

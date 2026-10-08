@@ -5,6 +5,7 @@
 	 * this display, the living-room TV's app, a cast speaker — shows here.
 	 * Folds into a pill; the wall decides when it shows at all.
 	 */
+	import { m } from '#lib/paraglide/messages.js';
 	import { ChevronDown, ChevronUp, Disc3 } from 'lucide-svelte';
 	import { Led } from '#lib/ui/index.js';
 	import { deviceLabel, formatTime, progressAt, type Playing } from '#lib/wall/spotify.js';
@@ -26,7 +27,8 @@
 	const ratio = $derived(now.duration_ms > 0 ? Math.min(1, position / now.duration_ms) : 0);
 	const where = $derived(deviceLabel(now, playing.source, speakerName));
 	const byline = $derived(now.artists.join(', '));
-	const verb = $derived(now.playing ? 'Playing' : 'Paused');
+	const verb = $derived(now.playing ? m.wall_now_playing() : m.wall_now_paused());
+	const track = $derived(byline ? `${now.title} — ${byline}` : now.title);
 </script>
 
 {#if collapsed}
@@ -35,7 +37,7 @@
 		class="now-pill pointer-events-auto flex max-w-full min-w-0 items-center gap-2 rounded-full border border-line bg-surface/90 py-1 pr-3 pl-1 text-left shadow-lift backdrop-blur-md"
 		onclick={ontoggle}
 		aria-expanded="false"
-		aria-label="{verb}: {now.title}{byline ? ` by ${byline}` : ''}. Show the music card"
+		aria-label={m.wall_now_pill_aria({ verb, track })}
 	>
 		{#if now.cover_url}
 			<img src={now.cover_url} alt="" class="size-7 shrink-0 rounded-full object-cover" />
@@ -50,10 +52,10 @@
 	<div
 		role="group"
 		class="now-card pointer-events-auto m-0 flex w-full min-w-0 items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface/90 p-2.5 pr-3 shadow-float backdrop-blur-md sm:gap-4 sm:p-3 sm:pr-4 2xl:gap-5 2xl:p-4"
-		aria-label="Now playing"
+		aria-label={m.wall_now_aria()}
 	>
 		{#if now.cover_url}
-			<img src={now.cover_url} alt="Cover of {now.album ?? now.title}" class="cover shrink-0 rounded-[10px] object-cover shadow-lift" />
+			<img src={now.cover_url} alt={m.wall_now_cover({ name: now.album ?? now.title })} class="cover shrink-0 rounded-[10px] object-cover shadow-lift" />
 		{:else}
 			<span class="cover grid shrink-0 place-items-center rounded-[10px] bg-surface-2 text-ink-3"><Disc3 class="size-1/2" aria-hidden="true" /></span>
 		{/if}
@@ -61,7 +63,7 @@
 		<div class="min-w-0 flex-1">
 			<p class="where flex min-w-0 items-center gap-2 text-ink-2">
 				<Led tone={now.playing ? 'signal' : 'ghost'} size="sm" />
-				<span class="truncate font-semibold tracking-[0.09em] uppercase">{verb} on {where}</span>
+				<span class="truncate font-semibold tracking-[0.09em] uppercase">{m.wall_now_on({ verb, where })}</span>
 			</p>
 			<p class="title display mt-0.5 truncate text-ink" title={now.title}>{now.title}</p>
 			{#if byline}
@@ -73,11 +75,11 @@
 					<span
 						class="relative h-1 min-w-8 flex-1 overflow-hidden rounded-full bg-line"
 						role="progressbar"
-						aria-label="Track progress"
+						aria-label={m.wall_now_progress()}
 						aria-valuemin={0}
 						aria-valuemax={Math.round(now.duration_ms / 1000)}
 						aria-valuenow={Math.round(position / 1000)}
-						aria-valuetext="{formatTime(position)} of {formatTime(now.duration_ms)}"
+						aria-valuetext={m.wall_now_progress_text({ position: formatTime(position), total: formatTime(now.duration_ms) })}
 					>
 						<span class="bar absolute inset-0 origin-left bg-signal" style:transform="scaleX({ratio})"></span>
 					</span>
@@ -88,10 +90,10 @@
 
 		<button
 			type="button"
-			class="wall-reveal shrink-0 self-start rounded-md p-1 text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+			class="wall-reveal -m-1.5 shrink-0 self-start rounded-md p-2.5 text-ink-3 sm:m-0 sm:p-1 transition-colors hover:bg-surface-2 hover:text-ink"
 			onclick={ontoggle}
 			aria-expanded="true"
-			aria-label="Fold the music card"
+			aria-label={m.wall_now_fold()}
 		>
 			<ChevronDown class="size-4" aria-hidden="true" />
 		</button>
