@@ -22,6 +22,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { alertDetail, coveringSilence, severityTone, severityWord, TONE_BAR } from './helpers';
+	import { m } from '#lib/paraglide/messages.js';
 	import { X, EllipsisVertical } from 'lucide-svelte';
 	import AckControl from './AckControl.svelte';
 	import SnoozeControl from './SnoozeControl.svelte';
@@ -76,11 +77,31 @@
 	const MAX_SHOWN = 3;
 	const siblings = $derived(extra.slice(0, MAX_SHOWN).map((a) => alertDetail(a, row.rule)).filter(Boolean));
 	const hidden = $derived(extra.length - siblings.length);
+	const alsoLine = $derived(
+		hidden > 0
+			? m.alerts_row_also_more({ list: siblings.join(' · '), count: hidden })
+			: m.alerts_row_also({ list: siblings.join(' · ') })
+	);
+	/** The message split around the parent's name, so the name stays a link. */
+	const suppressedParts = $derived(m.alerts_row_suppressed_by({ parent: '\u0000' }).split('\u0000'));
+	const ackedLine = $derived(
+		m.alerts_row_acked({
+			by: alert.acked_by ? m.alerts_row_acked_by({ name: alert.acked_by }) : '',
+			until: ackedUntil ? m.alerts_row_until({ time: ackedUntil }) : '',
+			note: alert.ack_note ? m.alerts_row_acked_note({ note: alert.ack_note }) : ''
+		})
+	);
 </script>
 
 <article
 	class={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface py-3 pr-4 pl-5 shadow-lift transition ${suppressed || acked || snoozed ? 'opacity-60' : ''}`}
-	aria-label={`${row.plate}: ${alert.rule_name || alert.rule_uid}${target ? ` on ${target.name}` : ''}`}
+	aria-label={target
+		? m.alerts_row_aria_on({
+				plate: row.plate,
+				rule: alert.rule_name || alert.rule_uid,
+				device: target.name
+			})
+		: m.alerts_row_aria({ plate: row.plate, rule: alert.rule_name || alert.rule_uid })}
 >
 	<span class={`absolute inset-y-0 left-0 w-1 ${TONE_BAR[row.tone]}`} aria-hidden="true"></span>
 
@@ -99,20 +120,20 @@
 		<div class="flex shrink-0 items-center gap-1">
 			{#if row.since}
 				<span class="tnum pt-0.5 text-[0.75rem] whitespace-nowrap text-ink-2" title={formatDateTime(row.since)}>
-					since {formatRelative(row.since)}
+					{m.alerts_row_since({ when: formatRelative(row.since) })}
 				</span>
 			{/if}
 			{#if auth.canOperate && !acked}
-				<Menu label="More actions for this alert">
+				<Menu label={m.alerts_row_more_menu()}>
 					{#snippet trigger({ toggle, open })}
 						<Button
 							size="sm"
 							variant="ghost"
-							class="!h-7 !w-7 !px-0"
+							class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
 							aria-haspopup="menu"
 							aria-expanded={open}
-							aria-label="More actions"
-							title="More actions"
+							aria-label={m.alerts_row_more()}
+							title={m.alerts_row_more()}
 							onclick={toggle}
 						>
 							<EllipsisVertical class="size-3.5" aria-hidden="true" />
@@ -128,9 +149,9 @@
 				<Button
 					size="sm"
 					variant="ghost"
-					class="!h-7 !w-7 !px-0"
-					aria-label="Dismiss"
-					title="Dismiss"
+					class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+					aria-label={m.alerts_row_dismiss()}
+					title={m.alerts_row_dismiss()}
 					onclick={() => ondismiss?.()}
 				>
 					<X class="size-3.5" aria-hidden="true" />
@@ -149,7 +170,7 @@
 				>{target.name}</a
 			>
 		{:else if alert.target_id !== null}
-			<span>Device {alert.target_id}</span>
+			<span>{m.alerts_scope_device({ id: alert.target_id })}</span>
 		{/if}
 		{#if detail}
 			<span class="text-ink-3" aria-hidden="true">·</span>
@@ -158,36 +179,33 @@
 	</div>
 	{#if siblings.length > 0}
 		<p class="mt-1 line-clamp-2 text-[0.8125rem] text-ink-2">
-			Also {siblings.join(' · ')}{#if hidden > 0}{' '}· +{hidden} more{/if}
+			{alsoLine}
 		</p>
 	{/if}
 
 	{#if suppressed && alert.learning}
-		<p class="mt-1 text-[0.8125rem] text-ink-2">Silent while it learns the normal shape.</p>
+		<p class="mt-1 text-[0.8125rem] text-ink-2">{m.alerts_row_learning_suppressed()}</p>
 	{:else if alert.learning}
-		<p class="mt-1 text-[0.8125rem] text-ink-2">Silent for its first 14 days of baseline.</p>
+		<p class="mt-1 text-[0.8125rem] text-ink-2">{m.alerts_row_learning({ days: 14 })}</p>
 	{/if}
 
 	{#if suppressed && row.parent}
 		<p class="mt-1 text-[0.8125rem] text-ink-2">
-			Suppressed by
-			<a href={`/targets/${row.parent.id}`} class="font-medium hover:text-ink hover:underline"
+			{suppressedParts[0]}<a href={`/targets/${row.parent.id}`} class="font-medium hover:text-ink hover:underline"
 				>{row.parent.name}</a
-			> — probably a consequence, not a separate problem.
+			>{suppressedParts[1]}
 		</p>
 	{/if}
 
 	{#if acked}
 		<p class="mt-1 text-[0.8125rem] text-ink-2" title={formatDateTime(alert.acked_until)}>
-			Acked{#if alert.acked_by}
-				by <span class="font-medium">{alert.acked_by}</span>{/if}{#if ackedUntil}
-				until <span class="tnum">{ackedUntil}</span>{/if}{#if alert.ack_note}
-				— {alert.ack_note}{/if}. Reminders paused; you will still hear when it resolves.
+			{ackedLine}
 		</p>
 	{:else if snoozed}
 		<p class="mt-1 text-[0.8125rem] text-ink-2" title={formatDateTime(snoozeUntil)}>
-			Snoozed{#if snoozeUntilLabel}
-				until <span class="tnum">{snoozeUntilLabel}</span>{/if}. Quiet until then, or until it resolves.
+			{m.alerts_row_snoozed({
+				until: snoozeUntilLabel ? m.alerts_row_until({ time: snoozeUntilLabel }) : ''
+			})}
 		</p>
 	{/if}
 
@@ -195,7 +213,7 @@
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
 			<AckControl {alert} onchanged={onchanged} />
 			{#if showOpen && target}
-				<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">Open device</Button>
+				<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">{m.alerts_row_open_device()}</Button>
 			{/if}
 		</div>
 	</div>

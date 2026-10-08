@@ -17,6 +17,8 @@ import type {
 import type { Tone } from "#lib/ui/index.js";
 import { parseServerDate } from "#lib/format.js";
 import { severityRank, severityTone } from "#lib/components/alerts/helpers.js";
+import { m } from "#lib/paraglide/messages.js";
+import { getLocale } from "#lib/paraglide/runtime.js";
 
 export interface BriefingInput {
   /** Phase transitions, any range: the window is cut here. */
@@ -54,34 +56,26 @@ export function isDownRule(uid: string, rule: AlertRule | undefined): boolean {
   );
 }
 
-/** "fired", "fired twice", "fired 5 times". */
-function times(n: number): string {
-  if (n <= 1) return "";
-  if (n === 2) return " twice";
-  return ` ${n} times`;
-}
-
-function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
 /** Readable rule name from its uid when the rule itself is gone. */
 function ruleName(uid: string, rules: Map<string, AlertRule>): string {
   const rule = rules.get(uid);
   if (rule?.name) return rule.name;
   const words = uid.replace(/[_-]+/g, " ").trim();
-  return words ? words[0].toUpperCase() + words.slice(1) : "A rule";
+  return words ? words[0].toUpperCase() + words.slice(1) : m.overview_brief_a_rule();
 }
 
-const clock = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
-const dayMonth = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-});
+/** Date formats in the UI language, built per call so a locale switch is followed. */
+export const clock = {
+  format: (at: Date) =>
+    new Intl.DateTimeFormat(getLocale(), { hour: "2-digit", minute: "2-digit", hour12: false }).format(at),
+};
+export const weekday = {
+  format: (at: Date) => new Intl.DateTimeFormat(getLocale(), { weekday: "short" }).format(at),
+};
+export const dayMonth = {
+  format: (at: Date) =>
+    new Intl.DateTimeFormat(getLocale(), { day: "numeric", month: "short" }).format(at),
+};
 
 function sameDay(a: Date, b: Date): boolean {
   return (
@@ -99,10 +93,10 @@ export function whenLabel(at: Date, now: Date): string {
   const time = clock.format(at);
   if (sameDay(at, now)) return time;
   const yesterday = new Date(now.getTime() - DAY_MS);
-  if (sameDay(at, yesterday)) return `yesterday ${time}`;
+  if (sameDay(at, yesterday)) return m.overview_when_yesterday({ time });
   if (now.getTime() - at.getTime() < 6 * DAY_MS)
-    return `${weekday.format(at)} ${time}`;
-  return `${dayMonth.format(at)} ${time}`;
+    return m.overview_when_dated({ date: weekday.format(at), time });
+  return m.overview_when_dated({ date: dayMonth.format(at), time });
 }
 
 /** Worst of two tones on the bulletin ladder. */
@@ -183,10 +177,10 @@ function collectEpisodes(entries: AlertHistoryEntry[]): Map<string, Episode> {
   return episodes;
 }
 
-/** Names joined the English way: "A", "A and B", "A, B and C". */
-function joinNames(names: string[]): string {
+/** Names joined the way the UI language does it: "A", "A and B", "A, B and C". */
+export function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return new Intl.ListFormat(getLocale(), { style: "long", type: "conjunction" }).format(names);
 }
 
 export function buildBriefing(input: BriefingInput): Sentence[] {
@@ -204,7 +198,9 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
   const rulesMap = new Map(rules.map((rule) => [rule.uid, rule]));
   const targetsMap = new Map(targets.map((target) => [target.id, target]));
   const deviceName = (id: TargetId | null) =>
-    id === null ? "the server" : (targetsMap.get(id)?.name ?? `Device ${id}`);
+    id === null
+      ? m.overview_brief_the_server()
+      : (targetsMap.get(id)?.name ?? m.overview_brief_device_n({ id }));
   const deviceHref = (id: TargetId | null) =>
     id === null ? undefined : `/targets/${id}`;
 
@@ -260,35 +256,36 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
 
   // 1. The lead: the window and its totals. A first visit opens with the
   // pigeon's introduction and reads the last 24 h instead.
-  const intro = firstTime
-    ? "First time here? Here is what the pigeon knows so far. "
-    : "";
+  const intro = firstTime ? m.overview_brief_intro() + " " : "";
   const reporting = Math.max(0, targets.length - unreachable.length);
   if (!eventful) {
     const head = firstTime
-      ? "Nothing happened in the last 24 h."
-      : "Nothing happened while you were away.";
+      ? m.overview_brief_quiet_first()
+      : m.overview_brief_quiet_away();
     out.push({
-      text: `${intro}${head} ${plural(reporting, "device")} kept reporting.`,
+      text: `${intro}${head} ${m.overview_brief_kept_reporting({ count: reporting })}`,
       tone: "signal",
     });
   } else {
     const parts: string[] = [];
-    if (fired > 0) parts.push(`${plural(fired, "alert")} fired`);
+    if (fired > 0) parts.push(m.overview_brief_n_fired({ count: fired }));
     if (resolved > 0) {
       parts.push(
         fired > 0
-          ? `${resolved} resolved on ${resolved === 1 ? "its" : "their"} own`
-          : `${plural(resolved, "alert")} resolved on ${resolved === 1 ? "its" : "their"} own`,
+          ? m.overview_brief_n_resolved({ count: resolved })
+          : m.overview_brief_n_alerts_resolved({ count: resolved }),
       );
     }
-    if (still > 0) parts.push(`${still} still firing`);
+    if (still > 0) parts.push(m.overview_brief_n_still({ count: still }));
     if (unreachable.length > 0)
-      parts.push(`${plural(unreachable.length, "device")} unreachable`);
+      parts.push(m.overview_brief_n_unreachable({ count: unreachable.length }));
     const head = firstTime
-      ? "In the last 24 h"
-      : `Since ${whenLabel(since, now)}`;
-    out.push({ text: `${intro}${head} — ${parts.join(", ")}.`, tone: worst });
+      ? m.overview_brief_head_first()
+      : m.overview_brief_head_since({ when: whenLabel(since, now) });
+    out.push({
+      text: `${intro}${m.overview_brief_lead({ head, parts: parts.join(", ") })}`,
+      tone: worst,
+    });
   }
 
   // 2. Outages: devices unreachable right now, then the ones that came back.
@@ -306,14 +303,15 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
     const more = wholeTime.length - names.length;
     const subject =
       more > 0
-        ? `${joinNames(names)} and ${plural(more, "other")}`
+        ? m.overview_brief_and_others({ names: joinNames(names), count: more })
         : joinNames(names);
-    const verb = wholeTime.length === 1 ? "has" : "have";
-    outageBits.push(`${subject} ${verb} been unreachable the whole time.`);
+    outageBits.push(
+      m.overview_brief_down_whole({ subject, count: wholeTime.length }),
+    );
   }
   for (const { target, at } of wentDown.slice(0, 2)) {
     outageBits.push(
-      `${target.name} went unreachable ${whenLabel(at, now)} and still is.`,
+      m.overview_brief_went_down({ name: target.name, when: whenLabel(at, now) }),
     );
   }
   if (outageBits.length > 0) {
@@ -338,8 +336,8 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
     out.push({
       text:
         cameBack.length === 1
-          ? `${names[0]} dropped out${times(total)} and came back.`
-          : `${joinNames(names)} dropped out and came back.`,
+          ? m.overview_brief_dropped({ name: names[0], count: total })
+          : m.overview_brief_dropped_many({ names: joinNames(names) }),
       tone: "advisory",
       href: deviceHref(cameBack[0].targetId),
     });
@@ -365,15 +363,18 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
         .sort((a, b) => severityRank(a.severity) - severityRank(b.severity))
         .map((episode) => {
           const name = ruleName(episode.uid, rulesMap);
-          if (episode.fired === 0) return `${name} resolved on its own`;
+          if (episode.fired === 0) return m.overview_brief_phrase_resolved({ name });
           if (stillFiring(episode)) {
             tone = worse(tone, severityTone(episode.severity));
-            return `${name} fired${times(episode.fired)} and is still firing`;
+            return m.overview_brief_phrase_still({ name, count: episode.fired });
           }
-          return `${name} fired${times(episode.fired)} and resolved on its own`;
+          return m.overview_brief_phrase_fired_resolved({ name, count: episode.fired });
         });
       return {
-        text: `On ${deviceName(targetId)}, ${phrases.join("; ")}.`,
+        text: m.overview_brief_on_device({
+          device: deviceName(targetId),
+          phrases: phrases.join("; "),
+        }),
         tone,
         href: deviceHref(targetId),
       };
@@ -382,25 +383,30 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
   // 4. Whether anyone was told.
   let notice: Sentence | null = null;
   if (notified > 0) {
-    const where = channels && channels.length === 1 ? ` to ${channels[0]}` : "";
     notice = {
-      text: `${plural(notified, "notification")} went out${where}.`,
+      text:
+        channels && channels.length === 1
+          ? m.overview_brief_notified_to({ count: notified, channel: channels[0] })
+          : m.overview_brief_notified({ count: notified }),
       tone: "info",
     };
   } else if (eventful) {
     if (channels === undefined)
-      notice = { text: "Nothing was sent.", tone: "ghost" };
+      notice = { text: m.overview_brief_nothing_sent(), tone: "ghost" };
     else if (channels.length === 0) {
       notice = {
-        text: "Nothing was sent: no notification channel is set up yet.",
+        text: m.overview_brief_nothing_no_channel(),
         tone: "advisory",
         href: "/alerts#notifications",
       };
     } else if (channels.length === 1) {
-      notice = { text: `Nothing was sent to ${channels[0]}.`, tone: "ghost" };
+      notice = {
+        text: m.overview_brief_nothing_to_channel({ channel: channels[0] }),
+        tone: "ghost",
+      };
     } else {
       notice = {
-        text: `Nothing was sent to your ${channels.length} channels.`,
+        text: m.overview_brief_nothing_to_channels({ count: channels.length }),
         tone: "ghost",
       };
     }
@@ -417,8 +423,12 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
     const names = [
       ...new Set(learning.map((episode) => ruleName(episode.uid, rulesMap))),
     ];
+    const listed = joinNames(names.slice(0, 2));
     extras.push({
-      text: `${joinNames(names.slice(0, 2))} ${names.length === 1 ? "is" : "are"} still learning the baseline: ${names.length === 1 ? "it" : "they"} would have fired${times(total) || " once"}.`,
+      text:
+        names.length === 1
+          ? m.overview_brief_learning_one({ names: listed, count: total })
+          : m.overview_brief_learning_many({ names: listed, count: total }),
       tone: "info",
     });
   }
@@ -428,12 +438,15 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
   );
   if (dissolved > 0) {
     const top = [...measured].sort((a, b) => b.dissolved - a.dissolved)[0];
-    const mostly =
-      top && top.dissolved > 1 && measured.length > 1
-        ? ` (mostly ${ruleName(top.uid, rulesMap)} on ${deviceName(top.targetId)})`
-        : "";
+    const mostly = top && top.dissolved > 1 && measured.length > 1;
     extras.push({
-      text: `${plural(dissolved, "alert")} built up and dissolved before firing${mostly}.`,
+      text: mostly
+        ? m.overview_brief_dissolved_mostly({
+            count: dissolved,
+            rule: ruleName(top.uid, rulesMap),
+            device: deviceName(top.targetId),
+          })
+        : m.overview_brief_dissolved({ count: dissolved }),
       tone: "ghost",
     });
   }
@@ -449,7 +462,13 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
     const rest = deviceSentences.slice(room - 1);
     const names = [...byDevice.keys()].slice(room - 1).map(deviceName);
     out.push({
-      text: `Alerts also came and went on ${joinNames(names.slice(0, 3))}${names.length > 3 ? ` and ${plural(names.length - 3, "other")}` : ""}.`,
+      text:
+        names.length > 3
+          ? m.overview_brief_also_more({
+              names: names.slice(0, 3).join(", "),
+              count: names.length - 3,
+            })
+          : m.overview_brief_also({ names: joinNames(names.slice(0, 3)) }),
       tone: rest.some((sentence) => sentence.tone === "warning")
         ? "warning"
         : "advisory",

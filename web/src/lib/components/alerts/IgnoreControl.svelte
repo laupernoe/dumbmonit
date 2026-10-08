@@ -16,6 +16,7 @@
 	import { Button, Confirm } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { EyeOff } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		rule?: AlertRule;
@@ -65,7 +66,7 @@
 			undoTimer = setTimeout(() => (justIgnored = false), 8000);
 			onchanged?.();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not ignore this rule for this device.';
+			error = cause instanceof Error ? cause.message : m.alerts_ignore_error();
 		} finally {
 			busy = false;
 		}
@@ -85,7 +86,7 @@
 			}
 			onchanged?.();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not stop ignoring this rule.';
+			error = cause instanceof Error ? cause.message : m.alerts_ignore_error_undo();
 		} finally {
 			busy = false;
 		}
@@ -95,18 +96,18 @@
 {#if auth.canOperate && rule && target}
 	<div class="flex flex-col items-start gap-1 sm:items-end">
 		{#if ignored}
-			<Button size="sm" variant="ghost" loading={busy} onclick={unignore}>Stop ignoring</Button>
+			<Button size="sm" variant="ghost" loading={busy} onclick={unignore}>{m.alerts_ignore_stop()}</Button>
 		{:else if justIgnored}
 			<p class="text-[0.8125rem] text-ink-2">
-				Ignored on {target.name}.
-				<button type="button" class="font-medium text-ink hover:underline" onclick={unignore}>
-					Undo
+				{m.alerts_ignore_done({ device: target.name })}
+				<button type="button" class="min-h-10 px-1 font-medium text-ink hover:underline sm:min-h-0" onclick={unignore}>
+					{m.alerts_ignore_undo()}
 				</button>
 			</p>
 		{:else}
-			<Confirm size="sm" variant="secondary" confirmLabel="Never again?" loading={busy} onconfirm={ignore}>
+			<Confirm size="sm" variant="secondary" confirmLabel={m.alerts_ignore_confirm()} loading={busy} onconfirm={ignore}>
 				<EyeOff class="size-3.5" aria-hidden="true" />
-				Never for this device
+				{m.alerts_ignore_button()}
 			</Confirm>
 		{/if}
 	</div>

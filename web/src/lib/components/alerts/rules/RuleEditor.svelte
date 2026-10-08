@@ -12,11 +12,12 @@
 	import type { AlertRule, Channel, RuleOperator } from '#lib/api/index.js';
 	import { ApiError, updateAlertRule } from '#lib/api/index.js';
 	import { Button, Field } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
-		ESCALATE_OPTIONS,
-		HOLD_OPTIONS,
-		REPEAT_OPTIONS,
-		SEVERITY_OPTIONS,
+		escalateOptions as escalateChoices,
+		holdOptions as holdChoices,
+		repeatOptions as repeatChoices,
+		severityOptions,
 		anomalySummary,
 		clearLabel,
 		fromSeverityWord,
@@ -38,12 +39,12 @@
 
 	let { rule, channels, channelsError = null, onsaved, oncancel }: Props = $props();
 
-	const OPERATORS: { id: RuleOperator; label: string }[] = [
-		{ id: '>', label: '> above' },
-		{ id: '>=', label: '≥ at least' },
-		{ id: '<', label: '< below' },
-		{ id: '<=', label: '≤ at most' }
-	];
+	const OPERATORS: { id: RuleOperator; label: string }[] = $derived([
+		{ id: '>', label: m.alerts_rules_edit_op_gt() },
+		{ id: '>=', label: m.alerts_rules_edit_op_gte() },
+		{ id: '<', label: m.alerts_rules_edit_op_lt() },
+		{ id: '<=', label: m.alerts_rules_edit_op_lte() }
+	]);
 
 	const anomaly = $derived(rule.kind === 'anomaly');
 	const prefix = $derived(`rule-${rule.id}`);
@@ -68,18 +69,23 @@
 	let error = $state<string | null>(null);
 	let hint = $state<string | null>(null);
 
-	const holdOptions = $derived(withCurrent(HOLD_OPTIONS, rule.for_secs));
-	const repeatOptions = $derived(withCurrent(REPEAT_OPTIONS, rule.repeat_secs ?? 0));
-	const escalateOptions = $derived(withCurrent(ESCALATE_OPTIONS, rule.escalate_after_secs ?? 0));
+	const holdOptions = $derived(withCurrent(holdChoices(), rule.for_secs));
+	const repeatOptions = $derived(withCurrent(repeatChoices(), rule.repeat_secs ?? 0));
+	const escalateOptions = $derived(withCurrent(escalateChoices(), rule.escalate_after_secs ?? 0));
 
 	const enabledChannels = $derived(channels.filter((c) => c.enabled));
 	/** What "all" means today, in plain words. */
 	const allChannelsLabel = $derived(
 		enabledChannels.length === 0
-			? 'All enabled channels — none is enabled right now, so nothing is sent'
+			? m.alerts_rules_edit_all_none()
 			: enabledChannels.length === 1
-				? `All enabled channels (currently ${enabledChannels[0].name})`
-				: `All enabled channels (currently ${enabledChannels.length})`
+				? m.alerts_rules_edit_all_one({ name: enabledChannels[0].name })
+				: m.alerts_rules_edit_all_many({ count: enabledChannels.length })
+	);
+
+	/** "No channel yet — nothing is sent. [Add one under Notifications]." cut around its link. */
+	const noChannelParts = $derived(
+		m.alerts_rules_edit_no_channel({ link: '\u0000' + m.alerts_rules_edit_no_channel_link() + '\u0000' }).split('\u0000')
 	);
 
 	function toggleChannel(id: number, on: boolean) {
@@ -92,31 +98,31 @@
 		hint = null;
 		const trimmedName = name.trim();
 		if (!trimmedName) {
-			error = 'The rule needs a name.';
+			error = m.alerts_rules_error_name();
 			return;
 		}
 		const trimmedQuery = query.trim();
 		if (!trimmedQuery) {
-			error = 'The query is required — without it the rule watches nothing.';
+			error = m.alerts_rules_edit_error_query();
 			return;
 		}
 		const thresholdValue = anomaly ? rule.threshold : Number(threshold);
 		if (!Number.isFinite(thresholdValue)) {
-			error = 'The threshold must be a number.';
+			error = m.alerts_rules_error_threshold();
 			return;
 		}
 		let clearValue: number | null = null;
 		if (!anomaly && clearThreshold.trim() !== '') {
 			clearValue = Number(clearThreshold);
 			if (!Number.isFinite(clearValue)) {
-				error = 'The clear threshold must be a number, or left empty.';
+				error = m.alerts_rules_edit_error_clear_number();
 				return;
 			}
 			const firesAbove = operator === '>' || operator === '>=';
 			if (firesAbove ? clearValue >= thresholdValue : clearValue <= thresholdValue) {
 				error = firesAbove
-					? 'The clear threshold must be below the threshold: fire above one, clear under the other.'
-					: 'The clear threshold must be above the threshold: fire below one, clear over the other.';
+					? m.alerts_rules_edit_error_clear_below()
+					: m.alerts_rules_edit_error_clear_above();
 				return;
 			}
 		}
@@ -138,7 +144,7 @@
 			});
 			onsaved(saved);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not save the rule.';
+			error = cause instanceof Error ? cause.message : m.alerts_rules_edit_error_save();
 			if (cause instanceof ApiError && cause.hint) hint = cause.hint;
 		} finally {
 			saving = false;
@@ -156,17 +162,17 @@
 <!-- Escape leaves the editor, from anywhere in it. -->
 <svelte:window {onkeydown} />
 
-<form class="mt-3 grid gap-4 border-t border-line pt-4" onsubmit={submit} aria-label={`Edit ${rule.name}`}>
+<form class="mt-3 grid gap-4 border-t border-line pt-4" onsubmit={submit} aria-label={m.alerts_rules_edit_aria({ name: rule.name })}>
 	{#if !rule.builtin}
 		<div class="grid gap-4 sm:grid-cols-2">
-			<Field label="Name" for={`${prefix}-name`} required>
+			<Field label={m.alerts_form_name()} for={`${prefix}-name`} required>
 				<input id={`${prefix}-name`} class="input" bind:value={name} />
 			</Field>
-			<Field label="Description" for={`${prefix}-description`}>
+			<Field label={m.alerts_rules_edit_description()} for={`${prefix}-description`}>
 				<input id={`${prefix}-description`} class="input" bind:value={description} />
 			</Field>
 		</div>
-		<Field label="Query" for={`${prefix}-query`} required help="MetricsQL, evaluated per device.">
+		<Field label={m.alerts_rules_query()} for={`${prefix}-query`} required help={m.alerts_rules_edit_query_help()}>
 			<input
 				id={`${prefix}-query`}
 				class="input font-mono text-[0.8125rem]"
@@ -178,19 +184,19 @@
 	{/if}
 
 	{#if anomaly}
-		<Field label="Detection" for={`${prefix}-params`} help="Baseline anomaly settings are shipped with the rule and not editable here.">
+		<Field label={m.alerts_rules_edit_detection()} for={`${prefix}-params`} help={m.alerts_rules_edit_detection_help()}>
 			<p id={`${prefix}-params`} class="tnum text-[0.8125rem] text-ink-2">{anomalySummary(rule)}</p>
 		</Field>
 	{:else}
 		<div class="grid gap-4 sm:grid-cols-3">
-			<Field label="Operator" for={`${prefix}-op`}>
+			<Field label={m.alerts_rules_operator()} for={`${prefix}-op`}>
 				<select id={`${prefix}-op`} class="input" bind:value={operator}>
 					{#each OPERATORS as op (op.id)}
 						<option value={op.id}>{op.label}</option>
 					{/each}
 				</select>
 			</Field>
-			<Field label="Threshold" for={`${prefix}-threshold`} required>
+			<Field label={m.alerts_rules_threshold()} for={`${prefix}-threshold`} required>
 				<div class="relative">
 					<input
 						id={`${prefix}-threshold`}
@@ -204,7 +210,7 @@
 					{/if}
 				</div>
 			</Field>
-			<Field label="Hold for" for={`${prefix}-for`} help="How long the condition must last before firing.">
+			<Field label={m.alerts_rules_hold_for()} for={`${prefix}-for`} help={m.alerts_rules_edit_hold_help()}>
 				<select id={`${prefix}-for`} class="input" bind:value={forSecs}>
 					{#each holdOptions as option (option.value)}
 						<option value={option.value}>{option.label}</option>
@@ -216,7 +222,7 @@
 			<Field
 				label={clearLabel(operator)}
 				for={`${prefix}-clear`}
-				help="Optional. Once firing, the alert only clears past this value, so a reading hovering at the threshold does not flap."
+				help={m.alerts_rules_edit_clear_help()}
 			>
 				<div class="relative">
 					<input
@@ -225,7 +231,7 @@
 						step="any"
 						class={`input tnum ${rule.unit ? 'pr-12' : ''}`}
 						bind:value={clearThreshold}
-						placeholder="None"
+						placeholder={m.alerts_over_none_placeholder()}
 					/>
 					{#if rule.unit}
 						<span class="label-tape pointer-events-none absolute top-1/2 right-3 -translate-y-1/2" aria-hidden="true">{rule.unit}</span>
@@ -236,21 +242,21 @@
 	{/if}
 
 	<div class="grid gap-4 sm:grid-cols-3">
-		<Field label="Severity" for={`${prefix}-severity`}>
+		<Field label={m.alerts_history_severity()} for={`${prefix}-severity`}>
 			<select id={`${prefix}-severity`} class="input" bind:value={severity}>
-				{#each SEVERITY_OPTIONS as option (option.id)}
+				{#each severityOptions() as option (option.id)}
 					<option value={option.id}>{option.label}</option>
 				{/each}
 			</select>
 		</Field>
-		<Field label="Repeat every" for={`${prefix}-repeat`} help="Reminder while it keeps firing.">
+		<Field label={m.alerts_rules_edit_repeat()} for={`${prefix}-repeat`} help={m.alerts_rules_edit_repeat_help()}>
 			<select id={`${prefix}-repeat`} class="input" bind:value={repeatSecs}>
 				{#each repeatOptions as option (option.value)}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>
 		</Field>
-		<Field label="Escalate after" for={`${prefix}-escalate`} help="Raise the severity one rung if still firing.">
+		<Field label={m.alerts_rules_edit_escalate()} for={`${prefix}-escalate`} help={m.alerts_rules_edit_escalate_help()}>
 			<select id={`${prefix}-escalate`} class="input" bind:value={escalateSecs}>
 				{#each escalateOptions as option (option.value)}
 					<option value={option.value}>{option.label}</option>
@@ -258,7 +264,7 @@
 			</select>
 		</Field>
 		{#if anomaly}
-			<Field label="Hold for" for={`${prefix}-for`} help="How long the anomaly must last before firing.">
+			<Field label={m.alerts_rules_hold_for()} for={`${prefix}-for`} help={m.alerts_rules_edit_hold_anomaly_help()}>
 				<select id={`${prefix}-for`} class="input" bind:value={forSecs}>
 					{#each holdOptions as option (option.value)}
 						<option value={option.value}>{option.label}</option>
@@ -269,20 +275,25 @@
 	</div>
 
 	<fieldset class="grid gap-1.5">
-		<legend class="text-sm font-semibold text-ink">Notify via</legend>
+		<legend class="text-sm font-semibold text-ink">{m.alerts_rules_edit_notify_via()}</legend>
 		{#if channelsError}
 			<p class="text-[0.8125rem] text-ink-2">
-				Could not load the channels ({channelsError}). Leaving the list as it is:
-				{rule.channels.length === 0 ? 'all enabled channels.' : `${rule.channels.length} selected channel(s).`}
+				{m.alerts_rules_edit_channels_error({
+					error: channelsError,
+					state:
+						rule.channels.length === 0
+							? m.alerts_rules_edit_channels_state_all()
+							: m.alerts_rules_edit_channels_state_n({ count: rule.channels.length })
+				})}
 			</p>
 		{:else if channels.length === 0}
 			<p class="text-[0.8125rem] text-ink-2">
-				No channel yet — nothing is sent. <a href="/alerts#notifications" class="text-ink hover:underline">Add one under Notifications</a>.
+				{noChannelParts[0]}<a href="/alerts#notifications" class="text-ink hover:underline">{noChannelParts[1]}</a>{noChannelParts[2]}
 			</p>
 		{:else}
 			<div class="flex flex-wrap gap-x-4 gap-y-1.5">
 				{#each channels as channel (channel.id)}
-					<label class="inline-flex items-center gap-2 text-sm text-ink">
+					<label class="inline-flex min-h-10 items-center gap-2 text-sm text-ink sm:min-h-0">
 						<input
 							type="checkbox"
 							class="size-4 accent-[var(--c-signal)]"
@@ -291,16 +302,16 @@
 						/>
 						{channel.name}
 						{#if !channel.enabled}
-							<span class="label-tape">disabled</span>
+							<span class="label-tape">{m.alerts_rules_edit_channel_disabled()}</span>
 						{/if}
 					</label>
 				{/each}
 			</div>
 			<p class="text-[0.8125rem] text-ink-2" aria-live="polite">
 				{#if selected.length === 0}
-					None ticked: {allChannelsLabel}.
+					{m.alerts_rules_edit_none_ticked({ label: allChannelsLabel })}
 				{:else}
-					Only the ticked channels are notified.
+					{m.alerts_rules_edit_only_ticked()}
 				{/if}
 			</p>
 		{/if}
@@ -317,8 +328,8 @@
 		</p>
 	{/if}
 
-	<div class="flex items-center gap-2">
-		<Button type="submit" variant="primary" size="sm" loading={saving}>Save changes</Button>
-		<Button type="button" variant="ghost" size="sm" disabled={saving} onclick={oncancel}>Cancel</Button>
+	<div class="flex flex-wrap items-center gap-2">
+		<Button type="submit" variant="primary" size="sm" loading={saving}>{m.alerts_rules_edit_save()}</Button>
+		<Button type="button" variant="ghost" size="sm" disabled={saving} onclick={oncancel}>{m.alerts_form_cancel()}</Button>
 	</div>
 </form>

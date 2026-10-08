@@ -1,5 +1,1250 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"alerts_ack_button": "确认",
+	"alerts_ack_error_ack": "无法确认该告警。",
+	"alerts_ack_error_unack": "无法取消确认。",
+	"alerts_ack_hint": "提醒暂停;问题解决时仍会通知你。回车 = {hours} 小时。",
+	"alerts_ack_hours": "{hours} 小时",
+	"alerts_ack_menu_label": "确认时长",
+	"alerts_ack_note_label": "备注",
+	"alerts_ack_note_placeholder": "备注(可选):你正在做什么",
+	"alerts_ack_stop_reminding": "在此期间不再提醒",
+	"alerts_ack_unack": "取消确认",
+	"alerts_ack_until_resolved": "直到解决",
+	"alerts_device_last_report": "上次上报 {when}",
+	"alerts_device_never_reported": "从未上报",
+	"alerts_form_cancel": "取消",
+	"alerts_form_comment": "备注",
+	"alerts_form_comment_help": "可选。说明设置该时段的原因。",
+	"alerts_form_comment_placeholder": "计划中的固件升级",
+	"alerts_form_day": "星期",
+	"alerts_form_days": "日期",
+	"alerts_form_description": "在一段时间内静音某台设备或全部设备的告警。",
+	"alerts_form_device_help": "留空则对所有设备生效。",
+	"alerts_form_each_month": "每月",
+	"alerts_form_end": "结束",
+	"alerts_form_error_daily": "请以 HH:MM 格式输入每日开始和结束时间。",
+	"alerts_form_error_daily_differ": "每日开始和结束时间不能相同。",
+	"alerts_form_error_dates": "请输入有效的开始和结束时间。",
+	"alerts_form_error_days": "请至少选择一个星期几。",
+	"alerts_form_error_month_days": "请以 1 到 31 的数字输入每月的日期,例如“1, 15”。",
+	"alerts_form_error_name": "请为该时段起个名字,日后它会说明这些告警为何被静音。",
+	"alerts_form_error_order": "结束时间必须晚于开始时间。",
+	"alerts_form_error_schedule": "无法安排该时段。",
+	"alerts_form_error_start": "请以 HH:MM 格式输入开始时间。",
+	"alerts_form_for": "时长",
+	"alerts_form_for_help": "实际经过的时间:2 小时的时段就是 2 小时,即使遇到夏令时切换的夜晚。",
+	"alerts_form_from": "从",
+	"alerts_form_local_time_help": "以下方时区的本地时间为准。",
+	"alerts_form_month_days": "每月的日期",
+	"alerts_form_month_days_help": "一个或多个 1 到 31 的数字,用逗号分隔。没有该日期的月份会被跳过。",
+	"alerts_form_monthly": "每月",
+	"alerts_form_name": "名称",
+	"alerts_form_name_help": "显示在列表和历史记录中。",
+	"alerts_form_name_placeholder": "周日 NAS 重启",
+	"alerts_form_on_date": "按日期",
+	"alerts_form_on_weekday": "按星期",
+	"alerts_form_one_off": "一次性",
+	"alerts_form_rank_fifth": "第五个",
+	"alerts_form_rank_first": "第一个",
+	"alerts_form_rank_fourth": "第四个",
+	"alerts_form_rank_last": "最后一个",
+	"alerts_form_rank_second": "第二个",
+	"alerts_form_rank_third": "第三个",
+	"alerts_form_start": "开始",
+	"alerts_form_submit": "安排",
+	"alerts_form_timezone": "时区",
+	"alerts_form_timezone_help": "IANA 名称,例如 Europe/Paris。夏令时切换时,该时段保持其本地时间不变。",
+	"alerts_form_to": "至",
+	"alerts_form_weekly": "每周",
+	"alerts_form_when": "时间",
+	"alerts_form_which": "第几个",
+	"alerts_form_which_help": "没有该次序的月份(例如没有第五个周日)会被跳过。",
+	"alerts_history_clear_all": "清除所有已解决项",
+	"alerts_history_clear_confirm": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "清除 {count} 项?"
+			}
+		}
+	],
+	"alerts_history_cleared": "已清除",
+	"alerts_history_count": "{shown} / {total}",
+	"alerts_history_deleted_device": "(已删除的设备)",
+	"alerts_history_device": "设备",
+	"alerts_history_empty_description": "规则触发和恢复时,告警状态变化会显示在这里。",
+	"alerts_history_empty_title": "暂无历史记录。",
+	"alerts_history_error_clear": "无法清除此条目。",
+	"alerts_history_error_clear_all": "无法清除已解决的条目。",
+	"alerts_history_error_cleared": "无法加载已清除的条目。",
+	"alerts_history_error_more": "无法加载更多历史记录。",
+	"alerts_history_everything": "以上是最近 {days} 天的全部记录。",
+	"alerts_history_export": "导出 CSV",
+	"alerts_history_filter_all": "全部",
+	"alerts_history_load_more": "加载更多",
+	"alerts_history_nomatch_description": "放宽筛选条件即可再次查看日志。",
+	"alerts_history_nomatch_title": "没有符合这些筛选条件的内容。",
+	"alerts_history_not_sent": "未发送 · {reason}",
+	"alerts_history_notified": "已通知",
+	"alerts_history_only_notified": "仅已通知",
+	"alerts_history_phase_firing": "触发中",
+	"alerts_history_phase_ok": "正常",
+	"alerts_history_phase_pending": "酝酿中",
+	"alerts_history_phase_resolved": "已解决",
+	"alerts_history_quiet": "静音",
+	"alerts_history_severity": "严重程度",
+	"alerts_history_show_cleared": "显示已清除",
+	"alerts_history_today": "今天",
+	"alerts_history_yesterday": "昨天",
+	"alerts_ignore_button": "此设备永不触发",
+	"alerts_ignore_confirm": "不再触发？",
+	"alerts_ignore_done": "已在 {device} 上忽略。",
+	"alerts_ignore_error": "无法对此设备忽略该规则。",
+	"alerts_ignore_error_undo": "无法取消忽略该规则。",
+	"alerts_ignore_stop": "取消忽略",
+	"alerts_ignore_undo": "撤销",
+	"alerts_matcher_except": ",不包括 {items}",
+	"alerts_matcher_except_devices": "设备 {phrase}",
+	"alerts_matcher_except_rule": "规则 {rule}",
+	"alerts_matcher_floor_critical": "仅警告",
+	"alerts_matcher_floor_info": "所有告警",
+	"alerts_matcher_floor_warning": "提示及以上",
+	"alerts_matcher_from_all": "来自所有设备",
+	"alerts_matcher_from_devices": "来自设备 {devices}",
+	"alerts_matcher_of_kind": "类型为 {kinds}",
+	"alerts_matcher_only_rule": ",仅限规则 {rule}",
+	"alerts_matcher_only_rules": ",仅限规则 {rules}",
+	"alerts_matcher_sentence": "此渠道接收 {floor} {scope}{rules}{exceptions}。",
+	"alerts_matcher_tagged": "标签为 {tags}",
+	"alerts_needs_dismiss_error": "无法忽略此告警。",
+	"alerts_needs_dismissed": "已忽略",
+	"alerts_needs_dismissed_hint": "已知问题:在确认结束或告警解决之前,提醒将暂停。",
+	"alerts_needs_empty_no_devices": "暂无可监控的内容。",
+	"alerts_needs_empty_quiet": "没有需要你处理的事项。",
+	"alerts_needs_no_device": "无设备",
+	"alerts_needs_quiet_all_reporting": "所有设备均在上报,没有规则被触发。",
+	"alerts_needs_quiet_checked": "{text} 检查于 {when}。",
+	"alerts_needs_quiet_no_devices": "添加设备后,它的首次上报会显示在这里。",
+	"alerts_needs_quiet_waiting_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "没有规则被触发。有 {count} 台设备仍在等待首次上报。"
+			}
+		}
+	],
+	"alerts_needs_quiet_waiting_one": "没有规则被触发。有一台设备仍在等待首次上报。",
+	"alerts_needs_snoozed": "已暂缓",
+	"alerts_needs_snoozed_hint": "暂时隐藏:在时段结束或告警解决之前不会提醒。",
+	"alerts_needs_toast_dismissed": "已忽略。",
+	"alerts_nth_1": "第一个{day}",
+	"alerts_nth_2": "第二个{day}",
+	"alerts_nth_3": "第三个{day}",
+	"alerts_nth_last": "最后一个{day}",
+	"alerts_nth_other": "第{n}个{day}",
+	"alerts_over_add": "添加覆盖",
+	"alerts_over_clear": "{label} {value}",
+	"alerts_over_device_id": "设备 {id}",
+	"alerts_over_error_clear_number": "恢复阈值必须是数字。",
+	"alerts_over_error_devices": "无法加载设备。",
+	"alerts_over_error_empty": "请设置阈值、恢复阈值，或为此设备关闭该规则。",
+	"alerts_over_error_pick": "请选择设备。",
+	"alerts_over_error_remove": "无法移除覆盖。",
+	"alerts_over_error_save": "无法保存覆盖。",
+	"alerts_over_in_unit": "单位：{unit}。",
+	"alerts_over_no_change": "无变化",
+	"alerts_over_none": "无。覆盖可以修改阈值、恢复阈值，或为某台设备关闭此规则。",
+	"alerts_over_none_placeholder": "无",
+	"alerts_over_pick_device": "选择设备",
+	"alerts_over_rule_off": "规则已关闭",
+	"alerts_over_save": "保存覆盖",
+	"alerts_over_threshold": "阈值 {value}",
+	"alerts_over_title": "按设备覆盖",
+	"alerts_over_turn_off": "为该设备关闭此规则",
+	"alerts_page_description": "当前正在触发的内容、计划静音的时段、背后的规则,以及通知发往何处。",
+	"alerts_page_error_change_rule": "无法修改该规则。",
+	"alerts_page_error_delete_rule": "无法删除该规则。",
+	"alerts_page_error_load": "无法加载告警",
+	"alerts_page_error_refresh_rules": "无法刷新规则。",
+	"alerts_page_error_refresh_windows": "无法刷新维护时段。",
+	"alerts_page_error_remove_window": "无法移除维护时段。",
+	"alerts_page_sections": "告警分区",
+	"alerts_page_tab_history": "历史",
+	"alerts_page_tab_notifications": "通知",
+	"alerts_page_tab_now": "当前",
+	"alerts_page_tab_rules": "规则",
+	"alerts_page_tab_scheduled": "已安排",
+	"alerts_page_title": "告警",
+	"alerts_row_acked": "已确认{by}{until}{note}。提醒已暂停，恢复时仍会通知你。",
+	"alerts_row_acked_by": " 由 {name}",
+	"alerts_row_acked_note": " — {note}",
+	"alerts_row_also": "另有 {list}",
+	"alerts_row_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "另有 {list} · 还有 {count} 项"
+			}
+		}
+	],
+	"alerts_row_aria": "{plate}：{rule}",
+	"alerts_row_aria_on": "{plate}：{device} 上的 {rule}",
+	"alerts_row_dismiss": "关闭",
+	"alerts_row_learning": "基线学习的前 {days} 天保持静默。",
+	"alerts_row_learning_suppressed": "学习正常形态期间保持静默。",
+	"alerts_row_more": "更多操作",
+	"alerts_row_more_menu": "此告警的更多操作",
+	"alerts_row_open_device": "打开设备",
+	"alerts_row_since": "自 {when}",
+	"alerts_row_snoozed": "已暂停提醒{until}。在此之前或问题解决前保持安静。",
+	"alerts_row_suppressed_by": "已被 {parent} 抑制——很可能是连带影响，而非独立问题。",
+	"alerts_row_until": "，直到 {time}",
+	"alerts_rules_after_hours": "{hours} 小时后",
+	"alerts_rules_all_channels": "所有已启用的渠道",
+	"alerts_rules_all_kinds": "所有类型",
+	"alerts_rules_anomaly_summary": "灵敏度 k = {k} · 平滑 α = {alpha} · 至少 {samples} 个样本 · 下限 {abs} 绝对 / {rel} 相对",
+	"alerts_rules_baseline_anomaly": "基线异常",
+	"alerts_rules_builtin": "内置",
+	"alerts_rules_channel_id": "渠道 #{id}",
+	"alerts_rules_clear_above": "高于此值恢复",
+	"alerts_rules_clear_below": "低于此值恢复",
+	"alerts_rules_create": "创建规则",
+	"alerts_rules_current_value": "{value}（当前）",
+	"alerts_rules_delete": "删除",
+	"alerts_rules_delete_confirm": "删除？",
+	"alerts_rules_disable_aria": "停用 {name}",
+	"alerts_rules_disabled": "已停用",
+	"alerts_rules_edit": "编辑",
+	"alerts_rules_edit_all_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "所有已启用的渠道（当前 {count} 个）"
+			}
+		}
+	],
+	"alerts_rules_edit_all_none": "所有已启用的渠道——当前没有启用的渠道，因此不会发送任何内容",
+	"alerts_rules_edit_all_one": "所有已启用的渠道（当前为 {name}）",
+	"alerts_rules_edit_aria": "编辑 {name}",
+	"alerts_rules_edit_channel_disabled": "已停用",
+	"alerts_rules_edit_channels_error": "无法加载渠道（{error}）。列表保持不变：{state}",
+	"alerts_rules_edit_channels_state_all": "所有已启用的渠道。",
+	"alerts_rules_edit_channels_state_n": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已选 {count} 个渠道。"
+			}
+		}
+	],
+	"alerts_rules_edit_clear_help": "可选。告警触发后，只有越过此值才会恢复，因此在阈值附近波动的读数不会反复触发。",
+	"alerts_rules_edit_description": "描述",
+	"alerts_rules_edit_detection": "检测",
+	"alerts_rules_edit_detection_help": "基线异常的设置随规则一同提供，无法在此编辑。",
+	"alerts_rules_edit_error_clear_above": "恢复阈值必须高于阈值：低于一个值时触发，高于另一个值时恢复。",
+	"alerts_rules_edit_error_clear_below": "恢复阈值必须低于阈值：高于一个值时触发，低于另一个值时恢复。",
+	"alerts_rules_edit_error_clear_number": "恢复阈值必须是数字，或留空。",
+	"alerts_rules_edit_error_query": "必须填写查询——否则该规则不会监控任何内容。",
+	"alerts_rules_edit_error_save": "无法保存规则。",
+	"alerts_rules_edit_escalate": "升级时间",
+	"alerts_rules_edit_escalate_help": "若仍在触发，则将严重程度提高一级。",
+	"alerts_rules_edit_hold_anomaly_help": "异常需持续多久才会触发。",
+	"alerts_rules_edit_hold_help": "条件需持续多久才会触发。",
+	"alerts_rules_edit_no_channel": "还没有渠道——不会发送任何内容。{link}。",
+	"alerts_rules_edit_no_channel_link": "请在“通知”中添加",
+	"alerts_rules_edit_none_ticked": "未勾选任何项：{label}。",
+	"alerts_rules_edit_notify_via": "通知方式",
+	"alerts_rules_edit_only_ticked": "仅通知已勾选的渠道。",
+	"alerts_rules_edit_op_gt": "> 高于",
+	"alerts_rules_edit_op_gte": "≥ 至少",
+	"alerts_rules_edit_op_lt": "< 低于",
+	"alerts_rules_edit_op_lte": "≤ 至多",
+	"alerts_rules_edit_query_help": "MetricsQL，按设备分别计算。",
+	"alerts_rules_edit_repeat": "重复间隔",
+	"alerts_rules_edit_repeat_help": "持续触发期间的提醒。",
+	"alerts_rules_edit_save": "保存更改",
+	"alerts_rules_empty_description": "添加规则以开始监控某项指标，或等待内置规则出现。",
+	"alerts_rules_empty_title": "还没有规则。",
+	"alerts_rules_enable_aria": "启用 {name}",
+	"alerts_rules_enabled": "已启用",
+	"alerts_rules_error_create": "无法创建规则。",
+	"alerts_rules_error_hold": "保持时间必须是整数秒。",
+	"alerts_rules_error_name": "规则需要一个名称。",
+	"alerts_rules_error_query": "必须填写 MetricsQL 查询——否则该规则不会监控任何内容。",
+	"alerts_rules_error_threshold": "阈值必须是数字。",
+	"alerts_rules_escalates": "{duration} 后升级",
+	"alerts_rules_every_hour": "每小时",
+	"alerts_rules_every_hours": "每 {hours} 小时",
+	"alerts_rules_filter_kind": "按类型筛选",
+	"alerts_rules_firing_now": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条正在触发"
+			}
+		}
+	],
+	"alerts_rules_for": "持续 {duration}",
+	"alerts_rules_hide_query": "隐藏查询",
+	"alerts_rules_hold_for": "保持时长",
+	"alerts_rules_hold_for_help": "条件需持续多少秒才会触发。",
+	"alerts_rules_ignored_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已在 {count} 台设备上忽略"
+			}
+		}
+	],
+	"alerts_rules_ignored_one": "已在 1 台设备上忽略",
+	"alerts_rules_immediately": "立即",
+	"alerts_rules_immediately_cap": "立即",
+	"alerts_rules_name_placeholder": "CPU 饱和",
+	"alerts_rules_new": "新建规则",
+	"alerts_rules_new_description": "监控一条 MetricsQL 查询的阈值规则。创建后可再调整渠道和提醒。",
+	"alerts_rules_nomatch_description": "试试其他搜索词或类型。",
+	"alerts_rules_nomatch_title": "没有匹配的规则。",
+	"alerts_rules_notifies": "通知 {channels}",
+	"alerts_rules_off": "关闭",
+	"alerts_rules_op_gt": "高于 {amount}",
+	"alerts_rules_op_gte": "至少 {amount}",
+	"alerts_rules_op_lt": "低于 {amount}",
+	"alerts_rules_op_lte": "至多 {amount}",
+	"alerts_rules_operator": "运算符",
+	"alerts_rules_query": "查询",
+	"alerts_rules_query_help": "MetricsQL，例如 dumbmonit_cpu_usage_percent",
+	"alerts_rules_repeats": "每 {duration} 重复",
+	"alerts_rules_saved": "已保存",
+	"alerts_rules_search_label": "搜索规则",
+	"alerts_rules_search_placeholder": "按名称、描述或查询搜索",
+	"alerts_rules_show_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "显示全部 {count} 条内置规则"
+			}
+		}
+	],
+	"alerts_rules_show_fewer": "显示更少规则",
+	"alerts_rules_show_query": "显示查询",
+	"alerts_rules_threshold": "阈值",
+	"alerts_schedule_day_of_month": "{day} 日",
+	"alerts_schedule_monthly": "{when} {start},持续 {duration},每月 · {zone}",
+	"alerts_schedule_no_day": "未选择日期",
+	"alerts_schedule_weekly": "{days} {span},每周 · {zone}",
+	"alerts_scope_all_devices": "所有设备",
+	"alerts_scope_device": "设备 {id}",
+	"alerts_severity_advisory": "提示",
+	"alerts_severity_info": "信息",
+	"alerts_severity_warning": "警告",
+	"alerts_silences_active_now": "当前生效",
+	"alerts_silences_empty_description": "安排一个时段,在你处理设备期间将某台或全部设备静音。",
+	"alerts_silences_empty_title": "没有已安排的维护。",
+	"alerts_silences_next": "下次:{when}",
+	"alerts_silences_remove": "移除",
+	"alerts_silences_remove_confirm": "移除?",
+	"alerts_silences_schedule": "安排维护",
+	"alerts_silences_scheduled": "已安排",
+	"alerts_silences_until": "至 {when}",
+	"alerts_snooze_button": "暂停提醒",
+	"alerts_snooze_error": "无法暂停此告警的提醒。",
+	"alerts_snooze_error_lift": "无法取消暂停。",
+	"alerts_snooze_hide_for": "隐藏时长",
+	"alerts_snooze_hint": "在时间结束或告警恢复之前不会发送通知。",
+	"alerts_snooze_lift": "取消暂停",
+	"alerts_snooze_menu_label": "暂停提醒时长",
+	"alerts_span_day": "1 天",
+	"alerts_span_days": "{days} 天",
+	"alerts_span_h": "{hours} 小时",
+	"alerts_span_hm": "{hours} 小时 {minutes} 分",
+	"alerts_span_min": "{minutes} 分钟",
+	"alerts_span_s": "{seconds} 秒",
+	"notifications_channels_add": "添加渠道",
+	"notifications_channels_description": "DumbMonit 在有事需要关注时通知你的位置。",
+	"notifications_channels_disabled": "已停用",
+	"notifications_channels_edit": "编辑",
+	"notifications_channels_empty_admin": "添加 Discord、Telegram、邮件或其他 20 种渠道之一，在你常用的地方接收告警。",
+	"notifications_channels_empty_title": "还没有渠道。",
+	"notifications_channels_empty_viewer": "管理员可以添加 Discord、Telegram、邮件或其他 20 种渠道之一。",
+	"notifications_channels_enabled": "已启用",
+	"notifications_channels_error_action": "无法执行该操作",
+	"notifications_channels_error_load": "无法加载渠道",
+	"notifications_channels_last_error": "最近错误：{error}",
+	"notifications_channels_last_sent": "上次发送 {when}",
+	"notifications_channels_policy_advisory_up": "提示及以上",
+	"notifications_channels_policy_interval": "同一告警最多每 {minutes} 分钟一次",
+	"notifications_channels_policy_no_recoveries": "不通知恢复",
+	"notifications_channels_policy_quiet": "静音 {start}–{end}",
+	"notifications_channels_policy_warning_only": "仅警告",
+	"notifications_channels_remove": "删除",
+	"notifications_channels_remove_confirm": "永久删除？",
+	"notifications_channels_send_test": "发送测试",
+	"notifications_channels_test_failed": "测试失败",
+	"notifications_channels_test_ok": "测试消息已发送",
+	"notifications_channels_title": "渠道",
+	"notifications_field_default": "默认（{value}）",
+	"notifications_field_list_hint": "每行一项。",
+	"notifications_field_object_hint": "一个 JSON 对象。",
+	"notifications_form_change_type": "更改类型",
+	"notifications_form_change_type_title": "更改渠道类型",
+	"notifications_form_clear_secrets": "清除已保存的密钥",
+	"notifications_form_clear_secrets_help": "删除已存储的内容；在输入新密钥之前，该渠道将发送失败。",
+	"notifications_form_delivery": "投递",
+	"notifications_form_delivery_hide": "隐藏投递选项",
+	"notifications_form_delivery_hint": "—— 此渠道接收什么，以及何时接收",
+	"notifications_form_delivery_show": "投递选项",
+	"notifications_form_documentation": "文档",
+	"notifications_form_edit_title": "编辑“{name}”",
+	"notifications_form_enabled_help": "已停用的渠道会保留其设置，但不会收到任何内容。",
+	"notifications_form_error_invalid": "值无效。",
+	"notifications_form_error_json": "必须是有效的 JSON 对象，例如 \"key\": \"value\"。",
+	"notifications_form_error_json_object": "必须是 JSON 对象，而不是列表或单个值。",
+	"notifications_form_error_name": "为渠道起个名字；你将在告警规则中选择它。",
+	"notifications_form_error_number": "必须是数字。",
+	"notifications_form_error_required": "此字段为必填项。",
+	"notifications_form_error_save": "无法保存渠道",
+	"notifications_form_error_secret_required": "此密钥为必填项。",
+	"notifications_form_floor_critical": "仅警告",
+	"notifications_form_floor_info": "全部（信息及以上）",
+	"notifications_form_floor_warning": "提示及以上",
+	"notifications_form_interval": "同一告警再次发送的最短间隔",
+	"notifications_form_interval_current": "{seconds} 秒（当前）",
+	"notifications_form_interval_help": "同一告警的提醒和重新触发至少间隔这么久。",
+	"notifications_form_keep_type": "保留当前类型",
+	"notifications_form_name_help": "显示在渠道列表中，并在告警规则中选择。",
+	"notifications_form_name_placeholder": "家庭群聊",
+	"notifications_form_name_placeholder_kind": "{kind} — 家庭",
+	"notifications_form_new_title": "新建 {kind} 渠道",
+	"notifications_form_no_match": "没有与“{query}”匹配的渠道类型。",
+	"notifications_form_no_minimum": "无最小间隔",
+	"notifications_form_pick_hint": "选择一项服务，接下来只会显示它需要的字段。",
+	"notifications_form_pick_title": "告警应发送到哪里？",
+	"notifications_form_resolved": "恢复时通知我",
+	"notifications_form_resolved_help": "关闭后，该渠道只会收到问题通知，不会收到恢复通知。",
+	"notifications_form_search_label": "搜索渠道类型",
+	"notifications_form_search_placeholder": "搜索 Discord、邮件、Webhook…",
+	"notifications_form_secrets": "密钥",
+	"notifications_form_secrets_destination_changed": "目标已更改：请重新输入密钥，已保存的密钥不会发送到新地址。",
+	"notifications_form_secrets_keep": "留空则保留已保存的密钥。",
+	"notifications_form_secrets_note": "加密存储，不会再次显示。",
+	"notifications_form_secrets_saved": "此渠道已保存了密钥。",
+	"notifications_form_send": "发送",
+	"notifications_form_send_help": "低于此级别的告警不会发送到该渠道。",
+	"notifications_form_settings": "设置",
+	"notifications_matcher_add": "添加条件",
+	"notifications_matcher_checking": "正在检查匹配的设备…",
+	"notifications_matcher_count": "{total} 台设备中的 {matched} 台",
+	"notifications_matcher_error_preview": "无法预览此筛选条件。",
+	"notifications_matcher_except": "排除",
+	"notifications_matcher_field": "字段",
+	"notifications_matcher_field_kind": "设备类型",
+	"notifications_matcher_field_rule": "规则",
+	"notifications_matcher_field_tag": "标签",
+	"notifications_matcher_help": "关闭：渠道接收高于其严重级别下限的全部内容。开启：只接收按标签、设备类型或规则匹配的内容。",
+	"notifications_matcher_mode": "包含或排除",
+	"notifications_matcher_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "还有 {count} 台"
+			}
+		}
+	],
+	"notifications_matcher_none": "目前没有设备匹配——此渠道将保持静默。",
+	"notifications_matcher_only": "仅",
+	"notifications_matcher_only_some": "仅部分告警",
+	"notifications_matcher_remove": "删除此条件",
+	"notifications_matcher_rules_note": "规则条件作用于告警而非设备：上方的数量不包含这类条件。",
+	"notifications_matcher_tag_name": "标签名称",
+	"notifications_matcher_value": "值",
+	"notifications_policy_also_tell": "同时通知",
+	"notifications_policy_also_tell_help": "额外多一跳，只发送一次。该渠道自身的严重级别下限和静音时段不会阻止它。",
+	"notifications_policy_cap": "每个渠道每小时的消息数",
+	"notifications_policy_cap_help": "超过上限后，告警会等待并合并为一条汇总。留空表示不设上限。",
+	"notifications_policy_cap_placeholder": "不限制",
+	"notifications_policy_daily": "每天",
+	"notifications_policy_description": "DumbMonit 如何减少通知：每波只发一条消息、每小时设上限，并对反复抖动的告警保持静默。",
+	"notifications_policy_error_cap": "每小时上限必须是整数；留空表示不设上限。",
+	"notifications_policy_error_escalate": "请选择无人确认时要通知的渠道，或将延迟设为“不升级”。",
+	"notifications_policy_error_flap": "抖动检测至少需要 2 次状态变化。",
+	"notifications_policy_error_load": "无法加载通知策略",
+	"notifications_policy_error_save": "无法保存策略",
+	"notifications_policy_error_url": "公开 URL 必须以 http:// 或 https:// 开头。",
+	"notifications_policy_escalate_after": "{span}后",
+	"notifications_policy_escalate_help": "从第一条消息实际发出时开始计时，而不是从告警触发时。",
+	"notifications_policy_escalate_label": "如果无人确认",
+	"notifications_policy_escalate_never": "不升级",
+	"notifications_policy_escalate_off": "不会二次通知任何人：无人确认的告警只停留在其自身的渠道中。",
+	"notifications_policy_escalate_on": "如果在第一条消息发出后 {minutes} 分钟内无人确认，告警还会再发送到 {name}，仅发送一次。确认告警或告警恢复后，此步骤即停止。",
+	"notifications_policy_everything": "全部",
+	"notifications_policy_fewer": "收起选项",
+	"notifications_policy_flap": "抑制反复抖动的告警",
+	"notifications_policy_flap_changes": "状态变化次数",
+	"notifications_policy_flap_changes_help": "触发和恢复合并计数。",
+	"notifications_policy_flap_help": "反复触发又恢复的告警只会发送一条“抖动”提示，然后静默一段时间。",
+	"notifications_policy_flap_hint": "—— 抖动检测",
+	"notifications_policy_flap_hold": "之后抑制",
+	"notifications_policy_flap_within": "在",
+	"notifications_policy_group": "合并告警的时间窗口",
+	"notifications_policy_group_help": "在此时间窗口内触发的告警会合并为每个渠道一条消息：“2 台设备上的 3 条告警”。",
+	"notifications_policy_more": "更多选项",
+	"notifications_policy_no_channel": "无渠道",
+	"notifications_policy_per_channel": "按渠道",
+	"notifications_policy_per_channel_note": "每个渠道接收什么以及它的静音时段，需在渠道本身设置（先点“编辑”，再点“投递选项”）。",
+	"notifications_policy_quiet": "静音 {days} {start}–{end}",
+	"notifications_policy_saved": "已保存",
+	"notifications_policy_send_now": "立即发送",
+	"notifications_policy_that_channel": "该渠道",
+	"notifications_policy_title": "通知策略",
+	"notifications_policy_url": "公开 URL",
+	"notifications_policy_url_help": "用于每条消息中的“在 DumbMonit 中打开”链接。留空则使用 DUMBMONIT_PUBLIC_URL。",
+	"notifications_quiet_days": "日期",
+	"notifications_quiet_error_days": "请至少选择一天。",
+	"notifications_quiet_error_differ": "开始和结束时间不能相同。",
+	"notifications_quiet_error_format": "请按 HH:MM 格式输入开始和结束时间。",
+	"notifications_quiet_from": "从",
+	"notifications_quiet_from_help": "使用你的本地时间。跨越午夜的时段归属于其开始的那一天。",
+	"notifications_quiet_help": "静音时段内只有“警告”级别的告警会送达；其余告警会等待，并在时段结束时合并为一条汇总。",
+	"notifications_quiet_title": "静音时段",
+	"notifications_quiet_to": "到",
+	"overview_brief_a_rule": "某条规则",
+	"overview_brief_also": "{names} 上也出现过告警并已消失。",
+	"overview_brief_also_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{names} 等 {count} 台设备上也出现过告警并已消失。"
+			}
+		}
+	],
+	"overview_brief_and_others": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{names} 等 {count} 台"
+			}
+		}
+	],
+	"overview_brief_device_n": "设备 {id}",
+	"overview_brief_dissolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条告警在触发前已自行消散。"
+			}
+		}
+	],
+	"overview_brief_dissolved_mostly": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条告警在触发前已自行消散(主要是 {device} 上的 {rule})。"
+			}
+		}
+	],
+	"overview_brief_down_whole": "{subject} 一直无法访问。",
+	"overview_brief_dropped": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{name} 掉线 {count} 次后恢复。"
+			}
+		}
+	],
+	"overview_brief_dropped_many": "{names} 掉线后已恢复。",
+	"overview_brief_head_first": "过去 24 小时内",
+	"overview_brief_head_since": "自 {when} 起",
+	"overview_brief_intro": "第一次来?这是鸽子目前掌握的情况。",
+	"overview_brief_kept_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台设备持续上报数据。"
+			}
+		}
+	],
+	"overview_brief_lead": "{head}——{parts}。",
+	"overview_brief_learning_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{names} 仍在学习基线:本来会触发 {count} 次。"
+			}
+		}
+	],
+	"overview_brief_learning_one": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{names} 仍在学习基线:本来会触发 {count} 次。"
+			}
+		}
+	],
+	"overview_brief_n_alerts_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条告警自行恢复"
+			}
+		}
+	],
+	"overview_brief_n_fired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条告警触发"
+			}
+		}
+	],
+	"overview_brief_n_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条自行恢复"
+			}
+		}
+	],
+	"overview_brief_n_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条仍在触发"
+			}
+		}
+	],
+	"overview_brief_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 台设备无法访问"
+			}
+		}
+	],
+	"overview_brief_nothing_no_channel": "没有发送任何通知:尚未设置通知渠道。",
+	"overview_brief_nothing_sent": "没有发送任何通知。",
+	"overview_brief_nothing_to_channel": "没有向 {channel} 发送任何通知。",
+	"overview_brief_nothing_to_channels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "没有向你的 {count} 个渠道发送任何通知。"
+			}
+		}
+	],
+	"overview_brief_notified": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已发送 {count} 条通知。"
+			}
+		}
+	],
+	"overview_brief_notified_to": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已向 {channel} 发送 {count} 条通知。"
+			}
+		}
+	],
+	"overview_brief_on_device": "{device}:{phrases}。",
+	"overview_brief_phrase_fired_resolved": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{name} 触发了 {count} 次,均已自行恢复"
+			}
+		}
+	],
+	"overview_brief_phrase_resolved": "{name} 已自行恢复",
+	"overview_brief_phrase_still": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{name} 触发了 {count} 次,目前仍在触发"
+			}
+		}
+	],
+	"overview_brief_quiet_away": "你不在期间没有发生任何事件。",
+	"overview_brief_quiet_first": "过去 24 小时内没有发生任何事件。",
+	"overview_brief_the_server": "服务器",
+	"overview_brief_went_down": "{name} 自 {when} 起无法访问,目前仍未恢复。",
+	"overview_first_all_done": "三步全部完成，此向导不会再出现。",
+	"overview_first_channel_action": "添加通知渠道",
+	"overview_first_channel_text": "邮件、ntfy、Discord、Telegram、PagerDuty，用你平时看的就行。出问题之前不会发送任何内容。",
+	"overview_first_channel_title": "接入一种通知方式",
+	"overview_first_demo": "添加演示设备",
+	"overview_first_device_action": "添加设备",
+	"overview_first_device_text": "交换机、NAS、虚拟化主机或网站。输入地址，其余自动识别。",
+	"overview_first_device_title": "添加第一台设备",
+	"overview_first_done": "已完成",
+	"overview_first_error": "无法保存，请稍后重试。",
+	"overview_first_error_detail": "无法保存：{message}",
+	"overview_first_hurry": "赶时间？扫描一个网段，一次添加所有响应 SNMP 的设备。",
+	"overview_first_intro": "三步之后，鸽子就有东西可看了。",
+	"overview_first_scan": "扫描我的网络",
+	"overview_first_skip_guide": "跳过向导",
+	"overview_first_skip_step": "跳过此步骤",
+	"overview_first_skip_step_aria": "跳过第 {n} 步：{title}",
+	"overview_first_skipped": "已跳过",
+	"overview_first_step": "第 {n} 步",
+	"overview_first_test_action": "发送测试",
+	"overview_first_test_text": "在渠道里发送一条测试。消息真正发出后，此步骤会变绿。",
+	"overview_first_test_title": "确认能收到消息",
+	"overview_first_title": "最初的五分钟",
+	"overview_page_checked": "检查于 {when}",
+	"overview_page_empty_text": "添加交换机、NAS、虚拟化主机或网站，一分钟内就会开始上报。",
+	"overview_page_empty_title": "还没有设备",
+	"overview_page_error_load": "无法加载概览",
+	"overview_page_error_refresh": "无法刷新告警。",
+	"overview_page_history_note": "取自过去一周的告警历史。",
+	"overview_page_last_days": "最近 {days} 天",
+	"overview_page_mark_read": "标为已读",
+	"overview_page_needs_you": "需要你处理",
+	"overview_page_or": "或者{agent}，或者通过其中一台{relay}。",
+	"overview_page_or_agent": "在某台机器上安装 agent",
+	"overview_page_or_relay": "监控远程站点",
+	"overview_page_since": "自你上次查看以来",
+	"overview_page_title": "概览",
+	"overview_page_week": "未来一周",
+	"overview_scene_asleep": "{label}，鸽子睡着了",
+	"overview_scene_cloudy": "少云",
+	"overview_scene_overcast": "阴天",
+	"overview_scene_storm": "风暴",
+	"overview_sky_clear": "晴空万里",
+	"overview_sky_n_acked": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个已确认"
+			}
+		}
+	],
+	"overview_sky_n_advisories": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个提示"
+			}
+		}
+	],
+	"overview_sky_n_building": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个在酝酿"
+			}
+		}
+	],
+	"overview_sky_n_info": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个信息"
+			}
+		}
+	],
+	"overview_sky_n_misconfigured": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个配置有误"
+			}
+		}
+	],
+	"overview_sky_n_reporting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个在上报"
+			}
+		}
+	],
+	"overview_sky_n_snoozed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个已暂缓"
+			}
+		}
+	],
+	"overview_sky_n_suppressed": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个被上级抑制"
+			}
+		}
+	],
+	"overview_sky_n_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个无法访问"
+			}
+		}
+	],
+	"overview_sky_n_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个在等待"
+			}
+		}
+	],
+	"overview_sky_n_warnings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个警告"
+			}
+		}
+	],
+	"overview_sky_nothing": "暂无可监控的内容",
+	"overview_sky_plate_acked": "已确认",
+	"overview_sky_plate_building": "酝酿中",
+	"overview_sky_plate_down": "宕机",
+	"overview_sky_plate_learning": "学习中",
+	"overview_sky_plate_misconfigured": "配置有误",
+	"overview_sky_plate_snoozed": "已暂缓",
+	"overview_sky_plate_suppressed": "被上级抑制",
+	"overview_sky_plate_unreachable": "无法访问",
+	"overview_sky_sentence": "{parts}。",
+	"overview_sky_waiting": "等待首批上报",
+	"overview_streaks_d_h": "{days} 天 {hours} 小时",
+	"overview_streaks_fewest": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "告警最少:{days} 天内 {count} 个告警事件"
+			}
+		}
+	],
+	"overview_streaks_h_min": "{hours} 小时 {minutes} 分钟",
+	"overview_streaks_many_unreachable": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{name} 等另外 {count} 台无法访问"
+			}
+		}
+	],
+	"overview_streaks_most": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{days} 天内 {count} 个告警事件(开始、触发或恢复)"
+			}
+		}
+	],
+	"overview_streaks_no_alert": "{days} 天内没有告警",
+	"overview_streaks_no_alert_like": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{days} 天内没有告警,另有 {count} 台也是如此"
+			}
+		}
+	],
+	"overview_streaks_noisiest": "告警最多",
+	"overview_streaks_none_down": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 天内没有设备无法访问"
+			}
+		}
+	],
+	"overview_streaks_not_now": "当前不是",
+	"overview_streaks_one_unreachable": "{name} 无法访问",
+	"overview_streaks_over": "超过 {days} 天",
+	"overview_streaks_quietest": "最安静的设备",
+	"overview_streaks_reporting": "全部正常上报",
+	"overview_streaks_reporting_for": "全部正常上报已持续",
+	"overview_streaks_since_outage": "自上次故障以来没有设备无法访问",
+	"overview_streaks_under_minute": "不到一分钟",
+	"overview_tip_agent_action": "安装 agent",
+	"overview_tip_agent_text": "服务、磁盘健康、温度、待安装的更新，还能在这里重启或更新 Docker 容器，并查看 Plakar、restic 和 Borg 备份。Linux、Windows、macOS 或 FreeBSD 上一条命令即可。",
+	"overview_tip_agent_title": "agent 能看到机器内部。",
+	"overview_tip_api_action": "创建 API 令牌",
+	"overview_tip_api_text": "限定范围的令牌（只读，或读写）即可让你的脚本调用它，已有的 Prometheus 或 Grafana 也能用同一个令牌读取指标。",
+	"overview_tip_api_title": "这里的一切都有 HTTP API。",
+	"overview_tip_mcp_action": "连接助手",
+	"overview_tip_mcp_text": "Claude、ChatGPT、Cursor 或任何 MCP 客户端都可以向 DumbMonit 询问当前状况；持有写入令牌时，还能静音设备或运行探测。",
+	"overview_tip_mcp_title": "AI 助手可以读取这份简报。",
+	"overview_tip_packs_action": "集成包",
+	"overview_tip_packs_text": "集成包是用 YAML 编写的设备类型：向设备查询什么、保留哪些数值、何时告警。",
+	"overview_tip_packs_title": "DumbMonit 可以学会新设备。",
+	"overview_tip_palette_action": "打开命令面板",
+	"overview_tip_palette_text": "命令面板可以不离开键盘，直接跳转到任何设备、页面或操作。",
+	"overview_tip_palette_title": "每个页面和操作都只需一个快捷键。",
+	"overview_tip_relay_action": "监控远程站点",
+	"overview_tip_relay_text": "把它装在另一处站点、客户办公室或 NAT 后的机器上：它会替本服务器探测那里的交换机、NAS 和虚拟化主机。仅出站连接，那边无需开放任何端口。",
+	"overview_tip_relay_title": "agent 可以监控另一个网络。",
+	"overview_tip_status_action": "创建状态页",
+	"overview_tip_status_text": "公开状态页会展示你选定的服务、可用率和你的公告。分享一个链接，就不用再回答“是不是挂了？”。",
+	"overview_tip_status_title": "别等别人来问。",
+	"overview_tip_wall_action": "打开墙屏模式",
+	"overview_tip_wall_text": "墙屏模式以全屏显示天空和需要你处理的事项，隔着房间也看得清，并保持屏幕常亮。",
+	"overview_tip_wall_title": "这份简报适合放在电视上。",
+	"overview_tips_another": "换一条",
+	"overview_tips_hide": "隐藏这些提示",
+	"overview_tips_hide_title": "隐藏这些提示（仅限此浏览器）",
+	"overview_tips_label": "你知道吗？",
+	"overview_tips_prefix": "你知道吗？{title}",
+	"overview_week_cert_expired": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "证书已过期 {count} 天"
+			}
+		}
+	],
+	"overview_week_cert_expires": "证书即将到期",
+	"overview_week_cert_expires_today": "证书今天到期",
+	"overview_week_days_short": "{days} 天",
+	"overview_week_filling": "按当前速度将被占满",
+	"overview_week_filling_series": "按当前速度将被占满:{series}",
+	"overview_week_from": "{scope},从 {time} 起",
+	"overview_week_full": "按当前速度将被占满",
+	"overview_week_full_series": "按当前速度将被占满:{series}",
+	"overview_week_later": "稍后:",
+	"overview_week_later_certs": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个证书将在 {when} 后到期"
+			}
+		}
+	],
+	"overview_week_later_disks": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个磁盘将在 {days} 天内被占满"
+			}
+		}
+	],
+	"overview_week_later_windows": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{days} 天内有 {count} 个维护窗口"
+			}
+		}
+	],
+	"overview_week_maintenance": "维护",
+	"overview_week_maintenance_all": "所有设备维护",
+	"overview_week_maintenance_device": "设备 {id} 维护",
+	"overview_week_nothing_due": "暂无事项",
+	"overview_week_plate_certificate": "证书",
+	"overview_week_plate_forecast": "预测",
+	"overview_week_plate_scheduled": "已计划",
+	"overview_week_plate_warning": "警告",
+	"overview_week_quiet": "接下来一周很平静:没有证书、磁盘或维护事项。",
+	"overview_week_range": "{scope},{start}–{end}",
+	"overview_week_series_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{names} 等 {count} 项"
+			}
+		}
+	],
+	"overview_week_today": "今天",
+	"overview_week_tomorrow": "明天",
+	"overview_week_until": "{scope},至 {when}",
+	"overview_when_dated": "{date} {time}",
+	"overview_when_yesterday": "昨天 {time}",
 	"settings.appearance.language_label": "语言",
 	"settings.group.wall_display": "墙面与显示",
 	"settings.hint.notifications_lead": "在找通知渠道和静默时段？它们位于",

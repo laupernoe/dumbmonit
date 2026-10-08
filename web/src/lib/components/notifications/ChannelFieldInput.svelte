@@ -10,6 +10,7 @@
 	import { Field, Toggle } from '#lib/ui/index.js';
 	import type { KindField } from './kinds';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		field: KindField;
@@ -30,7 +31,11 @@
 	const help = $derived([field.help, note].filter(Boolean).join(' '));
 	const multiline = $derived(field.input === 'textarea' || field.shape !== 'scalar');
 	const shapeHint = $derived(
-		field.shape === 'list' ? 'One entry per line.' : field.shape === 'object' ? 'A JSON object.' : ''
+		field.shape === 'list'
+			? m.notifications_field_list_hint()
+			: field.shape === 'object'
+				? m.notifications_field_object_hint()
+				: ''
 	);
 </script>
 
@@ -43,7 +48,7 @@
 		{#if field.input === 'select'}
 			<select {id} class="input" value={text} {disabled} aria-invalid={error ? 'true' : undefined} onchange={(e) => onchange(e.currentTarget.value)}>
 				{#if !field.required || !text}
-					<option value="">{field.default ? `Default (${field.default})` : '—'}</option>
+					<option value="">{field.default ? m.notifications_field_default({ value: field.default }) : '—'}</option>
 				{/if}
 				{#each field.options as option (option)}
 					<option value={option}>{option}</option>

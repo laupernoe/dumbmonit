@@ -11,6 +11,7 @@ import type { Alert, AlertRule, Target, TargetId } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
 import { displayState, formatFailureReason, type ProbeStatus, type TargetState } from '#lib/format.js';
 import { isForecast, severityRank, severityTone, severityWord } from '#lib/components/alerts/helpers.js';
+import { m } from '#lib/paraglide/messages.js';
 
 export interface SkyInput {
 	targets: Target[];
@@ -111,11 +112,7 @@ export function skyCondition(sky: Sky): SkyCondition {
 	return 'clear';
 }
 
-/** English plural helper for the sky sentence. */
-function count(n: number, one: string, many = `${one}s`): string {
-	return `${n} ${n === 1 ? one : many}`;
-}
-
+// Counts are phrased by plural messages (m.overview_sky_*).
 /**
  * Sort key for a firing alert: warnings first, then advisories, then info.
  * A snoozed alert reads below those, an acknowledged one last of all — someone
@@ -190,7 +187,11 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 			key: `device:${target.id}`,
 			rank: misconfigured ? 1 : 0,
 			tone: misconfigured ? 'advisory' : 'warning',
-			plate: misconfigured ? 'Misconfigured' : state === 'down' ? 'Down' : 'Unreachable',
+			plate: misconfigured
+				? m.overview_sky_plate_misconfigured()
+				: state === 'down'
+					? m.overview_sky_plate_down()
+					: m.overview_sky_plate_unreachable(),
 			target,
 			state,
 			detail:
@@ -217,15 +218,15 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 							? 'ghost'
 							: severityTone(alert.severity),
 			plate: alert.acked
-				? 'Acked'
+				? m.overview_sky_plate_acked()
 				: isSnoozed
-					? 'Snoozed'
+					? m.overview_sky_plate_snoozed()
 					: isSuppressed
-						? 'Suppressed by parent'
+						? m.overview_sky_plate_suppressed()
 						: alert.learning
-							? 'Learning'
+							? m.overview_sky_plate_learning()
 							: isPending
-								? 'Building up'
+								? m.overview_sky_plate_building()
 								: severityWord(alert.severity),
 			alert,
 			rule: rulesMap.get(alert.rule_uid),
@@ -264,31 +265,41 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 	// already excludes devices whose outage is voiced by a firing alert.
 	let sentence: string;
 	if (targets.length === 0) {
-		sentence = 'Nothing to watch yet.';
+		sentence = m.overview_sky_nothing();
 	} else {
 		const parts: string[] = [];
-		if (counts.warnings > 0) parts.push(count(counts.warnings, 'warning'));
-		if (counts.advisories > 0) parts.push(count(counts.advisories, 'advisory', 'advisories'));
-		if (counts.notices > 0) parts.push(count(counts.notices, 'info', 'info'));
-		if (unreachableRows > 0) parts.push(`${unreachableRows} unreachable`);
-		if (misconfiguredRows > 0) parts.push(`${misconfiguredRows} misconfigured`);
-		if (counts.buildingUp > 0) parts.push(`${counts.buildingUp} building up`);
-		if (parts.length > 0) sentence = `${parts.join(', ')}.`;
-		else if (counts.reporting === 0 && counts.waiting > 0) sentence = 'Waiting for the first reports.';
-		else sentence = 'Clear skies.';
+		if (counts.warnings > 0) parts.push(m.overview_sky_n_warnings({ count: counts.warnings }));
+		if (counts.advisories > 0) parts.push(m.overview_sky_n_advisories({ count: counts.advisories }));
+		if (counts.notices > 0) parts.push(m.overview_sky_n_info({ count: counts.notices }));
+		if (unreachableRows > 0) parts.push(m.overview_sky_n_unreachable({ count: unreachableRows }));
+		if (misconfiguredRows > 0) parts.push(m.overview_sky_n_misconfigured({ count: misconfiguredRows }));
+		if (counts.buildingUp > 0) parts.push(m.overview_sky_n_building({ count: counts.buildingUp }));
+		if (parts.length > 0) sentence = m.overview_sky_sentence({ parts: parts.join(', ') });
+		else if (counts.reporting === 0 && counts.waiting > 0) sentence = m.overview_sky_waiting();
+		else sentence = m.overview_sky_clear();
 	}
 
-	const plates: SkyPlate[] = [{ tone: 'signal', label: `${counts.reporting} reporting`, bare: true }];
-	if (counts.unreachable > 0) plates.push({ tone: 'warning', label: `${counts.unreachable} unreachable` });
+	const plates: SkyPlate[] = [
+		{ tone: 'signal', label: m.overview_sky_n_reporting({ count: counts.reporting }), bare: true }
+	];
+	if (counts.unreachable > 0) {
+		plates.push({ tone: 'warning', label: m.overview_sky_n_unreachable({ count: counts.unreachable }) });
+	}
 	if (counts.misconfigured > 0) {
-		plates.push({ tone: 'advisory', label: `${counts.misconfigured} misconfigured` });
+		plates.push({ tone: 'advisory', label: m.overview_sky_n_misconfigured({ count: counts.misconfigured }) });
 	}
-	if (counts.waiting > 0) plates.push({ tone: 'ghost', label: `${counts.waiting} waiting` });
+	if (counts.waiting > 0) {
+		plates.push({ tone: 'ghost', label: m.overview_sky_n_waiting({ count: counts.waiting }) });
+	}
 	if (counts.suppressed > 0) {
-		plates.push({ tone: 'muted', label: `${counts.suppressed} suppressed by parent` });
+		plates.push({ tone: 'muted', label: m.overview_sky_n_suppressed({ count: counts.suppressed }) });
 	}
-	if (counts.acked > 0) plates.push({ tone: 'muted', label: `${counts.acked} acknowledged` });
-	if (counts.snoozed > 0) plates.push({ tone: 'muted', label: `${counts.snoozed} snoozed` });
+	if (counts.acked > 0) {
+		plates.push({ tone: 'muted', label: m.overview_sky_n_acked({ count: counts.acked }) });
+	}
+	if (counts.snoozed > 0) {
+		plates.push({ tone: 'muted', label: m.overview_sky_n_snoozed({ count: counts.snoozed }) });
+	}
 
 	return {
 		sentence,

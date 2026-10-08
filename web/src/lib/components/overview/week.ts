@@ -10,6 +10,8 @@ import { isDistinctiveLabel } from "#lib/metrics.js";
 import type { Tone } from "#lib/ui/index.js";
 import { parseServerDate } from "#lib/format.js";
 import { isForecast } from "#lib/components/alerts/helpers.js";
+import { m } from "#lib/paraglide/messages.js";
+import { clock, dayMonth, joinNames, weekday } from "./briefing";
 
 export const DAY_MS = 24 * 3600 * 1000;
 export const WEEK_DAYS = 7;
@@ -51,16 +53,7 @@ export interface WeekInput {
   now: Date;
 }
 
-const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
-const dayMonth = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-});
-const clock = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
+// Date formats (locale aware) come from ./briefing.
 function startOfDay(date: Date): Date {
   const day = new Date(date);
   day.setHours(0, 0, 0, 0);
@@ -81,10 +74,12 @@ function minutesToClock(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
+/** "15 Sep 22:10" or just the clock when the moment is today. */
+function endText(end: Date, now: Date): string {
+  return dayIndex(end, now) === 0
+    ? clock.format(end)
+    : m.overview_when_dated({ date: dayMonth.format(end), time: clock.format(end) });
 }
-
 /**
  * Days until a disk is full, read from the alert value when the rule's unit
  * says it is a duration. Predict rules that extrapolate a percentage (the
@@ -127,7 +122,12 @@ export function buildWeek(input: WeekInput): Week {
     const date = new Date(today.getTime() + i * DAY_MS);
     return {
       date,
-      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : weekday.format(date),
+      label:
+        i === 0
+          ? m.overview_week_today()
+          : i === 1
+            ? m.overview_week_tomorrow()
+            : weekday.format(date),
       dateLabel: dayMonth.format(date),
       items: [],
     };
@@ -144,8 +144,8 @@ export function buildWeek(input: WeekInput): Week {
       place(0, {
         key: `cert:${targetId}`,
         tone: "warning",
-        plate: "Warning",
-        text: `Certificate expired ${plural(Math.round(-left), "day")} ago`,
+        plate: m.overview_week_plate_warning(),
+        text: m.overview_week_cert_expired({ count: Math.round(-left) }),
         target,
       });
     } else if (left < WEEK_DAYS) {
@@ -153,8 +153,11 @@ export function buildWeek(input: WeekInput): Week {
       place(index, {
         key: `cert:${targetId}`,
         tone: left < 3 ? "warning" : "advisory",
-        plate: "Certificate",
-        text: index === 0 ? "Certificate expires today" : "Certificate expires",
+        plate: m.overview_week_plate_certificate(),
+        text:
+          index === 0
+            ? m.overview_week_cert_expires_today()
+            : m.overview_week_cert_expires(),
         target,
       });
     } else if (left <= LATER_DAYS) {
@@ -163,9 +166,9 @@ export function buildWeek(input: WeekInput): Week {
   }
   if (laterCerts.length > 0) {
     laterCerts.sort((a, b) => a - b);
-    const when = laterCerts.map((d) => `${d} d`);
+    const when = laterCerts.map((d) => m.overview_week_days_short({ days: d }));
     later.push(
-      `${plural(laterCerts.length, "certificate")} in ${when.length === 1 ? when[0] : `${when.slice(0, -1).join(", ")} and ${when[when.length - 1]}`}`,
+      m.overview_week_later_certs({ count: laterCerts.length, when: joinNames(when) }),
     );
   }
 
@@ -199,23 +202,29 @@ export function buildWeek(input: WeekInput): Week {
     const named = series.slice(0, 2).join(", ");
     const more = series.length - Math.min(series.length, 2);
     const which = named
-      ? `: ${named}${more > 0 ? ` and ${more} more` : ""}`
+      ? more > 0
+        ? m.overview_week_series_more({ names: named, count: more })
+        : named
       : "";
     const eta = daysToFull(alert, rule);
     if (eta === null || eta < 0) {
       place(0, {
         key: `disk:${key}`,
         tone: "advisory",
-        plate: "Forecast",
-        text: `Filling up at this rate${which}`,
+        plate: m.overview_week_plate_forecast(),
+        text: which
+          ? m.overview_week_filling_series({ series: which })
+          : m.overview_week_filling(),
         target,
       });
     } else if (eta < WEEK_DAYS) {
       place(Math.floor(eta), {
         key: `disk:${key}`,
         tone: eta < 2 ? "warning" : "advisory",
-        plate: "Forecast",
-        text: `Full at this rate${which}`,
+        plate: m.overview_week_plate_forecast(),
+        text: which
+          ? m.overview_week_full_series({ series: which })
+          : m.overview_week_full(),
         target,
       });
     } else if (eta <= LATER_DAYS) {
@@ -223,9 +232,7 @@ export function buildWeek(input: WeekInput): Week {
     }
   }
   if (laterDisks > 0)
-    later.push(
-      `${plural(laterDisks, "disk")} filling up within ${LATER_DAYS} d`,
-    );
+    later.push(m.overview_week_later_disks({ count: laterDisks, days: LATER_DAYS }));
 
   // Maintenance windows: once-windows on their day, weekly ones on each day they cover.
   let laterWindows = 0;
@@ -235,25 +242,21 @@ export function buildWeek(input: WeekInput): Week {
       silence.target_id !== null ? targets.get(silence.target_id) : undefined;
     // The device is linked under the line; only a device-less window names its scope.
     const scope = target
-      ? "Maintenance"
+      ? m.overview_week_maintenance()
       : silence.target_id === null
-        ? "Maintenance on all devices"
-        : `Maintenance on device ${silence.target_id}`;
+        ? m.overview_week_maintenance_all()
+        : m.overview_week_maintenance_device({ id: silence.target_id });
     const schedule = silence.schedule;
     if (schedule.kind === "once") {
       const start = parseServerDate(schedule.starts_at);
       const end = parseServerDate(schedule.ends_at);
       if (!start || !end || end.getTime() <= now.getTime()) continue;
       if (start.getTime() <= now.getTime()) {
-        const endLabel =
-          dayIndex(end, now) === 0
-            ? clock.format(end)
-            : `${dayMonth.format(end)} ${clock.format(end)}`;
         place(0, {
           key: `silence:${silence.id}`,
           tone: "muted",
-          plate: "Scheduled",
-          text: `${scope} until ${endLabel}`,
+          plate: m.overview_week_plate_scheduled(),
+          text: m.overview_week_until({ scope, when: endText(end, now) }),
           target,
         });
         continue;
@@ -263,15 +266,20 @@ export function buildWeek(input: WeekInput): Week {
         place(index, {
           key: `silence:${silence.id}`,
           tone: "muted",
-          plate: "Scheduled",
-          text: `${scope}, ${clock.format(start)}–${clock.format(end)}`,
+          plate: m.overview_week_plate_scheduled(),
+          text: m.overview_week_range({
+            scope,
+            start: clock.format(start),
+            end: clock.format(end),
+          }),
           target,
         });
       } else if (index <= LATER_DAYS) {
         laterWindows += 1;
       }
     } else if (schedule.kind === "weekly") {
-      const span = `${minutesToClock(schedule.start_minute)}–${minutesToClock(schedule.end_minute)}`;
+      const spanStart = minutesToClock(schedule.start_minute);
+      const spanEnd = minutesToClock(schedule.end_minute);
       days.forEach((day, index) => {
         // Schedule days count from Monday; JS weekdays from Sunday.
         const dow = (day.date.getDay() + 6) % 7;
@@ -279,8 +287,8 @@ export function buildWeek(input: WeekInput): Week {
         place(index, {
           key: `silence:${silence.id}:${index}`,
           tone: "muted",
-          plate: "Scheduled",
-          text: `${scope}, ${span}`,
+          plate: m.overview_week_plate_scheduled(),
+          text: m.overview_week_range({ scope, start: spanStart, end: spanEnd }),
           target,
         });
       });
@@ -291,15 +299,11 @@ export function buildWeek(input: WeekInput): Week {
       if (silence.active_now && silence.active_until) {
         const end = parseServerDate(silence.active_until);
         if (!end) continue;
-        const endLabel =
-          dayIndex(end, now) === 0
-            ? clock.format(end)
-            : `${dayMonth.format(end)} ${clock.format(end)}`;
         place(0, {
           key: `silence:${silence.id}`,
           tone: "muted",
-          plate: "Scheduled",
-          text: `${scope} until ${endLabel}`,
+          plate: m.overview_week_plate_scheduled(),
+          text: m.overview_week_until({ scope, when: endText(end, now) }),
           target,
         });
         continue;
@@ -313,8 +317,8 @@ export function buildWeek(input: WeekInput): Week {
         place(index, {
           key: `silence:${silence.id}`,
           tone: "muted",
-          plate: "Scheduled",
-          text: `${scope}, from ${clock.format(start)}`,
+          plate: m.overview_week_plate_scheduled(),
+          text: m.overview_week_from({ scope, time: clock.format(start) }),
           target,
         });
       } else if (index <= LATER_DAYS) {
@@ -324,7 +328,7 @@ export function buildWeek(input: WeekInput): Week {
   }
   if (laterWindows > 0)
     later.push(
-      `${plural(laterWindows, "maintenance window")} within ${LATER_DAYS} d`,
+      m.overview_week_later_windows({ count: laterWindows, days: LATER_DAYS }),
     );
 
   const empty = days.every((day) => day.items.length === 0);
