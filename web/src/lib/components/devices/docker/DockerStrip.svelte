@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The Docker line under an agent's header: how many containers, how many
 	 * run, how many could be updated, and what the policies cover — with the
@@ -50,17 +51,25 @@
 		expired: 'advisory'
 	};
 	const STATUS_WORD: Record<CommandStatus, string> = {
-		queued: 'Queued',
-		running: 'Running…',
-		done: 'Done',
-		failed: 'Failed',
-		cancelled: 'Cancelled',
-		expired: 'Expired'
+		get queued() {
+			return m.devices_docker_status_queued();
+		},
+		get running() {
+			return m.devices_docker_status_running();
+		},
+		get done() {
+			return m.devices_docker_status_done();
+		},
+		get failed() {
+			return m.devices_docker_status_failed();
+		},
+		get cancelled() {
+			return m.devices_docker_status_cancelled();
+		},
+		get expired() {
+			return m.devices_docker_status_expired();
+		}
 	};
-
-	function plural(n: number, word: string): string {
-		return `${n} ${word}${n === 1 ? '' : 's'}`;
-	}
 
 	function manage() {
 		openFold('containers');
@@ -108,28 +117,28 @@
 				Docker
 			</span>
 			<p class="tnum min-w-0 flex-1 basis-60 text-sm text-ink-2">
-				{plural(total, 'container')} · {fleet.running} running{#if stopped > 0}
-					· {stopped} stopped{/if}{#if fleet.updates > 0}
-					· {plural(fleet.updates, 'update')} available{/if}
-				· policies: {fleet.autoRestart} auto-restart, {fleet.autoUpdate} auto-update
+				{total === 1 ? m.devices_docker_containers_one({ count: total }) : m.devices_docker_containers_other({ count: total })} · {m.devices_docker_running({ count: fleet.running })}{#if stopped > 0}
+					· {m.devices_docker_stopped_n({ count: stopped })}{/if}{#if fleet.updates > 0}
+					· {fleet.updates === 1 ? m.devices_docker_updates_one({ count: fleet.updates }) : m.devices_docker_updates_other({ count: fleet.updates })}{/if}
+				· {m.devices_docker_policies({ restart: fleet.autoRestart, update: fleet.autoUpdate })}
 			</p>
 			<div class="flex flex-wrap items-center gap-2">
-				<Button size="sm" variant="secondary" onclick={manage}>Manage containers</Button>
-				<Button size="sm" variant={editing ? 'secondary' : 'ghost'} onclick={() => (editing = !editing)} aria-expanded={editing} aria-controls={`docker-policies-${target.id}`}>
-					{editing ? 'Close policies' : 'Policies…'}
+				<Button size="sm" variant="secondary" class="min-h-10 sm:min-h-0" onclick={manage}>{m.devices_docker_manage()}</Button>
+				<Button size="sm" variant={editing ? 'secondary' : 'ghost'} class="min-h-10 sm:min-h-0" onclick={() => (editing = !editing)} aria-expanded={editing} aria-controls={`docker-policies-${target.id}`}>
+					{editing ? m.devices_docker_policies_close() : m.devices_docker_policies_open()}
 				</Button>
 			</div>
 		</div>
 
 		<!-- Last thing the agent was asked to do -->
 		<p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2" aria-live="polite">
-			<span>Last action:</span>
+			<span>{m.devices_docker_last_action()}</span>
 			{#if lastCommand}
 				<Plate tone={STATUS_TONE[lastCommand.status]} label={STATUS_WORD[lastCommand.status]} pulse={lastCommand.status === 'running'} />
 				<span class="text-ink">{commandLabel(lastCommand.kind)} <span class="font-semibold break-all">{commandContainer(lastCommand)}</span></span>
 				<span class="tnum" title={lastCommand.created_at}>{formatRelative(lastCommand.created_at)}</span>
 			{:else}
-				<span>none yet — policies act on their own, or restart and update from the container list.</span>
+				<span>{m.devices_docker_last_none()}</span>
 			{/if}
 		</p>
 
@@ -137,31 +146,31 @@
 			<div id={`docker-policies-${target.id}`} class="mt-3 border-t border-line pt-3">
 				{#if !fleet.commandsSupported}
 					<p class="mb-3 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-2 text-sm text-ink" role="status">
-						<Plate tone="advisory" label="Actions unavailable" class="mr-1" />
-						This agent cannot run commands (too old, or <code class="font-mono text-[0.8125rem]">commands: false</code>): policies are kept but nothing runs until it is reinstalled with the current installer.
+						<Plate tone="advisory" label={m.devices_docker_unavailable()} class="mr-1" />
+						{m.devices_docker_strip_unavailable()}
 					</p>
 				{/if}
 				<p class="text-sm text-ink-2">
-					Auto-update only runs inside a maintenance window for this device —
-					<a href="/alerts#scheduled" class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">schedule one on the Alerts page</a>.
-					Updates pull the same tag, recreate the container, wait for its healthcheck and roll back if it fails; the old image is removed afterwards.
+					{m.devices_docker_window_note()}
+					<a href="/alerts#scheduled" class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_docker_window_link()}</a>.
+					{m.devices_docker_update_how()}
 				</p>
 
-				<div class="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 gap-y-2 sm:gap-x-8" role="table" aria-label="Container policies">
+				<div class="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 gap-y-2 sm:gap-x-8" role="table" aria-label={m.devices_docker_policies_aria()}>
 					<div class="contents" role="row">
-						<span class="label-tape" role="columnheader">Container</span>
-						<span class="label-tape text-center leading-tight" role="columnheader">Restart<span class="hidden sm:inline">&nbsp;if down</span></span>
-						<span class="label-tape text-center leading-tight" role="columnheader">Auto-update<span class="hidden sm:inline">&nbsp;in maintenance windows</span></span>
+						<span class="label-tape" role="columnheader">{m.devices_docker_col_container()}</span>
+						<span class="label-tape text-center leading-tight" role="columnheader"><span class="sm:hidden">{m.devices_docker_col_restart()}</span><span class="hidden sm:inline">{m.devices_docker_restart_if_down()}</span></span>
+						<span class="label-tape text-center leading-tight" role="columnheader"><span class="sm:hidden">{m.devices_docker_col_update()}</span><span class="hidden sm:inline">{m.devices_docker_auto_update()}</span></span>
 					</div>
 
 					<!-- Apply to all -->
 					<div class="contents" role="row">
-						<span class="text-sm font-semibold text-ink" role="cell">Apply to all</span>
+						<span class="text-sm font-semibold text-ink" role="cell">{m.devices_docker_apply_all()}</span>
 						<span class="flex justify-center" role="cell">
-							<Toggle id={`policy-all-restart-${target.id}`} checked={allRestart} disabled={applyingAll !== null} label="Restart if down, all containers" onchange={(v) => void applyAll('auto_restart', v)} />
+							<Toggle id={`policy-all-restart-${target.id}`} checked={allRestart} disabled={applyingAll !== null} label={m.devices_docker_restart_all()} onchange={(v) => void applyAll('auto_restart', v)} />
 						</span>
 						<span class="flex justify-center" role="cell">
-							<Toggle id={`policy-all-update-${target.id}`} checked={allUpdate} disabled={applyingAll !== null} label="Auto-update in maintenance windows, all containers" onchange={(v) => void applyAll('auto_update', v)} />
+							<Toggle id={`policy-all-update-${target.id}`} checked={allUpdate} disabled={applyingAll !== null} label={m.devices_docker_update_all()} onchange={(v) => void applyAll('auto_update', v)} />
 						</span>
 					</div>
 					<div class="col-span-3 graticule" aria-hidden="true"></div>
@@ -172,25 +181,25 @@
 							<span class="flex min-w-0 flex-col gap-0.5" role="cell">
 								<span class="flex min-w-0 items-center gap-2">
 									<span class="min-w-0 text-sm leading-tight text-ink break-all">{c.name}</span>
-									{#if !c.up}<Plate tone="warning" label="Stopped" bare />{/if}
-									{#if c.update_available === true}<Plate tone="info" label="Update available" bare />{/if}
+									{#if !c.up}<Plate tone="warning" label={m.devices_docker_state_stopped()} bare />{/if}
+									{#if c.update_available === true}<Plate tone="info" label={m.devices_docker_update_available()} bare />{/if}
 								</span>
 								{#if rowError[c.name]}
 									<span class="text-xs text-warning-ink" role="alert">{rowError[c.name]}</span>
 								{/if}
 							</span>
 							<span class="flex justify-center" role="cell">
-								<Toggle id={`policy-restart-${target.id}-${c.name}`} checked={c.policy.auto_restart} disabled={saving} label={`Restart ${c.name} if down`} onchange={(v) => void save(c, { auto_restart: v })} />
+								<Toggle id={`policy-restart-${target.id}-${c.name}`} checked={c.policy.auto_restart} disabled={saving} label={m.devices_docker_restart_one({ name: c.name })} onchange={(v) => void save(c, { auto_restart: v })} />
 							</span>
 							<span class="flex justify-center" role="cell">
-								<Toggle id={`policy-update-${target.id}-${c.name}`} checked={c.policy.auto_update} disabled={saving} label={`Auto-update ${c.name} in maintenance windows`} onchange={(v) => void save(c, { auto_update: v })} />
+								<Toggle id={`policy-update-${target.id}-${c.name}`} checked={c.policy.auto_update} disabled={saving} label={m.devices_docker_update_one_label({ name: c.name })} onchange={(v) => void save(c, { auto_update: v })} />
 							</span>
 						</div>
 					{/each}
 				</div>
 
 				<div class="mt-3 flex justify-end">
-					<Button size="sm" variant="ghost" onclick={() => (editing = false)}>Done</Button>
+					<Button size="sm" variant="ghost" class="min-h-10 sm:min-h-0" onclick={() => (editing = false)}>{m.devices_docker_done()}</Button>
 				</div>
 			</div>
 		{/if}

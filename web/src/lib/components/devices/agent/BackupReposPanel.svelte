@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * restic and Borg repositories the agent was told to watch (`restic_repos`,
 	 * `borg_repos` in agent.yaml): whether each one can be read, and the age of
@@ -36,11 +37,11 @@
 	let error = $state<unknown>(null);
 
 	function plateOf(r: RepoStat): { tone: Tone; label: string } {
-		if (r.reachable === false) return { tone: 'warning', label: 'Cannot be read' };
-		if (r.age === null) return { tone: 'ghost', label: 'No snapshot yet' };
-		if (r.age < DAY) return { tone: 'signal', label: `Backed up ${formatAge(r.age)} ago` };
-		if (r.age <= TOO_OLD) return { tone: 'advisory', label: `Last backup ${formatAge(r.age)} ago` };
-		return { tone: 'warning', label: `No backup for ${formatAge(r.age)}` };
+		if (r.reachable === false) return { tone: 'warning', label: m.devices_repos_cannot_read() };
+		if (r.age === null) return { tone: 'ghost', label: m.devices_repos_no_snapshot() };
+		if (r.age < DAY) return { tone: 'signal', label: m.devices_repos_backed_up({ age: formatAge(r.age) }) };
+		if (r.age <= TOO_OLD) return { tone: 'advisory', label: m.devices_repos_last_backup({ age: formatAge(r.age) }) };
+		return { tone: 'warning', label: m.devices_repos_no_backup_for({ age: formatAge(r.age) }) };
 	}
 
 	function fold(series: { metric: Record<string, string>; values: [number, string][] }[]): RepoStat[] {
@@ -97,38 +98,38 @@
 </script>
 
 {#if !loading && (error || repos.length > 0)}
-	<Panel title="Backup repositories" description="restic and Borg repositories declared in agent.yaml." padded={false} class="rise-in">
+	<Panel title={m.devices_repos_title()} description={m.devices_repos_description()} padded={false} class="rise-in">
 		{#snippet aside()}
 			{#if failing > 0}
-				<Plate tone="warning" label={failing === 1 ? '1 needs attention' : `${failing} need attention`} />
+				<Plate tone="warning" label={failing === 1 ? m.devices_repos_need_one() : m.devices_repos_need_other({ count: failing })} />
 			{:else if repos.length > 0}
-				<Plate tone="signal" label="Backups fine" />
+				<Plate tone="signal" label={m.devices_repos_fine()} />
 			{/if}
 		{/snippet}
 		{#if error}
 			<div class="px-5 py-4">
-				<ErrorNotice {error} title="Could not load the repositories" onretry={() => void load()} />
+				<ErrorNotice {error} title={m.devices_repos_err_title()} onretry={() => void load()} />
 			</div>
 		{:else}
 			<ul class="divide-y divide-line">
 				{#each repos as r (`${r.tool}:${r.repo}`)}
 					{@const plate = plateOf(r)}
-					<li class="flex flex-col gap-1 px-5 py-3">
+					<li class="flex flex-col gap-1 px-4 py-3 sm:px-5">
 						<div class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
 							<Plate tone={plate.tone} label={plate.label} />
 							<span class="min-w-0 text-sm font-semibold text-ink break-all">{r.repo}</span>
 							<span class="text-sm text-ink-2">{r.tool === 'borg' ? 'Borg' : 'restic'}</span>
 							{#if r.bytes !== null}
-								<span class="tnum text-sm text-ink-2">{`${formatBytes(r.bytes)} in the last snapshot`}</span>
+								<span class="tnum text-sm text-ink-2">{m.devices_repos_snapshot_size({ size: formatBytes(r.bytes) })}</span>
 							{/if}
 						</div>
 						{#if r.reachable === false}
 							<p class="text-sm text-ink-2">
-								The agent could not open this repository. Its log says why (unreachable, password refused, binary missing):
+								{m.devices_repos_unreadable()}
 								<span class="font-mono">journalctl -u dumbmonit-agent</span>.
 							</p>
 						{:else if r.age !== null && r.age > TOO_OLD}
-							<p class="text-sm text-warning-ink">Check the job that runs the backups: nothing new for more than 48 hours.</p>
+							<p class="text-sm text-warning-ink">{m.devices_repos_too_old()}</p>
 						{/if}
 					</li>
 				{/each}

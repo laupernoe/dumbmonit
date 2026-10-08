@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * A MikroTik router as the last probe saw it: versions and firmware, load,
 	 * sensors, then the interfaces. Read from the stored measurements, refreshed
@@ -67,58 +68,58 @@
 </script>
 
 {#if error}
-	<Panel title="Router" class="rise-in">
-		<ErrorNotice {error} title="Could not load the router's measurements" onretry={() => void load()} />
+	<Panel title={m.devices_mikrotik_title()} class="rise-in">
+		<ErrorNotice {error} title={m.devices_mikrotik_error()} onretry={() => void load()} />
 	</Panel>
 {:else if loading}
-	<Panel title="Router" padded={false} class="rise-in">
-		<div class="flex flex-col gap-3 px-5 py-4" aria-busy="true" aria-label="Loading the router's measurements">
+	<Panel title={m.devices_mikrotik_title()} padded={false} class="rise-in">
+		<div class="flex flex-col gap-3 px-4 py-4 sm:px-5" aria-busy="true" aria-label={m.devices_mikrotik_loading()}>
 			<Skeleton class="h-10 w-full" rows={3} />
 		</div>
 	</Panel>
 {:else if !seen}
-	<Panel title="Router" class="rise-in">
-		<p class="text-sm text-ink-2">Waiting for the first probe: the router has not been read yet.</p>
+	<Panel title={m.devices_mikrotik_title()} class="rise-in">
+		<p class="text-sm text-ink-2">{m.devices_mikrotik_waiting()}</p>
 	</Panel>
 {:else}
 	<div class="flex flex-col gap-6">
-		<Panel title="Router" {description} padded={false} class="rise-in">
+		<Panel title={m.devices_mikrotik_title()} {description} padded={false} class="rise-in">
 			{#snippet aside()}
 				{#if failedSensors > 0}
-					<Plate tone="warning" label={failedSensors === 1 ? '1 sensor failed' : `${failedSensors} sensors failed`} />
+					<Plate tone="warning" label={failedSensors === 1 ? m.devices_mikrotik_sensors_failed_one({ count: failedSensors }) : m.devices_mikrotik_sensors_failed_other({ count: failedSensors })} />
 				{:else if hotSensors > 0}
-					<Plate tone="advisory" label="Running hot" />
+					<Plate tone="advisory" label={m.devices_mikrotik_hot()} />
 				{:else}
-					<Plate tone="signal" label="Healthy" />
+					<Plate tone="signal" label={m.devices_mikrotik_healthy()} />
 				{/if}
 			{/snippet}
 			<div class="flex flex-col divide-y divide-line">
-				<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-5 pt-4 pb-2 sm:grid-cols-4">
-					<Figure label="CPU" value={percent(reading.cpu)} hint={reading.cpuCount ? `${reading.cpuCount} cores` : undefined} />
-					<Figure label="Memory" value={percent(reading.memoryUsed)} hint={reading.memoryTotal ? `of ${formatBytes(reading.memoryTotal)}` : undefined} />
-					<Figure label="Storage" value={percent(reading.storageUsed)} hint={reading.storageTotal ? `of ${formatBytes(reading.storageTotal)}` : undefined} />
-					<Figure label="Uptime" value={reading.uptime === null ? null : formatSpan(reading.uptime)} />
+				<div class="grid grid-cols-2 gap-x-6 gap-y-2 px-4 pt-4 pb-2 sm:grid-cols-4 sm:px-5">
+					<Figure label={m.devices_mikrotik_fig_cpu()} value={percent(reading.cpu)} hint={reading.cpuCount ? m.devices_mikrotik_cores({ count: reading.cpuCount }) : undefined} />
+					<Figure label={m.devices_mikrotik_fig_memory()} value={percent(reading.memoryUsed)} hint={reading.memoryTotal ? m.devices_mikrotik_of_total({ size: formatBytes(reading.memoryTotal) }) : undefined} />
+					<Figure label={m.devices_mikrotik_fig_storage()} value={percent(reading.storageUsed)} hint={reading.storageTotal ? m.devices_mikrotik_of_total({ size: formatBytes(reading.storageTotal) }) : undefined} />
+					<Figure label={m.devices_mikrotik_fig_uptime()} value={reading.uptime === null ? null : formatSpan(reading.uptime)} />
 				</div>
 
-				<ul class="flex flex-col gap-2 px-5 py-4 text-sm">
+				<ul class="flex flex-col gap-2 px-4 py-4 text-sm sm:px-5">
 					<li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
 						<span class="shrink-0 sm:w-36">
 							{#if reading.update?.available}
-								<Plate tone="info" label="Update available" />
+								<Plate tone="info" label={m.devices_mikrotik_update_available()} />
 							{:else if reading.update}
-								<Plate tone="signal" label="Up to date" />
+								<Plate tone="signal" label={m.devices_mikrotik_up_to_date()} />
 							{:else}
-								<Plate tone="ghost" label="Not checked" />
+								<Plate tone="ghost" label={m.devices_mikrotik_not_checked()} />
 							{/if}
 						</span>
 						<span class="min-w-0 text-ink">
-							<span class="font-semibold">RouterOS {reading.version ?? '—'}</span>{reading.release ? ` (${reading.release}).` : '.'}
+							<span class="font-semibold">{reading.release ? m.devices_mikrotik_ros_release({ version: reading.version ?? '—', release: reading.release }) : m.devices_mikrotik_ros({ version: reading.version ?? '—' })}</span>
 							{#if reading.update?.available}
-								{` Version ${reading.update.latest} is available on the ${reading.update.channel ?? 'current'} channel.`}
+								{m.devices_mikrotik_version_available({ latest: reading.update.latest ?? '', channel: reading.update.channel ?? m.devices_mikrotik_channel_current() })}
 							{:else if reading.update}
-								{` Latest on the ${reading.update.channel ?? 'current'} channel.`}
+								{m.devices_mikrotik_latest_on({ channel: reading.update.channel ?? m.devices_mikrotik_channel_current() })}
 							{:else}
-								{' '}<span class="text-ink-2">The router has not checked for a newer version: schedule the check on the router (see the setup) to be told about updates.</span>
+								<span class="text-ink-2">{m.devices_mikrotik_no_update_check()}</span>
 							{/if}
 						</span>
 					</li>
@@ -126,28 +127,28 @@
 						<li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
 							<span class="shrink-0 sm:w-36">
 								{#if reading.firmware?.pending}
-									<Plate tone="info" label="Upgrade pending" />
+									<Plate tone="info" label={m.devices_mikrotik_fw_pending()} />
 								{:else if reading.firmware}
-									<Plate tone="signal" label="Current" />
+									<Plate tone="signal" label={m.devices_mikrotik_fw_current()} />
 								{:else}
-									<Plate tone="ghost" label="Unknown" />
+									<Plate tone="ghost" label={m.devices_mikrotik_fw_unknown()} />
 								{/if}
 							</span>
 							<span class="min-w-0 text-ink">
-								<span class="font-semibold">RouterBOOT {reading.firmware?.current ?? '—'}.</span>
+								<span class="font-semibold">{m.devices_mikrotik_routerboot({ version: reading.firmware?.current ?? '—' })}</span>
 								{#if reading.firmware?.pending}
-									{` RouterOS bundles ${reading.firmware.upgrade}: run /system routerboard upgrade, then reboot.`}
+									{m.devices_mikrotik_fw_bundled({ version: reading.firmware.upgrade ?? '' })}
 								{/if}
 							</span>
 						</li>
 					{:else}
-						<li class="text-ink-2">No RouterBOARD firmware: this is a Cloud Hosted Router or an x86 machine.</li>
+						<li class="text-ink-2">{m.devices_mikrotik_no_routerboard()}</li>
 					{/if}
 				</ul>
 
 				{#if reading.sensors.length > 0}
-					<div class="px-5 py-4">
-						<h3 class="text-sm font-semibold text-ink">Sensors</h3>
+					<div class="px-4 py-4 sm:px-5">
+						<h3 class="text-sm font-semibold text-ink">{m.devices_mikrotik_sensors()}</h3>
 						<dl class="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
 							{#each reading.sensors as sensor (`${sensor.kind}:${sensor.name}`)}
 								<div class="flex items-center justify-between gap-3 border-b border-line py-1">
@@ -164,30 +165,44 @@
 						</dl>
 					</div>
 				{:else if reading.routerboard === false}
-					<p class="px-5 py-4 text-sm text-ink-2">No sensors: this router reports no temperature, fan or power supply.</p>
+					<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_mikrotik_no_sensors()}</p>
 				{/if}
 			</div>
 		</Panel>
 
 		{#if reading.ports.length > 0}
-			<Panel title="Interfaces" description="Traffic over five minutes; errors and link losses over the last 24 hours." padded={false} class="rise-in">
+			<Panel title={m.devices_mikrotik_ifaces()} description={m.devices_mikrotik_ifaces_desc()} padded={false} class="rise-in">
 				{#snippet aside()}
 					{#if portsDown === 0}
-						<Plate tone="signal" label="All linked" />
+						<Plate tone="signal" label={m.devices_mikrotik_all_linked()} />
 					{:else}
-						<Plate tone="ghost" label={portsDown === 1 ? '1 without link' : `${portsDown} without link`} />
+						<Plate tone="ghost" label={portsDown === 1 ? m.devices_mikrotik_no_link_one({ count: portsDown }) : m.devices_mikrotik_no_link_other({ count: portsDown })} />
 					{/if}
 				{/snippet}
-				<div class="overflow-x-auto">
+				<ul class="divide-y divide-line sm:hidden">
+					{#each reading.ports as port (port.name)}
+						<li class="flex flex-col gap-1 px-4 py-3 text-sm">
+							<div class="flex items-center justify-between gap-3">
+								<span class="min-w-0 font-medium break-all text-ink">{port.name}</span>
+								{#if port.running !== null}
+									<Plate tone={port.running ? 'signal' : 'ghost'} label={port.running ? m.devices_mikrotik_up() : m.devices_mikrotik_nolink()} />
+								{/if}
+							</div>
+							<span class="tnum text-ink-2">{m.devices_mikrotik_col_in()} {formatBits(port.rxRate)} · {m.devices_mikrotik_col_out()} {formatBits(port.txRate)}</span>
+							<span class={`tnum ${port.errors || port.linkDowns ? 'text-advisory-ink' : 'text-ink-2'}`}>{m.devices_mikrotik_col_errors()} {port.errors ?? '—'} · {m.devices_mikrotik_col_linkloss()} {port.linkDowns ?? '—'}</span>
+						</li>
+					{/each}
+				</ul>
+				<div class="hidden overflow-x-auto sm:block">
 					<table class="w-full min-w-[36rem] text-sm">
 						<thead>
 							<tr class="border-b border-line text-left text-[0.75rem] text-ink-3">
-								<th scope="col" class="px-5 py-2 font-medium">Interface</th>
-								<th scope="col" class="px-3 py-2 font-medium">Link</th>
-								<th scope="col" class="px-3 py-2 text-right font-medium">In</th>
-								<th scope="col" class="px-3 py-2 text-right font-medium">Out</th>
-								<th scope="col" class="px-3 py-2 text-right font-medium">Errors</th>
-								<th scope="col" class="px-5 py-2 text-right font-medium">Link losses</th>
+								<th scope="col" class="px-5 py-2 font-medium">{m.devices_mikrotik_col_interface()}</th>
+								<th scope="col" class="px-3 py-2 font-medium">{m.devices_mikrotik_col_link()}</th>
+								<th scope="col" class="px-3 py-2 text-right font-medium">{m.devices_mikrotik_col_in()}</th>
+								<th scope="col" class="px-3 py-2 text-right font-medium">{m.devices_mikrotik_col_out()}</th>
+								<th scope="col" class="px-3 py-2 text-right font-medium">{m.devices_mikrotik_col_errors()}</th>
+								<th scope="col" class="px-5 py-2 text-right font-medium">{m.devices_mikrotik_col_linkloss()}</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-line">
@@ -201,7 +216,7 @@
 										{#if port.running === null}
 											<span class="text-ink-3">—</span>
 										{:else}
-											<Plate tone={port.running ? 'signal' : 'ghost'} label={port.running ? 'Up' : 'No link'} />
+											<Plate tone={port.running ? 'signal' : 'ghost'} label={port.running ? m.devices_mikrotik_up() : m.devices_mikrotik_nolink()} />
 										{/if}
 									</td>
 									<td class="tnum px-3 py-2.5 text-right text-ink">{formatBits(port.rxRate)}</td>
@@ -214,8 +229,8 @@
 					</table>
 				</div>
 				{#if reading.skipped > 0}
-					<p class="border-t border-line px-5 py-3 text-sm text-ink-2">
-						{`${reading.skipped} more ${reading.skipped === 1 ? 'interface is' : 'interfaces are'} not read: raise "Interfaces read at most" in the options to see them.`}
+					<p class="border-t border-line px-4 py-3 text-sm text-ink-2 sm:px-5">
+						{reading.skipped === 1 ? m.devices_mikrotik_skipped_one({ count: reading.skipped }) : m.devices_mikrotik_skipped_other({ count: reading.skipped })}
 					</p>
 				{/if}
 			</Panel>

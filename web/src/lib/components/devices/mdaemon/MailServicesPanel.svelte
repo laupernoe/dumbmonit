@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * MDaemon Email Server and SecurityGateway: the mail services as seen from
 	 * outside, the version, and (SecurityGateway 12.5+) the REST API's
@@ -58,18 +59,34 @@
 
 	const LABELS: Record<string, string> = {
 		smtp: 'SMTP',
-		msa: 'SMTP submission (MSA)',
-		smtps: 'SMTP over TLS',
+		get msa() {
+			return m.devices_mail_svc_msa();
+		},
+		get smtps() {
+			return m.devices_mail_svc_smtps();
+		},
 		pop3: 'POP3',
-		pop3s: 'POP3 over TLS',
+		get pop3s() {
+			return m.devices_mail_svc_pop3s();
+		},
 		imap: 'IMAP',
-		imaps: 'IMAP over TLS',
+		get imaps() {
+			return m.devices_mail_svc_imaps();
+		},
 		webmail: 'Webmail',
-		remote_admin: 'Remote Administration',
-		remote_admin_https: 'Remote Administration (HTTPS)',
+		get remote_admin() {
+			return m.devices_mail_svc_remote_admin();
+		},
+		get remote_admin_https() {
+			return m.devices_mail_svc_remote_admin_https();
+		},
 		xmpp: 'XMPP',
-		web: 'Web interface',
-		web_https: 'Web interface (HTTPS)'
+		get web() {
+			return m.devices_mail_svc_web();
+		},
+		get web_https() {
+			return m.devices_mail_svc_web_https();
+		}
 	};
 
 	const prefix = $derived(target.kind === 'securitygateway' ? 'securitygateway' : 'mdaemon');
@@ -193,11 +210,18 @@
 		return words.charAt(0).toUpperCase() + words.slice(1);
 	}
 
-	const sourceWord: Record<string, string> = {
-		xml_api: 'read from the XML API',
-		openapi: 'read from the REST API',
-		smtp_banner: 'announced in the SMTP greeting'
-	};
+	function sourceWord(source: string | null): string {
+		switch (source) {
+			case 'xml_api':
+				return m.devices_mail_source_xml();
+			case 'openapi':
+				return m.devices_mail_source_openapi();
+			case 'smtp_banner':
+				return m.devices_mail_source_banner();
+			default:
+				return m.devices_mail_source_reported();
+		}
+	}
 
 	const hasAnything = $derived(
 		reading.services.length > 0 || reading.apiUp !== null || reading.version !== null
@@ -205,63 +229,66 @@
 </script>
 
 {#if !loading && (hasAnything || error)}
-<Panel title="Mail services" description="Checked from outside, as a mail client would." padded={false} class="rise-in">
+<Panel title={m.devices_mail_title()} description={m.devices_mail_desc()} padded={false} class="rise-in">
 	{#snippet aside()}
 		{#if reading.services.length > 0}
 			{#if down === 0}
-				<Plate tone="signal" label="All answering" />
+				<Plate tone="signal" label={m.devices_mail_all_answering()} />
 			{:else}
-				<Plate tone="warning" label={down === 1 ? '1 service down' : `${down} services down`} />
+				<Plate tone="warning" label={down === 1 ? m.devices_mail_down_one({ count: down }) : m.devices_mail_down_other({ count: down })} />
 			{/if}
 		{/if}
 	{/snippet}
 	{#if error}
-		<div class="px-5 py-4">
-			<ErrorNotice {error} title="Could not load the mail services" onretry={() => void load()} />
+		<div class="px-4 py-4 sm:px-5">
+			<ErrorNotice {error} title={m.devices_mail_error()} onretry={() => void load()} />
 		</div>
 	{:else}
 		{#if reading.services.length > 0}
 			<ul class="divide-y divide-line">
 				{#each reading.services as s (`${s.name}:${s.port}`)}
-					<li class="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:gap-x-3">
-						<Plate tone={s.up ? 'signal' : 'warning'} label={s.up ? 'Answering' : 'Down'} />
+					<li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:px-5 sm:items-center sm:gap-x-3">
+						<Plate tone={s.up ? 'signal' : 'warning'} label={s.up ? m.devices_mail_answering() : m.devices_mail_down()} />
 						<span class="min-w-0 text-sm font-medium text-ink break-all">{label(s.name)}</span>
-						<span class="tnum text-sm text-ink-2">port {s.port}</span>
+						<span class="tnum text-sm text-ink-2">{m.devices_mail_port({ port: s.port })}</span>
 						<span class="tnum text-sm text-ink-2 sm:ml-auto">{s.up ? ms(s.seconds) : '—'}</span>
 					</li>
 				{/each}
 			</ul>
 		{:else}
-			<p class="px-5 py-4 text-sm text-ink-2">No port is checked on this device: its Services option is set to none.</p>
+			<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_mail_no_ports()}</p>
 		{/if}
 
-		<div class="flex flex-col gap-2 border-t border-line px-5 py-4 text-sm">
+		<div class="flex flex-col gap-2 border-t border-line px-4 py-4 text-sm sm:px-5">
 			<p class="text-ink-2">
 				{#if reading.version}
-					Version <span class="tnum font-medium text-ink">{reading.version}</span>{#if reading.build && reading.build !== reading.version}&nbsp;(build <span class="tnum">{reading.build}</span>){/if},
-					{sourceWord[reading.versionSource ?? ''] ?? 'as reported'}.
+					{#if reading.build && reading.build !== reading.version}
+						{m.devices_mail_version_build({ version: reading.version, build: reading.build, source: sourceWord(reading.versionSource) })}
+					{:else}
+						{m.devices_mail_version({ version: reading.version, source: sourceWord(reading.versionSource) })}
+					{/if}
 				{:else}
-					Version unknown: the greeting does not announce it{reading.apiUp === null ? ', and no credential is set for the API' : ''}.
+					{reading.apiUp === null ? m.devices_mail_version_unknown_nocred() : m.devices_mail_version_unknown()}
 				{/if}
 			</p>
 			{#if prefix === 'mdaemon' && !linked}
 				<p class="text-ink-2">
-					Queue sizes are not visible from outside: install the DumbMonit agent on this server and they appear here. If they do not, make that agent the parent of this device.
+					{m.devices_mail_queues_hint()}
 				</p>
 			{/if}
 			{#if reading.apiUp !== null}
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<Plate tone={reading.apiUp ? 'signal' : 'warning'} label={reading.apiUp ? `${apiName} answering` : `${apiName} not answering`} />
+					<Plate tone={reading.apiUp ? 'signal' : 'warning'} label={reading.apiUp ? m.devices_mail_api_answering({ api: apiName }) : m.devices_mail_api_down({ api: apiName })} />
 					{#if reading.operationOk === false}
-						<span class="text-ink-2">The account may not run GetVersionInfo; the version still comes from the answer.</span>
+						<span class="text-ink-2">{m.devices_mail_op_note()}</span>
 					{/if}
 				</div>
 			{/if}
 		</div>
 
 		{#if prefix === 'securitygateway' && reading.apiUp}
-			<div class="border-t border-line px-5 py-4">
-				<h3 class="text-sm font-semibold text-ink">Performance counters</h3>
+			<div class="border-t border-line px-4 py-4 sm:px-5">
+				<h3 class="text-sm font-semibold text-ink">{m.devices_mail_counters()}</h3>
 				{#if reading.counters.length > 0}
 					<dl class="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
 						{#each reading.counters as c (c.name)}
@@ -272,9 +299,9 @@
 						{/each}
 					</dl>
 				{:else if reading.countersAvailable === false}
-					<p class="mt-1 text-sm text-ink-2">No counters read: the API describes none, or the account that owns the key may not read them. Give that account the Global Administrator role if they stay empty.</p>
+					<p class="mt-1 text-sm text-ink-2">{m.devices_mail_counters_none()}</p>
 				{:else}
-					<p class="mt-1 text-sm text-ink-2">Counter reading is turned off in this device's options.</p>
+					<p class="mt-1 text-sm text-ink-2">{m.devices_mail_counters_off()}</p>
 				{/if}
 			</div>
 		{/if}

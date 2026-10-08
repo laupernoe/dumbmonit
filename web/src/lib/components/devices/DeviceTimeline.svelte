@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	import { isDistinctiveLabel } from '#lib/metrics.js';
 	/**
 	 * The story of this device's alerts: what is firing now, then the moments
@@ -100,10 +101,18 @@
 	const DEFAULT_SHOWN = 5;
 
 	const PHASE_WORD: Record<AlertPhase, string> = {
-		ok: 'OK',
-		pending: 'Building up',
-		firing: 'Firing',
-		resolved: 'Resolved'
+		get ok() {
+			return m.devices_timeline_phase_ok();
+		},
+		get pending() {
+			return m.devices_timeline_phase_pending();
+		},
+		get firing() {
+			return m.devices_timeline_phase_firing();
+		},
+		get resolved() {
+			return m.devices_timeline_phase_resolved();
+		}
 	};
 
 	let history = $state<AlertHistoryEntry[]>([]);
@@ -135,7 +144,7 @@
 			dismissing = new Set(dismissing);
 			dismissing.delete(alert.fingerprint);
 			dismissToast = {
-				error: cause instanceof Error ? cause.message : 'Could not dismiss this alert.'
+				error: cause instanceof Error ? cause.message : m.devices_timeline_err_dismiss()
 			};
 		}
 	}
@@ -189,9 +198,9 @@
 
 	/** Plate for an active alert: acknowledgement, suppression and building-up read as such. */
 	function activePlate(alert: Alert): { tone: Tone; label: string } {
-		if (alert.acked) return { tone: 'muted', label: 'Acked' };
-		if (alert.effective_phase === 'suppressed') return { tone: 'muted', label: 'Suppressed by parent' };
-		if (alert.effective_phase === 'pending') return { tone: 'ghost', label: 'Building up' };
+		if (alert.acked) return { tone: 'muted', label: m.devices_timeline_acked() };
+		if (alert.effective_phase === 'suppressed') return { tone: 'muted', label: m.devices_timeline_suppressed() };
+		if (alert.effective_phase === 'pending') return { tone: 'ghost', label: m.devices_timeline_phase_pending() };
 		return { tone: severityTone(alert.severity), label: severityWord(alert.severity) };
 	}
 
@@ -282,9 +291,9 @@
 
 	/** "Fired" / "Resolved" / "Building up → OK": the verb of the row. */
 	function verbOf(fold: Fold): string {
-		if (fold.to_phase === 'firing') return 'Fired';
+		if (fold.to_phase === 'firing') return m.devices_timeline_fired();
 		if (fold.from_phase === 'firing') return PHASE_WORD[fold.to_phase];
-		return `${PHASE_WORD[fold.from_phase]} → ${PHASE_WORD[fold.to_phase]}`;
+		return m.devices_timeline_phase_change({ from: PHASE_WORD[fold.from_phase], to: PHASE_WORD[fold.to_phase] });
 	}
 
 	/** Labels of the folded entries when known; otherwise how many there were. */
@@ -299,17 +308,29 @@
 			return [label, value].filter(Boolean).join(' · ') || null;
 		}
 		const n = fold.entries.length;
-		if (labels.length === n) return `on ${n}: ${labels.join(', ')}`;
-		if (labels.length > 0) return `on ${n}, including ${labels.join(', ')}`;
-		return `on ${n} ${n === 1 ? 'instance' : 'instances'}`;
+		if (labels.length === n) return m.devices_timeline_detail_all({ n, labels: labels.join(', ') });
+		if (labels.length > 0) return m.devices_timeline_detail_some({ n, labels: labels.join(', ') });
+		return m.devices_timeline_detail_count({ n });
 	}
 
 	function sentOf(fold: Fold): string {
 		const sent = fold.entries.filter((entry) => entry.notified).length;
-		if (sent === fold.entries.length) return 'Notified';
-		if (sent > 0) return `Notified ${sent} of ${fold.entries.length}`;
-		const reason = fold.entries[0].reason || 'quiet';
-		return `Not sent · ${reason}`;
+		if (sent === fold.entries.length) return m.devices_timeline_notified();
+		if (sent > 0) return m.devices_timeline_notified_some({ sent, total: fold.entries.length });
+		const reason = fold.entries[0].reason || m.devices_timeline_quiet();
+		return m.devices_timeline_not_sent({ reason });
+	}
+
+	/** "Acked · by Ana · until 14:00 · note". */
+	function ackedLine(alert: Alert): string {
+		return [
+			m.devices_timeline_acked(),
+			alert.acked_by ? m.devices_timeline_acked_by({ name: alert.acked_by }) : '',
+			alert.acked_until ? m.devices_timeline_acked_until({ when: formatDateTime(alert.acked_until) }) : '',
+			alert.ack_note ?? ''
+		]
+			.filter(Boolean)
+			.join(' · ');
 	}
 
 	const empty = $derived(!loading && !error && alerts.length === 0 && history.length === 0);
@@ -318,7 +339,7 @@
 {#if ignoredRules.length > 0}
 	<div class="mb-4 rounded-[var(--radius-card)] border border-line bg-surface-2 px-4 py-2.5">
 		<p class="text-[0.8125rem] font-semibold text-ink-2">
-			Ignored on this device — never alerts, never notifies
+			{m.devices_timeline_ignored()}
 		</p>
 		<ul class="mt-1.5 grid gap-1" role="list">
 			{#each ignoredRules as { override, rule } (override.rule_uid)}
@@ -330,7 +351,7 @@
 						loading={unignoringUid === override.rule_uid}
 						onclick={() => void unignore(override.rule_uid)}
 					>
-						Stop ignoring
+						{m.devices_timeline_stop_ignoring()}
 					</Button>
 				</li>
 			{/each}
@@ -339,17 +360,17 @@
 {/if}
 
 {#if error}
-	<ErrorNotice {error} title="Could not load the alert history" onretry={() => void load()} />
+	<ErrorNotice {error} title={m.devices_timeline_err_load()} onretry={() => void load()} />
 {:else if loading}
-	<div class="space-y-2" aria-busy="true" aria-label="Loading alert history">
+	<div class="space-y-2" aria-busy="true" aria-label={m.devices_timeline_loading()}>
 		<Skeleton class="h-10 w-full" />
 		<Skeleton class="h-10 w-full" />
 		<Skeleton class="h-10 w-3/4" />
 	</div>
 {:else if empty}
 	<p class="flex flex-wrap items-center gap-2 text-sm text-ink-2">
-		<Plate tone="signal" label="Reporting" />
-		No alert has ever fired on this device.
+		<Plate tone="signal" label={m.devices_timeline_reporting()} />
+		{m.devices_timeline_never()}
 	</p>
 {:else}
 	<ol class="relative ml-2 border-l border-line pl-5">
@@ -371,12 +392,12 @@
 						<span class="tnum min-w-0 break-all text-ink-2">{detail}</span>
 					{/if}
 					{#if alert.silenced}
-						<Plate tone="ghost" bare label="Quiet · maintenance window" />
+						<Plate tone="ghost" bare label={m.devices_timeline_maintenance()} />
 					{/if}
 					<span class="tnum text-ink-2" title={formatDateTime(alert.firing_since ?? alert.condition_since)}>
-						since {formatRelative(alert.firing_since ?? alert.condition_since)}
+						{m.devices_timeline_since({ when: formatRelative(alert.firing_since ?? alert.condition_since) })}
 					</span>
-					<a href="/alerts" class="text-ink-2 hover:text-ink hover:underline">Open alerts</a>
+					<a href="/alerts" class="text-ink-2 hover:text-ink hover:underline">{m.devices_timeline_open_alerts()}</a>
 					<AckControl {alert} onchanged={onackchange} />
 					<SnoozeControl {alert} {target} {silences} onchanged={() => onackchange?.(alert)} />
 					<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => onackchange?.(alert)} />
@@ -384,9 +405,9 @@
 						<Button
 							size="sm"
 							variant="ghost"
-							class="!h-7 !w-7 !px-0"
-							aria-label="Dismiss"
-							title="Dismiss"
+							class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+							aria-label={m.devices_timeline_dismiss()}
+							title={m.devices_timeline_dismiss()}
 							onclick={() => void dismissAlert(alert)}
 						>
 							<X class="size-3.5" aria-hidden="true" />
@@ -395,10 +416,7 @@
 				</div>
 				{#if alert.acked}
 					<p class="mt-0.5 text-[0.8125rem] text-ink-2" title={formatDateTime(alert.acked_until)}>
-						Acked{#if alert.acked_by}
-							by <span class="font-medium">{alert.acked_by}</span>{/if}{#if alert.acked_until}
-							until <span class="tnum">{formatDateTime(alert.acked_until)}</span>{/if}{#if alert.ack_note}
-							— {alert.ack_note}{/if}.
+						{ackedLine(alert)}
 					</p>
 				{/if}
 			</li>
@@ -407,7 +425,7 @@
 		{#if rows.length === 0 && alerts.length === 0}
 			<li class="relative pb-3 text-sm text-ink-2">
 				<span class="absolute top-1.5 -left-[1.5625rem] size-2.5 rounded-full bg-ink-3 ring-4 ring-canvas" aria-hidden="true"></span>
-				Nothing has fired on this device. Rules built up {quietCount} {quietCount === 1 ? 'time' : 'times'} and settled on their own.
+				{quietCount === 1 ? m.devices_timeline_nothing_one({ count: quietCount }) : m.devices_timeline_nothing_other({ count: quietCount })}
 			</li>
 		{/if}
 
@@ -434,7 +452,7 @@
 						{formatRelative(newest.at)}
 					</time>
 					{#if fold.entries.length > 1 && oldest.at !== newest.at}
-						<span class="tnum text-ink-3" title={formatDateTime(oldest.at)}>first {formatRelative(oldest.at)}</span>
+						<span class="tnum text-ink-3" title={formatDateTime(oldest.at)}>{m.devices_timeline_first({ when: formatRelative(oldest.at) })}</span>
 					{/if}
 				</div>
 				<p class="mt-0.5 text-[0.8125rem] text-ink-2">{sentOf(fold)}</p>
@@ -444,16 +462,16 @@
 	<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-ink-2">
 		{#if rows.length > DEFAULT_SHOWN}
 			<Button size="sm" variant="ghost" onclick={() => (showAll = !showAll)} aria-pressed={showAll}>
-				{showAll ? 'Show fewer' : `Show all · ${rows.length - DEFAULT_SHOWN} more`}
+				{showAll ? m.devices_timeline_show_fewer() : m.devices_timeline_show_all({ count: rows.length - DEFAULT_SHOWN })}
 			</Button>
 		{/if}
 		{#if quietCount > 0}
 			<Button size="sm" variant="ghost" onclick={() => (showQuiet = !showQuiet)} aria-pressed={showQuiet}>
-				{showQuiet ? 'Hide quiet transitions' : `Show quiet transitions (building up and back) · ${quietCount}`}
+				{showQuiet ? m.devices_timeline_hide_quiet() : m.devices_timeline_show_quiet({ count: quietCount })}
 			</Button>
 		{/if}
 		{#if rows.length === SHOWN || history.length >= WINDOW}
-			<span>Last {SHOWN} rows. <a href="/alerts#history" class="text-ink hover:underline">Full history</a></span>
+			<span>{m.devices_timeline_last_rows({ count: SHOWN })} <a href="/alerts#history" class="text-ink hover:underline">{m.devices_timeline_full_history()}</a></span>
 		{/if}
 	</div>
 {/if}
@@ -462,8 +480,8 @@
 	{#if 'fingerprint' in dismissToast}
 		{@const fingerprint = dismissToast.fingerprint}
 		<Toast
-			message="Dismissed."
-			actionLabel="Undo"
+			message={m.devices_timeline_dismissed()}
+			actionLabel={m.devices_timeline_undo()}
 			onaction={() => void undoDismissAlert(fingerprint)}
 			onclose={() => (dismissToast = null)}
 		/>

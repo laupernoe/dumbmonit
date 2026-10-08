@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Header of one folder section on /targets: collapse toggle, device count,
 	 * worst status in the folder (so trouble is visible even collapsed), and —
@@ -106,7 +107,7 @@
 		<ChevronDown class={`size-4 shrink-0 text-ink-2 transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`} aria-hidden="true" />
 		<FolderOpen class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 		{#if renaming}
-			<span class="sr-only">Renaming folder</span>
+			<span class="sr-only">{m.devices_folder_renaming()}</span>
 		{:else}
 			<span class="truncate font-semibold text-ink">{label}</span>
 		{/if}
@@ -117,8 +118,8 @@
 		<input
 			bind:this={input}
 			bind:value={draft}
-			class="input !h-7 w-40 text-[0.8125rem]"
-			aria-label={`Rename folder "${folderKey}"`}
+			class="input !h-10 w-32 text-[0.8125rem] sm:w-40"
+			aria-label={m.devices_folder_rename_aria({ name: folderKey })}
 			disabled={busy}
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => {
@@ -134,18 +135,18 @@
 		/>
 	{/if}
 
-	<Plate tone={STATE_TONE[worst]} label={count > 0 ? STATE_LABEL[worst] : 'Empty'} size="sm" />
+	<Plate tone={STATE_TONE[worst]} label={count > 0 ? STATE_LABEL[worst] : m.devices_folder_empty()} size="sm" />
 
 	{#if canManage && !renaming}
-		<Menu label={`Actions for "${label}"`} align="right" bind:open={actionsOpen}>
+		<Menu label={m.devices_folder_actions({ name: label })} align="right" bind:open={actionsOpen}>
 			{#snippet trigger({ toggle, open })}
 				<button
 					type="button"
-					class="rounded-md p-1 text-ink-3 hover:bg-surface-2 hover:text-ink"
+					class="-my-1.5 rounded-md p-2.5 text-ink-3 hover:bg-surface-2 hover:text-ink"
 					onclick={toggle}
 					aria-haspopup="menu"
 					aria-expanded={open}
-					aria-label={`Actions for "${label}"`}
+					aria-label={m.devices_folder_actions({ name: label })}
 				>
 					<EllipsisVertical class="size-4" aria-hidden="true" />
 				</button>
@@ -154,26 +155,26 @@
 				<button
 					type="button"
 					role="menuitem"
-					class="block w-full rounded-lg px-2 py-1.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface"
+					class="block min-h-10 w-full rounded-lg px-2 py-2 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface"
 					onclick={() => {
 						close();
 						startRename();
 					}}
 				>
-					Rename folder
+					{m.devices_folder_rename()}
 				</button>
 				<Confirm
 					size="sm"
 					variant="danger"
 					class="mt-1 w-full justify-start !px-2"
-					confirmLabel="Delete for good?"
+					confirmLabel={m.devices_folder_delete_confirm()}
 					loading={busy}
 					onconfirm={() => {
 						close();
 						void ondelete?.();
 					}}
 				>
-					Delete folder
+					{m.devices_folder_delete()}
 				</Confirm>
 			{/snippet}
 		</Menu>

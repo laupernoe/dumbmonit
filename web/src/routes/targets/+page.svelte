@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Devices — the rack.
 	 *
@@ -104,10 +105,10 @@
 	});
 
 	const segments = $derived([
-		{ id: 'all' as const, label: 'All', count: counts.all },
-		{ id: 'attention' as const, label: 'Needs attention', count: counts.attention },
-		{ id: 'reporting' as const, label: 'Reporting', count: counts.reporting },
-		{ id: 'disabled' as const, label: 'Disabled', count: counts.disabled }
+		{ id: 'all' as const, label: m.devices_targets_seg_all(), count: counts.all },
+		{ id: 'attention' as const, label: m.devices_targets_seg_attention(), count: counts.attention },
+		{ id: 'reporting' as const, label: m.devices_targets_seg_reporting(), count: counts.reporting },
+		{ id: 'disabled' as const, label: m.devices_targets_seg_disabled(), count: counts.disabled }
 	]);
 
 	const visible = $derived.by(() => {
@@ -533,11 +534,11 @@
 			if (pickedUp === id) {
 				pickedUp = null;
 				pickedSnapshot = null;
-				announce = `Dropped ${target.name}.`;
+				announce = m.devices_targets_announce_dropped({ name: target.name });
 			} else {
 				pickedUp = id;
 				pickedSnapshot = reorderScope(effectiveTargets, target).map((t) => t.id);
-				announce = `Picked up ${target.name}. Use the up and down arrow keys to move it, space to drop, escape to cancel.`;
+				announce = m.devices_targets_announce_picked({ name: target.name });
 			}
 			return;
 		}
@@ -548,9 +549,9 @@
 			const order = moveWithinScope(effectiveTargets, stateOf, id, delta);
 			if (order) {
 				void persistOrder(order);
-				announce = `${target.name} moved to position ${order.indexOf(id) + 1} of ${order.length}.`;
+				announce = m.devices_targets_announce_moved({ name: target.name, position: order.indexOf(id) + 1, total: order.length });
 			} else {
-				announce = `${target.name} cannot move further that way: devices needing attention stay above the rest.`;
+				announce = m.devices_targets_announce_blocked({ name: target.name });
 			}
 			return;
 		}
@@ -559,7 +560,7 @@
 			pickedUp = null;
 			if (pickedSnapshot) void persistOrder(pickedSnapshot);
 			pickedSnapshot = null;
-			announce = `Cancelled. ${target.name} is back where it was.`;
+			announce = m.devices_targets_announce_cancelled({ name: target.name });
 		}
 	}
 
@@ -603,12 +604,12 @@
 	});
 </script>
 
-<svelte:head><title>Devices — DumbMonit</title></svelte:head>
+<svelte:head><title>{m.devices_targets_page_title()}</title></svelte:head>
 
-<PageHeader title="Devices" description="Everything DumbMonit watches, stacked like a rack.">
+<PageHeader title={m.devices_targets_title()} description={m.devices_targets_description()}>
 	{#snippet actions()}
 		{#if auth.isAdmin && targets.length > 0}
-			<Menu label="Create a folder" align="right">
+			<Menu label={m.devices_targets_create_folder_menu()} align="right">
 				{#snippet trigger({ toggle, open })}
 					<Button
 						variant="secondary"
@@ -621,7 +622,7 @@
 						}}
 					>
 						<FolderPlus class="size-4" aria-hidden="true" />
-						Create folder
+						{m.devices_targets_create_folder()}
 					</Button>
 				{/snippet}
 				{#snippet children({ close })}
@@ -637,10 +638,10 @@
 						<input
 							bind:this={newFolderInput}
 							bind:value={newFolderDraft}
-							class="input !h-8 min-w-0 flex-1 text-[0.8125rem]"
-							placeholder="Folder name"
+							class="input !h-10 min-w-0 flex-1 text-[0.8125rem]"
+							placeholder={m.devices_targets_folder_placeholder()}
 							maxlength="80"
-							aria-label="New folder name"
+							aria-label={m.devices_targets_folder_aria()}
 							onkeydown={(e) => {
 								if (e.key === 'Escape') {
 									e.preventDefault();
@@ -650,10 +651,10 @@
 						/>
 						<button
 							type="submit"
-							class="shrink-0 rounded-lg bg-signal px-2 py-1.5 text-[0.75rem] font-semibold text-on-signal disabled:opacity-50"
+							class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50"
 							disabled={!newFolderDraft.trim()}
 						>
-							Create
+							{m.devices_targets_folder_create()}
 						</button>
 					</form>
 				{/snippet}
@@ -664,7 +665,7 @@
 			<ClickSpark>
 				<Button variant="primary" href="/targets/new">
 					<Plus class="size-4" aria-hidden="true" />
-					Add a device
+					{m.devices_targets_add()}
 				</Button>
 			</ClickSpark>
 		{/if}
@@ -674,22 +675,22 @@
 {#if !firstLoad && !pageError && targets.length > 0}
 	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
 		<label class="relative min-w-0 flex-1 lg:max-w-sm">
-			<span class="sr-only">Search devices</span>
+			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
 			<input
 				type="search"
 				class="input !pl-9"
-				placeholder="Search by name, address or kind"
+				placeholder={m.devices_targets_search_placeholder()}
 				bind:value={search}
 				autocomplete="off"
 			/>
 		</label>
 		<div class="flex min-w-0 flex-wrap items-center gap-3">
-			<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label="Filter by state" />
+			<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} />
 			<label class="min-w-0">
-				<span class="sr-only">Filter by kind</span>
-				<select class="input !min-h-9 !w-auto !py-1.5 text-sm" bind:value={kind}>
-					<option value="">All kinds</option>
+				<span class="sr-only">{m.devices_targets_filter_kind()}</span>
+				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={kind}>
+					<option value="">{m.devices_targets_all_kinds()}</option>
 					{#each kinds as [value, label] (value)}
 						<option {value}>{label}</option>
 					{/each}
@@ -700,49 +701,55 @@
 {/if}
 
 {#if actionError}
-	<div class="mb-3"><ErrorNotice error={actionError} title="Could not save the new order or folder" /></div>
+	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
 
 {#if pageError}
 	<ErrorNotice
 		error={pageError}
-		title="Could not load the devices"
+		title={m.devices_targets_err_load()}
 		onretry={() => void alertsStore.refresh()}
 	/>
 {:else if firstLoad}
-	<div class="flex flex-col gap-2" aria-busy="true" aria-label="Loading devices">
+	<div class="flex flex-col gap-2" aria-busy="true" aria-label={m.devices_targets_loading()}>
 		<Skeleton class="h-[66px] w-full rounded-[var(--radius-card)]" rows={5} />
 	</div>
 {:else if targets.length === 0}
 	<EmptyState
 		mascot="watch"
-		title="No devices yet."
-		description={auth.isAdmin ? 'Add your first switch, NAS, hypervisor or server. It takes under a minute.' : 'An admin can add the first switch, NAS, hypervisor or server.'}
+		title={m.devices_targets_empty_title()}
+		description={auth.isAdmin ? m.devices_targets_empty_admin() : m.devices_targets_empty_viewer()}
 	>
 		{#snippet action()}
 			{#if auth.isAdmin}
+				{@const linkClass = 'font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink'}
 				<ClickSpark>
-					<Button variant="primary" href="/targets/new">Add a device</Button>
+					<Button variant="primary" href="/targets/new">{m.devices_targets_add()}</Button>
 				</ClickSpark>
 				<p class="mt-4 text-sm text-ink-2">
-					Or <a href="/targets/new?kind=agent" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">install the agent on a machine</a>,
-					or <a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">watch a remote site</a> through one.
+					{#each m.devices_targets_empty_or({ agent: '\u0001', relay: '\u0002' }).split(/(\u0001|\u0002)/) as part, i (i)}
+						{#if part === '\u0001'}
+							<a href="/targets/new?kind=agent" class={linkClass}>{m.devices_targets_empty_agent_link()}</a>
+						{:else if part === '\u0002'}
+							<a href="/targets/new?kind=agent&via=relay" class={linkClass}>{m.devices_targets_empty_relay_link()}</a>
+						{:else}{part}{/if}
+					{/each}
 				</p>
 			{/if}
 		{/snippet}
 	</EmptyState>
 {:else if totalRows === 0}
-	<EmptyState title="Nothing matches." description="No device matches these filters.">
+	<EmptyState title={m.devices_targets_nomatch_title()} description={m.devices_targets_nomatch_desc()}>
 		{#snippet action()}
-			<Button variant="ghost" onclick={clearFilters}>Clear filters</Button>
+			<Button variant="ghost" onclick={clearFilters}>{m.devices_targets_clear_filters()}</Button>
 		{/snippet}
 	</EmptyState>
 {:else}
-	<p class="sr-only" aria-live="polite">{totalRows} of {targets.length} devices shown</p>
+	<p class="sr-only" aria-live="polite">{m.devices_targets_shown({ shown: totalRows, total: targets.length })}</p>
 	{#if filtered}
 		<p class="mb-2 text-[0.8125rem] text-ink-2">
-			<span class="tnum">{totalRows}</span> of <span class="tnum">{targets.length}</span> devices
-			<button type="button" class="ml-1 text-ink-2 underline hover:text-ink" onclick={clearFilters}>Clear filters</button>
+			<span class="tnum">{m.devices_targets_shown({ shown: totalRows, total: targets.length })}</span>
+			<button type="button" class="ml-1 inline-flex min-h-10 items-center text-ink-2 underline hover:text-ink" onclick={clearFilters}>{m.devices_targets_clear_filters()}</button>
 		</p>
 	{/if}
 	<div class="flex flex-col gap-4">
@@ -784,7 +791,7 @@
 	>
 		{dragLabel}
 		{#if dropBlockedHint}
-			<span class="text-[0.75rem] font-normal text-ink-2">stays above — needs attention</span>
+			<span class="text-[0.75rem] font-normal text-ink-2">{m.devices_targets_stays_above()}</span>
 		{/if}
 	</div>
 {/if}

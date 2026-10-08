@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Security score of one device (PingCastle / Secure Score style): a letter
 	 * grade out of a handful of checks run against the collected data — never
@@ -78,42 +79,42 @@
 {#if hide}
 	<!-- Nothing to show: either the kind has no security checks, or the device no longer exists. -->
 {:else if error}
-	<section class="mt-6" aria-label="Security score">
-		<Panel title="Security score" class="rise-in">
-			<ErrorNotice {error} title="Could not load the security score" onretry={() => void load()} />
+	<section class="mt-6" aria-label={m.devices_security_title()}>
+		<Panel title={m.devices_security_title()} class="rise-in">
+			<ErrorNotice {error} title={m.devices_security_error()} onretry={() => void load()} />
 		</Panel>
 	</section>
 {:else if loading || !report}
 	<!-- Nothing while the first answer is pending: most kinds have no checks,
 	     and a skeleton that then vanishes would make the page jump. -->
 {:else}
-	<section class="mt-6" aria-label="Security score">
+	<section class="mt-6" aria-label={m.devices_security_title()}>
 	<Panel
-		title="Security score"
-		description={`${report.counts.pass} passed · ${report.counts.fail} failed · ${report.counts.unknown} not evaluated`}
+		title={m.devices_security_title()}
+		description={m.devices_security_counts({ pass: report.counts.pass, fail: report.counts.fail, unknown: report.counts.unknown })}
 		padded={false}
 		class="rise-in"
 	>
 		{#snippet aside()}
 			{#if report && report.grade !== null && report.score !== null}
-				<Plate tone={GRADE_TONE[report.grade]} label={`Grade ${report.grade} · ${report.score}/100`} />
+				<Plate tone={GRADE_TONE[report.grade]} label={m.devices_security_grade_score({ grade: report.grade, score: report.score })} />
 			{/if}
 			<button
 				type="button"
-				class="inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink"
+				class="inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink"
 				aria-expanded={open}
 				onclick={() => (open = !open)}
 			>
 				<ChevronRight class={`size-4 transition-transform duration-200 ease-out-expo ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
-				{open ? 'Hide' : 'Details'}
+				{open ? m.devices_security_hide() : m.devices_security_details()}
 			</button>
 			<a
 				href={DOCS_URL}
 				target="_blank"
 				rel="noopener"
-				class="inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline"
+				class="inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline"
 			>
-				What is this?
+				{m.devices_security_what()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>
 		{/snippet}
@@ -123,26 +124,26 @@
 			{#if report.grade !== null && report.score !== null}
 				<div class="flex items-center gap-3">
 					<Plate tone={GRADE_TONE[report.grade]} size="md">
-						Grade {report.grade} · {GRADE_WORD[report.grade]}
+						{m.devices_security_grade_word({ grade: report.grade, word: GRADE_WORD[report.grade] })}
 					</Plate>
 					<span class="display tnum text-3xl text-ink">{report.score}<span class="text-lg text-ink-3">/100</span></span>
 				</div>
 			{:else}
 				<div class="flex items-center gap-3">
-					<Plate tone="ghost" size="md">Not rated</Plate>
-					<span class="text-sm text-ink-2">No check could be evaluated yet.</span>
+					<Plate tone="ghost" size="md">{m.devices_security_not_rated()}</Plate>
+					<span class="text-sm text-ink-2">{m.devices_security_none_evaluated()}</span>
 				</div>
 			{/if}
 			{#if report.capped}
-				<Plate tone="warning" bare label="Capped by a failing critical check" />
+				<Plate tone="warning" bare label={m.devices_security_capped()} />
 			{/if}
 			<span class="tnum ml-auto text-[0.75rem] text-ink-3" title={formatDateTime(report.evaluated_at)}>
-				evaluated {formatRelative(report.evaluated_at)}
+				{m.devices_security_evaluated({ when: formatRelative(report.evaluated_at) })}
 			</span>
 		</div>
 
 		{#if report.checks.length === 0}
-			<p class="px-5 py-4 text-sm text-ink-2">No check has run on this device yet.</p>
+			<p class="px-5 py-4 text-sm text-ink-2">{m.devices_security_no_checks()}</p>
 		{:else}
 			<div class="flex flex-col">
 				{#if failing.length > 0}
@@ -150,7 +151,7 @@
 						{#each failing as check, i (check.id)}
 							<li class="rise-in flex flex-col gap-1.5 px-5 py-3" style="--rise-delay: {Math.min(i, 8) * 40}ms">
 								<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-									<Plate tone={severityTone(check.severity)} label={`Failed · ${SEVERITY_WORD[check.severity]}`} />
+									<Plate tone={severityTone(check.severity)} label={m.devices_security_failed({ severity: SEVERITY_WORD[check.severity] })} />
 									<span class="min-w-0 font-semibold text-ink break-words">{check.title}</span>
 									<span class="text-[0.75rem] text-ink-3">{CATEGORY_WORD[check.category]}</span>
 								</div>
@@ -163,7 +164,7 @@
 										rel="noopener"
 										class="inline-flex w-fit items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline"
 									>
-										Vendor guidance
+										{m.devices_security_guidance()}
 										<ExternalLink class="size-3.5" aria-hidden="true" />
 									</a>
 								{/if}
@@ -176,7 +177,7 @@
 					<ul class="divide-y divide-line">
 						{#each passing as check (check.id)}
 							<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5">
-								<Plate tone="signal" bare label="Passed" />
+								<Plate tone="signal" bare label={m.devices_security_passed()} />
 								<span class="min-w-0 flex-1 text-sm text-ink break-words">{check.title}</span>
 								<span class="text-[0.75rem] text-ink-3">{CATEGORY_WORD[check.category]}</span>
 							</li>
@@ -188,13 +189,13 @@
 					<div class="border-t border-line">
 						<button
 							type="button"
-							class="flex w-full items-center gap-2 px-5 py-2.5 text-left text-sm font-semibold text-ink-2 hover:text-ink"
+							class="flex min-h-10 w-full items-center gap-2 px-4 py-2.5 text-left sm:px-5 text-sm font-semibold text-ink-2 hover:text-ink"
 							aria-expanded={unknownOpen}
 							aria-controls="security-unknown-checks"
 							onclick={() => (unknownOpen = !unknownOpen)}
 						>
 							<ChevronRight class={`size-4 shrink-0 text-ink-3 transition-transform duration-200 ease-out-expo ${unknownOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
-							{unknown.length} {unknown.length === 1 ? 'check' : 'checks'} not evaluated — data not collected
+							{unknown.length === 1 ? m.devices_security_unknown_one({ count: unknown.length }) : m.devices_security_unknown_other({ count: unknown.length })}
 						</button>
 						{#if unknownOpen}
 							<ul id="security-unknown-checks" class="divide-y divide-line border-t border-line">

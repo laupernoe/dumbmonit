@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Plakar backups seen by the agent: one block per kloset, one line per
 	 * backed-up source with the age of its newest snapshot as a plate. Read
@@ -74,21 +75,22 @@
 	}
 
 	function klosetStatus(k: KlosetStat): { tone: Tone; label: string } {
-		if (unreadable(k)) return { tone: 'warning', label: 'Cannot be opened' };
-		if (k.sources.some((s) => !s.ok)) return { tone: 'warning', label: 'Last backup failed' };
-		if (k.sources.length === 0) return { tone: 'ghost', label: 'No snapshot yet' };
-		return { tone: 'signal', label: 'Last backup fine' };
+		if (unreadable(k)) return { tone: 'warning', label: m.devices_plakar_cannot_open() };
+		if (k.sources.some((s) => !s.ok)) return { tone: 'warning', label: m.devices_plakar_last_failed() };
+		if (k.sources.length === 0) return { tone: 'ghost', label: m.devices_plakar_no_snapshot() };
+		return { tone: 'signal', label: m.devices_plakar_last_fine() };
 	}
 
 	const DAY = 86_400;
 
 	/** The plate word does the alerting: signal under a day, advisory up to two, warning beyond or on failure. */
 	function plateOf(s: SourceStat): { tone: Tone; label: string } {
-		if (!s.ok) return { tone: 'warning', label: 'Backup failed' };
-		if (s.ageSeconds === null) return { tone: 'ghost', label: 'No snapshot yet' };
-		if (s.ageSeconds < DAY) return { tone: 'signal', label: `Backed up ${formatAge(s.ageSeconds)} ago` };
-		if (s.ageSeconds <= 2 * DAY) return { tone: 'advisory', label: `Last backup ${formatAge(s.ageSeconds)} ago` };
-		return { tone: 'warning', label: `No backup for ${formatAge(s.ageSeconds)}` };
+		if (!s.ok) return { tone: 'warning', label: m.devices_plakar_failed() };
+		if (s.ageSeconds === null) return { tone: 'ghost', label: m.devices_plakar_no_snapshot() };
+		const age = formatAge(s.ageSeconds);
+		if (s.ageSeconds < DAY) return { tone: 'signal', label: m.devices_plakar_backed_up({ age }) };
+		if (s.ageSeconds <= 2 * DAY) return { tone: 'advisory', label: m.devices_plakar_last_ago({ age }) };
+		return { tone: 'warning', label: m.devices_plakar_none_for({ age }) };
 	}
 
 	/** Folds the flat series list into klosets and sources; the presence gauge is read on the side. */
@@ -163,22 +165,22 @@
 </script>
 
 {#if !loading && !absent}
-<Panel title="Backups" description={klosets.length > 0 ? 'Plakar klosets the agent reads.' : undefined} padded={false} class="rise-in">
+<Panel title={m.devices_plakar_title()} description={klosets.length > 0 ? m.devices_plakar_desc() : undefined} padded={false} class="rise-in">
 	{#if error}
-		<div class="px-5 py-4">
-			<ErrorNotice {error} title="Could not load the backups" onretry={() => void load()} />
+		<div class="px-4 py-4 sm:px-5">
+			<ErrorNotice {error} title={m.devices_plakar_err()} onretry={() => void load()} />
 		</div>
 	{:else if klosets.length === 0}
-		<p class="px-5 py-4 text-sm text-ink-2">
-			Plakar is installed but no kloset was found. Create one and run a first backup —
-			<a href={GUIDE_URL} class="inline-flex items-center gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink" target="_blank" rel="noreferrer">
-				see the guide
+		<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">
+			{m.devices_plakar_no_kloset()}
+			<a href={GUIDE_URL} class="inline-flex min-h-10 items-center sm:min-h-0 gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink" target="_blank" rel="noreferrer">
+				{m.devices_plakar_guide()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>.
 		</p>
 	{:else}
 		{#if installed === false}
-			<p class="px-5 pt-4 text-sm text-warning-ink">The agent found these klosets but cannot run <span class="font-mono">plakar</span>: set <span class="font-mono">plakar_bin</span> in agent.yaml, or <span class="font-mono">plakar: false</span> to stop watching them.</p>
+			<p class="px-4 pt-4 text-sm text-warning-ink sm:px-5">{m.devices_plakar_no_binary()}</p>
 		{/if}
 		<ul class="divide-y divide-line">
 			{#each klosets as k, i (k.kloset)}
@@ -186,45 +188,45 @@
 				{@const oldest = oldestAge(k)}
 				{@const total = snapshotTotal(k)}
 				{@const status = klosetStatus(k)}
-				<li class="rise-in px-5 py-4" style="--rise-delay: {Math.min(i, 8) * 40}ms">
+				<li class="rise-in px-4 py-4 sm:px-5" style="--rise-delay: {Math.min(i, 8) * 40}ms">
 					<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 						<p class="min-w-0 font-semibold text-ink break-all">{k.kloset}</p>
 						{#if unreadable(k)}
 							<!-- the status plate below says it all -->
 						{:else if newest === null}
-							<Plate tone="ghost" label="No snapshot yet" />
+							<Plate tone="ghost" label={m.devices_plakar_no_snapshot()} />
 						{:else if newest < DAY}
-							<Plate tone="signal" label={`Backed up ${formatAge(newest)} ago`} />
+							<Plate tone="signal" label={m.devices_plakar_backed_up({ age: formatAge(newest) })} />
 						{:else if newest <= 2 * DAY}
-							<Plate tone="advisory" label={`Last backup ${formatAge(newest)} ago`} />
+							<Plate tone="advisory" label={m.devices_plakar_last_ago({ age: formatAge(newest) })} />
 						{:else}
-							<Plate tone="warning" label={`No backup for ${formatAge(newest)}`} />
+							<Plate tone="warning" label={m.devices_plakar_none_for({ age: formatAge(newest) })} />
 						{/if}
 						<Plate tone={status.tone} label={status.label} bare />
 					</div>
 					<p class="tnum mt-1 flex flex-wrap gap-x-3 text-sm text-ink-2">
-						{#if total !== null}<span>{total} {total === 1 ? 'snapshot' : 'snapshots'}</span>{/if}
-						{#if k.sizeBytes !== null}<span>{formatBytes(k.sizeBytes)} on disk</span>{/if}
-						{#if k.sources.length > 0}<span>{k.sources.length} {k.sources.length === 1 ? 'source' : 'sources'}</span>{/if}
+						{#if total !== null}<span>{total === 1 ? m.devices_plakar_snapshots_one({ count: total }) : m.devices_plakar_snapshots_other({ count: total })}</span>{/if}
+						{#if k.sizeBytes !== null}<span>{m.devices_plakar_on_disk({ size: formatBytes(k.sizeBytes) })}</span>{/if}
+						{#if k.sources.length > 0}<span>{k.sources.length === 1 ? m.devices_plakar_sources_one({ count: k.sources.length }) : m.devices_plakar_sources_other({ count: k.sources.length })}</span>{/if}
 					</p>
 					{#if oldest !== null && oldest > 2 * DAY}
-						<p class="mt-1 text-sm text-warning-ink">Backup too old: the newest snapshot of at least one source is {formatAge(oldest)} old. Check the schedule that runs <span class="font-mono">plakar backup</span> on this machine.</p>
+						<p class="mt-1 text-sm text-warning-ink">{m.devices_plakar_too_old({ age: formatAge(oldest) })}</p>
 					{/if}
 					{#if unreadable(k) && installed === false}
-						<p class="mt-1 text-sm text-ink-2">Not read: the plakar binary is missing from the agent's PATH.</p>
+						<p class="mt-1 text-sm text-ink-2">{m.devices_plakar_not_read()}</p>
 					{:else if unreadable(k)}
-						<p class="mt-1 text-sm text-ink-2">The agent cannot open this kloset: check its passphrase (PLAKAR_PASSPHRASE or the store entry) and that the agent's user can read it.</p>
+						<p class="mt-1 text-sm text-ink-2">{m.devices_plakar_cannot_open_hint()}</p>
 					{:else if k.sources.length === 0}
-						<p class="mt-1 text-sm text-ink-2">No snapshot in this kloset yet.</p>
+						<p class="mt-1 text-sm text-ink-2">{m.devices_plakar_kloset_empty()}</p>
 					{:else}
 						<ul class="mt-2 flex flex-col gap-2">
 							{#each k.sources as s (s.source)}
 								{@const plate = plateOf(s)}
 								<li class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
 									<Plate tone={plate.tone} label={plate.label} />
-									<span class="min-w-0 text-sm text-ink break-all">{s.source === '*' ? 'whole kloset' : s.source}</span>
+									<span class="min-w-0 text-sm text-ink break-all">{s.source === '*' ? m.devices_plakar_whole() : s.source}</span>
 									{#if s.snapshots !== null}
-										<span class="tnum text-sm text-ink-2">{s.snapshots} {s.snapshots === 1 ? 'snapshot' : 'snapshots'}</span>
+										<span class="tnum text-sm text-ink-2">{s.snapshots === 1 ? m.devices_plakar_snapshots_one({ count: s.snapshots }) : m.devices_plakar_snapshots_other({ count: s.snapshots })}</span>
 									{/if}
 								</li>
 							{/each}
