@@ -25,6 +25,7 @@
 	import QuietHoursEditor from './QuietHoursEditor.svelte';
 	import MatcherEditor from './MatcherEditor.svelte';
 	import { matcherIsEmpty } from '#lib/components/alerts/helpers.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		kinds: KindInfo[];
@@ -67,18 +68,18 @@
 
 	// Delivery policy: what this channel accepts and when. The bulletin's ladder
 	// words map onto the API severities (Advisory = warning, Warning = critical).
-	const SEVERITY_FLOORS: { id: AlertSeverity; label: string }[] = [
-		{ id: 'info', label: 'Everything (Info and up)' },
-		{ id: 'warning', label: 'Advisory and up' },
-		{ id: 'critical', label: 'Warning only' }
-	];
-	const INTERVALS: { value: number; label: string }[] = [
-		{ value: 0, label: 'No minimum' },
-		{ value: 300, label: '5 min' },
-		{ value: 900, label: '15 min' },
-		{ value: 3600, label: '1 h' },
-		{ value: 21600, label: '6 h' }
-	];
+	const SEVERITY_FLOORS: { id: AlertSeverity; label: string }[] = $derived([
+		{ id: 'info', label: m.notifications_form_floor_info() },
+		{ id: 'warning', label: m.notifications_form_floor_warning() },
+		{ id: 'critical', label: m.notifications_form_floor_critical() }
+	]);
+	const INTERVALS: { value: number; label: string }[] = $derived([
+		{ value: 0, label: m.notifications_form_no_minimum() },
+		{ value: 300, label: m.alerts_span_min({ minutes: 5 }) },
+		{ value: 900, label: m.alerts_span_min({ minutes: 15 }) },
+		{ value: 3600, label: m.alerts_span_h({ hours: 1 }) },
+		{ value: 21600, label: m.alerts_span_h({ hours: 6 }) }
+	]);
 	let minSeverity = $state<AlertSeverity>(untrack(() => channel?.policy?.min_severity ?? 'info'));
 	let notifyResolved = $state(untrack(() => channel?.policy?.notify_resolved ?? true));
 	let minInterval = $state(untrack(() => channel?.policy?.min_interval_secs ?? 0));
@@ -100,7 +101,7 @@
 	const intervalOptions = $derived(
 		INTERVALS.some((o) => o.value === minInterval)
 			? INTERVALS
-			: [...INTERVALS, { value: minInterval, label: `${minInterval} s (current)` }].sort((a, b) => a.value - b.value)
+			: [...INTERVALS, { value: minInterval, label: m.notifications_form_interval_current({ seconds: minInterval }) }].sort((a, b) => a.value - b.value)
 	);
 
 	let step = $state<'kind' | 'fields'>(untrack(() => (channel ? 'fields' : 'kind')));
@@ -180,16 +181,16 @@
 			try {
 				parsed = JSON.parse(text);
 			} catch {
-				throw new Error('Must be a valid JSON object, for example {"key": "value"}.');
+				throw new Error(m.notifications_form_error_json());
 			}
 			if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-				throw new Error('Must be a JSON object, not a list or a plain value.');
+				throw new Error(m.notifications_form_error_json_object());
 			}
 			return parsed;
 		}
 		if (field.input === 'number') {
 			const n = Number(text);
-			if (Number.isNaN(n)) throw new Error('Must be a number.');
+			if (Number.isNaN(n)) throw new Error(m.notifications_form_error_number());
 			return n;
 		}
 		return text;
@@ -197,27 +198,27 @@
 
 	function validate(): boolean {
 		const errors: Record<string, string> = {};
-		nameError = name.trim() ? null : 'Give the channel a name; you will pick it in alert rules.';
+		nameError = name.trim() ? null : m.notifications_form_error_name();
 
 		for (const field of settingFields) {
 			if (field.input === 'boolean') continue;
 			const value = settings[field.key];
 			if (field.required && isBlank(value)) {
-				errors[`setting-${field.key}`] = 'This field is required.';
+				errors[`setting-${field.key}`] = m.notifications_form_error_required();
 				continue;
 			}
 			if (isBlank(value)) continue;
 			try {
 				toServer(field, value ?? '');
 			} catch (cause) {
-				errors[`setting-${field.key}`] = cause instanceof Error ? cause.message : 'Invalid value.';
+				errors[`setting-${field.key}`] = cause instanceof Error ? cause.message : m.notifications_form_error_invalid();
 			}
 		}
 		// A required secret may stay blank on edit: the server keeps the one it has,
 		// unless the user asked to clear the saved secrets.
 		for (const field of secretFields) {
 			if (field.required && isBlank(secrets[field.key]) && !keepsSecrets) {
-				errors[`secret-${field.key}`] = 'This secret is required.';
+				errors[`secret-${field.key}`] = m.notifications_form_error_secret_required();
 			}
 		}
 		fieldErrors = errors;
@@ -283,16 +284,16 @@
 	const KindIcon = $derived(kindIcon(kind));
 </script>
 
-<div class="rounded-[var(--radius-card)] border border-signal/40 bg-surface shadow-lift" role="region" aria-label={editing ? `Edit ${channel?.name}` : 'Add channel'}>
+<div class="rounded-[var(--radius-card)] border border-signal/40 bg-surface shadow-lift" role="region" aria-label={editing ? m.alerts_rules_edit_aria({ name: channel?.name ?? '' }) : m.notifications_channels_add()}>
 	{#if step === 'kind'}
 		<div class="border-b border-line px-5 py-4">
 			<div class="flex flex-wrap items-start justify-between gap-3">
 				<div>
-					<h3 class="text-base font-semibold tracking-tight text-ink">{editing ? 'Change the channel type' : 'Where should alerts go?'}</h3>
-					<p class="mt-0.5 text-sm text-ink-2">Pick a service. Only the fields it needs come next.</p>
+					<h3 class="text-base font-semibold tracking-tight text-ink">{editing ? m.notifications_form_change_type_title() : m.notifications_form_pick_title()}</h3>
+					<p class="mt-0.5 text-sm text-ink-2">{m.notifications_form_pick_hint()}</p>
 				</div>
 				<Button variant="ghost" size="sm" onclick={editing ? () => (step = 'fields') : oncancel}>
-					{editing ? 'Keep current type' : 'Cancel'}
+					{editing ? m.notifications_form_keep_type() : m.alerts_form_cancel()}
 				</Button>
 			</div>
 			<div class="relative mt-3 max-w-sm">
@@ -301,17 +302,17 @@
 					bind:this={searchBox}
 					type="search"
 					class="input !pl-9"
-					placeholder="Search Discord, email, webhook…"
+					placeholder={m.notifications_form_search_placeholder()}
 					bind:value={search}
 					autocomplete="off"
-					aria-label="Search channel types"
+					aria-label={m.notifications_form_search_label()}
 				/>
 			</div>
 		</div>
 		<div class="px-5 py-4">
 			{#if filteredKinds.length === 0}
 				<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-8 text-center text-sm text-ink-2">
-					No channel type matches “{search}”.
+					{m.notifications_form_no_match({ query: search })}
 				</p>
 			{:else}
 				<ul class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" role="list">
@@ -347,31 +348,33 @@
 					</span>
 					<div class="min-w-0">
 						<h3 class="truncate text-base font-semibold tracking-tight text-ink">
-							{editing ? `Edit “${channel?.name}”` : `New ${info?.label ?? kind} channel`}
+							{editing
+								? m.notifications_form_edit_title({ name: channel?.name ?? '' })
+								: m.notifications_form_new_title({ kind: info?.label ?? kind })}
 						</h3>
 						{#if info?.summary}<p class="mt-0.5 text-sm text-ink-2">{info.summary}</p>{/if}
 					</div>
 				</div>
-				<div class="flex items-center gap-1">
+				<div class="flex flex-wrap items-center gap-1">
 					<Button variant="ghost" size="sm" onclick={() => (step = 'kind')} disabled={saving}>
 						<ChevronLeft class="size-4" aria-hidden="true" />
-						Change type
+						{m.notifications_form_change_type()}
 					</Button>
 					<Button variant="ghost" size="sm" href={kindDocUrl(info)} target="_blank" rel="noopener">
-						Documentation
+						{m.notifications_form_documentation()}
 						<ExternalLink class="size-3.5" aria-hidden="true" />
 					</Button>
 				</div>
 			</div>
 
 			<div class="grid gap-5 px-5 py-5">
-				<Field label="Name" for="channel-name" required error={nameError} help="Shown in the channel list and picked in alert rules.">
+				<Field label={m.alerts_form_name()} for="channel-name" required error={nameError} help={m.notifications_form_name_help()}>
 					<input
 						id="channel-name"
 						type="text"
 						class="input"
 						bind:value={name}
-						placeholder={info ? `${info.label} — family` : 'Family chat'}
+						placeholder={info ? m.notifications_form_name_placeholder_kind({ kind: info.label }) : m.notifications_form_name_placeholder()}
 						autocomplete="off"
 						disabled={saving}
 						aria-invalid={nameError ? 'true' : undefined}
@@ -381,7 +384,7 @@
 
 				{#if settingFields.length > 0}
 					<fieldset class="grid gap-4 border-t border-line pt-5">
-						<legend class="sr-only">Settings</legend>
+						<legend class="sr-only">{m.notifications_form_settings()}</legend>
 						{#each settingFields as field (field.key)}
 							<ChannelFieldInput
 								{field}
@@ -400,17 +403,17 @@
 
 				{#if secretFields.length > 0}
 					<fieldset class="grid gap-4 border-t border-line pt-5">
-						<legend class="mb-1 text-sm font-semibold text-ink">Secrets</legend>
+						<legend class="mb-1 text-sm font-semibold text-ink">{m.notifications_form_secrets()}</legend>
 						<p class="-mt-3 text-[0.8125rem] text-ink-2">
-							Encrypted at rest and never shown again.
-							{#if destinationChanged}The destination changed: enter the secrets again, saved ones are not sent to a new address.{:else if editing && channel?.has_secret}A secret is already saved for this channel.{/if}
+							{m.notifications_form_secrets_note()}
+							{#if destinationChanged}{m.notifications_form_secrets_destination_changed()}{:else if editing && channel?.has_secret}{m.notifications_form_secrets_saved()}{/if}
 						</p>
 						{#each secretFields as field (field.key)}
 							<ChannelFieldInput
 								{field}
 								idPrefix="secret"
 								value={secrets[field.key] ?? ''}
-								note={keepsSecrets ? 'Leave blank to keep the saved secret.' : undefined}
+								note={keepsSecrets ? m.notifications_form_secrets_keep() : undefined}
 								error={fieldErrors[`secret-${field.key}`] ?? null}
 								disabled={saving}
 								onchange={(value) => {
@@ -420,42 +423,42 @@
 							/>
 						{/each}
 						{#if editing && channel?.has_secret}
-							<Field label="Clear the saved secrets" for="clear-secrets" inline help="Removes what is stored; the channel will fail until new secrets are entered.">
-								<Toggle id="clear-secrets" bind:checked={clearSecrets} disabled={saving} label="Clear the saved secrets" />
+							<Field label={m.notifications_form_clear_secrets()} for="clear-secrets" inline help={m.notifications_form_clear_secrets_help()}>
+								<Toggle id="clear-secrets" bind:checked={clearSecrets} disabled={saving} label={m.notifications_form_clear_secrets()} />
 							</Field>
 						{/if}
 					</fieldset>
 				{/if}
 
 				<div class="border-t border-line pt-5">
-					<Field label="Enabled" for="channel-enabled" inline help="A disabled channel keeps its setup but receives nothing.">
-						<Toggle id="channel-enabled" bind:checked={enabled} disabled={saving} label="Enabled" />
+					<Field label={m.notifications_channels_enabled()} for="channel-enabled" inline help={m.notifications_form_enabled_help()}>
+						<Toggle id="channel-enabled" bind:checked={enabled} disabled={saving} label={m.notifications_channels_enabled()} />
 					</Field>
 				</div>
 
 				<fieldset class="grid gap-4 border-t border-line pt-5">
-					<legend class="sr-only">Delivery</legend>
+					<legend class="sr-only">{m.notifications_form_delivery()}</legend>
 					<button
 						type="button"
-						class="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-ink"
+						class="inline-flex min-h-10 w-fit flex-wrap items-center gap-x-1.5 text-left text-sm font-semibold text-ink sm:min-h-0"
 						aria-expanded={showDelivery}
 						aria-controls="channel-delivery"
 						onclick={() => (showDelivery = !showDelivery)}
 					>
-						{showDelivery ? 'Hide delivery options' : 'Delivery options'}
-						<span class="font-normal text-ink-2">— what this channel hears, and when</span>
+						{showDelivery ? m.notifications_form_delivery_hide() : m.notifications_form_delivery_show()}
+						<span class="font-normal text-ink-2">{m.notifications_form_delivery_hint()}</span>
 					</button>
 					{#if showDelivery}
 						<div id="channel-delivery" class="grid gap-4">
 							<div class="grid gap-4 sm:grid-cols-2">
-								<Field label="Send" for="channel-min-severity" help="Alerts below this level never reach the channel.">
+								<Field label={m.notifications_form_send()} for="channel-min-severity" help={m.notifications_form_send_help()}>
 									<select id="channel-min-severity" class="input" bind:value={minSeverity} disabled={saving}>
 										{#each SEVERITY_FLOORS as option (option.id)}
 											<option value={option.id}>{option.label}</option>
 										{/each}
 									</select>
 								</Field>
-								<Field label="Same alert again no sooner than" for="channel-min-interval" help="Reminders and re-fires of one alert are spaced out by at least this.">
+								<Field label={m.notifications_form_interval()} for="channel-min-interval" help={m.notifications_form_interval_help()}>
 									<select id="channel-min-interval" class="input" bind:value={minInterval} disabled={saving}>
 										{#each intervalOptions as option (option.value)}
 											<option value={option.value}>{option.label}</option>
@@ -463,8 +466,8 @@
 									</select>
 								</Field>
 							</div>
-							<Field label="Tell me when it clears" for="channel-resolved" inline help="Off: the channel only hears about problems, never recoveries.">
-								<Toggle id="channel-resolved" bind:checked={notifyResolved} disabled={saving} label="Tell me when it clears" />
+							<Field label={m.notifications_form_resolved()} for="channel-resolved" inline help={m.notifications_form_resolved_help()}>
+								<Toggle id="channel-resolved" bind:checked={notifyResolved} disabled={saving} label={m.notifications_form_resolved()} />
 							</Field>
 							<QuietHoursEditor value={quietHours} idPrefix="channel-quiet" disabled={saving} onchange={(next) => (quietHours = next)} />
 							<MatcherEditor value={matcher} {minSeverity} disabled={saving} onchange={(next) => (matcher = next)} />
@@ -473,15 +476,15 @@
 				</fieldset>
 
 				{#if apiError}
-					<ErrorNotice error={apiError} title="Could not save the channel" />
+					<ErrorNotice error={apiError} title={m.notifications_form_error_save()} />
 				{/if}
 			</div>
 
 			<div class="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-4">
-				<Button variant="ghost" onclick={oncancel} disabled={saving}>Cancel</Button>
+				<Button variant="ghost" onclick={oncancel} disabled={saving}>{m.alerts_form_cancel()}</Button>
 				<ClickSpark>
 					<Button type="submit" variant="primary" loading={saving}>
-						{editing ? 'Save changes' : 'Add channel'}
+						{editing ? m.alerts_rules_edit_save() : m.notifications_channels_add()}
 					</Button>
 				</ClickSpark>
 			</div>

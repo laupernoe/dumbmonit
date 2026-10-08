@@ -11,6 +11,7 @@ import type { AlertHistoryEntry, AlertRule, Target, TargetId } from "#lib/api/in
 import type { Tone } from "#lib/ui/index.js";
 import { parseServerDate } from "#lib/format.js";
 import { isDownRule } from "./briefing";
+import { m } from "#lib/paraglide/messages.js";
 
 export interface Streak {
   key: string;
@@ -35,13 +36,21 @@ export interface StreaksInput {
 /** "3 d 4 h", "5 h 12 min", "42 min", "under a minute". */
 export function formatSpan(ms: number): string {
   const minutes = Math.floor(ms / 60_000);
-  if (minutes < 1) return "under a minute";
+  if (minutes < 1) return m.overview_streaks_under_minute();
   const days = Math.floor(minutes / 1_440);
   const hours = Math.floor((minutes % 1_440) / 60);
   const mins = minutes % 60;
-  if (days > 0) return hours > 0 ? `${days} d ${hours} h` : `${days} d`;
-  if (hours > 0) return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
-  return `${mins} min`;
+  if (days > 0) {
+    return hours > 0
+      ? m.overview_streaks_d_h({ days, hours })
+      : m.overview_week_days_short({ days });
+  }
+  if (hours > 0) {
+    return mins > 0
+      ? m.overview_streaks_h_min({ hours, minutes: mins })
+      : m.alerts_span_h({ hours });
+  }
+  return m.alerts_span_min({ minutes: mins });
 }
 
 export function computeStreaks(input: StreaksInput): Streak[] {
@@ -65,26 +74,29 @@ export function computeStreaks(input: StreaksInput): Streak[] {
     const first = unreachable[0];
     out.push({
       key: "reporting",
-      label: "Everything reporting",
-      value: "Not now",
+      label: m.overview_streaks_reporting(),
+      value: m.overview_streaks_not_now(),
       tone: "warning",
       hint:
         unreachable.length === 1
-          ? `${first.name} is unreachable`
-          : `${first.name} and ${unreachable.length - 1} more are unreachable`,
+          ? m.overview_streaks_one_unreachable({ name: first.name })
+          : m.overview_streaks_many_unreachable({
+              name: first.name,
+              count: unreachable.length - 1,
+            }),
       href: `/targets/${first.id}`,
     });
   } else {
     out.push({
       key: "reporting",
-      label: "Everything reporting for",
+      label: m.overview_streaks_reporting_for(),
       value: lastOutage
         ? formatSpan(now.getTime() - lastOutage.getTime())
-        : `over ${windowDays} d`,
+        : m.overview_streaks_over({ days: windowDays }),
       tone: "signal",
       hint: lastOutage
-        ? "no device unreachable since the last outage"
-        : `no device went unreachable in ${windowDays} days`,
+        ? m.overview_streaks_since_outage()
+        : m.overview_streaks_none_down({ count: windowDays }),
     });
   }
 
@@ -107,13 +119,13 @@ export function computeStreaks(input: StreaksInput): Streak[] {
     const first = quiet[0];
     out.push({
       key: "quietest",
-      label: "Quietest device",
+      label: m.overview_streaks_quietest(),
       value: first.name,
       tone: "ink",
       hint:
         quiet.length === 1
-          ? `no alert in ${windowDays} days`
-          : `no alert in ${windowDays} days, like ${quiet.length - 1} other${quiet.length > 2 ? "s" : ""}`,
+          ? m.overview_streaks_no_alert({ days: windowDays })
+          : m.overview_streaks_no_alert_like({ days: windowDays, count: quiet.length - 1 }),
       href: `/targets/${first.id}`,
     });
   } else {
@@ -123,10 +135,10 @@ export function computeStreaks(input: StreaksInput): Streak[] {
     const n = counts.get(calmest.id) ?? 0;
     out.push({
       key: "quietest",
-      label: "Quietest device",
+      label: m.overview_streaks_quietest(),
       value: calmest.name,
       tone: "ink",
-      hint: `fewest alerts: ${n} alert event${n === 1 ? "" : "s"} in ${windowDays} days`,
+      hint: m.overview_streaks_fewest({ count: n, days: windowDays }),
       href: `/targets/${calmest.id}`,
     });
   }
@@ -137,10 +149,10 @@ export function computeStreaks(input: StreaksInput): Streak[] {
   if (noise > 0) {
     out.push({
       key: "noisiest",
-      label: "Most alerts",
+      label: m.overview_streaks_noisiest(),
       value: noisiest.name,
       tone: noise >= 20 ? "advisory" : "ink",
-      hint: `${noise} alert event${noise === 1 ? "" : "s"} (started, fired or resolved) in ${windowDays} days`,
+      hint: m.overview_streaks_most({ count: noise, days: windowDays }),
       href: `/targets/${noisiest.id}`,
     });
   }

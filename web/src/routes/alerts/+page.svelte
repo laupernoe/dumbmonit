@@ -43,15 +43,16 @@
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	type Tab = 'now' | 'scheduled' | 'rules' | 'notifications' | 'history';
-	const TABS: { id: Tab; label: string }[] = [
-		{ id: 'now', label: 'Now' },
-		{ id: 'scheduled', label: 'Scheduled' },
-		{ id: 'rules', label: 'Rules' },
-		{ id: 'notifications', label: 'Notifications' },
-		{ id: 'history', label: 'History' }
-	];
+	const TABS: { id: Tab; label: string }[] = $derived([
+		{ id: 'now', label: m.alerts_page_tab_now() },
+		{ id: 'scheduled', label: m.alerts_page_tab_scheduled() },
+		{ id: 'rules', label: m.alerts_page_tab_rules() },
+		{ id: 'notifications', label: m.alerts_page_tab_notifications() },
+		{ id: 'history', label: m.alerts_page_tab_history() }
+	]);
 	// Anchors inside the Notifications tab: `#notifications-policy` opens the
 	// tab and scrolls to that panel (the old Settings deep links land here).
 	const NOTIFICATION_ANCHORS = ['notifications-channels', 'notifications-policy'];
@@ -134,7 +135,7 @@
 		try {
 			silences = await listSilences();
 		} catch (cause) {
-			reportError(cause, 'Could not refresh the maintenance windows.');
+			reportError(cause, m.alerts_page_error_refresh_windows());
 		}
 	}
 
@@ -142,7 +143,7 @@
 		try {
 			rules = await listAlertRules();
 		} catch (cause) {
-			reportError(cause, 'Could not refresh the rules.');
+			reportError(cause, m.alerts_page_error_refresh_rules());
 		}
 	}
 
@@ -165,7 +166,7 @@
 			await deleteSilence(id);
 			await Promise.all([refreshSilences(), alertsStore.refresh()]);
 		} catch (cause) {
-			reportError(cause, 'Could not remove the maintenance window.');
+			reportError(cause, m.alerts_page_error_remove_window());
 		} finally {
 			removingSilenceId = null;
 		}
@@ -178,7 +179,7 @@
 			await setAlertRuleEnabled(rule.id, enabled);
 			await refreshRules();
 		} catch (cause) {
-			reportError(cause, 'Could not change the rule.');
+			reportError(cause, m.alerts_page_error_change_rule());
 			await refreshRules(); // put the toggle back where the server has it
 		} finally {
 			ruleBusyId = null;
@@ -192,7 +193,7 @@
 			await deleteAlertRule(id);
 			await refreshRules();
 		} catch (cause) {
-			reportError(cause, 'Could not delete the rule.');
+			reportError(cause, m.alerts_page_error_delete_rule());
 		} finally {
 			ruleBusyId = null;
 		}
@@ -207,7 +208,7 @@
 	function readHash() {
 		if (!browser) return;
 		const raw = window.location.hash.replace('#', '');
-		if (TABS.some((t) => t.id === raw)) {
+		if (['now', 'scheduled', 'rules', 'notifications', 'history'].includes(raw)) {
 			tab = raw as Tab;
 		} else if (NOTIFICATION_ANCHORS.includes(raw)) {
 			tab = 'notifications';
@@ -235,11 +236,11 @@
 	});
 </script>
 
-<svelte:head><title>Alerts · DumbMonit</title></svelte:head>
+<svelte:head><title>{m.alerts_page_title()} · DumbMonit</title></svelte:head>
 
 <PageHeader
-	title="Alerts"
-	description="What is firing now, what is scheduled to stay quiet, the rules behind it, and where you are told."
+	title={m.alerts_page_title()}
+	description={m.alerts_page_description()}
 >
 	{#snippet actions()}
 		{#if auth.canOperate}
@@ -250,7 +251,7 @@
 					if (scheduling) selectTab('scheduled');
 				}}
 			>
-				Schedule maintenance
+				{m.alerts_silences_schedule()}
 			</Button>
 		{:else}
 			<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
@@ -263,14 +264,14 @@
 	<div
 		class="inline-flex gap-1 rounded-lg border border-line bg-surface-2 p-1"
 		role="tablist"
-		aria-label="Alert sections"
+		aria-label={m.alerts_page_sections()}
 	>
 		{#each TABS as item (item.id)}
 			<button
 				type="button"
 				role="tab"
 				aria-selected={tab === item.id}
-				class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 				onclick={() => selectTab(item.id)}
 			>
 				{item.label}
@@ -301,7 +302,7 @@
 {#if pageError}
 	<ErrorNotice
 		error={pageError}
-		title="Could not load the alerts"
+		title={m.alerts_page_error_load()}
 		onretry={() => {
 			loading = true;
 			void loadAll();

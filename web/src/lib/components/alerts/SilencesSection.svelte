@@ -10,6 +10,7 @@
 	import { CalendarClock } from 'lucide-svelte';
 	import { formatDateTime } from '#lib/format.js';
 	import { scheduleLabel, silenceScope } from './helpers';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		silences: Silence[];
@@ -25,12 +26,12 @@
 {#if silences.length === 0}
 	<EmptyState
 		icon={CalendarClock}
-		title="No maintenance scheduled."
-		description="Schedule a window to mute a device — or all of them — while you work on it."
+		title={m.alerts_silences_empty_title()}
+		description={m.alerts_silences_empty_description()}
 	>
 		{#snippet action()}
 			{#if auth.canOperate}
-				<Button variant="primary" onclick={onschedule}>Schedule maintenance</Button>
+				<Button variant="primary" onclick={onschedule}>{m.alerts_silences_schedule()}</Button>
 			{/if}
 		{/snippet}
 	</EmptyState>
@@ -44,9 +45,9 @@
 				<div class="min-w-0 flex-1">
 					<div class="flex flex-wrap items-center gap-2">
 						{#if silence.active_now}
-							<Plate tone="signal" label="Active now" pulse />
+							<Plate tone="signal" label={m.alerts_silences_active_now()} pulse />
 						{:else}
-							<Plate tone="ghost" label="Scheduled" />
+							<Plate tone="ghost" label={m.alerts_silences_scheduled()} />
 						{/if}
 						<span class="truncate font-semibold text-ink">{silence.name}</span>
 					</div>
@@ -56,10 +57,10 @@
 						<span class="tnum">{scheduleLabel(silence.schedule)}</span>
 						{#if silence.active_now && silence.active_until}
 							<span class="text-ink-3" aria-hidden="true">·</span>
-							<span class="tnum">until {formatDateTime(silence.active_until)}</span>
+							<span class="tnum">{m.alerts_silences_until({ when: formatDateTime(silence.active_until) })}</span>
 						{:else if silence.next_start_at}
 							<span class="text-ink-3" aria-hidden="true">·</span>
-							<span class="tnum">next {formatDateTime(silence.next_start_at)}</span>
+							<span class="tnum">{m.alerts_silences_next({ when: formatDateTime(silence.next_start_at) })}</span>
 						{/if}
 					</div>
 					{#if silence.comment}
@@ -70,11 +71,11 @@
 					<Confirm
 						size="sm"
 						variant="danger"
-						confirmLabel="Remove?"
+						confirmLabel={m.alerts_silences_remove_confirm()}
 						loading={removingId === silence.id}
 						onconfirm={() => onremove(silence.id)}
 					>
-						Remove
+						{m.alerts_silences_remove()}
 					</Confirm>
 				{/if}
 			</div>

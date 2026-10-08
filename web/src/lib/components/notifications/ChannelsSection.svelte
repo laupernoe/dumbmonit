@@ -11,6 +11,7 @@
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { kindIcon, normalizeKind, type KindInfo } from './kinds';
 	import ChannelForm from './ChannelForm.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	let kinds = $state<KindInfo[]>([]);
 	let channels = $state<Channel[]>([]);
@@ -40,6 +41,9 @@
 		return () => controller.abort();
 	});
 
+	/** "Last sent <time>" cut around the time, which stays a <time> element. */
+	const lastSentParts = $derived(m.notifications_channels_last_sent({ when: '\u0000' }).split('\u0000'));
+
 	function kindLabel(kind: string): string {
 		return kinds.find((k) => k.kind === kind)?.label ?? kind;
 	}
@@ -49,14 +53,21 @@
 		const p = channel.policy;
 		if (!p) return '';
 		const parts: string[] = [];
-		if (p.min_severity === 'critical') parts.push('Warning only');
-		else if (p.min_severity === 'warning') parts.push('Advisory and up');
-		if (!p.notify_resolved) parts.push('no recoveries');
-		if (p.min_interval_secs > 0) parts.push(`same alert every ${Math.round(p.min_interval_secs / 60)} min at most`);
+		if (p.min_severity === 'critical') parts.push(m.notifications_channels_policy_warning_only());
+		else if (p.min_severity === 'warning') parts.push(m.notifications_channels_policy_advisory_up());
+		if (!p.notify_resolved) parts.push(m.notifications_channels_policy_no_recoveries());
+		if (p.min_interval_secs > 0) {
+			parts.push(m.notifications_channels_policy_interval({ minutes: Math.round(p.min_interval_secs / 60) }));
+		}
 		if (p.quiet_hours) {
 			const pad = (n: number) => String(n).padStart(2, '0');
-			const clock = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-			parts.push(`quiet ${clock(p.quiet_hours.start_minute)}–${clock(p.quiet_hours.end_minute)}`);
+			const clock = (min: number) => `${pad(Math.floor(min / 60))}:${pad(min % 60)}`;
+			parts.push(
+				m.notifications_channels_policy_quiet({
+					start: clock(p.quiet_hours.start_minute),
+					end: clock(p.quiet_hours.end_minute)
+				})
+			);
 		}
 		return parts.join(' · ');
 	}
@@ -114,7 +125,7 @@
 	}
 </script>
 
-<Panel id="notifications-channels" title="Channels" description="Where DumbMonit tells you when something needs attention." padded={false}>
+<Panel id="notifications-channels" title={m.notifications_channels_title()} description={m.notifications_channels_description()} padded={false}>
 	{#snippet aside()}
 		{#if !auth.isAdmin}
 			<Plate tone="ghost" label={auth.readOnlyLabel} />
@@ -122,7 +133,7 @@
 			<ClickSpark>
 				<Button variant="primary" size="sm" onclick={() => (form = 'new')}>
 					<Plus class="size-4" aria-hidden="true" />
-					Add channel
+					{m.notifications_channels_add()}
 				</Button>
 			</ClickSpark>
 		{/if}
@@ -130,7 +141,7 @@
 
 	<div class="px-5 py-4">
 		{#if error}
-			<ErrorNotice {error} title="Could not load the channels" onretry={() => void load()} />
+			<ErrorNotice {error} title={m.notifications_channels_error_load()} onretry={() => void load()} />
 		{:else if loading}
 			<div class="grid gap-2">
 				<Skeleton class="h-16 w-full" rows={2} />
@@ -147,18 +158,18 @@
 
 			{#if channels.length === 0}
 				{#if !auth.isAdmin}
-					<EmptyState icon={BellRing} title="No channel yet." description="An admin can add Discord, Telegram, email or one of 20 others." />
+					<EmptyState icon={BellRing} title={m.notifications_channels_empty_title()} description={m.notifications_channels_empty_viewer()} />
 				{:else if form === null}
 					<EmptyState
 						icon={BellRing}
-						title="No channel yet."
-						description="Add Discord, Telegram, email or one of 20 others to get alerts where you already are."
+						title={m.notifications_channels_empty_title()}
+						description={m.notifications_channels_empty_admin()}
 					>
 						{#snippet action()}
 							<ClickSpark>
 								<Button variant="primary" onclick={() => (form = 'new')}>
 									<Plus class="size-4" aria-hidden="true" />
-									Add channel
+									{m.notifications_channels_add()}
 								</Button>
 							</ClickSpark>
 						{/snippet}
@@ -183,30 +194,29 @@
 										<span class="truncate font-semibold text-ink">{channel.name}</span>
 										<span class="text-sm text-ink-2">{kindLabel(channel.kind)}</span>
 										{#if channel.enabled}
-											<Plate tone="signal" label="Enabled" />
+											<Plate tone="signal" label={m.notifications_channels_enabled()} />
 										{:else}
-											<Plate tone="ghost" label="Disabled" />
+											<Plate tone="ghost" label={m.notifications_channels_disabled()} />
 										{/if}
 									</div>
 									<p class="mt-1 text-sm text-ink-2">
-										Last sent
-										<time class="tnum" title={formatDateTime(channel.last_sent_at)}>{formatRelative(channel.last_sent_at)}</time>
+										{lastSentParts[0]}<time class="tnum" title={formatDateTime(channel.last_sent_at)}>{formatRelative(channel.last_sent_at)}</time>{lastSentParts[1]}
 									</p>
 									{#if policySummary(channel)}
 										<p class="mt-0.5 text-[0.8125rem] text-ink-2">{policySummary(channel)}</p>
 									{/if}
 									{#if channel.last_error}
-										<p class="mt-1 text-sm break-words text-warning-ink">Last error: {channel.last_error}</p>
+										<p class="mt-1 text-sm break-words text-warning-ink">{m.notifications_channels_last_error({ error: channel.last_error })}</p>
 									{/if}
 								</div>
 								{#if auth.isAdmin}
 									<div class="flex flex-wrap items-center gap-1.5">
 										<Button variant="secondary" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => void sendTest(channel)}>
-											Send test
+											{m.notifications_channels_send_test()}
 										</Button>
-										<Button variant="ghost" size="sm" disabled={current !== null} onclick={() => (form = channel)}>Edit</Button>
-										<Confirm confirmLabel="Remove for good?" loading={current === 'delete'} disabled={current !== null} onconfirm={() => remove(channel)}>
-											Remove
+										<Button variant="ghost" size="sm" disabled={current !== null} onclick={() => (form = channel)}>{m.notifications_channels_edit()}</Button>
+										<Confirm confirmLabel={m.notifications_channels_remove_confirm()} loading={current === 'delete'} disabled={current !== null} onconfirm={() => remove(channel)}>
+											{m.notifications_channels_remove()}
 										</Confirm>
 									</div>
 								{/if}
@@ -215,12 +225,12 @@
 							<div aria-live="polite">
 								{#if testResult?.id === channel.id}
 									<div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
-										<Plate tone={testResult.ok ? 'signal' : 'warning'} label={testResult.ok ? 'Test message sent' : 'Test failed'} />
+										<Plate tone={testResult.ok ? 'signal' : 'warning'} label={testResult.ok ? m.notifications_channels_test_ok() : m.notifications_channels_test_failed()} />
 										<span class="min-w-0 break-words text-ink-2">{testResult.message}</span>
 									</div>
 								{/if}
 								{#if actionError?.id === channel.id}
-									<ErrorNotice error={actionError.cause} title="Could not do that" class="mt-3" />
+									<ErrorNotice error={actionError.cause} title={m.notifications_channels_error_action()} class="mt-3" />
 								{/if}
 							</div>
 						</li>

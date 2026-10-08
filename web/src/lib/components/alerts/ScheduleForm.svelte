@@ -12,6 +12,8 @@
 	 */
 	import type { NthWeekday, Target, SilencePayload } from '#lib/api/index.js';
 	import { Button, Field, Panel } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { dayName } from './helpers';
 
 	interface Props {
 		targets: Target[];
@@ -22,33 +24,25 @@
 
 	let { targets, oncreate, oncancel }: Props = $props();
 
-	const DAYS = [
-		{ index: 0, label: 'Mon' },
-		{ index: 1, label: 'Tue' },
-		{ index: 2, label: 'Wed' },
-		{ index: 3, label: 'Thu' },
-		{ index: 4, label: 'Fri' },
-		{ index: 5, label: 'Sat' },
-		{ index: 6, label: 'Sun' }
-	];
+	const DAYS = $derived([0, 1, 2, 3, 4, 5, 6].map((index) => ({ index, label: dayName(index) })));
 
-	const RANKS = [
-		{ value: 1, label: 'First' },
-		{ value: 2, label: 'Second' },
-		{ value: 3, label: 'Third' },
-		{ value: 4, label: 'Fourth' },
-		{ value: 5, label: 'Fifth' },
-		{ value: -1, label: 'Last' }
-	];
+	const RANKS = $derived([
+		{ value: 1, label: m.alerts_form_rank_first() },
+		{ value: 2, label: m.alerts_form_rank_second() },
+		{ value: 3, label: m.alerts_form_rank_third() },
+		{ value: 4, label: m.alerts_form_rank_fourth() },
+		{ value: 5, label: m.alerts_form_rank_fifth() },
+		{ value: -1, label: m.alerts_form_rank_last() }
+	]);
 
-	const DURATIONS = [
-		{ value: 30, label: '30 min' },
-		{ value: 60, label: '1 h' },
-		{ value: 120, label: '2 h' },
-		{ value: 240, label: '4 h' },
-		{ value: 480, label: '8 h' },
-		{ value: 1440, label: '24 h' }
-	];
+	const DURATIONS = $derived([
+		{ value: 30, label: m.alerts_span_min({ minutes: 30 }) },
+		{ value: 60, label: m.alerts_span_h({ hours: 1 }) },
+		{ value: 120, label: m.alerts_span_h({ hours: 2 }) },
+		{ value: 240, label: m.alerts_span_h({ hours: 4 }) },
+		{ value: 480, label: m.alerts_span_h({ hours: 8 }) },
+		{ value: 1440, label: m.alerts_span_h({ hours: 24 }) }
+	]);
 
 	/** "2026-09-14T22:00" in local time, for a datetime-local default. */
 	function localInput(date: Date): string {
@@ -124,7 +118,7 @@
 	function build(): SilencePayload | null {
 		const trimmed = name.trim();
 		if (!trimmed) {
-			error = 'Give the window a name — it explains, later, why these alerts went quiet.';
+			error = m.alerts_form_error_name();
 			return null;
 		}
 		const target_id = targetId === '' ? null : Number(targetId);
@@ -134,11 +128,11 @@
 			const start = new Date(startAt);
 			const end = new Date(endAt);
 			if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-				error = 'Enter a valid start and end.';
+				error = m.alerts_form_error_dates();
 				return null;
 			}
 			if (end <= start) {
-				error = 'The end of the window must come after its start.';
+				error = m.alerts_form_error_order();
 				return null;
 			}
 			return {
@@ -149,17 +143,17 @@
 
 		if (mode === 'weekly') {
 			if (days.length === 0) {
-				error = 'Pick at least one day of the week.';
+				error = m.alerts_form_error_days();
 				return null;
 			}
 			const start_minute = clockToMinutes(weeklyStart);
 			const end_minute = clockToMinutes(weeklyEnd);
 			if (start_minute === null || end_minute === null) {
-				error = 'Enter the daily start and end as HH:MM.';
+				error = m.alerts_form_error_daily();
 				return null;
 			}
 			if (start_minute === end_minute) {
-				error = 'The daily start and end must differ.';
+				error = m.alerts_form_error_daily_differ();
 				return null;
 			}
 			return {
@@ -177,7 +171,7 @@
 
 		const start_minute = clockToMinutes(monthlyStart);
 		if (start_minute === null) {
-			error = 'Enter the start as HH:MM.';
+			error = m.alerts_form_error_start();
 			return null;
 		}
 		let monthDays: number[] = [];
@@ -185,7 +179,7 @@
 		if (monthlyBy === 'dates') {
 			const parsed = parseDates(monthlyDates);
 			if (parsed === null) {
-				error = 'Enter the days of the month as numbers from 1 to 31, for example “1, 15”.';
+				error = m.alerts_form_error_month_days();
 				return null;
 			}
 			monthDays = parsed;
@@ -215,28 +209,28 @@
 		try {
 			await oncreate(payload);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not schedule the window.';
+			error = cause instanceof Error ? cause.message : m.alerts_form_error_schedule();
 		} finally {
 			saving = false;
 		}
 	}
 </script>
 
-<Panel title="Schedule maintenance" description="Mute alerts for a device, or all of them, for a window.">
+<Panel title={m.alerts_silences_schedule()} description={m.alerts_form_description()}>
 	<form class="grid gap-4" onsubmit={submit}>
-		<Field label="Name" for="silence-name" required help="Shown in the list and in history.">
+		<Field label={m.alerts_form_name()} for="silence-name" required help={m.alerts_form_name_help()}>
 			<input
 				id="silence-name"
 				class="input"
 				bind:value={name}
-				placeholder="Sunday NAS reboot"
+				placeholder={m.alerts_form_name_placeholder()}
 				autocomplete="off"
 			/>
 		</Field>
 
-		<Field label="Device" for="silence-target" help="Leave empty to cover every device.">
+		<Field label={m.alerts_history_device()} for="silence-target" help={m.alerts_form_device_help()}>
 			<select id="silence-target" class="input" bind:value={targetId}>
-				<option value="">All devices</option>
+				<option value="">{m.alerts_scope_all_devices()}</option>
 				{#each targets as target (target.id)}
 					<option value={String(target.id)}>{target.name}</option>
 				{/each}
@@ -244,49 +238,49 @@
 		</Field>
 
 		<div>
-			<span class="mb-1.5 block text-sm font-semibold text-ink">When</span>
+			<span class="mb-1.5 block text-sm font-semibold text-ink">{m.alerts_form_when()}</span>
 			<div class="flex flex-wrap gap-2">
 				<Button
 					size="sm"
 					variant={mode === 'once' ? 'secondary' : 'ghost'}
 					onclick={() => (mode = 'once')}
 				>
-					One-off
+					{m.alerts_form_one_off()}
 				</Button>
 				<Button
 					size="sm"
 					variant={mode === 'weekly' ? 'secondary' : 'ghost'}
 					onclick={() => (mode = 'weekly')}
 				>
-					Weekly
+					{m.alerts_form_weekly()}
 				</Button>
 				<Button
 					size="sm"
 					variant={mode === 'monthly' ? 'secondary' : 'ghost'}
 					onclick={() => (mode = 'monthly')}
 				>
-					Monthly
+					{m.alerts_form_monthly()}
 				</Button>
 			</div>
 		</div>
 
 		{#if mode === 'once'}
 			<div class="grid gap-4 sm:grid-cols-2">
-				<Field label="Start" for="silence-start">
+				<Field label={m.alerts_form_start()} for="silence-start">
 					<input id="silence-start" type="datetime-local" class="input" bind:value={startAt} />
 				</Field>
-				<Field label="End" for="silence-end">
+				<Field label={m.alerts_form_end()} for="silence-end">
 					<input id="silence-end" type="datetime-local" class="input" bind:value={endAt} />
 				</Field>
 			</div>
 		{:else if mode === 'weekly'}
 			<div>
-				<span class="mb-1.5 block text-sm font-semibold text-ink">Days</span>
+				<span class="mb-1.5 block text-sm font-semibold text-ink">{m.alerts_form_days()}</span>
 				<div class="flex flex-wrap gap-2">
 					{#each DAYS as day (day.index)}
 						<button
 							type="button"
-							class={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${days.includes(day.index) ? 'border-signal bg-signal-soft text-signal-ink' : 'border-line-strong bg-surface text-ink-2 hover:text-ink'}`}
+							class={`min-h-10 min-w-11 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${days.includes(day.index) ? 'border-signal bg-signal-soft text-signal-ink' : 'border-line-strong bg-surface text-ink-2 hover:text-ink'}`}
 							aria-pressed={days.includes(day.index)}
 							onclick={() => toggleDay(day.index)}
 						>
@@ -296,43 +290,43 @@
 				</div>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<Field label="From" for="silence-wstart" help="Local time in the zone below.">
+				<Field label={m.alerts_form_from()} for="silence-wstart" help={m.alerts_form_local_time_help()}>
 					<input id="silence-wstart" type="time" class="input" bind:value={weeklyStart} />
 				</Field>
-				<Field label="To" for="silence-wend">
+				<Field label={m.alerts_form_to()} for="silence-wend">
 					<input id="silence-wend" type="time" class="input" bind:value={weeklyEnd} />
 				</Field>
 			</div>
 		{:else}
 			<div>
-				<span class="mb-1.5 block text-sm font-semibold text-ink">Each month</span>
+				<span class="mb-1.5 block text-sm font-semibold text-ink">{m.alerts_form_each_month()}</span>
 				<div class="flex flex-wrap gap-2">
 					<Button
 						size="sm"
 						variant={monthlyBy === 'weekday' ? 'secondary' : 'ghost'}
 						onclick={() => (monthlyBy = 'weekday')}
 					>
-						On a weekday
+						{m.alerts_form_on_weekday()}
 					</Button>
 					<Button
 						size="sm"
 						variant={monthlyBy === 'dates' ? 'secondary' : 'ghost'}
 						onclick={() => (monthlyBy = 'dates')}
 					>
-						On a date
+						{m.alerts_form_on_date()}
 					</Button>
 				</div>
 			</div>
 			{#if monthlyBy === 'weekday'}
 				<div class="grid gap-4 sm:grid-cols-2">
-					<Field label="Which one" for="silence-rank" help="A month without that one — no fifth Sunday — is skipped.">
+					<Field label={m.alerts_form_which()} for="silence-rank" help={m.alerts_form_which_help()}>
 						<select id="silence-rank" class="input" bind:value={monthlyRank}>
 							{#each RANKS as rank (rank.value)}
 								<option value={rank.value}>{rank.label}</option>
 							{/each}
 						</select>
 					</Field>
-					<Field label="Day" for="silence-weekday">
+					<Field label={m.alerts_form_day()} for="silence-weekday">
 						<select id="silence-weekday" class="input" bind:value={monthlyWeekday}>
 							{#each DAYS as day (day.index)}
 								<option value={day.index}>{day.label}</option>
@@ -341,15 +335,15 @@
 					</Field>
 				</div>
 			{:else}
-				<Field label="Days of the month" for="silence-dates" help="One or more, from 1 to 31, separated by commas. A month without that day is skipped.">
+				<Field label={m.alerts_form_month_days()} for="silence-dates" help={m.alerts_form_month_days_help()}>
 					<input id="silence-dates" class="input tnum" bind:value={monthlyDates} placeholder="1, 15" autocomplete="off" />
 				</Field>
 			{/if}
 			<div class="grid gap-4 sm:grid-cols-2">
-				<Field label="From" for="silence-mstart" help="Local time in the zone below.">
+				<Field label={m.alerts_form_from()} for="silence-mstart" help={m.alerts_form_local_time_help()}>
 					<input id="silence-mstart" type="time" class="input" bind:value={monthlyStart} />
 				</Field>
-				<Field label="For" for="silence-mduration" help="Real elapsed time: a 2 h window lasts 2 h, even on a clock-change night.">
+				<Field label={m.alerts_form_for()} for="silence-mduration" help={m.alerts_form_for_help()}>
 					<select id="silence-mduration" class="input" bind:value={monthlyDuration}>
 						{#each DURATIONS as option (option.value)}
 							<option value={option.value}>{option.label}</option>
@@ -360,17 +354,17 @@
 		{/if}
 
 		{#if mode !== 'once'}
-			<Field label="Time zone" for="silence-tz" help="An IANA name such as Europe/Paris. The window keeps its local hour across daylight-saving changes.">
+			<Field label={m.alerts_form_timezone()} for="silence-tz" help={m.alerts_form_timezone_help()}>
 				<input id="silence-tz" class="input" bind:value={timezone} placeholder="Europe/Paris" autocomplete="off" />
 			</Field>
 		{/if}
 
-		<Field label="Comment" for="silence-comment" help="Optional. Why the window exists.">
+		<Field label={m.alerts_form_comment()} for="silence-comment" help={m.alerts_form_comment_help()}>
 			<input
 				id="silence-comment"
 				class="input"
 				bind:value={comment}
-				placeholder="Planned firmware upgrade"
+				placeholder={m.alerts_form_comment_placeholder()}
 				autocomplete="off"
 			/>
 		</Field>
@@ -379,9 +373,9 @@
 			<p class="text-[0.8125rem] font-medium text-warning-ink" role="alert">{error}</p>
 		{/if}
 
-		<div class="flex items-center gap-2">
-			<Button type="submit" variant="primary" loading={saving}>Schedule</Button>
-			<Button type="button" variant="ghost" onclick={oncancel} disabled={saving}>Cancel</Button>
+		<div class="flex flex-wrap items-center gap-2">
+			<Button type="submit" variant="primary" loading={saving}>{m.alerts_form_submit()}</Button>
+			<Button type="button" variant="ghost" onclick={oncancel} disabled={saving}>{m.alerts_form_cancel()}</Button>
 		</div>
 	</form>
 </Panel>

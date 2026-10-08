@@ -17,6 +17,7 @@
 	} from '#lib/api/index.js';
 	import { Button, Field, Toggle } from '#lib/ui/index.js';
 	import { clearLabel } from './options';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		rule: AlertRule;
@@ -42,13 +43,13 @@
 			.then((list) => (targets = list))
 			.catch((cause) => {
 				if (cause instanceof DOMException && cause.name === 'AbortError') return;
-				targetsError = cause instanceof Error ? cause.message : 'Could not load the devices.';
+				targetsError = cause instanceof Error ? cause.message : m.alerts_over_error_devices();
 			});
 		return () => controller.abort();
 	});
 
 	function deviceName(id: number): string {
-		return targets.find((t) => t.id === id)?.name ?? `device ${id}`;
+		return targets.find((t) => t.id === id)?.name ?? m.alerts_over_device_id({ id });
 	}
 
 	// --- Add form ---------------------------------------------------------------
@@ -64,11 +65,14 @@
 	const candidates = $derived(targets.filter((t) => !overrides.some((o) => o.target_id === t.id)));
 
 	function summary(o: RuleOverride): string {
-		if (o.enabled === false) return 'rule off';
+		if (o.enabled === false) return m.alerts_over_rule_off();
 		const parts: string[] = [];
-		if (o.threshold !== null) parts.push(`threshold ${o.threshold}${unit ? ` ${unit}` : ''}`);
-		if (o.clear_threshold !== null) parts.push(`${clearLabel(rule.operator).toLowerCase()} ${o.clear_threshold}${unit ? ` ${unit}` : ''}`);
-		return parts.join(' · ') || 'no change';
+		const withUnit = (value: number) => `${value}${unit ? ` ${unit}` : ''}`;
+		if (o.threshold !== null) parts.push(m.alerts_over_threshold({ value: withUnit(o.threshold) }));
+		if (o.clear_threshold !== null) {
+			parts.push(m.alerts_over_clear({ label: clearLabel(rule.operator), value: withUnit(o.clear_threshold) }));
+		}
+		return parts.join(' · ') || m.alerts_over_no_change();
 	}
 
 	async function add(event: SubmitEvent) {
@@ -76,7 +80,7 @@
 		error = null;
 		const id = Number(targetId);
 		if (!targetId || !Number.isFinite(id)) {
-			error = 'Pick a device.';
+			error = m.alerts_over_error_pick();
 			return;
 		}
 		const payload: { threshold?: number; clear_threshold?: number; enabled?: boolean } = {};
@@ -86,7 +90,7 @@
 			if (threshold.trim() !== '') {
 				const n = Number(threshold);
 				if (!Number.isFinite(n)) {
-					error = 'The threshold must be a number.';
+					error = m.alerts_rules_error_threshold();
 					return;
 				}
 				payload.threshold = n;
@@ -94,13 +98,13 @@
 			if (clear.trim() !== '') {
 				const n = Number(clear);
 				if (!Number.isFinite(n)) {
-					error = 'The clear threshold must be a number.';
+					error = m.alerts_over_error_clear_number();
 					return;
 				}
 				payload.clear_threshold = n;
 			}
 			if (payload.threshold === undefined && payload.clear_threshold === undefined) {
-				error = 'Set a threshold, a clear threshold, or turn the rule off for this device.';
+				error = m.alerts_over_error_empty();
 				return;
 			}
 		}
@@ -114,7 +118,7 @@
 			clear = '';
 			disabled = false;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not save the override.';
+			error = cause instanceof Error ? cause.message : m.alerts_over_error_save();
 		} finally {
 			saving = false;
 		}
@@ -129,7 +133,7 @@
 			await deleteRuleOverride(rule.id, o.target_id);
 			overrides = overrides.filter((x) => x.target_id !== o.target_id);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not remove the override.';
+			error = cause instanceof Error ? cause.message : m.alerts_over_error_remove();
 		} finally {
 			removing = null;
 		}
@@ -139,7 +143,7 @@
 <div class="grid gap-2">
 	<button
 		type="button"
-		class="inline-flex items-center gap-1.5 text-sm font-semibold text-ink"
+		class="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink sm:min-h-0"
 		aria-expanded={open}
 		aria-controls={`${prefix}-panel`}
 		onclick={() => (open = !open)}
@@ -149,7 +153,7 @@
 		{:else}
 			<ChevronRight class="size-4" aria-hidden="true" />
 		{/if}
-		Per-device overrides
+		{m.alerts_over_title()}
 		<span class="tnum font-normal text-ink-2">({overrides.length})</span>
 	</button>
 
@@ -157,7 +161,7 @@
 		<div id={`${prefix}-panel`} class="grid gap-3 pl-5">
 			{#if overrides.length === 0}
 				<p class="text-[0.8125rem] text-ink-2">
-					None. Overrides change the threshold, the clear threshold, or turn this rule off for one device.
+					{m.alerts_over_none()}
 				</p>
 			{:else}
 				<ul class="grid gap-1.5" role="list">
@@ -166,7 +170,7 @@
 							<span class="font-medium text-ink">{deviceName(o.target_id)}</span>
 							<span class="tnum text-ink-2">{summary(o)}</span>
 							<Button variant="ghost" size="sm" loading={removing === o.target_id} onclick={() => void remove(o)}>
-								Remove
+								{m.alerts_silences_remove()}
 							</Button>
 						</li>
 					{/each}
@@ -176,32 +180,32 @@
 			{#if targetsError}
 				<p class="text-[0.8125rem] text-warning-ink">{targetsError}</p>
 			{:else if adding}
-				<form class="grid gap-3 rounded-lg border border-line bg-surface-2 p-3" onsubmit={add} aria-label="Add override">
+				<form class="grid gap-3 rounded-lg border border-line bg-surface-2 p-3" onsubmit={add} aria-label={m.alerts_over_add()}>
 					<div class="grid gap-3 sm:grid-cols-3">
-						<Field label="Device" for={`${prefix}-target`} required>
+						<Field label={m.alerts_history_device()} for={`${prefix}-target`} required>
 							<select id={`${prefix}-target`} class="input" bind:value={targetId}>
-								<option value="">Pick a device</option>
+								<option value="">{m.alerts_over_pick_device()}</option>
 								{#each candidates as target (target.id)}
 									<option value={String(target.id)}>{target.name}</option>
 								{/each}
 							</select>
 						</Field>
-						<Field label="Threshold" for={`${prefix}-threshold`} help={unit ? `In ${unit}.` : undefined}>
+						<Field label={m.alerts_rules_threshold()} for={`${prefix}-threshold`} help={unit ? m.alerts_over_in_unit({ unit }) : undefined}>
 							<input id={`${prefix}-threshold`} type="number" step="any" class="input tnum" bind:value={threshold} placeholder={String(rule.threshold)} disabled={disabled} />
 						</Field>
 						<Field label={clearLabel(rule.operator)} for={`${prefix}-clear`}>
-							<input id={`${prefix}-clear`} type="number" step="any" class="input tnum" bind:value={clear} placeholder={rule.clear_threshold === null ? 'None' : String(rule.clear_threshold)} disabled={disabled} />
+							<input id={`${prefix}-clear`} type="number" step="any" class="input tnum" bind:value={clear} placeholder={rule.clear_threshold === null ? m.alerts_over_none_placeholder() : String(rule.clear_threshold)} disabled={disabled} />
 						</Field>
 					</div>
-					<Field label="Turn this rule off for the device" for={`${prefix}-off`} inline>
-						<Toggle id={`${prefix}-off`} bind:checked={disabled} label="Turn this rule off for the device" />
+					<Field label={m.alerts_over_turn_off()} for={`${prefix}-off`} inline>
+						<Toggle id={`${prefix}-off`} bind:checked={disabled} label={m.alerts_over_turn_off()} />
 					</Field>
 					{#if error}
 						<p class="text-[0.8125rem] font-medium text-warning-ink" role="alert">{error}</p>
 					{/if}
-					<div class="flex items-center gap-2">
-						<Button type="submit" variant="secondary" size="sm" loading={saving}>Save override</Button>
-						<Button type="button" variant="ghost" size="sm" disabled={saving} onclick={() => (adding = false)}>Cancel</Button>
+					<div class="flex flex-wrap items-center gap-2">
+						<Button type="submit" variant="secondary" size="sm" loading={saving}>{m.alerts_over_save()}</Button>
+						<Button type="button" variant="ghost" size="sm" disabled={saving} onclick={() => (adding = false)}>{m.alerts_form_cancel()}</Button>
 					</div>
 				</form>
 			{:else}
@@ -210,7 +214,7 @@
 				{/if}
 				<div>
 					<Button variant="ghost" size="sm" disabled={candidates.length === 0 && targets.length > 0} onclick={() => (adding = true)}>
-						Add override
+						{m.alerts_over_add()}
 					</Button>
 				</div>
 			{/if}

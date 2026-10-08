@@ -16,6 +16,7 @@
 	import { Button } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { BellOff } from 'lucide-svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { SNOOZE_DURATIONS, coveringSilence, snoozePayload } from './helpers';
 
 	interface Props {
@@ -30,6 +31,14 @@
 	let { alert, target, silences = [], onchanged }: Props = $props();
 
 	const active = $derived(coveringSilence(alert, silences));
+
+	/** Preset labels in the UI language, keyed on the duration the helper defines. */
+	function durationLabel(secs: number): string {
+		if (secs === 3600) return m.alerts_ack_hours({ hours: 1 });
+		if (secs === 8 * 3600) return m.alerts_ack_hours({ hours: 8 });
+		if (secs === 24 * 3600) return m.alerts_span_day();
+		return m.alerts_ack_until_resolved();
+	}
 
 	let open = $state(false);
 	let busy = $state(false);
@@ -50,7 +59,7 @@
 			open = false;
 			onchanged?.();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not snooze this alert.';
+			error = cause instanceof Error ? cause.message : m.alerts_snooze_error();
 		} finally {
 			busy = false;
 		}
@@ -64,7 +73,7 @@
 			await deleteSilence(active.id);
 			onchanged?.();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Could not lift the snooze.';
+			error = cause instanceof Error ? cause.message : m.alerts_snooze_error_lift();
 		} finally {
 			busy = false;
 		}
@@ -90,7 +99,7 @@
 {#if auth.canOperate}
 	<div class="flex flex-col items-start gap-1 sm:items-end" bind:this={root} {onkeydown} role="presentation">
 		{#if active}
-			<Button size="sm" variant="ghost" loading={busy} onclick={unsnooze}>Unsnooze</Button>
+			<Button size="sm" variant="ghost" loading={busy} onclick={unsnooze}>{m.alerts_snooze_lift()}</Button>
 		{:else}
 			<Button
 				size="sm"
@@ -102,7 +111,7 @@
 				aria-controls={menuId}
 			>
 				<BellOff class="size-3.5" aria-hidden="true" />
-				Snooze
+				{m.alerts_snooze_button()}
 			</Button>
 		{/if}
 
@@ -110,27 +119,27 @@
 			<div
 				id={menuId}
 				role="menu"
-				aria-label="Snooze for"
+				aria-label={m.alerts_snooze_menu_label()}
 				class="w-48 max-w-full rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left shadow-lift"
 			>
 				<p class="px-1 pb-1 text-[0.6875rem] font-semibold tracking-wide text-ink-2 uppercase">
-					Hide for
+					{m.alerts_snooze_hide_for()}
 				</p>
 				<div class="grid grid-cols-2 gap-1">
 					{#each SNOOZE_DURATIONS as choice (choice.secs)}
 						<button
 							type="button"
 							role="menuitem"
-							class="h-8 rounded-lg border border-line bg-surface px-2 text-[0.8125rem] font-semibold text-ink transition hover:border-ink-3 hover:bg-surface-2 disabled:opacity-50"
+							class="h-10 rounded-lg border border-line bg-surface px-2 text-[0.8125rem] font-semibold text-ink transition hover:border-ink-3 hover:bg-surface-2 disabled:opacity-50 sm:h-8"
 							disabled={busy}
 							onclick={() => void snooze(choice.secs)}
 						>
-							{choice.label}
+							{durationLabel(choice.secs)}
 						</button>
 					{/each}
 				</div>
 				<p class="mt-1 px-1 text-[0.6875rem] text-ink-3">
-					No notification until it ends or the alert resolves.
+					{m.alerts_snooze_hint()}
 				</p>
 			</div>
 		{/if}

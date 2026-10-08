@@ -10,6 +10,7 @@
 	import { Button, Plate } from '#lib/ui/index.js';
 	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { TONE_BAR } from './helpers';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		row: Extract<SkyRow, { kind: 'device' }>;
@@ -29,9 +30,9 @@
 		<Plate tone={row.tone} label={row.plate} pulse />
 		<span class="tnum shrink-0 pt-0.5 text-[0.75rem] whitespace-nowrap text-ink-2" title={row.since ? formatDateTime(row.since) : undefined}>
 			{#if row.since}
-				last report {formatRelative(row.since)}
+				{m.alerts_device_last_report({ when: formatRelative(row.since) })}
 			{:else}
-				never reported
+				{m.alerts_device_never_reported()}
 			{/if}
 		</span>
 	</div>
@@ -44,7 +45,7 @@
 
 	<div class="mt-auto pt-3">
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
-			<Button size="sm" variant="ghost" href={`/targets/${target.id}`}>Open device</Button>
+			<Button size="sm" variant="ghost" href={`/targets/${target.id}`}>{m.alerts_row_open_device()}</Button>
 		</div>
 	</div>
 </article>
