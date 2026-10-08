@@ -19,6 +19,8 @@
  * Only what waiting cannot fix (no DRM, no Premium) stops for good, until
  * "Try again".
  */
+import { m } from '#lib/paraglide/messages.js';
+import { sdkFailureText, speakerSupportText } from './messages';
 import { ApiError } from '#lib/api/client.js';
 import { getSpotifyToken, playOnSpeaker, reportSpeaker } from '#lib/api/music.js';
 import type { NowPlaying, SpeakerReportBody } from '#lib/api/music.js';
@@ -85,7 +87,7 @@ function loadSdk(): Promise<SpotifyNamespace> {
 	sdkLoading = new Promise<SpotifyNamespace>((resolve, reject) => {
 		window.onSpotifyWebPlaybackSDKReady = () => {
 			if (window.Spotify) resolve(window.Spotify);
-			else reject(new Error('The Spotify player did not start.'));
+			else reject(new Error(m.misc_speaker_not_started()));
 		};
 		const script = document.createElement('script');
 		script.src = SDK_URL;
@@ -93,7 +95,7 @@ function loadSdk(): Promise<SpotifyNamespace> {
 		script.onerror = () => {
 			sdkLoading = null;
 			script.remove();
-			reject(new Error('The Spotify player could not be downloaded (sdk.scdn.co unreachable).'));
+			reject(new Error(m.misc_speaker_download_failed()));
 		};
 		document.head.appendChild(script);
 	});
@@ -180,8 +182,9 @@ export class WallSpeaker {
 		if (generation !== this.#generation) return;
 		if (!support.ok) {
 			this.phase = 'unsupported';
-			this.problem = support.reason;
-			this.fix = support.fix;
+			const text = speakerSupportText(support.code);
+			this.problem = text.reason;
+			this.fix = text.fix;
 			this.#report();
 			return;
 		}
@@ -202,8 +205,8 @@ export class WallSpeaker {
 							const permanent = cause instanceof ApiError && cause.status === 409;
 							this.#fail(
 								{
-									problem: cause instanceof Error ? cause.message : 'No Spotify token.',
-									fix: permanent ? 'An admin can connect Spotify again in Settings → Wall music.' : null,
+									problem: cause instanceof Error ? cause.message : m.misc_speaker_no_token(),
+									fix: permanent ? m.misc_speaker_fix_reconnect() : null,
 									permanent
 								},
 								generation
@@ -250,25 +253,25 @@ export class WallSpeaker {
 				this.#report();
 			});
 			player.addListener('initialization_error', ({ message }: { message: string }) =>
-				this.#fail(sdkFailure('initialization_error', message), generation)
+				this.#fail(sdkFailureText(sdkFailure('initialization_error', message)), generation)
 			);
 			player.addListener('authentication_error', ({ message }: { message: string }) =>
-				this.#fail(sdkFailure('authentication_error', message), generation)
+				this.#fail(sdkFailureText(sdkFailure('authentication_error', message)), generation)
 			);
 			player.addListener('account_error', ({ message }: { message: string }) =>
-				this.#fail(sdkFailure('account_error', message), generation)
+				this.#fail(sdkFailureText(sdkFailure('account_error', message)), generation)
 			);
 			player.addListener('playback_error', ({ message }: { message: string }) => {
-				this.problem = `Spotify could not play this track (${message}).`;
+				this.problem = m.misc_speaker_playback_error({ message });
 			});
 			const connected = await player.connect();
 			if (!connected && generation === this.#generation) {
-				this.#fail({ problem: 'Spotify did not accept this display as a speaker.', fix: null, permanent: false }, generation);
+				this.#fail({ problem: m.misc_speaker_not_accepted(), fix: null, permanent: false }, generation);
 			}
 		} catch (cause) {
 			if (generation === this.#generation) {
 				this.#fail(
-					{ problem: cause instanceof Error ? cause.message : 'The Spotify player did not start.', fix: null, permanent: false },
+					{ problem: cause instanceof Error ? cause.message : m.misc_speaker_not_started(), fix: null, permanent: false },
 					generation
 				);
 			}
@@ -292,7 +295,7 @@ export class WallSpeaker {
 	/** "Play here": unlocks the sound (a gesture) and moves the account's playback to this display. */
 	async playHere(): Promise<void> {
 		this.activate();
-		if (!this.deviceId) throw new Error('This display is not ready as a speaker yet.');
+		if (!this.deviceId) throw new Error(m.misc_speaker_not_ready());
 		await playOnSpeaker(this.deviceId);
 	}
 

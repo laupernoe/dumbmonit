@@ -34,6 +34,7 @@
 	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { formatRelative, parseServerDate } from '#lib/format.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
+	import { musicErrorText } from '#lib/wall/messages.js';
 	import SpeakerStatus from './SpeakerStatus.svelte';
 
 	let account = $state<SpotifyAccount | null>(null);
@@ -172,7 +173,7 @@
 		sendError = null;
 		const parsed = parseMusicLink(link);
 		if (!parsed.ok) {
-			linkError = parsed.message;
+			linkError = musicErrorText(parsed.code);
 			return;
 		}
 		linkError = null;

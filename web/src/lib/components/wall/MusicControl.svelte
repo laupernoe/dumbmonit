@@ -15,6 +15,7 @@
 	import type { SpotifyNow } from '#lib/api/music.js';
 	import { Button, Led, Toggle } from '#lib/ui/index.js';
 	import { parseMusicLink, type MusicEmbed } from '#lib/wall/music.js';
+	import { musicErrorText } from '#lib/wall/messages.js';
 	import type { WallSpeaker } from '#lib/wall/speaker.svelte.js';
 
 	interface Props {
@@ -84,7 +85,7 @@
 		event.preventDefault();
 		const parsed = parseMusicLink(draft);
 		if (!parsed.ok) {
-			error = parsed.message;
+			error = musicErrorText(parsed.code);
 			input?.focus();
 			return;
 		}

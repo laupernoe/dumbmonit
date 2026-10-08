@@ -37,7 +37,10 @@ export function coverUrl(url: string | null | undefined): string | null {
 /** How long a paused track stays on the wall before the card goes away. */
 export const PAUSE_GRACE_MS = 30_000;
 
-export type SpeakerSupport = { ok: true } | { ok: false; reason: string; fix: string };
+/** `code` picks the translated text (`wall/messages.ts`); `reason` and `fix` are the English fallback. */
+export type SpeakerSupportCode = 'insecure' | 'no_eme' | 'no_drm';
+
+export type SpeakerSupport = { ok: true } | { ok: false; code: SpeakerSupportCode; reason: string; fix: string };
 
 /** The few things `speakerSupport` reads, so it can be tested without a browser. */
 export interface SpeakerEnv {
@@ -79,6 +82,7 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 	if (!env.isSecureContext) {
 		return {
 			ok: false,
+			code: 'insecure',
 			reason: 'This display opened DumbMonit over plain HTTP.',
 			fix: 'Spotify only plays in a secure page: open DumbMonit over HTTPS (a reverse proxy), or as http://localhost on the display itself.'
 		};
@@ -87,6 +91,7 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 	if (typeof request !== 'function') {
 		return {
 			ok: false,
+			code: 'no_eme',
 			reason: 'This browser cannot play Spotify: it has no Encrypted Media Extensions (DRM).',
 			fix: NO_DRM_FIX
 		};
@@ -101,6 +106,7 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 	}
 	return {
 		ok: false,
+		code: 'no_drm',
 		reason: 'This browser cannot play Spotify: it has no DRM module (Widevine).',
 		fix: NO_DRM_FIX
 	};
@@ -108,6 +114,10 @@ export async function speakerSupport(env: SpeakerEnv): Promise<SpeakerSupport> {
 
 /** Why the Web Playback SDK gave up, in words, and whether trying again can help. */
 export interface SdkFailure {
+	/** Which SDK event; `wall/messages.ts` turns it into translated text. */
+	code?: 'initialization_error' | 'authentication_error' | 'account_error';
+	/** The SDK's own message, appended in parentheses. */
+	detail?: string;
 	problem: string;
 	fix: string | null;
 	/** Nothing changes by waiting: only a change on the display or the account helps. */
@@ -126,12 +136,15 @@ export function sdkFailure(event: 'initialization_error' | 'authentication_error
 	switch (event) {
 		case 'initialization_error':
 			return {
+				code: event,
+				detail: message,
 				problem: `This browser cannot play Spotify: its DRM (Widevine) did not start${detail}.`,
 				fix: NO_DRM_FIX,
 				permanent: true
 			};
 		case 'account_error':
 			return {
+				code: event,
 				problem: 'Spotify Premium is required for the wall to be a speaker.',
 				fix: 'Connect a Premium account in Settings → Wall music. Now playing still shows what plays on your other devices.',
 				permanent: true,
@@ -139,6 +152,8 @@ export function sdkFailure(event: 'initialization_error' | 'authentication_error
 			};
 		default:
 			return {
+				code: event,
+				detail: message,
 				problem: `Spotify refused the wall’s connection${detail}.`,
 				fix: 'Trying again by itself. If it keeps failing, reconnect Spotify in Settings → Wall music.',
 				permanent: false

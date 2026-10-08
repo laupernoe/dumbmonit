@@ -22,7 +22,23 @@ export interface MusicEmbed {
 	src: string;
 }
 
-export type MusicParse = { ok: true; embed: MusicEmbed } | { ok: false; message: string };
+/** Why a link was refused; the UI says it in the user's language (`wall/messages.ts`). */
+export type MusicErrorCode =
+	| 'empty'
+	| 'not_link'
+	| 'unsupported'
+	| 'spotify_short'
+	| 'deezer_short'
+	| 'youtube_page'
+	| 'spotify_kinds'
+	| 'spotify_cut'
+	| 'deezer_kinds'
+	| 'deezer_cut'
+	| 'youtube_cut'
+	| 'youtube_empty';
+
+/** `message` is the English fallback; screens show the translation of `code`. */
+export type MusicParse = { ok: true; embed: MusicEmbed } | { ok: false; code: MusicErrorCode; message: string };
 
 /** The only origins a wall ever frames (mirrors the server's `frame-src`). */
 export const EMBED_ORIGINS = [
@@ -42,8 +58,8 @@ const YOUTUBE_LIST = /^[A-Za-z0-9_-]{2,80}$/;
 const UNSUPPORTED =
 	'Paste a Spotify, Deezer or YouTube link: a track, album, playlist, episode or video.';
 
-function fail(message: string): MusicParse {
-	return { ok: false, message };
+function fail(code: MusicErrorCode, message: string): MusicParse {
+	return { ok: false, code, message };
 }
 
 function includes<T extends string>(list: readonly T[], value: string): value is T {
@@ -53,7 +69,7 @@ function includes<T extends string>(list: readonly T[], value: string): value is
 /** Parses a pasted link. Accepts it with or without `https://`. */
 export function parseMusicLink(input: string): MusicParse {
 	const raw = input.trim();
-	if (!raw) return fail('Paste a link first.');
+	if (!raw) return fail('empty', 'Paste a link first.');
 
 	// Spotify's app copies URIs as well as links: spotify:playlist:<id>.
 	const uri = /^spotify:([a-z]+):([A-Za-z0-9]+)$/.exec(raw);
@@ -63,11 +79,11 @@ export function parseMusicLink(input: string): MusicParse {
 	try {
 		url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
 	} catch {
-		return fail(`That is not a link. ${UNSUPPORTED}`);
+		return fail('not_link', `That is not a link. ${UNSUPPORTED}`);
 	}
-	if (url.protocol !== 'https:' && url.protocol !== 'http:') return fail(UNSUPPORTED);
+	if (url.protocol !== 'https:' && url.protocol !== 'http:') return fail('unsupported', UNSUPPORTED);
 	if (url.username || url.password || (url.port && url.port !== '443' && url.port !== '80')) {
-		return fail(UNSUPPORTED);
+		return fail('unsupported', UNSUPPORTED);
 	}
 
 	const host = url.hostname.toLowerCase();
@@ -81,7 +97,7 @@ export function parseMusicLink(input: string): MusicParse {
 			return spotify(rest);
 		}
 		case 'spotify.link':
-			return fail('Short Spotify links cannot be read here: open it, then copy the full open.spotify.com link.');
+			return fail('spotify_short', 'Short Spotify links cannot be read here: open it, then copy the full open.spotify.com link.');
 		case 'deezer.com':
 		case 'www.deezer.com': {
 			// Localised links carry a language: /fr/playlist/<id>.
@@ -90,12 +106,12 @@ export function parseMusicLink(input: string): MusicParse {
 		}
 		case 'widget.deezer.com': {
 			// Already an embed: /widget/<theme>/<kind>/<id>.
-			if (segments[0] !== 'widget') return fail(UNSUPPORTED);
+			if (segments[0] !== 'widget') return fail('unsupported', UNSUPPORTED);
 			return deezer(segments.slice(2));
 		}
 		case 'deezer.page.link':
 		case 'link.deezer.com':
-			return fail('Short Deezer links cannot be read here: open it, then copy the full deezer.com link.');
+			return fail('deezer_short', 'Short Deezer links cannot be read here: open it, then copy the full deezer.com link.');
 		case 'youtu.be':
 			return youtube(segments[0], url.searchParams.get('list'), false);
 		case 'youtube.com':
@@ -113,19 +129,19 @@ export function parseMusicLink(input: string): MusicParse {
 				if (second === 'videoseries') return youtube(null, list, music);
 				return youtube(second, list, music);
 			}
-			return fail('Paste the link of a YouTube video or playlist, not of a channel or a page.');
+			return fail('youtube_page', 'Paste the link of a YouTube video or playlist, not of a channel or a page.');
 		}
 		default:
-			return fail(UNSUPPORTED);
+			return fail('unsupported', UNSUPPORTED);
 	}
 }
 
 function spotify([kind, id]: string[]): MusicParse {
-	if (!kind || !id) return fail(UNSUPPORTED);
+	if (!kind || !id) return fail('unsupported', UNSUPPORTED);
 	if (!includes(SPOTIFY_KINDS, kind)) {
-		return fail('Spotify links to a track, album, playlist or episode can play on the wall.');
+		return fail('spotify_kinds', 'Spotify links to a track, album, playlist or episode can play on the wall.');
 	}
-	if (!SPOTIFY_ID.test(id)) return fail('This Spotify link looks cut short.');
+	if (!SPOTIFY_ID.test(id)) return fail('spotify_cut', 'This Spotify link looks cut short.');
 	return {
 		ok: true,
 		embed: {
@@ -138,11 +154,11 @@ function spotify([kind, id]: string[]): MusicParse {
 }
 
 function deezer([kind, id]: string[]): MusicParse {
-	if (!kind || !id) return fail(UNSUPPORTED);
+	if (!kind || !id) return fail('unsupported', UNSUPPORTED);
 	if (!includes(DEEZER_KINDS, kind)) {
-		return fail('Deezer links to a track, album or playlist can play on the wall.');
+		return fail('deezer_kinds', 'Deezer links to a track, album or playlist can play on the wall.');
 	}
-	if (!DEEZER_ID.test(id)) return fail('This Deezer link looks cut short.');
+	if (!DEEZER_ID.test(id)) return fail('deezer_cut', 'This Deezer link looks cut short.');
 	return {
 		ok: true,
 		embed: {
@@ -158,7 +174,7 @@ function youtube(video: string | null | undefined, list: string | null, music: b
 	const label = music ? 'YouTube Music' : 'YouTube';
 	const validList = list && YOUTUBE_LIST.test(list) ? list : null;
 	if (video) {
-		if (!YOUTUBE_VIDEO.test(video)) return fail('This YouTube link looks cut short.');
+		if (!YOUTUBE_VIDEO.test(video)) return fail('youtube_cut', 'This YouTube link looks cut short.');
 		const query = validList ? `?list=${validList}` : '';
 		return {
 			ok: true,
@@ -170,7 +186,7 @@ function youtube(video: string | null | undefined, list: string | null, music: b
 			}
 		};
 	}
-	if (!validList) return fail('This YouTube link has no video or playlist in it.');
+	if (!validList) return fail('youtube_empty', 'This YouTube link has no video or playlist in it.');
 	return {
 		ok: true,
 		embed: {
