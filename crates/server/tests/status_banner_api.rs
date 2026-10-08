@@ -44,7 +44,10 @@ async fn the_public_document_is_cross_origin_readable_and_the_banner_script_is_s
     let response = get(&app, "/api/public/status/home/banner.js").await;
     assert_eq!(response.status(), StatusCode::OK);
     assert!(
-        response.headers()[header::CONTENT_TYPE].to_str().unwrap().starts_with("application/javascript")
+        response.headers()[header::CONTENT_TYPE]
+            .to_str()
+            .unwrap()
+            .starts_with("application/javascript")
     );
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     assert!(String::from_utf8_lossy(&bytes).contains("attachShadow"));
