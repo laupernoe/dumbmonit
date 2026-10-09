@@ -335,8 +335,9 @@ impl RocketChat {
         let mut body = json!({
             "alias": self.alias,
             "text": format!("{} {}", message.emoji(), message.title),
+            // Le titre n'est que dans `text` : le répéter en titre de pièce jointe
+            // l'afficherait deux fois dans le salon.
             "attachments": [{
-                "title": message.title,
                 "text": message.text,
                 "color": format!("#{:06X}", message.color()),
                 "ts": message.at.to_rfc3339(),
@@ -723,7 +724,6 @@ mod tests {
             "alias": "DumbMonit",
             "text": "⚠️ nas — Disk full",
             "attachments": [{
-                "title": "nas — Disk full",
                 "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
                 "color": "#D98A00",
                 "ts": "2025-09-01T14:12:05+00:00",

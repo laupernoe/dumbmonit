@@ -60,11 +60,40 @@ pub fn http_client() -> reqwest::Client {
         .unwrap_or_default()
 }
 
+/// Client HTTP qui accepte les certificats non vérifiables (auto-signés ou d'une
+/// autorité privée), partagé par les canaux qui l'ont demandé explicitement.
+///
+/// Jamais utilisé par défaut : voir [`client_for`].
+fn insecure_http_client() -> &'static reqwest::Client {
+    static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .timeout(SEND_TIMEOUT)
+            .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap_or_default()
+    })
+}
+
+/// Choisit le client d'un canal : le client vérifié, sauf si le canal est d'un type
+/// auto-hébergeable et que `insecure_tls` y est expressément activé.
+fn client_for<'a>(http: &'a reqwest::Client, config: &ChannelConfig) -> &'a reqwest::Client {
+    if catalog::supports_insecure_tls(&config.kind)
+        && config.setting_bool(catalog::INSECURE_TLS_KEY, false)
+    {
+        insecure_http_client()
+    } else {
+        http
+    }
+}
+
 /// Instancie le notificateur correspondant au canal.
 pub fn build(
     http: &reqwest::Client,
     config: &ChannelConfig,
 ) -> Result<Arc<dyn Notifier>, NotifyError> {
+    let http = client_for(http, config);
     let notifier: Arc<dyn Notifier> = match config.kind.as_str() {
         "discord" => Arc::new(services::Discord::new(http.clone(), config)?),
         "slack" => Arc::new(services::Slack::new(http.clone(), config)?),
@@ -325,6 +354,23 @@ mod tests {
     fn un_canal_demande_mais_desactive_ne_recoit_rien() {
         let channels = vec![channel(1, "ntfy", false)];
         assert!(select(&channels, &[1]).is_empty());
+    }
+
+    #[test]
+    fn le_client_non_verifie_n_est_choisi_que_sur_demande_explicite() {
+        let verifie = http_client();
+        let insecure = insecure_http_client();
+        let pick = |kind: &str, settings: serde_json::Value| {
+            let mut config = channel(1, kind, true);
+            config.settings = settings;
+            std::ptr::eq(client_for(&verifie, &config), insecure)
+        };
+        assert!(!pick("zulip", json!({})), "default must stay verified");
+        assert!(!pick("zulip", json!({"insecure_tls": false})));
+        assert!(!pick("zulip", json!({"insecure_tls": "true"})), "only a real boolean counts");
+        assert!(pick("zulip", json!({"insecure_tls": true})));
+        assert!(pick("webhook", json!({"insecure_tls": true})));
+        assert!(!pick("discord", json!({"insecure_tls": true})), "public services ignore it");
     }
 
     #[tokio::test]

@@ -218,6 +218,51 @@ fn info(
 /// Chaque bras reflète le constructeur du notificateur du même nom ; le test
 /// `chaque_type_de_canal_est_catalogue` garantit qu'aucun bras ne manque.
 fn describe(kind: &'static str) -> Option<KindInfo> {
+    let mut info = describe_base(kind)?;
+    if supports_insecure_tls(kind) {
+        info.settings.push(insecure_tls_field());
+    }
+    Some(info)
+}
+
+/// Types de canaux dont le serveur est typiquement auto-hébergé, et qui acceptent
+/// donc le réglage facultatif [`INSECURE_TLS_KEY`] (certificat auto-signé ou d'une
+/// autorité privée). Les services publics (Discord, Slack, Pushover…) n'en ont
+/// pas : leur certificat est toujours valide, un contournement n'y servirait qu'à
+/// affaiblir la connexion.
+pub fn supports_insecure_tls(kind: &str) -> bool {
+    matches!(
+        kind,
+        "matrix"
+            | "mattermost"
+            | "rocketchat"
+            | "zulip"
+            | "ntfy"
+            | "gotify"
+            | "bark"
+            | "apprise"
+            | "homeassistant"
+            | "signal"
+            | "webhook"
+    )
+}
+
+/// Clé du réglage booléen, dans `settings`.
+pub const INSECURE_TLS_KEY: &str = "insecure_tls";
+
+fn insecure_tls_field() -> Field {
+    field(
+        INSECURE_TLS_KEY,
+        "Accept an unverifiable certificate",
+        "boolean",
+        "Off by default. Turn it on only for a server of yours with a self-signed or \
+         private-CA certificate: the connection stays encrypted, but the server's identity \
+         is no longer checked.",
+        "",
+    )
+}
+
+fn describe_base(kind: &'static str) -> Option<KindInfo> {
     Some(match kind {
         // --- Messageries grand public et autohébergées ------------------------
         "discord" => info(
@@ -934,6 +979,7 @@ mod tests {
             ("object", _) => serde_json::from_str(text).expect("invalid JSON object example"),
             (_, "number") => json!(text.parse::<i64>().expect("invalid numeric example")),
             (_, "select") => json!(field.default),
+            (_, "boolean") => json!(false),
             _ => json!(text),
         }
     }
@@ -1099,6 +1145,23 @@ mod tests {
                 panic!("{}: an example is rejected — {error}", kind.kind);
             }
         }
+    }
+
+    #[test]
+    fn le_reglage_de_certificat_n_est_propose_qu_aux_services_autohebergeables() {
+        for kind in all() {
+            let declared = kind.settings.iter().find(|f| f.key == INSECURE_TLS_KEY);
+            assert_eq!(declared.is_some(), supports_insecure_tls(kind.kind), "{}", kind.kind);
+            if let Some(field) = declared {
+                assert_eq!(field.input, "boolean");
+                assert!(!field.required, "{}: must be opt-in", kind.kind);
+                assert!(!field.destination);
+            }
+        }
+        for kind in ["zulip", "matrix", "gotify", "ntfy", "webhook"] {
+            assert!(supports_insecure_tls(kind), "{kind}");
+        }
+        assert!(!supports_insecure_tls("discord"));
     }
 
     #[test]
