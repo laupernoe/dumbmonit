@@ -121,6 +121,10 @@ the official documentation.
 !!! warning
     Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless you installed your own. UniFi knows every client that ever connected, most of them phones passing by: only those named, reserved on a fixed IP, or noted in UniFi are watched for staleness by default, to avoid an alert for every visitor's phone. List more in the Clients to watch option, or enter all.
 
+## Controller not set up yet
+
+A self-hosted controller whose first-run setup wizard is not finished answers every request with a redirect to `/setup`. DumbMonit then reports "The UniFi controller is not set up yet" as a configuration error (not a refused password): finish the wizard in the browser, then probe again.
+
 ## Credentials
 
 | Credential | Fields |

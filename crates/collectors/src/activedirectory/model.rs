@@ -69,7 +69,13 @@ impl Entry {
         if let Some(bytes) = self.bin_attrs.get("objectsid").and_then(|v| v.first()) {
             return decode::sid_to_string(bytes);
         }
-        self.first("objectSid").filter(|s| s.starts_with("S-")).map(str::to_string)
+        // ldap3 range dans les attributs texte toute valeur binaire qui est de l'UTF-8
+        // valide : c'est le cas de S-1-5-32-544 (tous les octets sont < 0x80).
+        let text = self.first("objectSid")?;
+        if text.starts_with("S-") {
+            return Some(text.to_string());
+        }
+        decode::sid_to_string(text.as_bytes())
     }
 }
 
@@ -491,6 +497,14 @@ pub struct Inventory {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sid_builtin_rangee_en_texte_par_ldap3() {
+        // S-1-5-32-544 : octets tous ASCII, ldap3 le livre dans les attributs texte.
+        let raw = String::from_utf8(vec![1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0]).unwrap();
+        let e = entry("CN=Administrators,CN=Builtin,DC=lab,DC=local", &[("objectSid", &[&raw])]);
+        assert_eq!(e.sid().as_deref(), Some("S-1-5-32-544"));
+    }
 
     fn entry(dn: &str, attrs: &[(&str, &[&str])]) -> Entry {
         Entry::new(

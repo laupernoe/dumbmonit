@@ -57,7 +57,11 @@ The [built-in rules](../alerting/rules.md#kubernetes) that apply:
 - **Kubernetes node under pressure**: memory, disk or PID pressure for five
   minutes (Advisory).
 - **Kubernetes pod crash looping**: a container in `CrashLoopBackOff` for ten
-  minutes (Warning). Between two attempts the container restarts and the state
+  minutes (Warning). Some kubelets (k3s 1.37) show the container as
+  `terminated` with reason `Error` between two attempts and never
+  `CrashLoopBackOff`: a container that restarted at least twice and whose last
+  stop, within ten minutes, ended with a non-zero exit code counts as crash
+  looping too. Between two attempts the container restarts and the state
   disappears for a moment; the rule reads the maximum over ten minutes so that
   it does not start over each time.
 - **Kubernetes pod stuck pending**: a pod Pending for fifteen minutes
