@@ -4765,7 +4765,7 @@ components:
           type: object
           description: Type options go here under their key.
           additionalProperties: { type: string }
-        group_name: { type: string, description: "Flat folder shown on `/targets`. Absent or empty: no folder." }
+        group_name: { type: [string, "null"], description: "Flat folder shown on `/targets`. Empty or `null`: no folder. Absent on `PUT` keeps the folder." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'

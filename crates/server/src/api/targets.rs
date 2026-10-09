@@ -121,9 +121,12 @@ pub struct TargetPayload {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub tags: BTreeMap<String, String>,
-    /// Dossier plat et libre ; absent ou vide signifie « aucun dossier ».
-    #[serde(default)]
-    pub group_name: String,
+    /// Dossier plat et libre ; vide ou `null` : aucun dossier. Absent lors d'une
+    /// modification : conserver le dossier enregistré, comme pour `via_agent` —
+    /// un client qui ne connaît pas ce champ (script, ancienne interface) ne doit
+    /// pas sortir la cible de son dossier en la modifiant.
+    #[serde(default, deserialize_with = "deserialize_present")]
+    pub group_name: Option<Option<String>>,
     /// Absent lors d'une modification signifie « conserver le secret enregistré ».
     ///
     /// Renommer une cible ou changer sa période est bien plus fréquent que changer
@@ -166,7 +169,7 @@ impl TargetPayload {
             )));
         }
 
-        let group_name = self.group_name.trim().to_string();
+        let group_name = self.group_name.flatten().unwrap_or_default().trim().to_string();
         if group_name.chars().count() > MAX_GROUP_NAME_CHARS {
             return Err(ApiError::BadRequest(format!(
                 "The folder name must be at most {MAX_GROUP_NAME_CHARS} characters."
@@ -290,6 +293,7 @@ pub async fn update(
 ) -> ApiResult<Json<TargetView>> {
     let keep_profile = payload.profile_id.is_none();
     let keep_relay = payload.via_agent.is_none();
+    let keep_group = payload.group_name.is_none();
     let mut input = payload.validate(&state, Some(id))?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
@@ -299,6 +303,9 @@ pub async fn update(
         input.via_agent = relay_before;
     }
     check_secret_destination(&before, relay_before, &input)?;
+    if keep_group {
+        input.group_name = before.group_name;
+    }
     if keep_profile {
         input.profile_id = before.profile_id;
     }
@@ -618,7 +625,7 @@ async fn probe_through_relay(
             None => {
                 // Les mesures sont déjà rangées par le compte rendu ; on ne fait
                 // que les décrire à l'appelant.
-                let prepared = relay::prepare(&target, outcome.samples);
+                let prepared = relay::prepare(&state.collectors, &target, outcome.samples);
                 Ok(Json(ProbeReport {
                     sample_count: prepared.len(),
                     series: prepared.iter().map(|s| s.series_key()).collect(),

@@ -52,11 +52,11 @@ pub mod uptime;
 pub mod veeam;
 pub mod vsphere;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
+use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
 
 pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
@@ -117,6 +117,11 @@ pub struct Registry {
     /// Clé possédée : un type peut naître à l'exécution (paquet d'intégration).
     collectors: HashMap<Arc<str>, Arc<dyn Collector>>,
     runtime: Arc<RwLock<Table>>,
+    /// Les options de chaque type compilé : les clés de `Target::tags` que son
+    /// collecteur lit comme des réglages, et qui ne sont donc pas recopiées en
+    /// étiquettes. Un type né à l'exécution déclare les siennes lui-même
+    /// (`Collector::description`).
+    options: HashMap<Arc<str>, Arc<[String]>>,
 }
 
 /// Type de cible → collecteur.
@@ -191,6 +196,25 @@ impl Registry {
         registry.register(Arc::new(NginxCollector::new()));
         registry.register(Arc::new(ApacheCollector::new()));
         registry
+    }
+
+    /// Déclare les options d'un type compilé (voir [`Registry::base_labels`]).
+    pub fn set_options(&mut self, kind: &str, keys: impl IntoIterator<Item = String>) {
+        self.options.insert(Arc::from(kind), keys.into_iter().collect());
+    }
+
+    /// Les étiquettes d'identité d'une cible, sans les options de son type : un
+    /// port, `insecure_tls` ou un certificat d'autorité sont des réglages, pas
+    /// des étiquettes, et ne doivent pas se répéter sur chaque série.
+    pub fn base_labels(&self, target: &Target) -> BTreeMap<String, String> {
+        if let Some(keys) = self.options.get(target.kind.as_str()) {
+            return target.base_labels_except(|key| keys.iter().any(|k| k.as_str() == key));
+        }
+        let declared = self.runtime_read().get(target.kind.as_str()).and_then(|c| c.description());
+        let Some(description) = declared else {
+            return target.base_labels();
+        };
+        target.base_labels_except(|key| description.options.iter().any(|o| &*o.key == key))
     }
 
     pub fn register(&mut self, collector: Arc<dyn Collector>) -> &mut Self {
@@ -301,12 +325,11 @@ impl Registry {
             chrono::Utc::now().timestamp_millis(),
         ));
 
-        let base_labels = target.base_labels();
+        // Les étiquettes d'identité priment sur celles du collecteur ; une
+        // étiquette homonyme est gardée sous `exported_<nom>` (`apply_identity`).
+        let base_labels = self.base_labels(target);
         for sample in &mut samples {
-            for (key, value) in &base_labels {
-                // Les étiquettes d'identité priment sur celles du collecteur.
-                sample.labels.insert(key.clone(), value.clone());
-            }
+            apply_identity(&base_labels, &mut sample.labels);
         }
         Ok(samples)
     }
@@ -327,6 +350,64 @@ mod tests {
 
         async fn probe(&self, _target: &Target) -> Result<Vec<Sample>, ProbeError> {
             Ok(Vec::new())
+        }
+    }
+
+    /// Un collecteur qui pose sa propre étiquette `host`, comme NPM ou vSphere.
+    struct ParHote;
+
+    #[async_trait::async_trait]
+    impl Collector for ParHote {
+        fn kind(&self) -> &str {
+            "parhote"
+        }
+
+        async fn probe(&self, _target: &Target) -> Result<Vec<Sample>, ProbeError> {
+            Ok(vec![
+                Sample::new("x", 1.0, MetricKind::Gauge, 0).with_label("host", "a.lab"),
+                Sample::new("x", 0.0, MetricKind::Gauge, 0).with_label("host", "b.lab"),
+            ])
+        }
+    }
+
+    /// Rapports npm, vcsim, unifi, k3s : les séries par hôte ne se confondent
+    /// plus, et les options du type ne deviennent pas des étiquettes.
+    #[tokio::test]
+    async fn les_etiquettes_du_collecteur_survivent_et_les_options_restent_des_reglages() {
+        let mut registry = Registry::new();
+        registry.register(Arc::new(ParHote));
+        registry.set_options("parhote", ["port".to_string(), "insecure_tls".to_string()]);
+        let target = Target {
+            id: 52,
+            name: "lab-npm".into(),
+            address: "npm.lan:81".into(),
+            kind: "parhote".into(),
+            profile_id: None,
+            parent_id: None,
+            interval: Duration::from_secs(60),
+            enabled: true,
+            tags: [("port", "81"), ("insecure_tls", "true"), ("site", "cave")]
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+            credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
+        };
+
+        let samples = registry.probe(&target, Duration::from_secs(5)).await.unwrap();
+        let hosts: Vec<_> = samples
+            .iter()
+            .filter(|s| s.metric == "x")
+            .map(|s| s.labels["exported_host"].as_str())
+            .collect();
+        assert_eq!(hosts, ["a.lab", "b.lab"]);
+        for sample in &samples {
+            assert_eq!(sample.labels["host"], "lab-npm");
+            assert_eq!(sample.labels["target"], "52");
+            assert_eq!(sample.labels["tag_site"], "cave");
+            assert!(!sample.labels.contains_key("tag_port"));
+            assert!(!sample.labels.contains_key("tag_insecure_tls"));
         }
     }
 

@@ -1418,7 +1418,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
     let planned: HashSet<TargetId> = shown
         .iter()
         .filter(|target| {
-            let labels = target.base_labels();
+            let labels = state.collectors.base_labels(target);
             crate::alerting::silence::first_match(&silences, now, Some(target.id), &labels)
                 .is_some()
         })

@@ -3169,6 +3169,17 @@ pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     )
 }
 
+/// Les clés d'options d'un type compilé, telles que les tables les décrivent.
+///
+/// Le registre les écarte des étiquettes de chaque série
+/// (`Registry::base_labels`) : un port ou un certificat d'autorité sont des
+/// réglages, pas des étiquettes que l'utilisateur a voulu poser.
+pub fn option_keys(kind: &str) -> Vec<String> {
+    compiled(kind)
+        .map(|view| view.options.iter().map(|option| option.key.to_string()).collect())
+        .unwrap_or_default()
+}
+
 /// Description d'un type : celle des tables de ce fichier s'il y figure, sinon
 /// celle que fournit son collecteur (`Collector::description`, pour un type né à
 /// l'exécution), à défaut une description générique.

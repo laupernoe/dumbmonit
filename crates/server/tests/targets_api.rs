@@ -175,6 +175,35 @@ async fn ranger_une_cible_dans_un_dossier() {
     assert_eq!(reread["group_name"], json!("Rack A"));
 }
 
+/// `PUT` d'une cible de test, avec `group_name` à `group` (absent si `None`).
+async fn put_mongo(app: &TestApp, id: i64, group: Option<Value>) -> Value {
+    let mut body = json!({ "name": "mongo", "address": "10.0.0.5", "kind": "dummy" });
+    if let Some(group) = group {
+        body["group_name"] = group;
+    }
+    let uri = format!("/api/targets/{id}");
+    let (status, body) = app.request("PUT", &uri, Some(body), Some(&app.admin)).await;
+    assert_eq!(status, StatusCode::OK, "mise à jour refusée : {body}");
+    body
+}
+
+/// `PUT` sans `group_name` garde le dossier, comme `credential` ou `via_agent` :
+/// un client qui ignore le champ (rapport mongo du lab) ne doit pas sortir la
+/// cible de son dossier. `""` ou `null` l'en sortent explicitement.
+#[tokio::test]
+async fn un_put_sans_dossier_garde_le_dossier() {
+    let app = setup().await;
+    let (id, _) = app.create_target("mongo", "10.0.0.5").await;
+
+    put_mongo(&app, id, Some(json!("lab"))).await;
+    assert_eq!(put_mongo(&app, id, None).await["group_name"], json!("lab"));
+    assert_eq!(app.get_target(id).await["group_name"], json!("lab"));
+
+    assert_eq!(put_mongo(&app, id, Some(json!(""))).await["group_name"], json!(""));
+    put_mongo(&app, id, Some(json!("lab"))).await;
+    assert_eq!(put_mongo(&app, id, Some(Value::Null)).await["group_name"], json!(""));
+}
+
 /// Un nom de dossier trop long est une erreur de saisie, pas une panne.
 #[tokio::test]
 async fn un_nom_de_dossier_trop_long_est_refuse() {
