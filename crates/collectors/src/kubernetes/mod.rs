@@ -424,7 +424,8 @@ mod tests {
             .unwrap()
         };
         let now = captured_at();
-        let error = r#"{"terminated":{"exitCode":1,"reason":"Error","finishedAt":"2026-09-30T22:46:30Z"}}"#;
+        let error =
+            r#"{"terminated":{"exitCode":1,"reason":"Error","finishedAt":"2026-09-30T22:46:30Z"}}"#;
         let running = r#"{"running":{"startedAt":"2026-09-30T22:46:50Z"}}"#;
         // Terminé en erreur, sans CrashLoopBackOff.
         assert!(crashlooping(&pod(error, 5, "2026-09-30T22:46:30Z"), now));

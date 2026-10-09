@@ -273,11 +273,7 @@ impl HttpClient {
         if error.is_builder() {
             return ProbeError::Config(format!("Malformed request to {path}: {error}"));
         }
-        ProbeError::Unreachable(format!(
-            "{path}: {} ({})",
-            transport_reason(error),
-            self.base_url
-        ))
+        ProbeError::Unreachable(format!("{path}: {} ({})", transport_reason(error), self.base_url))
     }
 }
 
@@ -349,7 +345,9 @@ mod tests {
             Duration::from_secs(5),
             "Caddy",
         );
-        let error = client.get_raw("/config/").await.unwrap_err();
+        let Err(error) = client.get_raw("/config/").await else {
+            panic!("refused connection must fail")
+        };
         assert!(error.means_down(), "{error}");
         let text = error.to_string();
         assert!(text.contains("connection refused"), "{text}");
