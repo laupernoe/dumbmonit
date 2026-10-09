@@ -220,6 +220,7 @@
 	"alerts_row_since": "depuis {when}",
 	"alerts_row_snoozed": "En sourdine{until}. Silence jusque-là, ou jusqu’à la résolution.",
 	"alerts_row_suppressed_by": "Masquée par {parent} — probablement une conséquence, pas un problème distinct.",
+	"alerts_row_suppressed_self": "Masquée tant que cet appareil est injoignable : ses valeurs ne sont plus à jour.",
 	"alerts_row_until": " jusqu’à {time}",
 	"alerts_rules_after_hours": "Après {hours} h",
 	"alerts_rules_all_channels": "tous les canaux activés",

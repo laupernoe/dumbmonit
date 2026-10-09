@@ -217,6 +217,7 @@
 	"alerts_row_since": "自 {when}",
 	"alerts_row_snoozed": "已暂停提醒{until}。在此之前或问题解决前保持安静。",
 	"alerts_row_suppressed_by": "已被 {parent} 抑制——很可能是连带影响，而非独立问题。",
+	"alerts_row_suppressed_self": "此设备无法访问期间已隐藏：其数据已过时。",
 	"alerts_row_until": "，直到 {time}",
 	"alerts_rules_after_hours": "{hours} 小时后",
 	"alerts_rules_all_channels": "所有已启用的渠道",
