@@ -15,11 +15,14 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use dumbmonit_proto::{AgentCommand, ProbeJob, ProbeOutcome, Sample, Target, TargetId};
+use dumbmonit_proto::{
+    AgentCommand, ProbeJob, ProbeOutcome, Sample, Target, TargetId, apply_identity,
+};
 use tokio::sync::{Notify, oneshot};
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
+use crate::collectors::Registry;
 use crate::db;
 use crate::state::AppState;
 
@@ -270,7 +273,7 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
             } else {
                 let error = outcome.error.as_deref();
                 if error.is_none() {
-                    let samples = prepare(&target, outcome.samples.clone());
+                    let samples = prepare(&state.collectors, &target, outcome.samples.clone());
                     debug!(
                         target = target.id,
                         agent = job.agent_id,
@@ -307,15 +310,17 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
 /// la cible priment sur ce que l'agent a envoyé — même garde-fou qu'à
 /// l'ingestion, un relais ne peut pas écrire dans les séries d'une autre cible —
 /// et une valeur non finie ferait rejeter le lot entier.
-pub fn prepare(target: &Target, samples: Vec<Sample>) -> Vec<Sample> {
-    let base_labels = target.base_labels();
+///
+/// Les étiquettes sont celles du registre du serveur, sans les options du type :
+/// les `tag_*` que l'agent relais a posés d'après ses propres règles sont retirés
+/// (`apply_identity`).
+pub fn prepare(registry: &Registry, target: &Target, samples: Vec<Sample>) -> Vec<Sample> {
+    let base_labels = registry.base_labels(target);
     samples
         .into_iter()
         .filter(|sample| sample.value.is_finite())
         .map(|mut sample| {
-            for (key, value) in &base_labels {
-                sample.labels.insert(key.clone(), value.clone());
-            }
+            apply_identity(&base_labels, &mut sample.labels);
             sample
         })
         .collect()
@@ -465,13 +470,18 @@ mod tests {
         let samples = vec![
             Sample::new("http_status", 200.0, MetricKind::Gauge, 1_000)
                 .with_label("target", "42")
-                .with_label("host", "usurpateur"),
+                .with_label("host", "usurpateur")
+                .with_label("tag_port", "8443"),
             Sample::new("mauvais", f64::NAN, MetricKind::Gauge, 1_000),
         ];
-        let prepared = prepare(&target(7), samples);
+        let prepared = prepare(&Registry::new(), &target(7), samples);
         assert_eq!(prepared.len(), 1);
         assert_eq!(prepared[0].labels.get("target").map(String::as_str), Some("7"));
         assert_eq!(prepared[0].labels.get("host").map(String::as_str), Some("cible-7"));
         assert_eq!(prepared[0].labels.get("tag_salle").map(String::as_str), Some("cave"));
+        // L'identité forgée reste visible sous `exported_*`, sans rien écraser ;
+        // un `tag_*` que la cible n'a pas disparaît.
+        assert_eq!(prepared[0].labels.get("exported_host").map(String::as_str), Some("usurpateur"));
+        assert!(!prepared[0].labels.contains_key("tag_port"));
     }
 }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anyhow::{Context, Result};
 use dumbmonit_server::config::Config;
 use dumbmonit_server::state::{AppState, Inner};
@@ -134,142 +132,17 @@ async fn run(mut config: Config) -> Result<()> {
         None
     };
 
-    let mut registry = collectors::Registry::new();
-
     // Paquets d'intégration activés : relus ici pour les profils SNMP qu'ils
     // apportent, que le collecteur SNMP doit connaître dès sa construction. Leurs
-    // collecteurs HTTP sont enregistrés plus bas, avec les autres.
+    // collecteurs HTTP sont enregistrés plus bas, dans l'étage d'exécution.
     let packs = dumbmonit_server::packs::load_enabled(&pool).await?;
 
-    // Équipements interrogés à distance.
-    let snmp = collectors::SnmpCollector::new().with_request_timeout(config.probe_timeout);
-    let snmp = match dumbmonit_server::packs::snmp_catalog(snmp.catalog(), &packs) {
-        Some(catalog) => snmp.with_catalog(Arc::new(catalog)),
-        None => snmp,
-    };
-    registry.register(Arc::new(snmp));
-    registry.register(Arc::new(collectors::ProxmoxCollector::new()));
-    registry.register(Arc::new(
-        collectors::PbsCollector::new()
-            .with_observer(collectors::pbs_history::sqlite_observer(pool.clone())),
-    ));
-    registry.register(Arc::new(
-        collectors::PdmCollector::new()
-            .with_observer(collectors::pdm_history::sqlite_observer(pool.clone())),
-    ));
-    registry.register(Arc::new(
-        collectors::PmgCollector::new()
-            .with_observer(collectors::pmg_history::sqlite_observer(pool.clone())),
-    ));
-    registry.register(Arc::new(
-        collectors::SynologyCollector::new()
-            .with_abb_history(collectors::synology_history::sqlite_history(pool.clone())),
-    ));
-    registry.register(Arc::new(
-        collectors::OpnsenseCollector::new()
-            .with_observer(collectors::opnsense_history::sqlite_observer(pool.clone())),
-    ));
-    registry.register(Arc::new(
-        collectors::TruenasCollector::new()
-            .with_observer(collectors::truenas_history::sqlite_observer(pool.clone())),
-    ));
-    // Matériel serveur, lu sur le contrôleur de gestion (BMC) en Redfish.
-    registry.register(Arc::new(collectors::RedfishCollector::new()));
-    // Serveurs de journaux et de métriques : la santé de la pile d'observabilité
-    // elle-même (`collectors/observability`).
-    registry.register(Arc::new(collectors::VictoriaCollector::metrics()));
-    registry.register(Arc::new(collectors::VictoriaCollector::logs()));
-    registry.register(Arc::new(collectors::LokiCollector::new()));
-    registry.register(Arc::new(collectors::GraylogCollector::new()));
-    // Messagerie MDaemon : services de messagerie, API XML ou REST si un
-    // identifiant est fourni.
-    registry.register(Arc::new(collectors::MdaemonCollector::new()));
-    registry.register(Arc::new(collectors::SecurityGatewayCollector::new()));
-    // Applications auto-hébergées : maintenance, dépendances, travaux et
-    // lectures en cours, par leur API d'administration (`collectors/selfhosted`).
-    registry.register(Arc::new(collectors::NextcloudCollector::new()));
-    registry.register(Arc::new(collectors::ImmichCollector::new()));
-    registry.register(Arc::new(collectors::PaperlessCollector::new()));
-    registry.register(Arc::new(collectors::JellyfinCollector::new()));
-    registry.register(Arc::new(collectors::PlexCollector::new()));
-    // Forges auto-hébergées (`collectors/selfhosted/{gitlab,forgejo}.rs`).
-    registry.register(Arc::new(collectors::GitlabCollector::new()));
-    registry.register(Arc::new(collectors::ForgejoCollector::new()));
-    // Filtrage DNS (Pi-hole, AdGuard Home), onduleurs derrière NUT, routeurs
-    // MikroTik.
-    registry.register(Arc::new(collectors::PiholeCollector::new()));
-    registry.register(Arc::new(collectors::AdguardCollector::new()));
-    registry.register(Arc::new(collectors::NutCollector::new()));
-    registry.register(Arc::new(collectors::MikrotikCollector::new()));
-    // Réseau UniFi, maison connectée Home Assistant, virtualisation vSphere.
-    registry.register(Arc::new(collectors::UnifiCollector::new()));
-    registry.register(Arc::new(collectors::HomeAssistantCollector::new()));
-    registry.register(Arc::new(collectors::VsphereCollector::new()));
-    // Bases, courtier de messages et moteur de sécurité, lus avec un compte en
-    // lecture seule (`collectors/{redis,mongodb,rabbitmq,crowdsec}`).
-    registry.register(Arc::new(collectors::RedisCollector::new()));
-    registry.register(Arc::new(collectors::MongodbCollector::new()));
-    registry.register(Arc::new(collectors::RabbitmqCollector::new()));
-    registry.register(Arc::new(collectors::CrowdsecCollector::new()));
-    // Proxys inverses, et l'expiration des noms de domaine (RDAP).
-    registry.register(Arc::new(collectors::TraefikCollector::new()));
-    registry.register(Arc::new(collectors::CaddyCollector::new()));
-    registry.register(Arc::new(collectors::NpmCollector::new()));
-    registry.register(Arc::new(collectors::DomainCollector::new()));
-    registry.register(Arc::new(collectors::KubernetesCollector::new()));
-    // Active Directory en LDAP, lecture seule : la vue (contrôleurs, groupes
-    // privilégiés, constats) est conservée pour la page.
-    registry.register(Arc::new(
-        collectors::ActiveDirectoryCollector::new()
-            .with_observer(collectors::activedirectory_history::sqlite_observer(pool.clone())),
-    ));
-    // Équipements commerciaux interrogés par leur API (`collectors/{pfsense,
-    // unraid,veeam,tailscale,fortigate,sophos}`).
-    registry.register(Arc::new(collectors::PfsenseCollector::new()));
-    registry.register(Arc::new(collectors::UnraidCollector::new()));
-    registry.register(Arc::new(collectors::VeeamCollector::new()));
-    registry.register(Arc::new(collectors::TailscaleCollector::new()));
-    registry.register(Arc::new(collectors::FortigateCollector::new()));
-    registry.register(Arc::new(collectors::SophosCollector::new()));
-
-    // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur ne
-    // fait que constater leur fraîcheur.
-    registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
-
-    // Sondes de disponibilité, à la manière d'Uptime Kuma.
-    registry.register(Arc::new(collectors::HttpCollector::new()));
-    registry.register(Arc::new(collectors::TcpCollector::new()));
-    registry.register(Arc::new(collectors::DnsCollector::new()));
-    registry.register(Arc::new(collectors::PingCollector::new()));
-    registry.register(Arc::new(collectors::TlsCollector::new()));
-
-    // Sondes applicatives : elles mènent le début d'une vraie session plutôt que
-    // de constater l'ouverture d'un port.
-    registry.register(Arc::new(collectors::SmtpCollector::new()));
-    registry.register(Arc::new(collectors::PostgresCollector::new()));
-    registry.register(Arc::new(collectors::MysqlCollector::new()));
-    registry.register(Arc::new(collectors::MqttCollector::new()));
-    registry.register(Arc::new(collectors::WebsocketCollector::new()));
-
-    // Moniteurs en poussée (heartbeat) : le travail surveillé appelle une URL, ce
-    // collecteur ne fait que constater qu'il l'a fait à temps.
-    registry.register(Arc::new(collectors::PushCollector::new(pool.clone())));
-
-    // Changements du contenu d'un site : texte, instantanés et captures, gardés
-    // en base et sous `<data>/webchange`. Une vérification interrompue par un
-    // arrêt du serveur a laissé son verrou : il est levé ici.
+    // Une vérification de site interrompue par un arrêt du serveur a laissé son
+    // verrou : il est levé avant que le collecteur ne reprenne.
     dumbmonit_server::webchange::store::release_all(&pool).await?;
-    registry.register(Arc::new(dumbmonit_server::webchange::WebchangeCollector::new(
-        dumbmonit_server::webchange::Context {
-            pool: pool.clone(),
-            data_dir: config.data_dir.clone(),
-            browser_url: config.browser_url.clone(),
-        },
-    )));
 
-    // Collecteur de démonstration : il permet d'obtenir des graphes sans matériel,
-    // le temps de configurer un premier équipement réel.
-    registry.register(Arc::new(collectors::DummyCollector));
+    // Liste unique, partagée avec l'agent relais (`collectors::builtin`).
+    let mut registry = collectors::builtin(&pool, &config, &packs);
     if config.demo {
         demo::register_synthetic(&mut registry);
     }

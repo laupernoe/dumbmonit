@@ -4,10 +4,10 @@
 //! qu'avec une modification voulue de ses tables (`api/collectors.rs`), jamais en
 //! passant, à l'occasion d'un remaniement de la façon dont il est construit.
 //!
-//! Le registre reproduit celui de `main.rs` (les collecteurs réseau de
-//! `Registry::remote`, plus l'agent, les heartbeats, la surveillance des sites
-//! et la démonstration), et y ajoute un type qu'aucune table ne connaît, pour
-//! figer aussi la description générique.
+//! Le registre est celui de `main.rs` (`collectors::builtin` : les collecteurs
+//! réseau de `Registry::remote`, plus l'agent, les heartbeats, la surveillance
+//! des sites et la démonstration), auquel s'ajoute un type qu'aucune table ne
+//! connaît, pour figer aussi la description générique.
 //!
 //! `DUMBMONIT_BLESS=1` réécrit l'instantané après un changement voulu.
 
@@ -48,17 +48,10 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
     let dir = tempfile::tempdir().expect("répertoire temporaire");
     let config = common::base_config(dir.path());
     let pool = db::open(&config.database_path()).await.expect("ouverture de la base");
-    let mut registry = collectors::Registry::remote(Duration::from_secs(5));
-    registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
-    registry.register(Arc::new(collectors::PushCollector::new(pool.clone())));
-    registry.register(Arc::new(dumbmonit_server::webchange::WebchangeCollector::new(
-        dumbmonit_server::webchange::Context {
-            pool: pool.clone(),
-            data_dir: config.data_dir.clone(),
-            browser_url: None,
-        },
-    )));
-    registry.register(Arc::new(collectors::DummyCollector));
+    let mut config = config;
+    config.probe_timeout = Duration::from_secs(5);
+    config.browser_url = None;
+    let mut registry = collectors::builtin(&pool, &config, &[]);
     registry.register(Arc::new(Inconnu));
     let app = common::build_with_registry(dir, config, pool, registry).await;
     app.create_admin().await;
@@ -88,6 +81,40 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
         );
     }
     assert_eq!(expected.len(), body.len(), "GET /api/collectors a changé de longueur");
+}
+
+/// Tous les types partagés avec l'agent relais sont connus du serveur : la liste
+/// du serveur part de `Registry::remote` et ne peut plus en oublier (NTP, Nginx
+/// et Apache manquaient quand `main.rs` enregistrait ses collecteurs un à un).
+#[tokio::test]
+async fn le_serveur_connait_tous_les_types_partages() {
+    let dir = tempfile::tempdir().expect("répertoire temporaire");
+    let config = common::base_config(dir.path());
+    let pool = db::open(&config.database_path()).await.expect("ouverture de la base");
+    let registry = collectors::builtin(&pool, &config, &[]);
+    let app = common::build_with_registry(dir, config, pool, registry).await;
+    app.create_admin().await;
+    let cookie = app.admin_cookie().await;
+
+    let request =
+        Request::get("/api/collectors").header(header::COOKIE, cookie).body(Body::empty()).unwrap();
+    let response = app.router.clone().oneshot(request).await.expect("réponse");
+    assert_eq!(response.status(), StatusCode::OK);
+    let bytes = response.into_body().collect().await.expect("corps").to_bytes();
+    let body: serde_json::Value = serde_json::from_slice(&bytes).expect("JSON");
+    let served: std::collections::BTreeSet<String> = body
+        .as_array()
+        .expect("liste des types")
+        .iter()
+        .filter_map(|kind| kind["kind"].as_str().map(str::to_string))
+        .collect();
+
+    let shared = collectors::Registry::remote(Duration::from_secs(5)).kinds();
+    let missing: Vec<_> = shared.iter().filter(|kind| !served.contains(&***kind)).collect();
+    assert!(missing.is_empty(), "types partagés absents du serveur : {missing:?}");
+    for kind in ["ntp", "nginx", "apache", "agent", "push", "dummy"] {
+        assert!(served.contains(kind), "type {kind} absent de GET /api/collectors");
+    }
 }
 
 /// Environ 240 octets à partir de `from`, sans couper un caractère.

@@ -182,9 +182,7 @@ fn prepare(target: &Target, samples: Vec<Sample>, received_at_ms: i64) -> (Vec<S
             sample.value.is_finite() && sample.ts_ms >= oldest && sample.ts_ms <= newest
         })
         .map(|mut sample| {
-            for (key, value) in &base_labels {
-                sample.labels.insert(key.clone(), value.clone());
-            }
+            dumbmonit_proto::apply_identity(&base_labels, &mut sample.labels);
             sample
         })
         .collect();

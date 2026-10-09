@@ -44,6 +44,7 @@ mod users;
 mod webchange;
 mod webpush;
 
+pub use collectors::option_keys as collector_option_keys;
 pub use error::{ApiError, ApiResult};
 pub use openapi::API_VERSION;
 

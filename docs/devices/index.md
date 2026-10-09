@@ -72,7 +72,10 @@ minimum 10 s) through the collector for its kind, with at most
 `DUMBMONIT_MAX_CONCURRENT_PROBES` probes in flight and a hard timeout of
 `DUMBMONIT_PROBE_TIMEOUT_SECS` per probe. Each successful probe writes its
 samples plus `dumbmonit_up = 1`; a failed probe writes nothing, and it is the
-silence of the series that the "Device unreachable" rule detects.
+silence of the series that the "Device unreachable" rule detects. The device
+page shows the failure at the next probe, but the alert waits on purpose: it
+fires about four minutes after the last successful probe (three minutes of
+silence, then a one-minute hold), so a single lost probe never pages anyone.
 
 Failures are classified. A device that does not answer is *unreachable* and
 raises an alert. A wrong community, a refused certificate or a missing
@@ -85,9 +88,11 @@ device should not wake anyone up at night.
 Some types read options from the device's tags: the API port, whether to accept
 a self-signed certificate, which nodes to monitor. The form shows a typed field
 per option under **More options**, with its default and help text. The per-kind
-pages list them verbatim. Options are copied on every series as `tag_<key>`
-labels, so never put a secret in one: use the credential field, which is
-encrypted.
+pages list them verbatim. Options are settings, not labels: they are not copied
+on the series. Free tags (any other key) are copied on every series as
+`tag_<key>` labels, except keys that name a secret (`password`, `token`, `key`,
+`cert`, `secret`…) and values longer than 256 characters. Never put a secret in
+a tag anyway: use the credential field, which is encrypted.
 
 ## Parent devices
 

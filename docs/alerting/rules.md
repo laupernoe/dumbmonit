@@ -411,7 +411,7 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 
 ### VMware vSphere
 
-[Device page](../devices/vsphere.md). Host series carry `host`, VM series `vm`, datastore series `datastore`, so the notification names the object.
+[Device page](../devices/vsphere.md). Host series carry `esxi`, VM series `vm`, datastore series `datastore`, so the notification names the object.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -452,7 +452,7 @@ Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [M
 
 ### Reverse proxies and domains
 
-Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Domain expiry](../devices/domain.md)), and the DNS check's *Alert when the answer changes* option ([Services](../devices/services.md#alerting-when-the-answer-changes)). Series carry `router`, `service`, `server`, `upstream`, `host` or `cert`, so the notification names what failed.
+Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Domain expiry](../devices/domain.md)), and the DNS check's *Alert when the answer changes* option ([Services](../devices/services.md#alerting-when-the-answer-changes)). Series carry `router`, `service`, `server`, `upstream`, `proxy_host` or `cert`, so the notification names what failed.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|

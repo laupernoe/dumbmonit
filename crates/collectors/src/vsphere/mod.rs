@@ -505,7 +505,7 @@ mod tests {
 
         let samples = collector.probe(&target).await.unwrap();
         assert_eq!(value(&samples, "vsphere_hosts", "state", "disconnected"), Some(1.0));
-        assert_eq!(value(&samples, "vsphere_host_maintenance", "host", "DC0_C0_H2"), Some(1.0));
+        assert_eq!(value(&samples, "vsphere_host_maintenance", "esxi", "DC0_C0_H2"), Some(1.0));
         assert_eq!(
             value(&samples, "vsphere_datastore_accessible", "datastore", "LocalDS_0"),
             Some(1.0)

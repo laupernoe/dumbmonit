@@ -627,7 +627,7 @@ fn assemble_ceph(series: &[InstantSeries]) -> CephView {
                 }
                 let osd = osds.entry(name.clone()).or_insert_with(|| CephOsdView {
                     name,
-                    host: label(point, "host"),
+                    host: label(point, "ceph_host"),
                     device_class: label(point, "device_class"),
                     ..Default::default()
                 });
@@ -1042,8 +1042,9 @@ mod tests {
 
     #[test]
     fn les_osd_sont_recolles_et_ranges_par_numero() {
-        let osd =
-            |name: &'static str| vec![("osd", name), ("host", "pve1"), ("device_class", "ssd")];
+        let osd = |name: &'static str| {
+            vec![("osd", name), ("ceph_host", "pve1"), ("device_class", "ssd")]
+        };
         let series = vec![
             serie("dumbmonit_proxmox_ceph_health", &[], 1.0),
             serie("dumbmonit_proxmox_ceph_health_info", &[("status", "HEALTH_WARN")], 1.0),
