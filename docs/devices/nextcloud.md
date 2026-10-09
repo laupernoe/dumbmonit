@@ -97,7 +97,7 @@ platform (database, PHP).
     php occ config:app:get serverinfo token
     ```
 
-2. If occ says serverinfo is disabled, enable it first.
+2. If occ says serverinfo is disabled, enable it first. Right after the token is set, Nextcloud may refuse the very first read (401) before it takes effect: DumbMonit retries once after two seconds, so a brand-new target does not show a spurious "token refused" error.
 
     ```
     php occ app:enable serverinfo

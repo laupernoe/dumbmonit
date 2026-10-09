@@ -444,3 +444,18 @@ fn l_identifiant_et_le_site_sont_verifies() {
     assert_eq!(settings.connection.base_url, "https://unifi.lan:8443");
     assert_eq!(settings.site, "default");
 }
+
+#[tokio::test]
+async fn un_controleur_non_configure_est_une_erreur_de_configuration_claire() {
+    let app = Router::new()
+        .route("/", get(|| async { Redirect::to("/setup/") }))
+        .route("/setup/", get(|| async { "<html>UniFi setup</html>" }))
+        .route(
+            "/api/auth/login",
+            post(|| async { (StatusCode::BAD_REQUEST, real("login_refused")) }),
+        );
+    let base = serve(app).await;
+    let target = target("unifi", &base, &[], login_credential("ViewOnly-Pass-42"));
+    let error = UnifiCollector::new().probe(&target).await.unwrap_err();
+    assert!(matches!(error, ProbeError::Config(ref m) if m.contains("not set up")), "{error:?}");
+}
