@@ -35,11 +35,11 @@ All metrics are prefixed `dumbmonit_vsphere_`. Health values follow vSphere's
 |---|---|---|
 | `info` | value 1 | `product` (`vcenter` or `esxi`), `version`, `build` |
 | `hosts` | hosts by connection state: `connected`, `disconnected`, `notResponding` | `state` |
-| `host_connection_state` | 0 connected, 1 disconnected by an administrator, 2 not responding | `host` |
-| `host_power_state` | 0 powered on, 1 standby, 2 powered off, 3 unknown | `host` |
-| `host_maintenance` | 1 in maintenance mode | `host` |
-| `host_status` | overall health | `host` |
-| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | connected hosts only | `host` |
+| `host_connection_state` | 0 connected, 1 disconnected by an administrator, 2 not responding | `esxi` |
+| `host_power_state` | 0 powered on, 1 standby, 2 powered off, 3 unknown | `esxi` |
+| `host_maintenance` | 1 in maintenance mode | `esxi` |
+| `host_status` | overall health | `esxi` |
+| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | connected hosts only | `esxi` |
 | `vms` | VMs by power state: `poweredOn`, `poweredOff`, `suspended` (templates excluded) | `state` |
 | `templates` | VM templates | |
 | `vm_power_state` | 0 powered on, 1 powered off, 2 suspended; at most 1000 VMs | `vm` |

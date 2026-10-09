@@ -27,12 +27,12 @@ All metrics are prefixed `dumbmonit_npm_`.
 | `version_info` | value 1 | `version` |
 | `hosts`, `hosts_enabled`, `hosts_disabled` | hosts of each type | `type`: `proxy`, `redirection`, `dead` (404 hosts), `stream` |
 | `hosts_offline` | enabled hosts whose configuration nginx refused | `type` |
-| `host_online` | per enabled host: 0 when nginx refused its configuration | `type`, `host` |
-| `host_error_info` | value 1, for a host nginx refused: the first line of nginx's error | `type`, `host`, `error` |
+| `host_online` | per enabled host: 0 when nginx refused its configuration | `type`, `proxy_host` |
+| `host_error_info` | value 1, for a host nginx refused: the first line of nginx's error | `type`, `proxy_host`, `error` |
 | `certificates_checked`, `certificates_read` | certificates attached to an enabled host, and those read on the HTTPS port | |
-| `cert_expiry_days` | days left before the certificate a host presents expires | `host` |
+| `cert_expiry_days` | days left before the certificate a host presents expires | `proxy_host` |
 
-`host` is the first domain name of the host, or `port 9000` for a stream.
+`proxy_host` is the first domain name of the host, or `port 9000` for a stream.
 Disabled hosts are counted, not described: disabling a host is deliberate, and
 its alert, if any, resolves. Hosts are described one by one up to 500, and at
 most 100 certificates are read per check.

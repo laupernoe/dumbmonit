@@ -107,7 +107,7 @@
 			return v;
 		};
 		for (const { name, labels, value } of rows) {
-			const h = labels.host ?? '';
+			const h = labels.esxi ?? '';
 			const d = labels.datastore ?? '';
 			const m = labels.vm ?? '';
 			switch (name) {

@@ -145,7 +145,7 @@ fn host_samples(host: &ObjectContent, name: &str, ts_ms: i64) -> Vec<Sample> {
     let mut out = Vec::new();
     let mut push = |metric: &str, value: Option<f64>| {
         if let Some(value) = value {
-            out.push(gauge(metric, value, ts_ms).with_label("host", name));
+            out.push(gauge(metric, value, ts_ms).with_label("esxi", name));
         }
     };
     let connected = host.text("runtime.connectionState") == Some("connected");
@@ -319,17 +319,17 @@ mod tests {
     fn les_etats_des_hotes_sont_distingues() {
         let samples = inventory_samples(&inventory(), 0);
         let state =
-            |host| find(&samples, "vsphere_host_connection_state", "host", host).unwrap().value;
+            |host| find(&samples, "vsphere_host_connection_state", "esxi", host).unwrap().value;
         assert_eq!(state("DC0_H0"), 0.0);
         assert_eq!(state("DC0_C0_H1"), 1.0);
         let maintenance =
-            find(&samples, "vsphere_host_maintenance", "host", "DC0_C0_H2").unwrap().value;
+            find(&samples, "vsphere_host_maintenance", "esxi", "DC0_C0_H2").unwrap().value;
         assert_eq!(maintenance, 1.0);
         // Un hôte déconnecté ne publie plus de charge.
-        assert!(find(&samples, "vsphere_host_cpu_percent", "host", "DC0_C0_H1").is_none());
-        let cpu = find(&samples, "vsphere_host_cpu_percent", "host", "DC0_H0").unwrap().value;
+        assert!(find(&samples, "vsphere_host_cpu_percent", "esxi", "DC0_C0_H1").is_none());
+        let cpu = find(&samples, "vsphere_host_cpu_percent", "esxi", "DC0_H0").unwrap().value;
         assert!((cpu - 67.0 / (2294.0 * 2.0) * 100.0).abs() < 1e-9);
-        let memory = find(&samples, "vsphere_host_memory_percent", "host", "DC0_H0").unwrap().value;
+        let memory = find(&samples, "vsphere_host_memory_percent", "esxi", "DC0_H0").unwrap().value;
         assert!(memory > 30.0 && memory < 40.0, "{memory}");
         assert_eq!(find(&samples, "vsphere_hosts", "state", "connected").unwrap().value, 3.0);
         assert_eq!(find(&samples, "vsphere_hosts", "state", "disconnected").unwrap().value, 1.0);

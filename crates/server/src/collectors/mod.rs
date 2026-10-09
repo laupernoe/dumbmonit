@@ -63,3 +63,88 @@ pub use dumbmonit_proto::Collector;
 
 pub use agent::AgentCollector;
 pub use push::PushCollector;
+
+/// Le registre des collecteurs compilés du serveur.
+///
+/// Il part de [`Registry::remote`], la liste partagée avec l'agent relais, pour
+/// que les deux ne puissent plus diverger : un collecteur ajouté là est connu du
+/// serveur sans autre retouche. Ne sont remplacés ici que les collecteurs qui
+/// gardent un historique en base (même type, `register` écrase), et ne sont
+/// ajoutés que ceux qui lisent la base du serveur : agents, moniteurs en
+/// poussée, changements de site, démonstration.
+///
+/// Les profils SNMP des paquets activés sont fusionnés au catalogue ; les types
+/// que ces paquets définissent, eux, sont activés par l'appelant, dans l'étage
+/// d'exécution du registre.
+pub fn builtin(
+    pool: &sqlx::SqlitePool,
+    config: &crate::config::Config,
+    packs: &[std::sync::Arc<dumbmonit_pack::Pack>],
+) -> Registry {
+    use std::sync::Arc;
+
+    let mut registry = Registry::remote(config.probe_timeout);
+
+    let snmp = SnmpCollector::new().with_request_timeout(config.probe_timeout);
+    let snmp = match crate::packs::snmp_catalog(snmp.catalog(), packs) {
+        Some(catalog) => snmp.with_catalog(Arc::new(catalog)),
+        None => snmp,
+    };
+    registry.register(Arc::new(snmp));
+
+    // Collecteurs qui conservent leur vue pour la page de l'équipement.
+    registry.register(Arc::new(
+        PbsCollector::new().with_observer(pbs_history::sqlite_observer(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        PdmCollector::new().with_observer(pdm_history::sqlite_observer(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        PmgCollector::new().with_observer(pmg_history::sqlite_observer(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        SynologyCollector::new().with_abb_history(synology_history::sqlite_history(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        OpnsenseCollector::new().with_observer(opnsense_history::sqlite_observer(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        TruenasCollector::new().with_observer(truenas_history::sqlite_observer(pool.clone())),
+    ));
+    registry.register(Arc::new(
+        ActiveDirectoryCollector::new()
+            .with_observer(activedirectory_history::sqlite_observer(pool.clone())),
+    ));
+
+    // Machines équipées de l'agent : les mesures arrivent en push, ce collecteur
+    // ne fait que constater leur fraîcheur.
+    registry.register(Arc::new(AgentCollector::new(pool.clone())));
+    // Moniteurs en poussée (heartbeat) : le travail surveillé appelle une URL.
+    registry.register(Arc::new(PushCollector::new(pool.clone())));
+    // Changements du contenu d'un site : texte, instantanés et captures, gardés
+    // en base et sous `<data>/webchange`.
+    registry.register(Arc::new(crate::webchange::WebchangeCollector::new(
+        crate::webchange::Context {
+            pool: pool.clone(),
+            data_dir: config.data_dir.clone(),
+            browser_url: config.browser_url.clone(),
+        },
+    )));
+    // Collecteur de démonstration : des graphes sans matériel, le temps de
+    // configurer un premier équipement réel.
+    registry.register(Arc::new(DummyCollector));
+    declare_options(&mut registry);
+    registry
+}
+
+/// Déclare au registre les options de chacun de ses types compilés, d'après les
+/// tables de `api/collectors.rs` : elles ne seront pas recopiées en étiquettes.
+/// Clé par type : remplacer un collecteur (démonstration) garde ses options.
+fn declare_options(registry: &mut Registry) {
+    for kind in registry.kinds() {
+        let keys = crate::api::collector_option_keys(&kind);
+        if !keys.is_empty() {
+            registry.set_options(&kind, keys);
+        }
+    }
+}
