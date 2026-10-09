@@ -341,7 +341,8 @@ mod tests {
     use axum::routing::get;
     use chrono::{DateTime, Utc};
 
-    use super::metrics::{Cluster, parse_list, samples};
+    use super::metrics::{Cluster, crashlooping, parse_list, samples};
+    use super::model::Pod;
     use super::*;
     use crate::api_options::test_support::target;
 
@@ -409,6 +410,29 @@ mod tests {
         assert_eq!(value(&s, "k8s_pods", &[]), 8.0);
         assert_eq!(value(&s, "k8s_pods_pending", &[]), 1.0);
         assert_eq!(value(&s, "k8s_pods_crashlooping", &[]), 1.0);
+    }
+
+    #[test]
+    fn k3s_terminated_error_entre_deux_redemarrages_reste_une_boucle() {
+        let pod = |state: &str, restarts: u64, finished: &str| -> Pod {
+            serde_json::from_str(&format!(
+                r#"{{"metadata":{{"name":"p","namespace":"d"}},"status":{{"phase":"Running",
+                "containerStatuses":[{{"name":"c","restartCount":{restarts},
+                "state":{state},
+                "lastState":{{"terminated":{{"exitCode":1,"finishedAt":"{finished}"}}}}}}]}}}}"#
+            ))
+            .unwrap()
+        };
+        let now = captured_at();
+        let error = r#"{"terminated":{"exitCode":1,"reason":"Error","finishedAt":"2026-09-30T22:46:30Z"}}"#;
+        let running = r#"{"running":{"startedAt":"2026-09-30T22:46:50Z"}}"#;
+        // Terminé en erreur, sans CrashLoopBackOff.
+        assert!(crashlooping(&pod(error, 5, "2026-09-30T22:46:30Z"), now));
+        // Relancé mais le dernier arrêt est récent : toujours une boucle.
+        assert!(crashlooping(&pod(running, 5, "2026-09-30T22:46:30Z"), now));
+        // Arrêt ancien, ou un seul redémarrage : pas de boucle.
+        assert!(!crashlooping(&pod(running, 5, "2026-09-30T20:00:00Z"), now));
+        assert!(!crashlooping(&pod(running, 1, "2026-09-30T22:46:30Z"), now));
     }
 
     #[test]
