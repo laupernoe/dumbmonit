@@ -97,6 +97,12 @@ certificate check, and timeout for the whole check (10 s). With TLS on, the
 certificate is checked against the public authorities built into DumbMonit;
 for a private authority, tick Accept an unverifiable certificate.
 
+A refused password (`WRONGPASS`, `NOAUTH`, `NOPERM`) is shown as a credential
+error and nobody is notified about the error itself, but DumbMonit then collects
+nothing: the Device unreachable rule keeps firing, as for any device it cannot
+read, until the credential works again. Redis restarting without its ACL user
+(users defined with `ACL SETUSER` but never saved) causes exactly this.
+
 In a Redis Sentinel or Cluster deployment, add each server you want to watch:
 each reports its own memory, clients and persistence, and a primary reports
 its replicas. Sentinel itself is not covered.

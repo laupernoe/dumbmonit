@@ -273,7 +273,51 @@ impl HttpClient {
         if error.is_builder() {
             return ProbeError::Config(format!("Malformed request to {path}: {error}"));
         }
-        ProbeError::Unreachable(format!("{path}: {error}"))
+        ProbeError::Unreachable(format!(
+            "{path}: {} ({})",
+            transport_reason(error),
+            self.base_url
+        ))
+    }
+}
+
+/// Dit en une phrase pourquoi la requête n'est pas partie ou n'a pas abouti,
+/// à la place du « error sending request for url (…) » de reqwest, qui ne dit
+/// rien de la cause et recopie l'adresse entière (jeton d'URL compris).
+fn transport_reason(error: &reqwest::Error) -> String {
+    use std::error::Error as _;
+    use std::io::ErrorKind;
+
+    let mut chain = Vec::new();
+    let mut source = error.source();
+    while let Some(cause) = source {
+        if let Some(io) = cause.downcast_ref::<std::io::Error>() {
+            match io.kind() {
+                ErrorKind::ConnectionRefused => {
+                    return "connection refused, nothing listens on that address and port".into();
+                }
+                ErrorKind::ConnectionReset | ErrorKind::ConnectionAborted => {
+                    return "connection reset by the server".into();
+                }
+                ErrorKind::TimedOut => return "connection timed out".into(),
+                ErrorKind::HostUnreachable | ErrorKind::NetworkUnreachable => {
+                    return "no route to the host".into();
+                }
+                _ => {}
+            }
+        }
+        chain.push(cause.to_string());
+        source = cause.source();
+    }
+    let text = chain.join(": ").to_lowercase();
+    if text.contains("dns error") || text.contains("failed to lookup") {
+        "the host name does not resolve".into()
+    } else if text.contains("certificate") || text.contains("tls") || text.contains("ssl") {
+        "TLS handshake failed (certificate or protocol)".into()
+    } else if error.is_connect() {
+        "could not connect".into()
+    } else {
+        "the request failed".into()
     }
 }
 
@@ -289,6 +333,27 @@ mod tests {
             Duration::from_secs(5),
             "Loki",
         )
+    }
+
+    #[tokio::test]
+    async fn une_connexion_refusee_est_expliquee() {
+        // Un port qui vient d'être libéré : personne n'écoute.
+        let port = {
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            listener.local_addr().unwrap().port()
+        };
+        let client = HttpClient::new(
+            reqwest::Client::new(),
+            format!("http://127.0.0.1:{port}"),
+            Auth::None,
+            Duration::from_secs(5),
+            "Caddy",
+        );
+        let error = client.get_raw("/config/").await.unwrap_err();
+        assert!(error.means_down(), "{error}");
+        let text = error.to_string();
+        assert!(text.contains("connection refused"), "{text}");
+        assert!(!text.contains("error sending request"), "{text}");
     }
 
     #[test]
