@@ -189,7 +189,9 @@
 		<p class="mt-1 text-[0.8125rem] text-ink-2">{m.alerts_row_learning({ days: 14 })}</p>
 	{/if}
 
-	{#if suppressed && row.parent}
+	{#if suppressed && row.parent && row.parent.id === alert.target_id}
+		<p class="mt-1 text-[0.8125rem] text-ink-2">{m.alerts_row_suppressed_self()}</p>
+	{:else if suppressed && row.parent}
 		<p class="mt-1 text-[0.8125rem] text-ink-2">
 			{suppressedParts[0]}<a href={`/targets/${row.parent.id}`} class="font-medium hover:text-ink hover:underline"
 				>{row.parent.name}</a

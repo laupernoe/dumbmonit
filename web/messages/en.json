@@ -220,6 +220,7 @@
 	"alerts_row_since": "since {when}",
 	"alerts_row_snoozed": "Snoozed{until}. Quiet until then, or until it resolves.",
 	"alerts_row_suppressed_by": "Suppressed by {parent} — probably a consequence, not a separate problem.",
+	"alerts_row_suppressed_self": "Hidden while this device is unreachable: its readings are stale.",
 	"alerts_row_until": " until {time}",
 	"alerts_rules_after_hours": "After {hours} h",
 	"alerts_rules_all_channels": "all enabled channels",

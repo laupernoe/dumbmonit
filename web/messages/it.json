@@ -220,6 +220,7 @@
 	"alerts_row_since": "da {when}",
 	"alerts_row_snoozed": "Posticipato{until}. Silenzio fino ad allora, o finché non si risolve.",
 	"alerts_row_suppressed_by": "Soppresso da {parent}: probabilmente una conseguenza, non un problema separato.",
+	"alerts_row_suppressed_self": "Nascosta finché questo dispositivo non è raggiungibile: i suoi valori non sono aggiornati.",
 	"alerts_row_until": " fino a {time}",
 	"alerts_rules_after_hours": "Dopo {hours} h",
 	"alerts_rules_all_channels": "tutti i canali attivi",

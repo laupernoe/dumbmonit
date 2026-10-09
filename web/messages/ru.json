@@ -226,6 +226,7 @@
 	"alerts_row_since": "с {when}",
 	"alerts_row_snoozed": "Отложено{until}. Тишина до этого момента или до решения.",
 	"alerts_row_suppressed_by": "Подавлено из-за {parent} — вероятно, это следствие, а не отдельная проблема.",
+	"alerts_row_suppressed_self": "Скрыто, пока это устройство недоступно: его данные устарели.",
 	"alerts_row_until": " до {time}",
 	"alerts_rules_after_hours": "Через {hours} ч",
 	"alerts_rules_all_channels": "все включённые каналы",

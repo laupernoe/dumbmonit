@@ -220,6 +220,7 @@
 	"alerts_row_since": "seit {when}",
 	"alerts_row_snoozed": "Stummgeschaltet{until}. Bis dahin ruhig, oder bis es behoben ist.",
 	"alerts_row_suppressed_by": "Unterdrückt durch {parent} – vermutlich eine Folge, kein eigenes Problem.",
+	"alerts_row_suppressed_self": "Ausgeblendet, solange dieses Gerät nicht erreichbar ist: seine Werte sind veraltet.",
 	"alerts_row_until": " bis {time}",
 	"alerts_rules_after_hours": "Nach {hours} h",
 	"alerts_rules_all_channels": "alle aktivierten Kanäle",
