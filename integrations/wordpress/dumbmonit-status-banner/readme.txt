@@ -4,7 +4,7 @@ Tags: status, uptime, monitoring, banner
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: Apache-2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
@@ -20,7 +20,14 @@ Reads the public JSON of a published DumbMonit status page on the server (cached
 2. Go to Settings > DumbMonit Banner.
 3. Enter the status page API URL, for example `https://monit.example.com/api/public/status/my-page`, choose position and show mode.
 
+The DumbMonit server can be on a private (LAN) address. If the address is invalid or the status page cannot be fetched, a notice is shown in the admin. Banner texts are translatable and follow the site language.
+
 == Changelog ==
+
+= 1.1.0 =
+* Works with a DumbMonit server on a private/LAN address.
+* Admin notice when the status page cannot be fetched; error when the URL is invalid.
+* Banner strings are translatable (text domain dumbmonit-status-banner).
 
 = 1.0.0 =
 * First release.
