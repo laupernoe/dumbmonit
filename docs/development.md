@@ -148,7 +148,10 @@ without network.
 
 Samples are `Sample::new(name, value, MetricKind::Gauge | Counter,
 timestamp_ms)` with `.with_label(k, v)`; identity labels (`target`, `host`,
-`tag_*`) are added by the registry.
+`tag_*`) are added by the registry. Do not emit them yourself: name a per-object
+label after the object (`proxy_host`, `esxi`, `ceph_host`). A colliding label is
+kept as `exported_<name>`, and the options listed for the kind in
+`api/collectors.rs` are not copied as `tag_*`.
 
 ## Adding a notification channel
 

@@ -144,7 +144,7 @@ fn walk_crush(
                 samples.push(
                     sample
                         .with_label("osd", name.clone())
-                        .with_label("host", host)
+                        .with_label("ceph_host", host)
                         .with_label("device_class", node.device_class.clone().unwrap_or_default()),
                 );
             };

@@ -376,7 +376,7 @@ pub fn samples(
             out.push(
                 gauge("npm_host_online", if host.is_online() { 1.0 } else { 0.0 })
                     .with_label("type", *kind)
-                    .with_label("host", name.clone()),
+                    .with_label("proxy_host", name.clone()),
             );
             if !host.is_online()
                 && let Some(error) = host.meta.nginx_err.as_deref().map(first_error_line)
@@ -385,7 +385,7 @@ pub fn samples(
                 out.push(
                     gauge("npm_host_error_info", 1.0)
                         .with_label("type", *kind)
-                        .with_label("host", name)
+                        .with_label("proxy_host", name)
                         .with_label("error", error),
                 );
             }
@@ -484,7 +484,7 @@ async fn certificates(
         gauge("npm_certificates_read", read.len() as f64),
     ];
     for (name, days) in read {
-        out.push(gauge("npm_cert_expiry_days", days).with_label("host", name));
+        out.push(gauge("npm_cert_expiry_days", days).with_label("proxy_host", name));
     }
     out
 }
@@ -535,25 +535,25 @@ mod tests {
         assert_eq!(find(&samples, "npm_hosts", &proxy).unwrap().value, 3.0);
         assert_eq!(find(&samples, "npm_hosts_disabled", &proxy).unwrap().value, 1.0);
         assert_eq!(find(&samples, "npm_hosts_offline", &proxy).unwrap().value, 1.0);
-        let broken = find(&samples, "npm_host_online", &[("host", "broken.example.test")]);
+        let broken = find(&samples, "npm_host_online", &[("proxy_host", "broken.example.test")]);
         assert_eq!(broken.unwrap().value, 0.0);
-        let error = find(&samples, "npm_host_error_info", &[("host", "broken.example.test")]);
+        let error = find(&samples, "npm_host_error_info", &[("proxy_host", "broken.example.test")]);
         assert!(
             error.unwrap().labels["error"].starts_with("[emerg] unknown directive"),
             "{:?}",
             error.unwrap().labels
         );
         assert_eq!(
-            find(&samples, "npm_host_online", &[("host", "app.example.test")]).unwrap().value,
+            find(&samples, "npm_host_online", &[("proxy_host", "app.example.test")]).unwrap().value,
             1.0
         );
         assert!(
-            find(&samples, "npm_host_online", &[("host", "photos.example.test")]).is_none(),
+            find(&samples, "npm_host_online", &[("proxy_host", "photos.example.test")]).is_none(),
             "un hôte désactivé n'est pas décrit"
         );
         assert_eq!(find(&samples, "npm_hosts", &[("type", "dead")]).unwrap().value, 1.0);
         assert_eq!(
-            find(&samples, "npm_host_online", &[("type", "stream"), ("host", "port 9000")])
+            find(&samples, "npm_host_online", &[("type", "stream"), ("proxy_host", "port 9000")])
                 .unwrap()
                 .value,
             1.0
@@ -706,7 +706,7 @@ mod tests {
         let samples = NpmCollector::new().probe(&target).await.unwrap();
         assert_eq!(find(&samples, "npm_certificates_checked", &[]).unwrap().value, 1.0);
         assert_eq!(find(&samples, "npm_certificates_read", &[]).unwrap().value, 1.0);
-        let days = find(&samples, "npm_cert_expiry_days", &[("host", "app.example.test")]);
+        let days = find(&samples, "npm_cert_expiry_days", &[("proxy_host", "app.example.test")]);
         assert!(days.unwrap().value > 3000.0, "{:?}", days.unwrap().value);
 
         // Port HTTPS fermé : rien n'est lu, et l'interrogation aboutit vite.

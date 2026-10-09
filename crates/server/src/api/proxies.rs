@@ -372,10 +372,10 @@ fn npm(view: &mut ObservabilityView, s: &Series) {
         .all("host_online")
         .filter(|e| e.value < 1.0)
         .map(|e| {
-            let host = label_of(e, "host");
+            let host = label_of(e, "proxy_host");
             let error = s
                 .all("host_error_info")
-                .find(|i| label_of(i, "host") == host)
+                .find(|i| label_of(i, "proxy_host") == host)
                 .map(|i| format!(" ({})", label_of(i, "error")))
                 .unwrap_or_default();
             format!("{host}{error}")
@@ -397,7 +397,7 @@ fn npm(view: &mut ObservabilityView, s: &Series) {
         detail.push('.');
         view.checks.push(check("Hosts", "ok", detail));
     }
-    certificates(view, s, "cert_expiry_days", "host");
+    certificates(view, s, "cert_expiry_days", "proxy_host");
     if let (Some(checked), Some(read)) = (s.get("certificates_checked"), s.get("certificates_read"))
         && read < checked
     {
@@ -592,11 +592,16 @@ mod tests {
         let last = [
             serie(k, "hosts", 3.0, &[("type", "proxy")]),
             serie(k, "hosts_disabled", 1.0, &[("type", "proxy")]),
-            serie(k, "host_online", 0.0, &[("type", "proxy"), ("host", "broken.test")]),
-            serie(k, "host_error_info", 1.0, &[("host", "broken.test"), ("error", "[emerg]")]),
+            serie(k, "host_online", 0.0, &[("type", "proxy"), ("proxy_host", "broken.test")]),
+            serie(
+                k,
+                "host_error_info",
+                1.0,
+                &[("proxy_host", "broken.test"), ("error", "[emerg]")],
+            ),
             serie(k, "certificates_checked", 2.0, &[]),
             serie(k, "certificates_read", 1.0, &[]),
-            serie(k, "cert_expiry_days", 40.0, &[("host", "app.test")]),
+            serie(k, "cert_expiry_days", 40.0, &[("proxy_host", "app.test")]),
         ];
         let view = build_view(k, &Series::new(k, &last, &[], &[], &[]), 0.0);
         assert_eq!(state(&view, "Hosts"), Some("warning"));
