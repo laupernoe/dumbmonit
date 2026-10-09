@@ -23,7 +23,7 @@
 //! * `/api/v1/admin/actions/runners` — les exécuteurs Actions, en ligne ou non.
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use dumbmonit_proto::{Collector, ProbeError, Sample, Target, TargetId};
 use serde::Deserialize;
 use serde_json::Value;
@@ -49,13 +49,48 @@ pub struct Cron {
     #[serde(default)]
     name: String,
     #[serde(default)]
+    schedule: Option<String>,
+    #[serde(default)]
     next: Option<String>,
 }
 
+impl Cron {
+    /// Tâche désactivée : Gitea et Forgejo répondent `schedule: "-"` et un
+    /// `next` à l'heure zéro de Go (`0001-01-01T00:00:00Z`).
+    fn disabled(&self) -> bool {
+        let no_schedule = self.schedule.as_deref().is_some_and(|s| matches!(s.trim(), "" | "-"));
+        let zero_next = self
+            .next
+            .as_deref()
+            .and_then(|raw| DateTime::parse_from_rfc3339(raw).ok())
+            .is_some_and(|next| next.year() <= 1);
+        no_schedule || zero_next
+    }
+}
+
+/// Gitea et Forgejo ≤ 9 : `{"entries": [...]}` ; Forgejo récent : tableau nu.
 #[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum RunnersBody {
+    List(Vec<ActionRunner>),
+    Wrapped {
+        #[serde(default)]
+        entries: Vec<ActionRunner>,
+    },
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(from = "RunnersBody")]
 pub struct ActionRunnersResponse {
-    #[serde(default)]
     entries: Vec<ActionRunner>,
+}
+
+impl From<RunnersBody> for ActionRunnersResponse {
+    fn from(body: RunnersBody) -> Self {
+        match body {
+            RunnersBody::List(entries) | RunnersBody::Wrapped { entries } => Self { entries },
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -140,7 +175,8 @@ pub fn cron_samples(tasks: &[Cron], now: DateTime<Utc>, ts_ms: i64) -> Vec<Sampl
     // Un drapeau par tâche, qu'elle soit en retard ou non : un contrôle de
     // sécurité qui ne lirait que les tâches en retard ne verrait jamais le cas
     // sain, faute de série à zéro pour les autres.
-    for task in tasks.iter().take(MAX_NAMED) {
+    // Les tâches désactivées n'ont pas de prochaine exécution : sans drapeau.
+    for task in tasks.iter().filter(|task| !task.disabled()).take(MAX_NAMED) {
         let overdue = task
             .next
             .as_deref()
@@ -152,9 +188,10 @@ pub fn cron_samples(tasks: &[Cron], now: DateTime<Utc>, ts_ms: i64) -> Vec<Sampl
 }
 
 pub fn runner_samples(runners: &ActionRunnersResponse, ts_ms: i64) -> Vec<Sample> {
-    let online = runners.entries.iter().filter(|r| r.status == "online").count();
-    let offline: Vec<&ActionRunner> =
-        runners.entries.iter().filter(|r| r.status != "online").collect();
+    // `idle` (libre) et `active` (occupé) sont en ligne ; `offline` ne l'est pas.
+    let is_online = |r: &&ActionRunner| matches!(r.status.as_str(), "online" | "idle" | "active");
+    let online = runners.entries.iter().filter(is_online).count();
+    let offline: Vec<&ActionRunner> = runners.entries.iter().filter(|r| !is_online(r)).collect();
     let mut out = vec![
         gauge("forgejo_runners_total", runners.entries.len() as f64, ts_ms),
         gauge("forgejo_runners_online", online as f64, ts_ms),
@@ -282,6 +319,42 @@ mod tests {
         assert_eq!(value(&samples, "forgejo_runners_offline"), Some(1.0));
         let offline = samples.iter().find(|s| s.metric == "forgejo_runner_offline").unwrap();
         assert_eq!(offline.labels["runner"], "runner-amd64-2");
+    }
+
+    // Forgejo 16 : tâches désactivées (`schedule: "-"`, heure zéro de Go) et
+    // exécuteurs en tableau nu, statuts `idle` / `active` / `offline`.
+    const CRON_DISABLED: &str = r#"[
+      {"name":"update_checker","schedule":"@every 168h","next":"2026-10-10T03:00:00Z","prev":"2026-10-03T03:00:00Z","exec_times":52},
+      {"name":"gc_lfs","schedule":"-","next":"0001-01-01T00:00:00Z","prev":"0001-01-01T00:00:00Z","exec_times":0},
+      {"name":"git_gc_repos","schedule":"","next":"0001-01-01T00:00:00Z","prev":"0001-01-01T00:00:00Z","exec_times":0}
+    ]"#;
+    const RUNNERS_BARE: &str = r#"[
+      {"id":1,"name":"docker","status":"idle","version":"v6.3.1","labels":["docker"]},
+      {"id":2,"name":"builder","status":"active","version":"v6.3.1","labels":["docker"]},
+      {"id":3,"name":"old","status":"offline","version":"v6.3.1","labels":[]}
+    ]"#;
+
+    #[test]
+    fn les_taches_desactivees_ne_sont_pas_en_retard() {
+        let tasks: Vec<Cron> = serde_json::from_str(CRON_DISABLED).unwrap();
+        let now = chrono::DateTime::parse_from_rfc3339("2026-10-03T12:00:00Z").unwrap().into();
+        let samples = cron_samples(&tasks, now, 0);
+        assert_eq!(value(&samples, "forgejo_cron_tasks"), Some(3.0));
+        let flags: Vec<_> =
+            samples.iter().filter(|s| s.metric == "forgejo_cron_task_overdue").collect();
+        assert_eq!(flags.len(), 1);
+        assert_eq!(flags[0].value, 0.0);
+    }
+
+    #[test]
+    fn un_tableau_nu_d_executeurs_inactifs_ou_actifs_est_en_ligne() {
+        let runners: ActionRunnersResponse = serde_json::from_str(RUNNERS_BARE).unwrap();
+        let samples = runner_samples(&runners, 0);
+        assert_eq!(value(&samples, "forgejo_runners_total"), Some(3.0));
+        assert_eq!(value(&samples, "forgejo_runners_online"), Some(2.0));
+        assert_eq!(value(&samples, "forgejo_runners_offline"), Some(1.0));
+        let wrapped: ActionRunnersResponse = serde_json::from_str(ACTIONS_RUNNERS).unwrap();
+        assert_eq!(wrapped.entries.len(), 2);
     }
 
     fn target(address: String, credential: Credential) -> Target {

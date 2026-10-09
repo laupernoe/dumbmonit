@@ -31,8 +31,8 @@ All metrics are prefixed `dumbmonit_forgejo_`.
 | `repos` | repositories visible to the token's account | |
 | `users`, `orgs` | accounts and organisations on the instance | |
 | `cron_tasks` | scheduled tasks defined on the instance | |
-| `cron_task_overdue` | 1 per task whose next run is already due, 0 otherwise | `task` |
-| `runners_total`, `runners_online`, `runners_offline` | Actions runners known to the instance | |
+| `cron_task_overdue` | 1 per task whose next run is already due, 0 otherwise; disabled tasks (schedule `-`) are skipped | `task` |
+| `runners_total`, `runners_online`, `runners_offline` | Actions runners known to the instance; `online`, `idle` and `active` count as online | |
 | `runner_offline` | value 1 per offline runner (at most 32) | `runner` |
 | `scrape_errors` | administrator-only calls that failed on the last probe (0 with an ordinary token's ones never attempted) | |
 
