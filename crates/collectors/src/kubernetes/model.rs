@@ -151,12 +151,25 @@ pub struct ContainerStatus {
     pub restart_count: u64,
     #[serde(default)]
     pub state: ContainerState,
+    /// Dernier arrêt du conteneur, conservé entre deux redémarrages.
+    #[serde(default, rename = "lastState")]
+    pub last_state: ContainerState,
 }
 
 #[derive(Debug, Default, Deserialize)]
 pub struct ContainerState {
     #[serde(default)]
     pub waiting: Option<Waiting>,
+    #[serde(default)]
+    pub terminated: Option<Terminated>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct Terminated {
+    #[serde(default, rename = "exitCode")]
+    pub exit_code: i64,
+    #[serde(default, rename = "finishedAt")]
+    pub finished_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Default, Deserialize)]

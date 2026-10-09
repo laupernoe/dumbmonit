@@ -446,6 +446,15 @@ async fn login(client: &mut Client, username: &str, password: &str) -> Result<()
     let root = client.send(Method::GET, "/", None).await?;
     // Le serveur auto-hébergé renvoie la racine vers `/manage` ; UniFi OS sert
     // sa page directement.
+    // Un contrôleur dont l'assistant de première configuration n'est pas terminé
+    // renvoie vers `/setup` : ce n'est ni UniFi OS ni un refus d'identifiants.
+    if root.final_path.starts_with("/setup") {
+        return Err(ProbeError::Config(
+            "The UniFi controller is not set up yet: finish its first-run setup wizard, then \
+             probe again."
+                .into(),
+        ));
+    }
     let console = !root.final_path.starts_with("/manage");
     let (path, body) = if console {
         ("/api/auth/login", json!({"username": username, "password": password, "rememberMe": true}))

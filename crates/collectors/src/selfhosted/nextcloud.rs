@@ -224,6 +224,26 @@ fn fpm_samples(fpm: Option<&Value>, ts_ms: i64) -> Vec<Sample> {
 
 // ------------------------------------------------------------ collecteur
 
+/// Attente avant de relire après un refus : juste après la création du jeton,
+/// la première lecture a été vue refusée (401) alors que la suivante passait,
+/// sans rien changer (cache de configuration de Nextcloud). Un vrai mauvais
+/// jeton échoue aussi la seconde fois, et l'erreur reste affichée.
+const RETRY_AFTER_REFUSAL: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Une sonde, relancée une fois si le jeton est refusé.
+async fn probe_with_retry(
+    client: &HttpClient,
+    retry_after: std::time::Duration,
+) -> Result<Vec<Sample>, ProbeError> {
+    match probe(client, now_ms()).await {
+        Err(ProbeError::Auth(_)) => {
+            tokio::time::sleep(retry_after).await;
+            probe(client, now_ms()).await
+        }
+        other => other,
+    }
+}
+
 #[derive(Default)]
 pub struct NextcloudCollector;
 
@@ -258,7 +278,7 @@ impl Collector for NextcloudCollector {
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
-        probe(&Self::client(target)?, now_ms()).await
+        probe_with_retry(&Self::client(target)?, RETRY_AFTER_REFUSAL).await
     }
 
     async fn discover(&self, target: &Target) -> Result<Option<String>, ProbeError> {
@@ -414,6 +434,35 @@ mod tests {
 
         let error = NextcloudCollector::new().probe(&target(base, "mauvais")).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)), "{error}");
+    }
+
+    #[tokio::test]
+    async fn un_premier_refus_passager_est_retente_une_fois() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let refusals = Arc::new(AtomicUsize::new(1));
+        let app = Router::new()
+            .route("/status.php", get(|| async { STATUS }))
+            .route(
+                "/ocs/v2.php/apps/serverinfo/api/v1/info",
+                get(move || {
+                    let refusals = refusals.clone();
+                    async move {
+                        let refused = refusals
+                            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
+                            .is_ok();
+                        if refused {
+                            return (StatusCode::UNAUTHORIZED, SERVERINFO_UNAUTHORIZED);
+                        }
+                        (StatusCode::OK, SERVERINFO)
+                    }
+                }),
+            );
+        let base = serve(app).await;
+        let client = NextcloudCollector::client(&target(base, "jeton-de-supervision")).unwrap();
+        let samples = probe_with_retry(&client, Duration::from_millis(10)).await.unwrap();
+        assert_eq!(value(&samples, "nextcloud_maintenance"), Some(0.0));
+        assert!(value(&samples, "nextcloud_users").is_some());
     }
 
     #[tokio::test]

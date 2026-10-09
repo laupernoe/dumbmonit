@@ -18,7 +18,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use chrono::{DateTime, Duration, Utc};
 use dumbmonit_proto::{MetricKind, Sample};
 
-use super::model::{Claim, Event, List, Node, Pod, Version, Workload};
+use super::model::{Claim, Event, List, Node, Pod, Terminated, Version, Workload};
 
 /// Pods décrits un par un, au plus ; les totaux couvrent toujours tout.
 pub const MAX_PODS: usize = 500;
@@ -84,10 +84,24 @@ pub fn workload_of(pod: &Pod) -> String {
     owner.name.clone()
 }
 
+/// Fenêtre pendant laquelle un arrêt en erreur compte comme une boucle en cours.
+const CRASH_WINDOW_MINUTES: i64 = 10;
+
 /// Un conteneur du pod attend dans une boucle de redémarrage.
-pub fn crashlooping(pod: &Pod) -> bool {
+///
+/// Entre deux redémarrages, certains kubelets (k3s 1.37) montrent le conteneur
+/// `terminated`/`Error` ou déjà relancé, jamais `CrashLoopBackOff` : on regarde
+/// donc aussi le compteur de redémarrages et le dernier arrêt en erreur, récent.
+pub fn crashlooping(pod: &Pod, now: DateTime<Utc>) -> bool {
+    let recent = |t: &Terminated| {
+        t.exit_code != 0
+            && t.finished_at.is_none_or(|at| now - at <= Duration::minutes(CRASH_WINDOW_MINUTES))
+    };
     pod.status.containers.iter().chain(&pod.status.init_containers).any(|c| {
         c.state.waiting.as_ref().and_then(|w| w.reason.as_deref()) == Some("CrashLoopBackOff")
+            || (c.restart_count >= 2
+                && (c.state.terminated.as_ref().is_some_and(recent)
+                    || c.last_state.terminated.as_ref().is_some_and(recent)))
     })
 }
 
@@ -160,13 +174,13 @@ pub fn samples(cluster: &Cluster, now: DateTime<Utc>) -> Vec<Sample> {
     out.push(gauge("k8s_pods_running", count(&|p| p.status.phase == "Running")));
     out.push(gauge("k8s_pods_pending", count(&|p| p.status.phase == "Pending")));
     out.push(gauge("k8s_pods_failed", count(&|p| p.status.phase == "Failed")));
-    out.push(gauge("k8s_pods_crashlooping", count(&|p| crashlooping(p))));
+    out.push(gauge("k8s_pods_crashlooping", count(&|p| crashlooping(p, now))));
     out.push(gauge("k8s_pods_not_ready", count(&|p| p.status.phase == "Running" && !pod_ready(p))));
     // Les pods à problème d'abord : c'est eux qu'on veut voir si le plafond coupe.
     let mut detailed = live.clone();
     detailed.sort_by_key(|p| {
         (
-            !(crashlooping(p) || p.status.phase != "Running" || !pod_ready(p)),
+            !(crashlooping(p, now) || p.status.phase != "Running" || !pod_ready(p)),
             p.metadata.name.clone(),
         )
     });
@@ -179,7 +193,7 @@ pub fn samples(cluster: &Cluster, now: DateTime<Utc>) -> Vec<Sample> {
         };
         let restarts: u64 = pod.status.containers.iter().map(|c| c.restart_count).sum();
         out.push(labelled(gauge("k8s_pod_ready", flag(pod_ready(pod)))));
-        out.push(labelled(gauge("k8s_pod_crashlooping", flag(crashlooping(pod)))));
+        out.push(labelled(gauge("k8s_pod_crashlooping", flag(crashlooping(pod, now)))));
         out.push(labelled(gauge("k8s_pod_pending", flag(pod.status.phase == "Pending"))));
         out.push(labelled(Sample::new(
             "k8s_pod_restarts",
