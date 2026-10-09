@@ -195,7 +195,16 @@ pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), No
         // qui suit reste une seconde barrière, au cas où le jeton apparaîtrait
         // ailleurs dans la chaîne.
         let timed_out = error.is_timeout();
-        let raw = error.without_url().to_string();
+        let error = error.without_url();
+        // « error sending request » seul ne dit rien : la cause (certificat
+        // inconnu, nom introuvable, connexion refusée…) est dans la chaîne des sources.
+        let mut raw = error.to_string();
+        let mut cause = std::error::Error::source(&error);
+        while let Some(inner) = cause {
+            raw.push_str(": ");
+            raw.push_str(&inner.to_string());
+            cause = inner.source();
+        }
         let redacted = secret::redact(&raw, &request.secrets);
         NotifyError::Transport(if timed_out {
             format!("no answer within {} s ({redacted})", SEND_TIMEOUT.as_secs())
