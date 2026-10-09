@@ -11,6 +11,7 @@ token to copy, and what to type into the form.
 - [How it works](#how-it-works)
 - [Creating and testing a channel](#creating-and-testing-a-channel)
 - [Settings or secrets: the difference](#settings-or-secrets-the-difference)
+- [Self-signed certificates](#self-signed-certificates)
 - [The custom channel](#the-custom-channel)
   - [Available variables](#available-variables)
   - [Example 1 — an internal JSON API](#example-1--an-internal-json-api)
@@ -75,6 +76,21 @@ stored there would be published every time the page is opened.
 
 The tables in the [Supported channels](#supported-channels) section say, for each
 channel, what goes where.
+
+---
+
+## Self-signed certificates
+
+By default DumbMonit refuses any server whose certificate it cannot verify. For a
+self-hosted service served with a self-signed certificate or one from a private
+authority, the channels for Matrix, Mattermost, Rocket.Chat, Zulip, ntfy, Gotify,
+Bark, Apprise, Home Assistant, Signal and the custom webhook have an **Accept an
+unverifiable certificate** setting (`insecure_tls`, a boolean, off by default).
+
+Turning it on keeps the connection encrypted but stops checking the identity of
+the server, so use it only for a server you control, on a network you trust. When a
+certificate is the reason for a failure, the error shown for the channel names it
+(for example "invalid peer certificate: UnknownIssuer").
 
 ---
 
@@ -715,6 +731,10 @@ A required field is empty. The message names the exact setting.
 The target server is unreachable from DumbMonit. If it is a service on your local
 network, check that the DumbMonit container can reach it — this is frequently a
 Docker networking problem, not a channel configuration problem.
+
+**The test fails with a certificate error.**
+Your server uses a self-signed or private-CA certificate. See
+[Self-signed certificates](#self-signed-certificates).
 
 **The test succeeds, but I receive nothing.**
 The service accepted the message and sent it elsewhere: wrong channel, wrong ntfy
