@@ -76,6 +76,75 @@ All notable changes to this project are documented here. The format follows
   internal error. The table is rebuilt without that list at upgrade; existing
   channels and queued notifications are kept.
 
+- **Nginx, Apache and NTP devices are available on the server.** The three
+  kinds existed in the shared collectors but were missing from the server's
+  list, so they could not be added. See [Nginx](docs/devices/nginx.md) and
+  [Apache](docs/devices/apache.md).
+
+- **Per-host series no longer collapse into one.** Nginx Proxy Manager now
+  labels its hosts `proxy_host`, vSphere `esxi` and Ceph `ceph_host`, instead
+  of a `host` label that the device's own `host` label overwrote. Existing
+  series and silences keyed on the old `host` label start new series: update
+  your rules and silences to the new label. A label that still collides is
+  kept as `exported_<name>`. See [Nginx Proxy Manager](docs/devices/npm.md).
+
+- **Options and secret-looking tags are no longer copied as `tag_*` labels.**
+  A device's settings (port, `insecure_tls`, CA certificate…) stay settings,
+  and free tags named like a secret (`password`, `token`, `key`…) or longer
+  than 256 characters are not written to the metrics store.
+
+- **Saving a device without `group_name` keeps its folder.** `PUT
+  /api/targets/{id}` used to clear the folder when the field was left out;
+  now only `""` or `null` clears it. The OpenAPI description is updated.
+
+- **Self-signed certificates for self-hosted notification channels.** Matrix,
+  Mattermost, Rocket.Chat, Zulip, ntfy, Gotify, Bark, Apprise, Home Assistant,
+  Signal and custom webhook channels have an **Accept an unverifiable
+  certificate** setting, off by default. See
+  [Self-signed certificates](docs/notifications.md#self-signed-certificates).
+
+- **Connection errors say what went wrong.** A failed notification or probe
+  now names the cause, such as an untrusted certificate (`UnknownIssuer`),
+  instead of a generic transport error.
+
+- **Rocket.Chat messages no longer repeat the title.**
+
+- **Forgejo and Gitea.** Disabled cron tasks are no longer reported as
+  overdue, runners are read on Forgejo 16 (bare list), and `idle` and
+  `active` runners count as online. See [Forgejo](docs/devices/forgejo.md).
+
+- **GitLab no longer counts a 404 as a scrape error.** `/-/readiness`
+  answers 404 outside the monitoring allowlist, and the licence endpoint on
+  Community Edition. See [GitLab](docs/devices/gitlab.md#readiness-check).
+
+- **VictoriaLogs on a fresh instance** no longer shows errors before the
+  first logs arrive. See [VictoriaMetrics and VictoriaLogs](docs/devices/victoriametrics.md).
+
+- **CrowdSec bouncer ages** are read correctly. See
+  [CrowdSec](docs/devices/crowdsec.md).
+
+- **Active Directory built-in groups** (binary SIDs) are no longer read as
+  garbled text. See [Active Directory](docs/devices/activedirectory.md).
+
+- **UniFi controller not set up yet** is reported as a configuration error
+  with a clear message. See [UniFi](docs/devices/unifi.md).
+
+- **Kubernetes crash loops are detected on k3s**, where the kubelet shows
+  `terminated` instead of `CrashLoopBackOff`. See
+  [Kubernetes](docs/devices/kubernetes.md).
+
+- **Nextcloud no longer fails the first probe** with a 401 right after the
+  token is set: it retries once. See [Nextcloud](docs/devices/nextcloud.md).
+
+- **Alerts hidden because their own device is unreachable say so.** They are
+  no longer shown as suppressed by the device itself as parent.
+
+- **WordPress banner and PHP include.** The WordPress plugin accepts a
+  DumbMonit server on a LAN address, shows admin notices when the address is
+  invalid or the page cannot be fetched, and has translatable texts. The PHP
+  include gets a `lang` option and logs failures. See
+  [Website banner](docs/integrations/website-banner.md).
+
 ## 0.1.0-alpha.6 — 2026-10-06
 
 ### Security
