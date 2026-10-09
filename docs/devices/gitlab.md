@@ -25,7 +25,7 @@ All metrics are prefixed `dumbmonit_gitlab_`.
 | Metric | What | Labels |
 |---|---|---|
 | `version_info` | value 1 | `version`, `revision` |
-| `readiness_check` | 1 when a readiness component (database, cache, queues, shared state, Gitaly) is not `ok` | `check` |
+| `readiness_check` | 1 when a readiness component (database, cache, queues, shared state, Gitaly) is not `ok`; absent when GitLab does not expose it to DumbMonit (see below) | `check` |
 | `sidekiq_queue_backlog`, `sidekiq_queue_latency_seconds` | jobs waiting and their age, per Sidekiq queue | `queue` |
 | `runners_total`, `runners_online`, `runners_offline` | CI/CD runners known to the instance | |
 | `runner_offline` | value 1 per offline runner (at most 32) | `runner` |
@@ -79,6 +79,22 @@ the instance counts and the settings read from the administration API.
 
 !!! warning
     A personal access token on an administrator account can read everything the account can read, even with the read_api scope: GitLab has no read-only administrator role. Dedicate a bot account to it rather than reusing your own, and revoke the token if it ever leaks.
+
+### Readiness check
+
+GitLab answers `/-/readiness` with 404 to any client address that is not in
+its monitoring allowlist (by default only 127.0.0.1; behind Docker or a
+reverse proxy DumbMonit arrives from another address). DumbMonit treats that
+404 as "not exposed": the readiness panel stays empty and it is not counted in
+`scrape_errors`. To enable it, add DumbMonit's address in `gitlab.rb` and run
+`gitlab-ctl reconfigure`:
+
+```
+gitlab_rails['monitoring_whitelist'] = ['127.0.0.0/8', '::1/128', '192.168.1.10/32']
+```
+
+The licence endpoint likewise answers 404 on Community Edition, which is not
+an error either.
 
 Checking the token by hand, from the DumbMonit host:
 

@@ -8,7 +8,8 @@
 //!   état partagé, Gitaly). GitLab répond 404 sans l'adresse de DumbMonit dans
 //!   la liste blanche de supervision (`monitoring_whitelist`) ni de compte
 //!   administrateur, et 503 — avec le détail dans le corps — quand un
-//!   composant est en échec : seul le premier cas compte comme une erreur ;
+//!   composant est en échec. Le 404 veut dire « non exposé » : la santé
+//!   détaillée est alors simplement absente, sans erreur de collecte ;
 //! * `/api/v4/sidekiq/queue_metrics` — le retard de chaque file Sidekiq.
 //!   Sans Sidekiq, plus aucune notification, aucun webhook, aucun import ne
 //!   part ;
@@ -18,7 +19,8 @@
 //! * `/api/v4/application/statistics` — les décomptes de l'instance ;
 //! * `/api/v4/application/settings` — deux réglages de sécurité : l'auto-
 //!   inscription et l'obligation du second facteur ;
-//! * `/api/v4/license` — plan et expiration de la licence (EE uniquement) ;
+//! * `/api/v4/license` — plan et expiration de la licence (EE uniquement ;
+//!   le 404 de l'édition Community n'est pas une erreur) ;
 //! * `/api/v4/projects/<id>/pipelines`, pour les projets listés dans
 //!   l'étiquette `watched_projects` : pipelines en échec ou en cours.
 //!
@@ -126,7 +128,10 @@ pub async fn probe(
         client.get_json::<Value>("/api/v4/application/settings"),
         client.get_json::<License>("/api/v4/license"),
     );
-    if let Some(v) = settle(readiness, &mut errors, target_id, "/-/readiness") {
+    // 404 : GitLab ne montre pas la santé détaillée à cette adresse (liste
+    // blanche de supervision) — « non exposé », pas une erreur de collecte.
+    if let Some(v) = settle(absent_ok(readiness), &mut errors, target_id, "/-/readiness").flatten()
+    {
         out.extend(readiness_samples(&v, ts_ms));
     }
     if let Some(v) = settle(queues, &mut errors, target_id, "/api/v4/sidekiq/queue_metrics") {
@@ -145,7 +150,9 @@ pub async fn probe(
     if let Some(v) = settle(settings, &mut errors, target_id, "/api/v4/application/settings") {
         out.extend(settings_samples(&v, ts_ms));
     }
-    if let Some(v) = settle(license, &mut errors, target_id, "/api/v4/license") {
+    // 404 sur l'édition Community, qui n'a pas de licence : attendu.
+    if let Some(v) = settle(absent_ok(license), &mut errors, target_id, "/api/v4/license").flatten()
+    {
         out.extend(license_samples(&v, ts_ms));
     }
 
@@ -164,6 +171,16 @@ pub async fn probe(
 
     out.push(gauge("gitlab_scrape_errors", f64::from(errors), ts_ms));
     Ok(out)
+}
+
+/// Un 404 n'est pas une erreur pour un appel facultatif : `Ok(None)`.
+/// `HttpClient::status_error` traduit le 404 en `Protocol("… has no <chemin> at …")`.
+fn absent_ok<T>(outcome: Result<T, ProbeError>) -> Result<Option<T>, ProbeError> {
+    match outcome {
+        Ok(value) => Ok(Some(value)),
+        Err(ProbeError::Protocol(message)) if message.contains(" has no /") => Ok(None),
+        Err(error) => Err(error),
+    }
 }
 
 // ------------------------------------------------------------ traduction
@@ -504,6 +521,37 @@ mod tests {
             value(&pipeline_samples("64", &pipelines, later, 0), "gitlab_pipelines_failed_recent"),
             Some(0.0)
         );
+    }
+
+    #[tokio::test]
+    async fn readiness_et_licence_en_404_ne_comptent_pas_comme_erreur() {
+        // Édition Community derrière une adresse hors liste blanche : corps
+        // relevé sur GitLab CE.
+        let not_found =
+            || async { (StatusCode::NOT_FOUND, r#"{"error":"Not Found","status":404}"#) };
+        let app = Router::new()
+            .route("/api/v4/version", get(|| async { VERSION }))
+            .route("/-/readiness", get(not_found))
+            .route("/api/v4/license", get(not_found))
+            .route("/api/v4/sidekiq/queue_metrics", get(|| async { QUEUE_METRICS }))
+            .route("/api/v4/runners/all", get(|| async { RUNNERS }))
+            .route("/api/v4/admin/migrations/pending", get(|| async { MIGRATIONS }))
+            .route("/api/v4/application/statistics", get(|| async { STATISTICS }))
+            .route("/api/v4/application/settings", get(|| async { SETTINGS }));
+        let base = serve(app).await;
+        let cred = Credential::ApiToken { token: "glpat-abc123".into() };
+        let samples = GitlabCollector::new().probe(&target(base, cred)).await.unwrap();
+        assert_eq!(value(&samples, "gitlab_scrape_errors"), Some(0.0));
+        assert!(!samples.iter().any(|s| s.metric == "gitlab_readiness_check"));
+        assert!(!samples.iter().any(|s| s.metric == "gitlab_license_info"));
+    }
+
+    #[test]
+    fn seul_le_404_est_absorbe() {
+        let not_found = ProbeError::Protocol("GitLab has no /-/readiness at http://x: …".into());
+        assert!(matches!(absent_ok::<()>(Err(not_found)), Ok(None)));
+        let denied = ProbeError::Auth("403".into());
+        assert!(absent_ok::<()>(Err(denied)).is_err());
     }
 
     fn target(address: String, credential: Credential) -> Target {
