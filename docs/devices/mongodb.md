@@ -31,7 +31,7 @@ rules turn them into rates.
 | `connections_used_percent` | current against current plus available | |
 | `connections_created_total`, `connections_rejected_total` | | |
 | `operations_total` | operations since start | `op`: `insert`, `query`, `update`, `delete`, `getmore`, `command` |
-| `asserts_total` | assertions since start; `regular` are internal server errors, `user` errors returned to clients | `type` |
+| `asserts_total` | assertions since start; `type` is `regular` (internal server errors), `warning`, `msg`, `user` (errors returned to clients), `tripwire` or `rollovers`. `regular` and `user` are the ones worth a chart | `type` |
 | `queued_operations`, `active_clients` | operations waiting for a lock, clients running one | |
 | `wiredtiger_cache_max_bytes`, `wiredtiger_cache_used_bytes`, `wiredtiger_cache_used_percent` | the WiredTiger cache and how full it is | |
 | `wiredtiger_cache_dirty_bytes`, `wiredtiger_cache_dirty_percent` | modified pages not yet written | |

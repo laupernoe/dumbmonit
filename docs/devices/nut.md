@@ -94,7 +94,12 @@ Address: a host name or IP (`nas.lan`), `host:port`, or the `ups@host` form of
 `upsc`, of which only the host is kept. Options: port (3493), the UPS to watch
 (all by default) and the timeout per exchange (10 s).
 
-A refused connection or no answer counts as the device being unreachable.
+A refused connection or no answer counts as the device being unreachable. When
+the machine running the NUT server shuts down in the outage it reports (it is
+often its own upsmon primary), the UPS alerts are hidden as suppressed while
+Device unreachable fires for that same device: read the Device unreachable
+alert as the sign that the power failure won. Run the NUT server on a machine
+that outlives the others, or watch the UPS from a second NUT server.
 `ACCESS-DENIED` is shown as a credential error, and a UPS name the server does
 not publish as a configuration error; neither wakes anyone at night. The
 connection is plain TCP: `STARTTLS` is not used, and nothing read is secret.
