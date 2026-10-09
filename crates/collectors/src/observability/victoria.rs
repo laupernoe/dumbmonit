@@ -60,10 +60,14 @@ impl Flavour {
 
     /// La famille qui prouve qu'on parle au bon produit : un VictoriaLogs
     /// déclaré comme VictoriaMetrics (ou l'inverse) donnerait une page vide.
+    /// Elle doit exister dès le démarrage : les familles d'ingestion
+    /// (`vl_rows_ingested_total`, `vm_rows_inserted_total`) n'apparaissent
+    /// qu'après la première insertion, et une instance neuve ou redémarrée
+    /// passerait à tort pour une erreur de configuration.
     fn signature(self) -> &'static str {
         match self {
-            Self::Metrics => "vm_rows_inserted_total",
-            Self::Logs => "vl_rows_ingested_total",
+            Self::Metrics => "vm_app_version",
+            Self::Logs => "vl_free_disk_space_bytes",
         }
     }
 }
@@ -129,7 +133,8 @@ pub fn samples(page: &Exposition, flavour: Flavour, ts_ms: i64) -> Vec<Sample> {
             push_counter(
                 &mut out,
                 &format!("{p}_rows_ingested_total"),
-                page.sum("vm_rows_inserted_total"),
+                // Absente tant que rien n'a été inséré : zéro, pas « inconnu ».
+                page.sum("vm_rows_inserted_total").or(Some(0.0)),
                 ts_ms,
             );
             push_counter(
@@ -157,13 +162,14 @@ pub fn samples(page: &Exposition, flavour: Flavour, ts_ms: i64) -> Vec<Sample> {
             push_counter(
                 &mut out,
                 &format!("{p}_rows_ingested_total"),
-                page.sum("vl_rows_ingested_total"),
+                // La famille naît à la première insertion : absente = zéro ligne.
+                page.sum("vl_rows_ingested_total").or(Some(0.0)),
                 ts_ms,
             );
             push_counter(
                 &mut out,
                 &format!("{p}_bytes_ingested_total"),
-                page.sum("vl_bytes_ingested_total"),
+                page.sum("vl_bytes_ingested_total").or(Some(0.0)),
                 ts_ms,
             );
         }
@@ -421,6 +427,22 @@ mod tests {
         assert_eq!(value(&samples, "victoriametrics_read_only"), Some(1.0));
         // Sous le seuil, la marge est nulle et non négative.
         assert_eq!(value(&samples, "victoriametrics_disk_headroom_percent"), Some(0.0));
+    }
+
+    #[test]
+    fn victorialogs_neuf_sans_insertion() {
+        // Instance qui n'a encore rien reçu : ni `vl_rows_ingested_total` ni
+        // `vl_bytes_ingested_total`, mais la signature et le disque sont là.
+        let page = Exposition::parse(
+            "vm_app_version{version=\"victoria-logs-v1.53.0\",short_version=\"v1.53.0\"} 1\n\
+             vl_http_requests_total{path=\"/health\"} 3\n\
+             vl_free_disk_space_bytes{path=\"/victoria-logs-data\"} 90000000\n",
+        );
+        assert!(page.has(Flavour::Logs.signature()));
+        let samples = samples(&page, Flavour::Logs, 0);
+        assert_eq!(value(&samples, "victorialogs_rows_ingested_total"), Some(0.0));
+        assert_eq!(value(&samples, "victorialogs_bytes_ingested_total"), Some(0.0));
+        assert_eq!(value(&samples, "victorialogs_rows_rejected_total"), Some(0.0));
     }
 
     #[test]

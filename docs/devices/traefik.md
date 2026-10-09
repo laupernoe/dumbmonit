@@ -43,6 +43,13 @@ Traefik's own routers and services (`@internal`) are left out. Routers,
 services and servers are described one by one up to 500 each; the totals always
 cover everything.
 
+A router, service or server that Traefik no longer lists (the Docker provider
+drops the routers of a stopped container at once) is simply no longer reported:
+DumbMonit does not keep a "healthy" value for it, and its series end. Charts
+and rules may still show its last value for a few minutes, until the metrics
+store drops the stale series. Traefik answers 404 for such a route, which no
+rule reports: only a router that is listed and disabled does.
+
 The [built-in rules](../alerting/rules.md#reverse-proxies-and-domains) that
 apply: Traefik router disabled, Traefik backend server down, Traefik service
 without a server, Traefik certificate not obtained, Proxy certificate not

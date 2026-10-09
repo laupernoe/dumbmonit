@@ -54,7 +54,10 @@ knows.
 disk instead of in its cache. Every brand-new series is one, so a deployment
 causes a burst; a share that stays above 5% means the server lacks memory for
 its active series. That is the threshold the VictoriaMetrics documentation
-gives.
+gives. After a restart the server's caches are cold, so the share can sit high
+for a while: the rule waits half an hour before it fires. Counters restart from
+zero with the server; the rules use reset-aware increases, so a restart is not
+counted as refused data.
 
 The [built-in rules](../alerting/rules.md#log-and-metrics-servers) that apply:
 Metrics or log storage read-only, Metrics or log storage almost read-only,
@@ -99,7 +102,7 @@ queries the server. It says, in this order:
 
     ```
     curl http://victorialogs.lan:9428/health
-    curl -s http://victorialogs.lan:9428/metrics | grep vl_rows_ingested_total
+    curl -s http://victorialogs.lan:9428/metrics | grep vl_free_disk_space_bytes
     ```
 
 2. If VictoriaLogs runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.

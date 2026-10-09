@@ -105,7 +105,20 @@ impl Series {
             last: convert(last),
             rate: convert(rate),
             day: convert(day),
-            idle: convert(idle),
+            // `time() - x` fait perdre `__name__` à VictoriaMetrics, même avec
+            // `keep_metric_names` : la requête ne porte que sur les compteurs des
+            // bouncers, on nomme donc les entrées d'office.
+            idle: idle
+                .iter()
+                .filter_map(|s| {
+                    let value = s.value.1.parse::<f64>().ok().filter(|v| v.is_finite())?;
+                    Some(Entry {
+                        name: "bouncer_requests_total".to_string(),
+                        labels: s.metric.clone(),
+                        value,
+                    })
+                })
+                .collect(),
             sampled_at,
         }
     }
@@ -808,6 +821,21 @@ mod tests {
         let queues = view.breakdowns.iter().find(|b| b.title == "Fullest queues").unwrap();
         assert_eq!(queues.rows[0].label, "orders (0 consumers)");
         assert_eq!(queues.rows[1].label, "shop/mail (2 consumers)");
+    }
+
+    #[test]
+    fn l_age_des_bouncers_se_lit_sans_nom_de_metrique() {
+        // VictoriaMetrics renvoie `time() - x` sans `__name__` : seules les
+        // étiquettes `bouncer`, `host` et `target` restent.
+        let k = "crowdsec";
+        let last = [serie(k, "lapi_up", 1.0, &[])];
+        let mut idle = vec![serie(k, "bouncer_requests_total", 7200.0, &[("bouncer", "nginx")])];
+        idle[0].metric.remove("__name__");
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &idle));
+        let bouncers = view.checks.iter().find(|c| c.label == "Bouncers").unwrap();
+        assert!(bouncers.detail.contains("nginx"));
+        let rows = view.breakdowns.iter().flat_map(|b| &b.rows).collect::<Vec<_>>();
+        assert!(rows.iter().any(|r| r.label == "nginx, last pull"));
     }
 
     #[test]

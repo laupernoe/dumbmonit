@@ -76,7 +76,7 @@ to `target`, `host` and `tag_*`.
 | `probe_mqtt_message_bytes` | mqtt | Size of the retained message. |
 | `probe_mqtt_message_value` | mqtt | Its content, when it is a number. |
 | `probe_ws_handshake_seconds` | websocket | Opening handshake. |
-| `probe_ws_message_bytes` | websocket | Size of the frame received. |
+| `probe_ws_message_bytes` | websocket | Size of the first frame received. Only present when the check sends a message or expects a reply (`send` / `expect` options). |
 
 ## HTTP
 

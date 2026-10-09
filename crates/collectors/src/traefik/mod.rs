@@ -546,6 +546,18 @@ mod tests {
     }
 
     #[test]
+    fn un_routeur_disparu_n_est_plus_emis() {
+        // Le fournisseur Docker retire routeur et service d'un conteneur arrêté :
+        // aucune série ne doit survivre pour lui (sinon la dernière valeur,
+        // « saine », resterait lisible).
+        let mut api = api();
+        api.routers.retain(|r| r.name != "blog@file");
+        let samples = samples(&api, None, CAPTURED_AT, 0);
+        assert!(find(&samples, "traefik_router_status", &[("router", "blog@file")]).is_none());
+        assert!(find(&samples, "traefik_router_status", &[("router", "wiki@file")]).is_some());
+    }
+
+    #[test]
     fn traefik_reel() {
         let page = Exposition::parse(METRICS);
         let samples = samples(&api(), Some(&page), CAPTURED_AT, 0);
