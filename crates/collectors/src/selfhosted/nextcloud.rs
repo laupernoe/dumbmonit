@@ -441,23 +441,21 @@ mod tests {
         use std::sync::Arc;
         use std::sync::atomic::{AtomicUsize, Ordering};
         let refusals = Arc::new(AtomicUsize::new(1));
-        let app = Router::new()
-            .route("/status.php", get(|| async { STATUS }))
-            .route(
-                "/ocs/v2.php/apps/serverinfo/api/v1/info",
-                get(move || {
-                    let refusals = refusals.clone();
-                    async move {
-                        let refused = refusals
-                            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
-                            .is_ok();
-                        if refused {
-                            return (StatusCode::UNAUTHORIZED, SERVERINFO_UNAUTHORIZED);
-                        }
-                        (StatusCode::OK, SERVERINFO)
+        let app = Router::new().route("/status.php", get(|| async { STATUS })).route(
+            "/ocs/v2.php/apps/serverinfo/api/v1/info",
+            get(move || {
+                let refusals = refusals.clone();
+                async move {
+                    let refused = refusals
+                        .try_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
+                        .is_ok();
+                    if refused {
+                        return (StatusCode::UNAUTHORIZED, SERVERINFO_UNAUTHORIZED);
                     }
-                }),
-            );
+                    (StatusCode::OK, SERVERINFO)
+                }
+            }),
+        );
         let base = serve(app).await;
         let client = NextcloudCollector::client(&target(base, "jeton-de-supervision")).unwrap();
         let samples = probe_with_retry(&client, Duration::from_millis(10)).await.unwrap();

@@ -501,7 +501,8 @@ mod tests {
     #[test]
     fn sid_builtin_rangee_en_texte_par_ldap3() {
         // S-1-5-32-544 : octets tous ASCII, ldap3 le livre dans les attributs texte.
-        let raw = String::from_utf8(vec![1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0]).unwrap();
+        let raw =
+            String::from_utf8(vec![1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0]).unwrap();
         let e = entry("CN=Administrators,CN=Builtin,DC=lab,DC=local", &[("objectSid", &[&raw])]);
         assert_eq!(e.sid().as_deref(), Some("S-1-5-32-544"));
     }
