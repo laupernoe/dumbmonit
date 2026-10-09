@@ -1,0 +1,22 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DumbMonit Status Banner 1.1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Maintenance in progress"
+msgstr ""
+
+msgid "%d service is down"
+msgid_plural "%d services are down"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Incident in progress"
+msgstr ""
+
+msgid "All systems operational"
+msgstr ""
+
+msgid "Details"
+msgstr ""
