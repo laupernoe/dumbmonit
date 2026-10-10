@@ -7301,7 +7301,7 @@
     "setup": {
       "title": "Let DumbMonit read VictoriaLogs' own health",
       "steps": [
-        "Nothing to install: VictoriaLogs publishes its own health on /health and /metrics, on the port of its API (9428 by default). Check from the DumbMonit host that both answer.\ncurl http://victorialogs.lan:9428/health\ncurl -s http://victorialogs.lan:9428/metrics | grep vl_rows_ingested_total",
+        "Nothing to install: VictoriaLogs publishes its own health on /health and /metrics, on the port of its API (9428 by default). Check from the DumbMonit host that both answer.\ncurl http://victorialogs.lan:9428/health\ncurl -s http://victorialogs.lan:9428/metrics | grep vl_free_disk_space_bytes",
         "If VictoriaLogs runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.",
         "In DumbMonit, enter the server address, for example \"victorialogs.lan\" or \"http://10.0.0.6:9428\". Behind a reverse proxy, enter the full URL with its path prefix.",
         "DumbMonit only reads /health and /metrics. It never runs a LogsQL query and never reads a log line."
