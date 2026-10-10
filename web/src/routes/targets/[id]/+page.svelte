@@ -71,7 +71,6 @@
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
-	import { deviceContext } from '#lib/components/pigeon/deviceContext.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
@@ -143,12 +142,6 @@
 	const collector = $derived(collectors.find((c) => c.kind === target?.kind) ?? null);
 	const kindLabel = $derived(target ? kindLabelOf(target.kind, collector?.label) : '');
 
-	// Pip reads this device's own setup notice straight from the collector
-	// description already fetched above, instead of guessing at one.
-	$effect(() => {
-		deviceContext.set(collector);
-		return () => deviceContext.clear();
-	});
 
 	const tags = $derived(Object.entries(target?.tags ?? {}));
 

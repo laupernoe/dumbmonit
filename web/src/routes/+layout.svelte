@@ -10,7 +10,6 @@
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '#lib/stores/auth.svelte.js';
 	import NavBar from '#lib/components/NavBar.svelte';
 	import VersionTag from '#lib/components/VersionTag.svelte';
-	import Pip from '#lib/components/pigeon/Pip.svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
 	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
@@ -171,7 +170,6 @@
 			<CommandPalette />
 		{/if}
 		{#if !onWall}
-			<Pip />
 			{#if !auth.demo}
 				<WhatsNew />
 			{/if}

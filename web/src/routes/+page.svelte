@@ -42,7 +42,6 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '#lib/ui/index.js';
 	import SkyScene, { type PigeonMood } from '#lib/components/overview/SkyScene.svelte';
-	import DidYouKnow from '#lib/components/overview/DidYouKnow.svelte';
 	import Briefing from '#lib/components/overview/Briefing.svelte';
 	import WeekAhead from '#lib/components/overview/WeekAhead.svelte';
 	import Streaks from '#lib/components/overview/Streaks.svelte';
@@ -155,7 +154,6 @@
 	});
 
 	/** The tips strip: only on a quiet sky, never over something that needs the reader. */
-	const showTips = $derived(sky.quiet && alertsStore.activeCount === 0 && !noDevices && !showGuide);
 
 	const briefing = $derived(
 		buildBriefing({ history, targets: shownTargets, rules, alerts, unreachable, channels, lastVisit, now })
@@ -443,11 +441,6 @@
 			</div>
 		{/if}
 
-		{#if showTips}
-			<div class="rise-in mt-4" style={`--rise-delay: ${STAGGER_MS}ms`}>
-				<DidYouKnow />
-			</div>
-		{/if}
 
 		<!-- Since you last looked -->
 		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS}ms`}>
