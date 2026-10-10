@@ -66,7 +66,7 @@ impl Flavour {
     /// passerait à tort pour une erreur de configuration.
     fn signature(self) -> &'static str {
         match self {
-            Self::Metrics => "vm_app_version",
+            Self::Metrics => "vm_rows_inserted_total",
             Self::Logs => "vl_free_disk_space_bytes",
         }
     }

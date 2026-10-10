@@ -364,7 +364,7 @@ mod tests {
         let tree = serde_json::from_str::<Envelope<CephOsdTree>>(OSD_TREE).unwrap().data;
         let samples = osd_samples(&tree, 1000);
 
-        let osd0 = r#"{device_class="ssd",host="pve1",osd="osd.0"}"#;
+        let osd0 = r#"{ceph_host="pve1",device_class="ssd",osd="osd.0"}"#;
         assert_eq!(valeur(&samples, &format!("proxmox_ceph_osd_up{osd0}")), Some(1.0));
         assert_eq!(valeur(&samples, &format!("proxmox_ceph_osd_used_percent{osd0}")), Some(20.97));
         assert_eq!(
@@ -372,10 +372,10 @@ mod tests {
             Some(3.0)
         );
 
-        let osd1 = r#"{device_class="ssd",host="pve1",osd="osd.1"}"#;
+        let osd1 = r#"{ceph_host="pve1",device_class="ssd",osd="osd.1"}"#;
         assert_eq!(valeur(&samples, &format!("proxmox_ceph_osd_up{osd1}")), Some(0.0));
 
-        let osd2 = r#"{device_class="hdd",host="pve2",osd="osd.2"}"#;
+        let osd2 = r#"{ceph_host="pve2",device_class="hdd",osd="osd.2"}"#;
         assert_eq!(valeur(&samples, &format!("proxmox_ceph_osd_in{osd2}")), Some(0.0));
         assert_eq!(valeur(&samples, &format!("proxmox_ceph_osd_used_percent{osd2}")), Some(90.0));
 
