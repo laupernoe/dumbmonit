@@ -22,7 +22,6 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar, RadioTower } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
-	import { deviceContext } from '#lib/components/pigeon/deviceContext.svelte.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
@@ -73,12 +72,6 @@
 	const params = $derived(page.url.searchParams);
 	const requestedKind = $derived(params.get('kind'));
 	const selected = $derived(collectors.find((c) => c.kind === requestedKind) ?? null);
-	// Pip reads this kind's own setup notice, straight from the collector
-	// description already fetched above.
-	$effect(() => {
-		deviceContext.set(selected);
-		return () => deviceContext.clear();
-	});
 	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
 	const scanning = $derived(!requestedKind && params.get('scan') === '1');
 	const snmp = $derived(collectors.find((c) => c.kind === SNMP_KIND) ?? null);
