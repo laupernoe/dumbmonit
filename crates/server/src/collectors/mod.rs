@@ -130,6 +130,9 @@ pub fn builtin(
             browser_url: config.browser_url.clone(),
         },
     )));
+    // Santé et référencement d'un site : référence des métadonnées et
+    // historique des changements gardés en base.
+    registry.register(Arc::new(crate::website::WebsiteCollector::new(pool.clone())));
     // Collecteur de démonstration : des graphes sans matériel, le temps de
     // configurer un premier équipement réel.
     registry.register(Arc::new(DummyCollector));

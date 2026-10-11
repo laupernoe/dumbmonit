@@ -214,10 +214,11 @@ impl TargetPayload {
         }
         // La surveillance d'un site garde ses instantanés sur le serveur : un
         // relais ne sait pas la faire.
-        if via_agent.is_some() && self.kind == crate::webchange::KIND {
+        if via_agent.is_some()
+            && (self.kind == crate::webchange::KIND || self.kind == crate::website::KIND)
+        {
             return Err(ApiError::BadRequest(
-                "Website change checks run on the server itself: they cannot go through a relay."
-                    .into(),
+                "Website checks run on the server itself: they cannot go through a relay.".into(),
             ));
         }
 

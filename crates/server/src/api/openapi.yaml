@@ -148,6 +148,8 @@ tags:
     description: Push monitors — the secret URL a job calls.
   - name: Website changes
     description: Pages, changes, line diffs and screenshots of a `webchange` device.
+  - name: Websites
+    description: Last reading, tracked SEO metadata and confirmed changes of a `website` device.
   - name: Integration packs
     description: Device types described in YAML.
   - name: Integrations
@@ -2830,6 +2832,59 @@ paths:
                 required: [started]
                 properties:
                   started: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/website:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getWebsiteOverview
+      tags: [Websites]
+      summary: Last reading of a website, its tracked metadata and their state
+      description: >-
+        The last reading of a `website` device (final address, redirect chain,
+        status, platform, SEO metadata) and, for every tracked field, its
+        confirmed value, a different value seen once and waiting for the next
+        check (`pending`), and the date of its last confirmed change. Every
+        field is null or empty before the first reading. `404` when the device
+        is not a `website`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The reading.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebsiteOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/website/changes:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listWebsiteChanges
+      tags: [Websites]
+      summary: Confirmed metadata changes of a website, newest first
+      description: >-
+        A change is recorded once two checks in a row have seen the new value.
+        The last two hundred changes are kept per device.
+      x-token-scope: read
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: The changes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WebsiteChange" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -5633,6 +5688,92 @@ components:
         grace_secs: { type: [integer, "null"] }
         settings_error: { type: [string, "null"] }
         verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+
+    WebsiteOverview:
+      type: object
+      required: [checked_at, error, probe, platform_label, fields, robots_checked_at, robots_blocks_all, sitemap_ok]
+      properties:
+        checked_at: { type: [string, "null"], description: "Last reading, successful or not. UTC, without suffix." }
+        error: { type: [string, "null"], description: "Why the last reading failed (unreachable, certificate refused, redirect loop…); `probe` then stays the last successful one." }
+        probe:
+          oneOf:
+            - { $ref: "#/components/schemas/WebsiteProbe" }
+            - { type: "null" }
+        platform_label: { type: [string, "null"], description: "Display name of `probe.platform`, e.g. Next.js." }
+        fields:
+          type: array
+          items: { $ref: "#/components/schemas/WebsiteField" }
+        robots_checked_at: { type: [string, "null"], description: "robots.txt and the sitemap are read at most once an hour. UTC, without suffix." }
+        robots_blocks_all: { type: [boolean, "null"], description: "robots.txt forbids Googlebot (or *) to crawl /." }
+        sitemap_ok: { type: [boolean, "null"], description: "The sitemap announced by robots.txt, or /sitemap.xml, answers 200 and reads as a sitemap." }
+
+    WebsiteProbe:
+      type: object
+      required: [requested_url, final_url, status, response_ms, redirects, platform, content_type, text_chars, blank, expect_text_found, metadata]
+      properties:
+        requested_url: { type: string }
+        final_url: { type: string, description: "Where the redirects lead." }
+        status: { type: integer, description: "HTTP status of the final answer." }
+        response_ms: { type: integer, description: "Total time, redirects included." }
+        redirects:
+          type: array
+          description: "Redirects followed, in order; the last one leads to `final_url`. Empty without redirect."
+          items:
+            type: object
+            required: [url, status]
+            properties:
+              url: { type: string }
+              status: { type: integer }
+        platform: { $ref: "#/components/schemas/WebsitePlatform" }
+        content_type: { type: string }
+        text_chars: { type: [integer, "null"], description: "Characters of visible text; null unless the final answer is 2xx." }
+        blank: { type: [boolean, "null"], description: "Visible text below `min_text_chars`." }
+        expect_text_found: { type: [boolean, "null"], description: "Null without the `expect_text` option." }
+        metadata:
+          oneOf:
+            - { $ref: "#/components/schemas/WebsiteMetadata" }
+            - { type: "null" }
+
+    WebsiteMetadata:
+      type: object
+      required: [title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count, noindex, nofollow]
+      properties:
+        title: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        canonical: { type: [string, "null"], description: "Resolved against the final address." }
+        robots: { type: [string, "null"], description: "Robots meta tags and X-Robots-Tag headers, joined." }
+        og_title: { type: [string, "null"] }
+        og_description: { type: [string, "null"] }
+        lang: { type: [string, "null"], description: "`<html lang>`." }
+        h1_count: { type: integer }
+        hreflang_count: { type: integer }
+        noindex: { type: boolean }
+        nofollow: { type: boolean }
+
+    WebsitePlatform:
+      type: string
+      description: "Platform guessed from the generator meta tag, headers and markup; also the `platform` label of `dumbmonit_website_info`."
+      enum: [wordpress, shopify, wix, squarespace, webflow, ghost, drupal, joomla, prestashop, magento, nextjs, nuxt, gatsby, hugo, jekyll, other]
+
+    WebsiteField:
+      type: object
+      required: [field, value, pending, changed_at, recently_changed]
+      properties:
+        field: { type: string, enum: [final_url, title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count] }
+        value: { type: [string, "null"], description: "Confirmed value; empty string when the page has none." }
+        pending: { type: [string, "null"], description: "A different value seen once, confirmed if the next check sees it again." }
+        changed_at: { type: [string, "null"], description: "Last confirmed change. UTC, without suffix." }
+        recently_changed: { type: boolean, description: "Changed less than 24 hours ago." }
+
+    WebsiteChange:
+      type: object
+      required: [id, detected_at, field, before, after]
+      properties:
+        id: { type: integer, format: int64 }
+        detected_at: { type: string, description: "UTC, without suffix." }
+        field: { type: string }
+        before: { type: string }
+        after: { type: string }
 
     WebchangePages:
       type: object

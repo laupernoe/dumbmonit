@@ -158,6 +158,58 @@ pub fn parse(html: &str) -> Page {
     page
 }
 
+/// Une balise ouvrante, telle que [`elements`] la rend.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Element {
+    /// Nom en minuscules.
+    pub name: String,
+    /// `(nom en minuscules, valeur brute)`, dans l'ordre du document.
+    pub attributes: Vec<(String, String)>,
+}
+
+impl Element {
+    /// Valeur d'un attribut, rognée et entités décodées.
+    pub fn attribute(&self, key: &str) -> Option<String> {
+        self.attributes.iter().find(|(k, _)| k == key).map(|(_, v)| decode_entities(v.trim()))
+    }
+}
+
+/// Les balises ouvrantes d'un document, dans l'ordre : de quoi lire les
+/// métadonnées (`<meta>`, `<link>`, `<html lang>`) ou compter des titres.
+/// Les commentaires sont sautés, et le contenu des éléments jamais affichés
+/// (`script`, `style`…) aussi — leur balise ouvrante, elle, est rendue.
+pub fn elements(html: &str) -> Vec<Element> {
+    let mut found = Vec::new();
+    let mut rest = html;
+    while let Some(open) = rest.find('<') {
+        rest = &rest[open..];
+        if let Some(after) = rest.strip_prefix("<!--") {
+            rest = after.find("-->").map_or("", |end| &after[end + 3..]);
+            continue;
+        }
+        if rest.starts_with("<!") || rest.starts_with("<?") {
+            rest = rest.find('>').map_or("", |end| &rest[end + 1..]);
+            continue;
+        }
+        let Some(tag) = Tag::read(rest) else {
+            rest = &rest[1..];
+            continue;
+        };
+        rest = &rest[tag.len..];
+        if tag.closing {
+            continue;
+        }
+        let skip =
+            (HIDDEN.contains(&tag.name.as_str()) || tag.name == "title") && !tag.self_closing;
+        let name = tag.name.clone();
+        found.push(Element { name: tag.name, attributes: tag.attributes });
+        if skip {
+            rest = raw_content(rest, &name).1;
+        }
+    }
+    found
+}
+
 /// Une balise ouvrante ou fermante, telle que lue.
 struct Tag {
     name: String,
