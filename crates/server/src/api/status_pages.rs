@@ -16,7 +16,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, HeaderName, StatusCode, header};
+use axum::http::{HeaderName, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
@@ -480,10 +480,10 @@ pub async fn get_page(
 
 pub async fn create_page(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    origin: super::oidc::Origin,
     Json(payload): Json<StatusPagePayload>,
 ) -> ApiResult<(StatusCode, Json<StatusPageView>)> {
-    let input = payload.validate(&state, None, public_origin(&headers)).await?;
+    let input = payload.validate(&state, None, origin.as_str().to_string()).await?;
     let id = db::status_pages::create_page(&state.pool, &input)
         .await
         .map_err(duplicate_slug_to_conflict)?;
@@ -497,12 +497,12 @@ pub async fn create_page(
 pub async fn update_page(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    headers: HeaderMap,
+    origin: super::oidc::Origin,
     Json(payload): Json<StatusPagePayload>,
 ) -> ApiResult<Json<StatusPageView>> {
     let existing =
         db::status_pages::get_page(&state.pool, id).await?.ok_or_else(|| page_not_found(id))?;
-    let input = payload.validate(&state, Some(&existing), public_origin(&headers)).await?;
+    let input = payload.validate(&state, Some(&existing), origin.as_str().to_string()).await?;
     let updated = db::status_pages::update_page(&state.pool, id, &input)
         .await
         .map_err(duplicate_slug_to_conflict)?;
@@ -1650,23 +1650,10 @@ pub async fn public_badge(
         .into_response())
 }
 
-/// Origine publique du serveur, telle que le navigateur la voit — derrière un
-/// mandataire, ce sont ses en-têtes `X-Forwarded-*` qui font foi.
-fn public_origin(headers: &HeaderMap) -> String {
-    let header = |name: &str| headers.get(name).and_then(|v| v.to_str().ok()).map(str::trim);
-    let proto = header("x-forwarded-proto")
-        .and_then(|v| v.split(',').next())
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-        .unwrap_or("http");
-    let host = header("x-forwarded-host")
-        .and_then(|v| v.split(',').next())
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-        .or_else(|| header("host"))
-        .unwrap_or("localhost");
-    format!("{proto}://{host}")
-}
+// L'origine publique vient de `oidc::Origin` : les en-têtes `X-Forwarded-*` n'y
+// comptent que s'ils viennent d'un mandataire de confiance
+// (`DUMBMONIT_TRUSTED_PROXIES`). Sinon un client choisirait le lien d'un flux RSS
+// mis en cache, ou celui des e-mails d'abonnement.
 
 fn rfc2822(stored: &str) -> String {
     parse_stored(stored).map(|at| at.to_rfc2822()).unwrap_or_default()
@@ -1675,7 +1662,7 @@ fn rfc2822(stored: &str) -> String {
 pub async fn public_rss(
     State(state): State<AppState>,
     Path(slug): Path<String>,
-    headers: HeaderMap,
+    origin: super::oidc::Origin,
 ) -> ApiResult<Response> {
     let body = load_public(&state, &slug).await?;
     // Le domaine public de la page s'il y en a un ; sinon l'origine de la requête.
@@ -1683,7 +1670,7 @@ pub async fn public_rss(
         db::status_pages::get_page_by_slug(&state.pool, &slug).await?.and_then(|page| page.domain);
     let link = match domain {
         Some(domain) => format!("https://{domain}/"),
-        None => format!("{}/s/{slug}", public_origin(&headers)),
+        None => format!("{}/s/{slug}", origin.as_str()),
     };
     let title = body.pointer("/page/title").and_then(Value::as_str).unwrap_or("Status");
     let description = body.pointer("/page/description").and_then(Value::as_str).unwrap_or("");

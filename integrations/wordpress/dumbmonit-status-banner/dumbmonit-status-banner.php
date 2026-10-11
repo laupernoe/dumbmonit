@@ -50,7 +50,7 @@ function dmt_sanitize($in): array
             add_settings_error(DMT_OPT, 'dmt_unreachable', sprintf(
                 /* translators: %s: error detail */
                 __('Saved, but the status page could not be fetched from this server: %s', 'dumbmonit-status-banner'),
-                (string) get_transient(DMT_ERR)
+                esc_html((string) get_transient(DMT_ERR))
             ), 'warning');
         }
     }

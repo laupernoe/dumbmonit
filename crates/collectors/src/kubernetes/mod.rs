@@ -322,6 +322,8 @@ fn client_trusting(pem: &[u8]) -> Result<reqwest::Client, ProbeError> {
     }
     let client = reqwest::Client::builder()
         .tls_certs_only(certificates)
+        // Le jeton de compte de service ne suit jamais une redirection hors de l'API.
+        .redirect(crate::http::same_host_redirects())
         .connect_timeout(crate::http::CONNECT_TIMEOUT)
         .pool_max_idle_per_host(2)
         .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))

@@ -15,6 +15,8 @@ pub enum ApiError {
     /// Le message doit dire quoi faire à la place, pas seulement « interdit ».
     Forbidden(String),
     Conflict(String),
+    /// Geste répété trop vite ; le message dit combien de temps attendre.
+    TooManyRequests(String),
     Internal(anyhow::Error),
 }
 
@@ -29,6 +31,7 @@ impl ApiError {
             Self::BadRequest(why) => (StatusCode::BAD_REQUEST, why),
             Self::Forbidden(why) => (StatusCode::FORBIDDEN, why),
             Self::Conflict(why) => (StatusCode::CONFLICT, why),
+            Self::TooManyRequests(why) => (StatusCode::TOO_MANY_REQUESTS, why),
             Self::Internal(error) => {
                 tracing::error!(?error, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.".to_string())

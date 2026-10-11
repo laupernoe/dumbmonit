@@ -44,6 +44,69 @@ pub fn clear(secure: bool) -> HeaderValue {
     header_value(value)
 }
 
+/// Ajoute `Secure` aux cookies posés pour un navigateur qui nous joint en HTTPS.
+///
+/// `DUMBMONIT_COOKIE_SECURE` reste éteint par défaut, parce qu'un cookie
+/// `Secure` n'est jamais renvoyé en HTTP simple et rendrait la connexion
+/// impossible sur un réseau local. Mais quand la requête montre qu'elle vient
+/// d'une page HTTPS, l'attribut ne coûte rien et empêche le navigateur de
+/// renvoyer la session de trente jours sur un lien `http://` (lien mixte,
+/// rétrogradation sur un Wi-Fi hostile). Les indices retenus :
+///
+/// - `X-Forwarded-Proto: https`, seulement si la connexion vient d'un
+///   mandataire de confiance (`DUMBMONIT_TRUSTED_PROXIES`) ;
+/// - un en-tête `Origin` en `https://`, que le navigateur pose lui-même sur le
+///   `POST` de connexion. Le falsifier ne sert à rien : il ne ferait que durcir
+///   le cookie de celui qui le falsifie.
+pub async fn secure_when_https(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    let https = request_is_https(&request);
+    let mut response = next.run(request).await;
+    if https {
+        let headers = response.headers_mut();
+        let upgraded: Vec<HeaderValue> = headers
+            .get_all(header::SET_COOKIE)
+            .iter()
+            .map(|value| match value.to_str() {
+                Ok(text) if !text.to_ascii_lowercase().contains("; secure") => {
+                    HeaderValue::from_str(&format!("{text}; Secure")).unwrap_or(value.clone())
+                }
+                _ => value.clone(),
+            })
+            .collect();
+        if !upgraded.is_empty() {
+            headers.remove(header::SET_COOKIE);
+            for value in upgraded {
+                headers.append(header::SET_COOKIE, value);
+            }
+        }
+    }
+    response
+}
+
+fn request_is_https(request: &axum::extract::Request) -> bool {
+    let headers = request.headers();
+    let text = |name: &str| headers.get(name).and_then(|value| value.to_str().ok());
+    if text("origin").is_some_and(|origin| origin.trim().starts_with("https://")) {
+        return true;
+    }
+    let trusted = request
+        .extensions()
+        .get::<crate::auth::AuthState>()
+        .map(|auth| auth.trusted_proxies().to_vec())
+        .unwrap_or_default();
+    let peer = request
+        .extensions()
+        .get::<axum::extract::ConnectInfo<std::net::SocketAddr>>()
+        .map(|info| info.0.ip());
+    peer.is_some_and(|peer| trusted.iter().any(|net| net.contains(&peer)))
+        && text("x-forwarded-proto")
+            .and_then(|value| value.split(',').next())
+            .is_some_and(|proto| proto.trim().eq_ignore_ascii_case("https"))
+}
+
 fn header_value(value: String) -> HeaderValue {
     // La valeur n'est faite que d'hexadécimal et de ponctuation ASCII : la
     // conversion ne peut pas échouer.

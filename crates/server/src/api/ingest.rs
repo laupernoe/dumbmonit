@@ -21,7 +21,7 @@ use serde_json::json;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
-use crate::auth::middleware::Authenticated;
+use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::collectors::agent;
 use crate::state::AppState;
 
@@ -207,7 +207,11 @@ impl TokenPayload {
     }
 }
 
-pub async fn list_tokens(State(state): State<AppState>) -> ApiResult<Json<Vec<TokenView>>> {
+/// Réservé aux administrateurs, comme la liste des jetons d'API.
+pub async fn list_tokens(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<TokenView>>> {
     let tokens = agent::list_tokens(&state.pool).await?;
     Ok(Json(tokens.into_iter().map(TokenView::from).collect()))
 }

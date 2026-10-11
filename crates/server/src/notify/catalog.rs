@@ -893,13 +893,6 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                      standard JSON payload is sent.",
                     "{\"title\": \"{{title}}\", \"detail\": \"{{message}}\"}",
                 ),
-                textarea(
-                    "headers",
-                    "Extra headers",
-                    "JSON object, one value per header.",
-                    "{\"X-Application\": \"dumbmonit\"}",
-                )
-                .object(),
                 url(
                     "base_url",
                     "Public address of DumbMonit",
@@ -931,6 +924,15 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                     "",
                 ),
                 password("password", "Password", "Password for HTTP \"Basic\" authentication.", ""),
+                // Secret : c'est là qu'on met naturellement un `X-Api-Key` ou un
+                // `Authorization`, et les réglages sont lisibles par tout compte.
+                textarea(
+                    "headers",
+                    "Extra headers",
+                    "JSON object, one value per header. Stored encrypted like the token, so API \
+                     keys belong here.",
+                    "{\"X-Api-Key\": \"…\"}",
+                ),
             ],
         ),
         _ => return None,

@@ -1,5 +1,6 @@
 use axum::Json;
 use axum::extract::State;
+use axum::http::HeaderMap;
 use serde::Serialize;
 
 use crate::state::AppState;
@@ -36,6 +37,12 @@ impl ComponentHealth {
         }
     }
 
+    /// Version publique : l'état sans le détail de la panne.
+    fn anonymous(self) -> Self {
+        let error = (!self.ok).then(|| "unavailable (sign in for details)".to_string());
+        Self { error, ..self }
+    }
+
     fn embedded(self, embedded: bool) -> Self {
         Self { embedded: Some(embedded), ..self }
     }
@@ -53,20 +60,31 @@ fn build_id() -> Option<&'static str> {
 /// Répond toujours 200 : c'est un rapport de diagnostic, pas une sonde de vivacité.
 /// Un composant en panne se lit dans le corps de la réponse, ce qui permet à
 /// l'interface d'afficher précisément ce qui ne va pas.
-pub async fn health(State(state): State<AppState>) -> Json<Health> {
+///
+/// Le texte d'une panne (message d'erreur de SQLite ou de `reqwest`, qui peut
+/// recopier l'URL de `DUMBMONIT_VM_URL` et ses identifiants) n'est rendu qu'à une
+/// session ouverte ; un appel anonyme ne lit que `ok`.
+pub async fn health(State(state): State<AppState>, headers: HeaderMap) -> Json<Health> {
     let database =
         sqlx::query("SELECT 1").execute(&state.pool).await.map(|_| ()).map_err(anyhow::Error::from);
 
     let victoria = state.victoria.health().await;
 
     let all_ok = database.is_ok() && victoria.is_ok();
+    let signed_in = matches!(
+        crate::auth::middleware::current_session(&state.pool, &headers).await,
+        Ok(Some(_))
+    );
+    let shown = |component: ComponentHealth| {
+        if signed_in { component } else { component.anonymous() }
+    };
 
     Json(Health {
         status: if all_ok { "ok" } else { "degraded" },
         version: env!("CARGO_PKG_VERSION"),
         build: build_id(),
-        database: ComponentHealth::from(database),
-        victoria: ComponentHealth::from(victoria).embedded(state.config.vm_embedded()),
+        database: shown(ComponentHealth::from(database)),
+        victoria: shown(ComponentHealth::from(victoria).embedded(state.config.vm_embedded())),
         demo: state.config.demo,
     })
 }

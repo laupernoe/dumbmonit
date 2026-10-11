@@ -8,6 +8,7 @@ use dumbmonit_proto::{Credential, Target, TargetId};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::middleware::Identity;
 use crate::collectors::relay::{self, JobResult};
 use crate::db;
 use crate::state::AppState;
@@ -238,27 +239,87 @@ impl TargetPayload {
     }
 }
 
-pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<TargetView>>> {
+pub async fn list(
+    Identity(who): Identity,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<TargetView>>> {
     let targets = db::targets::list(&state.pool, &state.cipher).await?;
     let mut statuses = db::targets::statuses(&state.pool).await?;
+    let admin = who.is_admin();
     Ok(Json(
         targets
             .into_iter()
             .map(|target| {
                 let status = statuses.remove(&target.id);
-                TargetView::new(target, status)
+                TargetView::new(target, status).for_reader(admin)
             })
             .collect(),
     ))
 }
 
 pub async fn get_one(
+    Identity(who): Identity,
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<TargetView>> {
     let target = load(&state, id).await?;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok(Json(TargetView::new(target, status)))
+    Ok(Json(TargetView::new(target, status).for_reader(who.is_admin())))
+}
+
+/// Valeur substituée à ce qui ressemble à un secret, pour qui n'administre pas.
+pub const REDACTED: &str = "***";
+
+impl TargetView {
+    /// Version de la vue destinée à un lecteur : les options dont la clé nomme
+    /// un secret (`api_key`, `password`…), les en-têtes d'un moniteur HTTP (un
+    /// `Authorization` s'y glisse vite) et le mot de passe d'une adresse
+    /// `https://user:pass@hôte` sont masqués. Un administrateur, qui peut
+    /// modifier la cible, voit tout : le formulaire renvoie ces valeurs telles
+    /// quelles.
+    fn for_reader(mut self, admin: bool) -> Self {
+        if admin {
+            return self;
+        }
+        self.tags = reader_tags(&self.tags);
+        self.address = redact_userinfo(&self.address);
+        self
+    }
+}
+
+/// Options d'une cible telles qu'un lecteur (ou un assistant) peut les voir :
+/// voir [`TargetView::for_reader`].
+pub fn reader_tags(tags: &BTreeMap<String, String>) -> BTreeMap<String, String> {
+    tags.iter()
+        .map(|(key, value)| {
+            let shown = if dumbmonit_proto::looks_secret(key) || key.eq_ignore_ascii_case("headers")
+            {
+                REDACTED.to_string()
+            } else {
+                redact_userinfo(value)
+            };
+            (key.clone(), shown)
+        })
+        .collect()
+}
+
+/// Masque le mot de passe d'une URL `schéma://user:pass@hôte…`, sans toucher au
+/// reste du texte. Une valeur qui n'est pas une URL ressort intacte.
+pub fn redact_userinfo(text: &str) -> String {
+    let Some(scheme_end) = text.find("://") else { return text.to_string() };
+    let rest = &text[scheme_end + 3..];
+    let authority_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..authority_end];
+    let Some(at) = authority.rfind('@') else { return text.to_string() };
+    let userinfo = &authority[..at];
+    let user = userinfo.split(':').next().unwrap_or_default();
+    format!(
+        "{}://{}{}{}",
+        &text[..scheme_end],
+        if userinfo.contains(':') { format!("{user}:{REDACTED}") } else { REDACTED.to_string() },
+        &authority[at..],
+        &rest[authority_end..]
+    )
 }
 
 pub async fn create(
