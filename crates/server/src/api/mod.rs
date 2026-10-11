@@ -43,6 +43,7 @@ mod update;
 mod users;
 mod webchange;
 mod webpush;
+mod website;
 
 pub use collectors::option_keys as collector_option_keys;
 pub use error::{ApiError, ApiResult};
@@ -159,6 +160,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(packs::routes())
         // Changements d'un site web : pages, diff et captures (`webchange.rs`).
         .merge(webchange::routes())
+        // Santé et référencement d'un site : dernière lecture et changements (`website.rs`).
+        .merge(website::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
         .merge(music::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).

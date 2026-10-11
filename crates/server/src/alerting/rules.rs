@@ -4784,6 +4784,99 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: None,
             ..base("webchange_detected", "Website changed", RuleKind::Threshold, "dumbmonit_webchange_last_check_changes")
         },
+        // --- Santé et référencement d'un site (`website`) ---
+        //
+        // Un site injoignable (réseau, délai, certificat refusé, boucle de
+        // redirections) relève de « Device unreachable » : la sonde échoue.
+        // `website_up` couvre le site qui répond, mais par une erreur.
+        Rule {
+            description: "The website answers with an error (4xx or 5xx) after following its redirects.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            ..base("website_down", "Website down", RuleKind::Threshold, "dumbmonit_website_up")
+        },
+        Rule {
+            description: "The website answers, but its page shows almost no text: a broken theme, a failed database or an empty template.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Critical,
+            ..base("website_blank", "Website page blank", RuleKind::Threshold, "dumbmonit_website_blank")
+        },
+        Rule {
+            description: "The text the page must show (option \"Expected text\") is missing.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Warning,
+            ..base("website_expected_text_missing", "Website expected text missing", RuleKind::Threshold, "dumbmonit_website_expect_text_missing")
+        },
+        // Les deux règles suivantes sortent le site des moteurs de recherche :
+        // critiques, mais lentes à prouver un préjudice, d'où un rappel par jour.
+        Rule {
+            description: "The page asks search engines not to index it (noindex in a robots meta tag or an X-Robots-Tag header).".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("website_noindex", "Website not indexable", RuleKind::Threshold, "dumbmonit_website_noindex")
+        },
+        Rule {
+            description: "The site's robots.txt forbids search engines to crawl anything.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("website_robots_blocks_all", "Website blocked by robots.txt", RuleKind::Threshold, "dumbmonit_website_robots_blocks_all")
+        },
+        // Changements confirmés (vus deux sondes de suite) : la jauge vaut 1
+        // pendant 24 heures. Pas de rappel : c'est un fait, pas une panne.
+        Rule {
+            description: "The canonical URL of the page changed, confirmed on two checks in a row. Search engines may move the page's ranking to the new address.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base("website_canonical_changed", "Website canonical URL changed", RuleKind::Threshold, "dumbmonit_website_canonical_changed")
+        },
+        Rule {
+            description: "After its redirects, the website now lands on another host or path, confirmed on two checks in a row (a move, a parked domain, a hijack). Going from http to https or to www. is not a change.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base("website_final_url_changed", "Website address changed", RuleKind::Threshold, "dumbmonit_website_final_url_changed")
+        },
+        Rule {
+            description: "The title or the meta description that search engines show changed, confirmed on two checks in a row.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base(
+                "website_metadata_changed",
+                "Website title or description changed",
+                RuleKind::Threshold,
+                "dumbmonit_website_title_changed + dumbmonit_website_description_changed",
+            )
+        },
+        Rule {
+            description: "The website takes more than five seconds to answer, redirects included.".to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base("website_slow", "Website slow", RuleKind::Threshold, "dumbmonit_website_response_seconds")
+        },
         // --- Active Directory (`collectors/activedirectory`) ---
         //
         // Le contrôleur interrogé lui-même relève de « Device unreachable » ;
@@ -5868,6 +5961,15 @@ mod tests {
             "domain_redemption",
             "dns_answer_changed",
             "webchange_detected",
+            "website_down",
+            "website_blank",
+            "website_expected_text_missing",
+            "website_noindex",
+            "website_robots_blocks_all",
+            "website_canonical_changed",
+            "website_final_url_changed",
+            "website_metadata_changed",
+            "website_slow",
             "k8s_node_not_ready",
             "k8s_node_pressure",
             "k8s_pod_crashlooping",
@@ -6252,6 +6354,17 @@ mod tests {
             "dumbmonit_probe_dns_answer_fingerprint",
             // Changements d'un site web (`webchange`).
             "dumbmonit_webchange_last_check_changes",
+            // Santé et référencement d'un site (`website`).
+            "dumbmonit_website_up",
+            "dumbmonit_website_blank",
+            "dumbmonit_website_expect_text_missing",
+            "dumbmonit_website_noindex",
+            "dumbmonit_website_robots_blocks_all",
+            "dumbmonit_website_canonical_changed",
+            "dumbmonit_website_final_url_changed",
+            "dumbmonit_website_title_changed",
+            "dumbmonit_website_description_changed",
+            "dumbmonit_website_response_seconds",
             // Appareils clients, générique (`collectors/client_devices.rs`).
             "dumbmonit_client_device_stale_seconds",
             // Active Directory (`collectors/activedirectory/metrics.rs`).

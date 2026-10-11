@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Website health & SEO, in bulk.** A new `website` device type reads a
+  site once per check, following its redirects (http → https and example.com
+  → www.example.com are normal; a loop or too many hops is an error), and
+  reports a site that is down or answers an error, a page gone blank, missing
+  expected text, `noindex` (meta tag or `X-Robots-Tag`), a `robots.txt` that
+  blocks everything, a slow answer, and changes of the title, description,
+  canonical URL or final address — only once two checks in a row have seen
+  them, so A/B tests stay quiet. Each site's platform (WordPress, Shopify,
+  Wix, Next.js…) is detected and exposed as `dumbmonit_website_info{platform}`.
+  Nine built-in alert rules. See [Website health & SEO](docs/devices/website.md).
+
 - **A custom domain for a status page.** The page editor's **Public domain**
   field (for example `status.example.com`) makes DumbMonit show that page at
   the root of the name when your reverse proxy (Traefik, Nginx Proxy Manager,

@@ -1116,6 +1116,45 @@ const WEBCHANGE_OPTIONS: &[OptionView] = &[
     ALLOW_PRIVATE_TARGETS,
 ];
 
+/// Options lues par `website/options.rs` (`Options::from_target`).
+const WEBSITE_OPTIONS: &[OptionView] = &[
+    text(
+        "expect_text",
+        "Expected text",
+        "A phrase the page must show, such as your company name or \"Add to cart\". Case and spacing do not matter. Empty: not checked.",
+        "Add to cart",
+        "",
+    ),
+    number(
+        "min_text_chars",
+        "Blank page below (characters)",
+        "Visible text shorter than this counts as a blank page, from 0 to 100000. 0 turns the check off.",
+        "200",
+        "200",
+    ),
+    number(
+        "max_redirects",
+        "Max redirects",
+        "Redirects followed at most, from 0 to 30. Going from http to https or from example.com to www.example.com is normal and never an error; a loop or more redirects than this is.",
+        "10",
+        "10",
+    ),
+    text(
+        "user_agent",
+        "User agent",
+        "Sent instead of DumbMonit's own, for a site that serves robots differently. Empty: DumbMonit/<version>.",
+        "Mozilla/5.0 (compatible; DumbMonit)",
+        "",
+    ),
+    boolean(
+        "ignore_query",
+        "Ignore query strings",
+        "Leave ?utm_source=… and other URL parameters out when comparing the final address and the canonical URL.",
+        true,
+    ),
+    ALLOW_PRIVATE_TARGETS,
+];
+
 /// Options lues par `collectors/proxmox/options.rs`.
 const PROXMOX_OPTIONS: &[OptionView] = &[
     number("port", "API port", "Used if the address does not give a port.", "8006", "8006"),
@@ -3825,6 +3864,36 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: WEBCHANGE_OPTIONS,
         },
+        // Santé et référencement d'un site (`website`) : une lecture par
+        // sonde, redirections suivies, métadonnées comparées sur deux sondes.
+        "website" => CollectorView {
+            kind: "website",
+            label: "Website health & SEO",
+            summary: "Know when a website breaks, goes blank, drops out of search engines or changes its title, description or canonical address, for one site or hundreds.",
+            examples: &[
+                "Company website",
+                "Online shop",
+                "Customer sites you host",
+                "Landing pages",
+                "Blog or documentation",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "https://example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Watch a website",
+                steps: &[
+                    "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
+                    "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
+                    "The first check records the reference: final address, title, description, canonical URL, indexing rules. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
+                    "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder.",
+                ],
+                warning: "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
+                doc_url: "",
+            },
+            options: WEBSITE_OPTIONS,
+        },
         // Moniteur en poussée : rien n'est interrogé, c'est le travail surveillé
         // qui appelle. L'adresse n'est qu'un libellé : elle doit rester unique
         // parmi les heartbeats, comme toute adresse pour un type donné.
@@ -4856,6 +4925,7 @@ mod tests {
         "websocket",
         "push",
         "webchange",
+        "website",
         "dummy",
     ];
 
@@ -5175,6 +5245,17 @@ mod tests {
                     "screenshots",
                     "check_interval_minutes",
                     "insecure_tls",
+                    "allow_private_targets",
+                ],
+            ),
+            (
+                "website",
+                &[
+                    "expect_text",
+                    "min_text_chars",
+                    "max_redirects",
+                    "user_agent",
+                    "ignore_query",
                     "allow_private_targets",
                 ],
             ),
@@ -5890,6 +5971,7 @@ mod tests {
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("webchange", include_str!("../../../../docs/devices/webchange.md")),
+            ("website", include_str!("../../../../docs/devices/website.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
             ("postgres", include_str!("../../../../docs/devices/services.md")),
             ("mysql", include_str!("../../../../docs/devices/services.md")),
@@ -5916,6 +5998,30 @@ mod tests {
             let warning = flatten(view.setup.warning);
             assert!(flat.contains(&warning), "docs/devices/{kind}.md ne reprend pas : {warning}");
         }
+    }
+
+    /// Les défauts affichés pour la santé des sites sont ceux que lit
+    /// `website/options.rs`.
+    #[test]
+    fn les_defauts_website_sont_ceux_du_collecteur() {
+        use crate::website::options as o;
+        let defaut = |cle: &str| {
+            describe("website").options.iter().find(|opt| opt.key == cle).map(|opt| opt.default)
+        };
+        assert_eq!(
+            defaut(o::OPTION_MIN_TEXT_CHARS),
+            Some(o::DEFAULT_MIN_TEXT_CHARS.to_string().as_str())
+        );
+        assert_eq!(
+            defaut(o::OPTION_MAX_REDIRECTS),
+            Some(o::DEFAULT_MAX_REDIRECTS.to_string().as_str())
+        );
+        assert_eq!(defaut(o::OPTION_IGNORE_QUERY), Some("true"));
+        for cle in [o::OPTION_EXPECT_TEXT, o::OPTION_USER_AGENT] {
+            assert_eq!(defaut(cle), Some(""), "{cle}");
+        }
+        assert_eq!(defaut(o::OPTION_ALLOW_PRIVATE), Some("false"));
+        assert_eq!(describe("website").credential_types, &["none"]);
     }
 
     /// Les défauts affichés pour la surveillance des sites sont ceux que lit
