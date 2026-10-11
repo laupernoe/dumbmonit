@@ -3434,3 +3434,29 @@ export interface UpdateInfo {
 	/** Why the last check failed. */
 	error: string | null;
 }
+
+// --- Bulk import of websites (crates/server/src/api/targets_import.rs) -------
+
+export type TargetImportStatus = 'ok' | 'created' | 'skipped' | 'error';
+
+export interface TargetImportRow {
+	/** Line number in the file (the header is line 1). */
+	row: number;
+	url: string;
+	name: string;
+	folder: string;
+	platform: string | null;
+	status: TargetImportStatus;
+	message: string | null;
+	id: number | null;
+}
+
+/** Answer to `POST /api/targets/import`. */
+export interface TargetImportReport {
+	dry_run: boolean;
+	total: number;
+	created: number;
+	skipped: number;
+	errors: number;
+	rows: TargetImportRow[];
+}
