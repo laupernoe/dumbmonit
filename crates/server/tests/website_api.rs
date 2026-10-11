@@ -36,10 +36,15 @@ async fn serve(State(site): State<Site>, request: Request) -> Response {
     };
     let mut response =
         (StatusCode::from_u16(page.status).unwrap(), page.body.clone()).into_response();
+    // Axum pose déjà un `content-type: text/plain` pour un corps texte : celui de la
+    // page doit le remplacer, pas s'y ajouter (le client lirait le premier).
     for (name, value) in page.headers {
-        response
-            .headers_mut()
-            .append(HeaderName::from_static(name), HeaderValue::from_str(&value).unwrap());
+        let (name, value) = (HeaderName::from_static(name), HeaderValue::from_str(&value).unwrap());
+        if name == axum::http::header::CONTENT_TYPE {
+            response.headers_mut().insert(name, value);
+        } else {
+            response.headers_mut().append(name, value);
+        }
     }
     response
 }
