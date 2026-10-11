@@ -1128,9 +1128,9 @@ const WEBSITE_OPTIONS: &[OptionView] = &[
     number(
         "min_text_chars",
         "Blank page below (characters)",
-        "Visible text shorter than this counts as a blank page, from 0 to 100000. 0 turns the check off.",
-        "200",
-        "200",
+        "Visible text shorter than this counts as a blank page (20 by default, so short legitimate pages pass), from 0 to 100000. 0 turns the check off.",
+        "20",
+        "20",
     ),
     number(
         "max_redirects",
