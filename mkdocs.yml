@@ -250,6 +250,7 @@ nav:
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
+      - Website health & SEO: devices/website.md
       - Demo device: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md

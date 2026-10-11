@@ -25,3 +25,4 @@ pub mod status_host;
 pub mod tsdb;
 pub mod update;
 pub mod webchange;
+pub mod website;
