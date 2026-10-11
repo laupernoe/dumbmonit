@@ -425,6 +425,11 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` or `auto`: MDaemon's performance counters (default `auto`, read when the `MDaemon` Windows service exists) |
 | `DUMBMONIT_AGENT_HYPERV` | `true`, `false` or `auto`: Hyper-V's performance counters (default `auto`, read when the `vmms` Windows service exists) |
 | `DUMBMONIT_AGENT_PERF_COUNTERS` | Windows performance counter paths, separated by **semicolons** (a comma can be part of an instance name); replaces `perf_counters` |
+| `DUMBMONIT_AGENT_SYSTEM_HEALTH` | `true` / `false`: operating-system health, the master switch of the next four (default `true`) |
+| `DUMBMONIT_AGENT_CHECK_UPDATES` | `true` / `false`: pending updates (default `true`) |
+| `DUMBMONIT_AGENT_UPDATES_INTERVAL_SECS` | Period between two pending-updates checks, default `3600`, minimum `300` |
+| `DUMBMONIT_AGENT_CHECK_REBOOT` | `true` / `false`: reboot required (default `true`) |
+| `DUMBMONIT_AGENT_CHECK_FAILED_UNITS` | `true` / `false`: failed systemd units (default `true`) |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Size of the catch-up buffer |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` to run, for the server, the probes of the devices assigned to this agent (see [Run the agent in Docker / on another network](#run-the-agent-in-docker--on-another-network)) |

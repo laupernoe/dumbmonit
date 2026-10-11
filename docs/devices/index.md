@@ -60,6 +60,11 @@ form always matches what this version can monitor.
 | [Domain name](services.md#dns) | `dns` | none | Your domain, an internal name |
 | [Reachable host](services.md#ping) | `ping` | none | Gateway, access point, printer |
 | [TLS certificate](services.md#tls) | `tls` | none | IMAPS, LDAPS, reverse proxy |
+| [SMTP server](services.md#smtp) | `smtp` | none, or username/password | Mail server: greeting, STARTTLS, certificate, optional login |
+| [PostgreSQL](services.md#postgresql) | `postgres` | username/password | Database: connection and a query you choose |
+| [MySQL or MariaDB](services.md#mysql-and-mariadb) | `mysql` | username/password | Database: connection and a query you choose |
+| [MQTT broker](services.md#mqtt) | `mqtt` | none, or username/password | Broker: connection, subscription, retained message |
+| [WebSocket](services.md#websocket) | `websocket` | none, username/password or token | WebSocket endpoint: handshake, optional message exchange |
 | [NTP time server](services.md#ntp) | `ntp` | none | Router, NAS, internal time server, public pool server |
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
 | [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |

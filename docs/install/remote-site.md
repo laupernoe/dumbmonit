@@ -117,7 +117,7 @@ role and wins when both are down.
   the server.
 - Agent devices themselves cannot be relayed: they push their own metrics.
 - The relay runs at most 8 probes at a time; a probe is bounded by the
-  server's probe timeout (`DUMBMONIT_PROBE_TIMEOUT`), capped at 120 s on the
+  server's probe timeout (`DUMBMONIT_PROBE_TIMEOUT_SECS`), capped at 120 s on the
   agent.
 - A relay agent needs the collectors compiled in: agents older than this
   feature ignore `relay: true`, and the server reports their probes as timed

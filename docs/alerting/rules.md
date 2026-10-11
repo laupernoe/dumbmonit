@@ -99,6 +99,17 @@ Reported by the agent; see [Agent](../devices/agent.md#wireguard-tunnels).
 |---|---|---|---|---|---|
 | WireGuard peer silent | A peer with a persistent keepalive has not completed a handshake for more than 15 minutes: the tunnel is down (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). A peer that never connected counts its silence from the moment the agent first saw it. Peers without keepalive (a phone, a laptop) idle for days and are left out; change the threshold to change N, or drop the `and on …` part to watch every peer. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
 
+### Agent disks, ZFS and sensors
+
+Reported by the agent; see [Agent](../devices/agent.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Disk SMART failing | The disk's own SMART self-assessment reports it as failing (`dumbmonit_agent_disk_smart_ok == bool 0`). Replace it and check the backups. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| ZFS pool degraded | A ZFS pool is no longer healthy: a device is missing, faulted or removed (`dumbmonit_agent_zfs_pool_health`: 0 online, 1 degraded, 2 anything else). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| ZFS scrub found errors | The last ZFS scrub found errors on this pool, or files are permanently lost (`dumbmonit_agent_zfs_pool_scrub_errors or dumbmonit_agent_zfs_pool_data_errors`). The pool can stay `ONLINE`. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| Temperature above critical | A sensor is above the critical temperature its own hardware declares (`dumbmonit_agent_sensor_temperature_celsius >= dumbmonit_agent_sensor_temperature_critical_celsius`); no fixed value. | > 0 | 5 min | Warning (`critical`) | 6 h |
+
 ### Proxmox VE
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
@@ -245,6 +256,7 @@ Reported by the agent; see [Agent](../devices/agent.md#wireguard-tunnels).
 | Synology disk bad sectors growing | New unreadable sectors appeared in the last 24 hours (`delta(dumbmonit_synology_disk_unc_count[24h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Synology SSD wearing out | An SSD has less than 10 % of its rated life left (`dumbmonit_synology_disk_remaining_life_percent`); clears above 12 %. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
 | Synology volume degraded | A volume is degraded or crashed: its redundancy is gone (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
+| Synology storage pool degraded | A storage pool or SSD cache is degraded or crashed: a disk failed and the redundancy is gone or rebuilding (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
 | Synology volume almost full | A volume is 90 % full or more (`dumbmonit_synology_volume_used_percent`); clears below 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
 | Synology temperature high | A disk is above 55 °C, or DSM raised its own temperature warning (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); clears below 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
 | Synology memory high | Memory usage of the NAS above 95 % (`dumbmonit_synology_memory_usage_percent`); clears below 90 %. | > 95 % | 15 min | Advisory (`warning`) | 6 h |

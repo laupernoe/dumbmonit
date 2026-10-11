@@ -41,7 +41,7 @@ A refused password is never an outage of the service: it is recorded as
 ### Metrics
 
 All gauges, all prefixed `dumbmonit_`, all labelled
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` in addition
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp"` in addition
 to `target`, `host` and `tag_*`.
 
 | Metric | Monitors | Meaning |
@@ -76,6 +76,13 @@ to `target`, `host` and `tag_*`.
 | `probe_mqtt_message_bytes` | mqtt | Size of the retained message. |
 | `probe_mqtt_message_value` | mqtt | Its content, when it is a number. |
 | `probe_ws_handshake_seconds` | websocket | Opening handshake. |
+| `probe_ntp_offset_seconds` | ntp | Offset between the local clock and the server. |
+| `probe_ntp_delay_seconds` | ntp | Network round-trip delay. |
+| `probe_ntp_stratum` | ntp | Distance to a reference clock (16: not synchronized). |
+| `probe_ntp_leap_indicator` | ntp | 0 to 3 (leap second warning, 3 = clock unsynchronized). |
+| `probe_ntp_root_delay_seconds` | ntp | Cumulated delay up to the root of the hierarchy. |
+| `probe_ntp_root_dispersion_seconds` | ntp | Cumulated dispersion up to the root. |
+| `probe_ntp_reference_info` | ntp | Presence; `reference_id` label. |
 | `probe_ws_message_bytes` | websocket | Size of the first frame received. Only present when the check sends a message or expects a reply (`send` / `expect` options). |
 
 ## HTTP
