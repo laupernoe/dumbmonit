@@ -619,7 +619,7 @@ const HTTP_OPTIONS: &[OptionView] = &[
     text(
         "headers",
         "Extra headers",
-        "One or more \"Name: value\" headers, separated by \"|\". Do not put secrets here: options are visible in the charts.",
+        "One or more \"Name: value\" headers, separated by \"|\". Stored unencrypted and hidden from viewers only: put tokens and passwords in the credential instead.",
         "Accept: application/json | X-Origin: dumbmonit",
         "",
     ),

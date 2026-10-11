@@ -61,6 +61,12 @@ async fn run(mut config: Config) -> Result<()> {
              remove the variable once the first admin has been created again"
         );
     }
+    // Les en-têtes de webhook rangés en clair par une version antérieure passent
+    // dans les secrets chiffrés. Un échec n'empêche pas de démarrer : l'API ne
+    // les renvoie de toute façon plus.
+    if let Err(error) = db::alerts::lift_legacy_webhook_headers(&pool, &cipher).await {
+        warn!(?error, "webhook headers could not be moved to secrets");
+    }
     info!(database = %config.database_path().display(), "database ready");
     // Paire VAPID des notifications Web Push : générée au premier démarrage,
     // chiffrée en base. Un échec ici n'empêche pas de surveiller : il sera

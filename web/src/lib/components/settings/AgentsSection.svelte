@@ -49,6 +49,12 @@
 	let error = $state<unknown>(null);
 
 	async function load(signal?: AbortSignal) {
+		// The enrolment token list is admin-only on the server.
+		if (!auth.isAdmin) {
+			tokens = [];
+			loading = false;
+			return;
+		}
 		loading = true;
 		error = null;
 		try {

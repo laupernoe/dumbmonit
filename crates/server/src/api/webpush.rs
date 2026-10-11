@@ -21,6 +21,13 @@ use crate::notify::webpush::{self, Audience, Store, endpoint, store, vapid};
 use crate::notify::{self, message};
 use crate::state::AppState;
 
+/// Appareils abonnés au plus par compte.
+pub const MAX_DEVICES_PER_USER: i64 = 10;
+
+/// Délai minimal entre deux envois de test d'un même compte : chaque test fait
+/// partir une requête par appareil, vers des services tiers.
+pub const TEST_COOLDOWN: std::time::Duration = std::time::Duration::from_secs(30);
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/webpush", get(overview))
@@ -94,19 +101,24 @@ pub async fn subscribe(
     }
     let auth = decode_key(&payload.keys.auth, "auth", 16)?;
 
+    // Un compte n'a que quelques navigateurs : au-delà, ce sont des adresses
+    // fabriquées, et chacune ferait partir une requête du serveur à chaque alerte.
+    let endpoint = payload.endpoint.trim();
+    if !store::owns_endpoint(&state.pool, user.id, endpoint).await?
+        && store::count_for_user(&state.pool, user.id).await? >= MAX_DEVICES_PER_USER
+    {
+        return Err(ApiError::Conflict(format!(
+            "An account can register at most {MAX_DEVICES_PER_USER} devices for push \
+             notifications. Remove one you no longer use first."
+        )));
+    }
+
     let user_agent =
         headers.get(header::USER_AGENT).and_then(|value| value.to_str().ok()).unwrap_or("");
     let device = store::describe_user_agent(user_agent);
-    let saved = store::upsert(
-        &state.pool,
-        &state.cipher,
-        user.id,
-        payload.endpoint.trim(),
-        &p256dh,
-        &auth,
-        &device,
-    )
-    .await?;
+    let saved =
+        store::upsert(&state.pool, &state.cipher, user.id, endpoint, &p256dh, &auth, &device)
+            .await?;
     Ok((StatusCode::CREATED, Json(saved)))
 }
 
@@ -149,6 +161,14 @@ pub async fn test(
     let only = payload.and_then(|Json(payload)| payload.id);
     if notify::sending_disabled() {
         return Err(ApiError::Forbidden(notify::DISABLED_MESSAGE.into()));
+    }
+    // Sans appareil, rien ne part : la réponse vient de `send`, sans délai imposé.
+    if store::count_for_user(&state.pool, user.id).await? > 0
+        && let Err(wait) = state.cooldowns().try_take("webpush-test", user.id, TEST_COOLDOWN)
+    {
+        return Err(ApiError::TooManyRequests(format!(
+            "A test notification was just sent. Try again in {wait} s."
+        )));
     }
     let store = Store { pool: &state.pool, cipher: &state.cipher };
     let audience = Audience::User { user_id: user.id, subscription: only };

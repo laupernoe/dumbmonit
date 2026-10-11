@@ -69,7 +69,9 @@ instead of adding a second one.
 ## Devices and accounts
 
 Each account sees and manages its own devices: viewers can enable push on
-their phone too, it changes nothing else. The list shows the browser and
+their phone too, it changes nothing else. An account holds at most 10
+devices (remove an old one to add another), and a test can be sent once every
+30 seconds. The list shows the browser and
 system, the push service, when the device was added and when it last received
 a message; **Remove** forgets it (and, on the device you are using,
 unsubscribes the browser as well). A device the push service reports as gone

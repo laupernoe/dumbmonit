@@ -109,7 +109,7 @@ pub fn apply_identity(base: &BTreeMap<String, String>, labels: &mut BTreeMap<Str
 /// Vrai pour une clé de tag qui nomme un secret (`api_key`, `ca_cert`,
 /// `password`…) : sa valeur n'a rien à faire dans la base de séries, ni dans les
 /// notifications qui recopient les étiquettes.
-fn looks_secret(key: &str) -> bool {
+pub fn looks_secret(key: &str) -> bool {
     const WORDS: [&str; 12] = [
         "secret",
         "password",

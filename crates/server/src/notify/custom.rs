@@ -151,7 +151,7 @@ impl Webhook {
             method,
             url,
             url_is_secret,
-            headers: channel.headers(),
+            headers: channel.headers()?,
             content_type,
             body,
             token,
@@ -229,6 +229,10 @@ impl Notifier for Webhook {
         }
         if let Some(token) = &self.token {
             request = request.secret(token);
+        }
+        // Les en-têtes sont des secrets : leurs valeurs sont expurgées des erreurs.
+        for (_, value) in &self.headers {
+            request = request.secret_text(value.clone());
         }
         if let Some((username, password)) = &self.basic_auth {
             request = request.basic(username.clone(), password);
@@ -332,11 +336,22 @@ mod tests {
 
     #[test]
     fn les_en_tetes_configures_sont_repris() {
+        // Ancienne forme, dans les réglages : encore lue tant qu'elle n'a pas migré.
         let notifier = webhook(
             json!({"url": "https://exemple.org/hook", "headers": {"X-Cle": "valeur"}}),
             json!({}),
         );
         assert_eq!(notifier.headers, vec![("X-Cle".to_string(), "valeur".to_string())]);
+
+        // Forme courante : parmi les secrets, en texte JSON tel que le formulaire l'envoie.
+        let notifier = webhook(
+            json!({"url": "https://exemple.org/hook"}),
+            json!({"headers": "{\"X-Api-Key\": \"cle-secrete\"}"}),
+        );
+        assert_eq!(notifier.headers, vec![("X-Api-Key".to_string(), "cle-secrete".to_string())]);
+
+        let erreur = refus(json!({"url": "https://exemple.org/hook"}), json!({"headers": "[1]"}));
+        assert!(erreur.contains("JSON object"), "{erreur}");
     }
 
     // --- Méthode et type de contenu ---

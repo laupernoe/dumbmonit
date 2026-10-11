@@ -87,7 +87,21 @@ without a demonstrated impact.
 - Login attempts are counted per client address and per account. Behind a
   reverse proxy, set `DUMBMONIT_TRUSTED_PROXIES` to the proxy's address so
   the counters and the security log see the real client; `X-Forwarded-For` is
-  ignored from anywhere else.
+  ignored from anywhere else. The same goes for `X-Forwarded-Host` and
+  `X-Forwarded-Proto`, which set status page links and mark the session
+  cookie `Secure`.
+- The session cookie gets `Secure` whenever the browser is on an `https://`
+  page; set `DUMBMONIT_COOKIE_SECURE=1` to force it. Add
+  `Strict-Transport-Security` at your reverse proxy if the instance is only
+  ever reached over HTTPS.
+- Put credentials in the credential or secret fields, never in device options
+  or addresses: options are stored unencrypted. Options whose name looks like
+  a secret, HTTP check headers and URL passwords are masked for viewers and
+  assistants, but admins and backups see them.
+- Integrations and notification channels follow HTTP redirects only to the
+  same host, so a device or service cannot bounce a request (and its API key)
+  to another address. `/api/health` returns failure details only to a signed-in
+  session.
 - Every state-changing request authenticated by the session cookie must carry
   `X-Requested-With: DumbMonit` (the web UI does), or same-origin fetch
   metadata; a cross-site request is refused with `403`. Scripts that reuse a

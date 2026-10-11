@@ -5,7 +5,41 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-### Added
+### Security
+
+- **Custom webhook headers are now a secret.** *Extra headers* moved from the
+  channel settings, which every viewer and `read` token could read, to the
+  encrypted secrets: they are never returned, are kept when you edit the
+  channel without retyping them, and their values are masked in error
+  messages. Existing channels are migrated at startup (and after a restore).
+  See [Custom channel settings](docs/notifications.md#custom-channel-settings).
+- **Status page subscriber emails are admin only.** Viewers, operators and
+  `read` tokens can no longer list them.
+- **API and agent token lists are admin only**, like creating and revoking.
+- **Redirects never leave the configured host.** Built-in integrations
+  (Proxmox, Synology, GitLab, Kubernetes…) and notification channels follow a
+  redirect only to the same host (or from `http` to `https`): a hostile device
+  can no longer bounce a probe to the loopback or a metadata service, and
+  custom credential headers (`X-Api-Key`, `PRIVATE-TOKEN`…) are never sent to
+  another host.
+- **Web Push limits.** An account holds at most 10 push devices, and a test
+  notification can be sent once every 30 seconds.
+- **Secret-looking device options are masked for non-admins.** Options whose
+  name contains `key`, `token`, `password`…, HTTP check headers and the
+  password of a `user:pass@host` address read `***` for viewers, operators,
+  `read` tokens and the assistant tools.
+- **Status page links ignore forged forwarded headers.** The RSS feed and the
+  link stored for subscription emails use `X-Forwarded-Host` and
+  `X-Forwarded-Proto` only from `DUMBMONIT_TRUSTED_PROXIES`.
+- **The session cookie is `Secure` over HTTPS** even without
+  `DUMBMONIT_COOKIE_SECURE`, when the browser's `Origin` or a trusted proxy
+  shows the page is on `https://`.
+- **`/api/health` no longer shows failure details to anonymous callers**, which
+  could include the address and credentials of an external VictoriaMetrics.
+- **The first-run setup code is rate limited per address only**, so someone
+  else on the network can no longer keep the owner locked out of `/setup`.
+- The WordPress status banner escapes the fetch error it shows in the settings
+  screen.
 
 - **A custom domain for a status page.** The page editor's **Public domain**
   field (for example `status.example.com`) makes DumbMonit show that page at

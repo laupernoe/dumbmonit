@@ -54,6 +54,10 @@ pub fn http_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(SEND_TIMEOUT)
         .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
+        // Jamais de redirection vers un autre hôte : les en-têtes d'un canal
+        // (clé d'API, jeton) ne doivent partir que vers la destination saisie, et
+        // une réponse ne doit pas pouvoir renvoyer le serveur vers sa boucle locale.
+        .redirect(dumbmonit_collectors::http::same_host_redirects())
         .build()
         // Un échec ici ne peut venir que d'un environnement TLS cassé ; le client par
         // défaut permet au moins au reste du serveur de démarrer.
@@ -71,6 +75,7 @@ fn insecure_http_client() -> &'static reqwest::Client {
             .timeout(SEND_TIMEOUT)
             .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
             .danger_accept_invalid_certs(true)
+            .redirect(dumbmonit_collectors::http::same_host_redirects())
             .build()
             .unwrap_or_default()
     })

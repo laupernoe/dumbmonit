@@ -99,9 +99,22 @@ impl std::fmt::Debug for SetupPayload {
     }
 }
 
-/// Seau partagé par toutes les tentatives de code, d'où qu'elles viennent :
-/// répartir les essais sur plusieurs adresses ne les multiplie pas.
+/// Seau des tentatives de code dont l'adresse est inconnue.
 const SETUP_BUCKET: &str = "\u{0}setup";
+
+/// Seaux d'une tentative de code de première configuration : l'adresse seule.
+///
+/// Un seau commun à toutes les adresses laisserait n'importe qui sur le réseau
+/// tenir le propriétaire dehors en échouant exprès toutes les cinq minutes. Le
+/// code (une cinquantaine de bits, renouvelé à chaque démarrage) rend inutile de
+/// cumuler les essais de plusieurs adresses. Sans adresse connue, un seau commun
+/// reste le seul recours.
+fn setup_keys(ip: Option<std::net::IpAddr>) -> Vec<Key> {
+    match ip {
+        Some(ip) => vec![Key::Ip(ip)],
+        None => vec![Key::User(SETUP_BUCKET.to_string(), None)],
+    }
+}
 
 /// Corps de `login`. Sans `username`, le mot de passe seul suffit tant qu'il n'y
 /// a qu'un compte local : c'est ce que l'ancienne interface envoie.
@@ -183,10 +196,7 @@ pub async fn setup(
 
     // Le code prouve qu'on a la main sur le serveur : sans lui, le premier venu
     // sur le réseau prendrait l'instance avant son propriétaire.
-    let mut keys = vec![Key::User(SETUP_BUCKET.to_string(), None)];
-    if let Some(ip) = ip {
-        keys.push(Key::Ip(ip));
-    }
+    let keys = setup_keys(ip);
     guard_attempt(&auth, &keys).await?;
     if !crate::auth::setup_code::matches(auth.setup_code(), &payload.setup_code) {
         auth.limiter().lock().await.record_failure(&keys, Instant::now());
@@ -392,6 +402,22 @@ pub async fn guard_attempt(auth: &AuthState, keys: &[Key]) -> AuthResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn les_echecs_de_code_d_une_adresse_ne_bloquent_pas_les_autres() {
+        let attaquant: std::net::IpAddr = "192.168.1.66".parse().unwrap();
+        let proprietaire: std::net::IpAddr = "192.168.1.10".parse().unwrap();
+        let mut buckets = crate::auth::rate_limit::Buckets::new();
+        let now = Instant::now();
+        for _ in 0..20 {
+            buckets.record_failure(&setup_keys(Some(attaquant)), now);
+        }
+        assert!(buckets.check(&setup_keys(Some(attaquant)), now).is_err());
+        assert!(
+            buckets.check(&setup_keys(Some(proprietaire)), now).is_ok(),
+            "the owner must not be locked out of setup by someone else's failures"
+        );
+    }
 
     /// Garde-fou : une régression ici recopierait des mots de passe en clair dans
     /// les journaux à la première trace de requête.
