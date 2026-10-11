@@ -1111,7 +1111,7 @@ export interface RuleOverridePayload {
 export type StatusPageTheme = 'auto' | 'light' | 'dark';
 /** Accent of a public page: a closed set, each checked for contrast in day and night. */
 /** Banner scenes a page can show; the server may add more, so unknown ids must be tolerated. */
-export type StatusPageScene = 'venice' | 'paris' | 'tokyo' | 'newyork' | 'london' | 'rome';
+export type StatusPageScene = string;
 /** How a page with several scenes picks the one on screen. */
 export type StatusPageSceneRotation = 'visit' | '1m' | '10m' | '1h';
 
@@ -2141,6 +2141,7 @@ export interface PdmSubscription {
 export interface PdmNode {
 	cpu_percent: number | null;
 	cpu_count: number | null;
+	iowait_percent: number | null;
 	cpu_model: string | null;
 	load1: number | null;
 	memory_used_bytes: number | null;

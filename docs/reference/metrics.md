@@ -56,7 +56,7 @@ of each device whose kind has security checks, and writes
 |---|---|---|
 | `target` | server | The device id, as in `/api/targets/{id}`. Every rule and every chart selects on it. |
 | `host` | server | The device name. |
-| `tag_<key>` | server | Every tag of the device, including type options (`tag_insecure_tls`, `tag_port`…). Never put a secret in a tag. |
+| `tag_<key>` | server | The free tags of the device. Type options (`insecure_tls`, `port`…), tags whose key looks like a secret (matched per word: `key`, `pass`, `cert`, `private`, `pem`…) and values over 256 characters are not copied. Never put a secret in a tag. |
 | `probe` | services | `http`, `tcp`, `dns`, `ping` or `tls`. |
 | per-series labels | collector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… as listed on each device page. |
 

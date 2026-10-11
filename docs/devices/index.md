@@ -95,8 +95,9 @@ a self-signed certificate, which nodes to monitor. The form shows a typed field
 per option under **More options**, with its default and help text. The per-kind
 pages list them verbatim. Options are settings, not labels: they are not copied
 on the series. Free tags (any other key) are copied on every series as
-`tag_<key>` labels, except keys that name a secret (`password`, `token`, `key`,
-`cert`, `secret`…) and values longer than 256 characters. Never put a secret in
+`tag_<key>` labels, except keys that name a secret (matched per word: `password`, `token`,
+`key`, `cert`, `secret`, `pass`, `private`, `pem`…, so `primary_key` is skipped
+but `keyboard` is not) and values longer than 256 characters. Never put a secret in
 a tag anyway: use the credential field, which is encrypted.
 
 ## Parent devices
