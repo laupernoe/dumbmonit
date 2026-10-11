@@ -138,7 +138,7 @@ pub struct TargetPayload {
 }
 
 impl TargetPayload {
-    fn validate(
+    pub(super) fn validate(
         self,
         state: &AppState,
         id: Option<TargetId>,

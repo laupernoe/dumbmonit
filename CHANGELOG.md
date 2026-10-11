@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Import websites from a CSV.** *Import websites (CSV)*, on the add-device
+  page and on the device list, creates one website device per row from pasted
+  or uploaded text (`url` required; `name`, `folder`, `tags`, `interval` and
+  `expect_text` optional; up to 1000 rows). A preview shows each row's folder
+  and errors before anything is created, sites already monitored are skipped,
+  and rows without a folder land in `Websites/<platform>` (WordPress, Shopify,
+  Wix…) after one page fetch each. A template is one click away. Also
+  available as `POST /api/targets/import`.
+
 - **A custom domain for a status page.** The page editor's **Public domain**
   field (for example `status.example.com`) makes DumbMonit show that page at
   the root of the name when your reverse proxy (Traefik, Nginx Proxy Manager,
