@@ -66,7 +66,8 @@ impl Flavour {
     /// passerait à tort pour une erreur de configuration.
     fn signature(self) -> &'static str {
         match self {
-            Self::Metrics => "vm_rows_inserted_total",
+            // `vm_app_version` ne départage pas : VictoriaLogs l'expose aussi.
+            Self::Metrics => "vm_free_disk_space_bytes",
             Self::Logs => "vl_free_disk_space_bytes",
         }
     }
@@ -443,6 +444,19 @@ mod tests {
         assert_eq!(value(&samples, "victorialogs_rows_ingested_total"), Some(0.0));
         assert_eq!(value(&samples, "victorialogs_bytes_ingested_total"), Some(0.0));
         assert_eq!(value(&samples, "victorialogs_rows_rejected_total"), Some(0.0));
+    }
+
+    #[test]
+    fn victoriametrics_neuf_sans_insertion() {
+        // Instance qui n'a encore rien reçu : pas de `vm_rows_inserted_total`,
+        // mais la signature (le disque) est là dès le démarrage.
+        let page = Exposition::parse(
+            "vm_app_version{version=\"victoria-metrics-v1.152.0\"} 1\n\
+             vm_free_disk_space_bytes{path=\"/storage\"} 32364400640\n",
+        );
+        assert!(page.has(Flavour::Metrics.signature()));
+        assert!(!page.has("vm_rows_inserted_total"));
+        assert!(!Exposition::parse(VL).has(Flavour::Metrics.signature()));
     }
 
     #[test]

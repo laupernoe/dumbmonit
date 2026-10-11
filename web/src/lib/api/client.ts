@@ -44,7 +44,7 @@ export class ApiError extends Error {
 			return 'Too many failed attempts. Wait for the indicated delay before trying again.';
 		}
 		if (this.status === 409) {
-			return 'A device already uses this address. Choose another one.';
+			return 'The request conflicts with the current state. Read the message above, adjust it, then try again.';
 		}
 		if (this.status >= 500) {
 			return 'The server ran into an error. Check its logs for details.';
