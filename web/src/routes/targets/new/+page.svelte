@@ -23,6 +23,8 @@
 	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar, RadioTower } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
@@ -272,7 +274,11 @@
 	</ol>
 </nav>
 
-<PageHeader title={m.deviceform_new_add()} {description} />
+<PageHeader title={m.deviceform_new_add()} {description}>
+	{#snippet actions()}
+		{#if view === 'picker' && auth.isAdmin}<ImportWebsites />{/if}
+	{/snippet}
+</PageHeader>
 
 {#if view === 'picker'}
 	<!-- The picker ------------------------------------------------------------ -->

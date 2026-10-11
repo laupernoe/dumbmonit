@@ -23,6 +23,7 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
+	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -660,6 +661,9 @@
 					</form>
 				{/snippet}
 			</Menu>
+		{/if}
+		{#if auth.isAdmin}
+			<ImportWebsites ondone={() => void load()} />
 		{/if}
 		<!-- The empty state carries the primary itself: one primary per view. Viewers cannot add. -->
 		{#if auth.isAdmin && (firstLoad || pageError || targets.length > 0)}
