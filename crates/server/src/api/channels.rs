@@ -153,12 +153,19 @@ async fn summaries(pool: &SqlitePool, only: Option<i64>) -> ApiResult<Vec<Channe
         .map(|row| {
             let settings: String = row.try_get("settings")?;
             let policy: String = row.try_get("policy")?;
+            let mut settings: Value = serde_json::from_str(&settings).unwrap_or(Value::Null);
+            // Filet de sécurité : des en-têtes de webhook encore rangés dans les
+            // réglages (base restaurée entre deux démarrages, migration impossible
+            // faute de pouvoir déchiffrer) ne sont jamais renvoyés.
+            if let Some(map) = settings.as_object_mut() {
+                map.remove(notify::channel::HEADERS_KEY);
+            }
             Ok(ChannelSummary {
                 id: row.try_get("id")?,
                 name: row.try_get("name")?,
                 kind: row.try_get("kind")?,
                 enabled: row.try_get::<i64, _>("enabled")? != 0,
-                settings: serde_json::from_str(&settings).unwrap_or(Value::Null),
+                settings,
                 has_secret: row.try_get::<i64, _>("has_secret")? != 0,
                 last_error: row.try_get("last_error")?,
                 last_sent_at: row.try_get("last_sent_at")?,

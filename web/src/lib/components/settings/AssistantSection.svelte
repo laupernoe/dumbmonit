@@ -25,6 +25,7 @@
 		type CreatedApiToken
 	} from '#lib/api/tokens.js';
 	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	const EXAMPLE_PROMPTS = [m.settings_assistant_prompt_fine(), m.settings_assistant_prompt_silence(), m.settings_assistant_prompt_night(), m.settings_assistant_prompt_backup()];
@@ -34,6 +35,12 @@
 	let error = $state<unknown>(null);
 
 	async function load(signal?: AbortSignal) {
+		// The token list is admin-only on the server.
+		if (!auth.isAdmin) {
+			tokens = [];
+			loading = false;
+			return;
+		}
 		loading = true;
 		error = null;
 		try {

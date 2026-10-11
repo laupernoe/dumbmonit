@@ -82,7 +82,11 @@ Admins only. The accounts that can sign in, and their role:
 | **Admin** | yes | yes | yes |
 
 A viewer sees every page with every control that would change something
-hidden. An operator is the on-call role: the alert controls are there, the
+hidden. A few things stay admin only even to read: API and agent tokens,
+status page subscriber emails, and device options that look like secrets
+(an option whose name contains `key`, `token`, `password`…, the extra headers
+of an HTTP check, the password of a `https://user:pass@host` address), which
+non-admins read as `***`. An operator is the on-call role: the alert controls are there, the
 configuration screens read *Operator — config is admin only*. Only an admin
 creates accounts or changes a role — an operator cannot promote anyone,
 themselves included. The *Users*, *Single sign-on* and security log sections
@@ -167,8 +171,8 @@ and whether it was revoked. **Revoke** stops every agent using that token at
 its next push.
 
 One token can enrol several machines. Revoking it does not delete the devices.
-Viewers see the list and the section reads *Viewer — read only*; creating and
-revoking are for admins.
+The token list, creating and revoking are for admins; viewers and operators
+see the section without the list.
 
 ## API & assistants
 

@@ -117,6 +117,29 @@ async fn get(pool: &SqlitePool, id: i64) -> Result<Option<Device>> {
     row.as_ref().map(device_from).transpose()
 }
 
+/// Nombre d'appareils abonnés d'un compte.
+pub async fn count_for_user(pool: &SqlitePool, user_id: i64) -> Result<i64> {
+    sqlx::query_scalar("SELECT COUNT(*) FROM webpush_subscriptions WHERE user_id = ?")
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .context("counting push subscriptions")
+}
+
+/// Vrai si cette adresse d'abonnement appartient déjà au compte : un
+/// réabonnement du même navigateur ne compte pas comme un appareil de plus.
+pub async fn owns_endpoint(pool: &SqlitePool, user_id: i64, endpoint: &str) -> Result<bool> {
+    let found: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM webpush_subscriptions WHERE user_id = ? AND endpoint = ?",
+    )
+    .bind(user_id)
+    .bind(endpoint)
+    .fetch_optional(pool)
+    .await
+    .context("looking up a push subscription")?;
+    Ok(found.is_some())
+}
+
 /// Appareils abonnés d'un compte, du plus récent au plus ancien.
 pub async fn list_for_user(pool: &SqlitePool, user_id: i64) -> Result<Vec<Device>> {
     let rows = sqlx::query(

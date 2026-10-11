@@ -138,6 +138,10 @@ pub async fn restore(
         tx.commit().await.context("validation de la restauration")?;
         // Les domaines publics des pages ont pu changer.
         crate::status_host::invalidate();
+        // Une sauvegarde ancienne peut ramener des en-têtes de webhook en clair.
+        if let Err(error) = crate::db::alerts::lift_legacy_webhook_headers(pool, cipher).await {
+            tracing::warn!(?error, "webhook headers of the backup left in settings");
+        }
     } else {
         tx.rollback().await.context("annulation de la simulation")?;
     }

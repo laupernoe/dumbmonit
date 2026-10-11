@@ -685,7 +685,7 @@ paths:
       operationId: listApiTokens
       tags: [API tokens]
       summary: Every API token, revoked ones included
-      description: The secret is never listed.
+      description: Admin only. The secret is never listed.
       security: [{ cookieAuth: [] }]
       x-token-scope: none
       responses:
@@ -1924,7 +1924,7 @@ paths:
       operationId: listStatusPageSubscribers
       tags: [Status pages]
       summary: Email subscribers of a page
-      description: Their tokens never leave the server.
+      description: Admin accounts and `write` tokens only (personal data). Their tokens never leave the server.
       x-token-scope: read
       responses:
         "200":
@@ -2418,7 +2418,7 @@ paths:
     get:
       operationId: listAgentTokens
       tags: [Agents]
-      summary: Every agent enrolment token
+      summary: Every agent enrolment token (admin only)
       security: [{ cookieAuth: [] }]
       x-token-scope: none
       responses:

@@ -25,6 +25,7 @@ use serde_json::json;
 use super::{format_timestamp, page_not_found, public_not_found};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::client_ip::ClientIp;
+use crate::auth::middleware::AdminIdentity;
 use crate::db;
 use crate::db::status_pages::{Incident, StatusPage, Subscriber};
 use crate::notify::ChannelConfig;
@@ -320,7 +321,10 @@ pub async fn unsubscribe(
 // Administration
 // --------------------------------------------------------------------------
 
+/// Adresses e-mail de personnes du public : données personnelles, réservées aux
+/// administrateurs (et aux jetons `write`, qui en ont les droits).
 pub async fn list(
+    _: AdminIdentity,
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> ApiResult<Json<Vec<Subscriber>>> {

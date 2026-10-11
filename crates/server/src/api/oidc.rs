@@ -188,6 +188,13 @@ fn is_internal_path(path: &str) -> bool {
 /// Origine de la requête, établie comme le fait [`request_origin`].
 pub struct Origin(String);
 
+impl Origin {
+    /// `schéma://hôte`, sans barre finale.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 impl<S: Send + Sync> FromRequestParts<S> for Origin {
     type Rejection = std::convert::Infallible;
 
