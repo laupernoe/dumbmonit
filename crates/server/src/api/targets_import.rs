@@ -443,7 +443,7 @@ async fn platform_for(client: &reqwest::Client, url: &str) -> (String, Option<St
     let Ok(mut response) = client.get(url).send().await else {
         return (OTHER_PLATFORM.into(), None);
     };
-    let final_url = response.url().to_string();
+    let final_url = response.url().clone();
     let headers = response.headers().clone();
     let mut html = Vec::new();
     while let Ok(Some(chunk)) = response.chunk().await {
@@ -453,90 +453,8 @@ async fn platform_for(client: &reqwest::Client, url: &str) -> (String, Option<St
         }
     }
     let html = String::from_utf8_lossy(&html);
-    let platform = detect_platform_stub(&final_url, &headers, &html)
-        .map_or_else(|| OTHER_PLATFORM.to_string(), str::to_string);
-    (platform, Some(final_url))
-}
-
-/// Reconnaissance minimale de la plateforme d'un site.
-fn detect_platform_stub(
-    _final_url: &str,
-    headers: &reqwest::header::HeaderMap,
-    html: &str,
-) -> Option<&'static str> {
-    let html = html.to_lowercase();
-    let header = |name: &str| {
-        headers.get(name).and_then(|v| v.to_str().ok()).unwrap_or_default().to_lowercase()
-    };
-    let generator = generator_of(&html);
-    let has_header_prefix = |prefix: &str| headers.keys().any(|k| k.as_str().starts_with(prefix));
-    let by_generator = [
-        ("wordpress", "WordPress"),
-        ("shopify", "Shopify"),
-        ("wix", "Wix"),
-        ("squarespace", "Squarespace"),
-        ("webflow", "Webflow"),
-        ("ghost", "Ghost"),
-        ("drupal", "Drupal"),
-        ("joomla", "Joomla"),
-    ];
-    for (needle, name) in by_generator {
-        if generator.contains(needle) {
-            return Some(name);
-        }
-    }
-    if html.contains("/wp-content/") || html.contains("/wp-includes/") {
-        return Some("WordPress");
-    }
-    if has_header_prefix("x-shopify") || html.contains("cdn.shopify.com") {
-        return Some("Shopify");
-    }
-    if has_header_prefix("x-wix") || html.contains("static.wixstatic.com") {
-        return Some("Wix");
-    }
-    if html.contains("static1.squarespace.com") || html.contains("squarespace.com/") {
-        return Some("Squarespace");
-    }
-    if html.contains("data-wf-site") || html.contains("assets.website-files.com") {
-        return Some("Webflow");
-    }
-    if html.contains("ghost-url") || html.contains("/ghost/") && html.contains("ghost") {
-        return Some("Ghost");
-    }
-    if header("x-generator").contains("drupal") || html.contains("/sites/default/files/") {
-        return Some("Drupal");
-    }
-    if html.contains("/media/jui/") || html.contains("/templates/system/") {
-        return Some("Joomla");
-    }
-    if html.contains("__next_data__")
-        || html.contains("/_next/static/")
-        || header("x-powered-by").contains("next.js")
-    {
-        return Some("Next.js");
-    }
-    if generator.contains("hugo") || generator.contains("jekyll") || generator.contains("eleventy")
-    {
-        return Some("Static");
-    }
-    None
-}
-
-/// Contenu de `<meta name="generator" content="...">`, en minuscules.
-fn generator_of(html: &str) -> String {
-    let Some(at) = html.find("name=\"generator\"").or_else(|| html.find("name='generator'")) else {
-        return String::new();
-    };
-    let start = html[..at].rfind('<').unwrap_or(at);
-    let end = html[at..].find('>').map_or(html.len(), |e| at + e);
-    let tag = &html[start..end];
-    let Some(content) = tag.find("content=") else { return String::new() };
-    let rest = &tag[content + 8..];
-    let quote = rest.chars().next().filter(|c| *c == '"' || *c == '\'');
-    match quote {
-        Some(q) => rest[1..].split(q).next().unwrap_or_default().to_string(),
-        None => rest.split_whitespace().next().unwrap_or_default().to_string(),
-    }
+    let platform = crate::website::platform::detect_platform(&final_url, &headers, &html);
+    (platform.label().to_string(), Some(final_url.to_string()))
 }
 
 #[cfg(test)]
