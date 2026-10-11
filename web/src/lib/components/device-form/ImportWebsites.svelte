@@ -54,6 +54,13 @@
 		}
 	}
 
+	/** The server sends English sentences; the known "already monitored" ones are translated here. */
+	function messageLabel(message: string): string {
+		const match = /^Already monitored(?: \((.*)\))?\.$/.exec(message);
+		if (!match) return message;
+		return match[1] ? m.devices_import_already_monitored({ url: match[1] }) : m.devices_import_already_monitored_plain();
+	}
+
 	function show() {
 		returnFocus = (document.activeElement as HTMLElement | null) ?? null;
 		csv = '';
@@ -198,8 +205,8 @@
 				})}
 			</p>
 			<div class="mt-3 max-h-[46dvh] overflow-auto rounded-lg border border-line">
-				<table class="w-full min-w-[34rem] text-left text-[0.8125rem]">
-					<thead class="sticky top-0 bg-surface-2 text-ink-2">
+				<table class="block w-full text-left text-[0.8125rem] sm:table sm:min-w-[34rem]">
+					<thead class="bg-surface-2 text-ink-2 max-sm:sr-only sm:sticky sm:top-0">
 						<tr>
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_import_col_row()}</th>
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_import_col_site()}</th>
@@ -207,18 +214,18 @@
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_import_col_status()}</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody class="max-sm:block">
 						{#each report.rows as row (row.row)}
-							<tr class="border-t border-line align-top">
-								<td class="tnum px-3 py-2 text-ink-3">{row.row}</td>
-								<td class="max-w-[16rem] px-3 py-2">
+							<tr class="border-t border-line align-top max-sm:block max-sm:px-3 max-sm:py-2 max-sm:first:border-t-0">
+								<td class="tnum px-3 py-2 text-ink-3 max-sm:hidden">{row.row}</td>
+								<td class="px-3 py-2 sm:max-w-[16rem] max-sm:block max-sm:px-0 max-sm:py-0.5">
 									<span class="block truncate font-medium" title={row.url}>{row.name || row.url}</span>
 									<span class="block truncate text-ink-3" title={row.url}>{row.url}</span>
 								</td>
-								<td class="px-3 py-2 break-words text-ink-2">{row.folder}</td>
-								<td class="px-3 py-2">
+								<td class="px-3 py-2 break-words text-ink-2 max-sm:block max-sm:px-0 max-sm:py-0.5">{row.folder}</td>
+								<td class="px-3 py-2 max-sm:block max-sm:px-0 max-sm:py-0.5">
 									<Plate tone={TONE[row.status]} label={statusLabel(row.status)} />
-									{#if row.message}<p class="mt-1 text-ink-2">{row.message}</p>{/if}
+									{#if row.message}<p class="mt-1 text-ink-2">{messageLabel(row.message)}</p>{/if}
 								</td>
 							</tr>
 						{/each}

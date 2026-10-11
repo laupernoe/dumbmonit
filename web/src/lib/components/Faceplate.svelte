@@ -9,6 +9,7 @@
 	import type { TargetState } from '#lib/format.js';
 	import { STATE_LABEL, STATE_TONE, formatRelative } from '#lib/format.js';
 	import { Led, Plate, Spotlight } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import Chart, { type Serie } from './Chart.svelte';
 	import { ChevronRight, CornerDownRight } from 'lucide-svelte';
 
@@ -85,7 +86,7 @@
 					{#if target.last_error}
 						<span class={target.error_kind === 'config' ? 'text-advisory-ink' : 'text-warning-ink'}>{target.last_error}</span>
 					{:else}
-						Last seen {formatRelative(target.last_probe_at)}
+						{m.devices_target_last_seen({ when: formatRelative(target.last_probe_at) })}
 					{/if}
 				</p>
 			</div>

@@ -494,7 +494,7 @@
 	</div>
 {:else}
 	<!-- Header band: the device's own faceplate, larger. -->
-	<section class="faceplate rise-in px-5 py-5 sm:px-6" aria-labelledby="device-name">
+	<section class="faceplate rise-in overflow-x-clip px-5 py-5 sm:px-6" aria-labelledby="device-name">
 		<div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 			<div class="flex min-w-0 gap-4">
 				<Led {tone} {blink} size="lg" class="mt-2.5" label={STATE_LABEL[stateNow]} />
@@ -569,7 +569,7 @@
 						<Pencil class="size-4" aria-hidden="true" />
 						{m.devices_target_edit()}
 					</Button>
-					<div class="inline-flex h-10 items-center gap-2 rounded-lg border border-line px-3">
+					<div class="inline-flex h-10 max-w-full items-center gap-2 rounded-lg border border-line px-3">
 						<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 						<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
 					</div>

@@ -42,6 +42,7 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	unifi: () => import('./unifi/UnifiPanel.svelte'),
 	homeassistant: () => import('./homeassistant/HomeAssistantPanel.svelte'),
 	vsphere: () => import('./vsphere/VspherePanel.svelte'),
+	website: () => import('./website/WebsitePanel.svelte'),
 	redis: () => import('./backends/BackendPanel.svelte'),
 	mongodb: () => import('./backends/BackendPanel.svelte'),
 	rabbitmq: () => import('./backends/BackendPanel.svelte'),

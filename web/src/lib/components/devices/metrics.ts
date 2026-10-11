@@ -64,6 +64,9 @@ function unitFor(name: string): string {
 
 /** "Cpu usage percent" from `dumbmonit_cpu_usage_percent`; "Interface octets in" from `dumbmonit_if_octets_in`. */
 export function titleFor(name: string): string {
+	// Families the UI has a message for (website metrics) read in the user's language.
+	const translated = (m as unknown as Record<string, (() => string) | undefined>)[`metrics_title_${name.replace(/^dumbmonit_/, '')}`];
+	if (translated) return translated();
 	const words = name
 		.replace(/^dumbmonit_/, '')
 		.replace(/^if_/, 'interface_')
