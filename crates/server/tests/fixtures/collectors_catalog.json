@@ -7762,9 +7762,9 @@
       {
         "key": "min_text_chars",
         "label": "Blank page below (characters)",
-        "help": "Visible text shorter than this counts as a blank page, from 0 to 100000. 0 turns the check off.",
-        "placeholder": "200",
-        "default": "200",
+        "help": "Visible text shorter than this counts as a blank page (20 by default, so short legitimate pages pass), from 0 to 100000. 0 turns the check off.",
+        "placeholder": "20",
+        "default": "20",
         "required": false,
         "input": "number",
         "choices": [],

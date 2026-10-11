@@ -13,7 +13,7 @@ pub const OPTION_USER_AGENT: &str = "user_agent";
 pub const OPTION_IGNORE_QUERY: &str = "ignore_query";
 pub const OPTION_ALLOW_PRIVATE: &str = dumbmonit_collectors::uptime::guard::OPTION;
 
-pub const DEFAULT_MIN_TEXT_CHARS: u32 = 200;
+pub const DEFAULT_MIN_TEXT_CHARS: u32 = 20;
 pub const MAX_MIN_TEXT_CHARS: u32 = 100_000;
 pub const DEFAULT_MAX_REDIRECTS: u32 = 10;
 pub const MAX_MAX_REDIRECTS: u32 = 30;
@@ -149,7 +149,7 @@ pub(crate) mod tests {
     fn les_defauts() {
         let options = Options::from_target(&target("example.com", &[])).unwrap();
         assert_eq!(options.url.as_str(), "https://example.com/");
-        assert_eq!(options.min_text_chars, 200);
+        assert_eq!(options.min_text_chars, 20);
         assert_eq!(options.max_redirects, 10);
         assert!(options.ignore_query);
         assert!(options.expect_text.is_none() && options.user_agent.is_none());
