@@ -379,6 +379,19 @@ mod tests {
     }
 
     #[test]
+    fn une_petite_page_legitime_nest_pas_blanche() {
+        let options = Options::from_target(&target("ex.fr", &[])).unwrap();
+        let petite = format!(
+            "<html><body><h1>Example Domain</h1><p>{}</p></body></html>",
+            "mot ".repeat(35)
+        );
+        let reading = read(&options, &followed(200, "text/html", &petite));
+        assert_eq!(reading.probe.blank, Some(false));
+        let vide = read(&options, &followed(200, "text/html", "<html><body></body></html>"));
+        assert_eq!(vide.probe.blank, Some(true));
+    }
+
+    #[test]
     fn une_page_blanche_est_reconnue() {
         let options = Options::from_target(&target("ex.fr", &[])).unwrap();
         let blank = "<html><head><title>Boutique</title><script>app()</script></head>\

@@ -36,7 +36,7 @@ Every polling interval (60 s by default), the page is read once:
   makes the check fail.
 - **The visible text** of the page, as in [Website changes](webchange.md):
   scripts, styles and hidden blocks are left out. Below **Blank page below**
-  characters (200 by default) the page counts as blank. With
+  characters (20 by default, so short legitimate pages pass) the page counts as blank. With
   **Expected text**, that phrase must appear in it (case and spacing ignored).
 - **The SEO metadata** of the final page: `<title>`, meta description,
   canonical URL, robots meta tags and `X-Robots-Tag` headers (`noindex`,
@@ -68,7 +68,7 @@ hours. The first check only records the reference. Changing the address or
 | Option | Default | Meaning |
 |---|---|---|
 | Expected text | empty | A phrase the page must show. |
-| Blank page below (characters) | 200 | Visible text shorter than this is a blank page; 0 turns the check off. |
+| Blank page below (characters) | 20 | Visible text shorter than this is a blank page; 0 turns the check off. |
 | Max redirects | 10 | Redirects followed at most (0 to 30). |
 | User agent | `DumbMonit/<version>` | Sent instead of DumbMonit's own. |
 | Ignore query strings | on | URL parameters do not count when comparing addresses. |
