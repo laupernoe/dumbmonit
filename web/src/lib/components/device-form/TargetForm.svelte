@@ -311,7 +311,7 @@
 	<div class="graticule pb-3">
 		<button
 			type="button"
-			class="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink"
+			class="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink sm:min-h-0"
 			aria-expanded={more}
 			aria-controls="target-more"
 			onclick={() => (more = !more)}

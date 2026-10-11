@@ -181,7 +181,7 @@
 					{#if !searching && group.choices.length > COLLAPSE_AT}
 						<button
 							type="button"
-							class="mt-2.5 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+							class="mt-1 inline-flex min-h-10 items-center gap-1.5 rounded text-sm sm:mt-2.5 sm:min-h-0 font-semibold text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
 							aria-expanded={isExpanded}
 							onclick={() => toggleExpanded(group.id)}
 						>

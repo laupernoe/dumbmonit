@@ -8,13 +8,22 @@
 import { queryInstant, queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
 import type { Serie } from '#lib/components/Chart.svelte';
 import type { ProbeStatus } from '#lib/format.js';
+import { m } from '#lib/paraglide/messages.js';
 
 /** Ranges offered in the selector of a device's detail page. */
 export const RANGES = [
-	{ id: '1h', label: '1 hour', seconds: 3600 },
-	{ id: '6h', label: '6 hours', seconds: 6 * 3600 },
-	{ id: '24h', label: '24 hours', seconds: 24 * 3600 },
-	{ id: '7d', label: '7 days', seconds: 7 * 86400 }
+	{ id: '1h', get label() {
+			return m.devices_range_1h();
+		}, seconds: 3600 },
+	{ id: '6h', get label() {
+			return m.devices_range_6h();
+		}, seconds: 6 * 3600 },
+	{ id: '24h', get label() {
+			return m.devices_range_24h();
+		}, seconds: 24 * 3600 },
+	{ id: '7d', get label() {
+			return m.devices_range_7d();
+		}, seconds: 7 * 86400 }
 ] as const;
 
 export type RangeId = (typeof RANGES)[number]['id'];
@@ -415,7 +424,7 @@ export async function loadResponseTimes(
 	);
 	return series
 		.map((item) => ({
-			label: 'Response time',
+			label: m.devices_chart_response_time(),
 			points: toPoints(item).map(
 				([ts, value]) => [ts, Math.round(value * 1000)] as [number, number]
 			)
