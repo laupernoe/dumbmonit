@@ -50,7 +50,7 @@ All metrics are prefixed `dumbmonit_veeam_`.
 | `license_instances_licensed`, `license_instances_used` | | Instance license use. |
 | `section_readable` | `section`: `sessions`, `repositories`, `license`, `restore_points` | 1 when the account may read it, 0 when Veeam refused. |
 
-The [built-in rules](../alerting/rules.md#veeam-backup-replication) that apply:
+The [built-in rules](../alerting/rules.md#veeam-backup--replication) that apply:
 
 - **Veeam job failed**: the last run of an enabled job failed (Warning,
   reminded daily).

@@ -29,7 +29,8 @@ down this page are a readable summary of the same thing.
 Left out on purpose: the agent protocol (`/api/ingest`,
 `/api/agent/commands*`, `/api/agent/relay*`), which only the
 [agent](../devices/agent.md) speaks; the browser redirects of SSO sign-in
-(`/api/auth/oidc/start`, `/api/auth/oidc/callback`); and the agent downloads
+(`/api/auth/oidc/start`, `/api/auth/oidc/callback`) and the Spotify one
+(`/api/music/spotify/callback`); and the agent downloads
 (`/install.sh`, `/install.ps1`, `/download/*`).
 
 Load it in any OpenAPI tool:
@@ -544,6 +545,40 @@ For an existing Prometheus or Grafana. Both take a `read` API token in
 
 `DUMBMONIT_METRICS_PUBLIC=true` serves the three without a token — only behind
 a firewall, since they carry every measurement of every device.
+
+## Further routes
+
+Routes not detailed above; the OpenAPI document gives their parameters and
+response shapes. *read* and *write* are the token scope needed; *none* means no token is accepted (session only).
+
+| Method | Route | Scope | Purpose |
+|---|---|---|---|
+| `POST` | `/api/targets/reorder` | write | Reorder devices. |
+| `GET` | `/api/targets/{id}/security` | read | Security score, grade and checks of one device. |
+| `GET` | `/api/security/summary` | read | Security score of every rated device, worst first. |
+| `GET` | `/api/targets/{id}/webchange/pages` | read | Pages followed by a website watch. |
+| `GET` | `/api/targets/{id}/webchange/changes` | read | Changes found on a watched website, newest first. |
+| `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | One change, with both versions and the line diff. |
+| `GET` | `/api/targets/{id}/webchange/snapshots/{snapshot_id}/screenshot` | read | The screenshot of a snapshot. |
+| `POST` | `/api/targets/{id}/webchange/check` | write | Check a watched website now. |
+| `GET` | `/api/targets/{id}/opnsense/gateways`, `/traffic`, `/health` | read | OPNsense: gateways and WAN addresses; interfaces, firewall and DHCP; system, services, tunnels and firmware. |
+| `GET` | `/api/targets/{id}/truenas/storage`, `/protection`, `/health` | read | TrueNAS: pools, datasets and disks; scrubs and data protection tasks; system, alerts and services. |
+| `GET` | `/api/targets/{id}/ad`, `/ad/findings` | read | Active Directory: domain, controllers, privileged groups and findings; the raw security findings. |
+| `GET` | `/api/targets/{id}/redfish` | read | Server hardware read from its management controller. |
+| `GET` | `/api/targets/{id}/observability` | read | Health of a log or metrics server. |
+| `GET` | `/api/targets/{id}/backend` | read | Health of Redis, MongoDB, RabbitMQ or CrowdSec. |
+| `GET` | `/api/targets/{id}/proxy` | read | Health of a reverse proxy or a domain registration. |
+| `GET` | `/api/public/status/{slug}/badge.svg`, `/response.svg`, `/uptime.svg` | public | Overall status, mean response time and uptime badges of a status page. |
+| `GET` | `/api/public/status/{slug}/components/{key}/badge.svg`, `/uptime.svg`, `/response.svg` | public | The same badges for one service of the page. |
+| `GET` | `/api/public/status/{slug}/banner.js` | public | Script of the status banner for third-party websites. |
+| `GET` | `/api/public/status/{slug}/rss` | public | Incidents as an RSS feed. |
+| `GET` | `/api/music/now` | read | What the walls play (room monitor). |
+| `PUT`, `DELETE` | `/api/music/link` | write | Every wall plays this Spotify, Deezer or YouTube link; or stops the embedded player. |
+| `GET`, `DELETE` | `/api/music/spotify` | read, write | The connected Spotify account (never a token); disconnect it and forget its tokens. |
+| `POST` | `/api/music/spotify/authorize`, `/complete` | none | Start connecting Spotify; finish a loopback connection. Session only. |
+| `GET` | `/api/music/spotify/token` | none | A short-lived Spotify access token for the wall's player. Session only. |
+| `GET`, `PUT` | `/api/music/speaker` | read, write | The wall's Spotify speaker as Settings shows it; rename it (admin). |
+| `POST` | `/api/music/speaker/report`, `/play` | none | A wall reports its speaker's state; play the account on it. Session only. |
 
 ## Alerts
 

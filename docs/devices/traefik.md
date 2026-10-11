@@ -29,6 +29,7 @@ rules turn them into rates.
 | `services`, `services_errors`, `middlewares_errors` | the same for services and middlewares | |
 | `router_status` | per HTTP router: 0 enabled, 1 warning, 2 disabled | `router`, `provider` |
 | `router_error_info` | value 1, for a router that is not enabled: Traefik's first error | `router`, `error` |
+| `service_error_info` | value 1, for a service that is not enabled: Traefik's first error | `service`, `error` |
 | `service_status` | per service: 0 enabled, 1 warning, 2 disabled | `service` |
 | `service_servers`, `service_servers_up` | servers of a load-balanced service, and those passing their health check | `service` |
 | `server_up` | 1 when the server passes its health check (or has none) | `service`, `server` |

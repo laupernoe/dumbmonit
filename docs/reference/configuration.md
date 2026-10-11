@@ -22,8 +22,19 @@ configuration file to mount.
 | `DUMBMONIT_RESET_PASSWORD` | *(off)* | `1`, `true`, `yes` or `on`: clear the password and every session at startup. The UI then shows `/setup` again. Remove it afterwards. |
 | `DUMBMONIT_COOKIE_SECURE` | *(off)* | `1` to set the `Secure` attribute on the session cookie. Only behind HTTPS: over plain HTTP the browser would never send the cookie back. |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(empty)* | Reverse proxies whose `X-Forwarded-For` is believed, as addresses or CIDR ranges separated by commas (`10.0.0.5, 172.16.0.0/12`). The login rate limiter and the security log then see the real client address instead of the proxy's; without it, every visitor behind the proxy shares one bucket. The header is ignored from any other address, so a client cannot pick its own bucket. |
-| `DUMBMONIT_OIDC_AUTO_CREATE` | *(off)* | `true` to create an account for an unknown identity at its first single sign-on. Off, only existing accounts (already linked, or matched by a provider-verified email) can sign in. Read only while no single sign-on settings are saved in the interface. |
+| `DUMBMONIT_OIDC_AUTO_CREATE` | *(off)* | `true` to create an account for an unknown identity at its first single sign-on. Off, only existing accounts (already linked, or matched by a provider-verified email) can sign in. Like the other `DUMBMONIT_OIDC_*` variables, read only while no single sign-on settings are saved in the interface. |
 | `DUMBMONIT_OIDC_ALLOW_HTTP` | *(off)* | `1` to accept an OpenID Connect issuer in plain `http://`. Off, the settings screen refuses anything but `https://`: a clear-text issuer hands the authorization code and client secret to whoever listens on the network. Only for a test provider on the loopback. |
+| `DUMBMONIT_SETUP_CODE` | *(generated)* | Code `/setup` asks for while no administrator exists. Unset, a random one is printed in the server log at each start; set it for an automated deployment. See [Install with Docker](../install/docker.md). |
+| `DUMBMONIT_PUBLIC_URL` | *(unset)* | Address browsers reach DumbMonit at (`https://monit.example.org`). Used for links in notifications and status-page emails, the single sign-on redirect URI and the contact given to push services (HTTPS only). A value saved in the interface (notification policy, SSO settings) wins. |
+| `DUMBMONIT_API_CORS_ORIGINS` | *(any origin)* | Origins allowed to call the API cross-origin with a bearer token, and to reach the MCP endpoint: a comma-separated list, or `off` for none. See [HTTP API](api.md#cross-origin-requests-cors). |
+| `DUMBMONIT_OIDC_ISSUER` | *(unset)* | Issuer URL of the OpenID Connect provider; discovery is read from `{issuer}/.well-known/openid-configuration`. Must be `https://` unless `DUMBMONIT_OIDC_ALLOW_HTTP` is set. |
+| `DUMBMONIT_OIDC_CLIENT_ID` | *(unset)* | Client id registered with the provider. |
+| `DUMBMONIT_OIDC_CLIENT_SECRET` | *(unset)* | Client secret. |
+| `DUMBMONIT_OIDC_PROVIDER_NAME` | `SSO` | Label of the "Continue with …" button. |
+| `DUMBMONIT_OIDC_SCOPES` | `openid profile email` | Scopes requested, separated by spaces. |
+| `DUMBMONIT_OIDC_GROUPS_CLAIM` | `groups` | Token claim listing the user's groups. |
+| `DUMBMONIT_OIDC_ADMIN_GROUPS` | *(empty)* | Comma-separated groups whose members become administrators. |
+| `DUMBMONIT_OIDC_OPERATOR_GROUPS` | *(empty)* | Comma-separated groups whose other members become operators. See [Single sign-on](../using/settings.md#single-sign-on). |
 | `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` to serve `/metrics`, `/federate` and `/prometheus/api/v1/…` without an API token. Anyone who can reach the port then reads every measurement of every device and the state of the instance; only set it where something else already restricts access to the port. See [Metrics](metrics.md#scraping-dumbmonit). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period. Values below 10 are raised to 10. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Retention of alert history, in days. |
