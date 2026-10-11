@@ -127,7 +127,7 @@
 				</div>
 				<div class="min-w-0">
 					<dt class="text-ink-3">{m.website_platform()}</dt>
-					<dd class="mt-0.5 font-medium">{overview.platform_label ?? probe.platform}</dd>
+					<dd class="mt-0.5 font-medium">{probe.platform === 'other' ? m.website_platform_other() : (overview.platform_label ?? probe.platform)}</dd>
 				</div>
 				<div class="min-w-0 sm:col-span-2">
 					<dt class="text-ink-3">{m.website_final_url()}</dt>
