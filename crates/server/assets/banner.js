@@ -22,6 +22,12 @@
   };
   var t = I[L] || I[L.slice(0, 2)] || I.en;
   var T = { ok: t[0], maint: t[1], one: t[2], many: t[3], deg: t[4], close: t[5], more: t[6] };
+  function ruMany(n) {
+    var a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return n + " сервис недоступен";
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return n + " сервиса недоступны";
+    return n + " сервисов недоступны";
+  }
   var key = "dmt-banner-" + api;
   try { if (sessionStorage.getItem(key) === "1") return; } catch (e) {}
 
@@ -36,7 +42,7 @@
       });
       var tone = "ok", text = T.ok;
       if (j.overall === "maintenance") { tone = "info"; text = T.maint; }
-      else if (n > 0) { tone = j.overall === "major" ? "bad" : "warn"; text = n === 1 ? T.one : n + T.many; }
+      else if (n > 0) { tone = j.overall === "major" ? "bad" : "warn"; text = n === 1 ? T.one : L.slice(0, 2) === "ru" ? ruMany(n) : n + T.many; }
       else if (j.overall !== "operational") { tone = "warn"; text = T.deg; }
       if (tone === "ok" && !always) return;
 

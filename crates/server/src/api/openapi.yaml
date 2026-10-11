@@ -3246,7 +3246,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/TaskFailure" }
+                items: { $ref: "#/components/schemas/PbsTaskFailure" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3379,7 +3379,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/TaskFailure" }
+                items: { $ref: "#/components/schemas/PdmTaskFailure" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -5347,7 +5347,6 @@ components:
       required: [endpoint, keys]
       properties:
         endpoint: { type: string, format: uri }
-        expirationTime: { type: [integer, "null"] }
         keys:
           type: object
           required: [p256dh, auth]
@@ -5511,6 +5510,12 @@ components:
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
         footer_text: { type: string, maxLength: 280 }
         homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
+        scenes:
+          type: array
+          items: { type: string }
+          description: Decorative scene ids. Omitted keeps the saved list; `[]` means no scene.
+        scene_rotation: { type: string, description: Omitted keeps the saved value (`visit` on creation). }
+        simple: { type: boolean, default: false, description: Omitted keeps the saved value. }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
         domain:
           type: [string, "null"]
@@ -6125,17 +6130,31 @@ components:
         lines:
           type: array
           items: { type: string }
-    TaskFailure:
+    PbsTaskFailure:
       type: object
       additionalProperties: true
       properties:
         upid: { type: string }
-        remote: { type: string, description: PDM only. }
         worker_type: { type: string }
         kind: { type: string }
         worker_id: { type: string }
-        datastore: { type: [string, "null"], description: PBS only. }
+        datastore: { type: [string, "null"] }
+        object: { type: [string, "null"] }
+        user: { type: [string, "null"] }
+        start: { type: [integer, "null"] }
+        end: { type: [integer, "null"] }
+        error: { type: [string, "null"] }
+    PdmTaskFailure:
+      type: object
+      additionalProperties: true
+      properties:
+        upid: { type: string }
+        remote: { type: string }
         node: { type: [string, "null"] }
+        user: { type: [string, "null"] }
+        worker_type: { type: string }
+        kind: { type: string }
+        worker_id: { type: string }
         start: { type: [integer, "null"] }
         end: { type: [integer, "null"] }
         error: { type: [string, "null"] }
