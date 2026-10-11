@@ -3461,3 +3461,66 @@ export interface TargetImportReport {
 	errors: number;
 	rows: TargetImportRow[];
 }
+
+// --- Website health & SEO (kind `website`) ----------------------------------
+// Mirrors `crates/server/src/api/website.rs`.
+
+export interface WebsiteHop {
+	url: string;
+	status: number;
+}
+
+export interface WebsiteMetadata {
+	title: string | null;
+	description: string | null;
+	canonical: string | null;
+	robots: string | null;
+	og_title: string | null;
+	og_description: string | null;
+	lang: string | null;
+	h1_count: number;
+	hreflang_count: number;
+	noindex: boolean;
+	nofollow: boolean;
+}
+
+export interface WebsiteProbe {
+	requested_url: string;
+	final_url: string;
+	status: number;
+	response_ms: number;
+	redirects: WebsiteHop[];
+	platform: string;
+	content_type: string;
+	text_chars: number | null;
+	blank: boolean | null;
+	expect_text_found: boolean | null;
+	metadata: WebsiteMetadata | null;
+}
+
+export interface WebsiteField {
+	field: string;
+	value: string | null;
+	pending: string | null;
+	changed_at: string | null;
+	recently_changed: boolean;
+}
+
+export interface WebsiteOverview {
+	checked_at: string | null;
+	error: string | null;
+	probe: WebsiteProbe | null;
+	platform_label: string | null;
+	fields: WebsiteField[];
+	robots_checked_at: string | null;
+	robots_blocks_all: boolean | null;
+	sitemap_ok: boolean | null;
+}
+
+export interface WebsiteChange {
+	id: number;
+	detected_at: string;
+	field: string;
+	before: string;
+	after: string;
+}
