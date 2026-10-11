@@ -795,6 +795,62 @@ pub async fn list_channels(pool: &SqlitePool, cipher: &Cipher) -> Result<Vec<Cha
     Ok(channels)
 }
 
+/// Déplace vers les secrets chiffrés les en-têtes de webhook qu'une version
+/// antérieure rangeait dans `settings`, lisibles par tout compte. Appelé au
+/// démarrage et après une restauration ; renvoie le nombre de canaux corrigés.
+///
+/// Un canal dont les secrets ne se déchiffrent plus est laissé tel quel : les
+/// réécrire perdrait le jeton qu'une ancienne clé pourrait encore rendre lisible.
+/// L'API ne renvoie de toute façon jamais ces en-têtes.
+pub async fn lift_legacy_webhook_headers(pool: &SqlitePool, cipher: &Cipher) -> Result<usize> {
+    let rows = sqlx::query(
+        "SELECT id, name, settings, secret_enc FROM notification_channels
+         WHERE json_valid(settings) AND json_type(settings, '$.headers') IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await
+    .context("recherche des anciens en-têtes de webhook")?;
+
+    let mut lifted = 0;
+    for row in &rows {
+        let id: i64 = row.try_get("id")?;
+        let name: String = row.try_get("name")?;
+        let raw_settings: String = row.try_get("settings")?;
+        let encrypted: Option<Vec<u8>> = row.try_get("secret_enc")?;
+        let mut settings: Value = serde_json::from_str(&raw_settings)?;
+        let mut secrets = match &encrypted {
+            None => Value::Null,
+            Some(bytes) => match cipher.decrypt(bytes) {
+                Ok(plain) => serde_json::from_slice(&plain).unwrap_or(Value::Null),
+                Err(error) => {
+                    tracing::warn!(channel = %name, %error, "secrets illisibles : en-têtes laissés en place");
+                    continue;
+                }
+            },
+        };
+        if !crate::notify::channel::lift_legacy_headers(&mut settings, &mut secrets) {
+            continue;
+        }
+        let secret_enc = if secrets.is_null() {
+            encrypted
+        } else {
+            Some(cipher.encrypt(serde_json::to_string(&secrets)?.as_bytes())?)
+        };
+        sqlx::query("UPDATE notification_channels SET settings = ?, secret_enc = ? WHERE id = ?")
+            .bind(serde_json::to_string(&settings)?)
+            .bind(secret_enc)
+            .bind(id)
+            .execute(pool)
+            .await
+            .context("déplacement des en-têtes de webhook")?;
+        lifted += 1;
+    }
+    if lifted > 0 {
+        tracing::info!(channels = lifted, "webhook headers moved to encrypted secrets");
+    }
+    Ok(lifted)
+}
+
 pub async fn get_channel(
     pool: &SqlitePool,
     cipher: &Cipher,

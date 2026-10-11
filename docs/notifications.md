@@ -130,7 +130,6 @@ payload that a script can use:
 | `method` | no | `POST` | `POST`, `PUT` or `GET`. |
 | `content_type` | no | `json` | `json`, `form` or `text`. Also determines how variables are escaped. |
 | `body_template` | no | — | Body template. When absent, the payload above is sent. |
-| `headers` | no | — | Extra headers, as an object `{"X-Key": "value"}`. |
 | `base_url` | no | — | Public address of your DumbMonit, so that `{{link}}` gives a clickable link. |
 | `username` | no | — | Username for HTTP "Basic" authentication. Requires the `password` secret. |
 
@@ -139,6 +138,15 @@ payload that a script can use:
 | `url` | Use it instead of the `url` setting if the address already contains a token. |
 | `token` | Sent as an `Authorization: Bearer …` header, unless your template uses `{{token}}`. |
 | `password` | Password for "Basic" authentication. |
+| `headers` | Extra headers, as a JSON object `{"X-Api-Key": "value"}`. Stored encrypted like the token and never shown again, so API keys and `Authorization` headers belong here. |
+
+`headers` is a secret. Channels saved by 0.1.0-alpha.6 or earlier, which kept them in
+the settings, have them moved to the encrypted secrets at the first start,
+and the API no longer returns them. Like every secret, they are kept when you edit the
+channel without typing them again; sending `secrets` replaces the whole set.
+
+DumbMonit follows a redirect only to the same host (or from `http` to `https` on that
+host): a channel's headers and token never go anywhere but the address you entered.
 
 ### Available variables
 
@@ -204,9 +212,6 @@ header.
   "method": "POST",
   "content_type": "json",
   "base_url": "https://dumbmonit.home",
-  "headers": {
-    "X-Application": "dumbmonit"
-  },
   "body_template": "{\"title\": \"{{title}}\", \"device\": \"{{target}}\", \"severity\": \"{{severity}}\", \"state\": \"{{status}}\", \"value\": {{value_raw}}, \"threshold\": {{threshold_raw}}, \"detail\": \"{{message}}\", \"link\": \"{{link}}\", \"seen_at\": \"{{timestamp}}\"}"
 }
 ```
@@ -214,7 +219,10 @@ header.
 **Secrets**
 
 ```json
-{ "token": "your-application-token" }
+{
+  "token": "your-application-token",
+  "headers": "{\"X-Application\": \"dumbmonit\"}"
+}
 ```
 
 The token is sent automatically as an `Authorization: Bearer …` header. Here is what

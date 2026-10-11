@@ -1180,17 +1180,19 @@ impl Device {
         &self.target.name
     }
 
+    /// Comme pour un lecteur de l'API : un assistant ne reçoit jamais les
+    /// options qui ressemblent à des secrets, ni le mot de passe d'une URL.
     fn summary(&self, parents: &HashMap<TargetId, String>) -> Value {
         json!({
             "id": self.target.id,
             "name": self.target.name,
             "kind": self.target.kind,
-            "address": self.target.address,
+            "address": targets::redact_userinfo(&self.target.address),
             "state": self.state.word(),
             "enabled": self.target.enabled,
             "parent_id": self.target.parent_id,
             "parent": self.target.parent_id.and_then(|id| parents.get(&id)),
-            "tags": self.target.tags,
+            "tags": targets::reader_tags(&self.target.tags),
             "interval_secs": self.target.interval.as_secs(),
             "last_probe_at": self.last_probe_at,
             "last_error": self.last_error,
@@ -1203,7 +1205,7 @@ impl Device {
             self.target.name,
             self.target.id,
             self.target.kind,
-            self.target.address,
+            targets::redact_userinfo(&self.target.address),
             self.state.word()
         );
         if let Some(detail) = self.detail() {
@@ -1216,7 +1218,10 @@ impl Device {
             line.push_str(&format!("; parent: {parent}"));
         }
         if !self.target.tags.is_empty() {
-            line.push_str(&format!("; tags: {}", format_tags(&self.target.tags)));
+            line.push_str(&format!(
+                "; tags: {}",
+                format_tags(&targets::reader_tags(&self.target.tags))
+            ));
         }
         line
     }

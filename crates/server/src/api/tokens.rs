@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
-use crate::auth::middleware::Authenticated;
+use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::auth::token::{self as token, MAX_EXPIRY_DAYS, NewToken, Scope, TokenRecord};
 use crate::state::AppState;
 
@@ -44,7 +44,12 @@ pub struct TokenPayload {
     pub allowed_networks: Vec<String>,
 }
 
-pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<TokenRecord>>> {
+/// Réservé aux administrateurs : nom, portée, propriétaire et réseaux autorisés
+/// de chaque jeton sont une reconnaissance utile à qui voudrait en voler un.
+pub async fn list(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<TokenRecord>>> {
     Ok(Json(token::list(&state.pool).await?))
 }
 

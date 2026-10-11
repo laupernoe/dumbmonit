@@ -250,6 +250,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // authentification : c'est l'application elle-même qui demande le mot de
         // passe, elle doit donc pouvoir se charger d'abord.
         .fallback(spa::serve)
+        // `Secure` sur les cookies dès que le navigateur est en HTTPS. Sous la
+        // couche qui dépose `AuthState`, dont il lit les mandataires de confiance.
+        .layer(middleware::from_fn(crate::auth::cookie::secure_when_https))
         .layer(Extension(auth_state))
         .layer(Extension(music_hub))
         // Mode démonstration : toute écriture refusée ici, avant l'authentification

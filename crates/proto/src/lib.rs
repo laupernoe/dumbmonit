@@ -33,4 +33,5 @@ pub use push::{
 pub use sample::{MetricKind, Sample};
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,
+    looks_secret,
 };
