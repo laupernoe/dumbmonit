@@ -109,7 +109,7 @@
 		{#if renaming}
 			<span class="sr-only">{m.devices_folder_renaming()}</span>
 		{:else}
-			<span class="truncate font-semibold text-ink">{label}</span>
+			<span class="min-w-0 break-words font-semibold text-ink" title={label}>{label}</span>
 		{/if}
 		<span class="tnum text-[0.8125rem] text-ink-2">{count}</span>
 	</button>
