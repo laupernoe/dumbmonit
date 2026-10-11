@@ -258,8 +258,15 @@ const TARGET_LABELS: [&str; 7] =
 
 /// Étiquettes qui nomment le mieux une série, par ordre de préférence. Une VM
 /// se reconnaît à son nom, une sauvegarde à son groupe, un port à son nom.
-const IDENTITY_LABELS: [&str; 25] = [
+const IDENTITY_LABELS: [&str; 30] = [
     "name",
+    // Objets que les collecteurs nomment depuis le renommage de `host` : l'objet
+    // d'abord, son hôte ensuite.
+    "osd",
+    "ceph_host",
+    "esxi",
+    "proxy_host",
+    "vm",
     "container",
     "service",
     "task",
@@ -824,6 +831,19 @@ mod tests {
         assert_eq!(
             series_identity(r#"m{host="sw",index="5",target="4",zone="a"}"#).as_deref(),
             Some("5 · a")
+        );
+        // Un OSD Ceph se nomme par son identifiant puis son hôte, pas par la classe.
+        assert_eq!(
+            series_identity(
+                r#"dumbmonit_proxmox_ceph_osd_up{ceph_host="pve1",device_class="ssd",osd="osd.3",target="2"}"#
+            )
+            .as_deref(),
+            Some("osd.3 · pve1")
+        );
+        assert_eq!(series_identity(r#"m{esxi="esx1",target="2"}"#).as_deref(), Some("esx1"));
+        assert_eq!(
+            series_identity(r#"m{proxy_host="app.example.org",target="2"}"#).as_deref(),
+            Some("app.example.org")
         );
         assert_eq!(series_identity("dumbmonit_up"), None);
         assert_eq!(series_identity(r#"m{host="nas",target="1"}"#), None);
