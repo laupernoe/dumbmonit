@@ -313,7 +313,7 @@
 							aria-selected={client === option.id}
 							aria-controls="assistant-snippets"
 							tabindex={client === option.id ? 0 : -1}
-							class={`rounded-md px-3 py-1.5 text-sm transition-colors ${client === option.id ? 'bg-surface font-semibold text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+							class={`min-h-10 rounded-md px-3 py-1.5 text-sm transition-colors sm:min-h-0 ${client === option.id ? 'bg-surface font-semibold text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 							onclick={() => (client = option.id)}
 							onkeydown={onTabKey}
 						>

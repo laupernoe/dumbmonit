@@ -270,7 +270,7 @@
 		return RANGES.some((r) => r.id === raw) ? (raw as RangeId) : '1h';
 	});
 	const rangeSeconds = $derived(RANGES.find((r) => r.id === range)?.seconds ?? 3600);
-	const rangeLabel = $derived(RANGES.find((r) => r.id === range)?.label ?? '1 hour');
+	const rangeLabel = $derived(RANGES.find((r) => r.id === range)?.label ?? m.devices_range_1h());
 
 	interface Detail {
 		cpu: Serie[];

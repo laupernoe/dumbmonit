@@ -19,7 +19,7 @@
 <div class={`mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 ${className}`}>
 	<div class="min-w-0">
 		{#if back}
-			<a href={back.href} class="mb-1 inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink hover:underline">← {back.label}</a>
+			<a href={back.href} class="-mt-2 mb-1 inline-flex min-h-10 items-center gap-1 text-sm sm:mt-0 sm:min-h-0 text-ink-2 hover:text-ink hover:underline">← {back.label}</a>
 		{/if}
 		{#if reveal}
 			<BlurText tag="h1" text={title} class="display text-2xl text-ink sm:text-3xl" />

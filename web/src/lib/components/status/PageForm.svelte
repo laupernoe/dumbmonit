@@ -269,7 +269,7 @@
 	<Field label={m.status_form_description()} for="{idPrefix}-description" help={m.status_form_description_help()}>
 		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} disabled={saving} />
 	</Field>
-	<div class="grid gap-4 sm:grid-cols-3">
+	<div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
 		<Field label={m.status_form_theme()} for="{idPrefix}-theme">
 			<select id="{idPrefix}-theme" class="input" bind:value={theme} disabled={saving}>
 				<option value="auto">{m.status_form_theme_auto()}</option>
@@ -284,7 +284,7 @@
 				{/each}
 			</select>
 		</Field>
-		<Field label={m.status_form_published()} for="{idPrefix}-published" inline help={published ? m.status_form_published_on() : m.status_form_published_off()}>
+		<Field label={m.status_form_published()} for="{idPrefix}-published" inline class="sm:items-start" help={published ? m.status_form_published_on() : m.status_form_published_off()}>
 			<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label={m.status_form_published()} />
 		</Field>
 	</div>

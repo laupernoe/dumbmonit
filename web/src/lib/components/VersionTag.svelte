@@ -1,6 +1,7 @@
 <script lang="ts">
 	/**
-	 * The running version, fixed at the bottom-right corner of the viewport —
+	 * The running version, a small line at the foot of the page (end of the
+	 * layout, right-aligned, in the flow so it never covers content) —
 	 * discreet on purpose: a build hash is for a bug report, not a headline.
 	 * Mounted once by the root layout on every page except `/wall` (a kiosk
 	 * display with nothing to spare at its edges). Hidden on phones, where the
@@ -25,7 +26,7 @@
 {#if version}
 	<a
 		href="/settings#about"
-		class={`tnum rounded-md px-1.5 py-0.5 text-[0.6875rem] font-medium transition-opacity hover:text-ink-2 hover:opacity-100 ${inline ? 'text-ink-3' : 'fixed right-3 bottom-3 z-20 hidden text-ink-3/70 opacity-70 sm:block'}`}
+		class={`tnum rounded-md px-1.5 py-0.5 text-[0.6875rem] font-medium transition-opacity hover:text-ink-2 hover:opacity-100 ${inline ? 'text-ink-3' : 'mr-4 mb-3 hidden self-end text-ink-3/70 opacity-70 sm:mr-6 sm:block'}`}
 		title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
 		>v{version.number}{#if version.build}<span class="font-mono"> · {version.build}</span>{/if}</a
 	>

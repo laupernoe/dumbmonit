@@ -8,6 +8,8 @@
 	 */
 	import { untrack } from 'svelte';
 	import uPlot from 'uplot';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
 
 	export interface Serie {
@@ -126,7 +128,11 @@
 						}
 					],
 			series: [
-				{ label: 'Time' },
+				{
+					label: m.devices_chart_time(),
+					value: (_u: uPlot, v: number | null) =>
+						v == null ? '' : new Date(v * 1000).toLocaleString(getLocale(), { dateStyle: 'short', timeStyle: 'medium' })
+				},
 				...series.map((serie, i) => ({
 					label: serie.label,
 					stroke: colors[i % colors.length],

@@ -69,6 +69,25 @@
 		return `${n < 10 && unit > 0 ? n.toFixed(1) : Math.round(n)} ${units[unit]}`;
 	}
 
+	/** Section blurbs are translated here by key; an unknown section keeps the server text. */
+	const SECTION_TEXT: Record<string, () => string> = {
+		targets: m.settings_backup_section_targets,
+		rules: m.settings_backup_section_rules,
+		rule_overrides: m.settings_backup_section_rule_overrides,
+		channels: m.settings_backup_section_channels,
+		silences: m.settings_backup_section_silences,
+		status_pages: m.settings_backup_section_status_pages,
+		incidents: m.settings_backup_section_incidents,
+		users: m.settings_backup_section_users,
+		agent_tokens: m.settings_backup_section_agent_tokens,
+		api_tokens: m.settings_backup_section_api_tokens,
+		push_monitors: m.settings_backup_section_push_monitors,
+		packs: m.settings_backup_section_packs
+	};
+	function sectionText(key: string, fallback: string): string {
+		return SECTION_TEXT[key]?.() ?? fallback;
+	}
+
 	// --- Export ---------------------------------------------------------------
 
 	let passphrase = $state('');
@@ -244,7 +263,7 @@
 					{#each status.contents as section (section.section)}
 						<li class="flex items-baseline gap-2">
 							<span class="tnum w-8 shrink-0 text-right font-semibold text-ink">{section.count}</span>
-							<span>{section.description}</span>
+							<span>{sectionText(section.section, section.description)}</span>
 						</li>
 					{/each}
 				</ul>

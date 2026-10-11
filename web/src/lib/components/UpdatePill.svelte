@@ -22,7 +22,7 @@
 {#if latest}
 	<a
 		href="/settings#about"
-		class="fixed right-3 bottom-9 z-20 hidden items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 text-[0.75rem] font-medium text-advisory-ink shadow-sm transition-colors hover:border-line-strong sm:inline-flex"
+		class="fixed right-3 bottom-3 z-20 hidden items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 text-[0.75rem] font-medium text-advisory-ink shadow-sm transition-colors hover:border-line-strong sm:inline-flex"
 		title={m.misc_update_title()}
 	>
 		<ArrowUpCircle class="size-3.5" aria-hidden="true" />

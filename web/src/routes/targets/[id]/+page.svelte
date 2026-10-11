@@ -172,7 +172,7 @@
 	}
 	const range = $derived(validRange(page.url.searchParams.get('range')));
 	const rangeSeconds = $derived(RANGES.find((r) => r.id === range)?.seconds ?? 3600);
-	const rangeLabel = $derived(RANGES.find((r) => r.id === range)?.label ?? '1 hour');
+	const rangeLabel = $derived(RANGES.find((r) => r.id === range)?.label ?? m.devices_range_1h());
 	const rangeOptions = RANGES.map((r) => ({ id: r.id, label: r.id }));
 
 	function setRange(next: RangeId) {

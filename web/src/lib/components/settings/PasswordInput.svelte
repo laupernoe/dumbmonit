@@ -61,7 +61,7 @@
 	/>
 	<button
 		type="button"
-		class="absolute top-1/2 right-1.5 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-50"
+		class="absolute top-1/2 right-0 inline-flex size-10 -translate-y-1/2 sm:right-1.5 sm:size-8 items-center justify-center rounded-md text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-50"
 		onclick={() => (shown = !shown)}
 		{disabled}
 		aria-label={shown ? m.settings_password_hide() : m.settings_password_show()}
