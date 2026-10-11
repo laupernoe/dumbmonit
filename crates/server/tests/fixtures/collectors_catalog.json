@@ -7713,6 +7713,110 @@
     ]
   },
   {
+    "kind": "website",
+    "label": "Website health & SEO",
+    "summary": "Know when a website breaks, goes blank, drops out of search engines or changes its title, description or canonical address, for one site or hundreds.",
+    "examples": [
+      "Company website",
+      "Online shop",
+      "Customer sites you host",
+      "Landing pages",
+      "Blog or documentation"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the device answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "https://example.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Watch a website",
+      "steps": [
+        "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
+        "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
+        "The first check records the reference: final address, title, description, canonical URL, indexing rules. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
+        "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder."
+      ],
+      "warning": "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
+      "doc_url": ""
+    },
+    "options": [
+      {
+        "key": "expect_text",
+        "label": "Expected text",
+        "help": "A phrase the page must show, such as your company name or \"Add to cart\". Case and spacing do not matter. Empty: not checked.",
+        "placeholder": "Add to cart",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "min_text_chars",
+        "label": "Blank page below (characters)",
+        "help": "Visible text shorter than this counts as a blank page, from 0 to 100000. 0 turns the check off.",
+        "placeholder": "200",
+        "default": "200",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "max_redirects",
+        "label": "Max redirects",
+        "help": "Redirects followed at most, from 0 to 30. Going from http to https or from example.com to www.example.com is normal and never an error; a loop or more redirects than this is.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "user_agent",
+        "label": "User agent",
+        "help": "Sent instead of DumbMonit's own, for a site that serves robots differently. Empty: DumbMonit/<version>.",
+        "placeholder": "Mozilla/5.0 (compatible; DumbMonit)",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "ignore_query",
+        "label": "Ignore query strings",
+        "help": "Leave ?utm_source=… and other URL parameters out when comparing the final address and the canonical URL.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "websocket",
     "label": "WebSocket endpoint",
     "summary": "Completes the upgrade handshake, and can exchange a frame.",
