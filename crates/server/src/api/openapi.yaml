@@ -873,6 +873,51 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/targets/import:
+    post:
+      operationId: importTargets
+      tags: [Devices]
+      summary: Import websites from a CSV
+      description: >-
+        Creates one `website` device per CSV row. Body: `text/csv`, or JSON
+        `{"csv": "..."}`. A header row is required; columns are `url`
+        (required), `name`, `folder`, `tags` (`k=v;k=v`), `interval`
+        (`300`, `5m`, `1h`) and `expect_text`. At most 1000 rows. Without
+        `folder`, the folder is `Websites/<platform>` (platform detected by
+        one GET per site, 4 at a time, 10 s each) or `Websites/Other`. Rows
+        already monitored are skipped and reported. With `dry_run=true`
+        nothing is created and rows come back with status `ok`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema: { type: string }
+          application/json:
+            schema:
+              type: object
+              required: [csv]
+              properties:
+                csv: { type: string }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/reorder:
     post:
       operationId: reorderTargets
@@ -4804,6 +4849,29 @@ components:
     NullableServerTimestamp:
       type: [string, "null"]
       description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
+    TargetImportReport:
+      type: object
+      required: [dry_run, total, created, skipped, errors, rows]
+      properties:
+        dry_run: { type: boolean }
+        total: { type: integer }
+        created: { type: integer, description: Devices created (or that would be, in a dry run). }
+        skipped: { type: integer }
+        errors: { type: integer }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [row, url, name, folder, status]
+            properties:
+              row: { type: integer, description: Line number in the file (header is 1). }
+              url: { type: string }
+              name: { type: string }
+              folder: { type: string }
+              platform: { type: [string, "null"] }
+              status: { type: string, enum: [ok, created, skipped, error] }
+              message: { type: [string, "null"] }
+              id: { type: [integer, "null"], format: int64 }
     TargetPayload:
       type: object
       required: [name, address, kind]
