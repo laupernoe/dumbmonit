@@ -20,6 +20,12 @@ pub struct Robots {
 impl Robots {
     /// Analyse un `robots.txt` pour notre jeton de produit.
     pub fn parse(text: &str) -> Self {
+        Self::parse_for(text, PRODUCT_TOKEN)
+    }
+
+    /// Analyse un `robots.txt` pour un autre robot (`googlebot` pour juger du
+    /// référencement), en minuscules : ses groupes, à défaut ceux de `*`.
+    pub fn parse_for(text: &str, agent: &str) -> Self {
         struct Group {
             agents: Vec<String>,
             rules: Vec<(bool, String)>,
@@ -68,7 +74,7 @@ impl Robots {
         }
 
         let ours: Vec<&Group> =
-            groups.iter().filter(|g| g.agents.iter().any(|a| a == PRODUCT_TOKEN)).collect();
+            groups.iter().filter(|g| g.agents.iter().any(|a| a == agent)).collect();
         let chosen = if ours.is_empty() {
             groups.iter().filter(|g| g.agents.iter().any(|a| a == "*")).collect()
         } else {

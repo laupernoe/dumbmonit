@@ -68,6 +68,7 @@ form always matches what this version can monitor.
 | [NTP time server](services.md#ntp) | `ntp` | none | Router, NAS, internal time server, public pool server |
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
 | [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |
+| [Website health & SEO](website.md) | `website` | none | Sites in bulk: down, blank page, redirects, noindex, robots.txt, title/description/canonical changes, platform (CSV import) |
 | [Demo device](demo.md) | `dummy` | none | Explore the UI without hardware |
 
 ## How a device is read
