@@ -46,6 +46,9 @@ impl Security {
 
 pub struct Smtp {
     transport: AsyncSmtpTransport<Tokio1Executor>,
+    /// Relais saisi, revérifié avant chaque envoi : voir [`super::guard`].
+    host: String,
+    port: u16,
     from: String,
     to: Vec<String>,
     /// Conservé pour l'expurgation : lettre peut citer les identifiants dans
@@ -87,7 +90,7 @@ impl Smtp {
                 builder.credentials(Credentials::new(username, password.expose().to_string()));
         }
 
-        Ok(Self { transport: builder.build(), from, to, password })
+        Ok(Self { transport: builder.build(), host, port, from, to, password })
     }
 
     fn secrets(&self) -> Vec<SecretString> {
@@ -120,6 +123,7 @@ impl Smtp {
             .subject(subject)
             .multipart(MultiPart::alternative_plain_html(text, html))
             .map_err(|error| NotifyError::Config(error.to_string()))?;
+        super::guard::vet_host(&self.host, self.port).await?;
         self.transport.send(email).await.map_err(|error| {
             NotifyError::Transport(secret::truncate(
                 &secret::redact(&error.to_string(), &self.secrets()),
@@ -170,6 +174,7 @@ impl Smtp {
                 ));
         }
         let email = builder.body(body).map_err(|error| NotifyError::Config(error.to_string()))?;
+        super::guard::vet_host(&self.host, self.port).await?;
         self.transport.send(email).await.map_err(|error| {
             NotifyError::Transport(secret::truncate(
                 &secret::redact(&error.to_string(), &self.secrets()),
@@ -206,6 +211,7 @@ impl Notifier for Smtp {
             .body(message.text.clone())
             .map_err(|error| NotifyError::Config(error.to_string()))?;
 
+        super::guard::vet_host(&self.host, self.port).await?;
         self.transport.send(email).await.map_err(|error| {
             NotifyError::Transport(secret::truncate(
                 &secret::redact(&error.to_string(), &self.secrets()),

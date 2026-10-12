@@ -170,6 +170,10 @@ async fn run(mut config: Config) -> Result<()> {
         None => None,
     };
 
+    // Les canaux de notification ne doivent jamais viser ce serveur ni sa base
+    // de métriques, dont certaines routes ne demandent aucune authentification.
+    dumbmonit_server::notify::guard::protect_config(&config).await;
+
     let bind = config.bind;
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
 

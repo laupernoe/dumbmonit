@@ -13,6 +13,7 @@ pub mod chat;
 pub mod custom;
 pub mod error;
 pub mod gateway;
+pub mod guard;
 pub mod http;
 pub mod message;
 pub mod oncall;
@@ -57,7 +58,10 @@ pub fn http_client() -> reqwest::Client {
         // Jamais de redirection vers un autre hôte : les en-têtes d'un canal
         // (clé d'API, jeton) ne doivent partir que vers la destination saisie, et
         // une réponse ne doit pas pouvoir renvoyer le serveur vers sa boucle locale.
-        .redirect(dumbmonit_collectors::http::same_host_redirects())
+        .redirect(guard::redirects())
+        // Ni le VictoriaMetrics embarqué ni l'API de ce serveur, même par un nom
+        // qui changerait de réponse entre la vérification et la connexion.
+        .dns_resolver(Arc::new(guard::Resolver))
         .build()
         // Un échec ici ne peut venir que d'un environnement TLS cassé ; le client par
         // défaut permet au moins au reste du serveur de démarrer.
@@ -75,7 +79,8 @@ fn insecure_http_client() -> &'static reqwest::Client {
             .timeout(SEND_TIMEOUT)
             .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
             .danger_accept_invalid_certs(true)
-            .redirect(dumbmonit_collectors::http::same_host_redirects())
+            .redirect(guard::redirects())
+            .dns_resolver(Arc::new(guard::Resolver))
             .build()
             .unwrap_or_default()
     })
