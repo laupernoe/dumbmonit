@@ -272,8 +272,11 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
                 }
             } else {
                 let error = outcome.error.as_deref();
+                // Une sonde de disponibilité réussie peut constater une panne.
+                let mut verdict = outcome.error.clone();
                 if error.is_none() {
                     let samples = prepare(&state.collectors, &target, outcome.samples.clone());
+                    verdict = db::targets::service_failure(&samples);
                     debug!(
                         target = target.id,
                         agent = job.agent_id,
@@ -285,6 +288,7 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
                     debug!(target = target.id, agent = job.agent_id, error, "relayed probe failed");
                 }
                 crate::stats::stats().probe(&target.kind, error.is_some());
+                let error = verdict.as_deref();
                 if let Err(error) = db::targets::record_probe(&state.pool, target.id, error).await {
                     warn!(target = target.id, ?error, "cannot record the relayed result");
                 }

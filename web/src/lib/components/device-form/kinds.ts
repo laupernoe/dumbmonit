@@ -66,7 +66,9 @@ import {
 	BrickWallShield,
 	CloudBackup,
 	RadioTower,
-	Clock
+	Clock,
+	FileDiff,
+	PanelsTopLeft
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
@@ -132,7 +134,9 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	veeam: CloudBackup,
 	tailscale: Network,
 	fortigate: BrickWallShield,
-	sophos: ShieldCheck
+	sophos: ShieldCheck,
+	website: PanelsTopLeft,
+	webchange: FileDiff
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {

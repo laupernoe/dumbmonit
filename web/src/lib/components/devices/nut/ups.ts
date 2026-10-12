@@ -44,8 +44,6 @@ const FLAG_METRICS: Record<string, string> = {
 
 export const NUT_QUERY_NAMES = [
 	...Object.keys(FLAG_METRICS),
-	'ups_info',
-	'ups_status_info',
 	'ups_data_stale',
 	'ups_driver_connected',
 	'battery_charge_percent',
@@ -55,6 +53,31 @@ export const NUT_QUERY_NAMES = [
 	'battery_age_seconds',
 	'ups_self_test_failed'
 ];
+
+/**
+ * Info series whose meaning is in their labels. When `ups.status` changes, the
+ * collector starts a new series (`status="OB LB"`) and the old one (`status="OL"`)
+ * lingers in the lookback window for a few minutes: only the freshest series
+ * per UPS is kept, through its last sample time.
+ */
+export const NUT_INFO_NAMES = ['ups_info', 'ups_status_info'];
+
+/** Instant queries for the panel of `targetId`: plain values, then the latest info series. */
+export function nutQueries(targetId: number): string[] {
+	const target = `target="${targetId}"`;
+	return [
+		`{__name__=~"dumbmonit_nut_(${NUT_QUERY_NAMES.join('|')})", ${target}}`,
+		latestInfoQuery(`{__name__=~"dumbmonit_nut_(${NUT_INFO_NAMES.join('|')})", ${target}}`, ['target', 'ups'])
+	];
+}
+
+/**
+ * Keeps, per metric and per `by` labels, only the info series written last.
+ * Its value becomes the sample time, which info readers ignore.
+ */
+export function latestInfoQuery(selector: string, by: string[]): string {
+	return `topk by (__name__, ${by.join(', ')}) (1, tlast_over_time(${selector}[5m]) keep_metric_names)`;
+}
 
 function empty(name: string): UpsReading {
 	return {

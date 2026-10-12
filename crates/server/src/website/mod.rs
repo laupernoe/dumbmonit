@@ -13,8 +13,9 @@
 //!   cassé, une base de données en panne derrière un 200), texte attendu ;
 //! - le référencement ([`seo`]) : titre, description, canonique, consignes
 //!   `noindex` / `nofollow` (balise ou en-tête `X-Robots-Tag`), Open Graph,
-//!   langue, `h1`, `hreflang` ; et, une fois l'heure, `robots.txt` (tout
-//!   interdire à Google ?) et le plan de site ;
+//!   langue, `h1`, `hreflang` ; et, aux sondes de changement (au plus une
+//!   fois l'heure), `robots.txt` (tout interdire à Google ?) et le plan de
+//!   site ;
 //! - la plateforme ([`platform`]) : WordPress, Shopify, Next.js…
 //!
 //! # Changements
@@ -22,7 +23,18 @@
 //! Les métadonnées et l'adresse finale sont comparées à une référence
 //! confirmée ([`changes`]) : une valeur nouvelle n'est un changement que lue
 //! deux sondes de suite (pas de fausse alerte sur un test A/B ou un cache qui
-//! hésite). Un changement confirmé est gardé dans l'historique, et sa jauge
+//! hésite).
+//!
+//! Cette comparaison, et la relecture de `robots.txt` et du plan de site qui
+//! l'accompagne, n'a lieu qu'aux sondes de changement : toutes les
+//! `change_check_minutes` (six heures par défaut,
+//! `DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES` pour l'instance), alors que la
+//! disponibilité est lue à chaque sonde. Une valeur mise en attente est
+//! revue dès la sonde suivante, pas six heures plus tard : la règle des deux
+//! lectures de suite garde son sens, et un changement est signalé au plus
+//! une période et une sonde après être apparu.
+//!
+//! Un changement confirmé est gardé dans l'historique, et sa jauge
 //! (`website_title_changed`…) vaut 1 pendant 24 heures, ce qui laisse aux
 //! règles le temps de le voir quelle que soit leur cadence.
 //!
@@ -56,8 +68,10 @@ pub mod options;
 pub mod platform;
 pub mod seo;
 pub mod store;
+pub mod throttle;
 
 use std::collections::BTreeMap;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
@@ -79,7 +93,8 @@ pub const KIND: &str = "website";
 
 /// Durée pendant laquelle la jauge d'un changement confirmé vaut 1.
 pub const CHANGE_WINDOW_SECS: i64 = 24 * 3600;
-/// `robots.txt` et le plan de site sont relus au plus toutes les heures.
+/// `robots.txt` et le plan de site sont relus aux sondes de changement, et au
+/// plus toutes les heures.
 pub const ROBOTS_REFRESH_SECS: i64 = 3600;
 /// Corps lu au plus pour `robots.txt` et le plan de site.
 const MAX_AUX_BYTES: usize = 10 * 1024 * 1024;
@@ -117,12 +132,34 @@ pub struct LastProbe {
 pub struct WebsiteCollector {
     pool: SqlitePool,
     clients: Clients,
+    /// Période de comparaison des métadonnées pour un site sans option
+    /// `change_check_minutes`.
+    change_check: Duration,
 }
 
 impl WebsiteCollector {
     pub fn new(pool: SqlitePool) -> Self {
-        Self { pool, clients: Clients::default() }
+        let change_check =
+            Duration::from_secs(u64::from(options::DEFAULT_CHANGE_CHECK_MINUTES) * 60);
+        Self { pool, clients: Clients::default(), change_check }
     }
+
+    /// Période d'instance (`DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES`).
+    pub fn with_change_check(mut self, period: Duration) -> Self {
+        self.change_check = period;
+        self
+    }
+}
+
+/// La comparaison des métadonnées est-elle due à cette sonde ?
+///
+/// Oui sans référence, avec une valeur en attente (la confirmer ou l'écarter
+/// ne doit pas attendre une période entière), jamais faite, ou faite il y a
+/// au moins `period`.
+pub fn change_check_due(tracker: &Tracker, check_age: Option<i64>, period: Duration) -> bool {
+    tracker.confirmed.is_empty()
+        || !tracker.pending.is_empty()
+        || check_age.is_none_or(|age| age < 0 || age as u64 >= period.as_secs())
 }
 
 #[async_trait]
@@ -159,8 +196,15 @@ impl Collector for WebsiteCollector {
             Some(state) => (state.tracker(), false),
             None => (Tracker::default(), true),
         };
+        let period = options.change_check.unwrap_or(self.change_check);
+        let check_age = state.as_ref().and_then(|s| s.check_age);
+        let check_due = change_check_due(&tracker, check_age, period);
+        // La comparaison n'est faite que sur une page lue : une erreur ou une
+        // réponse qui n'est pas du HTML la reporte à la sonde suivante.
+        let mut checked = false;
         let confirmed = match &reading.probe.metadata {
-            Some(metadata) => {
+            Some(metadata) if check_due => {
+                checked = true;
                 let current = changes::values(&followed.final_url, metadata);
                 if baseline || tracker.confirmed.is_empty() {
                     tracker = Tracker::baseline(current);
@@ -169,14 +213,15 @@ impl Collector for WebsiteCollector {
                     tracker.observe(&current, options.ignore_query)
                 }
             }
-            None => Vec::new(),
+            _ => Vec::new(),
         };
 
-        // `robots.txt` et plan de site : une fois l'heure, sur l'origine finale.
+        // `robots.txt` et plan de site, sur l'origine finale : aux sondes de
+        // changement, au plus une fois l'heure, et dès qu'ils manquent.
         let robots_due = reading.probe.status < 500
             && state.as_ref().is_none_or(|s| {
-                s.robots_age.is_none_or(|age| age >= ROBOTS_REFRESH_SECS)
-                    || s.robots_blocks_all.is_none()
+                s.robots_blocks_all.is_none()
+                    || (check_due && s.robots_age.is_none_or(|age| age >= ROBOTS_REFRESH_SECS))
             });
         let robots = if robots_due {
             Some(check_robots(&client, &followed.final_url, options.allow_private).await)
@@ -195,6 +240,7 @@ impl Collector for WebsiteCollector {
                 changes: &confirmed,
                 last_probe: &last_probe,
                 robots,
+                checked,
             },
         )
         .await
@@ -361,7 +407,6 @@ mod tests {
     use super::*;
     use options::tests::target;
     use reqwest::header::{HeaderMap, HeaderValue};
-    use std::time::Duration;
 
     fn followed(status: u16, content_type: &str, body: &str) -> fetch::Followed {
         let mut headers = HeaderMap::new();
@@ -451,6 +496,22 @@ mod tests {
         assert_eq!(value(&samples, "website_sitemap_ok"), Some(0.0));
         let info = samples.iter().find(|s| s.metric == "website_info").unwrap();
         assert_eq!(info.labels.get("platform").map(String::as_str), Some("wordpress"));
+    }
+
+    #[test]
+    fn cadence_de_la_comparaison() {
+        let six_heures = Duration::from_secs(6 * 3600);
+        let reference = Tracker::baseline([("title".to_string(), "A".to_string())].into());
+        assert!(change_check_due(&Tracker::default(), Some(10), six_heures), "sans référence");
+        assert!(change_check_due(&reference, None, six_heures), "jamais comparée");
+        assert!(!change_check_due(&reference, Some(3600), six_heures), "une heure : pas encore");
+        assert!(change_check_due(&reference, Some(6 * 3600), six_heures));
+        assert!(change_check_due(&reference, Some(-5), six_heures), "horloge reculée");
+        assert!(change_check_due(&reference, Some(0), Duration::ZERO), "zéro : à chaque sonde");
+        // Une valeur en attente est revue dès la sonde suivante.
+        let mut pending = reference.clone();
+        pending.pending.insert("title".into(), "B".into());
+        assert!(change_check_due(&pending, Some(60), six_heures));
     }
 
     #[test]

@@ -7741,7 +7741,7 @@
       "steps": [
         "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
         "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
-        "The first check records the reference: final address, title, description, canonical URL, indexing rules. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
+        "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
         "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder."
       ],
       "warning": "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
@@ -7802,6 +7802,28 @@
         "input": "boolean",
         "choices": [],
         "group": ""
+      },
+      {
+        "key": "change_check_minutes",
+        "label": "Check for changes every (minutes)",
+        "help": "How often the title, description, canonical URL, final address and robots.txt are compared with the reference, from 0 to 10080 (a week). Up/down, blank page and expected text are checked at every polling interval regardless. A value seen once is confirmed at the next poll. Empty: the server default, 360 (DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES). 0: at every poll.",
+        "placeholder": "360",
+        "default": "360",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": "Pacing"
+      },
+      {
+        "key": "host_spacing_seconds",
+        "label": "Wait before the next request to this domain (seconds)",
+        "help": "Minimum gap after this site's check before any other check of a site on the same domain (www.example.com and shop.example.com share one), from 0 to 3600. Keeps a firewall or CDN from mistaking a list of sites for an attack. Empty: the server default, 2 (DUMBMONIT_WEBSITE_HOST_SPACING_SECS).",
+        "placeholder": "2",
+        "default": "2",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": "Pacing"
       },
       {
         "key": "allow_private_targets",

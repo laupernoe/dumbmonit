@@ -32,6 +32,28 @@ const FS_USED_PERCENT: &str = "(\
      or dumbmonit_proxmox_storage_used_percent \
      or dumbmonit_proxmox_node_rootfs_percent)";
 
+/// Âge du dernier échantillon de chaque cible, en secondes : la plus fraîche de
+/// ses séries `dumbmonit_up` (voir la règle « Device unreachable »).
+pub const HOST_DOWN_QUERY: &str =
+    "bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))";
+
+/// Part des insertions lentes de VictoriaMetrics sur quinze minutes, pour un
+/// serveur démarré depuis plus longtemps que la fenêtre (voir la règle).
+pub const VM_SLOW_INSERTS_QUERY: &str = "(100 \
+     * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) \
+     / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) \
+     and on (target) dumbmonit_victoriametrics_uptime_seconds > 900";
+
+/// Durée des sondes de disponibilité réussies (voir la règle `service_slow`).
+pub const SERVICE_SLOW_QUERY: &str =
+    "dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1";
+
+/// Pod en boucle de redémarrage : le drapeau du collecteur, tenu par un compteur
+/// de redémarrages qui progresse encore (voir la règle `k8s_pod_crashlooping`).
+pub const K8S_CRASHLOOP_QUERY: &str = "max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) \
+     and on (target, namespace, pod) \
+     increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2";
+
 /// Rappel par défaut : six heures. Assez pour ne pas oublier une panne en cours,
 /// assez peu pour ne pas devenir du bruit pendant une semaine de vacances.
 const DEFAULT_REPEAT: Duration = Duration::from_secs(6 * 3600);
@@ -75,6 +97,13 @@ pub fn builtin_rules() -> Vec<Rule> {
         // du dernier échantillon, ce qui détecte aussi bien une panne réseau qu'un
         // collecteur bloqué. La fenêtre de sept jours borne le coût de la requête ;
         // au-delà, la cible n'a plus de série du tout et l'interface prend le relais.
+        //
+        // La règle est par cible, pas par série : sept jours de fenêtre gardent
+        // aussi les variantes que plus personne n'écrit (tags retouchés, options
+        // qui ont cessé d'être exportées, renommage). Leur âge ne fait que croître
+        // et elles sonnaient une semaine durant, la cible bien vivante. `bottomk`
+        // ne garde que la plus fraîche de chaque cible, avec ses étiquettes : les
+        // silences par tag et le nom affiché continuent de fonctionner.
         Rule {
             description: "No measurement received for more than three minutes.".to_string(),
             operator: Operator::Gt,
@@ -86,7 +115,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 RULE_HOST_DOWN,
                 "Device unreachable",
                 RuleKind::Threshold,
-                "time() - tlast_over_time(dumbmonit_up[7d])",
+                HOST_DOWN_QUERY,
             )
         },
         // Processeur élevé. L'agrégation ramène les cœurs à une seule série par
@@ -528,6 +557,9 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // Lenteur : le défaut de délai des sondes est de 5 s, au-delà elles échouent
         // déjà ; 3 s soutenues pendant dix minutes est un service qui souffre.
+        // Seules les sondes réussies comptent : une sonde en échec dure le temps
+        // de son délai, et ce n'est pas de la lenteur mais une panne, que
+        // `service_down` porte déjà.
         Rule {
             description: "The service takes more than three seconds to respond.".to_string(),
             operator: Operator::Gt,
@@ -539,7 +571,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "service_slow",
                 "Slow service",
                 RuleKind::Threshold,
-                "dumbmonit_probe_duration_seconds",
+                SERVICE_SLOW_QUERY,
             )
         },
         // Certificats. Les deux règles sont disjointes (`>= 0` / `< 0`) pour qu'un
@@ -2615,6 +2647,12 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Le seuil que la documentation de VictoriaMetrics donne lui-même : au-delà
         // de 5 % d'insertions lentes, le cache des séries ne tient plus en mémoire.
         // Une demi-heure écarte la vague de séries neuves d'un déploiement.
+        //
+        // Après un redémarrage, le cache est froid et la fenêtre de quinze
+        // minutes mêle des points d'avant et d'après : la règle restait en
+        // `pending`, ni déclenchée ni résolue, jusqu'à ce que la fenêtre se
+        // vide. Elle ne juge donc qu'un serveur démarré depuis plus que la
+        // fenêtre, dont les compteurs ne contiennent plus de remise à zéro.
         Rule {
             description: "More than 5% of new samples take the slow insert path: VictoriaMetrics \
                           lacks memory for its active series."
@@ -2630,8 +2668,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "victoriametrics_slow_inserts",
                 "VictoriaMetrics slow inserts",
                 RuleKind::Threshold,
-                "100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) \
-                 / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])",
+                VM_SLOW_INSERTS_QUERY,
             )
         },
         // Loki : `/ready` dit s'il accepte d'écrire et de lire. Cinq minutes
@@ -4581,6 +4618,12 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // CrowdSec ne publie pas l'heure du dernier tirage : le compteur de
         // requêtes du bouncer qui ne bouge plus en tient lieu.
+        //
+        // Ces deux règles d'absence de progrès finissent par `and <compteur>` :
+        // une variante que plus rien n'écrit (étiquettes renommées, tags
+        // retouchés) reste dans la fenêtre sans plus bouger, et passerait pour
+        // un bouncer arrêté ou une acquisition cassée. Seules les séries encore
+        // alimentées sont jugées.
         Rule {
             description: "A CrowdSec bouncer has not called the Local API for 30 minutes: it enforces a frozen list."
                 .to_string(),
@@ -4589,7 +4632,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Warning,
             repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base("crowdsec_bouncer_stale", "CrowdSec bouncer stopped pulling", RuleKind::Threshold, "changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])")
+            ..base("crowdsec_bouncer_stale", "CrowdSec bouncer stopped pulling", RuleKind::Threshold, "changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m]) and dumbmonit_crowdsec_bouncer_requests_total")
         },
         Rule {
             description: "CrowdSec has not read a single log line in six hours: its acquisition is broken and it sees no attack."
@@ -4599,7 +4642,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             for_duration: Duration::from_secs(30 * 60),
             severity: Severity::Warning,
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
-            ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])")
+            ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h]) and dumbmonit_crowdsec_lines_read_total")
         },
         // --- Proxys inverses (`collectors/{traefik,caddy,npm}`) ---
         Rule {
@@ -5005,6 +5048,11 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Entre deux tentatives, le conteneur redémarre et l'état
         // `CrashLoopBackOff` disparaît quelques secondes : le maximum sur dix
         // minutes lisse ce va-et-vient, sans quoi le `for` repartirait de zéro.
+        //
+        // Une boucle redémarre au moins toutes les cinq minutes (plafond du
+        // back-off de Kubernetes) : on exige deux redémarrages en quinze minutes.
+        // Le redémarrage d'un nœud n'en ajoute qu'un par conteneur, et le compteur
+        // à vie d'un pod système ne fait plus passer ce redémarrage pour une boucle.
         Rule {
             description: "A pod keeps crashing and Kubernetes waits longer and longer before \
                           restarting it (CrashLoopBackOff)."
@@ -5018,7 +5066,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "k8s_pod_crashlooping",
                 "Kubernetes pod crash looping",
                 RuleKind::Threshold,
-                "max_over_time(dumbmonit_k8s_pod_crashlooping[10m])",
+                K8S_CRASHLOOP_QUERY,
             )
         },
         Rule {
@@ -6465,6 +6513,62 @@ mod tests {
         let host_down: Vec<_> = builtin_rules().into_iter().filter(|r| r.is_host_down()).collect();
         assert_eq!(host_down.len(), 1);
         assert_eq!(host_down[0].severity, Severity::Critical);
+    }
+
+    /// Une sonde en échec dure son délai : la lenteur ne se juge que sur les
+    /// sondes réussies.
+    #[test]
+    fn la_lenteur_ne_juge_que_les_sondes_reussies() {
+        let rule = builtin_rules().into_iter().find(|r| r.uid == "service_slow").unwrap();
+        assert_eq!(rule.query, SERVICE_SLOW_QUERY);
+        assert!(rule.query.contains("and dumbmonit_probe_success == 1"));
+    }
+
+    /// Après un redémarrage de VictoriaMetrics, la fenêtre mêle compteurs d'avant
+    /// et d'après : la règle attend que le serveur tourne depuis plus que sa
+    /// fenêtre.
+    #[test]
+    fn les_insertions_lentes_attendent_un_serveur_installe() {
+        let rule =
+            builtin_rules().into_iter().find(|r| r.uid == "victoriametrics_slow_inserts").unwrap();
+        assert_eq!(rule.query, VM_SLOW_INSERTS_QUERY);
+        assert!(rule.query.contains("[15m]"));
+        assert!(rule.query.ends_with("dumbmonit_victoriametrics_uptime_seconds > 900"));
+    }
+
+    /// Le redémarrage d'un nœud ajoute un redémarrage par conteneur : la boucle
+    /// exige un compteur qui progresse encore.
+    #[test]
+    fn la_boucle_de_redemarrage_exige_des_redemarrages_recents() {
+        let rule = builtin_rules().into_iter().find(|r| r.uid == "k8s_pod_crashlooping").unwrap();
+        assert_eq!(rule.query, K8S_CRASHLOOP_QUERY);
+        assert!(rule.query.contains("increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2"));
+    }
+
+    /// Les règles de fraîcheur jugent une cible, pas chacune de ses variantes :
+    /// la fenêtre de sept jours garde des séries que plus personne n'écrit, et
+    /// sans réduction par cible leur âge croissant fait sonner une cible vivante.
+    #[test]
+    fn la_regle_injoignable_ne_garde_qu_une_serie_par_cible() {
+        let rule = builtin_rules().into_iter().find(|r| r.is_host_down()).expect("host_down");
+        assert_eq!(rule.query, HOST_DOWN_QUERY);
+        assert!(rule.query.starts_with("bottomk by (target) (1, "), "{}", rule.query);
+        assert!(rule.query.contains("tlast_over_time(dumbmonit_up[7d])"));
+    }
+
+    /// Une règle d'absence de progrès (`changes`, `increase` sous un seuil) sur
+    /// une longue fenêtre doit se restreindre aux séries encore écrites : une
+    /// variante figée n'y progresse plus par définition.
+    #[test]
+    fn les_regles_d_absence_de_progres_ignorent_les_series_figees() {
+        for rule in builtin_rules() {
+            let absence = matches!(rule.operator, Operator::Lt | Operator::Le)
+                && ["changes", "increase", "delta"].iter().any(|f| rule.query.contains(f))
+                && rule.query.contains('[');
+            if absence {
+                assert!(rule.query.contains(" and "), "{} also fires on stale series", rule.uid);
+            }
+        }
     }
 
     #[test]

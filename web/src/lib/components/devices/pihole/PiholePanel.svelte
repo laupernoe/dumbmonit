@@ -15,6 +15,7 @@
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import Figure from '../Figure.svelte';
 	import { formatSpan } from '../pbs/format';
+	import { latestInfoQuery } from '../nut/ups';
 
 	interface Props {
 		target: Target;
@@ -139,11 +140,17 @@
 	async function load(signal?: AbortSignal) {
 		error = null;
 		try {
-			const series = await queryInstant(
-				`{__name__=~"dumbmonit_pihole_(blocking_enabled|blocking_timer_seconds|queries_24h|queries_blocked_24h|queries_blocked_percent|replies_servfail_24h|clients_active|gravity_domains|gravity_age_seconds|updates_available|update_available|messages|messages_by_type|version_info)", target="${target.id}"}`,
-				signal
-			);
-			reading = fold(series);
+			// `version_info` carries its versions as labels: after an update the old
+			// series lingers a few minutes beside the new one, so only the freshest
+			// is read.
+			const [values, versions] = await Promise.all([
+				queryInstant(
+					`{__name__=~"dumbmonit_pihole_(blocking_enabled|blocking_timer_seconds|queries_24h|queries_blocked_24h|queries_blocked_percent|replies_servfail_24h|clients_active|gravity_domains|gravity_age_seconds|updates_available|update_available|messages|messages_by_type)", target="${target.id}"}`,
+					signal
+				),
+				queryInstant(latestInfoQuery(`dumbmonit_pihole_version_info{target="${target.id}"}`, ['target']), signal)
+			]);
+			reading = fold([...values, ...versions]);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;

@@ -252,7 +252,7 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="primary" loading={saving}>{m.settings_sso_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving}>{m.settings_sso_save()}</Button>
 				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_sso_test()}

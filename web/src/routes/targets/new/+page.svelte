@@ -31,6 +31,7 @@
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import RelayDiagram from '#lib/components/device-form/RelayDiagram.svelte';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '#lib/components/device-form/kinds.js';
 
 	let collectors = $state<CollectorInfo[]>([]);
@@ -237,7 +238,7 @@
 {#snippet stamp()}
 	{#if selected && SelectedIcon}
 		<Plate tone="ghost" bare>
-			<SelectedIcon class="size-3.5" aria-hidden="true" />
+			{#if feature}<SelectedIcon class="size-3.5" aria-hidden="true" />{:else}<KindIcon kind={selected.kind} class="size-3.5" />{/if}
 			{selected.kind}
 		</Plate>
 	{/if}
@@ -444,7 +445,7 @@
 						<div class="flex min-w-0 items-start gap-3">
 							{#if SelectedIcon}
 								<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-signal-soft text-signal-ink">
-									<SelectedIcon class="size-[1.125rem]" aria-hidden="true" />
+									{#if feature || !selected}<SelectedIcon class="size-[1.125rem]" aria-hidden="true" />{:else}<KindIcon kind={selected.kind} class="size-[1.125rem]" />{/if}
 								</span>
 							{/if}
 							<div class="min-w-0">

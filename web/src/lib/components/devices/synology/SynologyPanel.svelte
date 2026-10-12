@@ -227,7 +227,7 @@
 			{/if}
 		</Panel>
 
-		<Panel title={m.devicesb_synology_panel_volumes()} description={m.devicesb_synology_panel_volumes_desc()} padded={false} class="rise-in">
+		<Panel title={m.devicesb_synology_panel_volumes()} padded={false} class="rise-in">
 			{#if overview.volumes.length === 0}
 				<p class="px-5 py-4 text-sm text-ink-2">
 					{m.devicesb_synology_panel_no_volume({ group: 'administrators' })}
@@ -316,7 +316,7 @@
 			</Panel>
 		{/if}
 
-		<Panel title={m.devicesb_synology_panel_disks()} description={m.devicesb_synology_panel_disks_desc()} padded={false} class="rise-in">
+		<Panel title={m.devicesb_synology_panel_disks()} padded={false} class="rise-in">
 			{#if overview.disks.length === 0}
 				<p class="px-5 py-4 text-sm text-ink-2">
 					{m.devicesb_synology_panel_no_disk({ group: 'administrators' })}

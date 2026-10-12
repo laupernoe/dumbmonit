@@ -204,6 +204,44 @@ pub fn error_means_down(message: &str) -> bool {
     message.starts_with("Timed out") || message.starts_with("Device unreachable")
 }
 
+/// Préfixe du verdict d'une sonde de disponibilité en échec (voir
+/// [`service_failure`]).
+pub const SERVICE_DOWN_PREFIX: &str = "Service down";
+
+/// Vrai si le message enregistré est celui d'un service qui ne répond pas
+/// correctement. L'interface l'affiche comme une panne, pas comme une erreur
+/// de configuration ; l'alerte, elle, reste `service_down` : la cible n'est pas
+/// « injoignable » au sens de la topologie, sans quoi ses propres alertes de
+/// service se croiraient étouffées par elle-même.
+pub fn error_means_service_down(message: &str) -> bool {
+    message.starts_with(SERVICE_DOWN_PREFIX)
+}
+
+/// Verdict à enregistrer pour une sonde de disponibilité qui a tourné mais
+/// dont le résultat est négatif (`probe_success = 0`).
+///
+/// Ces sondes renvoient `Ok` avec un zéro plutôt qu'une erreur, pour que le
+/// taux de disponibilité compte la panne (voir `uptime/outcome.rs`) : sans ce
+/// passage, `last_error` restait vide pendant toute la panne. Les heartbeats
+/// (`probe="push"`) ont leur propre règle et ne passent pas par ici.
+pub fn service_failure(samples: &[dumbmonit_proto::Sample]) -> Option<String> {
+    let failed = samples.iter().find(|s| {
+        s.metric == "probe_success"
+            && s.value == 0.0
+            && s.labels.get("probe").map(String::as_str) != Some("push")
+    })?;
+    let probe = failed.labels.get("probe").map_or("service", String::as_str);
+    let reason = samples
+        .iter()
+        .find(|s| s.metric == "probe_failure_info")
+        .and_then(|s| s.labels.get("reason"))
+        .map(|reason| reason.replace('_', " "));
+    Some(match reason {
+        Some(reason) => format!("{SERVICE_DOWN_PREFIX}: the {probe} check failed ({reason})"),
+        None => format!("{SERVICE_DOWN_PREFIX}: the {probe} check failed"),
+    })
+}
+
 /// Enregistre l'issue d'une interrogation. `error` à `None` signifie succès.
 pub async fn record_probe(pool: &SqlitePool, id: TargetId, error: Option<&str>) -> Result<()> {
     sqlx::query(
@@ -349,4 +387,37 @@ pub async fn statuses(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetStatu
             ))
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use dumbmonit_proto::{MetricKind, Sample};
+
+    use super::*;
+
+    fn gauge(metric: &str, value: f64, probe: &str) -> Sample {
+        Sample::new(metric, value, MetricKind::Gauge, 0).with_label("probe", probe)
+    }
+
+    /// Une sonde NTP ou WebSocket en échec renvoie `Ok` avec un zéro : son
+    /// verdict doit quand même atteindre `last_error`, classé comme une panne.
+    #[test]
+    fn une_sonde_de_service_en_echec_laisse_un_verdict() {
+        let samples = vec![
+            gauge("probe_success", 0.0, "ntp"),
+            gauge("probe_duration_seconds", 5.0, "ntp"),
+            gauge("probe_failure_info", 1.0, "ntp").with_label("reason", "timeout"),
+        ];
+        let verdict = service_failure(&samples).expect("verdict");
+        assert_eq!(verdict, "Service down: the ntp check failed (timeout)");
+        assert!(error_means_service_down(&verdict));
+        assert!(!error_means_down(&verdict), "the target itself is not unreachable");
+    }
+
+    #[test]
+    fn une_sonde_reussie_ou_un_heartbeat_ne_laisse_aucun_verdict() {
+        assert!(service_failure(&[gauge("probe_success", 1.0, "websocket")]).is_none());
+        assert!(service_failure(&[gauge("probe_success", 0.0, "push")]).is_none());
+        assert!(service_failure(&[gauge("up", 1.0, "snmp")]).is_none());
+    }
 }

@@ -4,6 +4,10 @@
 //! bornées par un sémaphore. Ce choix — plutôt qu'une tâche permanente par cible —
 //! garde la concurrence maîtrisée : cinq cents équipements ne déclenchent jamais
 //! cinq cents requêtes réseau simultanées.
+//!
+//! Les sites (`website`) passent en plus par leurs propres bornes
+//! ([`crate::website::throttle`]) : plafond général, plafond et écart par
+//! domaine. Ils attendent dans leur tâche, jamais dans la boucle.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -18,6 +22,7 @@ use crate::collectors::relay::{self, EnqueueError, JobResult};
 use crate::db;
 use crate::state::AppState;
 use crate::stats::stats;
+use crate::website::{self, throttle::Throttle};
 
 /// Granularité de la boucle. Plus fin serait inutile : la période minimale
 /// d'interrogation est de dix secondes.
@@ -36,6 +41,7 @@ pub fn spawn(state: AppState) {
 
 async fn run(state: AppState) -> anyhow::Result<()> {
     let permits = Arc::new(Semaphore::new(state.config.max_concurrent_probes));
+    let websites = Arc::new(Throttle::new(state.config.website));
     let mut next_run: HashMap<TargetId, Instant> = HashMap::new();
     let mut ticker = interval(TICK);
     ticker.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -47,6 +53,9 @@ async fn run(state: AppState) -> anyhow::Result<()> {
     info!(
         max_concurrent = state.config.max_concurrent_probes,
         timeout = ?state.config.probe_timeout,
+        website_max_concurrent = websites.limits().max_concurrent,
+        website_max_per_host = websites.limits().max_per_host,
+        website_host_spacing = ?websites.limits().host_spacing,
         "scheduler started"
     );
 
@@ -95,6 +104,28 @@ async fn run(state: AppState) -> anyhow::Result<()> {
                 continue;
             }
 
+            if target.kind == website::KIND {
+                // Un site encore en file depuis le tour précédent n'y est pas
+                // remis : il serait sondé deux fois de suite.
+                let Some(claim) = websites.claim(target.id) else {
+                    debug!(target = target.id, "website still queued, round skipped");
+                    continue;
+                };
+                let (domain, spacing) = website::throttle::plan(target);
+                let websites = websites.clone();
+                let permits = permits.clone();
+                let state = state.clone();
+                let target = target.clone();
+                tokio::spawn(async move {
+                    let _pass = websites.admit(claim, &domain, spacing).await;
+                    let Ok(_permit) = permits.acquire_owned().await else {
+                        return; // sémaphore fermé : arrêt du serveur
+                    };
+                    probe_once(state, target).await;
+                });
+                continue;
+            }
+
             let Ok(permit) = permits.clone().acquire_owned().await else {
                 return Ok(()); // sémaphore fermé : arrêt du serveur
             };
@@ -123,8 +154,10 @@ async fn probe_once(state: AppState, target: dumbmonit_proto::Target) {
     let error_message = match result {
         Ok(samples) => {
             debug!(target = target.id, count = samples.len(), "probe succeeded");
+            // Une sonde de disponibilité réussie peut constater une panne.
+            let verdict = db::targets::service_failure(&samples);
             state.sink.send(samples).await;
-            None
+            verdict
         }
         Err(error) => {
             // Une cible injoignable est un événement métier normal, journalisé en

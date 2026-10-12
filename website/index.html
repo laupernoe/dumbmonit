@@ -107,7 +107,7 @@
 	<div class="wrap">
 		<div class="section-head">
 			<h2>One way to add anything</h2>
-			<p>Pick a type among more than fifty, read the notice that says what to prepare on the device, fill in only the fields that type needs. SNMP profiles are picked from the device's <code>sysObjectID</code>; defaults do the rest.</p>
+			<p>Pick a monitor type among more than fifty, read the notice that says what to prepare on the device, fill in only the fields that type needs. SNMP profiles are picked from the device's <code>sysObjectID</code>; defaults do the rest.</p>
 		</div>
 
 		<div class="rack">
@@ -148,6 +148,7 @@
 					<li><span class="led" aria-hidden="true"></span><span class="name">Application sessions</span><span class="what">SMTP, PostgreSQL, MySQL and MariaDB, MQTT and WebSocket: a real login or handshake, so “up but refusing you” is not reported as “up”.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Heartbeats</span><span class="what">A cron job or backup script calls a secret URL; when it stops calling, you hear about it. Uptime Kuma push-compatible.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Docker containers</span><span class="what">State, health, restarts, image age and available updates, through the agent. Opt-in restart and update inside a maintenance window.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Website health &amp; SEO</span><span class="what">Down, error, blank page, missing expected text, <code>noindex</code>, a <code>robots.txt</code> blocking everything, slow answers, and changes of title, description or canonical URL (confirmed by two checks in a row). Redirects are followed, so http to https is not a false alarm. Import many sites from a CSV: they are sorted by platform (WordPress, Shopify, Wix&hellip;).</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Website change detection</span><span class="what">Watch a page, or a whole site crawled from its sitemap, for changes in its visible text: before/after text, a line diff and, when available, screenshots.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">GitLab and Forgejo/Gitea</span><span class="what">Sidekiq queues, CI/CD runners, scheduled tasks and database migrations on a self-managed Git forge. An ordinary access token proves the instance is up.</span></li>
 					<li><span class="led" aria-hidden="true"></span><span class="name">Nginx and Apache</span><span class="what">Active/idle workers or connections, request and byte rates, through <code>stub_status</code> or <code>mod_status</code>. No account needed.</span></li>
@@ -157,10 +158,10 @@
 		</div>
 
 		<div class="legend">
-			<span><span class="led" aria-hidden="true"></span>Used on real devices</span>
+			<span><span class="led" aria-hidden="true"></span>Used on real monitors</span>
 			<span><span class="plate plate-advisory">Test instance only</span>Built and checked against a real copy of the software installed for the purpose, not yet run for weeks in production</span>
 		</div>
-		<p class="code-note" style="margin-top:14px">Every kind has its own page in the <a href="https://dumbmonit.readthedocs.io/en/latest/devices/">device documentation</a>, with exactly what it reads and what to prepare. A demo device kind produces data without any hardware.</p>
+		<p class="code-note" style="margin-top:14px">Every kind has its own page in the <a href="https://dumbmonit.readthedocs.io/en/latest/devices/">monitor documentation</a>, with exactly what it reads and what to prepare. A demo monitor kind produces data without any hardware.</p>
 
 		<div class="gallery" style="margin-top:56px">
 			<figure class="wide">
@@ -170,7 +171,7 @@
 						<img src="assets/shots/add-device-light.webp" alt="Add a device: a grid of types (SNMP device, Proxmox VE, Proxmox Backup Server, Datacenter Manager, Mail Gateway, Synology DSM, TrueNAS, OPNsense) and a 'What to prepare' panel on the right" width="1440" height="820" loading="lazy">
 					</picture>
 				</div>
-				<figcaption>Adding a device: pick a type, and the notice on the right says what to prepare.</figcaption>
+				<figcaption>Adding a monitor: pick a type, and the notice on the right says what to prepare.</figcaption>
 			</figure>
 			<figure>
 				<div class="shot">
@@ -357,7 +358,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 					<li><span>The HTTP API is not frozen and the database schema still changes between alphas.</span></li>
 					<li><span>OPNsense, TrueNAS, Proxmox Datacenter Manager and Mail Gateway need reports from real, long-running installs. Redfish needs a real management controller.</span></li>
 					<li><span>The macOS and FreeBSD agents need someone to run them on real hardware.</span></li>
-					<li><span>The interface is in English; the language picker already offers 8 more (German, Spanish, French, Italian, Portuguese in two variants, Russian, Simplified Chinese), partly translated, and <a href="https://hosted.weblate.org/engage/dumbmonit/">translations are open on Weblate</a>.</span></li>
+					<li><span>The interface is in English; the language picker already offers 8 more (German, Spanish, French, Italian, Portuguese in two variants, Russian, Simplified Chinese), partly translated (the documentation is available in the same languages), and <a href="https://hosted.weblate.org/engage/dumbmonit/">translations are open on Weblate</a>.</span></li>
 					<li><span>What gets built next is decided in the <a href="https://github.com/laupernoe/dumbmonit/issues">GitHub issues</a>, and the <a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">changelog</a> says what changed.</span></li>
 				</ul>
 			</div>

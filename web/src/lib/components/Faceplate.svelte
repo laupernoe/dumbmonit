@@ -11,6 +11,7 @@
 	import { Led, Plate, Spotlight } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import Chart, { type Serie } from './Chart.svelte';
+	import KindIcon from './KindIcon.svelte';
 	import { ChevronRight, CornerDownRight } from 'lucide-svelte';
 
 	interface Props {
@@ -60,13 +61,9 @@
 			class="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-1 @md:grid-cols-[minmax(0,1fr)_auto] @md:items-center @lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto]"
 		>
 			<div class="min-w-0">
-				<div class="flex min-w-0 items-center gap-2">
-					<span class="truncate font-semibold text-ink">{target.name}</span>
-					{#if !target.enabled}
-						<Plate tone="ghost" label="Disabled" bare />
-					{/if}
-				</div>
+				<span class="block truncate font-semibold text-ink">{target.name}</span>
 				<div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-ink-2">
+					<KindIcon kind={target.kind} class="size-3.5 text-ink-3" />
 					<span class="label-tape block max-w-[12rem] shrink-0 truncate whitespace-nowrap !text-[0.625rem]">
 						{kindLabel ?? target.kind}
 					</span>
