@@ -14,7 +14,7 @@ For the content of a page rather than its health, see
 
 1. In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.
 2. Optionally fill in "Expected text" with a phrase the page must always show, and adjust "Blank page below" if the page is short on purpose.
-3. The first check records the reference: final address, title, description, canonical URL, indexing rules. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.
+3. The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default ("Check for changes every"), while up/down is checked at every polling interval. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.
 4. To add many sites at once, import a CSV file from the device list: each site is filed under `Websites/<platform>` (WordPress, Shopify…) unless you give a folder.
 
 !!! warning
@@ -41,18 +41,27 @@ Every polling interval (60 s by default), the page is read once:
 - **The SEO metadata** of the final page: `<title>`, meta description,
   canonical URL, robots meta tags and `X-Robots-Tag` headers (`noindex`,
   `nofollow`, `none`), `og:title`, `og:description`, `<html lang>`, the number
-  of `<h1>` and of `hreflang` alternates.
-- **Once an hour**, `robots.txt` of the final site: does it forbid Googlebot
-  (or `*`) to crawl `/`? And the sitemap it announces, or `/sitemap.xml`: does
-  it answer and read as a sitemap?
+  of `<h1>` and of `hreflang` alternates. The indexing directives and counts
+  are reported at every check; comparing the metadata with the reference only
+  happens at change checks, see [below](#changes-confirmed-twice).
+- **At change checks, and at most once an hour**, `robots.txt` of the final
+  site: does it forbid Googlebot (or `*`) to crawl `/`? And the sitemap it
+  announces, or `/sitemap.xml`: does it answer and read as a sitemap?
 
 The User-Agent is `DumbMonit/<version>` unless **User agent** says otherwise.
 
 ## Changes, confirmed twice
 
-The final address and the metadata are compared to a reference. A different
-value seen once is only **pending**; it becomes a change when the next check
-sees it again. A page served in two versions (an A/B test), a cache that
+The final address and the metadata are compared to a reference, but not at
+every check: only at **change checks**, every **Check for changes every**
+minutes (360, that is 6 hours, by default; `DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES`
+sets the server-wide default, 0 compares at every check). Up/down, blank page
+and expected text are still read at every polling interval.
+
+A different value seen at a change check is only **pending**; the very next
+check (one polling interval later, not 6 hours later) looks at it again, and
+it becomes a change if that check sees it too. A change is therefore reported
+at most one change period plus one polling interval after it appears. A page served in two versions (an A/B test), a cache that
 hesitates or a truncated answer therefore stays quiet. Values are compared with
 spacing and case ignored; addresses ignore the scheme, a leading `www.`, a
 trailing `/` and, with **Ignore query strings** (on by default), URL parameters
@@ -72,7 +81,34 @@ hours. The first check only records the reference. Changing the address or
 | Max redirects | 10 | Redirects followed at most (0 to 30). |
 | User agent | `DumbMonit/<version>` | Sent instead of DumbMonit's own. |
 | Ignore query strings | on | URL parameters do not count when comparing addresses. |
+| Check for changes every (minutes) | 360 | How often the metadata, the final address and `robots.txt` are compared, 0 to 10080; 0 means at every check. Empty: the server default (`DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES`). |
+| Wait before the next request to this domain (seconds) | 2 | Minimum gap after this site's check before another check on the same domain, 0 to 3600. Empty: the server default (`DUMBMONIT_WEBSITE_HOST_SPACING_SECS`). |
 | Allow loopback and link-local targets | off | For a site served by the DumbMonit host itself. |
+
+## Pacing hundreds of sites
+
+Checks never leave in one burst, so a firewall or CDN in front of the sites
+does not mistake DumbMonit for an attack:
+
+- **Spread over the interval**: each site starts at its own, fixed offset
+  within its polling interval, so sites added together (a CSV import) do not
+  fire at the same second.
+- **Global cap**: at most `DUMBMONIT_WEBSITE_MAX_CONCURRENT` website checks in
+  flight (10 by default), on top of `DUMBMONIT_MAX_CONCURRENT_PROBES`.
+- **Per domain**: at most `DUMBMONIT_WEBSITE_MAX_PER_HOST` checks in flight
+  towards one domain (1 by default), and at least
+  `DUMBMONIT_WEBSITE_HOST_SPACING_SECS` seconds between two of them (2 by
+  default, or the site's **Wait before the next request to this domain**).
+  The domain is the registrable name: `www.example.com`, `shop.example.com`
+  and `example.com` share one, `example.co.uk` is one; customer subdomains of
+  hosting platforms (`*.myshopify.com`, `*.wordpress.com`, `*.github.io`,
+  `*.netlify.app`…) each count as their own.
+
+A site whose previous check is still waiting its turn skips a round rather
+than queueing twice. Many sites on one domain with a short polling interval
+are therefore checked less often than asked: raise the interval, or the
+per-domain limits, if the device list shows them late. See
+[Configuration](../reference/configuration.md#server).
 
 ## Platform detection
 

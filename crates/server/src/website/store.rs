@@ -26,6 +26,10 @@ pub struct StateRow {
     pub robots_age: Option<i64>,
     pub robots_blocks_all: Option<bool>,
     pub sitemap_ok: Option<bool>,
+    /// Dernière comparaison des métadonnées.
+    pub changes_checked_at: Option<String>,
+    /// Son âge, en secondes.
+    pub check_age: Option<i64>,
 }
 
 impl StateRow {
@@ -45,7 +49,9 @@ pub async fn state(pool: &SqlitePool, target: TargetId) -> Result<Option<StateRo
                 robots_checked_at,
                 CAST(strftime('%s', 'now') - strftime('%s', robots_checked_at) AS INTEGER)
                     AS robots_age,
-                robots_blocks_all, sitemap_ok
+                robots_blocks_all, sitemap_ok, changes_checked_at,
+                CAST(strftime('%s', 'now') - strftime('%s', changes_checked_at) AS INTEGER)
+                    AS check_age
          FROM website_state WHERE target_id = ?",
     )
     .bind(target)
@@ -62,6 +68,9 @@ pub struct Saved<'a> {
     pub last_probe: &'a str,
     /// `Some` quand `robots.txt` et le plan de site viennent d'être relus.
     pub robots: Option<(bool, bool)>,
+    /// Les métadonnées ont été comparées à la référence (sonde de
+    /// changement) ; sinon `tracker` est rendu tel quel.
+    pub checked: bool,
 }
 
 /// Enregistre une lecture et ses changements, d'un bloc.
@@ -116,6 +125,14 @@ pub async fn save(pool: &SqlitePool, target: TargetId, saved: Saved<'_>) -> Resu
     .bind(saved.last_probe)
     .execute(&mut *tx)
     .await?;
+    if saved.checked {
+        sqlx::query(
+            "UPDATE website_state SET changes_checked_at = datetime('now') WHERE target_id = ?",
+        )
+        .bind(target)
+        .execute(&mut *tx)
+        .await?;
+    }
     if let Some((blocks_all, sitemap_ok)) = saved.robots {
         sqlx::query(
             "UPDATE website_state SET robots_checked_at = datetime('now'),

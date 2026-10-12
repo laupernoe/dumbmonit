@@ -481,6 +481,30 @@ mod tests {
         cleanup(&path, pool).await;
     }
 
+    /// Une base installée avant la réduction par cible garde l'ancienne requête de
+    /// `host_down` ; le démarrage suivant la remplace, sans toucher au seuil que
+    /// l'utilisateur a réglé.
+    #[tokio::test]
+    async fn l_ancienne_requete_injoignable_est_remplacee_au_demarrage() {
+        let (path, pool, _cipher) = fixture().await;
+        sqlx::query(
+            "UPDATE alert_rules SET query = 'time() - tlast_over_time(dumbmonit_up[7d])',
+                 threshold = 600 WHERE uid = ?",
+        )
+        .bind(RULE_HOST_DOWN)
+        .execute(&pool)
+        .await
+        .expect("simulate an older database");
+
+        db::alerts::seed_builtin_rules(&pool).await.expect("seed again");
+        let rules = db::alerts::list_rules(&pool).await.expect("read rules");
+        let host_down = rules.iter().find(|r| r.uid == RULE_HOST_DOWN).expect("host_down");
+        assert_eq!(host_down.query, crate::alerting::rules::HOST_DOWN_QUERY);
+        assert_eq!(host_down.threshold, 600.0, "the user's threshold is kept");
+
+        cleanup(&path, pool).await;
+    }
+
     #[tokio::test]
     async fn un_cycle_complet_traverse_la_base_et_fait_avancer_l_etat() {
         let (path, pool, cipher) = fixture().await;

@@ -80,7 +80,7 @@ fn build(accept_invalid_certs: bool) -> Result<reqwest::Client, ProbeError> {
 }
 
 /// Nombre maximal de redirections suivies vers le même hôte.
-const MAX_REDIRECTS: usize = 5;
+pub const MAX_REDIRECTS: usize = 5;
 
 /// Politique de redirection des clients d'API : ne suivre que vers le même hôte.
 ///

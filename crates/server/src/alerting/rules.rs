@@ -32,6 +32,11 @@ const FS_USED_PERCENT: &str = "(\
      or dumbmonit_proxmox_storage_used_percent \
      or dumbmonit_proxmox_node_rootfs_percent)";
 
+/// Âge du dernier échantillon de chaque cible, en secondes : la plus fraîche de
+/// ses séries `dumbmonit_up` (voir la règle « Device unreachable »).
+pub const HOST_DOWN_QUERY: &str =
+    "bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))";
+
 /// Rappel par défaut : six heures. Assez pour ne pas oublier une panne en cours,
 /// assez peu pour ne pas devenir du bruit pendant une semaine de vacances.
 const DEFAULT_REPEAT: Duration = Duration::from_secs(6 * 3600);
@@ -75,6 +80,13 @@ pub fn builtin_rules() -> Vec<Rule> {
         // du dernier échantillon, ce qui détecte aussi bien une panne réseau qu'un
         // collecteur bloqué. La fenêtre de sept jours borne le coût de la requête ;
         // au-delà, la cible n'a plus de série du tout et l'interface prend le relais.
+        //
+        // La règle est par cible, pas par série : sept jours de fenêtre gardent
+        // aussi les variantes que plus personne n'écrit (tags retouchés, options
+        // qui ont cessé d'être exportées, renommage). Leur âge ne fait que croître
+        // et elles sonnaient une semaine durant, la cible bien vivante. `bottomk`
+        // ne garde que la plus fraîche de chaque cible, avec ses étiquettes : les
+        // silences par tag et le nom affiché continuent de fonctionner.
         Rule {
             description: "No measurement received for more than three minutes.".to_string(),
             operator: Operator::Gt,
@@ -86,7 +98,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 RULE_HOST_DOWN,
                 "Device unreachable",
                 RuleKind::Threshold,
-                "time() - tlast_over_time(dumbmonit_up[7d])",
+                HOST_DOWN_QUERY,
             )
         },
         // Processeur élevé. L'agrégation ramène les cœurs à une seule série par
@@ -4581,6 +4593,12 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // CrowdSec ne publie pas l'heure du dernier tirage : le compteur de
         // requêtes du bouncer qui ne bouge plus en tient lieu.
+        //
+        // Ces deux règles d'absence de progrès finissent par `and <compteur>` :
+        // une variante que plus rien n'écrit (étiquettes renommées, tags
+        // retouchés) reste dans la fenêtre sans plus bouger, et passerait pour
+        // un bouncer arrêté ou une acquisition cassée. Seules les séries encore
+        // alimentées sont jugées.
         Rule {
             description: "A CrowdSec bouncer has not called the Local API for 30 minutes: it enforces a frozen list."
                 .to_string(),
@@ -4589,7 +4607,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             for_duration: Duration::from_secs(5 * 60),
             severity: Severity::Warning,
             repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base("crowdsec_bouncer_stale", "CrowdSec bouncer stopped pulling", RuleKind::Threshold, "changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])")
+            ..base("crowdsec_bouncer_stale", "CrowdSec bouncer stopped pulling", RuleKind::Threshold, "changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m]) and dumbmonit_crowdsec_bouncer_requests_total")
         },
         Rule {
             description: "CrowdSec has not read a single log line in six hours: its acquisition is broken and it sees no attack."
@@ -4599,7 +4617,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             for_duration: Duration::from_secs(30 * 60),
             severity: Severity::Warning,
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
-            ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])")
+            ..base("crowdsec_no_logs_read", "CrowdSec reads no logs", RuleKind::Threshold, "increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h]) and dumbmonit_crowdsec_lines_read_total")
         },
         // --- Proxys inverses (`collectors/{traefik,caddy,npm}`) ---
         Rule {
@@ -6465,6 +6483,32 @@ mod tests {
         let host_down: Vec<_> = builtin_rules().into_iter().filter(|r| r.is_host_down()).collect();
         assert_eq!(host_down.len(), 1);
         assert_eq!(host_down[0].severity, Severity::Critical);
+    }
+
+    /// Les règles de fraîcheur jugent une cible, pas chacune de ses variantes :
+    /// la fenêtre de sept jours garde des séries que plus personne n'écrit, et
+    /// sans réduction par cible leur âge croissant fait sonner une cible vivante.
+    #[test]
+    fn la_regle_injoignable_ne_garde_qu_une_serie_par_cible() {
+        let rule = builtin_rules().into_iter().find(|r| r.is_host_down()).expect("host_down");
+        assert_eq!(rule.query, HOST_DOWN_QUERY);
+        assert!(rule.query.starts_with("bottomk by (target) (1, "), "{}", rule.query);
+        assert!(rule.query.contains("tlast_over_time(dumbmonit_up[7d])"));
+    }
+
+    /// Une règle d'absence de progrès (`changes`, `increase` sous un seuil) sur
+    /// une longue fenêtre doit se restreindre aux séries encore écrites : une
+    /// variante figée n'y progresse plus par définition.
+    #[test]
+    fn les_regles_d_absence_de_progres_ignorent_les_series_figees() {
+        for rule in builtin_rules() {
+            let absence = matches!(rule.operator, Operator::Lt | Operator::Le)
+                && ["changes", "increase", "delta"].iter().any(|f| rule.query.contains(f))
+                && rule.query.contains('[');
+            if absence {
+                assert!(rule.query.contains(" and "), "{} also fires on stale series", rule.uid);
+            }
+        }
     }
 
     #[test]

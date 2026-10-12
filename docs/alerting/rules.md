@@ -14,7 +14,7 @@ below is shipped enabled on every instance.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| Device unreachable | No measurement received for more than three minutes. `time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 min | Warning (`critical`) | 6 h |
+| Device unreachable | No measurement received for more than three minutes. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 min | Warning (`critical`) | 6 h |
 | High CPU | CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %. | > 90 % | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
 | Unusual CPU | CPU load noticeably different from the usual at this time and day of the week (seasonal baseline). | score > 3.5 | 15 min | Info (`info`) | 6 h |
 | Disk almost full | Filesystem 90% full or more, per mount point (SNMP, Proxmox storages and root filesystems); clears below 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
@@ -679,8 +679,8 @@ carries a `target` label (the device id) and a `host` label (its name).
 Some patterns used by the built-in rules:
 
 ```
-# Age of the last sample: what "unreachable" means
-time() - tlast_over_time(dumbmonit_up[7d])
+# Age of the last sample, freshest series per device: what "unreachable" means
+bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))
 
 # One value per device, whatever the source
 avg by (target, host) (dumbmonit_cpu_load_percent or dumbmonit_proxmox_node_cpu_percent or dumbmonit_cpu_usage_percent)
