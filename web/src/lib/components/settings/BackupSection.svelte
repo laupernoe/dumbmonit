@@ -311,7 +311,7 @@
 					{/if}
 
 					<div class="flex flex-wrap items-center gap-3" aria-live="polite">
-						<Button type="submit" variant="primary" loading={exporting}>
+						<Button type="submit" variant="secondary" loading={exporting}>
 							<Download class="size-4" aria-hidden="true" />
 							{m.settings_backup_download()}
 

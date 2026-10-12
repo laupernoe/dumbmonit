@@ -40,7 +40,7 @@
 
 {#if shown}
 	{@const relayOn = shown.relay}
-	<Panel title={m.devicesb_relay_panel_title()} description={m.devicesb_relay_panel_desc()}>
+	<Panel title={m.devicesb_relay_panel_title()}>
 		{#snippet aside()}
 			{#if relayOn}
 				<Plate tone="signal" label={m.devicesb_relay_panel_on()} />
