@@ -36,7 +36,9 @@ reset, never as a fake spike.
 After every successful probe, the server writes `dumbmonit_up = 1` for the
 device. Nothing is written when a probe fails: the series simply stops, and the
 "Device unreachable" rule measures the age of the last sample
-(`time() - tlast_over_time(dumbmonit_up[7d])`).
+(`time() - tlast_over_time(dumbmonit_up[7d])`), keeping only the freshest series
+of each device (`bottomk by (target) (1, …)`): a series no longer written after
+a tag or label change stays in the 7-day window and must not count.
 
 For services (`http`, `tcp`, `dns`, `ping`, `tls`), `dumbmonit_up = 1` means
 "the monitor ran", and `dumbmonit_probe_success` says whether the service is
@@ -100,7 +102,7 @@ rate(dumbmonit_if_octets_in{target="4"}[5m]) * 8
 avg by (host) (avg_over_time(dumbmonit_probe_success[30d]))
 
 # Every device that has not reported for 5 minutes
-time() - tlast_over_time(dumbmonit_up[7d]) > 300
+bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d])) > 300
 ```
 
 ## Scraping DumbMonit
