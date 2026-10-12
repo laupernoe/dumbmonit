@@ -66,7 +66,11 @@ pub struct TargetView {
 /// Seul le texte est conservé en base ; les préfixes proviennent de l'affichage
 /// de `ProbeError`, dont `means_down` fait la même distinction.
 fn error_kind(message: &str) -> &'static str {
-    if db::targets::error_means_down(message) { "down" } else { "config" }
+    if db::targets::error_means_down(message) || db::targets::error_means_service_down(message) {
+        "down"
+    } else {
+        "config"
+    }
 }
 
 impl TargetView {
@@ -651,7 +655,8 @@ pub async fn probe_now(
 
     match state.collectors.probe(&target, state.config.probe_timeout).await {
         Ok(samples) => {
-            db::targets::record_probe(&state.pool, id, None).await?;
+            let verdict = db::targets::service_failure(&samples);
+            db::targets::record_probe(&state.pool, id, verdict.as_deref()).await?;
             let series = samples.iter().map(|s| s.series_key()).collect();
             let sample_count = samples.len();
             // Écriture directe plutôt que par le tampon : l'utilisateur qui vient

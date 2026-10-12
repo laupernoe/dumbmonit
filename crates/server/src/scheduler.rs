@@ -154,8 +154,10 @@ async fn probe_once(state: AppState, target: dumbmonit_proto::Target) {
     let error_message = match result {
         Ok(samples) => {
             debug!(target = target.id, count = samples.len(), "probe succeeded");
+            // Une sonde de disponibilité réussie peut constater une panne.
+            let verdict = db::targets::service_failure(&samples);
             state.sink.send(samples).await;
-            None
+            verdict
         }
         Err(error) => {
             // Une cible injoignable est un événement métier normal, journalisé en
