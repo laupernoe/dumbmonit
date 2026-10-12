@@ -14,6 +14,7 @@
 	import { Check, ChevronDown, Search } from 'lucide-svelte';
 	import type { CollectorInfo } from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { filterGroups, groupCollectors, type KindChoice, type KindGroup } from './kinds';
 
 	interface Props {
@@ -155,7 +156,11 @@
 											active ? 'border-signal/30 bg-surface text-signal-ink' : 'border-line bg-surface-2 text-ink-2'
 										}`}
 									>
-										<Icon class="size-4" aria-hidden="true" />
+										{#if choice.feature}
+											<Icon class="size-4" aria-hidden="true" />
+										{:else}
+											<KindIcon kind={choice.kind} />
+										{/if}
 									</span>
 									<span class="min-w-0 flex-1 pr-5">
 										<span class="flex flex-wrap items-center gap-x-2 gap-y-1">
