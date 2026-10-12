@@ -37,6 +37,9 @@ struct Overview {
     platform_label: Option<&'static str>,
     /// Champs suivis, dans l'ordre d'affichage.
     fields: Vec<FieldView>,
+    /// Dernière comparaison des métadonnées à la référence (UTC sans
+    /// suffixe) : elle n'a lieu qu'aux sondes de changement.
+    changes_checked_at: Option<String>,
     robots_checked_at: Option<String>,
     robots_blocks_all: Option<bool>,
     sitemap_ok: Option<bool>,
@@ -68,6 +71,7 @@ async fn overview(
             probe: None,
             platform_label: None,
             fields: Vec::new(),
+            changes_checked_at: None,
             robots_checked_at: None,
             robots_blocks_all: None,
             sitemap_ok: None,
@@ -96,6 +100,7 @@ async fn overview(
         platform_label: probe.as_ref().map(|p| p.platform.label()),
         probe,
         fields,
+        changes_checked_at: row.changes_checked_at,
         robots_checked_at: row.robots_checked_at,
         robots_blocks_all: row.robots_blocks_all,
         sitemap_ok: row.sitemap_ok,

@@ -2,6 +2,8 @@
 //! cible. Toute erreur ici est une erreur de configuration : elle s'affiche à
 //! côté de l'équipement et ne déclenche aucune alerte.
 
+use std::time::Duration;
+
 use dumbmonit_proto::{ProbeError, Target};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
@@ -12,12 +14,21 @@ pub const OPTION_MAX_REDIRECTS: &str = "max_redirects";
 pub const OPTION_USER_AGENT: &str = "user_agent";
 pub const OPTION_IGNORE_QUERY: &str = "ignore_query";
 pub const OPTION_ALLOW_PRIVATE: &str = dumbmonit_collectors::uptime::guard::OPTION;
+pub const OPTION_CHANGE_CHECK: &str = "change_check_minutes";
+pub const OPTION_HOST_SPACING: &str = "host_spacing_seconds";
 
 pub const DEFAULT_MIN_TEXT_CHARS: u32 = 20;
 pub const MAX_MIN_TEXT_CHARS: u32 = 100_000;
 pub const DEFAULT_MAX_REDIRECTS: u32 = 10;
 pub const MAX_MAX_REDIRECTS: u32 = 30;
 pub const DEFAULT_IGNORE_QUERY: bool = true;
+/// Défaut de `DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES` : six heures.
+pub const DEFAULT_CHANGE_CHECK_MINUTES: u32 = 360;
+/// Une semaine.
+pub const MAX_CHANGE_CHECK_MINUTES: u32 = 10_080;
+/// Défaut de `DUMBMONIT_WEBSITE_HOST_SPACING_SECS`.
+pub const DEFAULT_HOST_SPACING_SECS: u32 = 2;
+pub const MAX_HOST_SPACING_SECS: u32 = 3600;
 
 #[derive(Debug, Clone)]
 pub struct Options {
@@ -32,6 +43,12 @@ pub struct Options {
     /// comparaisons d'adresses (adresse finale, canonique).
     pub ignore_query: bool,
     pub allow_private: bool,
+    /// Période de la comparaison des métadonnées ; `None` : celle de
+    /// l'instance. Zéro : à chaque sonde.
+    pub change_check: Option<Duration>,
+    /// Écart minimal avant la requête suivante vers le même domaine ; `None` :
+    /// celui de l'instance.
+    pub host_spacing: Option<Duration>,
     /// Empreinte de ce qui change la comparaison elle-même (adresse,
     /// `ignore_query`) : quand elle change, la référence repart de zéro au lieu
     /// de signaler un changement.
@@ -62,10 +79,26 @@ impl Options {
             user_agent: tag(target, OPTION_USER_AGENT).map(str::to_string),
             ignore_query,
             allow_private: parse_bool(target, OPTION_ALLOW_PRIVATE, false)?,
+            change_check: change_check(target)?,
+            host_spacing: host_spacing(target)?,
             fingerprint: hex::encode(hasher.finalize()),
             url,
         })
     }
+}
+
+/// L'option `change_check_minutes`, si elle est posée.
+pub fn change_check(target: &Target) -> Result<Option<Duration>, ProbeError> {
+    let minutes = parse_opt_u32(target, OPTION_CHANGE_CHECK, 0..=MAX_CHANGE_CHECK_MINUTES)?;
+    Ok(minutes.map(|m| Duration::from_secs(u64::from(m) * 60)))
+}
+
+/// L'option `host_spacing_seconds`, si elle est posée. Le planificateur la lit
+/// avant la sonde, sans s'arrêter à une valeur fausse : c'est la sonde qui la
+/// signale.
+pub fn host_spacing(target: &Target) -> Result<Option<Duration>, ProbeError> {
+    let seconds = parse_opt_u32(target, OPTION_HOST_SPACING, 0..=MAX_HOST_SPACING_SECS)?;
+    Ok(seconds.map(|s| Duration::from_secs(u64::from(s))))
 }
 
 /// Adresse d'un site : `https://` est supposé quand le schéma manque.
@@ -109,7 +142,15 @@ fn parse_u32(
     default: u32,
     range: std::ops::RangeInclusive<u32>,
 ) -> Result<u32, ProbeError> {
-    let Some(raw) = tag(target, key) else { return Ok(default) };
+    Ok(parse_opt_u32(target, key, range)?.unwrap_or(default))
+}
+
+fn parse_opt_u32(
+    target: &Target,
+    key: &str,
+    range: std::ops::RangeInclusive<u32>,
+) -> Result<Option<u32>, ProbeError> {
+    let Some(raw) = tag(target, key) else { return Ok(None) };
     let value: u32 = raw
         .parse()
         .map_err(|_| ProbeError::Config(format!("\"{key}\" expects an integer, got \"{raw}\"")))?;
@@ -120,13 +161,12 @@ fn parse_u32(
             range.end()
         )));
     }
-    Ok(value)
+    Ok(Some(value))
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use std::time::Duration;
 
     pub(crate) fn target(address: &str, tags: &[(&str, &str)]) -> Target {
         Target {
@@ -154,6 +194,35 @@ pub(crate) mod tests {
         assert!(options.ignore_query);
         assert!(options.expect_text.is_none() && options.user_agent.is_none());
         assert!(!options.allow_private);
+        assert!(options.change_check.is_none() && options.host_spacing.is_none());
+    }
+
+    #[test]
+    fn cadence_des_changements_et_ecart_par_domaine() {
+        let options = Options::from_target(&target(
+            "ex.fr",
+            &[("change_check_minutes", "0"), ("host_spacing_seconds", "15")],
+        ))
+        .unwrap();
+        assert_eq!(options.change_check, Some(Duration::ZERO), "zéro : à chaque sonde");
+        assert_eq!(options.host_spacing, Some(Duration::from_secs(15)));
+        let options =
+            Options::from_target(&target("ex.fr", &[("change_check_minutes", "1440")])).unwrap();
+        assert_eq!(options.change_check, Some(Duration::from_secs(86_400)));
+        for (key, value) in [
+            ("change_check_minutes", "10081"),
+            ("change_check_minutes", "-1"),
+            ("host_spacing_seconds", "3601"),
+            ("host_spacing_seconds", "deux"),
+        ] {
+            assert!(
+                matches!(
+                    Options::from_target(&target("ex.fr", &[(key, value)])),
+                    Err(ProbeError::Config(_))
+                ),
+                "{key}={value}"
+            );
+        }
     }
 
     #[test]

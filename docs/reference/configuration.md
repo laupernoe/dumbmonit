@@ -12,6 +12,10 @@ configuration file to mount.
 | `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics). |
 | `DUMBMONIT_SECRET` | *(generated)* | Instance secret. If empty, read from `<data dir>/secret.key`, generated on first start. Encrypts device credentials, channel secrets and agent tokens with AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Maximum simultaneous probes, all collectors combined. |
+| `DUMBMONIT_WEBSITE_MAX_CONCURRENT` | `10` | Maximum simultaneous [website health](../devices/website.md#pacing-hundreds-of-sites) checks, 1 to 256, within the limit above. |
+| `DUMBMONIT_WEBSITE_MAX_PER_HOST` | `1` | Maximum simultaneous website checks towards one domain (`www.example.com` and `shop.example.com` count as one), 1 to 16. |
+| `DUMBMONIT_WEBSITE_HOST_SPACING_SECS` | `2` | Minimum seconds between two website checks towards one domain, 0 to 3600. A site's `host_spacing_seconds` option overrides it after that site's check. |
+| `DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES` | `360` | Default period, in minutes, of the website metadata comparison (title, description, canonical, final address, `robots.txt`), 0 to 10080; 0 compares at every check. Up/down is still checked at every polling interval. A site's `change_check_minutes` option overrides it. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Hard timeout of one probe. Service monitors have their own, shorter `timeout_seconds` option. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Period of the batched writes towards VictoriaMetrics. |
 | `DUMBMONIT_FLUSH_BATCH` | `5000` | Number of buffered samples that triggers a write before the period elapses. |
