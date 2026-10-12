@@ -8,6 +8,7 @@
 	import { formatPercent } from '#lib/format.js';
 	import { Plate } from '#lib/ui/index.js';
 	import UptimeBar from './UptimeBar.svelte';
+	import LatencyGraph from './LatencyGraph.svelte';
 	import { ITEM_STATE } from './words';
 
 	interface Props {
@@ -49,6 +50,7 @@
 		<div class="mt-2">
 			<UptimeBar history={item.history} label={item.label} compact />
 		</div>
+		<LatencyGraph series={item.latency_series} label={item.label} />
 	</li>
 {:else}
 <li class="px-4 py-4 sm:px-5">
@@ -65,6 +67,7 @@
 	<div class="mt-3">
 		<UptimeBar history={item.history} label={item.label} />
 	</div>
+	<LatencyGraph series={item.latency_series} label={item.label} />
 
 	<dl class="graticule mt-2 flex flex-wrap gap-x-6 gap-y-1 pb-1 text-sm">
 		{#each readouts as readout (readout.label)}

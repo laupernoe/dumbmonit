@@ -5479,6 +5479,8 @@ components:
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
         footer_text: { type: string }
         homepage_url: { type: string }
+        show_calendar: { type: boolean }
+        show_latency: { type: boolean }
         logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
@@ -5521,6 +5523,8 @@ components:
           description: Decorative scene ids. Omitted keeps the saved list; `[]` means no scene.
         scene_rotation: { type: string, description: Omitted keeps the saved value (`visit` on creation). }
         simple: { type: boolean, default: false, description: Omitted keeps the saved value. }
+        show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }
+        show_latency: { type: boolean, default: false, description: Public response-time graph per service. Omitted keeps the saved value. }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
         domain:
           type: [string, "null"]
@@ -5613,6 +5617,18 @@ components:
             homepage_url: { type: string }
             logo_url: { type: [string, "null"] }
             subscribe: { type: boolean }
+            show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
+            show_latency: { type: boolean, description: Present (true) only when the page shows response times. }
+        calendar:
+          type: array
+          description: One entry per day, oldest first (90 days). Present only when the calendar is enabled.
+          items:
+            type: object
+            properties:
+              date: { type: string }
+              state: { type: string, enum: [operational, degraded, outage, nodata] }
+              uptime_pct: { type: [number, "null"] }
+              incidents: { type: integer }
         overall: { type: string }
         generated_at: { type: string }
         groups:
@@ -5634,6 +5650,12 @@ components:
                     uptime_30d: { type: [number, "null"] }
                     uptime_90d: { type: [number, "null"] }
                     latency_ms: { type: [number, "null"] }
+                    latency_series:
+                      type: object
+                      description: Present only when response times are enabled and the service has latency data.
+                      properties:
+                        h24: { type: array, items: { type: array, items: { type: number }, description: "[unix seconds, milliseconds]" } }
+                        d7: { type: array, items: { type: array, items: { type: number } } }
                     history:
                       type: array
                       items:

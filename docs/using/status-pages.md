@@ -28,6 +28,8 @@ its own route (`/status/new`, `/status/<id>`). The public rendering is at
 | **Theme** | Day, night, or follow the visitor's system. |
 | **History** | The longest window the history bar covers (30, 60 or 90 days). The bar adapts to the age of the page's data: it shows as many days as the oldest service has been monitored, from 7 days up to this setting. A page never says more than this — see [Badges](#badges). |
 | **Simple mode** | A plain page: no scene, no mascot, no animation and no easter eggs. Light or dark follows the visitor's system, with a toggle in the header; the page's Theme setting is ignored. |
+| **Daily calendar** | Off by default. Adds a 90-day calendar under the services: one small cell per day, all services combined. See [The 90-day calendar](#the-90-day-calendar). |
+| **Response times** | Off by default. Adds a small response-time graph (24 h / 7 days) to each service that has latency data. See [Response times](#response-times). |
 | **Published** | Off = draft: the page, its badges and its logo answer "not found" to visitors until you switch it on. |
 
 Then tick the devices to show. For each one, set the **label** visitors will
@@ -92,6 +94,33 @@ perfect ones. Hover a square, or focus the bar and move with the arrow keys
 (Home and End jump to the ends), to read the date, the uptime, the **minutes
 of downtime** and the incidents that touched that day. The words are there for
 screen readers too: status is never told by colour alone.
+
+### The 90-day calendar
+
+Enable **Daily calendar** in the page settings to show a grid of the last 90
+days, a contribution-graph style layout with one column per week. Each cell is
+a UTC day and takes the worst result among the page's services that day:
+
+| Cell | Meaning |
+| --- | --- |
+| Solid green | Operational: every measured service was at 99.9 % or better and no incident was announced. |
+| Striped amber | Degraded: the worst service fell below 99.9 %, or an incident touched that day. |
+| Red with a cross | Outage: the worst service fell below 95 %. |
+| Empty, dashed | No data: nothing was measured that day. |
+
+Hover, focus or tap a day to read its date, the worst uptime and the number
+of incidents; arrow keys move between cells. The grid fits a phone screen
+without scrolling sideways. The page only sends these aggregated cells, never
+the underlying queries, and nothing at all is sent when the option is off.
+
+### Response times
+
+Enable **Response times** to add a small graph under each service: the average
+response time of its checks over the last 24 hours (15-minute slices) or the
+last 7 days (2-hour slices), with a switch between the two and the average and
+peak spelled out below. Only services that have latency data (probes such as
+`http`, `tcp`, `ping`, `dns`, `tls`) get a graph; others show nothing. The
+page receives the averaged points only, and nothing when the option is off.
 
 How the state is decided:
 
