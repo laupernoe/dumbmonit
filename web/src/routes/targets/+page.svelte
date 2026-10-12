@@ -23,11 +23,12 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
-	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import ViewSwitcher from '#lib/components/devices/ViewSwitcher.svelte';
+	import { loadRackView, saveRackView, type RackView } from '#lib/components/devices/view.js';
 	import { nearestRow, needsAttention } from '#lib/components/devices/rack.js';
 	import {
 		buildFolders,
@@ -53,6 +54,14 @@
 	let search = $state('');
 	let segment = $state<Segment>('all');
 	let kind = $state('');
+
+	/** Rows, tiles or compact: remembered per viewer, in this browser only. */
+	let view = $state<RackView>(loadRackView());
+	function setView(next: RackView) {
+		view = next;
+		saveRackView(next);
+	}
+	const names = $derived(new Map(targets.map((t) => [t.id, t.name])));
 
 	const stateOf = (target: Target) => displayState(target, probes.get(target.id));
 
@@ -133,6 +142,8 @@
 	// real sections, in the same order, until a device is dropped into it.
 	let pendingEmptyFolders = $state<Set<string>>(new Set());
 	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '');
+	/** Reordering hit-tests rows top to bottom: offered in the two list layouts only. */
+	const canReorder = $derived(auth.isAdmin && !filtered && view !== 'tiles');
 	const folderSections = $derived.by(() => {
 		const base = buildFolders(effectiveTargets, stateOf, visible);
 		if (filtered || pendingEmptyFolders.size === 0) return base;
@@ -369,7 +380,7 @@
 	 * works) and is disarmed by any early movement.
 	 */
 	function onRowPointerDown(id: TargetId, event: PointerEvent) {
-		if (!auth.isAdmin || filtered) return;
+		if (!canReorder) return;
 		if (event.button !== 0) return;
 		const startX = event.clientX;
 		const startY = event.clientY;
@@ -528,7 +539,7 @@
 	let announce = $state('');
 
 	function onRowKeyDown(id: TargetId, event: KeyboardEvent) {
-		if (!auth.isAdmin || filtered) return;
+		if (!canReorder) return;
 		const target = targets.find((t) => t.id === id);
 		if (!target) return;
 		if (event.key === ' ' || event.key === 'Enter') {
@@ -614,7 +625,7 @@
 			<Menu label={m.devices_targets_create_folder_menu()} align="right">
 				{#snippet trigger({ toggle, open })}
 					<Button
-						variant="secondary"
+						variant="ghost"
 						aria-haspopup="menu"
 						aria-expanded={open}
 						onclick={() => {
@@ -662,9 +673,6 @@
 				{/snippet}
 			</Menu>
 		{/if}
-		{#if auth.isAdmin}
-			<ImportWebsites ondone={() => void load()} />
-		{/if}
 		<!-- The empty state carries the primary itself: one primary per view. Viewers cannot add. -->
 		{#if auth.isAdmin && (firstLoad || pageError || targets.length > 0)}
 			<ClickSpark>
@@ -679,7 +687,7 @@
 
 {#if !firstLoad && !pageError && targets.length > 0}
 	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-		<label class="relative min-w-0 flex-1 lg:max-w-sm">
+		<label class="relative min-w-0 flex-1 lg:max-w-sm lg:min-w-56">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
 			<input
@@ -690,8 +698,8 @@
 				autocomplete="off"
 			/>
 		</label>
-		<div class="flex min-w-0 flex-wrap items-center gap-3">
-			<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} />
+		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} />
+		<div class="flex min-w-0 items-center justify-between gap-3 lg:contents">
 			<label class="min-w-0">
 				<span class="sr-only">{m.devices_targets_filter_kind()}</span>
 				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={kind}>
@@ -701,6 +709,7 @@
 					{/each}
 				</select>
 			</label>
+			<div class="lg:ml-auto"><ViewSwitcher value={view} onchange={setView} /></div>
 		</div>
 	</div>
 {/if}
@@ -757,7 +766,7 @@
 			<button type="button" class="ml-1 inline-flex min-h-10 items-center text-ink-2 underline hover:text-ink" onclick={clearFilters}>{m.devices_targets_clear_filters()}</button>
 		</p>
 	{/if}
-	<div class="flex flex-col gap-4">
+	<div class={`flex flex-col ${view === 'compact' ? 'gap-3' : 'gap-4'}`}>
 		{#each folderSections as section (section.key)}
 			{@const collapsed = collapsedFolders.has(section.key)}
 			{#if showFolderHeaders}
@@ -772,7 +781,7 @@
 					busy={moving}
 					onrename={(next) => renameFolder(section.key, next)}
 					ondelete={() => deleteFolder(section.key)}
-					dropActive={auth.isAdmin && dragging !== null && !filtered}
+					dropActive={canReorder && dragging !== null}
 					dropHover={dragging !== null && dropSlot?.kind === 'folder' && dropSlot.key === section.key}
 					onheaderref={(el) => registerHeader(section.key, el)}
 				/>
@@ -782,7 +791,9 @@
 					rows={section.rows}
 					{sparklines}
 					{kindLabels}
-					reorder={auth.isAdmin && !filtered ? reorderControls() : null}
+					reorder={canReorder ? reorderControls() : null}
+					layout={view}
+					{names}
 				/>
 			{/if}
 		{/each}

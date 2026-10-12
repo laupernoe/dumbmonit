@@ -17,7 +17,7 @@
 	import type { CollectorInfo } from '#lib/api/index.js';
 	import { CopyBlock, Panel, Plate } from '#lib/ui/index.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { kindIcon } from './kinds';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	interface Props {
 		collector: CollectorInfo | null;
@@ -29,7 +29,6 @@
 
 	const setup = $derived(collector?.setup ?? null);
 	const title = $derived(setup?.title || (collector ? m.deviceform_setup_title({ label: collector.label }) : m.deviceform_setup_title_empty()));
-	const Icon = $derived(collector ? kindIcon(collector.kind) : null);
 
 	/** Short human list of the credential families the kind accepts. */
 	const credentialSummary = $derived.by(() => {
@@ -51,9 +50,9 @@
 <Panel {title} class="rise-in">
 	{#snippet aside()}
 		<div class="flex items-center gap-2">
-			{#if Icon}
+			{#if collector}
 				<span class="flex size-9 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
-					<Icon class="size-[1.125rem]" aria-hidden="true" />
+					<KindIcon kind={collector.kind} class="size-[1.125rem]" />
 				</span>
 			{/if}
 			{#if onclose}

@@ -120,13 +120,13 @@
 
 		<div class="grid gap-6">
 			{#each schedules as schedule (schedule.id)}
-				<div class="rounded-[var(--radius-card)] border border-line p-4">
+				<div class="border-t border-line pt-6 first:border-t-0 first:pt-0">
 					<ReportEditor {schedule} channels={emailChannels} {defaultTimezone} {timezones} onsaved={saved} ondeleted={removed} />
 				</div>
 			{/each}
 
 			{#if adding}
-				<div class="rounded-[var(--radius-card)] border border-line p-4">
+				<div class="border-t border-line pt-6 first:border-t-0 first:pt-0">
 					<ReportEditor
 						schedule={null}
 						channels={emailChannels}
@@ -140,7 +140,7 @@
 			{:else if schedules.length === 0}
 				<EmptyState icon={Mail} title={m.settings_reports_empty_title()} description={m.settings_reports_empty_description()}>
 					{#snippet action()}
-						<Button variant="primary" onclick={() => (adding = true)}>
+						<Button variant="secondary" onclick={() => (adding = true)}>
 							<Plus class="size-4" aria-hidden="true" />
 							{m.settings_reports_setup()}
 						</Button>

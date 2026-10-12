@@ -1152,6 +1152,26 @@ const WEBSITE_OPTIONS: &[OptionView] = &[
         "Leave ?utm_source=… and other URL parameters out when comparing the final address and the canonical URL.",
         true,
     ),
+    grouped(
+        number(
+            "change_check_minutes",
+            "Check for changes every (minutes)",
+            "How often the title, description, canonical URL, final address and robots.txt are compared with the reference, from 0 to 10080 (a week). Up/down, blank page and expected text are checked at every polling interval regardless. A value seen once is confirmed at the next poll. Empty: the server default, 360 (DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES). 0: at every poll.",
+            "360",
+            "360",
+        ),
+        "Pacing",
+    ),
+    grouped(
+        number(
+            "host_spacing_seconds",
+            "Wait before the next request to this domain (seconds)",
+            "Minimum gap after this site's check before any other check of a site on the same domain (www.example.com and shop.example.com share one), from 0 to 3600. Keeps a firewall or CDN from mistaking a list of sites for an attack. Empty: the server default, 2 (DUMBMONIT_WEBSITE_HOST_SPACING_SECS).",
+            "2",
+            "2",
+        ),
+        "Pacing",
+    ),
     ALLOW_PRIVATE_TARGETS,
 ];
 
@@ -3886,7 +3906,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 steps: &[
                     "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
                     "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
-                    "The first check records the reference: final address, title, description, canonical URL, indexing rules. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
+                    "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
                     "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder.",
                 ],
                 warning: "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
@@ -5256,6 +5276,8 @@ mod tests {
                     "max_redirects",
                     "user_agent",
                     "ignore_query",
+                    "change_check_minutes",
+                    "host_spacing_seconds",
                     "allow_private_targets",
                 ],
             ),
@@ -6017,6 +6039,14 @@ mod tests {
             Some(o::DEFAULT_MAX_REDIRECTS.to_string().as_str())
         );
         assert_eq!(defaut(o::OPTION_IGNORE_QUERY), Some("true"));
+        assert_eq!(
+            defaut(o::OPTION_CHANGE_CHECK),
+            Some(o::DEFAULT_CHANGE_CHECK_MINUTES.to_string().as_str())
+        );
+        assert_eq!(
+            defaut(o::OPTION_HOST_SPACING),
+            Some(o::DEFAULT_HOST_SPACING_SECS.to_string().as_str())
+        );
         for cle in [o::OPTION_EXPECT_TEXT, o::OPTION_USER_AGENT] {
             assert_eq!(defaut(cle), Some(""), "{cle}");
         }

@@ -500,6 +500,14 @@ pub struct SilencePayload {
     pub enabled: Option<bool>,
 }
 
+/// Filtres de `GET /api/alerts`.
+#[derive(Debug, Default, Deserialize)]
+pub struct ActiveQuery {
+    /// Ne garde que les alertes de cet équipement.
+    #[serde(default)]
+    pub target_id: Option<i64>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct HistoryQuery {
     /// Borne basse, au format RFC 3339. Par défaut, les sept derniers jours.
@@ -1105,7 +1113,10 @@ fn rule_not_found(id: i64) -> ApiError {
 // Alertes actives et historique
 // --------------------------------------------------------------------------
 
-pub async fn list_active(State(state): State<AppState>) -> ApiResult<Json<Vec<ActiveAlertView>>> {
+pub async fn list_active(
+    State(state): State<AppState>,
+    Query(query): Query<ActiveQuery>,
+) -> ApiResult<Json<Vec<ActiveAlertView>>> {
     let now = Utc::now();
     let alerts = db::alerts::list_active(&state.pool).await?;
     let rules: HashMap<String, Rule> = db::alerts::list_rules(&state.pool)
@@ -1130,6 +1141,9 @@ pub async fn list_active(State(state): State<AppState>) -> ApiResult<Json<Vec<Ac
                 Some(id) => live.contains(&id),
                 None => !crate::alerting::model::carries_target_id(&alert.labels),
             })
+            // Le filtre `target_id` ne garde que les alertes de cet équipement
+            // (une alerte sans équipement n'y répond jamais).
+            .filter(|alert| query.target_id.is_none_or(|id| alert.target_id == Some(id)))
             .map(|alert| {
                 let rule = rules.get(&alert.rule_uid);
                 ActiveAlertView::new(alert, rule, now)

@@ -174,7 +174,7 @@
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
 				{#if support.state === 'ready' && support.permission !== 'denied' && !thisDevice}
-					<Button size="sm" variant="primary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => void enable()}>
+					<Button size="sm" variant="secondary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => void enable()}>
 						<BellRing class="size-4" aria-hidden="true" />
 						{m.settings_push_enable()}
 					</Button>

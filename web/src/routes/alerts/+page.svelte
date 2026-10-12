@@ -238,10 +238,7 @@
 
 <svelte:head><title>{m.alerts_page_title()} · DumbMonit</title></svelte:head>
 
-<PageHeader
-	title={m.alerts_page_title()}
-	description={m.alerts_page_description()}
->
+<PageHeader title={m.alerts_page_title()}>
 	{#snippet actions()}
 		{#if auth.canOperate}
 			<Button

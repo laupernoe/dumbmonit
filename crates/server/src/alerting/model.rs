@@ -334,7 +334,13 @@ pub fn series_key(labels: &BTreeMap<String, String>) -> String {
 
 /// Préfixe des étiquettes recopiées depuis les `tags` de la cible par
 /// `Target::base_labels()`.
-const TAG_LABEL_PREFIX: &str = "tag_";
+pub const TAG_LABEL_PREFIX: &str = "tag_";
+
+/// Nom d'étiquette (sans le préfixe) sous lequel un tag est exporté : tout ce
+/// qui sort de `[a-zA-Z0-9_]` devient `_`, comme dans `Target::base_labels()`.
+pub fn tag_label_key(tag: &str) -> String {
+    tag.chars().map(|c| if c.is_ascii_alphanumeric() || c == '_' { c } else { '_' }).collect()
+}
 
 /// Vrai si la série porte l'identifiant de sa cible.
 pub fn carries_target_id(labels: &BTreeMap<String, String>) -> bool {

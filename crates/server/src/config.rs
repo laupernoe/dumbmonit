@@ -118,6 +118,55 @@ pub struct Config {
     /// surveillance des sites (`DUMBMONIT_BROWSER_URL`, `http://browser:9222`).
     /// `None` : pas de capture, la comparaison de texte fonctionne seule.
     pub browser_url: Option<String>,
+    /// Bornes des sondes de santé des sites (`website`), pour qu'une liste de
+    /// centaines de sites ne parte jamais d'un bloc. Voir
+    /// [`crate::website::throttle`].
+    pub website: WebsiteLimits,
+}
+
+/// Réglages d'instance du collecteur `website`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WebsiteLimits {
+    /// Sondes de sites en vol au plus, tous sites confondus
+    /// (`DUMBMONIT_WEBSITE_MAX_CONCURRENT`).
+    pub max_concurrent: usize,
+    /// Sondes en vol au plus vers un même domaine
+    /// (`DUMBMONIT_WEBSITE_MAX_PER_HOST`).
+    pub max_per_host: usize,
+    /// Écart minimal entre deux requêtes vers un même domaine
+    /// (`DUMBMONIT_WEBSITE_HOST_SPACING_SECS`) ; l'option `host_spacing_seconds`
+    /// d'un site le remplace pour ce site.
+    pub host_spacing: Duration,
+    /// Période par défaut de la comparaison des métadonnées
+    /// (`DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES`) ; l'option
+    /// `change_check_minutes` d'un site la remplace pour ce site.
+    pub change_check: Duration,
+}
+
+impl WebsiteLimits {
+    /// Défauts : dix sites en vol, un seul par domaine, deux secondes entre
+    /// deux requêtes vers un même domaine, métadonnées comparées toutes les six
+    /// heures.
+    fn from_env() -> Result<Self> {
+        use crate::website::options as o;
+        let spacing = env_parsed::<u64>(
+            "DUMBMONIT_WEBSITE_HOST_SPACING_SECS",
+            &o::DEFAULT_HOST_SPACING_SECS.to_string(),
+        )?
+        .min(u64::from(o::MAX_HOST_SPACING_SECS));
+        let minutes = env_parsed::<u64>(
+            "DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES",
+            &o::DEFAULT_CHANGE_CHECK_MINUTES.to_string(),
+        )?
+        .min(u64::from(o::MAX_CHANGE_CHECK_MINUTES));
+        Ok(Self {
+            max_concurrent: env_parsed::<usize>("DUMBMONIT_WEBSITE_MAX_CONCURRENT", "10")?
+                .clamp(1, 256),
+            max_per_host: env_parsed::<usize>("DUMBMONIT_WEBSITE_MAX_PER_HOST", "1")?.clamp(1, 16),
+            host_spacing: Duration::from_secs(spacing),
+            change_check: Duration::from_secs(minutes * 60),
+        })
+    }
 }
 
 impl Config {
@@ -168,6 +217,7 @@ impl Config {
             browser_url: env_var("DUMBMONIT_BROWSER_URL")
                 .map(|url| url.trim().trim_end_matches('/').to_string())
                 .filter(|url| !url.is_empty()),
+            website: WebsiteLimits::from_env()?,
         })
     }
 

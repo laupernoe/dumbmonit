@@ -66,7 +66,11 @@ pub struct TargetView {
 /// Seul le texte est conservé en base ; les préfixes proviennent de l'affichage
 /// de `ProbeError`, dont `means_down` fait la même distinction.
 fn error_kind(message: &str) -> &'static str {
-    if db::targets::error_means_down(message) { "down" } else { "config" }
+    if db::targets::error_means_down(message) || db::targets::error_means_service_down(message) {
+        "down"
+    } else {
+        "config"
+    }
 }
 
 impl TargetView {
@@ -651,10 +655,21 @@ pub async fn probe_now(
 
     match state.collectors.probe(&target, state.config.probe_timeout).await {
         Ok(samples) => {
-            db::targets::record_probe(&state.pool, id, None).await?;
+            let verdict = db::targets::service_failure(&samples);
+            db::targets::record_probe(&state.pool, id, verdict.as_deref()).await?;
             let series = samples.iter().map(|s| s.series_key()).collect();
             let sample_count = samples.len();
-            state.sink.send(samples).await;
+            // Écriture directe plutôt que par le tampon : l'utilisateur qui vient
+            // de cliquer relit aussitôt l'équipement, et le lot ne partirait qu'à
+            // la prochaine échéance du tampon. En cas d'échec, le tampon reprend
+            // le lot et le réessaiera comme les autres. Le délai borne l'attente
+            // d'un VictoriaMetrics lent : la réponse ne doit pas en dépendre.
+            let written =
+                tokio::time::timeout(Duration::from_secs(5), state.victoria.write(&samples)).await;
+            if !matches!(written, Ok(Ok(()))) {
+                tracing::debug!(target = id, "direct write failed, samples buffered");
+                state.sink.send(samples).await;
+            }
             Ok(Json(ProbeReport { sample_count, series }))
         }
         Err(error) => {

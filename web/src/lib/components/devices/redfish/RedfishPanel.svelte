@@ -239,7 +239,7 @@
 
 			<!-- 3. Is power redundant. -->
 			{#if view.power_supplies.length > 0 || view.power_redundancy.length > 0}
-				<Panel title={m.devicesb_redfish_panel_power()} description={m.devicesb_redfish_panel_power_desc()} padded={false} class="rise-in">
+				<Panel title={m.devicesb_redfish_panel_power()} padded={false} class="rise-in">
 					<ul class="divide-y divide-line">
 						{#each view.power_redundancy as group (`${group.chassis}/${group.group}`)}
 							{@const plate = healthPlate(group.health, 'redundancy')}
@@ -270,7 +270,7 @@
 
 			<!-- 4. Are the drives healthy. -->
 			{#if view.drives.length > 0 || view.storage.length > 0}
-				<Panel title={m.devicesb_redfish_panel_drives()} description={m.devicesb_redfish_panel_drives_desc()} padded={false} class="rise-in">
+				<Panel title={m.devicesb_redfish_panel_drives()} padded={false} class="rise-in">
 					<ul class="divide-y divide-line">
 						{#each view.storage as controller (`${controller.system}/${controller.storage}`)}
 							{@const plate = healthPlate(controller.health)}
@@ -308,7 +308,7 @@
 
 			<!-- 5. Memory, processors, the controller, voltages. -->
 			{#if view.systems.length > 0 || view.managers.length > 0 || view.voltages.length > 0}
-				<Panel title={m.devicesb_redfish_panel_mem_title()} description={m.devicesb_redfish_panel_mem_desc()} padded={false} class="rise-in">
+				<Panel title={m.devicesb_redfish_panel_mem_title()} padded={false} class="rise-in">
 					<ul class="divide-y divide-line">
 						{#each view.systems as s (s.id)}
 							{#if s.memory_health !== null || s.memory_total_bytes !== null}

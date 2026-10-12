@@ -31,7 +31,8 @@ the scheduler, it could not write its zero.
 
 Built-in rules that apply to all eleven: Service down (3 minutes), Service
 flapping (more than six state changes in thirty minutes), Slow service (more
-than 3 s for ten minutes). For every check that reads a certificate — `http`,
+than 3 s for ten minutes, successful checks only: a failing check lasts its
+timeout and is Service down, not slowness). For every check that reads a certificate — `http`,
 `tls`, `smtp`, `mqtt`, `websocket`: Certificate expiring soon (14 days) and
 Certificate expired.
 

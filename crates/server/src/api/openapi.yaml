@@ -1123,6 +1123,11 @@ paths:
         parent device is unreachable, named by `suppressed_by`). Alerts of
         deleted or paused devices are never listed.
       x-token-scope: read
+      parameters:
+        - name: target_id
+          in: query
+          description: Only the alerts of this device.
+          schema: { type: integer }
       responses:
         "200":
           description: Alerts.
@@ -5764,7 +5769,7 @@ components:
 
     WebsiteOverview:
       type: object
-      required: [checked_at, error, probe, platform_label, fields, robots_checked_at, robots_blocks_all, sitemap_ok]
+      required: [checked_at, error, probe, platform_label, fields, changes_checked_at, robots_checked_at, robots_blocks_all, sitemap_ok]
       properties:
         checked_at: { type: [string, "null"], description: "Last reading, successful or not. UTC, without suffix." }
         error: { type: [string, "null"], description: "Why the last reading failed (unreachable, certificate refused, redirect loop…); `probe` then stays the last successful one." }
@@ -5776,7 +5781,8 @@ components:
         fields:
           type: array
           items: { $ref: "#/components/schemas/WebsiteField" }
-        robots_checked_at: { type: [string, "null"], description: "robots.txt and the sitemap are read at most once an hour. UTC, without suffix." }
+        changes_checked_at: { type: [string, "null"], description: "Last comparison of the metadata with the reference. It only happens every change_check_minutes (6 hours by default); a pending value is checked again at the next probe. UTC, without suffix." }
+        robots_checked_at: { type: [string, "null"], description: "robots.txt and the sitemap are read at change checks, at most once an hour. UTC, without suffix." }
         robots_blocks_all: { type: [boolean, "null"], description: "robots.txt forbids Googlebot (or *) to crawl /." }
         sitemap_ok: { type: [boolean, "null"], description: "The sitemap announced by robots.txt, or /sitemap.xml, answers 200 and reads as a sitemap." }
 

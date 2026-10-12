@@ -13,6 +13,7 @@ pub mod chat;
 pub mod custom;
 pub mod error;
 pub mod gateway;
+pub mod guard;
 pub mod http;
 pub mod message;
 pub mod oncall;
@@ -57,7 +58,10 @@ pub fn http_client() -> reqwest::Client {
         // Jamais de redirection vers un autre hôte : les en-têtes d'un canal
         // (clé d'API, jeton) ne doivent partir que vers la destination saisie, et
         // une réponse ne doit pas pouvoir renvoyer le serveur vers sa boucle locale.
-        .redirect(dumbmonit_collectors::http::same_host_redirects())
+        .redirect(guard::redirects())
+        // Ni le VictoriaMetrics embarqué ni l'API de ce serveur, même par un nom
+        // qui changerait de réponse entre la vérification et la connexion.
+        .dns_resolver(Arc::new(guard::Resolver))
         .build()
         // Un échec ici ne peut venir que d'un environnement TLS cassé ; le client par
         // défaut permet au moins au reste du serveur de démarrer.
@@ -75,7 +79,8 @@ fn insecure_http_client() -> &'static reqwest::Client {
             .timeout(SEND_TIMEOUT)
             .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
             .danger_accept_invalid_certs(true)
-            .redirect(dumbmonit_collectors::http::same_host_redirects())
+            .redirect(guard::redirects())
+            .dns_resolver(Arc::new(guard::Resolver))
             .build()
             .unwrap_or_default()
     })
@@ -241,19 +246,24 @@ pub async fn deliver_stored(
 }
 
 /// Comme [`test_channel`], avec la base : voir [`deliver_stored`].
+///
+/// `public_url` est l'adresse publique de l'instance, quand elle est connue :
+/// le message de test porte alors un lien comme une vraie alerte.
 pub async fn test_channel_stored(
     store: webpush::Store<'_>,
     http: &reqwest::Client,
     config: &ChannelConfig,
+    public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
     if config.kind != webpush::KIND {
-        return test_channel(http, config).await;
+        return test_channel(http, config, public_url).await;
     }
     build(http, config)?;
     if sending_disabled() {
         return Ok(());
     }
-    webpush::deliver(store, config, &message::test_message(&config.name)).await.map(|_| ())
+    let message = message::test_message_linked(&config.name, public_url);
+    webpush::deliver(store, config, &message).await.map(|_| ())
 }
 
 /// Envoie un message sur plusieurs canaux.
@@ -291,12 +301,13 @@ pub fn select<'a>(channels: &'a [ChannelConfig], wanted: &[i64]) -> Vec<&'a Chan
 pub async fn test_channel(
     http: &reqwest::Client,
     config: &ChannelConfig,
+    public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
     let notifier = build(http, config)?;
     if sending_disabled() {
         return Ok(());
     }
-    notifier.send(&message::test_message(&config.name)).await
+    notifier.send(&message::test_message_linked(&config.name, public_url)).await
 }
 
 #[cfg(test)]

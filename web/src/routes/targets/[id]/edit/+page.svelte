@@ -18,7 +18,7 @@
 	import { ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
-	import { kindIcon } from '#lib/components/device-form/kinds.js';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
 
@@ -62,7 +62,6 @@
 		const kind = target.kind;
 		return collectors.find((c) => c.kind === kind) ?? normalizeCollector({ kind });
 	});
-	const KindIcon = $derived(target ? kindIcon(target.kind) : null);
 </script>
 
 <svelte:head><title>{target ? m.deviceform_edit_page_title({ name: target.name }) : m.deviceform_edit_page_title_fallback()}</title></svelte:head>
@@ -93,9 +92,9 @@
 		<div class="min-w-0 lg:col-span-7">
 			<Panel title={collector.label} description={m.deviceform_edit_type_fixed()}>
 				{#snippet aside()}
-					{#if KindIcon}
+					{#if target}
 						<Plate tone="ghost" bare>
-							<KindIcon class="size-3.5" aria-hidden="true" />
+							<KindIcon kind={target.kind} class="size-3.5" />
 							{target?.kind}
 						</Plate>
 					{/if}

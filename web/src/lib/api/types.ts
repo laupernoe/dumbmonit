@@ -3512,6 +3512,8 @@ export interface WebsiteOverview {
 	probe: WebsiteProbe | null;
 	platform_label: string | null;
 	fields: WebsiteField[];
+	/** Last comparison of the metadata with the reference (every `change_check_minutes`). */
+	changes_checked_at: string | null;
 	robots_checked_at: string | null;
 	robots_blocks_all: boolean | null;
 	sitemap_ok: boolean | null;

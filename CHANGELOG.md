@@ -22,6 +22,11 @@ All notable changes to this project are documented here. The format follows
   can no longer bounce a probe to the loopback or a metadata service, and
   custom credential headers (`X-Api-Key`, `PRIVATE-TOKEN`…) are never sent to
   another host.
+- **Notification channels cannot target DumbMonit itself.** A webhook, a
+  self-hosted service URL or an SMTP relay that resolves to the embedded
+  VictoriaMetrics or to the server's own loopback listener is refused with a
+  configuration error, checked after DNS resolution, at connection time and on
+  every redirect. Other loopback and LAN addresses stay allowed.
 - **Web Push limits.** An account holds at most 10 push devices, and a test
   notification can be sent once every 30 seconds.
 - **Secret-looking device options are masked for non-admins.** Options whose
@@ -121,6 +126,14 @@ All notable changes to this project are documented here. The format follows
 - **A "What's new" window after an update.** The first screen after an
   upgrade lists the headline changes of the new version once, with a link to
   the full release notes; **Settings → About** reopens it.
+
+### Changed
+
+- **The tip bubbles are gone.** Pip's tips and the "Did you know" card on the
+  overview are removed.
+- **The documentation is available in 9 languages** (English, German, Spanish,
+  French, Italian, Portuguese, Brazilian Portuguese, Russian, Simplified
+  Chinese).
 
 ### Fixed
 
