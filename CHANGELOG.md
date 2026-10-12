@@ -122,6 +122,14 @@ All notable changes to this project are documented here. The format follows
   upgrade lists the headline changes of the new version once, with a link to
   the full release notes; **Settings → About** reopens it.
 
+### Changed
+
+- **The tip bubbles are gone.** Pip's tips and the "Did you know" card on the
+  overview are removed.
+- **The documentation is available in 9 languages** (English, German, Spanish,
+  French, Italian, Portuguese, Brazilian Portuguese, Russian, Simplified
+  Chinese).
+
 ### Fixed
 
 - **Every channel type can be saved.** The database still only accepted the
