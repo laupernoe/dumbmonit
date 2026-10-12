@@ -12,7 +12,10 @@ import * as si from 'simple-icons';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const version = JSON.parse(readFileSync(join(root, 'node_modules/simple-icons/package.json'), 'utf8')).version;
 
-/** Collector kind → simple-icons slug. Kinds without a mark keep their Lucide icon. */
+/**
+ * Collector kind → simple-icons slug. Kinds without a mark keep their Lucide
+ * icon; so do kinds whose mark is a wordmark unreadable at 16 px (VMware).
+ */
 const KINDS = {
 	proxmox: 'proxmox',
 	pbs: 'proxmox',
@@ -37,7 +40,6 @@ const KINDS = {
 	mikrotik: 'mikrotik',
 	unifi: 'ubiquiti',
 	homeassistant: 'homeassistant',
-	vsphere: 'vmware',
 	redis: 'redis',
 	mongodb: 'mongodb',
 	rabbitmq: 'rabbitmq',

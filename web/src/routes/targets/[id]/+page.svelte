@@ -470,6 +470,17 @@
 	$effect(() => () => {
 		if (probeTimer) clearTimeout(probeTimer);
 	});
+
+	// The action row sits right-aligned from `lg`, left-aligned and wrapping
+	// below: the "more" menu opens towards the free side so it never leaves the screen.
+	let actionsAtEnd = $state(false);
+	$effect(() => {
+		const query = window.matchMedia('(min-width: 64rem)');
+		actionsAtEnd = query.matches;
+		const onchange = () => (actionsAtEnd = query.matches);
+		query.addEventListener('change', onchange);
+		return () => query.removeEventListener('change', onchange);
+	});
 </script>
 
 <svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
@@ -576,7 +587,7 @@
 						{m.devices_target_edit()}
 					</Button>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
-					<Menu label={m.devices_target_more_actions()} align="right">
+					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
 						{#snippet trigger({ toggle, open })}
 							<button
 								type="button"
