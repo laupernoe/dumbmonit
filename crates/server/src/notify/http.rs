@@ -8,9 +8,10 @@
 
 use std::time::Duration;
 
-use reqwest::Method;
+use reqwest::{Method, Url};
 
 use crate::notify::error::NotifyError;
+use crate::notify::guard;
 use crate::notify::secret::{self, SecretString};
 
 /// Délai au-delà duquel un service de notification est considéré comme muet.
@@ -167,6 +168,17 @@ impl<'a> Request<'a> {
 
 /// Envoie une requête et transforme toute défaillance en [`NotifyError`] expurgée.
 pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), NotifyError> {
+    // Jamais vers le serveur lui-même (VictoriaMetrics embarqué, API locale) :
+    // l'URL est jugée ici après résolution, puis à nouveau par le résolveur du
+    // client et à chaque redirection. Une URL illisible est laissée à reqwest,
+    // qui refusera de l'envoyer.
+    let port = match Url::parse(request.url) {
+        Ok(url) => {
+            guard::vet_url(&url).await?;
+            url.port_or_known_default()
+        }
+        Err(_) => None,
+    };
     let mut builder = http.request(request.method, request.url).timeout(SEND_TIMEOUT);
 
     if !request.query.is_empty() {
@@ -189,7 +201,12 @@ pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), No
         Body::Empty => builder,
     };
 
-    let response = builder.send().await.map_err(|error| {
+    let response = guard::scoped(port, builder.send()).await.map_err(|error| {
+        // Refus posé par le résolveur ou la politique de redirection : c'est la
+        // configuration du canal qui est en cause, pas le réseau.
+        if let Some(refused) = guard::refusal_in(&error) {
+            return NotifyError::from(refused);
+        }
         // `without_url` d'abord : reqwest inclut l'URL complète dans son message, et
         // pour Discord, Slack ou Telegram cette URL *est* le secret. L'expurgation
         // qui suit reste une seconde barrière, au cas où le jeton apparaîtrait

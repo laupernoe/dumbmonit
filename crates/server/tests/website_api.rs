@@ -86,6 +86,7 @@ struct Setup {
     app: TestApp,
     cookie: String,
     collector: WebsiteCollector,
+    pool: sqlx::SqlitePool,
 }
 
 async fn setup() -> Setup {
@@ -96,10 +97,10 @@ async fn setup() -> Setup {
     registry.register(Arc::new(collectors::DummyCollector));
     registry.register(Arc::new(WebsiteCollector::new(pool.clone())));
     let collector = WebsiteCollector::new(pool.clone());
-    let app = common::build_with_registry(dir, config, pool, registry).await;
+    let app = common::build_with_registry(dir, config, pool.clone(), registry).await;
     app.create_admin().await;
     let cookie = app.admin_cookie().await;
-    Setup { app, cookie, collector }
+    Setup { app, cookie, collector, pool }
 }
 
 impl Setup {
@@ -136,6 +137,18 @@ impl Setup {
 
     async fn probe(&self, target: &Target) -> Vec<Sample> {
         self.collector.probe(target).await.expect("sonde réussie")
+    }
+
+    /// Recule la dernière comparaison des métadonnées de `minutes`.
+    async fn age_check(&self, target: &Target, minutes: i64) {
+        sqlx::query(
+            "UPDATE website_state SET changes_checked_at = datetime('now', ?) WHERE target_id = ?",
+        )
+        .bind(format!("-{minutes} minutes"))
+        .bind(target.id)
+        .execute(&self.pool)
+        .await
+        .expect("comparaison reculée");
     }
 
     async fn get(&self, uri: &str) -> Value {
@@ -207,7 +220,7 @@ async fn website_un_changement_de_titre_n_est_confirme_qu_a_la_deuxieme_sonde() 
     let (base, site) = fake_site().await;
     html_page(&site, "/", article("Accueil", "Le site", ""));
     let s = setup().await;
-    let target = s.create(&base, &[]).await;
+    let target = s.create(&base, &[("change_check_minutes", "0")]).await;
     s.probe(&target).await;
 
     // Une variante vue une seule fois (test A/B) : en attente, rien n'alerte.
@@ -248,13 +261,77 @@ async fn website_un_changement_de_titre_n_est_confirme_qu_a_la_deuxieme_sonde() 
 }
 
 #[tokio::test]
+async fn website_les_changements_sont_compares_moins_souvent_que_la_disponibilite() {
+    let (base, site) = fake_site().await;
+    html_page(&site, "/", article("Accueil", "Le site", ""));
+    let s = setup().await;
+    let target = s.create(&base, &[]).await;
+    s.probe(&target).await;
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert!(overview["changes_checked_at"].is_string(), "la référence compte comme comparaison");
+
+    // Entre deux sondes de changement (six heures par défaut), la page est
+    // lue pour sa disponibilité mais ses métadonnées ne sont pas comparées.
+    html_page(&site, "/", article("Nouveau titre", "Le site", ""));
+    let samples = s.probe(&target).await;
+    assert_eq!(value(&samples, "website_up"), Some(1.0));
+    assert_eq!(value(&samples, "website_title_changed"), Some(0.0));
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert_eq!(field(&overview, "title")["value"], "Accueil");
+    assert!(field(&overview, "title")["pending"].is_null(), "pas encore comparé");
+    assert_eq!(overview["probe"]["metadata"]["title"], "Nouveau titre", "mais bien lu");
+
+    // Six heures plus tard : en attente…
+    s.age_check(&target, 361).await;
+    let samples = s.probe(&target).await;
+    assert_eq!(value(&samples, "website_title_changed"), Some(0.0));
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert_eq!(field(&overview, "title")["pending"], "Nouveau titre");
+    // … et confirmé dès la sonde suivante, sans attendre une autre période.
+    let samples = s.probe(&target).await;
+    assert_eq!(value(&samples, "website_title_changed"), Some(1.0));
+
+    // Une valeur vue une fois puis disparue est écartée à la sonde suivante.
+    s.age_check(&target, 361).await;
+    html_page(&site, "/", article("Variante", "Le site", ""));
+    s.probe(&target).await;
+    html_page(&site, "/", article("Nouveau titre", "Le site", ""));
+    s.probe(&target).await;
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert!(field(&overview, "title")["pending"].is_null());
+    assert_eq!(field(&overview, "title")["value"], "Nouveau titre");
+    html_page(&site, "/", article("Variante", "Le site", ""));
+    s.probe(&target).await;
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert!(field(&overview, "title")["pending"].is_null(), "pas de comparaison due");
+}
+
+#[tokio::test]
+async fn website_cadence_des_changements_reglable_par_site() {
+    let (base, site) = fake_site().await;
+    html_page(&site, "/", article("Accueil", "Le site", ""));
+    let s = setup().await;
+    let target = s.create(&base, &[("change_check_minutes", "60")]).await;
+    s.probe(&target).await;
+    html_page(&site, "/", article("Autre", "Le site", ""));
+    s.age_check(&target, 30).await;
+    s.probe(&target).await;
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert!(field(&overview, "title")["pending"].is_null(), "trente minutes : pas encore");
+    s.age_check(&target, 61).await;
+    s.probe(&target).await;
+    let overview = s.get(&format!("/api/targets/{}/website", target.id)).await;
+    assert_eq!(field(&overview, "title")["pending"], "Autre");
+}
+
+#[tokio::test]
 async fn website_parametres_d_url_ignores_et_demenagement_detecte() {
     let (base, site) = fake_site().await;
     redirect(&site, "/", 302, "/accueil?utm_source=1");
     html_page(&site, "/accueil", article("Accueil", "Le site", ""));
     html_page(&site, "/ailleurs", article("Accueil", "Le site", ""));
     let s = setup().await;
-    let target = s.create(&base, &[]).await;
+    let target = s.create(&base, &[("change_check_minutes", "0")]).await;
     s.probe(&target).await;
 
     for n in 2..5 {
@@ -399,7 +476,15 @@ async fn website_le_type_est_decrit_avec_ses_options() {
     assert_eq!(website["label"], "Website health & SEO");
     let keys: Vec<&str> =
         website["options"].as_array().unwrap().iter().map(|o| o["key"].as_str().unwrap()).collect();
-    for key in ["expect_text", "min_text_chars", "max_redirects", "user_agent", "ignore_query"] {
+    for key in [
+        "expect_text",
+        "min_text_chars",
+        "max_redirects",
+        "user_agent",
+        "ignore_query",
+        "change_check_minutes",
+        "host_spacing_seconds",
+    ] {
         assert!(keys.contains(&key), "{key} absent : {keys:?}");
     }
 }

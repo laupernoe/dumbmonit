@@ -7,6 +7,7 @@
 //! entrées/sorties, ce qui rend l'ensemble du comportement testable sans réseau ni
 //! base de données.
 
+use std::cmp::{Ordering, Reverse};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use chrono::{DateTime, Utc};
@@ -225,6 +226,44 @@ impl Candidate<'_> {
             .filter_map(|l| self.point.labels.get(*l))
             .all(|n| *n == target.name)
     }
+
+    /// Nombre d'étiquettes `tag_*` que la fiche actuelle de la cible dément : tag
+    /// retiré ou valeur changée. Une série qui en porte est celle d'avant la
+    /// retouche, que VictoriaMetrics garde dans la fenêtre d'une requête.
+    fn obsolete_tags(&self) -> usize {
+        let Some(target) = self.target else { return 0 };
+        let current = |key: &str, value: &str| {
+            target.tags.iter().any(|(tag, v)| v == value && model::tag_label_key(tag) == key)
+        };
+        self.point
+            .labels
+            .iter()
+            .filter(|(label, value)| {
+                label
+                    .strip_prefix(model::TAG_LABEL_PREFIX)
+                    .is_some_and(|key| !current(key, value.as_str()))
+            })
+            .count()
+    }
+
+    /// Vrai si cette série doit remplacer `other`, de même empreinte.
+    ///
+    /// Les deux décrivent le même objet de la même cible et ne diffèrent que par
+    /// son nom ou ses tags : une seule est encore écrite, les autres sont des
+    /// variantes figées (renommage, tags retouchés, étiquettes qui ont cessé
+    /// d'être exportées) qu'une requête à longue fenêtre continue de renvoyer.
+    /// Garder la première rencontrée laissait l'ordre de la réponse décider, et
+    /// une variante figée de `host_down` sonnait sept jours durant. Dans l'ordre :
+    /// le nom courant, des tags conformes à la fiche, puis, pour `host_down` dont
+    /// la valeur est l'âge du dernier échantillon, la plus fraîche.
+    fn preferred_over(&self, other: &Self, rule: &Rule) -> bool {
+        let rank = |c: &Self| (c.bears_current_name(), Reverse(c.obsolete_tags()));
+        match rank(self).cmp(&rank(other)) {
+            Ordering::Greater => true,
+            Ordering::Less => false,
+            Ordering::Equal => rule.is_host_down() && self.point.value < other.point.value,
+        }
+    }
 }
 
 /// État intermédiaire d'une empreinte, avant application des surcouches.
@@ -307,9 +346,10 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
 
         // Premier passage : rattachement et dédoublonnage. Deux séries qui se
         // réduisent à la même empreinte — la série d'avant et celle d'après un
-        // renommage, ou une agrégation mal écrite — ne doivent pas se battre pour
-        // la même ligne d'état : celle qui porte le nom courant de la cible gagne,
-        // sinon la première rencontrée.
+        // renommage ou d'une retouche des tags, ou une agrégation mal écrite — ne
+        // doivent pas se battre pour la même ligne d'état : celle qui décrit la
+        // cible telle qu'elle est aujourd'hui gagne (voir
+        // `Candidate::preferred_over`), sinon la première rencontrée.
         let mut candidates: Vec<Candidate<'_>> = Vec::with_capacity(series.len());
         let mut position: HashMap<String, usize> = HashMap::with_capacity(series.len());
         for point in series {
@@ -328,7 +368,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             let candidate = Candidate { fingerprint: fingerprint.clone(), target, point };
             match position.get(&fingerprint) {
                 Some(&at) => {
-                    if !candidates[at].bears_current_name() && candidate.bears_current_name() {
+                    if candidate.preferred_over(&candidates[at], rule) {
                         candidates[at] = candidate;
                     }
                 }
@@ -1350,6 +1390,117 @@ mod tests {
             assert_eq!(cycle.alerts[0].fingerprint, cycle1.alerts[0].fingerprint);
             assert!(cycle.groups.is_empty());
         }
+    }
+
+    /// Cas du labo : une option (`port`) cesse d'être exportée en `tag_port`.
+    /// L'ancienne série de `dumbmonit_up` n'est plus écrite mais reste dans la
+    /// fenêtre de sept jours, son âge croît ; elle se confond avec la nouvelle
+    /// sous la même empreinte. Quel que soit l'ordre de la réponse, c'est la plus
+    /// fraîche qui compte : pas d'alerte fantôme, et celle qui sonnait se résout.
+    #[test]
+    fn une_variante_figee_de_up_ne_fait_pas_sonner_host_down() {
+        let down = rule(crate::alerting::model::RULE_HOST_DOWN, RuleKind::Threshold, 180.0, 0);
+        let mut baselines = BaselineStore::default();
+        let mut target = node(1, None);
+        target.tags.insert("port".to_string(), "8443".to_string());
+
+        let mut stale = point(1, 4000.0);
+        stale.labels.insert("tag_port".to_string(), "8443".to_string());
+        let fresh = point(1, 20.0);
+
+        // L'alerte fantôme était déjà partie, rattachée à l'ancienne variante.
+        let phantom = RuleObservations { rule: down.clone(), series: Some(vec![stale.clone()]) };
+        let first = input(at(0), vec![phantom], vec![target.clone()], Vec::new());
+        let cycle1 = plan_cycle(first, &mut baselines);
+        assert_eq!(cycle1.alerts[0].state.phase, Phase::Firing);
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+
+        for series in [vec![stale.clone(), fresh.clone()], vec![fresh.clone(), stale.clone()]] {
+            let obs = RuleObservations { rule: down.clone(), series: Some(series) };
+            let next = input(at(30), vec![obs], vec![target.clone()], stored.clone());
+            let cycle = plan_cycle(next, &mut baselines);
+            assert_eq!(cycle.alerts.len(), 1, "one identity per device and rule");
+            assert_eq!(cycle.alerts[0].fingerprint, cycle1.alerts[0].fingerprint);
+            assert_eq!(cycle.alerts[0].state.phase, Phase::Resolved, "the device is up");
+            assert_eq!(cycle.alerts[0].value, Some(20.0));
+            assert!(!cycle.alerts[0].labels.contains_key("tag_port"), "labels of the live series");
+        }
+
+        // Sans alerte préalable, la variante figée ne déclenche rien.
+        let obs = RuleObservations { rule: down, series: Some(vec![stale, fresh]) };
+        let cycle = plan_cycle(input(at(30), vec![obs], vec![target], Vec::new()), &mut baselines);
+        assert_eq!(cycle.alerts[0].state.phase, Phase::Ok);
+        assert!(cycle.groups.is_empty());
+    }
+
+    /// Une série dont un `tag_*` contredit la fiche actuelle (tag retiré ou
+    /// changé) est une variante d'avant la retouche : pour toute règle, la série
+    /// conforme l'emporte et l'alerte figée se résout.
+    #[test]
+    fn une_serie_aux_tags_perimes_cede_la_place_a_la_serie_courante() {
+        let cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        let mut baselines = BaselineStore::default();
+        let mut target = node(1, None);
+        target.tags.insert("salle".to_string(), "cave".to_string());
+
+        let mut stale = point(1, 99.0);
+        stale.labels.insert("tag_salle".to_string(), "grenier".to_string());
+        let mut live = point(1, 20.0);
+        live.labels.insert("tag_salle".to_string(), "cave".to_string());
+
+        let before = RuleObservations { rule: cpu.clone(), series: Some(vec![stale.clone()]) };
+        let first = input(at(0), vec![before], vec![target.clone()], Vec::new());
+        let cycle1 = plan_cycle(first, &mut baselines);
+        assert_eq!(cycle1.alerts[0].state.phase, Phase::Firing);
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+
+        for series in [vec![stale.clone(), live.clone()], vec![live.clone(), stale.clone()]] {
+            let obs = RuleObservations { rule: cpu.clone(), series: Some(series) };
+            let next = input(at(30), vec![obs], vec![target.clone()], stored.clone());
+            let cycle = plan_cycle(next, &mut baselines);
+            assert_eq!(cycle.alerts.len(), 1);
+            assert_eq!(cycle.alerts[0].state.phase, Phase::Resolved);
+            assert_eq!(cycle.alerts[0].labels.get("tag_salle").map(String::as_str), Some("cave"));
+        }
+    }
+
+    /// Une étiquette renommée par un collecteur (`host` → `proxy_host` pour
+    /// npm) change l'identité de la série : l'alerte stockée sous l'ancien jeu
+    /// d'étiquettes ne revoit plus sa série et doit se résoudre, au lieu de
+    /// rester `firing` à côté de la nouvelle.
+    #[test]
+    fn une_alerte_sous_un_jeu_d_etiquettes_perime_se_resout() {
+        let offline = rule("npm_host_offline", RuleKind::Threshold, 0.0, 0);
+        let mut baselines = BaselineStore::default();
+
+        let mut old = point(1, 1.0);
+        old.labels.insert("exported_host".to_string(), "app.test".to_string());
+        let before = RuleObservations { rule: offline.clone(), series: Some(vec![old]) };
+        let first = input(at(0), vec![before], vec![node(1, None)], Vec::new());
+        let cycle1 = plan_cycle(first, &mut baselines);
+        assert_eq!(cycle1.alerts[0].state.phase, Phase::Firing);
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+
+        // Le proxy est revenu ; la série porte désormais `proxy_host`.
+        let mut new = point(1, 0.0);
+        new.labels.insert("proxy_host".to_string(), "app.test".to_string());
+        let after = RuleObservations { rule: offline, series: Some(vec![new]) };
+        let next = input(at(30), vec![after], vec![node(1, None)], stored);
+        let cycle2 = plan_cycle(next, &mut baselines);
+        let old_alert = cycle2
+            .alerts
+            .iter()
+            .find(|a| a.fingerprint == cycle1.alerts[0].fingerprint)
+            .expect("the old instance is still reported once");
+        assert_eq!(old_alert.state.phase, Phase::Resolved);
+        assert!(
+            cycle2.alerts.iter().all(|a| a.state.phase != Phase::Firing),
+            "nothing stays firing once the proxy is back"
+        );
+        assert_eq!(cycle2.groups.len(), 1, "the resolution is announced");
     }
 
     #[test]
