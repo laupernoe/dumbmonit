@@ -388,3 +388,36 @@ pub async fn statuses(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetStatu
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use dumbmonit_proto::{MetricKind, Sample};
+
+    use super::*;
+
+    fn gauge(metric: &str, value: f64, probe: &str) -> Sample {
+        Sample::new(metric, value, MetricKind::Gauge, 0).with_label("probe", probe)
+    }
+
+    /// Une sonde NTP ou WebSocket en échec renvoie `Ok` avec un zéro : son
+    /// verdict doit quand même atteindre `last_error`, classé comme une panne.
+    #[test]
+    fn une_sonde_de_service_en_echec_laisse_un_verdict() {
+        let samples = vec![
+            gauge("probe_success", 0.0, "ntp"),
+            gauge("probe_duration_seconds", 5.0, "ntp"),
+            gauge("probe_failure_info", 1.0, "ntp").with_label("reason", "timeout"),
+        ];
+        let verdict = service_failure(&samples).expect("verdict");
+        assert_eq!(verdict, "Service down: the ntp check failed (timeout)");
+        assert!(error_means_service_down(&verdict));
+        assert!(!error_means_down(&verdict), "the target itself is not unreachable");
+    }
+
+    #[test]
+    fn une_sonde_reussie_ou_un_heartbeat_ne_laisse_aucun_verdict() {
+        assert!(service_failure(&[gauge("probe_success", 1.0, "websocket")]).is_none());
+        assert!(service_failure(&[gauge("probe_success", 0.0, "push")]).is_none());
+        assert!(service_failure(&[gauge("up", 1.0, "snmp")]).is_none());
+    }
+}
