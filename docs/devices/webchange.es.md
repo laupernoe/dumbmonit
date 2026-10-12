@@ -1,0 +1,205 @@
+# Cambios en sitios web {#website-changes}
+
+Vigila el *contenido* de una página web, o de un sitio entero, y entérate
+cuando cambie: una página de precios o condiciones, un sitio de
+documentación, un aviso de mantenimiento de un proveedor, una página de
+anuncios públicos, o tu propio sitio tras un despliegue. Cada cambio se
+guarda con el texto antes y después, un diff de líneas y, cuando hay un
+navegador disponible, una captura de cada versión.
+
+Lo que se compara es el **texto visible** de cada página, no su HTML:
+los scripts, estilos, comentarios, bloques `noscript`, `svg` y
+`template` se descartan, los espacios se colapsan y cada bloque (párrafo,
+encabezado, elemento de lista, fila de tabla) se convierte en una línea.
+Una nueva compilación de la misma página, un atributo reordenado o un
+nombre de asset con cache-busting nuevo no cambian nada; una frase
+reformulada sí.
+
+## Página o sitio {#page-or-site}
+
+**Page** (por defecto) lee la dirección del dispositivo y nada más.
+También puede ser un documento de texto plano o JSON, comparado línea
+por línea.
+
+**Site** parte de la dirección y sigue cada página bajo la misma carpeta
+(`https://example.com/docs/intro.html` cubre todo bajo `/docs/`; **Path
+prefix** elige otra carpeta). Las páginas se encuentran:
+
+1. en el sitemap del sitio: las que anuncia `robots.txt` (líneas
+   `Sitemap:`), o `/sitemap.xml`, índices de sitemap incluidos (un
+   nivel);
+2. si no, o cuando el sitemap no lista nada bajo la carpeta, siguiendo
+   los enlaces de cada página, en anchura primero.
+
+Solo se siguen páginas del mismo origen (esquema, host y puerto); los
+enlaces a imágenes, hojas de estilo, scripts, PDFs, archivos comprimidos
+y otros archivos se omiten por su extensión, y cualquier respuesta que
+no sea HTML se ignora. Los fragmentos (`#section`) se descartan y las
+queries vacías se eliminan, así que una página es una dirección.
+`robots.txt` se respeta para las páginas encontradas de esta forma: el
+grupo que nombra `DumbMonit`, o si no el grupo `*`, con `Allow`,
+`Disallow`, `*` y `$`.
+
+El rastreo es educado: como máximo dos peticiones a la vez, medio
+segundo entre dos lotes, el `User-Agent` `DumbMonit/<version>`, un
+tiempo de espera de 15 segundos por petición y 5 MB leídos como máximo
+por página. Se detiene en **Max pages** (25 por defecto, 200 como
+máximo) o tras diez minutos.
+
+## Cómo funciona una comprobación {#how-a-check-works}
+
+El dispositivo se sondea como cualquier otro (cada minuto por defecto),
+pero las páginas solo se leen cada **Check every** minutos (60 por
+defecto, de 5 a 10080). Entre medias, el sondeo solo reporta el estado
+de la última comprobación: el sitio no se consulta cada minuto. Una
+comprobación se ejecuta en segundo plano; dos comprobaciones del mismo
+dispositivo nunca se superponen, y **Check now** en la página del
+dispositivo inicia una de inmediato.
+
+La primera comprobación solo registra la **referencia**: se lee y
+guarda cada página, nada se reporta. A partir de entonces, para cada
+página:
+
+| Situación | Qué se guarda |
+|---|---|
+| Mismo texto que la última vez (tras **Ignore lines**) | Nada nuevo; la página se marca comprobada. |
+| Texto diferente | Una nueva captura y un evento **changed**, con el número de líneas añadidas y eliminadas. |
+| Una página nunca vista antes, o vista de nuevo tras haber desaparecido | Una captura y un evento **new page**. |
+| La página responde 404 o 410 | Un evento **removed page**, la última captura como «before». |
+| Alcance de sitio: un rastreo completo ya no alcanza una página conocida | También un evento **removed page** («No longer linked»). Un rastreo detenido por **Max pages** o por su límite de tiempo nunca concluye que una página desapareció. |
+| Cualquier otro error en una página (tiempo de espera, 403, 500 en una subpágina) | El error se muestra en la página; sin evento. |
+
+Cambiar la dirección, el alcance, el prefijo de ruta o **Ignore lines**
+hace que la siguiente comprobación sea una nueva referencia en lugar de
+reportar cada página como cambiada.
+
+### Ignore lines {#ignore-lines}
+
+Las líneas que cambian en cada visita — un reloj, un contador de
+visitantes, «actualizado hace 5 minutos», una cita aleatoria — se
+reportarían en cada comprobación. **Ignore lines** contiene expresiones
+regulares (sintaxis `regex` de Rust), una por línea o unidas con `|`;
+cualquier línea de texto que coincida con una de ellas se excluye antes
+de comparar. Por ejemplo:
+
+```
+Updated \d+ minutes ago|Visitors: \d+|© \d{4}
+```
+
+### Página de inicio inaccesible {#unreachable-start-page}
+
+Cuando la propia página de inicio no se puede leer (sin respuesta,
+conexión rechazada, tiempo de espera, HTTP 5xx), el dispositivo es
+**inaccesible**: el sondeo falla, y la regla «Device unreachable» se
+activa como para cualquier dispositivo. La página de inicio entonces se
+reintenta en cada sondeo, así que su regreso se ve dentro de un minuto.
+Una página de inicio que rechaza el acceso (401, 403) se reporta como
+un problema de configuración, no como una caída. Los errores en otras
+páginas del sitio solo se muestran en esas páginas.
+
+Las direcciones que solo el propio host de DumbMonit puede alcanzar
+(loopback, link-local, el servicio de metadatos de la nube) se rechazan
+a menos que esté activado **Allow loopback and link-local targets**; las
+direcciones de LAN privada siempre están permitidas.
+
+## Alertas {#alerts}
+
+La regla integrada **Website changed** (`webchange_detected`, Info) se
+activa tras una comprobación que encontró al menos un cambio (página
+cambiada, nueva o eliminada), y se resuelve en la siguiente comprobación
+que no encuentra ninguno. Lee
+`dumbmonit_webchange_last_check_changes`; asígnala a un canal como
+cualquier otra regla, o eleva su severidad, en **Alerts → Rules**.
+Consulta [Reglas integradas](../alerting/rules.md#website-changes).
+
+| Métrica | Qué |
+|---|---|
+| `dumbmonit_webchange_pages` | Páginas seguidas (páginas eliminadas excluidas). |
+| `dumbmonit_webchange_pages_failed` | Páginas seguidas cuya última lectura falló. |
+| `dumbmonit_webchange_last_check_changes` | Cambios encontrados por la última comprobación. |
+
+Las métricas aparecen una vez hecha la primera comprobación.
+
+## Capturas de pantalla {#screenshots}
+
+La imagen de DumbMonit no tiene navegador: las capturas vienen de un
+Chromium sin interfaz opcional, controlado a través del Chrome DevTools
+Protocol. El archivo Compose incluye uno como el servicio `browser`,
+bajo el perfil `screenshots`, así que solo se inicia cuando se pide:
+
+```
+DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
+```
+
+`DUMBMONIT_BROWSER_URL` apunta DumbMonit hacia el navegador (cualquier
+Chromium iniciado con `--remote-debugging-port`, por ejemplo
+`chromedp/headless-shell`; el servidor lee `/json/version` y habla con
+la dirección a la que resuelve el nombre de host). Pon la variable en un
+archivo `.env` junto a `docker-compose.yml` para conservarla.
+
+Una captura se toma solo cuando una página obtiene una nueva captura (la
+referencia, y cada cambio), nunca en una comprobación sin cambios: una
+ventana de 1366 × 900, la página completa hasta 5000 píxeles, como JPEG.
+La opción **Screenshots** las desactiva para un dispositivo. Sin
+navegador, o cuando no responde, la comparación de texto funciona igual
+y las capturas simplemente no tienen imagen; la página del dispositivo
+lo indica.
+
+El navegador carga la página como lo haría un visitante, con sus
+scripts: lo que muestra puede diferir del texto que comparó DumbMonit,
+que es el HTML que envió el servidor.
+
+## Almacenamiento {#storage}
+
+El texto de cada captura se guarda en la base de datos (1 MB como
+máximo por página); las capturas de pantalla son archivos bajo
+`/data/webchange/<id del dispositivo>/`. Por dispositivo, se conservan
+los últimos cien cambios; una captura se conserva mientras sea la más
+reciente de una página o un cambio conservado la referencia, y todo lo
+demás, archivos incluidos, se elimina tras cada comprobación. Eliminar
+el dispositivo lo elimina todo.
+
+## Vigilar un sitio web por cambios {#watch-a-website-for-changes}
+
+Los pasos de abajo son los que muestra el aviso junto al formulario.
+
+1. En la dirección, pega la página a vigilar, con http:// o https://.
+   Para vigilar un sitio entero o una de sus secciones, pega su página
+   de inicio y define «Scope» como «site»: se sigue cada página bajo la
+   misma carpeta, hasta «Max pages».
+2. Las líneas que cambian en cada visita (un reloj, un contador de
+   visitantes, «actualizado hace 5 minutos») se reportarían cada vez:
+   lístalas en «Ignore lines» como expresiones regulares.
+3. La primera comprobación solo registra la referencia, nada se
+   reporta. A partir de entonces, cada comprobación compara el texto
+   visible página por página y guarda una copia antes/después de cada
+   cambio, mostrada en la página del dispositivo; la alerta «Website
+   changed» te avisa.
+4. Para una captura de cada versión, inicia el servicio de navegador
+   opcional del archivo Compose y apunta DumbMonit hacia él:
+
+    ```
+    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
+    ```
+
+!!! warning
+    Solo se compara el texto que envía el servidor: una página dibujada
+    enteramente por JavaScript muestra poco o nada a la comprobación.
+    Las páginas detrás de un inicio de sesión tampoco son accesibles.
+
+Credenciales: ninguna. Las comprobaciones siempre se ejecutan en el
+servidor DumbMonit: una vigilancia de sitio web no puede pasar por un
+agente relay.
+
+## Opciones {#options}
+
+| Opción | Por defecto | Significado |
+|---|---|---|
+| Scope (`scope`) | `page` | `page`: solo la dirección. `site`: cada página bajo la misma carpeta. |
+| Max pages (`max_pages`) | `25` | Alcance de sitio: páginas leídas como máximo por comprobación, de 1 a 200. |
+| Path prefix (`path_prefix`) | carpeta de la dirección | Alcance de sitio: solo páginas cuya ruta empieza con esto (`/docs/`). |
+| Ignore lines (`ignore`) | — | Expresiones regulares; las líneas de texto coincidentes no se comparan. |
+| Screenshots (`screenshots`) | `true` | Guardar una captura de cada versión nueva, cuando hay un navegador configurado. |
+| Check every (`check_interval_minutes`) | `60` | Minutos entre dos comprobaciones, de 5 a 10080. |
+| Accept an unverifiable certificate (`insecure_tls`) | `false` | Para un sitio propio detrás de un certificado autofirmado. |
+| Allow loopback and link-local targets (`allow_private_targets`) | `false` | Alcanzar un sitio servido por el propio host de DumbMonit. |
