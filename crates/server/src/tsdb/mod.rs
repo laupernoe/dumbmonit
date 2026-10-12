@@ -281,10 +281,26 @@ impl Victoria {
 
     /// Exécute une requête MetricsQL instantanée.
     pub async fn query(&self, query: &str) -> Result<Vec<InstantSeries>> {
+        self.query_with(query, &[]).await
+    }
+
+    /// Requête instantanée qui voit aussi les échantillons des dernières
+    /// secondes.
+    ///
+    /// VictoriaMetrics masque par défaut les points de moins de 30 s
+    /// (`-search.latencyOffset`), prévu pour des scrapes encore incomplets. Nos
+    /// lots sont écrits d'un seul tenant : l'interface peut donc lire le
+    /// résultat d'une sonde sitôt écrit, en particulier après « Probe now ».
+    pub async fn query_fresh(&self, query: &str) -> Result<Vec<InstantSeries>> {
+        self.query_with(query, &[("latency_offset", "0s")]).await
+    }
+
+    async fn query_with(&self, query: &str, extra: &[(&str, &str)]) -> Result<Vec<InstantSeries>> {
         let response = self
             .http
             .get(format!("{}/api/v1/query", self.base_url))
             .query(&[("query", query)])
+            .query(extra)
             .send()
             .await
             .context("interrogation de VictoriaMetrics")?;
