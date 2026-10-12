@@ -1416,7 +1416,7 @@ fn alert_word(alert: &ActiveAlertView) -> &'static str {
 }
 
 async fn active_alerts(state: &AppState) -> Result<Vec<ActiveAlertView>, ToolError> {
-    let Json(alerts) = alerts::list_active(State(state.clone())).await?;
+    let Json(alerts) = alerts::list_active(State(state.clone()), Query(alerts::ActiveQuery::default())).await?;
     Ok(alerts)
 }
 
