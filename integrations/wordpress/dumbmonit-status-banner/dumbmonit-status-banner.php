@@ -41,7 +41,7 @@ function dmt_sanitize($in): array
     $url = esc_url_raw($raw, ['http', 'https']);
     $ok = dmt_valid_url($url);
     if ($raw !== '' && !$ok) {
-        add_settings_error(DMT_OPT, 'dmt_bad_url', __('Invalid status page URL. Expected https://your-server/api/public/status/<address>. The URL was not saved.', 'dumbmonit-status-banner'));
+        add_settings_error(DMT_OPT, 'dmt_bad_url', esc_html__('Invalid status page URL. Expected https://your-server/api/public/status/<address>. The URL was not saved.', 'dumbmonit-status-banner'));
     }
     if ($ok) {
         delete_transient('dmt_' . md5(untrailingslashit($url)));
