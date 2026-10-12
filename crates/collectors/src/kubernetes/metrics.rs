@@ -87,14 +87,34 @@ pub fn workload_of(pod: &Pod) -> String {
 /// Fenêtre pendant laquelle un arrêt en erreur compte comme une boucle en cours.
 const CRASH_WINDOW_MINUTES: i64 = 10;
 
+/// Codes de sortie d'un conteneur tué de l'extérieur : SIGKILL (137), SIGTERM
+/// (143), et 255, que k3s pose sur les conteneurs qu'il retrouve morts à son
+/// redémarrage.
+const KILLED_EXIT_CODES: [i64; 3] = [137, 143, 255];
+
+/// Vrai si l'arrêt vient d'un arrêt du nœud ou du runtime plutôt que du
+/// conteneur lui-même. Un manque de mémoire sort aussi en 137, mais avec la
+/// raison `OOMKilled` : celui-là reste un plantage.
+fn killed_from_outside(t: &Terminated) -> bool {
+    KILLED_EXIT_CODES.contains(&t.exit_code) && t.reason.as_deref() != Some("OOMKilled")
+}
+
 /// Un conteneur du pod attend dans une boucle de redémarrage.
 ///
 /// Entre deux redémarrages, certains kubelets (k3s 1.37) montrent le conteneur
 /// `terminated`/`Error` ou déjà relancé, jamais `CrashLoopBackOff` : on regarde
 /// donc aussi le compteur de redémarrages et le dernier arrêt en erreur, récent.
+///
+/// Ce second critère ignore les conteneurs tués de l'extérieur : après le
+/// redémarrage d'un nœud, chaque pod système qui avait déjà redémarré une fois
+/// porte un arrêt récent en 137 ou 255 sans boucler pour autant. Une vraie
+/// boucle tuée par sa sonde de vie finit, elle, par passer en
+/// `CrashLoopBackOff`. La règle exige en plus que le compteur progresse (voir
+/// `k8s_pod_crashlooping` côté serveur).
 pub fn crashlooping(pod: &Pod, now: DateTime<Utc>) -> bool {
     let recent = |t: &Terminated| {
         t.exit_code != 0
+            && !killed_from_outside(t)
             && t.finished_at.is_none_or(|at| now - at <= Duration::minutes(CRASH_WINDOW_MINUTES))
     };
     pod.status.containers.iter().chain(&pod.status.init_containers).any(|c| {
