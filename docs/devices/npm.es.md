@@ -27,12 +27,12 @@ Todas las métricas tienen el prefijo `dumbmonit_npm_`.
 | `version_info` | valor 1 | `version` |
 | `hosts`, `hosts_enabled`, `hosts_disabled` | hosts de cada tipo | `type`: `proxy`, `redirection`, `dead` (hosts 404), `stream` |
 | `hosts_offline` | hosts activados cuya configuración nginx rechazó | `type` |
-| `host_online` | por host activado: 0 cuando nginx rechazó su configuración | `type`, `host` |
-| `host_error_info` | valor 1, para un host que nginx rechazó: la primera línea del error de nginx | `type`, `host`, `error` |
+| `host_online` | por host activado: 0 cuando nginx rechazó su configuración | `type`, `proxy_host` |
+| `host_error_info` | valor 1, para un host que nginx rechazó: la primera línea del error de nginx | `type`, `proxy_host`, `error` |
 | `certificates_checked`, `certificates_read` | certificados adjuntos a un host activado, y los leídos en el puerto HTTPS | |
-| `cert_expiry_days` | días restantes antes de que caduque el certificado que presenta un host | `host` |
+| `cert_expiry_days` | días restantes antes de que caduque el certificado que presenta un host | `proxy_host` |
 
-`host` es el primer nombre de dominio del host, o `port 9000` para un
+`proxy_host` es el primer nombre de dominio del host, o `port 9000` para un
 stream. Los hosts desactivados se cuentan, no se describen: desactivar un
 host es deliberado, y su alerta, si la hay, se resuelve. Los hosts se
 describen uno por uno hasta 500, y como máximo se leen 100 certificados por

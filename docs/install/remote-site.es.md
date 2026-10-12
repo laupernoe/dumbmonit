@@ -127,7 +127,7 @@ conserva su rol y gana cuando ambos están caídos.
   sus propias métricas.
 - El relay ejecuta como máximo 8 sondas a la vez; una sonda está acotada
   por el tiempo de espera de sonda del servidor
-  (`DUMBMONIT_PROBE_TIMEOUT`), limitado a 120 s en el agente.
+  (`DUMBMONIT_PROBE_TIMEOUT_SECS`), limitado a 120 s en el agente.
 - Un agente relay necesita los recolectores compilados: los agentes más
   antiguos que esta función ignoran `relay: true`, y el servidor reporta
   sus sondas como agotadas. Reinstala con el binario o imagen actual.

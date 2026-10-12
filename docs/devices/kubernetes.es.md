@@ -63,9 +63,18 @@ aplican:
 - **Kubernetes node under pressure**: presión de memoria, disco o PID
   durante cinco minutos (Advisory).
 - **Kubernetes pod crash looping**: un contenedor en
-  `CrashLoopBackOff` durante diez minutos (Warning). Entre dos intentos
-  el contenedor se reinicia y el estado desaparece por un momento; la
-  regla lee el máximo sobre diez minutos para no reiniciarse cada vez.
+  `CrashLoopBackOff` durante diez minutos (Warning). Algunos kubelets
+  (k3s 1.37) muestran el contenedor como `terminated` con motivo `Error`
+  entre dos intentos y nunca `CrashLoopBackOff`: un contenedor que se
+  reinició al menos dos veces y cuya última parada, en diez minutos,
+  terminó con un código de salida distinto de cero también cuenta como
+  crash looping. Entre dos intentos el contenedor se reinicia y el estado
+  desaparece por un momento; la regla lee el máximo sobre diez minutos
+  para no reiniciarse cada vez. El pod también debe seguir reiniciándose
+  (al menos dos reinicios en 15 minutos), y una parada con código de
+  salida 137, 143 o 255 (terminado por un reinicio del nodo o del
+  runtime, no `OOMKilled`) no es un fallo: los pods del sistema no
+  saltan tras un reinicio del nodo.
 - **Kubernetes pod stuck pending**: un pod en Pending durante quince
   minutos (Advisory).
 - **Kubernetes pod restarting**: más de cinco reinicios en una hora,

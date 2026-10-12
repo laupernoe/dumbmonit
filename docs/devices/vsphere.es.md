@@ -37,11 +37,11 @@ gris (desconocido).
 |---|---|---|
 | `info` | valor 1 | `product` (`vcenter` o `esxi`), `version`, `build` |
 | `hosts` | hosts por estado de conexión: `connected`, `disconnected`, `notResponding` | `state` |
-| `host_connection_state` | 0 conectado, 1 desconectado por un administrador, 2 sin respuesta | `host` |
-| `host_power_state` | 0 encendido, 1 en espera, 2 apagado, 3 desconocido | `host` |
-| `host_maintenance` | 1 en modo mantenimiento | `host` |
-| `host_status` | salud general | `host` |
-| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | solo hosts conectados | `host` |
+| `host_connection_state` | 0 conectado, 1 desconectado por un administrador, 2 sin respuesta | `esxi` |
+| `host_power_state` | 0 encendido, 1 en espera, 2 apagado, 3 desconocido | `esxi` |
+| `host_maintenance` | 1 en modo mantenimiento | `esxi` |
+| `host_status` | salud general | `esxi` |
+| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | solo hosts conectados | `esxi` |
 | `vms` | VMs por estado de encendido: `poweredOn`, `poweredOff`, `suspended` (plantillas excluidas) | `state` |
 | `templates` | plantillas de VM | |
 | `vm_power_state` | 0 encendida, 1 apagada, 2 suspendida; como máximo 1000 VMs | `vm` |

@@ -33,7 +33,7 @@ contadores: las gráficas y las reglas los convierten en tasas.
 | `connections_used_percent` | actuales frente a actuales más disponibles | |
 | `connections_created_total`, `connections_rejected_total` | | |
 | `operations_total` | operaciones desde el arranque | `op`: `insert`, `query`, `update`, `delete`, `getmore`, `command` |
-| `asserts_total` | aserciones desde el arranque; `regular` son errores internos del servidor, `user` errores devueltos a los clientes | `type` |
+| `asserts_total` | aserciones desde el arranque; `type` es `regular` (errores internos del servidor), `warning`, `msg`, `user` (errores devueltos a los clientes), `tripwire` o `rollovers`. `regular` y `user` son las que merecen una gráfica | `type` |
 | `queued_operations`, `active_clients` | operaciones esperando un bloqueo, clientes ejecutando una | |
 | `wiredtiger_cache_max_bytes`, `wiredtiger_cache_used_bytes`, `wiredtiger_cache_used_percent` | la caché de WiredTiger y cuán llena está | |
 | `wiredtiger_cache_dirty_bytes`, `wiredtiger_cache_dirty_percent` | páginas modificadas aún no escritas | |
