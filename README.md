@@ -38,7 +38,7 @@ docker compose up -d
 
 1. Open http://localhost:8080.
 2. Create the first admin account with the one-time code printed by `docker compose logs dumbmonit`.
-3. Add a device, connect a notification channel, send a test message.
+3. Add a monitor, connect a notification channel, send a test message.
 
 Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost password: see the
 [installation guide](https://dumbmonit.readthedocs.io/en/latest/install/docker/).
@@ -49,7 +49,7 @@ Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost 
 
 - **Network and servers**: SNMP, firewalls (OPNsense, pfSense, FortiGate, MikroTik, UniFi…), Redfish, Active Directory, and an **agent** for Linux, Windows, macOS and FreeBSD.
 - **Virtualisation and storage**: Proxmox (VE, Backup Server, Datacenter Manager, Mail Gateway), vSphere, Synology, TrueNAS, Unraid, Veeam.
-- **Apps and services**: Nextcloud, Immich, Jellyfin, GitLab, Kubernetes, databases, HTTP/TCP/DNS/ping/TLS checks, heartbeats.
+- **Apps and services**: Nextcloud, Immich, Jellyfin, GitLab, Kubernetes, databases, HTTP/TCP/DNS/ping/TLS checks, heartbeats, and **website health and SEO** (blank page, `noindex`, title or canonical changes, redirects, slowness) with bulk CSV import sorted by platform.
 - **Anything else**: network discovery and YAML **integration packs**, no release needed.
 
 ## What it does
@@ -57,7 +57,7 @@ Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost 
 - **Alerting that does not cry wolf**: parent/child suppression, maintenance windows, forecasts, a seasonal baseline.
 - **22 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
 - **Public status pages** with history, incidents, email subscribers, badges and city scenes.
-- **Wall mode** for a room monitor, and a **security score** per device.
+- **Wall mode** for a room monitor, and a **security score** per monitor.
 - **API and MCP server** (27 tools): ask Claude or ChatGPT "is everything fine?", or read it from Prometheus and Grafana.
 - **Encrypted backup**, accounts with TOTP and OIDC, and remote sites through an outbound-only relay agent.
 
@@ -66,7 +66,7 @@ One Rust binary with the UI embedded, VictoriaMetrics started by it, SQLite for 
 ## Contributing
 
 Bug reports, device profiles and integrations are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) (Docker only, no Rust toolchain needed).
-The web UI can be **translated on [Weblate](https://hosted.weblate.org/engage/dumbmonit/)** (8 languages besides English; only part of the interface is translated so far).
+The web UI can be **translated on [Weblate](https://hosted.weblate.org/engage/dumbmonit/)** (8 languages besides English; only part of the interface is translated so far); the documentation is available in the same languages.
 Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://github.com/users/laupernoe/projects/2).
 
 ## Status
