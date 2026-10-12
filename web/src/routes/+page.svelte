@@ -483,10 +483,7 @@
 		<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
 		{#if streaks.length > 0}
 			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 4}ms`}>
-				<div class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-					<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_last_days({ days: HISTORY_DAYS })}</h2>
-					<p class="text-[0.8125rem] text-ink-2">{m.overview_page_history_note()}</p>
-				</div>
+				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_last_days({ days: HISTORY_DAYS })}</h2>
 				<Streaks {streaks} />
 			</section>
 		{/if}
