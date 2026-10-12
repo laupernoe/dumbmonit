@@ -118,9 +118,14 @@ payload that a script can use:
   "fingerprint": "nas/disk-full",
   "count": 1,
   "at": "2026-09-01T14:12:05+00:00",
-  "link": ""
+  "link": "https://dumbmonit.home/targets/42"
 }
 ```
+
+`link` points to the device page, built on the `public_url` of the
+[notification policy](alerting/notifications.md) (or `DUMBMONIT_PUBLIC_URL`), or on the channel's
+`base_url`. A message about several devices, and the test message, link to
+the instance itself. Without any public URL, `link` is `null`.
 
 ### Custom channel settings
 

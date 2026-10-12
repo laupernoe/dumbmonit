@@ -196,7 +196,10 @@ impl Webhook {
             "fingerprint": message.fingerprint,
             "count": message.count,
             "at": message.at.to_rfc3339(),
-            "link": variables.get("link").cloned().unwrap_or_default(),
+            // Lien vers l'équipement (ou l'instance), construit sur l'adresse
+            // publique réglée ; `null` quand aucune n'est connue plutôt qu'une
+            // chaîne vide qu'un automate prendrait pour une URL.
+            "link": variables.get("link").filter(|link| !link.is_empty()),
         })
     }
 }
@@ -320,7 +323,7 @@ mod tests {
                 "fingerprint": "nas/disk-full",
                 "count": 1,
                 "at": "2025-09-01T14:12:05+00:00",
-                "link": "",
+                "link": null,
             })
         );
     }
@@ -509,6 +512,19 @@ mod tests {
         // temps qu'une alerte sans lien.
         let notifier = webhook(json!({"url": "https://exemple.org/h"}), json!({}));
         assert_eq!(notifier.variables(&sample_message(false))["link"], "");
+    }
+
+    #[test]
+    fn la_charge_utile_porte_le_lien_de_l_adresse_publique_ou_null() {
+        let notifier = webhook(json!({"url": "https://exemple.org/h"}), json!({}));
+        let mut message = sample_message(false);
+        assert_eq!(notifier.default_payload(&message)["link"], serde_json::Value::Null);
+        // L'adresse publique de l'instance, posée par le moteur sur le message.
+        message.attach_link("https://monit.lan/");
+        assert_eq!(notifier.default_payload(&message)["link"], "https://monit.lan/targets/42");
+        // Le message de test pointe sur l'instance elle-même.
+        let test = crate::notify::message::test_message_linked("lab", Some("https://monit.lan/"));
+        assert_eq!(notifier.default_payload(&test)["link"], "https://monit.lan");
     }
 
     // --- Secrets ---
