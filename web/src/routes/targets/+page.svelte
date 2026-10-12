@@ -687,7 +687,7 @@
 
 {#if !firstLoad && !pageError && targets.length > 0}
 	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-		<label class="relative min-w-0 flex-1 lg:max-w-sm">
+		<label class="relative min-w-0 flex-1 lg:max-w-sm lg:min-w-56">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
 			<input
