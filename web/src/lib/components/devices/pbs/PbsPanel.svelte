@@ -133,7 +133,6 @@
 
 		<Panel
 			title={m.devicesb_pbs_panel_jobs()}
-			description={m.devicesb_pbs_panel_jobs_desc()}
 			padded={false}
 			class="rise-in"
 		>
@@ -148,7 +147,6 @@
 		{#if health?.tape}
 			<Panel
 				title={m.devicesb_pbs_panel_tape()}
-				description={m.devicesb_pbs_panel_tape_desc()}
 				padded={false}
 				class="rise-in"
 			>
@@ -177,7 +175,6 @@
 
 		<Panel
 			title={m.devicesb_pbs_panel_server()}
-			description={m.devicesb_pbs_panel_server_desc()}
 			padded={false}
 			class="rise-in"
 		>

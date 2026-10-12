@@ -104,7 +104,7 @@
 	}
 </script>
 
-<Panel title={m.website_panel_title()} description={m.website_panel_desc()} class="mb-4">
+<Panel title={m.website_panel_title()} class="mb-4">
 	{#if loading}
 		<Skeleton class="h-24 w-full" />
 	{:else if error}
