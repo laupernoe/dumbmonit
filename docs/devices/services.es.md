@@ -36,7 +36,7 @@ cero.
 
 Las reglas integradas que se aplican a los once: Service down (3
 minutos), Service flapping (más de seis cambios de estado en treinta
-minutos), Slow service (más de 3 s durante diez minutos). Para cada
+minutos), Slow service (más de 3 s durante diez minutos, solo comprobaciones correctas: una comprobación que falla dura su tiempo de espera y es Service down, no lentitud). Para cada
 comprobación que lee un certificado — `http`, `tls`, `smtp`, `mqtt`,
 `websocket`: Certificate expiring soon (14 días) y Certificate
 expired.
@@ -47,7 +47,7 @@ como `reason="auth"`, así que la alerta dice qué corregir.
 ### Métricas {#metrics}
 
 Todas gauges, todas con el prefijo `dumbmonit_`, todas etiquetadas
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"`
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp"`
 además de `target`, `host` y `tag_*`.
 
 | Métrica | Monitores | Significado |
@@ -82,7 +82,14 @@ además de `target`, `host` y `tag_*`.
 | `probe_mqtt_message_bytes` | mqtt | Tamaño del mensaje retenido. |
 | `probe_mqtt_message_value` | mqtt | Su contenido, cuando es un número. |
 | `probe_ws_handshake_seconds` | websocket | Handshake de apertura. |
-| `probe_ws_message_bytes` | websocket | Tamaño del frame recibido. |
+| `probe_ntp_offset_seconds` | ntp | Desfase entre el reloj local y el servidor. |
+| `probe_ntp_delay_seconds` | ntp | Retardo de ida y vuelta de red. |
+| `probe_ntp_stratum` | ntp | Distancia a un reloj de referencia (16: no sincronizado). |
+| `probe_ntp_leap_indicator` | ntp | De 0 a 3 (aviso de segundo intercalar, 3 = reloj no sincronizado). |
+| `probe_ntp_root_delay_seconds` | ntp | Retardo acumulado hasta la raíz de la jerarquía. |
+| `probe_ntp_root_dispersion_seconds` | ntp | Dispersión acumulada hasta la raíz. |
+| `probe_ntp_reference_info` | ntp | Presencia; etiqueta `reference_id`. |
+| `probe_ws_message_bytes` | websocket | Tamaño del primer frame recibido. Solo presente cuando la comprobación envía un mensaje o espera una respuesta (opciones `send` / `expect`). |
 
 ## HTTP
 

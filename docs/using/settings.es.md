@@ -92,7 +92,13 @@ Solo administradores. Las cuentas que pueden iniciar sesión, y su rol:
 | **Operator** | sí | sí | no |
 | **Admin** | sí | sí | sí |
 
-Un visor ve cada página con cada control que cambiaría algo oculto. Un
+Un visor ve cada página con cada control que cambiaría algo oculto. Algunas cosas
+siguen siendo solo de administrador incluso para leerlas: los tokens de API y
+de agente, los correos de suscriptores de páginas de estado y las opciones de
+dispositivo que parecen secretos (una opción cuyo nombre contiene `key`,
+`token`, `password`…, las cabeceras extra de una comprobación HTTP, la
+contraseña de una dirección `https://user:pass@host`), que los no
+administradores leen como `***`. Un
 operador es el rol de guardia: los controles de alerta están ahí, las
 pantallas de configuración dicen *Operator — config is admin only*. Solo
 un administrador crea cuentas o cambia un rol — un operador no puede
@@ -195,8 +201,8 @@ si fue revocado. **Revoke** detiene cada agente que use ese token en su
 siguiente envío.
 
 Un token puede inscribir varias máquinas. Revocarlo no elimina los
-dispositivos. Los visores ven la lista y la sección dice *Viewer —
-read only*; crear y revocar son para administradores.
+dispositivos. La lista de tokens, crear y revocar son para administradores;
+los visores y operadores ven la sección sin la lista.
 
 ## API & assistants
 

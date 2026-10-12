@@ -459,6 +459,11 @@ usable en un contenedor sin montar un archivo:
 | `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` o `auto`: los contadores de rendimiento de MDaemon (por defecto `auto`, leído cuando existe el servicio Windows `MDaemon`) |
 | `DUMBMONIT_AGENT_HYPERV` | `true`, `false` o `auto`: los contadores de rendimiento de Hyper-V (por defecto `auto`, leído cuando existe el servicio Windows `vmms`) |
 | `DUMBMONIT_AGENT_PERF_COUNTERS` | Rutas de contador de rendimiento de Windows, separadas por **punto y coma** (una coma puede formar parte de un nombre de instancia); sustituye `perf_counters` |
+| `DUMBMONIT_AGENT_SYSTEM_HEALTH` | `true` / `false`: salud del sistema operativo, el interruptor general de los cuatro siguientes (por defecto `true`) |
+| `DUMBMONIT_AGENT_CHECK_UPDATES` | `true` / `false`: actualizaciones pendientes (por defecto `true`) |
+| `DUMBMONIT_AGENT_UPDATES_INTERVAL_SECS` | Periodo entre dos comprobaciones de actualizaciones pendientes, por defecto `3600`, mínimo `300` |
+| `DUMBMONIT_AGENT_CHECK_REBOOT` | `true` / `false`: reinicio necesario (por defecto `true`) |
+| `DUMBMONIT_AGENT_CHECK_FAILED_UNITS` | `true` / `false`: unidades systemd fallidas (por defecto `true`) |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Tamaño del búfer de recuperación |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` para ejecutar, por el servidor, las sondas de los dispositivos asignados a este agente (consulta [Ejecutar el agente en Docker / en otra red](#run-the-agent-in-docker--on-another-network)) |
