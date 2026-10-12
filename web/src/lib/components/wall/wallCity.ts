@@ -1,5 +1,5 @@
 /**
- * The wall's backdrop city: Paris, London, New York, Tokyo or Rome.
+ * The wall's backdrop city: Paris, London, New York, Tokyo, Rome or one of five Swiss scenes.
  * `auto` picks the closest one from the browser's time zone. Remembered per
  * browser; a `?city=` on a shared link overrides it without saving.
  */
@@ -10,8 +10,13 @@ import LondonScene from '#lib/components/wall/london/LondonScene.svelte';
 import NewYorkScene from '#lib/components/wall/newyork/NewYorkScene.svelte';
 import TokyoScene from '#lib/components/wall/tokyo/TokyoScene.svelte';
 import RomeScene from '#lib/components/wall/rome/RomeScene.svelte';
+import GenevaScene from '#lib/components/wall/geneva/GenevaScene.svelte';
+import ZermattScene from '#lib/components/wall/zermatt/ZermattScene.svelte';
+import BernScene from '#lib/components/wall/bern/BernScene.svelte';
+import LucerneScene from '#lib/components/wall/lucerne/LucerneScene.svelte';
+import MontreuxScene from '#lib/components/wall/montreux/MontreuxScene.svelte';
 
-export type WallCity = 'paris' | 'london' | 'newyork' | 'tokyo' | 'rome';
+export type WallCity = 'paris' | 'london' | 'newyork' | 'tokyo' | 'rome' | 'geneva' | 'zermatt' | 'bern' | 'lucerne' | 'montreux';
 export type WallCityChoice = 'auto' | WallCity;
 
 export const WALL_CITIES: { value: WallCity; readonly label: string; scene: Component<any> }[] = [
@@ -19,7 +24,12 @@ export const WALL_CITIES: { value: WallCity; readonly label: string; scene: Comp
 	{ value: 'london', get label() { return m.wall_city_london(); }, scene: LondonScene },
 	{ value: 'newyork', get label() { return m.wall_city_newyork(); }, scene: NewYorkScene },
 	{ value: 'tokyo', get label() { return m.wall_city_tokyo(); }, scene: TokyoScene },
-	{ value: 'rome', get label() { return m.wall_city_rome(); }, scene: RomeScene }
+	{ value: 'rome', get label() { return m.wall_city_rome(); }, scene: RomeScene },
+	{ value: 'geneva', get label() { return m.wall_city_geneva(); }, scene: GenevaScene },
+	{ value: 'zermatt', get label() { return m.wall_city_zermatt(); }, scene: ZermattScene },
+	{ value: 'bern', get label() { return m.wall_city_bern(); }, scene: BernScene },
+	{ value: 'lucerne', get label() { return m.wall_city_lucerne(); }, scene: LucerneScene },
+	{ value: 'montreux', get label() { return m.wall_city_montreux(); }, scene: MontreuxScene }
 ];
 
 const STORAGE_KEY = 'dumbmonit-wall-city';
@@ -59,6 +69,7 @@ export function cityForTimeZone(zone: string | undefined): WallCity {
 		return 'london';
 	if (z === 'Europe/Rome' || z === 'Europe/Madrid' || z === 'Europe/Athens' || z === 'Europe/Malta')
 		return 'rome';
+	if (z === 'Europe/Zurich' || z === 'Europe/Vaduz') return 'zermatt';
 	return 'paris';
 }
 

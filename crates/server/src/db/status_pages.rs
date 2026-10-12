@@ -76,6 +76,11 @@ pub const SCENES: [&str; 26] = [
     "rhodes",
     "alexandria",
     "athens",
+    "geneva",
+    "matterhorn",
+    "bern",
+    "lucerne",
+    "chillon",
 ];
 /// Rythmes de changement de scène (plusieurs scènes seulement).
 pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];
