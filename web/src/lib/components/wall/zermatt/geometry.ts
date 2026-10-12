@@ -123,7 +123,7 @@ const LAND: Record<SceneTheme, Land> = {
 };
 
 /** Snow takes the colour of the hour: pink at dawn and dusk, gold at the end of the day. */
-const SNOW: Record<SceneTheme, Record<ScenePhase, [lit: string, shade: string]>> = {
+const SNOW_TINT: Record<SceneTheme, Record<ScenePhase, [lit: string, shade: string]>> = {
 	light: {
 		dawn: ['#ffd9d6', '#d7bfd0'], day: ['#ffffff', '#d3deee'], golden: ['#ffe2c2', '#d9c3cc'],
 		dusk: ['#f2c3cf', '#b9aac6'], night: ['#d6dcea', '#aeb7cf']
@@ -140,7 +140,7 @@ const SNOW: Record<SceneTheme, Record<ScenePhase, [lit: string, shade: string]>>
 
 /** The scene's custom properties: the Paris sky and cast, plus Zermatt's land. */
 export function zermattStyle(theme: SceneTheme, phase: ScenePhase, mood: SceneMood): string {
-	const [snow, shade] = SNOW[theme][phase];
+	const [snow, shade] = SNOW_TINT[theme][phase];
 	const vars: Land = { ...LAND[theme], '--mh-snow': snow, '--mh-snow-shade': shade };
 	return (
 		sceneStyle(theme, phase, mood) +

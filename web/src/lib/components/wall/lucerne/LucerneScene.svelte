@@ -395,7 +395,7 @@
 				<path d={TOWN_LEFT.roofs} fill="var(--lz-roof)" />
 				<path d={TOWN_RIGHT.bodies} fill="var(--lz-town)" />
 				<path d={TOWN_RIGHT.roofs} fill="var(--lz-roof)" />
-				{#each [[TOWN_BACK, townLit], [TOWN_LEFT, leftLit], [TOWN_RIGHT, rightLit]] as [row, set] (row)}
+				{#each [{ row: TOWN_BACK, set: townLit }, { row: TOWN_LEFT, set: leftLit }, { row: TOWN_RIGHT, set: rightLit }] as { row, set } (row)}
 					{#each row.windows as w, i (i)}
 						<rect x={w.x} y={w.y} width={w.w} height={w.h} rx="4" fill="var(--window)" />
 						{#if set.has(i)}
