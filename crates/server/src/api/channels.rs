@@ -260,7 +260,12 @@ pub async fn test(
     // contexte TLS — est sans conséquence à cette fréquence.
     let http = notify::http_client();
     let store = notify::webpush::Store { pool: &state.pool, cipher: &state.cipher };
-    let result = notify::test_channel_stored(store, &http, &config).await;
+    // L'adresse publique, comme pour une vraie alerte : le test montre le lien
+    // que les messages porteront.
+    let global = crate::notify::policy_store::load_global(&state.pool).await?;
+    let env_url = crate::config::env_var("DUMBMONIT_PUBLIC_URL");
+    let public_url = global.public_url(env_url.as_deref());
+    let result = notify::test_channel_stored(store, &http, &config, public_url.as_deref()).await;
     let error = result.as_ref().err().map(ToString::to_string);
 
     // Le résultat est consigné comme celui d'un envoi réel : c'est ce que
