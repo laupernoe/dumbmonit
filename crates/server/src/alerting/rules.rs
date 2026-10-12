@@ -37,6 +37,12 @@ const FS_USED_PERCENT: &str = "(\
 pub const HOST_DOWN_QUERY: &str =
     "bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))";
 
+/// Pod en boucle de redémarrage : le drapeau du collecteur, tenu par un compteur
+/// de redémarrages qui progresse encore (voir la règle `k8s_pod_crashlooping`).
+pub const K8S_CRASHLOOP_QUERY: &str = "max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) \
+     and on (target, namespace, pod) \
+     increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2";
+
 /// Rappel par défaut : six heures. Assez pour ne pas oublier une panne en cours,
 /// assez peu pour ne pas devenir du bruit pendant une semaine de vacances.
 const DEFAULT_REPEAT: Duration = Duration::from_secs(6 * 3600);
@@ -5023,6 +5029,11 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Entre deux tentatives, le conteneur redémarre et l'état
         // `CrashLoopBackOff` disparaît quelques secondes : le maximum sur dix
         // minutes lisse ce va-et-vient, sans quoi le `for` repartirait de zéro.
+        //
+        // Une boucle redémarre au moins toutes les cinq minutes (plafond du
+        // back-off de Kubernetes) : on exige deux redémarrages en quinze minutes.
+        // Le redémarrage d'un nœud n'en ajoute qu'un par conteneur, et le compteur
+        // à vie d'un pod système ne fait plus passer ce redémarrage pour une boucle.
         Rule {
             description: "A pod keeps crashing and Kubernetes waits longer and longer before \
                           restarting it (CrashLoopBackOff)."
@@ -5036,7 +5047,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "k8s_pod_crashlooping",
                 "Kubernetes pod crash looping",
                 RuleKind::Threshold,
-                "max_over_time(dumbmonit_k8s_pod_crashlooping[10m])",
+                K8S_CRASHLOOP_QUERY,
             )
         },
         Rule {
