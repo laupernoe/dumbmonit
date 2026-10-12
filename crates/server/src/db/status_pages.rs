@@ -31,6 +31,10 @@ pub struct StatusPage {
     pub scene_rotation: String,
     /// Mode simple : ni scène, ni pigeon, ni animation (voir la migration 0047).
     pub simple: bool,
+    /// Calendrier public de 90 jours (migration 0050).
+    pub show_calendar: bool,
+    /// Graphique public de temps de réponse par service (migration 0050).
+    pub show_latency: bool,
     pub footer_text: String,
     pub homepage_url: String,
     /// Type MIME du logo déposé ; `None` : pas de logo.
@@ -98,7 +102,7 @@ macro_rules! select_page {
     ($tail:literal) => {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
-            "created_at, updated_at, accent, scenes, scene_rotation, simple, footer_text, homepage_url, ",
+            "created_at, updated_at, accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url, ",
             "logo_type, subscribe_channel_id, link_origin, domain FROM status_pages ",
             $tail
         )
@@ -119,6 +123,8 @@ pub struct StatusPageInput {
     pub scenes: String,
     pub scene_rotation: String,
     pub simple: bool,
+    pub show_calendar: bool,
+    pub show_latency: bool,
     pub footer_text: String,
     pub homepage_url: String,
     pub subscribe_channel_id: Option<i64>,
@@ -211,9 +217,9 @@ pub async fn get_page_by_slug(pool: &SqlitePool, slug: &str) -> Result<Option<St
 pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i64> {
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO status_pages (slug, title, description, published, theme, show_uptime_days,
-             accent, scenes, scene_rotation, simple, footer_text, homepage_url,
+             accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url,
              subscribe_channel_id, link_origin, domain)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id",
     )
     .bind(&input.slug)
@@ -226,6 +232,8 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     .bind(&input.scenes)
     .bind(&input.scene_rotation)
     .bind(i64::from(input.simple))
+    .bind(i64::from(input.show_calendar))
+    .bind(i64::from(input.show_latency))
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)
@@ -256,6 +264,7 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
         "UPDATE status_pages SET
              slug = ?, title = ?, description = ?, published = ?, theme = ?,
              show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?, simple = ?,
+             show_calendar = ?, show_latency = ?,
              footer_text = ?, homepage_url = ?, subscribe_channel_id = ?, link_origin = ?,
              domain = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
@@ -270,6 +279,8 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .bind(&input.scenes)
     .bind(&input.scene_rotation)
     .bind(i64::from(input.simple))
+    .bind(i64::from(input.show_calendar))
+    .bind(i64::from(input.show_latency))
     .bind(&input.footer_text)
     .bind(&input.homepage_url)
     .bind(input.subscribe_channel_id)

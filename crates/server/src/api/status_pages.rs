@@ -164,6 +164,12 @@ pub struct StatusPagePayload {
     /// Absent : la valeur enregistrée est gardée (`false` à la création).
     #[serde(default)]
     pub simple: Option<bool>,
+    /// Absent : la valeur enregistrée est gardée (`false` à la création).
+    #[serde(default)]
+    pub show_calendar: Option<bool>,
+    /// Absent : la valeur enregistrée est gardée (`false` à la création).
+    #[serde(default)]
+    pub show_latency: Option<bool>,
     #[serde(default)]
     pub footer_text: Option<String>,
     #[serde(default)]
@@ -260,6 +266,10 @@ impl StatusPagePayload {
             )));
         }
         let simple = self.simple.unwrap_or_else(|| existing.is_some_and(|page| page.simple));
+        let show_calendar =
+            self.show_calendar.unwrap_or_else(|| existing.is_some_and(|page| page.show_calendar));
+        let show_latency =
+            self.show_latency.unwrap_or_else(|| existing.is_some_and(|page| page.show_latency));
         let footer_text = match self.footer_text {
             Some(text) => text.trim().to_string(),
             None => existing.map(|page| page.footer_text.clone()).unwrap_or_default(),
@@ -322,6 +332,8 @@ impl StatusPagePayload {
             scenes,
             scene_rotation,
             simple,
+            show_calendar,
+            show_latency,
             footer_text,
             homepage_url,
             subscribe_channel_id,
@@ -920,6 +932,9 @@ struct PublicStatus {
     overall: &'static str,
     generated_at: String,
     groups: Vec<PublicGroup>,
+    /// Calendrier de 90 jours ; absent quand la page ne le montre pas.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    calendar: Option<Vec<CalendarDay>>,
     /// Incidents en cours et ceux des trente derniers jours.
     incidents: Vec<PublicIncident>,
     /// Maintenances prévues ou en cours.
@@ -945,6 +960,11 @@ struct PublicPage {
     scene_rotation: String,
     /// Mode simple : le public n'affiche ni scène, ni pigeon, ni animation.
     simple: bool,
+    /// Présents seulement quand l'administrateur les a activés.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    show_calendar: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    show_latency: bool,
     footer_text: String,
     /// Site de l'organisation, vide si la page n'en cite pas.
     homepage_url: String,
@@ -974,7 +994,40 @@ struct PublicItem {
     /// Seulement quand la page montre 90 jours d'historique.
     uptime_90d: Option<f64>,
     latency_ms: Option<f64>,
+    /// Temps de réponse agrégés ; seulement si la page les montre et que le
+    /// service en a.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    latency_series: Option<LatencySeries>,
     history: Vec<DayBucket>,
+}
+
+/// Points `[horodatage (s), millisecondes]`, moyennés par tranche.
+#[derive(Debug, Serialize)]
+struct LatencySeries {
+    h24: Vec<[f64; 2]>,
+    d7: Vec<[f64; 2]>,
+}
+
+/// Un jour du calendrier de la page, tous services confondus.
+#[derive(Debug, Serialize)]
+struct CalendarDay {
+    date: String,
+    /// `operational`, `degraded`, `outage` ou `nodata`.
+    state: &'static str,
+    /// Disponibilité du service le moins disponible ce jour-là.
+    uptime_pct: Option<f64>,
+    incidents: u32,
+}
+
+/// État d'un jour : le plus mauvais des services mesurés ; un incident annoncé
+/// ce jour-là suffit à ne pas le dire parfait.
+fn calendar_state(worst_uptime: Option<f64>, incidents: u32) -> &'static str {
+    match worst_uptime {
+        None => "nodata",
+        Some(pct) if pct < 95.0 => "outage",
+        Some(pct) if pct < 99.9 || incidents > 0 => "degraded",
+        Some(_) => "operational",
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -1106,6 +1159,10 @@ struct Metrics {
     daily: HashMap<TargetId, HashMap<i64, f64>>,
     /// Par cible, minutes d'indisponibilité de chaque jour, même index.
     daily_down: HashMap<TargetId, HashMap<i64, f64>>,
+    /// Par sonde, temps de réponse moyen par quart d'heure sur 24 h.
+    latency_24h: HashMap<TargetId, Vec<[f64; 2]>>,
+    /// Par sonde, temps de réponse moyen par tranche de deux heures sur 7 jours.
+    latency_7d: HashMap<TargetId, Vec<[f64; 2]>>,
 }
 
 pub(crate) fn target_of(metric: &BTreeMap<String, String>) -> Option<TargetId> {
@@ -1149,11 +1206,56 @@ pub(crate) fn rescale(measured: f64, window_secs: f64, covered_secs: f64) -> Opt
     Some((measured * window_secs / covered_secs).min(100.0))
 }
 
+/// Séries de temps de réponse (ms) des sondes, agrégées côté serveur : le public
+/// ne reçoit que des points, jamais la requête.
+async fn collect_latency(
+    victoria: &Victoria,
+    probes: &[TargetId],
+    now: DateTime<Utc>,
+    metrics: &mut Metrics,
+) {
+    if probes.is_empty() {
+        return;
+    }
+    let sel = selector(probes);
+    let end_ms = now.timestamp() * 1_000;
+    let spans: [(i64, u64, &str); 2] = [(86_400, 900, "15m"), (7 * 86_400, 7_200, "2h")];
+    for (index, (span, step, window)) in spans.into_iter().enumerate() {
+        let query =
+            format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[{window}]) * 1000");
+        match victoria.query_range(&query, end_ms - span * 1_000, end_ms, step).await {
+            Ok(series) => {
+                for item in series {
+                    let Some(id) = target_of(&item.metric) else { continue };
+                    let points: Vec<[f64; 2]> = item
+                        .values
+                        .into_iter()
+                        .filter_map(|(ts, raw)| {
+                            let value: f64 = raw.parse().ok()?;
+                            value.is_finite().then(|| [ts, round(value)])
+                        })
+                        .collect();
+                    if points.is_empty() {
+                        continue;
+                    }
+                    if index == 0 {
+                        metrics.latency_24h.insert(id, points);
+                    } else {
+                        metrics.latency_7d.insert(id, points);
+                    }
+                }
+            }
+            Err(error) => tracing::warn!(%error, "status page: latency metrics unavailable"),
+        }
+    }
+}
+
 async fn collect_metrics(
     victoria: &Victoria,
     targets: &[&Target],
     days: i64,
     now: DateTime<Utc>,
+    with_latency: bool,
 ) -> Metrics {
     let probes: Vec<TargetId> =
         targets.iter().filter(|t| PROBE_KINDS.contains(&t.kind.as_str())).map(|t| t.id).collect();
@@ -1170,6 +1272,9 @@ async fn collect_metrics(
     let range_end_ms = (today_start + 86_400) * 1_000;
 
     let mut metrics = Metrics::default();
+    if with_latency {
+        collect_latency(victoria, &probes, now, &mut metrics).await;
+    }
 
     if !probes.is_empty() {
         let sel = selector(&probes);
@@ -1408,7 +1513,10 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
     let statuses = db::targets::statuses(&state.pool).await?;
     let shown: Vec<&Target> =
         items.iter().filter_map(|item| targets.get(&item.target_id)).collect();
-    let metrics = collect_metrics(&state.victoria, &shown, days, now).await;
+    // Le calendrier montre toujours 90 jours, quelle que soit la fenêtre des barres.
+    let metrics_days = if page.show_calendar { MAX_HISTORY_DAYS } else { days };
+    let metrics =
+        collect_metrics(&state.victoria, &shown, metrics_days, now, page.show_latency).await;
 
     // Maintenance planifiée : une fenêtre de maintenance posée dans l'alerting
     // vaut annonce publique. Sans cela, la page montre du rouge pendant que
@@ -1476,6 +1584,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         })
         .collect();
     let empty_daily = HashMap::new();
+    // Pire disponibilité de chaque jour du calendrier (indexée par début de jour).
+    let mut worst_daily: HashMap<i64, f64> = HashMap::new();
     let mut keys: HashSet<String> = HashSet::new();
 
     let mut groups: Vec<PublicGroup> = Vec::new();
@@ -1503,6 +1613,11 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         }
         let daily = metrics.daily.get(&target.id).unwrap_or(&empty_daily);
         let daily_down = metrics.daily_down.get(&target.id).unwrap_or(&empty_daily);
+        if page.show_calendar {
+            for (&day, &value) in daily {
+                worst_daily.entry(day).and_modify(|w| *w = w.min(value)).or_insert(value);
+            }
+        }
         let history = day_starts
             .iter()
             .zip(&incidents_per_day)
@@ -1532,6 +1647,16 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 .then(|| metrics.uptime_90d.get(&target.id).map(|v| round(*v)))
                 .flatten(),
             latency_ms: metrics.latency_ms.get(&target.id).map(|v| round(*v)),
+            latency_series: match (
+                metrics.latency_24h.get(&target.id),
+                metrics.latency_7d.get(&target.id),
+            ) {
+                (None, None) => None,
+                (h24, d7) => Some(LatencySeries {
+                    h24: h24.cloned().unwrap_or_default(),
+                    d7: d7.cloned().unwrap_or_default(),
+                }),
+            },
             history,
         };
         match groups.iter_mut().find(|group| group.name == item.group_name) {
@@ -1581,6 +1706,29 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         })
         .collect();
 
+    let calendar = page.show_calendar.then(|| {
+        let cal_days = MAX_HISTORY_DAYS;
+        (0..cal_days)
+            .map(|i| {
+                let day = today_start - (cal_days - 1 - i) * 86_400;
+                let worst = worst_daily.get(&day).map(|v| round(*v));
+                let incidents = incident_spans
+                    .iter()
+                    .filter(|(starts, ends)| *starts < day + 86_400 && *ends >= day)
+                    .count() as u32;
+                CalendarDay {
+                    date: NaiveDate::from_ymd_opt(1970, 1, 1)
+                        .and_then(|epoch| epoch.checked_add_signed(TimeDelta::seconds(day)))
+                        .map(|date| date.format("%Y-%m-%d").to_string())
+                        .unwrap_or_default(),
+                    state: calendar_state(worst, incidents),
+                    uptime_pct: worst,
+                    incidents,
+                }
+            })
+            .collect()
+    });
+
     Ok(PublicStatus {
         page: PublicPage {
             slug: page.slug.clone(),
@@ -1594,6 +1742,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             scenes: split_scenes(&page.scenes),
             scene_rotation: page.scene_rotation.clone(),
             simple: page.simple,
+            show_calendar: page.show_calendar,
+            show_latency: page.show_latency,
             footer_text: page.footer_text.clone(),
             homepage_url: page.homepage_url.clone(),
             logo_url: page.logo_type.as_ref().map(|_| {
@@ -1604,6 +1754,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         overall,
         generated_at: format_timestamp(now),
         groups,
+        calendar,
         incidents: public_incidents,
         maintenance: public_maintenance,
     })
@@ -1724,6 +1875,16 @@ pub async fn public_rss(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn calendar_day_states() {
+        assert_eq!(calendar_state(None, 0), "nodata");
+        assert_eq!(calendar_state(None, 2), "nodata");
+        assert_eq!(calendar_state(Some(100.0), 0), "operational");
+        assert_eq!(calendar_state(Some(100.0), 1), "degraded");
+        assert_eq!(calendar_state(Some(99.0), 0), "degraded");
+        assert_eq!(calendar_state(Some(80.0), 0), "outage");
+    }
 
     #[test]
     fn slug_rule() {

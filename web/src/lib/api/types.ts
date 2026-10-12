@@ -1146,6 +1146,10 @@ export interface StatusPage {
 	scene_rotation: StatusPageSceneRotation;
 	/** Simple mode: the public page has no scene, mascot or animation. */
 	simple: boolean;
+	/** Public 90-day calendar. */
+	show_calendar: boolean;
+	/** Public response-time graph per service. */
+	show_latency: boolean;
 	footer_text: string;
 	/** Link back to the organisation's site; empty for none. */
 	homepage_url: string;
@@ -1171,6 +1175,8 @@ export interface StatusPagePayload {
 	scenes?: string[];
 	scene_rotation?: StatusPageSceneRotation;
 	simple?: boolean;
+	show_calendar?: boolean;
+	show_latency?: boolean;
 	footer_text?: string;
 	homepage_url?: string;
 	/** `null` turns email subscription off. */
@@ -1262,6 +1268,23 @@ export interface PublicDayBucket {
 	incidents: number;
 }
 
+/** `[unix seconds, milliseconds]` points, averaged per slice server-side. */
+export interface PublicLatencySeries {
+	h24: [number, number][];
+	d7: [number, number][];
+}
+
+export type PublicCalendarState = 'operational' | 'degraded' | 'outage' | 'nodata';
+
+export interface PublicCalendarDay {
+	/** `YYYY-MM-DD`, UTC. */
+	date: string;
+	state: PublicCalendarState;
+	/** Uptime of the least available service that day; `null` without data. */
+	uptime_pct: number | null;
+	incidents: number;
+}
+
 export interface PublicStatusItem {
 	/** Stable public key of the service (from its label), used in badge URLs. */
 	key: string;
@@ -1273,6 +1296,8 @@ export interface PublicStatusItem {
 	/** Only when the page shows 90 days of history. */
 	uptime_90d: number | null;
 	latency_ms: number | null;
+	/** Only when the page shows response times and the service has latency data. */
+	latency_series?: PublicLatencySeries;
 	history: PublicDayBucket[];
 }
 
@@ -1314,6 +1339,9 @@ export interface PublicStatus {
 		scene_rotation: StatusPageSceneRotation;
 		/** Simple mode: no scene, mascot or animation; light/dark follows the visitor. */
 		simple: boolean;
+		/** Present (true) only when the page shows the calendar / response times. */
+		show_calendar?: boolean;
+		show_latency?: boolean;
 		footer_text: string;
 		homepage_url: string;
 		/** Versioned relative URL of the logo, `null` without one. */
@@ -1324,6 +1352,8 @@ export interface PublicStatus {
 	overall: PublicOverall;
 	generated_at: string;
 	groups: PublicStatusGroup[];
+	/** 90 days, oldest first; present only when the page shows the calendar. */
+	calendar?: PublicCalendarDay[];
 	/** Open incidents and those of the last 30 days. */
 	incidents: PublicIncident[];
 	/** Scheduled or in-progress maintenance windows. */

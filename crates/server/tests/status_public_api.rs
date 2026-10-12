@@ -407,6 +407,59 @@ async fn simple_mode_round_trips_and_is_kept_when_omitted() {
 }
 
 #[tokio::test]
+async fn calendar_and_latency_are_off_by_default_and_leak_nothing() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    branded_page(&app, &admin).await;
+    let doc: Value =
+        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme", None).await.text)
+            .unwrap();
+    assert!(doc.get("calendar").is_none());
+    assert!(doc["page"].get("show_calendar").is_none());
+    assert!(doc["page"].get("show_latency").is_none());
+    assert!(doc["groups"][0]["items"][0].get("latency_series").is_none());
+}
+
+#[tokio::test]
+async fn calendar_covers_ninety_days_when_enabled_and_flags_are_kept_when_omitted() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let page = branded_page(&app, &admin).await;
+    let url = format!("/api/status-pages/{page}");
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Acme services", "slug": "acme", "published": true,
+                    "show_calendar": true, "show_latency": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["show_calendar"], json!(true));
+    assert_eq!(reply.body["show_latency"], json!(true));
+    let reply = app
+        .put(&url, json!({ "title": "Acme services", "slug": "acme", "published": true }), Some(&admin))
+        .await;
+    assert_eq!(reply.body["show_calendar"], json!(true), "omitted: kept");
+
+    let doc: Value =
+        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme", None).await.text)
+            .unwrap();
+    assert_eq!(doc["page"]["show_calendar"], json!(true));
+    assert_eq!(doc["page"]["show_latency"], json!(true));
+    let calendar = doc["calendar"].as_array().expect("calendar");
+    assert_eq!(calendar.len(), 90);
+    // Sans mesure : jour sans données, jamais « parfait ».
+    for day in calendar {
+        assert_eq!(day["state"], "nodata");
+        assert!(day["uptime_pct"].is_null());
+    }
+    // Aucune donnée de latence : le service n'a pas de graphique.
+    assert!(doc["groups"][0]["items"][0].get("latency_series").is_none());
+    assert!(!doc.to_string().contains(SECRET_NAME));
+}
+
+#[tokio::test]
 async fn badges_are_svg_cacheable_and_say_no_more_than_the_page() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;

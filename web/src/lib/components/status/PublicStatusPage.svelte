@@ -23,6 +23,7 @@
 	import Logo from '#lib/components/Logo.svelte';
 	import IncidentCard from '#lib/components/status/IncidentCard.svelte';
 	import StatusUpdates from '#lib/components/status/StatusUpdates.svelte';
+	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
 	import ServiceRow from '#lib/components/status/ServiceRow.svelte';
 	import StatusMascot from '#lib/components/status/StatusMascot.svelte';
 	import SceneBackdrop from '#lib/components/status/scenes/SceneBackdrop.svelte';
@@ -215,6 +216,10 @@
 						</div>
 					{/each}
 				</div>
+			{/if}
+			{#if status.calendar && status.calendar.length > 0}
+				<h2 class="mt-6 text-base font-semibold tracking-tight text-ink">{m.status_calendar_title({ days: status.calendar.length })}</h2>
+				<div class="mt-3"><CalendarHistory days={status.calendar} /></div>
 			{/if}
 		</section>
 	{/if}

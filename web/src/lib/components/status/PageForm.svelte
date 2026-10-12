@@ -63,6 +63,8 @@
 	// Banner scenes in the order they were ticked; none keeps the plain page. New pages start on one.
 	let scenes = $state<string[]>([...(initial?.scenes ?? [DEFAULT_SCENE])]);
 	let simple = $state(initial?.simple ?? false);
+	let showCalendar = $state(initial?.show_calendar ?? false);
+	let showLatency = $state(initial?.show_latency ?? false);
 	let sceneRotation = $state<StatusPageSceneRotation>(initial?.scene_rotation ?? 'visit');
 	let footerText = $state(initial?.footer_text ?? '');
 	let homepageUrl = $state(initial?.homepage_url ?? '');
@@ -195,6 +197,8 @@
 				scenes,
 				scene_rotation: sceneRotation,
 				simple,
+				show_calendar: showCalendar,
+				show_latency: showLatency,
 				footer_text: footerText.trim(),
 				homepage_url: homepageUrl.trim(),
 				subscribe_channel_id: subscribeChannel,
@@ -342,6 +346,14 @@
 
 	<Field label={m.status_form_simple()} for="{idPrefix}-simple" inline help={m.status_form_simple_help()}>
 		<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label={m.status_form_simple()} />
+	</Field>
+
+	<Field label={m.status_form_calendar()} for="{idPrefix}-calendar" inline help={m.status_form_calendar_help()}>
+		<Toggle id="{idPrefix}-calendar" bind:checked={showCalendar} disabled={saving} label={m.status_form_calendar()} />
+	</Field>
+
+	<Field label={m.status_form_latency()} for="{idPrefix}-latency" inline help={m.status_form_latency_help()}>
+		<Toggle id="{idPrefix}-latency" bind:checked={showLatency} disabled={saving} label={m.status_form_latency()} />
 	</Field>
 
 	<!-- Scene -->
