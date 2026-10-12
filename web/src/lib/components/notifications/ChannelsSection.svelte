@@ -211,7 +211,7 @@
 								</div>
 								{#if auth.isAdmin}
 									<div class="flex flex-wrap items-center gap-1.5">
-										<Button variant="secondary" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => void sendTest(channel)}>
+										<Button variant="ghost" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => void sendTest(channel)}>
 											{m.notifications_channels_send_test()}
 										</Button>
 										<Button variant="ghost" size="sm" disabled={current !== null} onclick={() => (form = channel)}>{m.notifications_channels_edit()}</Button>

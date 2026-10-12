@@ -209,9 +209,6 @@
 				{m.alerts_needs_snoozed()}
 				<span class="tnum font-normal text-ink-3">· {snoozedRows.length}</span>
 			</h3>
-			<p class="mb-2 text-[0.8125rem] text-ink-2">
-				{m.alerts_needs_snoozed_hint()}
-			</p>
 			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
 				{#each snoozedRows as folded, i (folded.row.key)}
 					<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
