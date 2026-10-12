@@ -341,7 +341,7 @@
 					{/if}
 
 					<div>
-						<Button type="submit" variant="primary" loading={installing} disabled={!yaml.trim()}>
+						<Button type="submit" variant="secondary" loading={installing} disabled={!yaml.trim()}>
 							<Plus class="size-4" aria-hidden="true" />
 							{m.settings_packs_install_button()}
 						</Button>

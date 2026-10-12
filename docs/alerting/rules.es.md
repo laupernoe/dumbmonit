@@ -16,7 +16,7 @@ se distribuye activada en cada instancia.
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
 |---|---|---|---|---|---|
-| Device unreachable | Ninguna medición recibida en más de tres minutos. `time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 min | Warning (`critical`) | 6 h |
+| Device unreachable | Ninguna medición recibida en más de tres minutos. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 min | Warning (`critical`) | 6 h |
 | High CPU | Carga de CPU sostenida por encima del 90%, promediada por dispositivo entre fuentes SNMP, Proxmox y agente; se limpia por debajo del 85 %. | > 90 % | 10 min | Advisory (`warning`), escala tras 1 h | 6 h |
 | Unusual CPU | Carga de CPU notablemente distinta de lo habitual a esta hora y día de la semana (referencia estacional). | score > 3.5 | 15 min | Info (`info`) | 6 h |
 | Disk almost full | Sistema de archivos al 90% de llenado o más, por punto de montaje (almacenamientos SNMP, Proxmox y sistemas de archivos raíz); se limpia por debajo del 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escala tras 24 h | 6 h |
@@ -58,7 +58,7 @@ entregado con una fuente de alimentación de dos nunca se activa.
 | Service down | El servicio no ha respondido correctamente durante tres minutos (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 min | Warning (`critical`) | 30 min |
 | Heartbeat missed | El trabajo no ha avisado dentro de su intervalo esperado más el período de gracia, o reportó un fallo él mismo (`dumbmonit_probe_success{probe="push"} == bool 0`; el retraso se define por dispositivo, consulta [Heartbeat](../devices/push.md)). | > 0 | 2 min | Advisory (`warning`) | 6 h |
 | Service flapping | El servicio cambió de estado más de seis veces en treinta minutos (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 min | Advisory (`warning`) | 1 h |
-| Slow service | El servicio tarda más de tres segundos en responder. | > 3 s | 10 min | Advisory (`warning`) | 6 h |
+| Slow service | El servicio tarda más de tres segundos en responder; las comprobaciones fallidas se excluyen (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 min | Advisory (`warning`) | 6 h |
 | Certificate expiring soon | El certificado caduca en menos de catorce días. | < 14 d | 1 h | Advisory (`warning`) | 24 h |
 | Certificate expired | El certificado ha caducado. | < 0 d | 5 min | Warning (`critical`) | 24 h |
 
@@ -106,6 +106,17 @@ Reportado por el agente; consulta
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
 |---|---|---|---|---|---|
 | WireGuard peer silent | Un peer con keepalive persistente no ha completado un handshake en más de 15 minutos: el túnel está caído (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Un peer que nunca se conectó cuenta su silencio desde el momento en que el agente lo vio por primera vez. Los peers sin keepalive (un teléfono, un portátil) están inactivos durante días y se excluyen; cambia el umbral para cambiar N, o quita la parte `and on …` para vigilar cada peer. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
+
+### Discos, ZFS y sensores del agente {#agent-disks-zfs-and-sensors}
+
+Reportado por el agente; consulta [Agente](../devices/agent.md).
+
+| Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
+|---|---|---|---|---|---|
+| Disk SMART failing | La propia autoevaluación SMART del disco lo reporta como fallando (`dumbmonit_agent_disk_smart_ok == bool 0`). Reemplázalo y revisa las copias de seguridad. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| ZFS pool degraded | Un pool ZFS ya no está sano: falta un dispositivo, está en fallo o retirado (`dumbmonit_agent_zfs_pool_health`: 0 online, 1 degraded, 2 cualquier otro estado). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| ZFS scrub found errors | El último scrub de ZFS encontró errores en este pool, o hay archivos perdidos de forma permanente (`dumbmonit_agent_zfs_pool_scrub_errors or dumbmonit_agent_zfs_pool_data_errors`). El pool puede seguir `ONLINE`. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| Temperature above critical | Un sensor supera la temperatura crítica que declara su propio hardware (`dumbmonit_agent_sensor_temperature_celsius >= dumbmonit_agent_sensor_temperature_critical_celsius`); sin valor fijo. | > 0 | 5 min | Warning (`critical`) | 6 h |
 
 ### Proxmox VE
 
@@ -253,6 +264,7 @@ Reportado por el agente; consulta
 | Synology disk bad sectors growing | Aparecieron sectores ilegibles nuevos en las últimas 24 horas (`delta(dumbmonit_synology_disk_unc_count[24h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Synology SSD wearing out | Un SSD tiene menos del 10 % de su vida nominal restante (`dumbmonit_synology_disk_remaining_life_percent`); se limpia por encima del 12 %. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
 | Synology volume degraded | Un volumen está degraded o crashed: su redundancia desapareció (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
+| Synology storage pool degraded | Un pool de almacenamiento o caché SSD está degraded o crashed: falló un disco y la redundancia desapareció o se está reconstruyendo (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
 | Synology volume almost full | Un volumen está al 90 % lleno o más (`dumbmonit_synology_volume_used_percent`); se limpia por debajo del 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escala tras 24 h | 6 h |
 | Synology temperature high | Un disco está por encima de 55 °C, o DSM lanzó su propio aviso de temperatura (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); se limpia por debajo de 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
 | Synology memory high | Uso de memoria del NAS por encima del 95 % (`dumbmonit_synology_memory_usage_percent`); se limpia por debajo del 90 %. | > 95 % | 15 min | Advisory (`warning`) | 6 h |
@@ -275,7 +287,7 @@ historial de datos rechazados no se activa en su primera medición.
 | Metrics or log storage almost read-only | Menos del 10% de disco restante antes de solo lectura (`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`); se limpia por encima del 12 %. | < 10 % | 30 min | Advisory (`warning`) | 24 h |
 | Metrics or log server unhealthy | `/health` no responde OK (`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`). | < 1 | 3 min | Warning (`critical`) | 6 h |
 | Metrics or log data refused | Muestras o líneas de log rechazadas en la última hora: timestamps fuera de retención, etiquetas demasiado largas, límite de serie (`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
-| VictoriaMetrics slow inserts | Más del 5% de las muestras nuevas tomaron la vía lenta durante 15 minutos: no hay suficiente memoria para las series activas (`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`); se limpia por debajo del 3 %. | > 5 % | 30 min | Advisory (`warning`) | 24 h |
+| VictoriaMetrics slow inserts | Más del 5% de las muestras nuevas tomaron la vía lenta durante 15 minutos: no hay suficiente memoria para las series activas (`(100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) and on (target) dumbmonit_victoriametrics_uptime_seconds > 900`); se limpia por debajo del 3 %. Solo se evalúa una vez que el servidor lleva 15 minutos en marcha, así que un reinicio (caché fría, contadores a cero dentro de la ventana) no la deja pendiente. | > 5 % | 30 min | Advisory (`warning`) | 24 h |
 | Loki not ready | `/ready` no responde ready (`dumbmonit_loki_ready`). | < 1 | 5 min | Warning (`critical`) | 6 h |
 | Loki refusing log lines | Líneas rechazadas en la última hora: demasiado antiguas, límite de tasa o stream, línea demasiado larga (`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Loki cannot flush to storage | Chunks fallaron al llegar al almacenamiento en los últimos 30 minutos; se pierden si Loki se reinicia (`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`). | > 0 | 10 min | Warning (`critical`) | 1 h |
@@ -458,7 +470,7 @@ línea.
 ### VMware vSphere
 
 [Página del dispositivo](../devices/vsphere.md). Las series de host
-llevan `host`, las de VM `vm`, las de datastore `datastore`, así que
+llevan `esxi`, las de VM `vm`, las de datastore `datastore`, así que
 la notificación nombra el objeto.
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
@@ -511,7 +523,7 @@ Traefik, Caddy, Nginx Proxy Manager y registros de dominio
 dominio](../devices/domain.md)), y la opción *Alert when the answer
 changes* de la comprobación DNS
 ([Servicios](../devices/services.md#alerting-when-the-answer-changes)).
-Las series llevan `router`, `service`, `server`, `upstream`, `host` o
+Las series llevan `router`, `service`, `server`, `upstream`, `proxy_host` o
 `cert`, así que la notificación nombra lo que falló.
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
@@ -550,7 +562,7 @@ afectado.
 |---|---|---|---|---|---|
 | Kubernetes node not ready | Un nodo no está Ready: su kubelet ya no reporta, y sus pods serán expulsados (`dumbmonit_k8s_node_ready == bool 0`). | > 0 | 5 min | Warning (`critical`) | 6 h |
 | Kubernetes node under pressure | Un nodo reporta presión de memoria, disco o PID (`dumbmonit_k8s_node_pressure`, etiqueta `condition`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
-| Kubernetes pod crash looping | Un contenedor está en `CrashLoopBackOff` (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`: el estado desaparece por un momento en cada intento de reinicio). | > 0 | 10 min | Warning (`critical`) | 6 h |
+| Kubernetes pod crash looping | Un contenedor está en `CrashLoopBackOff` y sigue reiniciándose: al menos dos reinicios en 15 minutos (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2`; el estado desaparece por un momento en cada intento de reinicio). Los contenedores terminados por un reinicio del nodo o del runtime (exit 137, 143 o 255, no `OOMKilled`) no cuentan, así que un reinicio del equipo no parece un bucle de fallos. | > 0 | 10 min | Warning (`critical`) | 6 h |
 | Kubernetes pod stuck pending | Un pod lleva quince minutos en Pending: ningún nodo puede tomarlo, o un volumen o imagen que necesita no llega (`dumbmonit_k8s_pod_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
 | Kubernetes pod restarting | Un pod se reinició más de cinco veces en la última hora sin estar en `CrashLoopBackOff` (`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`). | > 5 | 5 min | Advisory (`warning`) | 6 h |
 | Kubernetes workload missing replicas | Un Deployment, StatefulSet o DaemonSet tiene menos réplicas disponibles de las que pide (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Advisory (`warning`), escala tras 1 h | 6 h |
@@ -750,8 +762,8 @@ métricas](../reference/metrics.md), y cada serie lleva una etiqueta
 Algunos patrones usados por las reglas integradas:
 
 ```
-# Antigüedad de la última muestra: lo que significa "unreachable"
-time() - tlast_over_time(dumbmonit_up[7d])
+# Antigüedad de la última muestra, serie más reciente por dispositivo: lo que significa "unreachable"
+bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))
 
 # Un valor por dispositivo, sea cual sea la fuente
 avg by (target, host) (dumbmonit_cpu_load_percent or dumbmonit_proxmox_node_cpu_percent or dumbmonit_cpu_usage_percent)

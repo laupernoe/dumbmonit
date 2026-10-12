@@ -11,6 +11,7 @@
 	import { formatRelative } from '#lib/format.js';
 	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	interface Props {
 		target: Target;
@@ -104,7 +105,7 @@
 	}
 </script>
 
-<Panel title={m.website_panel_title()} description={m.website_panel_desc()} class="mb-4">
+<Panel title={m.website_panel_title()} class="mb-4">
 	{#if loading}
 		<Skeleton class="h-24 w-full" />
 	{:else if error}
@@ -127,7 +128,10 @@
 				</div>
 				<div class="min-w-0">
 					<dt class="text-ink-3">{m.website_platform()}</dt>
-					<dd class="mt-0.5 font-medium">{probe.platform === 'other' ? m.website_platform_other() : (overview.platform_label ?? probe.platform)}</dd>
+					<dd class="mt-0.5 flex items-center gap-1.5 font-medium">
+						<KindIcon kind="website" platform={probe.platform} class="size-4 text-ink-2" />
+						{probe.platform === 'other' ? m.website_platform_other() : (overview.platform_label ?? probe.platform)}
+					</dd>
 				</div>
 				<div class="min-w-0 sm:col-span-2">
 					<dt class="text-ink-3">{m.website_final_url()}</dt>

@@ -10,7 +10,7 @@
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import Figure from '../Figure.svelte';
-	import { NUT_QUERY_NAMES, extraFlags, foldUps, formatAge, formatRuntime, verdict, type UpsReading } from './ups';
+	import { nutQueries, extraFlags, foldUps, formatAge, formatRuntime, verdict, type UpsReading } from './ups';
 
 	interface Props {
 		target: Target;
@@ -25,11 +25,8 @@
 	async function load(signal?: AbortSignal) {
 		error = null;
 		try {
-			const series = await queryInstant(
-				`{__name__=~"dumbmonit_nut_(${NUT_QUERY_NAMES.join('|')})", target="${target.id}"}`,
-				signal
-			);
-			readings = foldUps(series);
+			const parts = await Promise.all(nutQueries(target.id).map((query) => queryInstant(query, signal)));
+			readings = foldUps(parts.flat());
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;
@@ -82,7 +79,6 @@
 		title={readings.length > 1
 			? m.devicesb_nut_panel_title_many({ count: readings.length })
 			: m.devicesb_nut_panel_title()}
-		description={m.devicesb_nut_panel_description()}
 		padded={false}
 		class="rise-in"
 	>

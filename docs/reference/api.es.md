@@ -32,7 +32,8 @@ Dejado fuera a propósito: el protocolo de agente (`/api/ingest`,
 `/api/agent/commands*`, `/api/agent/relay*`), que solo habla el
 [agente](../devices/agent.md); las redirecciones de navegador del
 inicio de sesión SSO (`/api/auth/oidc/start`,
-`/api/auth/oidc/callback`); y las descargas de agente (`/install.sh`,
+`/api/auth/oidc/callback`) y la de Spotify
+(`/api/music/spotify/callback`); y las descargas de agente (`/install.sh`,
 `/install.ps1`, `/download/*`).
 
 Cárgalo en cualquier herramienta OpenAPI:
@@ -450,7 +451,10 @@ etiqueta. Los timestamps del servidor son UTC sin sufijo.
 `error_kind` clasifica `last_error`: `down` (el dispositivo no
 respondió) o `config` (de nuestro lado — credenciales, dirección,
 opción), que es lo que la UI muestra como *Unreachable* o
-*Misconfigured*; `null` cuando la última sonda tuvo éxito.
+*Misconfigured*; `null` cuando la última sonda tuvo éxito. Una comprobación de
+servicio (HTTP, TCP, NTP, WebSocket…) que se ejecutó pero encontró el servicio
+fallando registra `Service down: the <probe> check failed (<reason>)` con
+`error_kind` `down`.
 
 Crear uno:
 
@@ -580,11 +584,46 @@ listo para copiar y la fuente de datos de Grafana.
 `DUMBMONIT_METRICS_PUBLIC=true` sirve las tres sin token — solo detrás
 de un cortafuegos, ya que llevan cada medición de cada dispositivo.
 
+## Otras rutas {#further-routes}
+
+Rutas no detalladas arriba; el documento OpenAPI da sus parámetros y formas de
+respuesta. *read* y *write* son el alcance de token necesario; *none* significa
+que no se acepta ningún token (solo sesión).
+
+| Método | Ruta | Alcance | Propósito |
+|---|---|---|---|
+| `POST` | `/api/targets/reorder` | write | Reordena los dispositivos. |
+| `GET` | `/api/targets/{id}/security` | read | Puntuación de seguridad, nota y comprobaciones de un dispositivo. |
+| `GET` | `/api/security/summary` | read | Puntuación de seguridad de cada dispositivo evaluado, el peor primero. |
+| `GET` | `/api/targets/{id}/webchange/pages` | read | Páginas seguidas por una vigilancia de sitio web. |
+| `GET` | `/api/targets/{id}/webchange/changes` | read | Cambios encontrados en un sitio web vigilado, el más reciente primero. |
+| `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | Un cambio, con ambas versiones y el diff por líneas. |
+| `GET` | `/api/targets/{id}/webchange/snapshots/{snapshot_id}/screenshot` | read | La captura de pantalla de una instantánea. |
+| `POST` | `/api/targets/{id}/webchange/check` | write | Comprueba ahora un sitio web vigilado. |
+| `GET` | `/api/targets/{id}/opnsense/gateways`, `/traffic`, `/health` | read | OPNsense: pasarelas y direcciones WAN; interfaces, cortafuegos y DHCP; sistema, servicios, túneles y firmware. |
+| `GET` | `/api/targets/{id}/truenas/storage`, `/protection`, `/health` | read | TrueNAS: pools, datasets y discos; scrubs y tareas de protección de datos; sistema, alertas y servicios. |
+| `GET` | `/api/targets/{id}/ad`, `/ad/findings` | read | Active Directory: dominio, controladores, grupos privilegiados y hallazgos; los hallazgos de seguridad en bruto. |
+| `GET` | `/api/targets/{id}/redfish` | read | Hardware del servidor leído desde su controlador de gestión. |
+| `GET` | `/api/targets/{id}/observability` | read | Salud de un servidor de logs o métricas. |
+| `GET` | `/api/targets/{id}/backend` | read | Salud de Redis, MongoDB, RabbitMQ o CrowdSec. |
+| `GET` | `/api/targets/{id}/proxy` | read | Salud de un proxy inverso o de un registro de dominio. |
+| `GET` | `/api/public/status/{slug}/badge.svg`, `/response.svg`, `/uptime.svg` | público | Badges de estado general, tiempo de respuesta medio y disponibilidad de una página de estado. |
+| `GET` | `/api/public/status/{slug}/components/{key}/badge.svg`, `/uptime.svg`, `/response.svg` | público | Los mismos badges para un servicio de la página. |
+| `GET` | `/api/public/status/{slug}/banner.js` | público | Script del banner de estado para sitios web de terceros. |
+| `GET` | `/api/public/status/{slug}/rss` | público | Incidentes como feed RSS. |
+| `GET` | `/api/music/now` | read | Lo que reproducen los muros (monitor de sala). |
+| `PUT`, `DELETE` | `/api/music/link` | write | Cada muro reproduce este enlace de Spotify, Deezer o YouTube; o detiene el reproductor integrado. |
+| `GET`, `DELETE` | `/api/music/spotify` | read, write | La cuenta de Spotify conectada (nunca un token); la desconecta y olvida sus tokens. |
+| `POST` | `/api/music/spotify/authorize`, `/complete` | none | Inicia la conexión de Spotify; termina una conexión por loopback. Solo sesión. |
+| `GET` | `/api/music/spotify/token` | none | Un token de acceso de Spotify de corta duración para el reproductor del muro. Solo sesión. |
+| `GET`, `PUT` | `/api/music/speaker` | read, write | El altavoz de Spotify del muro tal como lo muestra Settings; renombrarlo (admin). |
+| `POST` | `/api/music/speaker/report`, `/play` | none | Un muro reporta el estado de su altavoz; reproduce la cuenta en él. Solo sesión. |
+
 ## Alertas {#alerts}
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| `GET` | `/api/alerts` | Alertas activas (pending, firing, suppressed, recientemente resueltas). Las alertas de dispositivos eliminados o en pausa nunca se listan. |
+| `GET` | `/api/alerts` | Alertas activas (pending, firing, suppressed, recientemente resueltas). Las alertas de dispositivos eliminados o en pausa nunca se listan. `?target_id=` conserva solo las alertas de un dispositivo. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Transiciones de fase. `since` es RFC 3339, por defecto los últimos siete días; `limit` debe ser positivo. `dismissed` (por defecto `false`) excluye entradas limpiadas con las dos rutas de abajo; nada se destruye nunca con una limpieza, solo se oculta de la vista por defecto. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Limpia una entrada `resolved` de la vista de historial por defecto. `204`. `404` en un id desconocido o una transición todavía activa. Operador; auditado. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Limpia cada entrada `resolved` aún no limpiada de golpe («Clear all resolved»). Devuelve `{"dismissed": <count>}`. Operador; auditado. |

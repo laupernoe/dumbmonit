@@ -522,6 +522,36 @@ async fn alerts_of_missing_or_paused_devices_are_never_listed() {
 }
 
 #[tokio::test]
+async fn the_active_alerts_route_filters_by_device() {
+    let app = setup().await;
+    let nas = app.create_target("nas", "10.0.0.7").await;
+    let router = app.create_target("router", "10.0.0.1").await;
+    db::alerts::save_states(
+        &app.pool,
+        &[
+            TestApp::firing_alert("cpu_high@0000000000000001", Some(nas), "nas"),
+            TestApp::firing_alert("cpu_high@0000000000000002", Some(router), "router"),
+            AlertOutcome {
+                labels: BTreeMap::from([("host".to_string(), "aggregate".to_string())]),
+                ..TestApp::firing_alert("cpu_high@0000000000000003", None, "aggregate")
+            },
+        ],
+    )
+    .await
+    .expect("states saved");
+
+    let (status, body) = app.request("GET", &format!("/api/alerts?target_id={nas}"), None).await;
+    assert_eq!(status, StatusCode::OK);
+    let listed: Vec<&str> =
+        body.as_array().unwrap().iter().map(|a| a["fingerprint"].as_str().unwrap()).collect();
+    assert_eq!(listed, vec!["cpu_high@0000000000000001"], "{body}");
+
+    // Sans filtre, tout reste listé.
+    let (_, body) = app.request("GET", "/api/alerts", None).await;
+    assert_eq!(body.as_array().unwrap().len(), 3, "{body}");
+}
+
+#[tokio::test]
 async fn deleting_a_device_clears_its_alerts_without_notifying() {
     let app = setup().await;
     let nas = app.create_target("nas", "10.0.0.7").await;

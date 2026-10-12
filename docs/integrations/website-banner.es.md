@@ -40,9 +40,20 @@ Copia `integrations/wordpress/dumbmonit-status-banner` en
 e introduce la URL de la página de estado
 (`https://monit.example.com/api/public/status/my-page`), la posición y el
 modo de visualización. El plugin obtiene el JSON desde el servidor, lo
-cachea durante un minuto y escapa todo lo que imprime. WordPress rechaza
-las peticiones a direcciones privadas, así que el servidor de DumbMonit debe
-ser accesible en una dirección pública.
+cachea durante un minuto y escapa todo lo que imprime.
+
+El servidor de DumbMonit puede estar en una dirección privada (LAN): el plugin
+solo solicita la URL exacta que guardaste (comprobada contra el patrón
+`/api/public/status/<address>`, con las redirecciones desactivadas). Si la
+dirección no es válida, la página de ajustes muestra un error y conserva el
+valor anterior. Si no se puede obtener la página de estado, se muestra un
+aviso en el administrador de WordPress (y al guardar), en lugar de fallar en
+silencio.
+
+El texto del banner es traducible (dominio de texto
+`dumbmonit-status-banner`, plantilla en `languages/`); sigue el idioma del
+sitio WordPress. El JSON público de estado no lleva idioma, así que no puede
+elegir uno.
 
 ## Inclusión PHP {#php-include}
 
@@ -56,5 +67,7 @@ dumbmonit_banner('https://monit.example.com/api/public/status/my-page',
 
 El helper solo acepta URLs `http` y `https`, usa un tiempo de espera de 3
 segundos, no sigue redirecciones, mantiene una caché de archivo en el
-directorio temporal y no imprime nada si no se puede alcanzar el servidor.
-Consulta `integrations/php/example.php`.
+directorio temporal y no imprime nada si no se puede alcanzar el servidor (el fallo se escribe en el
+log de errores de PHP). Los textos están en inglés por defecto; pasa
+`'lang' => 'fr'` o un array `'strings'` para cambiarlos. Una dirección
+privada (LAN) funciona. Consulta `integrations/php/example.php`.

@@ -34,8 +34,8 @@ Todas las métricas tienen el prefijo `dumbmonit_forgejo_`.
 | `repos` | repositorios visibles para la cuenta del token | |
 | `users`, `orgs` | cuentas y organizaciones en la instancia | |
 | `cron_tasks` | tareas programadas definidas en la instancia | |
-| `cron_task_overdue` | 1 por tarea cuya próxima ejecución ya ha vencido, 0 en caso contrario | `task` |
-| `runners_total`, `runners_online`, `runners_offline` | runners de Actions conocidos por la instancia | |
+| `cron_task_overdue` | 1 por tarea cuya próxima ejecución ya ha vencido, 0 en caso contrario; las tareas desactivadas (programación `-`) se omiten | `task` |
+| `runners_total`, `runners_online`, `runners_offline` | runners de Actions conocidos por la instancia; `online`, `idle` y `active` cuentan como en línea | |
 | `runner_offline` | valor 1 por runner fuera de línea (como máximo 32) | `runner` |
 | `scrape_errors` | llamadas solo de administrador que fallaron en la última sonda (0 con las de un token corriente, nunca intentadas) | |
 

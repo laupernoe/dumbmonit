@@ -74,8 +74,7 @@ Convenciones: solo Svelte 5 runes (`$props`, `$state`, `$derived`,
 `src/lib/api/`; los componentes nunca hacen `fetch`. Los tipos en
 `api/types.ts` reflejan exactamente las estructuras Rust y deben
 mantenerse sincronizados con `crates/server/src/api/*.rs`. El sistema de
-diseño (tokens en `src/app.css`, primitivas en `src/lib/ui/`) está
-documentado en `DESIGN.md`; el contexto de producto en `PRODUCT.md`.
+diseño vive en `src/app.css` (tokens) y `src/lib/ui/` (primitivas).
 Nunca ejecutes dos `vite build` a la vez: borran `.svelte-kit/output`.
 
 ## Traducciones (Weblate) {#translations-weblate}
@@ -162,7 +161,10 @@ de alertas, silencios) se prueban en el sitio sin red.
 
 Las muestras son `Sample::new(name, value, MetricKind::Gauge | Counter,
 timestamp_ms)` con `.with_label(k, v)`; las etiquetas de identidad
-(`target`, `host`, `tag_*`) las añade el registro.
+(`target`, `host`, `tag_*`) las añade el registro. No las emitas tú: nombra una
+etiqueta por objeto con el nombre del objeto (`proxy_host`, `esxi`, `ceph_host`).
+Una etiqueta que colisiona se conserva como `exported_<name>`, y las opciones
+listadas para el tipo en `api/collectors.rs` no se copian como `tag_*`.
 
 ## Añadir un canal de notificación {#adding-a-notification-channel}
 

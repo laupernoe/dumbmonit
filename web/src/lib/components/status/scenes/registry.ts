@@ -31,6 +31,11 @@ import HalicarnassusScene from './HalicarnassusScene.svelte';
 import RhodesScene from './RhodesScene.svelte';
 import AlexandriaScene from './AlexandriaScene.svelte';
 import AthensScene from './AthensScene.svelte';
+import GenevaScene from './GenevaScene.svelte';
+import MatterhornScene from './MatterhornScene.svelte';
+import BernScene from './BernScene.svelte';
+import LucerneScene from './LucerneScene.svelte';
+import ChillonScene from './ChillonScene.svelte';
 
 export const SCENE_COMPONENTS: Record<string, Component> = {
 	venice: VeniceScene,
@@ -58,7 +63,12 @@ export const SCENE_COMPONENTS: Record<string, Component> = {
 	halicarnassus: HalicarnassusScene,
 	rhodes: RhodesScene,
 	alexandria: AlexandriaScene,
-	athens: AthensScene
+	athens: AthensScene,
+	geneva: GenevaScene,
+	matterhorn: MatterhornScene,
+	bern: BernScene,
+	lucerne: LucerneScene,
+	chillon: ChillonScene
 };
 
 /** Labels for the editor, in display order: cities, then the new wonders, then the ancient ones. */
@@ -88,7 +98,12 @@ export const SCENE_CHOICES: { value: string; label: string }[] = [
 	{ value: 'halicarnassus', get label() { return m.status_scene_halicarnassus(); } },
 	{ value: 'rhodes', get label() { return m.status_scene_rhodes(); } },
 	{ value: 'alexandria', get label() { return m.status_scene_alexandria(); } },
-	{ value: 'athens', get label() { return m.status_scene_athens(); } }
+	{ value: 'athens', get label() { return m.status_scene_athens(); } },
+	{ value: 'geneva', get label() { return m.status_scene_geneva(); } },
+	{ value: 'matterhorn', get label() { return m.status_scene_matterhorn(); } },
+	{ value: 'bern', get label() { return m.status_scene_bern(); } },
+	{ value: 'lucerne', get label() { return m.status_scene_lucerne(); } },
+	{ value: 'chillon', get label() { return m.status_scene_chillon(); } }
 ];
 
 export const SCENE_ROTATIONS: { value: string; label: string }[] = [

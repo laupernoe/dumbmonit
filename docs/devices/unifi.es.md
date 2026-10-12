@@ -156,6 +156,10 @@ Integration API se validan contra la documentación oficial.
     cada visitante. Lista más en la opción Clients to watch, o
     introduce all.
 
+## Controlador aún sin configurar {#controller-not-set-up-yet}
+
+Un controlador autoalojado cuyo asistente de primer arranque no ha terminado responde a toda petición con una redirección a `/setup`. DumbMonit informa entonces «The UniFi controller is not set up yet» como un error de configuración (no una contraseña rechazada): termina el asistente en el navegador y vuelve a sondear.
+
 ## Credenciales {#credentials}
 
 | Credencial | Campos |

@@ -115,6 +115,13 @@ certificado se comprueba contra las autoridades públicas incluidas en
 DumbMonit; para una autoridad privada, marca Accept an unverifiable
 certificate.
 
+Una contraseña rechazada (`WRONGPASS`, `NOAUTH`, `NOPERM`) se muestra como un
+error de credencial y nadie recibe notificación del error en sí, pero entonces
+DumbMonit no recopila nada: la regla Device unreachable sigue activándose, como
+con cualquier dispositivo que no puede leer, hasta que la credencial funcione
+de nuevo. Redis reiniciándose sin su usuario ACL (usuarios definidos con
+`ACL SETUSER` pero nunca guardados) provoca exactamente esto.
+
 En un despliegue Redis Sentinel o Cluster, añade cada servidor que quieras
 vigilar: cada uno reporta su propia memoria, clientes y persistencia, y un
 primario reporta sus réplicas. El propio Sentinel no está cubierto.

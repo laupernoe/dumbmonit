@@ -101,7 +101,7 @@ pub async fn query(
 
     let series = state
         .victoria
-        .query(&params.query)
+        .query_fresh(&params.query)
         .await
         .map_err(|error| ApiError::BadRequest(format!("{error:#}")))?;
 

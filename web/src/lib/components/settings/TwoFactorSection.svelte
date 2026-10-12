@@ -182,7 +182,7 @@
 			{:else}
 				<div class="flex flex-wrap items-center gap-2">
 					<Plate tone="ghost" label={m.settings_2fa_off()} />
-					<Button size="sm" variant="primary" disabled={step !== 'idle'} onclick={() => start('password')}>
+					<Button size="sm" variant="secondary" disabled={step !== 'idle'} onclick={() => start('password')}>
 						<ShieldCheck class="size-4" aria-hidden="true" />
 						{m.settings_2fa_setup()}
 					</Button>

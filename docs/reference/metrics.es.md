@@ -41,7 +41,10 @@ Tras cada sonda exitosa, el servidor escribe `dumbmonit_up = 1` para el
 dispositivo. No se escribe nada cuando una sonda falla: la serie
 simplemente se detiene, y la regla «Device unreachable» mide la
 antigüedad de la última muestra
-(`time() - tlast_over_time(dumbmonit_up[7d])`).
+(`time() - tlast_over_time(dumbmonit_up[7d])`), conservando solo la serie más
+reciente de cada dispositivo (`bottomk by (target) (1, …)`): una serie que ya
+no se escribe tras un cambio de etiqueta o de tag permanece en la ventana de 7
+días y no debe contar.
 
 Para los servicios (`http`, `tcp`, `dns`, `ping`, `tls`),
 `dumbmonit_up = 1` significa «el monitor se ejecutó», y
@@ -64,7 +67,7 @@ tiene comprobaciones de seguridad, y escribe `dumbmonit_security_score`
 |---|---|---|
 | `target` | servidor | El id del dispositivo, como en `/api/targets/{id}`. Cada regla y cada gráfica selecciona sobre ella. |
 | `host` | servidor | El nombre del dispositivo. |
-| `tag_<key>` | servidor | Cada etiqueta del dispositivo, incluidas las opciones de tipo (`tag_insecure_tls`, `tag_port`…). Nunca pongas un secreto en una etiqueta. |
+| `tag_<key>` | servidor | Las etiquetas libres del dispositivo. Las opciones de tipo (`insecure_tls`, `port`…), las etiquetas cuya clave parece un secreto (comparada por palabra: `key`, `pass`, `cert`, `private`, `pem`…) y los valores de más de 256 caracteres no se copian. Nunca pongas un secreto en una etiqueta. |
 | `probe` | servicios | `http`, `tcp`, `dns`, `ping` o `tls`. |
 | etiquetas por serie | recolector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… como se lista en cada página de dispositivo. |
 
@@ -115,7 +118,7 @@ rate(dumbmonit_if_octets_in{target="4"}[5m]) * 8
 avg by (host) (avg_over_time(dumbmonit_probe_success[30d]))
 
 # Cada dispositivo que no ha reportado en 5 minutos
-time() - tlast_over_time(dumbmonit_up[7d]) > 300
+bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d])) > 300
 ```
 
 ## Sondear DumbMonit {#scraping-dumbmonit}

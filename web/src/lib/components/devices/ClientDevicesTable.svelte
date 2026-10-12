@@ -61,7 +61,7 @@
 		</div>
 	</Panel>
 {:else if devices && devices.length > 0}
-	<Panel title={m.devices_clients_title()} description={m.devices_clients_description()} padded={false} class="rise-in">
+	<Panel title={m.devices_clients_title()} padded={false} class="rise-in">
 		<ul class="divide-y divide-line sm:hidden">
 			{#each devices as device (device.device)}
 				<li class={`flex flex-col gap-1 px-4 py-3 text-sm ${device.stale ? 'bg-warning-soft/40' : ''}`}>

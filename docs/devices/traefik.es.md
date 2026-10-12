@@ -33,6 +33,7 @@ son contadores: las gráficas y las reglas los convierten en tasas.
 | `services`, `services_errors`, `middlewares_errors` | lo mismo para servicios y middlewares | |
 | `router_status` | por router HTTP: 0 activado, 1 aviso, 2 desactivado | `router`, `provider` |
 | `router_error_info` | valor 1, para un router no activado: el primer error de Traefik | `router`, `error` |
+| `service_error_info` | valor 1, para un servicio no activado: el primer error de Traefik | `service`, `error` |
 | `service_status` | por servicio: 0 activado, 1 aviso, 2 desactivado | `service` |
 | `service_servers`, `service_servers_up` | servidores de un servicio con balanceo de carga, y los que pasan su comprobación de salud | `service` |
 | `server_up` | 1 cuando el servidor pasa su comprobación de salud (o no tiene ninguna) | `service`, `server` |
@@ -46,6 +47,14 @@ son contadores: las gráficas y las reglas los convierten en tasas.
 Los propios routers y servicios de Traefik (`@internal`) se excluyen. Los
 routers, servicios y servidores se describen uno por uno hasta 500 cada
 uno; los totales siempre cubren todo.
+
+Un router, servicio o servidor que Traefik ya no lista (el proveedor Docker
+elimina de inmediato los routers de un contenedor detenido) simplemente deja
+de reportarse: DumbMonit no conserva un valor «sano» para él, y sus series
+terminan. Las gráficas y reglas pueden seguir mostrando su último valor unos
+minutos, hasta que el almacén de métricas descarta la serie obsoleta. Traefik
+responde 404 para una ruta así, lo que ninguna regla reporta: solo un router
+que está listado y desactivado.
 
 Las [reglas integradas](../alerting/rules.md#reverse-proxies-and-domains)
 que se aplican: Traefik router disabled, Traefik backend server down,
