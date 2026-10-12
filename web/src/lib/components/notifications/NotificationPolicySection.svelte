@@ -336,18 +336,13 @@
 			<p class="mt-0.5 text-[0.8125rem] text-ink-2">
 				{m.notifications_policy_per_channel_note()}
 			</p>
-			{#if channels.length === 0}
-				<p class="mt-2 text-sm text-ink-2">{m.notifications_channels_empty_title()}</p>
-			{:else}
+			{#if channels.some((channel) => channel.enabled)}
 				<ul class="mt-2 grid gap-1.5" role="list">
-					{#each channels as channel (channel.id)}
+					{#each channels.filter((channel) => channel.enabled) as channel (channel.id)}
 						<li class="text-sm">
 							<div class="flex flex-wrap items-baseline gap-x-2">
 								<span class="font-medium text-ink">{channel.name}</span>
 								<span class="text-ink-2">{channelSummary(channel)}</span>
-								{#if !channel.enabled}
-									<Plate tone="ghost" label={m.notifications_channels_disabled()} bare />
-								{/if}
 							</div>
 							{#if !matcherIsEmpty(channel.policy?.matcher)}
 								<p class="text-[0.8125rem] text-ink-2">
