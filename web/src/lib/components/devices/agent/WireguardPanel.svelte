@@ -143,7 +143,7 @@
 </script>
 
 {#if !loading && (error || interfaces.length > 0)}
-	<Panel title={m.devices_wg_title()} description={m.devices_wg_description()} padded={false} class="rise-in">
+	<Panel title={m.devices_wg_title()} padded={false} class="rise-in">
 		{#snippet aside()}
 			{#if silent > 0}
 				<Plate tone="warning" label={silent === 1 ? m.devices_wg_silent_one() : m.devices_wg_silent_other({ count: silent })} />
