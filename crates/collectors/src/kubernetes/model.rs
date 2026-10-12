@@ -168,6 +168,9 @@ pub struct ContainerState {
 pub struct Terminated {
     #[serde(default, rename = "exitCode")]
     pub exit_code: i64,
+    /// `Error`, `OOMKilled`, `Completed`, `Unknown`…
+    #[serde(default)]
+    pub reason: Option<String>,
     #[serde(default, rename = "finishedAt")]
     pub finished_at: Option<DateTime<Utc>>,
 }

@@ -1123,6 +1123,11 @@ paths:
         parent device is unreachable, named by `suppressed_by`). Alerts of
         deleted or paused devices are never listed.
       x-token-scope: read
+      parameters:
+        - name: target_id
+          in: query
+          description: Only the alerts of this device.
+          schema: { type: integer }
       responses:
         "200":
           description: Alerts.

@@ -49,7 +49,7 @@ pub struct StatusPage {
 /// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
 /// Scène d'une page créée sans liste de scènes.
 pub const DEFAULT_SCENE: &str = "paris";
-pub const SCENES: [&str; 26] = [
+pub const SCENES: &[&str] = &[
     "venice",
     "paris",
     "tokyo",
@@ -76,6 +76,11 @@ pub const SCENES: [&str; 26] = [
     "rhodes",
     "alexandria",
     "athens",
+    "geneva",
+    "matterhorn",
+    "bern",
+    "lucerne",
+    "chillon",
 ];
 /// Rythmes de changement de scène (plusieurs scènes seulement).
 pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];

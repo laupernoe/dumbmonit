@@ -12,6 +12,7 @@ escribir en el formulario.
 - [Cómo funciona](#how-it-works)
 - [Crear y probar un canal](#creating-and-testing-a-channel)
 - [Settings o secrets: la diferencia](#settings-or-secrets-the-difference)
+- [Certificados autofirmados](#self-signed-certificates)
 - [El canal personalizado](#the-custom-channel)
   - [Variables disponibles](#available-variables)
   - [Ejemplo 1 — una API JSON interna](#example-1--an-internal-json-api)
@@ -85,6 +86,23 @@ dicen, para cada canal, qué va dónde.
 
 ---
 
+## Certificados autofirmados {#self-signed-certificates}
+
+Por defecto DumbMonit rechaza todo servidor cuyo certificado no pueda
+verificar. Para un servicio autoalojado servido con un certificado
+autofirmado o de una autoridad privada, los canales de Matrix, Mattermost,
+Rocket.Chat, Zulip, ntfy, Gotify, Bark, Apprise, Home Assistant, Signal y el
+webhook personalizado tienen un ajuste **Accept an unverifiable certificate**
+(`insecure_tls`, un booleano, desactivado por defecto).
+
+Activarlo mantiene la conexión cifrada pero deja de comprobar la identidad del
+servidor, así que úsalo solo para un servidor que controlas, en una red de
+confianza. Cuando un certificado es la causa de un fallo, el error mostrado
+para el canal lo nombra (por ejemplo «invalid peer certificate:
+UnknownIssuer»).
+
+---
+
 ## El canal personalizado {#the-custom-channel}
 
 El canal **`webhook`** es la vía de escape de DumbMonit. Describes
@@ -110,9 +128,15 @@ estructurada que un script puede usar:
   "fingerprint": "nas/disk-full",
   "count": 1,
   "at": "2026-09-01T14:12:05+00:00",
-  "link": ""
+  "link": "https://dumbmonit.home/targets/42"
 }
 ```
+
+`link` apunta a la página del dispositivo, construida sobre la `public_url` de
+la [política de notificación](alerting/notifications.md) (o
+`DUMBMONIT_PUBLIC_URL`), o sobre la `base_url` del canal. Un mensaje sobre
+varios dispositivos, y el mensaje de prueba, enlazan a la propia instancia. Sin
+ninguna URL pública, `link` es `null`.
 
 ### Ajustes del canal personalizado {#custom-channel-settings}
 
@@ -122,7 +146,6 @@ estructurada que un script puede usar:
 | `method` | no | `POST` | `POST`, `PUT` o `GET`. |
 | `content_type` | no | `json` | `json`, `form` o `text`. También determina cómo se escapan las variables. |
 | `body_template` | no | — | Plantilla del cuerpo. Cuando está ausente, se envía la carga de arriba. |
-| `headers` | no | — | Cabeceras extra, como un objeto `{"X-Key": "value"}`. |
 | `base_url` | no | — | Dirección pública de tu DumbMonit, para que `{{link}}` dé un enlace clicable. |
 | `username` | no | — | Nombre de usuario para autenticación HTTP «Basic». Requiere el secret `password`. |
 
@@ -131,6 +154,17 @@ estructurada que un script puede usar:
 | `url` | Úsalo en lugar del ajuste `url` si la dirección ya contiene un token. |
 | `token` | Enviado como una cabecera `Authorization: Bearer …`, a menos que tu plantilla use `{{token}}`. |
 | `password` | Contraseña para autenticación «Basic». |
+| `headers` | Cabeceras extra, como un objeto JSON `{"X-Api-Key": "value"}`. Guardado cifrado como el token y nunca mostrado de nuevo, así que las claves de API y las cabeceras `Authorization` van aquí. |
+
+`headers` es un secret. Los canales guardados por 0.1.0-alpha.6 o anteriores,
+que los guardaban en los settings, los tienen movidos a los secrets cifrados en
+el primer arranque, y la API ya no los devuelve. Como todo secret, se conservan
+cuando editas el canal sin volver a escribirlos; enviar `secrets` reemplaza el
+conjunto completo.
+
+DumbMonit sigue una redirección solo al mismo host (o de `http` a `https` en
+ese host): las cabeceras y el token de un canal nunca van a otra dirección que
+la que introdujiste.
 
 ### Variables disponibles {#available-variables}
 
@@ -199,9 +233,6 @@ una cabecera personalizada.
   "method": "POST",
   "content_type": "json",
   "base_url": "https://dumbmonit.home",
-  "headers": {
-    "X-Application": "dumbmonit"
-  },
   "body_template": "{\"title\": \"{{title}}\", \"device\": \"{{target}}\", \"severity\": \"{{severity}}\", \"state\": \"{{status}}\", \"value\": {{value_raw}}, \"threshold\": {{threshold_raw}}, \"detail\": \"{{message}}\", \"link\": \"{{link}}\", \"seen_at\": \"{{timestamp}}\"}"
 }
 ```
@@ -209,7 +240,10 @@ una cabecera personalizada.
 **Secrets**
 
 ```json
-{ "token": "your-application-token" }
+{
+  "token": "your-application-token",
+  "headers": "{\"X-Application\": \"dumbmonit\"}"
+}
 ```
 
 El token se envía automáticamente como una cabecera
@@ -780,6 +814,10 @@ El servidor destino es inaccesible desde DumbMonit. Si es un servicio
 en tu red local, comprueba que el contenedor de DumbMonit puede
 alcanzarlo — esto es frecuentemente un problema de redes Docker, no un
 problema de configuración de canal.
+
+**La prueba falla con un error de certificado.**
+Tu servidor usa un certificado autofirmado o de una CA privada. Consulta
+[Certificados autofirmados](#self-signed-certificates).
 
 **La prueba tiene éxito, pero no recibo nada.**
 El servicio aceptó el mensaje y lo envió a otro sitio: canal

@@ -229,7 +229,7 @@
 </script>
 
 {#if !loading && (hasAnything || error)}
-<Panel title={m.devices_mail_title()} description={m.devices_mail_desc()} padded={false} class="rise-in">
+<Panel title={m.devices_mail_title()} padded={false} class="rise-in">
 	{#snippet aside()}
 		{#if reading.services.length > 0}
 			{#if down === 0}

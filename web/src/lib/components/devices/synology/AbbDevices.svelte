@@ -149,7 +149,6 @@
 
 <Panel
 	title={m.devicesb_synology_abb_title()}
-	description={m.devicesb_synology_abb_desc()}
 	padded={false}
 	class="rise-in"
 >

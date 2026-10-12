@@ -425,7 +425,9 @@ The secret itself is never returned: `credential_kind` is a label. Server
 timestamps are UTC without a suffix. `error_kind` classifies `last_error`:
 `down` (the device did not answer) or `config` (our side — credentials,
 address, option), which is what the UI shows as *Unreachable* or
-*Misconfigured*; `null` when the last probe succeeded.
+*Misconfigured*; `null` when the last probe succeeded. A service check
+(HTTP, TCP, NTP, WebSocket…) that ran but found the service failing records
+`Service down: the <probe> check failed (<reason>)` with `error_kind` `down`.
 
 Creating one:
 
@@ -584,7 +586,7 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused devices are never listed. |
+| `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused devices are never listed. `?target_id=` keeps only the alerts of one device. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Phase transitions. `since` is RFC 3339, default the last seven days; `limit` must be positive. `dismissed` (default `false`) excludes entries cleared with the two routes below; nothing is ever destroyed by a clear, only hidden from the default view. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Clears one `resolved` entry from the default history view. `204`. `404` on an unknown id or a still-active transition. Operator; audited. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Clears every not-yet-cleared `resolved` entry at once ("Clear all resolved"). Returns `{"dismissed": <count>}`. Operator; audited. |

@@ -81,6 +81,7 @@
 		EmptyState,
 		ErrorNotice,
 		Led,
+		Menu,
 		Panel,
 		Plate,
 		Skeleton,
@@ -88,7 +89,8 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
 
@@ -468,6 +470,17 @@
 	$effect(() => () => {
 		if (probeTimer) clearTimeout(probeTimer);
 	});
+
+	// The action row sits right-aligned from `lg`, left-aligned and wrapping
+	// below: the "more" menu opens towards the free side so it never leaves the screen.
+	let actionsAtEnd = $state(false);
+	$effect(() => {
+		const query = window.matchMedia('(min-width: 64rem)');
+		actionsAtEnd = query.matches;
+		const onchange = () => (actionsAtEnd = query.matches);
+		query.addEventListener('change', onchange);
+		return () => query.removeEventListener('change', onchange);
+	});
 </script>
 
 <svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
@@ -501,7 +514,10 @@
 				<div class="min-w-0 flex-1">
 					<h1 id="device-name" class="display text-3xl break-words text-ink sm:text-4xl">{target.name}</h1>
 					<div class="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink-2">
-						<span class="label-tape">{kindLabel}</span>
+						<span class="inline-flex items-center gap-1.5">
+							<KindIcon kind={target.kind} class="size-4 text-ink-2" />
+							<span class="label-tape">{kindLabel}</span>
+						</span>
 						{#if hostname}
 							<span class="text-ink-3" aria-hidden="true">·</span>
 							<span class="break-all font-semibold text-ink">{hostname}</span>
@@ -565,16 +581,34 @@
 					{m.devices_target_probe_now()}
 				</Button>
 				{#if auth.isAdmin}
+					<SilenceControl {target} {refreshKey} />
 					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
 						<Pencil class="size-4" aria-hidden="true" />
 						{m.devices_target_edit()}
 					</Button>
-					<div class="inline-flex h-10 max-w-full items-center gap-2 rounded-lg border border-line px-3">
-						<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
-						<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
-					</div>
-					<Confirm size="md" confirmLabel={m.devices_target_delete_confirm()} onconfirm={remove} loading={deleting}>{m.devices_target_delete()}</Confirm>
-					<SilenceControl {target} {refreshKey} />
+					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
+					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
+						{#snippet trigger({ toggle, open })}
+							<button
+								type="button"
+								class="flex size-10 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+								onclick={toggle}
+								aria-haspopup="menu"
+								aria-expanded={open}
+								aria-label={m.devices_target_more_actions()}
+								title={m.devices_target_more_actions()}
+							>
+								<EllipsisVertical class="size-4" aria-hidden="true" />
+							</button>
+						{/snippet}
+						{#snippet children()}
+							<div class="flex min-h-10 items-center gap-2 rounded-lg px-2 py-1.5">
+								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
+								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
+							</div>
+							<Confirm size="md" class="mt-1 w-full justify-start" confirmLabel={m.devices_target_delete_confirm()} onconfirm={remove} loading={deleting}>{m.devices_target_delete()}</Confirm>
+						{/snippet}
+					</Menu>
 				{:else}
 					{#if auth.canOperate}
 						<SilenceControl {target} {refreshKey} />

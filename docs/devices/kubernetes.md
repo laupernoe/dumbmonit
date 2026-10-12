@@ -63,7 +63,10 @@ The [built-in rules](../alerting/rules.md#kubernetes) that apply:
   stop, within ten minutes, ended with a non-zero exit code counts as crash
   looping too. Between two attempts the container restarts and the state
   disappears for a moment; the rule reads the maximum over ten minutes so that
-  it does not start over each time.
+  it does not start over each time. The pod must also still be restarting (at
+  least two restarts in 15 minutes), and a stop with exit code 137, 143 or 255
+  (killed by a node or runtime restart, not `OOMKilled`) is not a crash: system
+  pods do not fire after a node reboot.
 - **Kubernetes pod stuck pending**: a pod Pending for fifteen minutes
   (Advisory).
 - **Kubernetes pod restarting**: more than five restarts in an hour, for a pod

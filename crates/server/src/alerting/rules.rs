@@ -37,6 +37,23 @@ const FS_USED_PERCENT: &str = "(\
 pub const HOST_DOWN_QUERY: &str =
     "bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))";
 
+/// Part des insertions lentes de VictoriaMetrics sur quinze minutes, pour un
+/// serveur démarré depuis plus longtemps que la fenêtre (voir la règle).
+pub const VM_SLOW_INSERTS_QUERY: &str = "(100 \
+     * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) \
+     / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) \
+     and on (target) dumbmonit_victoriametrics_uptime_seconds > 900";
+
+/// Durée des sondes de disponibilité réussies (voir la règle `service_slow`).
+pub const SERVICE_SLOW_QUERY: &str =
+    "dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1";
+
+/// Pod en boucle de redémarrage : le drapeau du collecteur, tenu par un compteur
+/// de redémarrages qui progresse encore (voir la règle `k8s_pod_crashlooping`).
+pub const K8S_CRASHLOOP_QUERY: &str = "max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) \
+     and on (target, namespace, pod) \
+     increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2";
+
 /// Rappel par défaut : six heures. Assez pour ne pas oublier une panne en cours,
 /// assez peu pour ne pas devenir du bruit pendant une semaine de vacances.
 const DEFAULT_REPEAT: Duration = Duration::from_secs(6 * 3600);
@@ -540,6 +557,9 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // Lenteur : le défaut de délai des sondes est de 5 s, au-delà elles échouent
         // déjà ; 3 s soutenues pendant dix minutes est un service qui souffre.
+        // Seules les sondes réussies comptent : une sonde en échec dure le temps
+        // de son délai, et ce n'est pas de la lenteur mais une panne, que
+        // `service_down` porte déjà.
         Rule {
             description: "The service takes more than three seconds to respond.".to_string(),
             operator: Operator::Gt,
@@ -551,7 +571,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "service_slow",
                 "Slow service",
                 RuleKind::Threshold,
-                "dumbmonit_probe_duration_seconds",
+                SERVICE_SLOW_QUERY,
             )
         },
         // Certificats. Les deux règles sont disjointes (`>= 0` / `< 0`) pour qu'un
@@ -2627,6 +2647,12 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Le seuil que la documentation de VictoriaMetrics donne lui-même : au-delà
         // de 5 % d'insertions lentes, le cache des séries ne tient plus en mémoire.
         // Une demi-heure écarte la vague de séries neuves d'un déploiement.
+        //
+        // Après un redémarrage, le cache est froid et la fenêtre de quinze
+        // minutes mêle des points d'avant et d'après : la règle restait en
+        // `pending`, ni déclenchée ni résolue, jusqu'à ce que la fenêtre se
+        // vide. Elle ne juge donc qu'un serveur démarré depuis plus que la
+        // fenêtre, dont les compteurs ne contiennent plus de remise à zéro.
         Rule {
             description: "More than 5% of new samples take the slow insert path: VictoriaMetrics \
                           lacks memory for its active series."
@@ -2642,8 +2668,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "victoriametrics_slow_inserts",
                 "VictoriaMetrics slow inserts",
                 RuleKind::Threshold,
-                "100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) \
-                 / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])",
+                VM_SLOW_INSERTS_QUERY,
             )
         },
         // Loki : `/ready` dit s'il accepte d'écrire et de lire. Cinq minutes
@@ -5023,6 +5048,11 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Entre deux tentatives, le conteneur redémarre et l'état
         // `CrashLoopBackOff` disparaît quelques secondes : le maximum sur dix
         // minutes lisse ce va-et-vient, sans quoi le `for` repartirait de zéro.
+        //
+        // Une boucle redémarre au moins toutes les cinq minutes (plafond du
+        // back-off de Kubernetes) : on exige deux redémarrages en quinze minutes.
+        // Le redémarrage d'un nœud n'en ajoute qu'un par conteneur, et le compteur
+        // à vie d'un pod système ne fait plus passer ce redémarrage pour une boucle.
         Rule {
             description: "A pod keeps crashing and Kubernetes waits longer and longer before \
                           restarting it (CrashLoopBackOff)."
@@ -5036,7 +5066,7 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "k8s_pod_crashlooping",
                 "Kubernetes pod crash looping",
                 RuleKind::Threshold,
-                "max_over_time(dumbmonit_k8s_pod_crashlooping[10m])",
+                K8S_CRASHLOOP_QUERY,
             )
         },
         Rule {
@@ -6483,6 +6513,36 @@ mod tests {
         let host_down: Vec<_> = builtin_rules().into_iter().filter(|r| r.is_host_down()).collect();
         assert_eq!(host_down.len(), 1);
         assert_eq!(host_down[0].severity, Severity::Critical);
+    }
+
+    /// Une sonde en échec dure son délai : la lenteur ne se juge que sur les
+    /// sondes réussies.
+    #[test]
+    fn la_lenteur_ne_juge_que_les_sondes_reussies() {
+        let rule = builtin_rules().into_iter().find(|r| r.uid == "service_slow").unwrap();
+        assert_eq!(rule.query, SERVICE_SLOW_QUERY);
+        assert!(rule.query.contains("and dumbmonit_probe_success == 1"));
+    }
+
+    /// Après un redémarrage de VictoriaMetrics, la fenêtre mêle compteurs d'avant
+    /// et d'après : la règle attend que le serveur tourne depuis plus que sa
+    /// fenêtre.
+    #[test]
+    fn les_insertions_lentes_attendent_un_serveur_installe() {
+        let rule =
+            builtin_rules().into_iter().find(|r| r.uid == "victoriametrics_slow_inserts").unwrap();
+        assert_eq!(rule.query, VM_SLOW_INSERTS_QUERY);
+        assert!(rule.query.contains("[15m]"));
+        assert!(rule.query.ends_with("dumbmonit_victoriametrics_uptime_seconds > 900"));
+    }
+
+    /// Le redémarrage d'un nœud ajoute un redémarrage par conteneur : la boucle
+    /// exige un compteur qui progresse encore.
+    #[test]
+    fn la_boucle_de_redemarrage_exige_des_redemarrages_recents() {
+        let rule = builtin_rules().into_iter().find(|r| r.uid == "k8s_pod_crashlooping").unwrap();
+        assert_eq!(rule.query, K8S_CRASHLOOP_QUERY);
+        assert!(rule.query.contains("increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2"));
     }
 
     /// Les règles de fraîcheur jugent une cible, pas chacune de ses variantes :

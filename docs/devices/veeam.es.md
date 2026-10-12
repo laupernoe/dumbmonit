@@ -53,7 +53,7 @@ Todas las métricas tienen el prefijo `dumbmonit_veeam_`.
 | `license_instances_licensed`, `license_instances_used` | | Uso de licencia por instancia. |
 | `section_readable` | `section`: `sessions`, `repositories`, `license`, `restore_points` | 1 cuando la cuenta puede leerlo, 0 cuando Veeam lo rechazó. |
 
-Las [reglas integradas](../alerting/rules.md#veeam-backup-replication)
+Las [reglas integradas](../alerting/rules.md#veeam-backup--replication)
 que se aplican:
 
 - **Veeam job failed**: la última ejecución de un job activado falló

@@ -129,19 +129,10 @@
 		</div>
 
 		<div class="rise-in" style="--rise-delay: 0ms">
-			<Panel id="pages" title={m.status_list_pages()} description={m.status_list_pages_description()} padded={false}>
+			<Panel id="pages" title={m.status_list_pages()} padded={false}>
 				{#if pages.length === 0}
 					<div class="px-5 py-4">
-						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()}>
-							{#snippet action()}
-								{#if auth.isAdmin}
-									<Button variant="secondary" href="/status/new">
-										<Plus class="size-4" aria-hidden="true" />
-										{m.status_list_new_page()}
-									</Button>
-								{/if}
-							{/snippet}
-						</EmptyState>
+						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()} />
 					</div>
 				{:else}
 					<ul class="divide-y divide-line" role="list">
@@ -165,7 +156,7 @@
 											<ExternalLink class="size-3.5" aria-hidden="true" />
 										</Button>
 										{#if auth.isAdmin}
-											<Button variant="secondary" size="sm" href={`/status/${item.id}`}>{m.status_list_edit()}</Button>
+											<Button variant="ghost" size="sm" href={`/status/${item.id}`}>{m.status_list_edit()}</Button>
 											<Confirm confirmLabel={m.status_incidents_delete_confirm()} loading={deleting === item.id} onconfirm={() => remove(item)}>{m.status_incidents_delete()}</Confirm>
 										{/if}
 									</div>

@@ -74,7 +74,9 @@ reemplaza su notificación en lugar de añadir una segunda.
 ## Dispositivos y cuentas {#devices-and-accounts}
 
 Cada cuenta ve y gestiona sus propios dispositivos: los visores también
-pueden activar el push en su teléfono, no cambia nada más. La lista
+pueden activar el push en su teléfono, no cambia nada más. Una cuenta
+guarda como máximo 10 dispositivos (elimina uno antiguo para añadir otro), y
+se puede enviar una prueba una vez cada 30 segundos. La lista
 muestra el navegador y sistema, el servicio push, cuándo se añadió el
 dispositivo y cuándo recibió el último mensaje; **Remove** lo olvida (y,
 en el dispositivo que estás usando, también desuscribe el navegador). Un

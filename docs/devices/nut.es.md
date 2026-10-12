@@ -124,7 +124,13 @@ puerto (3493), el SAI a vigilar (todos por defecto) y el tiempo de espera
 por intercambio (10 s).
 
 Una conexión rechazada o sin respuesta cuenta como el dispositivo
-inaccesible. `ACCESS-DENIED` se muestra como un error de credencial, y un
+inaccesible. Cuando la máquina que ejecuta el servidor NUT se apaga en el
+corte que reporta (a menudo es su propio primario de upsmon), las alertas
+del SAI se ocultan como suprimidas mientras Device unreachable se activa para
+ese mismo dispositivo: lee la alerta Device unreachable como la señal de que
+el corte de corriente ganó. Ejecuta el servidor NUT en una máquina que
+sobreviva a las demás, o vigila el SAI desde un segundo servidor NUT.
+`ACCESS-DENIED` se muestra como un error de credencial, y un
 nombre de SAI que el servidor no publica como un error de configuración;
 ninguno de los dos despierta a nadie por la noche. La conexión es TCP
 plano: `STARTTLS` no se usa, y nada de lo leído es secreto.

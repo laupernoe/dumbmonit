@@ -58,7 +58,12 @@ que buscar en disco en lugar de en su caché. Cada serie completamente
 nueva es una, así que un despliegue causa una ráfaga; una proporción que
 se mantiene por encima del 5 % significa que al servidor le falta
 memoria para sus series activas. Ese es el umbral que da la
-documentación de VictoriaMetrics.
+documentación de VictoriaMetrics. Tras un reinicio las cachés del servidor
+están frías, así que la proporción puede mantenerse alta un tiempo: la regla
+solo juzga un servidor en marcha desde hace más de 15 minutos, y espera media
+hora antes de activarse. Los contadores vuelven a cero con el servidor; las
+reglas usan incrementos que tienen en cuenta los reinicios, así que un
+reinicio no se cuenta como datos rechazados.
 
 Las [reglas integradas](../alerting/rules.md#log-and-metrics-servers) que
 se aplican: Metrics or log storage read-only, Metrics or log storage
@@ -124,7 +129,7 @@ nunca consulta el servidor. Indica, en este orden:
 
     ```
     curl http://victorialogs.lan:9428/health
-    curl -s http://victorialogs.lan:9428/metrics | grep vl_rows_ingested_total
+    curl -s http://victorialogs.lan:9428/metrics | grep vl_free_disk_space_bytes
     ```
 
 2. Si VictoriaLogs se ejecuta con -httpAuth.username y

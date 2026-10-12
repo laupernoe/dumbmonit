@@ -681,6 +681,16 @@ pub fn test_message(channel_name: &str) -> Message {
     }
 }
 
+/// Message de test, avec le lien vers l'instance quand son adresse publique est
+/// connue : sans lui, le champ `link` d'un webhook restait vide au test.
+pub fn test_message_linked(channel_name: &str, public_url: Option<&str>) -> Message {
+    let mut message = test_message(channel_name);
+    message.link = public_url
+        .map(|base| base.trim_end_matches('/').to_string())
+        .filter(|base| !base.is_empty());
+    message
+}
+
 /// Message figé servant de référence aux tests de charge utile des canaux.
 ///
 /// Partagé plutôt que recopié dans chaque module : les charges utiles attendues

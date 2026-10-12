@@ -439,6 +439,34 @@ mod tests {
     }
 
     #[test]
+    fn un_conteneur_tue_par_le_redemarrage_du_noeud_ne_boucle_pas() {
+        let pod = |last: &str, state: &str| -> Pod {
+            serde_json::from_str(&format!(
+                r#"{{"metadata":{{"name":"coredns","namespace":"kube-system"}},
+                "status":{{"phase":"Running","containerStatuses":[{{"name":"c","restartCount":3,
+                "state":{state},"lastState":{{"terminated":{last}}}}}]}}}}"#
+            ))
+            .unwrap()
+        };
+        let now = captured_at();
+        let running = r#"{"running":{"startedAt":"2026-09-30T22:46:50Z"}}"#;
+        // Tué par l'arrêt de k3s (255 ou SIGKILL) : pas une boucle.
+        for code in [255, 137, 143] {
+            let last = format!(
+                r#"{{"exitCode":{code},"reason":"Unknown","finishedAt":"2026-09-30T22:46:30Z"}}"#
+            );
+            assert!(!crashlooping(&pod(&last, running), now), "exit {code}");
+        }
+        // Manque de mémoire : un vrai plantage, même en 137.
+        let oom = r#"{"exitCode":137,"reason":"OOMKilled","finishedAt":"2026-09-30T22:46:30Z"}"#;
+        assert!(crashlooping(&pod(oom, running), now));
+        // `CrashLoopBackOff` affiché : boucle, quel que soit le code.
+        let killed = r#"{"exitCode":137,"reason":"Error","finishedAt":"2026-09-30T22:46:30Z"}"#;
+        let backoff = r#"{"waiting":{"reason":"CrashLoopBackOff"}}"#;
+        assert!(crashlooping(&pod(killed, backoff), now));
+    }
+
+    #[test]
     fn le_pod_en_boucle_de_redemarrage_est_rattache_a_son_deploiement() {
         let s = samples(&cluster(), captured_at());
         let api = [("namespace", "demo"), ("pod", "api-7c9696d669-8tpp6")];

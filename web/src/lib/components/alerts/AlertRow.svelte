@@ -215,7 +215,7 @@
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
 			<AckControl {alert} onchanged={onchanged} />
 			{#if showOpen && target}
-				<Button size="sm" variant="secondary" href={`/targets/${target.id}`} class="ml-auto">{m.alerts_row_open_device()}</Button>
+				<Button size="sm" variant="ghost" href={`/targets/${target.id}`} class="ml-auto">{m.alerts_row_open_device()}</Button>
 			{/if}
 		</div>
 	</div>

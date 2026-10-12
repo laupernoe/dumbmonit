@@ -55,7 +55,8 @@ disk instead of in its cache. Every brand-new series is one, so a deployment
 causes a burst; a share that stays above 5% means the server lacks memory for
 its active series. That is the threshold the VictoriaMetrics documentation
 gives. After a restart the server's caches are cold, so the share can sit high
-for a while: the rule waits half an hour before it fires. Counters restart from
+for a while: the rule only judges a server up for more than 15 minutes, and
+waits half an hour before it fires. Counters restart from
 zero with the server; the rules use reset-aware increases, so a restart is not
 counted as refused data.
 
