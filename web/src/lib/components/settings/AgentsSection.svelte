@@ -262,7 +262,7 @@
 			</Button>
 		</form>
 
-		<div class="mt-3 flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-canvas-deep px-4 py-3">
+		<div class="mt-3 flex flex-col gap-3">
 			<div class="flex items-start gap-3">
 				<Toggle id="token-reusable" bind:checked={reusable} label={m.settings_agents_reusable()} />
 				<div class="min-w-0">

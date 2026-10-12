@@ -98,7 +98,7 @@
 </script>
 
 {#if !loading && (error || repos.length > 0)}
-	<Panel title={m.devices_repos_title()} description={m.devices_repos_description()} padded={false} class="rise-in">
+	<Panel title={m.devices_repos_title()} padded={false} class="rise-in">
 		{#snippet aside()}
 			{#if failing > 0}
 				<Plate tone="warning" label={failing === 1 ? m.devices_repos_need_one() : m.devices_repos_need_other({ count: failing })} />

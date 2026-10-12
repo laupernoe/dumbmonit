@@ -131,9 +131,6 @@
 								<span class="text-ink-3">{m.app_security_top_failures()}</span> {device.top_failures.join(' · ')}
 							</p>
 						{/if}
-						<a href={`/targets/${device.target_id}`} class="inline-flex min-h-10 items-center text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline sm:min-h-0">
-							{m.app_security_view_device()}
-						</a>
 					</li>
 				{/each}
 			</ul>

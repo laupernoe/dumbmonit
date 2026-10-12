@@ -82,7 +82,6 @@
 		title={readings.length > 1
 			? m.devicesb_nut_panel_title_many({ count: readings.length })
 			: m.devicesb_nut_panel_title()}
-		description={m.devicesb_nut_panel_description()}
 		padded={false}
 		class="rise-in"
 	>
