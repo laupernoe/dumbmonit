@@ -23,22 +23,21 @@ OUT = HERE.parent / "website"
 
 SITE = "https://dumbmonit.app/"
 # Where the documentation lives. One constant: change it here if the layout moves.
-# English is the default language of the docs (no prefix); the others are served under
-# <DOCS_BASE><code>/ (mkdocs-static-i18n, suffix layout).
-DOCS_BASE = "https://dumbmonit.readthedocs.io/en/latest/"
+# One Read the Docs project per language: <DOCS_HOST><rtd code>/latest/.
+DOCS_HOST = "https://dumbmonit.readthedocs.io/"
 LASTMOD = "2026-10-13"
 
-# code, name in its own language, short label, Open Graph locale, docs folder ("" = default)
+# code, name in its own language, short label, Open Graph locale, Read the Docs language
 LANGS = [
-    ("en", "English", "EN", "en_US", ""),
-    ("fr", "Français", "FR", "fr_FR", "fr/"),
-    ("de", "Deutsch", "DE", "de_DE", "de/"),
-    ("es", "Español", "ES", "es_ES", "es/"),
-    ("it", "Italiano", "IT", "it_IT", "it/"),
-    ("pt", "Português", "PT", "pt_PT", "pt/"),
-    ("pt-BR", "Português (Brasil)", "PT-BR", "pt_BR", "pt-BR/"),
-    ("ru", "Русский", "RU", "ru_RU", "ru/"),
-    ("zh-Hans", "简体中文", "中文", "zh_CN", "zh-Hans/"),
+    ("en", "English", "EN", "en_US", "en"),
+    ("fr", "Français", "FR", "fr_FR", "fr"),
+    ("de", "Deutsch", "DE", "de_DE", "de"),
+    ("es", "Español", "ES", "es_ES", "es"),
+    ("it", "Italiano", "IT", "it_IT", "it"),
+    ("pt", "Português", "PT", "pt_PT", "pt"),
+    ("pt-BR", "Português (Brasil)", "PT-BR", "pt_BR", "pt-br"),
+    ("ru", "Русский", "RU", "ru_RU", "ru"),
+    ("zh-Hans", "简体中文", "中文", "zh_CN", "zh-cn"),
 ]
 
 GLOBE = (
@@ -108,7 +107,7 @@ def build_page(template, svgs, table, code):
     t = re.sub(r'(="\s*)\{\{(k\d+)\}\}"', lambda m: '="' + table[m.group(2)].replace('"', "&quot;") + '"', template)
     t = re.sub(r"\{\{(k\d+)\}\}", lambda m: table[m.group(1)], t)
     t = re.sub(r"\[\[(svg\d+)\]\]", lambda m: svgs[m.group(1)], t)
-    t = t.replace("@@DOCS@@", DOCS_BASE + docs_dir)
+    t = t.replace("@@DOCS@@", DOCS_HOST + docs_dir + "/latest/")
 
     # Assets are shared: relative paths from a language folder go one level up.
     t = re.sub(r'\b(href|src|srcset)="(assets/|favicon\.svg|apple-touch-icon\.png)', lambda m: f'{m.group(1)}="{root}{m.group(2)}', t)
