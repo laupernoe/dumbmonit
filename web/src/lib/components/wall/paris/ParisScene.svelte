@@ -59,7 +59,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: everyone startles once. */
@@ -68,19 +68,51 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
 		theme,
 		now,
-		mood,
+		mood: moodIn = 'calm',
 		problems,
 		startle = 0,
 		paused = false,
 		focus = 0,
+		pulse = null,
 		class: className = ''
 	}: Props = $props();
+
+	// The wall's vocabulary (ok / warn / critical) maps onto the scene's own.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let pulseTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(pulseTimer);
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			pulseTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(pulseTimer));
 
 	const motion = !reducedMotion();
 
@@ -378,6 +410,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -473,6 +507,26 @@
 					{/each}
 				</g>
 			</svg>
+			<!-- Pulse gesture: replayed over the landmark whenever `pulse.at` changes. -->
+			{#if active}
+				{#key playKey}
+					<svg class="layer gest" viewBox="0 0 {STAGE_W} {STAGE_H}" fill="none">
+						{#if active === 'down'}
+							<path class="g-dim g-dim--down" d={TOWER} fill-rule="evenodd" />
+						{:else}
+							{#if active === 'up'}<path class="g-dim g-dim--up" d={TOWER} fill-rule="evenodd" />{/if}
+							{#each (active === 'up' ? TOWER_SPARKS.filter((_, k) => k % 2 === 0) : TOWER_SPARKS) as spark, i (i)}
+								<circle class="g-spark" cx={spark.x} cy={spark.y} r="3.4" fill="#fff6dc" style:animation-delay="{500 + spark.delay}ms" />
+							{/each}
+							{#if active === 'resolved'}
+								<g transform="translate({TOWER_TOP.x} {TOWER_TOP.y + 8})">
+									<polygon class="g-sweep" points="0,0 -30,-460 30,-460" />
+								</g>
+							{/if}
+						{/if}
+					</svg>
+				{/key}
+			{/if}
 
 			{#if balloonOn}
 				<div class="mover" bind:this={balloonEl}>
@@ -1011,6 +1065,125 @@
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
 	}
+	/* The pulse gesture: a dark veil on the landmark, light coming back, sparkles. */
+	.gest {
+		pointer-events: none;
+	}
+	.g-dim {
+		fill: #060a1a;
+		opacity: 0;
+	}
+	.g-dim--down {
+		animation: g-blackout 5.2s ease-out both;
+	}
+	.g-dim--up {
+		animation: g-relight 2.6s ease-out both;
+	}
+	.g-spark,
+	.g-ring,
+	.g-ray,
+	.g-petal,
+	.g-sweep {
+		transform-box: fill-box;
+		transform-origin: center;
+		opacity: 0;
+	}
+	.g-spark {
+		animation: g-spark 2.4s ease-in-out both;
+	}
+	.g-ring {
+		fill: none;
+		stroke: #ffe9a8;
+		stroke-width: 4;
+		animation: g-ring 2.8s ease-out both;
+	}
+	@keyframes g-blackout {
+		0% {
+			opacity: 0;
+		}
+		6% {
+			opacity: 0.7;
+		}
+		11% {
+			opacity: 0.2;
+		}
+		16%,
+		82% {
+			opacity: 0.72;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes g-relight {
+		0% {
+			opacity: 0.72;
+		}
+		12% {
+			opacity: 0;
+		}
+		20% {
+			opacity: 0.6;
+		}
+		34% {
+			opacity: 0;
+		}
+		42% {
+			opacity: 0.3;
+		}
+		56%,
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes g-spark {
+		0%,
+		100% {
+			opacity: 0;
+			transform: scale(0.2);
+		}
+		40% {
+			opacity: 1;
+			transform: scale(1.5);
+		}
+		70% {
+			opacity: 0.6;
+			transform: scale(0.9);
+		}
+	}
+	@keyframes g-ring {
+		0% {
+			opacity: 0.9;
+			transform: scale(0.6);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(5);
+		}
+	}
+	.g-sweep {
+		fill: #ffe9a8;
+		transform-origin: 50% 100%;
+		animation: g-sweep 6s ease-in-out both;
+	}
+	@keyframes g-sweep {
+		0% {
+			opacity: 0;
+			transform: rotate(-50deg);
+		}
+		12%,
+		88% {
+			opacity: 0.4;
+		}
+		50% {
+			transform: rotate(50deg);
+		}
+		100% {
+			opacity: 0;
+			transform: rotate(-50deg);
+		}
+	}
+
 	/* Reduced motion: a still picture in the right pose. */
 	.scene--still :global(*) {
 		animation: none !important;
