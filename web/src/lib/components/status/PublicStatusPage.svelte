@@ -125,11 +125,11 @@
 	const sceneSnapshot = $derived.by((): { tone: SceneTone; snapshot: MoodSnapshot } | null => {
 		if (!status) return null;
 		const items = status.groups.flatMap((g) => g.items);
-		const down = new Set(items.filter((i) => i.state === 'down').map((i) => `item:${i.name}`));
+		const down = new Set(items.filter((i) => i.state === 'down').map((i) => `item:${i.key}`));
 		const open = status.incidents.filter((i) => !isClosed(i.status));
 		const issues = new Set([
 			...down,
-			...items.filter((i) => i.state === 'degraded').map((i) => `item:${i.name}`),
+			...items.filter((i) => i.state === 'degraded').map((i) => `item:${i.key}`),
 			...open.map((i) => `incident:${i.starts_at}:${i.title}`)
 		]);
 		const tone = toneFrom({
