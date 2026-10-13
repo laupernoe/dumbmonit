@@ -4,7 +4,7 @@
 	 * voile, pluie et éclair selon l'humeur. ok/calm = ciel dégagé,
 	 * warn/clouded = nuages, critical/storm = orage.
 	 */
-	import { moodLevel, type SceneMood } from './scenePulse.svelte.js';
+	import { moodLevel, type SceneMood } from './scenePulseS.svelte.js';
 
 	let { mood = 'ok' }: { mood?: SceneMood } = $props();
 	const lvl = $derived(moodLevel(mood));

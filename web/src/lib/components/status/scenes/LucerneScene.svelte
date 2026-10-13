@@ -13,8 +13,8 @@
 	 * by one along the bridge, on `resolved` flower petals rain from the
 	 * flower boxes. Reduced motion freezes everything.
 	 */
-	import SceneWeather from './SceneWeather.svelte';
-	import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+	import SceneWeather from './SceneWeatherS.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
 	interface Props {
 		mood?: SceneMood;
