@@ -1,4 +1,20 @@
-<div class="scene scene-newyork" aria-hidden="true">
+<script lang="ts">
+	/**
+	 * New York, the Empire State Building. Its windows and spire go dark on `down`, relight in flickers on `up`, and on `resolved` the spire throws red, white and blue light rings.
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
+	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	const TRI = ['#ff4d4d', '#ffffff', '#4d7dff'];
+</script>
+
+<div class="scene scene-newyork" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <!-- fenêtres des tours (cellule 12 x 10) et des immeubles de brique (16 x 18) -->
@@ -15,6 +31,8 @@
     <circle cx="884" cy="330" r="7" fill="var(--crater)" /><circle cx="916" cy="360" r="5" fill="var(--crater)" />
     <g fill="var(--star)"><circle cx="1010" cy="120" r="2" /><circle cx="1300" cy="104" r="2.2" /><circle cx="1560" cy="120" r="2" /><circle cx="1660" cy="210" r="2.2" /><circle cx="1130" cy="190" r="1.8" /><circle cx="1500" cy="170" r="1.8" /></g>
     <g fill="var(--cloud)" opacity=".7"><ellipse cx="1530" cy="150" rx="80" ry="10" /><ellipse cx="1580" cy="170" rx="54" ry="8" /><ellipse cx="1000" cy="150" rx="50" ry="8" /></g>
+
+    <SceneWeather mood={wx} layer="back" />
 
     <!-- rive lointaine et pont de Brooklyn -->
     <g fill="var(--ny-far)"><path d="M560 482V450h40v-18h30v26h44v-14h36v22h50v-30h28v30h60v-12h44v24h70v-16h60z" /><rect x="1060" y="372" width="60" height="110" /><rect x="1400" y="346" width="40" height="136" /><rect x="1458" y="396" width="90" height="86" /></g>
@@ -45,11 +63,19 @@
     <g transform="translate(1210 482)">
       <path d="M-80 0V-86H-58V-168H-42V-230H-30V-276H-20V-292H-14V-308H-8V-322H-2V-380H2V-322H8V-308H14V-292H20V-276H30V-230H42V-168H58V-86H80V0Z" fill="var(--ny-stone)" />
       <g clip-path="url(#ny-esb)">
-        <rect x="-80" y="-380" width="160" height="380" fill="url(#ny-win)" opacity=".75" />
+        <rect class="esb-win" x="-80" y="-380" width="160" height="380" fill="url(#ny-win)" opacity=".75" />
         <rect x="0" y="-380" width="80" height="380" fill="var(--ny-stone2)" opacity=".55" />
         <path d="M-80-86H80M-58-168H58M-42-230H42M-30-276H30" stroke="var(--ny-stone)" stroke-width="3" />
       </g>
-      <path d="M-14-292H14M-8-308H8" stroke="var(--ny-silver)" stroke-width="3" /><circle cy="-336" r="3" fill="var(--ny-beacon)" />
+      <path d="M-14-292H14M-8-308H8" stroke="var(--ny-silver)" stroke-width="3" /><circle class="esb-top" cy="-336" r="3" fill="var(--ny-beacon)" />
+      {#if pl.kind === 'resolved'}
+        {#key pl.key}
+          <g class="show">
+            {#each TRI as c, i}<circle class="ring" cy="-336" r="26" style="stroke:{c};animation-delay:{i * 450}ms" />{/each}
+            {#each TRI as c, i}<circle class="ring" cy="-336" r="26" style="stroke:{c};animation-delay:{1350 + i * 450}ms" />{/each}
+          </g>
+        {/key}
+      {/if}
     </g>
 
     <!-- immeubles de brique, escaliers de secours et château d'eau -->
@@ -79,6 +105,8 @@
       <g fill="var(--ny-silver)" opacity=".7"><circle cx="86" cy="-34" r="7" /><circle cx="97" cy="-44" r="9" /></g>
     </g>
 
+    <SceneWeather mood={wx} layer="front" />
+
     <!-- mascottes : sur un toit de brique et sur le ponton -->
     <use href="#dm-mascot" transform="translate(1324 320) scale(.1)" />
     <use href="#dm-mascot" transform="translate(946 452) scale(.1)" />
@@ -99,6 +127,20 @@
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
   }
+  .esb-top { filter: drop-shadow(0 0 4px var(--ny-beacon)); }
+  .show .ring { fill: none; stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  @media (prefers-reduced-motion: no-preference) {
+    .p-down .esb-win { animation: ny-off 5s ease-out both; }
+    .p-down .esb-top { animation: ny-off-top 5s ease-out both; }
+    .p-up .esb-win { animation: ny-on 2.6s ease-out both; }
+    .p-up .esb-top { animation: ny-on-top 2.6s ease-out both; }
+    .show .ring { animation: ny-ring 2s ease-out both; }
+  }
+  @keyframes ny-off { 0% { opacity: 0.75; } 10% { opacity: 0.1; } 18% { opacity: 0.6; } 30%, 82% { opacity: 0.03; } 100% { opacity: 0.75; } }
+  @keyframes ny-on { 0% { opacity: 0.03; } 20% { opacity: 0.75; } 32% { opacity: 0.15; } 50%, 100% { opacity: 0.75; } }
+  @keyframes ny-off-top { 0%, 8% { opacity: 1; } 20%, 82% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes ny-on-top { 0% { opacity: 0; } 30% { opacity: 1; } 45% { opacity: 0; } 60%, 100% { opacity: 1; } }
+  @keyframes ny-ring { 0% { opacity: 0.95; transform: scale(0.15); } 100% { opacity: 0; transform: scale(2.6); } }
   .scene-newyork {
     --sky1: #adc0dc; --sky2: #f4e0cd; --sun: #ffd7a2; --water1: #94abc3; --water2: #647f9f; --cloud: #fff;
     --crater: transparent; --star: transparent;
