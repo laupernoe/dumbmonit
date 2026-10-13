@@ -5,8 +5,8 @@
 	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
 	 * Reduced motion freezes everything.
 	 */
-	import SceneWeather from './SceneWeather.svelte';
-	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
 
 	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
 	const wx = $derived(weatherOf(mood));
