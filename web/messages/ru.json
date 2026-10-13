@@ -4992,6 +4992,7 @@
 	"settings_backup_to_update": "обновить: {count}",
 	"settings_backup_without_key": "Без ключа",
 	"settings_backup_write_error": "Не удалось записать резервную копию",
+	"settings_language_auto": "Автоматически (язык браузера)",
 	"settings_music_account": "Аккаунт",
 	"settings_music_admin_only": "Подключить аккаунт Spotify здесь может администратор.",
 	"settings_music_app": "Приложение (Client ID)",
