@@ -482,6 +482,7 @@
 	"app_security_worst_first": "Сначала худшая оценка.",
 	"app_ui_copied": "Скопировано",
 	"app_ui_copy": "Копировать",
+	"app_ui_run_with_sudo": "Запустить через sudo",
 	"app_ui_select_copy": "Выделить и скопировать",
 	"app_ui_tone_advisory": "Внимание",
 	"app_ui_tone_ghost": "Неизвестно",
