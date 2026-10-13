@@ -61,7 +61,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: the pigeon startles once. */
@@ -70,21 +70,56 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
 		theme,
 		now,
-		mood,
+		mood: moodIn = 'calm',
 		problems,
 		startle = 0,
 		paused = false,
 		focus = 0,
+		pulse = null,
 		class: className = ''
 	}: Props = $props();
 
 	const motion = !reducedMotion();
+
+	// The wall's moods and the status page's ones are the same weather.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	// A short landmark gesture, replayed whenever `pulse.at` changes. Reduced
+	// motion skips it: the scene holds its still pose.
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let gestureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(gestureTimer);
+		if (!motion) return;
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			gestureTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(gestureTimer));
 
 	// --- Stage fit ----------------------------------------------------------------
 
@@ -281,6 +316,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -430,6 +467,44 @@
 				{/if}
 			</svg>
 
+			<!-- The gesture: the Kapellbrücke goes dark (down), its lamps come on one by one (up), petals fall from the flower boxes (resolved). -->
+			{#if active}
+				{#key playKey}
+					<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+						{#if active === 'down'}
+							<g class="lz-dark" fill="#0a1020">
+								<rect x={BRIDGE_X0 - 14} y="716" width={BRIDGE_X1 - BRIDGE_X0 + 28} height="150" />
+								<rect x={TOWER.x - 8} y={TOWER.top - 8} width={TOWER.w + 16} height={WATER_Y + 48 - TOWER.top} />
+								<path d="M{TOWER.x - 6} {TOWER.top - 8} L{TOWER.x + TOWER.w / 2} {TOWER.roofTop} L{TOWER.x + TOWER.w + 6} {TOWER.top - 8} Z" />
+							</g>
+						{:else if active === 'up'}
+							{#each Array.from({ length: 16 }, (_, i) => 190 + i * 96) as x, i (x)}
+								<g class="lz-lamp" style:animation-delay="{i * 0.12}s">
+									<circle cx={x} cy="766" r="30" fill="#ffd98a" opacity="0.28" />
+									<circle cx={x} cy="766" r="9" fill="#ffe7b0" />
+								</g>
+							{/each}
+						{:else}
+							{#each BOXES as box, i (box.x)}
+								{#each [0, 1] as k (k)}
+									<ellipse
+										class="lz-petal"
+										cx={box.x + 14 + k * 26}
+										cy="792"
+										rx="6"
+										ry="3.5"
+										fill="var(--lz-flower-{box.tone})"
+										style:--dx="{k ? 38 : -34}px"
+										style:--dy="{90 + ((i * 37 + k * 53) % 70)}px"
+										style:animation-delay="{(i % 6) * 0.35 + k * 0.5}s"
+									/>
+								{/each}
+							{/each}
+						{/if}
+					</svg>
+				{/key}
+			{/if}
+
 			<!-- Two swans on the river. -->
 			<div class="swans">
 				<svg viewBox="0 0 200 80">
@@ -503,6 +578,10 @@
 					</svg>
 				</div>
 				<div class="veil"></div>
+				<svg class="layer bolt-layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+					<path class="bolt" d="M1180 0l-70 250 60-10-90 330 160-360-70 10z" fill="#fff" />
+				</svg>
+				<div class="flash"></div>
 			{/if}
 		</div>
 	{/if}
@@ -770,6 +849,108 @@
 		}
 	}
 
+	.flash {
+		position: absolute;
+		inset: 0;
+		background: #d6defc;
+		opacity: 0;
+		animation: flash 11s linear infinite;
+	}
+	.bolt {
+		opacity: 0;
+		animation: bolt 11s linear infinite;
+	}
+	@keyframes flash {
+		0%,
+		90%,
+		100% {
+			opacity: 0;
+		}
+		91% {
+			opacity: 0.5;
+		}
+		92% {
+			opacity: 0.04;
+		}
+		93.5% {
+			opacity: 0.38;
+		}
+		96% {
+			opacity: 0;
+		}
+	}
+	@keyframes bolt {
+		0%,
+		90.5%,
+		94%,
+		100% {
+			opacity: 0;
+		}
+		91%,
+		93.5% {
+			opacity: 0.9;
+		}
+	}
+
+	/* The gesture. */
+	.lz-dark {
+		opacity: 0;
+		animation: lz-dark 5.2s ease-in-out both;
+	}
+	.lz-lamp {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+		opacity: 0;
+		animation: lz-lamp 4.2s ease-out both;
+	}
+	.lz-petal {
+		opacity: 0;
+		animation: lz-petal 4.4s ease-in-out both;
+	}
+	@keyframes lz-dark {
+		15%,
+		78% {
+			opacity: 0.55;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes lz-lamp {
+		0% {
+			opacity: 0;
+			transform: scale(0.2);
+		}
+		12% {
+			opacity: 1;
+			transform: scale(1.5);
+		}
+		25%,
+		80% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes lz-petal {
+		0% {
+			opacity: 0;
+			transform: translate(0, 0) rotate(0);
+		}
+		12% {
+			opacity: 0.95;
+		}
+		60% {
+			transform: translate(calc(var(--dx) * 0.2), calc(var(--dy) * 0.6)) rotate(140deg);
+		}
+		100% {
+			opacity: 0;
+			transform: translate(var(--dx), var(--dy)) rotate(300deg);
+		}
+	}
+
 	/* A hidden tab: everything holds its breath. */
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
@@ -785,7 +966,15 @@
 	.scene--still .swans {
 		transform: translateX(800px);
 	}
+	.scene--still .flash,
+	.scene--still .bolt {
+		display: none;
+	}
 	@media (prefers-reduced-motion: reduce) {
+		.flash,
+		.bolt {
+			display: none;
+		}
 		.scene :global(*) {
 			animation: none !important;
 			transition: none !important;

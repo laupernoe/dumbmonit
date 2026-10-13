@@ -22,7 +22,7 @@
 	 * opacity only. Hidden tabs pause everything; reduced motion freezes a still
 	 * picture.
 	 */
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { reducedMotion } from '#lib/ui/index.js';
 	import WallPigeon from '#lib/components/wall/paris/WallPigeon.svelte';
 	import { STAGE_W, STAGE_H, STARS, RAIN } from '#lib/components/wall/paris/geometry.js';
@@ -50,7 +50,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: the pigeon startles once. */
@@ -59,21 +59,56 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
 		theme,
 		now,
-		mood,
+		mood: moodIn = 'calm',
 		problems,
 		startle = 0,
 		paused = false,
 		focus = 0,
+		pulse = null,
 		class: className = ''
 	}: Props = $props();
 
 	const motion = !reducedMotion();
+
+	// The wall's moods and the status page's ones are the same weather.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	// A short landmark gesture, replayed whenever `pulse.at` changes. Reduced
+	// motion skips it: the scene holds its still pose.
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let gestureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(gestureTimer);
+		if (!motion) return;
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			gestureTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(gestureTimer));
 
 	// --- Stage fit ----------------------------------------------------------------
 
@@ -175,6 +210,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -313,6 +350,19 @@
 				<ellipse class="mist" cx={JET.x} cy={JET.base + 4} rx="70" ry="12" fill="var(--jet)" opacity="0.55" />
 			</svg>
 
+			<!-- Resolved: a rainbow over the jet. -->
+			{#if active === 'resolved'}
+				{#key playKey}
+					<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+						<g class="rainbow" fill="none" stroke-linecap="round" stroke-width="9">
+							{#each [['#ff8a8a', 340], ['#ffd27a', 328], ['#9be39b', 316], ['#8ec5ff', 304]] as [c, r] (c)}
+								<path d="M{JET.x - r} {JET.base + 4} A{r} {r} 0 0 1 {JET.x + r} {JET.base + 4}" stroke={c} pathLength="1" />
+							{/each}
+						</g>
+					</svg>
+				{/key}
+			{/if}
+
 			<!-- Boats: a sailing boat crosses the lake, a swan bobs on the left. -->
 			<div class="mover sail">
 				<svg viewBox="0 0 120 130" width="120" height="130">
@@ -373,6 +423,10 @@
 					</svg>
 				</div>
 				<div class="veil"></div>
+				<svg class="layer bolt-layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+					<path class="bolt" d="M1180 0l-70 250 60-10-90 330 160-360-70 10z" fill="#fff" />
+				</svg>
+				<div class="flash"></div>
 			{/if}
 		</div>
 	{/if}
@@ -629,6 +683,143 @@
 		}
 	}
 
+	.flash {
+		position: absolute;
+		inset: 0;
+		background: #d6defc;
+		opacity: 0;
+		animation: flash 11s linear infinite;
+	}
+	.bolt {
+		opacity: 0;
+		animation: bolt 11s linear infinite;
+	}
+	@keyframes flash {
+		0%,
+		90%,
+		100% {
+			opacity: 0;
+		}
+		91% {
+			opacity: 0.5;
+		}
+		92% {
+			opacity: 0.04;
+		}
+		93.5% {
+			opacity: 0.38;
+		}
+		96% {
+			opacity: 0;
+		}
+	}
+	@keyframes bolt {
+		0%,
+		90.5%,
+		94%,
+		100% {
+			opacity: 0;
+		}
+		91%,
+		93.5% {
+			opacity: 0.9;
+		}
+	}
+
+	/* The gesture: the jet cuts out and sinks (down), shoots back up (up), a rainbow (resolved). */
+	.p-down .jet {
+		animation: jet-down 5.2s cubic-bezier(0.5, 0, 0.7, 1) both;
+	}
+	.p-up .jet {
+		animation: jet-up 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+	}
+	.p-down .mist {
+		animation: mist-down 5.2s ease-out both;
+	}
+	.p-up .mist {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+		animation: mist-up 2.8s ease-out both;
+	}
+	@keyframes jet-down {
+		0% {
+			transform: none;
+			opacity: 1;
+		}
+		16% {
+			transform: scaleY(0.05);
+			opacity: 0.3;
+		}
+		80% {
+			transform: scaleY(0.03);
+			opacity: 0;
+		}
+		100% {
+			transform: scaleY(0.2);
+			opacity: 0.6;
+		}
+	}
+	@keyframes jet-up {
+		0% {
+			transform: scaleY(0.03);
+			opacity: 0;
+		}
+		35% {
+			transform: scaleY(1.16);
+			opacity: 1;
+		}
+		55% {
+			transform: scaleY(0.95);
+		}
+		75% {
+			transform: scaleY(1.04);
+		}
+		100% {
+			transform: none;
+			opacity: 1;
+		}
+	}
+	@keyframes mist-down {
+		0% {
+			opacity: 0.55;
+		}
+		20%,
+		85% {
+			opacity: 0.08;
+		}
+		100% {
+			opacity: 0.3;
+		}
+	}
+	@keyframes mist-up {
+		30% {
+			transform: scale(1.7, 1.5);
+			opacity: 0.8;
+		}
+	}
+	.rainbow path {
+		stroke-dasharray: 1;
+		animation: rainbow 6.6s ease-in-out both;
+	}
+	@keyframes rainbow {
+		0% {
+			stroke-dashoffset: 1;
+			opacity: 0;
+		}
+		30% {
+			stroke-dashoffset: 0;
+			opacity: 0.8;
+		}
+		75% {
+			stroke-dashoffset: 0;
+			opacity: 0.8;
+		}
+		100% {
+			stroke-dashoffset: 0;
+			opacity: 0;
+		}
+	}
+
 	/* A hidden tab: everything holds its breath. */
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
@@ -648,7 +839,15 @@
 		opacity: 0.8;
 		transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.4));
 	}
+	.scene--still .flash,
+	.scene--still .bolt {
+		display: none;
+	}
 	@media (prefers-reduced-motion: reduce) {
+		.flash,
+		.bolt {
+			display: none;
+		}
 		.scene :global(*) {
 			animation: none !important;
 			transition: none !important;
