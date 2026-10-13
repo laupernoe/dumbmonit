@@ -179,3 +179,6 @@ export function knownScenes(scenes: readonly string[] | null | undefined): strin
 }
 
 export const ROTATION_MS: Record<string, number> = { '1m': 60_000, '10m': 600_000, '1h': 3_600_000 };
+
+/** Scenes drawn at night: the text over them uses the dark tokens, in any theme. */
+export const NIGHT_SCENES = new Set(['orbit', 'hongkong']);

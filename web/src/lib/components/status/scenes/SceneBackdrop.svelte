@@ -18,9 +18,11 @@
 		rotation?: string;
 		mood?: 'ok' | 'warn' | 'critical';
 		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
+		/** The id of the scene on screen, for the page to adapt its text to it. */
+		active?: string | null;
 	}
 
-	let { scenes, rotation = 'visit', mood = 'ok', pulse = null }: Props = $props();
+	let { scenes, rotation = 'visit', mood = 'ok', pulse = null, active = $bindable(null) }: Props = $props();
 
 	const ids = $derived(knownScenes(scenes));
 	const interval = $derived(ids.length > 1 ? (ROTATION_MS[rotation] ?? 0) : 0);
@@ -35,6 +37,9 @@
 		return ids[index % ids.length];
 	});
 	const Scene = $derived(current ? SCENE_COMPONENTS[current] : null);
+	$effect(() => {
+		active = current;
+	});
 	const fadeMs = reducedMotion() ? 0 : 1200;
 
 	$effect(() => {
@@ -61,6 +66,12 @@
 	.layer {
 		position: absolute;
 		inset: 0;
+	}
+	/* Its own stacking context: nothing a scene draws (clouds, bolts, landmarks)
+	   can climb above the title block laid over it. */
+	.backdrop {
+		z-index: 0;
+		isolation: isolate;
 	}
 	.fade {
 		position: absolute;
