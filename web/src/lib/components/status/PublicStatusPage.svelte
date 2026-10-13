@@ -29,7 +29,7 @@
 	import { useSceneLive } from '#lib/scene/live.svelte.js';
 	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
 	import SceneBackdrop from '#lib/components/status/scenes/SceneBackdrop.svelte';
-	import { knownScenes } from '#lib/components/status/scenes/registry.js';
+	import { NIGHT_SCENES, knownScenes } from '#lib/components/status/scenes/registry.js';
 	import { accentClass, homepageHost, isClosed, overallBanner } from '#lib/components/status/words.js';
 
 	const REFRESH_MS = 60_000;
@@ -118,6 +118,8 @@
 	const sceneIds = $derived(knownScenes(status?.page.scenes));
 	// Simple mode: no scene, no pigeon, no animation, only a light/dark toggle.
 	const simple = $derived(status?.page.simple ?? false);
+	let activeScene = $state<string | null>(null);
+	const nightScene = $derived(activeScene !== null && NIGHT_SCENES.has(activeScene));
 	const withScene = $derived(!simple && sceneIds.length > 0);
 
 	// Scene mood and gestures from the published state: a service down or a major
@@ -296,8 +298,8 @@
 			class="relative h-[380px] overflow-hidden sm:h-[570px]"
 			style={`--scene-tone: ${TONE_VAR[bannerTone] ?? 'var(--c-signal)'}`}
 		>
-			<SceneBackdrop scenes={sceneIds} rotation={status.page.scene_rotation} mood={sceneTone} pulse={live.pulse} />
-			<div class="relative z-[2] mx-auto w-full max-w-3xl px-4 pt-6 sm:px-6">
+			<SceneBackdrop scenes={sceneIds} rotation={status.page.scene_rotation} mood={sceneTone} pulse={live.pulse} bind:active={activeScene} />
+			<div class={`relative z-[2] mx-auto w-full max-w-3xl px-4 pt-6 sm:px-6 ${nightScene ? 'tokens-night' : ''}`}>
 				<header class="flex flex-wrap items-center gap-x-4 gap-y-2">
 					<div class="flex min-w-0 items-center gap-3">
 						{#if status.page.logo_url}
@@ -327,7 +329,7 @@
 					</div>
 				</header>
 
-				<section class="rise-in mt-8 max-w-[21rem] sm:mt-12 sm:max-w-md" aria-live="polite" aria-label={m.status_public_current_status()}>
+				<section class="hero-block rise-in relative mt-8 max-w-[21rem] sm:mt-12 sm:max-w-md" aria-live="polite" aria-label={m.status_public_current_status()}>
 					<Plate tone={bannerTone} size="md" label={banner.plate} />
 					<p class="display mt-3 text-3xl text-balance text-ink sm:text-5xl">
 						{labelHead}<span class={TONE_WORD[bannerTone] ?? 'text-ink'}>{labelTail}</span>
@@ -433,3 +435,21 @@
 		</main>
 	{/if}
 </div>
+
+<style>
+	/* A soft veil in the canvas colour behind the title and the plate: whatever
+	   the scene draws there (storm clouds, a sun, a landmark) stays a backdrop. */
+	.hero-block::before {
+		content: '';
+		position: absolute;
+		z-index: -1;
+		inset: -2.25rem -3.5rem -1.75rem -3rem;
+		pointer-events: none;
+				background: radial-gradient(
+			ellipse closest-side at 50% 50%,
+			color-mix(in srgb, var(--c-canvas) 86%, transparent) 0%,
+			color-mix(in srgb, var(--c-canvas) 72%, transparent) 55%,
+			transparent 100%
+		);
+	}
+</style>
