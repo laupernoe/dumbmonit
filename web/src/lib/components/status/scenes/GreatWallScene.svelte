@@ -1,13 +1,26 @@
 <script lang="ts">
 	/**
-	 * The Great Wall of China on a misty morning — the wall climbing a ridge
-	 * with watchtowers, layered blue-grey mountains fading into haze.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * The Great Wall of China on a misty morning — the wall climbing a ridge with watchtowers, layered blue-grey mountains fading into haze.
+	 * `mood` is the weather (ok: clear, warn: clouds, critical: rain and
+	 * lightning; `calm|clouded|storm` accepted too). `pulse` plays one gesture
+	 * whenever its `at` changes: down puts the watchtower beacons out one after another along the wall, up relays the signal by lighting them in sequence from the first tower to the last, resolved flares every beacon and sends up smoke columns.
+	 * Fills its positioned parent; the headline zone (top left) is left clear.
+	 * Reduced motion freezes every animation.
 	 */
+	import SceneWeather from './SceneWeatherB.svelte';
+	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
+
+	interface Props {
+		mood?: Mood;
+		pulse?: Pulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const g = createGesture(() => pulse);
+	const level = $derived(moodLevel(mood));
+	const towers: [number, number][] = [[860, 408], [1080, 340], [1300, 262], [1520, 210], [1740, 208]];
 </script>
 
-<div class="scene scene-greatwall" aria-hidden="true">
+<div class="scene scene-greatwall" class:p-down={g.kind === 'down'} class:p-up={g.kind === 'up'} class:p-resolved={g.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="gw-mist" x1="0" y1="0" x2="0" y2="1">
@@ -48,6 +61,15 @@
 		<path d="M560 520V500C700 470 860 500 1000 490C1180 476 1360 500 1560 478C1660 468 1740 480 1780 474V620H560Z" fill="var(--near)" />
 		<g fill="var(--tree)"><path d="M980 500l-14 0 7-34z" /><path d="M1010 506l-18 0 9-44z" /><path d="M1046 498l-12 0 6-30z" /><path d="M1400 492l-16 0 8-38z" /><path d="M1440 498l-20 0 10-46z" /><path d="M1480 490l-12 0 6-30z" /></g>
 		<rect x="560" y="470" width="1220" height="150" fill="url(#gw-mist)" opacity=".45" />
+
+		<!-- feux de signalisation sur les tours -->
+		{#each towers as [x, y], i}
+			<g transform="translate({x} {y - 70})" style="--i:{i}; --r:{towers.length - 1 - i}">
+				<path class="gw-smoke" d="M0 -20C-10 -44 10 -64 0 -96C-6 -120 8 -140 0 -170" stroke="var(--smoke, #6c6a66)" stroke-width="9" stroke-linecap="round" />
+				<g class="gw-fire"><circle r="16" fill="var(--fire, #ff9a3c)" opacity=".28" /><path d="M0 0C-8-9-3-15 0-24C3-15 8-9 0 0z" fill="var(--fire, #ff9a3c)" /></g>
+			</g>
+		{/each}
+		<SceneWeather {level} bolt={1300} />
 	</svg>
 </div>
 
@@ -109,4 +131,21 @@
 		-webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 		mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 	}
+	.scene-greatwall { --fire: #ff8a2c; --smoke: #7a7872; }
+	:global(.dark) .scene-greatwall { --fire: #ffb347; --smoke: #9aa0b8; }
+	.gw-fire { transform-box: fill-box; transform-origin: 50% 100%; }
+	.gw-smoke { opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.gw-fire { animation: gw-flick 1.1s ease-in-out infinite alternate; }
+		.p-down .gw-fire { animation: gw-out 5s ease-out both; animation-delay: calc(var(--i) * 450ms); }
+		.p-up .gw-fire { animation: gw-light 3.2s ease-out both; animation-delay: calc(var(--i) * 450ms); }
+		.p-resolved .gw-fire { animation: gw-flare 3.5s ease-out both; }
+		.p-resolved .gw-smoke { animation: gw-rise 4.5s ease-out both; animation-delay: calc(var(--i) * 250ms); }
+		.p-up .gw-smoke { animation: gw-rise 3.5s ease-out both; animation-delay: calc(var(--i) * 450ms + 400ms); }
+	}
+	@keyframes gw-flick { to { transform: scale(1.12, 0.9); } }
+	@keyframes gw-out { 0% { transform: none; opacity: 1; } 10% { transform: scale(0.4); } 18%, 85% { transform: scale(0); opacity: 0; } 100% { transform: none; opacity: 1; } }
+	@keyframes gw-light { 0%, 12% { transform: scale(0); opacity: 0; } 35% { transform: scale(1.8); opacity: 1; } 100% { transform: none; opacity: 1; } }
+	@keyframes gw-flare { 0% { transform: none; } 25% { transform: scale(2.1); } 100% { transform: none; } }
+	@keyframes gw-rise { 0% { opacity: 0; transform: scaleY(0.1); } 25% { opacity: 0.7; } 100% { opacity: 0; transform: scale(1.4, 1); } }
 </style>
