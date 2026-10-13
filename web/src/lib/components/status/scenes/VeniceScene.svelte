@@ -3,12 +3,44 @@
 	 * Venice at the golden hour — basilica, campanile, Doge's Palace, a gondola,
 	 * a mooring post whose lamp takes the page's status colour
 	 * (`--scene-tone`, set by the page) and two DumbMonit pigeons on the quay.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Follows the scene contract: fills its positioned parent, the headline
+	 * zone (top left) is left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (ok = clear, warn = cloud, critical = storm).
+	 * `pulse` plays one gesture each time `at` changes: down = the gondola
+	 * glides on, jolts to a halt and the mooring lamp flashes red, up = it
+	 * glides back in from the left, resolved = fireworks over the lagoon
+	 * (the Redentore). Reduced motion: still picture.
 	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { createPulsePlayer, type ScenePulse } from './pulse.svelte.js';
+
+	interface Props {
+		mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulsePlayer(() => pulse);
+	const RAYS = Array.from({ length: 14 }, (_, i) => {
+		const a = (i / 14) * Math.PI * 2;
+		const c = Math.cos(a);
+		const sn = Math.sin(a);
+		return `M${(c * 12).toFixed(0)} ${(sn * 12).toFixed(0)}L${(c * 46).toFixed(0)} ${(sn * 46).toFixed(0)}`;
+	}).join('');
+	const BURSTS = [
+		{ x: 1000, y: 110, c: '#ffb84a', d: 0 },
+		{ x: 1250, y: 70, c: '#ff62d6', d: 500 },
+		{ x: 1500, y: 130, c: '#3ee8ff', d: 1000 }
+	];
 </script>
 
-<div class="scene scene-venice" aria-hidden="true">
+<div
+	class="scene scene-venice"
+	class:p-down={pl.kind === 'down'}
+	class:p-up={pl.kind === 'up'}
+	class:p-res={pl.kind === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
   <pattern id="vn-dia" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="var(--wh)"/><path d="M11 0L22 11L11 22L0 11Z" fill="var(--pink)"/></pattern>
@@ -18,6 +50,7 @@
 <g transform="translate(0 80)">
  <circle cx="1110" cy="110" r="46" fill="var(--sun)" opacity=".9"/>
  <g fill="var(--cloud)" opacity=".75"><ellipse cx="820" cy="110" rx="70" ry="16"/><ellipse cx="860" cy="98" rx="46" ry="16"/><ellipse cx="1290" cy="200" rx="80" ry="14"/></g>
+ <g transform="translate(0 -80)"><SceneWeather part="sky" {mood} /></g>
  <g transform="translate(170 0)">
  <!-- far: Salute -->
  <g opacity=".5" transform="translate(470 392)"><rect x="-70" y="-60" width="140" height="60" fill="var(--stone2)"/><path d="M-28-60C-30-96 0-120 0-120C0-120 30-96 28-60Z" fill="var(--stone2)"/><rect x="-2" y="-138" width="4" height="20" fill="var(--stone2)"/></g>
@@ -59,25 +92,60 @@
  <g opacity=".22" transform="translate(0 808) scale(1 -1)"><rect x="978" y="404" width="46" height="120" fill="var(--brick)"/><rect x="640" y="404" width="320" height="60" fill="var(--stone)"/><rect x="1036" y="404" width="420" height="60" fill="var(--pink)"/></g>
  <g stroke="var(--wh)" stroke-width="2" opacity=".5" stroke-linecap="round"><path d="M560 430h60M700 446h90M880 424h70M1040 440h120M1220 428h80M620 470h70M780 486h110M960 466h80M1120 482h100M1280 468h90M420 440h60M300 476h80"/></g>
  <!-- gondola -->
- <g transform="translate(890 452) scale(.8)">
+ <g class="gond"><g transform="translate(890 452) scale(.8)">
   <path d="M0 0C40 10 150 10 190-6C194-18 196-34 188-52L183-52C187-34 182-18 170-12C120-4 50-4 0-12C-6-8-6-4 0 0Z" fill="#14182a"/>
   <path d="M-2-12C-10-20-10-34 0-42L0-12Z" fill="#14182a"/>
   <path d="M184-52l10 3-4 7-8-4z" fill="#c9ced8"/>
   <path d="M70-4L100-4L98-14L72-14z" fill="#8a3a3a"/>
   <g fill="#14182a"><ellipse cx="150" cy="-62" rx="6" ry="6"/><path d="M144-56h12l4 40h-20z"/></g>
   <path d="M148-50L110 4" stroke="#6b4a2b" stroke-width="3"/>
- </g>
+ </g></g>
  <!-- piles with status lamps -->
  <g>
   <g fill="#fff" stroke="#c0392b"><rect x="880" y="372" width="12" height="70" rx="3" fill="#fff" stroke="none"/><path d="M880 384l12-6v10l-12 6zM880 404l12-6v10l-12 6zM880 424l12-6v10l-12 6z" fill="#2f6db5" stroke="none"/></g>
   <circle cx="886" cy="366" r="9" fill="var(--scene-tone, var(--c-signal))"/><circle cx="886" cy="366" r="20" fill="var(--scene-tone, var(--c-signal))" opacity=".25"/>
+  <circle class="alarm" cx="886" cy="366" r="26" fill="#ff4d4d"/>
  </g>
  <!-- pigeons on the quay and the mascot -->
  <use href="#dm-mascot" transform="translate(1194 370) scale(.1)"/><use href="#dm-mascot" transform="translate(1276 370) scale(.1)"/>
+ {#key pl.key}
+  {#if pl.kind === 'resolved'}
+   {#each BURSTS as b}
+    <g transform="translate({b.x} {b.y})" style="color:{b.c}"><g class="burst" style="animation-delay:{b.d}ms"><path d={RAYS} stroke="currentColor" stroke-width="3" stroke-linecap="round"/></g></g>
+   {/each}
+  {/if}
+ {/key}
+ <g transform="translate(0 -80)"><SceneWeather part="fx" {mood} boltX={1400} /></g>
 </g></svg>
 </div>
 
 <style>
+	.alarm,
+	.burst {
+		opacity: 0;
+	}
+	.burst {
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.gond { animation: gond-rock 5s ease-in-out infinite alternate; }
+		.p-down .gond { animation: gond-stop 5s ease-out both; }
+		.p-up .gond { animation: gond-in 3s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+		.p-down .alarm { animation: alarm 0.8s steps(1) 5 both; }
+		.burst { animation: burst 2.6s ease-out both; }
+	}
+	@keyframes gond-rock { to { transform: translateY(2px); } }
+	@keyframes gond-stop {
+		0% { transform: translateX(0); } 20% { transform: translateX(52px); }
+		26% { transform: translateX(46px) rotate(-1.2deg); } 32% { transform: translateX(50px) rotate(0.8deg); }
+		38%, 82% { transform: translateX(48px); } 100% { transform: translateX(0); }
+	}
+	@keyframes gond-in { from { transform: translateX(-190px); } to { transform: translateX(0); } }
+	@keyframes alarm { 0%, 100% { opacity: 0; } 50% { opacity: 0.45; } }
+	@keyframes burst {
+		0% { opacity: 1; transform: scale(0.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1.7) translateY(14px); }
+	}
 	.scene-venice {
 		--sky1: #f6d9b4;
 		--sky2: #fbefd9;

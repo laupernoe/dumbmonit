@@ -3,12 +3,39 @@
 	 * The statue of Zeus at Olympia — Phidias' seated colossus of ivory and
 	 * gold in the cella of its Doric temple (cut-away view): olive wreath,
 	 * Nike in the right hand, eagle-topped sceptre in the left, ebony throne.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Follows the scene contract: fills its positioned parent, the headline
+	 * zone (top left) is left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (ok = clear, warn = cloud, critical = storm with
+	 * thunder, fitting for the god of it). `pulse` plays one gesture each time
+	 * `at` changes: down = the divine glow dies and the cella falls dark, up =
+	 * the glow flares back, resolved = golden rays burst from the god's head.
+	 * Reduced motion: still picture.
 	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { createPulsePlayer, type ScenePulse } from './pulse.svelte.js';
+
+	interface Props {
+		mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulsePlayer(() => pulse);
+	const RAYS = Array.from({ length: 18 }, (_, i) => {
+		const a = (i / 18) * Math.PI * 2;
+		const c = Math.cos(a);
+		const sn = Math.sin(a);
+		return `M${(c * 40).toFixed(0)} ${(sn * 40).toFixed(0)}L${(c * 150).toFixed(0)} ${(sn * 150).toFixed(0)}`;
+	}).join('');
 </script>
 
-<div class="scene scene-zeus" aria-hidden="true">
+<div
+	class="scene scene-zeus"
+	class:p-down={pl.kind === 'down'}
+	class:p-up={pl.kind === 'up'}
+	class:p-res={pl.kind === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<radialGradient id="zs-glow" cx=".5" cy=".5" r=".5">
@@ -27,6 +54,8 @@
 		<g fill="var(--star)"><circle cx="1000" cy="110" r="2" /><circle cx="1200" cy="100" r="2.2" /><circle cx="1480" cy="116" r="1.8" /><circle cx="1650" cy="110" r="2" /><circle cx="1730" cy="190" r="2.2" /><circle cx="740" cy="230" r="1.8" /><circle cx="1600" cy="180" r="1.6" /></g>
 		<g fill="var(--cloud)" opacity=".75"><ellipse cx="1560" cy="130" rx="100" ry="9" /><ellipse cx="1620" cy="146" rx="58" ry="7" /><ellipse cx="760" cy="110" rx="70" ry="7" /></g>
 
+		<SceneWeather part="sky" {mood} />
+
 		<!-- hills -->
 		<path d="M560 482V420C660 400 760 360 860 366C960 372 1020 400 1120 410C1300 420 1500 396 1620 380C1700 372 1760 388 1780 396V482z" fill="var(--hill-far)" />
 		<path d="M560 482V450C720 436 860 440 1000 454C1260 466 1500 440 1780 448V482z" fill="var(--hill)" />
@@ -43,7 +72,7 @@
 		<!-- interior of the cella -->
 		<rect x="940" y="224" width="720" height="258" fill="var(--wall)" />
 		<rect x="940" y="224" width="720" height="22" fill="var(--wall-shade)" />
-		<ellipse cx="1300" cy="360" rx="250" ry="210" fill="url(#zs-glow)" />
+		<ellipse class="aura" cx="1300" cy="360" rx="250" ry="210" fill="url(#zs-glow)" />
 		<!-- inner colonnade (two storeys) -->
 		<g fill="var(--wall-col)"><rect x="1080" y="270" width="20" height="212" /><rect x="1140" y="270" width="20" height="212" /><rect x="1440" y="270" width="20" height="212" /><rect x="1500" y="270" width="20" height="212" /></g>
 		<g fill="var(--wall-shade)"><rect x="1070" y="262" width="100" height="8" /><rect x="1430" y="262" width="100" height="8" /></g>
@@ -67,6 +96,7 @@
 		<rect x="1236" y="424" width="128" height="14" fill="var(--gold)" />
 		<rect x="1236" y="436" width="128" height="4" fill="var(--ebony)" opacity=".6" />
 
+		<g transform="translate(1300 252)"><g class="rays"><path d={RAYS} stroke="var(--gold)" stroke-width="4" stroke-linecap="round" /></g></g>
 		<!-- statue: body -->
 		<!-- lap and legs under the gold mantle -->
 		<path d="M1236 352H1364L1384 392L1376 426H1224L1216 392z" fill="var(--gold)" />
@@ -98,6 +128,7 @@
 
 		</g>
 
+		<rect class="dark" x="940" y="224" width="720" height="258" />
 		<!-- front Doric columns -->
 		<path d="M950 470L953 244H987L990 470z" fill="var(--st)" /><path d="M972.0 470L973.0 244H987L990 470z" fill="var(--st-shade)" opacity=".6" /><path d="M958.0 470V240M966.0 470V240M974.0 470V240M982.0 470V240" stroke="var(--flute)" stroke-width="1.2" opacity=".6" /><path d="M953 244C948 238 944 238 944 232H996C996 238 992 238 987 244z" fill="var(--st)" /><rect x="941" y="224" width="58" height="9" fill="var(--st2)" /><path d="M1008 470L1011 244H1045L1048 470z" fill="var(--st)" /><path d="M1030.0 470L1031.0 244H1045L1048 470z" fill="var(--st-shade)" opacity=".6" /><path d="M1016.0 470V240M1024.0 470V240M1032.0 470V240M1040.0 470V240" stroke="var(--flute)" stroke-width="1.2" opacity=".6" /><path d="M1011 244C1006 238 1002 238 1002 232H1054C1054 238 1050 238 1045 244z" fill="var(--st)" /><rect x="999" y="224" width="58" height="9" fill="var(--st2)" /><path d="M1552 470L1555 244H1589L1592 470z" fill="var(--st)" /><path d="M1574.0 470L1575.0 244H1589L1592 470z" fill="var(--st-shade)" opacity=".6" /><path d="M1560.0 470V240M1568.0 470V240M1576.0 470V240M1584.0 470V240" stroke="var(--flute)" stroke-width="1.2" opacity=".6" /><path d="M1555 244C1550 238 1546 238 1546 232H1598C1598 238 1594 238 1589 244z" fill="var(--st)" /><rect x="1543" y="224" width="58" height="9" fill="var(--st2)" /><path d="M1610 470L1613 244H1647L1650 470z" fill="var(--st)" /><path d="M1632.0 470L1633.0 244H1647L1650 470z" fill="var(--st-shade)" opacity=".6" /><path d="M1618.0 470V240M1626.0 470V240M1634.0 470V240M1642.0 470V240" stroke="var(--flute)" stroke-width="1.2" opacity=".6" /><path d="M1613 244C1608 238 1604 238 1604 232H1656C1656 238 1652 238 1647 244z" fill="var(--st)" /><rect x="1601" y="224" width="58" height="9" fill="var(--st2)" />
 		<rect x="930" y="216" width="740" height="10" fill="var(--st2)" />
@@ -113,10 +144,36 @@
 		<path d="M560 482H912V506H560zM1688 482H1780V506H1688z" fill="url(#zs-grass)" />
 		<g stroke="var(--blade)" stroke-width="2" stroke-linecap="round" opacity=".6"><path d="M640 530h40M760 556h60M880 540h50M1700 546h60M1560 580h70M720 596h50" /></g>
 		<use href="#zs-cypress" transform="translate(870 500) scale(1.2)" /><use href="#zs-cypress" transform="translate(1730 500) scale(1.3)" />
+		<SceneWeather part="fx" {mood} boltX={1640} />
 	</svg>
 </div>
 
 <style>
+	.aura {
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	.dark {
+		fill: #070913;
+		opacity: 0;
+	}
+	.rays {
+		opacity: 0;
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .aura { animation: aura-off 5s ease-in-out both; }
+		.p-down .dark { animation: dark-in 5s ease-in-out both; }
+		.p-up .aura { animation: aura-on 2.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+		.p-up .dark { animation: dark-out 2.6s ease-out both; }
+		.p-res .rays { animation: rays 6s ease-in-out both; }
+	}
+	@keyframes aura-off { 0% { opacity: 1; transform: scale(1); } 10% { opacity: 0.2; } 16% { opacity: 0.7; } 30%, 80% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: scale(1); } }
+	@keyframes dark-in { 0% { opacity: 0; } 30%, 80% { opacity: 0.72; } 100% { opacity: 0; } }
+	@keyframes aura-on { 0% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
+	@keyframes dark-out { from { opacity: 0.72; } to { opacity: 0; } }
+	@keyframes rays { 0% { opacity: 0; transform: scale(0.4) rotate(0); } 25%, 70% { opacity: 0.9; transform: scale(1) rotate(25deg); } 100% { opacity: 0; transform: scale(1.2) rotate(50deg); } }
 	.scene {
 		position: absolute;
 		inset: 0;
