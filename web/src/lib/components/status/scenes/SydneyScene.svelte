@@ -2,9 +2,27 @@
 	/**
 	 * Sydney Harbour in the morning — the Opera House's white sails in front,
 	 * the Harbour Bridge arch behind, a few towers of the city and the bay.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Follows the scene contract: fills its positioned parent, the headline
+	 * zone (top left) is left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (ok = clear, warn = cloud, critical = storm).
+	 * `pulse` plays one gesture each time `at` changes: down = the Opera
+	 * House sails slump, up = they spring back up, resolved = the sails glow
+	 * gold one after the other. Reduced motion: still picture.
 	 */
+	import SceneWeather from './SceneWeatherD.svelte';
+	import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
+
+	interface Props {
+		mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulsePlayer(() => pulse);
+	const SAILS: [number, number, number][] = [
+		[880, 0.85, 0.8], [920, 0.95, 1], [962, 1.05, 1.25], [1010, 1.1, 1.5],
+		[1100, 0.7, 0.75], [1136, 0.8, 1], [1176, 0.8, 0.6]
+	];
 	const cx = 1370;
 	const half = 190;
 	const deck = 446;
@@ -22,7 +40,13 @@
 	const diag = xs.slice(0, -1).map((x, i) => `${x.toFixed(1)},${lower(x).toFixed(1)} ${xs[i + 1].toFixed(1)},${upper(xs[i + 1]).toFixed(1)}`);
 </script>
 
-<div class="scene scene-sydney" aria-hidden="true">
+<div
+	class="scene scene-sydney"
+	class:p-down={pl.kind === 'down'}
+	class:p-up={pl.kind === 'up'}
+	class:p-res={pl.kind === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="sy-wat" x1="0" y1="0" x2="0" y2="1">
@@ -37,6 +61,7 @@
 			<ellipse cx="1220" cy="140" rx="46" ry="12" />
 			<ellipse cx="1600" cy="210" rx="70" ry="10" />
 		</g>
+		<SceneWeather part="sky" {mood} />
 		<!-- far city -->
 		<g fill="var(--far)" opacity=".8">
 			<rect x="1180" y="400" width="26" height="82" />
@@ -94,6 +119,7 @@
 		<g>
 			<rect x="860" y="468" width="360" height="22" fill="var(--stone)" />
 			<rect x="860" y="486" width="360" height="6" fill="var(--stone2)" />
+			<g class="sails">
 			<!-- far group of sails (smaller, behind) -->
 			<g fill="var(--sail2)">
 				<use href="#sy-sail" transform="translate(1010 468) scale(.8 .85)" />
@@ -119,6 +145,12 @@
 				<path d="M884 468h36v-12z" />
 				<path d="M1100 468h38l-38-30z" />
 			</g>
+			<g class="glowsails">
+				{#each SAILS as [x, sx, sy], i}
+					<use class="gs" href="#sy-sail" transform="translate({x} 468) scale({sx} {sy})" style="animation-delay:{i * 380}ms" />
+				{/each}
+			</g>
+			</g>
 		</g>
 		<!-- ferry -->
 		<g transform="translate(1260 520)">
@@ -133,10 +165,30 @@
 			<circle cx="1010" cy="566" r="22" fill="var(--scene-tone, var(--c-signal))" opacity=".25" />
 			<rect x="1006" y="574" width="8" height="10" fill="var(--steel)" />
 		</g>
+		<SceneWeather part="fx" {mood} boltX={1120} />
 	</svg>
 </div>
 
 <style>
+	.sails {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+	}
+	.gs {
+		fill: #ffe7a0;
+		opacity: 0;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .sails { animation: slump 5s ease-in-out both; }
+		.p-up .sails { animation: spring 1.8s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+		.p-res .gs { animation: shine 3.4s ease-in-out both; }
+		.p-res .glowsails { filter: drop-shadow(0 0 10px #ffd36a); }
+	}
+	@keyframes slump {
+		0% { transform: scaleY(1); } 25%, 80% { transform: scaleY(0.72) skewX(-3deg); } 100% { transform: scaleY(1); }
+	}
+	@keyframes spring { from { transform: scaleY(0.72) skewX(-3deg); } to { transform: scaleY(1); } }
+	@keyframes shine { 0%, 100% { opacity: 0; } 30%, 60% { opacity: 0.85; } }
 	.scene-sydney {
 		--sky1: #f3c9a6;
 		--sky2: #fdeed6;

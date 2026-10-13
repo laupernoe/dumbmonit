@@ -2,13 +2,35 @@
 	/**
 	 * The Taj Mahal at dawn — white marble mausoleum with its great dome, four
 	 * minarets and flanking red-sandstone buildings, mirrored in the long
-	 * reflecting pool between cypress-lined gardens. Static, no animation.
-	 * Follows the scene contract: fills its positioned parent, the headline
-	 * zone (top left) is left clear, the palette lives here.
+	 * reflecting pool between cypress-lined gardens. Follows the scene
+	 * contract: fills its positioned parent, the headline zone (top left) is
+	 * left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (ok = clear, warn = cloud, critical = storm).
+	 * `pulse` plays one gesture each time `at` changes: down = the marble
+	 * goes dark, as if the floodlights were cut, up = it flickers back to
+	 * life in warm light, resolved = a flock of white doves crosses the sky.
+	 * Reduced motion: still picture.
 	 */
+	import SceneWeather from './SceneWeatherD.svelte';
+	import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
+
+	interface Props {
+		mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulsePlayer(() => pulse);
+	const DOVES = [[170, 0], [140, 260], [205, 420], [120, 640], [190, 800], [155, 1000]];
 </script>
 
-<div class="scene scene-tajmahal" aria-hidden="true">
+<div
+	class="scene scene-tajmahal"
+	class:p-down={pl.kind === 'down'}
+	class:p-up={pl.kind === 'up'}
+	class:p-res={pl.kind === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<clipPath id="tj-pool"><path d="M1150 398H1250L1400 620H1000Z" /></clipPath>
@@ -61,9 +83,12 @@
 		</defs>
 		<circle cx="1560" cy="170" r="40" fill="var(--sun)" opacity=".9" />
 		<g fill="var(--cloud)" opacity=".7"><ellipse cx="860" cy="130" rx="80" ry="14" /><ellipse cx="940" cy="118" rx="44" ry="12" /><ellipse cx="1330" cy="110" rx="60" ry="10" /></g>
+		<SceneWeather part="sky" {mood} />
 		<!-- distant trees -->
 		<path d="M560 392C700 372 820 380 900 392zM1500 392C1600 376 1700 380 1780 392z" fill="var(--tree2)" />
 		<use href="#tj-main" />
+		<use class="dim" href="#tj-main" />
+		<use class="lit" href="#tj-main" />
 		<!-- ground -->
 		<path d="M560 392H1780V620H560Z" fill="var(--lawn)" />
 		<path d="M560 392H1780V398H560Z" fill="var(--marble2)" />
@@ -82,10 +107,56 @@
 			<path d="M1010 560c-14-36-14-80 0-116 14 36 14 80 0 116z" /><path d="M1390 560c14-36 14-80 0-116-14 36-14 80 0 116z" />
 		</g>
 		<g fill="var(--tree2)" opacity=".8"><ellipse cx="800" cy="440" rx="70" ry="16" /><ellipse cx="1600" cy="440" rx="70" ry="16" /><ellipse cx="760" cy="520" rx="90" ry="20" /><ellipse cx="1640" cy="520" rx="90" ry="20" /></g>
+		{#key pl.key}
+			{#if pl.kind === 'resolved'}
+				<g stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+					{#each DOVES as [y, d]}
+						<g transform="translate(0 {y})">
+							<g class="dove" style="animation-delay:{d}ms"><path class="wings" d="M-14 -4Q-7 -10 0 0Q7 -10 14 -4" /></g>
+						</g>
+					{/each}
+				</g>
+			{/if}
+		{/key}
+		<SceneWeather part="fx" {mood} boltX={1560} />
 	</svg>
 </div>
 
 <style>
+	.dim,
+	.lit {
+		opacity: 0;
+	}
+	.dim {
+		filter: brightness(0.3) saturate(0.7);
+	}
+	.lit {
+		filter: brightness(1.3) saturate(1.2) drop-shadow(0 0 8px #ffcf6a);
+	}
+	.dove {
+		opacity: 0;
+		transform: translateX(560px);
+	}
+	.wings {
+		transform-box: fill-box;
+		transform-origin: center bottom;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .dim { animation: dim 5s ease-in-out both; }
+		.p-up .lit { animation: relight 2.6s ease-out both; }
+		.dove { animation: fly 5.2s ease-in-out both; }
+		.wings { animation: flap 0.5s ease-in-out infinite alternate; }
+	}
+	@keyframes dim {
+		0% { opacity: 0; } 8% { opacity: 0.9; } 14% { opacity: 0.3; } 22%, 80% { opacity: 0.95; } 100% { opacity: 0; }
+	}
+	@keyframes relight {
+		0% { opacity: 0; } 14% { opacity: 0.9; } 24% { opacity: 0.1; } 38% { opacity: 0.8; } 50% { opacity: 0.2; } 70% { opacity: 0.6; } 100% { opacity: 0; }
+	}
+	@keyframes fly {
+		from { opacity: 1; transform: translateX(560px); } to { opacity: 1; transform: translateX(1900px); }
+	}
+	@keyframes flap { to { transform: scaleY(-0.6); } }
 	.scene-tajmahal {
 		--sky1: #f6c7b4;
 		--sky2: #fdeed9;

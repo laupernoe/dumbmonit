@@ -1,9 +1,37 @@
-<div class="scene scene-rome" aria-hidden="true">
+<script lang="ts">
+  /**
+   * Rome — the Colosseum, Saint Peter's dome, ruins and a piazza fountain.
+   * `mood` is the weather (ok = clear, warn = cloud, critical = storm).
+   * `pulse` plays one gesture each time `at` changes: down = the fountain
+   * jet collapses and stays off, up = it bursts back with a splash, resolved
+   * = the Colosseum arches light up gold tier by tier. Reduced motion: still.
+   */
+  import SceneWeather from './SceneWeatherD.svelte';
+  import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
+
+  interface Props {
+    mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+    pulse?: ScenePulse;
+  }
+  let { mood = 'ok', pulse = null }: Props = $props();
+  const pl = createPulsePlayer(() => pulse);
+</script>
+
+<div
+  class="scene scene-rome"
+  class:p-down={pl.kind === 'down'}
+  class:p-up={pl.kind === 'up'}
+  class:p-res={pl.kind === 'resolved'}
+  aria-hidden="true"
+>
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <!-- arcades du Colisée : 3 niveaux de 56, alignés sur y=314 ; attique en dessous du bandeau -->
       <pattern id="rome-arch" x="960" y="314" width="32" height="56" patternUnits="userSpaceOnUse">
         <path d="M7 56V22a9 9 0 0 1 18 0V56z" fill="var(--rome-arch)" /><rect x="14" y="10" width="4" height="5" fill="var(--rome-stone3)" />
+      </pattern>
+      <pattern id="rome-arch-gold" x="960" y="314" width="32" height="56" patternUnits="userSpaceOnUse">
+        <path d="M7 56V22a9 9 0 0 1 18 0V56z" fill="#ffd77a" />
       </pattern>
       <pattern id="rome-attic" x="960" y="292" width="32" height="22" patternUnits="userSpaceOnUse"><rect x="12" y="6" width="8" height="11" fill="var(--rome-arch)" /></pattern>
       <pattern id="rome-pal" width="22" height="26" patternUnits="userSpaceOnUse"><rect x="7" y="6" width="8" height="13" rx="1" fill="var(--rome-win)" /></pattern>
@@ -21,6 +49,8 @@
     <circle cx="1384" cy="184" r="7" fill="var(--crater)" /><circle cx="1414" cy="210" r="5" fill="var(--crater)" />
     <g fill="var(--star)"><circle cx="1010" cy="118" r="2" /><circle cx="1250" cy="104" r="2.2" /><circle cx="1560" cy="120" r="2" /><circle cx="1640" cy="230" r="2.2" /><circle cx="1180" cy="190" r="1.8" /><circle cx="1500" cy="250" r="1.8" /></g>
     <g fill="var(--cloud)" opacity=".75"><ellipse cx="1590" cy="146" rx="80" ry="10" /><ellipse cx="1640" cy="164" rx="50" ry="8" /><ellipse cx="1190" cy="150" rx="56" ry="8" /></g>
+
+    <SceneWeather part="sky" {mood} />
 
     <!-- second plan : toits ocre et basilique Saint-Pierre -->
     <path d="M560 482V440h40v-14h30v10h40v-20h34v24h50v-12h40z" fill="var(--rome-far)" />
@@ -51,6 +81,11 @@
       <rect x="960" y="314" width="480" height="168" fill="url(#rome-arch)" /><rect x="960" y="292" width="480" height="22" fill="url(#rome-attic)" />
       <g fill="var(--rome-stone2)"><rect x="960" y="312" width="480" height="5" /><rect x="960" y="368" width="480" height="5" /><rect x="960" y="424" width="480" height="5" /><rect x="960" y="292" width="480" height="5" /><rect x="960" y="476" width="480" height="6" /></g>
     </g>
+    <g clip-path="url(#rome-shell)" class="glow">
+      <rect class="tier" x="960" y="426" width="480" height="56" fill="url(#rome-arch-gold)" style="animation-delay:0ms" />
+      <rect class="tier" x="960" y="370" width="480" height="56" fill="url(#rome-arch-gold)" style="animation-delay:700ms" />
+      <rect class="tier" x="960" y="314" width="480" height="56" fill="url(#rome-arch-gold)" style="animation-delay:1400ms" />
+    </g>
     <g fill="var(--rome-stone2)"><ellipse cx="1412" cy="476" rx="22" ry="8" /><ellipse cx="1380" cy="480" rx="14" ry="6" /><ellipse cx="1340" cy="478" rx="10" ry="5" /></g>
 
     <!-- pins, ruines (colonnes et entablement) et fontaine -->
@@ -65,7 +100,8 @@
     <g transform="translate(1570 482)">
       <path d="M-76-16H76Q76 0 56 0H-56Q-76 0-76-16z" fill="var(--rome-stone)" /><ellipse cy="-16" rx="76" ry="9" fill="var(--rome-stone2)" /><ellipse cy="-16" rx="68" ry="6" fill="var(--rome-water)" />
       <rect x="-8" y="-62" width="16" height="48" fill="var(--rome-stone)" /><path d="M-34-62Q0-30 34-62z" fill="var(--rome-stone)" /><ellipse cy="-62" rx="34" ry="5" fill="var(--rome-water)" />
-      <path d="M0-66V-98M0-66Q-18-100-40-66M0-66Q18-100 40-66" stroke="var(--rome-water)" stroke-width="3" stroke-linecap="round" />
+      <path class="jet" pathLength="1" d="M0-66V-98M0-66Q-18-100-40-66M0-66Q18-100 40-66" stroke="var(--rome-water)" stroke-width="3" stroke-linecap="round" />
+      <ellipse class="splash" cy="-16" rx="30" ry="4" stroke="var(--rome-water)" stroke-width="2" />
     </g>
 
     <!-- sol de la piazza : bordure et pavés -->
@@ -75,10 +111,33 @@
     <!-- mascottes : sur les ruines et au pied du Colisée -->
     <use href="#dm-mascot" transform="translate(856 326) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1454 452) scale(.1)" />
+    <SceneWeather part="fx" {mood} boltX={1240} />
   </svg>
 </div>
 
 <style>
+  .jet {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 0;
+  }
+  .splash,
+  .tier {
+    opacity: 0;
+  }
+  .splash {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .p-down .jet { animation: jet-off 5s ease-in both; }
+    .p-up .jet { animation: jet-on 1.6s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+    .p-up .splash { animation: splash 1.6s ease-out 0.8s both; }
+    .p-res .tier { animation: tier 3.4s ease-in-out both; }
+  }
+  @keyframes jet-off { 0% { stroke-dashoffset: 0; } 12%, 85% { stroke-dashoffset: 1; } 100% { stroke-dashoffset: 0; } }
+  @keyframes jet-on { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes splash { 0% { opacity: 0.9; transform: scale(0.3); } 100% { opacity: 0; transform: scale(2.4); } }
+  @keyframes tier { 0% { opacity: 0; } 25%, 60% { opacity: 0.95; } 100% { opacity: 0; } }
   .scene {
     position: absolute;
     inset: 0;

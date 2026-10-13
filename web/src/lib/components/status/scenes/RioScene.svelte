@@ -2,15 +2,44 @@
 	/**
 	 * Rio de Janeiro — Christ the Redeemer arms open on top of Corcovado, the
 	 * Sugarloaf and Morro da Urca across Guanabara bay, the city at their feet,
-	 * a few sailboats and a beach palm. Static, no animation. Follows the scene
-	 * contract: fills its positioned parent, the headline zone (top left) is
-	 * left clear, the palette lives here.
+	 * a few sailboats and a beach palm. Follows the scene contract: fills its
+	 * positioned parent, the headline zone (top left) is left clear, the
+	 * palette lives here.
+	 *
+	 * `mood` is the weather (ok = clear, warn = cloud, critical = storm).
+	 * `pulse` plays one gesture each time `at` changes: down = the Redeemer's
+	 * arms drop, up = they swing back open, resolved = a halo and rays of
+	 * light bloom around him. Reduced motion: still picture.
 	 */
+	import SceneWeather from './SceneWeatherD.svelte';
+	import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
+
+	interface Props {
+		mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulsePlayer(() => pulse);
+	const RAYS = Array.from({ length: 14 }, (_, i) => {
+		const a = (i / 14) * Math.PI * 2;
+		const c = Math.cos(a);
+		const s = Math.sin(a);
+		return `M${(c * 44).toFixed(0)} ${(s * 44).toFixed(0)}L${(c * 120).toFixed(0)} ${(s * 120).toFixed(0)}`;
+	}).join('');
 </script>
 
-<div class="scene scene-rio" aria-hidden="true">
+<div
+	class="scene scene-rio"
+	class:p-down={pl.kind === 'down'}
+	class:p-up={pl.kind === 'up'}
+	class:p-res={pl.kind === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
+			<radialGradient id="rio-glow" cx=".5" cy=".5" r=".5">
+				<stop offset="0" stop-color="#fff3c4" stop-opacity=".95" /><stop offset="1" stop-color="#fff3c4" stop-opacity="0" />
+			</radialGradient>
 			<!-- voilier : origine = ligne de flottaison -->
 			<g id="rio-boat">
 				<path d="M-22 0H24L16 8H-14z" fill="var(--rio-hull)" />
@@ -28,6 +57,8 @@
 		<circle cx="986" cy="158" r="7" fill="var(--crater)" /><circle cx="1014" cy="184" r="5" fill="var(--crater)" />
 		<g fill="var(--star)"><circle cx="1180" cy="112" r="2" /><circle cx="1480" cy="130" r="2.2" /><circle cx="1620" cy="214" r="1.8" /><circle cx="860" cy="120" r="2" /><circle cx="1260" cy="190" r="1.8" /><circle cx="1700" cy="150" r="2" /></g>
 		<g fill="var(--cloud)" opacity=".8"><ellipse cx="1470" cy="160" rx="80" ry="11" /><ellipse cx="1520" cy="178" rx="50" ry="8" /><ellipse cx="1180" cy="230" rx="70" ry="10" /><ellipse cx="1230" cy="246" rx="40" ry="7" /><ellipse cx="760" cy="250" rx="60" ry="8" /></g>
+
+		<SceneWeather part="sky" {mood} />
 
 		<!-- îles et côte lointaine -->
 		<path d="M560 482V462C620 452 660 458 700 466C740 452 780 456 800 482z" fill="var(--rio-far)" />
@@ -52,12 +83,16 @@
 		<g fill="var(--rio-forest3)"><circle cx="1210" cy="400" r="14" /><circle cx="1238" cy="420" r="16" /><circle cx="1300" cy="450" r="18" /><circle cx="1180" cy="440" r="14" /><circle cx="1440" cy="400" r="12" /><circle cx="1470" cy="440" r="16" /></g>
 
 		<!-- le Christ Rédempteur -->
+		<g class="halo" transform="translate(1330 134)">
+			<circle r="80" fill="url(#rio-glow)" />
+			<g class="spin"><path d={RAYS} stroke="var(--rio-sail2)" stroke-width="3" stroke-linecap="round" /></g>
+		</g>
 		<g transform="translate(1330 230) scale(2)">
 			<path d="M-9-2L-7-14H7L9-2z" fill="var(--rio-stone2)" />
 			<path d="M-5.2-14L-4-44H4L5.2-14z" fill="var(--rio-christ)" />
 			<path d="M0-44V-14H5.2L4-44z" fill="var(--rio-christ2)" />
-			<path d="M-24-43L-4-44.5V-39.5L-24-38.5zM24-43L4-44.5V-39.5L24-38.5z" fill="var(--rio-christ)" />
-			<path d="M24-43L4-44.5V-39.5L24-38.5z" fill="var(--rio-christ2)" />
+			<path class="arm-l" d="M-24-43L-4-44.5V-39.5L-24-38.5z" fill="var(--rio-christ)" />
+			<g class="arm-r"><path d="M24-43L4-44.5V-39.5L24-38.5z" fill="var(--rio-christ)" /><path d="M24-43L4-44.5V-39.5L24-38.5z" fill="var(--rio-christ2)" /></g>
 			<circle cx="0" cy="-49" r="3.4" fill="var(--rio-christ)" />
 		</g>
 
@@ -79,10 +114,41 @@
 		<path d="M1480 600C1560 560 1660 548 1900 552V640H1480z" fill="var(--rio-sand)" />
 		<path d="M1500 600C1570 566 1660 556 1900 560" stroke="var(--rio-foam)" stroke-width="3" stroke-linecap="round" opacity=".8" />
 		<use href="#rio-palm" x="1620" y="566" /><g transform="translate(1720 570) scale(.8)"><use href="#rio-palm" /></g></g>
+		<SceneWeather part="fx" {mood} boltX={1260} />
 	</svg>
 </div>
 
 <style>
+	.arm-l {
+		transform-box: fill-box;
+		transform-origin: right center;
+	}
+	.arm-r {
+		transform-box: fill-box;
+		transform-origin: left center;
+	}
+	.halo {
+		opacity: 0;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .arm-l { animation: arm-l-down 5s ease-in-out both; }
+		.p-down .arm-r { animation: arm-r-down 5s ease-in-out both; }
+		.p-up .arm-l { animation: arm-l-up 2.6s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+		.p-up .arm-r { animation: arm-r-up 2.6s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+		.p-res .halo { animation: halo 6s ease-in-out both; }
+		.p-res .spin { animation: spin 6s linear both; }
+	}
+	.spin {
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	@keyframes arm-l-down { 0% { transform: rotate(0); } 22%, 80% { transform: rotate(-78deg); } 100% { transform: rotate(0); } }
+	@keyframes arm-r-down { 0% { transform: rotate(0); } 22%, 80% { transform: rotate(78deg); } 100% { transform: rotate(0); } }
+	@keyframes arm-l-up { from { transform: rotate(-78deg); } to { transform: rotate(0); } }
+	@keyframes arm-r-up { from { transform: rotate(78deg); } to { transform: rotate(0); } }
+	@keyframes halo { 0% { opacity: 0; transform: translate(1330px, 134px) scale(0.5); } 25%, 70% { opacity: 1; transform: translate(1330px, 134px) scale(1); } 100% { opacity: 0; transform: translate(1330px, 134px) scale(1.25); } }
+	@keyframes spin { to { transform: rotate(50deg); } }
+
 	.scene {
 		position: absolute;
 		inset: 0;
