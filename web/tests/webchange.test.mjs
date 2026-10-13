@@ -1,7 +1,7 @@
 // Website-changes panel helpers. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent, groupByDay, daysBetween, stepIndex, groupSameEdits } from '../src/lib/components/devices/webchange/format.ts';
+import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent, groupByDay, daysBetween, stepIndex, groupSameEdits, wordDiff, pairWords } from '../src/lib/components/devices/webchange/format.ts';
 
 test('pagePath keeps only the path, query and hash', () => {
 	assert.equal(pagePath('https://example.com/'), '/');
@@ -99,4 +99,31 @@ test('groupSameEdits folds consecutive changes with the same signature', () => {
 		[[1, [2, 3]], [4, []], [5, []], [6, []], [7, []]]
 	);
 	assert.deepEqual(groupSameEdits([]), []);
+});
+
+test('wordDiff marks only the words that differ', () => {
+	const { before, after } = wordDiff('Tarif : 10 € par mois', 'Tarif : 12 € par an');
+	const changed = (segs) => segs.filter((s) => s.changed).map((s) => s.text);
+	assert.deepEqual(changed(before), ['10', 'mois']);
+	assert.deepEqual(changed(after), ['12', 'an']);
+	assert.equal(before.map((s) => s.text).join(''), 'Tarif : 10 € par mois', 'the text joins back');
+	const phrase = wordDiff('a b c d', 'a x y d');
+	assert.deepEqual(changed(phrase.after), ['x y'], 'a replaced phrase is one run');
+	const same = wordDiff('pareil', 'pareil');
+	assert.deepEqual(same.after, [{ text: 'pareil', changed: false }]);
+});
+
+test('pairWords pairs deleted and inserted runs line by line', () => {
+	const rows = pairWords([
+		{ op: 'equal', text: 'Titre', count: null },
+		{ op: 'delete', text: 'Prix 10', count: null },
+		{ op: 'delete', text: 'Seul', count: null },
+		{ op: 'insert', text: 'Prix 12', count: null },
+		{ op: 'skip', text: '', count: 4 }
+	]);
+	assert.deepEqual(rows[0].segments, [{ text: 'Titre', changed: false }]);
+	assert.deepEqual(rows[1].segments.filter((s) => s.changed).map((s) => s.text), ['10']);
+	assert.deepEqual(rows[2].segments, [{ text: 'Seul', changed: false }], 'unpaired: whole');
+	assert.deepEqual(rows[3].segments.filter((s) => s.changed).map((s) => s.text), ['12']);
+	assert.equal(rows[4].count, 4);
 });

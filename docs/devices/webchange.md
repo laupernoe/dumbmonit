@@ -94,6 +94,10 @@ When one check finds the **same change on several pages** (the same lines
 removed and added, such as a banner), the device page shows it once, with the
 pages it was made on.
 
+The device page lists the changes newest first, by day. A replaced line shows
+which words changed, underlined; the list can be narrowed to one kind of change
+(changed, new or removed pages) or one page, and older changes load on request.
+
 ### Ignore lines
 
 Lines that change at every visit — a clock, a visitor counter, "updated 5

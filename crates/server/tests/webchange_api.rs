@@ -357,6 +357,19 @@ async fn reference_puis_changements_pages_nouvelles_et_disparues() {
     assert_eq!(only_a.as_array().unwrap().len(), 1);
     assert_eq!(only_a[0]["id"], changed["id"]);
 
+    // Par type, et la suite d'une liste après le dernier changement reçu.
+    let only_new = s.get(&format!("/api/targets/{id}/webchange/changes?kind=new_page")).await;
+    assert_eq!(kinds(&only_new), [("c.html".to_string(), "new_page".to_string())]);
+    let first_two = s.get(&format!("/api/targets/{id}/webchange/changes?limit=2")).await;
+    let last_id = first_two[1]["id"].as_i64().unwrap();
+    let rest = s.get(&format!("/api/targets/{id}/webchange/changes?before={last_id}")).await;
+    let all: Vec<Value> =
+        first_two.as_array().unwrap().iter().chain(rest.as_array().unwrap()).cloned().collect();
+    assert_eq!(Value::Array(all), changes, "deux pages de liste font la liste entière");
+    let bad =
+        s.app.get(&format!("/api/targets/{id}/webchange/changes?kind=tout"), Some(&s.cookie)).await;
+    assert_eq!(bad.status, StatusCode::BAD_REQUEST);
+
     // Les pages : B disparue, A modifiée, C suivie.
     let pages = s.get(&format!("/api/targets/{id}/webchange/pages")).await;
     let page = |path: &str| {

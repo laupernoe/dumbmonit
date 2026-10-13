@@ -18,6 +18,7 @@
 		listWebchangeChanges,
 		type Target,
 		type WebchangeChange,
+		type WebchangeChangeKind,
 		type WebchangePage
 	} from '#lib/api/index.js';
 	import { formatRelative } from '#lib/format.js';
@@ -42,9 +43,15 @@
 	let found = $state<number | null>(null);
 	let pagesError = $state<unknown>(null);
 
+	/** Changes read per request; a full batch means older ones may follow. */
+	const PAGE_SIZE = 50;
 	let changes = $state<WebchangeChange[]>([]);
 	let loadingChanges = $state(true);
 	let changesError = $state<unknown>(null);
+	let hasMore = $state(false);
+	let loadingMore = $state(false);
+	/** Kind the timeline is narrowed to; `null` shows every kind. */
+	let kindFilter = $state<WebchangeChangeKind | null>(null);
 
 	/** Page the change timeline is narrowed to; `null` shows every page. */
 	let selectedUrl = $state<string | null>(null);
@@ -90,7 +97,8 @@
 	async function loadChanges(signal?: AbortSignal) {
 		changesError = null;
 		try {
-			changes = await listWebchangeChanges(target.id, { url: selectedUrl ?? undefined }, signal);
+			changes = await listWebchangeChanges(target.id, query(), signal);
+			hasMore = changes.length === PAGE_SIZE;
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			changesError = cause;
@@ -98,6 +106,39 @@
 			loadingChanges = false;
 		}
 	}
+
+	function query(before?: number) {
+		return { url: selectedUrl ?? undefined, kind: kindFilter ?? undefined, limit: PAGE_SIZE, before };
+	}
+
+	async function loadMore() {
+		const last = changes.at(-1);
+		if (!last) return;
+		loadingMore = true;
+		try {
+			const older = await listWebchangeChanges(target.id, query(last.id));
+			changes = [...changes, ...older];
+			hasMore = older.length === PAGE_SIZE;
+		} catch (cause) {
+			changesError = cause;
+		} finally {
+			loadingMore = false;
+		}
+	}
+
+	function selectKind(kind: WebchangeChangeKind | null) {
+		kindFilter = kind;
+		pickedId = null;
+		loadingChanges = true;
+		void loadChanges();
+	}
+
+	const KIND_FILTERS: { kind: WebchangeChangeKind | null; label: () => string }[] = [
+		{ kind: null, label: () => m.devicesb_webchange_panel_kind_all() },
+		{ kind: 'changed', label: () => m.devicesb_webchange_timeline_changed() },
+		{ kind: 'new_page', label: () => m.devicesb_webchange_timeline_new_page() },
+		{ kind: 'removed_page', label: () => m.devicesb_webchange_timeline_removed_page() }
+	];
 
 	function selectUrl(url: string | null) {
 		selectedUrl = url;
@@ -133,6 +174,7 @@
 		changes = [];
 		selectedUrl = null;
 		pickedId = null;
+		kindFilter = null;
 		const controller = new AbortController();
 		void loadPages(controller.signal);
 		void loadChanges(controller.signal);
@@ -217,6 +259,18 @@
 			{#if selectedUrl}
 				<Button variant="ghost" size="sm" class="min-h-10 sm:min-h-0" onclick={() => selectUrl(null)}>{m.devicesb_webchange_panel_clear_filter()}</Button>
 			{/if}
+			<div role="group" aria-label={m.devicesb_webchange_panel_kind_label()} class="flex flex-wrap gap-1">
+				{#each KIND_FILTERS as filter (filter.kind)}
+					<button
+						type="button"
+						aria-pressed={kindFilter === filter.kind}
+						onclick={() => selectKind(filter.kind)}
+						class={`min-h-10 rounded-lg px-2.5 text-[0.8125rem] font-semibold sm:min-h-8 ${kindFilter === filter.kind ? 'bg-surface-2 text-ink ring-1 ring-line-strong' : 'text-ink-2 hover:bg-surface-2 hover:text-ink'}`}
+					>
+						{filter.label()}
+					</button>
+				{/each}
+			</div>
 		{/snippet}
 		{#if changesError}
 			<ErrorNotice error={changesError} title={m.devicesb_webchange_panel_changes_error()} onretry={() => void loadChanges()} class="m-4" />
@@ -233,6 +287,13 @@
 						selectedId={split ? selectedId : null}
 						onselect={split ? (change) => (pickedId = change.id) : undefined}
 					/>
+					{#if hasMore && !loadingChanges}
+						<div class="px-2 pt-2">
+							<Button variant="ghost" size="sm" class="w-full" onclick={loadMore} loading={loadingMore}>
+								{m.devicesb_webchange_panel_load_more()}
+							</Button>
+						</div>
+					{/if}
 				</div>
 				{#if split && selectedId !== null}
 					<div class="min-w-0 px-5 py-4">

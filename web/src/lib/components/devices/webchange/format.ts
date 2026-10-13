@@ -160,3 +160,113 @@ export function groupSameEdits<T extends { signature: string | null }>(items: T[
 	}
 	return groups;
 }
+
+/** A run of a diff line's text, `changed` when it is what differs from the other side. */
+export interface Segment {
+	text: string;
+	changed: boolean;
+}
+
+/** Above this many words on either side, a pair of lines is shown whole rather than word by word. */
+const MAX_WORDS = 400;
+
+/** Words and the spaces between them, kept as their own tokens so the text joins back unchanged. */
+function tokens(line: string): string[] {
+	return line.split(/(\s+)/).filter((token) => token !== '');
+}
+
+/** Joins consecutive tokens of the same kind into segments. */
+function segments(parts: Array<[string, boolean]>): Segment[] {
+	const out: Segment[] = [];
+	for (const [text, changed] of parts) {
+		const last = out.at(-1);
+		if (last && last.changed === changed) last.text += text;
+		else out.push({ text, changed });
+	}
+	return out;
+}
+
+/**
+ * Word-level comparison of a removed line and the line that replaced it: the
+ * longest common run of words is plain, the rest is `changed`. Spaces between
+ * two changed words count as changed, so a replaced phrase reads as one run.
+ * Lines too long to compare word by word come back entirely changed.
+ */
+export function wordDiff(before: string, after: string): { before: Segment[]; after: Segment[] } {
+	const a = tokens(before);
+	const b = tokens(after);
+	if (a.length > MAX_WORDS * 2 || b.length > MAX_WORDS * 2) {
+		return { before: [{ text: before, changed: true }], after: [{ text: after, changed: true }] };
+	}
+	// Longest common subsequence, by suffix lengths.
+	const lcs: number[][] = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+	for (let i = a.length - 1; i >= 0; i--) {
+		for (let j = b.length - 1; j >= 0; j--) {
+			lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+		}
+	}
+	const left: Array<[string, boolean]> = [];
+	const right: Array<[string, boolean]> = [];
+	let i = 0;
+	let j = 0;
+	while (i < a.length || j < b.length) {
+		if (i < a.length && j < b.length && a[i] === b[j]) {
+			left.push([a[i++], false]);
+			right.push([b[j++], false]);
+		} else if (j < b.length && (i === a.length || lcs[i][j + 1] >= lcs[i + 1][j])) {
+			right.push([b[j++], true]);
+		} else {
+			left.push([a[i++], true]);
+		}
+	}
+	return { before: segments(absorbSpaces(left)), after: segments(absorbSpaces(right)) };
+}
+
+/** A space kept between two changed words is part of the change. */
+function absorbSpaces(parts: Array<[string, boolean]>): Array<[string, boolean]> {
+	return parts.map(([text, changed], k) => {
+		const between = !changed && /^\s+$/.test(text) && parts[k - 1]?.[1] && parts[k + 1]?.[1];
+		return [text, changed || Boolean(between)];
+	});
+}
+
+/** One line of a diff, ready to render: its words, split where they differ from the paired line. */
+export interface DiffRow<Op extends string> {
+	op: Op;
+	segments: Segment[];
+	count: number | null;
+}
+
+/**
+ * Pairs each run of deleted lines with the run of inserted lines right after
+ * it, line by line, and compares each pair word by word. Unpaired lines (more
+ * deleted than inserted, or the reverse) stay whole.
+ */
+export function pairWords<Op extends string>(
+	lines: Array<{ op: Op; text: string; count: number | null }>
+): DiffRow<Op>[] {
+	const rows: DiffRow<Op>[] = lines.map((line) => ({
+		op: line.op,
+		segments: [{ text: line.text, changed: false }],
+		count: line.count
+	}));
+	let k = 0;
+	while (k < lines.length) {
+		if (lines[k].op !== 'delete') {
+			k++;
+			continue;
+		}
+		let deletes = k;
+		while (deletes < lines.length && lines[deletes].op === 'delete') deletes++;
+		let inserts = deletes;
+		while (inserts < lines.length && lines[inserts].op === 'insert') inserts++;
+		const pairs = Math.min(deletes - k, inserts - deletes);
+		for (let p = 0; p < pairs; p++) {
+			const words = wordDiff(lines[k + p].text, lines[deletes + p].text);
+			rows[k + p].segments = words.before;
+			rows[deletes + p].segments = words.after;
+		}
+		k = inserts;
+	}
+	return rows;
+}

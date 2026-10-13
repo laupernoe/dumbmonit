@@ -129,6 +129,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Website changes read faster.** The device page opens on the timeline of
+  changes, by day, with the selected change shown beside it (text first, then
+  screenshots) and the arrow keys to walk the list; the watched pages are
+  folded below. A replaced line underlines the words that changed. The list
+  filters by kind of change and loads older changes on request
+  (`GET …/webchange/changes` takes `kind` and `before`).
 - **Website changes ignore the site's menus, header and footer.** They are the
   same on every page, so one new menu entry used to mark every page of a
   watched site as changed. The navigation, the site header and footer and the
