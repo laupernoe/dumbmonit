@@ -3481,6 +3481,8 @@
 	"misc_nav_docs": "Docs",
 	"misc_nav_docs_sr": "Documentação, abre num novo separador",
 	"misc_nav_docs_title": "Documentação (abre num novo separador)",
+	"misc_nav_github": "GitHub, abre num novo separador",
+	"misc_nav_github_title": "Código-fonte no GitHub (novo separador)",
 	"misc_nav_home": "DumbMonit, visão geral",
 	"misc_nav_main": "Principal",
 	"misc_nav_overview": "Visão geral",
