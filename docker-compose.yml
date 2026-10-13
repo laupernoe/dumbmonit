@@ -1,3 +1,5 @@
+name: dumbmonit
+
 services:
   dumbmonit:
     image: ghcr.io/laupernoe/dumbmonit:latest
