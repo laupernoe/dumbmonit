@@ -73,6 +73,33 @@ horas. El primer control solo registra la referencia. Cambiar la dirección o
 | Ignorar cadenas de consulta | activado | Los parámetros de URL no cuentan cuando se comparan direcciones. |
 | Permitir destinos loopback y link-local | desactivado | Para un sitio servido por el host de DumbMonit mismo. |
 
+## Ritmo con cientos de sitios {#pacing-hundreds-of-sites}
+
+Los controles nunca salen de golpe, para que un cortafuegos o una CDN delante de
+los sitios no confunda DumbMonit con un ataque:
+
+- **Repartidos en el intervalo**: cada sitio arranca en su propio desfase fijo
+  dentro de su intervalo de sondeo, así que los sitios añadidos juntos (una
+  importación CSV) no disparan en el mismo segundo.
+- **Límite global**: como máximo `DUMBMONIT_WEBSITE_MAX_CONCURRENT` controles de
+  sitios en curso a la vez (10 por defecto), además de
+  `DUMBMONIT_MAX_CONCURRENT_PROBES`.
+- **Por dominio**: como máximo `DUMBMONIT_WEBSITE_MAX_PER_HOST` controles en
+  curso hacia un mismo dominio (1 por defecto), y al menos
+  `DUMBMONIT_WEBSITE_HOST_SPACING_SECS` segundos entre dos de ellos (2 por
+  defecto, o el valor **Esperar antes de la siguiente petición a este dominio**
+  del sitio). El dominio es el nombre registrable: `www.example.com`,
+  `shop.example.com` y `example.com` comparten uno, `example.co.uk` es uno;
+  los subdominios de clientes de las plataformas de alojamiento
+  (`*.myshopify.com`, `*.wordpress.com`, `*.github.io`, `*.netlify.app`…) cuentan
+  cada uno como el suyo.
+
+Un sitio cuyo control anterior sigue esperando su turno se salta una ronda en
+lugar de ponerse dos veces en cola. Muchos sitios de un mismo dominio con un
+intervalo corto se controlan, por tanto, menos a menudo de lo pedido: sube el
+intervalo, o los límites por dominio, si la lista de dispositivos los muestra
+con retraso. Consulta [Configuración](../reference/configuration.md#server).
+
 ## Detección de plataforma
 
 La plataforma viene de, en orden: la etiqueta `<meta name="generator">`, encabezados
