@@ -7,6 +7,7 @@
    * relights, on `resolved` the tower bell rings with sound waves and
    * confetti. Reduced motion freezes everything.
    */
+  import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
   import SceneWeather from './SceneWeatherS.svelte';
   import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
@@ -134,7 +135,8 @@
         {/key}
       {/if}
     </g>
-    <SceneWeather {mood} />
+    <SwissExtras {mood} {pulse} clock={{ x: 1436, y: 440, r: 26, ground: 482 }} board={{ x: 1262, y: 432, w: 126, ground: 482 }} area={{ x: 640, y: 90, w: 1060, h: 390 }} />
+<SceneWeather {mood} />
   </svg>
 </div>
 

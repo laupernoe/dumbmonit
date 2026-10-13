@@ -8,6 +8,7 @@
    * sparkles. Reduced motion freezes everything.
    */
   import SceneBursts from './SceneBursts.svelte';
+  import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
   import SceneWeather from './SceneWeatherS.svelte';
   import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
@@ -118,7 +119,8 @@
     <!-- mascottes : sur un toit et dans la rue -->
     <use href="#dm-mascot" transform="translate(1448 462) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1000 540) scale(.1)" />
-    <SceneWeather {mood} />
+    <SwissExtras {mood} {pulse} clock={{ x: 1040, y: 478, r: 24, ground: 540 }} board={{ x: 778, y: 486, w: 114, ground: 540 }} area={{ x: 640, y: 90, w: 1060, h: 440 }} />
+<SceneWeather {mood} />
   </svg>
 </div>
 

@@ -21,6 +21,7 @@
 	 * pause everything; reduced motion freezes the scene in a still pose.
 	 */
 	import { tick, untrack } from 'svelte';
+	import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
 	import { reducedMotion } from '#lib/ui/index.js';
 	import WallPigeon from '#lib/components/wall/paris/WallPigeon.svelte';
 	import {
@@ -479,6 +480,10 @@
 					/>
 				</div>
 			</div>
+
+			<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+				<SwissExtras {mood} {pulse} {problems} {paused} unit={2} clock={{ x: 330, y: 780, r: 60, ground: 962 }} board={{ x: 1600, y: 820, w: 260, ground: 962 }} area={{ x: 0, y: 60, w: 1920, h: 860 }} />
+			</svg>
 
 			{#if raining}
 				<div class="rain">

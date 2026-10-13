@@ -23,6 +23,7 @@
 	 * picture.
 	 */
 	import { tick, untrack } from 'svelte';
+	import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
 	import { reducedMotion } from '#lib/ui/index.js';
 	import WallPigeon from '#lib/components/wall/paris/WallPigeon.svelte';
 	import { STAGE_W, STAGE_H, STARS, RAIN } from '#lib/components/wall/paris/geometry.js';
@@ -423,6 +424,10 @@
 					blinkOffset={0.7}
 				/>
 			</div>
+
+			<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+				<SwissExtras {mood} {pulse} {problems} {paused} unit={2} clock={{ x: 1330, y: 840, r: 55, ground: 931 }} board={{ x: 140, y: 555, w: 300, ground: 657 }} area={{ x: 0, y: 60, w: 1920, h: 860 }} marmite={{ x: 1010, y: 570, s: 1.5 }} />
+			</svg>
 
 			{#if raining}
 				<div class="rain">

@@ -14,6 +14,7 @@
 	 * height, on `resolved` it flares higher under a rainbow. Everything stops
 	 * under `prefers-reduced-motion`.
 	 */
+	import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
 	import SceneWeather from './SceneWeatherS.svelte';
 	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
@@ -158,7 +159,8 @@
 			<g class="win"><rect x="1652" y="506" width="14" height="18" /><rect x="1680" y="506" width="14" height="18" /><rect x="1708" y="506" width="14" height="18" /></g>
 			<use href="#dm-mascot" transform="translate(1500 510) scale(.1)" /><use href="#dm-mascot" transform="translate(1544 510) scale(.1)" />
 		</g>
-		<SceneWeather {mood} />
+		<SwissExtras {mood} {pulse} clock={{ x: 770, y: 424, r: 26, ground: 474 }} board={{ x: 880, y: 424, w: 150, ground: 474 }} area={{ x: 640, y: 90, w: 1060, h: 380 }} marmite={{ x: 1420, y: 428, s: 0.8 }} />
+<SceneWeather {mood} />
 	</svg>
 </div>
 

@@ -16,6 +16,7 @@
 	 * `resolved` fireworks burst over the keep. Reduced motion freezes all.
 	 */
 	import SceneBursts from './SceneBursts.svelte';
+	import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
 	import SceneWeather from './SceneWeatherS.svelte';
 	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
@@ -108,6 +109,7 @@
   {#key pl.key}<SceneBursts bursts={FIREWORKS} />{/key}
  {/if}
 </g>
+<SwissExtras {mood} {pulse} clock={{ x: 1030, y: 432, r: 24, ground: 477 }} board={{ x: 1196, y: 424, w: 140 }} area={{ x: 640, y: 90, w: 1060, h: 380 }} />
 <SceneWeather {mood} /></svg>
 </div>
 

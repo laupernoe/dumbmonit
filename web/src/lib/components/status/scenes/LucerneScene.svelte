@@ -13,6 +13,7 @@
 	 * by one along the bridge, on `resolved` flower petals rain from the
 	 * flower boxes. Reduced motion freezes everything.
 	 */
+	import SwissExtras from '#lib/components/swiss/SwissExtras.svelte';
 	import SceneWeather from './SceneWeatherS.svelte';
 	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
@@ -100,7 +101,8 @@
 				{/key}
 			{/if}
 		</g>
-		<SceneWeather {mood} />
+		<SwissExtras {mood} {pulse} clock={{ x: 1230, y: 412, r: 22 }} board={{ x: 1330, y: 520, w: 150, ground: 563 }} area={{ x: 640, y: 90, w: 1060, h: 350 }} />
+<SceneWeather {mood} />
 	</svg>
 </div>
 
