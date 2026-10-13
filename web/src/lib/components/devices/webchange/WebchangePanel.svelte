@@ -28,6 +28,7 @@
 	import PagesTable from './PagesTable.svelte';
 	import ChangeTimeline from './ChangeTimeline.svelte';
 	import ChangePane from './ChangePane.svelte';
+	import { groupSameEdits } from './format';
 
 	interface Props {
 		target: Target;
@@ -53,6 +54,13 @@
 	const selectedId = $derived(
 		changes.some((change) => change.id === pickedId) ? pickedId : (changes[0]?.id ?? null)
 	);
+	/** The other pages the selected change's edit was also made on. */
+	const sameEdit = $derived.by(() => {
+		const group = groupSameEdits(changes).find((edit) =>
+			[edit.lead, ...edit.others].some((change) => change.id === selectedId)
+		);
+		return group ? [group.lead, ...group.others].filter((change) => change.id !== selectedId) : [];
+	});
 
 	let checking = $state(false);
 	let checkError = $state<unknown>(null);
@@ -219,7 +227,7 @@
 				</div>
 				{#if split && selectedId !== null}
 					<div class="min-w-0 px-5 py-4">
-						<ChangePane targetId={target.id} changeId={selectedId} />
+						<ChangePane targetId={target.id} changeId={selectedId} {sameEdit} onselect={(change) => (pickedId = change.id)} />
 					</div>
 				{/if}
 			</div>

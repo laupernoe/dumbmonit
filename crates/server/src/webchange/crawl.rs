@@ -23,6 +23,7 @@ use super::html;
 use super::options::{Mode, Options};
 use super::robots::Robots;
 use super::sitemap::{self, Sitemap};
+use super::zones::Zones;
 
 pub const USER_AGENT: &str = concat!("DumbMonit/", env!("CARGO_PKG_VERSION"));
 
@@ -92,7 +93,8 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
             first.status
         )));
     }
-    let (start_result, start_links) = read_page(&start, first, options.mode == Mode::Page);
+    let (start_result, start_links) =
+        read_page(&start, first, options.mode == Mode::Page, &options.zones);
     let start_ok = start_result.error.is_none();
     let mut pages = vec![start_result];
     if options.mode == Mode::Page {
@@ -124,7 +126,7 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
             async move {
                 match client.get(&url, MAX_PAGE_BYTES, false).await {
                     Ok(response) if response.skipped => None,
-                    Ok(response) => Some(read_page(&url, response, false)),
+                    Ok(response) => Some(read_page(&url, response, false, &options.zones)),
                     Err(error) => Some((failed(&url, error), Vec::new())),
                 }
             }
@@ -184,7 +186,12 @@ fn failed(url: &Url, error: FetchError) -> PageResult {
 ///
 /// `any_text` : une page seule peut être un fichier texte ou JSON, qu'on
 /// compare ligne à ligne ; dans un parcours, on ne garde que le HTML.
-fn read_page(url: &Url, response: Response, any_text: bool) -> (PageResult, Vec<Url>) {
+fn read_page(
+    url: &Url,
+    response: Response,
+    any_text: bool,
+    zones: &Zones,
+) -> (PageResult, Vec<Url>) {
     let mut result = PageResult {
         url: url.clone(),
         status: Some(response.status),
@@ -198,7 +205,7 @@ fn read_page(url: &Url, response: Response, any_text: bool) -> (PageResult, Vec<
         return (result, Vec::new());
     }
     if is_html(&response.content_type) {
-        let page = html::parse(&response.body);
+        let page = html::parse_with(&response.body, zones);
         let base = page
             .base
             .as_deref()
@@ -445,6 +452,7 @@ mod tests {
             &url,
             response(200, "text/html", "<title>T</title><p>Un</p><a href='autre'>x</a>"),
             false,
+            &Zones::everything(),
         );
         assert_eq!(result.title.as_deref(), Some("T"));
         assert_eq!(result.lines.as_deref(), Some(&["Un".to_string(), "x".to_string()][..]));
@@ -454,14 +462,22 @@ mod tests {
     #[test]
     fn erreurs_http_et_contenus_non_textuels() {
         let url = Url::parse("https://ex.fr/docs/page").unwrap();
-        let (gone, _) = read_page(&url, response(404, "text/html", "absent"), false);
+        let (gone, _) =
+            read_page(&url, response(404, "text/html", "absent"), false, &Zones::everything());
         assert!(gone.gone);
         assert_eq!(gone.error.as_deref(), Some("HTTP 404"));
-        let (forbidden, _) = read_page(&url, response(403, "text/html", ""), false);
+        let (forbidden, _) =
+            read_page(&url, response(403, "text/html", ""), false, &Zones::everything());
         assert!(!forbidden.gone);
-        let (json, _) = read_page(&url, response(200, "application/json", "{\n \"a\": 1\n}"), true);
+        let (json, _) = read_page(
+            &url,
+            response(200, "application/json", "{\n \"a\": 1\n}"),
+            true,
+            &Zones::everything(),
+        );
         assert_eq!(json.lines.map(|l| l.len()), Some(3));
-        let (pdf, _) = read_page(&url, response(200, "application/pdf", "%PDF"), true);
+        let (pdf, _) =
+            read_page(&url, response(200, "application/pdf", "%PDF"), true, &Zones::everything());
         assert!(pdf.error.unwrap().contains("application/pdf"));
     }
 }

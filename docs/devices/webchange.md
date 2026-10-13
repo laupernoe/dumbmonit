@@ -12,6 +12,26 @@ space is collapsed and each block (paragraph, heading, list item, table row)
 becomes one line. A new build of the same page, a reordered attribute or a
 fresh cache-busting asset name changes nothing; a reworded sentence does.
 
+### What part of the page
+
+The site's **navigation, header, footer and sidebars** are left out: they are
+the same on every page, so a new menu entry would otherwise mark every page as
+changed in one check. They follow the roles HTML gives them: every `nav`, a
+`header` or `footer` that is not inside an `article`, `aside`, `main`, `nav` or
+`section` (the header of an article is kept), an `aside` outside `article` and
+`main`, and any element with the role `navigation`, `banner`, `contentinfo` or
+`search`. Their links are still followed to find the pages of a site. **Compare
+menus, header and footer** turns this off.
+
+**Watched area** narrows the comparison to some elements, for example `main` or
+`#content`; a page where none of them is found is read whole rather than as
+empty. **Excluded areas** leaves more elements out: a cookie banner, a "latest
+posts" box, an ad slot. Both take simple selectors, separated by commas: a tag
+(`main`), an id (`#content`), classes (`.cookie-banner`), attributes
+(`[role=alert]`, `[data-ad]`), or several of them together
+(`div.notice[role=alert]`). Descendant (`main p`) and other combinators are not
+supported.
+
 ## Page or site
 
 **Page** (the default) reads the address of the device and nothing else. It
@@ -58,8 +78,14 @@ nothing is reported. From then on, for each page:
 | Site scope: a complete crawl no longer reaches a known page | A **removed page** event too ("No longer linked"). A crawl stopped by **Max pages** or by its time limit never concludes that a page has gone. |
 | Any other error on a page (timeout, 403, 500 on a sub-page) | The error is shown on the page; no event. |
 
-Changing the address, the scope, the path prefix or **Ignore lines** makes the
-next check a new reference instead of reporting every page as changed.
+Changing the address, the scope, the path prefix, **Max pages**, the areas or
+**Ignore lines** makes the next check a new reference instead of reporting every
+page as changed (or, for a higher **Max pages**, every page it adds as new). An
+update of DumbMonit that reads pages differently does the same once.
+
+When one check finds the **same change on several pages** (the same lines
+removed and added, such as a banner), the device page shows it once, with the
+pages it was made on.
 
 ### Ignore lines
 
@@ -134,7 +160,7 @@ sent.
 
 The text of each snapshot is kept in the database (1 MB at most per page);
 screenshots are files under `/data/webchange/<device id>/`. Per device, the
-last hundred changes are kept; a snapshot is kept while it is the latest of a
+last 500 changes are kept; a snapshot is kept while it is the latest of a
 page or a kept change refers to it, and everything else, files included, is
 removed after each check. Deleting the device removes all of it.
 
@@ -175,6 +201,9 @@ cannot go through a relay agent.
 | Max pages (`max_pages`) | `25` | Site scope: pages read at most per check, 1 to 200. |
 | Path prefix (`path_prefix`) | folder of the address | Site scope: only pages whose path starts with this (`/docs/`). |
 | Ignore lines (`ignore`) | — | Regular expressions; matching text lines are not compared. |
+| Watched area (`content_selector`) | — | Simple selectors; only the text inside them is compared. |
+| Excluded areas (`exclude_selector`) | — | Simple selectors; their text is not compared. |
+| Compare menus, header and footer (`keep_page_chrome`) | `false` | Compare the site's navigation, header, footer and sidebars too. |
 | Screenshots (`screenshots`) | `true` | Keep a screenshot of each new version, when a browser is configured. |
 | Check every (`check_interval_minutes`) | `60` | Minutes between two checks, 5 to 10080. |
 | Accept an unverifiable certificate (`insecure_tls`) | `false` | For a site of your own behind a self-signed certificate. |

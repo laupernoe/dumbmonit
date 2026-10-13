@@ -19,7 +19,7 @@ use dumbmonit_proto::TargetId;
 use sqlx::{FromRow, SqlitePool};
 
 /// Changements gardés par cible.
-pub const KEEP_CHANGES: i64 = 100;
+pub const KEEP_CHANGES: i64 = 500;
 /// Texte gardé au plus par instantané, en octets.
 const MAX_CONTENT_BYTES: usize = 1024 * 1024;
 /// Un verrou plus vieux que ceci est celui d'une vérification interrompue.
@@ -367,6 +367,8 @@ pub struct NewChange<'a> {
     pub removed: i64,
     pub before: Option<i64>,
     pub after: Option<i64>,
+    /// Empreinte des lignes retirées et ajoutées (voir la migration 0051).
+    pub signature: Option<&'a str>,
 }
 
 pub async fn insert_change(
@@ -376,8 +378,8 @@ pub async fn insert_change(
 ) -> Result<()> {
     sqlx::query(
         "INSERT INTO webchange_changes
-            (target_id, url, kind, added, removed, before_snapshot, after_snapshot)
-         VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (target_id, url, kind, added, removed, before_snapshot, after_snapshot, signature)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(target)
     .bind(change.url)
@@ -386,6 +388,7 @@ pub async fn insert_change(
     .bind(change.removed)
     .bind(change.before)
     .bind(change.after)
+    .bind(change.signature)
     .execute(pool)
     .await
     .context("enregistrement d'un changement")?;
@@ -402,6 +405,7 @@ pub struct ChangeRow {
     pub removed: i64,
     pub before_snapshot: Option<i64>,
     pub after_snapshot: Option<i64>,
+    pub signature: Option<String>,
 }
 
 /// Colonnes d'un changement. Une macro plutôt qu'une constante : `sqlx` 0.9
@@ -409,7 +413,7 @@ pub struct ChangeRow {
 /// littéraux.
 macro_rules! change_columns {
     () => {
-        "id, url, kind, detected_at, added, removed, before_snapshot, after_snapshot"
+        "id, url, kind, detected_at, added, removed, before_snapshot, after_snapshot, signature"
     };
 }
 

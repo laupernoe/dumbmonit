@@ -14,6 +14,28 @@ abandonnés, les espaces sont réduits et chaque bloc (paragraphe, titre,
 compilation de la même page, un attribut réordonné ou un nouveau nom de
 ressource anti-cache ne change rien ; une phrase reformulée si.
 
+### Quelle partie de la page {#what-part-of-the-page}
+
+La **navigation, l'en-tête, le pied de page et les encadrés latéraux** du site
+sont écartés : ils sont les mêmes sur toutes les pages, et une nouvelle entrée
+de menu ferait sinon signaler chaque page comme changée en une seule
+vérification. Ils suivent les rôles que leur donne le HTML : chaque `nav`, un
+`header` ou un `footer` qui n'est pas dans un `article`, `aside`, `main`, `nav`
+ou `section` (l'en-tête d'un article est gardé), un `aside` hors d'un `article`
+et d'un `main`, et tout élément de rôle `navigation`, `banner`, `contentinfo` ou
+`search`. Leurs liens restent suivis pour trouver les pages d'un site.
+**Comparer menus, en-tête et pied de page** désactive cela.
+
+**Zone surveillée** restreint la comparaison à certains éléments, par exemple
+`main` ou `#content` ; une page où aucun n'est trouvé est lue en entier plutôt
+que comme vide. **Zones exclues** écarte d'autres éléments : un bandeau de
+cookies, un encadré « derniers articles », un emplacement publicitaire. Les
+deux prennent des sélecteurs simples, séparés par des virgules : une balise
+(`main`), un id (`#content`), des classes (`.cookie-banner`), des attributs
+(`[role=alert]`, `[data-ad]`), ou plusieurs ensemble
+(`div.notice[role=alert]`). Les descendants (`main p`) et autres combinateurs
+ne sont pas pris en charge.
+
 ## Page ou site
 
 **Page** (le défaut) lit l'adresse de l'appareil et rien d'autre. Ça peut
@@ -64,9 +86,15 @@ page :
 | Portée site : un crawl complet n'atteint plus une page connue | Un événement **page supprimée** aussi (« Plus liée »). Un crawl arrêté par **Pages maximum** ou par sa limite de temps ne conclut jamais qu'une page a disparu. |
 | Toute autre erreur sur une page (délai dépassé, 403, 500 sur une sous-page) | L'erreur est montrée sur la page ; aucun événement. |
 
-Changer l'adresse, la portée, le préfixe de chemin ou
-**Ignorer les lignes** fait de la prochaine vérification une nouvelle
-référence plutôt que de rapporter chaque page comme changée.
+Changer l'adresse, la portée, le préfixe de chemin, **Pages maximum**, les
+zones ou **Ignorer les lignes** fait de la prochaine vérification une nouvelle
+référence plutôt que de rapporter chaque page comme changée (ou, pour un
+**Pages maximum** plus élevé, chaque page ajoutée comme nouvelle). Une mise à
+jour de DumbMonit qui lit les pages autrement fait de même, une fois.
+
+Quand une vérification trouve la **même modification sur plusieurs pages**
+(les mêmes lignes retirées et ajoutées, comme un bandeau), la page de
+l'appareil la montre une seule fois, avec les pages concernées.
 
 ### Ignorer les lignes
 
@@ -148,7 +176,7 @@ qui est le HTML envoyé par le serveur.
 
 Le texte de chaque instantané est gardé dans la base de données (1 Mo au
 plus par page) ; les captures d'écran sont des fichiers sous
-`/data/webchange/<id de l'appareil>/`. Par appareil, les cent derniers
+`/data/webchange/<id de l'appareil>/`. Par appareil, les 500 derniers
 changements sont gardés ; un instantané est gardé tant qu'il est le plus
 récent d'une page ou qu'un changement gardé s'y réfère, et tout le reste,
 fichiers inclus, est supprimé après chaque vérification. Supprimer
@@ -193,6 +221,9 @@ relais.
 | Pages maximum (`max_pages`) | `25` | Portée site : pages lues au plus par vérification, de 1 à 200. |
 | Préfixe de chemin (`path_prefix`) | dossier de l'adresse | Portée site : seulement les pages dont le chemin commence par ceci (`/docs/`). |
 | Ignorer les lignes (`ignore`) | — | Expressions régulières ; les lignes de texte correspondantes ne sont pas comparées. |
+| Zone surveillée (`content_selector`) | — | Sélecteurs simples ; seul le texte qu'ils contiennent est comparé. |
+| Zones exclues (`exclude_selector`) | — | Sélecteurs simples ; leur texte n'est pas comparé. |
+| Comparer menus, en-tête et pied de page (`keep_page_chrome`) | `false` | Comparer aussi la navigation, l'en-tête, le pied de page et les encadrés du site. |
 | Captures d'écran (`screenshots`) | `true` | Garder une capture d'écran de chaque nouvelle version, quand un navigateur est configuré. |
 | Vérifier toutes les (`check_interval_minutes`) | `60` | Minutes entre deux vérifications, de 5 à 10080. |
 | Accepter un certificat non vérifiable (`insecure_tls`) | `false` | Pour un site propre derrière un certificat autosigné. |

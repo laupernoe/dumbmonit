@@ -5,21 +5,24 @@
 	 * then the screenshots. The full page (`/targets/{id}/changes/{id}`) stays
 	 * one link away, for a wider look or a link to share.
 	 */
-	import { getWebchangeChange, type WebchangeChangeDetail } from '#lib/api/index.js';
+	import { getWebchangeChange, type WebchangeChange, type WebchangeChangeDetail } from '#lib/api/index.js';
 	import { formatDateTime } from '#lib/format.js';
 	import { Button, ErrorNotice, Skeleton } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { ExternalLink, Maximize2 } from 'lucide-svelte';
 	import ChangeScreenshots from './ChangeScreenshots.svelte';
 	import DiffView from './DiffView.svelte';
-	import { pagePath } from './format';
+	import { pagePath, shortenPath } from './format';
 
 	interface Props {
 		targetId: number;
 		changeId: number;
+		/** Changes making the same edit on other pages, found by the same check. */
+		sameEdit?: WebchangeChange[];
+		onselect?: (change: WebchangeChange) => void;
 	}
 
-	let { targetId, changeId }: Props = $props();
+	let { targetId, changeId, sameEdit = [], onselect }: Props = $props();
 
 	let detail = $state<WebchangeChangeDetail | null>(null);
 	let error = $state<unknown>(null);
@@ -79,6 +82,32 @@
 				{m.devicesb_webchange_pane_open()}
 			</Button>
 		</header>
+
+		{#if sameEdit.length > 0}
+			<section class="rounded-lg border border-line bg-canvas-deep px-3 py-2">
+				<h4 class="text-[0.8125rem] font-semibold text-ink">
+					{(sameEdit.length === 1 ? m.devicesb_webchange_pane_also_one : m.devicesb_webchange_pane_also_other)({ count: sameEdit.length })}
+				</h4>
+				<ul class="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+					{#each sameEdit as change (change.id)}
+						<li>
+							<a
+								href={`/targets/${targetId}/changes/${change.id}`}
+								class="text-[0.8125rem] text-ink-2 underline decoration-line underline-offset-2 hover:text-ink"
+								title={change.url}
+								onclick={(event) => {
+									if (!onselect || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+									event.preventDefault();
+									onselect(change);
+								}}
+							>
+								{shortenPath(pagePath(change.url), 40)}
+							</a>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 
 		<section class="flex flex-col gap-2">
 			<h4 class="text-sm font-semibold text-ink">{m.app_change_text_changes()}</h4>
