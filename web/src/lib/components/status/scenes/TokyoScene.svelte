@@ -1,4 +1,37 @@
-<div class="scene scene-tokyo" aria-hidden="true">
+<script lang="ts">
+  /**
+   * Tokyo — Tokyo Tower, Mount Fuji, the skyline, cherry trees, a torii and
+   * a yakatabune on the river. `mood` is the weather (ok = clear, warn =
+   * cloud, critical = storm). `pulse` plays one gesture each time `at`
+   * changes: down = the tower and the windows black out, up = they relight
+   * in warm flickers, resolved = cherry blossom petals drift down over the
+   * river. Reduced motion: still picture.
+   */
+  import SceneWeather from './SceneWeather.svelte';
+  import { createPulsePlayer, type ScenePulse } from './pulse.svelte.js';
+
+  interface Props {
+    mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
+    pulse?: ScenePulse;
+  }
+  let { mood = 'ok', pulse = null }: Props = $props();
+  const pl = createPulsePlayer(() => pulse);
+  // petals: [x, y, delay ms, size]
+  const PETALS = Array.from({ length: 16 }, (_, i) => [
+    1000 + ((i * 197) % 700),
+    150 + ((i * 53) % 120),
+    (i * 331) % 2600,
+    3 + (i % 3)
+  ]);
+</script>
+
+<div
+  class="scene scene-tokyo"
+  class:p-down={pl.kind === 'down'}
+  class:p-up={pl.kind === 'up'}
+  class:p-res={pl.kind === 'resolved'}
+  aria-hidden="true"
+>
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <pattern id="tokyo-win" width="12" height="14" patternUnits="userSpaceOnUse">
@@ -19,6 +52,8 @@
     <g fill="var(--star)"><circle cx="1040" cy="116" r="2" /><circle cx="1260" cy="104" r="2.2" /><circle cx="1560" cy="120" r="2" /><circle cx="1680" cy="190" r="2.2" /><circle cx="1180" cy="170" r="1.8" /><circle cx="1620" cy="250" r="1.8" /></g>
     <g fill="var(--cloud)" opacity=".7"><ellipse cx="1500" cy="150" rx="90" ry="9" /><ellipse cx="1560" cy="172" rx="60" ry="7" /><ellipse cx="1220" cy="330" rx="80" ry="6" /></g>
 
+    <SceneWeather part="sky" {mood} />
+
     <!-- mont Fuji enneigé -->
     <path d="M1000 482C1160 430 1290 316 1380 246L1396 232H1446L1462 246C1550 316 1680 430 1820 482z" fill="url(#tokyo-fuji)" />
     <path d="M1380 246L1396 232H1446L1462 246C1480 262 1494 280 1508 298L1486 308L1470 292L1446 322L1426 294L1406 326L1386 296L1364 316L1350 298C1362 280 1370 262 1380 246z" fill="var(--tokyo-snow)" />
@@ -29,7 +64,7 @@
     </g>
 
     <!-- Tokyo Tower -->
-    <g transform="translate(1130 482) scale(.93)">
+    <g id="tokyo-tower" transform="translate(1130 482) scale(.93)">
       <path d="M-66 0H-46C-46-26-22-42 0-42C22-42 46-26 46 0H66C54-50 42-95 34-125H24L13-245H10L5-300L2.5-380H-2.5L-5-300L-10-245H-13L-24-125H-34C-42-95-54-50-66 0Z" fill="var(--tokyo-red)" />
       <g clip-path="url(#tokyo-tt)">
         <g fill="var(--tokyo-white)"><rect x="-80" y="-76" width="160" height="20" /><rect x="-80" y="-116" width="160" height="16" /><rect x="-30" y="-190" width="60" height="22" /><rect x="-30" y="-232" width="60" height="16" /><rect x="-30" y="-312" width="60" height="22" /><rect x="-30" y="-352" width="60" height="14" /></g>
@@ -39,6 +74,9 @@
       <g fill="var(--tokyo-glass)"><rect x="-34" y="-144" width="68" height="9" rx="2" /><rect x="-17" y="-264" width="34" height="9" rx="2" /></g>
       <path d="M0-380V-396" stroke="var(--tokyo-red)" stroke-width="3" /><circle cy="-398" r="4" fill="var(--tokyo-glass)" />
     </g>
+
+    <use class="tk-dim" href="#tokyo-tower" />
+    <use class="tk-lit" href="#tokyo-tower" />
 
     <!-- immeubles : gauche, puis droite -->
     <g fill="var(--tokyo-b2)">
@@ -50,7 +88,7 @@
       <rect x="1230" y="302" width="60" height="180" /><rect x="1352" y="332" width="70" height="150" /><rect x="1428" y="392" width="52" height="90" /><rect x="1552" y="382" width="48" height="100" />
     </g>
     <g fill="var(--tokyo-b3)"><rect x="1612" y="412" width="56" height="70" /><rect x="1676" y="392" width="50" height="90" /></g>
-    <g fill="url(#tokyo-win)">
+    <g class="tk-win" fill="url(#tokyo-win)">
       <rect x="610" y="372" width="56" height="110" /><rect x="672" y="332" width="48" height="150" /><rect x="726" y="386" width="64" height="96" /><rect x="796" y="344" width="50" height="138" /><rect x="850" y="400" width="44" height="82" />
       <rect x="1006" y="384" width="40" height="98" /><rect x="1230" y="302" width="60" height="180" /><rect x="1296" y="362" width="50" height="120" /><rect x="1352" y="332" width="70" height="150" /><rect x="1428" y="392" width="52" height="90" />
       <rect x="1486" y="402" width="60" height="80" /><rect x="1552" y="382" width="48" height="100" /><rect x="1612" y="412" width="56" height="70" /><rect x="1676" y="392" width="50" height="90" />
@@ -85,10 +123,46 @@
     <!-- mascottes : sur un toit et au pied du torii -->
     <use href="#dm-mascot" transform="translate(744 356) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1276 452) scale(.1)" />
+    {#key pl.key}
+      {#if pl.kind === 'resolved'}
+        <g fill="var(--tokyo-sakura)">
+          {#each PETALS as [x, y, d, r]}
+            <g transform="translate({x} {y})"><ellipse class="petal" rx={r} ry={r * 0.6} style="animation-delay:{d}ms" /></g>
+          {/each}
+        </g>
+      {/if}
+    {/key}
+    <SceneWeather part="fx" {mood} boltX={1400} />
   </svg>
 </div>
 
 <style>
+  .tk-dim,
+  .tk-lit,
+  .petal {
+    opacity: 0;
+  }
+  .tk-dim {
+    filter: brightness(0.3) saturate(0.6);
+  }
+  .tk-lit {
+    filter: brightness(1.45) saturate(1.3) drop-shadow(0 0 8px #ffb347);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .p-down .tk-dim { animation: tk-dim 5s ease-in-out both; }
+    .p-down .tk-win { animation: tk-off 5s ease-out both; }
+    .p-up .tk-lit { animation: tk-on 2.6s ease-out both; }
+    .p-up .tk-win { animation: tk-on-win 2.6s ease-out both; }
+    .petal { animation: petal 4.2s ease-in-out both; }
+  }
+  @keyframes tk-dim { 0% { opacity: 0; } 8% { opacity: 0.9; } 14% { opacity: 0.3; } 22%, 80% { opacity: 0.95; } 100% { opacity: 0; } }
+  @keyframes tk-off { 0% { opacity: 1; } 10% { opacity: 0.2; } 16% { opacity: 0.8; } 24%, 82% { opacity: 0.04; } 100% { opacity: 1; } }
+  @keyframes tk-on { 0% { opacity: 0; } 14% { opacity: 0.9; } 24% { opacity: 0.1; } 38% { opacity: 0.8; } 52% { opacity: 0.2; } 70% { opacity: 0.55; } 100% { opacity: 0; } }
+  @keyframes tk-on-win { 0% { opacity: 0.04; } 16% { opacity: 1; } 26% { opacity: 0.2; } 40%, 100% { opacity: 1; } }
+  @keyframes petal {
+    0% { opacity: 0; transform: translate(0, 0) rotate(0); } 12% { opacity: 0.95; } 50% { transform: translate(-60px, 150px) rotate(140deg); }
+    88% { opacity: 0.9; } 100% { opacity: 0; transform: translate(40px, 300px) rotate(300deg); }
+  }
   .scene {
     position: absolute;
     inset: 0;
