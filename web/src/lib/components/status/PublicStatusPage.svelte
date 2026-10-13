@@ -26,6 +26,8 @@
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
 	import ServiceRow from '#lib/components/status/ServiceRow.svelte';
 	import StatusMascot from '#lib/components/status/StatusMascot.svelte';
+	import { useSceneLive } from '#lib/scene/live.svelte.js';
+	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
 	import SceneBackdrop from '#lib/components/status/scenes/SceneBackdrop.svelte';
 	import { knownScenes } from '#lib/components/status/scenes/registry.js';
 	import { accentClass, homepageHost, isClosed, overallBanner } from '#lib/components/status/words.js';
@@ -42,6 +44,7 @@
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let lastChecked = $state<Date | null>(null);
+	const live = useSceneLive();
 
 	async function load(signal?: AbortSignal) {
 		try {
@@ -116,6 +119,31 @@
 	// Simple mode: no scene, no pigeon, no animation, only a light/dark toggle.
 	const simple = $derived(status?.page.simple ?? false);
 	const withScene = $derived(!simple && sceneIds.length > 0);
+
+	// Scene mood and gestures from the published state: a service down or a major
+	// incident is critical, anything degraded or any open incident is a warning.
+	const sceneSnapshot = $derived.by((): { tone: SceneTone; snapshot: MoodSnapshot } | null => {
+		if (!status) return null;
+		const items = status.groups.flatMap((g) => g.items);
+		const down = new Set(items.filter((i) => i.state === 'down').map((i) => `item:${i.key}`));
+		const open = status.incidents.filter((i) => !isClosed(i.status));
+		const issues = new Set([
+			...down,
+			...items.filter((i) => i.state === 'degraded').map((i) => `item:${i.key}`),
+			...open.map((i) => `incident:${i.starts_at}:${i.title}`)
+		]);
+		const tone = toneFrom({
+			down: down.size,
+			critical: open.filter((i) => i.severity === 'major').length,
+			warnings: issues.size
+		});
+		return { tone, snapshot: { down, issues } };
+	});
+	$effect(() => {
+		const current = sceneSnapshot;
+		if (current) live.feed(current.snapshot);
+	});
+	const sceneTone = $derived(live.tone ?? sceneSnapshot?.tone ?? 'ok');
 
 	// The sentence on the scene keeps its last word in the tone's colour.
 	const TONE_WORD: Record<string, string> = {
@@ -268,7 +296,7 @@
 			class="relative h-[380px] overflow-hidden sm:h-[570px]"
 			style={`--scene-tone: ${TONE_VAR[bannerTone] ?? 'var(--c-signal)'}`}
 		>
-			<SceneBackdrop scenes={sceneIds} rotation={status.page.scene_rotation} />
+			<SceneBackdrop scenes={sceneIds} rotation={status.page.scene_rotation} mood={sceneTone} pulse={live.pulse} />
 			<div class="relative z-[2] mx-auto w-full max-w-3xl px-4 pt-6 sm:px-6">
 				<header class="flex flex-wrap items-center gap-x-4 gap-y-2">
 					<div class="flex min-w-0 items-center gap-3">

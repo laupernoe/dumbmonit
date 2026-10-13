@@ -51,6 +51,8 @@
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { Button, Plate, Skeleton, ErrorNotice } from '#lib/ui/index.js';
 	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
+	import { useSceneLive } from '#lib/scene/live.svelte.js';
+	import { toWallMood } from '#lib/scene/mood.js';
 	import type { SceneMood, SceneTheme } from '#lib/components/wall/paris/daylight.js';
 	import WallProblems from '#lib/components/wall/WallProblems.svelte';
 	import WallDevices from '#lib/components/wall/WallDevices.svelte';
@@ -434,9 +436,33 @@
 	});
 
 	const sceneTheme = $derived<SceneTheme>(oledActive ? 'oled' : theme.resolved);
+	const live = useSceneLive();
 	const mood = $derived<SceneMood>(
-		condition === 'storm' ? 'storm' : condition === 'cloudy' || condition === 'overcast' ? 'clouded' : 'calm'
+		live.tone
+			? toWallMood(live.tone)
+			: condition === 'storm'
+				? 'storm'
+				: condition === 'cloudy' || condition === 'overcast'
+					? 'clouded'
+					: 'calm'
 	);
+
+	// Gestures: a device going down or coming back, an alert resolving. The first
+	// load is only a baseline; a refetch from scratch (loading) starts over.
+	$effect(() => {
+		if (loading) {
+			live.reset();
+			return;
+		}
+		const down = new Set<string>();
+		const issues = new Set<string>();
+		for (const row of sky.needsYou) {
+			if (row.kind === 'device' && row.tone === 'warning') down.add(row.key);
+			else if (row.kind === 'alert' && row.alert.effective_phase === 'firing' && row.alert.rule_uid.startsWith('host_down')) down.add(row.key);
+			if (row.tone === 'warning' || row.tone === 'advisory') issues.add(row.key);
+		}
+		live.feed({ down, issues });
+	});
 
 	/**
 	 * A new problem startles the pigeons once (and drops a few feathers).
@@ -532,6 +558,7 @@
 				theme={sceneTheme}
 				{now}
 				{mood}
+				pulse={live.pulse}
 				problems={firstLoad ? 0 : sky.attention}
 				{startle}
 				paused={hidden}
