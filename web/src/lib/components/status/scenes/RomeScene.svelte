@@ -6,8 +6,8 @@
    * jet collapses and stays off, up = it bursts back with a splash, resolved
    * = the Colosseum arches light up gold tier by tier. Reduced motion: still.
    */
-  import SceneWeather from './SceneWeather.svelte';
-  import { createPulsePlayer, type ScenePulse } from './pulse.svelte.js';
+  import SceneWeather from './SceneWeatherD.svelte';
+  import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
 
   interface Props {
     mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
