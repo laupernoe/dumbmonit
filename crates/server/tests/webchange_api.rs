@@ -254,6 +254,24 @@ async fn reference_puis_changements_pages_nouvelles_et_disparues() {
     set(&site, "/docs/c.html", 200, html("Page C", "<p>Nouveauté</p><p>Deux</p>"));
     s.check(id).await;
 
+    // La mesure nomme les pages changées, et l'heure de la vérification : une
+    // notification par vérification qui trouve quelque chose.
+    let probe = s.app.post(&format!("/api/targets/{id}/probe"), json!({}), Some(&s.cookie)).await;
+    let changed_series: Vec<String> = probe.body["series"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|s| s.as_str())
+        .filter(|s| s.starts_with("webchange_last_check_changes"))
+        .map(str::to_string)
+        .collect();
+    assert_eq!(changed_series.len(), 1, "{changed_series:?}");
+    assert!(
+        changed_series[0].contains("changes=\"/docs/, /docs/a.html, /docs/b.html and 1 more\""),
+        "{changed_series:?}"
+    );
+    assert!(changed_series[0].contains("check=\""), "{changed_series:?}");
+
     let changes = s.get(&format!("/api/targets/{id}/webchange/changes")).await;
     assert_eq!(
         kinds(&changes),

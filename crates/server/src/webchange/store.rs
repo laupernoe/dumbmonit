@@ -54,12 +54,14 @@ pub struct State {
     pub last_check_changes: i64,
     pub last_error: Option<String>,
     pub last_error_kind: Option<String>,
+    /// Pages changées par la dernière vérification, résumées.
+    pub last_check_summary: Option<String>,
 }
 
 pub async fn state(pool: &SqlitePool, target: TargetId) -> Result<Option<State>> {
     sqlx::query_as(
         "SELECT fingerprint, running_since, last_check_at, last_check_changes, last_error,
-                last_error_kind
+                last_error_kind, last_check_summary
          FROM webchange_state WHERE target_id = ?",
     )
     .bind(target)
@@ -126,16 +128,18 @@ pub async fn finish_ok(
     target: TargetId,
     fingerprint: &str,
     changes: i64,
+    summary: Option<&str>,
     error: Option<(&str, &str)>,
 ) -> Result<()> {
     sqlx::query(
         "UPDATE webchange_state
          SET fingerprint = ?, last_check_at = datetime('now'), last_check_changes = ?,
-             last_error = ?, last_error_kind = ?
+             last_check_summary = ?, last_error = ?, last_error_kind = ?
          WHERE target_id = ?",
     )
     .bind(fingerprint)
     .bind(changes)
+    .bind(summary)
     .bind(error.map(|(_, message)| message))
     .bind(error.map(|(kind, _)| kind))
     .bind(target)
@@ -155,7 +159,7 @@ pub async fn finish_failed(
 ) -> Result<()> {
     sqlx::query(
         "UPDATE webchange_state
-         SET last_check_at = datetime('now'), last_check_changes = 0,
+         SET last_check_at = datetime('now'), last_check_changes = 0, last_check_summary = NULL,
              last_error = ?, last_error_kind = ?
          WHERE target_id = ?",
     )
