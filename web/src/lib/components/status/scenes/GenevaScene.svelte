@@ -3,14 +3,35 @@
 	 * Geneva — the Jet d'eau on the lake, Mont-Blanc and the Salève behind, the
 	 * Mont-Blanc bridge, a sailing boat, a swan, and the Bains des Pâquis jetty
 	 * whose little lighthouse takes the page's status colour (`--scene-tone`,
-	 * set by the page) with two DumbMonit pigeons on the deck. The jet climbs
-	 * and its spray falls; a boat drifts. Everything stops under
-	 * `prefers-reduced-motion`. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * set by the page) with two DumbMonit pigeons on the deck. The jet is a thin
+	 * column crowned with feathery spray, arcs of falling water and a mist cloud
+	 * on the lake. Follows the scene contract: fills its positioned parent, the
+	 * headline zone (top left) is left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (clear, clouded, storm with rain and lightning).
+	 * `pulse` plays one gesture when `at` changes: on `down` the jet switches
+	 * off and collapses into the lake, on `up` it shoots back up past its usual
+	 * height, on `resolved` it flares higher under a rainbow. Everything stops
+	 * under `prefers-reduced-motion`.
 	 */
+	import SceneWeather from './SceneWeatherS.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
+
+	interface Props {
+		mood?: SceneMood;
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulse(() => pulse, { down: 7000, up: 4500, resolved: 6500 });
 </script>
 
-<div class="scene scene-geneva" aria-hidden="true">
+<div
+	class="scene scene-geneva"
+	class:p-down={pl.active === 'down'}
+	class:p-up={pl.active === 'up'}
+	class:p-resolved={pl.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="gs-lake" x1="0" y1="0" x2="0" y2="1">
@@ -59,25 +80,59 @@
 			</g>
 			<path d="M1292 424h16l-4 120h-8z" fill="var(--jet)" opacity=".16" />
 
-			<!-- the Jet d'eau -->
-			<g class="jet">
-				<path d="M1291 404L1297 118h6L1309 404z" fill="url(#gs-jet)" />
-				<path class="flow" d="M1300 404V118" stroke="var(--cloud)" stroke-width="3" stroke-dasharray="20 16" stroke-linecap="round" opacity=".7" />
-				<g class="plume" fill="var(--jet)">
-					<ellipse cx="1300" cy="124" rx="34" ry="22" opacity=".5" />
-					<ellipse cx="1282" cy="146" rx="22" ry="16" opacity=".4" />
-					<ellipse cx="1320" cy="148" rx="24" ry="18" opacity=".4" />
-				</g>
-				<g fill="var(--jet)">
-					<circle class="drop d1" cx="1300" cy="122" r="2.2" />
-					<circle class="drop d2" cx="1300" cy="122" r="2" />
-					<circle class="drop d3" cx="1300" cy="122" r="2.4" />
-					<circle class="drop d4" cx="1300" cy="122" r="1.8" />
-					<circle class="drop d5" cx="1300" cy="122" r="2.2" />
-					<circle class="drop d6" cx="1300" cy="122" r="2" />
+			<!-- the Jet d'eau: a thin rising column, a feathered crown, arcs of falling spray, a mist cloud -->
+			<g class="jetwrap">
+				<g class="jet">
+					<path d="M1288 404L1296 118h8L1312 404z" fill="var(--jet)" opacity=".18" />
+					<path d="M1295 404L1298 122h4L1305 404z" fill="url(#gs-jet)" />
+					<path class="flow" d="M1300 404V122" stroke="var(--cloud)" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity=".7" />
+					<g stroke="var(--jet)" stroke-linecap="round" fill="none">
+						<path class="arc" d="M1300 124C1322 108 1352 170 1368 404" stroke-width="3" opacity=".6" />
+						<path class="arc a2" d="M1300 124C1278 108 1248 170 1232 404" stroke-width="3" opacity=".6" />
+						<path class="arc a3" d="M1300 122C1330 96 1384 190 1408 404" stroke-width="2" opacity=".45" />
+						<path class="arc a4" d="M1300 122C1270 96 1216 190 1192 404" stroke-width="2" opacity=".45" />
+						<path class="arc a5" d="M1300 126C1312 112 1330 150 1338 404" stroke-width="2" opacity=".5" />
+						<path class="arc a6" d="M1300 126C1288 112 1270 150 1262 404" stroke-width="2" opacity=".5" />
+					</g>
+					<g class="plume" fill="var(--jet)">
+						<ellipse cx="1300" cy="122" rx="30" ry="18" opacity=".4" />
+						<ellipse cx="1278" cy="142" rx="20" ry="14" opacity=".3" />
+						<ellipse cx="1324" cy="144" rx="22" ry="15" opacity=".3" />
+						<ellipse cx="1300" cy="160" rx="38" ry="22" opacity=".14" />
+					</g>
+					<g fill="var(--jet)">
+						<circle class="drop d1" cx="1300" cy="122" r="2.2" />
+						<circle class="drop d2" cx="1300" cy="122" r="2" />
+						<circle class="drop d3" cx="1300" cy="122" r="2.4" />
+						<circle class="drop d4" cx="1300" cy="122" r="1.8" />
+						<circle class="drop d5" cx="1300" cy="122" r="2.2" />
+						<circle class="drop d6" cx="1300" cy="122" r="2" />
+						<circle class="drop d7" cx="1300" cy="122" r="1.6" />
+						<circle class="drop d8" cx="1300" cy="122" r="1.8" />
+						<circle class="drop d9" cx="1300" cy="122" r="1.5" />
+						<circle class="drop d10" cx="1300" cy="122" r="1.7" />
+					</g>
 				</g>
 			</g>
-			<ellipse class="mist" cx="1300" cy="406" rx="52" ry="9" fill="var(--jet)" opacity=".5" />
+			<g class="base" fill="var(--jet)">
+				<ellipse class="mist" cx="1300" cy="404" rx="64" ry="11" opacity=".5" />
+				<ellipse class="mist m2" cx="1270" cy="398" rx="40" ry="14" opacity=".3" />
+				<ellipse class="mist m3" cx="1334" cy="396" rx="44" ry="16" opacity=".3" />
+				<ellipse class="mist m4" cx="1300" cy="386" rx="70" ry="22" opacity=".14" />
+			</g>
+			<g class="splash" stroke="var(--jet)" stroke-width="1.6" fill="none">
+				<ellipse class="ring" cx="1232" cy="406" rx="12" ry="3" />
+				<ellipse class="ring r2" cx="1368" cy="406" rx="12" ry="3" />
+				<ellipse class="ring r3" cx="1192" cy="408" rx="10" ry="3" />
+				<ellipse class="ring r4" cx="1408" cy="408" rx="10" ry="3" />
+			</g>
+			<g class="rainbow" fill="none" stroke-width="5" opacity="0">
+				<path d="M1130 404A170 170 0 0 1 1470 404" stroke="#e4574f" />
+				<path d="M1140 404A160 160 0 0 1 1460 404" stroke="#f2a43a" />
+				<path d="M1150 404A150 150 0 0 1 1450 404" stroke="#efd94e" />
+				<path d="M1160 404A140 140 0 0 1 1440 404" stroke="#5fb36a" />
+				<path d="M1170 404A130 130 0 0 1 1430 404" stroke="#4f8fd6" />
+			</g>
 
 			<!-- sailing boat and swan -->
 			<g class="sail">
@@ -103,6 +158,7 @@
 			<g class="win"><rect x="1652" y="506" width="14" height="18" /><rect x="1680" y="506" width="14" height="18" /><rect x="1708" y="506" width="14" height="18" /></g>
 			<use href="#dm-mascot" transform="translate(1500 510) scale(.1)" /><use href="#dm-mascot" transform="translate(1544 510) scale(.1)" />
 		</g>
+		<SceneWeather {mood} />
 	</svg>
 </div>
 
@@ -172,37 +228,29 @@
 		fill: var(--win);
 	}
 
-	.jet {
+	.jetwrap,
+	.jet,
+	.base {
 		transform-box: fill-box;
 		transform-origin: 50% 100%;
-		animation: sway 14s ease-in-out infinite;
-	}
-	@keyframes sway {
-		50% {
-			transform: rotate(0.7deg);
-		}
-	}
-	.flow {
-		animation: climb 1.6s linear infinite;
-	}
-	@keyframes climb {
-		to {
-			stroke-dashoffset: -36;
-		}
 	}
 	.plume {
 		transform-box: fill-box;
 		transform-origin: 50% 0;
-		animation: swell 5s ease-in-out infinite;
 	}
-	@keyframes swell {
-		50% {
-			transform: scale(1.08, 1.12);
-		}
+	.ring {
+		transform-box: fill-box;
+		transform-origin: center;
+		opacity: 0;
+	}
+	.rainbow {
+		opacity: 0;
 	}
 	.drop {
 		opacity: 0;
-		animation: spray 3.2s ease-in infinite;
+	}
+	.arc {
+		stroke-dasharray: 22 30;
 	}
 	.d1 { --dx: 40px; --dy: 130px; }
 	.d2 { --dx: -44px; --dy: 150px; animation-delay: -0.6s; }
@@ -210,66 +258,114 @@
 	.d4 { --dx: -64px; --dy: 170px; animation-delay: -1.8s; }
 	.d5 { --dx: 22px; --dy: 200px; animation-delay: -2.3s; }
 	.d6 { --dx: -26px; --dy: 190px; animation-delay: -2.8s; }
-	@keyframes spray {
-		0% {
-			transform: translate(0, 0);
-			opacity: 0.9;
-		}
-		100% {
-			transform: translate(var(--dx), var(--dy));
-			opacity: 0;
-		}
-	}
-	.mist {
-		animation: breathe 6s ease-in-out infinite;
-	}
-	@keyframes breathe {
-		50% {
-			opacity: 0.25;
-		}
-	}
-	.ripple {
-		animation: shimmer 6s ease-in-out infinite;
-	}
-	@keyframes shimmer {
-		50% {
-			opacity: 0.25;
-		}
-	}
+	.d7 { --dx: 96px; --dy: 220px; animation-delay: -0.3s; }
+	.d8 { --dx: -92px; --dy: 230px; animation-delay: -1.5s; }
+	.d9 { --dx: 10px; --dy: 120px; animation-delay: -2.1s; }
+	.d10 { --dx: -12px; --dy: 140px; animation-delay: -0.9s; }
+	.a2 { animation-delay: -0.5s; }
+	.a3 { animation-delay: -1.1s; }
+	.a4 { animation-delay: -0.2s; }
+	.a5 { animation-delay: -0.8s; }
+	.a6 { animation-delay: -1.4s; }
+	.m2 { animation-delay: -1.5s; }
+	.m3 { animation-delay: -3s; }
+	.m4 { animation-delay: -4.5s; }
+	.r2 { animation-delay: -0.7s; }
+	.r3 { animation-delay: -1.3s; }
+	.r4 { animation-delay: -1.9s; }
 	.sail {
 		transform: translate(980px, 408px);
-		animation: cruise 120s linear infinite;
 	}
-	@keyframes cruise {
-		from {
-			transform: translate(580px, 408px);
-		}
-		to {
-			transform: translate(1500px, 408px);
-		}
-	}
-	.swan {
-		animation: bob 5s ease-in-out infinite;
-	}
-	@keyframes bob {
-		50% {
-			transform: translateY(4px) rotate(-1.5deg);
-		}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.jet { animation: sway 14s ease-in-out infinite; }
+		.flow { animation: climb 1.6s linear infinite; }
+		.plume { animation: swell 3.2s ease-in-out infinite; }
+		.drop { animation: spray 3.2s ease-in infinite; }
+		.arc { animation: fall 1.8s linear infinite; }
+		.mist { animation: breathe 6s ease-in-out infinite; }
+		.ring { animation: ring 2.4s ease-out infinite; }
+		.ripple { animation: shimmer 6s ease-in-out infinite; }
+		.sail { animation: cruise 120s linear infinite; }
+		.swan { animation: bob 5s ease-in-out infinite; }
+		.p-down .jetwrap { animation: jet-off 7s cubic-bezier(0.4, 0, 0.2, 1) both; }
+		.p-down .base { animation: base-off 7s ease-in-out both; }
+		.p-down .ring { animation: none; }
+		.p-up .jetwrap { animation: jet-on 3.2s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+		.p-up .base { animation: base-on 3.2s ease-out both; }
+		.p-resolved .jetwrap { animation: jet-flare 6s ease-in-out both; }
+		.p-resolved .rainbow { animation: rainbow 6.5s ease-in-out both; }
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.jet,
-		.flow,
-		.plume,
-		.drop,
-		.mist,
-		.ripple,
-		.sail,
-		.swan {
-			animation: none;
-		}
 		.drop {
 			opacity: 0.7;
 			transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.4));
 		}
+	}
+	@keyframes sway {
+		50% { transform: rotate(0.7deg); }
+	}
+	@keyframes climb {
+		to { stroke-dashoffset: -32; }
+	}
+	@keyframes swell {
+		50% { transform: scale(1.12, 1.14); }
+	}
+	@keyframes fall {
+		to { stroke-dashoffset: -104; }
+	}
+	@keyframes ring {
+		0% { transform: scale(0.3); opacity: 0.8; }
+		100% { transform: scale(2.4); opacity: 0; }
+	}
+	@keyframes spray {
+		0% { transform: translate(0, 0); opacity: 0.9; }
+		100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+	}
+	@keyframes breathe {
+		50% { opacity: 0.25; }
+	}
+	@keyframes shimmer {
+		50% { opacity: 0.25; }
+	}
+	@keyframes cruise {
+		from { transform: translate(580px, 408px); }
+		to { transform: translate(1500px, 408px); }
+	}
+	@keyframes bob {
+		50% { transform: translateY(4px) rotate(-1.5deg); }
+	}
+	@keyframes jet-off {
+		0% { transform: scaleY(1); opacity: 1; }
+		10% { transform: scaleY(0.78); }
+		14% { transform: scaleY(0.9); }
+		30% { transform: scaleY(0.04); opacity: 0.5; }
+		78% { transform: scaleY(0.02); opacity: 0; }
+		100% { transform: scaleY(1); opacity: 1; }
+	}
+	@keyframes base-off {
+		0%, 12% { opacity: 1; }
+		35%, 80% { opacity: 0.08; }
+		100% { opacity: 1; }
+	}
+	@keyframes jet-on {
+		0% { transform: scaleY(0.02); opacity: 0.6; }
+		45% { transform: scaleY(1.3); opacity: 1; }
+		65% { transform: scaleY(0.94); }
+		100% { transform: scaleY(1); }
+	}
+	@keyframes base-on {
+		0% { opacity: 0.1; transform: scale(0.4, 0.6); }
+		40% { opacity: 1; transform: scale(1.4, 1.5); }
+		100% { opacity: 1; transform: scale(1); }
+	}
+	@keyframes jet-flare {
+		0%, 100% { transform: scaleY(1); }
+		25%, 70% { transform: scaleY(1.22); }
+	}
+	@keyframes rainbow {
+		0% { opacity: 0; }
+		25%, 70% { opacity: 0.6; }
+		100% { opacity: 0; }
 	}
 </style>
