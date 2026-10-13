@@ -76,13 +76,12 @@ pub fn socket_error(error: &io::Error) -> ProbeError {
     }
 
     ProbeError::Config(
-        "The DumbMonit container is not allowed to send ICMP packets. \
-         Add the NET_RAW capability to the \"dumbmonit\" service in docker-compose.yml:\n\
-         \n    cap_add:\n      - NET_RAW\n\n\
-         then restart with \"docker compose up -d\". Alternatively, without an extra \
-         capability, allow unprivileged ICMP echoes on the host with \
-         \"sysctl -w net.ipv4.ping_group_range='0 2147483647'\". \
-         Until one of the two is done, \"ping\" probes cannot work; TCP and HTTP probes \
+        "The DumbMonit container is not allowed to open an ICMP socket. Add the sysctl \
+         below to the \"dumbmonit\" service in docker-compose.yml, then restart with \
+         \"docker compose up -d\":\n\
+         \n    sysctls:\n      net.ipv4.ping_group_range: \"0 2147483647\"\n\n\
+         Outside Docker, \"sysctl -w net.ipv4.ping_group_range='0 2147483647'\" on the \
+         host does the same. Until then, \"ping\" probes cannot work; TCP and HTTP probes \
          need nothing."
             .to_string(),
     )
@@ -138,15 +137,15 @@ mod tests {
     /// Le test le plus utile du module : sans ce message, l'utilisateur croit à
     /// une panne d'équipement alors que c'est sa configuration Docker qui manque.
     #[test]
-    fn un_refus_de_socket_brute_explique_quoi_ajouter_au_docker_compose() {
+    fn un_refus_de_socket_icmp_explique_quoi_ajouter_au_docker_compose() {
         let error = socket_error(&io::Error::from(io::ErrorKind::PermissionDenied));
 
         assert!(matches!(error, ProbeError::Config(_)), "ce n'est pas une panne d'équipement");
         assert!(!error.means_down(), "cela ne doit pas déclencher « équipement injoignable »");
 
         let message = error.to_string();
-        assert!(message.contains("cap_add"), "{message}");
-        assert!(message.contains("NET_RAW"), "{message}");
+        assert!(message.contains("sysctls"), "{message}");
+        assert!(!message.contains("NET_RAW"), "{message}");
         assert!(message.contains("docker-compose.yml"), "{message}");
         assert!(message.contains("net.ipv4.ping_group_range"), "{message}");
     }

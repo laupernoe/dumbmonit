@@ -24,7 +24,7 @@ pub use credential::{
 };
 pub use description::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
-    SetupDescription, Text,
+    Requirement, SetupDescription, Text,
 };
 pub use push::{
     AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, INGEST_PATH, MAX_BATCH_SAMPLES,

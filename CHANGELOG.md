@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Missing server prerequisites are shown where they matter.** Adding or editing
+  a website-change device (headless browser for screenshots) or a ping device
+  (ICMP sysctl) shows a notice when the server cannot do it, with the Compose
+  lines to copy and a link to the matching section of
+  [Install with Docker](docs/install/docker.md#website-screenshots);
+  `GET /api/collectors` gains an optional `requirements` field.
 - **Website health & SEO: more control over what alerts.** Each metadata check
   (final address, title, description, canonical URL, robots directives, Open
   Graph, language, h1 count, hreflang, Google verification tag) can be switched

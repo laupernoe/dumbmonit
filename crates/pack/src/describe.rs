@@ -46,6 +46,7 @@ impl Pack {
                 doc_url: manifest.setup.doc_url.clone().into(),
             },
             options,
+            requirements: Vec::new(),
         }
     }
 
