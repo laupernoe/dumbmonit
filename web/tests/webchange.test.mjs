@@ -1,7 +1,7 @@
 // Website-changes panel helpers. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent } from '../src/lib/components/devices/webchange/format.ts';
+import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent, groupByDay, daysBetween, stepIndex } from '../src/lib/components/devices/webchange/format.ts';
 
 test('pagePath keeps only the path, query and hash', () => {
 	assert.equal(pagePath('https://example.com/'), '/');
@@ -46,4 +46,47 @@ test('stepPercent moves the slider by keyboard', () => {
 	assert.equal(stepPercent(50, 'Home'), 0);
 	assert.equal(stepPercent(50, 'End'), 100);
 	assert.equal(stepPercent(50, 'Tab'), 50);
+});
+
+test('groupByDay buckets items by local calendar day, keeping their order', () => {
+	const at = (y, mo, d, h) => new Date(y, mo - 1, d, h);
+	const items = [
+		{ id: 1, when: at(2026, 10, 13, 18) },
+		{ id: 2, when: at(2026, 10, 13, 0) },
+		{ id: 3, when: at(2026, 10, 12, 23) },
+		{ id: 4, when: null },
+		{ id: 5, when: at(2026, 10, 1, 9) }
+	];
+	const groups = groupByDay(items, (item) => item.when);
+	assert.deepEqual(
+		groups.map((g) => [g.key, g.items.map((i) => i.id)]),
+		[
+			['2026-10-13', [1, 2]],
+			['2026-10-12', [3]],
+			['', [4]],
+			['2026-10-01', [5]]
+		]
+	);
+	assert.equal(groups[0].day.getDate(), 13);
+	assert.equal(groups[2].day, null);
+	assert.deepEqual(groupByDay([], () => null), []);
+});
+
+test('daysBetween counts calendar days, not 24-hour spans', () => {
+	const now = new Date(2026, 9, 13, 0, 30);
+	assert.equal(daysBetween(new Date(2026, 9, 13, 0, 5), now), 0);
+	assert.equal(daysBetween(new Date(2026, 9, 12, 23, 55), now), 1);
+	assert.equal(daysBetween(new Date(2026, 9, 6, 12), now), 7);
+});
+
+test('stepIndex walks a list by keyboard and stays within it', () => {
+	assert.equal(stepIndex(0, 'ArrowDown', 3), 1);
+	assert.equal(stepIndex(2, 'ArrowDown', 3), 2);
+	assert.equal(stepIndex(1, 'ArrowUp', 3), 0);
+	assert.equal(stepIndex(0, 'ArrowUp', 3), 0);
+	assert.equal(stepIndex(1, 'Home', 3), 0);
+	assert.equal(stepIndex(0, 'End', 3), 2);
+	assert.equal(stepIndex(-1, 'ArrowDown', 3), 0);
+	assert.equal(stepIndex(1, 'Tab', 3), 1);
+	assert.equal(stepIndex(0, 'ArrowDown', 0), -1);
 });
