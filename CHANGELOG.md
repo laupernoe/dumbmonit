@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Website health & SEO: more control over what alerts.** Each metadata check
+  (final address, title, description, canonical URL, robots directives, Open
+  Graph, language, h1 count, hreflang, Google verification tag) can be switched
+  off on its own, and a change is reported after a configurable number of
+  consecutive checks (2 by default, 1 to 10). The `hreflang` languages and the
+  `google-site-verification` tag are now tracked, with new alerts "Website
+  Google verification changed" and "Website SEO markup changed". See
+  [Website health & SEO](docs/devices/website.md).
+- **Nearly empty pages.** Besides the blank-page threshold, the visible text of
+  a site is compared with a slowly moving reference: a sharp drop (80% by
+  default, confirmed like any change) raises "Website page nearly empty".
+- **Website categories.** Sites get a category (E-commerce, Blog, Web app,
+  Showcase) guessed from clear signs, or set with the new **Category** option.
+  The CSV import takes a `category` column, files unclassified sites under
+  `Websites/<category>` and keeps `Websites/<platform>` when the page does not
+  say. The category is the `category` label of `dumbmonit_website_info`.
+
 ## 0.1.0-alpha.7 — 2026-10-13
 
 ### Security

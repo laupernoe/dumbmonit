@@ -22,8 +22,9 @@
 //!
 //! Les métadonnées et l'adresse finale sont comparées à une référence
 //! confirmée ([`changes`]) : une valeur nouvelle n'est un changement que lue
-//! deux sondes de suite (pas de fausse alerte sur un test A/B ou un cache qui
-//! hésite).
+//! `confirm_checks` sondes de suite, deux par défaut (pas de fausse alerte
+//! sur un test A/B ou un cache qui hésite). Chaque champ se suit ou non
+//! (options `watch_*`).
 //!
 //! Cette comparaison, et la relecture de `robots.txt` et du plan de site qui
 //! l'accompagne, n'a lieu qu'aux sondes de changement : toutes les
@@ -56,6 +57,8 @@
 //! | `website_noindex` / `website_nofollow` | Consignes d'indexation. |
 //! | `website_h1_count` / `website_hreflang_count` | Titres `h1`, variantes de langue. |
 //! | `website_{title,description,canonical,final_url}_changed` | 1 pendant 24 h après un changement confirmé. |
+//! | `website_text_dropped` | 1 si le texte visible est tombé très en deçà de sa référence (`text_drop_percent`). |
+//! | `website_{robots,open_graph,lang,h1,hreflang,google_verification}_changed` | Idem, pour les autres métadonnées suivies. |
 //! | `website_robots_blocks_all` | 1 si `robots.txt` interdit tout à Google. |
 //! | `website_sitemap_ok` | 1 si un plan de site se lit. |
 //!
@@ -85,7 +88,7 @@ use crate::webchange::{html, robots::Robots, sitemap};
 use changes::Tracker;
 use fetch::{Clients, Hop};
 use options::Options;
-pub use platform::{Identity, Platform, detect_platform, identify};
+pub use platform::{Identity, Platform, categorize, detect_platform, identify};
 use seo::Metadata;
 
 /// Type de cible, tel qu'enregistré dans `Target::kind`.
@@ -101,12 +104,19 @@ const MAX_AUX_BYTES: usize = 10 * 1024 * 1024;
 /// Redirections suivies au plus pour `robots.txt` et le plan de site.
 const AUX_REDIRECTS: usize = 5;
 
-/// Champs dont un changement confirmé a sa jauge.
-const CHANGE_GAUGES: &[(&str, &str)] = &[
-    (changes::TITLE, "website_title_changed"),
-    (changes::DESCRIPTION, "website_description_changed"),
-    (changes::CANONICAL, "website_canonical_changed"),
-    (changes::FINAL_URL, "website_final_url_changed"),
+/// Champs dont un changement confirmé a sa jauge (un groupe de champs,
+/// une jauge : elle vaut 1 si l'un d'eux a changé).
+const CHANGE_GAUGES: &[(&[&str], &str)] = &[
+    (&[changes::TITLE], "website_title_changed"),
+    (&[changes::DESCRIPTION], "website_description_changed"),
+    (&[changes::CANONICAL], "website_canonical_changed"),
+    (&[changes::FINAL_URL], "website_final_url_changed"),
+    (&[changes::ROBOTS], "website_robots_changed"),
+    (&[changes::OG_TITLE, changes::OG_DESCRIPTION], "website_open_graph_changed"),
+    (&[changes::LANG], "website_lang_changed"),
+    (&[changes::H1_COUNT], "website_h1_changed"),
+    (&[changes::HREFLANG_COUNT, changes::HREFLANG], "website_hreflang_changed"),
+    (&[changes::GOOGLE_VERIFICATION], "website_google_verification_changed"),
 ];
 
 /// Le résultat d'une lecture, tel que gardé pour l'API.
@@ -120,6 +130,10 @@ pub struct LastProbe {
     /// `final_url`).
     pub redirects: Vec<Hop>,
     pub platform: Platform,
+    /// Catégorie de l'option `category`, sinon genre déduit des signaux de la
+    /// page (`ecommerce`, `blog`…) ; absente si trop incertain.
+    #[serde(default)]
+    pub category: Option<String>,
     pub content_type: String,
     /// Absents si la réponse finale n'est pas un succès 2xx.
     pub text_chars: Option<usize>,
@@ -197,6 +211,9 @@ impl Collector for WebsiteCollector {
             None => (Tracker::default(), true),
         };
         let period = options.change_check.unwrap_or(self.change_check);
+        // Un champ dont le suivi est coupé est oublié : réactivé, il repart
+        // d'une référence neuve.
+        tracker.retain(&|field| options.watched.contains(field));
         let check_age = state.as_ref().and_then(|s| s.check_age);
         let check_due = change_check_due(&tracker, check_age, period);
         // La comparaison n'est faite que sur une page lue : une erreur ou une
@@ -205,12 +222,13 @@ impl Collector for WebsiteCollector {
         let confirmed = match &reading.probe.metadata {
             Some(metadata) if check_due => {
                 checked = true;
-                let current = changes::values(&followed.final_url, metadata);
+                let mut current = changes::values(&followed.final_url, metadata);
+                current.retain(|field, _| options.watched.contains(field.as_str()));
                 if baseline || tracker.confirmed.is_empty() {
-                    tracker = Tracker::baseline(current);
+                    tracker.rebase(current);
                     Vec::new()
                 } else {
-                    tracker.observe(&current, options.ignore_query)
+                    tracker.observe(&current, options.ignore_query, options.confirm_checks)
                 }
             }
             _ => Vec::new(),
@@ -228,6 +246,16 @@ impl Collector for WebsiteCollector {
         } else {
             None
         };
+
+        // Chute du texte visible : lue à chaque sonde, comme la page blanche.
+        let text_dropped = reading.probe.text_chars.map(|chars| {
+            tracker.observe_text(
+                chars,
+                options.text_drop_percent,
+                options.confirm_checks,
+                chrono::Utc::now().timestamp(),
+            )
+        });
 
         let last_probe = serde_json::to_string(&reading.probe)
             .map_err(|e| ProbeError::Other(anyhow::anyhow!(e)))?;
@@ -249,7 +277,13 @@ impl Collector for WebsiteCollector {
         let state = store::state(pool, target.id).await.map_err(ProbeError::Other)?;
         let ages = state.as_ref().map(|s| change_ages(&s.changed_at())).unwrap_or_default();
         let robots = state.and_then(|s| Some((s.robots_blocks_all?, s.sitemap_ok?)));
-        Ok(samples(&reading.probe, &ages, robots, chrono::Utc::now().timestamp_millis()))
+        Ok(samples(
+            &reading.probe,
+            &ages,
+            robots,
+            text_dropped.filter(|_| options.text_drop_percent > 0),
+            chrono::Utc::now().timestamp_millis(),
+        ))
     }
 }
 
@@ -279,6 +313,7 @@ fn read(options: &Options, followed: &fetch::Followed) -> Reading {
         response_ms: followed.elapsed.as_millis() as u64,
         redirects: followed.chain.clone(),
         platform: detect_platform(&followed.final_url, &answer.headers, &answer.body),
+        category: None,
         content_type,
         text_chars: None,
         blank: None,
@@ -304,6 +339,15 @@ fn read(options: &Options, followed: &fetch::Followed) -> Reading {
     if is_html {
         probe.metadata = Some(seo::extract(&followed.final_url, &answer.headers, &answer.body));
     }
+    probe.category = options.category.clone().or_else(|| {
+        categorize(
+            probe.platform,
+            &followed.final_url,
+            &answer.body,
+            probe.metadata.as_ref().and_then(|m| m.og_type.as_deref()),
+        )
+        .map(|category| category.as_str().to_string())
+    });
     Reading { probe }
 }
 
@@ -367,6 +411,7 @@ fn samples(
     probe: &LastProbe,
     ages: &BTreeMap<String, i64>,
     robots: Option<(bool, bool)>,
+    text_dropped: Option<bool>,
     now: i64,
 ) -> Vec<Sample> {
     let gauge = |name: &str, value: f64| Sample::new(name, value, MetricKind::Gauge, now);
@@ -376,8 +421,17 @@ fn samples(
         gauge("website_status_code", f64::from(probe.status)),
         gauge("website_response_seconds", probe.response_ms as f64 / 1000.0),
         gauge("website_redirect_hops", probe.redirects.len() as f64),
-        gauge("website_info", 1.0).with_label("platform", probe.platform.as_str()),
+        {
+            let info = gauge("website_info", 1.0).with_label("platform", probe.platform.as_str());
+            match &probe.category {
+                Some(category) => info.with_label("category", category),
+                None => info,
+            }
+        },
     ];
+    if let Some(dropped) = text_dropped {
+        samples.push(gauge("website_text_dropped", flag(dropped)));
+    }
     if let (Some(chars), Some(blank)) = (probe.text_chars, probe.blank) {
         samples.push(gauge("website_text_chars", chars as f64));
         samples.push(gauge("website_blank", flag(blank)));
@@ -391,8 +445,10 @@ fn samples(
         samples.push(gauge("website_h1_count", meta.h1_count as f64));
         samples.push(gauge("website_hreflang_count", meta.hreflang_count as f64));
     }
-    for (field, metric) in CHANGE_GAUGES {
-        let recent = ages.get(*field).is_some_and(|age| *age < CHANGE_WINDOW_SECS);
+    for (fields, metric) in CHANGE_GAUGES {
+        let recent = fields
+            .iter()
+            .any(|field| ages.get(*field).is_some_and(|age| *age < CHANGE_WINDOW_SECS));
         samples.push(gauge(metric, flag(recent)));
     }
     if let Some((blocks_all, sitemap_ok)) = robots {
@@ -444,7 +500,7 @@ mod tests {
         let reading = read(&options, &followed(200, "text/html", blank));
         assert_eq!(reading.probe.blank, Some(true));
         assert_eq!(reading.probe.text_chars, Some(0), "ni le titre ni le script ne comptent");
-        let samples = samples(&reading.probe, &BTreeMap::new(), None, 0);
+        let samples = samples(&reading.probe, &BTreeMap::new(), None, None, 0);
         assert_eq!(value(&samples, "website_blank"), Some(1.0));
         assert_eq!(value(&samples, "website_up"), Some(1.0), "blanche, mais elle répond");
         assert_eq!(value(&samples, "website_redirect_hops"), Some(1.0));
@@ -465,7 +521,7 @@ mod tests {
         assert_eq!(found.probe.expect_text_found, Some(true));
         let missing = read(&options, &followed(200, "text/html", "<p>Maintenance</p>"));
         assert_eq!(missing.probe.expect_text_found, Some(false));
-        let samples = samples(&missing.probe, &BTreeMap::new(), None, 0);
+        let samples = samples(&missing.probe, &BTreeMap::new(), None, None, 0);
         assert_eq!(value(&samples, "website_expect_text_missing"), Some(1.0));
     }
 
@@ -474,7 +530,7 @@ mod tests {
         let options = Options::from_target(&target("ex.fr", &[])).unwrap();
         let reading = read(&options, &followed(503, "text/html", "<title>Erreur</title>"));
         assert!(reading.probe.metadata.is_none() && reading.probe.blank.is_none());
-        let samples = samples(&reading.probe, &BTreeMap::new(), None, 0);
+        let samples = samples(&reading.probe, &BTreeMap::new(), None, None, 0);
         assert_eq!(value(&samples, "website_up"), Some(0.0));
         assert_eq!(value(&samples, "website_status_code"), Some(503.0));
         assert_eq!(value(&samples, "website_blank"), None);
@@ -488,7 +544,7 @@ mod tests {
         let reading = read(&options, &followed(200, "text/html", page));
         let ages: BTreeMap<String, i64> =
             [("title".to_string(), 60), ("canonical".to_string(), CHANGE_WINDOW_SECS + 1)].into();
-        let samples = samples(&reading.probe, &ages, Some((true, false)), 0);
+        let samples = samples(&reading.probe, &ages, Some((true, false)), None, 0);
         assert_eq!(value(&samples, "website_title_changed"), Some(1.0));
         assert_eq!(value(&samples, "website_canonical_changed"), Some(0.0), "fenêtre passée");
         assert_eq!(value(&samples, "website_description_changed"), Some(0.0));
@@ -496,6 +552,26 @@ mod tests {
         assert_eq!(value(&samples, "website_sitemap_ok"), Some(0.0));
         let info = samples.iter().find(|s| s.metric == "website_info").unwrap();
         assert_eq!(info.labels.get("platform").map(String::as_str), Some("wordpress"));
+    }
+
+    #[test]
+    fn categorie_et_chute_du_texte_dans_les_mesures() {
+        let boutique = r#"<html><head><meta property="og:type" content="product"></head></html>"#;
+        let options = Options::from_target(&target("ex.fr", &[])).unwrap();
+        let reading = read(&options, &followed(200, "text/html", boutique));
+        assert_eq!(reading.probe.category.as_deref(), Some("ecommerce"));
+        let mesures = samples(&reading.probe, &BTreeMap::new(), None, Some(true), 0);
+        assert_eq!(value(&mesures, "website_text_dropped"), Some(1.0));
+        let info = mesures.iter().find(|s| s.metric == "website_info").unwrap();
+        assert_eq!(info.labels.get("category").map(String::as_str), Some("ecommerce"));
+
+        // L'option prime sur la déduction.
+        let options =
+            Options::from_target(&target("ex.fr", &[("category", "Client: Acme")])).unwrap();
+        let reading = read(&options, &followed(200, "text/html", boutique));
+        assert_eq!(reading.probe.category.as_deref(), Some("Client: Acme"));
+        let mesures = samples(&reading.probe, &BTreeMap::new(), None, None, 0);
+        assert_eq!(value(&mesures, "website_text_dropped"), None);
     }
 
     #[test]
