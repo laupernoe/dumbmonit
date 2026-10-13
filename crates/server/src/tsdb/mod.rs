@@ -291,8 +291,9 @@ impl Victoria {
     /// (`-search.latencyOffset`), prévu pour des scrapes encore incomplets. Nos
     /// lots sont écrits d'un seul tenant : l'interface peut donc lire le
     /// résultat d'une sonde sitôt écrit, en particulier après « Probe now ».
+    /// Depuis la v1.153, VictoriaMetrics refuse `0s` (400) : 1 ms est le minimum.
     pub async fn query_fresh(&self, query: &str) -> Result<Vec<InstantSeries>> {
-        self.query_with(query, &[("latency_offset", "0s")]).await
+        self.query_with(query, &[("latency_offset", "1ms")]).await
     }
 
     async fn query_with(&self, query: &str, extra: &[(&str, &str)]) -> Result<Vec<InstantSeries>> {
