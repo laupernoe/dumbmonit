@@ -65,6 +65,7 @@
 		type WallCityChoice
 	} from '#lib/components/wall/wallCity.js';
 	import WallThemeControl from '#lib/components/wall/WallThemeControl.svelte';
+	import WallStorm from '#lib/components/wall/WallStorm.svelte';
 	import MusicControl from '#lib/components/wall/MusicControl.svelte';
 	import MusicDock from '#lib/components/wall/MusicDock.svelte';
 	import {
@@ -311,6 +312,16 @@
 	const activeCity = $derived(
 		parseForcedWallCity(page.url.searchParams.get('city')) ?? resolveWallCity(wallCity)
 	);
+	/** Scenes with no sky of their own to storm in: indoors, under water, in space. */
+	const STORMLESS = new Set<string>(['orbit', 'aquarium', 'hamsters', 'cats', 'arcade', 'raclette', 'chalet', 'mars', 'desert']);
+	/** Scenes that are night whatever the hour or theme. */
+	const NIGHT_SCENES = new Set<string>(['orbit']);
+	/** Scenes whose picture goes dark under a mood: the Day palette's ink would sink into it. */
+	function darkUnder(city: string, tone: string): boolean {
+		if (city === 'aquarium') return tone !== 'calm';
+		if (city === 'forest' || city === 'mars') return tone === 'storm';
+		return false;
+	}
 	const CityScene = $derived(WALL_CITIES.find((c) => c.value === activeCity)!.scene);
 	function setWallCity(choice: WallCityChoice) {
 		wallCity = choice;
@@ -336,9 +347,16 @@
 	// the app-wide theme for this display only — never saved there, and
 	// restored on exit; OLED rides the Night palette, then this page paints
 	// true black and dimmed text over it (see the `oled` styles below).
+	// A scene that is always night (the station in orbit) never rides the Day
+	// palette: dark ink on black space would be unreadable.
 	$effect(() => {
-		if (effectiveWallTheme === 'auto') return;
-		const base: ThemePreference = effectiveWallTheme === 'oled' ? 'dark' : effectiveWallTheme;
+		const forcedNight = nightScene && (effectiveWallTheme === 'auto' || effectiveWallTheme === 'light');
+		if (effectiveWallTheme === 'auto' && !forcedNight) return;
+		const base: ThemePreference = forcedNight
+			? 'dark'
+			: effectiveWallTheme === 'oled'
+				? 'dark'
+				: (effectiveWallTheme as ThemePreference);
 		const previous: ThemePreference = untrack(() => theme.preference);
 		theme.preference = base;
 		return () => {
@@ -446,6 +464,8 @@
 					? 'clouded'
 					: 'calm'
 	);
+
+	const nightScene = $derived(NIGHT_SCENES.has(activeCity) || darkUnder(activeCity, mood));
 
 	// Gestures: a device going down or coming back, an alert resolving. The first
 	// load is only a baseline; a refetch from scratch (loading) starts over.
@@ -564,6 +584,9 @@
 				paused={hidden}
 				focus={1360}
 			/>
+			{#if mood === 'storm' && !STORMLESS.has(activeCity)}
+				<WallStorm theme={sceneTheme} paused={hidden} />
+			{/if}
 		</div>
 
 		<div class="board">
@@ -698,6 +721,8 @@
 		position: relative;
 		height: max(240px, 40vh);
 		overflow: hidden;
+		/* The scene and its storm stay under the board, whatever z-index they use. */
+		isolation: isolate;
 	}
 	.board {
 		display: flex;
@@ -843,6 +868,17 @@
 		}
 		.music-slot :global(.music-dock) {
 			justify-content: flex-end;
+		}
+	}
+	/* 720p to 900p: a narrower board leaves the middle of the scene to its monument. */
+	@media (min-width: 1024px) and (max-width: 1599px) {
+		.board {
+			grid-template-columns: minmax(0, 27rem) minmax(0, 1fr) minmax(0, 22rem);
+			gap: 1.5rem;
+			padding-inline: 2.5rem;
+		}
+		.clock {
+			font-size: 4.5rem;
 		}
 	}
 	/* A 4K panel read from the same sofa: the board grows with the screen. */

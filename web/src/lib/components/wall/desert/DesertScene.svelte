@@ -94,8 +94,8 @@
 			'--log': '#4a3020',
 			'--stone': '#8a7a72',
 			'--figure': '#3b2a26',
-			'--veil': '#e6c08c',
-			'--veil-streak': '#f4dcb0'
+			'--veil': '#b98552',
+			'--veil-streak': '#f0cf9c'
 		},
 		dark: {
 			'--sky-top': '#03061a',
@@ -252,7 +252,7 @@
 						<stop offset="1" stop-color="var(--fire-glow)" stop-opacity="0" />
 					</radialGradient>
 					<linearGradient id="wd-veil" x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0" stop-color="var(--veil)" stop-opacity=".5" />
+						<stop offset="0" stop-color="var(--veil)" stop-opacity=".75" />
 						<stop offset="1" stop-color="var(--veil)" stop-opacity="1" />
 					</linearGradient>
 					<g id="wd-camel">
@@ -375,7 +375,7 @@
 
 				<!-- weather: haze and sandstorm -->
 				<rect class="veil" width={STAGE_W} height={STAGE_H} fill="url(#wd-veil)" />
-				<g class="gusts" stroke="var(--veil-streak)" stroke-width="4" stroke-linecap="round">
+				<g class="gusts" stroke="var(--veil-streak)" stroke-width="6" stroke-linecap="round">
 					{#each GUSTS as g (g.id)}
 						<path d="M2100 {g.y}h{g.w}" style="--dur:{g.dur}s;animation-delay:{g.delay}s" />
 					{/each}
@@ -401,8 +401,8 @@
 		--starfade: 0.55;
 	}
 	.lvl-2 {
-		--veil-o: 0.72;
-		--starfade: 0.15;
+		--veil-o: 0.88;
+		--starfade: 0.1;
 	}
 	.stage {
 		position: absolute;
@@ -436,7 +436,7 @@
 		transition: opacity 1.5s;
 	}
 	.lvl-2 .gusts {
-		opacity: 0.5;
+		opacity: 0.85;
 	}
 	.gusts path {
 		animation: gust var(--dur) linear infinite;

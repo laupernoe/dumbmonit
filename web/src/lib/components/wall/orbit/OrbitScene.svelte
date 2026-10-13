@@ -209,8 +209,8 @@
 					{/if}
 				{/key}
 
-				<!-- the station -->
-				<g transform="translate(1560 250)">
+				<!-- the station: below the wall's clock, which sits at the top right -->
+				<g transform="translate(1590 480) scale(0.85)">
 					<g class="bob">
 						<path d="M-250 0H250" stroke="var(--hull)" stroke-width="5" />
 						{#each [-210, -150, 150, 210] as x (x)}

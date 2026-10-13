@@ -17,8 +17,11 @@ export function levelOf(mood: RacletteMood): Level {
 	return 'ok';
 }
 
-/** The window (outer glass rectangle). */
-export const WIN = { x: 1170, y: 150, w: 520, h: 400 };
+/**
+ * The window (outer glass rectangle): in the middle of the room, between the
+ * wall's cards on the left and its clock on the right.
+ */
+export const WIN = { x: 770, y: 150, w: 520, h: 400 };
 /** Table top edge and the line where the cloth falls over the front. */
 export const TABLE_Y = 740;
 export const FRONT_Y = 930;

@@ -279,8 +279,8 @@
 					</g>
 				{/each}
 
-				<!-- chalkboard -->
-				<g>
+				<!-- chalkboard: low on the right wall, clear of the clock and the cards -->
+				<g transform="translate(600 350)">
 					<rect x="840" y="196" width="280" height="130" rx="8" fill="var(--board)" stroke="var(--wood)" stroke-width="10" />
 					{#if trouble}
 						<text x="980" y="276" text-anchor="middle" font-size={sign.length > 14 ? 30 : 40} font-weight="700" font-family="'Comic Sans MS', 'Marker Felt', system-ui, sans-serif" fill="var(--chalk)">{sign}</text>
@@ -300,13 +300,15 @@
 
 				<!-- the room darkens with the hour; the lamp and the grill keep the light -->
 				<rect width={STAGE_W} height={STAGE_H} fill="#0a0612" opacity={dim} />
-				<ellipse class="lamp-glow" cx="600" cy="660" rx="420" ry="360" fill="url(#rw-lamp)" opacity={lit ? 1 : 0.35} />
+				<ellipse class="lamp-glow" cx="1480" cy="660" rx="420" ry="360" fill="url(#rw-lamp)" opacity={lit ? 1 : 0.35} />
 				<ellipse class="grill-glow" cx="965" cy="900" rx="420" ry="90" fill="url(#rw-glow)" />
 
-				<!-- the pendant lamp -->
-				<path d="M600 0V150" stroke="var(--ink)" stroke-width="3" opacity=".7" />
-				<path d="M550 200L575 150H625L650 200Z" fill="var(--cloth-r)" />
-				<ellipse cx="600" cy="200" rx="50" ry="8" fill="#ffd98a" opacity={lit ? 1 : 0.6} />
+				<!-- the pendant lamp: right of the window, so it hangs clear of the headline -->
+				<g transform="translate(880 0)">
+					<path d="M600 0V150" stroke="var(--ink)" stroke-width="3" opacity=".7" />
+					<path d="M550 200L575 150H625L650 200Z" fill="var(--cloth-r)" />
+					<ellipse cx="600" cy="200" rx="50" ry="8" fill="#ffd98a" opacity={lit ? 1 : 0.6} />
+				</g>
 
 				<!-- smoke alarm -->
 				<circle class="halo" cx="1000" cy="92" r="54" fill="#ff2a2a" />

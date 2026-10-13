@@ -134,13 +134,14 @@
 
 	const COLS = 8;
 	const PITCH = 16; // pixel units between two invaders of a row
-	const FLEET_X = 420;
+	// Below the headline and the clock, clear of the board's left column as far as it goes.
+	const FLEET_X = 540;
 	const ROWS: { y: number; a: Sprite; b: Sprite; tone: number }[] = [
-		{ y: 200, a: SQUID_A, b: SQUID_B, tone: 1 },
-		{ y: 288, a: CRAB_A, b: CRAB_B, tone: 2 },
+		{ y: 300, a: SQUID_A, b: SQUID_B, tone: 1 },
 		{ y: 376, a: CRAB_A, b: CRAB_B, tone: 2 },
-		{ y: 464, a: OCTO_A, b: OCTO_B, tone: 3 },
-		{ y: 552, a: OCTO_A, b: OCTO_B, tone: 3 }
+		{ y: 452, a: CRAB_A, b: CRAB_B, tone: 2 },
+		{ y: 528, a: OCTO_A, b: OCTO_B, tone: 3 },
+		{ y: 604, a: OCTO_A, b: OCTO_B, tone: 3 }
 	];
 	const cell = (s: Sprite, c: number) => c * PITCH + Math.floor((PITCH - s[0].length) / 2);
 	function rowPath(sprite: Sprite): string {
@@ -265,7 +266,7 @@
 				/>
 
 				<g class="ufo" fill="var(--hot)">
-					<path d={ufo} transform="translate(0 100) scale({P})" />
+					<path d={ufo} transform="translate(0 24) scale({P})" />
 				</g>
 
 				<g class="fleet">
