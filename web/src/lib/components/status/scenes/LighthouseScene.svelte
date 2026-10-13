@@ -143,7 +143,7 @@
 					<circle class="rise" r="3.5" fill="var(--bolt)" />
 					<g class="burst" transform="translate(0 -250)">
 						{#each sparks as a}
-							<path d="M0 -6V-22" stroke="var(--lamp)" stroke-width="3" stroke-linecap="round" transform="rotate({a})" />
+							<path d="M0 -8V-34" stroke="var(--lamp)" stroke-width="5" stroke-linecap="round" transform="rotate({a})" />
 						{/each}
 					</g>
 				</g>
@@ -214,7 +214,7 @@
 		--cloud: rgb(255 255 255 / 0.85);
 		--star: transparent;
 		--veil: rgb(60 70 92 / 0.22);
-		--rain: rgb(60 76 104 / 0.3);
+		--rain: rgb(50 64 96 / 0.5);
 		--bolt: #fffbe0;
 		--light-o: 0.4;
 	}
@@ -416,7 +416,7 @@
 	}
 	/* up: the lamp relights with a burst and a fast double sweep. */
 	.lp-up .beam {
-		animation: sweep 1.3s ease-in-out 2;
+		animation: sweep 1.3s ease-in-out 3;
 	}
 	.lp-up .halo {
 		animation: burst-halo 2.6s ease-out;
@@ -427,7 +427,7 @@
 			opacity: 0;
 		}
 		15% {
-			transform: scale(3.2);
+			transform: scale(5.5);
 			opacity: 1;
 		}
 		100% {
@@ -448,7 +448,7 @@
 		opacity: 0;
 		transform-box: fill-box;
 		transform-origin: center;
-		animation: burst 3s ease-out 1.4s both;
+		animation: burst 3.6s ease-out 1.4s both;
 	}
 	@keyframes burst {
 		0% {
@@ -457,7 +457,7 @@
 		}
 		35% {
 			opacity: 1;
-			scale: 1.5;
+			scale: 2.6;
 		}
 		100% {
 			opacity: 0;

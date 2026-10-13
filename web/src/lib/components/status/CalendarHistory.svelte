@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Optional 90-day calendar of a public status page: one small cell per day,
-	 * columns are weeks (Monday on top), the way a contribution graph reads.
+	 * filled column by column over 7 rows, the way a contribution graph reads.
 	 * Status is never colour alone: operational is solid, degraded is striped,
 	 * outage carries a cross, no data is an empty dashed cell; a legend names all
 	 * four. Hover, focus or tap a day for its date, uptime and incidents.
@@ -52,12 +52,8 @@
 		return `${m.status_calendar_day({ date: formatDay(day.date), state: label(day.state), uptime: formatPercent(day.uptime_pct) })}${incidents}`;
 	}
 
-	// Monday = 0, so the first column starts on a Monday row.
-	const offset = $derived.by(() => {
-		const first = days[0] ? new Date(`${days[0].date}T00:00:00Z`) : null;
-		return first && !Number.isNaN(first.getTime()) ? (first.getUTCDay() + 6) % 7 : 0;
-	});
-	const columns = $derived(Math.ceil((days.length + offset) / 7));
+	// Plain 7-row grid filled column by column: a clean rectangle, only the last column can be short.
+	const columns = $derived(Math.ceil(days.length / 7));
 
 	let active = $state<number | null>(null);
 	let focusIndex = $state<number | null>(null);
@@ -98,9 +94,6 @@
 		aria-label={m.status_calendar_label({ days: days.length })}
 		onmouseleave={() => (active = null)}
 	>
-		{#each Array(offset) as _, index (index)}
-			<div aria-hidden="true"></div>
-		{/each}
 		{#each days as day, index (day.date)}
 			<div role="listitem" class="aspect-square min-w-0">
 				<button

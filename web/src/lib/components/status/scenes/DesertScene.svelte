@@ -185,6 +185,9 @@
 		<!-- weather: haze and sandstorm -->
 		<g class="weather">
 			<rect class="veil" x="0" y="0" width="1220" height="540" fill="url(#ds-veil)" />
+			<g class="wall" fill="var(--veil-wall)">
+				<ellipse cx="140" cy="430" rx="260" ry="70" /><ellipse cx="470" cy="410" rx="300" ry="90" /><ellipse cx="820" cy="420" rx="280" ry="80" /><ellipse cx="1120" cy="400" rx="260" ry="100" /><ellipse cx="300" cy="360" rx="200" ry="60" /><ellipse cx="960" cy="350" rx="240" ry="64" />
+			</g>
 			<g class="gusts" stroke="var(--veil-streak)" stroke-width="3" stroke-linecap="round">
 				{#each gusts as g (g.o)}
 					<path d="M1300 {g.y}h{g.w}" style="--dur:{g.dur}s;animation-delay:{g.delay}s" />
@@ -241,6 +244,7 @@
 		--flame3: #fff0b0;
 		--veil: #e6c08c;
 		--veil-streak: #f4dcb0;
+		--veil-wall: #7d4f33;
 		--veil-o: 0;
 		--starfade: 1;
 	}
@@ -264,6 +268,7 @@
 		--stone: #4a4560;
 		--veil: #5a4636;
 		--veil-streak: #a08462;
+		--veil-wall: #2a2036;
 	}
 	.sky {
 		opacity: var(--starfade);
@@ -274,7 +279,7 @@
 		--starfade: 0.55;
 	}
 	.m-critical {
-		--veil-o: 0.7;
+		--veil-o: 0.85;
 		--starfade: 0.15;
 	}
 	.veil {
@@ -286,7 +291,24 @@
 		transition: opacity 1.2s;
 	}
 	.m-critical .gusts {
-		opacity: 0.55;
+		opacity: 0.85;
+		stroke-width: 5;
+	}
+	.wall {
+		opacity: 0;
+		transition: opacity 1.2s;
+	}
+	.m-warn .wall {
+		opacity: 0.25;
+	}
+	.m-critical .wall {
+		opacity: 0.8;
+		animation: roll 9s ease-in-out infinite alternate;
+	}
+	@keyframes roll {
+		to {
+			transform: translateX(-60px);
+		}
 	}
 	.gusts path {
 		animation: gust var(--dur) linear infinite;
@@ -435,6 +457,7 @@
 		.tw,
 		.flame,
 		.glow,
+		.wall,
 		.gusts path {
 			animation: none;
 		}
