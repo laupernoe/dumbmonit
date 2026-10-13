@@ -24,7 +24,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { ChevronRight, Eye, RefreshCw } from 'lucide-svelte';
+	import { ChevronRight, Eye, RefreshCw, TriangleAlert } from 'lucide-svelte';
 	import PagesTable from './PagesTable.svelte';
 	import ChangeTimeline from './ChangeTimeline.svelte';
 	import ChangePane from './ChangePane.svelte';
@@ -38,6 +38,8 @@
 
 	let pages = $state<WebchangePage[]>([]);
 	let screenshotsAvailable = $state(true);
+	/** Pages found when Max pages stopped the last crawl; `null` when the whole site was read. */
+	let found = $state<number | null>(null);
 	let pagesError = $state<unknown>(null);
 
 	let changes = $state<WebchangeChange[]>([]);
@@ -78,6 +80,7 @@
 			const response = await getWebchangePages(target.id, signal);
 			pages = response.pages;
 			screenshotsAvailable = response.screenshots_available;
+			found = response.found;
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			pagesError = cause;
@@ -179,6 +182,12 @@
 			<ErrorNotice error={checkError} title={m.devicesb_webchange_panel_check_error()} onretry={checkNow} class="mb-3" />
 		{:else if justChecked}
 			<Plate tone="signal" label={m.devicesb_webchange_panel_queued()} size="md" />
+		{/if}
+		{#if found !== null}
+			<p class="mb-2 flex items-start gap-1.5 text-[0.8125rem] text-warning-ink">
+				<TriangleAlert class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+				<span>{m.devicesb_webchange_panel_truncated({ read: pages.length, found })}</span>
+			</p>
 		{/if}
 		{#if !screenshotsAvailable}
 			<p class="text-[0.8125rem] text-ink-2">

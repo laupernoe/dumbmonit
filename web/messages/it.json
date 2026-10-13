@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} pagine monitorate · ultima modifica {when}",
 	"devicesb_webchange_panel_timeline": "Cronologia delle modifiche",
 	"devicesb_webchange_panel_title": "Modifiche del sito web",
+	"devicesb_webchange_panel_truncated": "Solo {read} pagine su almeno {found} sono monitorate: «Pagine massime» ha fermato la scansione. Aumentalo (200 al massimo) o restringi il prefisso del percorso.",
 	"devicesb_webchange_slider_after": "Dopo",
 	"devicesb_webchange_slider_before": "Prima",
 	"devicesb_webchange_slider_label": "Posizione del confronto prima/dopo",

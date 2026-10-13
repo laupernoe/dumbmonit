@@ -29,6 +29,10 @@ async fn serve(State(pages): State<Pages>, request: Request) -> Response {
     let path = request.uri().path().to_string();
     let found = pages.lock().unwrap().get(&path).cloned();
     match found {
+        // Une redirection : le corps est l'adresse de destination.
+        Some((status @ 301..=308, _, location)) => {
+            (StatusCode::from_u16(status).unwrap(), [(header::LOCATION, location)]).into_response()
+        }
         Some((status, content_type, body)) => {
             (StatusCode::from_u16(status).unwrap(), [(header::CONTENT_TYPE, content_type)], body)
                 .into_response()
@@ -443,6 +447,54 @@ fn urlencode(text: &str) -> String {
             _ => format!("%{b:02X}"),
         })
         .collect()
+}
+
+#[tokio::test]
+async fn une_redirection_vers_un_autre_hote_emmene_le_parcours_et_le_plafond_se_signale() {
+    let (base, site) = fake_site().await;
+    // `localhost` et `127.0.0.1` sont deux origines : le départ redirige de
+    // l'une vers l'autre, comme `ex.fr` vers `www.ex.fr`.
+    let port = base.rsplit(':').next().unwrap();
+    let other = format!("http://localhost:{port}");
+    set(&site, "/", 301, format!("{base}/docs/"));
+    set(
+        &site,
+        "/docs/",
+        200,
+        html(
+            "Accueil",
+            &format!(
+                "<p>Bienvenue</p><a href=a.html?utm_source=x>A</a><a href={other}/docs/b.html>B</a>\
+         <a href=c.html>C</a><a href=d.html>D</a>"
+            ),
+        ),
+    );
+    for page in ["a", "b", "c", "d"] {
+        set(&site, &format!("/docs/{page}.html"), 200, html(page, "<p>Texte</p>"));
+    }
+    let s = setup().await;
+    let id = s
+        .create(
+            &format!("{other}/"),
+            json!({ "scope": "site", "max_pages": "3", "allow_private_targets": "true" }),
+        )
+        .await;
+    s.check(id).await;
+
+    let pages = s.get(&format!("/api/targets/{id}/webchange/pages")).await;
+    let mut urls: Vec<String> = pages["pages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p["url"].as_str().unwrap().to_string())
+        .collect();
+    urls.sort();
+    assert_eq!(
+        urls,
+        [format!("{base}/docs/a.html"), format!("{base}/docs/b.html"), format!("{other}/")],
+        "liens suivis sur l'hôte de la redirection, suivi publicitaire retiré"
+    );
+    assert_eq!(pages["found"], 5, "3 lues, 2 encore en attente");
 }
 
 #[tokio::test]

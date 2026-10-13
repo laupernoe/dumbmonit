@@ -46,17 +46,24 @@ may also be a plain text or JSON document, compared line by line.
 2. failing that, or when the sitemap lists nothing under the folder, by
    following the links of each page, breadth first.
 
-Only pages of the same origin (scheme, host and port) are followed; links to
+Only pages of the same origin (scheme, host and port) are followed; when the
+start page redirects to another host (`example.com` to `www.example.com`), the
+site is taken to live there, and links to the first host are read on the second. links to
 images, style sheets, scripts, PDFs, archives and other files are skipped by
 their extension, and any answer that is not HTML is ignored. Fragments
-(`#section`) are dropped and empty queries removed, so one page is one address.
+(`#section`), tracking parameters (`utm_…`, `fbclid`, `gclid` and the like) and
+empty queries are removed, so one page is one address; **Ignore query strings**
+drops the whole `?…` part.
 `robots.txt` is honoured for the pages found this way: the group that names
 `DumbMonit`, or else the `*` group, with `Allow`, `Disallow`, `*` and `$`.
 
 The crawl is polite: two requests at a time at most, half a second between two
 batches, the `User-Agent` `DumbMonit/<version>`, a 15-second timeout per
 request and 5 MB read at most per page. It stops at **Max pages** (25 by
-default, 200 at most) or after ten minutes.
+default, 200 at most) or after ten minutes. When **Max pages** stopped it, the
+device page says how many pages were found, so that the unwatched part of the
+site is never a surprise. **User agent** replaces `DumbMonit/<version>` for a
+site that turns robots away.
 
 ## How a check works
 
@@ -206,6 +213,8 @@ cannot go through a relay agent.
 | Watched area (`content_selector`) | — | Simple selectors; only the text inside them is compared. |
 | Excluded areas (`exclude_selector`) | — | Simple selectors; their text is not compared. |
 | Compare menus, header and footer (`keep_page_chrome`) | `false` | Compare the site's navigation, header, footer and sidebars too. |
+| Ignore query strings (`ignore_query`) | `false` | Site scope: addresses that differ only by their `?…` part are one page. |
+| User agent (`user_agent`) | — | Sent instead of `DumbMonit/<version>`. |
 | Screenshots (`screenshots`) | `true` | Keep a screenshot of each new version, when a browser is configured. |
 | Check every (`check_interval_minutes`) | `60` | Minutes between two checks, 5 to 10080. |
 | Accept an unverifiable certificate (`insecure_tls`) | `false` | For a site of your own behind a self-signed certificate. |

@@ -3039,6 +3039,7 @@
 	"devicesb_webchange_panel_summary_other": "监控 {count} 个页面 · 最近更改：{when}",
 	"devicesb_webchange_panel_timeline": "更改时间线",
 	"devicesb_webchange_panel_title": "网站更改",
+	"devicesb_webchange_panel_truncated": "仅监控了至少 {found} 个页面中的 {read} 个：“最大页面数”已停止抓取。请提高该值（最多 200）或缩小路径前缀。",
 	"devicesb_webchange_slider_after": "之后",
 	"devicesb_webchange_slider_before": "之前",
 	"devicesb_webchange_slider_label": "前后对比位置",

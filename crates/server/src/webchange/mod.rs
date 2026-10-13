@@ -538,6 +538,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
         &options.fingerprint,
         changes,
         summarise(&changed).as_deref(),
+        crawl.found.map(|found| found as i64),
         start_error.as_ref().map(|(kind, message)| (*kind, message.as_str())),
     )
     .await?;

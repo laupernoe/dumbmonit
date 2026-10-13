@@ -51,17 +51,25 @@ aussi être un document texte brut ou JSON, comparé ligne par ligne.
    les liens de chaque page, en largeur d'abord.
 
 Seules les pages de la même origine (schéma, hôte et port) sont suivies ;
-les liens vers images, feuilles de style, scripts, PDF, archives et autres
+quand la page de départ redirige vers un autre hôte (`example.com` vers
+`www.example.com`), le site est tenu pour être là-bas, et les liens vers le
+premier hôte sont lus sur le second. Les liens vers images, feuilles de style, scripts, PDF, archives et autres
 fichiers sont ignorés par leur extension, et toute réponse qui n'est pas
-HTML est ignorée. Les fragments (`#section`) sont abandonnés et les
-requêtes vides retirées, une page est donc une adresse. `robots.txt` est
+HTML est ignorée. Les fragments (`#section`), les paramètres de suivi
+(`utm_…`, `fbclid`, `gclid` et consorts) et les requêtes vides sont retirés,
+une page est donc une adresse ; **Ignorer les paramètres d'URL** retire toute
+la partie `?…`. `robots.txt` est
 respecté pour les pages trouvées ainsi : le groupe qui nomme `DumbMonit`,
 ou sinon le groupe `*`, avec `Allow`, `Disallow`, `*` et `$`.
 
 Le crawl est poli : deux requêtes à la fois au plus, une demi-seconde
 entre deux lots, le `User-Agent` `DumbMonit/<version>`, un délai de 15
 secondes par requête et 5 Mo lus au plus par page. Il s'arrête à
-**Pages maximum** (25 par défaut, 200 au plus) ou après dix minutes.
+**Pages maximum** (25 par défaut, 200 au plus) ou après dix minutes. Quand
+**Pages maximum** l'a arrêté, la page de l'appareil dit combien de pages ont
+été trouvées : la partie du site non surveillée n'est jamais une surprise.
+**User agent** remplace `DumbMonit/<version>` pour un site qui refuse les
+robots.
 
 ## Comment une vérification fonctionne
 
@@ -226,6 +234,8 @@ relais.
 | Zone surveillée (`content_selector`) | — | Sélecteurs simples ; seul le texte qu'ils contiennent est comparé. |
 | Zones exclues (`exclude_selector`) | — | Sélecteurs simples ; leur texte n'est pas comparé. |
 | Comparer menus, en-tête et pied de page (`keep_page_chrome`) | `false` | Comparer aussi la navigation, l'en-tête, le pied de page et les encadrés du site. |
+| Ignorer les paramètres d'URL (`ignore_query`) | `false` | Portée site : les adresses qui ne diffèrent que par leur partie `?…` sont une même page. |
+| User agent (`user_agent`) | — | Envoyé à la place de `DumbMonit/<version>`. |
 | Captures d'écran (`screenshots`) | `true` | Garder une capture d'écran de chaque nouvelle version, quand un navigateur est configuré. |
 | Vérifier toutes les (`check_interval_minutes`) | `60` | Minutes entre deux vérifications, de 5 à 10080. |
 | Accepter un certificat non vérifiable (`insecure_tls`) | `false` | Pour un site propre derrière un certificat autosigné. |
