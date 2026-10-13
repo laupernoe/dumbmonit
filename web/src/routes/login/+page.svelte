@@ -17,6 +17,7 @@
 	import { KeyRound, Info } from 'lucide-svelte';
 	import { tick } from 'svelte';
 	import Logo from '#lib/components/Logo.svelte';
+	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 	import Mascot from '#lib/components/Mascot.svelte';
@@ -182,7 +183,9 @@
 <div class="relative min-h-screen overflow-hidden bg-canvas">
 	<DotField opacity={1} dotSpacing={13} />
 
-	<div class="absolute top-3 right-3 z-20 sm:top-4 sm:right-4">
+	<div class="absolute top-3 right-3 z-20 flex items-center gap-1 sm:top-4 sm:right-4">
+		<label for="login-language" class="sr-only">{m["settings.appearance.language_label"]()}</label>
+		<LanguageSelect id="login-language" class="max-w-36 border-transparent bg-transparent" />
 		<ThemeToggle />
 	</div>
 

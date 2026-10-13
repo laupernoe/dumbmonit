@@ -4742,6 +4742,7 @@
 	"settings_backup_to_update": "待更新 {count}",
 	"settings_backup_without_key": "不含密钥",
 	"settings_backup_write_error": "无法写入备份",
+	"settings_language_auto": "自动（浏览器语言）",
 	"settings_music_account": "账户",
 	"settings_music_admin_only": "管理员可在此连接 Spotify 账户。",
 	"settings_music_app": "应用（Client ID）",
