@@ -58,7 +58,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: everyone startles once. */
@@ -67,21 +67,56 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
 		theme,
 		now,
-		mood,
+		mood: moodIn = 'calm',
 		problems,
 		startle = 0,
 		paused = false,
 		focus = 0,
+		pulse = null,
 		class: className = ''
 	}: Props = $props();
 
 	const motion = !reducedMotion();
+
+	// The wall's moods and the status page's ones are the same weather.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	// A short landmark gesture, replayed whenever `pulse.at` changes. Reduced
+	// motion skips it: the scene holds its still pose.
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let gestureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(gestureTimer);
+		if (!motion) return;
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			gestureTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(gestureTimer));
 
 	// --- Stage fit ----------------------------------------------------------------
 
@@ -290,6 +325,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -409,6 +446,15 @@
 				<div class="glow flood" style:left="{CASTLE.x - 60}px" style:top="{CASTLE.y - 200}px"></div>
 			{/if}
 
+			<!-- The gesture: Chillon sinks into silhouette (down) or is floodlit gold (up). -->
+			{#if active === 'down' || active === 'up'}
+				{#key playKey}
+					<svg class="layer" viewBox={box}>
+						<use href="#mt-castle" class={active === 'down' ? 'mt-dim' : 'mt-flood'} />
+					</svg>
+				{/key}
+			{/if}
+
 			<!-- Ripples on the lake -->
 			<svg class="layer ripples" viewBox={box}>
 				<g class="rip rip-a" stroke="var(--cloud)" stroke-width="3" stroke-linecap="round" opacity="0.5">
@@ -442,6 +488,14 @@
 				<span class="puff p2" style="left:100px"></span>
 				<span class="puff" style="left:226px"></span>
 				<span class="puff p2" style="left:226px"></span>
+				{#if active === 'resolved'}
+					{#key playKey}
+						{#each [0, 1, 2] as k (k)}
+							<span class="toot" style="left:170px" style:animation-delay="{k * 1.5}s"></span>
+							<span class="toot" style="left:296px" style:animation-delay="{k * 1.5 + 0.2}s"></span>
+						{/each}
+					{/key}
+				{/if}
 			</div>
 
 			{#if flyer}
@@ -506,6 +560,10 @@
 					</svg>
 				</div>
 				<div class="veil"></div>
+				<svg class="layer bolt-layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+					<path class="bolt" d="M1180 0l-70 250 60-10-90 330 160-360-70 10z" fill="#fff" />
+				</svg>
+				<div class="flash"></div>
 			{/if}
 		</div>
 	{/if}
@@ -806,6 +864,108 @@
 		}
 	}
 
+	.flash {
+		position: absolute;
+		inset: 0;
+		background: #d6defc;
+		opacity: 0;
+		animation: flash 11s linear infinite;
+	}
+	.bolt {
+		opacity: 0;
+		animation: bolt 11s linear infinite;
+	}
+	@keyframes flash {
+		0%,
+		90%,
+		100% {
+			opacity: 0;
+		}
+		91% {
+			opacity: 0.5;
+		}
+		92% {
+			opacity: 0.04;
+		}
+		93.5% {
+			opacity: 0.38;
+		}
+		96% {
+			opacity: 0;
+		}
+	}
+	@keyframes bolt {
+		0%,
+		90.5%,
+		94%,
+		100% {
+			opacity: 0;
+		}
+		91%,
+		93.5% {
+			opacity: 0.9;
+		}
+	}
+
+	/* The gesture: Chillon goes dark or is floodlit; the steamer toots (resolved). */
+	.mt-dim {
+		filter: brightness(0.1);
+		opacity: 0;
+		animation: mt-dim 5.2s ease-in-out both;
+	}
+	.mt-flood {
+		filter: brightness(1.7) sepia(1) saturate(3.5);
+		opacity: 0;
+		animation: mt-flood 5.2s ease-in-out both;
+	}
+	.toot {
+		position: absolute;
+		top: 30px;
+		width: 70px;
+		height: 70px;
+		border-radius: 50%;
+		background: radial-gradient(circle, var(--smoke), transparent 70%);
+		opacity: 0;
+		animation: toot 2.2s ease-out both;
+	}
+	@keyframes mt-dim {
+		12%,
+		80% {
+			opacity: 0.8;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes mt-flood {
+		15% {
+			opacity: 0.9;
+		}
+		30% {
+			opacity: 0.5;
+		}
+		45%,
+		75% {
+			opacity: 0.85;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes toot {
+		0% {
+			transform: translate(0, 0) scale(0.4);
+			opacity: 0;
+		}
+		15% {
+			opacity: 0.95;
+		}
+		100% {
+			transform: translate(-50px, -150px) scale(2.8);
+			opacity: 0;
+		}
+	}
+
 	/* A hidden tab: everything holds its breath. */
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
@@ -821,7 +981,15 @@
 	.scene--still .steamer {
 		transform: translateX(520px);
 	}
+	.scene--still .flash,
+	.scene--still .bolt {
+		display: none;
+	}
 	@media (prefers-reduced-motion: reduce) {
+		.flash,
+		.bolt {
+			display: none;
+		}
 		.scene :global(*) {
 			animation: none !important;
 			transition: none !important;
