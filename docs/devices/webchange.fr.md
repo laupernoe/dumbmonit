@@ -128,9 +128,11 @@ LAN privées sont toujours autorisées.
 ## Alertes
 
 La règle intégrée **Site web changé** (`webchange_detected`, Info) se
-déclenche après une vérification qui a trouvé au moins un changement
-(page changée, nouvelle ou supprimée), et se résout à la prochaine
-vérification qui n'en trouve aucun. Elle lit
+déclenche après chaque vérification qui a trouvé au moins un changement
+(page changée, nouvelle ou supprimée), et la notification nomme les pages :
+« /tarifs, /contact and 2 more ». Deux vérifications de suite qui trouvent
+toutes deux des changements donnent deux notifications, même sur les mêmes
+pages ; l'alerte d'une vérification se résout à la suivante. Elle lit
 `dumbmonit_webchange_last_check_changes` ; attachez-la à un canal comme
 toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 [Règles intégrées](../alerting/rules.md#website-changes).
@@ -139,7 +141,7 @@ toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 |---|---|
 | `dumbmonit_webchange_pages` | Pages suivies (pages supprimées exclues). |
 | `dumbmonit_webchange_pages_failed` | Pages suivies dont la dernière lecture a échoué. |
-| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification. |
+| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification ; quand il y en a, l'étiquette `changes` liste les pages et `check` l'heure de la vérification. |
 
 Les métriques apparaissent une fois la première vérification faite.
 

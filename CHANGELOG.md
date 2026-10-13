@@ -149,6 +149,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Every website check that finds changes is notified, and says which
+  pages.** The "Website changed" alert stayed open while consecutive checks
+  kept finding changes, so only the first of them was ever notified, and the
+  message only gave a count. Each such check is now an alert of its own, whose
+  notification names the pages ("/pricing, /contact and 2 more"). See
+  [Alerts](docs/devices/webchange.md#alerts).
 - **Every channel type can be saved.** The database still only accepted the
   first seven channel types (Discord, ntfy, Gotify, Telegram, Slack, webhook,
   email): saving a Matrix, Teams, Pushover or other channel failed with an

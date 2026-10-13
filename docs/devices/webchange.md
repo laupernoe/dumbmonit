@@ -115,8 +115,10 @@ targets** is enabled; private LAN addresses are always allowed.
 ## Alerts
 
 The built-in rule **Website changed** (`webchange_detected`, Info) fires after
-a check that found at least one change (changed, new or removed page), and
-resolves at the next check that finds none. It reads
+each check that found at least one change (changed, new or removed page), and
+the notification names the pages: "/pricing, /contact and 2 more". Two checks
+in a row that both find changes are two notifications, even on the same pages;
+the alert of a check resolves at the next check. It reads
 `dumbmonit_webchange_last_check_changes`; attach it to a channel like any other
 rule, or raise its severity, in **Alerts → Rules**. See
 [Built-in rules](../alerting/rules.md#website-changes).
@@ -125,7 +127,7 @@ rule, or raise its severity, in **Alerts → Rules**. See
 |---|---|
 | `dumbmonit_webchange_pages` | Pages followed (removed pages excluded). |
 | `dumbmonit_webchange_pages_failed` | Pages followed whose last read failed. |
-| `dumbmonit_webchange_last_check_changes` | Changes found by the last check. |
+| `dumbmonit_webchange_last_check_changes` | Changes found by the last check; when there are some, the `changes` label lists the pages and `check` the time of the check. |
 
 The metrics appear once the first check is done.
 
