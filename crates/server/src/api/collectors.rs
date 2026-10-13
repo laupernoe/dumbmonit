@@ -1140,6 +1140,13 @@ const WEBSITE_OPTIONS: &[OptionView] = &[
         "10",
     ),
     text(
+        "category",
+        "Category",
+        "A label of your own (Shop, Blog, Client: Acme…), shown with the site and in its metrics. Set by the CSV import, which also guesses one (E-commerce, Blog, Web app, Showcase) when the page gives a clear sign. Empty: none.",
+        "Shop",
+        "",
+    ),
+    text(
         "user_agent",
         "User agent",
         "Sent instead of DumbMonit's own, for a site that serves robots differently. Empty: DumbMonit/<version>.",
@@ -1161,6 +1168,106 @@ const WEBSITE_OPTIONS: &[OptionView] = &[
             "360",
         ),
         "Pacing",
+    ),
+    grouped(
+        number(
+            "confirm_checks",
+            "Confirm a change after (checks)",
+            "A different title, description, canonical URL or other watched value is only reported once it was read this many times in a row, from 1 to 10. Keeps A/B tests and flaky caches quiet. Also applies to the sharp drop of the page text.",
+            "2",
+            "2",
+        ),
+        "Change detection",
+    ),
+    grouped(
+        number(
+            "text_drop_percent",
+            "Near-empty page: text drop (%)",
+            "Reports a page whose visible text falls by more than this percentage below its usual size (a 200+ character reference is needed), from 0 to 99, confirmed like any change. Catches a page that is no longer blank but almost. 0 turns the check off.",
+            "80",
+            "80",
+        ),
+        "Change detection",
+    ),
+    grouped(
+        boolean(
+            "watch_final_url",
+            "Watch the final address",
+            "Report when, after its redirects, the site lands somewhere else (another host or path). http to https, www and trailing slashes never count.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean("watch_title", "Watch the title", "Report a changed or missing <title>.", true),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_description",
+            "Watch the meta description",
+            "Report a changed or missing meta description.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_canonical",
+            "Watch the canonical URL",
+            "Report a changed or missing canonical link.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_robots",
+            "Watch the robots directives",
+            "Report a changed robots meta tag or X-Robots-Tag header (noindex, nofollow…).",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_open_graph",
+            "Watch Open Graph",
+            "Report a changed og:title or og:description.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean("watch_lang", "Watch the page language", "Report a changed <html lang>.", true),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_h1",
+            "Watch the h1 count",
+            "Report a different number of <h1> headings.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_hreflang",
+            "Watch hreflang",
+            "Report a changed set of hreflang language alternates.",
+            true,
+        ),
+        "Watched metadata",
+    ),
+    grouped(
+        boolean(
+            "watch_google_verification",
+            "Watch the Google verification tag",
+            "Report a changed or missing google-site-verification meta tag (losing it can cut access to Search Console).",
+            true,
+        ),
+        "Watched metadata",
     ),
     grouped(
         number(
@@ -3906,8 +4013,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 steps: &[
                     "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
                     "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
-                    "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
-                    "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder.",
+                    "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.",
+                    "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder.",
                 ],
                 warning: "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
                 doc_url: "",
@@ -5274,9 +5381,22 @@ mod tests {
                     "expect_text",
                     "min_text_chars",
                     "max_redirects",
+                    "category",
                     "user_agent",
                     "ignore_query",
                     "change_check_minutes",
+                    "confirm_checks",
+                    "text_drop_percent",
+                    "watch_final_url",
+                    "watch_title",
+                    "watch_description",
+                    "watch_canonical",
+                    "watch_robots",
+                    "watch_open_graph",
+                    "watch_lang",
+                    "watch_h1",
+                    "watch_hreflang",
+                    "watch_google_verification",
                     "host_spacing_seconds",
                     "allow_private_targets",
                 ],
@@ -6039,6 +6159,17 @@ mod tests {
             Some(o::DEFAULT_MAX_REDIRECTS.to_string().as_str())
         );
         assert_eq!(defaut(o::OPTION_IGNORE_QUERY), Some("true"));
+        assert_eq!(
+            defaut(o::OPTION_CONFIRM_CHECKS),
+            Some(o::DEFAULT_CONFIRM_CHECKS.to_string().as_str())
+        );
+        assert_eq!(
+            defaut(o::OPTION_TEXT_DROP),
+            Some(o::DEFAULT_TEXT_DROP_PERCENT.to_string().as_str())
+        );
+        for (cle, _) in crate::website::changes::WATCH_GROUPS {
+            assert_eq!(defaut(cle), Some("true"), "{cle}");
+        }
         assert_eq!(
             defaut(o::OPTION_CHANGE_CHECK),
             Some(o::DEFAULT_CHANGE_CHECK_MINUTES.to_string().as_str())

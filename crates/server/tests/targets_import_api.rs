@@ -62,6 +62,15 @@ async fn fake_sites() -> String {
             }),
         )
         .route(
+            "/shop",
+            get(|| async {
+                Html(
+                    "<html><head><meta property=\"og:type\" content=\"product\">\
+                     <title>Boutique</title></head><body>Bonjour</body></html>",
+                )
+            }),
+        )
+        .route(
             "/plain",
             get(|| async {
                 Html("<html><head><title>Simple</title></head><body>Salut</body></html>")
@@ -314,6 +323,31 @@ async fn sans_dossier_la_plateforme_decide_du_dossier() {
     // Un site injoignable retombe aussi dans « Other ».
     let mort = import_csv(&lab, "url\nhttp://127.0.0.1:1/\n").await;
     assert_eq!(mort.body["rows"][0]["folder"], json!("Websites/Other"), "{}", mort.body);
+}
+
+#[tokio::test]
+async fn la_categorie_donnee_ou_devinee_range_le_site() {
+    let lab = lab().await;
+    let base = fake_sites().await;
+    let csv = format!("url,category\n{base}/shop,\n{base}/wp,Clients\n{base}/plain,\n");
+    let reply = import_csv(&lab, &csv).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let rows = reply.body["rows"].as_array().unwrap();
+    assert_eq!(rows[0]["folder"], json!("Websites/E-commerce"), "{}", rows[0]);
+    assert_eq!(rows[0]["category"], json!("E-commerce"));
+    assert_eq!(rows[1]["folder"], json!("Websites/Clients"), "catégorie donnée : elle prime");
+    assert_eq!(rows[2]["folder"], json!("Websites/Other"), "trop incertain : plateforme");
+    assert!(rows[2]["category"].is_null());
+
+    let id = rows[0]["id"].as_i64().expect("id");
+    let cible = lab.app.get(&format!("/api/targets/{id}"), Some(&lab.admin)).await;
+    assert_eq!(cible.body["tags"]["category"], json!("ecommerce"), "{}", cible.body);
+    let id = rows[1]["id"].as_i64().expect("id");
+    let cible = lab.app.get(&format!("/api/targets/{id}"), Some(&lab.admin)).await;
+    assert_eq!(cible.body["tags"]["category"], json!("Clients"));
+
+    let invalide = import_csv(&lab, &format!("url,category\n{base}/wp,a/b\n")).await;
+    assert_eq!(invalide.body["errors"], json!(1), "{}", invalide.body);
 }
 
 #[tokio::test]

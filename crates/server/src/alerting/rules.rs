@@ -4911,6 +4911,37 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         Rule {
+            description: "The visible text of the page fell far below its usual size (option \"Near-empty page: text drop\"), confirmed on several checks in a row: a page that is no longer blank, but almost.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3 * 60),
+            severity: Severity::Warning,
+            ..base("website_text_dropped", "Website page nearly empty", RuleKind::Threshold, "dumbmonit_website_text_dropped")
+        },
+        Rule {
+            description: "The Google site verification tag (google-site-verification) changed or disappeared, confirmed on several checks in a row. Losing it can cut access to Search Console.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base("website_google_verification_changed", "Website Google verification changed", RuleKind::Threshold, "dumbmonit_website_google_verification_changed")
+        },
+        Rule {
+            description: "The robots directives, Open Graph tags, page language, h1 count or hreflang alternates of the page changed, confirmed on several checks in a row.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base(
+                "website_seo_markup_changed",
+                "Website SEO markup changed",
+                RuleKind::Threshold,
+                "dumbmonit_website_robots_changed + dumbmonit_website_open_graph_changed + dumbmonit_website_lang_changed + dumbmonit_website_h1_changed + dumbmonit_website_hreflang_changed",
+            )
+        },
+        Rule {
             description: "The website takes more than five seconds to answer, redirects included.".to_string(),
             operator: Operator::Gt,
             threshold: 5.0,
@@ -6017,6 +6048,9 @@ mod tests {
             "website_canonical_changed",
             "website_final_url_changed",
             "website_metadata_changed",
+            "website_text_dropped",
+            "website_google_verification_changed",
+            "website_seo_markup_changed",
             "website_slow",
             "k8s_node_not_ready",
             "k8s_node_pressure",
@@ -6413,6 +6447,13 @@ mod tests {
             "dumbmonit_website_final_url_changed",
             "dumbmonit_website_title_changed",
             "dumbmonit_website_description_changed",
+            "dumbmonit_website_text_dropped",
+            "dumbmonit_website_google_verification_changed",
+            "dumbmonit_website_robots_changed",
+            "dumbmonit_website_open_graph_changed",
+            "dumbmonit_website_lang_changed",
+            "dumbmonit_website_h1_changed",
+            "dumbmonit_website_hreflang_changed",
             "dumbmonit_website_response_seconds",
             // Appareils clients, générique (`collectors/client_devices.rs`).
             "dumbmonit_client_device_stale_seconds",

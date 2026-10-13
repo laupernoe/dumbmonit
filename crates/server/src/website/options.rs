@@ -2,6 +2,7 @@
 //! cible. Toute erreur ici est une erreur de configuration : elle s'affiche à
 //! côté de l'équipement et ne déclenche aucune alerte.
 
+use std::collections::BTreeSet;
 use std::time::Duration;
 
 use dumbmonit_proto::{ProbeError, Target};
@@ -11,16 +12,26 @@ use sha2::{Digest, Sha256};
 pub const OPTION_EXPECT_TEXT: &str = "expect_text";
 pub const OPTION_MIN_TEXT_CHARS: &str = "min_text_chars";
 pub const OPTION_MAX_REDIRECTS: &str = "max_redirects";
+pub const OPTION_CATEGORY: &str = "category";
 pub const OPTION_USER_AGENT: &str = "user_agent";
 pub const OPTION_IGNORE_QUERY: &str = "ignore_query";
 pub const OPTION_ALLOW_PRIVATE: &str = dumbmonit_collectors::uptime::guard::OPTION;
 pub const OPTION_CHANGE_CHECK: &str = "change_check_minutes";
 pub const OPTION_HOST_SPACING: &str = "host_spacing_seconds";
+pub const OPTION_CONFIRM_CHECKS: &str = "confirm_checks";
+pub const OPTION_TEXT_DROP: &str = "text_drop_percent";
 
 pub const DEFAULT_MIN_TEXT_CHARS: u32 = 20;
 pub const MAX_MIN_TEXT_CHARS: u32 = 100_000;
 pub const DEFAULT_MAX_REDIRECTS: u32 = 10;
 pub const MAX_MAX_REDIRECTS: u32 = 30;
+/// Lectures de suite qui confirment un changement.
+pub const DEFAULT_CONFIRM_CHECKS: u32 = 2;
+pub const MAX_CONFIRM_CHECKS: u32 = 10;
+/// Chute du texte visible, en % de la référence, qui compte comme une page
+/// quasi vide ; 0 coupe le suivi.
+pub const DEFAULT_TEXT_DROP_PERCENT: u32 = 80;
+pub const MAX_TEXT_DROP_PERCENT: u32 = 99;
 pub const DEFAULT_IGNORE_QUERY: bool = true;
 /// Défaut de `DUMBMONIT_WEBSITE_CHANGE_CHECK_MINUTES` : six heures.
 pub const DEFAULT_CHANGE_CHECK_MINUTES: u32 = 360;
@@ -39,6 +50,8 @@ pub struct Options {
     pub min_text_chars: usize,
     pub max_redirects: usize,
     pub user_agent: Option<String>,
+    /// Catégorie posée à la main (texte libre).
+    pub category: Option<String>,
     /// Les paramètres d'URL (`?utm_source=…`) ne comptent pas dans les
     /// comparaisons d'adresses (adresse finale, canonique).
     pub ignore_query: bool,
@@ -49,6 +62,12 @@ pub struct Options {
     /// Écart minimal avant la requête suivante vers le même domaine ; `None` :
     /// celui de l'instance.
     pub host_spacing: Option<Duration>,
+    /// Lectures de suite qui confirment un changement de métadonnée.
+    pub confirm_checks: u32,
+    /// Chute du texte visible (% de la référence) à signaler ; 0 : coupé.
+    pub text_drop_percent: u32,
+    /// Champs de métadonnées comparés (les autres sont ignorés).
+    pub watched: BTreeSet<&'static str>,
     /// Empreinte de ce qui change la comparaison elle-même (adresse,
     /// `ignore_query`) : quand elle change, la référence repart de zéro au lieu
     /// de signaler un changement.
@@ -59,6 +78,12 @@ impl Options {
     pub fn from_target(target: &Target) -> Result<Self, ProbeError> {
         let url = parse_url(&target.address)?;
         let ignore_query = parse_bool(target, OPTION_IGNORE_QUERY, DEFAULT_IGNORE_QUERY)?;
+        let mut watched = BTreeSet::new();
+        for (option, fields) in super::changes::WATCH_GROUPS {
+            if parse_bool(target, option, true)? {
+                watched.extend(fields.iter().copied());
+            }
+        }
         let mut hasher = Sha256::new();
         hasher.update(url.as_str().as_bytes());
         hasher.update([0, u8::from(ignore_query)]);
@@ -77,10 +102,24 @@ impl Options {
                 0..=MAX_MAX_REDIRECTS,
             )? as usize,
             user_agent: tag(target, OPTION_USER_AGENT).map(str::to_string),
+            category: tag(target, OPTION_CATEGORY).map(str::to_string),
             ignore_query,
             allow_private: parse_bool(target, OPTION_ALLOW_PRIVATE, false)?,
             change_check: change_check(target)?,
             host_spacing: host_spacing(target)?,
+            confirm_checks: parse_u32(
+                target,
+                OPTION_CONFIRM_CHECKS,
+                DEFAULT_CONFIRM_CHECKS,
+                1..=MAX_CONFIRM_CHECKS,
+            )?,
+            text_drop_percent: parse_u32(
+                target,
+                OPTION_TEXT_DROP,
+                DEFAULT_TEXT_DROP_PERCENT,
+                0..=MAX_TEXT_DROP_PERCENT,
+            )?,
+            watched,
             fingerprint: hex::encode(hasher.finalize()),
             url,
         })
@@ -195,6 +234,42 @@ pub(crate) mod tests {
         assert!(options.expect_text.is_none() && options.user_agent.is_none());
         assert!(!options.allow_private);
         assert!(options.change_check.is_none() && options.host_spacing.is_none());
+        assert_eq!((options.confirm_checks, options.text_drop_percent), (2, 80));
+        assert_eq!(options.watched.len(), super::super::changes::FIELDS.len(), "tout est suivi");
+    }
+
+    #[test]
+    fn controles_activables_un_par_un() {
+        let options = Options::from_target(&target(
+            "ex.fr",
+            &[
+                ("watch_title", "off"),
+                ("watch_open_graph", "false"),
+                ("watch_hreflang", "0"),
+                ("confirm_checks", "4"),
+                ("text_drop_percent", "0"),
+            ],
+        ))
+        .unwrap();
+        for field in ["title", "og_title", "og_description", "hreflang", "hreflang_count"] {
+            assert!(!options.watched.contains(field), "{field}");
+        }
+        assert!(options.watched.contains("canonical") && options.watched.contains("final_url"));
+        assert_eq!((options.confirm_checks, options.text_drop_percent), (4, 0));
+        for (key, value) in [
+            ("confirm_checks", "0"),
+            ("confirm_checks", "11"),
+            ("text_drop_percent", "100"),
+            ("watch_title", "peut-être"),
+        ] {
+            assert!(
+                matches!(
+                    Options::from_target(&target("ex.fr", &[(key, value)])),
+                    Err(ProbeError::Config(_))
+                ),
+                "{key}={value}"
+            );
+        }
     }
 
     #[test]
