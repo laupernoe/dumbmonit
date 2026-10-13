@@ -190,3 +190,12 @@ pip install -r docs/requirements.txt
 mkdocs serve
 mkdocs build --strict   # what Read the Docs runs; must pass with no warnings
 ```
+
+Each language is a separate Read the Docs project (`dumbmonit` for English, then
+`dumbmonit-fr`, `dumbmonit-de`, ... linked as translations), all built from the same
+`mkdocs.yml`. `hooks/rtd_language.py` reads `READTHEDOCS_LANGUAGE` and builds that one language
+at the root of the site: the `page.<lang>.md` files replace the English pages, a page without
+translation stays in English with a notice, and the navigation titles come from
+`hooks/nav_translations.yml`. Locally the variable is unset and the build is English; to
+preview another language: `READTHEDOCS_LANGUAGE=fr mkdocs serve` (`de`, `es`, `it`, `pt`,
+`pt-br`, `ru`, `zh-cn`).
