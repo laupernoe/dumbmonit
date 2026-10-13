@@ -1,17 +1,30 @@
 <script lang="ts">
 	/**
-	 * The Colossus of Rhodes: a giant bronze sun god straddling the harbour entrance on two stone moles, torch raised, sailing ships passing beneath. Static, no animation. Follows the scene contract: fills its
-	 * positioned parent, the headline zone (top left) is left clear, the
-	 * palette lives here with a light and a dark set.
+	 * The Colossus of Rhodes. The torch flame is snuffed out in a puff of smoke on `down`, flares back to life on `up`, and on `resolved` it erupts in a shower of sparks.
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
 	 */
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	const SPARKS = Array.from({ length: 16 }, (_, i) => {
+		const a = (i / 16) * Math.PI * 2 - Math.PI / 2;
+		const r = 60 + (i % 3) * 22;
+		return { dx: Math.round(Math.cos(a) * r), dy: Math.round(Math.sin(a) * r), d: (i % 4) * 90 };
+	});
 </script>
 
-<div class="scene scene-rhodes" aria-hidden="true">
+<div class="scene scene-rhodes" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 <defs><linearGradient id="rh-wat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--water1)"/><stop offset="1" stop-color="var(--water2)"/></linearGradient><radialGradient id="rh-flame"><stop offset="0" stop-color="var(--flame)" stop-opacity=".9"/><stop offset="1" stop-color="var(--flame)" stop-opacity="0"/></radialGradient></defs>
 <g fill="var(--star)"><circle cx="1010" cy="118" r="2"/><circle cx="1250" cy="104" r="2.2"/><circle cx="1560" cy="120" r="2"/><circle cx="1650" cy="230" r="2.2"/><circle cx="1130" cy="190" r="1.8"/><circle cx="1440" cy="160" r="1.8"/><circle cx="780" cy="200" r="2"/></g>
 <circle cx="1204" cy="196" r="82" fill="var(--sun)" opacity=".55"/><circle cx="1204" cy="196" r="56" fill="var(--sun)"/>
 <g fill="var(--cloud)" opacity=".75"><ellipse cx="820" cy="140" rx="80" ry="12"/><ellipse cx="870" cy="154" rx="50" ry="9"/><ellipse cx="1640" cy="250" rx="80" ry="11"/><ellipse cx="1580" cy="130" rx="50" ry="8"/></g>
+<SceneWeather mood={wx} layer="back" />
 <path d="M560 482C640 430 760 410 860 452C940 426 1030 436 1100 482Z" fill="var(--hill)" opacity=".8"/>
 <path d="M1320 482C1400 440 1500 420 1600 454C1670 436 1730 446 1780 470V482Z" fill="var(--hill)" opacity=".8"/>
 <g fill="var(--town)" opacity=".9"><rect x="1600" y="448" width="22" height="18"/><rect x="1626" y="440" width="26" height="26"/><rect x="1656" y="452" width="22" height="14"/><rect x="1682" y="444" width="20" height="22"/></g>
@@ -39,19 +52,51 @@
 <path d="M1226 252L1250 214L1262 154L1274 156L1264 220L1242 266Z" fill="var(--bronze)"/>
 <path d="M1262 156L1268 130" stroke="var(--bronze2)" stroke-width="7" stroke-linecap="round"/>
 <path d="M1256 134h24l-4 14h-16Z" fill="var(--bronze2)"/>
-<circle cx="1268" cy="116" r="30" fill="url(#rh-flame)"/>
+<g class="flame"><circle cx="1268" cy="116" r="30" fill="url(#rh-flame)"/>
 <path d="M1268 134C1254 124 1260 108 1268 94C1270 106 1282 110 1280 124C1280 130 1274 134 1268 134Z" fill="var(--flame)"/>
-<path d="M1268 130C1262 124 1266 116 1268 110C1272 116 1274 122 1268 130Z" fill="var(--flame2)"/>
+<path d="M1268 130C1262 124 1266 116 1268 110C1272 116 1274 122 1268 130Z" fill="var(--flame2)"/></g>
 <rect x="1196" y="218" width="16" height="22" fill="var(--bronze2)"/>
 <circle cx="1204" cy="196" r="19" fill="var(--bronze)"/><path d="M1204 178a19 19 0 0 0-19 19c8-4 14-12 19-19Z" fill="var(--bronze2)" opacity=".5"/>
 <g fill="var(--flame)"><path d="M1194.1 175.7L1176.5 166L1191.2 179.8Z"/><path d="M1197.8 173.2L1184 158.5L1193.7 176.1Z"/><path d="M1202.1 171.9L1193.5 153.7L1197.3 173.5Z"/><path d="M1206.5 172L1204 152L1201.5 172Z"/><path d="M1210.7 173.5L1214.5 153.7L1205.9 171.9Z"/><path d="M1214.3 176.1L1224 158.5L1210.2 173.2Z"/><path d="M1216.8 179.8L1231.5 166L1213.9 175.7Z"/></g>
 </g>
+{#if pl.kind === 'down'}
+	{#key pl.key}
+		<g class="smoke">
+			{#each [0, 1, 2, 3] as i}<circle class="puff" cx={1268 + (i % 2 ? 6 : -6)} cy="110" r={10 + i * 3} style="animation-delay:{i * 450}ms" />{/each}
+		</g>
+	{/key}
+{/if}
+{#if pl.kind === 'resolved'}
+	{#key pl.key}
+		<g class="sparks" transform="translate(1268 112)">
+			{#each SPARKS as s}<circle class="sp" r="3" style="--dx:{s.dx}px;--dy:{s.dy}px;animation-delay:{s.d}ms" />{/each}
+		</g>
+	{/key}
+{/if}
+<SceneWeather mood={wx} layer="front" />
 	</svg>
 </div>
 
 <style>
 	.scene { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, var(--sky1), var(--sky2) 73.5%, var(--water1) 74.4%, var(--water1) 80%, var(--water2)); }
 	svg { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%); }
+	.flame { transform-box: fill-box; transform-origin: 50% 100%; }
+	.puff { fill: #8a8f9e; opacity: 0; }
+	.sp { fill: var(--flame); opacity: 0; filter: drop-shadow(0 0 3px var(--flame)); }
+	@media (prefers-reduced-motion: no-preference) {
+		.flame { animation: rh-flicker 2.4s ease-in-out infinite alternate; }
+		.p-down .flame { animation: rh-snuff 5s ease-in-out both; }
+		.p-up .flame { animation: rh-relight 3s ease-out both; }
+		.p-ok .flame { animation: rh-flare 2.4s ease-out both; }
+		.puff { animation: rh-puff 2.2s ease-out both; }
+		.sp { animation: rh-spark 1.8s ease-out both; }
+	}
+	@keyframes rh-flicker { to { transform: scale(1.06, 0.95); } }
+	@keyframes rh-snuff { 0% { transform: scale(1); opacity: 1; } 15% { transform: scale(0.5, 0.35); opacity: 0.6; } 25%, 80% { transform: scale(0.1); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+	@keyframes rh-relight { 0% { transform: scale(0.1); opacity: 0; } 25% { transform: scale(1.5, 1.7); opacity: 1; } 40% { transform: scale(0.8); } 100% { transform: scale(1); opacity: 1; } }
+	@keyframes rh-flare { 0% { transform: scale(1); } 20% { transform: scale(2, 2.4); } 60% { transform: scale(1.3, 1.5); } 100% { transform: scale(1); } }
+	@keyframes rh-puff { 0% { opacity: 0.7; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(14px, -70px) scale(1.8); } }
+	@keyframes rh-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); } }
 	.scene-rhodes {
 		--sky1: #f7cfa0; --sky2: #fdecd0; --sun: #fff3c8; --star: transparent; --cloud: #fff; --water1: #5fb0c4; --water2: #2f7e9a; --wave: #fff; --hill: #d7b88e; --town: #f3e6cc; --stone: #ecdcba; --stone2: #d1bd94; --dark: #4a3b2c; --bronze: #c88a46; --bronze2: #98602b; --cloth: #a9703a; --flame: #f0a232; --flame2: #fff0a8; --hull: #5c3d28; --sail: #fbf3e1; --sail2: #e9b88a;
 	}

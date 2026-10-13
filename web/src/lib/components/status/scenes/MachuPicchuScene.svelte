@@ -1,14 +1,24 @@
 <script lang="ts">
 	/**
-	 * Machu Picchu — the Inca citadel in the cloud forest: stone terraces
-	 * and thatched houses on the ridge, Huayna Picchu rising behind, Andean
-	 * peaks fading into the mist and a llama grazing. Static, no animation.
-	 * Follows the scene contract: fills its positioned parent, the headline
-	 * zone (top left) is left clear, the palette lives here.
+	 * Machu Picchu. On `down` thick cloud-forest mist swallows the citadel, on `up` it lifts and a sunbeam sweeps the terraces, and on `resolved` the llama hops for joy under a shower of petals.
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
 	 */
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	const PETALS = Array.from({ length: 16 }, (_, i) => ({
+		x: 1040 + ((i * 53) % 340),
+		c: ['#ffb84a', '#ff62a8', '#fff3c4', '#ff7a5a'][i % 4],
+		d: (i * 170) % 1800
+	}));
 </script>
 
-<div class="scene scene-machupicchu" aria-hidden="true">
+<div class="scene scene-machupicchu" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<clipPath id="mp-hill"><path d="M740 620C800 500 940 380 1100 366C1260 360 1400 430 1520 620z" /></clipPath>
@@ -19,6 +29,8 @@
 		<circle cx="1546" cy="158" r="7" fill="var(--crater)" /><circle cx="1574" cy="184" r="5" fill="var(--crater)" />
 		<g fill="var(--star)"><circle cx="1010" cy="118" r="2" /><circle cx="1160" cy="150" r="1.8" /><circle cx="1400" cy="110" r="2.2" /><circle cx="1700" cy="120" r="2" /><circle cx="1330" cy="190" r="1.8" /><circle cx="860" cy="210" r="1.8" /></g>
 		<g fill="var(--cloud)" opacity=".8"><ellipse cx="1000" cy="170" rx="80" ry="11" /><ellipse cx="1050" cy="188" rx="50" ry="8" /><ellipse cx="1420" cy="140" rx="70" ry="10" /><ellipse cx="1700" cy="260" rx="60" ry="8" /></g>
+
+		<SceneWeather mood={wx} layer="back" />
 
 		<!-- cordillère lointaine dans la brume -->
 		<path d="M560 482V300L640 250L700 290L780 230L860 300L940 270L1010 330L1060 482z" fill="var(--mp-far)" />
@@ -47,16 +59,29 @@
 			<g transform="translate(990 402)"><rect x="0" y="-20" width="38" height="20" fill="var(--mp-stone)" /><rect x="0" y="-4" width="38" height="4" fill="var(--mp-stone2)" /><path d="M-6-20L19.0-42L44-20z" fill="var(--mp-thatch)" /><path d="M14.0 0V-12H24.0V0z" fill="var(--mp-door)" /></g><g transform="translate(1040 396)"><rect x="0" y="-20" width="38" height="20" fill="var(--mp-stone)" /><rect x="0" y="-4" width="38" height="4" fill="var(--mp-stone2)" /><path d="M-6-20L19.0-42L44-20z" fill="var(--mp-thatch)" /><path d="M14.0 0V-12H24.0V0z" fill="var(--mp-door)" /></g><g transform="translate(1092 392)"><rect x="0" y="-20" width="38" height="20" fill="var(--mp-stone)" /><rect x="0" y="-4" width="38" height="4" fill="var(--mp-stone2)" /><path d="M-6-20L19.0-42L44-20z" fill="var(--mp-thatch)" /><path d="M14.0 0V-12H24.0V0z" fill="var(--mp-door)" /></g><g transform="translate(1150 390)"><rect x="0" y="-20" width="38" height="20" fill="var(--mp-stone)" /><rect x="0" y="-4" width="38" height="4" fill="var(--mp-stone2)" /><path d="M-6-20L19.0-42L44-20z" fill="var(--mp-thatch)" /><path d="M14.0 0V-12H24.0V0z" fill="var(--mp-door)" /></g><g transform="translate(1208 392)"><rect x="0" y="-20" width="38" height="20" fill="var(--mp-stone)" /><rect x="0" y="-4" width="38" height="4" fill="var(--mp-stone2)" /><path d="M-6-20L19.0-42L44-20z" fill="var(--mp-thatch)" /><path d="M14.0 0V-12H24.0V0z" fill="var(--mp-door)" /></g>
 		</g>
 		<!-- lama -->
-		<g transform="translate(1320 478)" fill="var(--mp-llama)">
+		<g transform="translate(1320 478)"><g class="llama" fill="var(--mp-llama)">
 			<ellipse cx="0" cy="-12" rx="18" ry="9" /><path d="M10-14L16-34L22-34L20-12z" /><ellipse cx="22" cy="-36" rx="7" ry="4.5" /><path d="M20-38L18-46L23-39zM25-39L26-47L28-39z" />
 			<path d="M-10-6V6M-3-4V6M6-4V6M13-6V6" stroke="var(--mp-llama)" stroke-width="3" stroke-linecap="round" /><circle cx="-18" cy="-14" r="4" />
-		</g>
+		</g></g>
 
 		<!-- crêtes de forêt nuageuse, avant-plan latéral -->
 		<path d="M560 540V430C620 420 700 424 780 450C830 466 860 490 880 540z" fill="var(--mp-forest)" />
 		<path d="M1420 540C1450 480 1500 440 1580 430C1660 420 1730 424 1800 440V540z" fill="var(--mp-forest)" />
 		<g fill="var(--mp-forest2)"><circle cx="620" cy="440" r="18" /><circle cx="670" cy="436" r="22" /><circle cx="730" cy="448" r="18" /><circle cx="1560" cy="446" r="20" /><circle cx="1620" cy="438" r="24" /><circle cx="1690" cy="440" r="20" /></g>
 
+		<!-- gestures -->
+		<path class="beam" d="M1560 170L1020 610L1420 610z" fill="var(--sun)" />
+		<g class="fog" fill="var(--mp-mist)">
+			<ellipse cx="1000" cy="400" rx="260" ry="46" /><ellipse cx="1260" cy="380" rx="300" ry="54" /><ellipse cx="1180" cy="450" rx="340" ry="50" /><ellipse cx="1420" cy="430" rx="220" ry="40" /><ellipse cx="900" cy="470" rx="200" ry="36" />
+		</g>
+		{#if pl.kind === 'resolved'}
+			{#key pl.key}
+				<g class="petals">
+					{#each PETALS as p}<ellipse class="petal" cx={p.x} cy="330" rx="5" ry="3" fill={p.c} style="animation-delay:{p.d}ms" />{/each}
+				</g>
+			{/key}
+		{/if}
+		<SceneWeather mood={wx} layer="front" />
 	</svg>
 </div>
 
@@ -82,6 +107,22 @@
 		-webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 		mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 	}
+	.fog { opacity: 0; }
+	.beam { opacity: 0; }
+	.petal { opacity: 0; }
+	.llama { transform-box: fill-box; transform-origin: 50% 100%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .fog { animation: mp-in 5s ease-in-out both; }
+		.p-up .fog { animation: mp-out 4s ease-in both; }
+		.p-up .beam { animation: mp-beam 5s ease-in-out both; }
+		.p-ok .llama { animation: mp-hop 0.9s ease-out 3 both; }
+		.petal { animation: mp-petal 3.2s ease-in both; }
+	}
+	@keyframes mp-in { 0% { opacity: 0; transform: translateX(-140px); } 30%, 75% { opacity: 0.92; transform: translateX(0); } 100% { opacity: 0; transform: translateX(60px); } }
+	@keyframes mp-out { 0% { opacity: 0.92; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-70px); } }
+	@keyframes mp-beam { 0%, 100% { opacity: 0; } 30%, 60% { opacity: 0.3; } }
+	@keyframes mp-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-26px) rotate(-6deg); } }
+	@keyframes mp-petal { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(26px, 170px) rotate(160deg); } }
 	.scene-machupicchu {
 		--sky1: #9ccbe6;
 		--sky2: #f8ead0;

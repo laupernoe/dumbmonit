@@ -1,4 +1,37 @@
-<div class="scene scene-paris" aria-hidden="true">
+<script lang="ts">
+	/**
+	 * Paris, the Eiffel tower. Its lights go out on `down`, flicker back on `up`, and on `resolved` the tower glitters like it does on the hour.
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
+	 */
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	// Lamps along both flanks of the tower and its three platforms (tower-local coordinates).
+	const LAMPS: [number, number][] = (() => {
+		const pts: [number, number][] = [];
+		const edge: [number, number][] = [[-95, 0], [-58, -78], [-34, -150], [-9, -345]];
+		for (let i = 0; i < edge.length - 1; i++) {
+			const [x1, y1] = edge[i];
+			const [x2, y2] = edge[i + 1];
+			const n = Math.max(3, Math.round(Math.hypot(x2 - x1, y2 - y1) / 22));
+			for (let k = 0; k < n; k++) {
+				const t = k / n;
+				const x = x1 + (x2 - x1) * t;
+				const y = y1 + (y2 - y1) * t;
+				pts.push([x, y], [-x, y]);
+			}
+		}
+		for (const [y, w] of [[-84, 64], [-158, 40], [-350, 14]]) for (let x = -w; x <= w; x += 16) pts.push([x, y]);
+		return pts;
+	})();
+</script>
+
+<div class="scene scene-paris" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <!-- fenêtres haussmanniennes : une trame de 32 x 28 -->
@@ -39,6 +72,8 @@
     <g fill="var(--star)"><circle cx="1010" cy="130" r="2" /><circle cx="1360" cy="118" r="2.4" /><circle cx="1560" cy="130" r="2" /><circle cx="1330" cy="250" r="1.8" /><circle cx="1620" cy="260" r="2.2" /><circle cx="1090" cy="104" r="1.8" /><circle cx="1220" cy="96" r="2" /></g>
     <g fill="var(--cloud)" opacity=".7"><ellipse cx="1000" cy="132" rx="64" ry="13" /><ellipse cx="1030" cy="121" rx="38" ry="13" /><ellipse cx="1640" cy="170" rx="60" ry="11" /></g>
 
+    <SceneWeather mood={wx} layer="back" />
+
     <!-- second plan : butte Montmartre, Sacré-Cœur et toits lointains -->
     <g fill="var(--paris-far)">
       <path d="M540 482V396C620 366 700 340 780 346C860 352 910 420 960 482z" />
@@ -64,6 +99,10 @@
         <path d="M-2.5-370h5L1-398h-2z" /><path d="M-64-84v-8h128v8z" opacity=".6" />
       </g>
       <path d="M0-398V-412M0-410l12 3-12 3z" stroke="var(--paris-iron2)" stroke-width="2" />
+      <g class="lamps">
+        {#each LAMPS as [x, y], i}<circle class="lamp" cx={x} cy={y} r="2.8" style="--i:{i % 9}" />{/each}
+        <circle class="lamp" cy="-402" r="4" style="--i:0" />
+      </g>
     </g>
     <!-- Champ-de-Mars : arbres -->
     <g fill="var(--paris-green)">
@@ -92,6 +131,8 @@
       <path d="M30-18l8-8H112l8 8z" fill="var(--paris-boat)" /><path d="M92-26V-38l12 5z" fill="var(--paris-flag)" />
     </g>
 
+    <SceneWeather mood={wx} layer="front" />
+
     <!-- mascottes : sur le quai et sur un toit -->
     <use href="#dm-mascot" transform="translate(1034 452) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1432 300) scale(.1)" />
@@ -112,6 +153,15 @@
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
   }
+  .lamp { fill: #ffd25e; opacity: 0.85; filter: drop-shadow(0 0 3px #ffd25e); }
+  @media (prefers-reduced-motion: no-preference) {
+    .p-down .lamp { animation: paris-out 5s ease-out both; }
+    .p-up .lamp { animation: paris-on 2.6s ease-out both; animation-delay: calc(var(--i) * 60ms); }
+    .p-ok .lamp { animation: paris-glitter 1.1s ease-in-out 5 both; animation-delay: calc(var(--i) * 110ms); }
+  }
+  @keyframes paris-out { 0% { opacity: 0.85; } 10% { opacity: 0.1; } 18% { opacity: 0.7; } 30%, 82% { opacity: 0; } 100% { opacity: 0.85; } }
+  @keyframes paris-on { 0% { opacity: 0; } 30% { opacity: 1; } 45% { opacity: 0.2; } 65%, 100% { opacity: 0.85; } }
+  @keyframes paris-glitter { 0%, 100% { opacity: 0.85; } 40% { opacity: 0.05; } 60% { opacity: 1; filter: drop-shadow(0 0 7px #fff2b0); } }
   .scene-paris {
     --sky1: #c6dbf0; --sky2: #f9eddb; --sun: #ffe3a3; --water1: #a8c5d8; --water2: #7da2ba; --cloud: #fff;
     --crater: transparent; --star: transparent;
