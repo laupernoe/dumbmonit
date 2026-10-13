@@ -9,8 +9,9 @@ instância e as séries temporais.
 !!! note "Imagem alfa"
     `ghcr.io/laupernoe/dumbmonit:latest` é a última compilação alfa etiquetada (amd64;
     as imagens arm64 estão suspensas por agora); `:edge` segue o último commit em `main`. Para correr a partir do código-fonte,
-    `docker compose up -d --build` compila a mesma imagem localmente (cerca de dez
-    minutos da primeira vez; só é necessário o Docker).
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    --build` compila a mesma imagem localmente (cerca de dez minutos da
+    primeira vez; só é necessário o Docker).
 
 ## Pré-requisitos {#prerequisites}
 
@@ -18,80 +19,32 @@ instância e as séries temporais.
 - Uma máquina que consiga alcançar os dispositivos que quer monitorizar. Não precisa
   de ser alcançável por eles, exceto no caso dos [agentes](../devices/agent.md), que enviam
   as suas medições para o servidor por HTTP.
-- Porta `8080` livre no anfitrião, ou outra porta à sua escolha (veja abaixo).
+- Porta `8080` livre no anfitrião, ou outra porta à sua escolha ([veja abaixo](#advanced-options)).
 
 ## O ficheiro Compose {#the-compose-file}
 
-Este é o `docker-compose.yml` do repositório; guarde-o numa pasta
-própria:
+Este é o `docker-compose.yml` completo (não é preciso nenhum ficheiro `.env`);
+guarde-o numa pasta própria:
 
 ```yaml
-# Um contentor: o servidor DumbMonit corre o seu próprio VictoriaMetrics (integrado na
-# imagem) e guarda tudo num único volume. Para usar um VictoriaMetrics externo,
-# defina DUMBMONIT_VM_URL e o integrado não é iniciado.
-name: dumbmonit
-
 services:
   dumbmonit:
-    # `docker compose up -d` obtém a imagem publicada (última versão; use
-    # `:edge` para o último commit em main). Para compilar a partir deste clone,
-    # execute `docker compose up -d --build`: o resultado fica etiquetado com o mesmo nome
-    # e passa a ser usado daí em diante.
     image: ghcr.io/laupernoe/dumbmonit:latest
-    build: .
     ports:
-      # A porta do anfitrião é configurável: a 8080 é uma porta muito disputada numa
-      # máquina de homelab. `DUMBMONIT_PORT=8099 docker compose up -d` muda-a.
-      - "${DUMBMONIT_PORT:-8080}:8080"
+      - "8080:8080"
     volumes:
-      # Base de dados SQLite, segredo da instância e séries temporais (/data/vm).
-      #
-      # O servidor corre como utilizador 65532 (não root). Um volume nomeado criado pelo
-      # Docker herda esse dono da imagem: nada a fazer. Um bind mount
-      # (`./data:/data`) ou um volume criado antes desta alteração tem de ser entregue
-      # uma vez:
-      #   docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-      # ou, para manter os ficheiros como estão, execute o contentor como o respetivo dono
-      # com `user: "1000:1000"` (qualquer uid serve: a imagem não tem /etc/passwd).
       - dumbmonit-data:/data
-    environment:
-      # Descomente para definir o segredo você mesmo em vez de deixar o DumbMonit
-      # gerá-lo em /data/secret.key. Cifra as credenciais dos dispositivos: perdê-lo
-      # significa voltar a introduzir cada uma delas.
-      # DUMBMONIT_SECRET: replace-me-with-32-random-characters
-      # Palavra-passe perdida: `DUMBMONIT_RESET_PASSWORD=1 docker compose up -d` apaga
-      # a palavra-passe no arranque e a UI pede uma nova; depois arranque de novo
-      # sem a variável.
-      DUMBMONIT_RESET_PASSWORD: ${DUMBMONIT_RESET_PASSWORD:-}
-      # VictoriaMetrics integrado: retenção (meses, ou p. ex. 30d / 2y) e o
-      # orçamento de memória das suas caches. Um homelab com algumas dezenas de dispositivos cabe em
-      # 256 MB; aumente-o quando monitorizar centenas de máquinas.
-      DUMBMONIT_VM_RETENTION: ${DUMBMONIT_VM_RETENTION:-12}
-      DUMBMONIT_VM_MEMORY: ${DUMBMONIT_VM_MEMORY:-256MB}
-      # VictoriaMetrics externo em vez do integrado:
-      # DUMBMONIT_VM_URL: http://victoriametrics:8428
-    # Privilégio mínimo: nenhuma capability, sem escalada de privilégios e o
-    # sistema de ficheiros da imagem só de leitura — /data (volume) e /tmp (tmpfs) são os
-    # únicos locais graváveis. Os monitores ICMP «ping» também não precisam de capability: o
-    # sysctl abaixo permite ao servidor (sem privilégios) abrir sockets ICMP echo dentro
-    # do espaço de nomes de rede do próprio contentor. Remova-o se nunca usar ping.
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
     read_only: true
-    tmpfs:
-      - /tmp
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
-    # O servidor para o VictoriaMetrics depois de si: dê-lhe tempo para o fazer.
-    stop_grace_period: 30s
-    restart: unless-stopped
 
 volumes:
   dumbmonit-data:
-    # Nome fixo, independente do nome do projeto compose: o volume é o que
-    # se copia e o que uma atualização tem de voltar a encontrar.
     name: dumbmonit-data
 ```
 
@@ -101,12 +54,18 @@ Depois, arranque-o:
 docker compose up -d
 ```
 
+A imagem publicada é obtida; o sistema de ficheiros só de leitura, as
+capabilities retiradas e o sysctl `ping_group_range` são explicados em
+[Corre como utilizador sem privilégios](#runs-as-a-non-root-user) e
+[Ping ICMP sem capability](#icmp-ping-without-a-capability). As opções
+(porta, segredo, retenção, VictoriaMetrics externo, capturas de ecrã) são
+[variáveis de ambiente que você mesmo acrescenta](#advanced-options).
+
 !!! tip "Compilar a imagem você mesmo"
-    `docker compose up -d` obtém a imagem publicada e ignora `build: .`.
-    A partir de um clone do repositório, `docker compose up -d --build` compila a
-    mesma imagem localmente (cerca de dez minutos a frio; não é necessária nenhuma
-    toolchain Rust ou Node no anfitrião). Use-o para correr a partir do código-fonte ou de um
-    ramo.
+    A partir de um clone do repositório, `docker compose -f docker-compose.yml -f
+    docker-compose.dev.yml up -d --build` compila a mesma imagem localmente (cerca
+    de dez minutos a frio; não é necessária nenhuma toolchain Rust ou Node no
+    anfitrião). Use-o para correr a partir do código-fonte ou de um ramo.
 
 ## VictoriaMetrics integrado {#embedded-victoriametrics}
 
@@ -155,7 +114,9 @@ Depois adicione o seu primeiro dispositivo: veja [Adicionar o primeiro dispositi
 
 ## Variáveis de ambiente {#environment-variables}
 
-Tudo passa por variáveis de ambiente; nenhuma é obrigatória.
+Tudo passa por variáveis de ambiente; nenhuma é obrigatória. Acrescente as de que
+precisar em `environment:` do serviço, como mostrado em
+[Opções avançadas](#advanced-options).
 
 | Variável | Valor por omissão | Função |
 |---|---|---|
@@ -196,7 +157,7 @@ segredo em `/data/secret.key` (dentro do volume `dumbmonit-data`).
     copiam-no por si — veja [Cópia de segurança e restauro](backup.md).
 
 Se preferir ser dono do segredo, defina `DUMBMONIT_SECRET` no ficheiro Compose
-(32 caracteres aleatórios ou mais). Guarde-o no seu gestor de palavras-passe.
+([exemplo](#advanced-options)) (32 caracteres aleatórios ou mais). Guarde-o no seu gestor de palavras-passe.
 
 ## Atualização {#upgrading}
 
@@ -303,15 +264,72 @@ Para restaurar, crie o volume, extraia o arquivo para dentro dele da mesma forma
 Se o espaço importar, `--exclude=./vm` mantém o arquivo pequeno: a base de dados e
 o segredo são a configuração, `vm/` são apenas os gráficos.
 
-## Mudar a porta {#changing-the-port}
+## Opções avançadas {#advanced-options}
 
-Defina `DUMBMONIT_PORT` ao arrancar:
+O ficheiro Compose acima não tem variáveis, de propósito. Para mudar uma
+definição, acrescente um bloco `environment:` (ou uma linha nele) em
+`dumbmonit:` no seu `docker-compose.yml` e volte a executar
+`docker compose up -d`. O contentor é recriado; o volume de dados mantém-se.
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+**Outra porta.** Mude o lado esquerdo do mapeamento; o contentor continua a
+escutar na 8080:
+
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
-Ou ponha `DUMBMONIT_PORT=8099` num ficheiro `.env` junto ao ficheiro Compose.
+**O seu próprio segredo**, em vez do gerado em `/data/secret.key`. Cifra as
+credenciais dos dispositivos: perdê-lo significa voltar a introduzir cada uma
+delas.
+
+```yaml
+    environment:
+      DUMBMONIT_SECRET: replace-me-with-32-random-characters
+```
+
+**Retenção e memória** do VictoriaMetrics integrado (meses, ou `30d` / `2y`;
+um homelab com algumas dezenas de dispositivos cabe em 256 MB):
+
+```yaml
+    environment:
+      DUMBMONIT_VM_RETENTION: "24"
+      DUMBMONIT_VM_MEMORY: 512MB
+```
+
+**VictoriaMetrics externo**; o integrado deixa então de ser iniciado:
+
+```yaml
+    environment:
+      DUMBMONIT_VM_URL: http://victoriametrics:8428
+```
+
+**Palavra-passe perdida.** Acrescente a linha abaixo, execute
+`docker compose up -d`, crie de novo o primeiro administrador na UI
+(dispositivos, regras e canais mantêm-se), depois remova a linha e execute
+`docker compose up -d` mais uma vez:
+
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
+```
+
+**Capturas de ecrã das alterações de sites**: um Chromium headless ao lado do
+servidor. Só o DumbMonit lhe fala, pela rede do Compose; nada publica a sua
+porta.
+
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m   # o Chromium renderiza em /dev/shm; 64 MB é pouco para uma página longa
+    restart: unless-stopped
+```
+
+Mais variáveis: [referência de configuração](../reference/configuration.md).
 
 ## Proxy inverso {#reverse-proxy}
 

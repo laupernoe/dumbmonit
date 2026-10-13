@@ -1,83 +1,19 @@
-# One container: the DumbMonit server runs its own VictoriaMetrics (embedded in
-# the image) and keeps everything under a single volume. To use an external
-# VictoriaMetrics instead, set DUMBMONIT_VM_URL and the embedded one is not started.
-name: dumbmonit
-
 services:
   dumbmonit:
-    # `docker compose up -d` pulls the published image (latest release; use
-    # `:edge` for the last commit on main). To build from this checkout instead,
-    # run `docker compose up -d --build`: the result is tagged with the same name
-    # and used from then on.
     image: ghcr.io/laupernoe/dumbmonit:latest
-    build: .
     ports:
-      # The host port is configurable: 8080 is a crowded port on a homelab
-      # machine. `DUMBMONIT_PORT=8099 docker compose up -d` moves it.
-      - "${DUMBMONIT_PORT:-8080}:8080"
+      - "8080:8080"
     volumes:
-      # SQLite database, instance secret and the time series (/data/vm).
-      #
-      # The server runs as user 65532 (not root). A named volume created by
-      # Docker inherits that owner from the image: nothing to do. A bind mount
-      # (`./data:/data`) or a volume created before this change must be handed
-      # over once:
-      #   docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-      # or, to keep the files as they are, run the container as their owner
-      # with `user: "1000:1000"` (any uid works: the image has no /etc/passwd).
       - dumbmonit-data:/data
-    environment:
-      # Uncomment to set the secret yourself instead of letting DumbMonit
-      # generate it in /data/secret.key. It encrypts device credentials: losing
-      # it means re-entering every one of them.
-      # DUMBMONIT_SECRET: replace-me-with-32-random-characters
-      # Locked out: `DUMBMONIT_RESET_PASSWORD=1 docker compose up -d` removes
-      # every account and session at startup — devices, rules and channels stay —
-      # and the UI asks you to create the first admin again; then start again
-      # without the variable.
-      DUMBMONIT_RESET_PASSWORD: ${DUMBMONIT_RESET_PASSWORD:-}
-      # Embedded VictoriaMetrics: retention (months, or e.g. 30d / 2y) and the
-      # memory budget of its caches. A homelab of a few dozen devices fits in
-      # 256 MB; raise it when you monitor hundreds of hosts.
-      DUMBMONIT_VM_RETENTION: ${DUMBMONIT_VM_RETENTION:-12}
-      DUMBMONIT_VM_MEMORY: ${DUMBMONIT_VM_MEMORY:-256MB}
-      # External VictoriaMetrics instead of the embedded one:
-      # DUMBMONIT_VM_URL: http://victoriametrics:8428
-      # Screenshots of website changes, taken by the optional `browser`
-      # service below. Empty: website changes compare the text only.
-      #   DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-      DUMBMONIT_BROWSER_URL: ${DUMBMONIT_BROWSER_URL:-}
-    # Least privilege: no capability at all, no privilege escalation, and the
-    # image's file system read-only — /data (volume) and /tmp (tmpfs) are the
-    # only writable places. ICMP "ping" monitors need no capability either: the
-    # sysctl below lets the (unprivileged) server open ICMP echo sockets inside
-    # the container's own network namespace. Remove it if you never use ping.
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
     read_only: true
-    tmpfs:
-      - /tmp
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
-    # The server stops VictoriaMetrics after itself: leave it the time to do so.
-    stop_grace_period: 30s
-    restart: unless-stopped
-
-  # Optional headless Chromium for the screenshots of website changes, started
-  # only with `--profile screenshots`. Nothing publishes its port: only the
-  # DumbMonit server talks to it, over the Compose network.
-  browser:
-    image: chromedp/headless-shell:stable
-    profiles: ["screenshots"]
-    # Chromium keeps its rendering buffers in /dev/shm: Docker's default 64 MB
-    # is too small for a long page.
-    shm_size: 256m
-    restart: unless-stopped
 
 volumes:
   dumbmonit-data:
-    # Fixed name, independent of the compose project name: the volume is what
-    # you back up and what an upgrade must find again.
     name: dumbmonit-data

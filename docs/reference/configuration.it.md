@@ -43,7 +43,7 @@ Tutto passa attraverso variabili di ambiente; nessuna è richiesta. Non c'è alc
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Ore tra due backup, da 1 a 8760. Il primo avviene un intervallo dopo l'avvio, non all'avvio. |
 | `DUMBMONIT_DEMO` | *(disattivato)* | `1` per una demo pubblica di sola lettura con una proprietà fittizia fissa, accedi `demo` / `demo`. **Ricrea il database ad ogni avvio**: mai su un volume dati reale. Vedi [Esegui un'istanza demo](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Quanti backup vengono mantenuti, da 1 a 365. I più vecchi vengono rimossi con il loro `.key`. |
-| `DUMBMONIT_BROWSER_URL` | *(non impostato)* | Chromium headless utilizzato per gli screenshot di [modifiche del sito web](../devices/webchange.md#screenshots), come `http://host:9222` (porta DevTools). Il file Compose ne spedisce uno sotto il profilo `screenshots`: `DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d`. Non impostato: confronto solo del testo. |
+| `DUMBMONIT_BROWSER_URL` | *(non impostato)* | Chromium headless utilizzato per gli screenshot di [modifiche del sito web](../devices/webchange.md#screenshots), come `http://host:9222` (porta DevTools). Aggiungi un servizio `chromedp/headless-shell` al tuo file Compose, come mostrato in [Screenshot](../devices/webchange.md#screenshots). Non impostato: confronto solo del testo. |
 
 La conservazione della linea di base (60 giorni) e il periodo di apprendimento di 14 giorni non sono configurabili.
 
@@ -66,15 +66,15 @@ I suoi dati vivono in `<data dir>/vm`, sulla stessa volume del database. Tre fla
 
 Con `DUMBMONIT_VM_URL` impostato, nulla di questo si applica: il server usa l'istanza che nomini e quella incorporata non viene mai avviata. `GET /api/health` dice quale caso sei (`victoria.embedded`).
 
-## Variabili a livello di Compose
+## Impostazioni a livello di Compose
 
-Questi vengono letti da `docker-compose.yml`, non dal server:
-
-| Variabile | Predefinito | Ruolo |
-|---|---|---|
-| `DUMBMONIT_PORT` | `8080` | Porta host pubblicata per l'interfaccia web. |
-| `DUMBMONIT_VM_RETENTION`, `DUMBMONIT_VM_MEMORY` | `12`, `256MB` | Passati al server; vedi sopra. |
-| `DUMBMONIT_VM_PORT` | `8428` | Porta host per VictoriaMetrics incorporato, overlay di sviluppo solo. |
+Il `docker-compose.yml` fornito non legge alcuna variabile e non richiede un file
+`.env`. Tutto si imposta sotto `environment:` del servizio o modificando il
+file; vedi [Opzioni avanzate](../install/docker.md#advanced-options) (porta,
+segreto, retention e memoria, VictoriaMetrics esterno, reimpostazione della
+password, screenshot). L'overlay di sviluppo `docker-compose.dev.yml` legge
+`DUMBMONIT_VM_PORT` (predefinito `8428`) per la porta host del VictoriaMetrics
+incorporato.
 
 ## Porte
 
@@ -101,9 +101,11 @@ Un volume, `dumbmonit-data`, montato su `/data`. Il suo nome è fisso nel file C
 ## Ripristino della password
 
 ```bash
-DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
+# aggiungi DUMBMONIT_RESET_PASSWORD: "1" sotto environment: in docker-compose.yml
+docker compose up -d
 # apri l'interfaccia web: /setup chiede una nuova password
-docker compose up -d dumbmonit   # avvia di nuovo senza la variabile
+# rimuovi di nuovo la riga, poi:
+docker compose up -d
 ```
 
 Il ripristino cancella la password e ogni sessione; i dispositivi, le regole e i canali rimangono intatti.

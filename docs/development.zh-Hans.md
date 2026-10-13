@@ -31,8 +31,6 @@ docs/            this documentation (MkDocs, published on Read the Docs)
 
 ```bash
 # 完整堆栈(构建镜像:大约 10 分钟冷启动) — UI on http://localhost:8080
-docker compose up -d --build
-# 开发者覆盖:嵌入的 VictoriaMetrics 在:8428 上发布以用于直接 MetricsQL 查询
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust,在 builder 阶段内(musl/alpine)

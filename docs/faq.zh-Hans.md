@@ -7,17 +7,18 @@
 可以清除让你被锁在外面的第二因素。这是最常见的解决办法——一个
 有两个管理员账户的实例永远不需要用到本页其余的内容。
 
-当没有任何人能够登录,又没有恢复邮箱时:用
+当没有任何人能够登录,又没有恢复邮箱时:在 `docker-compose.yml` 中用
 `DUMBMONIT_RESET_PASSWORD=1` 启动一次服务器:
 
-```bash
-DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
 ```
 
+然后执行 `docker compose up -d`。
+
 启动时会移除每一个账户和每一个会话,界面会再次显示 `/setup`。
-创建第一个管理员,然后在不带该变量的情况下再次启动(在你的环境中
-取消设置该变量或将其设为空后,执行 `docker compose up -d
-dumbmonit`)。设备、规则、渠道和单点登录设置不受影响。
+创建第一个管理员,然后删除该行后再次执行 `docker compose up -d`。设备、规则、渠道和单点登录设置不受影响。
 
 ## 添加设备后没有数据 {#no-data-after-adding-a-device}
 
@@ -63,12 +64,12 @@ Ping 监控需要一个 ICMP echo 套接字。容器在没有任何 capability
 
 ## 更改端口 {#changing-the-port}
 
-容器监听在 8080 上;主机端口取决于 `docker-compose.yml` 发布的
-内容。设置 `DUMBMONIT_PORT`(在 Compose 文件旁边的 `.env` 文件
-中,或在命令行上):
+容器监听在 8080 上;主机端口是 `docker-compose.yml` 中映射的左侧。
+修改它,然后执行 `docker compose up -d`:
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
 若要更改容器*内部*的端口,请设置 `DUMBMONIT_BIND`,例如

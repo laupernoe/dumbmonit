@@ -119,18 +119,27 @@ Les métriques apparaissent une fois la première vérification faite.
 
 L'image DumbMonit n'a pas de navigateur : les captures d'écran viennent
 d'un Chromium headless optionnel, piloté via le protocole Chrome DevTools.
-Le fichier Compose en fournit un comme service `browser`, sous le profil
-`screenshots`, il ne démarre donc que si on le demande :
+Ajoutez-en un comme service `browser` à côté de DumbMonit dans
+`docker-compose.yml`, et pointez le serveur vers lui :
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Lancez ensuite `docker compose up -d`. Rien ne publie le port du navigateur :
+seul le serveur DumbMonit lui parle, via le réseau Compose.
 
 `DUMBMONIT_BROWSER_URL` pointe DumbMonit vers le navigateur (tout Chromium
 démarré avec `--remote-debugging-port`, par exemple
 `chromedp/headless-shell` ; le serveur lit `/json/version` et parle à
-l'adresse que le nom d'hôte résout). Mettez la variable dans un fichier
-`.env` à côté de `docker-compose.yml` pour la garder.
+l'adresse que le nom d'hôte résout).
 
 Une capture n'est prise que quand une page obtient un nouvel instantané
 (la référence, et chaque changement), jamais sur une vérification sans
@@ -171,12 +180,9 @@ Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
    page par page et garde une copie avant/après de chaque changement,
    montrée sur la page de l'appareil ; l'alerte « Site web changé » vous
    le dit.
-4. Pour une capture d'écran de chaque version, démarrez le service
-   navigateur optionnel du fichier Compose et pointez DumbMonit vers lui :
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Pour une capture d'écran de chaque version, ajoutez un service de
+   navigateur headless à votre fichier Compose et pointez DumbMonit vers lui,
+   comme montré sous [Captures d'écran](#screenshots).
 
 !!! warning
     Seul le texte envoyé par le serveur est comparé : une page dessinée entièrement par JavaScript montre peu ou rien à la vérification. Les pages derrière une connexion ne sont pas accessibles non plus.

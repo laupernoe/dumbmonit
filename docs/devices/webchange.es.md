@@ -124,18 +124,27 @@ Las métricas aparecen una vez hecha la primera comprobación.
 
 La imagen de DumbMonit no tiene navegador: las capturas vienen de un
 Chromium sin interfaz opcional, controlado a través del Chrome DevTools
-Protocol. El archivo Compose incluye uno como el servicio `browser`,
-bajo el perfil `screenshots`, así que solo se inicia cuando se pide:
+Protocol. Añade uno como servicio `browser` junto a DumbMonit en
+`docker-compose.yml` y apunta el servidor hacia él:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Después ejecuta `docker compose up -d`. Nada publica el puerto del navegador:
+solo el servidor de DumbMonit habla con él, a través de la red de Compose.
 
 `DUMBMONIT_BROWSER_URL` apunta DumbMonit hacia el navegador (cualquier
 Chromium iniciado con `--remote-debugging-port`, por ejemplo
 `chromedp/headless-shell`; el servidor lee `/json/version` y habla con
-la dirección a la que resuelve el nombre de host). Pon la variable en un
-archivo `.env` junto a `docker-compose.yml` para conservarla.
+la dirección a la que resuelve el nombre de host).
 
 Una captura se toma solo cuando una página obtiene una nueva captura (la
 referencia, y cada cambio), nunca en una comprobación sin cambios: una
@@ -175,12 +184,9 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
    visible página por página y guarda una copia antes/después de cada
    cambio, mostrada en la página del dispositivo; la alerta «Website
    changed» te avisa.
-4. Para una captura de cada versión, inicia el servicio de navegador
-   opcional del archivo Compose y apunta DumbMonit hacia él:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Para una captura de cada versión, añade un servicio de navegador sin
+   interfaz a tu archivo Compose y apunta DumbMonit hacia él, como se muestra
+   en [Capturas de pantalla](#screenshots).
 
 !!! warning
     Solo se compara el texto que envía el servidor: una página dibujada
