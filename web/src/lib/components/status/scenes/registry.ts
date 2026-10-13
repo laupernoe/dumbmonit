@@ -36,6 +36,26 @@ import MatterhornScene from './MatterhornScene.svelte';
 import BernScene from './BernScene.svelte';
 import LucerneScene from './LucerneScene.svelte';
 import ChillonScene from './ChillonScene.svelte';
+import HongKongScene from './HongKongScene.svelte';
+import BosphorusScene from './BosphorusScene.svelte';
+import SugarloafScene from './SugarloafScene.svelte';
+import MarrakechScene from './MarrakechScene.svelte';
+import KyotoScene from './KyotoScene.svelte';
+import ReykjavikScene from './ReykjavikScene.svelte';
+import CairoScene from './CairoScene.svelte';
+import OrbitScene from './OrbitScene.svelte';
+import AquariumScene from './AquariumScene.svelte';
+import LighthouseScene from './LighthouseScene.svelte';
+import MarsScene from './MarsScene.svelte';
+import ChaletScene from './ChaletScene.svelte';
+import TrainScene from './TrainScene.svelte';
+import ZenScene from './ZenScene.svelte';
+import ArcadeScene from './ArcadeScene.svelte';
+import ForestScene from './ForestScene.svelte';
+import DesertScene from './DesertScene.svelte';
+import HamstersScene from './HamstersScene.svelte';
+import CatsScene from './CatsScene.svelte';
+import RacletteScene from './RacletteScene.svelte';
 
 export const SCENE_COMPONENTS: Record<string, Component> = {
 	venice: VeniceScene,
@@ -68,7 +88,27 @@ export const SCENE_COMPONENTS: Record<string, Component> = {
 	matterhorn: MatterhornScene,
 	bern: BernScene,
 	lucerne: LucerneScene,
-	chillon: ChillonScene
+	chillon: ChillonScene,
+	hongkong: HongKongScene,
+	bosphorus: BosphorusScene,
+	sugarloaf: SugarloafScene,
+	marrakech: MarrakechScene,
+	kyoto: KyotoScene,
+	reykjavik: ReykjavikScene,
+	cairo: CairoScene,
+	orbit: OrbitScene,
+	aquarium: AquariumScene,
+	lighthouse: LighthouseScene,
+	mars: MarsScene,
+	chalet: ChaletScene,
+	train: TrainScene,
+	zen: ZenScene,
+	arcade: ArcadeScene,
+	forest: ForestScene,
+	desert: DesertScene,
+	hamsters: HamstersScene,
+	cats: CatsScene,
+	raclette: RacletteScene
 };
 
 /** Labels for the editor, in display order: cities, then the new wonders, then the ancient ones. */
@@ -103,7 +143,27 @@ export const SCENE_CHOICES: { value: string; label: string }[] = [
 	{ value: 'matterhorn', get label() { return m.status_scene_matterhorn(); } },
 	{ value: 'bern', get label() { return m.status_scene_bern(); } },
 	{ value: 'lucerne', get label() { return m.status_scene_lucerne(); } },
-	{ value: 'chillon', get label() { return m.status_scene_chillon(); } }
+	{ value: 'chillon', get label() { return m.status_scene_chillon(); } },
+	{ value: 'hongkong', get label() { return m.status_scene_hongkong(); } },
+	{ value: 'bosphorus', get label() { return m.status_scene_bosphorus(); } },
+	{ value: 'sugarloaf', get label() { return m.status_scene_sugarloaf(); } },
+	{ value: 'marrakech', get label() { return m.status_scene_marrakech(); } },
+	{ value: 'kyoto', get label() { return m.status_scene_kyoto(); } },
+	{ value: 'reykjavik', get label() { return m.status_scene_reykjavik(); } },
+	{ value: 'cairo', get label() { return m.status_scene_cairo(); } },
+	{ value: 'orbit', get label() { return m.status_scene_orbit(); } },
+	{ value: 'aquarium', get label() { return m.status_scene_aquarium(); } },
+	{ value: 'lighthouse', get label() { return m.status_scene_lighthouse(); } },
+	{ value: 'mars', get label() { return m.status_scene_mars(); } },
+	{ value: 'chalet', get label() { return m.status_scene_chalet(); } },
+	{ value: 'train', get label() { return m.status_scene_train(); } },
+	{ value: 'zen', get label() { return m.status_scene_zen(); } },
+	{ value: 'arcade', get label() { return m.status_scene_arcade(); } },
+	{ value: 'forest', get label() { return m.status_scene_forest(); } },
+	{ value: 'desert', get label() { return m.status_scene_desert(); } },
+	{ value: 'hamsters', get label() { return m.status_scene_hamsters(); } },
+	{ value: 'cats', get label() { return m.status_scene_cats(); } },
+	{ value: 'raclette', get label() { return m.status_scene_raclette(); } }
 ];
 
 export const SCENE_ROTATIONS: { value: string; label: string }[] = [
