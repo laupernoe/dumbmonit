@@ -113,7 +113,7 @@
 
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_linux()}</p>
-			<CopyBlock value={token.install_linux} label={m.deviceform_enroll_copy_linux()} />
+			<CopyBlock sudo value={token.install_linux} label={m.deviceform_enroll_copy_linux()} />
 		</div>
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_windows()}</p>

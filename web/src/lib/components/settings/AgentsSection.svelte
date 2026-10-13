@@ -310,7 +310,7 @@
 						{#if created.install_linux}
 							<div>
 								<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_install_linux()}</p>
-								<CopyBlock value={created.install_linux} label={m.settings_agents_copy_command()} />
+								<CopyBlock sudo value={created.install_linux} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
 						{#if created.install_windows}
