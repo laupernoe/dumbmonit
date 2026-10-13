@@ -123,6 +123,9 @@
 				completely) is the thing that is focusable, draggable and clickable.
 				Branched on `reorder` (rather than a computed role/tabindex) so
 				each branch's accessibility attributes are static, literal values.
+				The row's links are natively draggable: left alone, the browser
+				starts its own drag of the link a few pixels in, cancels the
+				pointer stream (`pointercancel`) and the row drag never begins.
 			-->
 			{#if reorder}
 				<div
@@ -132,6 +135,7 @@
 					aria-label={m.devices_rack_row_aria({ name: row.target.name })}
 					aria-pressed={isPicked}
 					onpointerdown={(e) => reorder.onRowPointerDown(id, e)}
+					ondragstart={(e) => e.preventDefault()}
 					onkeydown={(e) => reorder.onRowKeyDown(id, e)}
 					onclick={(e) => reorder.onRowClick(id, e)}
 				>

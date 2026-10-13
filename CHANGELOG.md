@@ -137,6 +137,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Dragging a monitor into a folder works again.** Pressing a row on its name
+  or address grabbed the link instead: the browser started its own drag of it,
+  cancelled the gesture, and the monitor never moved. Rows can be dragged from
+  anywhere again, onto another row or onto a folder header.
 - **Every channel type can be saved.** The database still only accepted the
   first seven channel types (Discord, ntfy, Gotify, Telegram, Slack, webhook,
   email): saving a Matrix, Teams, Pushover or other channel failed with an
