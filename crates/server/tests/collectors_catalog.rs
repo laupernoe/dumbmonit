@@ -65,7 +65,13 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
     let body = std::str::from_utf8(&bytes).expect("JSON en UTF-8");
     // La version du serveur (User-Agent par défaut) change à chaque publication :
     // l'instantané la remplace par un repère pour ne pas avoir à le réécrire.
-    let body = &body.replace(VERSION, "<version>");
+    let body = body.replace(VERSION, "<version>");
+    // Les prérequis dépendent de la machine (ICMP permis ou non, navigateur
+    // joignable ou non) : ils sont retirés de l'instantané et vérifiés à part.
+    let (body, mut removed) = strip_requirements(&body);
+    removed.sort();
+    assert_eq!(removed, ["browser", "icmp"], "seuls webchange et ping déclarent un prérequis");
+    let body = &body;
 
     if std::env::var_os("DUMBMONIT_BLESS").is_some() {
         std::fs::write(FIXTURE, pretty(body)).expect("écriture de l'instantané");
@@ -199,4 +205,22 @@ fn compact(pretty: &str) -> String {
         out.push(c);
     }
     out
+}
+
+/// Retire du JSON les tableaux `"requirements"` (dernier champ de chaque type) et
+/// rend les `id` qu'ils portaient, dans l'ordre.
+fn strip_requirements(body: &str) -> (String, Vec<String>) {
+    const KEY: &str = ",\"requirements\":[";
+    let (mut out, mut ids, mut rest) = (String::new(), Vec::new(), body);
+    while let Some(start) = rest.find(KEY) {
+        out.push_str(&rest[..start]);
+        let tail = &rest[start + KEY.len()..];
+        let end = tail.find(']').expect("tableau fermé");
+        for part in tail[..end].split("\"id\":\"").skip(1) {
+            ids.push(part[..part.find('"').expect("id fermé")].to_string());
+        }
+        rest = &tail[end + 1..];
+    }
+    out.push_str(rest);
+    (out, ids)
 }

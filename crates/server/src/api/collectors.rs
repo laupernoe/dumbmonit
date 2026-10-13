@@ -24,7 +24,7 @@ use axum::Json;
 use axum::extract::State;
 use dumbmonit_proto::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
-    SetupDescription, Text,
+    Requirement, SetupDescription, Text,
 };
 
 use crate::state::AppState;
@@ -3324,15 +3324,72 @@ const SOPHOS_OPTIONS: &[OptionView] = &[
     VENDOR_TIMEOUT,
 ];
 
+/// Racine de la documentation en ligne, vers laquelle pointent les prérequis.
+const DOCS_INSTALL: &str = "https://dumbmonit.readthedocs.io/en/latest/install/docker/";
+
+/// Bloc Compose à ajouter pour les captures d'écran : le navigateur sans tête et
+/// l'adresse que le serveur utilise pour lui parler. Identique à la documentation.
+const BROWSER_SNIPPET: &str = "services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
+";
+
+/// Bloc Compose qui autorise l'utilisateur non root du conteneur à émettre des
+/// échos ICMP. Identique à la documentation.
+const ICMP_SNIPPET: &str = "services:
+  dumbmonit:
+    sysctls:
+      net.ipv4.ping_group_range: \"0 2147483647\"
+";
+
+/// Ce que le déploiement doit fournir pour que `kind` fonctionne pleinement, et
+/// si le serveur l'a constaté. Vide pour les types qui n'exigent rien.
+///
+/// Les textes affichés sont ceux de l'interface, par `id` : ici, seulement des
+/// constats et des valeurs à copier.
+async fn requirements(kind: &str, browser_url: Option<&str>) -> Vec<Requirement> {
+    match kind {
+        "webchange" => {
+            let satisfied = match browser_url {
+                Some(url) => crate::webchange::cdp::available(url).await,
+                None => false,
+            };
+            vec![Requirement {
+                id: "browser".into(),
+                satisfied,
+                doc_url: format!("{DOCS_INSTALL}#website-screenshots").into(),
+                compose_snippet: BROWSER_SNIPPET.into(),
+            }]
+        }
+        "ping" => vec![Requirement {
+            id: "icmp".into(),
+            satisfied: dumbmonit_collectors::uptime::icmp_available(),
+            doc_url: format!("{DOCS_INSTALL}#icmp-ping-without-a-capability").into(),
+            compose_snippet: ICMP_SNIPPET.into(),
+        }],
+        _ => Vec::new(),
+    }
+}
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let registry = &state.collectors;
-    Json(
-        registry
-            .kinds()
-            .into_iter()
-            .map(|kind| describe(&kind, registry.get(&kind).and_then(|c| c.description())))
-            .collect(),
-    )
+    let mut kinds = Vec::new();
+    for kind in registry.kinds() {
+        let mut description = describe(&kind, registry.get(&kind).and_then(|c| c.description()));
+        // Les prérequis ne concernent que les types compilés : un paquet
+        // d'intégration ne peut pas en déclarer sous le nom d'un type du serveur.
+        if compiled(&kind).is_some() {
+            description.requirements =
+                requirements(&kind, state.config.browser_url.as_deref()).await;
+        }
+        kinds.push(description);
+    }
+    Json(kinds)
 }
 
 /// Les clés d'options d'un type compilé, telles que les tables les décrivent.
@@ -3758,9 +3815,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the address, write the host name or IP address: \"192.168.1.1\" or \"router.home.lan\".",
                     "On each poll, the check sends four echoes and measures the response time, along with the share of lost packets.",
                     "By default, only a total loss counts as down; partial loss stays visible in the charts. Lower \"Tolerated loss\" to be warned earlier.",
-                    "If DumbMonit runs in Docker, add the NET_RAW capability to the container: in docker-compose.yml, uncomment the \"cap_add: - NET_RAW\" lines under the dumbmonit service, then restart it.",
+                    "If DumbMonit runs in Docker, keep the \"sysctls:\" lines of the shipped docker-compose.yml under the dumbmonit service: they allow the container's unprivileged user to open ICMP echo sockets. No capability is needed.",
                 ],
-                warning: "Without the NET_RAW capability, the check cannot open an ICMP socket: it reports this as a configuration error, not as a host failure. Some devices also ignore pings on purpose: check that before drawing conclusions.",
+                warning: "Without that sysctl, the check cannot open an ICMP socket: it reports this as a configuration error, not as a host failure. Some devices also ignore pings on purpose: check that before drawing conclusions.",
                 doc_url: "",
             },
             options: PING_OPTIONS,
@@ -3984,7 +4041,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
                     "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
                     "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
-                    "For a screenshot of each version, start the optional browser service of the Compose file and point DumbMonit at it:\nDUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d",
+                    "For a screenshot of each version, add a headless browser to your Compose file; the exact lines are in the documentation (Advanced options, \"Screenshots of website changes\").",
                 ],
                 warning: "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.",
                 doc_url: "",
@@ -4936,6 +4993,7 @@ impl CollectorView {
                 doc_url: self.setup.doc_url.into(),
             },
             options: self.options.iter().map(OptionView::description).collect(),
+            requirements: Vec::new(),
         }
     }
 }
@@ -6211,11 +6269,44 @@ mod tests {
         assert_eq!(describe("webchange").credential_types, &["none"]);
     }
 
+    #[tokio::test]
+    async fn les_captures_exigent_un_navigateur_joignable() {
+        let sans = requirements("webchange", None).await;
+        assert_eq!(sans.len(), 1);
+        assert_eq!(sans[0].id, "browser");
+        assert!(!sans[0].satisfied, "pas d'adresse : pas de captures");
+        // Adresse configurée mais personne n'écoute : toujours manquant.
+        let mort = requirements("webchange", Some("http://127.0.0.1:1")).await;
+        assert!(!mort[0].satisfied);
+    }
+
+    #[tokio::test]
+    async fn seuls_les_types_qui_en_ont_besoin_declarent_un_prerequis() {
+        assert_eq!(requirements("ping", None).await[0].id, "icmp");
+        for kind in ["snmp", "http", "tcp", "proxmox", "agent", "website"] {
+            assert!(requirements(kind, None).await.is_empty(), "« {kind} » n'exige rien");
+        }
+    }
+
+    /// Les blocs offerts à la copie sont ceux de la documentation, mot pour mot :
+    /// l'un ne peut pas être corrigé sans l'autre.
     #[test]
-    fn la_notice_du_ping_mentionne_la_capacite_reseau_necessaire() {
+    fn les_blocs_compose_sont_ceux_de_la_documentation() {
+        let doc = include_str!("../../../../docs/install/docker.md");
+        for (nom, bloc) in [("browser", BROWSER_SNIPPET), ("icmp", ICMP_SNIPPET)] {
+            assert!(doc.contains(bloc.trim_end()), "le bloc « {nom} » a divergé de docker.md");
+        }
+        for ancre in ["{#website-screenshots}", "{#icmp-ping-without-a-capability}"] {
+            assert!(doc.contains(ancre), "ancre {ancre} absente de docker.md");
+        }
+    }
+
+    #[test]
+    fn la_notice_du_ping_mentionne_le_sysctl_necessaire() {
         let view = describe("ping");
         let texte = view.setup.steps.join(" ") + view.setup.warning;
-        assert!(texte.contains("NET_RAW"), "l'utilisateur doit savoir quoi décommenter");
+        assert!(texte.contains("net.ipv4.ping_group_range") || texte.contains("sysctls"));
+        assert!(!texte.contains("NET_RAW"), "la capacité ne sert à rien à un utilisateur non root");
     }
 
     #[test]

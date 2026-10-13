@@ -314,9 +314,15 @@ um homelab com algumas dezenas de dispositivos cabe em 256 MB):
       DUMBMONIT_RESET_PASSWORD: "1"
 ```
 
-**Capturas de ecrã das alterações de sites**: um Chromium headless ao lado do
-servidor. Só o DumbMonit lhe fala, pela rede do Compose; nada publica a sua
-porta.
+**Capturas de ecrã das alterações de sites**: um Chromium sem interface junto ao servidor; veja abaixo [Capturas de ecrã das alterações de sites](#website-screenshots).
+
+Mais variáveis: [referência de configuração](../reference/configuration.md).
+
+## Capturas de ecrã das alterações de sites {#website-screenshots}
+
+O [monitor de alterações de sites](../devices/webchange.md) compara sempre o texto visível das páginas. Guardar uma captura de ecrã de cada nova versão requer um navegador, e a imagem do DumbMonit não inclui nenhum: um Chromium sem interface corre como segundo serviço, e `DUMBMONIT_BROWSER_URL` indica ao servidor onde o encontrar.
+
+Adicione estas linhas ao seu `docker-compose.yml` e execute depois `docker compose up -d`:
 
 ```yaml
 services:
@@ -325,11 +331,16 @@ services:
       DUMBMONIT_BROWSER_URL: http://browser:9222
   browser:
     image: chromedp/headless-shell:stable
-    shm_size: 256m   # o Chromium renderiza em /dev/shm; 64 MB é pouco para uma página longa
+    shm_size: 256m
     restart: unless-stopped
 ```
 
-Mais variáveis: [referência de configuração](../reference/configuration.md).
+- `browser` é o nome do serviço; na rede do Compose, `http://browser:9222` leva até ele. Nada publica a sua porta: só o DumbMonit lhe fala.
+- `shm_size: 256m`: o Chromium renderiza em `/dev/shm`, e os 64 MB predefinidos do Docker são pouco para uma página longa.
+- Serve qualquer Chromium iniciado com `--remote-debugging-port`; aqui usa-se a imagem `chromedp/headless-shell`.
+
+Sem navegador, tudo o resto funciona como habitualmente (comparação de texto, alertas, cópias antes/depois); os instantâneos apenas não têm imagem. Enquanto o servidor não alcançar um navegador, o formulário de um dispositivo de alterações de sites mostra um aviso com estas linhas.
+Se o aviso persistir após o reinício, verifique `docker compose logs browser`, se o nome do anfitrião em `DUMBMONIT_BROWSER_URL` é o nome do serviço e se os dois serviços estão no mesmo projeto Compose.
 
 ## Proxy inverso {#reverse-proxy}
 
@@ -409,6 +420,8 @@ permite aos grupos listados em `net.ipv4.ping_group_range`. O ficheiro Compose
 define esse sysctl dentro do espaço de nomes de rede do próprio contentor:
 
 ```yaml
+services:
+  dumbmonit:
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
 ```
@@ -417,7 +430,7 @@ Nada muda no anfitrião. O Docker 20.10 e posteriores definem este intervalo em 
 contentores por si; as linhas explícitas garantem-no em motores mais antigos
 e no Podman. Sem ele, a verificação reporta um erro de configuração (mostrado no
 dispositivo, não notificado), nunca um falso «anfitrião em baixo». Com `docker run`, passe
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`.
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Enquanto o servidor não conseguir abrir um socket ICMP, o formulário de um dispositivo de ping mostra um aviso com estas linhas.
 
 ## Testar sem hardware {#testing-without-hardware}
 
