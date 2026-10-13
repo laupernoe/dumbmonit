@@ -4834,6 +4834,7 @@
 	"settings_backup_to_update": "{count} zu aktualisieren",
 	"settings_backup_without_key": "Ohne den Schlüssel",
 	"settings_backup_write_error": "Sicherung konnte nicht geschrieben werden",
+	"settings_language_auto": "Automatisch (Browsersprache)",
 	"settings_music_account": "Konto",
 	"settings_music_admin_only": "Ein Admin kann hier ein Spotify-Konto verbinden.",
 	"settings_music_app": "App (Client-ID)",
