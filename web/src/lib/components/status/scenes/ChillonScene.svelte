@@ -16,8 +16,8 @@
 	 * `resolved` fireworks burst over the keep. Reduced motion freezes all.
 	 */
 	import SceneBursts from './SceneBursts.svelte';
-	import SceneWeather from './SceneWeather.svelte';
-	import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+	import SceneWeather from './SceneWeatherS.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
 	interface Props {
 		mood?: SceneMood;

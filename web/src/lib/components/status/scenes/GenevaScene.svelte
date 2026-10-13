@@ -14,8 +14,8 @@
 	 * height, on `resolved` it flares higher under a rainbow. Everything stops
 	 * under `prefers-reduced-motion`.
 	 */
-	import SceneWeather from './SceneWeather.svelte';
-	import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+	import SceneWeather from './SceneWeatherS.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulseS.svelte.js';
 
 	interface Props {
 		mood?: SceneMood;
