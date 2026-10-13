@@ -20,7 +20,7 @@
 	 * shimmer, a stroll, and every 40–80 s a fly-by or a hat tip. Hidden tabs
 	 * pause everything; reduced motion freezes the scene in a still pose.
 	 */
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { reducedMotion } from '#lib/ui/index.js';
 	import WallPigeon from '#lib/components/wall/paris/WallPigeon.svelte';
 	import {
@@ -51,7 +51,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: the pigeon startles once. */
@@ -60,21 +60,56 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
 		theme,
 		now,
-		mood,
+		mood: moodIn = 'calm',
 		problems,
 		startle = 0,
 		paused = false,
 		focus = 0,
+		pulse = null,
 		class: className = ''
 	}: Props = $props();
 
 	const motion = !reducedMotion();
+
+	// The wall's moods and the status page's ones are the same weather.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	// A short landmark gesture, replayed whenever `pulse.at` changes. Reduced
+	// motion skips it: the scene holds its still pose.
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let gestureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(gestureTimer);
+		if (!motion) return;
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			gestureTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(gestureTimer));
 
 	// --- Stage fit ----------------------------------------------------------------
 
@@ -256,6 +291,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -389,6 +426,32 @@
 				</div>
 			{/if}
 
+			<!-- The gesture: the dials go dark and the flag droops (down), they re-light with a gold ring (up), the Zytglogge strikes (resolved). -->
+			{#if active}
+				{#key playKey}
+					<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+						{#if active === 'down'}
+							<g class="bn-dim" fill="#0c1424">
+								<circle cx={TOWER.x} cy={TOWER.face} r="58" />
+								<circle cx={TOWER.x} cy={TOWER.dial} r="38" />
+							</g>
+						{:else if active === 'up'}
+							<g class="bn-wake" fill="none" stroke="var(--gold)" stroke-width="7">
+								<circle cx={TOWER.x} cy={TOWER.face} r="58" />
+								<circle cx={TOWER.x} cy={TOWER.dial} r="38" />
+							</g>
+						{:else}
+							{#each [0, 1, 2, 3] as i (i)}
+								<g style:animation-delay="{i * 1.1}s" class="bn-strike">
+									<circle class="bn-flash" cx={TOWER.x} cy={TOWER.face} r="58" fill="var(--gold)" />
+									<circle class="bn-wave" cx={TOWER.x} cy={TOWER.face} r="58" fill="none" stroke="var(--gold)" stroke-width="6" />
+								</g>
+							{/each}
+						{/if}
+					</svg>
+				{/key}
+			{/if}
+
 			<!-- Our terrace: the parapet and the tiled roof below it. -->
 			<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
 				<rect x="0" y={LEDGE_Y - 10} width={STAGE_W} height="16" fill="var(--tile-dark)" />
@@ -424,6 +487,10 @@
 					</svg>
 				</div>
 				<div class="veil"></div>
+				<svg class="layer bolt-layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+					<path class="bolt" d="M1180 0l-70 250 60-10-90 330 160-360-70 10z" fill="#fff" />
+				</svg>
+				<div class="flash"></div>
 			{/if}
 		</div>
 	{/if}
@@ -650,6 +717,120 @@
 		}
 	}
 
+	.flash {
+		position: absolute;
+		inset: 0;
+		background: #d6defc;
+		opacity: 0;
+		animation: flash 11s linear infinite;
+	}
+	.bolt {
+		opacity: 0;
+		animation: bolt 11s linear infinite;
+	}
+	@keyframes flash {
+		0%,
+		90%,
+		100% {
+			opacity: 0;
+		}
+		91% {
+			opacity: 0.5;
+		}
+		92% {
+			opacity: 0.04;
+		}
+		93.5% {
+			opacity: 0.38;
+		}
+		96% {
+			opacity: 0;
+		}
+	}
+	@keyframes bolt {
+		0%,
+		90.5%,
+		94%,
+		100% {
+			opacity: 0;
+		}
+		91%,
+		93.5% {
+			opacity: 0.9;
+		}
+	}
+
+	/* The gesture. */
+	.bn-dim {
+		opacity: 0;
+		animation: bn-dim 5.2s ease-in-out both;
+	}
+	.bn-wake {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+		opacity: 0;
+		animation: bn-wake 2.6s ease-out both;
+	}
+	.bn-strike,
+	.bn-flash,
+	.bn-wave {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+	}
+	.bn-flash {
+		opacity: 0;
+		animation: bn-flash 1.1s ease-out 1 both;
+		animation-delay: inherit;
+	}
+	.bn-wave {
+		opacity: 0;
+		animation: bn-wave 1.6s ease-out 1 both;
+		animation-delay: inherit;
+	}
+	.bn-strike {
+		animation: none;
+	}
+	.p-down .flag {
+		animation-play-state: paused;
+	}
+	@keyframes bn-dim {
+		12%,
+		80% {
+			opacity: 0.72;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes bn-wake {
+		0% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1.5);
+		}
+	}
+	@keyframes bn-flash {
+		0% {
+			opacity: 0.7;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes bn-wave {
+		0% {
+			opacity: 0.9;
+			transform: scale(1);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(3.4);
+		}
+	}
+
 	/* A hidden tab: everything holds its breath. */
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
@@ -662,7 +843,15 @@
 	.scene--still .cloud {
 		transform: translateX(var(--still-x));
 	}
+	.scene--still .flash,
+	.scene--still .bolt {
+		display: none;
+	}
 	@media (prefers-reduced-motion: reduce) {
+		.flash,
+		.bolt {
+			display: none;
+		}
 		.scene :global(*) {
 			animation: none !important;
 			transition: none !important;

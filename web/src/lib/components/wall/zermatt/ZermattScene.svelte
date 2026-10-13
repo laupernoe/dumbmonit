@@ -42,7 +42,7 @@
 	interface Props {
 		theme: SceneTheme;
 		now: Date;
-		mood: SceneMood;
+		mood?: SceneMood | 'ok' | 'warn' | 'critical';
 		/** Problems on the board: the number on the protest sign. */
 		problems: number;
 		/** Bumped by the wall when a new problem appears: everyone startles once. */
@@ -51,14 +51,56 @@
 		paused?: boolean;
 		/** Stage x kept in view when the box is narrower than the stage (0: left edge). */
 		focus?: number;
+		/** A short landmark gesture, replayed whenever `at` changes. */
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 		class?: string;
 	}
 
 	let {
-		theme, now, mood, problems, startle = 0, paused = false, focus = 0, class: className = ''
+		theme,
+		now,
+		mood: moodIn = 'calm',
+		problems,
+		startle = 0,
+		paused = false,
+		focus = 0,
+		pulse = null,
+		class: className = ''
 	}: Props = $props();
 
 	const motion = !reducedMotion();
+
+	// The wall's moods and the status page's ones are the same weather.
+	const mood = $derived<SceneMood>(
+		moodIn === 'storm' || moodIn === 'critical'
+			? 'storm'
+			: moodIn === 'clouded' || moodIn === 'warn'
+				? 'clouded'
+				: 'calm'
+	);
+
+	// --- The gesture ---------------------------------------------------------------
+
+	// A short landmark gesture, replayed whenever `pulse.at` changes. Reduced
+	// motion skips it: the scene holds its still pose.
+	let active = $state<'down' | 'up' | 'resolved' | null>(null);
+	let playKey = $state(0);
+	let seen: number | null = untrack(() => pulse?.at ?? null);
+	let gestureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const p = pulse;
+		if (!p || p.at === seen) return;
+		seen = p.at;
+		active = null;
+		clearTimeout(gestureTimer);
+		if (!motion) return;
+		void tick().then(() => {
+			active = p.kind;
+			playKey++;
+			gestureTimer = setTimeout(() => (active = null), p.kind === 'resolved' ? 7000 : 5200);
+		});
+	});
+	$effect(() => () => clearTimeout(gestureTimer));
 
 	// --- Stage fit ---------------------------------------------------------------
 	let boxW = $state(0);
@@ -274,6 +316,8 @@
 	class="scene {className}"
 	class:scene--paused={paused}
 	class:scene--still={!motion}
+	class:p-down={active === 'down'}
+	class:p-up={active === 'up'}
 	{style}
 	bind:clientWidth={boxW}
 	bind:clientHeight={boxH}
@@ -330,6 +374,26 @@
 				<path d={TRACK} stroke="var(--mh-rail)" stroke-width="5" />
 				<path d={PINES} fill="var(--mh-pine)" />
 			</svg>
+
+			<!-- The gesture: the Matterhorn goes dark (down), blushes with alpenglow (up), lights its Swiss flag (resolved). -->
+			{#if active}
+				{#key playKey}
+					<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+						<g clip-path="url(#zm-clip)">
+							{#if active === 'down'}
+								<rect class="zm-shade" x="800" y="190" width="1120" height="650" fill="#0d1526" />
+							{:else if active === 'up'}
+								<rect class="zm-glow" x="800" y="190" width="1120" height="650" fill="#ff9a6b" />
+							{:else}
+								<g class="zm-show">
+									<rect x="1335" y="360" width="120" height="120" fill="#d52b1e" />
+									<path d="M1385 378h20v32h32v20h-32v32h-20v-32h-32v-20h32z" fill="#fff" />
+								</g>
+							{/if}
+						</g>
+					</svg>
+				{/key}
+			{/if}
 
 			<!-- The plume of snow the wind pulls off the summit. -->
 			<svg class="layer plume" viewBox="0 0 {STAGE_W} {STAGE_H}">
@@ -425,6 +489,10 @@
 					<svg viewBox="0 0 1920 1620"><path d={RAIN} stroke="var(--rain)" stroke-width="2.4" stroke-linecap="round" /></svg>
 				</div>
 				<div class="veil"></div>
+				<svg class="layer bolt-layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
+					<path class="bolt" d="M1180 0l-70 250 60-10-90 330 160-360-70 10z" fill="#fff" />
+				</svg>
+				<div class="flash"></div>
 			{/if}
 		</div>
 	{/if}
@@ -683,6 +751,125 @@
 		}
 	}
 
+	.flash {
+		position: absolute;
+		inset: 0;
+		background: #d6defc;
+		opacity: 0;
+		animation: flash 11s linear infinite;
+	}
+	.bolt {
+		opacity: 0;
+		animation: bolt 11s linear infinite;
+	}
+	@keyframes flash {
+		0%,
+		90%,
+		100% {
+			opacity: 0;
+		}
+		91% {
+			opacity: 0.5;
+		}
+		92% {
+			opacity: 0.04;
+		}
+		93.5% {
+			opacity: 0.38;
+		}
+		96% {
+			opacity: 0;
+		}
+	}
+	@keyframes bolt {
+		0%,
+		90.5%,
+		94%,
+		100% {
+			opacity: 0;
+		}
+		91%,
+		93.5% {
+			opacity: 0.9;
+		}
+	}
+
+	/* The gesture: the summit goes dark and its plume stops (down), the plume gusts and the
+	   peak blushes (up), the mountain lights the Swiss flag (resolved). */
+	.zm-shade {
+		opacity: 0;
+		animation: zm-shade 5.2s ease-in-out both;
+	}
+	.zm-glow {
+		opacity: 0;
+		mix-blend-mode: soft-light;
+		animation: zm-glow 5.2s ease-in-out both;
+	}
+	.zm-show {
+		opacity: 0;
+		animation: zm-show 7s ease-in-out both;
+	}
+	.p-down .plume {
+		animation: plume-down 5.2s ease-in-out both;
+	}
+	.p-up .plume {
+		animation: plume-up 5.2s ease-out both;
+	}
+	@keyframes zm-shade {
+		20%,
+		75% {
+			opacity: 0.6;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes zm-glow {
+		30%,
+		60% {
+			opacity: 0.9;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes zm-show {
+		10%,
+		30% {
+			opacity: 0.95;
+		}
+		22% {
+			opacity: 0.55;
+		}
+		80% {
+			opacity: 0.95;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes plume-down {
+		15%,
+		75% {
+			opacity: 0;
+			transform: scaleX(0.3);
+		}
+	}
+	@keyframes plume-up {
+		0% {
+			opacity: 0.2;
+			transform: scaleX(0.4);
+		}
+		30% {
+			opacity: 1;
+			transform: scaleX(1.9);
+		}
+		100% {
+			opacity: 0.85;
+			transform: scaleX(1);
+		}
+	}
+
 	/* A hidden tab: everything holds its breath. */
 	.scene--paused :global(*) {
 		animation-play-state: paused !important;
@@ -695,7 +882,15 @@
 	.scene--still .cloud {
 		transform: translateX(var(--still-x));
 	}
+	.scene--still .flash,
+	.scene--still .bolt {
+		display: none;
+	}
 	@media (prefers-reduced-motion: reduce) {
+		.flash,
+		.bolt {
+			display: none;
+		}
 		.scene :global(*) {
 			animation: none !important;
 			transition: none !important;
