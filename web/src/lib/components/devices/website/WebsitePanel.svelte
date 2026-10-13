@@ -57,8 +57,17 @@
 		og_description: () => m.website_field_og_description(),
 		lang: () => m.website_field_lang(),
 		h1_count: () => m.website_field_h1_count(),
-		hreflang_count: () => m.website_field_hreflang_count()
+		hreflang_count: () => m.website_field_hreflang_count(),
+		hreflang: () => m.website_field_hreflang(),
+		google_verification: () => m.website_field_google_verification()
 	};
+	const CATEGORY_LABEL: Record<string, () => string> = {
+		ecommerce: () => m.website_category_ecommerce(),
+		blog: () => m.website_category_blog(),
+		app: () => m.website_category_app(),
+		showcase: () => m.website_category_showcase()
+	};
+	const categoryLabel = (c: string) => CATEGORY_LABEL[c]?.() ?? c;
 	const fieldLabel = (f: string) => FIELD_LABEL[f]?.() ?? f;
 
 	function statusTone(status: number): Tone {
@@ -133,6 +142,12 @@
 						{probe.platform === 'other' ? m.website_platform_other() : (overview.platform_label ?? probe.platform)}
 					</dd>
 				</div>
+				{#if probe.category}
+					<div class="min-w-0">
+						<dt class="text-ink-3">{m.website_category()}</dt>
+						<dd class="mt-0.5 font-medium">{categoryLabel(probe.category)}</dd>
+					</div>
+				{/if}
 				<div class="min-w-0 sm:col-span-2">
 					<dt class="text-ink-3">{m.website_final_url()}</dt>
 					<dd class="mt-0.5 min-w-0 font-medium break-all">{probe.final_url}</dd>

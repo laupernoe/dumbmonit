@@ -2,10 +2,12 @@
 //!
 //! Le corps est un CSV (`text/csv`) ou `{"csv": "..."}`. Colonnes : `url`
 //! (obligatoire), `name`, `folder`, `tags` (`k=v;k=v`), `interval`,
-//! `expect_text`. Chaque ligne est validée comme une création ordinaire ; les
+//! `expect_text`, `category`. Chaque ligne est validée comme une création ordinaire ; les
 //! doublons sont ignorés et signalés. Sans `folder`, le dossier est
-//! `Websites/<plateforme>`, la plateforme étant lue par un GET au moment de
-//! l'import (4 à la fois, 10 s au plus chacun).
+//! `Websites/<catégorie>` (celle de la colonne `category`, sinon celle que la
+//! page laisse deviner : e-commerce, blog…), à défaut `Websites/<plateforme>`.
+//! La page est lue par un GET au moment de l'import (4 à la fois, 10 s au plus
+//! chacun). La catégorie devient l'option `category` de la cible.
 //!
 //! `?dry_run=true` rend le même rapport sans rien créer.
 
@@ -50,6 +52,7 @@ pub struct RowReport {
     name: String,
     folder: String,
     platform: Option<String>,
+    category: Option<String>,
     /// `ok` (aperçu), `created`, `skipped` ou `error`.
     status: &'static str,
     message: Option<String>,
@@ -145,6 +148,7 @@ pub async fn import(
             name: String::new(),
             folder: String::new(),
             platform: None,
+            category: None,
             status: "error",
             message: None,
             id: None,
@@ -160,17 +164,29 @@ pub async fn import(
         };
         report.url = parsed.url.clone();
         report.name = parsed.name.clone();
-        let (platform, final_url) = match detection {
-            Some(d) => (Some(d.platform), d.final_url),
-            None => (None, None),
+        let (platform, detected, final_url) = match detection {
+            Some(d) => (Some(d.platform), d.category, d.final_url),
+            None => (None, None, None),
         };
-        let folder = match (&parsed.folder, &platform) {
-            (Some(folder), _) => folder.clone(),
-            (None, Some(platform)) => format!("{DEFAULT_FOLDER}/{platform}"),
-            (None, None) => format!("{DEFAULT_FOLDER}/{OTHER_PLATFORM}"),
+        // La catégorie donnée prime ; sinon celle que la page laisse deviner.
+        let category = parsed.category.clone().or_else(|| detected.map(|c| c.label().to_string()));
+        let folder = match (&parsed.folder, &category, &platform) {
+            (Some(folder), ..) => folder.clone(),
+            (None, Some(category), _) => format!("{DEFAULT_FOLDER}/{category}"),
+            (None, None, Some(platform)) => format!("{DEFAULT_FOLDER}/{platform}"),
+            (None, None, None) => format!("{DEFAULT_FOLDER}/{OTHER_PLATFORM}"),
         };
         report.folder = folder.clone();
         report.platform = platform;
+        report.category = category.clone();
+        let mut tags = parsed.tags;
+        if let Some(category) = category {
+            let value = match parsed.category {
+                Some(_) => category,
+                None => detected.map_or(category, |c| c.as_str().to_string()),
+            };
+            tags.entry("category".into()).or_insert(value);
+        }
 
         let key = dedup_key(&parsed.url);
         let final_key = final_url.as_deref().map(dedup_key);
@@ -196,7 +212,7 @@ pub async fn import(
             via_agent: None,
             interval_secs: parsed.interval_secs,
             enabled: None,
-            tags: parsed.tags,
+            tags,
             group_name: Some(Some(folder)),
             credential: None,
         };
@@ -258,6 +274,8 @@ struct Parsed {
     url: String,
     name: String,
     folder: Option<String>,
+    /// Colonne `category`, texte libre.
+    category: Option<String>,
     tags: BTreeMap<String, String>,
     interval_secs: Option<u64>,
 }
@@ -301,13 +319,17 @@ fn parse_row(
     let name = Some(cell(record, "name")).filter(|n| !n.is_empty()).unwrap_or_else(|| host.into());
     let folder = Some(cell(record, "folder")).filter(|f| !f.is_empty());
     let mut tags = parse_tags(&cell(record, "tags"))?;
+    let category = Some(cell(record, "category")).filter(|c| !c.is_empty());
+    if category.as_ref().is_some_and(|c| c.contains('/') || c.chars().count() > 60) {
+        return Err("The category must be under 60 characters and cannot contain \"/\".".into());
+    }
     let expect_text = cell(record, "expect_text");
     if !expect_text.is_empty() {
         tags.insert("expect_text".into(), expect_text);
     }
     let interval = cell(record, "interval");
     let interval_secs = if interval.is_empty() { None } else { Some(parse_interval(&interval)?) };
-    Ok(Parsed { url: url.to_string(), name, folder, tags, interval_secs })
+    Ok(Parsed { url: url.to_string(), name, folder, category, tags, interval_secs })
 }
 
 fn parse_tags(text: &str) -> Result<BTreeMap<String, String>, String> {
@@ -419,6 +441,7 @@ fn parse_csv(text: &str) -> Result<Vec<Vec<String>>, String> {
 
 struct Detection {
     platform: String,
+    category: Option<crate::website::platform::Category>,
     final_url: Option<String>,
 }
 
@@ -433,15 +456,18 @@ fn detection_client() -> Option<reqwest::Client> {
 }
 
 async fn detect(client: &reqwest::Client, url: &str) -> Detection {
-    let platform = platform_for(client, url).await;
-    Detection { platform: platform.0, final_url: platform.1 }
+    let (platform, category, final_url) = platform_for(client, url).await;
+    Detection { platform, category, final_url }
 }
 
 /// Une requête GET (redirections suivies) puis reconnaissance de la plateforme.
 /// Renvoie le nom du dossier et l'URL finale quand la page a répondu.
-async fn platform_for(client: &reqwest::Client, url: &str) -> (String, Option<String>) {
+async fn platform_for(
+    client: &reqwest::Client,
+    url: &str,
+) -> (String, Option<crate::website::platform::Category>, Option<String>) {
     let Ok(mut response) = client.get(url).send().await else {
-        return (OTHER_PLATFORM.into(), None);
+        return (OTHER_PLATFORM.into(), None, None);
     };
     let final_url = response.url().clone();
     let headers = response.headers().clone();
@@ -454,7 +480,9 @@ async fn platform_for(client: &reqwest::Client, url: &str) -> (String, Option<St
     }
     let html = String::from_utf8_lossy(&html);
     let platform = crate::website::platform::detect_platform(&final_url, &headers, &html);
-    (platform.label().to_string(), Some(final_url.to_string()))
+    let og_type = crate::website::seo::extract(&final_url, &headers, &html).og_type;
+    let category = crate::website::categorize(platform, &final_url, &html, og_type.as_deref());
+    (platform.label().to_string(), category, Some(final_url.to_string()))
 }
 
 #[cfg(test)]
