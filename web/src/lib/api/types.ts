@@ -173,6 +173,8 @@ export interface WebchangePage {
 export interface WebchangePagesResponse {
 	/** False when the server has no headless browser configured: text diffing still works. */
 	screenshots_available: boolean;
+	/** Pages found when Max pages stopped the last crawl (read and still queued); `null` when the whole site was read. */
+	found: number | null;
 	pages: WebchangePage[];
 }
 

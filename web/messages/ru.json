@@ -3081,6 +3081,7 @@
 	"devicesb_webchange_panel_summary_other": "Отслеживается страниц: {count} · последнее изменение: {when}",
 	"devicesb_webchange_panel_timeline": "Хронология изменений",
 	"devicesb_webchange_panel_title": "Изменения сайта",
+	"devicesb_webchange_panel_truncated": "Отслеживается только {read} из как минимум {found} страниц: обход остановлен лимитом «Макс. страниц». Увеличьте его (не более 200) или сузьте префикс пути.",
 	"devicesb_webchange_slider_after": "После",
 	"devicesb_webchange_slider_before": "До",
 	"devicesb_webchange_slider_label": "Положение сравнения «до/после»",

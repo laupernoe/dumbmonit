@@ -22,6 +22,7 @@ use reqwest::header::CONTENT_TYPE;
 use super::html;
 use super::options::{Mode, Options};
 use super::robots::Robots;
+use super::scope::Scope;
 use super::sitemap::{self, Sitemap};
 use super::zones::Zones;
 
@@ -69,6 +70,10 @@ pub struct Crawl {
     /// ni page de départ en échec. Seul un parcours complet peut conclure
     /// qu'une page a disparu du site.
     pub complete: bool,
+    /// Pages trouvées quand **Max pages** a arrêté le parcours (lues, et encore
+    /// en attente) : de quoi dire à l'utilisateur ce qu'il ne surveille pas.
+    /// `None` quand le parcours n'a pas été arrêté par ce plafond.
+    pub found: Option<usize>,
 }
 
 /// Lit la page de départ, et le reste du site en mode site.
@@ -78,7 +83,8 @@ pub struct Crawl {
 /// rendue comme résultat, à l'appelant d'en juger.
 pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
     let started = Instant::now();
-    let client = Client::new(options.insecure_tls, options.allow_private)?;
+    let client =
+        Client::new(options.insecure_tls, options.allow_private, options.user_agent.as_deref())?;
     let start = options.scope.start().clone();
     guard::vet_url(&start, options.allow_private, Duration::from_secs(5)).await?;
 
@@ -93,28 +99,38 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
             first.status
         )));
     }
+    // Une redirection de la page de départ vers un autre hôte (`ex.fr` →
+    // `www.ex.fr`) : le site est là-bas, ses liens aussi.
+    let mut scope = options.scope.clone();
+    scope.follow(&first.final_url);
     let (start_result, start_links) =
         read_page(&start, first, options.mode == Mode::Page, &options.zones);
     let start_ok = start_result.error.is_none();
     let mut pages = vec![start_result];
     if options.mode == Mode::Page {
-        return Ok(Crawl { pages, complete: start_ok });
+        return Ok(Crawl { pages, complete: start_ok, found: None });
     }
     if !start_ok {
-        return Ok(Crawl { pages, complete: false });
+        return Ok(Crawl { pages, complete: false, found: None });
     }
 
-    let robots = client.robots(&start).await;
+    let robots = client.robots(scope.site_root()).await;
     let mut seen: HashSet<Url> = HashSet::from([start.clone()]);
     let mut queue: VecDeque<Url> = VecDeque::new();
-    let from_sitemap = client.sitemap_urls(options, &robots).await;
+    let from_sitemap = client.sitemap_urls(&scope, &robots).await;
     let follow_links = from_sitemap.is_empty();
     let candidates = if follow_links { start_links } else { from_sitemap };
-    enqueue(&mut queue, &mut seen, options, &robots, candidates);
+    enqueue(&mut queue, &mut seen, &scope, &robots, candidates);
 
     let mut complete = true;
+    let mut found = None;
     while !queue.is_empty() {
-        if pages.len() >= options.max_pages || started.elapsed() > CRAWL_BUDGET {
+        if pages.len() >= options.max_pages {
+            complete = false;
+            found = Some(pages.len() + queue.len());
+            break;
+        }
+        if started.elapsed() > CRAWL_BUDGET {
             complete = false;
             break;
         }
@@ -134,12 +150,12 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
         .await;
         for (result, links) in fetched.into_iter().flatten() {
             if follow_links {
-                enqueue(&mut queue, &mut seen, options, &robots, links);
+                enqueue(&mut queue, &mut seen, &scope, &robots, links);
             }
             pages.push(result);
         }
     }
-    Ok(Crawl { pages, complete })
+    Ok(Crawl { pages, complete, found })
 }
 
 /// Ajoute à la file ce qui est dans le périmètre, permis par `robots.txt` et
@@ -147,11 +163,11 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
 fn enqueue(
     queue: &mut VecDeque<Url>,
     seen: &mut HashSet<Url>,
-    options: &Options,
+    scope: &Scope,
     robots: &Robots,
     urls: Vec<Url>,
 ) {
-    for url in urls.into_iter().filter_map(|url| options.scope.contains(url)) {
+    for url in urls.into_iter().filter_map(|url| scope.contains(url)) {
         if seen.contains(&url) || !robots.allows(&path_and_query(&url)) {
             continue;
         }
@@ -263,7 +279,11 @@ enum FetchError {
 }
 
 impl Client {
-    fn new(insecure_tls: bool, allow_private: bool) -> Result<Self, ProbeError> {
+    fn new(
+        insecure_tls: bool,
+        allow_private: bool,
+        user_agent: Option<&str>,
+    ) -> Result<Self, ProbeError> {
         // Les noms sont vérifiés par le résolveur au moment de la connexion ;
         // une redirection vers une adresse littérale ne passe pas par lui, elle
         // est vérifiée ici.
@@ -291,7 +311,7 @@ impl Client {
             .danger_accept_invalid_certs(insecure_tls)
             .connect_timeout(dumbmonit_collectors::http::CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)
-            .user_agent(USER_AGENT)
+            .user_agent(user_agent.unwrap_or(USER_AGENT))
             .build()
             .map_err(|error| ProbeError::Config(format!("HTTP client unavailable: {error}")))?;
         Ok(Self { http })
@@ -348,17 +368,18 @@ impl Client {
     }
 
     /// Les pages du périmètre que listent les plans de site, dans leur ordre.
-    async fn sitemap_urls(&self, options: &Options, robots: &Robots) -> Vec<Url> {
-        let start = options.scope.start();
+    async fn sitemap_urls(&self, scope: &Scope, robots: &Robots) -> Vec<Url> {
+        let start = scope.start();
+        let site = scope.site_root();
         let mut candidates: Vec<Url> = robots
             .sitemaps
             .iter()
             .filter_map(|raw| Url::parse(raw).ok())
-            .filter(|url| url.origin() == start.origin())
+            .filter(|url| url.origin() == site.origin())
             .take(3)
             .collect();
         if candidates.is_empty() {
-            candidates.extend(start.join("/sitemap.xml").ok());
+            candidates.extend(site.join("/sitemap.xml").ok());
         }
 
         let mut locations = Vec::new();
@@ -369,7 +390,7 @@ impl Client {
                     let children = children
                         .iter()
                         .filter_map(|raw| Url::parse(raw).ok())
-                        .filter(|url| url.origin() == start.origin())
+                        .filter(|url| url.origin() == site.origin())
                         .take(MAX_CHILD_SITEMAPS);
                     for child in children {
                         // Un index d'index n'est pas suivi : un niveau suffit
@@ -387,7 +408,7 @@ impl Client {
         locations
             .iter()
             .filter_map(|raw| Url::parse(raw).ok())
-            .filter_map(|url| options.scope.contains(url))
+            .filter_map(|url| scope.contains(url))
             .filter(|url| url != start && seen.insert(url.clone()))
             .collect()
     }

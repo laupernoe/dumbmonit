@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} Seiten überwacht · letzte Änderung {when}",
 	"devicesb_webchange_panel_timeline": "Änderungsverlauf",
 	"devicesb_webchange_panel_title": "Website-Änderungen",
+	"devicesb_webchange_panel_truncated": "Nur {read} von mindestens {found} Seiten werden überwacht: „Max. Seiten“ hat den Durchlauf beendet. Erhöhen Sie den Wert (höchstens 200) oder grenzen Sie das Pfadpräfix ein.",
 	"devicesb_webchange_slider_after": "Nachher",
 	"devicesb_webchange_slider_before": "Vorher",
 	"devicesb_webchange_slider_label": "Position des Vorher/Nachher-Vergleichs",

@@ -21,10 +21,22 @@ const ASSET_EXTENSIONS: &[&str] = &[
 ];
 
 /// Le périmètre d'une surveillance de site.
+/// Paramètres d'URL de suivi publicitaire ou analytique : ils ne changent
+/// jamais la page, seulement l'adresse, et en feraient autant de pages.
+const TRACKING_PARAMS: &[&str] = &[
+    "fbclid", "gclid", "dclid", "gbraid", "wbraid", "msclkid", "yclid", "igshid", "mc_cid",
+    "mc_eid", "_ga", "_gl", "_hsenc", "_hsmi", "mkt_tok",
+];
+
 #[derive(Debug, Clone)]
 pub struct Scope {
     start: Url,
     prefix: String,
+    /// Origine où la page de départ a mené, quand une redirection a changé
+    /// d'hôte (`ex.fr` → `www.ex.fr`) : c'est là qu'est le site.
+    redirected: Option<Url>,
+    /// Retirer toute la requête (`?…`) des adresses suivies.
+    ignore_query: bool,
 }
 
 impl Scope {
@@ -36,7 +48,37 @@ impl Scope {
             Some(prefix) => format!("/{prefix}"),
             None => default_prefix(start),
         };
-        Self { start: normalise(start.clone()), prefix }
+        Self { start: normalise(start.clone()), prefix, redirected: None, ignore_query: false }
+    }
+
+    /// Les adresses qui ne diffèrent que par leur requête sont une même page.
+    pub fn with_ignore_query(mut self, ignore: bool) -> Self {
+        self.ignore_query = ignore;
+        self
+    }
+
+    /// La page de départ a été servie depuis `final_url` : si l'origine a
+    /// changé, le site est là, et les liens vers l'origine de départ y sont
+    /// ramenés plutôt que lus deux fois.
+    pub fn follow(&mut self, final_url: &Url) {
+        if final_url.origin() != self.start.origin() {
+            self.redirected = Some(final_url.clone());
+        }
+    }
+
+    /// `url`, de l'origine de départ, ramenée à celle de la redirection.
+    fn on_site(&self, mut url: Url) -> Url {
+        if let Some(site) = &self.redirected {
+            let _ = url.set_scheme(site.scheme());
+            let _ = url.set_host(site.host_str());
+            let _ = url.set_port(site.port());
+        }
+        url
+    }
+
+    /// Une adresse de l'origine où se trouve le site (départ, ou redirection).
+    pub fn site_root(&self) -> &Url {
+        self.redirected.as_ref().unwrap_or(&self.start)
     }
 
     pub fn start(&self) -> &Url {
@@ -63,12 +105,22 @@ impl Scope {
         if !matches!(url.scheme(), "http" | "https") {
             return None;
         }
-        let url = normalise(url);
-        if url.origin() != self.start.origin() {
-            return None;
+        let mut url = normalise(url);
+        if self.ignore_query {
+            url.set_query(None);
         }
         if url == self.start {
             return Some(url);
+        }
+        if url.origin() == self.start.origin() {
+            url = self.on_site(url);
+        }
+        if url.origin() != self.site_root().origin() {
+            return None;
+        }
+        // La page de départ, servie depuis l'origine de la redirection.
+        if url == self.on_site(self.start.clone()) {
+            return Some(self.start.clone());
         }
         if !under_prefix(url.path(), &self.prefix) || looks_like_asset(url.path()) {
             return None;
@@ -77,14 +129,30 @@ impl Scope {
     }
 }
 
-/// Forme canonique : sans fragment, sans `?` vide. `Url` s'occupe déjà de la
+/// Forme canonique : sans fragment, sans paramètres de suivi (`utm_…`,
+/// `fbclid`…), sans `?` vide. `Url` s'occupe déjà de la
 /// casse du schéma et de l'hôte, du port par défaut et des `.`/`..`.
 pub fn normalise(mut url: Url) -> Url {
     url.set_fragment(None);
-    if url.query() == Some("") {
-        url.set_query(None);
+    if url.query().is_some() {
+        let kept: Vec<(String, String)> = url
+            .query_pairs()
+            .filter(|(key, _)| !is_tracking(key))
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect();
+        let had_tracking = url.query_pairs().count() != kept.len();
+        if kept.is_empty() {
+            url.set_query(None);
+        } else if had_tracking {
+            url.query_pairs_mut().clear().extend_pairs(kept);
+        }
     }
     url
+}
+
+fn is_tracking(key: &str) -> bool {
+    let key = key.to_ascii_lowercase();
+    key.starts_with("utm_") || TRACKING_PARAMS.contains(&key.as_str())
 }
 
 /// Répertoire de l'adresse de départ : `/docs/` pour `/docs/intro.html` comme
@@ -119,6 +187,38 @@ mod tests {
 
     fn url(text: &str) -> Url {
         Url::parse(text).unwrap()
+    }
+
+    #[test]
+    fn une_redirection_vers_un_autre_hote_deplace_le_site() {
+        let mut scope = Scope::new(&url("https://ex.fr/"), None);
+        scope.follow(&url("https://www.ex.fr/accueil"));
+        let base = url("https://www.ex.fr/accueil");
+        let accept = |href: &str| scope.accept(&base, href).map(|u| u.to_string());
+        assert_eq!(accept("/tarifs").as_deref(), Some("https://www.ex.fr/tarifs"));
+        assert_eq!(accept("https://ex.fr/contact").as_deref(), Some("https://www.ex.fr/contact"));
+        assert_eq!(accept("https://www.ex.fr/").as_deref(), Some("https://ex.fr/"), "le départ");
+        assert_eq!(accept("https://autre.fr/"), None);
+
+        let mut same = Scope::new(&url("https://ex.fr/"), None);
+        same.follow(&url("https://ex.fr/fr/"));
+        assert_eq!(same.site_root().as_str(), "https://ex.fr/");
+    }
+
+    #[test]
+    fn les_parametres_de_suivi_sont_retires() {
+        let scope = Scope::new(&url("https://ex.fr/"), None);
+        let base = url("https://ex.fr/");
+        let accept = |href: &str| scope.accept(&base, href).map(|u| u.to_string());
+        assert_eq!(accept("/a?utm_source=x&UTM_medium=y").as_deref(), Some("https://ex.fr/a"));
+        assert_eq!(accept("/a?id=3&fbclid=abc").as_deref(), Some("https://ex.fr/a?id=3"));
+        assert_eq!(accept("/a?b=1&c=2").as_deref(), Some("https://ex.fr/a?b=1&c=2"), "intact");
+
+        let without = Scope::new(&url("https://ex.fr/"), None).with_ignore_query(true);
+        assert_eq!(
+            without.accept(&base, "/a?page=2").map(|u| u.to_string()).as_deref(),
+            Some("https://ex.fr/a")
+        );
     }
 
     #[test]

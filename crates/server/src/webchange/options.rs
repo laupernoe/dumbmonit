@@ -23,12 +23,15 @@ pub const OPTION_ALLOW_PRIVATE: &str = dumbmonit_collectors::uptime::guard::OPTI
 pub const OPTION_CONTENT_SELECTOR: &str = "content_selector";
 pub const OPTION_EXCLUDE_SELECTOR: &str = "exclude_selector";
 pub const OPTION_KEEP_CHROME: &str = "keep_page_chrome";
+pub const OPTION_USER_AGENT: &str = "user_agent";
+pub const OPTION_IGNORE_QUERY: &str = "ignore_query";
 
 /// Version de la lecture du texte. La relever change l'empreinte de toutes les
 /// surveillances : après une mise à jour qui lit les pages autrement (2 : menu,
-/// en-tête et pied de page écartés), la vérification suivante reprend une
-/// référence au lieu de signaler chaque page comme modifiée.
-const EXTRACTION_VERSION: &str = "2";
+/// en-tête et pied de page écartés ; 3 : paramètres de suivi retirés des
+/// adresses), la vérification suivante reprend une référence au lieu de
+/// signaler chaque page comme modifiée.
+const EXTRACTION_VERSION: &str = "3";
 
 pub const DEFAULT_MAX_PAGES: u32 = 25;
 pub const MAX_MAX_PAGES: u32 = 200;
@@ -63,6 +66,8 @@ pub struct Options {
     pub check_interval: Duration,
     pub insecure_tls: bool,
     pub allow_private: bool,
+    /// `User-Agent` envoyé à la place de `DumbMonit/<version>`.
+    pub user_agent: Option<String>,
     /// Empreinte de ce qui change la comparaison elle-même : adresse,
     /// périmètre, nombre de pages, zones, exclusions. Quand elle change, la vérification suivante
     /// repart d'une référence neuve au lieu de tout signaler comme modifié.
@@ -91,7 +96,14 @@ impl Options {
                 "\"{OPTION_PATH_PREFIX}\" is a path such as /docs/, got \"{prefix}\""
             )));
         }
-        let scope = Scope::new(&start, prefix);
+        let ignore_query = parse_bool(target, OPTION_IGNORE_QUERY, false)?;
+        let scope = Scope::new(&start, prefix).with_ignore_query(ignore_query);
+        let user_agent = tag(target, OPTION_USER_AGENT).map(str::to_string);
+        if user_agent.as_deref().is_some_and(|agent| agent.chars().any(char::is_control)) {
+            return Err(ProbeError::Config(format!(
+                "\"{OPTION_USER_AGENT}\" must fit on one line"
+            )));
+        }
         let raw_ignore = tag(target, OPTION_IGNORE).unwrap_or_default();
         let ignore = parse_ignore(raw_ignore)?;
         let minutes = parse_u32(
@@ -129,6 +141,7 @@ impl Options {
             raw_content.trim(),
             raw_exclude.trim(),
             if keep_chrome { "chrome" } else { "" },
+            if ignore_query { "no-query" } else { "" },
         ] {
             hasher.update(part.as_bytes());
             hasher.update([0]);
@@ -145,6 +158,7 @@ impl Options {
             check_interval: Duration::from_secs(u64::from(minutes) * 60),
             insecure_tls: parse_bool(target, OPTION_INSECURE_TLS, false)?,
             allow_private: parse_bool(target, OPTION_ALLOW_PRIVATE, false)?,
+            user_agent,
             fingerprint,
         })
     }
@@ -289,6 +303,7 @@ mod tests {
             ("https://ex.fr/", &[("content_selector", "main p")][..]),
             ("https://ex.fr/", &[("exclude_selector", "a:hover")][..]),
             ("https://ex.fr/", &[("keep_page_chrome", "parfois")][..]),
+            ("https://ex.fr/", &[("ignore_query", "bof")][..]),
         ] {
             let error = Options::from_target(&target(address, tags)).unwrap_err();
             assert!(matches!(error, ProbeError::Config(_)), "{address} {tags:?} : {error}");
@@ -335,6 +350,8 @@ mod tests {
         assert_ne!(base, site(&[("content_selector", "main")]));
         assert_ne!(base, site(&[("exclude_selector", ".ad")]));
         assert_ne!(base, site(&[("keep_page_chrome", "true")]));
+        assert_ne!(base, site(&[("ignore_query", "true")]));
+        assert_eq!(base, site(&[("user_agent", "Mozilla/5.0")]), "l'agent ne change pas le texte");
         assert_eq!(base, site(&[("max_pages", "25")]), "la valeur par défaut, écrite");
     }
 

@@ -7700,6 +7700,28 @@
         "group": ""
       },
       {
+        "key": "ignore_query",
+        "label": "Ignore query strings",
+        "help": "Site scope: addresses that differ only by their ?… part are one page. Tracking parameters (utm_…, fbclid, gclid…) are always left out.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "user_agent",
+        "label": "User agent",
+        "help": "Sent instead of DumbMonit's own, for a site that turns robots away. Empty: DumbMonit/<version>.",
+        "placeholder": "Mozilla/5.0 (compatible; DumbMonit)",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "screenshots",
         "label": "Screenshots",
         "help": "Keep a screenshot of each new version. Needs the optional browser service (DUMBMONIT_BROWSER_URL); without it, only the text is kept.",

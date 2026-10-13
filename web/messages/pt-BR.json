@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} páginas vigiadas · última alteração {when}",
 	"devicesb_webchange_panel_timeline": "Cronologia de alterações",
 	"devicesb_webchange_panel_title": "Alterações do site",
+	"devicesb_webchange_panel_truncated": "Apenas {read} de pelo menos {found} páginas são monitoradas: \"Máximo de páginas\" interrompeu o rastreamento. Aumente-o (200 no máximo) ou restrinja o prefixo do caminho.",
 	"devicesb_webchange_slider_after": "Depois",
 	"devicesb_webchange_slider_before": "Antes",
 	"devicesb_webchange_slider_label": "Posição da comparação antes/depois",

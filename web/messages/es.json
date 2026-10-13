@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} páginas vigiladas · último cambio {when}",
 	"devicesb_webchange_panel_timeline": "Cronología de cambios",
 	"devicesb_webchange_panel_title": "Cambios del sitio web",
+	"devicesb_webchange_panel_truncated": "Solo se vigilan {read} de al menos {found} páginas: «Páginas máximas» detuvo el recorrido. Auméntelo (200 como máximo) o acote el prefijo de ruta.",
 	"devicesb_webchange_slider_after": "Después",
 	"devicesb_webchange_slider_before": "Antes",
 	"devicesb_webchange_slider_label": "Posición de la comparación antes/después",

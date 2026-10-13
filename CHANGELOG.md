@@ -149,6 +149,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Watching a site that redirects to another host reads the whole site.** A
+  start page redirecting from `example.com` to `www.example.com` used to leave
+  every link outside the watch, which then only covered the start page.
+  Tracking parameters (`utm_…`, `fbclid`, `gclid`…) no longer make one page
+  several; **Ignore query strings** drops the whole `?…` part. When **Max
+  pages** stops a crawl, the device page now says how many pages were found.
+  New **User agent** option for sites that turn robots away.
 - **Every website check that finds changes is notified, and says which
   pages.** The "Website changed" alert stayed open while consecutive checks
   kept finding changes, so only the first of them was ever notified, and the

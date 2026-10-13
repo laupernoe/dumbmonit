@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} pages watched · last change {when}",
 	"devicesb_webchange_panel_timeline": "Change timeline",
 	"devicesb_webchange_panel_title": "Website changes",
+	"devicesb_webchange_panel_truncated": "Only {read} of at least {found} pages are watched: Max pages stopped the crawl. Raise it (200 at most) or narrow the path prefix.",
 	"devicesb_webchange_slider_after": "After",
 	"devicesb_webchange_slider_before": "Before",
 	"devicesb_webchange_slider_label": "Before/after comparison position",

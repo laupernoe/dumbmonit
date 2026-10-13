@@ -3053,6 +3053,7 @@
 	"devicesb_webchange_panel_summary_other": "{count} pages surveillées · dernière modification {when}",
 	"devicesb_webchange_panel_timeline": "Chronologie des modifications",
 	"devicesb_webchange_panel_title": "Modifications du site web",
+	"devicesb_webchange_panel_truncated": "Seules {read} pages sur au moins {found} sont surveillées : « Pages maximum » a arrêté le parcours. Augmentez-le (200 au plus) ou restreignez le préfixe de chemin.",
 	"devicesb_webchange_slider_after": "Après",
 	"devicesb_webchange_slider_before": "Avant",
 	"devicesb_webchange_slider_label": "Position de la comparaison avant/après",

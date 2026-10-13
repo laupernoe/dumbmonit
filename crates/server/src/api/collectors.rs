@@ -1118,6 +1118,19 @@ const WEBCHANGE_OPTIONS: &[OptionView] = &[
         false,
     ),
     boolean(
+        "ignore_query",
+        "Ignore query strings",
+        "Site scope: addresses that differ only by their ?… part are one page. Tracking parameters (utm_…, fbclid, gclid…) are always left out.",
+        false,
+    ),
+    text(
+        "user_agent",
+        "User agent",
+        "Sent instead of DumbMonit's own, for a site that turns robots away. Empty: DumbMonit/<version>.",
+        "Mozilla/5.0 (compatible; DumbMonit)",
+        "",
+    ),
+    boolean(
         "screenshots",
         "Screenshots",
         "Keep a screenshot of each new version. Needs the optional browser service (DUMBMONIT_BROWSER_URL); without it, only the text is kept.",
@@ -5285,6 +5298,8 @@ mod tests {
                     "content_selector",
                     "exclude_selector",
                     "keep_page_chrome",
+                    "ignore_query",
+                    "user_agent",
                     "screenshots",
                     "check_interval_minutes",
                     "insecure_tls",
@@ -6098,6 +6113,8 @@ mod tests {
             o::OPTION_IGNORE,
             o::OPTION_CONTENT_SELECTOR,
             o::OPTION_EXCLUDE_SELECTOR,
+            o::OPTION_IGNORE_QUERY,
+            o::OPTION_USER_AGENT,
             o::OPTION_INSECURE_TLS,
             o::OPTION_ALLOW_PRIVATE,
         ] {
