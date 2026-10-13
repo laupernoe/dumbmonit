@@ -1,12 +1,35 @@
 <script lang="ts">
 	/**
-	 * Istanbul across the Bosphorus — Hagia Sophia (central dome, semi-domes, buttresses, four minarets) beside the Blue Mosque (cascading domes, slender minarets), the far shore in haze, a ferry, a sailboat and a fishing boat, all mirrored in the water.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Istanbul across the Bosphorus — Hagia Sophia beside the Blue Mosque, the far shore in haze, a ferry, a sailboat and a fishing boat, all mirrored in the water.
+	 * `mood` is the weather (ok: clear, warn: clouds, critical: rain and
+	 * lightning; `calm|clouded|storm` accepted too). `pulse` plays one gesture
+	 * whenever its `at` changes: down puts out the lamps on the minaret tips and the Ramadan mahya string between the Blue Mosque minarets, up relights them with a flicker, resolved sets the string twinkling and bursts fireworks over the domes.
+	 * Fills its positioned parent; the headline zone (top left) is left clear.
+	 * Reduced motion freezes every animation.
 	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
+
+	interface Props {
+		mood?: Mood;
+		pulse?: Pulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const g = createGesture(() => pulse);
+	const level = $derived(moodLevel(mood));
+	const lamps = [[764, 232], [1146, 232], [1164, 301], [1206, 268], [1464, 268], [1506, 301]];
+	const bursts = [
+		{ x: 955, y: 200, d: 0 },
+		{ x: 1335, y: 190, d: 500 },
+		{ x: 1140, y: 150, d: 1000 }
+	];
+	const rays = Array.from({ length: 12 }, (_, i) => {
+		const a = (i / 12) * Math.PI * 2;
+		return `M${Math.round(Math.cos(a) * 10)} ${Math.round(Math.sin(a) * 10)}L${Math.round(Math.cos(a) * 40)} ${Math.round(Math.sin(a) * 40)}`;
+	}).join('');
 </script>
 
-<div class="scene scene-istanbul" aria-hidden="true">
+<div class="scene scene-istanbul" class:p-down={g.kind === 'down'} class:p-up={g.kind === 'up'} class:p-resolved={g.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 <pattern id="is-strp" width="10" height="12" patternUnits="userSpaceOnUse"><rect width="10" height="6" fill="var(--rose)"/><rect y="6" width="10" height="6" fill="var(--rose2)"/></pattern>
@@ -27,6 +50,23 @@
 <g opacity=".22" transform="translate(1110 582) scale(1 -.5)"><path d="M0 0H200L186 22H16Z" fill="var(--wh)"/></g>
 <g transform="translate(740 536)"><path d="M0 0H70L62 12H10Z" fill="var(--hullk)"/><path d="M34 -4V-52L64 -8Z" fill="var(--wh)"/><path d="M30 -4V-38L10 -8Z" fill="var(--sail2)"/><rect x="33" y="-56" width="1.6" height="52" fill="var(--hullk)"/></g>
 <g transform="translate(1420 520)"><path d="M0 0C30 8 80 8 100 -8L96 -12H6Z" fill="var(--hull2)"/><path d="M60 -12V-34h18V-12Z" fill="var(--wh)"/><rect x="60" y="-36" width="18" height="3" fill="var(--hullk)"/></g>
+
+		<!-- lampes des minarets et mahya -->
+		<g class="is-lamps">
+			{#each lamps as [x, y], i}
+				<g style="--i:{i}"><circle class="is-lamp" cx={x} cy={y} r="9" /><circle class="is-lampc" cx={x} cy={y} r="3" /></g>
+			{/each}
+			<path class="is-mahya" d="M1206 290Q1335 338 1464 290" pathLength="100" />
+			<path class="is-mahya is-mahya2" d="M1206 290Q1335 338 1464 290" pathLength="100" />
+		</g>
+		{#if g.kind === 'resolved'}
+			{#key g.key}
+				{#each bursts as b}
+					<g transform="translate({b.x} {b.y})"><g class="is-burst" style="animation-delay:{b.d}ms"><path d={rays} /></g></g>
+				{/each}
+			{/key}
+		{/if}
+		<SceneWeather {level} bolt={1150} />
 	</svg>
 </div>
 
@@ -107,4 +147,22 @@
 		-webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 		mask-image: linear-gradient(90deg, transparent, #000 9%, #000 70%, transparent 97%);
 	}
+	.scene-istanbul { --lampc: #ffb347; }
+	.is-lamp { fill: var(--lampc); opacity: 0.28; }
+	.is-lampc { fill: var(--lampc); }
+	.is-mahya { stroke: var(--lampc); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 0.1 3.4; fill: none; }
+	.is-mahya2 { stroke-dashoffset: -1.7; opacity: 0.6; }
+	.is-burst { opacity: 0; stroke: var(--lampc); stroke-width: 3; stroke-linecap: round; }
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .is-lamps > g, .p-down .is-mahya { animation: is-off 5s ease-out both; animation-delay: calc(var(--i, 0) * 200ms); }
+		.p-up .is-lamps > g, .p-up .is-mahya { animation: is-on 3s ease-out both; animation-delay: calc(var(--i, 0) * 200ms); }
+		.p-resolved .is-mahya { animation: is-twinkle 0.6s steps(2) 8 both; }
+		.p-resolved .is-mahya2 { animation-delay: 0.3s; }
+		.p-resolved .is-lamps > g { animation: is-twinkle 1.2s ease-in-out 4 both; }
+		.is-burst { transform-box: fill-box; transform-origin: center; animation: is-pop 2.6s ease-out both; }
+	}
+	@keyframes is-off { 0% { opacity: 1; } 8% { opacity: 0.1; } 14% { opacity: 0.8; } 22%, 85% { opacity: 0; } 100% { opacity: 1; } }
+	@keyframes is-on { 0%, 10% { opacity: 0; } 25% { opacity: 1; } 35% { opacity: 0.2; } 55%, 100% { opacity: 1; } }
+	@keyframes is-twinkle { 50% { opacity: 0.25; } }
+	@keyframes is-pop { 0% { opacity: 1; transform: scale(0.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(10px); } }
 </style>
