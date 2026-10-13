@@ -7,8 +7,8 @@
    * in warm flickers, resolved = cherry blossom petals drift down over the
    * river. Reduced motion: still picture.
    */
-  import SceneWeather from './SceneWeather.svelte';
-  import { createPulsePlayer, type ScenePulse } from './pulse.svelte.js';
+  import SceneWeather from './SceneWeatherD.svelte';
+  import { createPulsePlayer, type ScenePulse } from './pulseD.svelte.js';
 
   interface Props {
     mood?: 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
