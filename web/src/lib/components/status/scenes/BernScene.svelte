@@ -1,4 +1,36 @@
-<div class="scene scene-bern" aria-hidden="true">
+<script lang="ts">
+  /**
+   * Bern — the Zytglogge clock tower in the old town, arcades, the Aare, the
+   * Alps behind. `mood` is the weather (clear, clouded, storm with rain and
+   * lightning). `pulse` plays one gesture when `at` changes: on `down` the
+   * clock stops and its dial goes dark, on `up` the hands spin and the dial
+   * relights, on `resolved` the tower bell rings with sound waves and
+   * confetti. Reduced motion freezes everything.
+   */
+  import SceneWeather from './SceneWeather.svelte';
+  import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+
+  interface Props {
+    mood?: SceneMood;
+    pulse?: ScenePulse;
+  }
+  let { mood = 'ok', pulse = null }: Props = $props();
+  const pl = createPulse(() => pulse, { down: 7000, up: 4000, resolved: 6500 });
+  const CONFETTI = Array.from({ length: 22 }, (_, i) => ({
+    x: 1060 + ((i * 53) % 220),
+    c: ['#d52b1e', '#fff', '#e0b341'][i % 3],
+    d: ((i * 211) % 1800) + 700,
+    dx: ((i * 37) % 90) - 45
+  }));
+</script>
+
+<div
+  class="scene scene-bern"
+  class:p-down={pl.active === 'down'}
+  class:p-up={pl.active === 'up'}
+  class:p-resolved={pl.active === 'resolved'}
+  aria-hidden="true"
+>
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <!-- arcades de la vieille ville : un arc tous les 30, alignés sur le sol y=482 -->
@@ -55,11 +87,17 @@
       <!-- grand cadran -->
       <circle cx="1170" cy="288" r="34" fill="var(--bern-gold)" /><circle cx="1170" cy="288" r="29" fill="var(--bern-dial)" />
       <g stroke="var(--bern-gold)" stroke-width="2" stroke-linecap="round"><path d="M1170 262v6M1170 308v6M1144 288h6M1190 288h6M1152 270l3 3M1185 303l3 3M1188 270l-3 3M1155 303l-3 3" /></g>
-      <path d="M1170 288V268M1170 288L1182 296" stroke="var(--bern-gold)" stroke-width="3" stroke-linecap="round" />
+      <circle class="dialdim" cx="1170" cy="288" r="29" fill="#14121c" />
+      <g class="hand hand-m"><circle cx="1170" cy="288" r="30" /><path d="M1170 288V266" stroke="var(--bern-gold)" stroke-width="3" stroke-linecap="round" /></g>
+      <g class="hand hand-h"><circle cx="1170" cy="288" r="30" /><path d="M1170 288L1182 296" stroke="var(--bern-gold)" stroke-width="3" stroke-linecap="round" /></g>
       <circle cx="1170" cy="288" r="3" fill="var(--bern-gold)" />
       <!-- étage supérieur, lanterne à arcades -->
       <rect x="1126" y="170" width="88" height="46" fill="var(--bern-stone)" /><rect x="1120" y="164" width="100" height="8" fill="var(--bern-stone2)" />
       <path d="M1140 214V190a8 8 0 0 1 16 0V214zM1184 214V190a8 8 0 0 1 16 0V214z" fill="var(--bern-win)" />
+      <g class="bell"><rect x="1169" y="176" width="2" height="8" fill="var(--bern-dark)" /><path d="M1162 206c0-10 3-20 8-20s8 10 8 20z" fill="var(--bern-gold)" /><circle cx="1170" cy="208" r="2.4" fill="var(--bern-dark)" /></g>
+      <g class="waves" stroke="var(--bern-gold)" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M1104 186q-12 14 0 28M1090 178q-20 22 0 44" /><path d="M1236 186q12 14 0 28M1250 178q20 22 0 44" />
+      </g>
       <!-- tourelles d'angle et toit pyramidal -->
       <path d="M1112 166L1126 126L1140 166z" fill="var(--bern-tile)" /><path d="M1200 166L1214 126L1228 166z" fill="var(--bern-tile)" />
       <path d="M1126 166L1170 74L1214 166z" fill="var(--bern-tile)" />
@@ -87,6 +125,16 @@
     <!-- mascottes : sur le toit de gauche et au bord de l'eau -->
     <use href="#dm-mascot" transform="translate(1486 316) scale(.1)" />
     <use href="#dm-mascot" transform="translate(880 452) scale(.1)" />
+    <g class="confetti">
+      {#if pl.active === 'resolved'}
+        {#key pl.key}
+          {#each CONFETTI as c}
+            <rect class="conf" x={c.x} y="130" width="7" height="5" fill={c.c} style="--dx:{c.dx}px;animation-delay:{c.d}ms" />
+          {/each}
+        {/key}
+      {/if}
+    </g>
+    <SceneWeather {mood} />
   </svg>
 </div>
 
@@ -103,6 +151,35 @@
     height: 100%;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
+  }
+  .hand, .bell { transform-box: fill-box; }
+  .hand { transform-origin: 50% 50%; }
+  .hand circle { fill: none; }
+  .waves { transform-box: fill-box; transform-origin: center; }
+  .bell { transform-origin: 50% 0; }
+  .dialdim, .waves, .conf { opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hand-m { animation: tick 120s linear infinite; }
+    .hand-h { animation: tick 1440s linear infinite; }
+    .p-down .hand-m, .p-down .hand-h { animation-play-state: paused; }
+    .p-down .dialdim { animation: stopped 7s ease-in-out both; }
+    .p-up .hand-m { animation: whirl 3s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+    .p-up .hand-h { animation: whirl-h 3s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+    .p-up .dialdim { animation: relit 1.4s ease-out both; }
+    .p-resolved .bell { animation: ring 1.1s ease-in-out 5 both; }
+    .p-resolved .waves { animation: pulse 1.1s ease-out 5 both; }
+    .conf { transform-box: fill-box; transform-origin: center; animation: confetti 3.4s ease-in both; }
+  }
+  @keyframes tick { to { transform: rotate(360deg); } }
+  @keyframes whirl { to { transform: rotate(1080deg); } }
+  @keyframes whirl-h { to { transform: rotate(90deg); } }
+  @keyframes stopped { 0% { opacity: 0; } 8% { opacity: 0.7; } 14% { opacity: 0.25; } 22%, 80% { opacity: 0.8; } 100% { opacity: 0; } }
+  @keyframes relit { 0% { opacity: 0.8; } 30% { opacity: 0.1; } 45% { opacity: 0.5; } 100% { opacity: 0; } }
+  @keyframes ring { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(22deg); } 75% { transform: rotate(-22deg); } }
+  @keyframes pulse { 0% { opacity: 0.9; transform: scale(0.96); } 100% { opacity: 0; transform: scale(1.1); } }
+  @keyframes confetti {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0); } 85% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), 340px) rotate(540deg); }
   }
   .scene-bern {
     --sky1: #a9c8e6; --sky2: #eaf1f3; --sun: #fff2c6; --water1: #8fc0b8; --water2: #5f9a98; --cloud: #fff;

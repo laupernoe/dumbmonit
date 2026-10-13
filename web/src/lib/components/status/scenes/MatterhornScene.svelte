@@ -1,9 +1,45 @@
-<div class="scene scene-matterhorn" aria-hidden="true">
+<script lang="ts">
+  /**
+   * Matterhorn above Zermatt — the Gornergrat train, chalets and church spire.
+   * `mood` is the weather (clear, clouded, storm with rain and lightning).
+   * `pulse` plays one gesture when `at` changes: on `down` a cloud swallows
+   * the summit and the mountain falls into shadow, on `up` alpenglow climbs
+   * the face, on `resolved` a Swiss flag is hoisted on the peak in a burst of
+   * sparkles. Reduced motion freezes everything.
+   */
+  import SceneBursts from './SceneBursts.svelte';
+  import SceneWeather from './SceneWeather.svelte';
+  import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+
+  interface Props {
+    mood?: SceneMood;
+    pulse?: ScenePulse;
+  }
+  let { mood = 'ok', pulse = null }: Props = $props();
+  const pl = createPulse(() => pulse, { down: 7000, up: 4500, resolved: 6500 });
+  const SPARKS = [
+    { x: 1174, y: 88, c: '#fff6c8', d: 0 },
+    { x: 1130, y: 130, c: '#ffd36a', d: 500 },
+    { x: 1222, y: 140, c: '#ffffff', d: 1000 }
+  ];
+</script>
+
+<div
+  class="scene scene-matterhorn"
+  class:p-down={pl.active === 'down'}
+  class:p-up={pl.active === 'up'}
+  class:p-resolved={pl.active === 'resolved'}
+  aria-hidden="true"
+>
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <clipPath id="mh-clip">
         <path d="M700 490L860 380L960 330L1040 280L1090 214L1130 162L1160 120L1174 98L1190 112L1210 172L1242 242L1272 302L1332 362L1424 414L1580 490z" />
       </clipPath>
+      <linearGradient id="mh-glow" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#ff7a59" stop-opacity=".85" /><stop offset=".6" stop-color="#ffb070" stop-opacity=".55" /><stop offset="1" stop-color="#ffe9a8" stop-opacity=".8" />
+      </linearGradient>
+      <g id="mh-flag"><rect width="26" height="26" fill="#d52b1e" /><path d="M11 5h4v6h6v4h-6v6h-4v-6H5v-4h6z" fill="#fff" /></g>
       <!-- chalet : origine = pied, coin gauche, 72 de large -->
       <g id="mh-chalet">
         <rect y="-40" width="72" height="40" fill="var(--mh-wood)" />
@@ -32,8 +68,24 @@
       <path d="M1174 90H1300V270L1262 240L1240 282L1214 226L1190 272L1186 200z" fill="var(--mh-snow2)" />
       <path d="M1100 300L1150 262L1196 326M1010 350L1070 316M1300 400L1262 350M1180 400L1220 340" stroke="var(--mh-rock2)" stroke-width="3" stroke-linecap="round" opacity=".7" />
     </g>
+    <!-- geste : ombre, lueur du soir -->
+    <g clip-path="url(#mh-clip)">
+      <rect class="shade" x="680" y="90" width="920" height="400" fill="#070b1c" />
+      <rect class="alpen" x="680" y="90" width="920" height="400" fill="url(#mh-glow)" />
+    </g>
     <!-- panache de nuage -->
-    <g fill="var(--cloud)" opacity=".8"><ellipse cx="1240" cy="100" rx="70" ry="9" /><ellipse cx="1300" cy="90" rx="46" ry="7" /></g>
+    <g class="plume" fill="var(--cloud)" opacity=".8"><ellipse cx="1240" cy="100" rx="70" ry="9" /><ellipse cx="1300" cy="90" rx="46" ry="7" /></g>
+    <g class="swallow" fill="var(--cloud)">
+      <ellipse cx="1174" cy="120" rx="120" ry="34" /><ellipse cx="1140" cy="170" rx="130" ry="30" /><ellipse cx="1220" cy="190" rx="110" ry="26" />
+    </g>
+    <!-- drapeau suisse au sommet -->
+    <g class="flagwrap">
+      <rect x="1173" y="52" width="2" height="48" fill="#d8d4cc" />
+      <g class="flag"><use href="#mh-flag" transform="translate(1175 52) scale(.7)" /></g>
+    </g>
+    {#if pl.active === 'resolved'}
+      {#key pl.key}<SceneBursts bursts={SPARKS} size={0.6} />{/key}
+    {/if}
 
     <!-- prairie et voie du train -->
     <path d="M560 470C700 452 900 470 1100 462S1560 450 1780 466V620H560z" fill="var(--mh-meadow)" />
@@ -66,6 +118,7 @@
     <!-- mascottes : sur un toit et dans la rue -->
     <use href="#dm-mascot" transform="translate(1448 462) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1000 540) scale(.1)" />
+    <SceneWeather {mood} />
   </svg>
 </div>
 
@@ -83,6 +136,27 @@
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
   }
+  .shade, .alpen, .swallow, .flagwrap { opacity: 0; }
+  .flagwrap { transform-box: fill-box; transform-origin: 50% 100%; }
+  .flag { transform-box: fill-box; transform-origin: 0 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .plume { animation: drift 40s ease-in-out infinite alternate; }
+    .p-down .shade { animation: dim 7s ease-in-out both; }
+    .p-down .swallow { animation: engulf 7s ease-in-out both; }
+    .p-up .alpen { animation: glow 4.5s ease-out both; }
+    .p-resolved .flagwrap { animation: hoist 6.5s ease-out both; }
+    .p-resolved .flag { animation: wave 0.6s ease-in-out infinite alternate; }
+  }
+  @keyframes drift { to { transform: translateX(26px); } }
+  @keyframes dim { 0%, 100% { opacity: 0; } 25%, 70% { opacity: 0.62; } }
+  @keyframes engulf { 0%, 100% { opacity: 0; transform: translateX(-60px); } 28%, 68% { opacity: 0.96; transform: translateX(0); } }
+  @keyframes glow {
+    0% { opacity: 0; transform: translateY(300px); } 55% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); }
+  }
+  @keyframes hoist {
+    0% { opacity: 1; transform: translateY(46px) scaleY(.2); } 30% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @keyframes wave { to { transform: skewY(6deg) scaleX(.92); } }
   .scene-matterhorn {
     --sky1: #a9cdee; --sky2: #eef3f6; --sun: #fff0b8; --cloud: #fff; --crater: transparent; --star: transparent;
     --mh-far: #b9c8dd; --mh-rock: #8d93a6; --mh-rock2: #646b84; --mh-snow: #fff; --mh-snow2: #d3deee;
