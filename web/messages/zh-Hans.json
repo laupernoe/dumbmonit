@@ -458,6 +458,7 @@
 	"app_security_worst_first": "分数最差的排在最前。",
 	"app_ui_copied": "已复制",
 	"app_ui_copy": "复制",
+	"app_ui_run_with_sudo": "使用 sudo 运行",
 	"app_ui_select_copy": "选中并复制",
 	"app_ui_tone_advisory": "提示",
 	"app_ui_tone_ghost": "未知",

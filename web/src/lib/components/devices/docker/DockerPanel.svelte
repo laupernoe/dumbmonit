@@ -223,7 +223,7 @@
 					{m.devices_docker_unavailable_body({ why: whyNot })}
 				</p>
 				<div class="mt-2">
-					<CopyBlock value={installHint} label={m.devices_docker_copy_install()} />
+					<CopyBlock sudo value={installHint} label={m.devices_docker_copy_install()} />
 				</div>
 			</div>
 		{/if}
