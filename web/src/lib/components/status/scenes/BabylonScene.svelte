@@ -8,9 +8,9 @@
 	 * Fills its positioned parent, the headline zone (top left) is left clear.
 	 * Reduced motion keeps the still image.
 	 */
-	import SceneWeather from './SceneWeather.svelte';
+	import SceneWeather from './SceneWeatherA.svelte';
 	import SceneSparkles from './SceneSparkles.svelte';
-	import { createPulse } from './pulse.svelte';
+	import { createPulse } from './pulseA.svelte';
 	import { level, type Mood, type PulseProp } from './weather';
 
 	let { mood = 'ok', pulse = null }: { mood?: Mood; pulse?: PulseProp } = $props();
