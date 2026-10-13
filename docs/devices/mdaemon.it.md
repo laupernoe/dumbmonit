@@ -82,7 +82,7 @@ spam, virus e DNSBL delle ultime 24 ore, l'uptime di MDaemon, e i server
 interni che MDaemon riporta come inattivi. Lo stesso pannello appare sulla
 pagina propria dell'agent.
 
-## Code di posta tramite l'agent
+## Code di posta tramite l'agent {#mail-queues-through-the-agent}
 
 1. Installa l'[agent](agent.md#install) sul server Windows che esegue
    MDaemon. Nulla altro è necessario: l'agent nota il servizio Windows

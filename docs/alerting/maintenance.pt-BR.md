@@ -1,11 +1,11 @@
-# Janelas de manutenção
+# Janelas de manutenção {#maintenance-windows}
 
 Uma janela de manutenção (um *silêncio* na API) interrompe notificações para
 um dispositivo, ou para tudo, durante um período. A avaliação continua por
 baixo: quando a janela termina, um alerta que ainda está ativo é notificado
 uma vez, em vez de aparecer do nada depois de duas horas.
 
-## Onde
+## Onde {#where}
 
 - **Alertas → Manutenção programada**: a lista de janelas, com *Ativa agora*
   ou *Programada*, e o formulário para adicionar uma.
@@ -20,7 +20,7 @@ modo que uma regra irmã continua falando. Ela também aparece aqui, nomeada
 `Snooze · …`. Veja
 [Se livrando de um alerta](../using/alerts.md#getting-rid-of-an-alert).
 
-## Janela pontual
+## Janela pontual {#one-off-window}
 
 | Campo | Significado |
 |---|---|
@@ -31,7 +31,7 @@ modo que uma regra irmã continua falando. Ela também aparece aqui, nomeada
 
 Janelas pontuais são removidas assim que terminam.
 
-## Janela semanal
+## Janela semanal {#weekly-window}
 
 | Campo | Significado |
 |---|---|
@@ -42,7 +42,7 @@ ao dia em que começa). |
 | Fuso horário | Um nome IANA como `Europe/Paris`. Pré-preenchido com o fuso
 do seu navegador. |
 
-## Janela mensal
+## Janela mensal {#monthly-window}
 
 | Campo | Significado |
 |---|---|
@@ -65,7 +65,7 @@ O DumbMonit não tem expressões cron, de propósito: uma expressão cron nomeia
 e "o n-ésimo dia da semana" cobrem os calendários que as pessoas realmente
 mantêm, e se leem de volta em uma linha.
 
-## Fusos horários e horário de verão
+## Fusos horários e horário de verão {#time-zones-and-daylight-saving}
 
 Uma janela recorrente abre em sua hora local do relógio de parede e então
 roda por sua duração em tempo real. Ambas as partes importam:
@@ -83,7 +83,7 @@ UTC fixo e se comporta exatamente como antes. Salve-a novamente com um fuso
 para que ela siga as mudanças do relógio. Um nome de fuso que o servidor não
 conhece é recusado ao salvar, com um exemplo.
 
-## Correspondências
+## Correspondências {#matchers}
 
 Uma janela também pode ser limitada por correspondências exatas de rótulos
 (`matchers` na API): todas precisam corresponder aos rótulos do alerta, por
@@ -91,13 +91,13 @@ exemplo `tag_role = lab` e `__name__ = dumbmonit_up`. Uma janela sem
 dispositivo e sem correspondência silencia toda a instância. Janelas que se
 sobrepõem funcionam bem; a primeira que cobre o momento explica o silêncio.
 
-## Como um alerta silenciado aparece
+## Como um alerta silenciado aparece {#what-a-silenced-alert-looks-like}
 
 O alerta mantém sua fase e mostra `silenced: true`; o histórico registra a
 transição com `notified: false` e o motivo. Desativar uma janela
 (`enabled: false`) a mantém na lista sem efeito.
 
-## Em uma página de status pública
+## Em uma página de status pública {#on-a-public-status-page}
 
 Um dispositivo coberto por uma janela de manutenção é mostrado como
 **Manutenção** em qualquer [página de status](../using/status-pages.md) que o

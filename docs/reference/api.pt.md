@@ -29,26 +29,26 @@ resposta, respostas de erro e o âmbito que precisa (a extensão
 para rotas que um token nunca pode chamar). As tabelas mais abaixo
 nesta página são um resumo legível da mesma coisa.
 
-Deixados de fora de propósito: o protocolo de agente (`/api/ingest`,
+Deixadas de fora de propósito: o protocolo do agente (`/api/ingest`,
 `/api/agent/commands*`, `/api/agent/relay*`), que só o
-[agente](../devices/agent.md) fala; os redirecionamentos de navegador
-do início de sessão SSO (`/api/auth/oidc/start`,
-`/api/auth/oidc/callback`); e as descargas de agente (`/install.sh`,
-`/install.ps1`, `/download/*`).
+[agente](../devices/agent.md) fala; os redirecionamentos do navegador no início
+de sessão SSO (`/api/auth/oidc/start`, `/api/auth/oidc/callback`) e o do Spotify
+(`/api/music/spotify/callback`); e os downloads do agente
+(`/install.sh`, `/install.ps1`, `/download/*`).
 
 Carregue-o em qualquer ferramenta OpenAPI:
 
 ```bash
-# Navegue nele, e experimente chamadas com o seu token, no Swagger UI
+# Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
   -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
-# depois abra http://localhost:8081 e cole "dmt_…" em Authorize → bearerAuth
+# then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
-# Gere uma biblioteca de cliente (aqui Python)
+# Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
   -i http://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
 
-# Ou simplesmente liste o que existe
+# Or just list what is there
 curl -s http://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
 ```
 
@@ -72,11 +72,11 @@ Duas formas de entrar, aceites em toda rota protegida:
   cabeçalho `X-Requested-With` é alguma vez necessário.
 
 ```bash
-# Token de API: um cabeçalho, nada mais
+# API token: one header, nothing else
 curl -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/targets
 curl -H 'Authorization: Bearer dmt_…' -X POST http://monit.lan:8080/api/targets/4/probe
 
-# Sessão: iniciar sessão (204 e um cabeçalho Set-Cookie), depois enviar o cookie
+# Session: sign in (204 and a Set-Cookie header), then send the cookie
 curl -c cookies.txt -X POST http://monit.lan:8080/api/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"admin","password":"…"}'
@@ -211,7 +211,7 @@ A mesma lista decide qual `Origin` o
 [endpoint MCP](../using/assistant.md#security-notes) aceita.
 
 ```js
-// De uma página noutra origem. Nunca envie um token de escrita numa página pública.
+// From a page on another origin. Never ship a write token in a public page.
 const response = await fetch('https://monit.example.com/api/alerts', {
   headers: { Authorization: 'Bearer dmt_…' }
 });
@@ -259,7 +259,7 @@ $ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' http://monit.lan:8
 HTTP/1.1 403 Forbidden
 {"error":"This action needs a token with the \"write\" scope; the token \"Grafana\" is \"read\" only. Create a write token in Settings → API & assistants."}
 
-$ curl -i -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/alerts   # a 121ª chamada este minuto
+$ curl -i -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/alerts   # the 121st call this minute
 HTTP/1.1 429 Too Many Requests
 retry-after: 17
 ratelimit-limit: 120
@@ -466,37 +466,34 @@ Criar um:
 }
 ```
 
-Formas de credencial (`type`): `none`; `snmp_community`
-(`community`); `snmp_v3` (`username`, `auth: {protocol, passphrase}`
-opcional com `md5`, `sha1`, `sha224`, `sha256`, `sha384` ou `sha512`,
-`privacy: {protocol, passphrase}` opcional com `des`, `aes128`,
-`aes192` ou `aes256`, `context` opcional); `api_token` (`token`, ou as
-duas metades `token_id` e `secret`, que o servidor junta em
-`user@realm!name=secret` para o Proxmox VE e o PBS);
+Formas de credencial (`type`): `none`; `snmp_community` (`community`); `snmp_v3`
+(`username`, `auth: {protocol, passphrase}` opcional com `md5`, `sha1`,
+`sha224`, `sha256`, `sha384` ou `sha512`, `privacy: {protocol,
+passphrase}` opcional com `des`, `aes128`, `aes192` ou `aes256`, `context`
+opcional); `api_token` (`token`, ou as duas metades `token_id` e `secret`, que o
+servidor junta em `user@realm!name=secret` para o Proxmox VE e o PBS);
 `username_password` (`username`, `password`).
-`interval_secs` tem predefinição 60 e não pode ir abaixo de 10.
-`name` tem no máximo 200 caracteres e `address` no máximo 253 (`400`
-além disso). `parent_id` tem de nomear um dispositivo existente
-(`400 Parent device N not found.`). As opções de tipo vão em `tags`
-sob a sua chave.
+`interval_secs` tem predefinição 60 e não pode descer abaixo de 10. `name` tem no
+máximo 200 caracteres e `address` no máximo 253 (`400` além disso). `parent_id`
+tem de nomear um dispositivo existente (`400 Parent device N not found.`). As
+opções do tipo vão em `tags` sob a sua chave.
 
-`via_agent` nomeia o [agente relay](../install/remote-site.md) que
-sonda o dispositivo a partir da sua própria rede em vez do servidor;
-`null` (a predefinição) significa que o servidor o sonda. Tem de ser
-um dispositivo `agent` (`400` caso contrário), um dispositivo não
-pode relayar-se a si mesmo, e um dispositivo `agent` não pode ser
-relayed. Num `PUT`, um `via_agent` *omitido* mantém o valor guardado,
-como `profile_id` e `credential`; envie `null` para voltar à
-sondagem direta. `POST /api/targets/{id}/probe` e `/discover` num
-dispositivo relayed passam pelo relay e esperam pela sua resposta
-(`409` quando uma verificação já está em curso,
+`via_agent` nomeia o [agente de retransmissão](../install/remote-site.md) que sonda
+o dispositivo a partir da sua própria rede em vez do servidor; `null` (a
+predefinição) significa que o servidor o sonda. Tem de ser um dispositivo `agent`
+(`400` caso contrário), um dispositivo não pode retransmitir-se a si próprio, e
+um dispositivo `agent` não pode ser retransmitido. Em `PUT`, um `via_agent`
+*omitido* mantém o valor guardado, como `profile_id` e `credential`; envie
+`null` para voltar à sondagem direta. `POST
+/api/targets/{id}/probe` e `/discover` num dispositivo retransmitido passam pelo
+retransmissor e esperam pela sua resposta (`409` quando já há uma sonda em curso,
 `400 Timed out: relay agent …` quando não responde).
 
 ## Descoberta {#discovery}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
-| `POST` | `/api/discovery` | admin | `{"cidr": "192.168.1.0/24", "community": "public", "port": 161, "timeout_ms": 1000}`. Analisa uma rede por dispositivos SNMP. `cidr` é obrigatório; `community` tem predefinição `public`; `timeout_ms` é limitado a 100–10000. Redes maiores do que 4096 endereços são recusadas. A análise é um `POST` com um corpo JSON para que a comunidade nunca apareça num URL ou numa linha de registo. |
+| `POST` | `/api/discovery` | admin | `{"cidr": "192.168.1.0/24", "community": "public", "port": 161, "timeout_ms": 1000}`. Percorre uma rede à procura de dispositivos SNMP. `cidr` é obrigatório; `community` tem predefinição `public`; `timeout_ms` é limitado a 100–10 000. Redes com mais de 4096 endereços são recusadas. A pesquisa é um `POST` com corpo JSON para que a community nunca apareça num URL nem numa linha de registo. |
 
 ```json
 {
@@ -551,7 +548,7 @@ forma Prometheus:
 | Método | Rota | Propósito |
 |---|---|---|
 | `GET` | `/api/metrics/query?query=…` | Consulta MetricsQL instantânea. |
-| `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Consulta de intervalo. `start` e `end` são **milissegundos** desde a época; `step` está em segundos e é alargado para que uma série nunca exceda 2000 pontos. |
+| `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Consulta de intervalo. `start` e `end` são **milissegundos** desde a época; `step` é em segundos e é alargado para que uma série nunca exceda 2 000 pontos. |
 
 ```bash
 curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
@@ -579,6 +576,39 @@ a [referência de métricas](metrics.md#scraping-dumbmonit) para um
 
 `DUMBMONIT_METRICS_PUBLIC=true` serve as três sem token — só atrás de
 uma firewall, já que transportam toda medição de todo dispositivo.
+
+## Outras rotas {#further-routes}
+
+Rotas não detalhadas acima; o documento OpenAPI dá os seus parâmetros e formas de resposta. *read* e *write* são o âmbito de token necessário; *none* significa que nenhum token é aceite (apenas sessão).
+
+| Método | Rota | Âmbito | Propósito |
+|---|---|---|---|
+| `POST` | `/api/targets/reorder` | write | Reordenar dispositivos. |
+| `GET` | `/api/targets/{id}/security` | read | Pontuação de segurança, nota e verificações de um dispositivo. |
+| `GET` | `/api/security/summary` | read | Pontuação de segurança de todos os dispositivos avaliados, o pior primeiro. |
+| `GET` | `/api/targets/{id}/webchange/pages` | read | Páginas seguidas por uma vigilância de site. |
+| `GET` | `/api/targets/{id}/webchange/changes` | read | Alterações encontradas num site vigiado, as mais recentes primeiro. |
+| `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | Uma alteração, com ambas as versões e a diferença por linhas. |
+| `GET` | `/api/targets/{id}/webchange/snapshots/{snapshot_id}/screenshot` | read | A captura de ecrã de um snapshot. |
+| `POST` | `/api/targets/{id}/webchange/check` | write | Verificar agora um site vigiado. |
+| `GET` | `/api/targets/{id}/opnsense/gateways`, `/traffic`, `/health` | read | OPNsense: gateways e endereços WAN; interfaces, firewall e DHCP; sistema, serviços, túneis e firmware. |
+| `GET` | `/api/targets/{id}/truenas/storage`, `/protection`, `/health` | read | TrueNAS: pools, datasets e discos; scrubs e tarefas de proteção de dados; sistema, alertas e serviços. |
+| `GET` | `/api/targets/{id}/ad`, `/ad/findings` | read | Active Directory: domínio, controladores, grupos privilegiados e deteções; as deteções de segurança em bruto. |
+| `GET` | `/api/targets/{id}/redfish` | read | Hardware de servidor lido do seu controlador de gestão. |
+| `GET` | `/api/targets/{id}/observability` | read | Saúde de um servidor de registos ou de métricas. |
+| `GET` | `/api/targets/{id}/backend` | read | Saúde do Redis, MongoDB, RabbitMQ ou CrowdSec. |
+| `GET` | `/api/targets/{id}/proxy` | read | Saúde de um proxy inverso ou de um registo de domínio. |
+| `GET` | `/api/public/status/{slug}/badge.svg`, `/response.svg`, `/uptime.svg` | public | Emblemas de estado geral, tempo médio de resposta e disponibilidade de uma página de estado. |
+| `GET` | `/api/public/status/{slug}/components/{key}/badge.svg`, `/uptime.svg`, `/response.svg` | public | Os mesmos emblemas para um serviço da página. |
+| `GET` | `/api/public/status/{slug}/banner.js` | public | Script do banner de estado para sites de terceiros. |
+| `GET` | `/api/public/status/{slug}/rss` | public | Incidentes como feed RSS. |
+| `GET` | `/api/music/now` | read | O que as paredes tocam (monitor de sala). |
+| `PUT`, `DELETE` | `/api/music/link` | write | Cada parede toca esta ligação do Spotify, Deezer ou YouTube; ou pára o leitor incorporado. |
+| `GET`, `DELETE` | `/api/music/spotify` | read, write | A conta Spotify ligada (nunca um token); desligá-la e esquecer os seus tokens. |
+| `POST` | `/api/music/spotify/authorize`, `/complete` | none | Iniciar a ligação ao Spotify; terminar uma ligação por loopback. Apenas sessão. |
+| `GET` | `/api/music/spotify/token` | none | Um token de acesso Spotify de curta duração para o leitor da parede. Apenas sessão. |
+| `GET`, `PUT` | `/api/music/speaker` | read, write | A coluna Spotify da parede como as Definições a mostram; renomeá-la (admin). |
+| `POST` | `/api/music/speaker/report`, `/play` | none | Uma parede reporta o estado da sua coluna; tocar a conta nela. Apenas sessão. |
 
 ## Alertas {#alerts}
 
@@ -622,16 +652,15 @@ Um alerta ativo:
 }
 ```
 
-Uma entrada de histórico tem `id`, `fingerprint`, `rule_uid`,
-`target_id`, `from_phase`, `to_phase`, `severity`, `value`,
-`notified`, `reason` (vazio, ou porque nada foi enviado:
-`learning: would have fired`, `suppressed: device 2 unreachable`,
-`maintenance window`, `acknowledged by admin`, `device removed or
-disabled`), `at` e `dismissed` (limpo da vista ativa; a própria linha
-é mantida). `acked` é verdadeiro enquanto `acked_until` está no
-futuro: lembretes e escalonamentos pausam, a resolução continua a ser
-notificada e limpa a confirmação. Um `target_id` que já não existe é
-mostrado como «(deleted device)» pela interface.
+Uma entrada de histórico tem `id`, `fingerprint`, `rule_uid`, `target_id`,
+`from_phase`, `to_phase`, `severity`, `value`, `notified`, `reason` (vazio, ou
+o motivo de nada ter sido enviado: `learning: would have fired`, `suppressed: device 2
+unreachable`, `maintenance window`, `acknowledged by admin`, `device removed
+or disabled`), `at` e `dismissed` (limpa da vista ativa; a própria linha é
+mantida). `acked` é verdadeiro enquanto `acked_until` está no futuro:
+os lembretes e escalonamentos ficam em pausa, a resolução continua a ser notificada e limpa
+a confirmação.
+Um `target_id` que já não existe é mostrado como «(deleted device)» pela interface.
 
 ### Regras {#rules}
 
@@ -787,7 +816,7 @@ Os tokens bearer precisam do âmbito `write` para alterações. Ver
 | `PUT` | `/api/status-pages/{id}` | admin | Os mesmos campos, mas uma substituição completa em vez de um patch: `title` é obrigatório e todo campo omitido volta à sua predefinição (slug re-derivado do título, descrição vazia, `published: false`, `theme: auto`, 90 dias de disponibilidade). |
 | `DELETE` | `/api/status-pages/{id}` | admin | `204`. O URL público deixa de responder. |
 | `POST`, `PUT` | `/api/status-pages`, `/api/status-pages/{id}` — aspeto e subscrições | admin | Também aceitam `accent` (`default`, `blue`, `teal`, `violet`, `rose`, `amber`), `scenes` (ids de cenário da lista do editor — cidades, as novas maravilhas e as maravilhas antigas, por exemplo `venice`, `paris`, `giza`, `tajmahal`, sem duplicados; `[]` para nenhum; omitido na criação: `["paris"]`), `simple` (booleano, predefinição `false`: a página pública não mostra nenhum cenário, mascote ou animação e segue a preferência clara/escura do visitante), `scene_rotation` (`visit`, `1m`, `10m` ou `1h`), `footer_text` (texto simples, 280 caracteres), `homepage_url` (`http(s)://` ou vazio), `subscribe_channel_id` (um canal `smtp`, ou `null` para desligar a subscrição por email) e `domain` (o nome de anfitrião público da página, como `status.example.com`, ou `null`/`""` para nenhum — ver [Domínio personalizado](../using/status-pages.md#custom-domain)). `domain` fica em minúsculas e perde um prefixo `https://` ou barra final; uma porta, caminho ou endereço IP é `400`, o endereço do próprio DumbMonit (o seu URL público, ou o anfitrião em que o pedido chegou) é `400`, e um nome que outra página usa é `409`. Ao contrário dos outros campos, estes oito mantêm o seu valor guardado quando omitidos de um `PUT`. A vista da página devolve-os com `logo_type` (`image/png`, `image/jpeg`, `image/webp` ou `null`). |
-| `GET`, `PUT`, `DELETE` | `/api/status-pages/{id}/logo` | sessão / admin | O logo da página. `PUT` toma `{"data": "<base64 ou data: URL>"}`: PNG, JPEG ou WebP reconhecido pelo conteúdo, no máximo 256 KiB, qualquer outra coisa `400`. `204`. `GET` é a pré-visualização do editor (rascunhos incluídos). |
+| `GET`, `PUT`, `DELETE` | `/api/status-pages/{id}/logo` | sessão / admin | O logótipo da página. `PUT` recebe `{"data": "<base64 or data: URL>"}`: PNG, JPEG ou WebP reconhecidos pelo conteúdo, 256 KiB no máximo, qualquer outra coisa `400`. `204`. `GET` é a pré-visualização do editor (rascunhos incluídos). |
 | `GET` | `/api/status-pages/{id}/subscribers` | sessão | Subscritores por email: `id`, `page_id`, `email`, `confirmed_at` (`null` enquanto pendente), `created_at`. Os seus tokens nunca saem do servidor. |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | admin | Remove um endereço. `204`. |
 | `PUT` | `/api/status-pages/{id}/items` | admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — a lista completa e ordenada de dispositivos mostrados na página. |

@@ -1,4 +1,4 @@
-# Relatórios por e-mail
+# Relatórios por e-mail {#email-reports}
 
 Um relatório é um e-mail curto que conta à sua equipe como a infraestrutura se
 comportou no último dia, semana ou mês, sem que ninguém precise abrir o
@@ -11,7 +11,7 @@ Abra **Configurações > Relatórios** para configurá-los. Tudo aqui é restrit
 administradores, incluindo a leitura, porque a página lista os endereços dos
 destinatários.
 
-## O que um relatório contém
+## O que um relatório contém {#what-a-report-contains}
 
 | Seção | Conteúdo |
 | --- | --- |
@@ -26,7 +26,7 @@ imagem remota, então é renderizado da mesma forma em qualquer lugar e nada é
 buscado quando é aberto. Uma versão em texto é enviada junto. Todo nome de
 dispositivo e mensagem é escapado.
 
-## Configurações
+## Configurações {#settings}
 
 | Configuração | O que faz |
 | --- | --- |
@@ -44,7 +44,7 @@ duração imediatamente antes.
 
 Clique no **i** ao lado do título da seção para um lembrete do conteúdo.
 
-## Enviar uma pré-visualização
+## Enviar uma pré-visualização {#send-a-preview}
 
 **Enviar pré-visualização** envia por e-mail o relatório atual aos
 destinatários salvos agora mesmo, com `[Preview]` no assunto. Isso não muda
@@ -53,7 +53,7 @@ pré-visualização pode ser enviada uma vez a cada 30 segundos por relatório.
 Salve suas alterações primeiro, já que a pré-visualização usa os destinatários
 salvos.
 
-## Garantias de entrega
+## Garantias de entrega {#delivery-guarantees}
 
 - **No máximo uma vez.** O horário é reservado no banco de dados antes do
   e-mail ser montado, então um reinício nunca envia o mesmo relatório duas
@@ -71,6 +71,6 @@ Os relatórios estão incluídos nos [backups](../install/backup.md): o canal de
 e-mail é correspondido pelo nome na restauração, e um relatório restaurado
 começa do zero (sua data do último envio não é preservada).
 
-## API
+## API {#api}
 
 Veja [API HTTP](../reference/api.md#email-reports).

@@ -1,4 +1,4 @@
-# OPNsense
+# OPNsense {#opnsense}
 
 Firewall e roteador de código aberto: o estado de cada gateway com seu
 tempo de ida e volta e perda de pacotes, a tabela de estados pf,
@@ -17,7 +17,7 @@ serviços, CARP e atualizações pendentes.
     código-fonte do OPNsense em vez de uma resposta observada. Avise-nos
     o que não funcionar.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Além dos gráficos genéricos, um dispositivo OPNsense mostra três painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
@@ -46,7 +46,7 @@ firewall, nenhum estado de conexão, nenhum endereço de cliente e nenhum
 nome de host. Leases DHCP são contados, nunca listados; sessões VPN são
 contadas, nunca nomeadas.
 
-## "none" significa "online"
+## "none" significa "online" {#none-means-online}
 
 `GET /api/routes/gateway/status` escreve `"none"` no campo `status` de um
 gateway quando **tudo está bem** — uma palavra que por si só parece "sem
@@ -61,7 +61,7 @@ tem endereço de monitor. `"~"` produz uma série menos, nunca um zero: um
 gateway que ninguém pinga não tem zero milissegundos de latência, não tem
 nenhuma.
 
-## A verificação de atualização nunca é acionada
+## A verificação de atualização nunca é acionada {#the-update-check-is-never-triggered}
 
 `GET /api/core/firmware/status` retorna o resultado da *última*
 verificação do firewall — a que o próprio painel do OPNsense mostra. O
@@ -77,7 +77,7 @@ atualizações pendentes", nenhum "nenhum reinício necessário". Execute uma
 verificação uma vez em System → Firmware, ou deixe a programação própria
 do firewall fazer isso.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_opnsense_`.
 
@@ -125,7 +125,7 @@ in CARP maintenance mode, Firewall reboot pending, Firewall updates
 pending. Notificações nomeiam o gateway, túnel, serviço ou sensor
 envolvido.
 
-## O que preparar no OPNsense
+## O que preparar no OPNsense {#what-to-prepare-in-opnsense}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: um grupo apenas com os privilégios de status que o DumbMonit
@@ -197,7 +197,7 @@ pode ver isso", não como uma falha. Só `Lobby: Dashboard` é obrigatório:
 sem ele a sondagem não pode nem ler o nome e versão do firewall, e
 reporta um erro de autenticação.
 
-### camelCase ou snake_case
+### camelCase ou snake_case {#camelcase-or-snake_case}
 
 O OPNsense 25.7 renomeou seus caminhos de API de `systemResources` para
 `system_resources`. Ambas as grafias ainda respondem, mas os privilégios
@@ -206,7 +206,7 @@ restrita recebe `403` na grafia antiga, e na 25.1 em algumas das novas. O
 DumbMonit pede a grafia atual primeiro e recorre à outra em um `403`,
 então o mesmo grupo funciona em qualquer lado da renomeação.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -225,7 +225,7 @@ então o mesmo grupo funciona em qualquer lado da renomeação.
 | `firmware` | Observar atualizações | `true` | Lê o resultado da última verificação de atualização do firewall e se um reinício está pendente. |
 | `temperature` | Ler os sensores de temperatura | `true` | Lê os sensores de CPU e placa que o firewall expõe. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

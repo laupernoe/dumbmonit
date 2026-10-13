@@ -1,4 +1,4 @@
-# Mudanças no site
+# Mudanças no site {#website-changes}
 
 Observe o *conteúdo* de uma página web, ou de um site inteiro, e seja
 avisado quando mudar: uma página de preços ou termos, um site de
@@ -14,7 +14,7 @@ título, item de lista, linha de tabela) se torna uma linha. Um novo build
 da mesma página, um atributo reordenado ou um novo nome de arquivo de
 cache-busting não mudam nada; uma frase reescrita muda.
 
-## Página ou site
+## Página ou site {#page-or-site}
 
 **Página** (o padrão) lê o endereço do dispositivo e nada mais. Também
 pode ser um documento de texto simples ou JSON, comparado linha por
@@ -44,7 +44,7 @@ de 15 segundos por requisição e 5 MB lidos no máximo por página. Ela para
 em **Máximo de páginas** (25 por padrão, 200 no máximo) ou depois de dez
 minutos.
 
-## Como uma verificação funciona
+## Como uma verificação funciona {#how-a-check-works}
 
 O dispositivo é sondado como qualquer outro (a cada minuto por padrão),
 mas as páginas só são lidas a cada **Verificar cada** minutos (60 por
@@ -70,7 +70,7 @@ Mudar o endereço, o escopo, o prefixo de caminho ou **Ignorar linhas**
 faz a próxima verificação uma nova referência em vez de reportar toda
 página como mudada.
 
-### Ignorar linhas
+### Ignorar linhas {#ignore-lines}
 
 Linhas que mudam a cada visita — um relógio, um contador de visitantes,
 "atualizado há 5 minutos", uma citação aleatória — seriam reportadas a
@@ -83,7 +83,7 @@ comparação. Por exemplo:
 Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ```
 
-### Página inicial inacessível
+### Página inicial inacessível {#unreachable-start-page}
 
 Quando a própria página inicial não pode ser lida (sem resposta, conexão
 recusada, tempo esgotado, HTTP 5xx), o dispositivo está **inacessível**:
@@ -99,7 +99,7 @@ link-local, o serviço de metadados de nuvem) são recusados a menos que
 **Permitir alvos de loopback e link-local** esteja ativado; endereços de
 LAN privados são sempre permitidos.
 
-## Alertas
+## Alertas {#alerts}
 
 A regra integrada **Website changed** (`webchange_detected`, Info)
 dispara depois de uma verificação que encontrou ao menos uma mudança
@@ -117,7 +117,7 @@ severidade, em **Alertas → Regras**. Veja
 
 As métricas aparecem uma vez que a primeira verificação é feita.
 
-## Capturas de tela
+## Capturas de tela {#screenshots}
 
 A imagem DumbMonit não tem navegador: capturas de tela vêm de um Chromium
 headless opcional, controlado via Chrome DevTools Protocol. O arquivo
@@ -146,7 +146,7 @@ O navegador carrega a página como um visitante faria, com seus scripts:
 o que mostra pode diferir do texto que o DumbMonit comparou, que é o
 HTML que o servidor enviou.
 
-## Armazenamento
+## Armazenamento {#storage}
 
 O texto de cada snapshot é mantido no banco de dados (1 MB no máximo por
 página); capturas de tela são arquivos sob
@@ -156,7 +156,7 @@ página ou uma mudança mantida se refere a ele, e tudo mais, arquivos
 incluídos, é removido depois de cada verificação. Excluir o dispositivo
 remove tudo isso.
 
-## Observar um site para mudanças
+## Observar um site para mudanças {#watch-a-website-for-changes}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra.
 
@@ -186,7 +186,7 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
 Credenciais: nenhuma. Verificações sempre rodam no servidor DumbMonit:
 uma observação de site não pode passar por um agente relay.
 
-## Opções
+## Opções {#options}
 
 | Opção | Padrão | Significado |
 |---|---|---|

@@ -1,4 +1,4 @@
-# Sophos Firewall
+# Sophos Firewall {#sophos-firewall}
 
 Um Sophos Firewall (SFOS) através de sua API XML: o link de cada interface
 vinculada a uma zona, e quais conexões IPsec estão ativadas.
@@ -26,7 +26,7 @@ firewall aplica esse perfil também na API.
     status da interface (`Connected, 1000 Mbps…` ou `Disconnected`) vem
     dessa documentação e relatos da comunidade. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_sophos_`.
 
@@ -48,13 +48,13 @@ A [regra integrada](../alerting/rules.md#sophos-firewall) que se aplica:
 Para contadores de tráfego, adicione o firewall também como um
 [dispositivo SNMP](snmp.md): o SFOS responde à MIB de interface padrão.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Firewall diz se toda interface em uma zona tem seu link, depois
 lista essas interfaces e as conexões IPsec com sua ativação configurada,
 rotulada como tal.
 
-## Permitir que o DumbMonit leia a API XML do Sophos Firewall
+## Permitir que o DumbMonit leia a API XML do Sophos Firewall {#allow-dumbmonit-to-read-the-sophos-firewall-xml-api}
 
 1. Em Profiles > Device access, adicione um perfil chamado DumbMonit
    read-only e defina toda permissão como Read-only.
@@ -78,7 +78,7 @@ rotulada como tal.
     ativo. Alta disponibilidade, licenças e a versão do firmware não estão
     nela.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -91,7 +91,7 @@ Endereço: o nome de host ou IP do firewall, `host:porta`, ou uma URL. Opções:
   firewall é autoassinado.
 - **Tempo limite por requisição** (15 s).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "Sophos Firewall refused the request (534 …)": o endereço do DumbMonit não
 está entre os endereços IP permitidos na configuração da API.

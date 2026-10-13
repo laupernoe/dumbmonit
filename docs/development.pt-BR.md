@@ -1,4 +1,4 @@
-# Desenvolvimento
+# Desenvolvimento {#development}
 
 O DumbMonit é um único binário Rust (`crates/server`, que embute o build
 SvelteKit) mais o VictoriaMetrics para séries temporais, iniciado pelo
@@ -6,7 +6,7 @@ servidor a partir do binário entregue na imagem, e um banco de dados SQLite
 embutido para configuração e estado. Um contêiner. Código e comentários em
 Rust estão em francês; a interface web está em inglês.
 
-## Estrutura do projeto
+## Estrutura do projeto {#project-layout}
 
 ```
 crates/proto     tipos compartilhados: Sample, Target, Credential, trait Collector (+ ProbeError)
@@ -26,7 +26,7 @@ profiles/        perfis de coleta SNMP, aplicados automaticamente por sysObjectI
 docs/            esta documentação (MkDocs, publicada no Read the Docs)
 ```
 
-## Compilando sem um toolchain Rust
+## Compilando sem um toolchain Rust {#building-without-a-rust-toolchain}
 
 A compilação acontece no Docker; nada de Rust precisa ser instalado no
 host.
@@ -59,7 +59,7 @@ cargo-zigbuild para `x86_64-unknown-linux-musl`,
 `web/build` precisa existir antes de `cargo build`, senão o servidor é
 enviado sem interface.
 
-## Interface web
+## Interface web {#web-ui}
 
 Node 22 é suficiente no host.
 
@@ -78,7 +78,7 @@ com `crates/server/src/api/*.rs`. O design system (tokens em
 contexto de produto em `PRODUCT.md`. Nunca execute dois `vite build`s ao
 mesmo tempo: eles destroem `.svelte-kit/output`.
 
-## Traduções (Weblate)
+## Traduções (Weblate) {#translations-weblate}
 
 A interface web está preparada para tradução comunitária mas nada foi
 traduzido ainda: inglês é a única localidade entregue, em
@@ -114,7 +114,7 @@ um caminho relativo, não-`http`, é lido direto do disco, então
 não tem garantia de um cache npm aquecido oferecendo essa URL, e uma
 ferramenta de homelab que precisa da internet para se reconstruir é feia.
 
-## Testes e CI
+## Testes e CI {#tests-and-ci}
 
 `.github/workflows/ci.yml` executa, em todo push e pull request:
 
@@ -134,7 +134,7 @@ Testes de integração vivem em `crates/server/tests/`; módulos puros
 (conversão de métricas, análise de opções, máquina de estados de alerta,
 silêncios) são testados no lugar, sem rede.
 
-## Adicionando um coletor
+## Adicionando um coletor {#adding-a-collector}
 
 1. Implemente `Collector` de `crates/proto/src/collector.rs`: `kind()`,
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e opcionalmente
@@ -160,7 +160,7 @@ Amostras são `Sample::new(name, value, MetricKind::Gauge | Counter,
 timestamp_ms)` com `.with_label(k, v)`; rótulos de identidade (`target`,
 `host`, `tag_*`) são adicionados pelo registro.
 
-## Adicionando um canal de notificação
+## Adicionando um canal de notificação {#adding-a-notification-channel}
 
 1. Implemente `Notifier` (`crates/server/src/notify/mod.rs`): `kind()` e
    `async fn send(&Message) -> Result<(), NotifyError>`. Canais web
@@ -179,7 +179,7 @@ timestamp_ms)` com `.with_label(k, v)`; rótulos de identidade (`target`,
    título cujo slug corresponda à âncora `doc_url`: a interface liga
    diretamente para essa âncora no Read the Docs.
 
-## Capturas de tela headless
+## Capturas de tela headless {#headless-screenshots}
 
 `web/tools/README.md` descreve como renderizar toda página em um Chromium
 headless rodando no Docker (`zenika/alpine-chrome:with-puppeteer`, sem
@@ -190,7 +190,7 @@ contra o servidor de preview ou diretamente contra `:8080`. Ele escreve
 viewports, que é como a interface é verificada após uma mudança e como as
 capturas de tela desta documentação foram feitas.
 
-## Documentação
+## Documentação {#documentation}
 
 Este site é construído com MkDocs e Material for MkDocs a partir de
 `docs/` (`mkdocs.yml` na raiz, `.readthedocs.yaml` para o Read the Docs).

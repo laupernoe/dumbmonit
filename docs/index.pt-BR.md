@@ -1,4 +1,4 @@
-# DumbMonit
+# DumbMonit {#dumbmonit}
 
 Monitoramento simples, do homelab à pequena empresa. Um contêiner, um endereço IP
 para digitar, gráficos e alertas úteis em menos de um minuto.

@@ -1,4 +1,4 @@
-# Caddy
+# Caddy {#caddy}
 
 O servidor web e proxy reverso: upstreams falhando suas verificações de
 saúde, um recarregamento de configuração que falhou, erros de handler e a
@@ -17,7 +17,7 @@ carregar uma nova configuração ou parar o Caddy. Ela escuta em
 o próprio Caddy publicar uma visão somente leitura dela, protegida por
 senha, que responde `GET` nos três caminhos acima e recusa tudo mais.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_caddy_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -44,7 +44,7 @@ As [regras integradas](../alerting/rules.md#reverse-proxies-and-domains) que
 se aplicam: Caddy upstream unhealthy, Caddy configuration reload failed,
 Reverse proxy answering 5xx, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Caddy. Ele diz o que está errado em uma frase (nenhuma
@@ -53,7 +53,7 @@ alta parcela de 5xx), depois os servidores, rotas, upstreams, taxa de
 requisição, parcela de 5xx e erros de handler nas últimas 24 horas, depois
 cada upstream com suas falhas lembradas.
 
-## Publicar uma visão somente leitura da API de administração do Caddy
+## Publicar uma visão somente leitura da API de administração do Caddy {#publish-a-read-only-view-of-caddys-admin-api}
 
 1. A API de administração do Caddy pode carregar uma nova configuração e
    parar o Caddy: ela precisa permanecer inacessível a qualquer coisa além
@@ -119,7 +119,7 @@ recebe o mesmo site como um servidor extra com um handler `basic_auth`, um
 correspondente `method` e `path` e um `reverse_proxy` para
 `localhost:2019`.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

@@ -1,4 +1,4 @@
-# Notificações push (PWA)
+# Notificações push (PWA) {#push-notifications-pwa}
 
 O DumbMonit pode tocar no seu celular ou computador diretamente, como um
 aplicativo nativo faria, sem instalar um app ou criar uma conta em lugar
@@ -13,7 +13,7 @@ Dois passos: ative o push em cada dispositivo (esta página), depois decida
 quais alertas vão para lá com um canal **Web Push**
 ([Canais de notificação](../notifications.md#web-push)).
 
-## Antes de começar
+## Antes de começar {#before-you-start}
 
 - **HTTPS é obrigatório.** Navegadores só oferecem push a uma origem segura.
   Coloque o DumbMonit detrás de um proxy reverso com um certificado (Caddy,
@@ -31,9 +31,9 @@ quais alertas vão para lá com um canal **Web Push**
   dado aos serviços de push como o contato do remetente, e é o endereço para
   o qual os links em outros canais apontam.
 
-## Ativar em um celular ou computador
+## Ativar em um celular ou computador {#enable-on-a-phone-or-computer}
 
-### Android, Windows, macOS, Linux
+### Android, Windows, macOS, Linux {#android-windows-macos-linux}
 
 1. Abra o DumbMonit no Chrome, Edge, Firefox ou Safari e entre.
 2. Opcional: instale-o como um aplicativo (barra de endereço → **Instalar**,
@@ -44,7 +44,7 @@ quais alertas vão para lá com um canal **Web Push**
 4. **Envie um teste.** Uma *DumbMonit — notificação de teste* deve aparecer
    em poucos segundos.
 
-### iPhone e iPad
+### iPhone e iPad {#iphone-and-ipad}
 
 A Apple só oferece push a sites adicionados à Tela de Início (iOS e iPadOS
 16.4 ou posteriores):
@@ -58,7 +58,7 @@ A Apple só oferece push a sites adicionados à Tela de Início (iOS e iPadOS
 
 No Safari sem instalar, a seção diz **Instale primeiro**.
 
-## Escolher quais alertas chegam
+## Escolher quais alertas chegam {#choose-which-alerts-arrive}
 
 Em **Alertas → Notificações**, adicione um canal do tipo **Web Push**. Sem
 nenhuma configuração, todo dispositivo inscrito de toda conta o recebe;
@@ -71,7 +71,7 @@ Uma notificação lê `Critical · nas01` com um resumo curto; tocar nela abre a
 página **Alertas**. A resolução de um alerta substitui sua notificação em
 vez de adicionar uma segunda.
 
-## Dispositivos e contas
+## Dispositivos e contas {#devices-and-accounts}
 
 Cada conta vê e gerencia seus próprios dispositivos: visualizadores também
 podem ativar o push em seu celular, isso não muda mais nada. A lista mostra
@@ -82,7 +82,7 @@ navegador). Um dispositivo que o serviço de push reporta como desaparecido
 (o app foi removido, os dados do navegador foram limpos) é excluído
 automaticamente no próximo envio.
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 | O que você vê | O que fazer |
 |---|---|
@@ -94,7 +94,7 @@ automaticamente no próximo envio.
 | O teste diz *assinatura VAPID recusada* | Geralmente um relógio do servidor errado; verifique o NTP no host. |
 | Nada chega no Android quando o celular dorme | A otimização de bateria pode atrasar o navegador: isente-o, ou defina a **Urgência** do canal para `high`. |
 
-## Privacidade e segurança
+## Privacidade e segurança {#privacy-and-security}
 
 - Mensagens são criptografadas para cada dispositivo (RFC 8291) antes de
   deixarem o servidor: o serviço de push só vê um blob opaco, o dispositivo

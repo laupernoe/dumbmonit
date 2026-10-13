@@ -156,7 +156,7 @@ curl -s https://monit.example.lan/api/mcp \
                 "io.modelcontextprotocol/clientCapabilities":{}}}}'
 ```
 
-## Cosa può chiamare l'assistente
+## Cosa può chiamare l'assistente {#what-the-assistant-can-call}
 
 Ventisette strumenti. Ognuno ha un titolo, una descrizione, uno schema
 di input, uno schema di output e annotazioni (`readOnlyHint`,
@@ -199,7 +199,7 @@ spiega e nulla cambia. Lo stesso vale per qualsiasi cosa lo strumento
 non possa fare — un dispositivo sconosciuto, un nome ambiguo, una
 finestra più lunga di una settimana: il messaggio dice cosa correggere.
 
-## Dettagli del protocollo
+## Dettagli del protocollo {#protocol-details}
 
 `POST /api/mcp` implementa MCP sul trasporto **Streamable HTTP**:
 JSON-RPC 2.0, una richiesta per `POST`, risposta con JSON semplice
@@ -232,7 +232,7 @@ Uno strumento che funziona ma fallisce — scope mancante, dispositivo
 sconosciuto — non è un errore di protocollo: risponde normalmente con
 `isError: true` e una frase che l'assistente può riportare.
 
-## Note di sicurezza
+## Note di sicurezza {#security-notes}
 
 - **Un token è una password.** Chiunque lo possieda legge tutto ciò
   che mostra l'interfaccia — e, con un token write, modifica qualsiasi

@@ -1,15 +1,12 @@
 # 网站横幅 {#website-banner}
 
-当服务宕机时,在你自己的网站上显示一条横幅(“2 项服务不可用”),
-横幅由一个已发布的[状态页面](../using/status-pages.md)驱动。当一切
-正常时,横幅会保持隐藏,除非你要求始终显示它(“所有系统运行正常”)。
+当服务关闭时在你自己的网站上显示横幅（"2个服务关闭"），由发布的[状态页面](../using/status-pages.md)驱动。当一切都好时横幅保持隐藏，除非你要求显示它（"所有系统正常"）。
 
-共有三种添加方式,从最简单到最可控。可直接复制使用的文件
-位于仓库的 `integrations/` 目录中。
+三种添加方式，从最简单到最受控。现成副本文件在仓库的 `integrations/` 文件夹中。
 
-## HTML 代码片段 {#html-snippet}
+## HTML片段 {#html-snippet}
 
-把下面这段粘贴到 `</body>` 之前,填入你的服务器地址和页面的地址:
+在 `</body>` 前粘贴这个，用你的服务器地址和页面的地址：
 
 ```html
 <script async
@@ -17,31 +14,25 @@
   data-position="top" data-show="issues" data-lang="en"></script>
 ```
 
-| 属性 | 取值 | 默认值 |
+| 属性 | 值 | 默认 |
 |---|---|---|
-| `data-position` | `top`, `bottom` | `top` |
-| `data-show` | `issues`(仅在出问题时显示)、`always` | `issues` |
-| `data-lang` | `en`, `fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans` | 页面语言,否则为 `en` |
+| `data-position` | `top`、`bottom` | `top` |
+| `data-show` | `issues`（仅当错误时）、`always` | `issues` |
+| `data-lang` | `en`、`fr`、`de`、`es`、`it`、`pt`、`pt-BR`、`ru`、`zh-Hans` | 页面语言，否则`en` |
 
-该脚本没有任何依赖,会在一个 Shadow DOM 内绘制,因此你的样式不会
-影响到它,并会跟随访客的浅色或深色偏好,还可以被关闭(直到浏览器
-标签页关闭为止)。它读取页面的公开 JSON 数据,服务器允许任何网站
-获取这份数据(`Access-Control-Allow-Origin: *`,不带 cookie)。只有
-状态页面的公开文档会以这种方式被打开;API 的其余部分仍遵循
-原有的规则。
+脚本没有依赖，在Shadow DOM中绘制所以你的样式不接触它，跟随访问者的明亮或深暗偏好，可被解除（直到浏览器标签关闭）。它读页面的公共JSON，服务器允许任何网站获取（`Access-Control-Allow-Origin: *`，无cookies）。仅状态页面的公共文档以这方式打开；API的其余保留其规则。
 
-## WordPress
+## WordPress {#wordpress}
 
-把 `integrations/wordpress/dumbmonit-status-banner` 复制到
-`wp-content/plugins/` 中,启用它,然后打开**设置 > DumbMonit Banner**,
-填入状态页面的地址(`https://monit.example.com/api/public/status/my-page`)、
-位置和显示模式。该插件会在服务器端获取 JSON 数据,缓存一分钟,
-并对打印的所有内容进行转义。WordPress 会拒绝对私有地址发起的请求,
-因此 DumbMonit 服务器必须能通过公开地址访问。
+复制 `integrations/wordpress/dumbmonit-status-banner` 进入 `wp-content/plugins/`，激活它，然后打开**设置>DumbMonit横幅** 并输入状态页面URL (`https://monit.example.com/api/public/status/my-page`)、位置和显示模式。插件在服务器上获取JSON，为一分钟缓存它，并逃避它打印的一切。
 
-## PHP 引入 {#php-include}
+DumbMonit服务器可能在私有（LAN）地址上：插件仅请求你保存的准确URL（针对 `/api/public/status/<address>` 模式检查，重定向禁用）。如果地址无效，设置页面显示错误并保留之前的值。如果状态页面无法获取，在WordPress管理中显示警告（以及保存时），而不是默默失败。
 
-适用于任何不使用框架的 PHP 网站:
+横幅文本可翻译（文本域 `dumbmonit-status-banner`，模板在 `languages/`）；它跟随WordPress网站语言。公共状态JSON没有语言，所以它无法选一个。
+
+## PHP包含 {#php-include}
+
+对于任何PHP网站，没有框架：
 
 ```php
 require __DIR__ . '/banner.php';
@@ -49,6 +40,4 @@ dumbmonit_banner('https://monit.example.com/api/public/status/my-page',
     ['position' => 'top', 'show' => 'issues', 'ttl' => 60]);
 ```
 
-该辅助函数只接受 `http` 和 `https` 地址,使用 3 秒超时,不会跟随
-重定向,会在临时目录中保留一份文件缓存,并且在无法连接到服务器时
-不打印任何内容。参见 `integrations/php/example.php`。
+助手接受 `http` 和 `https` URLs仅，使用3秒超时，不跟随重定向，在临时目录中保留文件缓存，如果无法到达服务器打印无。文本默认用英文；通过 `'lang' => 'fr'` 或 `'strings'` 数组改变它们。私有（LAN）地址有效。见 `integrations/php/example.php`。

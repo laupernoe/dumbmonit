@@ -1,4 +1,4 @@
-# CrowdSec
+# CrowdSec {#crowdsec}
 
 O motor de segurança: decisões ativas e de onde elas vêm, alertas, bouncers
 que pararam de buscar, linhas de log lidas e as que nenhum analisador
@@ -19,7 +19,7 @@ bouncer, que para de se mover. A segunda é uma aquisição que quebrou (um
 arquivo de log renomeado, um contêiner recriado): o CrowdSec não lê nada, não
 vê nenhum ataque, e permanece verde.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_crowdsec_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -49,7 +49,7 @@ As [regras integradas](../alerting/rules.md#databases-message-broker-and-securit
 que se aplicam: CrowdSec Local API down, CrowdSec bouncer stopped pulling,
 CrowdSec reads no logs, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o CrowdSec. Ele diz o que está errado em uma frase (Local API,
@@ -59,7 +59,7 @@ nas últimas 24 horas e linhas lidas por segundo, depois o tempo desde que
 cada bouncer buscou por último, as decisões por origem e a parcela não
 analisada de cada fonte de log.
 
-## Deixar o DumbMonit ler as métricas do CrowdSec
+## Deixar o DumbMonit ler as métricas do CrowdSec {#let-dumbmonit-read-crowdsecs-metrics}
 
 1. O CrowdSec publica suas métricas em 127.0.0.1:6060 por padrão. Defina
    listen_addr na seção prometheus de /etc/crowdsec/config.yaml para um
@@ -111,7 +111,7 @@ chama a Local API quando atende uma requisição (um bouncer de proxy reverso
 em modo live) pode ficar quieto por meia hora em uma noite calma; mude-o
 para o modo stream, ou aumente a janela da regra.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

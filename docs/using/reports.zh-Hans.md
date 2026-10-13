@@ -63,6 +63,6 @@
 报告包含在[备份](../install/backup.md)之中:恢复时会按名称匹配
 邮件渠道,恢复后的报告会重新开始(不会带入上次发送的日期)。
 
-## API
+## API {#api}
 
 参见[HTTP API](../reference/api.md#email-reports)。

@@ -1,24 +1,24 @@
-# DumbMonit-Benachrichtigungen
+# DumbMonit-Benachrichtigungen {#dumbmonit-notifications}
 
-Diese Anleitung erklärt, wie Sie DumbMonit-Alarme auf dem Dienst
-Ihrer Wahl erhalten. Sie erfordert keine Programmierkenntnisse: Jeder
-Abschnitt sagt, wo die zu kopierende Adresse oder das Token zu finden
-ist, und was in das Formular einzutragen ist.
+Diese Anleitung erklärt, wie Sie DumbMonit-Alarme über den Dienst Ihrer Wahl erhalten.
+Programmierkenntnisse sind nicht nötig: Jeder Abschnitt sagt, wo Sie die zu kopierende Adresse
+oder das Token finden und was Sie in das Formular eintragen.
 
 ---
 
-## Inhalt
+## Inhalt {#contents}
 
 - [Wie es funktioniert](#how-it-works)
 - [Einen Kanal erstellen und testen](#creating-and-testing-a-channel)
-- [Settings oder Secrets: der Unterschied](#settings-or-secrets-the-difference)
+- [Einstellungen oder Geheimnisse: der Unterschied](#settings-or-secrets-the-difference)
+- [Selbstsignierte Zertifikate](#self-signed-certificates)
 - [Der benutzerdefinierte Kanal](#the-custom-channel)
   - [Verfügbare Variablen](#available-variables)
   - [Beispiel 1 — eine interne JSON-API](#example-1--an-internal-json-api)
   - [Beispiel 2 — ein Dienst, der ein Formular erwartet](#example-2--a-service-that-expects-a-form)
-  - [Beispiel 3 — eine einfache SMS über einen Carrier](#example-3--a-plain-text-sms-through-a-carrier)
-  - [Beispiel 4 — ein GET-Request ohne Body](#example-4--a-get-request-without-a-body)
-  - [Häufige Template-Fehler](#common-template-mistakes)
+  - [Beispiel 3 — eine Klartext-SMS über einen Anbieter](#example-3--a-plain-text-sms-through-a-carrier)
+  - [Beispiel 4 — eine GET-Anfrage ohne Body](#example-4--a-get-request-without-a-body)
+  - [Häufige Fehler in Vorlagen](#common-template-mistakes)
 - [Unterstützte Kanäle](#supported-channels)
 - [Fehlerbehebung](#troubleshooting)
 
@@ -26,78 +26,84 @@ ist, und was in das Formular einzutragen ist.
 
 ## Wie es funktioniert {#how-it-works}
 
-Ein **Kanal** ist ein Ziel: ein Discord-Kanal, eine Telefonnummer,
-ein Postfach. Sie erstellen so viele wie Sie wollen, und Ihre
-Alarmregeln wählen, welche benachrichtigt werden.
+Ein **Kanal** ist ein Ziel: ein Discord-Kanal, eine Telefonnummer, ein Postfach. Sie erstellen
+beliebig viele, und Ihre Alarmregeln wählen, welche benachrichtigt werden.
 
 Drei Prinzipien gelten für jeden Kanal:
 
-1. **Alarme werden gruppiert.** Eine Nachricht pro Gerät und Zyklus,
-   selbst wenn fünf Platten gleichzeitig voll werden. Ohne das würden
-   Sie Benachrichtigungen innerhalb einer Woche stummschalten.
-2. **Ein defekter Kanal blockiert nie einen anderen.** Der Fehler
-   wird in der Spalte "last error" des Kanals aufgezeichnet, und die
-   Zustellung an die anderen läuft weiter.
-3. **Ein nicht antwortender Dienst wird nach 15 Sekunden
-   aufgegeben.** Eine eine Minute zu spät ankommende Benachrichtigung
-   ist nicht mehr nützlich, und die Überwachungsschleife darf nicht
-   hinter einem nicht erreichbaren Server warten.
+1. **Alarme werden gruppiert.** Eine Nachricht pro Gerät und Zyklus, auch wenn fünf Platten
+   gleichzeitig volllaufen. Ohne das würden Sie die Benachrichtigungen binnen einer Woche
+   stummschalten.
+2. **Ein defekter Kanal blockiert nie einen anderen.** Der Fehler wird in der Spalte „Letzter
+   Fehler“ des Kanals festgehalten, und die Zustellung an die anderen läuft weiter.
+3. **Ein Dienst, der nicht antwortet, wird nach 15 Sekunden aufgegeben.** Eine
+   Benachrichtigung, die eine Minute zu spät kommt, nützt nichts mehr, und die
+   Überwachungsschleife darf nicht hinter einem nicht erreichbaren Server warten.
 
 ---
 
 ## Einen Kanal erstellen und testen {#creating-and-testing-a-channel}
 
-1. Öffnen Sie **Alerts → Notifications → Add channel**
-   (`/alerts#notifications`).
-2. Geben Sie ihm einen aussagekräftigen Namen ("Discord — family",
-   "SMS — on-call"). Das ist der Name, den Sie später in Ihren
-   Alarmregeln wählen.
-3. Wählen Sie die Kanalart, füllen Sie dann die unten beschriebenen
-   Felder aus.
-4. Speichern, dann auf **Send test** klicken.
+1. Öffnen Sie **Alarme → Benachrichtigungen → Kanal hinzufügen** (`/alerts#notifications`).
+2. Geben Sie ihm einen aussagekräftigen Namen („Discord — Familie“, „SMS — Bereitschaft“).
+   Diesen Namen wählen Sie später in Ihren Alarmregeln.
+3. Wählen Sie den Kanaltyp und füllen Sie dann die unten beschriebenen Felder aus.
+4. Speichern Sie, dann klicken Sie auf **Test senden**.
 
-Die Testnachricht nimmt **genau denselben Weg** wie ein echter
-Alarm: derselbe Request, dasselbe Token, dieselbe Formatierung.
-Kommt sie an, funktioniert der Kanal. Schlägt sie fehl, benennt die
-Fehlermeldung die zu behebende Einstellung.
+Die Testnachricht nimmt **exakt denselben Weg** wie ein echter Alarm: dieselbe Anfrage, dasselbe
+Token, dieselbe Formatierung. Kommt sie an, funktioniert der Kanal. Scheitert sie, nennt die
+Fehlermeldung die zu korrigierende Einstellung.
 
-> **Ein Token wird nie wieder angezeigt.** Einmal gespeichert, ist
-> es in der Datenbank verschlüsselt, und die Oberfläche sagt nur
-> "configured". Um einen Kanal zu bearbeiten, ohne sein Token erneut
-> einzutippen, lassen Sie das Feld einfach leer.
+> **Ein Token wird nie wieder angezeigt.** Nach dem Speichern ist es in der Datenbank
+> verschlüsselt, und die Oberfläche sagt nur „konfiguriert“. Um einen Kanal zu bearbeiten, ohne
+> sein Token neu einzugeben, lassen Sie das Feld einfach leer.
 
 ---
 
-## Settings oder Secrets: der Unterschied {#settings-or-secrets-the-difference}
+## Einstellungen oder Geheimnisse: der Unterschied {#settings-or-secrets-the-difference}
 
 Jeder Kanal hat zwei Gruppen von Feldern.
 
-| | **Settings** | **Secrets** |
+| | **Einstellungen** | **Geheimnisse** |
 |---|---|---|
-| Inhalt | Serveradresse, Kanalname, Thema | Tokens, Passwörter, Webhook-URLs |
+| Inhalt | Serveradresse, Kanalname, Topic | Tokens, Passwörter, Webhook-URLs |
 | Speicherung | Klartext | verschlüsselt |
 | Von der Oberfläche zurückgelesen | ja | nie |
 
-Die Oberfläche **verweigert**, ein sensibles Feld unter den Settings
-zu speichern, und sagt Ihnen das. Das ist keine Formalität: Settings
-werden unverändert von der API zurückgegeben, daher würde ein dort
-gespeichertes Token jedes Mal veröffentlicht, wenn die Seite geöffnet
-wird.
+Die Oberfläche **weigert sich**, ein sensibles Feld unter den Einstellungen zu speichern, und
+sagt es Ihnen. Das ist keine Formalität: Einstellungen werden von der API unverändert
+zurückgegeben, ein dort gespeichertes Token würde also bei jedem Öffnen der Seite
+veröffentlicht.
 
-Die Tabellen im Abschnitt [Unterstützte Kanäle](#supported-channels)
-sagen, für jeden Kanal, was wohin gehört.
+Die Tabellen im Abschnitt [Unterstützte Kanäle](#supported-channels) sagen für jeden Kanal, was
+wohin gehört.
+
+---
+
+## Selbstsignierte Zertifikate {#self-signed-certificates}
+
+Standardmäßig lehnt DumbMonit jeden Server ab, dessen Zertifikat es nicht prüfen kann. Für einen
+selbst gehosteten Dienst, der mit einem selbstsignierten Zertifikat oder einem einer privaten
+Zertifizierungsstelle ausgeliefert wird, haben die Kanäle für Matrix, Mattermost, Rocket.Chat,
+Zulip, ntfy, Gotify, Bark, Apprise, Home Assistant, Signal und den benutzerdefinierten Webhook
+die Einstellung **Nicht prüfbares Zertifikat akzeptieren** (`insecure_tls`, ein Boolean,
+standardmäßig aus).
+
+Das Einschalten hält die Verbindung verschlüsselt, prüft aber die Identität des Servers nicht
+mehr; verwenden Sie es also nur für einen Server, den Sie kontrollieren, in einem Netzwerk, dem
+Sie vertrauen. Ist ein Zertifikat der Grund für einen Fehler, nennt es die für den Kanal
+angezeigte Fehlermeldung (zum Beispiel „invalid peer certificate: UnknownIssuer“).
 
 ---
 
 ## Der benutzerdefinierte Kanal {#the-custom-channel}
 
-Der Kanal **`webhook`** ist DumbMonits Notausgang. Sie beschreiben
-den ganzen HTTP-Request — Methode, Adresse, Header, Content-Type
-und Body —, was Sie fast jeden Dienst anbinden lässt, einschließlich
-einer internen API, die DumbMonit nie kennen wird.
+Der Kanal **`webhook`** ist der Notausgang von DumbMonit. Sie beschreiben die gesamte
+HTTP-Anfrage — Methode, Adresse, Header, Inhaltstyp und Body —, womit sich fast jeder Dienst
+anbinden lässt, auch eine interne API, die DumbMonit nie kennen wird.
 
-**Ohne besondere Konfiguration** sendet er schon eine strukturierte
-JSON-Payload, die ein Skript nutzen kann:
+**Ohne besondere Konfiguration** sendet er bereits eine strukturierte JSON-Payload, die ein
+Skript verwenden kann:
 
 ```json
 {
@@ -118,30 +124,39 @@ JSON-Payload, die ein Skript nutzen kann:
 }
 ```
 
-### Einstellungen des benutzerdefinierten Kanals
+### Einstellungen des benutzerdefinierten Kanals {#custom-channel-settings}
 
 | Einstellung | Erforderlich | Standard | Rolle |
 |---|---|---|---|
-| `url` | ja (hier oder als Secret) | — | Aufzurufende Adresse. Kann Variablen enthalten. |
+| `url` | ja (hier oder als Geheimnis) | — | Aufzurufende Adresse. Darf Variablen enthalten. |
 | `method` | nein | `POST` | `POST`, `PUT` oder `GET`. |
-| `content_type` | nein | `json` | `json`, `form` oder `text`. Bestimmt auch, wie Variablen escaped werden. |
-| `body_template` | nein | — | Body-Template. Fehlt es, wird die obige Payload gesendet. |
-| `headers` | nein | — | Zusätzliche Header, als Objekt `{"X-Key": "value"}`. |
-| `base_url` | nein | — | Öffentliche Adresse Ihres DumbMonit, sodass `{{link}}` einen klickbaren Link gibt. |
-| `username` | nein | — | Benutzername für HTTP-"Basic"-Authentifizierung. Braucht das Secret `password`. |
+| `content_type` | nein | `json` | `json`, `form` oder `text`. Bestimmt auch, wie Variablen maskiert werden. |
+| `body_template` | nein | — | Body-Vorlage. Fehlt sie, wird die obige Payload gesendet. |
+| `base_url` | nein | — | Öffentliche Adresse Ihres DumbMonit, damit `{{link}}` einen anklickbaren Link liefert. |
+| `username` | nein | — | Benutzername für die HTTP-„Basic“-Authentifizierung. Erfordert das Geheimnis `password`. |
 
-| Secret | Rolle |
+| Geheimnis | Rolle |
 |---|---|
-| `url` | Nutzen Sie es statt der Einstellung `url`, wenn die Adresse schon ein Token enthält. |
-| `token` | Als `Authorization: Bearer …`-Header gesendet, sofern Ihr Template nicht `{{token}}` nutzt. |
-| `password` | Passwort für "Basic"-Authentifizierung. |
+| `url` | Verwenden Sie es statt der Einstellung `url`, wenn die Adresse bereits ein Token enthält. |
+| `token` | Wird als Header `Authorization: Bearer …` gesendet, sofern Ihre Vorlage nicht `{{token}}` verwendet. |
+| `password` | Passwort für die „Basic“-Authentifizierung. |
+| `headers` | Zusätzliche Header als JSON-Objekt `{"X-Api-Key": "value"}`. Wie das Token verschlüsselt gespeichert und nie wieder angezeigt, daher gehören API-Schlüssel und `Authorization`-Header hierher. |
+
+`headers` ist ein Geheimnis. Bei Kanälen, die mit 0.1.0-alpha.6 oder früher gespeichert wurden
+und sie in den Einstellungen hielten, werden sie beim ersten Start in die verschlüsselten
+Geheimnisse verschoben, und die API gibt sie nicht mehr zurück. Wie jedes Geheimnis bleiben sie
+erhalten, wenn Sie den Kanal bearbeiten, ohne sie erneut einzutippen; das Senden von `secrets`
+ersetzt den gesamten Satz.
+
+DumbMonit folgt einer Weiterleitung nur zum selben Host (oder von `http` zu `https` auf diesem
+Host): Header und Token eines Kanals gehen nie anderswohin als an die von Ihnen eingegebene
+Adresse.
 
 ### Verfügbare Variablen {#available-variables}
 
-Eine Variable wird zwischen **doppelten geschweiften Klammern**
-geschrieben: `{{title}}`. Leerzeichen um den Namen werden toleriert
-(`{{ title }}`). Einzelne geschweifte Klammern in einem JSON-Body
-bleiben wörtlich, daher können Sie Ihr JSON normal schreiben.
+Eine Variable wird zwischen **doppelten geschweiften Klammern** geschrieben: `{{title}}`.
+Leerzeichen um den Namen werden toleriert (`{{ title }}`). Einfache geschweifte Klammern in einem
+JSON-Body bleiben wörtlich, Sie können Ihr JSON also normal schreiben.
 
 | Variable | Was sie enthält | Beispiel |
 |---|---|---|
@@ -156,48 +171,44 @@ bleiben wörtlich, daher können Sie Ihr JSON normal schreiben.
 | `{{status}}` | Technischer Status | `firing` oder `resolved` |
 | `{{status_fr}}` | Status als lesbares Wort | `en cours` oder `résolu` |
 | `{{value}}` | Gemessener Wert, Einheit eingeschlossen | `95 %` |
-| `{{value_raw}}` | Blanker Wert, nutzbar als JSON-**Zahl** | `95` |
+| `{{value_raw}}` | Nackter Wert, als JSON-**Zahl** verwendbar | `95` |
 | `{{threshold}}` | Überschrittener Schwellenwert, Einheit eingeschlossen | `90 %` |
-| `{{threshold_raw}}` | Blanker Schwellenwert, nutzbar als JSON-**Zahl** | `90` |
+| `{{threshold_raw}}` | Nackter Schwellenwert, als JSON-**Zahl** verwendbar | `90` |
 | `{{unit}}` | Einheit des Werts | `%` |
-| `{{operator}}` | Schwellenwert-Vergleich | `>` |
-| `{{count}}` | Anzahl in dieser Nachricht gruppierter Alarme | `3` |
+| `{{operator}}` | Schwellenwertvergleich | `>` |
+| `{{count}}` | Anzahl der in dieser Nachricht gruppierten Alarme | `3` |
 | `{{fingerprint}}` | Stabile Kennung des Alarms | `nas/disk-full` |
 | `{{timestamp}}` | ISO-8601-Zeitstempel | `2026-09-01T14:12:05+00:00` |
 | `{{timestamp_unix}}` | Zeitstempel in Sekunden seit 1970 | `1788358325` |
 | `{{date}}` | Lesbarer Zeitstempel, in UTC | `2026-09-01 14:12 UTC` |
 | `{{priority}}` | Priorität von 1 (niedrig) bis 5 (hoch) | `4` |
-| `{{color}}` | Akzentfarbe, ohne Hash | `D98A00` |
-| `{{color_hex}}` | Akzentfarbe, mit Hash | `#D98A00` |
-| `{{emoji}}` | Status-Piktogramm | `🔴`, `⚠️`, `ℹ️` oder `✅` |
+| `{{color}}` | Akzentfarbe, ohne Raute | `D98A00` |
+| `{{color_hex}}` | Akzentfarbe, mit Raute | `#D98A00` |
+| `{{emoji}}` | Statuspiktogramm | `🔴`, `⚠️`, `ℹ️` oder `✅` |
 | `{{link}}` | Link zum Gerät in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Immer `dumbmonit` | `dumbmonit` |
-| `{{token}}` | Das `token`-Secret des Kanals | *(Ihr Token)* |
+| `{{token}}` | Das Geheimnis `token` des Kanals | *(Ihr Token)* |
 
-Zwei nützliche Bemerkungen:
+Zwei nützliche Hinweise:
 
-- **Manche Variablen können leer sein.** Ein Verfügbarkeitsalarm
-  ("host unreachable") hat weder einen Wert noch einen Schwellenwert:
-  `{{value}}` und `{{value_raw}}` rendern dann einen leeren String,
-  nie `null` oder `NaN`. Platzieren Sie sie als JSON-Zahl, behandeln
-  Sie diesen Fall — oder nutzen Sie `"{{value}}"` zwischen
-  Anführungszeichen.
-- **`{{link}}` bleibt leer**, bis Sie `base_url` ausfüllen. Ein
-  falscher Link würde mehr Zeit kosten als ein Alarm ohne einen.
+- **Manche Variablen können leer sein.** Ein Verfügbarkeitsalarm („Host nicht erreichbar“) hat
+  weder Wert noch Schwellenwert: `{{value}}` und `{{value_raw}}` ergeben dann eine leere
+  Zeichenkette, nie `null` oder `NaN`. Setzen Sie sie als JSON-Zahl ein, behandeln Sie diesen
+  Fall — oder verwenden Sie `"{{value}}"` in Anführungszeichen.
+- **`{{link}}` bleibt leer**, bis Sie `base_url` ausfüllen. Ein falscher Link würde mehr Zeit
+  kosten als ein Alarm ohne einen.
 
-**Sie müssen nie selbst etwas escapen.** Je nach gewähltem
-`content_type` schützt DumbMonit ersetzte Werte automatisch:
-Anführungszeichen und Zeilenumbrüche in JSON escaped,
-Percent-Encoding in einem Formular, keine Transformation in
-Klartext. Eine Regel namens `"System" disk full` wird Ihr
-JSON-Template nicht kaputt machen.
+**Sie müssen nie selbst etwas maskieren.** Je nach gewähltem `content_type` schützt DumbMonit
+eingesetzte Werte automatisch: Anführungszeichen und Zeilenumbrüche werden in JSON maskiert,
+in einem Formular prozentkodiert, in Klartext nicht umgewandelt. Eine Regel namens
+`"System" disk full` bricht Ihre JSON-Vorlage nicht.
 
 ### Beispiel 1 — eine interne JSON-API {#example-1--an-internal-json-api}
 
-Eine selbst gebaute Anwendung exponiert `POST /incidents` und
-erwartet ein Token in einem benutzerdefinierten Header.
+Eine selbst gebaute Anwendung stellt `POST /incidents` bereit und erwartet ein Token in einem
+benutzerdefinierten Header.
 
-**Settings**
+**Einstellungen**
 
 ```json
 {
@@ -205,21 +216,21 @@ erwartet ein Token in einem benutzerdefinierten Header.
   "method": "POST",
   "content_type": "json",
   "base_url": "https://dumbmonit.home",
-  "headers": {
-    "X-Application": "dumbmonit"
-  },
   "body_template": "{\"title\": \"{{title}}\", \"device\": \"{{target}}\", \"severity\": \"{{severity}}\", \"state\": \"{{status}}\", \"value\": {{value_raw}}, \"threshold\": {{threshold_raw}}, \"detail\": \"{{message}}\", \"link\": \"{{link}}\", \"seen_at\": \"{{timestamp}}\"}"
 }
 ```
 
-**Secrets**
+**Geheimnisse**
 
 ```json
-{ "token": "your-application-token" }
+{
+  "token": "your-application-token",
+  "headers": "{\"X-Application\": \"dumbmonit\"}"
+}
 ```
 
-Das Token wird automatisch als `Authorization: Bearer …`-Header
-gesendet. So sieht die Anwendung es:
+Das Token wird automatisch als Header `Authorization: Bearer …` gesendet. Das erhält die
+Anwendung:
 
 ```json
 {
@@ -237,11 +248,10 @@ gesendet. So sieht die Anwendung es:
 
 ### Beispiel 2 — ein Dienst, der ein Formular erwartet {#example-2--a-service-that-expects-a-form}
 
-Viele SMS-Gateways und ältere APIs erwarten
-`application/x-www-form-urlencoded` statt JSON, mit dem Token im
-Body.
+Viele SMS-Gateways und ältere APIs erwarten `application/x-www-form-urlencoded` statt JSON, mit
+dem Token im Body.
 
-**Settings**
+**Einstellungen**
 
 ```json
 {
@@ -252,24 +262,22 @@ Body.
 }
 ```
 
-**Secrets**
+**Geheimnisse**
 
 ```json
 { "token": "gateway-key" }
 ```
 
-Da das Template bereits `{{token}}` nutzt, **fügt** DumbMonit
-**keinen** `Authorization`-Header hinzu: manche Dienste weisen einen
-Request mit zwei Authentifizierungen ab. Werte werden automatisch
-codiert, Leerzeichen werden zu `+` und akzentuierte Zeichen zu ihrem
-Percent-Encoding-Äquivalent.
+Da die Vorlage bereits `{{token}}` verwendet, **fügt DumbMonit keinen** `Authorization`-Header
+hinzu: Manche Dienste lehnen eine Anfrage mit zwei Authentifizierungen ab. Werte werden
+automatisch kodiert, Leerzeichen werden zu `+` und Umlaute zu ihrem prozentkodierten Äquivalent.
 
-### Beispiel 3 — eine einfache SMS über einen Carrier {#example-3--a-plain-text-sms-through-a-carrier}
+### Beispiel 3 — eine Klartext-SMS über einen Anbieter {#example-3--a-plain-text-sms-through-a-carrier}
 
-Manche Dienste, wie die SMS-API eines Carriers oder eine selbst
-gebaute Automatisierung, wollen eine einzige Textzeile.
+Manche Dienste, etwa die SMS-API eines Anbieters oder eine selbst gebaute Automatisierung,
+wollen eine einzelne Textzeile.
 
-**Settings**
+**Einstellungen**
 
 ```json
 {
@@ -280,20 +288,19 @@ gebaute Automatisierung, wollen eine einzige Textzeile.
 }
 ```
 
-Die gesendete Nachricht, ohne jedes Escaping:
+Die gesendete Nachricht, ohne jegliche Maskierung:
 
 ```
 ⚠️ warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
-### Beispiel 4 — ein GET-Request ohne Body {#example-4--a-get-request-without-a-body}
+### Beispiel 4 — eine GET-Anfrage ohne Body {#example-4--a-get-request-without-a-body}
 
-Akzeptiert der Dienst nur URL-Parameter, legen Sie die Variablen in
-`url` und wählen Sie die Methode `GET`. Ein `GET`-Request hat keinen
-Body: `body_template` wird dann abgelehnt, damit niemand glaubt, es
-tue etwas.
+Akzeptiert der Dienst nur URL-Parameter, setzen Sie die Variablen in `url` und wählen die
+Methode `GET`. Eine `GET`-Anfrage hat keinen Body: `body_template` wird dann abgelehnt, damit
+niemand glaubt, es bewirke etwas.
 
-**Settings**
+**Einstellungen**
 
 ```json
 {
@@ -302,70 +309,65 @@ tue etwas.
 }
 ```
 
-**Secrets**
+**Geheimnisse**
 
 ```json
 { "token": "api-key" }
 ```
 
-Nur die **ersetzten Werte** werden codiert; der Rest der Adresse
-wird unverändert kopiert. Der tatsächlich gesendete Request sieht
-so aus:
+Nur die **eingesetzten Werte** werden kodiert; der Rest der Adresse wird unverändert kopiert.
+Die tatsächlich gesendete Anfrage sieht so aus:
 
 ```
 GET https://sms.example.org/send?user=noe&text=nas%20%E2%80%94%20Disk%20full%20%E2%80%94%2095%20%25
 ```
 
-### Häufige Template-Fehler {#common-template-mistakes}
+### Häufige Fehler in Vorlagen {#common-template-mistakes}
 
-Ein fehlerhaftes Template wird **beim Speichern abgelehnt**,
-während Sie das Formular ansehen, nicht in der Nacht, in der der
-Vorfall passiert.
+Eine fehlerhafte Vorlage wird **beim Speichern abgelehnt**, solange Sie auf das Formular
+schauen, nicht in der Nacht, in der der Vorfall eintritt.
 
 | Was Sie schreiben | Was passiert |
 |---|---|
-| `{{severite}}` | Abgelehnt: unbekannte Variable "severite", gefolgt von der Liste gültiger Namen. Der korrekte Name ist `severity`. |
-| `{"t": "{{title"}` | Abgelehnt: "unclosed braces". Das `}}` fehlt. |
-| `{{}}` oder `{{  }}` | Abgelehnt: eine Variable ohne Namen bedeutet nichts. |
-| `{"a": {"b": 1}}` | **Akzeptiert.** Einzelne geschweifte Klammern sind wörtlich: Schreiben Sie Ihr JSON normal. |
-| `{{token}}` ohne ein `token`-Secret | Abgelehnt: das Template verlangt ein Token, das der Kanal nicht hat. |
-| `method: GET` mit `body_template` | Abgelehnt, mit der Alternative: Legen Sie die Variablen in `url`. |
-| `method: DELETE` | Abgelehnt: nur `POST`, `PUT` und `GET` werden akzeptiert. |
+| `{{severite}}` | Abgelehnt: unbekannte Variable „severite“, gefolgt von der Liste gültiger Namen. Der richtige Name ist `severity`. |
+| `{"t": "{{title"}` | Abgelehnt: „unclosed braces“. Das `}}` fehlt. |
+| `{{}}` oder `{{  }}` | Abgelehnt: Eine Variable ohne Namen bedeutet nichts. |
+| `{"a": {"b": 1}}` | **Akzeptiert.** Einfache geschweifte Klammern sind wörtlich: Schreiben Sie Ihr JSON normal. |
+| `{{token}}` ohne Geheimnis `token` | Abgelehnt: Die Vorlage verlangt ein Token, das der Kanal nicht hat. |
+| `method: GET` mit `body_template` | Abgelehnt, mit der Alternative: Setzen Sie die Variablen in `url`. |
+| `method: DELETE` | Abgelehnt: Nur `POST`, `PUT` und `GET` werden akzeptiert. |
 
 ---
 
 ## Unterstützte Kanäle {#supported-channels}
 
-### Discord
+### Discord {#discord}
 
-In Discord: **Channel settings → Integrations → Webhooks → New
-webhook**, dann **Copy webhook URL**. Diese URL enthält das Token:
-Sie gehört in die Secrets.
+In Discord: **Kanaleinstellungen → Integrationen → Webhooks → Neuer Webhook**, dann
+**Webhook-URL kopieren**. Diese URL enthält das Token: Sie gehört in die Geheimnisse.
 
-- **Secrets** — `webhook_url`
+- **Geheimnisse** — `webhook_url`
 
-### Slack
+### Slack {#slack}
 
-Auf <https://api.slack.com/apps>, erstellen Sie eine App, aktivieren
-Sie **Incoming Webhooks**, dann **Add New Webhook to Workspace** und
-wählen Sie den Kanal. Kopieren Sie die
-`https://hooks.slack.com/services/…`-URL.
+Erstellen Sie auf <https://api.slack.com/apps> eine App, aktivieren Sie **Incoming Webhooks**,
+dann **Add New Webhook to Workspace** und wählen Sie den Kanal. Kopieren Sie die URL
+`https://hooks.slack.com/services/…`.
 
-- **Secrets** — `webhook_url`
+- **Geheimnisse** — `webhook_url`
 
-### Telegram
+### Telegram {#telegram}
 
-Sie brauchen zwei Dinge: das **Bot-Token** (Secret) und die
-**Chat-ID** (`chat_id`), an die es schreiben muss. Das erste dauert
-eine Minute; das zweite hängt davon ab, wo Sie die Alarme empfangen
-wollen.
+Sie brauchen zwei Dinge: das **Bot-Token** (Geheimnis) und die **Chat-ID** (`chat_id`), in die er
+schreiben soll. Das erste ist in einer Minute besorgt; das zweite hängt davon ab, wo Sie die
+Alarme empfangen möchten.
 
-#### 1. Den Bot erstellen und sein Token erhalten
+#### 1. Den Bot erstellen und sein Token holen {#1-create-the-bot-and-get-its-token}
 
-1. Suchen Sie in Telegram **@BotFather** und klicken Sie *Start*.
-2. Senden Sie `/newbot`, beantworten Sie dann die Fragen (ein Name,
-   dann ein Benutzername, der mit `bot` enden muss).
-3. BotFather endet mit einer Nachricht wie dieser:
+1. Suchen Sie in Telegram nach **@BotFather** und klicken Sie auf *Start*.
+2. Senden Sie `/newbot` und beantworten Sie die Fragen (ein Name, dann ein Benutzername, der auf
+   `bot` enden muss).
+3. BotFather schließt mit einer Nachricht wie dieser:
 
    ```
    Done! Congratulations on your new bot. You will find it at t.me/my_homelab_bot.
@@ -373,24 +375,20 @@ wollen.
    63xxxxxx71:AAFoxxxxn0hwA-2TVSxxxNf4c
    ```
 
-   Die Zeile `63xxxxxx71:AAFoxxxxn0hwA-2TVSxxxNf4c` ist das
-   **Bot-Token**. Teilen Sie es nicht: Es gibt volle Kontrolle über
-   den Bot.
+   Die Zeile `63xxxxxx71:AAFoxxxxn0hwA-2TVSxxxNf4c` ist das **Bot-Token**. Geben Sie es nicht
+   weiter: Es gibt die volle Kontrolle über den Bot.
 
-In den Beispielen unten ersetzen Sie `<TOKEN>` durch dieses Token.
-Beachten Sie das Präfix `bot`, das in URLs direkt davor klebt:
-`https://api.telegram.org/bot<TOKEN>/…`.
+Ersetzen Sie in den folgenden Beispielen `<TOKEN>` durch dieses Token. Beachten Sie das in URLs
+direkt davor geklebte Präfix `bot`: `https://api.telegram.org/bot<TOKEN>/…`.
 
-#### 2. Die `chat_id` finden
+#### 2. Die `chat_id` finden {#2-find-the-chat_id}
 
 **Privater Chat** (der Bot schreibt direkt an Sie)
 
-1. Öffnen Sie Ihren Bot (`t.me/my_homelab_bot`) und klicken Sie
-   *Start*, oder senden Sie ihm eine beliebige Nachricht. Ohne das
-   kann er Ihnen nie schreiben.
-2. Öffnen Sie in einem Browser:
-   `https://api.telegram.org/bot<TOKEN>/getUpdates`
-3. Sie erhalten ein JSON-Dokument; suchen Sie nach `"chat"`:
+1. Öffnen Sie Ihren Bot (`t.me/my_homelab_bot`) und klicken Sie auf *Start*, oder senden Sie ihm
+   eine beliebige Nachricht. Ohne das kann er Ihnen nie schreiben.
+2. Öffnen Sie in einem Browser: `https://api.telegram.org/bot<TOKEN>/getUpdates`
+3. Sie erhalten ein JSON-Dokument; suchen Sie `"chat"`:
 
    ```json
    {"ok":true,"result":[{"update_id":83xxxxx35,
@@ -399,51 +397,44 @@ Beachten Sie das Präfix `bot`, das in URLs direkt davor klebt:
        "date":1703062972,"text":"/start"}}]}
    ```
 
-   Die `chat_id` ist der Wert von `chat.id`: hier `21xxxxx38` (eine
-   positive Zahl).
+   Die `chat_id` ist der Wert von `chat.id`: hier `21xxxxx38` (eine positive Zahl).
 
-   Ist `result` leer (`"result":[]`), senden Sie dem Bot eine weitere
-   Nachricht und laden Sie die Seite neu.
+   Ist `result` leer (`"result":[]`), senden Sie dem Bot noch eine Nachricht und laden Sie die
+   Seite neu.
 
 **Kanal**
 
-1. Fügen Sie den Bot als Administrator des Kanals hinzu (Manage
-   channel → Administrators → Add).
+1. Fügen Sie den Bot als Administrator des Kanals hinzu (Kanal verwalten → Administratoren →
+   Hinzufügen).
 2. Posten Sie eine Nachricht im Kanal.
-3. Öffnen Sie `https://api.telegram.org/bot<TOKEN>/getUpdates`: die
-   Antwort enthält einen `channel_post`-Block mit
-   `"chat":{"id":-1001xxxxxx062,"type":"channel"}`.
+3. Öffnen Sie `https://api.telegram.org/bot<TOKEN>/getUpdates`: Die Antwort enthält einen Block
+   `channel_post` mit `"chat":{"id":-1001xxxxxx062,"type":"channel"}`.
 
-   Die `chat_id` ist diese negative Zahl, `-100` eingeschlossen:
-   `-1001xxxxxx062`.
+   Die `chat_id` ist diese negative Zahl, `-100` eingeschlossen: `-1001xxxxxx062`.
 
 **Gruppe**
 
-Der einfachste Weg läuft über die Desktop-App:
+Am einfachsten geht es über die Desktop-App:
 
 1. Fügen Sie den Bot zur Gruppe hinzu.
-2. Senden Sie eine Nachricht in der Gruppe, rechtsklicken Sie darauf
-   → *Copy message link*. Sie erhalten `https://t.me/c/194xxxx987/13`
-   (oder `https://t.me/c/194xxxx987/11/13`, wenn die Gruppe Topics
-   hat).
-3. Die Zahl direkt nach `/c/` ist die interne Kennung der Gruppe:
-   `194xxxx987`. Die einzugebende `chat_id` ist diese Zahl
-   **mit dem Präfix `-100`**: `-100194xxxx987`.
+2. Senden Sie eine Nachricht in der Gruppe, Rechtsklick darauf → *Nachrichtenlink kopieren*. Sie
+   erhalten `https://t.me/c/194xxxx987/13` (oder `https://t.me/c/194xxxx987/11/13`, wenn die
+   Gruppe Themen hat).
+3. Die Zahl direkt nach `/c/` ist die interne Kennung der Gruppe: `194xxxx987`. Die
+   einzutragende `chat_id` ist diese Zahl, **mit dem Präfix `-100`**: `-100194xxxx987`.
 
-Ohne die Desktop-App funktioniert die obige Methode `getUpdates`
-auch: `message.chat.id` ist direkt die richtige Zahl (schon negativ).
-Sieht der Bot die Nachrichten der Gruppe nicht, bitten Sie BotFather
-um `/setprivacy` → *Disable*, entfernen Sie den Bot dann aus der
-Gruppe und fügen Sie ihn erneut hinzu.
+Ohne die Desktop-App funktioniert auch die obige Methode `getUpdates`: `message.chat.id` ist
+direkt die richtige Zahl (bereits negativ). Sieht der Bot die Nachrichten der Gruppe nicht,
+bitten Sie BotFather um `/setprivacy` → *Disable*, entfernen Sie dann den Bot aus der Gruppe und
+fügen Sie ihn erneut hinzu.
 
-**Gruppen-Topic** (Gruppen im "Topics"-Modus)
+**Gruppenthema** (Gruppen im Modus „Themen“)
 
-Die `chat_id` ist die der Gruppe. Füllen Sie zusätzlich **Group
-topic** (`message_thread_id`) mit der mittleren Zahl des kopierten
-Links aus: In `https://t.me/c/194xxxx987/11/13` ist das Topic `11`.
-Ohne diese Einstellung landet die Nachricht im *General*-Thread.
+Die `chat_id` ist die der Gruppe. Füllen Sie zusätzlich **Gruppenthema** (`message_thread_id`)
+mit der mittleren Zahl des kopierten Links: In `https://t.me/c/194xxxx987/11/13` ist das Thema
+`11`. Ohne diese Einstellung landet die Nachricht im Thread *Allgemein*.
 
-#### 3. Vor dem Speichern prüfen
+#### 3. Vor dem Speichern prüfen {#3-check-before-saving}
 
 Öffnen Sie im Browser:
 
@@ -451,375 +442,315 @@ Ohne diese Einstellung landet die Nachricht im *General*-Thread.
 https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=test123
 ```
 
-(fügen Sie `&message_thread_id=11` für ein Topic hinzu). Kommt
-`test123` an, sind Token und `chat_id` richtig: Geben Sie sie in
-DumbMonit ein und klicken Sie *Test*.
+(ergänzen Sie `&message_thread_id=11` für ein Thema). Kommt `test123` an, stimmen Token und
+`chat_id`: Tragen Sie sie in DumbMonit ein und klicken Sie auf *Test*.
 
-- **Settings** — `chat_id` (erforderlich), `message_thread_id`
-  (Topic, optional), `api_base` (Standard
-  `https://api.telegram.org`, nur ändern, um über ein Relay zu
-  gehen)
-- **Secrets** — `bot_token`
+- **Einstellungen** — `chat_id` (erforderlich), `message_thread_id` (Thema, optional),
+  `api_base` (Standard `https://api.telegram.org`, ändern Sie es nur, um über ein Relay zu gehen)
+- **Geheimnisse** — `bot_token`
 
-> **"Telegram cannot find this chat"** — bei einem privaten Chat hat
-> der Bot nie eine Nachricht von Ihnen erhalten: senden Sie ihm
-> `/start`. Bei einer Gruppe oder einem Kanal fehlt wahrscheinlich das
-> Präfix `-100`, oder der Bot wurde nicht hinzugefügt.
+> **„Telegram cannot find this chat“** — bei einem privaten Chat hat der Bot nie eine Nachricht
+> von Ihnen erhalten: Senden Sie ihm `/start`. Bei einer Gruppe oder einem Kanal fehlt
+> wahrscheinlich das Präfix `-100`, oder der Bot wurde nicht hinzugefügt.
 >
-> **"thread not found"** — die `message_thread_id` passt zu keinem
-> Topic der Gruppe, oder die Gruppe ist nicht im "Topics"-Modus.
+> **„thread not found“** — die `message_thread_id` passt zu keinem Thema der Gruppe, oder die
+> Gruppe ist nicht im Modus „Themen“.
 
-### Microsoft Teams
+### Microsoft Teams {#microsoft-teams}
 
-**Achtung: Die Methode hat sich geändert.** Die alten "Office
-365-Konnektoren" wurden im Mai 2026 abgeschaltet; eine
-`outlook.office.com/webhook/…`-URL funktioniert nicht mehr.
+**Achtung: Die Methode hat sich geändert.** Die alten „Office-365-Connectors“ wurden im Mai 2026
+eingestellt; eine URL `outlook.office.com/webhook/…` funktioniert nicht mehr.
 
-Das aktuelle Verfahren:
+Das aktuelle Vorgehen:
 
-1. Im Teams-Kanal, **⋯ → Workflows**.
-2. Wählen Sie das Template **"Post to a channel when a webhook
-   request is received"**.
-3. Bestätigen Sie die Schritte, **kopieren Sie dann die am Ende
-   gezeigte HTTPS-POST-URL**.
+1. Im Teams-Kanal **⋯ → Workflows**.
+2. Wählen Sie die Vorlage **„Post to a channel when a webhook request is received“**.
+3. Bestätigen Sie die Schritte, dann **kopieren Sie die HTTPS-POST-URL**, die am Ende angezeigt
+   wird.
 
-- **Secrets** — `webhook_url`
+- **Geheimnisse** — `webhook_url`
 
-DumbMonit sendet eine verpackte *Adaptive Card*, das einzige Format,
-das diese Flows korrekt anzeigen. Erhalten Sie einen Fehler, der
-Power Automate erwähnt, stammt die URL wahrscheinlich von einem
-alten Konnektor.
+DumbMonit sendet eine eingebettete *Adaptive Card*, das einzige Format, das diese Flows korrekt
+darstellen. Erhalten Sie einen Fehler, der Power Automate erwähnt, stammt die URL wahrscheinlich
+von einem alten Connector.
 
-### Matrix
+### Matrix {#matrix}
 
-1. Erstellen Sie ein für DumbMonit dediziertes Konto auf Ihrem
-   Homeserver, und **laden Sie es in den Raum ein**. Ein Konto, das
-   kein Mitglied ist, kann nicht schreiben.
-2. Holen Sie sein Access-Token. In Element: **Settings → Help &
-   About → Advanced → Access token**.
-3. Holen Sie die **interne** Kennung des Raums — nicht seinen
-   Anzeigenamen. In Element: **Room settings → Advanced → Internal
-   room ID**. Sie beginnt mit `!` (zum Beispiel
+1. Erstellen Sie auf Ihrem Homeserver ein dediziertes Konto für DumbMonit und **laden Sie es in
+   den Raum ein**. Ein Konto, das kein Mitglied ist, kann nicht schreiben.
+2. Holen Sie sich sein Zugriffstoken. In Element: **Einstellungen → Hilfe & Info → Erweitert →
+   Zugriffstoken**.
+3. Holen Sie sich die **interne** Kennung des Raums — nicht seinen Anzeigenamen. In Element:
+   **Raumeinstellungen → Erweitert → Interne Raum-ID**. Sie beginnt mit `!` (zum Beispiel
    `!aBcDeF:matrix.org`).
 
-- **Settings** — `server_url` (zum Beispiel `https://matrix.org`),
-  `room_id`
-- **Secrets** — `token`
+- **Einstellungen** — `server_url` (zum Beispiel `https://matrix.org`), `room_id`
+- **Geheimnisse** — `token`
 
-### Mattermost
+### Mattermost {#mattermost}
 
-**Integrations → Incoming Webhooks → Add**. Wählen Sie den
-Standardkanal, kopieren Sie dann die URL.
+**Integrationen → Eingehende Webhooks → Hinzufügen**. Wählen Sie den Standardkanal, dann
+kopieren Sie die URL.
 
-- **Settings** — `channel` (optional, um woanders als dem
-  Standardkanal zu schreiben), `username` (optional, Standard
-  `DumbMonit`)
-- **Secrets** — `webhook_url`
+- **Einstellungen** — `channel` (optional, um woanders als im Standardkanal zu schreiben),
+  `username` (optional, Standard `DumbMonit`)
+- **Geheimnisse** — `webhook_url`
 
-### Rocket.Chat
+### Rocket.Chat {#rocketchat}
 
-**Administration → Integrations → New integration → Incoming
-webhook**. Wählen Sie den Raum, aktivieren Sie die Integration,
-kopieren Sie dann die *Webhook URL*.
+**Administration → Integrationen → Neue Integration → Eingehender Webhook**. Wählen Sie den
+Raum, aktivieren Sie die Integration, dann kopieren Sie die *Webhook-URL*.
 
-- **Settings** — `channel` (optional), `alias` (optional, Standard
-  `DumbMonit`)
-- **Secrets** — `webhook_url`
+- **Einstellungen** — `channel` (optional), `alias` (optional, Standard `DumbMonit`)
+- **Geheimnisse** — `webhook_url`
 
-### Google Chat
+### Google Chat {#google-chat}
 
-Im Google-Chat-Space: **Space-Name → Apps & integrations → Webhooks
-→ Add webhook**. Kopieren Sie die URL, die schon den Schlüssel und
-das Token enthält.
+Im Google-Chat-Space: **Name des Space → Apps & Integrationen → Webhooks → Webhook
+hinzufügen**. Kopieren Sie die URL, die bereits Schlüssel und Token enthält.
 
-- **Secrets** — `webhook_url`
+- **Geheimnisse** — `webhook_url`
 
-### Zulip
+### Zulip {#zulip}
 
-1. Erstellen Sie einen **Bot**: **Personal settings → Bots → Add a
-   new bot**, Typ "Generic". Merken Sie sich seine E-Mail-Adresse
-   und seinen API-Key.
-2. Abonnieren Sie den Bot für den Ziel-Stream, sonst wird das Senden
-   abgelehnt.
+1. Erstellen Sie einen **Bot**: **Persönliche Einstellungen → Bots → Neuen Bot hinzufügen**, Typ
+   „Generic“. Notieren Sie seine E-Mail-Adresse und seinen API-Schlüssel.
+2. Abonnieren Sie den Bot auf den Ziel-Stream, sonst wird das Senden abgelehnt.
 
-- **Settings** — `server_url` (zum Beispiel
-  `https://your-org.zulipchat.com`), `email` (die Adresse des Bots),
-  `stream` (der Stream-Name), `topic` (optional, Standard
-  `DumbMonit`)
-- **Secrets** — `api_key`
+- **Einstellungen** — `server_url` (zum Beispiel `https://your-org.zulipchat.com`), `email` (die
+  Adresse des Bots), `stream` (der Stream-Name), `topic` (optional, Standard `DumbMonit`)
+- **Geheimnisse** — `api_key`
 
-### ntfy
+### ntfy {#ntfy}
 
-Der einfachste Kanal von allen: Wählen Sie einen schwer zu
-erratenden Topic-Namen, abonnieren Sie ihn dann aus der ntfy-App.
+Der einfachste Kanal von allen: Wählen Sie einen schwer zu erratenden Topic-Namen und abonnieren
+Sie ihn dann in der ntfy-App.
 
-- **Settings** — `topic`, `server_url` (optional, Standard
-  `https://ntfy.sh`)
-- **Secrets** — `token` (nur, wenn Ihr Server Authentifizierung
-  verlangt)
+- **Einstellungen** — `topic`, `server_url` (optional, Standard `https://ntfy.sh`)
+- **Geheimnisse** — `token` (nur wenn Ihr Server Authentifizierung verlangt)
 
-> Auf der öffentlichen Instanz kann **jeder, der den Namen eines
-> Topics kennt, es lesen**. Wählen Sie einen langen, zufälligen
-> Namen, oder hosten Sie Ihren eigenen Server.
+> Auf der öffentlichen Instanz kann **jeder, der den Namen eines Topics kennt, es lesen**. Wählen
+> Sie einen langen, zufälligen Namen oder hosten Sie Ihren eigenen Server.
 
-### Gotify
+### Gotify {#gotify}
 
-In der Gotify-Oberfläche: **Apps → Create Application**. Kopieren
-Sie das gezeigte Token.
+In der Gotify-Oberfläche: **Apps → Anwendung erstellen**. Kopieren Sie das angezeigte Token.
 
-- **Settings** — `server_url` (zum Beispiel `https://gotify.home`)
-- **Secrets** — `token`
+- **Einstellungen** — `server_url` (zum Beispiel `https://gotify.home`)
+- **Geheimnisse** — `token`
 
-### Pushover
+### Pushover {#pushover}
 
-1. Auf <https://pushover.net> wird Ihr **User Key** direkt auf der
-   Startseite angezeigt.
-2. Erstellen Sie dann eine Anwendung: **Create an
-   Application/API Token**. Sie erhalten ein **Application-Token**.
+1. Auf <https://pushover.net> wird Ihr **User Key** direkt auf der Startseite angezeigt.
+2. Erstellen Sie dann eine Anwendung: **Create an Application/API Token**. Sie erhalten ein
+   **Anwendungstoken**.
 
-- **Settings** — `priority` (optional, von -2 bis 2), `sound`
-  (optional), `retry` und `expire` (nur für `priority: 2`)
-- **Secrets** — `token` (Application-Token), `user_key` (User-Key)
+- **Einstellungen** — `priority` (optional, von -2 bis 2), `sound` (optional), `retry` und
+  `expire` (nur für `priority: 2`)
+- **Geheimnisse** — `token` (Anwendungstoken), `user_key` (User Key)
 
-Ohne eine `priority`-Einstellung wählt DumbMonit nach Schweregrad:
-`-1` für ein Advisory oder eine Behebung, `0` für ein Warning, `1`
-für einen kritischen Alarm. Ein Advisory lässt das Telefon daher
-nicht klingeln.
+Ohne Einstellung `priority` wählt DumbMonit nach Schweregrad: `-1` für einen Hinweis oder eine
+Auflösung, `0` für eine Warnung, `1` für einen kritischen Alarm. Ein Hinweis lässt das
+Smartphone daher nicht klingeln.
 
-> Priorität `2` ("emergency") wiederholt die Benachrichtigung, bis
-> sie bestätigt wird. DumbMonit fügt dann automatisch `retry` und
-> `expire` hinzu, ohne die Pushover die Nachricht abweisen würde.
+> Priorität `2` („Notfall“) wiederholt die Benachrichtigung, bis sie bestätigt wird. DumbMonit
+> ergänzt dann `retry` und `expire` automatisch, ohne die Pushover die Nachricht ablehnen würde.
 
-### Pushbullet
+### Pushbullet {#pushbullet}
 
-Auf <https://www.pushbullet.com/#settings/account>, klicken Sie
-**Create Access Token**.
+Klicken Sie auf <https://www.pushbullet.com/#settings/account> auf **Create Access Token**.
 
-- **Settings** — `device_iden` (optional; ohne es werden alle Ihre
-  Geräte benachrichtigt)
-- **Secrets** — `token`
+- **Einstellungen** — `device_iden` (optional; ohne sie werden alle Ihre Geräte benachrichtigt)
+- **Geheimnisse** — `token`
 
-### Bark (iOS)
+### Bark (iOS) {#bark-ios}
 
-Öffnen Sie die Bark-App auf Ihrem iPhone: Sie zeigt eine URL mit
-Ihrem **Device Key**, dem langen Zeichenstring nach dem
-Domainnamen.
+Öffnen Sie die Bark-App auf Ihrem iPhone: Sie zeigt eine URL mit Ihrem **Device Key**, der langen
+Zeichenfolge nach dem Domainnamen.
 
-- **Settings** — `server_url` (optional, Standard
-  `https://api.day.app`), `group` (optional), `level` (optional),
-  `sound` (optional)
-- **Secrets** — `token` (der Device Key)
+- **Einstellungen** — `server_url` (optional, Standard `https://api.day.app`), `group`
+  (optional), `level` (optional), `sound` (optional)
+- **Geheimnisse** — `token` (der Device Key)
 
-Ohne eine `level`-Einstellung wählt DumbMonit: `passive` für ein
-Advisory, `active` für ein Warning, `timeSensitive` für einen
-kritischen Alarm. Die Stufe `critical`, die "Do Not Disturb"
-durchbricht, wird nie automatisch gewählt — setzen Sie sie explizit,
-wenn Sie sie wollen.
+Ohne Einstellung `level` wählt DumbMonit: `passive` für einen Hinweis, `active` für eine
+Warnung, `timeSensitive` für einen kritischen Alarm. Die Stufe `critical`, die „Nicht stören“
+durchbricht, wird nie automatisch gewählt — setzen Sie sie ausdrücklich, wenn Sie sie wollen.
 
-### Web Push
+### Web Push {#web-push}
 
-Native Benachrichtigungen auf Ihren Telefonen und Computern, direkt
-von Ihrem eigenen DumbMonit, ohne App zu installieren und ohne
-Drittanbieterkonto: Der Browser (installiert als App oder nicht)
-erhält die Alarme, auch mit jedem geschlossenen Tab.
+Native Benachrichtigungen auf Ihren Smartphones und Computern, direkt von Ihrem eigenen
+DumbMonit, ohne App-Installation und ohne Drittanbieter-Konto: Der Browser (als App installiert
+oder nicht) empfängt die Alarme auch bei geschlossenen Tabs.
 
-1. Öffnen Sie auf jedem Telefon oder Computer DumbMonit und gehen
-   Sie zu **Settings → Push notifications → Enable on this device**,
-   dann **Send a test**. Auf iPhone und iPad fügen Sie DumbMonit
-   zuerst dem Homescreen hinzu. Die Schritt-für-Schritt-Anleitung
-   steht in
-   [Push-Benachrichtigungen (PWA)](using/push-notifications.md).
-2. Erstellen Sie hier einen **Web-Push**-Kanal. Er hat kein Secret:
-   Seine Empfänger sind die in Schritt 1 abonnierten Geräte.
+1. Öffnen Sie auf jedem Smartphone oder Computer DumbMonit und gehen Sie zu **Einstellungen →
+   Push-Benachrichtigungen → Auf diesem Gerät aktivieren**, dann **Test senden**. Auf iPhone und
+   iPad fügen Sie DumbMonit zuerst zum Home-Bildschirm hinzu. Die Schritt-für-Schritt-Anleitung
+   steht unter [Push-Benachrichtigungen (PWA)](using/push-notifications.md).
+2. Erstellen Sie hier einen Kanal **Web Push**. Er hat kein Geheimnis: Seine Empfänger sind die
+   in Schritt 1 abonnierten Geräte.
 
-- **Settings** — `users` (optional; ein Konto pro Zeile, leer:
-  jedes abonnierte Gerät jedes Kontos), `urgency` (standardmäßig
-  `high`, `normal` oder `low`), `ttl` (Sekunden, die der Push-
-  Dienst die Nachricht für ein ausgeschaltetes Gerät behält,
-  Standard `86400`), `contact` (optionale `mailto:`- oder
-  `https:`-Adresse, Push-Diensten gegeben; leer:
-  `DUMBMONIT_PUBLIC_URL`, wenn es HTTPS ist, sonst die Projektseite)
-- **Secrets** — keine. Das VAPID-Schlüsselpaar des Servers wird beim
-  ersten Start generiert und verschlüsselt gespeichert; der private
-  Schlüssel verlässt den Server nie.
+- **Einstellungen** — `users` (optional; ein Konto pro Zeile, leer: jedes abonnierte Gerät jedes
+  Kontos), `urgency` (standardmäßig `high`, `normal` oder `low`), `ttl` (Sekunden, die der
+  Push-Dienst die Nachricht für ein ausgeschaltetes Gerät aufbewahrt, Standard `86400`),
+  `contact` (optionale Adresse `mailto:` oder `https:`, die an Push-Dienste gegeben wird; leer:
+  `DUMBMONIT_PUBLIC_URL`, wenn sie HTTPS ist, sonst die Projektseite)
+- **Geheimnisse** — keine. Das VAPID-Schlüsselpaar des Servers wird beim ersten Start erzeugt und
+  verschlüsselt gespeichert; der private Schlüssel verlässt den Server nie.
 
-Der Titel der Benachrichtigung ist der Schweregrad und das Gerät
-(`Critical · nas01`), der Body eine kurze Zusammenfassung; ein Tap
-öffnet die **Alerts**-Seite. DumbMonit braucht ausgehendes HTTPS zu
-den Push-Diensten (`fcm.googleapis.com`, `*.notify.windows.com`,
-`updates.push.services.mozilla.com`, `*.push.apple.com`); Nachrichten
-sind Ende-zu-Ende verschlüsselt, diese Dienste können sie nicht
-lesen. Ein vom Push-Dienst als verschwunden gemeldetes Abonnement
-(HTTP 404 oder 410, zum Beispiel nach Entfernung der App) wird
+Der Titel der Benachrichtigung ist der Schweregrad und das Gerät (`Kritisch · nas01`), der Body
+eine kurze Zusammenfassung; ein Tipp öffnet die Seite **Alarme**. DumbMonit braucht ausgehendes
+HTTPS zu den Push-Diensten (`fcm.googleapis.com`, `*.notify.windows.com`,
+`updates.push.services.mozilla.com`, `*.push.apple.com`); Nachrichten sind Ende-zu-Ende-
+verschlüsselt, diese Dienste können sie nicht lesen. Ein Abonnement, das der Push-Dienst als
+verschwunden meldet (HTTP 404 oder 410, zum Beispiel nach dem Entfernen der App), wird
 automatisch gelöscht.
 
-### Apprise
+### Apprise {#apprise}
 
-Apprise ist ein **Gateway**: mit einer einzigen Konfiguration gibt
-es Zugang zu Dutzenden Diensten, die DumbMonit nicht selbst
-implementiert. Deployen Sie den Container `caronc/apprise`, wählen
-Sie dann einen der zwei Modi.
+Apprise ist ein **Gateway**: Mit einer einzigen Konfiguration gibt es Zugriff auf Dutzende
+Dienste, die DumbMonit nicht selbst implementiert. Stellen Sie den Container `caronc/apprise`
+bereit und wählen Sie dann einen der beiden Modi.
 
-**Empfohlener Modus — Konfiguration in Apprise gespeichert.**
-Erstellen Sie eine Konfiguration in der Apprise-Oberfläche, merken
-Sie sich ihren Key, und legen Sie hier nichts sonst ab.
+**Empfohlener Modus — in Apprise gespeicherte Konfiguration.** Erstellen Sie in der
+Apprise-Oberfläche eine Konfiguration, notieren Sie ihren Schlüssel und tragen Sie hier sonst
+nichts ein.
 
-- **Settings** — `server_url`, `config_key`
+- **Einstellungen** — `server_url`, `config_key`
 
-**Direkter Modus — DumbMonit liefert die Ziele.** Apprise-URLs
-enthalten oft ein Passwort (`mailto://user:password@…`): Sie
-gehören daher in die Secrets.
+**Direkter Modus — DumbMonit liefert die Ziele.** Apprise-URLs enthalten oft ein Passwort
+(`mailto://user:password@…`): Sie gehören daher in die Geheimnisse.
 
-- **Settings** — `server_url`
-- **Secrets** — `urls` (eine oder mehrere Apprise-URLs,
-  kommagetrennt)
+- **Einstellungen** — `server_url`
+- **Geheimnisse** — `urls` (eine oder mehrere Apprise-URLs, durch Kommas getrennt)
 
-Optionale gemeinsame Einstellungen: `tag` (um nur einen Teil der
-Ziele einer Konfiguration anzusprechen) und `format` (standardmäßig
-`text`, oder `markdown`).
+Optionale allgemeine Einstellungen: `tag` (um nur einen Teil der Ziele einer Konfiguration
+anzusprechen) und `format` (standardmäßig `text`, oder `markdown`).
 
-> Antwortet der Test mit "Apprise has no configuration under this
-> config_key", passt der Key zu nichts. DumbMonit meldet das, statt
-> vorzugeben, die Nachricht sei gesendet worden.
+> Antwortet der Test „Apprise has no configuration under this config_key“, passt der Schlüssel zu
+> nichts. DumbMonit meldet es, statt so zu tun, als wäre die Nachricht gesendet worden.
 
-### Home Assistant
+### Home Assistant {#home-assistant}
 
-1. In Home Assistant: **Ihr Profil → Security → Long-lived access
-   tokens → Create token**. Kopieren Sie es, es wird nicht wieder
-   angezeigt.
-2. Wählen Sie den aufzurufenden Dienst. Standardmäßig erstellt
-   DumbMonit eine persistente Benachrichtigung auf dem Dashboard.
+1. In Home Assistant: **Ihr Profil → Sicherheit → Langlebige Zugriffstoken → Token erstellen**.
+   Kopieren Sie es, es wird nicht wieder angezeigt.
+2. Wählen Sie den aufzurufenden Dienst. Standardmäßig erstellt DumbMonit eine dauerhafte
+   Benachrichtigung auf dem Dashboard.
 
-- **Settings** — `server_url` (zum Beispiel
-  `http://homeassistant.local:8123`), `service` (optional, Standard
-  `persistent_notification.create`), `target` (optional), `data`
-  (optional, Objekt, in den Aufruf eingemischt)
-- **Secrets** — `token`
+- **Einstellungen** — `server_url` (zum Beispiel `http://homeassistant.local:8123`), `service`
+  (optional, Standard `persistent_notification.create`), `target` (optional), `data` (optional,
+  in den Aufruf eingemischtes Objekt)
+- **Geheimnisse** — `token`
 
-Ein paar nützliche Dienste:
+Einige nützliche Dienste:
 
 | `service` | Wirkung |
 |---|---|
 | `persistent_notification.create` | Banner in der Home-Assistant-Oberfläche |
 | `notify.notify` | Alle konfigurierten Benachrichtigungsziele |
-| `notify.mobile_app_<device>` | Die mobile App eines bestimmten Geräts |
-| `light.turn_on` | Schaltet eine Lampe ein — nutzen Sie `data` für Entität und Farbe |
+| `notify.mobile_app_<device>` | Die Mobile App eines bestimmten Geräts |
+| `light.turn_on` | Schaltet ein Licht ein — verwenden Sie `data` für Entität und Farbe |
 
-Die Einstellung `data` wird **zuletzt** eingemischt: Sie kann daher
-den Titel oder die Nachricht überschreiben, die DumbMonit
-vorbereitet hat.
+Die Einstellung `data` wird **zuletzt** eingemischt: Sie kann daher den Titel oder die Nachricht
+überschreiben, die DumbMonit vorbereitet hat.
 
-### E-Mail (SMTP)
+### E-Mail (SMTP) {#email-smtp}
 
 Der einzige Kanal, der von keinem Drittanbieterdienst abhängt.
 
-- **Settings** — `host`, `from`, `to` (Liste von Adressen),
-  `security` (standardmäßig `starttls`, oder `tls`, oder `none`),
-  `port` (aus `security` abgeleitet: 587, 465 oder 25), `username`
-  (optional)
-- **Secrets** — `password`
+- **Einstellungen** — `host`, `from`, `to` (Liste von Adressen), `security` (standardmäßig
+  `starttls`, oder `tls`, oder `none`), `port` (aus `security` abgeleitet: 587, 465 oder 25),
+  `username` (optional)
+- **Geheimnisse** — `password`
 
-> Mit Gmail funktioniert ein Kontopasswort nicht: Erstellen Sie ein
-> **App-Passwort** in den Sicherheitseinstellungen Ihres
-> Google-Kontos.
+> Bei Gmail funktioniert das Kontopasswort nicht: Erstellen Sie in den Sicherheitseinstellungen
+> Ihres Google-Kontos ein **App-Passwort**.
 
-### Signal
+### Signal {#signal}
 
-Läuft über eine
-[`signal-cli-rest-api`](https://github.com/bbernhard/signal-cli-rest-api)-
-Instanz, die Sie hosten und wo Sie zuerst Ihre Nummer registrieren.
+Läuft über eine Instanz von
+[`signal-cli-rest-api`](https://github.com/bbernhard/signal-cli-rest-api), die Sie selbst hosten
+und in der Sie zuerst Ihre Nummer registrieren.
 
-- **Settings** — `server_url` (zum Beispiel
-  `http://signal.home:8080`), `number` (die registrierte
-  Absendernummer), `recipients` (Liste von Nummern oder
-  Gruppenkennungen), `username` (optional)
-- **Secrets** — `password` (optional, falls Ihre Instanz geschützt
-  ist)
+- **Einstellungen** — `server_url` (zum Beispiel `http://signal.home:8080`), `number` (die
+  registrierte Absendernummer), `recipients` (Liste von Nummern oder Gruppenkennungen),
+  `username` (optional)
+- **Geheimnisse** — `password` (optional, wenn Ihre Instanz geschützt ist)
 
-Alle Nummern werden im **internationalen Format** geschrieben,
-`+33612345678`.
+Alle Nummern werden im **internationalen Format** geschrieben, `+33612345678`.
 
-### SMS über Twilio
+### SMS über Twilio {#sms-via-twilio}
 
-In der Twilio-Konsole zeigt die Startseite Ihre **Account SID** und
-Ihr **Auth Token**. Kaufen Sie dann eine SMS-fähige Nummer.
+In der Twilio-Konsole zeigt die Startseite Ihre **Account SID** und Ihr **Auth Token**. Kaufen
+Sie dann eine Nummer, die SMS senden kann.
 
-- **Settings** — `account_sid`, `from` (Ihre Twilio-Nummer) **oder**
-  `messaging_service_sid`, `to` (Liste von Empfängern)
-- **Secrets** — `token` (das *Auth Token*)
+- **Einstellungen** — `account_sid`, `from` (Ihre Twilio-Nummer) **oder**
+  `messaging_service_sid`, `to` (Liste der Empfänger)
+- **Geheimnisse** — `token` (das *Auth Token*)
 
-Der SMS-Body wird bei 300 Zeichen abgeschnitten: darüber hinaus
-teilt Twilio ihn in separat abgerechnete Segmente.
+Der SMS-Body wird bei 300 Zeichen abgeschnitten: Darüber teilt Twilio ihn in getrennt
+abgerechnete Segmente.
 
-> Auf einem Testkonto sendet Twilio nur an von Ihnen verifizierte
-> Nummern.
+> Bei einem Testkonto sendet Twilio nur an Nummern, die Sie verifiziert haben.
 
-### PagerDuty
+### PagerDuty {#pagerduty}
 
-In PagerDuty: **Services → Ihr Service → Integrations → Add
-integration**, und wählen Sie **Events API v2**. Kopieren Sie den
-*Integration Key*.
+In PagerDuty: **Services → Ihr Service → Integrations → Add integration**, und wählen Sie
+**Events API v2**. Kopieren Sie den *Integration Key*.
 
-- **Settings** — `region` (`eu`, wenn Ihr Konto in Europa gehostet
-  ist), `source` (optional, Standard `dumbmonit`)
-- **Secrets** — `token` (der *Integration Key*)
+- **Einstellungen** — `region` (`eu`, wenn Ihr Konto in Europa gehostet wird), `source`
+  (optional, Standard `dumbmonit`)
+- **Geheimnisse** — `token` (der *Integration Key*)
 
-Ein Alarm öffnet einen Vorfall; seine Behebung **schließt ihn
-automatisch**. Das Matching erfolgt über den Fingerprint des
-Alarms, mit `dumbmonit-` vorangestellt, daher öffnet eine Erinnerung
-nie einen zweiten Vorfall.
+Ein Alarm öffnet einen Vorfall; seine Auflösung **schließt ihn automatisch**. Die Zuordnung
+erfolgt über den Fingerprint des Alarms mit dem Präfix `dumbmonit-`, sodass eine Erinnerung nie
+einen zweiten Vorfall öffnet.
 
-> Ein Key eines anderen Typs ("Events API v1", "REST API") erhält
-> eine knappe Ablehnung. Prüfen Sie, dass die Integration
-> tatsächlich vom Typ *Events API v2* ist.
+> Ein Schlüssel eines anderen Typs („Events API v1“, „REST API“) erhält eine knappe Ablehnung.
+> Prüfen Sie, ob die Integration tatsächlich vom Typ *Events API v2* ist.
 
-### Opsgenie
+### Opsgenie {#opsgenie}
 
-**Teams → Ihr Team → Integrations → Add integration → API**.
-Kopieren Sie den API-Key.
+**Teams → Ihr Team → Integrations → Add integration → API**. Kopieren Sie den API-Schlüssel.
 
-- **Settings** — `region` (`eu` für ein europäisches Konto),
-  `responders` (Liste von Team-Namen, optional), `tags` (Liste,
-  optional)
-- **Secrets** — `api_key`
+- **Einstellungen** — `region` (`eu` für ein europäisches Konto), `responders` (Liste von
+  Teamnamen, optional), `tags` (Liste, optional)
+- **Geheimnisse** — `api_key`
 
-Wie bei PagerDuty schließt eine Behebung den Alarm, über seinen
-Alias identifiziert.
+Wie bei PagerDuty schließt eine Auflösung den Alarm, der über seinen Alias identifiziert wird.
 
-> Atlassian hat das **Ende des Dienstes für Opsgenie am 5. April
-> 2027** festgelegt. Dieser Kanal bleibt für bestehende
-> Installationen; für eine neue bevorzugen Sie PagerDuty oder einen
-> benutzerdefinierten Kanal zu Jira Service Management.
+> Atlassian hat das **Ende des Services für Opsgenie auf den 5. April 2027** festgelegt. Dieser
+> Kanal bleibt für bestehende Installationen; für eine neue bevorzugen Sie PagerDuty oder einen
+> benutzerdefinierten Kanal, der auf Jira Service Management zeigt.
 
-### Benutzerdefinierter Webhook
+### Benutzerdefinierter Webhook {#custom-webhook}
 
-Siehe [Der benutzerdefinierte Kanal](#the-custom-channel) oben.
+Siehe oben [Der benutzerdefinierte Kanal](#the-custom-channel).
 
 ---
 
 ## Fehlerbehebung {#troubleshooting}
 
-**Der Test schlägt sofort fehl, mit "missing setting …".**
-Ein erforderliches Feld ist leer. Die Meldung benennt genau die
-Einstellung.
+**Der Test scheitert sofort mit „missing setting …“.**
+Ein erforderliches Feld ist leer. Die Meldung nennt die genaue Einstellung.
 
-**Der Test schlägt fehl mit "no answer within 15 s".**
-Der Zielserver ist von DumbMonit aus nicht erreichbar. Ist es ein
-Dienst in Ihrem lokalen Netzwerk, prüfen Sie, dass der
-DumbMonit-Container ihn erreichen kann — das ist häufig ein
-Docker-Netzwerkproblem, kein Kanal-Konfigurationsproblem.
+**Der Test scheitert mit „no answer within 15 s“.**
+Der Zielserver ist von DumbMonit aus nicht erreichbar. Handelt es sich um einen Dienst in Ihrem
+lokalen Netzwerk, prüfen Sie, ob der DumbMonit-Container ihn erreichen kann — das ist häufig ein
+Docker-Netzwerkproblem, kein Problem der Kanalkonfiguration.
+
+**Der Test scheitert mit einem Zertifikatsfehler.**
+Ihr Server verwendet ein selbstsigniertes Zertifikat oder eines einer privaten CA. Siehe
+[Selbstsignierte Zertifikate](#self-signed-certificates).
 
 **Der Test gelingt, aber ich erhalte nichts.**
-Der Dienst hat die Nachricht angenommen und anderswohin gesendet:
-falscher Kanal, falsches ntfy-Topic, falsches Pushbullet-Gerät.
-Prüfen Sie die Ziel-Einstellung.
+Der Dienst hat die Nachricht angenommen und anderswohin gesendet: falscher Kanal, falsches
+ntfy-Topic, falsches Pushbullet-Gerät. Prüfen Sie die Einstellung für das Ziel.
 
 **Die Fehlermeldung enthält `***`.**
-Das ist beabsichtigt: Ihr Token wurde aus der Nachricht entfernt,
-bevor sie aufgezeichnet wurde. Kein Secret erscheint je in den Logs,
-in der Spalte "last error", oder in einer API-Antwort.
+Das ist beabsichtigt: Ihr Token wurde aus der Nachricht entfernt, bevor sie aufgezeichnet wurde.
+Kein Geheimnis erscheint je in den Logs, in der Spalte „Letzter Fehler“ oder in einer
+API-Antwort.
 
 **Wo sehe ich den letzten Fehler eines Kanals?**
-In der Kanalliste: Jede Zeile zeigt das Datum der letzten
-erfolgreichen Zustellung und, falls vorhanden, den Fehler des
-letzten Fehlschlags.
+In der Kanalliste: Jede Zeile zeigt das Datum der letzten erfolgreichen Zustellung und gegebenenfalls
+den Fehler des letzten Fehlschlags.

@@ -141,7 +141,7 @@ Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "https://monit.example.com/api
 "服务抖动"规则会跳过心跳设备,"设备不可达"也永远不会为它们
 触发:采集器始终会运行,只是它的判定结果会变化。
 
-## API
+## API {#api}
 
 | 路由 | 会话 | 用途 |
 |---|---|---|

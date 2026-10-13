@@ -1,4 +1,4 @@
-# Política de notificação
+# Política de notificação {#notification-policy}
 
 A promessa do DumbMonit é que uma notificação vale a pena ser lida. O motor
 de alertas mantém o ruído baixo antes de um alerta poder falar (supressão
@@ -6,7 +6,7 @@ por dependência, agrupamento, janelas de manutenção); a política de
 notificação o mantém baixo depois, por canal. Nada precisa ser
 configurado: os padrões abaixo se aplicam prontos para uso.
 
-## O pipeline, em uma lista
+## O pipeline, em uma lista {#the-pipeline-in-one-list}
 
 ```
 avaliar (histerese, substituições por dispositivo)
@@ -32,7 +32,7 @@ avaliar (histerese, substituições por dispositivo)
 | Mensagens por canal por hora | Alertas → Notificações → Política de notificação | 20 |
 | URL pública (links profundos) | Alertas → Notificações → Política de notificação, ou `DUMBMONIT_PUBLIC_URL` | vazia |
 
-## Histerese e substituições por dispositivo
+## Histerese e substituições por dispositivo {#hysteresis-and-per-device-overrides}
 
 Uma regra que dispara acima de 90% e limpa no momento em que o valor cai
 abaixo de 90% vai disparar e limpar a noite toda em uma CPU oscilando
@@ -57,7 +57,7 @@ DELETE /api/alerts/rules/{id}/overrides/{target_id}
 Uma substituição com todo campo vazio é removida. Mensagens citam o
 limite realmente aplicado.
 
-## Detecção de oscilação
+## Detecção de oscilação {#flap-detection}
 
 Independente da regra, um alerta cuja impressão digital disparou ou
 resolveu 4 vezes em 30 minutos está *oscilando*: um aviso sai
@@ -68,7 +68,7 @@ Alertas → Notificações → Política de notificação → Mais opções
 (`flap_events`, `flap_window_secs`, `flap_hold_secs`; `flap_events: 0` o
 desativa).
 
-## Opções de entrega por canal
+## Opções de entrega por canal {#per-channel-delivery-options}
 
 Cada canal decide o que ouve (`policy` no payload do canal):
 
@@ -102,7 +102,7 @@ Omitir `policy` em uma atualização mantém a armazenada;
 `"quiet_hours": null` as limpa, e `"matcher": null` limpa o filtro de
 roteamento.
 
-## Roteamento por tag
+## Roteamento por tag {#routing-by-tag}
 
 Dispositivos carregam tags (`site=cellar`, `role=storage`) e um tipo
 (`snmp`, `proxmox`, `synology`, `agent`…). O **filtro de roteamento** de
@@ -156,7 +156,7 @@ POST /api/notify/match-preview
 Um filtro é limitado a doze condições. Além disso, um segundo canal é
 mais claro que mais uma condição.
 
-## Escalonamento: se ninguém reconhecer
+## Escalonamento: se ninguém reconhecer {#escalation-if-nobody-acknowledges}
 
 Um salto extra, e apenas um. Quando a política define
 `escalate_after_secs` e `escalate_channel`, um alerta que ninguém
@@ -192,7 +192,7 @@ programação de quem está de plantão nesta semana. Se você precisa disso,
 aponte o canal de escalonamento para o PagerDuty ou Opsgenie, que fazem
 isso adequadamente.
 
-## Lotes e o limite por hora
+## Lotes e o limite por hora {#batching-and-the-hourly-cap}
 
 `GET/PUT /api/notify/policy` mantém as configurações globais:
 
@@ -218,7 +218,7 @@ isso adequadamente.
 Falhas de entrega mantêm as linhas na fila; o próximo ciclo tenta de
 novo.
 
-## O que uma linha diz
+## O que uma linha diz {#what-a-line-says}
 
 Cada alerta é uma linha, a mesma no e-mail, ntfy, chat e na variável
 `{{message}}` de um webhook personalizado:
@@ -239,7 +239,7 @@ Cada alerta é uma linha, a mesma no e-mail, ntfy, chat e na variável
   tudo-ou-nada em uma métrica 0/1 (na bateria, guest parado) não repete
   "1 (threshold > 0)".
 
-## Links profundos
+## Links profundos {#deep-links}
 
 Toda mensagem termina com um link para o dispositivo
 (`{public_url}/targets/{id}`) quando uma URL pública é conhecida — o
@@ -252,7 +252,7 @@ de chat buscam todo link que exibem para construir uma pré-visualização,
 o que acionaria o silêncio no momento em que a mensagem é postada.
 Silencie da página do dispositivo ou da página de Alertas em vez disso.
 
-## O que foi emprestado do Pulse, e o que não foi
+## O que foi emprestado do Pulse, e o que não foi {#what-was-borrowed-from-pulse-and-what-was-not}
 
 O design segue [Pulse](https://github.com/rcourtman/Pulse) onde se
 encaixa em um monitor de homelab: limites de disparo/limpeza, uma camada

@@ -1,4 +1,4 @@
-# UniFi Network
+# UniFi Network {#unifi-network}
 
 A rede UniFi e o que ela gerencia: gateways, switches e pontos de acesso que
 estão offline, isolados ou esperando adoção, atualizações de firmware
@@ -17,7 +17,7 @@ continua funcionando, e o buraco de cobertura ou o uplink perdido só é
 notado dias depois. O mesmo vale para um segundo link WAN que caiu: nada
 quebra até o primeiro também falhar.
 
-## Duas formas de entrada
+## Duas formas de entrada {#two-ways-in}
 
 | Credencial | API usada | O que lê |
 |---|---|---|
@@ -38,7 +38,7 @@ Uma sessão aberta com a conta View Only é mantida de uma sondagem para a
 próxima e reaberta quando expira: o UniFi não registra um novo login a cada
 minuto.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_unifi_`. Séries de dispositivo
 carregam `device` (seu nome, ou seu endereço MAC quando não tem nenhum),
@@ -69,7 +69,7 @@ UniFi device offline, UniFi Internet down, UniFi WAN link down, UniFi
 gateway CPU high, UniFi device waiting for adoption, UniFi firmware update
 available, UniFi alarms, além de Device unreachable.
 
-## Dispositivos
+## Dispositivos {#devices}
 
 `/rest/user` (a API clássica, lida com qualquer credencial) lista todo
 cliente que o controlador já viu — a maior parte de uma rede doméstica, na
@@ -92,7 +92,7 @@ completamente em [Dispositivos clientes](../alerting/rules.md#client-devices):
 | `last_seen_timestamp_seconds` | Última conexão, como `/rest/user` a reporta | `device`, `type` (`Wired`, `Wireless` ou `Unknown`), `os` (vazio), `user` (vazio), `kind` |
 | `stale_seconds` | Positivo uma vez que um cliente rastreado passou `device_stale_days` (3 por padrão) sem se conectar; aciona a regra [Dispositivo cliente desatualizado](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (sempre `connection`: o UniFi não tem backup para reportar) |
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o UniFi. Ele diz primeiro o que está errado (dispositivos
@@ -100,7 +100,7 @@ offline, Internet ou um link WAN fora do ar, alarmes), depois os
 dispositivos por tipo com seu estado, firmware e carga, e os clientes,
 depois a tabela de clientes rastreados com sua última conexão.
 
-## Como foi validado
+## Como foi validado {#how-it-was-validated}
 
 Login, o papel View Only, respostas de erro (senha recusada, site
 desconhecido, chave recusada, sessão expirada) e as respostas de um
@@ -110,7 +110,7 @@ dispositivos, a saúde de um site equipado, os clientes conhecidos
 (`/rest/user`) e os payloads da Integration API são validados contra a
 documentação oficial.
 
-## Criar um acesso somente leitura no UniFi Network
+## Criar um acesso somente leitura no UniFi Network {#create-a-read-only-access-in-unifi-network}
 
 1. Em um console UniFi OS (Dream Machine, Cloud Gateway, Cloud Key), você
    pode criar uma chave de API: no UniFi Network, Settings → Control Plane
@@ -151,7 +151,7 @@ documentação oficial.
     evitar um alerta para o celular de todo visitante. Liste mais na opção
     Clientes a observar, ou informe all.
 
-## Credenciais
+## Credenciais {#controller-not-set-up-yet}
 
 | Credencial | Campos |
 |---|---|

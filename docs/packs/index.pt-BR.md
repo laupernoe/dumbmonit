@@ -1,4 +1,4 @@
-# Pacotes de integração
+# Pacotes de integração {#integration-packs}
 
 Um pacote de integração adiciona um tipo de dispositivo ao DumbMonit sem uma
 nova versão. É um único arquivo YAML que diz onde ler (uma API HTTP ou uma
@@ -10,7 +10,7 @@ sondados, exibidos em gráfico e alertados como qualquer outro.
 Um pacote é declarativo: sem código, sem scripts. O DumbMonit executa toda
 requisição ele mesmo, sob regras que o pacote não pode alterar.
 
-## O que um pacote pode e não pode fazer
+## O que um pacote pode e não pode fazer {#what-a-pack-can-and-cannot-do}
 
 | Um pacote pode | Um pacote não pode |
 |---|---|
@@ -26,7 +26,7 @@ recusados a menos que a opção **Permitir alvos de loopback e link-local**
 do dispositivo esteja ativada, exatamente como nas verificações HTTP.
 Endereços de LAN privados são sempre permitidos.
 
-## Pacotes de referência
+## Pacotes de referência {#reference-packs}
 
 O repositório entrega três pacotes sob
 [`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), cada um com
@@ -38,7 +38,7 @@ suas fixtures e saída esperada:
 | `shelly-plug` | tomadas e relés Shelly Gen2+, `/rpc/Switch.GetStatus` | sobreaquecimento |
 | `speedtest-tracker` | o resultado mais recente da API v1 do Speedtest Tracker | internet abaixo do esperado, teste de velocidade falhando |
 
-## Instalar um pacote
+## Instalar um pacote {#install-a-pack}
 
 Na interface, como administrador: **Configurações → Pacotes de
 integração**. Cole o YAML do pacote ou envie seu `pack.yaml`, depois
@@ -83,7 +83,7 @@ dispositivo sem reinício. A única exceção é um pacote que traz perfis SNMP;
 a resposta então diz `"restart_required": true`, porque o catálogo SNMP é
 lido na inicialização.
 
-### Atualizações e suas alterações
+### Atualizações e suas alterações {#updates-and-your-changes}
 
 Atualizar um pacote (mesmo `id`, conteúdo novo) substitui sua extração e sua
 descrição. Suas regras de alerta são apenas sempre *adicionadas*: uma regra
@@ -96,12 +96,12 @@ dispositivos, histórico, regras. Seus dispositivos não são mais sondados
 para de reportar, geram *Device unreachable* depois de três minutos: pause-os
 também se você desativar o pacote por um tempo.
 
-### Backups
+### Backups {#backups}
 
 Pacotes instalados viajam em [backups](../install/backup.md) com seu YAML, e
 são restaurados antes dos dispositivos que os usam.
 
-## Verificar um pacote antes de instalá-lo
+## Verificar um pacote antes de instalá-lo {#check-a-pack-before-installing-it}
 
 O binário do servidor valida e testa pacotes offline:
 

@@ -115,7 +115,7 @@ toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 
 Les métriques apparaissent une fois la première vérification faite.
 
-## Captures d'écran
+## Captures d'écran {#screenshots}
 
 L'image DumbMonit n'a pas de navigateur : les captures d'écran viennent
 d'un Chromium headless optionnel, piloté via le protocole Chrome DevTools.

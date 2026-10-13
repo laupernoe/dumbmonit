@@ -1,4 +1,4 @@
-# FortiGate
+# FortiGate {#fortigate}
 
 Um Fortinet FortiGate através da API REST do FortiOS: túneis IPsec
 site-to-site fora do ar, interfaces ativadas que perderam seu link, um
@@ -28,7 +28,7 @@ HA, túneis IPsec, status de licença e firmware disponível.
     execução. Toda chamada é uma leitura. As páginas de licença e firmware
     são as menos documentadas: avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_fortigate_`.
 
@@ -77,14 +77,14 @@ As [regras integradas](../alerting/rules.md#fortigate) que se aplicam:
 - **FortiGate firmware update**: uma versão de patch é oferecida (Info,
   lembrada semanalmente).
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Firewall diz o que está errado em uma frase, mostra CPU, memória,
 sessões e o estado HA, depois lista os túneis IPsec (os fora do ar
 primeiro), as interfaces sem link, as licenças expirando dentro de 60 dias
 ou expiradas, e uma versão de patch disponível.
 
-## Criar um usuário de API REST somente leitura para o DumbMonit
+## Criar um usuário de API REST somente leitura para o DumbMonit {#create-a-read-only-rest-api-user-for-dumbmonit}
 
 1. Na CLI do FortiGate, crie um perfil de acesso que só pode ler o estado
    de sistema, rede e VPN, e nada mais.
@@ -135,7 +135,7 @@ ou expiradas, e uma versão de patch disponível.
     Atualizações de firmware são as que o FortiGuard oferece ao próprio
     FortiGate: sem acesso ao FortiGuard, nenhuma é reportada.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -152,7 +152,7 @@ Opções:
   FortiGate é autoassinado.
 - **Tempo limite por requisição** (15 s).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "FortiGate refused the API token (401)": o token está errado ou foi
 regenerado. Gere um novo com `execute api-user generate-key dumbmonit`.

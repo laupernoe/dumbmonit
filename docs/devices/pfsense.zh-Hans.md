@@ -1,4 +1,4 @@
-# pfSense
+# pfSense {#pfsense}
 
 通过社区 REST API 插件(`pfSense-pkg-RESTAPI`,版本 2)监控 pfSense
 防火墙:宕机、丢包或响应缓慢的网关,无链路的已启用接口,停止运行
