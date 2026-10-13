@@ -1,10 +1,16 @@
 site_name: DumbMonit
 site_description: Simple monitoring from the homelab to the small business. One container, one IP address, useful alerts in a minute.
-site_url: https://dumbmonit.readthedocs.io
+site_url: https://dumbmonit.readthedocs.io/en/latest/
 repo_url: https://github.com/laupernoe/dumbmonit
 repo_name: laupernoe/dumbmonit
 edit_uri: edit/main/docs/
 docs_dir: docs
+
+# One language per build, chosen by READTHEDOCS_LANGUAGE (English by default): see
+# hooks/rtd_language.py. site_url, theme.language, the search language, the language
+# switcher (extra.alternate) and the navigation titles are set there.
+hooks:
+  - hooks/rtd_language.py
 
 validation:
   links:
@@ -64,129 +70,6 @@ markdown_extensions:
 
 plugins:
   - search
-  - i18n:
-      docs_structure: suffix
-      # A page without a translation is served in English, with a notice.
-      fallback_to_default: true
-      reconfigure_material: true
-      reconfigure_search: true
-      languages:
-        - locale: en
-          name: English
-          build: true
-          default: true
-        - locale: fr
-          name: Français
-          build: true
-          nav_translations:
-            Home: "Accueil"
-            Live demo: "Démo en ligne"
-            Install: "Installation"
-            Devices: "Appareils"
-            Integration packs: "Packs d'intégration"
-            Alerting: "Alertes"
-            Using DumbMonit: "Utiliser DumbMonit"
-            Reference: "Référence"
-            Development: "Développement"
-            FAQ: "FAQ"
-        - locale: de
-          name: Deutsch
-          build: true
-          nav_translations:
-            Home: "Startseite"
-            Live demo: "Live-Demo"
-            Install: "Installation"
-            Devices: "Geräte"
-            Integration packs: "Integrationspakete"
-            Alerting: "Alarmierung"
-            Using DumbMonit: "DumbMonit verwenden"
-            Reference: "Referenz"
-            Development: "Entwicklung"
-            FAQ: "FAQ"
-        - locale: es
-          name: Español
-          build: true
-          nav_translations:
-            Home: "Inicio"
-            Live demo: "Demo en vivo"
-            Install: "Instalación"
-            Devices: "Dispositivos"
-            Integration packs: "Paquetes de integración"
-            Alerting: "Alertas"
-            Using DumbMonit: "Usar DumbMonit"
-            Reference: "Referencia"
-            Development: "Desarrollo"
-            FAQ: "Preguntas frecuentes"
-        - locale: it
-          name: Italiano
-          build: true
-          nav_translations:
-            Home: "Home"
-            Live demo: "Demo online"
-            Install: "Installazione"
-            Devices: "Dispositivi"
-            Integration packs: "Pacchetti di integrazione"
-            Alerting: "Allarmi"
-            Using DumbMonit: "Usare DumbMonit"
-            Reference: "Riferimento"
-            Development: "Sviluppo"
-            FAQ: "FAQ"
-        - locale: pt
-          name: Português
-          build: true
-          nav_translations:
-            Home: "Início"
-            Live demo: "Demonstração online"
-            Install: "Instalação"
-            Devices: "Dispositivos"
-            Integration packs: "Pacotes de integração"
-            Alerting: "Alertas"
-            Using DumbMonit: "Utilizar o DumbMonit"
-            Reference: "Referência"
-            Development: "Desenvolvimento"
-            FAQ: "FAQ"
-        - locale: pt-BR
-          name: Português (Brasil)
-          build: true
-          nav_translations:
-            Home: "Início"
-            Live demo: "Demonstração online"
-            Install: "Instalação"
-            Devices: "Dispositivos"
-            Integration packs: "Pacotes de integração"
-            Alerting: "Alertas"
-            Using DumbMonit: "Usando o DumbMonit"
-            Reference: "Referência"
-            Development: "Desenvolvimento"
-            FAQ: "FAQ"
-        - locale: ru
-          name: Русский
-          build: true
-          nav_translations:
-            Home: "Главная"
-            Live demo: "Живая демонстрация"
-            Install: "Установка"
-            Devices: "Устройства"
-            Integration packs: "Пакеты интеграции"
-            Alerting: "Оповещения"
-            Using DumbMonit: "Работа с DumbMonit"
-            Reference: "Справочник"
-            Development: "Разработка"
-            FAQ: "Вопросы и ответы"
-        - locale: zh-Hans
-          name: 简体中文
-          build: true
-          nav_translations:
-            Home: "首页"
-            Live demo: "在线演示"
-            Install: "安装"
-            Devices: "设备"
-            Integration packs: "集成包"
-            Alerting: "告警"
-            Using DumbMonit: "使用 DumbMonit"
-            Reference: "参考"
-            Development: "开发"
-            FAQ: "常见问题"
 
 nav:
   - Home: index.md
