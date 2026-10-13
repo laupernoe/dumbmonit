@@ -4,12 +4,40 @@
 	 * and the stone Wasserturm over the Reuss, Pilatus behind the old town, two
 	 * swans, and a quay lamp that takes the page's status colour (`--scene-tone`,
 	 * set by the page) with two DumbMonit pigeons beside it.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Follows the scene contract: fills its positioned parent, the headline zone
+	 * (top left) is left clear, the palette lives here.
+	 *
+	 * `mood` is the weather (clear, clouded, storm with rain and lightning).
+	 * `pulse` plays one gesture when `at` changes: on `down` a fog bank rolls
+	 * over the bridge and its lanterns go out, on `up` the lanterns light one
+	 * by one along the bridge, on `resolved` flower petals rain from the
+	 * flower boxes. Reduced motion freezes everything.
 	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+
+	interface Props {
+		mood?: SceneMood;
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulse(() => pulse, { down: 7000, up: 4500, resolved: 6500 });
+	const LAMPS = Array.from({ length: 16 }, (_, i) => 640 + i * 64).filter((x) => x < 1170 || x > 1290);
+	const PETALS = Array.from({ length: 26 }, (_, i) => ({
+		x: 640 + ((i * 157) % 1000),
+		c: ['var(--fl-a)', 'var(--fl-b)', 'var(--fl-c)'][i % 3],
+		d: (i * 173) % 2400,
+		dx: ((i * 29) % 70) - 35
+	}));
 </script>
 
-<div class="scene scene-lucerne" aria-hidden="true">
+<div
+	class="scene scene-lucerne"
+	class:p-down={pl.active === 'down'}
+	class:p-up={pl.active === 'up'}
+	class:p-resolved={pl.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="lc-wat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--water1)"/><stop offset="1" stop-color="var(--water2)"/></linearGradient>
@@ -50,9 +78,29 @@
 			<rect x="560" y="564" width="1220" height="60" fill="var(--stone)"/>
 			<rect x="560" y="562" width="1220" height="6" fill="var(--stone2)"/>
 			<rect x="640" y="556" width="36" height="9" rx="1" fill="var(--wood2)"/><ellipse cx="658" cy="553" rx="17" ry="6" fill="var(--leaf)"/><circle cx="648" cy="550" r="3" fill="var(--fl-a)"/><circle cx="658" cy="548" r="3" fill="var(--fl-b)"/><circle cx="668" cy="550" r="3" fill="var(--fl-c)"/><rect x="900" y="556" width="36" height="9" rx="1" fill="var(--wood2)"/><ellipse cx="918" cy="553" rx="17" ry="6" fill="var(--leaf)"/><circle cx="908" cy="550" r="3" fill="var(--fl-a)"/><circle cx="918" cy="548" r="3" fill="var(--fl-b)"/><circle cx="928" cy="550" r="3" fill="var(--fl-c)"/><rect x="1440" y="556" width="36" height="9" rx="1" fill="var(--wood2)"/><ellipse cx="1458" cy="553" rx="17" ry="6" fill="var(--leaf)"/><circle cx="1448" cy="550" r="3" fill="var(--fl-a)"/><circle cx="1458" cy="548" r="3" fill="var(--fl-b)"/><circle cx="1468" cy="550" r="3" fill="var(--fl-c)"/>
+			<!-- bridge lanterns -->
+			<g class="lamps">
+				{#each LAMPS as x, i}
+					<g class="lamp" style="animation-delay:{i * 130}ms"><path d="M{x} 372v6" stroke="var(--wood2)" stroke-width="1.5" /><circle cx={x} cy="383" r="9" fill="#ffd77a" opacity=".35" /><circle cx={x} cy="383" r="4" fill="#ffd77a" /></g>
+				{/each}
+			</g>
+			<!-- fog bank (gesture) -->
+			<g class="fog" fill="var(--fog)">
+				<ellipse cx="700" cy="400" rx="260" ry="46" /><ellipse cx="980" cy="380" rx="280" ry="52" /><ellipse cx="1260" cy="404" rx="270" ry="50" /><ellipse cx="1520" cy="384" rx="250" ry="48" /><ellipse cx="1100" cy="440" rx="500" ry="30" />
+			</g>
 			<g><rect x="1100" y="500" width="6" height="64" fill="var(--wood2)"/><circle cx="1103" cy="494" r="9" fill="var(--scene-tone, var(--c-signal))"/><circle cx="1103" cy="494" r="20" fill="var(--scene-tone, var(--c-signal))" opacity=".25"/></g>
 			<use href="#dm-mascot" transform="translate(1180 532) scale(.1)"/><use href="#dm-mascot" transform="translate(1264 532) scale(.1)"/>
 		</g>
+		<g class="petals">
+			{#if pl.active === 'resolved'}
+				{#key pl.key}
+					{#each PETALS as q}
+						<ellipse class="petal" cx={q.x} cy="410" rx="4" ry="2.4" fill={q.c} style="--dx:{q.dx}px;animation-delay:{q.d}ms" />
+					{/each}
+				{/key}
+			{/if}
+		</g>
+		<SceneWeather {mood} />
 	</svg>
 </div>
 
@@ -110,6 +158,26 @@
 		--swan: #cdd3df;
 		--beak: #a8642b;
 		--wh: #9aa0b2;
+	}
+	.scene-lucerne { --fog: #eef1f4; }
+	:global(.dark) .scene-lucerne { --fog: #5a6584; }
+	.lamp { --lamp-o: 0.55; opacity: var(--lamp-o); transform-box: fill-box; transform-origin: 50% 0; }
+	:global(.dark) .lamp { --lamp-o: 0.95; }
+	.fog, .petal { opacity: 0; }
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .fog { animation: roll 7s ease-in-out both; }
+		.p-down .lamp { animation: lampoff 7s ease-in-out both; }
+		.p-up .lamp { animation: lampon 1.4s ease-out both; }
+		.petal { transform-box: fill-box; transform-origin: center; animation: petal 3.8s ease-in both; }
+	}
+	@keyframes roll {
+		0% { opacity: 0; transform: translateX(-380px); } 30%, 62% { opacity: 0.92; transform: translateX(0); } 100% { opacity: 0; transform: translateX(380px); }
+	}
+	@keyframes lampoff { 0%, 100% { opacity: var(--lamp-o); } 20%, 80% { opacity: 0.04; } }
+	@keyframes lampon { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.6); } 100% { opacity: var(--lamp-o); transform: scale(1); } }
+	@keyframes petal {
+		0% { opacity: 1; transform: translate(0, 0) rotate(0); } 80% { opacity: 1; }
+		100% { opacity: 0; transform: translate(var(--dx), 150px) rotate(480deg); }
 	}
 	.scene-lucerne .win {
 		fill: #f1bf62;

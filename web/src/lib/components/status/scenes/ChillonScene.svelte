@@ -5,13 +5,40 @@
 	 * vineyard terraces of Lavaux, a paddle steamer, a sailing boat, a wooden
 	 * bridge with two DumbMonit pigeons and a mooring post whose lamp takes the
 	 * page's status colour (`--scene-tone`, set by the page). Day and night
-	 * (`.dark`: moon, lit windows). Static, no animation. Follows the scene
-	 * contract: fills its positioned parent, the headline zone (top left) is
-	 * left clear, the palette lives here.
+	 * (`.dark`: moon, lit windows). Follows the scene contract: fills its
+	 * positioned parent, the headline zone (top left) is left clear, the
+	 * palette lives here.
+	 *
+	 * `mood` is the weather (clear, clouded, storm with rain and lightning).
+	 * `pulse` plays one gesture when `at` changes: on `down` the castle's
+	 * drawbridge is hauled up, its windows go dark and the pigeons flee, on
+	 * `up` the bridge drops back with a bounce and the windows flare warm, on
+	 * `resolved` fireworks burst over the keep. Reduced motion freezes all.
 	 */
+	import SceneBursts from './SceneBursts.svelte';
+	import SceneWeather from './SceneWeather.svelte';
+	import { createPulse, type SceneMood, type ScenePulse } from './scenePulse.svelte.js';
+
+	interface Props {
+		mood?: SceneMood;
+		pulse?: ScenePulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const pl = createPulse(() => pulse, { down: 7000, up: 4500, resolved: 6500 });
+	const FIREWORKS = [
+		{ x: 1200, y: 80, c: '#ffd36a', d: 0 },
+		{ x: 1340, y: 40, c: '#ff7fb0', d: 500 },
+		{ x: 1100, y: 120, c: '#7fe0ff', d: 1000 }
+	];
 </script>
 
-<div class="scene scene-chillon" aria-hidden="true">
+<div
+	class="scene scene-chillon"
+	class:p-down={pl.active === 'down'}
+	class:p-up={pl.active === 'up'}
+	class:p-resolved={pl.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="chl-wat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--water1)"/><stop offset="1" stop-color="var(--water2)"/></linearGradient>
@@ -54,8 +81,8 @@
  <g opacity=".22" transform="translate(0 796) scale(1 -1)"><use href="#chl-castle"/></g>
  <g stroke="var(--wh)" stroke-width="2" opacity=".45" stroke-linecap="round"><path d="M560 432h60M700 462h90M880 424h70M1040 452h120M1560 428h80M620 490h70M980 480h110M1480 470h100M1280 500h90M1660 456h90M580 520h120"/></g>
  <!-- wooden bridge, pigeons -->
- <rect x="1000" y="394" width="112" height="6" fill="var(--wood)"/><path d="M1010 400v22M1040 400v22M1070 400v22M1100 400v22" stroke="var(--wood)" stroke-width="5"/>
- <use href="#dm-mascot" transform="translate(1022 364) scale(.1)"/><use href="#dm-mascot" transform="translate(1062 364) scale(.1)"/>
+ <g class="draw"><rect x="1000" y="394" width="112" height="6" fill="var(--wood)"/><path d="M1010 400v22M1040 400v22M1070 400v22M1100 400v22" stroke="var(--wood)" stroke-width="5"/></g>
+ <g class="pig"><use href="#dm-mascot" transform="translate(1022 364) scale(.1)"/><use href="#dm-mascot" transform="translate(1062 364) scale(.1)"/></g>
  <!-- paddle steamer -->
  <g transform="translate(690 456) scale(.95)">
   <path d="M-10 -16H186L172 2H6Z" fill="var(--hull)"/><path d="M-8 -10H184L180 -6H-4Z" fill="var(--red)"/>
@@ -76,7 +103,12 @@
   <rect x="1262" y="424" width="12" height="52" rx="3" fill="var(--wood)"/><rect x="1262" y="440" width="12" height="6" fill="var(--hull)"/>
   <circle cx="1268" cy="418" r="9" fill="var(--scene-tone, var(--c-signal))"/><circle cx="1268" cy="418" r="20" fill="var(--scene-tone, var(--c-signal))" opacity=".25"/>
  </g>
-</g></svg>
+ <g class="lit" fill="#ffd37a" transform="translate(1110 398)"><rect x="172" y="-148" width="8" height="16"/><rect x="172" y="-112" width="8" height="16"/><rect x="66" y="-88" width="8" height="14"/><rect x="108" y="-88" width="8" height="14"/><rect x="252" y="-116" width="7" height="14"/><rect x="8" y="-100" width="7" height="14"/><rect x="312" y="-86" width="7" height="14"/><rect x="60" y="-44" width="7" height="14"/><rect x="140" y="-40" width="7" height="14"/><rect x="214" y="-44" width="7" height="14"/><rect x="274" y="-40" width="7" height="14"/></g>
+ {#if pl.active === 'resolved'}
+  {#key pl.key}<SceneBursts bursts={FIREWORKS} />{/key}
+ {/if}
+</g>
+<SceneWeather {mood} /></svg>
 </div>
 
 <style>
@@ -163,6 +195,38 @@
 	}
 	.win {
 		fill: var(--win);
+	}
+	.lit {
+		opacity: 0;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .draw { animation: haul 7s ease-in-out both; }
+		.p-down .pig { animation: flee 7s ease-in-out both; }
+		.p-down .win { animation: dark 7s ease-in-out both; }
+		.p-up .draw { animation: drop 2.4s ease-out both; }
+		.p-up .lit { animation: flare 3.4s ease-out both; }
+	}
+	@keyframes haul {
+		0% { transform: translate(1112px, 397px) rotate(0) translate(-1112px, -397px); }
+		22%, 78% { transform: translate(1112px, 397px) rotate(54deg) translate(-1112px, -397px); }
+		100% { transform: translate(1112px, 397px) rotate(0) translate(-1112px, -397px); }
+	}
+	@keyframes drop {
+		0% { transform: translate(1112px, 397px) rotate(54deg) translate(-1112px, -397px); }
+		55% { transform: translate(1112px, 397px) rotate(-3deg) translate(-1112px, -397px); }
+		75% { transform: translate(1112px, 397px) rotate(2deg) translate(-1112px, -397px); }
+		100% { transform: translate(1112px, 397px) rotate(0) translate(-1112px, -397px); }
+	}
+	@keyframes flee {
+		0%, 4% { transform: none; opacity: 1; }
+		22%, 78% { transform: translate(-70px, -110px); opacity: 0; }
+		100% { transform: none; opacity: 1; }
+	}
+	@keyframes dark {
+		0%, 100% { opacity: 0.9; } 20%, 80% { opacity: 0; }
+	}
+	@keyframes flare {
+		0% { opacity: 0; } 20% { opacity: 0.95; } 35% { opacity: 0.3; } 55% { opacity: 0.9; } 100% { opacity: 0; }
 	}
 	.winl {
 		stroke: var(--winl);
