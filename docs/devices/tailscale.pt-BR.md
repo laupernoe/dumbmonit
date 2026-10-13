@@ -1,4 +1,4 @@
-# Tailscale
+# Tailscale {#tailscale}
 
 Os dispositivos de uma tailnet através da API do Tailscale: servidores que
 ficaram offline, chaves de nó próximas de expirar, dispositivos esperando
@@ -22,7 +22,7 @@ nada na tailnet é contatado.
     Tailscale e do modelo de dispositivo de seu cliente Go oficial, não
     contra uma tailnet real. Ela só lê. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_tailscale_`. Um dispositivo é
 nomeado pelo primeiro rótulo de seu nome MagicDNS (`nas` para
@@ -58,7 +58,7 @@ As [regras integradas](../alerting/rules.md#tailscale) que se aplicam:
 - **Tailscale client update**: um dispositivo observado tem uma
   atualização de cliente há seis horas (Info, lembrada semanalmente).
 
-## Dispositivos
+## Dispositivos {#devices}
 
 Todo dispositivo da tailnet, observado ou não (exceto dispositivos
 compartilhados), é publicado sob a família genérica compartilhada por toda
@@ -77,7 +77,7 @@ que só gera alerta para dispositivos observados ficando offline. Aumente
 **Desatualização de dispositivo** para uma tailnet com dispositivos que
 circulam.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Tailnet diz o que está errado em uma frase, mostra os dispositivos
 online, os dispositivos observados offline, as atualizações disponíveis e
@@ -85,7 +85,7 @@ os dispositivos compartilhados, depois lista os dispositivos observados e
 qualquer dispositivo esperando aprovação ou cuja chave expira em breve,
 depois a tabela de todo dispositivo com sua última conexão.
 
-## Criar um cliente OAuth somente leitura para o DumbMonit
+## Criar um cliente OAuth somente leitura para o DumbMonit {#create-a-read-only-oauth-client-for-dumbmonit}
 
 1. No console Tailscale (login.tailscale.com), abra Settings > Trust
    credentials (antigamente OAuth clients) e gere um cliente OAuth apenas
@@ -106,7 +106,7 @@ depois a tabela de todo dispositivo com sua última conexão.
     observado ou não; um celular que viaja pode passar dias sem uma, então
     aumente Desatualização de dispositivo para esses.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -124,7 +124,7 @@ Endereço: `api.tailscale.com`. Opções:
 - **Desatualização de dispositivo** (`device_stale_days`, 3 dias por
   padrão).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "Tailscale refused the OAuth client": o ID ou o segredo está errado, ou o
 cliente foi excluído.

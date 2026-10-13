@@ -1,4 +1,4 @@
-# Serviços: HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket
+# Serviços: HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket {#services-http-tcp-dns-ping-tls-ntp-smtp-sql-mqtt-websocket}
 
 Onze monitores observam **serviços** em vez de equipamentos, estilo
 Uptime Kuma: uma página web, uma porta, um nome DNS, um host, um
@@ -14,7 +14,7 @@ uma consulta". O NTP fica entre os dois: uma única requisição e
 resposta, no próprio protocolo NTP, suficiente para ler o relógio do
 servidor sem uma sessão.
 
-## Como o estado do serviço funciona
+## Como o estado do serviço funciona {#how-service-state-works}
 
 Um serviço pode responder e ainda estar fora do ar: um `500`, uma
 palavra-chave faltando, um certificado expirado. Então esses monitores
@@ -43,7 +43,7 @@ verificação que lê um certificado — `http`, `tls`, `smtp`, `mqtt`,
 Uma senha recusada nunca é uma indisponibilidade do serviço: é
 registrada como `reason="auth"`, então o alerta diz o que corrigir.
 
-### Métricas
+### Métricas {#metrics}
 
 Todos gauges, todos com o prefixo `dumbmonit_`, todos rotulados
 `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"`
@@ -83,14 +83,14 @@ além de `target`, `host` e `tag_*`.
 | `probe_ws_handshake_seconds` | websocket | Handshake de abertura. |
 | `probe_ws_message_bytes` | websocket | Tamanho do frame recebido. |
 
-## HTTP
+## HTTP {#http}
 
 **Site ou API web (HTTP)** — verifica que uma página ou API responde,
 com o código de status certo, o conteúdo certo, e um certificado
 válido. Exemplos: um site, uma página de saúde de aplicação, uma API
 REST, uma interface de serviço autoalojado.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, cole a URL completa da página a monitorar. Sem
    "http://" ou "https://", HTTPS é assumido.
@@ -114,7 +114,7 @@ REST, uma interface de serviço autoalojado.
 Credenciais: nenhuma, nome de usuário / senha (autenticação básica) ou
 token de API (`Authorization: Bearer`).
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -136,13 +136,13 @@ token de API (`Authorization: Bearer`).
 | `user_agent` | Identidade anunciada (User-Agent) | `DumbMonit/<version>` | Nome que a verificação dá ao servidor. Mude se o servidor filtra robôs. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-## TCP
+## TCP {#tcp}
 
 **Porta de rede (TCP)** — verifica que uma porta aceita conexões: SSH,
 banco de dados, compartilhamento de arquivo, servidor de jogo,
 impressora de rede.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o host seguido da porta, separados por dois
    pontos: "nas.home.lan:22" ou "192.168.1.5:445".
@@ -157,7 +157,7 @@ impressora de rede.
     Para um serviço web, prefira o tipo "Site ou API web", que lê a
     resposta.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -165,13 +165,13 @@ impressora de rede.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Por padrão a verificação recusa endereços que só o próprio host DumbMonit pode alcançar (127.0.0.1, ::1, 169.254.x.x). Ative isso para monitorar um serviço rodando no próprio host DumbMonit. Endereços de LAN privados (10.x, 192.168.x) são sempre permitidos. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-## DNS
+## DNS {#dns}
 
 **Nome de domínio (DNS)** — verifica que um nome resolve, e que aponta
 para o endereço certo. Exemplos: seu nome de domínio, um nome interno
 servido pelo seu Pi-hole ou AdGuard, um registro MX.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o nome a resolver, sem "http://":
    "www.example.com".
@@ -188,7 +188,7 @@ servido pelo seu Pi-hole ou AdGuard, um registro MX.
     O servidor DNS é dado por seu endereço IP, não por um nome: seria
     necessário um resolvedor para resolver o resolvedor.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -200,7 +200,7 @@ servido pelo seu Pi-hole ou AdGuard, um registro MX.
 | `alert_on_change` | Alertar quando a resposta mudar | `false` | Registra uma impressão digital da resposta ordenada e alerta sempre que muda, sem precisar escrever os valores esperados. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Afirmando o que uma zona responde
+### Afirmando o que uma zona responde {#asserting-what-a-zone-answers}
 
 `expect` por si só pega o registro que desapareceu. Não pega o
 registro que foi *adicionado*: uma zona sequestrada frequentemente
@@ -219,7 +219,7 @@ esperado como encontrado quando aparece dentro de um registro — então
 um `MX` corresponde em `mail.example.com` sem você ter que copiar sua
 prioridade.
 
-### Alertando quando a resposta muda
+### Alertando quando a resposta muda {#alerting-when-the-answer-changes}
 
 Escrever os valores esperados não é sempre prático: um nome servido por
 um CDN, registros que outra pessoa gerencia, ou simplesmente uma zona
@@ -239,14 +239,14 @@ DNS geográfico que responde diferente de um resolvedor para outro)
 alertaria o tempo todo: deixe a opção desligada para esses, ou consulte
 um resolvedor fixo.
 
-## Ping
+## Ping {#ping}
 
 **Host alcançável (ping)** — envia alguns ecos ICMP e mede o tempo de
 resposta e perda de pacotes. Exemplos: roteador ou gateway doméstico,
 ponto de acesso Wi-Fi, impressora, máquina sem agente ou SNMP, host
 remoto.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o nome de host ou endereço IP: "192.168.1.1" ou
    "router.home.lan".
@@ -277,7 +277,7 @@ Fora do Docker, `sysctl -w net.ipv4.ping_group_range="0 2147483647"` no
 host faz a mesma coisa, e um socket bruto (`NET_RAW`, root) também
 funciona.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -289,14 +289,14 @@ funciona.
 | `loss_threshold_percent` | Perda tolerada (%) | `100` | Acima desta porcentagem de pacotes perdidos, o host é reportado fora do ar. 100: só uma perda total conta, perda parcial permanece visível nos gráficos. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Orçamento total para a sondagem, de 1 a 60. Recusado se não cobrir "número de ecos × espera por pacote". |
 
-## TLS
+## TLS {#tls}
 
 **Certificado TLS** — verifica que um certificado é válido e avisa
 antes de expirar, em qualquer porta criptografada. Exemplos: servidor
 de e-mail (IMAPS, SMTPS), proxy reverso, diretório LDAPS, broker MQTT,
 interface de administração.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o host e, se não for 443, a porta do serviço
    criptografado: "mail.example.com:993", "ldap.home.lan:636".
@@ -321,7 +321,7 @@ O handshake se completa mesmo quando o certificado é recusado: é isso
 que permite ler a data de expiração de um certificado que já expirou. O
 veredito da verificação está em `probe_ssl_cert_valid`.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -330,14 +330,14 @@ veredito da verificação está em `probe_ssl_cert_valid`.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Por padrão a verificação recusa endereços que só o próprio host DumbMonit pode alcançar (127.0.0.1, ::1, 169.254.x.x). Ative isso para monitorar um serviço rodando no próprio host DumbMonit. Endereços de LAN privados (10.x, 192.168.x) são sempre permitidos. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-## SMTP
+## SMTP {#smtp}
 
 **Relay de e-mail (SMTP)** — abre uma sessão real em um servidor de
 e-mail: saudação, EHLO, STARTTLS, e o login se você der um. Exemplos:
 o relay SMTP do seu provedor, um Postfix ou msmtp local, Proxmox Mail
 Gateway, a porta de submissão de um servidor de e-mail.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o servidor de e-mail, e a porta se não for a
    usual: "smtp.example.com" ou "smtp.example.com:2525".
@@ -369,7 +369,7 @@ Via TLS ou STARTTLS, o certificado é lido como a verificação TLS o
 lê — expiração, emissor, versão de protocolo — então um relay de e-mail
 também é um certificado sobre o qual você é avisado.
 
-### O que ele não consegue detectar
+### O que ele não consegue detectar {#what-it-cannot-detect}
 
 Que o e-mail realmente saia. Um relay que aceita toda sessão e depois
 adia tudo responde perfeitamente aqui; observe suas filas em vez disso
@@ -377,7 +377,7 @@ adia tudo responde perfeitamente aqui; observe suas filas em vez disso
 mensagem, então não diz nada sobre filtragem de destinatário, SPF ou
 DKIM.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -390,7 +390,7 @@ DKIM.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Motivos de falha
+### Motivos de falha {#failure-reasons}
 
 | `reason` | O que aconteceu |
 |---|---|
@@ -400,7 +400,7 @@ DKIM.
 | `payload` | A extensão nomeada em "Extensão esperada" não é anunciada. |
 | `tls`, `cert_expired` | Mesmo significado que a verificação TLS. |
 
-## PostgreSQL
+## PostgreSQL {#postgresql}
 
 **Banco de dados PostgreSQL** — conecta, autentica e executa uma
 consulta: o sinal para um banco de dados que está ativo mas não
@@ -408,7 +408,7 @@ responde mais. Exemplos: o banco de dados detrás do Nextcloud ou
 Immich, um recorder do Home Assistant, um banco de dados de aplicação,
 uma instância TimescaleDB.
 
-### Configuração
+### Configuração {#setup}
 
 1. No servidor, crie uma conta para monitoramento e não dê a ela nada
    além do direito de conectar: CREATE ROLE dumbmonit LOGIN PASSWORD
@@ -434,14 +434,14 @@ Credenciais: um nome de usuário e senha, obrigatório. Um banco de dados
 nunca é monitorado anonimamente, então o formulário não oferece nada
 mais.
 
-### O que ele não consegue detectar
+### O que ele não consegue detectar {#what-it-cannot-detect}
 
 Atraso de replicação, um bloqueio que se arrasta, uma tabela que
 continua crescendo. Tudo isso vive nas próprias visões de administração
 do motor — escreva a consulta você mesmo, e o número que ela retorna se
 torna `probe_sql_value`, um gráfico sobre o qual você pode alertar.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -453,7 +453,7 @@ torna `probe_sql_value`, um gráfico sobre o qual você pode alertar.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-## MySQL e MariaDB
+## MySQL e MariaDB {#mysql-and-mariadb}
 
 **Banco de dados MySQL ou MariaDB** — conecta, autentica e executa uma
 consulta: o sinal para um banco de dados que está ativo mas não
@@ -461,7 +461,7 @@ responde mais. Exemplos: o banco de dados detrás de um WordPress, um
 Nextcloud ou um Kimai, um banco de dados de aplicação, um MariaDB no
 Docker.
 
-### Configuração
+### Configuração {#setup}
 
 1. No servidor, crie uma conta para monitoramento sem nenhum
    privilégio: CREATE USER 'dumbmonit'@'%' IDENTIFIED BY
@@ -483,7 +483,7 @@ Docker.
     instância já próxima de seu limite de conexões, dê a ela um
     intervalo mais longo.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -495,7 +495,7 @@ Docker.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Motivos de falha, ambos os motores
+### Motivos de falha, ambos os motores {#failure-reasons-both-engines}
 
 | `reason` | O que aconteceu |
 |---|---|
@@ -505,13 +505,13 @@ Docker.
 | `payload` | A consulta funcionou mas retornou algo diferente do valor esperado. |
 | `timeout` | A conexão ou a consulta não terminou a tempo — o caso "ativo mas lento". |
 
-## MQTT
+## MQTT {#mqtt}
 
 **Broker MQTT** — conecta ao broker, se inscreve em um tópico, e pode
 esperar por uma mensagem retida. Exemplos: Mosquitto, o broker detrás
 do Home Assistant, Zigbee2MQTT, sensores ESPHome.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o broker, e a porta se não for a usual:
    "broker.home.lan" ou "broker.home.lan:1884".
@@ -533,14 +533,14 @@ do Home Assistant, Zigbee2MQTT, sensores ESPHome.
     antiga é uma mensagem retida: o MQTT não as data, então um valor
     congelado há três semanas ainda conta como presente.
 
-### O que ele não consegue detectar
+### O que ele não consegue detectar {#what-it-cannot-detect}
 
 Que um determinado sensor parou de emitir. A mensagem retida que a
 verificação lê é o que quer que o broker manteve, possivelmente com
 três semanas — o MQTT não a marca com data. Para atualidade, observe a
 automação que a consome, ou use um heartbeat.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -555,7 +555,7 @@ automação que a consome, ou use um heartbeat.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Motivos de falha
+### Motivos de falha {#failure-reasons}
 
 | `reason` | O que aconteceu |
 |---|---|
@@ -564,14 +564,14 @@ automação que a consome, ou use um heartbeat.
 | `protocol` | Algo respondeu mas não fala MQTT 3.1.1, ou o broker rejeitou o identificador de cliente. |
 | `payload` | Nenhuma mensagem retida chegou no tópico, ou seu conteúdo não contém o texto esperado. |
 
-## WebSocket
+## WebSocket {#websocket}
 
 **Endpoint WebSocket** — executa o handshake de upgrade, e pode enviar
 um frame e esperar por um: uma falha diferente de uma página HTTP
 simples. Exemplos: a API do Home Assistant, um painel ao vivo, um
 fluxo de log, um endpoint detrás de um proxy reverso.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, cole o endpoint completo:
    "wss://home.example.com/api/websocket". Sem um esquema, wss é
@@ -599,7 +599,7 @@ Credenciais: nenhuma, um nome de usuário e senha (enviados como
 autenticação básica HTTP na requisição de abertura) ou um token
 (enviado como `Authorization: Bearer`).
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -614,7 +614,7 @@ autenticação básica HTTP na requisição de abertura) ou um token
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Motivos de falha
+### Motivos de falha {#failure-reasons}
 
 | `reason` | O que aconteceu |
 |---|---|
@@ -623,7 +623,7 @@ autenticação básica HTTP na requisição de abertura) ou um token
 | `protocol` | Respondeu `101` mas seu `Sec-WebSocket-Accept` não corresponde à chave enviada, escolheu outro subprotocolo, ou fechou a conexão imediatamente. |
 | `payload` | Nenhum frame chegou, ou não contém o texto esperado. |
 
-## NTP
+## NTP {#ntp}
 
 **Servidor de hora NTP** — envia uma única requisição SNTP e lê a
 resposta: desvio, atraso de ida e volta, stratum e indicador de salto.
@@ -631,7 +631,7 @@ Exemplos: um roteador ou NAS agindo como servidor de hora local, um
 servidor NTP interno (chrony, ntpd), um servidor de pool público usado
 como referência.
 
-### Configuração
+### Configuração {#setup}
 
 1. No endereço, escreva o nome ou endereço IP do servidor:
    "pool.ntp.org" ou "192.168.1.1". A porta UDP 123 é usada a menos que
@@ -655,7 +655,7 @@ como referência.
 
 Credenciais: nenhuma.
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -664,7 +664,7 @@ Credenciais: nenhuma.
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
 | `timeout_seconds` | Tempo limite (segundos) | `5` | Tempo após o qual o serviço é reportado fora do ar se não respondeu. Entre 1 e 60. |
 
-### Motivos de falha
+### Motivos de falha {#failure-reasons}
 
 | `reason` | O que aconteceu |
 |---|---|
@@ -674,7 +674,7 @@ Credenciais: nenhuma.
 | `unsynchronized` | O servidor respondeu stratum 16 ou 0 (um "kiss-o'-death", que também nomeia o motivo no log), ou seu indicador de salto lê "não sincronizado". |
 | `clock_offset` | O desvio medido excede "Desvio tolerado". |
 
-## Endereços que as verificações recusam
+## Endereços que as verificações recusam {#addresses-the-checks-refuse}
 
 As verificações que se conectam a um endereço que você dá a elas —
 HTTP, TCP, TLS, NTP, SMTP, PostgreSQL, MySQL, MQTT, WebSocket — reportam
@@ -710,7 +710,7 @@ mudou, não a configuração.
 Valores encontrados em um `json_path` nunca são ecoados além de 32
 caracteres em uma mensagem de falha.
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

@@ -157,7 +157,7 @@ encore moins un plus puissant.
   corps. Créer et révoquer un jeton sont enregistrés dans le journal
   d'audit (Réglages → Sécurité).
 
-## Limites de débit
+## Limites de débit {#rate-limits}
 
 Chaque jeton peut faire 120 appels par minute, REST et MCP ensemble.
 Au-delà, les appels sont refusés avec `429` et un en-tête `Retry-After`
@@ -216,7 +216,7 @@ const alerts = await response.json();
 console.log(response.headers.get('RateLimit-Remaining'), 'appels restants cette minute');
 ```
 
-## Versionnage
+## Versionnage {#versioning}
 
 Chaque réponse sous `/api` porte la version d'API :
 

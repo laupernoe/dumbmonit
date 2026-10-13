@@ -177,7 +177,7 @@ curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
   -d @restore.json | jq
 ```
 
-## Geplante lokale Backups
+## Geplante lokale Backups {#scheduled-local-backups}
 
 DumbMonit schreibt nach Zeitplan eine Kopie seiner eigenen Datenbank,
 standardmäßig **einmal täglich, die letzten sieben behaltend**, nach
@@ -237,7 +237,7 @@ Zeitplan nie deshalb genervt.
 und ob er gelang, die behaltenen Dateien und ihre Größe, und **Back
 up now**, um sofort eines zu schreiben.
 
-### Eines wiederherstellen
+### Eines wiederherstellen {#restoring-one}
 
 Stoppen Sie den Stack, legen Sie die Datei unter dem Namen der
 Datenbank zurück, und stellen Sie den Key daneben wieder her:

@@ -1,4 +1,4 @@
-# Redis e Valkey
+# Redis e Valkey {#redis-and-valkey}
 
 O próprio armazenamento em memória: memória contra `maxmemory`, conexões
 recusadas, o link de replicação e o atraso de cada réplica, snapshots e
@@ -17,7 +17,7 @@ escritas enquanto `stop-writes-on-bgsave-error` estiver ativo, o que é o
 padrão. Uma réplica cujo link com sua primária está fora do ar continua
 respondendo leituras, com dados desatualizados.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_redis_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -51,7 +51,7 @@ que se aplicam: Redis memory near maxmemory, Redis refusing connections,
 Redis replication link down, Redis replica lagging, Redis snapshot failed,
 Redis append-only file write failed, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Redis. Ele diz o que está errado em uma frase (replicação,
@@ -61,7 +61,7 @@ comandos por segundo, taxa de acerto, chaves removidas nas últimas 24 horas
 e tempo de atividade, depois as chaves por banco de dados e o atraso de cada
 réplica.
 
-## Criar um usuário Redis que só pode executar INFO
+## Criar um usuário Redis que só pode executar INFO {#create-a-redis-user-that-may-only-run-info}
 
 1. No Redis 6 ou posterior, ou Valkey, crie um usuário que possa executar
    INFO e PING e nada mais, sem acesso a nenhuma chave. No redis-cli,
@@ -95,7 +95,7 @@ réplica.
     maxmemory-policy. Sem maxmemory ele cresce até o kernel matá-lo. O
     DumbMonit avisa acima de 90% do maxmemory.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

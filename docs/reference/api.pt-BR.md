@@ -1,4 +1,4 @@
-# API HTTP
+# API HTTP {#http-api}
 
 Tudo que a interface web faz passa por `/api/*`, e a mesma API está aberta
 aos seus próprios scripts, painéis e assistentes: não há uma metade
@@ -10,7 +10,7 @@ interface web) ou por um token de API (tudo mais).
     mudar. A versão da API (abaixo) muda sempre que uma rota ou campo é
     removido ou renomeado, para que um cliente saiba.
 
-## Descrição OpenAPI
+## Descrição OpenAPI {#openapi-description}
 
 Toda instância descreve sua própria API em um documento
 [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0):
@@ -51,7 +51,7 @@ curl -s http://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
 
 O Postman e o Insomnia o importam da mesma URL.
 
-## Autenticação
+## Autenticação {#authentication}
 
 Duas formas de entrada, aceitas em toda rota protegida:
 
@@ -98,7 +98,7 @@ O login tem limite de taxa: depois de cinco tentativas falhadas, cada
 tentativa adicional é recusada com `429` e um prazo `Retry-After` que
 dobra de 30 s até 5 minutos. Nunca tente adivinhar senhas em um loop.
 
-## Escopos
+## Escopos {#scopes}
 
 Um token tem um de dois escopos. Não há um terceiro, mais poderoso: o que
 um administrador faz na própria conta permanece fora do alcance de todo
@@ -119,7 +119,7 @@ nomeando o token e o escopo faltando. Como nenhum token pode listar,
 criar ou revogar tokens, um token nunca pode criar outro — muito menos
 um mais poderoso.
 
-## Segurança de token
+## Segurança de token {#token-security}
 
 - **Mostrado uma vez, armazenado hasheado.** Um token é `dmt_` seguido de
   128 bits aleatórios. O servidor mantém só seu digest SHA-256 (e os
@@ -154,7 +154,7 @@ um mais poderoso.
   revogar um token são registrados no log de auditoria (Configurações →
   Segurança).
 
-## Limites de taxa
+## Limites de taxa {#rate-limits}
 
 Cada token pode fazer 120 chamadas por minuto, REST e MCP juntos. Além
 disso, chamadas são recusadas com `429` e um cabeçalho `Retry-After`
@@ -170,7 +170,7 @@ autenticada por token diz onde você está:
 Um painel Grafana com muitos painéis e uma atualização curta pode
 alcançar o limite: dê a ele seu próprio token, ou aumente a atualização.
 
-## Requisições entre origens (CORS)
+## Requisições entre origens (CORS) {#cross-origin-requests-cors}
 
 Uma página servida de outra origem — seu próprio painel, Swagger UI, um
 cliente MCP baseado em navegador — pode chamar a API **com um token
@@ -211,7 +211,7 @@ const alerts = await response.json();
 console.log(response.headers.get('RateLimit-Remaining'), 'chamadas restantes este minuto');
 ```
 
-## Versionamento
+## Versionamento {#versioning}
 
 Toda resposta sob `/api` carrega a versão da API:
 
@@ -225,7 +225,7 @@ O mesmo valor é `info.version` no documento OpenAPI, ao lado de
 removido ou renomeado. Adicionar uma rota ou campo não a muda: ignore
 campos que você não conhece.
 
-## Erros
+## Erros {#errors}
 
 Todo erro é JSON: `{"error": "message"}`, escrito para uma pessoa.
 
@@ -261,7 +261,7 @@ ratelimit-remaining: 0
 O [endpoint MCP](../using/assistant.md#protocol-details) responde em
 JSON-RPC em vez disso, com seus próprios códigos de erro.
 
-## Contas, login e tokens
+## Contas, login e tokens {#accounts-sign-in-and-tokens}
 
 Nas tabelas abaixo, *sessão* significa um cookie de sessão **ou** um
 token de API; *admin* significa uma sessão de administrador ou um token
@@ -318,7 +318,7 @@ Um token como listado:
 }
 ```
 
-## Cabeçalhos de resposta
+## Cabeçalhos de resposta {#response-headers}
 
 Além de `X-DumbMonit-Api-Version` ([versionamento](#versioning)), os
 cabeçalhos `RateLimit-*` ([limites de taxa](#rate-limits)) e os
@@ -354,7 +354,7 @@ adicione um segundo cabeçalho `Content-Security-Policy`: navegadores
 aplicam a interseção de todos eles, e um padrão de proxy sem o nonce
 deixa uma página vazia.
 
-## Saúde
+## Saúde {#health}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -370,7 +370,7 @@ carrega uma string `error`. `victoria.embedded` é `true` quando o
 servidor roda seu próprio VictoriaMetrics, `false` quando
 `DUMBMONIT_VM_URL` aponta para um externo.
 
-## Backup e restauração
+## Backup e restauração {#backup-and-restore}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -384,13 +384,13 @@ frase secreta, então essas rotas recusam tokens de API com uma
 explicação: só um administrador conectado à interface web recebe um.
 Veja [Backup e restauração](../install/backup.md).
 
-## Tipos de dispositivo
+## Tipos de dispositivo {#device-types}
 
 | Método | Rota | Propósito |
 |---|---|---|
 | `GET` | `/api/collectors` | Todo tipo de dispositivo que este servidor pode monitorar: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) e `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Tipos trazidos por um [pacote de integração](../packs/index.md) são listados da mesma forma, como `pack.<id>`. |
 
-## Pacotes de integração
+## Pacotes de integração {#integration-packs}
 
 Sessão de admin ou token de API (escopo `write` para mudanças). Veja
 [Pacotes de integração](../packs/index.md).
@@ -403,7 +403,7 @@ Sessão de admin ou token de API (escopo `write` para mudanças). Veja
 | `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Registra ou retira o tipo de dispositivo do pacote; dispositivos, histórico e regras permanecem. |
 | `DELETE` | `/api/packs/{id}` | Desinstala, com suas regras. `409` enquanto dispositivos o usam. |
 
-## Targets (dispositivos)
+## Targets (dispositivos) {#targets-devices}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -483,7 +483,7 @@ retransmitido passam pelo relay e esperam sua resposta (`409` quando
 uma sondagem já está em andamento, `400 Timed out: relay agent …`
 quando não responde).
 
-## Descoberta
+## Descoberta {#discovery}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -498,7 +498,7 @@ quando não responde).
 }
 ```
 
-## Guia de primeira execução
+## Guia de primeira execução {#first-run-guide}
 
 Os três passos que a visão geral mostra em uma instância nova. O estado
 é mantido na instância, não no navegador, então pular um passo o pula em
@@ -533,7 +533,7 @@ primeira leitura de uma instância que já tinha um dispositivo e um canal
 — então atualizar uma instância estabelecida nunca mostra um guia de
 primeira execução.
 
-## Métricas
+## Métricas {#metrics}
 
 Ambas as rotas retransmitem o VictoriaMetrics e retornam séries na forma
 Prometheus:
@@ -553,7 +553,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 [{"metric":{"host":"ThinkpadE14","target":"3"},"values":[[1757941205,"12.5"]]}]
 ```
 
-## Coleta (fora de `/api`)
+## Coleta (fora de `/api`) {#scraping-outside-api}
 
 Para um Prometheus ou Grafana existente. Ambos levam um token de API
 `read` em `Authorization: Bearer dmt_…` (um cookie de sessão também
@@ -571,7 +571,7 @@ precisa de nenhum — essas rotas só leem. Veja a
 `DUMBMONIT_METRICS_PUBLIC=true` serve as três sem um token — só detrás
 de um firewall, já que carregam toda medição de todo dispositivo.
 
-## Alertas
+## Alertas {#further-routes}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -624,7 +624,7 @@ escalonamentos pausam, a resolução ainda é notificada e limpa o
 reconhecimento. Um `target_id` que não existe mais é mostrado como
 "(dispositivo excluído)" pela interface.
 
-### Regras
+### Regras {#alerts}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -659,7 +659,7 @@ Criar uma precisa ao menos de `name` e `query`; `kind` (`threshold`,
 `channels` (ids de canal; vazio significa todo canal ativado), `unit`,
 `repeat_secs`, `escalate_after_secs` e `enabled` são opcionais.
 
-### Silêncios (janelas de manutenção)
+### Silêncios (janelas de manutenção) {#rules}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -690,7 +690,7 @@ recorrente, `timezone` (um nome IANA) vence sobre `utc_offset_minutes` e
 é o que mantém uma janela em sua hora local através de mudanças de
 horário de verão; um nome de fuso desconhecido é recusado.
 
-### Substituições por dispositivo
+### Substituições por dispositivo {#per-device-overrides}
 
 Uma regra pode ser ajustada para um dispositivo sem tocar na própria
 regra. `{"enabled": false}` é o que a ação **Ignorar** da interface (no
@@ -705,7 +705,7 @@ regra para mais ninguém.
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — cada campo opcional; `null` significa "como a regra". Cria ou substitui. Um operador só pode enviar `{"enabled": false}` (ignorar); as substituições de limite do dispositivo, se houver, são mantidas. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Para um operador, só remove o ignorar: substituições de limite permanecem. |
 
-## Política de notificação
+## Política de notificação {#per-device-overrides}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -713,7 +713,7 @@ regra para mais ninguém.
 | `PUT` | `/api/notify/policy` | Mesmos campos, todos opcionais: um campo omitido mantém seu valor. `"escalate_channel": null` desliga o escalonamento. Retorna a política. |
 | `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → quais dispositivos um filtro de roteamento de canal seleciona: `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
 
-## Canais de notificação
+## Canais de notificação {#notification-policy}
 
 | Método | Rota | Propósito |
 |---|---|---|
@@ -737,7 +737,7 @@ regra para mais ninguém.
 As chaves exatas por tipo vêm de `/api/notify/kinds` e são documentadas
 em [Canais de notificação](../notifications.md).
 
-### Dispositivos Web Push
+### Dispositivos Web Push {#notification-channels}
 
 Os dispositivos da **conta conectada** (apenas sessão, visualizadores
 incluídos; tokens de API recebem `401`). Um canal `webpush` envia para
@@ -750,7 +750,7 @@ eles; veja [Notificações push (PWA)](../using/push-notifications.md).
 | `DELETE` | `/api/webpush/subscriptions/{id}` | `204`; `404` para um dispositivo de outra conta. |
 | `POST` | `/api/webpush/test` | `{}` ou `{"id": 3}`. Envia uma notificação de teste: `{"ok", "delivered", "failed", "removed", "message"}`. Inscrições respondidas com `404`/`410` são removidas. |
 
-## Relatórios por e-mail
+## Relatórios por e-mail {#email-reports}
 
 Apenas administradores, `GET` incluído (a resposta lista
 destinatários). Tokens bearer precisam do escopo `write` para mudanças.
@@ -765,7 +765,7 @@ Veja [Relatórios por e-mail](../using/reports.md).
 | `DELETE` | `/api/reports/schedules/{id}` | admin | `204`. |
 | `POST` | `/api/reports/schedules/{id}/send-test` | admin | Envia por e-mail uma pré-visualização aos destinatários salvos: `{"sent": 2, "failed": 0}`. Não toca a programação. `400` sem um canal de e-mail usável; `409` dentro de 30 segundos da pré-visualização anterior. |
 
-## Páginas de status e incidentes
+## Páginas de status e incidentes {#email-reports}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -793,7 +793,7 @@ Veja [Relatórios por e-mail](../using/reports.md).
 | `POST` | `/api/public/status/{slug}/confirm?token=…` | público | Confirma uma inscrição (o link do e-mail de confirmação abre `/s/{slug}/confirm`, cujo botão posta aqui). `404` para um token desconhecido ou expirado. |
 | `POST` | `/api/public/status/{slug}/unsubscribe?token=…` | público | Remove uma inscrição; o corpo é ignorado, então também é o alvo de um clique RFC 8058 de `List-Unsubscribe`. Sempre `200`. |
 
-## Tokens de agente e ingestão
+## Tokens de agente e ingestão {#status-pages-and-incidents}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -817,7 +817,7 @@ Veja [Relatórios por e-mail](../using/reports.md).
 }
 ```
 
-## Contêineres e comandos (dispositivos de agente)
+## Contêineres e comandos (dispositivos de agente) {#agent-tokens-and-ingest}
 
 Ações nos contêineres de uma máquina que roda o agente. Toda rota
 responde `404` quando o dispositivo não é um target `agent`.
@@ -841,7 +841,7 @@ instalado com `commands: false`). O servidor expira comandos antigos a
 cada minuto por conta própria; um comando enfileirado nunca bloqueia um
 novo por mais que isso.
 
-## Guests Proxmox VE
+## Guests Proxmox VE {#containers-and-commands-agent-devices}
 
 As linhas do painel **Guests** de um dispositivo Proxmox VE, montadas da
 última sondagem no armazenamento de métricas (quatro consultas
@@ -867,7 +867,7 @@ existe, `400` quando não é um target `proxmox`.
 ]
 ```
 
-## Nós e Ceph Proxmox VE
+## Nós e Ceph Proxmox VE {#proxmox-ve-guests}
 
 As seções **Nodes** e **Ceph** da mesma página de dispositivo, lidas da
 mesma última sondagem. Mesmos códigos de status que acima.
@@ -877,7 +877,7 @@ mesma última sondagem. Mesmos códigos de status que acima.
 | `GET` | `/api/targets/{id}/proxmox/nodes` | `{"nodes": […], "fencing_state", "fencing_armed"}` — o estado do watchdog HA (`armed`, `standby`…) e se realmente isolaria um nó perdido, depois um objeto por nó, ordenado por nome: `name`, `up`, `cpu_percent`, `cpu_iowait_percent`, `memory_percent`, `ksm_shared_bytes`, `rootfs_percent`, `uptime_seconds`, `version` (a versão `pve-manager` instalada naquele nó), `services_down` (nomes de unidade dos daemons parados ou falhados), `interfaces_offline` (interfaces configuradas para iniciar no boot que não estão ativas), `thin_pools` (`name`, `vg`, `used_percent`, `metadata_used_percent`, `size_bytes`) e `volume_groups` (`name`, `used_percent`, `size_bytes`). Um nó que parou de responder mantém sua entrada com `up: false`. |
 | `GET` | `/api/targets/{id}/proxmox/ceph` | `available` (`false` quando o cluster não tem Ceph — a interface então não desenha seção alguma), `health` (0 OK, 1 WARN, 2 ERR, 3 desconhecido), `health_status`, `bytes_used`, `bytes_total`, `used_percent`, `osds_total`, `osds_up`, `osds_in`, `osds` (`name`, `host`, `device_class`, `up`, `in`, `used_percent`, `used_bytes`, `total_bytes`, `apply_latency_ms`, `commit_latency_ms`), `pools` (`name`, `used_percent`, `used_bytes`, `size`, `min_size`, `pg_num`, `pg_num_optimal`, `autoscale`), `filesystems` (nomes CephFS), `flags` (flags de OSD atualmente definidas, como `noout`) e `muted_checks` (verificações de saúde silenciadas, que `HEALTH_OK` não menciona mais). |
 
-## Proxmox Backup Server
+## Proxmox Backup Server {#proxmox-ve-nodes-and-ceph}
 
 Os painéis de um dispositivo `pbs`, lidos da última sondagem (nada
 pedido ao servidor exceto o log de tarefas). `404` quando o dispositivo
@@ -898,14 +898,14 @@ não existe, `400` quando não é um target `pbs`.
 | `GET` | `/api/targets/{id}/pmg/traffic` | Totais de hoje (`mail`), a curva de tráfego recente (`recent`), o histograma de score de spam, os vírus pegos hoje, e contagens de quarentena (`quarantine`). Apenas contagens: nenhum conteúdo de mensagem. |
 | `GET` | `/api/targets/{id}/pmg/health` | Uma entrada por nó (sistema, serviços, `signatures` com `family`, `age_seconds` e `stale`, `expiring_certificates`, atualizações, assinatura), os membros do `cluster` com seu estado de sincronização, e `stopped_services` entre nós. |
 
-## Synology
+## Synology {#proxmox-backup-server}
 
 | Método | Rota | Propósito |
 |---|---|---|
 | `GET` | `/api/targets/{id}/synology` | Visão geral de um dispositivo `synology` da última sondagem: `system` (modelo, versão DSM, tempo de atividade, temperatura, CPU, memória), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) e `sampled_at`. `404` quando o dispositivo não existe, `400` quando não é um Synology. |
 | `GET` | `/api/targets/{id}/synology/abb` | Active Backup for Business: `tasks`, e `devices` — um relatório por dispositivo protegido com seu ritmo aprendido em `assessment` (`state`, `last_success_s`, `typical_interval_s`, contagens de 30 dias). |
 
-## Heartbeats (monitores push)
+## Heartbeats (monitores push) {#synology}
 
 | Método | Rota | Auth | Propósito |
 |---|---|---|---|
@@ -913,7 +913,7 @@ não existe, `400` quando não é um target `pbs`.
 | `GET` | `/api/targets/{id}/push` | sessão | O monitor de um dispositivo `push`: `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Criado na primeira leitura. `400` quando o dispositivo não é um heartbeat. |
 | `POST` | `/api/targets/{id}/push/regenerate` | admin | Novo token; a URL anterior responde `404` a partir de então. Mesmo corpo que a leitura. |
 
-## Assistentes (MCP)
+## Assistentes (MCP) {#heartbeats-push-monitors}
 
 O servidor [Model Context Protocol](https://modelcontextprotocol.io)
 embutido, o que um assistente fala com. Autentica com os tokens de API
@@ -940,7 +940,7 @@ mesmo código que a interface web. Versões, cabeçalhos, códigos de erro e
 as notas de segurança estão em
 [Conectar um assistente](../using/assistant.md#protocol-details).
 
-## Arquivos de agente (fora de `/api`)
+## Arquivos de agente (fora de `/api`) {#assistants-mcp}
 
 | Método | Rota | Propósito |
 |---|---|---|

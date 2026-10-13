@@ -1,4 +1,4 @@
-# Unraid
+# Unraid {#unraid}
 
 通过其 GraphQL API 监控 Unraid 服务器:未启动的阵列、被禁用、
 缺失或报告读取错误的磁盘、发现错误或数周未运行的校验检查、空间

@@ -1,4 +1,4 @@
-# TrueNAS
+# TrueNAS {#truenas}
 
 Servidor de armazenamento ZFS (TrueNAS SCALE, agora TrueNAS Community
 Edition): a saúde de cada pool e o disco que falhou, scrubs e
@@ -17,7 +17,7 @@ próprio TrueNAS dispara, serviços e a máquina.
     então esses seguem o código-fonte do TrueNAS em vez de uma resposta
     observada. Toda chamada é uma leitura. Avise-nos o que não funcionar.
 
-## A falha para a qual isso existe
+## A falha para a qual isso existe {#the-failure-this-is-for}
 
 Um vdev mirror ou RAIDZ que perde um disco continua servindo os dados. O
 compartilhamento permanece montado, backups continuam rodando, a
@@ -26,7 +26,7 @@ não tem redundância alguma. O segundo disco leva o pool.
 `truenas_pool_healthy` cai para 0 no primeiro, a regra **NAS pool
 degraded** dispara, e a página do dispositivo nomeia o disco.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Além dos gráficos genéricos, um dispositivo TrueNAS mostra três painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
@@ -49,7 +49,7 @@ próprio NAS:
   severo primeiro, depois os serviços parados, depois a máquina: versão,
   tempo de atividade, carga, memória, CPU.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_truenas_`.
 
@@ -111,7 +111,7 @@ near its quota, NAS replication failed, NAS snapshot task failed, NAS
 snapshots stale, TrueNAS alert raised, NAS service stopped. Notificações
 nomeiam o pool, disco, dataset, tarefa ou serviço envolvido.
 
-## O que preparar no TrueNAS
+## O que preparar no TrueNAS {#what-to-prepare-in-truenas}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. Uma
 coisa a saber primeiro: pela API REST que o DumbMonit usa, **o TrueNAS
@@ -171,7 +171,7 @@ faltando.
 O TrueNAS anunciou que a API REST será removida no TrueNAS 26, a favor da
 API WebSocket. Até então, REST é o que toda versão até a 25.10 serve.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -186,7 +186,7 @@ API WebSocket. Até então, REST é o que toda versão até a 25.10 serve.
 | `tasks` | Observar tarefas de replicação e snapshot | `true` | Estado, última execução e último snapshot de cada tarefa. |
 | `services` | Observar os serviços | `true` | Serviços configurados para iniciar com o NAS, e se estão rodando. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

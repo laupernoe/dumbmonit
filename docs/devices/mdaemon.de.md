@@ -53,7 +53,7 @@ Manager. Keine von MDaemons veröffentlichter Dokumentation beschreibt
 einen XML-API-Aufruf, der sie zurückgibt, daher rät dieses Gerät
 keinen: Der auf dem MDaemon-Server installierte [Agent](agent.md)
 liest stattdessen die Leistungszähler. Siehe
-[Mail-Warteschlangen über den Agent](#mail-warteschlangen-ber-den-agent).
+[Mail-Warteschlangen über den Agent](#mail-queues-through-the-agent).
 Die Lizenz und der Plattenplatz des Mail-Stores werden über keine
 dokumentierte Schnittstelle oder einen Leistungszähler exponiert und
 nicht gelesen. Der Agent beobachtet auch die Platte mit dem
@@ -83,7 +83,7 @@ Virus- und DNSBL-Urteile der letzten 24 Stunden, MDaemons Uptime, und
 die von MDaemon als inaktiv gemeldeten internen Server. Dasselbe
 Panel erscheint auf der eigenen Seite des Agents.
 
-## Mail-Warteschlangen über den Agent {#mail-warteschlangen-ber-den-agent}
+## Mail-Warteschlangen über den Agent {#mail-queues-through-the-agent}
 
 1. Installieren Sie den [Agent](agent.md#install) auf dem
    Windows-Server, der MDaemon ausführt. Nichts sonst ist nötig: Der

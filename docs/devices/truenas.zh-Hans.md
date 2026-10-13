@@ -1,4 +1,4 @@
-# TrueNAS
+# TrueNAS {#truenas}
 
 ZFS 存储服务器(TrueNAS SCALE,现称 TrueNAS Community
 Edition):每个存储池的健康状况及故障的磁盘、校验和重新同步、

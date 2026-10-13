@@ -1,4 +1,4 @@
-# MDaemon Email Server
+# MDaemon Email Server {#mdaemon-email-server}
 
 Os serviços de e-mail de um servidor MDaemon, verificados de fora: SMTP,
 IMAP, POP3, webmail e Remote Administration aceitam conexões e saúdam da
@@ -18,7 +18,7 @@ o MDaemon publica apenas como contadores de desempenho do Windows.
     uma lista publicada de contadores de desempenho do MDaemon, não de um
     servidor em execução. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_mdaemon_`.
 
@@ -63,7 +63,7 @@ que se aplicam: MDaemon mail service down, MDaemon XML API not answering,
 além de Device unreachable; com o agente, MDaemon mail queue growing,
 MDaemon Bad queue not empty e MDaemon Retry queue high.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Um dispositivo MDaemon mostra um painel **Serviços de e-mail** acima dos
 gráficos, lido da última medição armazenada: abrir a página nunca se
@@ -79,7 +79,7 @@ veredictos de spam, vírus e DNSBL das últimas 24 horas, o tempo de
 atividade do MDaemon, e os servidores internos que o MDaemon reporta como
 inativos. O mesmo painel aparece na própria página do agente.
 
-## Filas de e-mail através do agente
+## Filas de e-mail através do agente {#mail-queues-through-the-agent}
 
 1. Instale o [agente](agent.md#install) no servidor Windows que executa o
    MDaemon. Nada mais é necessário: o agente percebe o serviço Windows
@@ -122,7 +122,7 @@ e os outros ainda são lidos; para ler um que o predefinido não tem, liste-o
 sob `perf_counters` em `agent.yaml` (veja
 [Contadores de desempenho do Windows](agent.md#windows-performance-counters)).
 
-## Observar os serviços de e-mail, e opcionalmente a API XML
+## Observar os serviços de e-mail, e opcionalmente a API XML {#watch-the-mail-services-and-optionally-the-xml-api}
 
 1. Nada para instalar no servidor. Sem credencial, o DumbMonit se conecta
    às portas de e-mail de fora e lê cada saudação: SMTP (25), IMAP (143) e
@@ -180,7 +180,7 @@ Remote Administration roda ali. Sua referência completa vem com o
 servidor: abra `https://mail.example.com:444/MdMgmtWS` em um navegador, ou
 procure em `\MDaemon\Docs\API\XML API\`.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -191,7 +191,7 @@ Endereço: o nome de host ou IP do servidor, por exemplo
 `mail.example.com`. Uma porta escrita no endereço
 (`mail.example.com:8444`) é tomada como a porta da API XML.
 
-## Opções
+## Opções {#options}
 
 | Opção | Padrão | Efeito |
 |---|---|---|

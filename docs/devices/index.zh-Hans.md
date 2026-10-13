@@ -1,95 +1,83 @@
 # 设备类型 {#device-types}
 
-DumbMonit 把它监控的一切都称为*设备*(API 中称为 *target*),即使
-它其实是一个网页或一个 DNS 名称。每种类型在服务器上对应一个
-采集器;服务器会向界面描述每种类型(`GET /api/collectors`),因此
-表单始终与当前版本能够监控的内容保持一致。
+DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），即使是网页或 DNS 名称也是如此。每种类型都是服务器上的一个收集器；服务器向接口描述每种类型（`GET /api/collectors`），所以表单总是与这个版本能监视的东西相匹配。
 
-| 类型 | `kind` | 凭据 | 典型用途 |
+| 类型 | `kind` | 凭证 | 典型用途 |
 |---|---|---|---|
-| [SNMP 设备](snmp.md) | `snmp` | 社区名或 SNMP v3 | 交换机、路由器、NAS、UPS、打印机 |
-| [Proxmox VE](proxmox.md) | `proxmox` | API 令牌或用户名/密码 | 虚拟化平台、集群 |
-| [Proxmox Backup Server](pbs.md) | `pbs` | API 令牌或用户名/密码 | 备份服务器 |
-| [Proxmox Datacenter Manager](pdm.md) | `pdm` | API 令牌 | 联合管理多个 PVE 集群和 PBS 实例的控制台 |
-| [Proxmox Mail Gateway](pmg.md) | `pmg` | 用户名/密码 | 过滤垃圾邮件和病毒的邮件网关 |
-| [VMware vSphere](vsphere.md) | `vsphere` | 用户名/密码 | vCenter 或独立 ESXi:主机、虚拟机、数据存储、告警 |
+| [SNMP 设备](snmp.md) | `snmp` | 社区或 SNMP v3 | 交换机、路由器、NAS、UPS、打印机 |
+| [Proxmox VE](proxmox.md) | `proxmox` | API 令牌或用户名/密码 | 虚拟化程序、群集 |
+| [Proxmox 备份服务器](pbs.md) | `pbs` | API 令牌或用户名/密码 | 备份服务器 |
+| [Proxmox 数据中心管理器](pdm.md) | `pdm` | API 令牌 | 联合多个 PVE 群集和 PBS 实例的控制台 |
+| [Proxmox 邮件网关](pmg.md) | `pmg` | 用户名/密码 | 邮件网关，过滤垃圾邮件和病毒 |
+| [VMware vSphere](vsphere.md) | `vsphere` | 用户名/密码 | vCenter 或独立 ESXi：主机、虚拟机、数据存储、警报 |
 | [Synology DSM](synology.md) | `synology` | 用户名/密码 | DiskStation、RackStation |
-| [OPNsense](opnsense.md) | `opnsense` | API 密钥和密钥口令 | 防火墙、路由器、多 WAN 边缘设备 |
-| [pfSense](pfsense.md) | `pfsense` | REST API 密钥(只读用户) | 防火墙:网关宕机或丢包、接口无链路、服务停止 |
-| [FortiGate](fortigate.md) | `fortigate` | REST API 令牌(只读配置档案、受信主机) | 防火墙:IPsec 隧道、链路、HA 同步、节能模式、FortiGuard 许可证 |
-| [Sophos Firewall](sophos.md) | `sophos` | 用户名/密码(只读配置档案) | 防火墙:仅接口链路(该 XML API 不暴露隧道、HA 或许可证状态) |
-| [UniFi Network](unifi.md) | `unifi` | API 密钥或用户名/密码 | UniFi 控制台或自托管服务器:设备、WAN、客户端 |
-| [Home Assistant](homeassistant.md) | `homeassistant` | 长期有效的访问令牌 | 智能家居:不可用的实体、电池电量低、更新、修复项 |
-| [TrueNAS](truenas.md) | `truenas` | API 密钥 | ZFS 存储服务器(SCALE,社区版) |
-| [Unraid](unraid.md) | `unraid` | API 密钥(Viewer 角色) | NAS:阵列、磁盘、校验检查、缓存池、容器、虚拟机 |
-| [MikroTik RouterOS](mikrotik.md) | `mikrotik` | 用户名/密码(只读分组) | 路由器或交换机:版本和固件落后情况、CPU、内存、传感器、接口错误 |
-| [UPS with NUT](nut.md) | `nut` | 无,或用户名/密码 | 接在 NAS、Raspberry Pi 或服务器上、运行 Network UPS Tools 的 UPS |
-| [服务器硬件(Redfish)](redfish.md) | `redfish` | 用户名/密码 | 服务器风扇、温度、电源和驱动器,从其 BMC 读取 |
-| [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | 无、用户名/密码或令牌 | 时间序列数据库:写入、拒绝的样本、磁盘剩余空间 |
-| [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | 无、用户名/密码或令牌 | 日志数据库:写入、拒绝的行、磁盘剩余空间 |
-| [Grafana Loki](loki.md) | `loki` | 无、用户名/密码或令牌 | 日志服务器:就绪状态、拒绝的行、写入失败 |
-| [Graylog](graylog.md) | `graylog` | 访问令牌或用户名/密码 | 日志服务器及其 OpenSearch 集群:日志队列、缓冲区、吞吐量、输入 |
-| [Pi-hole](pihole.md) | `pihole` | 应用密码,或无 | DNS 广告拦截器:拦截状态、拦截比例、黑名单年龄、更新 |
-| [AdGuard Home](adguard.md) | `adguard` | 用户名/密码 | DNS 过滤器:保护状态、拦截、过滤列表、上游服务器、更新 |
-| [MDaemon Email Server](mdaemon.md) | `mdaemon` | 无,或邮箱地址/密码 | 邮件服务器:SMTP、IMAP、POP3、网页邮件、版本 |
-| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | 无,或 API 密钥 | 邮件网关:服务、投递队列及其他计数器 |
-| [Redis / Valkey](redis.md) | `redis` | ACL 用户、仅密码,或无 | 内存存储:内存相对于 maxmemory、复制、持久化、键 |
-| [MongoDB](mongodb.md) | `mongodb` | 用户名/密码(clusterMonitor)或无 | 文档数据库:副本集、延迟、连接数、WiredTiger 缓存 |
-| [RabbitMQ](rabbitmq.md) | `rabbitmq` | 用户名/密码(monitoring 标记) | 消息中间件:资源告警、节点、分区、无消费者的队列 |
-| [CrowdSec](crowdsec.md) | `crowdsec` | 无,或 bouncer API 密钥 | 安全引擎:决策、告警、停止拉取的 bouncer、日志读取 |
-| [Traefik](traefik.md) | `traefik` | 无,或 basicAuth 用户 | 反向代理:已禁用的路由器、后端服务器宕机、未获取或未续签的证书、5xx 比例 |
-| [Caddy](caddy.md) | `caddy` | 只读查看用户,或无 | Web 服务器和反向代理:上游健康状况、重载失败、处理器错误、5xx 比例 |
-| [Nginx](nginx.md) | `nginx` | 无,或基本认证 | Web 服务器:活动/等待连接、接受/处理/请求速率、NGINX Plus 上游健康状况 |
-| [Apache httpd](apache.md) | `apache` | 无,或基本认证 | Web 服务器:忙碌/空闲工作进程、按状态的记分板、请求和字节速率 |
-| [Nginx Proxy Manager](npm.md) | `npm` | 用户邮箱和密码(仅查看) | 代理管理器:被 nginx 拒绝的主机、已禁用的主机、出示的证书 |
-| [域名到期](domain.md) | `domain` | 无 | 通过 RDAP 监控已注册域名:到期前剩余天数、保留状态、赎回期、注册商 |
-| [Kubernetes / k3s](kubernetes.md) | `kubernetes` | 服务账户令牌(只读 ClusterRole) | 集群:未就绪的节点、崩溃循环或挂起的 Pod、副本数不足的工作负载、卡住的卷声明 |
-| [Active Directory](activedirectory.md) | `activedirectory` | 用户名/密码(普通域用户) | 通过 LDAPS 监控 Windows 域:域控制器和 FSMO 角色、特权组成员、密码策略、安全发现项 |
-| [Veeam Backup & Replication](veeam.md) | `veeam` | 用户名/密码(Veeam Backup Viewer) | 备份服务器:失败的任务、失败的会话、存储库空间不足、许可证 |
-| [Tailscale](tailscale.md) | `tailscale` | OAuth 客户端(devices:core:read)或 API 访问令牌 | Tailnet:离线的服务器、即将过期的节点密钥、等待批准的设备 |
-| [Nextcloud](nextcloud.md) | `nextcloud` | 监控令牌(NC-Token) | 文件同步:维护模式、待处理的升级、更新、活跃用户、OPcache |
-| [Immich](immich.md) | `immich` | API 密钥 | 照片库:任务队列、更新、磁盘、照片数量 |
-| [Paperless-ngx](paperless.md) | `paperless` | API 令牌或用户名/密码 | 文档管理:Redis、Celery、索引、失败的导入、更新 |
-| [Jellyfin](jellyfin.md) | `jellyfin` | API 密钥 | 媒体服务器:失败的计划任务、插件、流和转码 |
-| [Plex Media Server](plex.md) | `plex` | X-Plex-Token,或来自允许网络时无需凭据 | 媒体服务器:流、转码、媒体库、更新 |
-| [GitLab(自托管)](gitlab.md) | `gitlab` | 个人访问令牌 | 代码托管平台:Sidekiq 积压、CI runner、待处理的迁移、注册/两步验证设置、许可证 |
-| [Forgejo / Gitea](forgejo.md) | `forgejo` | 访问令牌 | 代码托管平台:健康检查、计划任务、Actions runner、仓库/账户计数 |
-| [带代理的服务器](agent.md) | `agent` | 无(注册令牌) | Linux、Windows、Raspberry Pi、[Hyper-V 主机](agent.md#hyper-v-hosts) |
-| [网站或 Web API](services.md#http) | `http` | 无、用户名/密码或令牌 | 健康检查页面、REST API |
+| [OPNsense](opnsense.md) | `opnsense` | API 密钥和密钥 | 防火墙、路由器、多 WAN 边缘 |
+| [pfSense](pfsense.md) | `pfsense` | REST API 密钥（仅读用户） | 防火墙：网关掉线或有损、没有链接的接口、停止的服务 |
+| [FortiGate](fortigate.md) | `fortigate` | REST API 令牌（仅读配置文件、受信主机） | 防火墙：IPsec 隧道、链接、HA 同步、保守模式、FortiGuard 许可证 |
+| [Sophos 防火墙](sophos.md) | `sophos` | 用户名/密码（仅读配置文件） | 防火墙：仅接口链接（XML API 不公开隧道、HA 或许可证状态） |
+| [UniFi 网络](unifi.md) | `unifi` | API 密钥或用户名/密码 | UniFi 控制台或自托管服务器：设备、WAN、客户端 |
+| [Home Assistant](homeassistant.md) | `homeassistant` | 长期有效的访问令牌 | 智能家居：不可用的实体、低电池、更新、修复 |
+| [TrueNAS](truenas.md) | `truenas` | API 密钥 | ZFS 存储服务器（SCALE、社区版） |
+| [Unraid](unraid.md) | `unraid` | API 密钥（查看者角色） | NAS：阵列、磁盘、奇偶校验检查、缓存池、容器、虚拟机 |
+| [MikroTik RouterOS](mikrotik.md) | `mikrotik` | 用户名/密码（仅读组） | 路由器或交换机：版本和固件落后、CPU、内存、传感器、接口错误 |
+| [NUT 的 UPS](nut.md) | `nut` | 无，或用户名/密码 | NAS、Raspberry Pi 或运行网络 UPS 工具的服务器上的 UPS |
+| [服务器硬件（Redfish）](redfish.md) | `redfish` | 用户名/密码 | 服务器风扇、温度、电源和驱动器，从其 BMC 读取 |
+| [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | 无、用户名/密码或令牌 | 时间序列数据库：摄取、拒绝的样本、磁盘空间 |
+| [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | 无、用户名/密码或令牌 | 日志数据库：摄取、拒绝的行、磁盘空间 |
+| [Grafana Loki](loki.md) | `loki` | 无、用户名/密码或令牌 | 日志服务器：就绪状态、拒绝的行、刷新失败 |
+| [Graylog](graylog.md) | `graylog` | 访问令牌或用户名/密码 | 日志服务器及其 OpenSearch 群集：日志、缓冲区、吞吐量、输入 |
+| [Pi-hole](pihole.md) | `pihole` | 应用密码，或无 | DNS 广告拦截器：阻止状态、阻止份额、阻止列表年龄、更新 |
+| [AdGuard Home](adguard.md) | `adguard` | 用户名/密码 | DNS 过滤器：保护、阻止、过滤列表、上游服务器、更新 |
+| [MDaemon 邮件服务器](mdaemon.md) | `mdaemon` | 无，或电子邮件地址/密码 | 邮件服务器：SMTP、IMAP、POP3、网络邮件、版本 |
+| [电子邮件服务器安全网关](securitygateway.md) | `securitygateway` | 无，或 API 密钥 | 邮件网关：服务、投递队列和其他计数 |
+| [Redis / Valkey](redis.md) | `redis` | ACL 用户、仅密码或无 | 内存存储：针对最大内存的内存、复制、持久性、密钥 |
+| [MongoDB](mongodb.md) | `mongodb` | 用户名/密码（clusterMonitor）或无 | 文档数据库：副本集、滞后、连接、WiredTiger 缓存 |
+| [RabbitMQ](rabbitmq.md) | `rabbitmq` | 用户名/密码（监视标签） | 消息代理：资源警报、节点、分区、无消费者的队列 |
+| [CrowdSec](crowdsec.md) | `crowdsec` | 无，或 Bouncer API 密钥 | 安全引擎：决策、警报、停止拉取的 Bouncer、日志读取 |
+| [Traefik](traefik.md) | `traefik` | 无，或 basicAuth 用户 | 反向代理：禁用的路由器、后端服务器掉线、证书未获得或未更新、5xx 份额 |
+| [Caddy](caddy.md) | `caddy` | 仅读视图用户，或无 | Web 服务器和反向代理：上游健康、失败重载、处理程序错误、5xx 份额 |
+| [Nginx](nginx.md) | `nginx` | 无，或基本身份验证 | Web 服务器：活跃/等待连接、接受/处理/请求率、NGINX Plus 上游健康 |
+| [Apache httpd](apache.md) | `apache` | 无，或基本身份验证 | Web 服务器：繁忙/空闲工作程序、记分板按状态、请求和字节率 |
+| [Nginx 代理管理器](npm.md) | `npm` | 用户电子邮件和密码（仅查看） | 代理管理器：nginx 拒绝的主机、禁用的主机、提供的证书 |
+| [域名过期](domain.md) | `domain` | 无 | 通过 RDAP 的注册域名：过期前天数、保留、赎回期、注册商 |
+| [Kubernetes / k3s](kubernetes.md) | `kubernetes` | 服务账户令牌（仅读 ClusterRole） | 集群：节点不就绪、pod 崩溃循环或待处理、工作负载缺少副本、卡住的卷声明 |
+| [Active Directory](activedirectory.md) | `activedirectory` | 用户名/密码（普通域用户） | Windows 域通过 LDAPS：域控制器和 FSMO 角色、特权组成员、密码策略、安全发现 |
+| [Veeam Backup & Replication](veeam.md) | `veeam` | 用户名/密码（Veeam Backup Viewer） | 备份服务器：失败的任务、失败的会话、存储库填满、许可证 |
+| [Tailscale](tailscale.md) | `tailscale` | OAuth 客户端（devices:core:read）或 API 访问令牌 | Tailnet：服务器离线、节点密钥即将过期、设备等待批准 |
+| [Nextcloud](nextcloud.md) | `nextcloud` | 监视令牌（NC-Token） | 文件同步：维护模式、待处理升级、更新、活跃用户、OPcache |
+| [Immich](immich.md) | `immich` | API 密钥 | 照片库：任务队列、更新、磁盘、照片计数 |
+| [Paperless-ngx](paperless.md) | `paperless` | API 令牌或用户名/密码 | 文档：Redis、Celery、索引、失败的导入、更新 |
+| [Jellyfin](jellyfin.md) | `jellyfin` | API 密钥 | 媒体服务器：失败的计划任务、插件、流和转码 |
+| [Plex 媒体服务器](plex.md) | `plex` | X-Plex-Token，或来自允许网络的无 | 媒体服务器：流、转码、库、更新 |
+| [GitLab（自托管）](gitlab.md) | `gitlab` | 个人访问令牌 | 锻造：Sidekiq 积压、CI 运行器、待处理迁移、注册/2FA 设置、许可证 |
+| [Forgejo / Gitea](forgejo.md) | `forgejo` | 访问令牌 | 锻造：健康检查、计划任务、Actions 运行器、存储库/账户计数 |
+| [带代理的服务器](agent.md) | `agent` | 无（注册令牌） | Linux、Windows、Raspberry Pi、[Hyper-V 主机](agent.md#hyper-v-hosts) |
+| [网站或 Web API](services.md#http) | `http` | 无、用户名/密码或令牌 | 健康页面、REST API |
 | [网络端口](services.md#tcp) | `tcp` | 无 | SSH、SMB、数据库 |
-| [域名](services.md#dns) | `dns` | 无 | 你的域名、内部名称 |
+| [域名](services.md#dns) | `dns` | 无 | 您的域名、内部名称 |
 | [可达主机](services.md#ping) | `ping` | 无 | 网关、接入点、打印机 |
 | [TLS 证书](services.md#tls) | `tls` | 无 | IMAPS、LDAPS、反向代理 |
-| [NTP 时间服务器](services.md#ntp) | `ntp` | 无 | 路由器、NAS、内部时间服务器、公共时间池服务器 |
-| [心跳](push.md) | `push` | 无(密钥 URL) | cron 任务、备份脚本、必须定时上报的自动化任务 |
-| [网站变化](webchange.md) | `webchange` | 无 | 单个页面或整个网站:文本变化、新增和移除的页面、带截图的前后对比 |
-| [演示设备](demo.md) | `dummy` | 无 | 在没有硬件的情况下体验界面 |
+| [SMTP 服务器](services.md#smtp) | `smtp` | 无，或用户名/密码 | 邮件服务器：问候、STARTTLS、证书、可选登录 |
+| [PostgreSQL](services.md#postgresql) | `postgres` | 用户名/密码 | 数据库：连接和您选择的查询 |
+| [MySQL 或 MariaDB](services.md#mysql-and-mariadb) | `mysql` | 用户名/密码 | 数据库：连接和您选择的查询 |
+| [MQTT 代理](services.md#mqtt) | `mqtt` | 无，或用户名/密码 | 代理：连接、订阅、保留的消息 |
+| [WebSocket](services.md#websocket) | `websocket` | 无、用户名/密码或令牌 | WebSocket 端点：握手、可选消息交换 |
+| [NTP 时间服务器](services.md#ntp) | `ntp` | 无 | 路由器、NAS、内部时间服务器、公开池服务器 |
+| [心跳](push.md) | `push` | 无（秘密 URL） | Cron 任务、备份脚本、必须调用的自动化 |
+| [网站变化](webchange.md) | `webchange` | 无 | 一个页面或整个网站：文本变化、新增和删除的页面、之前/之后带屏幕截图 |
+| [网站健康和 SEO](website.md) | `website` | 无 | 批量网站：掉线、空白页、重定向、noindex、robots.txt、标题/描述/规范变化、平台（CSV 导入） |
+| [演示设备](demo.md) | `dummy` | 无 | 无硬件的情况下探索 UI |
 
 ## 设备如何被读取 {#how-a-device-is-read}
 
-调度器会按照各自的间隔(默认 60 秒,最小 10 秒)运行每个已启用的
-设备,通过对应类型的采集器,同时最多 `DUMBMONIT_MAX_CONCURRENT_PROBES`
-个探测并发执行,每次探测有 `DUMBMONIT_PROBE_TIMEOUT_SECS` 的硬性
-超时。每次成功的探测都会写入其样本数据以及 `dumbmonit_up = 1`;
-失败的探测什么都不会写入,"设备不可达"规则正是通过该序列的
-沉默来检测的。
+调度程序在其自己的间隔（默认 60 秒，最小 10 秒）运行每个启用的设备，通过其类型的收集器，最多 `DUMBMONIT_MAX_CONCURRENT_PROBES` 个在途探测，以及每个探测硬超时 `DUMBMONIT_PROBE_TIMEOUT_SECS`。每个成功的探测写其样本加 `dumbmonit_up = 1`；失败的探测什么都不写，它是"设备不可达"规则检测的系列的沉默。设备页面在下一次探测时显示故障，但警报故意等待：在最后一个成功探测后约四分钟触发（三分钟的沉默，然后一分钟的保留期），所以单个丢失的探测永远不会激活任何人。
 
-故障会被分类。没有应答的设备属于*不可达*,会触发告警。错误的
-社区名、被拒绝的证书或缺失的能力属于*配置错误*:会在设备页面上
-以红色显示原因,且不会发送通知。这个区分很重要:一个配置错误的
-设备不应该在半夜把任何人吵醒。
+故障是分类的。不回应的设备是*不可达的*并引发警报。错误的社区、被拒绝的证书或缺少的能力是*配置错误*：它显示在设备页面上，用红色，带有原因，它不被通知。区别很重要：配置错误的设备不应在半夜唤醒任何人。
 
 ## 选项 {#options}
 
-有些类型会从设备的标签中读取选项:API 端口、是否接受自签名证书、
-要监控哪些节点。表单会在**更多选项**下为每个选项显示一个带类型
-的字段,附上其默认值和帮助文字。各类型的专属页面会逐一列出它们。
-选项会作为 `tag_<key>` 标签复制到每个序列上,因此绝不要把密钥
-放在选项里:请使用凭据字段,它是加密存储的。
+一些类型从设备的标签中读取选项：API 端口、是否接受自签名证书、要监视哪些节点。表单在"更多选项"下为每个选项显示一个类型化字段，及其默认值和帮助文本。按类型的页面逐字列出它们。选项是设置，不是标签：它们不复制到系列上。自由标签（任何其他密钥）在每个系列上复制为 `tag_<key>` 标签，除了命名密钥的密钥（按单词匹配：`password`、`token`、`key`、`cert`、`secret`、`pass`、`private`、`pem` 等，所以 `primary_key` 被跳过但 `keyboard` 不是）和长于 256 个字符的值。永远不要在标签中放置密钥：使用凭证字段，这是加密的。
 
 ## 父设备 {#parent-devices}
 
-任何设备都可以把另一个设备声明为其父设备。当父设备不可达时,
-其所有后代产生的告警会被标记为*被父设备抑制*,而不会被发送:
-一台交换机宕机只产生一条通知,而不是三十条。在设备页面上,子设备
-会堆叠在其父设备下方,并在父设备不可达时变暗。
+任何设备都可以声明另一个设备为其父设备。当父设备不可达时，其子设备的警报被标记为*被父设备抑制*而不是被发送：交换机掉线产生一个通知，而不是三十个。在设备页面上，子设备堆叠在其父设备下，当它不可达时变暗。

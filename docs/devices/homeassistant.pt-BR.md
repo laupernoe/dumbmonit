@@ -1,4 +1,4 @@
-# Home Assistant
+# Home Assistant {#home-assistant}
 
 A casa inteligente por trás do painel: se o Home Assistant roda ou iniciou
 em modo de recuperação, entidades que estão indisponíveis ou desconhecidas
@@ -17,7 +17,7 @@ entidades todas ficaram indisponíveis depois de uma atualização, um stick
 Zigbee que caiu do barramento USB, um sensor de porta cuja bateria chegou a
 5%, um reparo esperando há semanas.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_homeassistant_`.
 
@@ -57,7 +57,7 @@ entities went unavailable, Home Assistant battery low, Home Assistant
 update available, Home Assistant repair to address, além de Device
 unreachable.
 
-## Dispositivos
+## Dispositivos {#devices}
 
 Todo celular e tablet conectado ao aplicativo companion (a integração
 `mobile_app`) é publicado sob a família genérica compartilhada por toda
@@ -82,7 +82,7 @@ com relato de bateria desligado fica faltando na tabela em vez de mostrado
 incorretamente. A conta do dispositivo, quando conhecida, vem de uma
 entidade `person.*` cujo atributo `device_trackers` o nomeia.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Home Assistant. Ele diz primeiro o que está errado (modo
@@ -91,7 +91,7 @@ depois as baterias baixas pelo nível, as atualizações esperando com suas
 versões, as entidades por domínio, e a tabela de dispositivos do aplicativo
 companion com sua última conexão.
 
-## Como foi validado
+## Como foi validado {#how-it-was-validated}
 
 Contra o Home Assistant 2026.9.4, com o token de longa duração de um
 usuário sem direitos de administrador: configuração, estados de entidade da
@@ -102,7 +102,7 @@ aplicativo companion (`battery_level`, `source_type`) foram verificados
 contra o código-fonte da integração `mobile_app`, não contra um celular
 real.
 
-## Criar um usuário dedicado e um token de longa duração no Home Assistant
+## Criar um usuário dedicado e um token de longa duração no Home Assistant {#create-a-dedicated-user-and-a-long-lived-token-in-home-assistant}
 
 1. No Home Assistant: Settings → People → Users → Add user (ative o modo
    Avançado no seu perfil se a aba Users estiver faltando). Nomeie o
@@ -138,7 +138,7 @@ real.
     abaixo com sua última atividade; é opcional e silencioso sem esse
     aplicativo.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

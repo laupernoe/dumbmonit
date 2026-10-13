@@ -1,9 +1,9 @@
-# Atualizar o DumbMonit
+# Atualizar o DumbMonit {#update-dumbmonit}
 
 O DumbMonit avisa quando existe uma versão mais nova e orienta você durante a
 atualização. Ele nunca instala nada por conta própria.
 
-## Detectando uma nova versão
+## Detectando uma nova versão {#spotting-a-new-version}
 
 No máximo uma vez por dia, o servidor consulta a API pública de releases do
 GitHub (`api.github.com/repos/laupernoe/dumbmonit/releases`) pela versão mais
@@ -23,7 +23,7 @@ uma vez por minuto).
     sobre sua instância, seus dispositivos ou sua rede é enviado, e o endereço
     é fixo no código.
 
-### Desativando a verificação
+### Desativando a verificação {#turning-the-check-off}
 
 Para redes isoladas (air-gapped), desligue **Verificar novas versões** em
 **Configurações → Sobre** (administradores), ou defina a variável de
@@ -37,7 +37,7 @@ environment:
 A mesma informação está disponível para scripts e tokens de API em
 `GET /api/update`.
 
-## Atualizando
+## Atualizando {#updating}
 
 1. **Faça backup.** Baixe um backup em **Configurações → Backup**, e guarde
    uma cópia de `/data/secret.key` (veja [Backup e restauração](backup.md)).

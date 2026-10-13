@@ -1,4 +1,4 @@
-# Agente Linux, macOS, FreeBSD e Windows
+# Agente Linux, macOS, FreeBSD e Windows {#linux-macos-freebsd-and-windows-agent}
 
 Um pequeno binário instalado na máquina a monitorar. Ele mede CPU, memória,
 discos, rede, serviços e contêineres — e, onde a máquina os expõe,
@@ -9,7 +9,7 @@ A direção é deliberada: o agente chama o servidor, nunca o contrário. Ele
 cruza NAT e firewalls domésticos, e não exige abrir **nenhuma porta** na
 máquina monitorada.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_`. Rótulos de identidade
 (`target`, `host`, `tag_*`) são definidos pelo servidor na recepção, nunca
@@ -43,7 +43,7 @@ vez de publicada, e uma leitura de ventoinha de 0 rpm também é descartada —
 uma placa-mãe tem mais conectores de ventoinha que ventoinhas, e um vazio
 lê zero como uma ventoinha morta.
 
-### O que é coletado onde
+### O que é coletado onde {#what-is-collected-where}
 
 | | Linux | macOS | FreeBSD | Windows |
 |---|---|---|---|---|
@@ -108,7 +108,7 @@ Hyper-V, três observam as máquinas virtuais: **Hyper-V VM health
 critical**, **Hyper-V host CPU high** e **Hyper-V virtual disk errors**
 (veja [Hosts Hyper-V](#hyper-v-hosts)).
 
-## Instalação
+## Instalação {#install}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. Não há
 conta para criar na máquina: o token de cadastro é o único segredo.
@@ -260,7 +260,7 @@ quando cria um token.
 Um token pode cadastrar várias máquinas: nomeie-o após um grupo ou uma
 máquina.
 
-### Binários nativos
+### Binários nativos {#native-binaries}
 
 O agente é um único executável estático por sistema, sem nada para
 instalar ao lado dele:
@@ -289,7 +289,7 @@ de um clone do repositório (o Docker é o único requisito):
 docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 ```
 
-### Gerenciando o serviço
+### Gerenciando o serviço {#managing-the-service}
 
 | | Linux (systemd) | Linux (OpenRC) | macOS (launchd) | FreeBSD (rc.d) | Windows (PowerShell) |
 |---|---|---|---|---|---|
@@ -326,7 +326,7 @@ incluído, em todo sistema.
     `--bin=PATH` instala um arquivo local como está, o arquivo sendo seu
     para verificar.
 
-### Flags do instalador
+### Flags do instalador {#installer-flags}
 
 | `install.sh` | `install.ps1` | Efeito |
 |---|---|---|
@@ -343,7 +343,7 @@ incluído, em todo sistema.
 | `--uninstall` | `-Uninstall` | Desinstala o agente e exclui sua configuração. |
 | `--help` | | Mostra a ajuda. |
 
-### Atualização
+### Atualização {#upgrade}
 
 Ambos os scripts são idempotentes: executar o comando de instalação de
 novo, com o mesmo token e URL, substitui o binário, reescreve a
@@ -361,7 +361,7 @@ lugar. O antigo token `ezym_…` permanece válido, então o comando mostrado
 quando o token foi criado ainda funciona; nada precisa ser revogado
 primeiro.
 
-## Arquivo de configuração
+## Arquivo de configuração {#configuration-file}
 
 `/etc/dumbmonit/agent.yaml` no Linux,
 `/usr/local/etc/dumbmonit/agent.yaml` no macOS e FreeBSD,
@@ -456,7 +456,7 @@ usável em um contêiner sem montar um arquivo:
 | `DUMBMONIT_AGENT_RELAY` | `true` para executar, para o servidor, as sondagens dos dispositivos atribuídos a este agente (veja [Executar o agente no Docker / em outra rede](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Rótulo de site mostrado ao lado do agente quando oferecido como relay |
 
-## Contadores de desempenho do Windows
+## Contadores de desempenho do Windows {#windows-performance-counters}
 
 No Windows, o agente lê contadores de desempenho — os valores que o
 Performance Monitor (`perfmon`) mostra — através da biblioteca PDH, e os
@@ -510,7 +510,7 @@ perf_counters:
 Para ver os nomes exatos na máquina, execute `typeperf -q MDaemon` (ou
 qualquer outro nome de objeto) em um prompt de comando.
 
-## Hosts Hyper-V
+## Hosts Hyper-V {#hyper-v-hosts}
 
 Instalado em um host Hyper-V — Windows Server com o papel Hyper-V, ou
 Windows com Hyper-V ativado — o agente encontra o serviço `vmms` e lê os
@@ -558,7 +558,7 @@ Três [regras integradas](../alerting/rules.md#hyper-v) se aplicam:
 - **Hyper-V virtual disk errors**: um disco virtual reportou erros de
   E/S na última hora (Aviso).
 
-## Executar o agente no Docker / em outra rede
+## Executar o agente no Docker / em outra rede {#run-the-agent-in-docker--on-another-network}
 
 O agente também é publicado como uma imagem de contêiner, com as mesmas
 tags do servidor: `ghcr.io/laupernoe/dumbmonit-agent:latest` (último
@@ -590,7 +590,7 @@ O que o contêiner vê, e o que montar:
 `pid: host` e `privileged: true` nunca são necessários: o agente não
 coleta métricas por processo.
 
-### Modo relay: monitorar outro site
+### Modo relay: monitorar outro site {#relay-mode-monitor-another-site}
 
 Um agente pode fazer mais que observar sua própria máquina. Com
 `relay: true` (ou `DUMBMONIT_AGENT_RELAY=true`), o servidor **delega
@@ -607,7 +607,7 @@ abrir do lado remoto.
 Como configurar isso, passo a passo, está em
 [Monitorar um site remoto](../install/remote-site.md).
 
-## Vínculo: uma máquina, um agente
+## Vínculo: uma máquina, um agente {#binding-one-machine-one-agent}
 
 Um token de cadastro diz *esta máquina tem permissão para falar*. Não diz
 *qual* máquina está falando — isso é para o que serve a chave de
@@ -634,7 +634,7 @@ Vínculo**:
 | **Vinculado** | O agente tem um segredo próprio. | Nada. |
 | **Não vinculado — recadastre este host** | Um host cadastrado antes do vínculo existir, e nunca vinculado desde então. O servidor recusa suas medições, comandos de contêiner e sondagens retransmitidas. | Clique em **Permitir recadastramento** na página do dispositivo, depois reinicie o agente. Se o agente é anterior ao vínculo, execute o comando de instalação no host primeiro. |
 
-### Hosts anteriores ao vínculo
+### Hosts anteriores ao vínculo {#hosts-that-predate-binding}
 
 !!! warning "Mudou: hosts não vinculados são recusados"
     Versões anteriores continuavam aceitando hosts cadastrados antes do
@@ -673,7 +673,7 @@ WARN this agent is not recognised for this machine
      older than binding).
 ```
 
-### Recadastramento depois de uma reinstalação
+### Recadastramento depois de uma reinstalação {#re-enrolment-after-a-reinstall}
 
 Se a máquina é reconstruída, seu disco substituído, ou seu contêiner de
 agente recriado sem o volume que mantém o segredo, o agente volta sem
@@ -699,7 +699,7 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
-## Tokens de cadastro
+## Tokens de cadastro {#enrolment-tokens}
 
 - Tokens são criados em **Configurações → Agentes** ou ao adicionar um
   dispositivo do tipo agent. O servidor mantém só uma impressão digital:
@@ -715,7 +715,7 @@ WARN this agent is not recognised for this machine
   novo para recadastrá-las.
 - Máquinas são dispositivos separados: revogar um token não as exclui.
 
-### Uso único ou frota
+### Uso único ou frota {#single-use-or-fleet}
 
 O escopo de um token é escolhido quando é criado, e é uma escolha, não um
 padrão que acontece com você:
@@ -734,7 +734,7 @@ Um token que não pode mais cadastrar — esgotado, ou passado seu prazo —
 é mostrado como **Não cadastra mais** em Configurações → Agentes. Suas
 máquinas continuam reportando; só não consegue deixar uma nova entrar.
 
-## Indisponibilidades e diagnósticos
+## Indisponibilidades e diagnósticos {#outages-and-diagnostics}
 
 Quando o servidor é inacessível, o agente continua medindo e armazena
 suas leituras em memória com seus timestamps originais. São enviadas tão
@@ -750,7 +750,7 @@ journalctl -u dumbmonit-agent -f   # log do serviço (systemd)
 tail -f /var/log/dumbmonit-agent.log   # log do serviço (OpenRC)
 ```
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|
@@ -766,7 +766,7 @@ tail -f /var/log/dumbmonit-agent.log   # log do serviço (OpenRC)
 | O log diz "this enrollment token has already enrolled all the machines it was allowed to" | Um token de uso único sendo reutilizado. Crie um novo, ou um token reutilizável em Configurações → Agentes. |
 | Windows | As partes do serviço Windows não tinham sido testadas na imagem de build do projeto no momento da escrita; reporte problemas no GitHub. |
 
-## Contêineres Docker
+## Contêineres Docker {#docker-containers}
 
 Quando o agente pode ler o socket do Docker (`docker: true`, o padrão, e
 um usuário no grupo `docker` ou root — `usermod -aG docker dumbmonit`,
@@ -798,7 +798,7 @@ minutos), **Container restarting** (três ou mais reinícios em 15
 minutos), **Container update available** (info, depois de uma hora,
 repetida diariamente). O alerta nomeia o contêiner.
 
-### Ações
+### Ações {#actions}
 
 Na página do dispositivo, cada contêiner tem duas ações e duas chaves.
 Ações viajam através de um **canal de comando**: o servidor enfileira o
@@ -842,7 +842,7 @@ atualizados da mesma forma, mas o resultado avisa que o próximo
 Contêineres cujo nome começa com `dumbmonit` ou `dumbmonit` são
 recusados: o monitor nunca se atualiza.
 
-### Políticas
+### Políticas {#policies}
 
 Uma **política** por contêiner é avaliada pelo servidor todo minuto:
 
@@ -874,7 +874,7 @@ respeito a essa linha e é mostrada ao lado dela.
 Ações automáticas aparecem em "Ações recentes" como solicitado por
 `policy`.
 
-### Regras de segurança
+### Regras de segurança {#safety-rules}
 
 - O agente só age quando `commands: true` (o padrão); defina como
   `false` para uma máquina que deve só ser medida.
@@ -896,7 +896,7 @@ Ações automáticas aparecem em "Ações recentes" como solicitado por
   `docker compose up` os recria a partir do arquivo compose: aumente a
   tag lá também.
 
-## Backups Plakar
+## Backups Plakar {#plakar-backups}
 
 O agente pode observar klosets [Plakar](https://plakar.io) (repositórios):
 a cada dez minutos, em segundo plano, ele executa `plakar at <kloset> ls`
@@ -915,7 +915,7 @@ detecção completamente:
 plakar: false                        # ou DUMBMONIT_AGENT_PLAKAR=false
 ```
 
-### Descoberta
+### Descoberta {#discovery}
 
 Nada para configurar: quando `plakar_klosets` está vazio, o agente
 encontra os klosets ele mesmo, nesta ordem, e lê cada local apenas uma
@@ -978,7 +978,7 @@ entrada do store (`plakar store set <name> passphrase=…`, que é o que
 serviço do agente. Sem isso o kloset lê como "Não pode ser aberto"
 (`backup_last_status = 0`).
 
-### Métricas e regras
+### Métricas e regras {#metrics-and-rules}
 
 Métricas, rotuladas `kloset` e `source` (o diretório que teve backup):
 `backup_last_success_seconds` (idade do snapshot mais novo),
@@ -995,7 +995,7 @@ dispositivo mostra um bloco por kloset — idade do último backup,
 contagem de snapshot, tamanho, último status — e uma linha por fonte,
 com uma dica "Backup too old" depois de dois dias.
 
-### Executar um primeiro backup
+### Executar um primeiro backup {#run-a-first-backup}
 
 Com o Plakar 1.1 instalado na máquina (`plakar version`), como o usuário
 que possuirá os backups:
@@ -1030,7 +1030,7 @@ depois adicione `plakar_klosets: ["/tmp/plakar-demo"]` a `agent.yaml`
 (um caminho simples fora de um home não é descoberto) e verifique com
 `dumbmonit-agent --dry-run` que amostras `backup_*` aparecem.
 
-## Backups restic e Borg
+## Backups restic e Borg {#restic-and-borg-backups}
 
 O agente pode observar repositórios [restic](https://restic.net) e
 [Borg](https://www.borgbackup.org): a cada dez minutos, em segundo
@@ -1124,7 +1124,7 @@ plano e procure pelas amostras `agent_backup_repo_*`:
 sudo dumbmonit-agent --config /etc/dumbmonit/agent.yaml --dry-run
 ```
 
-## Túneis WireGuard
+## Túneis WireGuard {#wireguard-tunnels}
 
 Em uma máquina que roda WireGuard, o agente lê toda interface e todo
 peer com `wg show all dump`, a cada ciclo. Nada para configurar: sem o
@@ -1173,7 +1173,7 @@ para observar todo peer. A página do dispositivo mostra um painel
 WireGuard com cada peer, o tempo desde seu último handshake, seu
 tráfego e seu keepalive.
 
-## Certificados TLS (Certbot / Let's Encrypt)
+## Certificados TLS (Certbot / Let's Encrypt) {#tls-certificates-certbot--lets-encrypt}
 
 O agente não lê `/etc/letsencrypt` diretamente. Todo certificado que o
 Certbot renova é servido em algum lugar — um servidor web, um servidor de

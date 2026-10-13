@@ -1,4 +1,4 @@
-# Nginx Proxy Manager
+# Nginx Proxy Manager {#nginx-proxy-manager}
 
 O gerenciador de proxy: hosts cuja configuração o nginx recusou, hosts
 desativados, e os certificados que os hosts apresentam, antes de uma falha de
@@ -18,7 +18,7 @@ certificado onde ele é servido, em vez disso: um handshake TLS na porta 443
 do Nginx Proxy Manager, com o nome de um host que o usa. Isso também mede o
 certificado que os visitantes realmente recebem.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_npm_`.
 
@@ -41,7 +41,7 @@ As [regras integradas](../alerting/rules.md#reverse-proxies-and-domains) que
 se aplicam: Nginx Proxy Manager host offline, Proxy certificate not renewed,
 além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Nginx Proxy Manager. Ele diz o que está errado em uma frase
@@ -50,7 +50,7 @@ expiração, certificados que não puderam ser lidos), depois os proxy hosts,
 redirecionamentos, hosts 404, streams e hosts desativados, depois os
 certificados que expiram primeiro.
 
-## Criar um usuário somente visualização no Nginx Proxy Manager
+## Criar um usuário somente visualização no Nginx Proxy Manager {#create-a-view-only-nginx-proxy-manager-user}
 
 1. No Nginx Proxy Manager, abra Users e adicione um usuário para o DumbMonit,
    com um endereço de e-mail próprio como dumbmonit@example.com. Deixe todos
@@ -87,7 +87,7 @@ não os reporta.
 O DumbMonit mantém o token que o Nginx Proxy Manager dá no login (válido por
 um dia) e faz login novamente quando ele expira, em vez de a cada verificação.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

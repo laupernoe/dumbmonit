@@ -1,4 +1,4 @@
-# Synology DSM
+# Synology DSM {#synology-dsm}
 
 NAS Synology através da API web do DSM: volumes, pools de armazenamento,
 saúde de disco, temperatura, tarefas Hyper Backup, tarefas Active Backup
@@ -6,7 +6,7 @@ for Business, e Synology Drive e Photos. O primeiro motivo para
 monitorar um NAS são seus discos: um disco que esquenta ou cujo status
 SMART degrada anuncia uma falha muito antes de um volume cair.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_synology_`.
 
@@ -65,7 +65,7 @@ chamada de descoberta de API ou na conexão condena toda a sondagem.
       mais, então em um NAS recente essas duas séries simplesmente não
       existem — nada é inventado no lugar.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 ![Um dispositivo Synology: visão geral, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
@@ -99,7 +99,7 @@ Um dispositivo Synology recebe seu próprio painel acima dos gráficos:
 Tudo vem do que a sondagem armazenou: abrir a página nunca consulta o
 NAS.
 
-### Regras integradas para o NAS
+### Regras integradas para o NAS {#built-in-rules-for-the-nas}
 
 | Regra | Severidade | Dispara quando |
 |---|---|---|
@@ -114,7 +114,7 @@ NAS.
 | Synology temperature high | aviso | Um disco está acima de 55 °C, ou o DSM disparou seu aviso de temperatura, por 15 minutos. |
 | Synology memory high | aviso | Uso de memória acima de 95% por 15 minutos. |
 
-## Active Backup for Business
+## Active Backup for Business {#active-backup-for-business}
 
 O Active Backup for Business (ABB) faz backup de PCs, servidores
 físicos, máquinas virtuais e servidores de arquivos para o NAS. Se o
@@ -155,7 +155,7 @@ Regras integradas sobre tarefas:
 | Active Backup too old | aviso | Nenhuma execução bem sucedida por mais de dois dias. |
 | Active Backup task disabled | info | A tarefa não tem programação, ou seu backup contínuo está pausado, por uma hora. |
 
-### Dispositivos e seu ritmo
+### Dispositivos e seu ritmo {#devices-and-their-rhythm}
 
 Uma regra no nível de tarefa é certa para um servidor e errada para um
 laptop: as pessoas não deixam seus laptops ligados, e "nenhum backup por
@@ -179,7 +179,7 @@ reler um mês de histórico. Depois, para cada dispositivo, olha os
 | `dumbmonit_abb_device_last_success_seconds` | Idade da última execução bem sucedida deste dispositivo. Ausente se nunca teve sucesso. | mesmos |
 | `dumbmonit_abb_device_typical_interval_seconds` | Intervalo mediano entre dois sucessos, dias de descanso excluídos. Ausente enquanto aprendendo. | mesmos |
 
-#### Como "atrasado" é julgado
+#### Como "atrasado" é julgado {#how-overdue-is-judged}
 
 Em palavras simples, para cada dispositivo:
 
@@ -263,7 +263,7 @@ Regras integradas sobre dispositivos:
     também volta quando o token CSRF está faltando, então o DumbMonit
     pede um ao DSM no login e o envia em toda chamada.
 
-## Synology Drive
+## Synology Drive {#synology-drive}
 
 O DSM não documenta a API web do Synology Drive. O DumbMonit lê três
 chamadas cujo nome e forma vêm da biblioteca comunitária
@@ -295,7 +295,7 @@ instalado, nunca uma falha.
 
 A opção `drive` (ativada por padrão) desliga toda a família.
 
-## Synology Photos
+## Synology Photos {#synology-photos}
 
 O Synology Photos entrega uma API de navegação bem documentada, mas nem
 a Synology nem as bibliotecas da comunidade expõem uma lista em nível
@@ -308,7 +308,7 @@ API sem nenhuma requisição extra ao NAS — o mesmo catálogo
 `SYNO.API.Info` já responde para todo outro pacote. A opção `photos`
 (ativada por padrão) a desliga.
 
-## O que preparar no NAS
+## O que preparar no NAS {#what-to-prepare-on-the-nas}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: uma conta reservada para monitoramento, despida de tudo que
@@ -363,7 +363,7 @@ a API do DSM não precisa — nunca a conta com a qual você entra.
 
 Documentação do fornecedor: [Create a user in DSM](https://kb.synology.com/en-global/DSM/help/DSM/AdminCenter/file_user_create).
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -372,7 +372,7 @@ Documentação do fornecedor: [Create a user in DSM](https://kb.synology.com/en-
 Endereço: `192.168.1.30`, `nas.lan` ou `nas.lan:5001`. Sem uma porta,
 5001 é usada via HTTPS e 5000 via HTTP.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -384,7 +384,7 @@ Endereço: `192.168.1.30`, `nas.lan` ou `nas.lan:5001`. Sem uma porta,
 | `drive` | Observar Synology Drive | `true` | Lê se o serviço Synology Drive responde, suas pastas de equipe e sua contagem de conexões ativas. Um NAS sem o pacote é simplesmente pulado. |
 | `photos` | Observar Synology Photos | `true` | Mostra se o pacote Synology Photos está instalado, sem nenhuma requisição extra ao NAS. A Synology não expõe uma lista de dispositivos de backup móvel através de nenhuma API. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

@@ -1,4 +1,4 @@
-# VictoriaMetrics e VictoriaLogs
+# VictoriaMetrics e VictoriaLogs {#victoriametrics-and-victorialogs}
 
 O próprio banco de dados de séries temporais e o banco de dados de logs: se
 aceitam o que lhes é enviado, quanto disco resta antes de parar de aceitar
@@ -19,7 +19,7 @@ retenção. Qualquer coisa que envia para eles (vmagent, Prometheus remote
 write, Vector, Fluent Bit, Promtail) tenta de novo, depois descarta. Esta
 página é sobre ver isso chegando.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Métricas têm o prefixo `dumbmonit_victoriametrics_` ou
 `dumbmonit_victorialogs_`. Os totais são contadores: gráficos e regras os
@@ -64,7 +64,7 @@ aplicam: Metrics or log storage read-only, Metrics or log storage almost
 read-only, Metrics or log server unhealthy, Metrics or log data refused,
 VictoriaMetrics slow inserts, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o servidor. Ele diz, nesta ordem:
@@ -79,7 +79,7 @@ nunca consulta o servidor. Ele diz, nesta ordem:
    livre de cada caminho de armazenamento contra seu limite somente
    leitura.
 
-## Deixar o DumbMonit ler a própria saúde do VictoriaMetrics
+## Deixar o DumbMonit ler a própria saúde do VictoriaMetrics {#let-dumbmonit-read-victoriametrics-own-health}
 
 1. Nada para instalar: o VictoriaMetrics publica sua própria saúde em
    /health e /metrics, na porta de sua API (8428 por padrão). Verifique a
@@ -114,7 +114,7 @@ nunca consulta o servidor. Ele diz, nesta ordem:
     mostra o espaço livre restante acima desse limite e avisa abaixo de
     10%.
 
-## Deixar o DumbMonit ler a própria saúde do VictoriaLogs
+## Deixar o DumbMonit ler a própria saúde do VictoriaLogs {#let-dumbmonit-read-victorialogs-own-health}
 
 1. Nada para instalar: o VictoriaLogs publica sua própria saúde em /health
    e /metrics, na porta de sua API (9428 por padrão). Verifique a partir do
@@ -146,7 +146,7 @@ nunca consulta o servidor. Ele diz, nesta ordem:
     mostra o espaço livre restante acima desse limite e avisa abaixo de
     10%.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

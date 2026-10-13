@@ -1,4 +1,4 @@
-# FortiGate
+# FortiGate {#fortigate}
 
 通过 FortiOS REST API 监控 Fortinet FortiGate:宕机的站点到站点
 IPsec 隧道、丢失链路的已启用接口、失去同步或缺少成员的 HA 集群、

@@ -1,4 +1,4 @@
-# Unraid
+# Unraid {#unraid}
 
 Um servidor Unraid através de sua API GraphQL: um array que não está
 iniciado, discos desativados, faltando ou reportando erros de leitura,
@@ -24,7 +24,7 @@ contêineres Docker, as VMs e as notificações não lidas.
     campos, enumerações, tamanhos em kilobytes), não contra um servidor em
     execução. Toda consulta é uma leitura. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_unraid_`.
 
@@ -70,7 +70,7 @@ As [regras integradas](../alerting/rules.md#unraid) que se aplicam:
 - **Unraid container stopped**: um contêiner configurado para iniciar com o
   array não está rodando há dez minutos (Advisory).
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Array diz o que está errado em uma frase, mostra a ocupação do
 array, a última verificação de paridade, os contêineres e VMs em execução,
@@ -78,7 +78,7 @@ depois lista cada disco — paridade primeiro, depois dados, depois cache —
 com seu status, temperatura e ocupação, e os contêineres que deveriam estar
 rodando.
 
-## Criar uma chave de API somente leitura para o DumbMonit
+## Criar uma chave de API somente leitura para o DumbMonit {#create-a-read-only-api-key-for-dumbmonit}
 
 1. No Unraid 7.2 ou posterior a API é embutida. No Unraid 6.12 a 7.1,
    instale o plugin Unraid Connect da aba Apps primeiro: ele traz a mesma
@@ -101,7 +101,7 @@ rodando.
     DumbMonit nunca desperta um: um disco dormindo simplesmente não tem
     temperatura até girar de novo.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -117,7 +117,7 @@ Opções:
   autoassinado.
 - **Tempo limite por requisição** (15 s).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "Unraid refused the API key (401)": a chave está errada ou foi excluída.
 

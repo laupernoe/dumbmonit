@@ -1,6 +1,6 @@
-# Perguntas frequentes
+# Perguntas frequentes {#faq}
 
-## Perdi a senha
+## Perdi a senha {#i-lost-the-password}
 
 Peça a outro administrador primeiro: em Configurações → **Usuários**,
 **Editar** na sua conta define uma nova senha e a mostra uma vez, e
@@ -21,7 +21,7 @@ variável (`docker compose up -d dumbmonit`, com a variável desativada ou
 vazia no seu ambiente). Dispositivos, regras, canais e as configurações de
 login único permanecem intactos.
 
-## Sem dados após adicionar um dispositivo
+## Sem dados após adicionar um dispositivo {#no-data-after-adding-a-device}
 
 Dê um minuto: a primeira sondagem roda no intervalo do dispositivo (60 s por
 padrão) e escritas chegam ao VictoriaMetrics a cada 5 segundos
@@ -41,7 +41,7 @@ padrão) e escritas chegam ao VictoriaMetrics a cada 5 segundos
 4. Verifique que o contêiner pode alcançar o dispositivo: redes Docker e
    firewalls são os culpados habituais.
 
-## Ping diz "erro de configuração"
+## Ping diz "erro de configuração" {#ping-says-configuration-error}
 
 O monitor de ping precisa de um socket de echo ICMP. O contêiner roda sem
 nenhuma capacidade, então o arquivo Compose permite esses sockets com o
@@ -50,7 +50,7 @@ de que as linhas `sysctls:` ainda estão lá, depois `docker compose up -d`.
 Veja
 [Ping ICMP sem uma capacidade](install/docker.md#icmp-ping-without-a-capability).
 
-## O agente não aparece
+## O agente não aparece {#the-agent-does-not-appear}
 
 - O instalador faz um envio de teste antes de iniciar o serviço e para com
   um erro explícito se a URL ou o token estiverem errados. Corrija
@@ -68,7 +68,7 @@ Veja
 
 Veja [Agente Linux, macOS, FreeBSD e Windows](devices/agent.md).
 
-## Mudando a porta
+## Mudando a porta {#changing-the-port}
 
 O contêiner escuta na 8080; a porta do host é a que `docker-compose.yml`
 publica. Defina `DUMBMONIT_PORT` (em um arquivo `.env` ao lado do arquivo
@@ -81,13 +81,13 @@ DUMBMONIT_PORT=8099 docker compose up -d
 Para mudar a porta *dentro* do contêiner, defina `DUMBMONIT_BIND`, por
 exemplo `0.0.0.0:9000`, e ajuste o mapeamento de porta.
 
-## Por que o alerta é "Aviso" quando a regra diz "warning"?
+## Por que o alerta é "Aviso" quando a regra diz "warning"? {#why-is-the-alert-advisory-when-the-rule-says-warning}
 
 A API armazena três severidades: `info`, `warning`, `critical`. A interface
 as mostra com as palavras do boletim meteorológico: Info, Aviso, Alerta.
 Veja [Severidades](alerting/index.md#severities).
 
-## Um alerta está "Suprimido pelo pai"
+## Um alerta está "Suprimido pelo pai" {#an-alert-is-suppressed-by-parent}
 
 O dispositivo tem um dispositivo pai inacessível, então seus próprios
 alertas são retidos em vez de enviados. Corrija o pai; os alertas do filho
@@ -95,13 +95,13 @@ se resolvem ou disparam por conta própria depois, sem uma segunda
 notificação. Veja
 [Supressão por dependência](alerting/index.md#dependency-suppression).
 
-## "CPU inusual" nunca dispara
+## "CPU inusual" nunca dispara {#unusual-cpu-never-fires}
 
 É uma linha de base sazonal que permanece silenciosa por seus primeiros 14
 dias em cada série. Durante esse tempo ela só mostra o que teria disparado.
 Veja [Aprendizado de linha de base](alerting/index.md#baseline-learning).
 
-## Posso usar meu próprio VictoriaMetrics?
+## Posso usar meu próprio VictoriaMetrics? {#can-i-use-my-own-victoriametrics}
 
 Sim: defina `DUMBMONIT_VM_URL` para seu endereço (`http://host:8428`) e o
 VictoriaMetrics embutido não é iniciado. Toda métrica tem o prefixo
@@ -109,14 +109,14 @@ VictoriaMetrics embutido não é iniciado. Toda métrica tem o prefixo
 `GET /api/health` reporta `victoria.embedded: false` uma vez feita a
 mudança.
 
-## O DumbMonit precisa ser acessível pela internet?
+## O DumbMonit precisa ser acessível pela internet? {#does-dumbmonit-need-to-be-reachable-from-the-internet}
 
 Não. Ele alcança dispositivos e serviços de notificação; nada chama de
 volta, exceto agentes, que precisam alcançar a URL do servidor. Mantenha-o
 na sua LAN ou detrás de uma VPN; se você o expõe, use um proxy reverso com
 TLS e defina `DUMBMONIT_COOKIE_SECURE=1`.
 
-## Existe um token de API?
+## Existe um token de API? {#is-there-an-api-token}
 
 Sim. Configurações → **API e assistentes** cria tokens `dmt_…` com um
 escopo `read` ou `write`; envie um como `Authorization: Bearer dmt_…` em

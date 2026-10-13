@@ -1,4 +1,4 @@
-# Grafana Loki
+# Grafana Loki {#grafana-loki}
 
 日志服务器本身:它是否就绪、拒绝了哪些日志行以及原因、它的数据块
 是否成功写入存储,以及它的预写日志(WAL)磁盘是否还有空间。

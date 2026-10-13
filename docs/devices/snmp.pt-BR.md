@@ -1,10 +1,10 @@
-# Dispositivo SNMP
+# Dispositivo SNMP {#snmp-device}
 
 O tipo mais universal: quase todo equipamento de rede fala SNMP. Switches,
 roteadores, NAS, nobreaks e impressoras todos qualificam. SNMP v1, v2c e v3
 são suportados.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 O perfil de coleta é detectado automaticamente a partir do `sysObjectID` do
 dispositivo (e, para nobreaks, de seu `sysDescr`). Sete perfis acompanham o
@@ -30,7 +30,7 @@ SNMP: Device unreachable, High CPU, Disk almost full, Filesystem almost full
 (forecast), UPS on battery, UPS battery low, Port accumulating errors, Port
 flapping, Unusual CPU (baseline).
 
-### Switches Zyxel
+### Switches Zyxel {#zyxel-switches}
 
 A parte padrão do perfil Zyxel (interfaces, erros Ethernet, LLDP) é comum a
 todo switch Zyxel. Os números de CPU, memória e firmware vêm do ramo privado
@@ -45,7 +45,7 @@ Zyxel mas ainda não foram vistas em hardware real.
 bilhões de quadros jumbo perfeitamente saudáveis, e uma série que sempre sobe
 em uma rede saudável só ensina as pessoas a ignorá-la.
 
-### Controladores de gerenciamento de servidor (BMC)
+### Controladores de gerenciamento de servidor (BMC) {#server-management-controllers-bmc}
 
 O próprio agente SNMP de um BMC descreve o BMC, não o servidor: seu pequeno
 Linux ARM, sua memória, seus links de rede. Um BMC Supermicro, por exemplo,
@@ -54,7 +54,7 @@ esse agente publica sobre si mesmo. As ventoinhas, temperaturas, fontes de
 alimentação e discos do servidor são lidos via [Redfish](redfish.md) em vez
 disso.
 
-## O que preparar no dispositivo
+## O que preparar no dispositivo {#what-to-prepare-on-the-device}
 
 1. Abra a interface de administração do dispositivo.
 2. Procure a seção SNMP, geralmente sob "Rede", "Serviços" ou
@@ -70,7 +70,7 @@ disso.
     Uma comunidade não é criptografada na rede. Em uma rede compartilhada,
     prefira SNMP v3, que autentica e criptografa.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -80,12 +80,12 @@ disso.
 Endereço: um IP ou nome de host, por exemplo `192.168.1.10`. A porta padrão
 é 161; escreva `host:porta` para usar outra.
 
-## Opções
+## Opções {#options}
 
 Este tipo não lê opções. Tags livres ainda estão disponíveis e são copiadas
 em toda série como `tag_<key>`.
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

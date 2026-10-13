@@ -169,7 +169,7 @@ curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
   -d @restore.json | jq
 ```
 
-## Backup locali pianificati
+## Backup locali pianificati {#scheduled-local-backups}
 
 DumbMonit scrive una copia del proprio database su una pianificazione,
 per impostazione predefinita **una volta al giorno, conservando le
@@ -228,7 +228,7 @@ su questo.
 esecuzione e se è riuscita, i file conservati e la loro dimensione, e
 **Back up now** per scriverne uno immediatamente.
 
-### Ripristinarne uno
+### Ripristinarne uno {#restoring-one}
 
 Ferma lo stack, rimetti il file sotto il nome del database, e ripristina
 la chiave accanto ad esso:

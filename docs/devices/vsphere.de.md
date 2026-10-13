@@ -1,132 +1,102 @@
-# VMware vSphere
+# VMware vSphere {#vmware-vsphere}
 
-Ein vCenter Server und die von ihm verwalteten Hosts, oder ein
-eigenständiger ESXi-Host: Hosts, die aufhören zu antworten, im
-Wartungsmodus verbleiben oder eine rote Gesundheit melden, virtuelle
-Maschinen und ihre VMware Tools, sich füllende oder unzugänglich
-werdende Datastores, und die von vSphere selbst gehobenen Alarme.
+Ein vCenter Server und die von ihm verwalteten Hosts oder ein eigenständiger ESXi-Host: Hosts,
+die nicht mehr antworten, im Wartungsmodus belassen wurden oder einen roten Zustand melden,
+virtuelle Maschinen und ihre VMware Tools, sich füllende oder unzugängliche Datastores und die
+von vSphere selbst ausgelösten Alarme.
 
-DumbMonit liest vSphere mit einem dedizierten Benutzer, der die
-eingebaute Rolle **Read-only** hält. Es schaltet nie eine VM ein oder
-aus, geht nie in den Wartungsmodus und bestätigt nie einen Alarm.
+DumbMonit liest vSphere mit einem dedizierten Benutzer mit der eingebauten Rolle
+**Nur Lesen**. Es schaltet nie eine VM ein oder aus, wechselt nie in den Wartungsmodus und
+bestätigt nie einen Alarm.
 
-Der beobachtenswerte Fehler: **ein Datastore, der sich füllt**. Wenn
-ein Thin-Provisioned-Datastore 100 % erreicht, wird jede VM, die darauf
-schreiben muss, sofort pausiert. Die von vCenter gehobenen Alarme sagen
-es auch, aber nur an den, der den Client offen hat.
+Der Fehler, auf den es ankommt: **ein Datastore, der sich füllt**. Erreicht ein Thin-provisioned
+Datastore 100 %, werden alle VMs, die darauf schreiben müssen, auf einmal angehalten. Die von
+vCenter ausgelösten Alarme sagen es auch, aber nur dem, der den Client geöffnet hat.
 
-## Warum die Web Services API
+## Warum die Web-Services-API {#why-the-web-services-api}
 
-DumbMonit spricht mit der vSphere-Web-Services-API (SOAP, `/sdk`), nicht
-mit der REST-API (`/api/vcenter/*`): Ein eigenständiger ESXi-Host hat
-keine REST-API, und auf einem vCenter sagt die REST-API nichts über
-Wartungsmodus, die Gesamtgesundheit (`overallStatus`), den Zustand der
-VMware Tools oder ausgelöste Alarme. Eine Ansicht des gesamten
-Inventars wird in einem Durchgang gelesen, Seite für Seite, und am
-Ende freigegeben.
+DumbMonit spricht die vSphere-Web-Services-API (SOAP, `/sdk`), nicht die REST-API
+(`/api/vcenter/*`): Ein eigenständiger ESXi-Host hat keine REST-API, und bei einem vCenter
+verrät die REST-API weder den Wartungsmodus, den Gesamtzustand (`overallStatus`), den Zustand der
+VMware Tools noch die ausgelösten Alarme. Eine Sicht auf das gesamte Inventar wird in einem
+Durchgang, Seite für Seite, gelesen und am Ende freigegeben.
 
-Die Sitzung wird von einer Abfrage zur nächsten behalten und nur neu
-geöffnet, wenn sie abläuft: vCenter protokolliert nicht jede Minute
-einen neuen Login.
+Die Sitzung wird von einer Prüfung zur nächsten behalten und nur bei Ablauf neu geöffnet:
+vCenter protokolliert nicht jede Minute eine neue Anmeldung.
 
-## Was beobachtet wird
+## Was überwacht wird {#what-it-watches}
 
-Alle Metriken haben das Präfix `dumbmonit_vsphere_`. Health-Werte
-folgen vSpheres `overallStatus`: 0 grün, 1 gelb, 2 rot, 3 grau
-(unbekannt).
+Alle Metriken haben das Präfix `dumbmonit_vsphere_`. Zustandswerte folgen dem `overallStatus` von
+vSphere: 0 grün, 1 gelb, 2 rot, 3 grau (unbekannt).
 
 | Metrik | Was | Labels |
 |---|---|---|
 | `info` | Wert 1 | `product` (`vcenter` oder `esxi`), `version`, `build` |
 | `hosts` | Hosts nach Verbindungszustand: `connected`, `disconnected`, `notResponding` | `state` |
-| `host_connection_state` | 0 connected, 1 von einem Administrator disconnected, 2 not responding | `host` |
-| `host_power_state` | 0 eingeschaltet, 1 Standby, 2 ausgeschaltet, 3 unbekannt | `host` |
-| `host_maintenance` | 1 im Wartungsmodus | `host` |
-| `host_status` | Gesamtgesundheit | `host` |
-| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | nur verbundene Hosts | `host` |
-| `vms` | VMs nach Power-Zustand: `poweredOn`, `poweredOff`, `suspended` (Templates ausgeschlossen) | `state` |
-| `templates` | VM-Templates | |
-| `vm_power_state` | 0 eingeschaltet, 1 ausgeschaltet, 2 suspendiert; höchstens 1000 VMs | `vm` |
-| `vm_status` | Gesamtgesundheit | `vm` |
+| `host_connection_state` | 0 verbunden, 1 von einem Administrator getrennt, 2 antwortet nicht | `esxi` |
+| `host_power_state` | 0 eingeschaltet, 1 Standby, 2 ausgeschaltet, 3 unbekannt | `esxi` |
+| `host_maintenance` | 1 im Wartungsmodus | `esxi` |
+| `host_status` | Gesamtzustand | `esxi` |
+| `host_cpu_percent`, `host_memory_percent`, `host_memory_bytes`, `host_uptime_seconds` | nur verbundene Hosts | `esxi` |
+| `vms` | VMs nach Betriebszustand: `poweredOn`, `poweredOff`, `suspended` (Vorlagen ausgenommen) | `state` |
+| `templates` | VM-Vorlagen | |
+| `vm_power_state` | 0 eingeschaltet, 1 ausgeschaltet, 2 angehalten; höchstens 1000 VMs | `vm` |
+| `vm_status` | Gesamtzustand | `vm` |
 | `vm_tools_status` | nur eingeschaltete VMs: 0 aktuell, 1 alte Version, 2 installiert, aber nicht laufend, 3 nicht installiert | `vm` |
 | `datastores` | Datastores | |
 | `datastore_capacity_bytes`, `datastore_free_bytes`, `datastore_used_percent` | | `datastore` |
 | `datastore_accessible` | 1 zugänglich, 0 unzugänglich | `datastore` |
-| `datastore_status` | Gesamtgesundheit | `datastore` |
-| `alarms` | ausgelöste, nicht bestätigte Alarme, nach Farbe: `red`, `yellow` | `status` |
+| `datastore_status` | Gesamtzustand | `datastore` |
+| `alarms` | ausgelöste, nicht bestätigte Alarme nach Farbe: `red`, `yellow` | `status` |
 | `alarms_acknowledged` | bereits bestätigte ausgelöste Alarme | |
-| `alarm` | eine Zeitreihe pro nicht bestätigtem Alarm, Wert = sein Gesundheitscode, höchstens 64 | `alarm` (sein Name), `entity`, `entity_type`, `status` |
-| `scrape_errors` | bei der letzten Abfrage fehlgeschlagene Aufrufe | |
+| `alarm` | eine Serie pro unbestätigtem Alarm, Wert = sein Zustandscode, höchstens 64 | `alarm` (sein Name), `entity`, `entity_type`, `status` |
+| `scrape_errors` | bei der letzten Prüfung fehlgeschlagene Aufrufe | |
 
-Die geltenden [eingebauten Regeln](../alerting/rules.md#vmware-vsphere):
-vSphere host not responding, vSphere host health red, vSphere host
-left in maintenance, vSphere datastore almost full, vSphere datastore
-inaccessible, vSphere VM tools not running, vSphere red alarm, plus
-Device unreachable.
+Die zutreffenden [integrierten Regeln](../alerting/rules.md#vmware-vsphere): vSphere-Host
+antwortet nicht, vSphere-Host-Zustand rot, vSphere-Host im Wartungsmodus belassen,
+vSphere-Datastore fast voll, vSphere-Datastore unzugänglich, vSphere-VM-Tools laufen nicht,
+vSphere-Alarm rot, außerdem Gerät nicht erreichbar.
 
-## Die Geräteseite
+## Die Geräteseite {#the-device-page}
 
-Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
-Öffnen der Seite fragt vSphere nie ab. Es sagt zuerst, was nicht stimmt
-(nicht antwortende Hosts, rote Alarme, fast volle oder unzugängliche
-Datastores), dann die Hosts mit ihrer Last, die Datastores mit ihrem
-Füllstand, und die VMs nach Power-Zustand.
+Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite fragt
+vSphere nie ab. Es nennt zuerst, was nicht stimmt (Hosts, die nicht antworten, rote Alarme,
+fast volle oder unzugängliche Datastores), dann die Hosts mit ihrer Last, die Datastores mit
+ihrem Füllstand und die VMs nach Betriebszustand.
 
-## Wie es validiert wurde
+## Wie es validiert wurde {#how-it-was-validated}
 
-Gegen den govmomi-Simulator `vcsim` 0.56.0, im vCenter- und im
-ESXi-Modus: Login und abgelehntes Passwort, Sitzungswiederverwendung
-und -ablauf, Durchblättern des Inventars, ein nicht antwortender Host,
-ein Host im Wartungsmodus, eine ausgeschaltete VM und ein Template. Der
-Simulator löst keinen Alarm aus: Das Lesen ausgelöster Alarme ist gegen
-die dokumentierte `AlarmState`-Struktur der Web Services API validiert.
+Gegen den govmomi-Simulator `vcsim` 0.56.0, im vCenter- und im ESXi-Modus: Anmeldung und
+abgelehntes Passwort, Wiederverwendung und Ablauf der Sitzung, Seitenweise Lesen des Inventars,
+ein nicht antwortender Host, ein Host im Wartungsmodus, eine ausgeschaltete VM und eine
+Vorlage. Der Simulator löst keinen Alarm aus: Das Lesen der ausgelösten Alarme ist gegen die
+dokumentierte Struktur `AlarmState` der Web-Services-API validiert.
 
-## Einen nur-lesenden Benutzer in vSphere erstellen
+## Einen Nur-Lese-Benutzer in vSphere erstellen {#create-a-read-only-user-in-vsphere}
 
-1. Auf einem vCenter: Administration → Single Sign On → Users and
-   Groups → Users, Domain vsphere.local → Add. Benennen Sie den
-   Benutzer wie folgt und geben Sie ihm ein langes Zufallspasswort.
+1. Auf einem vCenter: Administration → Single Sign On → Benutzer und Gruppen → Benutzer, Domäne vsphere.local → Hinzufügen. Benennen Sie den Benutzer wie folgt und geben Sie ihm ein langes zufälliges Passwort.
 
     ```
     dumbmonit
     ```
 
-2. Weiterhin auf dem vCenter: Administration → Access Control → Global
-   Permissions → Add. Wählen Sie diesen Benutzer, die Rolle Read-only,
-   und kreuzen Sie Propagate to children an. Read-only sieht jeden
-   Host, jede VM, jedes Datastore und jeden Alarm, und kann nichts
-   ändern.
+2. Weiterhin auf dem vCenter: Administration → Zugriffskontrolle → Globale Berechtigungen → Hinzufügen. Wählen Sie diesen Benutzer, die Rolle Nur Lesen und haken Sie An untergeordnete Objekte weitergeben an. Nur Lesen sieht jeden Host, jede VM, jeden Datastore und jeden Alarm und kann nichts ändern.
 
-3. Auf einem eigenständigen ESXi-Host stattdessen: im Host-Client,
-   Manage → Security & users → Users → Add user, mit demselben Namen.
-   Dann Host → Actions → Permissions → Add user: wählen Sie ihn, die
-   Rolle Read-only, und kreuzen Sie Propagate to all children an.
+3. Stattdessen auf einem eigenständigen ESXi-Host: im Host-Client Verwalten → Sicherheit & Benutzer → Benutzer → Benutzer hinzufügen, mit demselben Namen. Dann Host → Aktionen → Berechtigungen → Benutzer hinzufügen: Wählen Sie ihn, die Rolle Nur Lesen und haken Sie An alle untergeordneten Objekte weitergeben an.
 
-4. Geben Sie in DumbMonit die Adresse des vCenter oder des Hosts ein,
-   zum Beispiel "vcenter.lan" oder "esxi1.lan", mit dem Benutzernamen
-   wie erstellt: dumbmonit@vsphere.local auf einem vCenter, dumbmonit
-   auf einem Host. Verwaltet ein vCenter die Hosts, fügen Sie nur das
-   vCenter hinzu: Es meldet jeden Host, jede VM und jedes Datastore.
+4. Geben Sie in DumbMonit die Adresse des vCenters oder des Hosts ein, zum Beispiel „vcenter.lan“ oder „esxi1.lan“, mit dem Benutzernamen wie erstellt: dumbmonit@vsphere.local auf einem vCenter, dumbmonit auf einem Host. Verwaltet ein vCenter die Hosts, fügen Sie nur das vCenter hinzu: Es meldet jeden Host, jede VM und jeden Datastore.
 
-5. DumbMonit liest nur, über die vSphere-Web-Services-API (/sdk). Es
-   schaltet nie eine VM ein oder aus, geht nie in den Wartungsmodus
-   und bestätigt nie einen Alarm.
+5. DumbMonit liest nur, über die vSphere-Web-Services-API (/sdk). Es schaltet nie eine VM ein oder aus, wechselt nie in den Wartungsmodus und bestätigt nie einen Alarm.
 
 !!! warning
-    Nutzen Sie nicht das Single-Sign-On-Domänenkonto oder das
-    eingebaute Konto des Hosts wiederverwendet: Die obige Read-only-
-    Rolle ist alles, was DumbMonit braucht. vCenter und ESXi nutzen
-    standardmäßig ein selbstsigniertes Zertifikat: Aktivieren Sie
-    "Accept an unverifiable certificate", sofern der DumbMonit-Host
-    deren Zertifizierungsstelle nicht vertraut.
+    Verwenden Sie weder das Konto der Single-Sign-On-Domäne noch das eingebaute Konto des Hosts: Die obige Rolle Nur Lesen ist alles, was DumbMonit braucht. vCenter und ESXi verwenden standardmäßig ein selbstsigniertes Zertifikat: Aktivieren Sie „Nicht prüfbares Zertifikat akzeptieren“, sofern der DumbMonit-Host ihrer Zertifizierungsstelle nicht vertraut.
 
-## Credentials
+## Zugangsdaten {#credentials}
 
-| Credential | Felder |
+| Zugangsdaten | Felder |
 |---|---|
-| Benutzername / Passwort | Der dedizierte Benutzer mit der Read-only-Rolle: `dumbmonit@vsphere.local` auf einem vCenter, `dumbmonit` auf einem Host. |
+| Benutzername / Passwort | Der dedizierte Benutzer mit der Rolle Nur Lesen: `dumbmonit@vsphere.local` auf einem vCenter, `dumbmonit` auf einem Host. |
 
-Adresse: ein Hostname oder eine IP (`vcenter.lan`), `host:port`, oder
-eine vollständige URL; ein abschließendes `/sdk` oder `/ui` wird
-akzeptiert. Optionen: Port (443), Zertifikatsprüfung, Anfrage-Timeout
-(20 s) und ausgelöste Alarme (gelesen).
+Adresse: ein Hostname oder eine IP (`vcenter.lan`), `host:port` oder eine vollständige URL; ein
+abschließendes `/sdk` oder `/ui` wird akzeptiert. Optionen: Port (443), Zertifikatsprüfung,
+Anfrage-Timeout (20 s) und ausgelöste Alarme (lesen).

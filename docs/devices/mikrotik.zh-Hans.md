@@ -1,4 +1,4 @@
-# MikroTik RouterOS
+# MikroTik RouterOS {#mikrotik-routeros}
 
 运行 RouterOS 7 的路由器和交换机:RouterOS 和 RouterBOOT 固件是否
 已经落后、CPU、内存和存储、温度、风扇和电源,以及每个接口的状态、

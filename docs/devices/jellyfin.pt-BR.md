@@ -1,4 +1,4 @@
-# Jellyfin
+# Jellyfin {#jellyfin}
 
 Se o Jellyfin mantém suas bibliotecas atualizadas e seus espectadores
 atendidos: tarefas agendadas que falharam na última execução (a varredura de
@@ -14,7 +14,7 @@ noite**. Um compartilhamento de rede desmontado, um disco cheio, e novos
 filmes e episódios deixam de aparecer; o próprio Jellyfin continua reproduzindo
 o que já conhece, e o único vestígio é uma linha em Tarefas Agendadas.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_jellyfin_`.
 
@@ -38,7 +38,7 @@ As [regras integradas](../alerting/rules.md#self-hosted-applications) que se
 aplicam: Jellyfin scheduled task failed, Jellyfin plugin broken, Jellyfin
 restart pending, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Jellyfin. Ele diz primeiro o que está errado (tarefas com falha,
@@ -46,7 +46,7 @@ plugins quebrados, um reinício pendente), depois streams, transcodificações,
 sessões e a idade da última varredura de biblioteca, depois as tarefas com
 falha e os plugins quebrados pelo nome com o erro do próprio Jellyfin.
 
-## Criar uma chave de API no Jellyfin
+## Criar uma chave de API no Jellyfin {#create-an-api-key-in-jellyfin}
 
 1. No Jellyfin: Dashboard → API Keys (em Advanced) → +, e nomeie a chave da
    seguinte forma. Copie-a.
@@ -72,7 +72,7 @@ falha e os plugins quebrados pelo nome com o erro do próprio Jellyfin.
     confiança e coloque o Jellyfin detrás de HTTPS pela internet. Se ela
     algum dia for exposta, revogue-a na mesma página: nada mais a utiliza.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

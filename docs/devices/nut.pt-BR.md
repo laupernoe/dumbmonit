@@ -1,4 +1,4 @@
-# UPS com NUT
+# UPS com NUT {#ups-with-nut}
 
 Um UPS conectado a um NAS, um Raspberry Pi ou um servidor via USB geralmente
 é observado pelo Network UPS Tools (NUT): seu daemon, `upsd`, publica o que o
@@ -12,7 +12,7 @@ série carrega o nome de seu UPS.
 Para um UPS com sua própria placa de rede, o tipo [dispositivo SNMP](snmp.md)
 lê a UPS-MIB padrão em vez disso.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_nut_` e carregam o rótulo `ups`, o
 nome do UPS em `ups.conf` (`ups` em um NAS Synology, `qnapups` em um QNAP).
@@ -46,7 +46,7 @@ UPS on battery, UPS battery low, UPS battery needs replacing, UPS load high,
 UPS runtime short, UPS data stale, além de Device unreachable quando o
 próprio servidor NUT para de responder.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca se conecta ao servidor NUT. Um cartão por UPS: seu estado em palavras
@@ -54,7 +54,7 @@ nunca se conecta ao servidor NUT. Um cartão por UPS: seu estado em palavras
 sobrecarga…), a carga, o tempo restante, a carga de trabalho, a tensão de
 entrada e a idade da bateria.
 
-## Deixar o DumbMonit ler o servidor NUT
+## Deixar o DumbMonit ler o servidor NUT {#let-dumbmonit-read-the-nut-server}
 
 1. Encontre o servidor NUT: a máquina em que o UPS está conectado (um NAS, um
    Raspberry Pi, um servidor) executa o upsd na porta TCP 3493. A partir do
@@ -108,7 +108,7 @@ entrada e a idade da bateria.
     alimenta ainda precisam de seu próprio cliente NUT (upsmon) para desligar
     corretamente quando a bateria ficar baixa.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

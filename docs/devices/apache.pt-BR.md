@@ -1,4 +1,4 @@
-# Apache httpd
+# Apache httpd {#apache-httpd}
 
 O servidor web: workers ocupados e ociosos, o placar de workers por estado, e
 taxas de requisição/bytes quando ExtendedStatus está ativo.
@@ -7,7 +7,7 @@ O DumbMonit lê o `mod_status` embutido do Apache, consultado com `?auto` para
 que ele responda em linhas simples `Chave: Valor` em vez da página HTML
 pensada para um navegador.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_apache_`. As métricas `_total` são
 contadores: gráficos e regras as transformam em taxas. Tudo abaixo de
@@ -29,14 +29,14 @@ contadores: gráficos e regras as transformam em taxas. Tudo abaixo de
 são waiting, open_slot, starting, reading, sending, keepalive, dns_lookup,
 closing, logging, finishing e idle_cleanup.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Apache. Ele mostra workers ocupados e ociosos, a divisão do
 placar, e, com ExtendedStatus, as taxas de requisição e bytes nas últimas 24
 horas.
 
-## Ativar o mod_status do Apache
+## Ativar o mod_status do Apache {#enable-apaches-mod_status}
 
 1. Certifique-se de que o mod_status está carregado (ele vem com o Apache e
    geralmente é ativado por padrão).
@@ -88,7 +88,7 @@ suficiente, nenhum arquivo novo é necessário. Onde a configuração é um úni
 arquivo (a maioria das outras distribuições), adicione o bloco ao virtual
 host principal em vez disso.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

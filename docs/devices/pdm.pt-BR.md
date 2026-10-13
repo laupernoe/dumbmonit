@@ -1,4 +1,4 @@
-# Proxmox Datacenter Manager
+# Proxmox Datacenter Manager {#proxmox-datacenter-manager}
 
 A console que federa vários clusters Proxmox VE e instâncias Proxmox
 Backup Server: quais instâncias ela alcança, todo o acervo em um
@@ -14,7 +14,7 @@ saúde da console.
     um datacenter manager em funcionamento. Avise-nos o que não
     funcionar.
 
-## Um dispositivo para o acervo, ou um dispositivo por cluster?
+## Um dispositivo para o acervo, ou um dispositivo por cluster? {#one-device-for-the-estate-or-one-device-per-cluster}
 
 Um dispositivo Datacenter Manager não é um substituto para dispositivos
 [Proxmox VE](proxmox.md) e [Proxmox Backup Server](pbs.md). Ele responde
@@ -44,7 +44,7 @@ dispositivo dedicado.
 Se você não roda nenhuma console, não instale uma só para monitoramento:
 dispositivos dedicados veem estritamente mais.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Além dos gráficos genéricos, um dispositivo Datacenter Manager mostra
 três painéis, lidos do que a sondagem armazenou — abrir a página não
@@ -77,7 +77,7 @@ O histórico de tarefas é mantido em SQLite (`pdm_task_history`, 19 dias,
 no máximo 5000 tarefas por dispositivo) então a lista de falhas sobrevive
 a reinícios mesmo que cada sondagem só olhe a janela de tarefas.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_pdm_`.
 
@@ -116,7 +116,7 @@ instance, Datacenter console disk almost full, Datacenter console
 certificate expiring, Datacenter console updates pending. Notificações
 nomeiam a instância envolvida.
 
-## O que preparar no Proxmox Datacenter Manager
+## O que preparar no Proxmox Datacenter Manager {#what-to-prepare-in-proxmox-datacenter-manager}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: um usuário reservado para monitoramento, um token com um papel
@@ -163,7 +163,7 @@ Prefere a linha de comando? `proxmox-datacenter-manager-admin` gerencia
 remotes, não usuários; crie a conta, o token e as duas permissões na
 interface web.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -201,7 +201,7 @@ instância jamais passa pelo coletor, a visão armazenada ou a API.
 Endereço: `10.0.0.40`, `dc.lan`, `dc.lan:8443`, `[fd00::2]` ou uma URL
 completa. O esquema `https` e a porta 8443 são adicionados se faltando.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -226,7 +226,7 @@ além de seu ritmo normal — exatamente a carga que um único dispositivo de
 console deveria evitar. Sessenta segundos ainda é mais fresco que o
 intervalo de sondagem padrão.
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

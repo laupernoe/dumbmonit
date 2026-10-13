@@ -1,4 +1,4 @@
-# Tailscale
+# Tailscale {#tailscale}
 
 通过 Tailscale API 监控某个 tailnet 的设备:离线的服务器、即将
 过期的节点密钥、等待批准的设备,以及有可用更新的客户端。

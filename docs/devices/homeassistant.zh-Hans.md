@@ -1,4 +1,4 @@
-# Home Assistant
+# Home Assistant {#home-assistant}
 
 仪表盘背后的智能家居:Home Assistant 是否在运行,还是以恢复模式
 启动的、按域分类的不可用或未知实体、电池电量低、等待中的更新

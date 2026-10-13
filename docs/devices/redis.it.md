@@ -1,29 +1,26 @@
 # Redis e Valkey
 
-Lo store in memoria stesso: memoria rispetto a `maxmemory`, connessioni
-rifiutate, il collegamento di replicazione e il ritardo di ogni replica,
-snapshot falliti e scritture dell'append-only file, e la dimensione dello
-keyspace.
+Il negozio in memoria stesso: la memoria rispetto a `maxmemory`, le connessioni
+rifiutate, il link di replica e il lag di ogni replica, gli snapshot non riusciti
+e le scritture nel file di sola aggiunta, e la dimensione dello spazio chiavi.
 
-DumbMonit apre una connessione, invia `AUTH`, poi `INFO`, e la chiude.
-L'account che usa può eseguire `INFO` e `PING` e nient'altro: non può
-leggere, scrivere o nemmeno elencare una chiave. Redis 6 e successivi,
-Valkey e i fork che rispondono a `INFO` nello stesso modo (KeyDB,
-Dragonfly) sono supportati.
+DumbMonit apre una connessione, invia `AUTH`, quindi `INFO`, e la chiude. L'account
+che usa può eseguire `INFO` e `PING` e nient'altro: non può leggere, scrivere o
+nemmeno elencare una chiave. Redis 6 e successivi, Valkey e i fork che rispondono
+a `INFO` allo stesso modo (KeyDB, Dragonfly) sono coperti.
 
-I guasti da tenere d'occhio sono quelli silenziosi. A `maxmemory`, Redis o
-evacua chiavi senza avvisare nessuno oppure rifiuta ogni scrittura con
-`OOM command not allowed`, a seconda di `maxmemory-policy`; senza
-`maxmemory`, cresce finché il kernel non lo uccide. Uno snapshot fallito fa
-sì che Redis rifiuti le scritture finché `stop-writes-on-bgsave-error` è
-attivo, cosa che è per impostazione predefinita. Una replica il cui
-collegamento con il suo primario è inattivo continua a rispondere alle
-letture, con dati obsoleti.
+I fallimenti che vale la pena osservare sono quelli silenziosi. A `maxmemory`, Redis
+o evita le chiavi senza dirlo a nessuno o rifiuta ogni scrittura con `OOM command
+not allowed`, a seconda di `maxmemory-policy`; senza `maxmemory`, cresce finché il
+kernel non lo uccide. Uno snapshot non riuscito fa sì che Redis rifiuti le scritture
+finché `stop-writes-on-bgsave-error` è acceso, il che è per impostazione predefinita.
+Una replica il cui link al suo primary è giù continua a rispondere alle letture,
+con dati stantii.
 
-## Cosa controlla
+## Cosa monitora
 
-Tutte le metriche hanno il prefisso `dumbmonit_redis_`. I totali sono
-contatori: grafici e regole li trasformano in tassi.
+Tutte le metriche hanno il prefisso `dumbmonit_redis_`. I totali sono contatori:
+i grafici e le regole li trasformano in rate.
 
 | Metrica | Cosa | Etichette |
 |---|---|---|
@@ -33,40 +30,39 @@ contatori: grafici e regole li trasformano in tassi.
 | `memory_max_bytes`, `memory_used_percent` | `maxmemory` e la quota usata; assente quando `maxmemory` è 0 (nessun limite) | |
 | `maxmemory_policy_info` | valore 1 | `policy` |
 | `connected_clients`, `blocked_clients`, `max_clients` | | |
-| `rejected_connections_total` | connessioni rifiutate perché `maxclients` è stato raggiunto | |
-| `evicted_keys_total`, `expired_keys_total` | chiavi evacuate a `maxmemory`, chiavi scadute | |
-| `keyspace_hits_total`, `keyspace_misses_total` | ricerche che hanno trovato la loro chiave, e quelle che non l'hanno trovata | |
+| `rejected_connections_total` | connessioni rifiutate perché è stato raggiunto `maxclients` | |
+| `evicted_keys_total`, `expired_keys_total` | chiavi evitate a `maxmemory`, chiavi scadute | |
+| `keyspace_hits_total`, `keyspace_misses_total` | ricerche che hanno trovato la loro chiave, e quelle che non lo hanno fatto | |
 | `commands_processed_total`, `connections_received_total`, `ops_per_second` | | |
-| `error_replies_total`, `acl_denied_auth_total` | risposte di errore inviate, e login rifiutati (una password che viene indovinata si vede qui) | |
-| `keys`, `keys_expiring` | chiavi in tutti i database, e quelle con una scadenza; sempre presente, anche a zero | |
+| `error_replies_total`, `acl_denied_auth_total` | risposte di errore inviate, e accessi rifiutati (un tentativo di indovinare una password mostra qui) | |
+| `keys`, `keys_expiring` | chiavi in tutti i database, e quelle con una scadenza; sempre presenti, anche a zero | |
 | `db_keys` | chiavi per database | `db` |
 | `rdb_last_save_ok` | 0 quando l'ultimo snapshot (`BGSAVE`) è fallito | |
 | `rdb_changes_since_last_save`, `rdb_last_save_timestamp_seconds` | | |
-| `aof_enabled`, `aof_last_write_ok`, `aof_last_rewrite_ok` | append-only file; i due stati solo quando è attivo | |
+| `aof_enabled`, `aof_last_write_ok`, `aof_last_rewrite_ok` | file di sola aggiunta; i due status solo quando è acceso | |
 | `loading` | 1 mentre Redis carica il suo dataset all'avvio | |
-| `connected_replicas` | replica collegate a questo primario | |
-| `replica_online`, `replica_lag_seconds`, `replica_lag_bytes` | visto dal primario, per replica: online o no, secondi dall'ultima conferma, byte di ritardo | `replica` (`ip:porta`) |
-| `master_link_up`, `master_last_io_seconds`, `master_link_down_seconds`, `master_sync_in_progress` | su una replica: il suo collegamento con il primario | |
+| `connected_replicas` | repliche collegate a questo primary | |
+| `replica_online`, `replica_lag_seconds`, `replica_lag_bytes` | visto dal primary, per replica: online o non, secondi da quando ha riconosciuto l'ultima volta, byte indietro | `replica` (`ip:port`) |
+| `master_link_up`, `master_last_io_seconds`, `master_link_down_seconds`, `master_sync_in_progress` | su una replica: il suo link al primary | |
 | `uptime_seconds`, `cluster_enabled` | | |
 
-Le [regole integrate](../alerting/rules.md#databases-message-broker-and-security-engine)
-che si applicano: Redis memory near maxmemory, Redis refusing connections,
-Redis replication link down, Redis replica lagging, Redis snapshot failed,
-Redis append-only file write failed, più Device unreachable.
+Le [regole incorporate](../alerting/rules.md#databases-message-broker-and-security-engine)
+che si applicano: memoria Redis vicino a maxmemory, Redis rifiuta le connessioni,
+link di replica Redis giù, replica Redis in ritardo, snapshot Redis non riuscito,
+scrittura file di sola aggiunta Redis non riuscita, più Device irraggiungibile.
 
 ## La pagina del dispositivo
 
-Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
-pagina non interroga mai Redis. Indica cosa non va in una frase
-(replicazione, memoria rispetto a `maxmemory` e la policy che si applica al
-limite, persistenza, connessioni rifiutate), poi le chiavi, la memoria, i
-client, i comandi al secondo, il tasso di successo, le chiavi evacuate
-nelle ultime 24 ore e l'uptime, poi le chiavi per database e il ritardo di
-ogni replica.
+Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina
+non interroga mai Redis. Dice cosa c'è che non va in una frase (replica, memoria
+rispetto a `maxmemory` e la politica che si applica al limite, persistenza, connessioni
+rifiutate), poi le chiavi, la memoria, i client, i comandi al secondo, il rapporto hit,
+le chiavi evitate nelle ultime 24 ore e l'uptime, poi le chiavi per database e il lag
+di ogni replica.
 
-## Creare un utente Redis che possa solo eseguire INFO
+## Crea un utente Redis che può solo eseguire INFO
 
-1. Su Redis 6 o successivo, oppure Valkey, crea un utente che possa eseguire INFO e PING e nient'altro, senza accesso ad alcuna chiave. In redis-cli, autenticato con un utente autorizzato a gestire le ACL:
+1. Su Redis 6 o successivo, o Valkey, crea un utente che può eseguire INFO e PING e nient'altro, senza accesso a nessuna chiave. In redis-cli, acceduto con un utente autorizzato a gestire gli ACL:
 
     ```
     ACL SETUSER dumbmonit on >a-long-password -@all +info +ping
@@ -78,32 +74,37 @@ ogni replica.
     ACL SAVE
     ```
 
-3. Su Redis 5 o più vecchio, oppure con solo requirepass impostato, scegli Password only più sotto. Quella password porta ogni diritto: preferisci un utente ACL ogni volta che il server lo supporta.
+3. Su Redis 5 o precedente, o con solo requirepass impostato, scegli Password only qui sotto. Quella password comporta ogni diritto: preferisci un utente ACL quando il server lo supporta.
 
-4. In DumbMonit, inserisci l'indirizzo del server, per esempio "cache.lan" oppure "cache.lan:6380". Se il server accetta solo TLS su quella porta (tls-port), spunta TLS più sotto.
+4. In DumbMonit, inserisci l'indirizzo del server, ad esempio "cache.lan" o "cache.lan:6380". Se il server accetta solo TLS su quella porta (tls-port), abilita TLS qui sotto.
 
-5. DumbMonit invia AUTH, poi INFO. Non legge, scrive o elenca mai una chiave.
+5. DumbMonit invia AUTH, quindi INFO. Non legge, scrive o elenca mai una chiave.
 
 !!! warning
-    Redis non dà alcun avviso prima di maxmemory: al limite evacua chiavi silenziosamente oppure rifiuta ogni scrittura, a seconda di maxmemory-policy. Senza maxmemory cresce finché il kernel non lo uccide. DumbMonit avvisa sopra il 90% di maxmemory.
+    Redis non dà avviso prima di maxmemory: al limite o evita le chiavi in silenzio o rifiuta ogni scrittura, a seconda di maxmemory-policy. Senza maxmemory cresce finché il kernel non lo uccide. DumbMonit avvisa al di sopra del 90% di maxmemory.
 
 ## Credenziali
 
 | Credenziale | Campi |
 |---|---|
-| ACL user (consigliato) | L'utente creato sopra e la sua password, inviati come `AUTH user password`. |
-| Password only | Il valore `requirepass`, inviato come `AUTH password`. |
-| No authentication | Per un server senza alcuna password. |
+| Utente ACL (consigliato) | L'utente creato sopra e la sua password, inviati come `AUTH user password`. |
+| Solo password | Il valore `requirepass`, inviato come `AUTH password`. |
+| Nessuna autenticazione | Per un server senza password. |
 
-Indirizzo: un nome host o IP (`cache.lan`), `host:porta`, oppure una
-stringa di connessione (`redis://cache.lan:6380`; tutto ciò che segue la
-porta viene ignorato, e le credenziali scritte in essa non vengono mai
-usate). Opzioni: porta (6379), TLS (disattivato), verifica del
-certificato, e timeout per l'intero controllo (10 s). Con TLS attivo, il
-certificato viene verificato contro le autorità pubbliche integrate in
-DumbMonit; per un'autorità privata, spunta Accept an unverifiable
-certificate.
+Indirizzo: un nome host o IP (`cache.lan`), `host:port`, o una stringa di connessione
+(`redis://cache.lan:6380`; qualsiasi cosa dopo la porta viene ignorata, e le
+credenziali scritte in essa non vengono mai utilizzate). Opzioni: porta (6379), TLS (spento),
+verifica del certificato, e timeout per l'intero controllo (10 s). Con TLS attivo, il
+certificato viene controllato rispetto alle autorità pubbliche incorporate in DumbMonit;
+per un'autorità privata, abilita Accetta un certificato non verificabile.
 
-In un deployment Redis Sentinel o Cluster, aggiungi ogni server che vuoi
-osservare: ciascuno riporta la propria memoria, i client e la persistenza,
-e un primario riporta le sue replica. Sentinel stesso non è supportato.
+Una password rifiutata (`WRONGPASS`, `NOAUTH`, `NOPERM`) viene mostrata come un errore
+di credenziale e nessuno viene avvisato dell'errore stesso, ma DumbMonit allora non
+raccoglie niente: la regola Device irraggiungibile continua a salire, come per qualsiasi
+dispositivo che non può leggere, finché le credenziali non funzionano di nuovo. Redis
+riavviato senza il suo utente ACL (utenti definiti con `ACL SETUSER` ma mai salvati)
+causa esattamente questo.
+
+In una distribuzione Redis Sentinel o Cluster, aggiungi ogni server che vuoi osservare:
+ognuno segnala la sua memoria, client e persistenza, e un primary segnala le sue repliche.
+Sentinel stesso non è coperto.

@@ -1,4 +1,4 @@
-# GitLab (self-managed)
+# GitLab (self-managed) {#gitlab-self-managed}
 
 Se uma instância GitLab self-managed está servindo, e se as partes que
 sustentam silenciosamente todo o resto estão se mantendo em dia: as filas do
@@ -18,7 +18,7 @@ GitLab continua servindo páginas enquanto sua fila de workers em segundo
 plano cresce, e nada na página avisa isso até que uma notificação, um
 webhook ou uma atualização de pipeline de CI atrase minutos ou horas.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_gitlab_`.
 
@@ -46,7 +46,7 @@ pontuação de segurança verifica as configurações de dois fatores e cadastro
 e migrações pendentes: veja
 [Atualizações de fornecedor e outras verificações](../using/security-score.md).
 
-## O que ele não observa
+## O que ele não observa {#what-it-does-not-watch}
 
 A própria API REST do GitLab não tem um endpoint que diga "uma versão mais
 nova do GitLab está disponível": diferente do Nextcloud ou Paperless-ngx, não
@@ -60,7 +60,7 @@ A saúde dos pipelines de CI é lida apenas para os projetos que você lista: a
 API do GitLab não tem um endpoint "todos os pipelines com falha" para toda a
 instância, apenas um por projeto.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o GitLab. Ele diz primeiro o que está errado (um componente de
@@ -68,7 +68,7 @@ prontidão falhou, executores todos offline, um grande atraso no Sidekiq),
 depois a versão, depois as contagens da instância e as configurações lidas da
 API de administração.
 
-## Criar um token de acesso pessoal em uma conta de administrador
+## Criar um token de acesso pessoal em uma conta de administrador {#create-a-personal-access-token-on-an-administrator-account}
 
 1. Crie um token de acesso pessoal em uma conta de administrador: avatar →
    Edit profile → Access tokens → Add new token. Nomeie-o como abaixo, defina
@@ -106,7 +106,7 @@ Verificando o token manualmente, a partir do host DumbMonit:
 curl --header 'PRIVATE-TOKEN: YOUR-TOKEN' 'https://gitlab.example.com/api/v4/version'
 ```
 
-## Credenciais
+## Credenciais {#readiness-check}
 
 | Credencial | Campos |
 |---|---|

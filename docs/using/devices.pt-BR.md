@@ -1,8 +1,8 @@
-# A página de dispositivos
+# A página de dispositivos {#the-devices-page}
 
 ![O rack: uma placa de identificação por dispositivo](../assets/screenshots/devices-light.png){ loading=lazy }
 
-## O rack
+## O rack {#the-rack}
 
 Cada dispositivo é uma placa de identificação de rack 1U: um LED de status, o
 nome, o selo do tipo, o endereço, quando foi visto por último, e um sparkline
@@ -21,7 +21,7 @@ Filtros: uma caixa de busca, um segmento de estado (Todos, Precisa de atenção,
 Reportando, Desativado) e um filtro de tipo. **Adicionar dispositivo** é a ação
 principal.
 
-## Um dispositivo
+## Um dispositivo {#a-device}
 
 ![Uma página de dispositivo: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
 
@@ -48,7 +48,7 @@ Serviços (HTTP, TCP, DNS, ping, TLS) recebem instrumentos em vez disso:
 número de **Verificações**, e uma barra de **Histórico** de intervalos (o mais
 antigo à esquerda) mostrando quando o serviço esteve fora do ar.
 
-## Políticas de contêiner
+## Políticas de contêiner {#container-policies}
 
 Em uma máquina com agente e Docker, uma faixa **Docker** fica sob o
 cabeçalho: contagem de contêineres, quantos estão em execução, atualizações
@@ -66,14 +66,14 @@ uma linha "Aplicar a todos":
 Cada chave salva por conta própria. Detalhes e regras de segurança:
 [Contêineres Docker](../devices/agent.md#docker-containers).
 
-## Adicionando e editando
+## Adicionando e editando {#adding-and-editing}
 
 Veja [Adicione seu primeiro dispositivo](../install/first-device.md) para o
 formulário e os [tipos de dispositivo](../devices/index.md) para o que cada
 tipo precisa. Ao editar, o formulário abre **Mais opções** por conta própria
 se o dispositivo já usa alguma.
 
-## Excluindo
+## Excluindo {#deleting}
 
 Excluir um dispositivo o remove da configuração, limpa seus alertas
 imediatamente — nada é notificado, o histórico mantém uma linha `device

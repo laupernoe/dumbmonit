@@ -1,4 +1,4 @@
-# Plex Media Server
+# Plex Media Server {#plex-media-server}
 
 O que o Plex está fazendo e se está atualizado: streams reproduzindo agora,
 quantos são transcodificados e se por hardware, a largura de banda que
@@ -12,7 +12,7 @@ O Plex não publica o resultado de suas tarefas de manutenção (o "butler" só 
 o cronograma delas) nem o estado de seus backups de banco de dados, então não
 há nada a dizer sobre isso.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_plex_`.
 
@@ -32,14 +32,14 @@ Todas as métricas têm o prefixo `dumbmonit_plex_`.
 A [regra integrada](../alerting/rules.md#self-hosted-applications) que se
 aplica: Plex update available, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Plex. Ele mostra o estado de atualização e se o servidor está
 vinculado, depois streams, transcodificações, transcodificações por hardware,
 streams remotos, largura de banda e bibliotecas.
 
-## Dar ao DumbMonit acesso ao servidor Plex
+## Dar ao DumbMonit acesso ao servidor Plex {#give-dumbmonit-access-to-the-plex-server}
 
 1. O DumbMonit lê a própria API do servidor na porta 32400, nunca o plex.tv.
    Um servidor vinculado a uma conta Plex exige um token (X-Plex-Token), e o
@@ -72,7 +72,7 @@ Docker: o contêiner do DumbMonit alcança o Plex pelo seu endereço na rede
 Docker, então liste essa rede, ou o endereço do host quando o Plex publica
 sua porta no host.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

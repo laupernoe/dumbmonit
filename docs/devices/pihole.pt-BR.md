@@ -1,4 +1,4 @@
-# Pi-hole
+# Pi-hole {#pi-hole}
 
 O bloqueador de anúncios DNS: se está bloqueando, quantas consultas responde e
 bloqueia, quão antigas são suas listas de bloqueio, se seus resolvedores
@@ -14,7 +14,7 @@ das listas de bloqueio (gravity) falha há um mês, um resolvedor upstream
 responde SERVFAIL, e a página de diagnóstico que ninguém abre tem listado o
 motivo o tempo todo.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_pihole_`. O Pi-hole conta consultas
 nas últimas 24 horas, uma janela móvel que sobe e desce: esses números são
@@ -46,7 +46,7 @@ As [regras integradas](../alerting/rules.md#pi-hole) que se aplicam: Pi-hole
 blocking disabled, Pi-hole blocklists stale, Pi-hole update available, Pi-hole
 diagnosis messages, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação armazenou; abrir a página
 nunca se conecta ao Pi-hole. Ele mostra se o bloqueio está ativo (e quando uma
@@ -54,7 +54,7 @@ pausa termina), as consultas e a parcela bloqueada nas últimas 24 horas, o
 tamanho e a idade da lista de bloqueio, os clientes, as versões com qualquer
 atualização esperando, e o número de mensagens de diagnóstico.
 
-## Criar uma senha de app no Pi-hole
+## Criar uma senha de app no Pi-hole {#create-an-app-password-in-pi-hole}
 
 1. O Pi-hole v6 ou posterior é necessário: a versão 5 não tinha API REST. O
    Pi-hole não tem conta somente leitura; o mais próximo é uma senha de app,
@@ -93,7 +93,7 @@ de dois fatores está ativa: é para isso que ela serve. Para revogá-la, limpe
 `webserver.api.app_pwhash` em Settings → All settings, ou ative uma nova: a
 anterior para de funcionar imediatamente.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

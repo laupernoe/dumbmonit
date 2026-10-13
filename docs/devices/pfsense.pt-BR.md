@@ -1,4 +1,4 @@
-# pfSense
+# pfSense {#pfsense}
 
 Um firewall pfSense através do pacote de API REST da comunidade
 (`pfSense-pkg-RESTAPI`, versão 2): gateways que estão fora do ar, perdem
@@ -23,7 +23,7 @@ alterar nada. A cada minuto o DumbMonit lê, em paralelo,
     contra um pfSense em execução. Toda chamada é uma leitura. Avise-nos o
     que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_pfsense_`.
 
@@ -68,14 +68,14 @@ As [regras integradas](../alerting/rules.md#pfsense) que se aplicam:
   minutos (Advisory).
 - **pfSense disk nearly full**: mais de 90% por trinta minutos (Advisory).
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Firewall diz o que está errado em uma frase, mostra CPU, memória,
 disco e temperatura, depois lista todo gateway com sua latência e perda, as
 interfaces sem link, os serviços parados, e uma atualização disponível do
 pacote de API REST.
 
-## Criar uma chave de API REST somente leitura para o DumbMonit
+## Criar uma chave de API REST somente leitura para o DumbMonit {#create-a-read-only-rest-api-key-for-dumbmonit}
 
 1. Instale o pacote de API REST da comunidade (pfSense-pkg-RESTAPI, versão
    2) em Diagnostics > Command Prompt ou um shell SSH, com o arquivo da
@@ -116,7 +116,7 @@ pacote de API REST.
     comunidade, não parte do pfSense: reinstale-o após cada atualização do
     pfSense.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -131,7 +131,7 @@ Opções:
   pfSense é autoassinado.
 - **Tempo limite por requisição** (15 s).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "pfSense refused the API key (401)": a chave está errada, ou Key não está
 marcado entre os métodos de autenticação em System > REST API > Settings.

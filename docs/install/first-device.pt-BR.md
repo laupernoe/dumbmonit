@@ -1,10 +1,10 @@
-# Adicione seu primeiro dispositivo
+# Adicione seu primeiro dispositivo {#add-your-first-device}
 
 Adicionar qualquer coisa sempre funciona da mesma forma: escolha um tipo da
 lista, um aviso à direita explica o que preparar no dispositivo, e o
 formulário só mostra os campos que importam para esse tipo.
 
-## Os três primeiros passos
+## Os três primeiros passos {#the-three-first-steps}
 
 Em uma instância nova, a visão geral não mostra um boletim vazio: ela
 mostra um guia curto — **adicione seu primeiro dispositivo**, **conecte
@@ -19,7 +19,7 @@ vez uma vez que os três passos estão resolvidos, e nunca aparece em uma
 instância que já tinha dispositivos e um canal — atualizar não entrega um
 tutorial a um homelab já estabelecido.
 
-## Adicionar um dispositivo SNMP
+## Adicionar um dispositivo SNMP {#add-an-snmp-device}
 
 O SNMP é o tipo mais universal: quase todo equipamento de rede o fala.
 Switches, roteadores, NAS, nobreaks e impressoras são os suspeitos
@@ -49,7 +49,7 @@ armazenamento, aparecem dentro de um minuto.
     Uma comunidade SNMP v1/v2c não é criptografada na rede. Em uma rede
     compartilhada, prefira SNMP v3, que autentica e criptografa.
 
-## Varrer uma rede
+## Varrer uma rede {#scan-a-network}
 
 Em vez de digitar dispositivos um a um, varra uma faixa:
 
@@ -64,7 +64,7 @@ Em vez de digitar dispositivos um a um, varra uma faixa:
    dispositivos**. Eles são criados um a um, cada linha mostrando seu
    próprio resultado, então uma falha nunca para o resto.
 
-## Adicionar um servidor Proxmox VE
+## Adicionar um servidor Proxmox VE {#add-a-proxmox-ve-server}
 
 O mesmo fluxo, com uma credencial em dois campos em vez de um:
 
@@ -92,7 +92,7 @@ uma conta DSM dedicada (nome de usuário e senha); um
 alguma, apenas o token de cadastro mostrado uma vez que o dispositivo é
 salvo.
 
-## O aviso de configuração
+## O aviso de configuração {#the-setup-notice}
 
 Todo tipo carrega seu próprio aviso, escrito pelo servidor e mostrado ao
 lado do formulário: passos numerados a fazer no dispositivo (criar um
@@ -111,7 +111,7 @@ O princípio detrás de todo aviso: uma conta dedicada somente leitura, nunca
 a que você usa para entrar. Um segredo de monitoramento exposto não deve
 conseguir alterar nada.
 
-## Campos comuns
+## Campos comuns {#common-fields}
 
 Qualquer que seja o tipo, o formulário tem:
 
@@ -125,7 +125,7 @@ Qualquer que seja o tipo, o formulário tem:
 | Ativado | Um dispositivo pausado não é verificado e não gera alertas. |
 | Tags | Rótulos livres chave/valor, copiados em toda série como `tag_<key>`. Opções específicas do tipo também vivem aqui, sob **Mais opções**. |
 
-## O que acontece depois
+## O que acontece depois {#what-happens-next}
 
 - O dispositivo aparece na página **Dispositivos** como uma placa de rack:
   LED de status, nome, tipo, endereço, visto por último, e um sparkline.

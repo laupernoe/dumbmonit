@@ -1,4 +1,4 @@
-# VMware vSphere
+# VMware vSphere {#vmware-vsphere}
 
 Um vCenter Server e os hosts que ele gerencia, ou um host ESXi autônomo:
 hosts que param de responder, ficam em modo de manutenção ou reportam uma
@@ -14,7 +14,7 @@ datastore thin provisioned atinge 100%, toda VM que precisa escrever nele é
 pausada imediatamente. Os alarmes que o vCenter dispara também avisam isso,
 mas só para quem tem o cliente aberto.
 
-## Por que a Web Services API
+## Por que a Web Services API {#why-the-web-services-api}
 
 O DumbMonit fala com a vSphere Web Services API (SOAP, `/sdk`), não com a
 API REST (`/api/vcenter/*`): um host ESXi autônomo não tem API REST, e em um
@@ -26,7 +26,7 @@ e liberada ao final.
 A sessão é mantida de uma sondagem para a próxima e reaberta apenas quando
 expira: o vCenter não registra um novo login a cada minuto.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_vsphere_`. Valores de saúde
 seguem o `overallStatus` do vSphere: 0 verde, 1 amarelo, 2 vermelho, 3 cinza
@@ -60,7 +60,7 @@ vSphere host not responding, vSphere host health red, vSphere host left in
 maintenance, vSphere datastore almost full, vSphere datastore inaccessible,
 vSphere VM tools not running, vSphere red alarm, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o vSphere. Ele diz primeiro o que está errado (hosts não
@@ -68,7 +68,7 @@ respondendo, alarmes vermelhos, datastores quase cheios ou inacessíveis),
 depois os hosts com sua carga, os datastores com seu nível de ocupação, e as
 VMs por estado de energia.
 
-## Como foi validado
+## Como foi validado {#how-it-was-validated}
 
 Contra o simulador govmomi `vcsim` 0.56.0, em modo vCenter e ESXi: login e
 senha recusada, reutilização e expiração de sessão, paginação pelo
@@ -77,7 +77,7 @@ desligada e um template. O simulador não dispara nenhum alarme: a leitura
 dos alarmes disparados é validada contra a estrutura documentada
 `AlarmState` da Web Services API.
 
-## Criar um usuário somente leitura no vSphere
+## Criar um usuário somente leitura no vSphere {#create-a-read-only-user-in-vsphere}
 
 1. Em um vCenter: Administration → Single Sign On → Users and Groups →
    Users, domínio vsphere.local → Add. Nomeie o usuário como abaixo e dê a
@@ -114,7 +114,7 @@ dos alarmes disparados é validada contra a estrutura documentada
     "Aceitar um certificado não verificável" a menos que o host DumbMonit
     confie na autoridade certificadora deles.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

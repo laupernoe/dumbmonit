@@ -1,9 +1,9 @@
-# Dispositivo de demonstração
+# Dispositivo de demonstração {#demo-device}
 
 Um dispositivo fictício produzindo medições, para explorar a ferramenta sem
 hardware. Nenhum hardware necessário.
 
-## Configuração
+## Configuração {#setup}
 
 1. Dê a ele qualquer nome e confirme.
 2. Medições falsas aparecerão imediatamente, suficientes para navegar pela

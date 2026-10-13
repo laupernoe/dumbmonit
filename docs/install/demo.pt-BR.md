@@ -1,4 +1,4 @@
-# Executar uma instância de demonstração
+# Executar uma instância de demonstração {#run-a-demo-instance}
 
 A demo pública em **[demo.dumbmonit.app](https://demo.dumbmonit.app)** é uma
 imagem comum do DumbMonit iniciada com `DUMBMONIT_DEMO=1`. Você pode executar a
@@ -10,7 +10,7 @@ verdade, ou para colocar uma vitrine no seu próprio site.
     volume próprio, ou nenhum: apontado para o `/data` de uma instância real,
     ele substituiria seus dispositivos, regras e histórico pelo acervo fictício.
 
-## O que o modo demo faz
+## O que o modo demo faz {#what-demo-mode-does}
 
 - **Entre com `demo` / `demo`.** A página de login avisa isso e preenche os
   campos com um clique. A conta vê todas as telas que um administrador vê.
@@ -42,7 +42,7 @@ A limitação de taxa do login funciona normalmente. Coloque a demo detrás do
 seu proxy reverso habitual com HTTPS e defina `DUMBMONIT_COOKIE_SECURE=1` e
 `DUMBMONIT_TRUSTED_PROXIES` como em qualquer instância pública.
 
-## Inicie-a
+## Inicie-a {#start-it}
 
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \

@@ -1,4 +1,4 @@
-# Expiração de domínio
+# Expiração de domínio {#domain-expiry}
 
 Um domínio registrado, lido de seu registro via RDAP: os dias restantes antes
 de expirar, uma retenção que o tira do DNS, um período de resgate, seu
@@ -18,7 +18,7 @@ que nunca foi verificado: todo site e caixa de e-mail sob ele para
 imediatamente. Um domínio em `redemptionPeriod` ou `pendingDelete` já expirou
 e será liberado a menos que seja restaurado, por um preço.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_domain_`.
 
@@ -46,14 +46,14 @@ se aplicam: Domain expiring (menos de 30 dias), Domain about to expire (menos
 de 7 dias ou expirado), Domain on hold, Domain in redemption, além de Device
 unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o registro. Ele mostra a data de expiração e os dias
 restantes, os códigos de status (ou a retenção e o resgate em uma frase), o
 registrador e o DNSSEC, e se a última consulta ao registro falhou.
 
-## Observar o registro de um domínio
+## Observar o registro de um domínio {#watch-a-domains-registration}
 
 1. Informe o domínio registrado, por exemplo "example.com", não um nome sob
    ele como www.example.com, que o registro não conhece. Nada a configurar e
@@ -88,7 +88,7 @@ ou um domínio que foi excluído) é reportado como um erro de configuração, n
 como uma indisponibilidade. Nomes com acentos são aceitos e consultados em sua
 forma ASCII (`xn--…`).
 
-## Credenciais
+## Credenciais {#credentials}
 
 Nenhuma: o RDAP é público.
 
