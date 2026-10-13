@@ -698,7 +698,7 @@
 				autocomplete="off"
 			/>
 		</label>
-		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} />
+		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} class="max-sm:w-full max-sm:flex-wrap" />
 		<div class="flex min-w-0 items-center justify-between gap-3 lg:contents">
 			<label class="min-w-0">
 				<span class="sr-only">{m.devices_targets_filter_kind()}</span>

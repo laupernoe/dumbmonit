@@ -263,9 +263,9 @@
 		description={quietDescription}
 	/>
 {:else if grouped}
-	<div class="space-y-6">
+	<div class="grid grid-cols-1 items-start gap-x-2.5 gap-y-6 md:grid-cols-2 xl:grid-cols-3">
 		{#each groups as group (group.key)}
-			<div>
+			<div class="min-w-0">
 				<h3 class="label-tape mb-2">
 					{#if group.target}
 						<a href={`/targets/${group.target.id}`} class="hover:text-ink hover:underline"
@@ -275,7 +275,7 @@
 						{group.name}
 					{/if}
 				</h3>
-				<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+				<div class="grid grid-cols-1 items-stretch gap-2.5">
 					{#each group.items as folded, i (folded.row.key)}
 						<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
 							{@render rowView(folded)}
