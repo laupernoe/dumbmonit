@@ -137,6 +137,7 @@
 
 		<!-- orage -->
 		<g class="storm">
+			<g fill="var(--sl-storm)" opacity=".9"><ellipse cx="760" cy="96" rx="260" ry="46" /><ellipse cx="1120" cy="80" rx="300" ry="50" /><ellipse cx="1500" cy="100" rx="280" ry="48" /><ellipse cx="1760" cy="84" rx="160" ry="40" /><ellipse cx="940" cy="150" rx="200" ry="30" /><ellipse cx="1330" cy="156" rx="220" ry="32" /></g>
 			<g stroke="var(--sl-rain)" stroke-width="1.6" stroke-linecap="round" class="rain"><path d="M600 100l-5 18M680 190l-5 18M760 120l-5 18M840 260l-5 18M920 140l-5 18M1000 300l-5 18M1080 110l-5 18M1160 230l-5 18M1240 150l-5 18M1320 320l-5 18M1400 120l-5 18M1480 250l-5 18M1560 170l-5 18M1640 300l-5 18M1720 130l-5 18M650 380l-5 18M830 420l-5 18M1010 400l-5 18M1190 380l-5 18M1370 410l-5 18M1550 390l-5 18M1730 420l-5 18" /></g>
 			<g class="flash"><rect x="540" y="60" width="1260" height="560" fill="#fff" /><path d="M1250 100l-24 130 30-4-36 140 74-170-34 4z" fill="var(--sl-bolt)" /></g>
 		</g>
@@ -202,8 +203,10 @@
 		--sl-trunk: #86684a;
 		--sl-leaf: #3f8a4a;
 		--sl-leaf2: #2f6e3b;
-		--sl-rain: rgb(255 255 255 / 0.55);
+		--sl-rain: rgb(40 56 92 / 0.55);
+		--sl-storm: #59627c;
 		--sl-bolt: #fffbe0;
+		--sl-cloud-warn: #dfe3ea;
 	}
 	:global(.dark) .scene-sugarloaf {
 		--sky1: #0a1230;
@@ -243,7 +246,9 @@
 		--sl-leaf: #1f4d46;
 		--sl-leaf2: #163b3a;
 		--sl-rain: rgb(159 176 200 / 0.4);
+		--sl-storm: #0e1428;
 		--sl-bolt: #f3f0ff;
+		--sl-cloud-warn: #2a3658;
 	}
 
 	/* Weather: clear, clouds and a mist cap, a storm. */
@@ -268,7 +273,13 @@
 		opacity: 0.25;
 	}
 	.critical {
-		filter: saturate(0.7) brightness(0.86);
+		filter: saturate(0.6) brightness(0.78);
+	}
+	.warn .cloud {
+		fill: var(--sl-cloud-warn);
+	}
+	.critical .cloud {
+		fill: var(--sl-storm);
 	}
 	.cloud {
 		animation: drift 60s ease-in-out infinite alternate;
@@ -291,7 +302,7 @@
 		animation: flash 11s linear infinite;
 	}
 	.flash rect {
-		opacity: 0.22;
+		opacity: 0.4;
 	}
 	@keyframes flash {
 		0%,

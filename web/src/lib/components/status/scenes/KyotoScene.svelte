@@ -148,10 +148,10 @@
     <!-- météo : voile, nuages, pluie, éclair -->
     <rect class="gloom" x="560" y="80" width="1220" height="540" fill="var(--ky-storm)" />
     <g class="wx-clouds" fill="var(--ky-wxcloud)">
-      <ellipse cx="900" cy="150" rx="190" ry="34" /><ellipse cx="1100" cy="128" rx="150" ry="30" /><ellipse cx="1400" cy="156" rx="210" ry="36" /><ellipse cx="1640" cy="132" rx="150" ry="28" />
+      <ellipse cx="900" cy="150" rx="190" ry="34" /><ellipse cx="1100" cy="128" rx="150" ry="30" /><ellipse cx="1400" cy="156" rx="210" ry="36" /><ellipse cx="1640" cy="132" rx="150" ry="28" /><ellipse cx="760" cy="196" rx="170" ry="30" /><ellipse cx="1250" cy="200" rx="230" ry="32" /><ellipse cx="1700" cy="210" rx="130" ry="26" />
     </g>
     <rect class="rain" x="480" y="-40" width="1400" height="720" fill="url(#ky-rain)" />
-    <rect class="bolt" x="560" y="80" width="1220" height="540" fill="#fff" />
+    <g class="bolt"><rect x="560" y="80" width="1220" height="540" fill="#fff" /><path d="M1010 170l-26 120 34-4-40 130 80-160-38 4z" fill="#fffbe0" /></g>
   </svg>
 </div>
 
@@ -175,7 +175,7 @@
     --ky-gold: #e9bd3c; --ky-gold2: #c4932a; --ky-roof: #5b4036; --ky-white: #f4ead8; --ky-wood: #7a5a44; --ky-win: #7d5a2a;
     --ky-torii: #d9472f; --ky-stone: #a9a79f; --ky-lamp: #56504c; --ky-fire: #ffd57a; --ky-glow: rgb(255 200 110 / .18);
     --ky-chochin: #e5533d; --ky-ripple: #fff; --ky-bank: #8e9382;
-    --ky-rain: rgb(60 76 104 / .5); --ky-storm: #2a3048; --ky-wxcloud: #f2f2f4;
+    --ky-rain: rgb(40 52 80 / .6); --ky-storm: #1c2236; --ky-wxcloud: #f2f2f4; --ky-cloud-warn: #cdd0d9; --ky-cloud-storm: #4a5068;
   }
   .scene-kyoto.spring { --sky1: #f6c9d8; --sky2: #fdeede; --water1: #a9c9cf; --water2: #7ba2b0; --ky-leaf: #f4a7c0; --ky-leaf2: #fbd0df; --ky-fall: #f7b6cc; }
   .scene-kyoto.autumn { --sky1: #f0b98f; --sky2: #fde6c8; --water1: #b0bfb2; --water2: #84988f; --ky-leaf: #d8452c; --ky-leaf2: #f08a2e; --ky-fall: #d9502e; }
@@ -185,7 +185,7 @@
     --ky-gold: #f0c04a; --ky-gold2: #b88a2a; --ky-roof: #2a2030; --ky-white: #3a3550; --ky-wood: #4a3a46; --ky-win: #ffd27a;
     --ky-torii: #d0583f; --ky-stone: #4b4f6c; --ky-lamp: #2a2838; --ky-fire: #ffc766; --ky-glow: rgb(255 180 80 / .38);
     --ky-chochin: #d9553f; --ky-ripple: #6a74a8; --ky-bank: #2a2f4e;
-    --ky-rain: rgb(170 190 230 / .4); --ky-storm: #05070f; --ky-wxcloud: #1a2038;
+    --ky-rain: rgb(170 190 230 / .5); --ky-storm: #05070f; --ky-wxcloud: #1a2038; --ky-cloud-warn: #2a3150; --ky-cloud-storm: #0f1426;
   }
   :global(.dark) .scene-kyoto.spring { --sky1: #0c1230; --sky2: #30244f; --water1: #171c43; --water2: #0a1028; --ky-leaf: #8a5c86; --ky-leaf2: #b07aa0; --ky-fall: #c78aae; }
   :global(.dark) .scene-kyoto.autumn { --sky1: #0c1230; --sky2: #2c2048; --water1: #171c43; --water2: #0a1028; --ky-leaf: #8c3a30; --ky-leaf2: #b8622c; --ky-fall: #c0502e; }
@@ -194,7 +194,10 @@
   .gloom, .wx-clouds, .rain, .bolt { opacity: 0; transition: opacity 2s ease; pointer-events: none; }
   .sun { transition: opacity 2s; }
   .mood-warn .gloom { opacity: .1; }
-  .mood-critical .gloom { opacity: .3; }
+  .mood-critical .gloom { opacity: .42; }
+  /* Rain falls from grey clouds: pale grey when overcast, slate when it storms. */
+  .mood-warn .wx-clouds { fill: var(--ky-cloud-warn); }
+  .mood-critical .wx-clouds { fill: var(--ky-cloud-storm); }
   .mood-warn .wx-clouds { opacity: .85; }
   .mood-critical .wx-clouds { opacity: 1; }
   .mood-warn .sun { opacity: .5; }
@@ -205,7 +208,7 @@
   @keyframes ky-rain { to { transform: translateY(60px); } }
   @keyframes ky-bolt {
     0%, 62%, 66%, 100% { opacity: 0; }
-    63% { opacity: .5; } 64% { opacity: .05; } 65% { opacity: .35; }
+    63% { opacity: .75; } 64% { opacity: .1; } 65% { opacity: .55; }
   }
   @keyframes ky-cloud { to { transform: translateX(40px); } }
 

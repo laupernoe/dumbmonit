@@ -124,6 +124,9 @@
 
 		<!-- weather -->
 		<rect class="haze" x="560" y="80" width="1220" height="540" fill="var(--dust)" />
+		<g class="wall" fill="var(--dust-wall)">
+			<ellipse cx="700" cy="470" rx="240" ry="70" /><ellipse cx="1000" cy="440" rx="280" ry="90" /><ellipse cx="1340" cy="455" rx="260" ry="80" /><ellipse cx="1640" cy="430" rx="240" ry="100" /><ellipse cx="860" cy="380" rx="200" ry="56" /><ellipse cx="1480" cy="370" rx="230" ry="60" />
+		</g>
 		<g class="wind">
 			{#each STREAKS as s, i (i)}
 				<rect class="streak" x="560" y={s.y} width={s.w} height="3" rx="1.5" fill="var(--dust-streak)" style:animation-duration="{s.d}s" style:animation-delay="{s.o}s" />
@@ -183,7 +186,8 @@
 		--moon: #a99381;
 		--star: #fff;
 		--dust: rgb(216 150 98);
-		--dust-streak: rgb(240 190 140 / 0.7);
+		--dust-streak: rgb(240 190 140 / 0.8);
+		--dust-wall: rgb(98 46 28);
 		--flash: rgb(255 244 232 / 0.8);
 		--beacon: #5fe08a;
 	}
@@ -218,7 +222,8 @@
 		--earth-halo: rgb(110 170 255 / 0.35);
 		--moon: #b8a490;
 		--dust: rgb(110 64 44);
-		--dust-streak: rgb(190 120 80 / 0.4);
+		--dust-streak: rgb(190 120 80 / 0.5);
+		--dust-wall: rgb(40 22 22);
 		--flash: rgb(255 226 206 / 0.45);
 	}
 	:global(.dark) .scene--critical {
@@ -370,7 +375,23 @@
 		opacity: 0.28;
 	}
 	.scene--critical .haze {
-		opacity: 0.5;
+		opacity: 0.68;
+	}
+	.wall {
+		opacity: 0;
+		transition: opacity 2.5s ease;
+	}
+	.scene--warn .wall {
+		opacity: 0.22;
+	}
+	.scene--critical .wall {
+		opacity: 0.75;
+		animation: roll 9s ease-in-out infinite alternate;
+	}
+	@keyframes roll {
+		to {
+			transform: translateX(-60px);
+		}
 	}
 	.wind,
 	.flash {
@@ -380,6 +401,7 @@
 		opacity: 1;
 	}
 	.streak {
+		height: 5px;
 		animation: sweep linear infinite;
 	}
 	@keyframes sweep {

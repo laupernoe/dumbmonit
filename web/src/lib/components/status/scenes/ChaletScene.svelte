@@ -158,6 +158,7 @@
 				<g class="cloud c1"><ellipse cx="1040" cy="190" rx="46" ry="12" /><ellipse cx="1070" cy="182" rx="30" ry="12" /></g>
 				<g class="cloud c2"><ellipse cx="1220" cy="214" rx="54" ry="13" /><ellipse cx="1190" cy="208" rx="30" ry="11" /></g>
 				<g class="cloud c3"><ellipse cx="1120" cy="166" rx="70" ry="15" /><ellipse cx="1160" cy="160" rx="36" ry="13" /></g>
+				<g class="cloud c4"><ellipse cx="1010" cy="168" rx="80" ry="18" /><ellipse cx="1130" cy="196" rx="90" ry="16" /><ellipse cx="1250" cy="170" rx="80" ry="18" /></g>
 			</g>
 			{#each shown as f}
 				<circle
@@ -360,23 +361,33 @@
 	.lv1 .c2,
 	.lv1 .c3,
 	.lv2 .cloud {
-		opacity: 0.85;
+		opacity: 0.9;
+	}
+	.lv1 .c4 {
+		opacity: 0.8;
+	}
+	.lv1 .cloud {
+		fill: #9aa6bd;
+	}
+	:global(.dark) .lv1 .cloud {
+		fill: #232c48;
 	}
 	.lv2 .cloud {
-		fill: #3b4660;
+		fill: #2f3a54;
+		opacity: 1;
 	}
 	:global(.dark) .lv2 .cloud {
-		fill: #161e33;
+		fill: #0e1426;
 	}
 	.chill {
 		opacity: 0;
 		transition: opacity 1.2s;
 	}
 	.lv1 .chill {
-		opacity: 0.14;
+		opacity: 0.26;
 	}
 	.lv2 .chill {
-		opacity: 0.34;
+		opacity: 0.5;
 	}
 	.lv0 {
 		--w: 10px;

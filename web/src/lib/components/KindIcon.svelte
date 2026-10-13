@@ -18,7 +18,9 @@
 
 	let { kind, platform = null, class: className = 'size-4' }: Props = $props();
 
-	const brand = $derived(platformBrand(platform) ?? kindBrand(kind));
+	// Synology's mark is a very wide wordmark: inset into a square it is unreadable at icon size.
+	const WORDMARKS = new Set(['synology']);
+	const brand = $derived(platformBrand(platform) ?? (WORDMARKS.has(kind) ? null : kindBrand(kind)));
 	const Fallback = $derived(kindIcon(kind));
 </script>
 
