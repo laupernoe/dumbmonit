@@ -99,6 +99,7 @@
 	});
 
 	let startled = $state(false);
+	// svelte-ignore state_referenced_locally
 	let seenStartle = startle;
 	$effect(() => {
 		if (startle === seenStartle) return;

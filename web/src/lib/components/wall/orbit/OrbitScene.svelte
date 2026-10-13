@@ -183,7 +183,6 @@
 						{/each}
 					</g>
 					<rect x="0" y="600" width={STAGE_W} height="500" fill="url(#orb-shade)" />
-					<rect x="1320" y="600" width="600" height="500" fill="#02040e" opacity=".9" />
 					<g mask="url(#orb-night)">
 						<g class="turn" style:animation-delay="{turnDelay}s" fill="#ffd886">
 							{#each [0, TILE] as dx (dx)}
