@@ -18,6 +18,8 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
+	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
+	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
 
 	// --- The agents themselves -----------------------------------------------
 
@@ -81,6 +83,8 @@
 	let creating = $state(false);
 	let createError = $state<unknown>(null);
 	let created = $state<CreatedAgentToken | null>(null);
+	/** Modules written into the install commands; `null` lets the agent detect everything. */
+	let modules = $state<AgentModule[] | null>(null);
 
 	/**
 	 * Scope of the token being created. Single use by default: an install
@@ -307,16 +311,19 @@
 							<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_token()}</p>
 							<CopyBlock value={created.secret} label={m.settings_agents_copy_token()} secret />
 						</div>
+						{#if created.install_linux || created.install_windows}
+							<AgentModules bind:modules />
+						{/if}
 						{#if created.install_linux}
 							<div>
 								<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_install_linux()}</p>
-								<CopyBlock value={created.install_linux} label={m.settings_agents_copy_command()} />
+								<CopyBlock value={withModules(created.install_linux, modules, 'unix')} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
 						{#if created.install_windows}
 							<div>
 								<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_install_windows()}</p>
-								<CopyBlock value={created.install_windows} label={m.settings_agents_copy_command()} />
+								<CopyBlock value={withModules(created.install_windows, modules, 'windows')} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
 						<AgentChecksums />

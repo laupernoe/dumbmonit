@@ -18,6 +18,8 @@
 	import { createAgentToken, type CreatedAgentToken } from '#lib/api/index.js';
 	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import AgentChecksums from './AgentChecksums.svelte';
+	import AgentModules from './AgentModules.svelte';
+	import { withModules, type AgentModule } from './agent-modules.js';
 	import RelayDiagram from './RelayDiagram.svelte';
 
 	interface Props {
@@ -37,6 +39,10 @@
 	let error = $state<unknown>(null);
 	let token = $state<CreatedAgentToken | null>(null);
 	let origin = $state('');
+	/** `null`: every module detects itself (the agent's default). */
+	let modules = $state<AgentModule[] | null>(null);
+	const installLinux = $derived(token ? withModules(token.install_linux, modules, 'unix') : '');
+	const installWindows = $derived(token ? withModules(token.install_windows, modules, 'windows') : '');
 
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
@@ -111,13 +117,14 @@
 			</p>
 		{/if}
 
+		<AgentModules bind:modules />
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_linux()}</p>
-			<CopyBlock value={token.install_linux} label={m.deviceform_enroll_copy_linux()} />
+			<CopyBlock value={installLinux} label={m.deviceform_enroll_copy_linux()} />
 		</div>
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_windows()}</p>
-			<CopyBlock value={token.install_windows} label={m.deviceform_enroll_copy_windows()} />
+			<CopyBlock value={installWindows} label={m.deviceform_enroll_copy_windows()} />
 		</div>
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token.name}</span></p>
