@@ -410,9 +410,19 @@ async fn simple_mode_round_trips_and_is_kept_when_omitted() {
 async fn calendar_and_latency_are_off_by_default_and_leak_nothing() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    branded_page(&app, &admin).await;
+    let page = branded_page(&app, &admin).await;
+    // Le cache public est global au processus et indexé par slug : un slug propre
+    // à ce test évite qu'un test voisin (même « acme ») y laisse son document.
+    let reply = app
+        .put(
+            &format!("/api/status-pages/{page}"),
+            json!({ "title": "Acme services", "slug": "acme-off", "published": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     let doc: Value =
-        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme", None).await.text)
+        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme-off", None).await.text)
             .unwrap();
     assert!(doc.get("calendar").is_none());
     assert!(doc["page"].get("show_calendar").is_none());
@@ -429,7 +439,7 @@ async fn calendar_covers_ninety_days_when_enabled_and_flags_are_kept_when_omitte
     let reply = app
         .put(
             &url,
-            json!({ "title": "Acme services", "slug": "acme", "published": true,
+            json!({ "title": "Acme services", "slug": "acme-cal", "published": true,
                     "show_calendar": true, "show_latency": true }),
             Some(&admin),
         )
@@ -440,14 +450,14 @@ async fn calendar_covers_ninety_days_when_enabled_and_flags_are_kept_when_omitte
     let reply = app
         .put(
             &url,
-            json!({ "title": "Acme services", "slug": "acme", "published": true }),
+            json!({ "title": "Acme services", "slug": "acme-cal", "published": true }),
             Some(&admin),
         )
         .await;
     assert_eq!(reply.body["show_calendar"], json!(true), "omitted: kept");
 
     let doc: Value =
-        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme", None).await.text)
+        serde_json::from_str(&raw(&app, "GET", "/api/public/status/acme-cal", None).await.text)
             .unwrap();
     assert_eq!(doc["page"]["show_calendar"], json!(true));
     assert_eq!(doc["page"]["show_latency"], json!(true));
