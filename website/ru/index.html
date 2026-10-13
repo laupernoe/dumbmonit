@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании</title>
+<meta name="description" content="Self-hosted мониторинг в одном контейнере: 50+ интеграций (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory), агент, 22 канала уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0. Альфа.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/ru/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании">
+<meta property="og:description" content="Один контейнер, один IP-адрес для ввода, полезные графики и оповещения меньше чем за минуту. 50+ интеграций, 22 канала уведомлений, страницы статуса. Открытый исходный код, Apache 2.0. Альфа.">
+<meta property="og:url" content="https://dumbmonit.app/ru/">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: всё в порядке? Узнайте за одну секунду. Self-hosted мониторинг в одном контейнере, рядом с талисманом-голубем.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании">
+<meta name="twitter:description" content="Один контейнер, один IP-адрес для ввода, полезные графики и оповещения меньше чем за минуту. Открытый исходный код, Apache 2.0. Альфа.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/ru/","inLanguage":"ru","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Перейти к содержимому</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="./" aria-label="Главная DumbMonit"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Разделы">
+			<a href="#watches">Что он отслеживает</a>
+			<a href="#alerting">Оповещения</a>
+			<a href="#agent">Агент</a>
+			<a href="#compare">Сравнение</a>
+			<a href="#status">Статус</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Язык"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>RU</span></summary>
+				<ul>
+				<li><a href="../" hreflang="en" lang="en">English</a></li>
+				<li><a href="../fr/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../de/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../es/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../it/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../pt/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../pt-BR/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../ru/" hreflang="ru" lang="ru" aria-current="true">Русский</a></li>
+				<li><a href="../zh-Hans/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Живое демо</a>
+			<a class="btn btn-ghost btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/ru/">Документация</a>
+			<a class="btn btn-secondary btn-sm" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+	<div class="wrap">
+		<div class="hero-grid">
+			<div>
+				<div class="status-row rise-in">
+					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>Альфа-версия, для первых тестировщиков</span>
+					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Apache 2.0, платной редакции нет</span>
+				</div>
+				<h1 class="rise-in">Всё в порядке? Узнайте за одну&nbsp;секунду.</h1>
+				<p class="lede rise-in">Предельно простой self-hosted мониторинг — от домашней лаборатории до небольшой компании. Один контейнер, один IP-адрес для ввода, полезные графики и оповещения меньше чем за минуту.</p>
+
+				<div class="code rise-in">
+					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
+<span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="Скопировано" data-copy="quickstart">Копировать</button>
+				</div>
+				<p class="code-note">Затем откройте <code>http://localhost:8080</code> и создайте первую учётную запись. Образ для amd64 (arm64 позже): <code>ghcr.io/laupernoe/dumbmonit</code>.</p>
+
+				<div class="cta">
+					<a class="btn btn-primary" href="https://demo.dumbmonit.app"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.9-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z"/></svg>Открыть живое демо</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>Смотреть на GitHub</a>
+					<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/en/latest/ru/install/docker/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>Читать руководство по установке</a>
+				</div>
+			</div>
+			<img class="mascot" src="../assets/mascot.svg" alt="Голубь DumbMonit: серо-синий, с выпученными глазами и оранжевым клювом" width="280" height="320">
+		</div>
+
+		<figure class="hero-shot">
+			<div class="shot">
+				<picture>
+					<source srcset="../assets/shots/wall-phone-dark.webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" width="390" height="844">
+					<source srcset="../assets/shots/wall-phone-light.webp" media="(max-width: 599px)" width="390" height="844">
+					<source srcset="../assets/shots/wall-dark.webp" media="(prefers-color-scheme: dark)">
+					<img src="../assets/shots/wall-light.webp" alt="Режим стены: фраза «9 warnings, 7 advisories, 2 info.», показатели отчитывающихся устройств, оповещений и прогнозов, штормовое окно погоды с голубем и оповещения, требующие вас" width="1440" height="670" fetchpriority="high">
+				</picture>
+			</div>
+			<figcaption>Сводка на настенном экране тестового экземпляра с включёнными сбоями &mdash; окно погоды показывает живую парижскую крышу с голубями. В спокойный день там написано «Ясно».</figcaption>
+		</figure>
+	</div>
+</section>
+
+<div class="wrap">
+	<div class="notice" role="note">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
+		<p><strong>Это альфа-версия</strong> (текущий релиз — 0.1.0-alpha.7). DumbMonit каждый день работает в сети своего автора, но HTTP API ещё не зафиксирован, схема базы данных продолжает меняться, а гарантий обновления между изменениями схемы пока нет. Часть интеграций проверялась только на тестовых экземплярах, а не на многолетнем боевом оборудовании; они отмечены ниже. Попробуйте и <a href="https://github.com/laupernoe/dumbmonit/issues">расскажите, что сломалось</a>.</p>
+	</div>
+</div>
+
+<section class="block" id="watches" style="border-top:0">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>Один способ добавить что угодно</h2>
+			<p>Список устройств (Мониторы) показывает строки или плитки со значками продуктов. Выберите тип монитора из более чем пятидесяти, прочитайте подсказку о том, что подготовить на устройстве, и заполните только поля, нужные этому типу. Профили SNMP подбираются по <code>sysObjectID</code> устройства; остальное делают значения по умолчанию.</p>
+		</div>
+
+		<div class="rack">
+			<div class="rack-group">
+				<h3>Сеть и межсетевые экраны</h3>
+				<ul class="faceplates">
+					<li><span class="led" aria-hidden="true"></span><span class="name">SNMP v1, v2c и v3</span><span class="what">Коммутаторы, маршрутизаторы, NAS, ИБП, принтеры. Интерфейсы и ошибки, ресурсы хоста, батарея ИБП, расходные материалы принтеров; семь профилей входят в поставку и применяются сами.</span></li>
+					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">OPNsense <span class="plate plate-advisory">Только тестовый экземпляр</span></span><span class="what">Шлюзы с задержкой и потерями, таблица состояний pf, VPN-туннели, аренды DHCP, CARP, ожидающие обновления. Ключ API только для чтения.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Обнаружение в сети</span><span class="what">Просканируйте диапазон CIDR и добавьте всё, что ответило, за один раз.</span></li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>Серверы и гипервизоры</h3>
+				<ul class="faceplates">
+					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox VE</span><span class="what">Узлы, ВМ и контейнеры, хранилища, HA, Ceph, ZFS, кворум кластера и возраст последнего бэкапа каждой гостевой системы.</span></li>
+					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Datacenter Manager <span class="plate plate-advisory">Только тестовый экземпляр</span></span><span class="what">До каких кластеров и серверов резервного копирования консоль ещё дотягивается, всё хозяйство на одной странице, неудачные задачи на каждой площадке.</span></li>
+					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Серверное оборудование (Redfish) <span class="plate plate-advisory">Только эталонные макеты</span></span><span class="what">Вентиляторы, температуры относительно собственных порогов оборудования, блоки питания и резервирование, диски, память, журнал событий. Проверено по макетам DMTF, но ещё не на настоящих платах iDRAC, iLO или Supermicro.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Машины с агентом</span><span class="what">Linux и Windows, macOS и FreeBSD — в предварительной версии. <a href="#agent">Подробнее ниже.</a></span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Active Directory</span><span class="what">Домен Windows через LDAP с обычной непривилегированной учётной записью: роли FSMO, привилегированные группы и то, что аудит домена проверяет в первую очередь — учётные записи, уязвимые к Kerberoasting, старый пароль krbtgt, компьютеры без LAPS.</span></li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>Хранилища и бэкапы</h3>
+				<ul class="faceplates">
+					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox Backup Server</span><span class="what">Календарь бэкапов за 30 дней по каждой машине, неудачные задачи с их журналами, задачи проверки и GC, прогноз заполнения хранилища данных.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Synology DSM</span><span class="what">Тома, пулы, диски и SMART, температура, Hyper Backup и Active Backup for Business с возрастом последнего успешного запуска, а также состояние пакетов Drive и Photos.</span></li>
+					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">TrueNAS <span class="plate plate-advisory">Только тестовый экземпляр</span></span><span class="what">Пул, потерявший диск, но всё ещё отдающий данные, с названием диска; scrub, квоты, снимки, репликация, SMART.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Бэкапы Plakar</span><span class="what">Возраст и результат последнего снимка по каждому репозиторию, через агент.</span></li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>Службы и приложения</h3>
+				<ul class="faceplates">
+					<li><span class="led" aria-hidden="true"></span><span class="name">Проверки доступности</span><span class="what">HTTP(S) со статусом, ключевым словом, путём JSON и сертификатом; TCP-порт; DNS-записи; ping; срок действия TLS-сертификата; смещение и страта NTP. Полоса истории, время ответа, доступность.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Сеансы приложений</span><span class="what">SMTP, PostgreSQL, MySQL и MariaDB, MQTT и WebSocket: настоящий вход или рукопожатие, поэтому состояние «работает, но вас не пускает» не считается «работает».</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Heartbeat-пинги</span><span class="what">Задача cron или скрипт бэкапа обращается к секретному URL; когда обращения прекращаются, вы узнаёте об этом. Совместимо с push-мониторами Uptime Kuma.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Контейнеры Docker</span><span class="what">Состояние, здоровье, перезапуски, возраст образа и доступные обновления, через агент. Перезапуск и обновление по желанию, в окне обслуживания.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Здоровье и SEO сайтов</span><span class="what">Недоступность, ошибка, пустая страница, пропавший ожидаемый текст, <code>noindex</code>, <code>robots.txt</code>, закрывающий всё, медленные ответы и изменения заголовка, описания или canonical URL (подтверждаются двумя проверками подряд). Перенаправления отслеживаются, поэтому переход с http на https не вызывает ложной тревоги. Также замечает страницу, ставшую почти пустой, изменения языковых тегов и перенаправлений; каждую проверку можно отключить, а число подтверждений — настроить. Сайтам присваиваются категория (интернет-магазин, блог, веб-приложение, сайт-визитка) и платформа (WordPress, Shopify, Wix&hellip;). Рассчитано на сотни сайтов: проверки распределяются по интервалу и не перегружают каждый домен, а импорт CSV раскладывает сайты по папкам.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Отслеживание изменений сайтов</span><span class="what">Следите за изменениями видимого текста страницы или целого сайта, обойдённого по sitemap: текст до и после, построчное сравнение и, если возможно, скриншоты.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">GitLab и Forgejo/Gitea</span><span class="what">Очереди Sidekiq, раннеры CI/CD, запланированные задачи и миграции базы данных на собственном Git-сервере. Обычный токен доступа подтверждает, что экземпляр работает.</span></li>
+					<li><span class="led" aria-hidden="true"></span><span class="name">Nginx и Apache</span><span class="what">Активные и простаивающие воркеры или соединения, частота запросов и байтов, через <code>stub_status</code> или <code>mod_status</code>. Учётная запись не нужна.</span></li>
+					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Mail Gateway <span class="plate plate-advisory">Только тестовый экземпляр</span></span><span class="what">Очереди Postfix и самое старое застрявшее письмо, отфильтрованная за сегодня почта, размеры карантина, возраст сигнатур антивируса и антиспама.</span></li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="legend">
+			<span><span class="led" aria-hidden="true"></span>Используется на реальных мониторах</span>
+			<span><span class="plate plate-advisory">Только тестовый экземпляр</span>Создано и проверено на настоящей копии ПО, установленной специально для этого, но пока не работавшей неделями в продакшене</span>
+		</div>
+		<p class="code-note" style="margin-top:14px">У каждого типа есть своя страница в <a href="https://dumbmonit.readthedocs.io/en/latest/ru/devices/">документации по мониторам</a>: что именно он читает и что подготовить. Демонстрационный тип монитора создаёт данные без всякого оборудования.</p>
+
+		<div class="gallery" style="margin-top:56px">
+			<figure class="wide">
+				<div class="shot">
+					<picture>
+						<source srcset="../assets/shots/add-device-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="../assets/shots/add-device-light.webp" alt="Добавление устройства: сетка типов (устройство SNMP, Proxmox VE, Proxmox Backup Server, Datacenter Manager, Mail Gateway, Synology DSM, TrueNAS, OPNsense) и панель «What to prepare» справа" width="1440" height="820" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>Добавление монитора: выберите тип, и подсказка справа расскажет, что подготовить.</figcaption>
+			</figure>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="../assets/shots/proxmox-guests-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="../assets/shots/proxmox-guests-light.webp" alt="Панель Guests в Proxmox VE: все ВМ и контейнеры по узлам со статусом, CPU, памятью, диском, сетью, временем работы, последним бэкапом и состоянием HA" width="1264" height="647" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>Proxmox VE: каждая гостевая система, её диск и последний бэкап.</figcaption>
+			</figure>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="../assets/shots/pbs-calendar-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="../assets/shots/pbs-calendar-light.webp" alt="Календарь бэкапов Proxmox Backup Server: по точке на каждый день и каждую машину за 30 дней, с возрастом последнего бэкапа" width="1264" height="700" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>Proxmox Backup Server: бэкап, который перестал выполняться, обнаружен до дня восстановления.</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="alerting">
+	<div class="wrap">
+		<div class="split">
+			<div>
+				<div class="section-head" style="margin-bottom:32px">
+					<h2>Оповещения без шума</h2>
+					<p>Полезные правила включены сразу после установки. Все усилия направлены на то, чтобы сообщений было меньше, а польза от них — больше.</p>
+				</div>
+				<ul class="points">
+					<li><strong>Зависимости</strong><p>Назначьте коммутатор родителем всего, что за ним находится. Когда он падает, вы получаете одно уведомление, а не тридцать; остальные помечаются «Подавлено родителем».</p></li>
+					<li><strong>Группировка по хосту</strong><p>NAS с деградирующим массивом присылает одно сообщение за цикл, а не по одному на каждый диск. Напоминания, эскалация, подтверждение, откладывание, игнорирование по устройству и очистка закрытой истории — всё встроено.</p></li>
+					<li><strong>Базовые уровни, которые сначала учатся</strong><p>Обнаружение аномалий без порогов для настройки: 168 интервалов, по одному на каждый час недели. Первые 14 дней оно молчит и лишь показывает, что сработало бы.</p></li>
+					<li><strong>Прогнозы</strong><p>«Эта файловая система заполнится в течение четырёх дней» выводится как прогноз, отдельно от того, что сломано прямо сейчас.</p></li>
+					<li><strong>Обслуживание и политика уведомлений</strong><p>Разовые или еженедельные окна, гистерезис, удержание при флаппинге, тихие часы, пакетная отправка и почасовой лимит, чтобы плохая ночь не превратилась в двести пушей.</p></li>
+				</ul>
+				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/en/latest/ru/alerting/">Как работают оповещения</a></p>
+			</div>
+			<div>
+				<figure>
+					<div class="shot">
+						<picture>
+							<source srcset="../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
+							<img src="../assets/shots/alerts-light.webp" alt="Страница оповещений: активные оповещения, сгруппированные по хосту, у каждого плашка Warning или Advisory, кнопки Ack, Silence 1 h и Open device" width="1440" height="760" loading="lazy">
+						</picture>
+					</div>
+					<figcaption>Оповещения, сгруппированные по хосту. Уровни читаются как в метеослужбе: info, advisory, warning.</figcaption>
+				</figure>
+
+				<h3 style="margin-top:48px">22 канала уведомлений</h3>
+				<p class="muted" style="margin-top:8px">У каждого есть кнопка «Проверить» и страница настройки в <a href="https://dumbmonit.readthedocs.io/en/latest/ru/notifications/">документации</a>.</p>
+				<ul class="chips" aria-label="Каналы уведомлений">
+					<li>Discord</li><li>Slack</li><li>Microsoft Teams</li><li>Telegram</li><li>Matrix</li><li>Mattermost</li><li>Rocket.Chat</li><li>Google Chat</li><li>Zulip</li><li>ntfy</li><li>Gotify</li><li>Pushover</li><li>Pushbullet</li><li>Bark</li><li>Apprise</li><li>Home Assistant</li><li>Эл. почта (SMTP)</li><li>Signal</li><li>Twilio SMS</li><li>PagerDuty</li><li>Opsgenie</li><li>Webhook</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>Агент для того, что не говорит по SNMP</h2>
+					<p>Небольшой бинарный файл, который отправляет на сервер данные о CPU, памяти, дисках, сети, службах и времени работы, а также о температурах, вентиляторах, SMART и пулах ZFS, если машина их предоставляет. Он сам обращается к серверу, а не наоборот: на машине не нужно открывать порты.</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># интерфейс подставит токен за вас</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="Скопировано" data-copy="agent-cmd">Копировать</button>
+				</div>
+				<p class="code-note">Для Windows по адресу <code>/install.ps1</code> отдаётся скрипт PowerShell. Агент также доступен как образ <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
+			</div>
+			<div>
+				<ul class="os-list">
+					<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Поддерживается</span><span class="how">x86_64 и aarch64, systemd или OpenRC. Контейнеры Docker и состояние ОС (обновления, ожидающая перезагрузка, упавшие юниты).</span></li>
+					<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Поддерживается</span><span class="how">x86_64, устанавливается как служба Windows. SMART через smartctl.</span></li>
+					<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Предварительная версия</span><span class="how">launchd, Apple silicon и Intel; бинарные файлы прикладываются к каждому релизу. Пока не запускалось на реальном оборудовании.</span></li>
+					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Предварительная версия</span><span class="how">rc.d, x86_64, пулы ZFS. Пока не запускалось на реальном оборудовании.</span></li>
+				</ul>
+				<ul class="points" style="margin-top:32px">
+					<li><strong>Удалённые площадки, только исходящие соединения</strong><p>В режиме ретранслятора агент выполняет проверки сервера (SNMP, Proxmox, HTTP…) из своей сети — второй площадки, сети клиента или VPS за NAT — без входящих соединений: ни VPN, ни открытых портов. <a href="https://dumbmonit.readthedocs.io/en/latest/ru/install/remote-site/">Мониторинг удалённой площадки</a></p></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="status">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Страницы статуса для тех, кому вы служите</h2>
+				<p>Публичные страницы по адресу <code>/s/&lt;name&gt;</code>: группы сервисов с 90 днями ежедневной истории, доступностью за 30 и 90 дней, объявлениями об инцидентах и обслуживании, подписчиками по электронной почте с двойным подтверждением, RSS, бейджами для README, компактным встраиваемым блоком для интранета, необязательным 90-дневным календарём и графиками времени ответа, а также необязательной сценой за баннером: на выбор около пятидесяти — от городских панорам (Венеция, Париж, Токио, Нью-Йорк&hellip;) и чудес света до швейцарских достопримечательностей (Маттерхорн, Жё-д&rsquo;О, Люцерн, Берн, Шильон). Небо следует состоянию ваших сервисов, и каждая сцена по-своему реагирует, когда что-то падает или возвращается. Швейцарские сцены украшены вокзальными часами в стиле SBB, табло с поворотными лопастями для оповещений, фейерверками 1 августа, котлом Эскалады и зимним снегом.</p>
+				<p>С сервера уходят только выбранные вами подписи. Имена устройств, адреса и типы никогда не появляются на странице, в бейдже или в письме.</p>
+				<p><a href="https://dumbmonit.readthedocs.io/en/latest/ru/using/status-pages/">Страницы статуса в документации</a></p>
+			</div>
+			<div>
+				<ul class="points">
+					<li><strong>Режим стены</strong><p>Только сводка, на весь экран, для монитора в комнате: живая сцена (по умолчанию парижская крыша с Эйфелевой башней и голубями DumbMonit или одна из многих других), погода в которой следует за вашими оповещениями, OLED-тема для экрана, включённого сутками, и музыка для стены &mdash; Spotify Connect превращает экран в колонку.</p></li>
+					<li><strong>Оценка безопасности</strong><p>Каждое поддерживаемое устройство получает оценку 0–100 и класс A–F по собственным проверкам лучших практик производителя, в духе PingCastle: категория, серьёзность, свидетельства, способ устранения и страница «Безопасность» с худшим сверху.</p></li>
+					<li><strong>Учётные записи</strong><p>Роли администратора, оператора (работает с оповещениями, но не меняет конфигурацию) и наблюдателя, необязательный второй фактор TOTP, журнал аудита и единый вход через OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…); создание учётных записей по умолчанию отключено.</p></li>
+					<li><strong>Хорошо уживается с тем, что у вас работает</strong><p><code>/metrics</code>, <code>/federate</code> и Prometheus-совместимый эндпоинт позволяют существующему Grafana читать данные DumbMonit.</p></li>
+					<li><strong>Открытый документированный API</strong><p>Каждый маршрут описан в <code>/api/openapi.json</code> (OpenAPI 3.1): токены с ограниченной областью (<code>dmt_…</code>, чтение или запись), которые могут истекать, быть привязаны к сети и имеют ограничение частоты запросов. <a href="https://dumbmonit.readthedocs.io/en/latest/ru/reference/api/">Справочник API</a></p></li>
+					<li><strong>Ассистент через MCP</strong><p>27 инструментов для Claude Code, Claude Desktop, ChatGPT, VS Code или Cursor: чтение статуса, устройств, оповещений, метрик и агентов; токен с правом записи также позволяет заглушать и подтверждать оповещения, добавлять устройство или перезапускать контейнер. Секреты никогда не возвращаются. <a href="https://dumbmonit.readthedocs.io/en/latest/ru/using/assistant/">Подключить ассистента</a></p></li>
+					<li><strong>На телефоне</strong><p>Посмотреть состояние, подтвердить оповещение, начать окно обслуживания. Устанавливается на домашний экран, намеренно без офлайн-режима: вчерашнее состояние он никогда не покажет.</p></li>
+				</ul>
+			</div>
+		</div>
+		<figure class="phone-shot" style="margin-top:48px; max-width:360px">
+			<div class="shot">
+				<picture>
+					<source srcset="../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
+					<img src="../assets/shots/wall-phone-light.webp" alt="Сводка на телефоне: фраза, показатели, окно погоды с голубем и первое оповещение, требующее вас" width="390" height="844" loading="lazy">
+				</picture>
+			</div>
+			<figcaption>Та же сводка в ширину телефона.</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section class="block" id="footprint">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>Достаточно мал, чтобы забыть о нём</h2>
+			<p>Один бинарный файл на Rust со встроенным веб-интерфейсом, база данных временных рядов VictoriaMetrics, которую этот файл запускает в том же образе, и SQLite для конфигурации. Ни контейнера с базой данных, ни очереди сообщений.</p>
+		</div>
+		<div class="readouts">
+			<div class="readout"><span class="fig">1</span><span class="label-tape">Контейнер, один том</span></div>
+			<div class="readout"><span class="fig">~130 МБ</span><span class="label-tape">RAM, измерено на 15 устройствах</span></div>
+			<div class="readout"><span class="fig">1</span><span class="label-tape">Архитектура: amd64 (arm64 позже)</span></div>
+			<div class="readout"><span class="fig">0</span><span class="label-tape">Требуемых привилегий (capabilities)</span></div>
+		</div>
+		<ul class="facts">
+			<li><span>Объём памяти указан для всего контейнера, включая базу данных временных рядов, на небольшом экземпляре. Бюджет кэша базы данных по умолчанию — 256 МБ, его можно увеличить для сотен хостов.</span></li>
+			<li><span>Работает от имени обычного пользователя на файловой системе только для чтения, со сброшенными всеми capabilities. Мониторы ping работают через sysctl, а не через <code>NET_RAW</code>.</span></li>
+			<li><span>Перенаправления, которым следуют проверки и каналы уведомлений, не выходят за пределы заданного хоста, канал нельзя направить на сам DumbMonit, а заголовки вебхуков хранятся как зашифрованные секреты.</span></li>
+			<li><span>Учётные данные шифруются при хранении (AES-256-GCM). Бэкап — один файл, зашифрованный выбранной вами парольной фразой, и его можно восстановить на чистый экземпляр, сначала выполнив пробный прогон.</span></li>
+			<li><span>VictoriaMetrics уже работает? Укажите на него <code>DUMBMONIT_VM_URL</code>, и встроенный запускаться не будет.</span></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="compare">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>Сравнение с другими</h2>
+			<p>DumbMonit для тех, кто следит за десятью машинами и тремя коммутаторами. Устоявшиеся инструменты отлично справляются со своими задачами; вот где каждый из них подходит лучше.</p>
+		</div>
+		<div class="compare">
+			<article>
+				<h3>Zabbix</h3>
+				<p>Зрелый, проверенный на тысячах хостов, с шаблоном почти для всего, распределёнными прокси и релизами с долгосрочной поддержкой. Но ему нужны сервер базы данных, веб-интерфейс и время на изучение элементов данных, триггеров и шаблонов.</p>
+				<p class="pick">Выбирайте Zabbix для больших парков или когда такая глубина нужна уже сегодня. Выбирайте DumbMonit, если нужен ответ за секунду и вас устроят меньшее число интеграций и молодой проект.</p>
+			</article>
+			<article>
+				<h3>Prometheus и Grafana</h3>
+				<p>Стандарт для метрик: огромная экосистема экспортёров, PromQL и дашборды для чего угодно, включая ваши собственные приложения. Стек вы собираете и поддерживаете сами: Prometheus, Alertmanager, экспортёры, дашборды и правила.</p>
+				<p class="pick">DumbMonit поставляет эту сборку уже готовой и предоставляет <code>/metrics</code>, <code>/federate</code> и Prometheus-совместимый эндпоинт, так что оба могут работать рядом.</p>
+			</article>
+			<article>
+				<h3>Uptime Kuma</h3>
+				<p>Отполированный и очень популярный монитор доступности с большим числом типов мониторов, сервисов уведомлений и более крупным сообществом. Он проверяет сервисы снаружи; порты коммутатора, гостевые системы гипервизора или диски NAS он не читает.</p>
+				<p class="pick">В DumbMonit есть проверки в стиле Kuma и heartbeat-пинги, совместимые с push, рядом с метриками устройств. Если вам нужны только проверки доступности, Uptime Kuma — более зрелый выбор.</p>
+			</article>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="open">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Открыт весь, целиком</h2>
+				<p>Apache 2.0, включая зависимости: CI падает на любой зависимости, не имеющей одобренной OSI лицензии. Ни одна функция не придерживается ради платной редакции, потому что её нет.</p>
+				<p>На этом сайте нет аналитики, cookie и запросов к сторонним серверам.</p>
+			</div>
+			<div>
+				<h3>Что ещё меняется</h3>
+				<ul class="facts" style="margin-top:16px">
+					<li><span>HTTP API не зафиксирован, а схема базы данных всё ещё меняется между альфа-версиями.</span></li>
+					<li><span>OPNsense, TrueNAS, Proxmox Datacenter Manager и Mail Gateway нужны отчёты с реальных долгоживущих установок. Для Redfish нужен настоящий контроллер управления.</span></li>
+					<li><span>Агентам для macOS и FreeBSD нужен кто-то, кто запустит их на реальном оборудовании.</span></li>
+					<li><span>Интерфейс на английском; в переключателе языков уже есть ещё 8 (немецкий, испанский, французский, итальянский, португальский в двух вариантах, русский, китайский упрощённый), переведены они частично (документация доступна на тех же языках), а <a href="https://hosted.weblate.org/engage/dumbmonit/">переводы открыты на Weblate</a>.</span></li>
+					<li><span>Что делать дальше, решается в <a href="https://github.com/laupernoe/dumbmonit/issues">задачах на GitHub</a>, а <a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">журнал изменений</a> рассказывает, что изменилось.</span></li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="feedback" style="margin-top:64px">
+			<img src="../assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+			<div>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">Расскажите, что сломалось</h2>
+				<p>Устройство, показывающее неверные данные, оповещение, разбудившее вас зря, страница, в которой вы запутались: каждый отчёт делает следующую альфу лучше. Запросы на поддержку устройств тоже приветствуются.</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">Создать задачу</a>
+				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">Живое демо</a>
+				<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/en/latest/ru/">Документация</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
+		<nav aria-label="Подвал">
+			<a href="https://demo.dumbmonit.app">Живое демо</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/en/latest/ru/">Документация</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Релизы</a>
+			<a href="https://hosted.weblate.org/engage/dumbmonit/">Перевод</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Лицензия</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Безопасность</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+</script>
+</body>
+</html>

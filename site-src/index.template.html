@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="@@LANG@@" dir="ltr">
+<head>
+<meta charset="utf-8">
+@@DETECT@@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{k001}}</title>
+<meta name="description" content="{{k183}}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="@@URL@@">
+@@ALTERNATES@@
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="{{k001}}">
+<meta property="og:description" content="{{k184}}">
+<meta property="og:url" content="@@URL@@">
+<meta property="og:locale" content="@@OGLOCALE@@">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{k185}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{k001}}">
+<meta name="twitter:description" content="{{k186}}">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"@@URL@@","inLanguage":"@@LANG@@","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">{{k002}}</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="./" aria-label="{{k172}}"><img src="favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="{{k173}}">
+			<a href="#watches">{{k003}}</a>
+			<a href="#alerting">{{k004}}</a>
+			<a href="#agent">{{k005}}</a>
+			<a href="#compare">{{k006}}</a>
+			<a href="#status">{{k007}}</a>
+		</nav>
+		<div class="actions">
+@@SWITCHER@@
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a class="btn btn-ghost btn-sm" href="@@DOCS@@">{{k009}}</a>
+			<a class="btn btn-secondary btn-sm" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+	<div class="wrap">
+		<div class="hero-grid">
+			<div>
+				<div class="status-row rise-in">
+					<span class="plate plate-advisory">{{k011}}</span>
+					<span class="plate plate-signal">{{k012}}</span>
+				</div>
+				<h1 class="rise-in">{{k013}}</h1>
+				<p class="lede rise-in">{{k014}}</p>
+
+				<div class="code rise-in">
+					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
+<span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="quickstart">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k016}}</p>
+
+				<div class="cta">
+					<a class="btn btn-primary" href="https://demo.dumbmonit.app">{{k017}}</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit">{{k018}}</a>
+					<a class="btn btn-secondary" href="@@DOCS@@install/docker/">{{k019}}</a>
+				</div>
+			</div>
+			<img class="mascot" src="assets/mascot.svg" alt="{{k174}}" width="280" height="320">
+		</div>
+
+		<figure class="hero-shot">
+			<div class="shot">
+				<picture>
+					<source srcset="assets/shots/wall-phone-dark.webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" width="390" height="844">
+					<source srcset="assets/shots/wall-phone-light.webp" media="(max-width: 599px)" width="390" height="844">
+					<source srcset="assets/shots/wall-dark.webp" media="(prefers-color-scheme: dark)">
+					<img src="assets/shots/wall-light.webp" alt="{{k175}}" width="1440" height="670" fetchpriority="high">
+				</picture>
+			</div>
+			<figcaption>{{k020}}</figcaption>
+		</figure>
+	</div>
+</section>
+
+<div class="wrap">
+	<div class="notice" role="note">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
+		<p>{{k021}}</p>
+	</div>
+</div>
+
+<section class="block" id="watches" style="border-top:0">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{k022}}</h2>
+			<p>{{k023}}</p>
+		</div>
+
+		<div class="rack">
+			<div class="rack-group">
+				<h3>{{k024}}</h3>
+				<ul class="faceplates">
+					<li>{{k025}}</li>
+					<li>{{k026}}</li>
+					<li>{{k027}}</li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>{{k028}}</h3>
+				<ul class="faceplates">
+					<li>{{k029}}</li>
+					<li>{{k030}}</li>
+					<li>{{k031}}</li>
+					<li>{{k032}}</li>
+					<li>{{k033}}</li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>{{k034}}</h3>
+				<ul class="faceplates">
+					<li>{{k035}}</li>
+					<li>{{k036}}</li>
+					<li>{{k037}}</li>
+					<li>{{k038}}</li>
+				</ul>
+			</div>
+
+			<div class="rack-group">
+				<h3>{{k039}}</h3>
+				<ul class="faceplates">
+					<li>{{k040}}</li>
+					<li>{{k041}}</li>
+					<li>{{k042}}</li>
+					<li>{{k043}}</li>
+					<li>{{k044}}</li>
+					<li>{{k045}}</li>
+					<li>{{k046}}</li>
+					<li>{{k047}}</li>
+					<li>{{k048}}</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="legend">
+			<span>{{k049}}</span>
+			<span>{{k050}}</span>
+		</div>
+		<p class="code-note" style="margin-top:14px">{{k051}}</p>
+
+		<div class="gallery" style="margin-top:56px">
+			<figure class="wide">
+				<div class="shot">
+					<picture>
+						<source srcset="assets/shots/add-device-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="assets/shots/add-device-light.webp" alt="{{k176}}" width="1440" height="820" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>{{k052}}</figcaption>
+			</figure>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="assets/shots/proxmox-guests-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="assets/shots/proxmox-guests-light.webp" alt="{{k177}}" width="1264" height="647" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>{{k053}}</figcaption>
+			</figure>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="assets/shots/pbs-calendar-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="assets/shots/pbs-calendar-light.webp" alt="{{k178}}" width="1264" height="700" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>{{k054}}</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="alerting">
+	<div class="wrap">
+		<div class="split">
+			<div>
+				<div class="section-head" style="margin-bottom:32px">
+					<h2>{{k055}}</h2>
+					<p>{{k056}}</p>
+				</div>
+				<ul class="points">
+					<li><strong>{{k057}}</strong><p>{{k058}}</p></li>
+					<li><strong>{{k059}}</strong><p>{{k060}}</p></li>
+					<li><strong>{{k061}}</strong><p>{{k062}}</p></li>
+					<li><strong>{{k063}}</strong><p>{{k064}}</p></li>
+					<li><strong>{{k065}}</strong><p>{{k066}}</p></li>
+				</ul>
+				<p class="code-note" style="margin-top:24px">{{k067}}</p>
+			</div>
+			<div>
+				<figure>
+					<div class="shot">
+						<picture>
+							<source srcset="assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
+							<img src="assets/shots/alerts-light.webp" alt="{{k179}}" width="1440" height="760" loading="lazy">
+						</picture>
+					</div>
+					<figcaption>{{k068}}</figcaption>
+				</figure>
+
+				<h3 style="margin-top:48px">{{k069}}</h3>
+				<p class="muted" style="margin-top:8px">{{k070}}</p>
+				<ul class="chips" aria-label="{{k180}}">
+					<li>{{k071}}</li><li>{{k072}}</li><li>{{k073}}</li><li>{{k074}}</li><li>{{k075}}</li><li>{{k076}}</li><li>{{k077}}</li><li>{{k078}}</li><li>{{k079}}</li><li>{{k080}}</li><li>{{k081}}</li><li>{{k082}}</li><li>{{k083}}</li><li>{{k084}}</li><li>{{k085}}</li><li>{{k086}}</li><li>{{k087}}</li><li>{{k088}}</li><li>{{k089}}</li><li>{{k090}}</li><li>{{k091}}</li><li>{{k092}}</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>{{k093}}</h2>
+					<p>{{k094}}</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># {{k170}}</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="agent-cmd">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k095}}</p>
+			</div>
+			<div>
+				<ul class="os-list">
+					<li><span class="os">{{k096}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k098}}</span></li>
+					<li><span class="os">{{k099}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k100}}</span></li>
+					<li><span class="os">{{k101}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k103}}</span></li>
+					<li><span class="os">{{k104}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k105}}</span></li>
+				</ul>
+				<ul class="points" style="margin-top:32px">
+					<li><strong>{{k106}}</strong><p>{{k107}}</p></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="status">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{k108}}</h2>
+				<p>{{k109}}</p>
+				<p>{{k110}}</p>
+				<p>{{k111}}</p>
+			</div>
+			<div>
+				<ul class="points">
+					<li><strong>{{k112}}</strong><p>{{k113}}</p></li>
+					<li><strong>{{k114}}</strong><p>{{k115}}</p></li>
+					<li><strong>{{k116}}</strong><p>{{k117}}</p></li>
+					<li><strong>{{k118}}</strong><p>{{k119}}</p></li>
+					<li><strong>{{k120}}</strong><p>{{k121}}</p></li>
+					<li><strong>{{k122}}</strong><p>{{k123}}</p></li>
+					<li><strong>{{k124}}</strong><p>{{k125}}</p></li>
+				</ul>
+			</div>
+		</div>
+		<figure class="phone-shot" style="margin-top:48px; max-width:360px">
+			<div class="shot">
+				<picture>
+					<source srcset="assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
+					<img src="assets/shots/wall-phone-light.webp" alt="{{k181}}" width="390" height="844" loading="lazy">
+				</picture>
+			</div>
+			<figcaption>{{k126}}</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section class="block" id="footprint">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{k127}}</h2>
+			<p>{{k128}}</p>
+		</div>
+		<div class="readouts">
+			<div class="readout"><span class="fig">{{k129}}</span><span class="label-tape">{{k130}}</span></div>
+			<div class="readout"><span class="fig">{{k131}}</span><span class="label-tape">{{k132}}</span></div>
+			<div class="readout"><span class="fig">{{k129}}</span><span class="label-tape">{{k133}}</span></div>
+			<div class="readout"><span class="fig">{{k134}}</span><span class="label-tape">{{k135}}</span></div>
+		</div>
+		<ul class="facts">
+			<li>{{k136}}</li>
+			<li>{{k137}}</li>
+			<li>{{k138}}</li>
+			<li>{{k139}}</li>
+			<li>{{k140}}</li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="compare">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{k141}}</h2>
+			<p>{{k142}}</p>
+		</div>
+		<div class="compare">
+			<article>
+				<h3>{{k143}}</h3>
+				<p>{{k144}}</p>
+				<p class="pick">{{k145}}</p>
+			</article>
+			<article>
+				<h3>{{k146}}</h3>
+				<p>{{k147}}</p>
+				<p class="pick">{{k148}}</p>
+			</article>
+			<article>
+				<h3>{{k149}}</h3>
+				<p>{{k150}}</p>
+				<p class="pick">{{k151}}</p>
+			</article>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="open">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{k152}}</h2>
+				<p>{{k153}}</p>
+				<p>{{k154}}</p>
+			</div>
+			<div>
+				<h3>{{k155}}</h3>
+				<ul class="facts" style="margin-top:16px">
+					<li>{{k156}}</li>
+					<li>{{k157}}</li>
+					<li>{{k158}}</li>
+					<li>{{k159}}</li>
+					<li>{{k160}}</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="feedback" style="margin-top:64px">
+			<img src="assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+			<div>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">{{k161}}</h2>
+				<p>{{k162}}</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">{{k163}}</a>
+				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">{{k008}}</a>
+				<a class="btn btn-secondary" href="@@DOCS@@">{{k164}}</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>{{k165}}</p>
+		<nav aria-label="{{k182}}">
+			<a href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<a href="@@DOCS@@">{{k164}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">{{k166}}</a>
+			<a href="https://hosted.weblate.org/engage/dumbmonit/">{{k167}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">{{k168}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{k169}}</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+</script>
+</body>
+</html>
