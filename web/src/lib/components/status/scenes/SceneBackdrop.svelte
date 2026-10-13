@@ -16,9 +16,11 @@
 	interface Props {
 		scenes: string[];
 		rotation?: string;
+		mood?: 'ok' | 'warn' | 'critical';
+		pulse?: { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 	}
 
-	let { scenes, rotation = 'visit' }: Props = $props();
+	let { scenes, rotation = 'visit', mood = 'ok', pulse = null }: Props = $props();
 
 	const ids = $derived(knownScenes(scenes));
 	const interval = $derived(ids.length > 1 ? (ROTATION_MS[rotation] ?? 0) : 0);
@@ -47,7 +49,7 @@
 	{#if Scene && current}
 		{#key current}
 			<div class="layer" in:fade={{ duration: fadeMs }} out:fade={{ duration: fadeMs }}>
-				<Scene />
+				<Scene {mood} {pulse} />
 			</div>
 		{/key}
 	{/if}
