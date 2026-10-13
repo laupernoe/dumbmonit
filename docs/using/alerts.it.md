@@ -18,7 +18,7 @@ finestra da qualsiasi tab.
 Lo stesso modello di verità alimenta il bollettino di panoramica e questa
 pagina, così i due sono sempre d'accordo su cosa richiede attenzione.
 
-## Eliminare un avviso
+## Eliminare un avviso {#getting-rid-of-an-alert}
 
 Un avviso attivo non è binario — "risolverlo" o "convivere con il rumore
 per sempre". Quattro azioni, per quattro situazioni diverse, aperte agli

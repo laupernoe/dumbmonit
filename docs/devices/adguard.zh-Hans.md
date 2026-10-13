@@ -1,4 +1,4 @@
-# AdGuard Home
+# AdGuard Home {#adguard-home}
 
 DNS 过滤器本身:保护是否开启、其 DNS 服务器是否运行、它应答和
 拦截了什么内容、它的过滤列表是否仍在更新、它的上游服务器是否

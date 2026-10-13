@@ -1,11 +1,10 @@
-# Einen entfernten Standort überwachen
+# Einen entfernten Standort überwachen {#monitor-a-remote-site}
 
-Ein DumbMonit, mehrere Netzwerke. Ein am entfernten Standort
-installierter **Relay-Agent** führt im Auftrag des Servers die
-Abfragen der ihm zugewiesenen Geräte aus und meldet die Ergebnisse
-über dieselbe ausgehende Verbindung, die er bereits zum Pushen seiner
-eigenen Metriken nutzt. Nichts am entfernten Standort zu öffnen, kein
-VPN, keine zweite Instanz zum Nachsehen.
+Ein DumbMonit, mehrere Netzwerke. Ein am entfernten Standort installierter **Relay-Agent**
+führt im Auftrag des Servers die Prüfungen der ihm zugewiesenen Geräte aus und meldet die
+Ergebnisse über dieselbe ausgehende Verbindung zurück, über die er bereits seine eigenen
+Metriken sendet. Am entfernten Standort muss nichts geöffnet werden, kein VPN, keine zweite
+Instanz, die man im Auge behalten müsste.
 
 ```
  head office                              remote site (NAT, firewall)
@@ -16,45 +15,38 @@ VPN, keine zweite Instanz zum Nachsehen.
  └──────────────────┘                     └──────────────────────────────┘
 ```
 
-## 1. Den Server über HTTPS veröffentlichen
+## 1. Den Server über HTTPS veröffentlichen {#1-publish-the-server-over-https}
 
-Das Relay holt seine Aufträge vom Server: Der Server muss vom
-entfernten Standort aus erreichbar sein, typischerweise
-`https://monitor.example.org` hinter einem Reverse Proxy. Zwei Dinge
-reisen auf dieser Verbindung:
+Das Relay holt seine Aufträge vom Server ab: Der Server muss vom entfernten Standort aus
+erreichbar sein, typischerweise `https://monitor.example.org` hinter einem Reverse-Proxy. Zwei
+Dinge laufen über diese Verbindung:
 
-- das **Enrollment-Token** (`dmon_…`), im `Authorization`-Header
-  jedes Requests — wie bei jedem Agent;
-- die **Gerätezugangsdaten** der vom Relay abgefragten Geräte
-  (SNMP-Community, Proxmox-API-Token…), entschlüsselt, innerhalb
-  jedes Abfrage-Auftrags.
+- das **Enrollment-Token** (`dmon_…`) im `Authorization`-Header jeder Anfrage, wie bei jedem
+  Agenten;
+- die **Zugangsdaten der Geräte**, die das Relay prüft (SNMP-Community, Proxmox-API-Token …),
+  entschlüsselt, in jedem Prüfauftrag.
 
-Über einfaches HTTP durch das Internet wären beide auf dem Weg lesbar:
-Stellen Sie den Server hinter HTTPS, bevor Sie irgendetwas außerhalb
-Ihres eigenen Netzwerks relayen. In einem LAN oder VPN ist HTTP
-akzeptabel, und das Token ist das einzige Secret in Bewegung, bis Sie
-dem Relay Geräte zuweisen. Zugangsdaten werden nie auf eine Platte
-geschrieben, auf keiner Seite: Ein Abfrage-Auftrag lebt im Speicher
-des Servers, bis das Relay ihn meldet, und der Agent behält nichts
-zwischen zwei Abfragen.
+Über unverschlüsseltes HTTP durch das Internet wären beide unterwegs lesbar: Stellen Sie den
+Server hinter HTTPS, bevor Sie etwas außerhalb Ihres eigenen Netzwerks weiterleiten. In einem
+LAN oder VPN ist HTTP akzeptabel, und das Token ist das einzige Geheimnis im Transit, bis Sie
+dem Relay Geräte zuweisen. Zugangsdaten werden auf keiner Seite auf die Festplatte
+geschrieben: Ein Prüfauftrag lebt im Speicher des Servers, bis das Relay ihn meldet, und der
+Agent behält zwischen zwei Prüfungen nichts.
 
-Der Reverse Proxy muss `/api/agent/relay` wie `/api/ingest`
-weiterleiten, Request-Bodies bis 16 MB erlauben (ein ausgelasteter
-Hypervisor meldet Tausende von Samples), und untätige Verbindungen
-mindestens 60 Sekunden offen halten: Der Server hält einen
-Relay-Request bis zu 25 Sekunden, während er auf Arbeit wartet (Long
-Polling).
+Der Reverse-Proxy muss `/api/agent/relay` wie `/api/ingest` weiterleiten, Request-Bodies bis
+16 MB erlauben (ein ausgelasteter Hypervisor meldet Tausende von Messwerten) und Leerlauf-
+verbindungen mindestens 60 Sekunden offen halten: Der Server hält eine Relay-Anfrage bis zu
+25 Sekunden, während er auf Arbeit wartet (Long Polling).
 
-## 2. Ein Enrollment-Token erstellen
+## 2. Ein Enrollment-Token erstellen {#2-create-an-enrollment-token}
 
-**Settings → Agents → New token**, oder ein Gerät der Art *agent*
-hinzufügen. Kopieren Sie den Wert `dmon_…`: Er wird nur einmal
-angezeigt.
+**Einstellungen → Agenten → Neues Token**, oder fügen Sie ein Gerät vom Typ *Agent* hinzu.
+Kopieren Sie den Wert `dmon_…`: Er wird nur einmal angezeigt.
 
-## 3. Das Relay am entfernten Standort starten
+## 3. Das Relay am entfernten Standort starten {#3-start-the-relay-at-the-remote-site}
 
-Jede Maschine am entfernten Standort mit Docker, mit
-`docker-compose.agent.yml` aus dem Repository:
+Jeder Rechner am entfernten Standort mit Docker, mit der Datei `docker-compose.agent.yml` aus
+dem Repository:
 
 ```sh
 DUMBMONIT_AGENT_URL=https://monitor.example.org \
@@ -65,76 +57,64 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Oder der gewöhnliche, mit dem Einzeiler-Installer installierte Agent,
-mit zwei weiteren Schlüsseln in `/etc/dumbmonit/agent.yaml`:
+Oder der normale, mit dem Einzeiler-Installer installierte Agent, mit zwei zusätzlichen
+Schlüsseln in `/etc/dumbmonit/agent.yaml`:
 
 ```yaml
 relay: true
 site: Lyon office
 ```
 
-Die Maschine erscheint innerhalb von Sekunden in DumbMonit, als
-gewöhnliches Agent-Gerät, und ihre Seite sagt *Relay · site Lyon
-office · relays 0 devices*. Das Log des Agents sagt `relay mode
-enabled: waiting for probes from the server`, sobald sein erster
+Der Rechner erscheint innerhalb weniger Sekunden in DumbMonit als gewöhnliches Agent-Gerät,
+und seine Seite zeigt *Relay · Standort Lyon office · leitet 0 Geräte weiter*. Das Log des
+Agenten meldet `relay mode enabled: waiting for probes from the server`, sobald sein erster
 Batch akzeptiert wurde.
 
 !!! note "Was das Relay erreichen muss"
-    Das Relay fragt Geräte von seinem eigenen Netzwerk aus ab: Es
-    braucht denselben Zugang, den der Server bräuchte, wäre er dort —
-    UDP 161 für SNMP, 8006 für Proxmox, 5001 für DSM, und so weiter.
-    Für **Ping**-Monitore braucht der Container `cap_add: [NET_RAW]`
-    (siehe die Compose-Datei). Für Geräte in einem VLAN oder
-    Link-Local-Netzwerk, oder für `localhost`-Ziele, nutzen Sie
+    Das Relay prüft Geräte aus seinem eigenen Netzwerk: Es braucht denselben Zugriff, den der
+    Server dort bräuchte — UDP 161 für SNMP, 8006 für Proxmox, 5001 für DSM usw. Für
+    **Ping**-Monitore braucht der Container `cap_add: [NET_RAW]` (siehe die Compose-Datei).
+    Für Geräte in einem VLAN oder Link-Local-Netz oder für `localhost`-Ziele verwenden Sie
     `network_mode: host`.
 
-## 4. Geräte dem Relay zuweisen
+## 4. Geräte dem Relay zuweisen {#4-assign-devices-to-the-relay}
 
-Fügen Sie die entfernten Geräte wie gewohnt hinzu — SNMP-Switch,
-Proxmox-Knoten, HTTP-Check — mit ihrer Adresse **wie vom entfernten
-Standort aus gesehen** (`192.168.10.1`, `https://pve.lan:8006`). Im
-Gerätedialog setzen Sie unter *More options* **Reached through** auf
-den Relay-Agent statt *Direct*. Bestehende Geräte können auf dieselbe
-Weise umgeschaltet werden; das Zurückschalten auf *Direct* lässt den
-Server sie wieder selbst abfragen.
+Fügen Sie die entfernten Geräte wie gewohnt hinzu — SNMP-Switch, Proxmox-Knoten, HTTP-Check —
+mit ihrer Adresse **aus Sicht des entfernten Standorts** (`192.168.10.1`,
+`https://pve.lan:8006`). Stellen Sie im Gerätformular unter *Weitere Optionen* **Erreicht über**
+auf den Relay-Agenten statt auf *Direkt*. Bestehende Geräte lassen sich genauso umstellen;
+das Zurückstellen auf *Direkt* lässt den Server sie wieder selbst abfragen.
 
-Von da an:
+Von da an gilt:
 
-- der Server reiht bei jedem Intervall eine Abfrage für das Gerät ein;
-  das Relay holt sie innerhalb von Millisekunden ab (es wartet auf dem
-  Server auf Arbeit), führt den Collector aus und meldet;
-- **Probe now** und Profilerkennung auf der Geräteseite laufen
-  ebenfalls über das Relay;
-- *last probe* und der Fehler des Geräts folgen dem Urteil des
-  Relays. Holt das Relay eine Abfrage nicht rechtzeitig ab, zeigt das
-  Gerät *Timed out: relay agent … did not pick up the probe* — prüfen
-  Sie, dass der Agent mit `relay: true` läuft;
-- die Seite des Agents zeigt *Relay for N devices*, und
-  `GET /api/relays` listet die Relays mit ihrem Standort und ihrer
-  Anzahl.
+- Der Server stellt bei jedem Intervall eine Prüfung für das Gerät in die Warteschlange; das
+  Relay nimmt sie innerhalb von Millisekunden auf (es wartet beim Server auf Arbeit), führt
+  den Collector aus und meldet das Ergebnis;
+- **Jetzt prüfen** und die Profilerkennung auf der Geräteseite laufen ebenfalls über das
+  Relay;
+- *Letzte Prüfung* und Fehler des Geräts folgen dem Urteil des Relays. Nimmt das Relay eine
+  Prüfung nicht rechtzeitig auf, zeigt das Gerät *Zeitüberschreitung: Relay-Agent … hat die
+  Prüfung nicht aufgenommen* — prüfen Sie, ob der Agent mit `relay: true` läuft;
+- die Seite des Agenten zeigt *Relay für N Geräte*, und `GET /api/relays` listet die Relays
+  mit Standort und Anzahl auf.
 
-## Alarmierung, wenn das Relay down ist
+## Alarmierung, wenn das Relay ausfällt {#alerting-when-the-relay-is-down}
 
-Ein verstummendes Relay zieht seine Geräte mit sich: ihre Abfragen
-stoppen, und sie würden alle gleichzeitig *unreachable* werden. Das
-Relay wird als **übergeordnetes Gerät** jedes von ihm abgefragten
-Geräts behandelt (zusätzlich zu einem von Ihnen gesetzten
-übergeordneten Gerät): Ist das Relay selbst *unreachable*, werden die
-Alarme seiner Geräte als `suppressed` mit `suppressed_by` = das Relay
-angezeigt, und nur eine Benachrichtigung geht raus — für das Relay.
-Das explizit gesetzte übergeordnete Gerät behält seine Rolle und
-gewinnt, wenn beide down sind.
+Ein Relay, das verstummt, reißt seine Geräte mit: Ihre Prüfungen stoppen, und alle würden auf
+einmal *nicht erreichbar*. Das Relay gilt als **Elternteil** aller Geräte, die es prüft (zusätzlich
+zu einem möglicherweise gesetzten Elternteil): Ist das Relay selbst *nicht erreichbar*, werden
+die Alarme seiner Geräte als `suppressed` mit `suppressed_by` = dem Relay angezeigt, und es
+geht nur eine Benachrichtigung hinaus — für das Relay. Das ausdrücklich gesetzte Elternteil
+behält seine Rolle und hat Vorrang, wenn beide ausgefallen sind.
 
-## Einschränkungen
+## Grenzen {#limits}
 
-- Ein Relay pro Gerät. Ein vom Relay abgefragtes Gerät wird nicht
-  zusätzlich vom Server abgefragt.
-- Agent-Geräte selbst können nicht relayed werden: Sie pushen ihre
-  eigenen Metriken.
-- Das Relay führt höchstens 8 Abfragen gleichzeitig aus; eine Abfrage
-  ist durch das Probe-Timeout des Servers begrenzt
-  (`DUMBMONIT_PROBE_TIMEOUT`), auf dem Agent bei 120 s gekappt.
-- Ein Relay-Agent braucht die eingebauten Collectors: Agents, die
-  älter als dieses Feature sind, ignorieren `relay: true`, und der
-  Server meldet ihre Abfragen als Timeout. Neu installieren mit dem
-  aktuellen Binary oder Image.
+- Ein Relay pro Gerät. Ein vom Relay geprüftes Gerät wird nicht zusätzlich vom Server
+  geprüft.
+- Agent-Geräte selbst können nicht über ein Relay laufen: Sie senden ihre eigenen Metriken.
+- Das Relay führt höchstens 8 Prüfungen gleichzeitig aus; eine Prüfung wird durch das
+  Prüf-Timeout des Servers (`DUMBMONIT_PROBE_TIMEOUT_SECS`) begrenzt, auf dem Agenten auf
+  120 s gedeckelt.
+- Ein Relay-Agent braucht die einkompilierten Collectors: Agenten, die älter als diese
+  Funktion sind, ignorieren `relay: true`, und der Server meldet ihre Prüfungen als
+  zeitüberschritten. Installieren Sie mit dem aktuellen Binary oder Image neu.

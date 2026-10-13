@@ -1,4 +1,4 @@
-# Tipos de dispositivo
+# Tipos de dispositivo {#device-types}
 
 O DumbMonit chama tudo que observa de *dispositivo* (a API diz *target*),
 mesmo quando é uma página web ou um nome DNS. Cada tipo é um coletor no
@@ -66,7 +66,7 @@ versão pode monitorar.
 | [Mudanças no site](webchange.md) | `webchange` | nenhuma | Uma página ou um site inteiro: mudanças de texto, páginas novas e removidas, antes/depois com capturas de tela |
 | [Dispositivo de demonstração](demo.md) | `dummy` | nenhuma | Explorar a interface sem hardware |
 
-## Como um dispositivo é lido
+## Como um dispositivo é lido {#how-a-device-is-read}
 
 O agendador executa todo dispositivo ativado em seu próprio intervalo (60 s
 por padrão, mínimo de 10 s) através do coletor de seu tipo, com no máximo
@@ -82,7 +82,7 @@ capacidade faltando é um *erro de configuração*: é mostrado na página do
 dispositivo, em vermelho, com o motivo, e não é notificado. A distinção
 importa: um dispositivo mal configurado não deveria acordar ninguém à noite.
 
-## Opções
+## Opções {#options}
 
 Alguns tipos leem opções das tags do dispositivo: a porta da API, se deve
 aceitar um certificado autoassinado, quais nós monitorar. O formulário mostra
@@ -91,7 +91,7 @@ ajuda. As páginas de cada tipo as listam literalmente. Opções são copiadas e
 toda série como rótulos `tag_<key>`, então nunca coloque um segredo em uma:
 use o campo de credencial, que é criptografado.
 
-## Dispositivos pai
+## Dispositivos pai {#parent-devices}
 
 Qualquer dispositivo pode declarar outro como seu pai. Quando o pai está
 inacessível, alertas de seus descendentes são marcados como *Suprimido pelo

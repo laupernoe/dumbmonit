@@ -1,4 +1,4 @@
-# Grafana Loki
+# Grafana Loki {#grafana-loki}
 
 O próprio servidor de logs: se está pronto, quais linhas de log recusa e por
 quê, se seus chunks chegam ao armazenamento, e se seu log de pré-escrita ainda
@@ -16,7 +16,7 @@ não mostra nada além de uma lacuna, descoberta no dia em que alguém procura o
 log de um incidente. A segunda é chunks que não podem ser gravados no
 armazenamento: o Loki os mantém em memória, e os perde no próximo reinício.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_loki_`. Os totais são contadores:
 gráficos e regras os transformam em taxas.
@@ -47,7 +47,7 @@ aplicam: Loki not ready, Loki refusing log lines, Loki cannot flush to
 storage, Loki write-ahead log disk full, Loki request errors, além de Device
 unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Loki. Ele diz o que está errado em uma frase (prontidão,
@@ -56,7 +56,7 @@ disco WAL cheio, membros do anel não saudáveis, erros de servidor), depois as
 linhas e o volume recebido por segundo, os streams em memória e o disco WAL,
 depois as linhas recusadas nas últimas 24 horas por motivo.
 
-## Deixar o DumbMonit ler a própria saúde do Loki
+## Deixar o DumbMonit ler a própria saúde do Loki {#let-dumbmonit-read-lokis-own-health}
 
 1. Nada para instalar: o Loki publica /ready e /metrics na sua porta HTTP
    (3100 por padrão). Verifique a partir do host DumbMonit que ambos
@@ -86,7 +86,7 @@ depois as linhas recusadas nas últimas 24 horas por motivo.
     longa), o remetente recebe um erro e geralmente descarta o lote. Nada
     aparece no Grafana exceto uma lacuna nos logs.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

@@ -1,4 +1,4 @@
-# Proxmox Backup Server
+# Proxmox Backup Server {#proxmox-backup-server}
 
 Servidor de backup: um calendário de backup de trinta dias por máquina,
 tarefas com falha com seus logs, jobs agendados (sync, verify, prune,
@@ -6,7 +6,7 @@ coleta de lixo), datastores, discos e pools ZFS, atualizações pendentes,
 os serviços e versões de pacote do próprio servidor, e o nível de fita
 quando houver um.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 ![Um dispositivo PBS: falhas, o calendário de backup de 30 dias, jobs e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
@@ -66,7 +66,7 @@ janela de tarefas, e o servidor mantém a união em SQLite
 (`pbs_task_history`, 35 dias, no máximo 10.000 tarefas por dispositivo)
 então o calendário sobrevive a reinícios.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_pbs_`.
 
@@ -136,7 +136,7 @@ crescer uma dúzia de séries zero que parecem um nível de fita com
 problemas. Uma fita que não pertence a nenhum pool, mídia em branco ou
 mídia retirada de um pool, não está em nenhuma contagem de pool.
 
-## Dispositivos
+## Dispositivos {#devices}
 
 Toda máquina com backup — host, VM ou contêiner — também é publicada sob
 a família genérica compartilhada por toda integração do DumbMonit que
@@ -173,7 +173,7 @@ tape backup failed, PBS disk SMART failure, PBS SSD worn out, PBS ZFS
 pool degraded, PBS updates pending, Client device stale. Notificações
 nomeiam o job, datastore ou grupo de backup envolvido.
 
-## O que preparar no PBS
+## O que preparar no PBS {#what-to-prepare-in-pbs}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: um usuário reservado para monitoramento, um token com um
@@ -267,7 +267,7 @@ papel somente leitura — nunca a conta com a qual você entra.
 
 Documentação do fornecedor: [PBS API tokens](https://pbs.proxmox.com/docs/user-management.html#api-tokens).
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -311,7 +311,7 @@ uma lista vazia, então nada é produzido e nada reclama também.
 Endereço: `10.0.0.20`, `pbs.lan`, `pbs.lan:8007`, `[fd00::2]` ou uma URL
 completa. O esquema `https` e a porta 8007 são adicionados se faltando.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -331,7 +331,7 @@ completa. O esquema `https` e a porta 8007 são adicionados se faltando.
 | `tape` | Observar backups em fita | `false` | Lê o nível de fita. Desligado por padrão, já que a maioria das instalações não tem hardware de fita. Precisa de `Tape.Audit` em `/tape`. |
 | `device_stale_days` | Desatualização de dispositivo (dias) | `3` | Uma máquina com backup sem um novo snapshot por mais que isso é reportada como desatualizada. De 1 a 90. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

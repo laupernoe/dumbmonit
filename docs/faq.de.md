@@ -1,6 +1,6 @@
 # FAQ
 
-## Ich habe das Passwort verloren
+## Ich habe das Passwort verloren {#i-lost-the-password}
 
 Fragen Sie zuerst einen anderen Administrator: In Settings → **Users**
 setzt **Edit** auf Ihrem Konto ein neues Passwort und zeigt es einmal,
@@ -21,7 +21,7 @@ Sie dann erneut ohne die Variable (`docker compose up -d dumbmonit`,
 mit der Variable in Ihrer Umgebung nicht gesetzt oder leer). Geräte,
 Regeln, Kanäle und die Single-Sign-On-Einstellungen bleiben unberührt.
 
-## Keine Daten nach dem Hinzufügen eines Geräts
+## Keine Daten nach dem Hinzufügen eines Geräts {#no-data-after-adding-a-device}
 
 Geben Sie ihm eine Minute: Die erste Abfrage läuft im Intervall des
 Geräts (standardmäßig 60 s), und Schreibvorgänge erreichen

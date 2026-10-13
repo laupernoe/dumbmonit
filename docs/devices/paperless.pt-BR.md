@@ -1,4 +1,4 @@
-# Paperless-ngx
+# Paperless-ngx {#paperless-ngx}
 
 Se o Paperless-ngx ainda importa o que recebe: a saúde de seu banco de dados,
 Redis, workers Celery, índice de busca, classificador e verificação de
@@ -14,7 +14,7 @@ abre e documentos podem ser lidos, mas nada do que foi colocado na pasta de
 consumo ou obtido por e-mail é importado até alguém notar o acúmulo. O status
 do sistema avisa isso; o DumbMonit alerta sobre ele.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_paperless_`.
 
@@ -42,7 +42,7 @@ aplicam: Paperless task queue down, Paperless index or sanity check error,
 Paperless migrations pending, Paperless task failed, Paperless storage almost
 full, Paperless update available, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Paperless. Ele diz primeiro o que está errado (um componente em
@@ -50,7 +50,7 @@ erro, tarefas com falha, migrações pendentes), depois atualizações, depois
 documentos, caixa de entrada, tarefas pendentes e com falha e espaço em
 disco, depois cada componente e as tarefas com falha pelo nome.
 
-## Criar um usuário somente leitura no Paperless-ngx
+## Criar um usuário somente leitura no Paperless-ngx {#create-a-read-only-user-in-paperless-ngx}
 
 1. Crie um usuário nomeado como abaixo, com uma senha longa e aleatória, sem
    status de superusuário ou staff, e apenas três permissões de visualização:
@@ -89,7 +89,7 @@ curl pede sua senha). Pedir o status do sistema pode levar vários segundos
 enquanto o Redis está fora do ar: o Paperless espera por ele antes de
 responder.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

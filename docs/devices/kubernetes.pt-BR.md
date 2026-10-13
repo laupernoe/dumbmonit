@@ -1,4 +1,4 @@
-# Kubernetes / k3s
+# Kubernetes / k3s {#kubernetes--k3s}
 
 Um cluster através de seu API server: nós que não estão Ready ou sob
 pressão, pods em crash loop ou travados em Pending, Deployments,
@@ -18,7 +18,7 @@ os pods, os Deployments, StatefulSets e DaemonSets, as reivindicações de
 volume persistente, e os eventos do tipo `Warning` (filtrados pelo API
 server). Listas longas são lidas em páginas de 500.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_k8s_`.
 
@@ -75,7 +75,7 @@ As [regras integradas](../alerting/rules.md#kubernetes) que se aplicam:
 
 Além de Device unreachable, quando o API server para de responder.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Cluster diz o que está errado em uma frase, depois lista os nós
 (Ready ou não, pressão, cordoned, versão do kubelet), os pods que
@@ -84,7 +84,7 @@ reinícios), os workloads com réplicas faltando, as reivindicações de
 volume travadas, e os eventos de aviso da última hora por motivo. Um
 cluster saudável mostra suas contagens e nada mais.
 
-## Criar uma conta de serviço somente leitura para o DumbMonit
+## Criar uma conta de serviço somente leitura para o DumbMonit {#create-a-read-only-service-account-for-dumbmonit}
 
 1. Crie uma conta de serviço, um ClusterRole que só pode fazer get e list
    em nós, pods, workloads, reivindicações de volume e eventos, e os
@@ -118,7 +118,7 @@ cluster saudável mostra suas contagens e nada mais.
     (um endereço IP de nó, ou um nome adicionado com --tls-san no k3s), ou
     marque Aceitar um certificado não verificável.
 
-### A mesma coisa como um manifesto
+### A mesma coisa como um manifesto {#the-same-thing-as-a-manifest}
 
 Para GitOps, ou para revisar exatamente o que é concedido, aplique este
 manifesto em vez dos três comandos `kubectl create` e o Secret do passo 2
@@ -183,7 +183,7 @@ Secret acima é a forma de longa duração que o Kubernetes documenta para
 este uso. Para revogar o acesso do DumbMonit, exclua o Secret, ou a conta
 de serviço.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -208,7 +208,7 @@ Opções:
   desses namespaces são deixados de fora, por exemplo um namespace de CI
   cheio de pods de vida curta. Eventos de nó são sempre mantidos.
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "The certificate of the API server could not be verified": ou a CA está
 faltando (cole-a, como no passo 2), ou o endereço não é um dos nomes no

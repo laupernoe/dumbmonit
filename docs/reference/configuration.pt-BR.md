@@ -1,9 +1,9 @@
-# Configuração
+# Configuração {#configuration}
 
 Tudo passa por variáveis de ambiente; nenhuma é obrigatória. Não há arquivo
 de configuração para montar.
 
-## Servidor
+## Servidor {#server}
 
 | Variável | Padrão | Função |
 |---|---|---|
@@ -38,7 +38,7 @@ de configuração para montar.
 A retenção da linha de base (60 dias) e o período de aprendizado de 14 dias
 não são configuráveis.
 
-### Antigos nomes `EZYMONIT_*`
+### Antigos nomes `EZYMONIT_*` {#former-ezymonit_-names}
 
 O DumbMonit se chamava EzyMonit até setembro de 2026. Toda variável
 `DUMBMONIT_*` também é lida sob seu antigo nome `EZYMONIT_*`, como
@@ -49,7 +49,7 @@ inicialização, e tokens de agente `ezym_…` permanecem válidos (os novos sã
 `dmon_…`). O cookie de sessão agora é `dumbmonit_session`: a primeira
 inicialização após a renomeação desconecta todos uma vez.
 
-### VictoriaMetrics embutido
+### VictoriaMetrics embutido {#embedded-victoriametrics}
 
 A imagem entrega o binário do VictoriaMetrics. A menos que
 `DUMBMONIT_VM_URL` esteja definido, o servidor o inicia como um processo
@@ -77,7 +77,7 @@ Com `DUMBMONIT_VM_URL` definido, nada disso se aplica: o servidor usa a
 instância que você nomeia e o embutido nunca é iniciado. `GET /api/health`
 diz em qual caso você está (`victoria.embedded`).
 
-## Variáveis de nível Compose
+## Variáveis de nível Compose {#compose-level-variables}
 
 Estas são lidas pelo `docker-compose.yml`, não pelo servidor:
 
@@ -87,7 +87,7 @@ Estas são lidas pelo `docker-compose.yml`, não pelo servidor:
 | `DUMBMONIT_VM_RETENTION`, `DUMBMONIT_VM_MEMORY` | `12`, `256MB` | Passadas ao servidor; veja acima. |
 | `DUMBMONIT_VM_PORT` | `8428` | Porta do host para o VictoriaMetrics embutido, apenas camada de desenvolvimento. |
 
-## Portas
+## Portas {#ports}
 
 | Porta | Contêiner | Propósito |
 |---|---|---|
@@ -99,7 +99,7 @@ direção a Proxmox, PBS, Synology e serviços de notificação, mais o que
 quer que seus monitores de serviço visem. O ping ICMP precisa do sysctl
 `net.ipv4.ping_group_range` definido no arquivo Compose (sem capacidade).
 
-## Volumes e arquivos
+## Volumes e arquivos {#volumes-and-files}
 
 Um volume, `dumbmonit-data`, montado em `/data`. Seu nome é fixo no
 arquivo Compose, qualquer que seja o nome do projeto.
@@ -113,7 +113,7 @@ arquivo Compose, qualquer que seja o nome do projeto.
 | `/agents/` | imagem | Binários de agente. Monte outro diretório e defina `DUMBMONIT_AGENT_DIR` para entregar os seus próprios. |
 | `/etc/ssl/certs/ca-certificates.crt` | imagem | Raízes TLS para HTTPS de saída. Monte seu próprio pacote aqui para confiar em uma autoridade privada. |
 
-## Redefinindo a senha
+## Redefinindo a senha {#resetting-the-password}
 
 ```bash
 DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
@@ -124,12 +124,12 @@ docker compose up -d dumbmonit   # inicie de novo sem a variável
 A redefinição limpa a senha e toda sessão; dispositivos, regras e canais
 permanecem intactos.
 
-## Agente
+## Agente {#agent}
 
 O agente tem suas próprias variáveis e arquivo de configuração: veja
 [Agente Linux, macOS, FreeBSD e Windows](../devices/agent.md#configuration-file).
 
-### Escopo de coleta
+### Escopo de coleta {#collection-scope}
 
 O que o agente mede, e portanto quantas séries uma máquina produz. Os
 padrões mantêm um host com dezenas de contêineres em algumas centenas de

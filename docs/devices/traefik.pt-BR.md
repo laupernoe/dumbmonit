@@ -1,4 +1,4 @@
-# Traefik
+# Traefik {#traefik}
 
 O proxy reverso: roteadores desativados por um erro de configuração,
 servidores backend falhando sua verificação de saúde, certificados que um
@@ -20,7 +20,7 @@ available server". Um roteador que pede a um resolver ACME um certificado
 que o resolver não consegue obter recebe o certificado autoassinado padrão
 do Traefik, que navegadores recusam.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_traefik_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -52,7 +52,7 @@ Traefik service without a server, Traefik certificate not obtained, Proxy
 certificate not renewed, Reverse proxy answering 5xx, além de Device
 unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Traefik. Ele diz o que está errado em uma frase
@@ -63,7 +63,7 @@ parcela de 5xx, depois os servidores ativos por serviço, os certificados
 que expiram primeiro, e as respostas 5xx por roteador nas últimas 24
 horas.
 
-## Deixar o DumbMonit ler a API do Traefik
+## Deixar o DumbMonit ler a API do Traefik {#let-dumbmonit-read-traefiks-api}
 
 1. A API do Traefik só lê: roteadores, serviços e certificados, nunca uma
    alteração. Ative-a com as métricas Prometheus, que adicionam a taxa de
@@ -105,7 +105,7 @@ horas.
     que o Traefik 3.7 serve; sem ele, a expiração de certificado vem
     apenas das métricas.
 
-### Um entry point de API com senha
+### Um entry point de API com senha {#an-api-entry-point-with-a-password}
 
 Em vez de `--api.insecure=true`, dê à API e às métricas um entry point
 próprio e coloque um middleware basicAuth na frente de ambos. Na
@@ -149,7 +149,7 @@ Depois informe `traefik.lan:8082` no DumbMonit com o usuário `dumbmonit`.
 `addRoutersLabels` é o que dá as respostas 5xx por roteador; sem ele só os
 totais por entry point são contados.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

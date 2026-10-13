@@ -457,7 +457,7 @@ alertar.
 | `allow_private_targets` | Allow loopback and link-local targets | `false` | Consulta «Direcciones que las comprobaciones rechazan» abajo. |
 | `timeout_seconds` | Timeout (seconds) | `5` | Tiempo tras el cual el servicio se reporta caído si no ha respondido. Entre 1 y 60. |
 
-## MySQL y MariaDB
+## MySQL y MariaDB {#mysql-and-mariadb}
 
 **Base de datos MySQL o MariaDB** — conecta, autentica y ejecuta una
 consulta: la señal de una base de datos que está activa pero ya no

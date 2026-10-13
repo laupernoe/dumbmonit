@@ -1,4 +1,4 @@
-# Hardware de servidor (Redfish)
+# Hardware de servidor (Redfish) {#server-hardware-redfish}
 
 O próprio hardware de um servidor, lido de seu controlador de gerenciamento
 (BMC): ventoinhas, temperaturas contra seus próprios limites, fontes de
@@ -23,7 +23,7 @@ seus links de rede — e não o servidor que ele gerencia (veja
     não foi executada contra um Supermicro, iDRAC ou iLO real por
     semanas. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_redfish_`. Séries de saúde são
 **0 (OK), 1 (Aviso) ou 2 (Crítico)**, direto de `Status.Health`.
@@ -68,7 +68,7 @@ se aplicam: Server fan failed, Server temperature above critical, Power
 supply redundancy lost, Power supply failed, Drive failure predicted,
 Server health critical, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Um dispositivo Redfish recebe seu próprio painel em sua página, acima dos
 gráficos, lido do que a última sondagem armazenou: abrir a página nunca
@@ -110,7 +110,7 @@ Compartimentos vazios e slots livres nunca aparecem: não produzem série
 alguma. Todo estado é uma palavra assim como uma cor, e um valor
 desconhecido lê "—", nunca 0.
 
-## Criar uma conta somente leitura no controlador de gerenciamento
+## Criar uma conta somente leitura no controlador de gerenciamento {#create-a-read-only-account-on-the-management-controller}
 
 1. Abra a interface web do controlador de gerenciamento (BMC), não o
    sistema operacional do servidor. Crie um novo usuário local nomeado
@@ -158,7 +158,7 @@ movem mas mantêm os mesmos papéis. No Supermicro, o tipo de conta mostrado
 ao criar um usuário decide quais interfaces ele pode usar: uma conta sem
 acesso Redfish é recusada com um 401 mesmo com a senha certa.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -168,7 +168,7 @@ Endereço: o nome de host ou IP do controlador, por exemplo `bmc.lan` ou
 `10.0.0.50`. A porta padrão é 443; escreva `host:porta` para outra, ou uma
 URL completa (`https://bmc.lan:8443`).
 
-## Opções
+## Opções {#options}
 
 | Opção | Padrão | Efeito |
 |---|---|---|
@@ -188,7 +188,7 @@ precisar de um tempo limite de sondagem mais longo
 [Configuração](../reference/configuration.md)) e um intervalo de
 sondagem de dois minutos ou mais.
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

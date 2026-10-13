@@ -68,7 +68,7 @@ Einträge das.
 **Last 24 hours** listet die feuernden Übergänge des Tages, mit einem
 Link zur vollständigen Historie auf der Alerts-Seite.
 
-## Wall-Modus
+## Wall-Modus {#wall-mode}
 
 `/wall` zeigt nur das Bulletin, im Vollbild, für einen Raummonitor: den
 Satz, die Zählungen und die *Needs you*-Liste, alle 20 Sekunden

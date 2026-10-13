@@ -1,4 +1,4 @@
-# Sophos Firewall
+# Sophos Firewall {#sophos-firewall}
 
 通过 XML API 监控 Sophos Firewall(SFOS):每个绑定到某个区域的接口的
 链路状态,以及哪些 IPsec 连接处于激活状态。

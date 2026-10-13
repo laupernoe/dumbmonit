@@ -133,7 +133,7 @@ anche su HTTP semplice e in un browser che non può riprodurre Spotify.
 Per usare solo questo, disattiva **Use this display as a Spotify
 speaker** nel pannello Music del wall.
 
-#### Quando il browser della TV non può riprodurre Spotify
+#### Quando il browser della TV non può riprodurre Spotify {#when-the-tvs-browser-cannot-play-spotify}
 
 Scegli ciò che corrisponde alla tua configurazione — in ogni caso il
 wall continua a mostrare cosa suona, perché *now playing* legge

@@ -1,293 +1,239 @@
-# Settings
+# Einstellungen {#settings}
 
-![Settings: Konto, Benutzer, Single Sign-On, Agents, Assistant, Erscheinungsbild, About](../assets/screenshots/settings-light.png){ loading=lazy }
+![Einstellungen: Konto, Benutzer, Single Sign-On, Agenten, Assistent, Darstellung, Info](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings hält alles Administrative: Ihr Konto, wer sich wie einloggen
-kann, die Tokens, die Agents und Assistants einlassen, die Sicherung
-der Instanz, das Theme, und die Gesundheit des Servers. Eine Seite,
-ein Abschnitt pro Thema, mit einer Leiste aus Anker-Links auf einem
-breiten Bildschirm und einem Streifen aus Chips auf einem Telefon.
-Jeder Abschnitt ist verlinkbar (`/settings#agents`).
+Die Einstellungen enthalten das Administrative: Ihr Konto, wer sich wie anmelden kann, die
+Tokens, die Agenten und Assistenten hereinlassen, die Sicherung der Instanz, das Theme und den
+Zustand des Servers. Eine Seite, ein Abschnitt pro Thema, mit einer Leiste von Ankern auf einem
+breiten Bildschirm und einem Streifen von Chips auf einem Smartphone. Jeder Abschnitt ist
+verlinkbar (`/settings#agents`).
 
-Zwei Dinge lebten früher hier und sind umgezogen, weil sie keine
-Administration sind:
+Zwei Dinge lagen früher hier und sind umgezogen, weil sie keine Administration sind:
 
 | Gesucht | Jetzt unter | Alter Link |
 |---|---|---|
-| Benachrichtigungskanäle, Ruhezeiten, Benachrichtigungsrichtlinie | **Alerts → Notifications** ([Alerts-Seite](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
+| Benachrichtigungskanäle, Ruhezeiten, Benachrichtigungsrichtlinie | **Alarme → Benachrichtigungen** ([Seite Alarme](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
 | Statusseiten und Ankündigungen | **Status** ([Statusseiten](status-pages.md)) | `/settings#status` |
 
-Die alten Links funktionieren weiterhin: Sie leiten zum neuen Ort weiter.
+Die alten Links funktionieren weiter: Sie leiten an die neue Stelle weiter.
 
-## Account & security
+## Konto & Sicherheit {#account-security}
 
-Das ist Ihr eigenes Konto. Das erste wird beim ersten Start erstellt,
-weitere können unten hinzugefügt werden. Hier ändern Sie Ihr Passwort:
-aktuelles Passwort, neues Passwort (mindestens 12 Zeichen; ein ganzer
-Satz ist sicherer als ein kompliziertes Wort), Bestätigung. Es zu
-ändern loggt jede andere Sitzung aus. Konten, die sich über den
-Identity-Provider einloggen, haben hier kein Passwort. **Sign out**
-beendet diese Sitzung.
+Das ist Ihr eigenes Konto. Das erste wird beim ersten Start erstellt, weitere lassen sich unten
+hinzufügen. Hier ändern Sie Ihr Passwort: aktuelles Passwort, neues Passwort (mindestens 12
+Zeichen; ein ganzer Satz ist sicherer als ein kompliziertes Wort), Bestätigung. Die Änderung
+meldet jede andere Sitzung ab. Konten, die sich über den Identitätsanbieter anmelden, haben hier
+kein Passwort. **Abmelden** beendet diese Sitzung.
 
-Der Login ist pro Client-Adresse und pro Konto ratenbegrenzt: Nach
-fünf fehlgeschlagenen Versuchen wartet jeder weitere Versuch länger
-(30 s, verdoppelnd, bis zu 5 Minuten). Setzen Sie hinter einem Reverse
-Proxy `DUMBMONIT_TRUSTED_PROXIES`, damit der Limiter die echte
-Client-Adresse sieht statt die des Proxys (siehe
-[Konfiguration](../reference/configuration.md)). Sitzungen dauern 30
-Tage. Ein vergessenes Passwort wird mit
-`DUMBMONIT_RESET_PASSWORD=1` zurückgesetzt: siehe die
-[FAQ](../faq.md#i-lost-the-password).
+Die Anmeldung ist pro Client-Adresse und pro Konto ratenbegrenzt: Nach fünf fehlgeschlagenen
+Versuchen wartet jeder weitere länger (30 s, sich verdoppelnd, bis zu 5 Minuten). Setzen Sie
+hinter einem Reverse-Proxy `DUMBMONIT_TRUSTED_PROXIES`, damit der Limiter die echte
+Client-Adresse statt der des Proxys sieht (siehe [Konfiguration](../reference/configuration.md)).
+Sitzungen dauern 30 Tage. Ein vergessenes Passwort wird mit `DUMBMONIT_RESET_PASSWORD=1`
+zurückgesetzt: siehe die [FAQ](../faq.md#i-lost-the-password).
 
-### Zwei-Faktor-Authentifizierung
+### Zwei-Faktor-Authentifizierung {#two-factor-authentication}
 
-Konten, die sich mit einem Passwort einloggen, können einen zweiten
-Faktor hinzufügen: einen sechsstelligen zeitbasierten Code (TOTP)
-aus einer Authenticator-App — Aegis, FreeOTP, Google Authenticator,
-1Password, Bitwarden… **Set up** fragt nach Ihrem Passwort, zeigt
-einen zu scannenden QR-Code (oder den zu tippenden Schlüssel), und
-aktiviert den zweiten Faktor, sobald Sie einen ersten Code aus der
-App eingeben. Acht **Recovery-Codes** werden dann einmal angezeigt:
-Speichern Sie sie, jeder loggt Sie einmal ein, falls das Telefon
-verloren geht. Der Login-Bildschirm fragt nach dem Code (oder einem
-Recovery-Code) nach dem Passwort; fünf falsche Codes brechen den
-Versuch ab, und Sie starten erneut beim Passwort, wobei die übliche
-Login-Ratenbegrenzung über die Versuche hinweg weiterzählt. Ein Code
-wird einmal akzeptiert: der, den Sie gerade genutzt haben
-(einschließlich dem, der den zweiten Faktor aktiviert hat), loggt Sie
-nicht erneut ein — warten Sie auf den nächsten.
+Konten, die sich mit einem Passwort anmelden, können einen zweiten Faktor hinzufügen: einen
+sechsstelligen zeitbasierten Code (TOTP) aus einer Authenticator-App — Aegis, FreeOTP, Google
+Authenticator, 1Password, Bitwarden … **Einrichten** fragt nach Ihrem Passwort, zeigt einen
+QR-Code zum Scannen (oder den Schlüssel zum Eintippen) und aktiviert den zweiten Faktor, sobald
+Sie einen ersten Code aus der App eingeben. Danach werden einmalig acht **Wiederherstellungscodes**
+angezeigt: Bewahren Sie sie auf, jeder meldet Sie genau einmal an, falls das Smartphone verloren
+geht. Der Anmeldebildschirm fragt nach dem Passwort nach dem Code (oder einem
+Wiederherstellungscode); fünf falsche Codes brechen den Versuch ab, und Sie beginnen wieder beim
+Passwort, wobei die übliche Anmelde-Ratenbegrenzung über Versuche hinweg weiterzählt. Ein Code
+wird nur einmal akzeptiert: Der gerade verwendete (auch der, der den zweiten Faktor aktiviert
+hat) meldet Sie nicht erneut an — warten Sie auf den nächsten.
 
-**Disable** fragt erneut nach dem Passwort. Recovery-Codes können
-nicht für sich allein neu erzeugt werden: deaktivieren und erneut
-einrichten für einen frischen Satz. Ein Admin kann den zweiten Faktor
-eines anderen Benutzers unter **Users** zurücksetzen (*Reset 2FA*),
-wenn sowohl das Telefon als auch die Codes weg sind — das loggt den
-Benutzer überall aus und lässt das Passwort unberührt. Das Secret wird
-mit dem Instanz-Secret verschlüsselt gespeichert; Codes sind gehasht.
-Single-Sign-On-Konten erhalten ihren zweiten Faktor vom
-Identity-Provider, nicht hier.
+**Deaktivieren** fragt erneut nach dem Passwort. Wiederherstellungscodes lassen sich nicht
+einzeln neu erzeugen: Deaktivieren Sie und richten Sie neu ein, um einen frischen Satz zu
+erhalten. Ein Admin kann den zweiten Faktor eines anderen Benutzers unter **Benutzer**
+(*2FA zurücksetzen*) zurücksetzen, wenn Smartphone und Codes beide weg sind — das meldet den
+Benutzer überall ab und lässt das Passwort unberührt. Das Geheimnis wird mit dem
+Instanzgeheimnis verschlüsselt gespeichert; Codes werden gehasht. Konten mit Single Sign-On
+erhalten ihren zweiten Faktor vom Identitätsanbieter, nicht von hier.
 
-Admins finden in diesem Abschnitt auch das **Security Log**: Logins
-und Fehlschläge, Passwort- und Zwei-Faktor-Änderungen,
-Token- und Kontoänderungen, mit der Client-Adresse. Es behält die
-letzten 5.000 Einträge.
+Admins finden in diesem Abschnitt auch das **Sicherheitslog**: Anmeldungen und Fehlschläge,
+Passwort- und Zwei-Faktor-Änderungen, Token- und Kontoänderungen, mit der Client-Adresse. Es
+behält die letzten 5 000 Einträge.
 
-## Push notifications
+## Push-Benachrichtigungen {#push-notifications}
 
-Native Benachrichtigungen auf diesem Telefon oder Computer, auch mit
-geschlossenem DumbMonit: **Enable on this device**, dann **Send a
-test**. Jedes Konto verwaltet hier seine eigenen Geräte (Viewer
-auch); welche Alarme sie erreichen, wird von einem **Web-Push**-Kanal
-unter Alerts → Notifications festgelegt. Die **i**-Schaltfläche fasst
-die Anforderungen zusammen: HTTPS (oder localhost),
-Homescreen-Installation auf iPhone und iPad, und die
-Push-Dienst-Domains, die der Server erreichen muss. Vollständige
-Anleitung: [Push-Benachrichtigungen (PWA)](push-notifications.md).
+Native Benachrichtigungen auf diesem Smartphone oder Computer, auch bei geschlossenem DumbMonit:
+**Auf diesem Gerät aktivieren**, dann **Test senden**. Jedes Konto verwaltet hier seine eigenen
+Geräte (auch Betrachter); welche Alarme sie erreichen, legt ein Kanal **Web Push** unter Alarme →
+Benachrichtigungen fest. Die Schaltfläche **i** fasst die Voraussetzungen zusammen: HTTPS (oder
+localhost), Installation auf dem Home-Bildschirm bei iPhone und iPad und die Domains der
+Push-Dienste, die der Server erreichen muss. Vollständige Anleitung:
+[Push-Benachrichtigungen (PWA)](push-notifications.md).
 
-## Users
+## Benutzer {#users}
 
-Nur Admins. Die Konten, die sich einloggen können, und ihre Rolle:
+Nur Admins. Die Konten, die sich anmelden können, und ihre Rolle:
 
-| Rolle | Liest alles | Bearbeitet Alarme (Ack, Snooze, Ignore, Wartungsfenster, Historie löschen) | Ändert Konfiguration (Geräte, Regeln, Kanäle, Statusseiten, Einstellungen, Backups, Tokens, Konten) |
+| Rolle | Liest alles | Bearbeitet Alarme (bestätigen, zurückstellen, ignorieren, Wartungsfenster, Verlauf löschen) | Ändert die Konfiguration (Geräte, Regeln, Kanäle, Statusseiten, Einstellungen, Sicherungen, Tokens, Konten) |
 |---|---|---|---|
-| **Viewer** | ja | nein | nein |
+| **Betrachter** | ja | nein | nein |
 | **Operator** | ja | ja | nein |
 | **Admin** | ja | ja | ja |
 
-Ein Viewer sieht jede Seite mit jeder Steuerung, die etwas verborgen
-ändern würde. Ein Operator ist die Bereitschafts-Rolle: Die
-Alarm-Steuerungen sind da, die Konfigurationsbildschirme lesen sich
-*Operator — config is admin only*. Nur ein Admin erstellt Konten oder
-ändert eine Rolle — ein Operator kann niemanden befördern, sich
-selbst eingeschlossen. Die Abschnitte *Users*, *Single sign-on* und
-das Security Log bleiben nur für Admins. **Add user** fragt nach
-einem Benutzernamen, einem optionalen Anzeigenamen, einer Rolle und
-einem Passwort; die Schaltfläche neben dem Passwortfeld erzeugt ein
-zufälliges. Das Passwort wird einmal angezeigt, zur Weitergabe.
+Ein Betrachter sieht jede Seite, wobei jedes Bedienelement, das etwas ändern würde, verborgen ist.
+Einiges bleibt selbst zum Lesen Admins vorbehalten: API- und Agent-Tokens, E-Mail-Adressen der
+Abonnenten von Statusseiten und Geräteoptionen, die wie Geheimnisse aussehen (eine Option, deren
+Name `key`, `token`, `password` … enthält, die zusätzlichen Header einer HTTP-Prüfung, das
+Passwort einer Adresse `https://user:pass@host`), die Nicht-Admins als `***` lesen. Ein Operator
+ist die Bereitschaftsrolle: Die Alarmsteuerung ist da, die Konfigurationsbildschirme lesen
+*Operator — Konfiguration nur für Admins*. Nur ein Admin erstellt Konten oder ändert eine Rolle —
+ein Operator kann niemanden befördern, sich selbst eingeschlossen. Die Abschnitte *Benutzer*,
+*Single Sign-On* und Sicherheitslog bleiben Admins vorbehalten. **Benutzer hinzufügen** fragt
+nach einem Benutzernamen, einem optionalen Anzeigenamen, einer Rolle und einem Passwort; die
+Schaltfläche neben dem Passwortfeld denkt sich ein zufälliges aus. Das Passwort wird einmalig
+zur Übergabe angezeigt.
 
-Jede Zeile trägt die Rolle, ob das Konto sich mit einem Passwort oder
-über den Identity-Provider einloggt, ob Zwei-Faktor an ist, und den
-letzten Login. **Edit** ändert den Anzeigenamen, die Rolle und das
-Passwort (ein Reset loggt diesen Benutzer überall aus und zeigt das
-neue Passwort einmal). Der Schalter **Enabled** suspendiert ein Konto
-ohne es zu löschen; **Reset 2FA** erscheint, wenn das Konto einen
-zweiten Faktor hat; **Delete** entfernt es endgültig. Der Server
-behält mindestens einen aktiven Admin, und die Steuerungen spiegeln
-diese Regel wider, statt sie als Fehler zu melden: Der letzte Admin
-kann nicht degradiert, deaktiviert oder gelöscht werden, und Sie
-können Ihr eigenes Konto nicht deaktivieren oder löschen.
+Jede Zeile trägt die Rolle, ob sich das Konto mit einem Passwort oder über den Identitätsanbieter
+anmeldet, ob Zwei-Faktor aktiv ist, und die letzte Anmeldung. **Bearbeiten** ändert den
+Anzeigenamen, die Rolle und das Passwort (ein Zurücksetzen meldet den Benutzer überall ab und
+zeigt das neue Passwort einmalig an). Der Schalter **Aktiviert** sperrt ein Konto, ohne es zu
+löschen; **2FA zurücksetzen** erscheint, wenn das Konto einen zweiten Faktor hat; **Löschen**
+entfernt es endgültig. Der Server behält mindestens einen aktiven Admin, und die Bedienelemente
+spiegeln diese Regel wider, statt sie als Fehler zu melden: Der letzte Admin kann nicht
+herabgestuft, deaktiviert oder gelöscht werden, und Sie können Ihr eigenes Konto nicht
+deaktivieren oder löschen.
 
-## Single sign-on
+## Single Sign-On {#single-sign-on}
 
-Nur Admins. Login über einen OpenID-Connect-Provider (Authelia,
-Authentik, Keycloak, Pocket ID, Google Workspace…). Füllen Sie den
-*Provider-Namen* aus (er beschriftet die "Continue with …"-
-Schaltfläche am Login-Bildschirm), die *Issuer-URL* — Discovery wird
-von `{issuer}/.well-known/openid-configuration` gelesen — die
-*Client-ID*, das *Client-Secret* (verschlüsselt gespeichert, nie
-wieder angezeigt) und die *öffentliche URL*, über die Browser
-DumbMonit erreichen. Das Formular baut die Redirect-URI aus dieser
-öffentlichen URL: Kopieren Sie sie und registrieren Sie sie bei Ihrem
-Provider.
+Nur Admins. Anmeldung über einen OpenID-Connect-Anbieter (Authelia, Authentik, Keycloak, Pocket
+ID, Google Workspace …). Füllen Sie den *Anbieternamen* (er beschriftet die Schaltfläche
+„Weiter mit …“ auf dem Anmeldebildschirm), die *Issuer-URL* — Discovery wird aus
+`{issuer}/.well-known/openid-configuration` gelesen —, die *Client-ID*, das *Client-Secret*
+(verschlüsselt gespeichert, nie wieder angezeigt) und die *öffentliche URL* aus, unter der
+Browser DumbMonit erreichen. Das Formular baut die Redirect-URI aus dieser öffentlichen URL:
+Kopieren Sie sie und registrieren Sie sie bei Ihrem Anbieter.
 
-**Test discovery** liest die Konfiguration des Providers, ohne
-irgendjemanden einzuloggen, listet die gefundenen Endpunkte, und warnt,
-wenn der Provider weder mit RS256 noch mit ES256 signiert — den
-einzigen zwei Signaturen, die DumbMonit akzeptiert. Hier gespeicherte
-Einstellungen haben Vorrang vor den Umgebungsvariablen
-`DUMBMONIT_OIDC_*`, die nur gelten, solange nichts gespeichert ist;
-**Forget saved settings** löscht sie und fällt auf die Variablen
-zurück, falls vorhanden.
+**Discovery testen** liest die Konfiguration des Anbieters, ohne jemanden anzumelden, listet die
+gefundenen Endpunkte auf und warnt, wenn der Anbieter weder mit RS256 noch mit ES256 signiert —
+den einzigen beiden Signaturen, die DumbMonit akzeptiert. Hier gespeicherte Einstellungen haben
+Vorrang vor den Umgebungsvariablen `DUMBMONIT_OIDC_*`, die nur gelten, solange nichts gespeichert
+ist; **Gespeicherte Einstellungen vergessen** löscht sie und fällt auf die Variablen zurück,
+sofern sie existieren.
 
-**Advanced.** Der Rest des Formulars sitzt unter *Advanced*: *Scopes*
-benennt, wonach beim Provider gefragt wird, *Groups claim* den
-Token-Claim, der die Gruppen des Benutzers listet, und *Create
-accounts on first sign-in* entscheidet, ob eine unbekannte Person ein
-Konto erhält. Es ist **standardmäßig aus**: Nur bereits existierende
-Konten können sich einloggen, bis Sie es einschalten.
+**Erweitert.** Der Rest des Formulars liegt unter *Erweitert*: *Scopes* nennt, was beim Anbieter
+angefragt wird, *Gruppen-Claim* den Token-Claim, der die Gruppen des Benutzers auflistet, und
+*Konten bei der ersten Anmeldung erstellen* entscheidet, ob eine unbekannte Person ein Konto
+erhält. Es ist **standardmäßig aus**: Nur bereits existierende Konten können sich anmelden, bis
+Sie es einschalten.
 
-**Roles.** *Admin groups* listet die Gruppen, deren Mitglieder zu
-Admins werden; *Operator groups* die Gruppen, deren andere Mitglieder
-zu Operatoren werden; alle anderen sind Viewer. Lassen Sie beide leer,
-um die Rollen weiter unter **Users** zu verwalten. Mit nur
-ausgefülltem *Operator groups* berühren die Gruppen nie die
-Admin-Rolle: Admins bleiben Admins, die anderen werden Operatoren
-oder Viewer. Rollen werden bei jedem Login neu bewertet, außer dass
-der letzte aktive Admin nie degradiert wird. Die passenden
-Umgebungsvariablen sind `DUMBMONIT_OIDC_ADMIN_GROUPS` und
-`DUMBMONIT_OIDC_OPERATOR_GROUPS`.
+**Rollen.** *Admin-Gruppen* listet die Gruppen auf, deren Mitglieder zu Admins werden;
+*Operator-Gruppen* die Gruppen, deren übrige Mitglieder zu Operatoren werden; alle anderen sind
+Betrachter. Lassen Sie beide leer, um Rollen weiter unter **Benutzer** zu verwalten. Ist nur
+*Operator-Gruppen* ausgefüllt, berühren die Gruppen die Admin-Rolle nie: Admins bleiben Admins,
+die anderen werden Operatoren oder Betrachter. Rollen werden bei jeder Anmeldung neu bewertet,
+außer dass der letzte aktive Admin nie herabgestuft wird. Die entsprechenden Umgebungsvariablen
+sind `DUMBMONIT_OIDC_ADMIN_GROUPS` und `DUMBMONIT_OIDC_OPERATOR_GROUPS`.
 
-**Auf welchem Konto ein Login landet.** Die Identität wird nach dem
-ersten Login anhand ihres Provider-Subjects gemerkt. Bei einem ersten
-Login:
+**Auf welchem Konto eine Anmeldung landet.** Die Identität wird nach der ersten Anmeldung über
+das Subject des Anbieters gemerkt. Bei einer ersten Anmeldung:
 
-- Ein existierendes Konto wird nur verknüpft, wenn der Provider
-  `email_verified: true` behauptet und diese E-Mail der Benutzername
-  des Kontos ist. Ein `preferred_username` oder eine nicht
-  verifizierte E-Mail verknüpft nie: Bei den meisten Providern wählt
-  das der Benutzer, daher darf das `admin` vom Provider nicht zu
-  *Ihrem* `admin` werden.
-- Ein lokaler **Admin mit Passwort wird nie automatisch verknüpft**,
-  selbst bei verifizierter E-Mail: Der Login erstellt stattdessen ein
-  eigenständiges Konto. Verwalten Sie diesen Admin weiter mit seinem
-  Passwort, oder erstellen Sie einen separaten SSO-Admin über die
-  Admin-Gruppen.
-- Sonst, mit eingeschaltetem *Create accounts on first sign-in*, wird
-  ein neues Konto erstellt (Benutzername vom Provider, mit `-1`,
-  `-2`… ergänzt, falls vergeben). Mit ausgeschaltetem kann sich nur
-  die oben beschriebene verifizierte E-Mail-Verknüpfung einloggen.
+- Ein bestehendes Konto wird nur verknüpft, wenn der Anbieter `email_verified: true` zusichert
+  und diese E-Mail der Benutzername des Kontos ist. Ein `preferred_username` oder eine
+  unverifizierte E-Mail verknüpft nie: Bei den meisten Anbietern wählt der Benutzer diese selbst,
+  daher darf ein `admin` vom Anbieter nicht *Ihr* `admin` werden.
+- Ein lokaler **Admin mit Passwort wird nie automatisch verknüpft**, selbst bei verifizierter
+  E-Mail: Die Anmeldung erstellt stattdessen ein eigenes Konto. Verwalten Sie diesen Admin weiter
+  mit seinem Passwort oder erstellen Sie über die Admin-Gruppen einen separaten SSO-Admin.
+- Andernfalls wird, wenn *Konten bei der ersten Anmeldung erstellen* an ist, ein neues Konto
+  erstellt (Benutzername vom Anbieter, mit `-1`, `-2` … ergänzt, wenn vergeben). Ist es aus, kann
+  sich nur über die oben beschriebene Verknüpfung per verifizierter E-Mail angemeldet werden.
 
-**Kontoerstellung ist aus, sofern Sie sie nicht wählen.** Neue
-Installationen starten mit ausgeschaltetem *Create accounts on first
-sign-in*, ebenso jede Konfiguration, in der es nie gesetzt wurde —
-vor Existenz der Option gespeicherte Einstellungen, oder nur auf
-Umgebungsvariablen beruhende Setups ohne `DUMBMONIT_OIDC_AUTO_CREATE`.
-Frühere Releases behandelten "nie gesetzt" als an; das
-Single-Sign-On-Panel sagt jetzt, wann dieser Standard gilt. Ein von
-Ihnen explizit gespeicherter Wert wird so behalten, wie er ist.
+**Kontoerstellung ist aus, sofern Sie sie nicht wählen.** Neue Installationen starten mit
+*Konten bei der ersten Anmeldung erstellen* aus, ebenso jede Konfiguration, in der es nie gesetzt
+wurde — vor der Option gespeicherte Einstellungen oder reine Umgebungs-Setups ohne
+`DUMBMONIT_OIDC_AUTO_CREATE`. Frühere Versionen behandelten „nie gesetzt“ als an; das Panel
+Single Sign-On sagt jetzt, wann dieser Standard gilt. Ein ausdrücklich gespeicherter Wert bleibt
+unverändert.
 
-## Agents
+## Agenten {#agents}
 
-Enrollment-Tokens für den
-[Linux-, macOS-, FreeBSD- und Windows-Agent](../devices/agent.md).
-Erstellen Sie eines mit einem Namen ("File server", "Home fleet"):
-Das Token wird einmal angezeigt, mit den fertigen Installationsbefehlen
-für Linux und Windows. Jeder Befehl trägt die SHA-256-Prüfsummen der
-von diesem Server gelieferten Agent-Binaries, und der Installer lehnt
-einen nicht passenden Download ab; die Prüfsummen stehen außerdem
-unter den Befehlen, zum händischen Vergleich. Die Liste zeigt das
-Präfix, Erstellungsdatum, letzte Nutzung und ob jedes Token
-widerrufen wurde. **Revoke** stoppt jeden damit laufenden Agent bei
-seinem nächsten Push.
+Enrollment-Tokens für den [Linux-, macOS-, FreeBSD- und Windows-Agenten](../devices/agent.md).
+Erstellen Sie eines mit einem Namen („Dateiserver“, „Heimflotte“): Das Token wird einmalig
+angezeigt, mit den kopierfertigen Installationsbefehlen für Linux und Windows. Jeder Befehl trägt
+die SHA-256-Prüfsummen der Agent-Binaries, die dieser Server ausliefert, und der Installer lehnt
+einen nicht passenden Download ab; die Prüfsummen stehen zum Vergleich von Hand auch unter den
+Befehlen. Die Liste zeigt für jedes Token sein Präfix, Erstellungsdatum, letzte Verwendung und ob
+es widerrufen wurde. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem
+nächsten Push.
 
-Ein Token kann mehrere Maschinen anmelden. Es zu widerrufen löscht
-die Geräte nicht. Viewer sehen die Liste, und der Abschnitt liest sich
-*Viewer — read only*; Erstellen und Widerrufen sind für Admins.
+Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Geräte nicht. Die Tokenliste,
+Erstellen und Widerrufen sind Admins vorbehalten; Betrachter und Operatoren sehen den Abschnitt
+ohne die Liste.
 
-## API & assistants
+## API & Assistenten {#api-assistants}
 
-Eine Art Token für beides: MCP-Clients und die
-[REST-API](../reference/api.md). Benennen Sie ein Token, wählen Sie
-seinen Scope und erstellen Sie es — es wird einmal angezeigt. Ein
-**read**-Token kann nur nachsehen; ein **read and write**-Token kann
-auch Dinge ändern — ein Gerät stummschalten, eine Abfrage ausführen,
-Geräte, Regeln und Kanäle hinzufügen oder bearbeiten — aber nie
-Konten, Login-Einstellungen oder andere Tokens.
+Eine Art Token für beides: MCP-Clients und die [REST-API](../reference/api.md). Benennen Sie ein
+Token, wählen Sie seinen Umfang und erstellen Sie es — es wird einmalig angezeigt. Ein
+**Lese**-Token kann nur ansehen; ein **Lese- und Schreib**-Token kann auch etwas ändern — ein
+Gerät stummschalten, eine Prüfung ausführen, Geräte, Regeln und Kanäle hinzufügen oder bearbeiten
+—, aber nie Konten, Anmeldeeinstellungen oder andere Tokens.
 
-Unter **Connect** halten drei Tabs die Snippets, mit dem Token
-gefüllt, während es noch auf dem Bildschirm steht: *Claude* (der
-Befehl `claude mcp add` und der
-`claude_desktop_config.json`-Block), *ChatGPT* (die
-MCP-Server-URL und der Autorisierungs-Header, mit einer Warnung,
-wenn diese Seite nicht über HTTPS bedient wird — ChatGPT verbindet
-sich von OpenAIs Servern aus, daher muss die Adresse aus dem
-Internet erreichbar sein) und *Cursor / other*, dieselbe Form für
-jeden Client, der Streamable HTTP mit einem Bearer-Header spricht.
-**API access** zeigt dasselbe Token auf der REST-API als
-`curl`-Beispiel, und verweist auf die Routen, die ein Prometheus
-oder ein Grafana damit abfragt. Siehe
-[Einen Assistant verbinden](assistant.md) und
-[DumbMonit abfragen](../reference/metrics.md#scraping-dumbmonit).
+Unter **Verbinden** enthalten drei Tabs die Snippets, mit dem Token befüllt, solange es noch auf
+dem Bildschirm steht: *Claude* (der Befehl `claude mcp add` und der Block für
+`claude_desktop_config.json`), *ChatGPT* (die URL des MCP-Servers und der Authorization-Header,
+mit einer Warnung, wenn diese Seite nicht über HTTPS ausgeliefert wird — ChatGPT verbindet sich
+von den Servern von OpenAI aus, daher muss die Adresse aus dem Internet erreichbar sein) und
+*Cursor / andere*, dieselbe Form für jeden Client, der Streamable HTTP mit Bearer-Header spricht.
+**API-Zugriff** zeigt dasselbe Token an der REST-API als `curl`-Beispiel und verweist auf die
+Routen, die ein Prometheus oder Grafana damit abfragt. Siehe [Einen Assistenten
+verbinden](assistant.md) und [DumbMonit abfragen](../reference/metrics.md#scraping-dumbmonit).
 
-## Backup
+## Sicherung {#backup}
 
 Drei Dinge, in der Reihenfolge, in der Sie ihnen begegnen.
 
-Eine **nicht zu übersehende Warnung**: `/data/secret.key` ist, was
-Gerätezugangsdaten entschlüsselt, und eine Kopie der Datenbank ohne
-sie stellt eine Instanz wieder her, die mit nichts sprechen kann. Der
-Wortlaut ändert sich, wenn das Secret stattdessen aus
-`DUMBMONIT_SECRET` kommt — es gibt dann keine Datei zum Kopieren, und
-Ihr Passwort-Manager muss es halten.
+Eine **Warnung, die Sie nicht übersehen können**: `/data/secret.key` entschlüsselt die
+Gerätezugangsdaten, und eine Kopie der Datenbank ohne sie stellt eine Instanz wieder her, die mit
+nichts sprechen kann. Der Wortlaut ändert sich, wenn das Geheimnis stattdessen aus
+`DUMBMONIT_SECRET` kommt — dann gibt es keine Datei zu kopieren, und Ihr Passwortmanager muss es
+halten.
 
-**Export the configuration** listet, was das Bündel enthalten würde,
-mit einer Zahl pro Abschnitt, und fragt dann zweimal nach einer
-Passphrase. Die herunterkommende Datei hält jedes Credential dieser
-Instanz, allein mit dieser Passphrase verschlüsselt: Bewahren Sie sie
-auf, wo Sie Passwörter aufbewahren. Kontopasswörter und 2FA-Secrets
-werden ausgelassen, sofern Sie den Schalter nicht einschalten.
+**Die Konfiguration exportieren** listet auf, was das Bundle enthalten würde, mit einer Zahl pro
+Abschnitt, und fragt dann zweimal nach einer Passphrase. Die heruntergeladene Datei enthält alle
+Zugangsdaten dieser Instanz, allein mit dieser Passphrase verschlüsselt: Bewahren Sie sie dort
+auf, wo Sie Passwörter aufbewahren. Kontopasswörter und 2FA-Geheimnisse bleiben außen vor, sofern
+Sie den Schalter nicht einschalten.
 
-**Restore a bundle** nimmt die Datei und ihre Passphrase und zeigt
-zuerst einen **Dry Run**: eine Tabelle, was erstellt, aktualisiert
-und unberührt gelassen würde, Abschnitt für Abschnitt, mit einer
-Notiz für alles, was nicht platziert werden kann. Nichts wird
-geschrieben, bis Sie *Restore for real* drücken.
+**Ein Bundle wiederherstellen** nimmt die Datei und ihre Passphrase und zeigt zuerst einen
+**Probelauf**: eine Tabelle, was erstellt, aktualisiert und unangetastet bliebe, Abschnitt für
+Abschnitt, mit einem Hinweis zu allem, was es nicht einordnen kann. Nichts wird geschrieben, bis
+Sie *Wirklich wiederherstellen* drücken.
 
-**Scheduled local backups** zeigt, ob sie an sind, wohin sie gehen,
-den letzten Lauf und ob er gelang, und die behaltenen Dateien mit
-ihrer Größe. **Back up now** schreibt sofort eines — das, was vor
-einem Upgrade zu tun ist.
+**Geplante lokale Sicherungen** zeigt, ob sie aktiv sind, wohin sie gehen, den letzten Lauf und
+ob er erfolgreich war, und die aufbewahrten Dateien mit ihrer Größe. **Jetzt sichern** schreibt
+sofort eine — das, was man vor einem Upgrade tun sollte.
 
-Alles hier ist nur für Admins. Siehe
-[Backup und Wiederherstellung](../install/backup.md).
+Alles hier ist Admins vorbehalten. Siehe [Sicherung und Wiederherstellung](../install/backup.md).
 
-## Reports
+## Berichte {#reports}
 
-Periodische Verfügbarkeits-E-Mails für das Team: wöchentlich, täglich
-oder monatlich wählen, den Tag, die Stunde und Zeitzone, die
-Empfänger und den E-Mail-Kanal, dann **Send a preview**, um das
-Ergebnis zu sehen. Nur für Admins. Siehe
-[E-Mail-Berichte](reports.md).
+Periodische Verfügbarkeits-E-Mails für das Team: Wählen Sie wöchentlich, täglich oder monatlich,
+den Tag, die Uhrzeit und die Zeitzone, die Empfänger und den E-Mail-Kanal, dann **Vorschau
+senden**, um das Ergebnis zu sehen. Nur Admins. Siehe [E-Mail-Berichte](reports.md).
 
-## Appearance
+## Darstellung {#appearance}
 
-Drei Kacheln, jede mit Vorschau ihres eigenen Themes: **System**
-(folgt Ihrem Gerät und wechselt damit), **Day** (das
-"Diagrammpapier"-Theme) und **Night** (das "Radar"-Theme). Die Wahl
-wird im Browser gespeichert. Der Umschalter im Header und *Toggle
-theme* der Befehlspalette wechseln zwischen Tag und Nacht.
+Drei Kacheln, jede mit Vorschau ihres eigenen Themes: **System** (folgt Ihrem Gerät und wechselt
+mit ihm), **Tag** (das Theme „Diagrammpapier“) und **Nacht** (das Theme „Radar“). Die Wahl wird im
+Browser gespeichert. Der Umschalter im Header und *Theme wechseln* der Befehlspalette schalten
+zwischen Tag und Nacht um.
 
-**Open wall mode** sitzt am Ende des Abschnitts: nur das Bulletin,
-im Vollbild, für einen Monitor im Raum. ++esc++ verlässt es, und die
-Befehlspalette öffnet es von überall — siehe
-[Wall-Modus](overview.md#wall-mode).
+**Wandmodus öffnen** steht am Ende des Abschnitts: der Bericht allein, im Vollbild, für einen
+Monitor im Raum. ++esc++ verlässt ihn, und die Befehlspalette öffnet ihn von überall — siehe
+[Wandmodus](overview.md#wall-mode).
 
-## About
+## Info {#about}
 
-Version des Servers und die Gesundheit seiner zwei Speicher, der
-Datenbank (Geräte-Setup und Alarmhistorie) und VictoriaMetrics (jede
-Messung in den Diagrammen), wie von `GET /api/health` gemeldet und
-alle 15 Sekunden aktualisiert. Ein Speicher, der aufhört zu
-antworten, zeigt eine Warnung mit dem Fehler und was zu prüfen ist.
-Der Abschnitt verlinkt auch auf diese Dokumentation und benennt die
-Lizenz, Apache 2.0.
+Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Geräteeinrichtung und
+Alarmverlauf) und VictoriaMetrics (jede Messung in den Diagrammen), wie von `GET /api/health`
+gemeldet und alle 15 Sekunden aktualisiert. Ein Speicher, der nicht mehr antwortet, zeigt eine
+Warnung mit dem Fehler und dem, was zu prüfen ist. Der Abschnitt verlinkt außerdem diese
+Dokumentation und nennt die Lizenz, Apache 2.0.

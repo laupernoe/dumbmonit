@@ -1,130 +1,123 @@
 # Sviluppo
 
-DumbMonit è un binario Rust (`crates/server`, che include la build
-SvelteKit) più VictoriaMetrics per le serie temporali, avviato dal server
-dal binario fornito nell'immagine, e un database SQLite integrato per
-configurazione e stato. Un container. Il codice Rust e i commenti sono
-in francese; l'interfaccia web è in inglese.
+DumbMonit è un unico binario Rust (`crates/server`, che incorpora la build di
+SvelteKit) più VictoriaMetrics per le serie temporali, avviato dal server a
+partire dal binario fornito nell'immagine, e un database SQLite incorporato per
+configurazione e stato. Un solo container. Il codice Rust e i commenti sono in
+francese; l'interfaccia web è in inglese.
 
 ## Struttura del progetto
 
 ```
-crates/proto     tipi condivisi: Sample, Target, Credential, trait Collector (+ ProbeError)
-crates/server    il binario
-  api/           rotte axum (mod.rs è la tabella delle rotte); spa.rs serve web/build
-  auth/          password per istanza singola, cookie di sessione HttpOnly, rate limit
-  collectors/    snmp (profiles/*.yaml caricati all'avvio), proxmox, pbs, synology, agent, uptime
-  scheduler.rs   esegue ogni target abilitato sul suo intervallo attraverso il registry dei collector
-  tsdb/          writer VictoriaMetrics (flush in batch) + proxy di query; embedded.rs supervisiona il VictoriaMetrics figlio
-  db/            SQLite + migrazioni numerate in db/migrations/
-  alerting/      regole, macchina a stati (Phase/EffectivePhase), soppressione per genitore, silenzi, baseline stagionale
-  notify/        22 canali di notifica, descritti all'interfaccia da notify/catalog.rs
-  crypto.rs      AES-256-GCM per credenziali/token, chiave derivata da /data/secret.key o DUMBMONIT_SECRET
-crates/agent     agent Linux/macOS/FreeBSD/Windows; install/ contiene install.sh/.ps1 servito dal server
-web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), fallback SPA adapter-static, ssr=false
-profiles/        profili di raccolta SNMP, applicati automaticamente per sysObjectID
-docs/            questa documentazione (MkDocs, pubblicata su Read the Docs)
+crates/proto     shared types: Sample, Target, Credential, trait Collector (+ ProbeError)
+crates/server    the binary
+  api/           axum routes (mod.rs is the route table); spa.rs serves web/build
+  auth/          single instance password, HttpOnly session cookie, rate limit
+  collectors/    snmp (profiles/*.yaml loaded at startup), proxmox, pbs, synology, agent, uptime
+  scheduler.rs   runs every enabled target on its interval through the collector registry
+  tsdb/          VictoriaMetrics writer (batched flush) + query proxy; embedded.rs supervises the child VictoriaMetrics
+  db/            SQLite + numbered migrations in db/migrations/
+  alerting/      rules, state machine (Phase/EffectivePhase), suppression by parent, silences, seasonal baseline
+  notify/        22 notification channels, described to the UI by notify/catalog.rs
+  crypto.rs      AES-256-GCM for credentials/tokens, key derived from /data/secret.key or DUMBMONIT_SECRET
+crates/agent     Linux/macOS/FreeBSD/Windows agent; install/ holds install.sh/.ps1 served by the server
+web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), adapter-static SPA fallback, ssr=false
+profiles/        SNMP collection profiles, auto-applied by sysObjectID
+docs/            this documentation (MkDocs, published on Read the Docs)
 ```
 
-## Compilare senza un toolchain Rust
+## Compilare senza una toolchain Rust
 
-La compilazione avviene in Docker; nulla di Rust deve essere installato
-sull'host.
+La compilazione avviene in Docker; sull'host non serve installare nulla di Rust.
 
 ```bash
-# Stack completo (costruisce l'immagine: circa 10 min a freddo) — UI su http://localhost:8080
+# Full stack (builds the image: about 10 min cold) — UI on http://localhost:8080
 docker compose up -d --build
-# overlay sviluppatore: il VictoriaMetrics integrato viene pubblicato su :8428 per query MetricsQL dirette
+# developer overlay: the embedded VictoriaMetrics is published on :8428 for direct MetricsQL queries
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
-# Rust, dentro lo stage builder (musl/alpine)
+# Rust, inside the builder stage (musl/alpine)
 docker build -t dumbmonit-devenv --target builder .
 docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo test
-docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo test -p dumbmonit-server --test alerts_api   # un file di test di integrazione
-docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo test -p dumbmonit-server test_name          # un test per nome
+docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo test -p dumbmonit-server --test alerts_api   # one integration test file
+docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo test -p dumbmonit-server test_name          # one test by name
 docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo clippy --all-targets --all-features -- -D warnings
 docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo fmt --all --check
 ```
 
-Con Rust installato localmente, `cargo test` e
-`cargo clippy -- -D warnings` funzionano direttamente. Edition 2024, MSRV
-1.88; `rustfmt.toml` imposta `max_width = 100` e
-`use_small_heuristics = "Max"`.
+Con Rust installato in locale, `cargo test` e `cargo clippy -- -D warnings`
+funzionano direttamente. Edition 2024, MSRV 1.88; `rustfmt.toml` imposta
+`max_width = 100` e `use_small_heuristics = "Max"`.
 
-La build Docker è a strati: build web → dipendenze Rust su fonti fittizie
-→ fonti reali (con un `touch` prima del secondo `cargo build`, altrimenti
-cargo riutilizza gli artefatti fittizi) → agent cross-compilato con
-cargo-zigbuild per `x86_64-unknown-linux-musl`,
-`aarch64-unknown-linux-musl` e `x86_64-pc-windows-gnu` →
-`FROM scratch`. `web/build` deve esistere prima di `cargo build`,
-altrimenti il server viene spedito senza un'interfaccia.
+La build Docker è a livelli: build web → dipendenze Rust su sorgenti fittizi →
+sorgenti reali (con un `touch` prima della seconda `cargo build`, altrimenti
+cargo riutilizza gli artefatti fittizi) → agent compilato in cross-compilation
+con cargo-zigbuild per `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`
+e `x86_64-pc-windows-gnu` → `FROM scratch`. `web/build` deve esistere prima di
+`cargo build`, altrimenti il server viene distribuito senza interfaccia.
 
 ## Interfaccia web
 
 Node 22 è sufficiente sull'host.
 
 ```bash
-cd web && npm run dev        # Vite su :5173, inoltra /api a localhost:8080 (il server Docker)
-cd web && npm run check      # svelte-check (eseguito dalla CI)
-cd web && npm run build      # build statica in web/build, incorporata da rust_embed al cargo build
+cd web && npm run dev        # Vite on :5173, proxies /api to localhost:8080 (the Docker server)
+cd web && npm run check      # svelte-check (CI runs this)
+cd web && npm run build      # static build into web/build, embedded by rust_embed at cargo build
 ```
 
-Convenzioni: solo Svelte 5 runes (`$props`, `$state`, `$derived`,
-`$effect`, snippet, `onclick`). Ogni accesso di rete passa attraverso
-`src/lib/api/`; i componenti non fanno mai `fetch`. I tipi in
-`api/types.ts` rispecchiano esattamente le struct Rust e devono essere
-mantenuti sincronizzati con `crates/server/src/api/*.rs`. Il design
-system (token in `src/app.css`, primitive in `src/lib/ui/`) è
-documentato in `DESIGN.md`; il contesto di prodotto in `PRODUCT.md`. Non
-eseguire mai due `vite build` contemporaneamente: svuotano
-`.svelte-kit/output`.
+Convenzioni: solo rune di Svelte 5 (`$props`, `$state`, `$derived`, `$effect`,
+snippet, `onclick`). Tutto l'accesso alla rete passa da `src/lib/api/`; i
+componenti non usano mai `fetch`. I tipi in `api/types.ts` rispecchiano
+esattamente le struct Rust e devono restare sincronizzati con
+`crates/server/src/api/*.rs`. Il design system si trova in `src/app.css` (token)
+e in `src/lib/ui/` (primitive). Non eseguire mai due `vite build` contemporaneamente:
+cancellano `.svelte-kit/output`.
 
 ## Traduzioni (Weblate)
 
-L'interfaccia web è cablata per la traduzione della community ma nulla è
-ancora tradotto: l'inglese è l'unica locale fornita, in
-`web/messages/en.json` (piatto, chiavi punteggiate, segnaposto
-`{param}`, compilato da [Paraglide JS](https://paraglidejs.com) in
-funzioni di messaggio tree-shaken sotto `web/src/lib/paraglide/`,
-generato e non tracciato). La traduzione avviene su
+L'interfaccia web è predisposta per la traduzione da parte della comunità, ma
+per ora non è tradotto nulla: l'inglese è l'unica lingua distribuita, in
+`web/messages/en.json` (chiavi piatte con punti, segnaposto `{param}`, compilato
+da [Paraglide JS](https://paraglidejs.com) in funzioni di messaggio con
+tree-shaking sotto `web/src/lib/paraglide/`, generato e non tracciato). La
+traduzione avviene su
 [hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
 (componente `web-ui`), configurato come segue:
 
 | Impostazione | Valore |
 | --- | --- |
-| Repository | questo repo, sottodirectory `web/` |
-| File mask | `web/messages/*.json` |
-| Monolingual base language file | `web/messages/en.json` |
-| File format | JSON file (monolingual) |
-| New language | crea un nuovo file di traduzione (Weblate scrive `web/messages/<locale>.json`) |
-| Version control | GitHub, tramite l'app GitHub di Weblate: le traduzioni ritornano come pull request su `main` |
+| Repository | questo repository, sottocartella `web/` |
+| Maschera dei file | `web/messages/*.json` |
+| File della lingua base monolingue | `web/messages/en.json` |
+| Formato dei file | JSON file (monolingue) |
+| Nuova lingua | creare un nuovo file di traduzione (Weblate scrive `web/messages/<locale>.json`) |
+| Controllo versione | GitHub, tramite l'app GitHub di Weblate: le traduzioni tornano come pull request su `main` |
 
-Le nuove stringhe dell'interfaccia atterrano solo in
-`web/messages/en.json`; un traduttore poi compila gli altri file di
-locale tramite Weblate. Le chiavi vengono estratte progressivamente —
-oggi questo copre le pagine Settings (`web/src/routes/settings/`) e la
-copia integrata di un paio di primitive `web/src/lib/ui/` — il resto
-dell'interfaccia legge ancora inglese semplice e viene estratto man mano
-che viene toccato. Vedi `CONTRIBUTING.md` per la convenzione di
-redazione delle stringhe.
+Le nuove stringhe dell'interfaccia vanno solo in `web/messages/en.json`; un
+traduttore compila poi gli altri file delle lingue tramite Weblate. Le chiavi
+vengono estratte progressivamente — oggi riguardano le pagine Impostazioni
+(`web/src/routes/settings/`) e il testo integrato di un paio di primitive di
+`web/src/lib/ui/` — il resto dell'interfaccia legge ancora inglese semplice e
+viene estratto man mano che lo si tocca. Vedi `CONTRIBUTING.md` per la
+convenzione di scrittura delle stringhe.
 
-`web/project.inlang/settings.json` punta il suo unico plugin
-(message-format) a `./node_modules/@inlang/plugin-message-format/dist/index.js`
-invece dell'URL jsdelivr a cui lo strumento proprio di inlang punta per
-impostazione predefinita: un percorso relativo, non `http`, viene letto
-direttamente dal disco, così `npm run build` non raggiunge mai un CDN —
-importante poiché la build dell'immagine non ha garanzia di una cache
-npm calda che offra quell'URL, e uno strumento per homelab che ha
-bisogno di internet per ricostruirsi è una brutta impressione.
+`web/project.inlang/settings.json` punta il suo unico plugin (message-format) a
+`./node_modules/@inlang/plugin-message-format/dist/index.js` anziché all'URL
+jsdelivr usato per impostazione predefinita dagli strumenti di inlang: un
+percorso relativo, non `http`, viene letto direttamente dal disco, quindi
+`npm run build` non contatta mai una CDN — importante perché la build
+dell'immagine non ha garanzie di una cache npm calda che offra quell'URL, e uno
+strumento per homelab che ha bisogno di internet per ricompilarsi fa una brutta
+figura.
 
 ## Test e CI
 
 `.github/workflows/ci.yml` esegue, a ogni push e pull request:
 
 1. `cargo fmt --all --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-features`;
-2. `cargo deny check licenses bans` — solo licenze approvate OSI sono
-   consentite da `deny.toml`; una dipendenza copyleft o source-available
-   fa fallire la build;
+2. `cargo deny check licenses bans` — `deny.toml` consente solo licenze approvate
+   dall'OSI; una dipendenza copyleft o source-available fa fallire la build;
 3. `npm run check` e `npm run build`;
 4. l'immagine (`linux/amd64`), solo build.
 
@@ -132,79 +125,76 @@ bisogno di internet per ricostruirsi è una brutta impressione.
 `ghcr.io/laupernoe/dumbmonit`: `:edge` a ogni push su `main`, `:X.Y.Z`,
 `:X.Y`, `:X` e `:latest` a ogni tag `v*`.
 
-I test di integrazione vivono in `crates/server/tests/`; i moduli puri
-(conversione delle metriche, parsing delle opzioni, macchina a stati
-degli avvisi, silenzi) sono testati sul posto senza rete.
+I test di integrazione si trovano in `crates/server/tests/`; i moduli puri
+(conversione delle metriche, parsing delle opzioni, macchina a stati degli
+avvisi, silenziamenti) sono testati sul posto senza rete.
 
 ## Aggiungere un collector
 
 1. Implementa `Collector` da `crates/proto/src/collector.rs`: `kind()`,
-   `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e opzionalmente
-   `discover()` per il rilevamento del profilo. Restituisci le varianti
-   `ProbeError` sinceramente: `means_down()` decide se un fallimento
-   conta come "dispositivo inattivo" (avvisato) oppure come un errore di
-   configurazione (mostrato sul dispositivo, non notificato).
-2. Leggi le tue opzioni da `Target::tags` in un `options.rs`, con valori
-   predefiniti.
-3. Registralo in `crates/server/src/main.rs` con
-   `registry.register(...)`. Lo scheduler e l'API non conoscono mai i
-   tipi concreti.
-4. Descrivilo in `crates/server/src/api/collectors.rs`: label, summary,
-   esempi, tipi di credenziale, suggerimento di indirizzo, nota di
-   configurazione e l'elenco `options` (key, label, help, placeholder,
-   default, input, choices). L'interfaccia costruisce il suo modulo da
-   questo; un test lì verifica che ogni tipo registrato abbia una nota e
-   che le chiavi delle opzioni corrispondano a ciò che il collector
-   legge.
-5. Nomina le metriche `<cosa>_<unità>` senza il prefisso `dumbmonit_`
-   (il writer lo aggiunge) e aggiungi qualsiasi nuova metrica che una
-   regola integrata bersaglia all'elenco nei test di
-   `alerting/rules.rs`.
+   `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e, facoltativamente,
+   `discover()` per il rilevamento dei profili. Restituisci le varianti di
+   `ProbeError` in modo veritiero: `means_down()` decide se un errore conta come
+   "dispositivo non raggiungibile" (con avviso) o come errore di configurazione
+   (mostrato sul dispositivo, non notificato).
+2. Leggi le tue opzioni da `Target::tags` in un `options.rs`, con valori predefiniti.
+3. Registralo in `crates/server/src/main.rs` con `registry.register(...)`.
+   Lo scheduler e l'API non conoscono mai i tipi concreti.
+4. Descrivilo in `crates/server/src/api/collectors.rs`: etichetta, riepilogo,
+   esempi, tipi di credenziali, suggerimento per l'indirizzo, avviso di
+   configurazione e l'elenco `options` (key, label, help, placeholder, default,
+   input, choices). L'interfaccia costruisce il proprio modulo a partire da
+   questo; un test verifica che ogni tipo registrato abbia un avviso e che le
+   chiavi delle opzioni corrispondano a quelle lette dal collector.
+5. Nomina le metriche `<what>_<unit>` senza il prefisso `dumbmonit_` (lo aggiunge
+   il writer) e aggiungi ogni nuova metrica che una regola integrata prende di
+   mira all'elenco nei test di `alerting/rules.rs`.
 6. Aggiungi una pagina sotto `docs/devices/`.
 
 I campioni sono `Sample::new(name, value, MetricKind::Gauge | Counter,
-timestamp_ms)` con `.with_label(k, v)`; le etichette di identità
-(`target`, `host`, `tag_*`) vengono aggiunte dal registry.
+timestamp_ms)` con `.with_label(k, v)`; le etichette di identità (`target`,
+`host`, `tag_*`) sono aggiunte dal registry. Non emetterle tu stesso: dai a
+un'etichetta per oggetto il nome dell'oggetto (`proxy_host`, `esxi`,
+`ceph_host`). Un'etichetta in collisione viene conservata come
+`exported_<name>`, e le opzioni elencate per il tipo in `api/collectors.rs` non
+vengono copiate come `tag_*`.
 
 ## Aggiungere un canale di notifica
 
-1. Implementa `Notifier` (`crates/server/src/notify/mod.rs`): `kind()`
-   e `async fn send(&Message) -> Result<(), NotifyError>`. I canali web
+1. Implementa `Notifier` (`crates/server/src/notify/mod.rs`): `kind()` e
+   `async fn send(&Message) -> Result<(), NotifyError>`. I canali web
    condividono il client HTTP e gli helper in `notify/http.rs`; guarda
-   `services.rs`, `chat.rs`, `push.rs`, `oncall.rs` e `smtp.rs` come
-   esempi affini.
-2. Aggiungi il tipo a `CHANNEL_KINDS` e al match `build` in
-   `notify/mod.rs`, che trasforma un `ChannelConfig` memorizzato
-   (impostazioni + segreti decifrati) in un `Notifier`.
-3. Descrivilo in `notify/catalog.rs`: label, summary, ancora `doc_url`,
-   e i campi `settings` e `secrets` (key, label, required, input, help,
-   placeholder, options, shape, default). L'interfaccia rende il modulo
-   da questa descrizione, quindi non è necessaria alcuna release
-   dell'interfaccia.
-4. Documentalo in `docs/notifications.md` sotto *Supported channels*,
-   con un'intestazione il cui slug corrisponde all'ancora `doc_url`:
-   l'interfaccia collega direttamente a quell'ancora su Read the Docs.
+   `services.rs`, `chat.rs`, `push.rs`, `oncall.rs` e `smtp.rs` per quelli simili.
+2. Aggiungi il tipo a `CHANNEL_KINDS` e al `match` di `build` in
+   `notify/mod.rs`, che trasforma un `ChannelConfig` memorizzato (impostazioni +
+   segreti decifrati) in un `Notifier`.
+3. Descrivilo in `notify/catalog.rs`: etichetta, riepilogo, ancora `doc_url`, e
+   i campi `settings` e `secrets` (key, label, required, input, help,
+   placeholder, options, shape, default). L'interfaccia genera il modulo da
+   questa descrizione, quindi non serve alcun rilascio dell'interfaccia.
+4. Documentalo in `docs/notifications.md` sotto *Canali supportati*, con un
+   titolo il cui slug corrisponda all'ancora `doc_url`: l'interfaccia rimanda
+   direttamente a quell'ancora su Read the Docs.
 
 ## Screenshot headless
 
-`web/tools/README.md` descrive come rendere ogni pagina in un Chromium
-headless in esecuzione in Docker (`zenika/alpine-chrome:with-puppeteer`,
-nessun browser locale necessario): accedi con `curl` per ottenere il
-cookie `dumbmonit_session`, poi esegui `web/tools/screenshot.js` contro
-il server di preview oppure direttamente contro `:8080`. Scrive
-`web/shots/<page>-<theme>-<viewport>.png` per entrambi i temi e
-entrambe le viewport, che è come viene verificata l'interfaccia dopo
-una modifica e come sono stati fatti gli screenshot di questa
-documentazione.
+`web/tools/README.md` descrive come renderizzare ogni pagina in un Chromium
+headless eseguito in Docker (`zenika/alpine-chrome:with-puppeteer`, nessun
+browser locale necessario): accedi con `curl` per ottenere il cookie
+`dumbmonit_session`, poi esegui `web/tools/screenshot.js` sul server di anteprima
+o direttamente su `:8080`. Scrive `web/shots/<page>-<theme>-<viewport>.png` per
+entrambi i temi e entrambi i viewport, ed è così che l'interfaccia viene
+controllata dopo una modifica e così sono stati realizzati gli screenshot di
+questa documentazione.
 
 ## Documentazione
 
-Questo sito è costruito con MkDocs e Material for MkDocs da `docs/`
-(`mkdocs.yml` alla radice, `.readthedocs.yaml` per Read the Docs). Per
-visualizzare un'anteprima:
+Questo sito è costruito con MkDocs e Material for MkDocs a partire da `docs/`
+(`mkdocs.yml` nella radice, `.readthedocs.yaml` per Read the Docs). Per
+l'anteprima:
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # ciò che esegue Read the Docs; deve passare senza avvisi
+mkdocs build --strict   # what Read the Docs runs; must pass with no warnings
 ```

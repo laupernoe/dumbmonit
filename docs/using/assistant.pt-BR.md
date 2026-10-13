@@ -1,4 +1,4 @@
-# Conectar um assistente
+# Conectar um assistente {#connect-an-assistant}
 
 O DumbMonit tem um servidor [MCP](https://modelcontextprotocol.io)
 embutido: o Model Context Protocol, a forma como assistentes como
@@ -18,7 +18,7 @@ métricas, agentes, páginas de status — e usa as mesmas palavras:
 pelo pai*. Ele roda dentro do servidor: nada para instalar ao lado do
 DumbMonit, e as ferramentas chamam o mesmo código que a interface web.
 
-## 1. Criar um token
+## 1. Criar um token {#1-create-a-token}
 
 Configurações → **API e assistentes** (`/settings#assistant`). Nomeie o
 token após o assistente ou a máquina em que roda ("Claude no meu
@@ -43,13 +43,13 @@ https://monit.example.lan/api/targets` — onde `read` vê o que um
 visualizador vê e `write` faz o que um administrador faz, contas, tokens
 e backups excetuados.
 
-## 2. Cole o trecho
+## 2. Cole o trecho {#2-paste-the-snippet}
 
 A página de configurações os preenche com o endereço do seu servidor e o
 novo token. Abaixo, `https://monit.example.lan` representa seu
 servidor.
 
-### Claude Code
+### Claude Code {#claude-code}
 
 ```sh
 claude mcp add --transport http dumbmonit https://monit.example.lan/api/mcp \
@@ -58,7 +58,7 @@ claude mcp add --transport http dumbmonit https://monit.example.lan/api/mcp \
 
 Adicione `--scope user` para tê-lo em todo projeto, não apenas o atual.
 
-### Claude Desktop
+### Claude Desktop {#claude-desktop}
 
 O Claude Desktop inicia servidores locais a partir de seu arquivo de
 configuração; o [`mcp-remote`](https://www.npmjs.com/package/mcp-remote)
@@ -89,7 +89,7 @@ Para um servidor alcançado via HTTP simples na sua rede, adicione
 `"--allow-http"` em `args` — a página de configurações faz isso por
 você quando ela mesma é servida via HTTP.
 
-### VS Code
+### VS Code {#vs-code}
 
 `.vscode/mcp.json` em um workspace (ou o comando **MCP: Add Server** →
 HTTP):
@@ -106,7 +106,7 @@ HTTP):
 }
 ```
 
-### Cursor e outros clientes
+### Cursor e outros clientes {#cursor-and-other-clients}
 
 `.cursor/mcp.json`, e a mesma forma para a maioria dos clientes que
 suportam servidores Streamable HTTP com cabeçalhos personalizados:
@@ -125,7 +125,7 @@ suportam servidores Streamable HTTP com cabeçalhos personalizados:
 Um cliente que só inicia servidores locais (stdio) pode usar o bridge
 `mcp-remote` mostrado para o Claude Desktop.
 
-### ChatGPT
+### ChatGPT {#chatgpt}
 
 Settings → Connectors → **Create** (modo desenvolvedor). URL do
 servidor MCP: `https://monit.example.lan/api/mcp`, cabeçalho de
@@ -136,7 +136,7 @@ navegador: o DumbMonit precisa estar **acessível pela internet via
 HTTPS**. Veja as [notas de segurança](#security-notes) antes de fazer
 isso.
 
-### Qualquer outro cliente
+### Qualquer outro cliente {#any-other-client}
 
 O que um cliente precisa saber: o endpoint é
 `https://<server>/api/mcp`, o transporte é Streamable HTTP, e toda
@@ -155,7 +155,7 @@ curl -s https://monit.example.lan/api/mcp \
                 "io.modelcontextprotocol/clientCapabilities":{}}}}'
 ```
 
-## O que o assistente pode chamar
+## O que o assistente pode chamar {#what-the-assistant-can-call}
 
 Vinte e sete ferramentas. Cada uma tem um título, uma descrição, um
 esquema de entrada, um esquema de saída e anotações (`readOnlyHint`,
@@ -199,7 +199,7 @@ a ferramenta não pode fazer — um dispositivo desconhecido, um nome
 ambíguo, uma janela mais longa que uma semana: a mensagem diz o que
 corrigir.
 
-## Detalhes do protocolo
+## Detalhes do protocolo {#protocol-details}
 
 `POST /api/mcp` implementa MCP sobre o transporte **Streamable HTTP**:
 JSON-RPC 2.0, uma requisição por `POST`, respondida com JSON simples
@@ -233,7 +233,7 @@ Uma ferramenta que roda mas falha — escopo faltando, dispositivo
 desconhecido — não é um erro de protocolo: responde normalmente com
 `isError: true` e uma frase que o assistente pode retransmitir.
 
-## Notas de segurança
+## Notas de segurança {#security-notes}
 
 - **Um token é uma senha.** Quem o possui lê tudo que a interface
   mostra — e, com um token de escrita, altera qualquer coisa que um
@@ -287,7 +287,7 @@ desconhecido — não é um erro de protocolo: responde normalmente com
   caminho e o status, nunca o corpo. Criar e revogar tokens está no
   log de auditoria (Configurações → Segurança).
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 | Sintoma | Causa e correção |
 | --- | --- |

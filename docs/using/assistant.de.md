@@ -203,7 +203,7 @@ Werkzeug nicht kann — ein unbekanntes Gerät, ein mehrdeutiger Name,
 ein Fenster länger als eine Woche: die Meldung sagt, was zu beheben
 ist.
 
-## Protokolldetails
+## Protokolldetails {#protocol-details}
 
 `POST /api/mcp` implementiert MCP über den **Streamable-HTTP**-
 Transport: JSON-RPC 2.0, ein Request pro `POST`, mit einfachem JSON

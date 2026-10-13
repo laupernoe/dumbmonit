@@ -1,114 +1,85 @@
-# Nginx Proxy Manager
+# Nginx Proxy Manager {#nginx-proxy-manager}
 
-Der Proxy-Manager: Hosts, deren Konfiguration nginx abgelehnt hat,
-deaktivierte Hosts, und die von den Hosts präsentierten Zertifikate,
-bevor ein fehlgeschlagenes Let's-Encrypt-Renewal zu einer abgelaufenen
-Site wird.
+Der Proxy-Manager: Hosts, deren Konfiguration nginx abgelehnt hat, deaktivierte Hosts und die
+Zertifikate, die die Hosts präsentieren, bevor ein fehlgeschlagener Let's-Encrypt-Erneuerungs-
+versuch zu einer abgelaufenen Website wird.
 
-DumbMonit loggt sich mit einem eigenen Benutzer in die REST-API von
-Nginx Proxy Manager ein (`/api`, auf dem Port seiner Web-Oberfläche, 81)
-und liest dann die Proxy-Hosts, Redirection-Hosts, 404-Hosts (in der API
-Dead Hosts genannt) und Streams. Jeder Host sagt, ob er aktiviert ist
-und ob nginx seine Konfiguration akzeptiert hat. Ein von nginx
-abgelehnter Host wird nicht bedient, und die Web-Oberfläche zeigt ihn
-nur als roten Punkt.
+DumbMonit meldet sich mit einem eigenen Benutzer an der REST-API von Nginx Proxy Manager an
+(`/api`, auf dem Port seiner Weboberfläche, 81) und liest dann die Proxy-Hosts, Weiterleitungs-
+Hosts, 404-Hosts (in der API „dead hosts“ genannt) und Streams. Jeder Host sagt, ob er
+aktiviert ist und ob nginx seine Konfiguration akzeptiert hat. Ein Host, den nginx abgelehnt
+hat, wird nicht ausgeliefert, und die Weboberfläche zeigt ihn nur als roten Punkt.
 
-Zertifikate werden nicht aus der API gelesen. `/api/nginx/certificates`
-gibt den privaten Schlüssel importierter Zertifikate und die
-Zugangsdaten der DNS-Challenge an jeden Benutzer weiter, der Zertifikate
-ansehen darf. DumbMonit liest jedes Zertifikat stattdessen dort, wo es
-ausgeliefert wird: ein TLS-Handshake auf Port 443 von Nginx Proxy
-Manager, mit dem Namen eines Hosts, der es nutzt. Das misst auch das
-Zertifikat, das Besucher tatsächlich bekommen.
+Zertifikate werden nicht aus der API gelesen. `/api/nginx/certificates` gibt den privaten
+Schlüssel importierter Zertifikate und die Zugangsdaten der DNS-Challenge an jeden Benutzer
+heraus, der Zertifikate ansehen darf. DumbMonit liest stattdessen jedes Zertifikat dort, wo es
+ausgeliefert wird: ein TLS-Handshake auf Port 443 von Nginx Proxy Manager, mit dem Namen eines
+Hosts, der es verwendet. Das misst zugleich das Zertifikat, das Besucher tatsächlich erhalten.
 
-## Was beobachtet wird
+## Was überwacht wird {#what-it-watches}
 
 Alle Metriken haben das Präfix `dumbmonit_npm_`.
 
 | Metrik | Was | Labels |
 |---|---|---|
 | `version_info` | Wert 1 | `version` |
-| `hosts`, `hosts_enabled`, `hosts_disabled` | Hosts jeder Art | `type`: `proxy`, `redirection`, `dead` (404-Hosts), `stream` |
+| `hosts`, `hosts_enabled`, `hosts_disabled` | Hosts jedes Typs | `type`: `proxy`, `redirection`, `dead` (404-Hosts), `stream` |
 | `hosts_offline` | aktivierte Hosts, deren Konfiguration nginx abgelehnt hat | `type` |
-| `host_online` | pro aktiviertem Host: 0, wenn nginx seine Konfiguration abgelehnt hat | `type`, `host` |
-| `host_error_info` | Wert 1, für einen von nginx abgelehnten Host: die erste Zeile von nginx' Fehler | `type`, `host`, `error` |
-| `certificates_checked`, `certificates_read` | an einen aktivierten Host angehängte Zertifikate, und die auf dem HTTPS-Port gelesenen | |
-| `cert_expiry_days` | verbleibende Tage, bis das von einem Host präsentierte Zertifikat abläuft | `host` |
+| `host_online` | pro aktiviertem Host: 0, wenn nginx seine Konfiguration abgelehnt hat | `type`, `proxy_host` |
+| `host_error_info` | Wert 1, für einen von nginx abgelehnten Host: die erste Zeile des nginx-Fehlers | `type`, `proxy_host`, `error` |
+| `certificates_checked`, `certificates_read` | an einen aktivierten Host gebundene Zertifikate und die auf dem HTTPS-Port gelesenen | |
+| `cert_expiry_days` | verbleibende Tage bis zum Ablauf des Zertifikats, das ein Host präsentiert | `proxy_host` |
 
-`host` ist der erste Domainname des Hosts, oder `port 9000` für einen
-Stream. Deaktivierte Hosts werden gezählt, nicht beschrieben: Einen Host
-zu deaktivieren ist absichtlich, und sein Alarm, falls vorhanden, löst
-sich. Hosts werden einzeln bis zu 500 beschrieben, und höchstens 100
-Zertifikate werden pro Prüfung gelesen.
+`proxy_host` ist der erste Domainname des Hosts oder `port 9000` bei einem Stream. Deaktivierte
+Hosts werden gezählt, nicht beschrieben: Einen Host zu deaktivieren ist Absicht, und sein
+Alarm, falls vorhanden, löst sich auf. Hosts werden bis zu 500 einzeln beschrieben, und pro
+Prüfung werden höchstens 100 Zertifikate gelesen.
 
-Die geltenden [eingebauten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
-Nginx Proxy Manager host offline, Proxy certificate not renewed, plus
-Device unreachable.
+Die zutreffenden [integrierten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
+Nginx-Proxy-Manager-Host offline, Proxy-Zertifikat nicht erneuert, außerdem Gerät nicht
+erreichbar.
 
-## Die Geräteseite
+## Die Geräteseite {#the-device-page}
 
-Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
-Öffnen der Seite fragt Nginx Proxy Manager nie ab. Es sagt in einem Satz,
-was nicht stimmt (von nginx abgelehnte Hosts, mit Grund, kurz vor dem
-Ablauf stehende Zertifikate, nicht lesbare Zertifikate), dann die
-Proxy-Hosts, Weiterleitungen, 404-Hosts, Streams und deaktivierte Hosts,
-dann die Zertifikate, die am ehesten ablaufen, zuerst.
+Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
+fragt Nginx Proxy Manager nie ab. Es nennt in einem Satz, was nicht stimmt (von nginx
+abgelehnte Hosts mit Begründung, bald ablaufende Zertifikate, nicht lesbare Zertifikate), dann
+die Proxy-Hosts, Weiterleitungen, 404-Hosts, Streams und deaktivierten Hosts, dann die
+Zertifikate, das am frühesten ablaufende zuerst.
 
-## Einen nur-lesenden Nginx-Proxy-Manager-Benutzer erstellen
+## Einen Nur-Lese-Benutzer in Nginx Proxy Manager erstellen {#create-a-view-only-nginx-proxy-manager-user}
 
-1. Öffnen Sie in Nginx Proxy Manager Users und fügen Sie einen Benutzer
-   für DumbMonit hinzu, mit einer eigenen E-Mail-Adresse wie
-   dumbmonit@example.com. Lassen Sie jede Rolle unangekreuzt.
+1. Öffnen Sie in Nginx Proxy Manager Benutzer und fügen Sie einen Benutzer für DumbMonit mit eigener E-Mail-Adresse hinzu, etwa dumbmonit@example.com. Lassen Sie alle Rollen abgehakt aus.
 
-2. Öffnen Sie im Menü dieses Benutzers Permissions: Item Visibility All
-   Items; Proxy Hosts, Redirection Hosts, 404 Hosts und Streams View
-   Only; Access Lists und SSL Certificates Hidden. Setzen Sie dann sein
-   Passwort mit Change Password im selben Menü.
+2. Öffnen Sie im Menü dieses Benutzers Berechtigungen: Elementsichtbarkeit Alle Elemente; Proxy-Hosts, Weiterleitungs-Hosts, 404-Hosts und Streams Nur ansehen; Zugriffslisten und SSL-Zertifikate Ausgeblendet. Setzen Sie dann sein Passwort mit Passwort ändern im selben Menü.
 
-3. SSL Certificates bleibt absichtlich auf Hidden: Nginx Proxy Manager
-   gibt den privaten Schlüssel importierter Zertifikate und die
-   Zugangsdaten der DNS-Challenge an jeden Benutzer weiter, der sie
-   ansehen darf. DumbMonit liest jedes Zertifikat stattdessen dort, wo
-   es ausgeliefert wird, mit einem TLS-Handshake auf Port 443 für jeden
-   Host, der eines hat.
+3. SSL-Zertifikate bleiben absichtlich ausgeblendet: Nginx Proxy Manager gibt den privaten Schlüssel importierter Zertifikate und die Zugangsdaten der DNS-Challenge an jeden Benutzer heraus, der sie ansehen darf. DumbMonit liest stattdessen jedes Zertifikat dort, wo es ausgeliefert wird, mit einem TLS-Handshake auf Port 443 für jeden Host, der eines hat.
 
-4. Geben Sie in DumbMonit den Nginx-Proxy-Manager-Host mit dem Port
-   seiner Web-Oberfläche ein, zum Beispiel "npm.lan:81", und E-Mail und
-   Passwort dieses Benutzers. Werden die Hosts über HTTPS auf einem
-   anderen Port als 443 bedient, setzen Sie unten HTTPS port.
+4. Geben Sie in DumbMonit den Nginx-Proxy-Manager-Host mit dem Port seiner Weboberfläche ein, zum Beispiel „npm.lan:81“, sowie E-Mail und Passwort dieses Benutzers. Werden die Hosts über HTTPS auf einem anderen Port als 443 ausgeliefert, setzen Sie unten HTTPS-Port.
 
 !!! warning
-    Ein Host, dessen Konfiguration nginx ablehnt (ein Tippfehler unter
-    Advanced, eine fehlende Zertifikatsdatei), wird nicht bedient, und
-    Nginx Proxy Manager zeigt ihn nur als roten Punkt in der Liste.
-    Let's-Encrypt-Zertifikate werden dreißig Tage im Voraus erneuert:
-    eines, das in weniger als vierzehn Tagen abläuft, ist eines, dessen
-    Erneuerung fehlschlug, und DumbMonit warnt dann.
+    Ein Host, dessen Konfiguration nginx ablehnt (ein Tippfehler in Erweitert, eine fehlende Zertifikatsdatei), wird nicht ausgeliefert, und Nginx Proxy Manager zeigt ihn in der Liste nur als roten Punkt. Let's-Encrypt-Zertifikate werden dreißig Tage im Voraus erneuert: Eines, das in weniger als vierzehn Tagen abläuft, ist eines, dessen Erneuerung fehlgeschlagen ist, und DumbMonit warnt dann.
 
-Item Visibility All Items ist wichtig: Mit Created Items sieht der
-Benutzer nur die Hosts, die er selbst erstellt hat, also keine. Ein
-Benutzer ohne Proxy Hosts View Only wird abgelehnt; einer ohne Streams,
-Redirection Hosts oder 404 Hosts meldet diese einfach nicht.
+Elementsichtbarkeit Alle Elemente ist wichtig: Mit Erstellte Elemente sieht der Benutzer nur die
+Hosts, die er selbst erstellt hat, also keine. Ein Benutzer ohne Proxy-Hosts Nur ansehen wird
+abgewiesen; einer ohne Streams, Weiterleitungs-Hosts oder 404-Hosts meldet diese schlicht nicht.
 
-DumbMonit behält das beim Login von Nginx Proxy Manager erhaltene Token
-(einen Tag gültig) und loggt sich erneut ein, wenn es abläuft, statt bei
-jeder Prüfung.
+DumbMonit behält das Token, das Nginx Proxy Manager bei der Anmeldung ausgibt (einen Tag gültig),
+und meldet sich bei Ablauf erneut an, statt bei jeder Prüfung.
 
-## Credentials
+## Zugangsdaten {#credentials}
 
-| Credential | Felder |
+| Zugangsdaten | Felder |
 |---|---|
-| Benutzer-E-Mail und Passwort | E-Mail-Adresse und Passwort des oben erstellten Benutzers. |
+| E-Mail und Passwort des Benutzers | E-Mail-Adresse und Passwort des oben erstellten Benutzers. |
 
-Adresse: ein Hostname oder eine IP mit dem Port der Web-Oberfläche
-(`npm.lan:81`), oder eine vollständige URL. Optionen: Protokoll
-(standardmäßig HTTP), Port der Web-Oberfläche (81), Check the
-certificates (ein), HTTPS-Port (443), Zertifikatsprüfung der API und
-Anfrage-Timeout (10 s).
+Adresse: ein Hostname oder eine IP mit dem Port der Weboberfläche (`npm.lan:81`) oder eine
+vollständige URL. Optionen: Protokoll (standardmäßig HTTP), Port der Weboberfläche (81),
+Zertifikate prüfen (an), HTTPS-Port (443), Zertifikatsprüfung der API und Anfrage-Timeout
+(10 s).
 
-Die Zertifikatsprüfung verbindet sich mit dem Host-Teil der Adresse:
-Wird die Web-Oberfläche über einen anderen Proxy erreicht, richten Sie
-die Adresse auf Nginx Proxy Manager selbst, oder entfernen Sie das
-Häkchen bei Check the certificates und beobachten Sie jede Site
-stattdessen mit einem [TLS-Zertifikats-Check](services.md). Wildcard-
-Zertifikate werden über den ersten sie nutzenden Host gelesen.
+Die Zertifikatsprüfung verbindet sich mit dem Host-Teil der Adresse: Wird die Weboberfläche über
+einen weiteren Proxy erreicht, richten Sie die Adresse auf Nginx Proxy Manager selbst, oder
+haken Sie Zertifikate prüfen ab und überwachen Sie jede Website stattdessen mit einer
+[TLS-Zertifikatsprüfung](services.md). Wildcard-Zertifikate werden über den ersten Host
+gelesen, der sie verwendet.

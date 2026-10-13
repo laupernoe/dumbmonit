@@ -183,7 +183,7 @@ guarda gli ultimi trenta giorni.
 | `dumbmonit_abb_device_last_success_seconds` | Età dell'ultima esecuzione riuscita di questo dispositivo. Assente se non è mai riuscita. | stessi |
 | `dumbmonit_abb_device_typical_interval_seconds` | Gap mediano tra due successi, giorni liberi esclusi. Assente mentre apprende. | stessi |
 
-#### Come viene giudicato "overdue"
+#### Come viene giudicato "overdue" {#how-overdue-is-judged}
 
 In parole semplici, per ogni dispositivo:
 

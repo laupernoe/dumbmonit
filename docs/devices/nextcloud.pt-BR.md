@@ -1,4 +1,4 @@
-# Nextcloud
+# Nextcloud {#nextcloud}
 
 Se o Nextcloud está servindo ou travado: modo de manutenção deixado
 ativado, uma atualização de banco de dados esperando após uma atualização,
@@ -17,7 +17,7 @@ manutenção, ou esperar por `occ upgrade`; a página web então mostra um
 aviso que ninguém vê até alguém tentar sincronizar. Ambos são lidos de
 `status.php`, que responde mesmo então.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_nextcloud_`.
 
@@ -49,7 +49,7 @@ se aplicam: Nextcloud stuck in maintenance, Nextcloud database upgrade
 pending, Nextcloud update available, Nextcloud OPcache full, Nextcloud
 free space low, além de Device unreachable.
 
-## Jobs em segundo plano (cron)
+## Jobs em segundo plano (cron) {#background-jobs-cron}
 
 O Nextcloud não informa ao token de monitoramento quando jobs em segundo
 plano rodaram por último: só uma conta com todos os direitos na instância
@@ -66,7 +66,7 @@ Com um intervalo esperado de 5 minutos, o heartbeat alerta assim que o
 cron para, qualquer que seja o motivo (um contêiner reiniciado sem seu
 cron, um erro de PHP, jobs em segundo plano deixados no AJAX).
 
-## Dispositivos clientes
+## Dispositivos clientes {#client-devices}
 
 O Nextcloud não expõe uma lista de clientes de sincronização ou
 dispositivos móveis em nível de administrador através de nenhuma API. A
@@ -88,7 +88,7 @@ OCS, o DumbMonit seguirá o mesmo padrão de
 [dispositivos clientes](../alerting/rules.md) já usado para Immich, Proxmox
 Backup Server e Veeam.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Nextcloud. Ele diz primeiro o que está errado (manutenção,
@@ -97,7 +97,7 @@ depois usuários ativos, espaço livre, tamanho do banco de dados, usuários,
 arquivos e números do OPcache, depois os apps a atualizar pelo nome e a
 plataforma (banco de dados, PHP).
 
-## Dar ao Nextcloud um token de monitoramento
+## Dar ao Nextcloud um token de monitoramento {#give-nextcloud-a-monitoring-token}
 
 1. O app serverinfo do Nextcloud, entregue e ativado com o Nextcloud,
    responde a um token de monitoramento que abre suas estatísticas e nada
@@ -145,7 +145,7 @@ Verificando o token manualmente, a partir do host DumbMonit:
 curl -H 'NC-Token: YOUR-TOKEN' 'https://cloud.example.com/ocs/v2.php/apps/serverinfo/api/v1/info?format=json'
 ```
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

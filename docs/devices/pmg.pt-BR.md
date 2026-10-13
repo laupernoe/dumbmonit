@@ -1,4 +1,4 @@
-# Proxmox Mail Gateway
+# Proxmox Mail Gateway {#proxmox-mail-gateway}
 
 Gateway de e-mail: filas do Postfix e a idade da mensagem mais antiga
 esperando, e-mail contado e filtrado hoje, tamanhos de quarentena, a idade
@@ -13,7 +13,7 @@ certificados e estado do cluster.
     mas ninguém ainda o executou por semanas em um gateway de e-mail em
     funcionamento. Avise-nos o que não funcionar.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Além dos gráficos genéricos, um dispositivo Proxmox Mail Gateway mostra
 três painéis, lidos do que a sondagem armazenou — abrir a página nunca
@@ -46,7 +46,7 @@ corpo. Os endpoints de estatísticas por endereço (`/statistics/sender`,
 `/statistics/receiver`, `/statistics/contact`) não são chamados de forma
 alguma.
 
-## Hoje, não as últimas vinte e quatro horas
+## Hoje, não as últimas vinte e quatro horas {#today-not-the-last-twenty-four-hours}
 
 `GET /statistics/mail` agrega por **dia local no gateway**: o PMG ignora
 o fim da janela que você pede, só `starttime` escolhe o dia. O DumbMonit
@@ -56,7 +56,7 @@ a zero à meia-noite, não contadores: não as envolva em `rate()`. A curva
 recente (`/statistics/recent`) lê a tabela bruta em vez disso e realmente
 rola.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_pmg_`.
 
@@ -117,7 +117,7 @@ cluster degraded, Mail gateway certificate expiring, Mail gateway updates
 pending. Notificações nomeiam a fila, serviço, banco de dados ou nó
 envolvido.
 
-## O que preparar no Proxmox Mail Gateway
+## O que preparar no Proxmox Mail Gateway {#what-to-prepare-in-proxmox-mail-gateway}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: um usuário reservado para monitoramento, com um papel somente
@@ -164,7 +164,7 @@ leitura — nunca a conta com a qual você entra.
 Endereço: `10.0.0.40`, `mail.lan`, `mail.lan:8006`, `[fd00::4]` ou uma URL
 completa. O esquema `https` e a porta 8006 são adicionados se faltando.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -182,7 +182,7 @@ completa. O esquema `https` e a porta 8006 são adicionados se faltando.
 | `updates` | Contar atualizações pendentes | `true` | Lista os pacotes esperando por uma atualização em cada nó. |
 | `subscription` | Ler a assinatura | `true` | Lê o status de assinatura de cada nó. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

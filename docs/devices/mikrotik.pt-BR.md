@@ -1,4 +1,4 @@
-# MikroTik RouterOS
+# MikroTik RouterOS {#mikrotik-routeros}
 
 Roteadores e switches rodando RouterOS 7: se o RouterOS e o firmware
 RouterBOOT ficaram atrasados, CPU, memória e armazenamento, temperaturas,
@@ -15,7 +15,7 @@ reinício), uma fonte de alimentação redundante que morreu sem ninguém
 notar, uma porta que continua registrando erros ou perdendo seu link. É
 isso que esta página observa, junto com a carga.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_mikrotik_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -58,7 +58,7 @@ high, power supply or fan failed, interface accumulating errors, link
 flapping, RouterOS update available e firmware upgrade pending, além de
 Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca se conecta ao roteador. Ele mostra a versão do RouterOS e se uma mais
@@ -66,7 +66,7 @@ nova está disponível, o firmware RouterBOOT, o tempo de atividade, CPU,
 memória e armazenamento, cada sensor com seu estado, e uma tabela das
 interfaces com seu link, tráfego, erros e perdas de link.
 
-## Criar um usuário somente leitura no roteador
+## Criar um usuário somente leitura no roteador {#create-a-read-only-user-on-the-router}
 
 1. Abra um terminal no roteador (WinBox → New Terminal, ou SSH com a conta
    padrão) e crie um grupo que só pode ler, através da API REST. O
@@ -132,7 +132,7 @@ um usuário por um tempo depois que o grupo é editado. Se você mudar as
 políticas de um grupo existente e o erro persistir, remova e recrie o
 usuário.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

@@ -1,56 +1,52 @@
-# Monitorare una sede remota
+# Monitora un sito remoto
 
-Un solo DumbMonit, diverse reti. Un **agent relay** installato nella sede
-remota esegue, per conto del server, le sonde dei dispositivi che gli
-assegni, e riporta i risultati tramite la stessa connessione in uscita
-che usa già per inviare le proprie metriche. Nulla da aprire nella sede
-remota, nessuna VPN, nessuna seconda istanza da controllare.
+Un DumbMonit, diverse reti. Un **agente relè** installato al sito remoto
+esegue, per conto del server, i probe dei dispositivi che assegni ad esso, e
+segnala i risultati sulla stessa connessione in uscita che usa già per inviare
+le sue stesse metriche. Niente da aprire al sito remoto, nessuna VPN, nessuna seconda
+istanza da guardare.
 
 ```
- sede principale                          sede remota (NAT, firewall)
- ┌──────────────────┐   HTTPS, outbound   ┌──────────────────────────────┐
- │ DumbMonit server │◀────────────────────│ relay agent                  │
- │  scheduler       │  probes to run  ──▶ │  runs SNMP / Proxmox / HTTP… │──▶ switch, NAS,
- │  alerting, UI    │◀── samples, verdict │  pushes its own metrics too  │    hypervisor…
+ ufficio principale                          sito remoto (NAT, firewall)
+ ┌──────────────────┐   HTTPS, in uscita    ┌──────────────────────────────┐
+ │ Server DumbMonit │◀────────────────────│ agente relè                  │
+ │  scheduler       │  probe da eseguire ──▶ │  esegue SNMP / Proxmox / HTTP… │──▶ switch, NAS,
+ │  alerting, UI    │◀── campioni, verdetto │  invia anche le sue metriche   │    hypervisor…
  └──────────────────┘                     └──────────────────────────────┘
 ```
 
-## 1. Pubblicare il server su HTTPS
+## 1. Pubblica il server su HTTPS
 
-Il relay recupera i suoi job dal server: il server deve essere
-raggiungibile dalla sede remota, tipicamente
-`https://monitor.example.org` dietro un reverse proxy. Due cose
-viaggiano su quel collegamento:
+L'agente relè recupera i suoi lavori dal server: il server deve essere raggiungibile dal
+sito remoto, tipicamente `https://monitor.example.org` dietro un reverse proxy. Due cose viaggiano su
+quel collegamento:
 
-- il **token di iscrizione** (`dmon_…`), nell'header `Authorization` di
-  ogni richiesta — come per qualsiasi agent;
-- le **credenziali dei dispositivi** dei dispositivi che il relay sonda
-  (community SNMP, token API Proxmox…), decifrate, dentro ogni job di
-  sonda.
+- il **token di iscrizione** (`dmon_…`), nell'intestazione `Authorization` di ogni
+  richiesta — come per qualsiasi agente;
+- le **credenziali del dispositivo** dei dispositivi che l'agente relè esegue il probe (comunità SNMP,
+  token API Proxmox…), decifrate, all'interno di ogni lavoro di probe.
 
-Su HTTP semplice attraverso internet entrambe sarebbero leggibili lungo
-il percorso: metti il server dietro HTTPS prima di fare relay di
-qualsiasi cosa fuori dalla tua stessa rete. Su una LAN o una VPN, HTTP è
-accettabile e il token è il solo segreto in transito finché non assegni
-dispositivi al relay. Le credenziali non vengono mai scritte su disco su
-nessuno dei due lati: un job di sonda vive nella memoria del server finché
-il relay non lo riporta, e l'agent non mantiene nulla tra due sonde.
+Su plain HTTP attraverso Internet entrambi sarebbero leggibili per strada: metti il
+server dietro HTTPS prima di inoltrare nulla al di fuori della tua stessa rete. Su
+una LAN o una VPN, HTTP è accettabile e il token è l'unico segreto in volo
+fino a quando non assegni dispositivi all'agente relè. Le credenziali non vengono mai scritte su disco
+da nessuno: un lavoro di probe vive nella memoria del server fino a quando l'agente relè
+lo segnala, e l'agente non mantiene nulla tra due probe.
 
-Il reverse proxy deve inoltrare `/api/agent/relay` come `/api/ingest`,
-consentire corpi di richiesta fino a 16 MB (un hypervisor occupato
-riporta migliaia di campioni), e mantenere le connessioni inattive aperte
-per almeno 60 secondi: il server mantiene una richiesta relay in attesa
-fino a 25 secondi mentre aspetta lavoro (long polling).
+Il reverse proxy deve inoltrare `/api/agent/relay` come `/api/ingest`, consentire
+corpi di richiesta fino a 16 MB (un hypervisor occupato segnala migliaia di campioni),
+e mantenere aperte le connessioni inattive per almeno 60 secondi: il server mantiene una
+richiesta dell'agente relè fino a 25 secondi mentre aspetta il lavoro (long polling).
 
-## 2. Creare un token di iscrizione
+## 2. Crea un token di iscrizione
 
-**Settings → Agents → New token**, oppure aggiungi un dispositivo di tipo
-*agent*. Copia il valore `dmon_…`: viene mostrato una volta.
+**Impostazioni → Agenti → Nuovo token**, o aggiungi un dispositivo di tipo *agente*. Copia il
+valore `dmon_…`: viene mostrato una sola volta.
 
-## 3. Avviare il relay nella sede remota
+## 3. Avvia l'agente relè al sito remoto
 
-Qualsiasi macchina nella sede remota con Docker, usando
-`docker-compose.agent.yml` dal repository:
+Qualsiasi macchina al sito remoto con Docker, usando `docker-compose.agent.yml`
+dal repository:
 
 ```sh
 DUMBMONIT_AGENT_URL=https://monitor.example.org \
@@ -61,71 +57,67 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Oppure l'agent normale installato con l'installer a una riga, con due
-chiavi in più in `/etc/dumbmonit/agent.yaml`:
+O l'agente normale installato con il programma di installazione a una riga, con due
+chiavi aggiuntive in `/etc/dumbmonit/agent.yaml`:
 
 ```yaml
 relay: true
 site: Lyon office
 ```
 
-La macchina appare in DumbMonit entro secondi, come un dispositivo agent
-ordinario, e la sua pagina dice *Relay · site Lyon office · relays 0
-devices*. Il log dell'agent dice `relay mode enabled: waiting for probes
-from the server` una volta accettato il suo primo batch.
+La macchina appare in DumbMonit entro secondi, come un dispositivo agente ordinario,
+e la sua pagina dice *Relay · site Lyon office · relays 0 devices*. Il log dell'agente dice `relay mode enabled: waiting for probes from the server` una volta che il primo batch
+è accettato.
 
-!!! note "Cosa il relay ha bisogno di raggiungere"
-    Il relay sonda i dispositivi dalla sua propria rete: ha bisogno dello
-    stesso accesso che il server avrebbe bisogno se fosse lì — UDP 161
-    per SNMP, 8006 per Proxmox, 5001 per DSM, e così via. Per i monitor
-    **ping**, il container ha bisogno di `cap_add: [NET_RAW]` (vedi il
-    file compose). Per dispositivi su una VLAN o rete link-local, oppure
-    per target `localhost`, usa `network_mode: host`.
+!!! note "Cosa l'agente relè deve raggiungere"
+    L'agente relè esegue il probe dei dispositivi dalla sua stessa rete: ha bisogno dello stesso accesso
+    che il server avrebbe se fosse lì — UDP 161 per SNMP, 8006 per
+    Proxmox, 5001 per DSM, e così via. Per i monitor di **ping**, il contenitore
+    ha bisogno di `cap_add: [NET_RAW]` (vedi il file compose). Per dispositivi su una VLAN
+    o rete link-local, o per target `localhost`, usa
+    `network_mode: host`.
 
-## 4. Assegnare dispositivi al relay
+## 4. Assegna i dispositivi all'agente relè
 
-Aggiungi i dispositivi remoti come al solito — switch SNMP, nodo Proxmox,
-controllo HTTP — con il loro indirizzo **come visto dalla sede remota**
-(`192.168.10.1`, `https://pve.lan:8006`). Nel modulo del dispositivo,
-sotto *More options*, imposta **Reached through** sull'agent relay
-invece di *Direct*. I dispositivi esistenti possono essere cambiati allo
-stesso modo; tornare a *Direct* fa sondare di nuovo dal server.
+Aggiungi i dispositivi remoti come al solito — switch SNMP, nodo Proxmox, controllo HTTP —
+con il loro indirizzo **come visto dal sito remoto** (`192.168.10.1`,
+`https://pve.lan:8006`). Nel modulo del dispositivo, sotto *Più opzioni*, imposta
+**Raggiungibile attraverso** all'agente relè invece di *Diretto*. I dispositivi esistenti
+possono essere cambiati allo stesso modo; il passaggio indietro a *Diretto* fa sì che il server
+li esamini di nuovo.
 
-Da quel momento:
+Da allora:
 
-- il server accoda una sonda per il dispositivo a ogni intervallo; il
-  relay la raccoglie entro millisecondi (attende sul server del lavoro),
-  esegue il collector e riporta;
-- **Probe now** e il rilevamento del profilo sulla pagina del dispositivo
-  passano anch'essi attraverso il relay;
-- l'*ultima sonda* e l'errore del dispositivo seguono il verdetto del
-  relay. Quando il relay non raccoglie una sonda in tempo, il dispositivo
-  mostra *Timed out: relay agent … did not pick up the probe* — verifica
-  che l'agent funzioni con `relay: true`;
-- la pagina dell'agent mostra *Relay for N devices*, e `GET /api/relays`
-  elenca i relay con il loro sito e conteggio.
+- il server accoda un probe per il dispositivo ad ogni intervallo; l'agente relè
+  lo raccoglie entro millisecondi (aspetta il server per il lavoro), esegue il
+  collettore e segnala;
+- **Esegui probe ora** e il rilevamento del profilo sulla pagina del dispositivo passano attraverso
+  l'agente relè anche;
+- l'*ultimo probe* del dispositivo e l'errore seguono il verdetto dell'agente relè. Quando l'agente relè
+  non raccoglie un probe in tempo, il dispositivo mostra *Timed out: relay
+  agent … did not pick up the probe* — controlla che l'agente viene eseguito con
+  `relay: true`;
+- la pagina dell'agente mostra *Relay for N devices*, e `GET /api/relays` elenca
+  gli agenti relè con il loro sito e conteggio.
 
-## Avvisi quando il relay è inattivo
+## Avviso quando l'agente relè è inattivo
 
-Un relay che diventa silenzioso porta con sé i suoi dispositivi: le loro
-sonde si fermano, e diventerebbero tutti *unreachable* in una volta. Il
-relay viene trattato come un **genitore** di ogni dispositivo che sonda
-(in aggiunta al genitore che potresti avere impostato): quando il relay
-stesso è *unreachable*, gli avvisi dei suoi dispositivi vengono mostrati
-come `suppressed` con `suppressed_by` = il relay, e solo una notifica
-viene inviata — per il relay. Il genitore che hai impostato esplicitamente
-mantiene il suo ruolo e vince quando entrambi sono inattivi.
+Un agente relè che rimane silenzioso porta i suoi dispositivi con sé: i loro probe si fermano, e
+sarebbero tutti *irraggiungibili* una volta. L'agente relè è trattato come un
+**genitore** di ogni dispositivo che esamina (in aggiunta al genitore che potresti avere
+impostato): quando l'agente relè stesso è *irraggiungibile*, gli avvisi dei suoi dispositivi vengono
+mostrati come `suppressed` con `suppressed_by` = l'agente relè, e solo una
+notifica esce — per l'agente relè. Il genitore che hai impostato esplicitamente mantiene il suo ruolo e vince quando
+entrambi sono inattivi.
 
 ## Limiti
 
-- Un relay per dispositivo. Un dispositivo sondato dal relay non viene
-  anche sondato dal server.
-- I dispositivi agent stessi non possono essere fatti relayare: inviano
-  le proprie metriche.
-- Il relay esegue al massimo 8 sonde alla volta; una sonda è limitata dal
-  timeout di sonda del server (`DUMBMONIT_PROBE_TIMEOUT`), limitato a
-  120 s sull'agent.
-- Un agent relay ha bisogno dei collector compilati dentro: agent più
-  vecchi di questa funzionalità ignorano `relay: true`, e il server
-  segnala le loro sonde come scadute. Reinstalla con il binario o
-  l'immagine attuale.
+- Un agente relè per dispositivo. Un dispositivo sottoposto a probe dall'agente relè non viene
+  anche sottoposto a probe dal server.
+- I dispositivi agente stessi non possono essere inoltrati: inoltrano le loro stesse metriche.
+- L'agente relè esegue al massimo 8 probe per volta; un probe è limitato dal
+  timeout del probe del server (`DUMBMONIT_PROBE_TIMEOUT_SECS`), limitato a 120 s su
+  l'agente.
+- Un agente relè ha bisogno dei collettori compilati in: gli agenti più vecchi di questa
+  caratteristica ignorano `relay: true`, e il server segnala i loro probe come
+  scaduti. Reinstalla con il binario o l'immagine corrente.

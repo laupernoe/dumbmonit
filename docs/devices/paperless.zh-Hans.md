@@ -1,4 +1,4 @@
-# Paperless-ngx
+# Paperless-ngx {#paperless-ngx}
 
 Paperless-ngx 是否还在导入发送给它的内容:数据库、Redis、Celery
 工作进程、搜索索引、分类器和健全性检查的健康状况,失败的任务、

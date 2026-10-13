@@ -1,4 +1,4 @@
-# Forgejo / Gitea
+# Forgejo / Gitea {#forgejo--gitea}
 
 O Forgejo e o Gitea compartilham a mesma API REST, então o DumbMonit lê ambos
 com um único coletor: se a instância responde, sua verificação de saúde,
@@ -20,7 +20,7 @@ enquanto seu agendador interno está travado; ninguém percebe até o
 verificador de atualizações ou uma verificação de consistência de
 repositório não rodar há semanas.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_forgejo_`.
 
@@ -44,7 +44,7 @@ overdue, além de Device unreachable. Uma pontuação de segurança verifica as
 tarefas agendadas: veja
 [Atualizações de fornecedor e outras verificações](../using/security-score.md).
 
-## O que ele não observa
+## O que ele não observa {#what-it-does-not-watch}
 
 O Forgejo e o Gitea não têm papel de administrador somente leitura: toda
 chamada reservada a "admin" exige uma conta com direitos totais, não um
@@ -53,7 +53,7 @@ configurações de cadastro ou de dois fatores do GitLab, nem um indicador
 próprio de "atualização disponível" — compare a versão acima com as
 [notas de lançamento](https://forgejo.org/releases/) do projeto manualmente.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Forgejo ou o Gitea. Ele diz primeiro o que está errado (a
@@ -61,7 +61,7 @@ verificação de saúde falhando, executores todos offline, uma tarefa agendada
 atrasada), depois a versão, depois as contagens de repositórios, contas e
 organizações.
 
-## Criar um token de acesso em uma conta de administrador do site
+## Criar um token de acesso em uma conta de administrador do site {#create-an-access-token-on-a-site-administrator-account}
 
 1. Crie um token de acesso em uma conta de administrador do site: avatar →
    Settings → Applications → Generate new token. Nomeie-o como abaixo e
@@ -92,7 +92,7 @@ Verificando o token manualmente, a partir do host DumbMonit:
 curl --header 'Authorization: token YOUR-TOKEN' 'https://git.example.com/api/v1/version'
 ```
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

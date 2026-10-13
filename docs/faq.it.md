@@ -1,6 +1,6 @@
 # FAQ
 
-## Ho perso la password
+## Ho perso la password {#i-lost-the-password}
 
 Chiedi prima a un altro amministratore: in Settings → **Users**, **Edit**
 sul tuo account imposta una nuova password e la mostra una volta, e **Reset
@@ -21,7 +21,7 @@ variabile (`docker compose up -d dumbmonit`, con la variabile non impostata
 o vuota nel tuo ambiente). Dispositivi, regole, canali e le impostazioni di
 single sign-on restano intatti.
 
-## Nessun dato dopo l'aggiunta di un dispositivo
+## Nessun dato dopo l'aggiunta di un dispositivo {#no-data-after-adding-a-device}
 
 Dagli un minuto: la prima sonda viene eseguita all'intervallo del
 dispositivo (60 s per impostazione predefinita) e le scritture raggiungono

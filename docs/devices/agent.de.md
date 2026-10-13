@@ -1,21 +1,18 @@
-# Linux-, macOS-, FreeBSD- und Windows-Agent
+# Linux-, macOS-, FreeBSD- und Windows-Agent {#linux-macos-freebsd-and-windows-agent}
 
-Ein kleines, auf der zu überwachenden Maschine installiertes Binary.
-Es misst CPU, Speicher, Platten, Netzwerk, Dienste und Container —
-und, wo die Maschine sie exponiert, Temperaturen, Plattengesundheit
-und ZFS-Pools — und **pusht** dann seine Messwerte über HTTP an den
+Ein kleines Binary, das auf dem zu überwachenden Rechner installiert wird. Es misst CPU,
+Speicher, Platten, Netzwerk, Dienste und Container — und, wo der Rechner sie bereitstellt,
+Temperaturen, Plattenzustand und ZFS-Pools — und **sendet** seine Messwerte dann per HTTP an den
 DumbMonit-Server.
 
-Die Richtung ist Absicht: Der Agent ruft den Server auf, nie
-umgekehrt. Er durchquert NAT und Heim-Firewalls und erfordert, dass
-**kein Port** auf der überwachten Maschine geöffnet wird.
+Die Richtung ist Absicht: Der Agent ruft den Server auf, nie umgekehrt. Er überwindet NAT und
+Heim-Firewalls und verlangt, auf dem überwachten Rechner **keinen Port** zu öffnen.
 
-## Was beobachtet wird
+## Was überwacht wird {#what-it-watches}
 
-Alle Metriken haben das Präfix `dumbmonit_`. Identitätslabels
-(`target`, `host`, `tag_*`) werden vom Server beim Empfang gesetzt,
-nie vom Agent: Eine Maschine kann nicht in die Zeitreihe einer
-anderen Maschine schreiben, selbst durch Fälschen ihrer Labels.
+Alle Metriken haben das Präfix `dumbmonit_`. Identitätslabels (`target`, `host`, `tag_*`) setzt
+der Server beim Empfang, nie der Agent: Ein Rechner kann nicht in die Serien eines anderen
+Rechners schreiben, auch nicht durch das Fälschen seiner Labels.
 
 | Familie | Metriken | Labels |
 |---|---|---|
@@ -23,152 +20,127 @@ anderen Maschine schreiben, selbst durch Fälschen ihrer Labels.
 | Speicher | `memory_total/used/available_bytes`, `memory_used_percent`, `swap_total/used_bytes`, `swap_used_percent` | |
 | Dateisysteme | `filesystem_total/used/free_bytes`, `filesystem_used_percent` | `mountpoint`, `device`, `fstype` |
 | Netzwerk (Zähler) | `if_octets_in/out`, `if_packets_in/out`, `if_errors_in/out` | `ifname` |
-| Platten (Zähler) | `disk_read_bytes`, `disk_written_bytes`, eine Zeitreihe pro Block-Gerät | `device` |
+| Platten (Zähler) | `disk_read_bytes`, `disk_written_bytes`, eine Serie pro Blockgerät | `device` |
 | Host | `uptime_seconds`, `process_count` | |
-| Dienste | `service_up` (1 = laufend) | `service` |
+| Dienste | `service_up` (1 = läuft) | `service` |
 | Container | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (Container über `docker_max_containers` hinaus) | `container`, `image` |
-| Sensoren | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (der von der Hardware selbst angegebene Schwellenwert), `agent_sensor_fan_rpm` | `sensor`, `fan` |
-| Plattengesundheit (SMART) | `agent_disk_smart_ok` (1 = die Platte besteht ihre eigene Selbstbeurteilung), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
-| ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 schlimmer), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
-| WireGuard | `agent_wireguard_interface_peers`; pro Peer `agent_wireguard_peer_handshake_age_seconds`, `agent_wireguard_peer_has_handshake`, `agent_wireguard_peer_keepalive_seconds`, `agent_wireguard_peer_rx_bytes`, `agent_wireguard_peer_tx_bytes` (Zähler) — siehe [WireGuard-Tunnel](#wireguard-tunnel) | `interface`, `peer`, `allowed_ips`, `name` |
-| restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — siehe [restic- und Borg-Backups](#restic--und-borg-backups) | `tool`, `repo` |
-| Windows-Leistungszähler | `agent_perf_counter`, eine Zeitreihe pro in `perf_counters` gelistetem Zähler | `counter` |
+| Sensoren | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (die Schwelle, die die Hardware selbst deklariert), `agent_sensor_fan_rpm` | `sensor`, `fan` |
+| Plattenzustand (SMART) | `agent_disk_smart_ok` (1 = die Platte besteht ihre eigene Selbstbewertung), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
+| ZFS | `agent_zfs_pool_health` (0 online, 1 degradiert, 2 schlimmer), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
+| WireGuard | `agent_wireguard_interface_peers`; pro Peer `agent_wireguard_peer_handshake_age_seconds`, `agent_wireguard_peer_has_handshake`, `agent_wireguard_peer_keepalive_seconds`, `agent_wireguard_peer_rx_bytes`, `agent_wireguard_peer_tx_bytes` (Zähler) — siehe [WireGuard-Tunnel](#wireguard-tunnels) | `interface`, `peer`, `allowed_ips`, `name` |
+| restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — siehe [restic- und Borg-Backups](#restic-and-borg-backups) | `tool`, `repo` |
+| Windows-Leistungsindikatoren | `agent_perf_counter`, eine Serie pro in `perf_counters` aufgeführtem Indikator | `counter` |
 | MDaemon (Windows) | `mdaemon_queue_messages`, `mdaemon_queue_frozen`, `mdaemon_sessions_active`, `mdaemon_sessions_total`, `mdaemon_messages_total`, `mdaemon_filtered_messages_total`, `mdaemon_server_active`, `mdaemon_running`, `mdaemon_uptime_seconds` — siehe [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`, `protocol`, `filter`, `verdict`, `server` |
 | Hyper-V (Windows) | `hyperv_vms_health_ok`, `hyperv_vms_health_critical`, `hyperv_host_cpu_percent`, `hyperv_host_cpu_guest_percent`, `hyperv_partitions`; pro VM `hyperv_vm_physical_memory_megabytes`, `hyperv_vm_guest_visible_memory_megabytes`, `hyperv_vm_memory_pressure_percent`; pro virtueller Platte `hyperv_vhd_read_bytes_per_second`, `hyperv_vhd_write_bytes_per_second`, `hyperv_vhd_latency_seconds`, `hyperv_vhd_queue_length`, `hyperv_vhd_errors_total` — siehe [Hyper-V-Hosts](#hyper-v-hosts) | `vm`, `disk` |
 | Agent | `agent_collect_seconds`, `agent_buffered_samples`, `agent_dropped_samples` | |
 
-Eine nicht messbare Zeitreihe ist **abwesend**, nie null: kein
-`smartctl`, kein `agent_disk_*`; keine lesbare Sonde, kein
-`agent_sensor_*`; kein ZFS, kein `agent_zfs_*`. Eine Temperatur
-außerhalb von 1–150 °C wird verworfen statt veröffentlicht, und eine
-Lüfterdrehzahl von 0 U/min wird auch verworfen — ein Mainboard hat
-mehr Lüfteranschlüsse als Lüfter, und ein leerer liest sich null wie
-ein toter Lüfter.
+Eine Serie, die nicht gemessen werden kann, ist **abwesend**, nie null: kein `smartctl`, kein
+`agent_disk_*`; keine lesbare Sonde, kein `agent_sensor_*`; kein ZFS, kein `agent_zfs_*`. Eine
+Temperatur außerhalb von 1–150 °C wird verworfen statt veröffentlicht, und ein Lüfter mit 0 rpm
+ebenfalls — ein Mainboard hat mehr Lüfteranschlüsse als Lüfter, und ein leerer liest null wie ein
+toter Lüfter.
 
-### Was wo gesammelt wird
+### Was wo erfasst wird {#what-is-collected-where}
 
 | | Linux | macOS | FreeBSD | Windows |
 |---|---|---|---|---|
-| CPU, Speicher, Swap, Dateisysteme, Netzwerk, Uptime, Prozesse | ja | ja | ja | ja |
-| Load Average | ja | ja | ja | nein (Windows hat diesen Begriff nicht) |
+| CPU, Speicher, Swap, Dateisysteme, Netzwerk, Laufzeit, Prozesse | ja | ja | ja | ja |
+| Load Average | ja | ja | ja | nein (Windows kennt den Begriff nicht) |
 | Dienste | systemd (`systemctl`) | launchd (`launchctl`) | rc.d (`service`) | Windows-Dienste |
 | Docker-Container | ja | ja, wenn `docker_socket` auf den Socket von Docker Desktop zeigt | nein (kein Docker-Daemon) | nein |
 | Temperaturen | `/sys/class/hwmon` | SMC-Sensoren | `dev.cpu.N.temperature` (nur CPU) | nein |
 | Lüfter | `/sys/class/hwmon` | nein | nein | nein |
-| Plattengesundheit (SMART) | `smartctl` | `smartctl` (Homebrew) | `smartctl` (`sysutils/smartmontools`) | `smartctl` |
+| Plattenzustand (SMART) | `smartctl` | `smartctl` (Homebrew) | `smartctl` (`sysutils/smartmontools`) | `smartctl` |
 | ZFS-Pools | `zpool` (OpenZFS) | nein | `zpool` | nein |
-| OS-Gesundheit (Updates, Reboot, fehlgeschlagene Units, SELinux) | ja | nein | nein | nein |
+| OS-Zustand (Updates, Neustart, fehlgeschlagene Units, SELinux) | ja | nein | nein | nein |
 | Plakar-Backups | ja | ja | ja | ja |
-| WireGuard-Tunnel | `wg show` | wenn `wg` installiert ist (ungetestet) | wenn `wg` installiert ist (ungetestet) | nein |
-| restic- und Borg-Backups | ja | ja | ja | nur restic (ungetestet; Borg hat keinen Windows-Build) |
-| Leistungszähler, MDaemon-Warteschlangen, Hyper-V | nein | nein | nein | ja |
+| WireGuard-Tunnel | `wg show` | wenn `wg` installiert ist (nicht getestet) | wenn `wg` installiert ist (nicht getestet) | nein |
+| restic- und Borg-Backups | ja | ja | ja | nur restic (nicht getestet; Borg hat keinen Windows-Build) |
+| Leistungsindikatoren, MDaemon-Queues, Hyper-V | nein | nein | nein | ja |
 | Maschinenidentität | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`, `/etc/hostid` | Hostname |
 | Relay-Modus | ja | ja | ja | ja |
 
-Windows hat absichtlich keine Temperaturzeile: Dort Sensoren zu lesen
-bedeutet, über WMI zu gehen, mit administrativen Rechten, für Werte,
-die die meisten Maschinen überhaupt nicht exponieren. Nichts zu
+Windows hat absichtlich keine Temperaturzeile: Dort Sensoren zu lesen bedeutet den Umweg über WMI,
+mit Administratorrechten, für Werte, die die meisten Rechner gar nicht bereitstellen. Nichts zu
 veröffentlichen ist die ehrliche Antwort.
 
-`smartctl` (smartmontools) und `zpool` werden bei jeder Lese-Periode
-gesucht und genutzt, wenn vorhanden; keines wird vom Agent
-installiert, und keines ist erforderlich. Beide brauchen root — der
-vom Installer registrierte Dienst läuft als root, ein von Hand unter
-Ihrem eigenen Konto gestarteter Agent findet nichts.
+`smartctl` (smartmontools) und `zpool` werden in jeder Leseperiode gesucht und verwendet, wenn
+vorhanden; keines wird vom Agenten installiert, und keines ist erforderlich. Beide brauchen root —
+der vom Installer registrierte Dienst läuft als root, ein von Hand unter Ihrem eigenen Konto
+gestarteter Agent findet nichts.
 
-Zähler werden roh gesendet, damit ein Neustart des Agents nie eine
-gefälschte Rate erzeugt; wenden Sie `rate()` in Abfragen an.
+Zähler werden roh gesendet, damit ein Neustart des Agenten nie eine falsche Rate erzeugt; wenden
+Sie in Abfragen `rate()` an.
 
-Geltende eingebaute Regeln: Device unreachable, High CPU, Unusual
-CPU. "Device unreachable" funktioniert auch für Agents: Der Server
-prüft das Alter des letzten empfangenen Batches und erklärt die
-Maschine nach drei verpassten Perioden (mindestens 90 Sekunden) als
-still.
+Zutreffende integrierte Regeln: Gerät nicht erreichbar, CPU hoch, Ungewöhnliche CPU. „Gerät nicht
+erreichbar“ funktioniert auch bei Agenten: Der Server prüft das Alter des letzten empfangenen
+Batches und erklärt den Rechner nach drei verpassten Perioden (mindestens 90 Sekunden) für still.
 
-Vier weitere feuern nur auf Maschinen, die die passende Zeitreihe
-erzeugen, brauchen daher keine Einrichtung und können auf einer
-Maschine ohne die Hardware nicht losgehen:
+Vier weitere lösen nur auf Rechnern aus, die die passenden Serien erzeugen, brauchen also keine
+Einrichtung und können auf einem Rechner ohne die Hardware nicht auslösen:
 
-| Regel | Feuert, wenn |
+| Regel | Löst aus, wenn |
 |---|---|
-| **Disk SMART failing** (critical) | die eigene Selbstbeurteilung einer Platte sie als ausfallend meldet |
-| **ZFS pool degraded** (critical) | ein Pool seit fünf Minuten nicht mehr `ONLINE` ist |
-| **ZFS scrub found errors** (critical) | der letzte Scrub Fehler fand, oder der Pool permanent beschädigte Dateien meldet |
-| **Temperature above critical** (critical) | ein Sensor den kritischen Schwellenwert überschreitet, **den seine eigene Hardware angibt** — kein Wert ist hartcodiert, 85 °C ist ein Notfall auf einer Platte und ein normaler Nachmittag auf einer Laptop-CPU |
+| **Platten-SMART fehlerhaft** (kritisch) | die eigene Selbstbewertung einer Platte sie als fehlerhaft meldet |
+| **ZFS-Pool degradiert** (kritisch) | ein Pool fünf Minuten lang nicht mehr `ONLINE` ist |
+| **ZFS-Scrub hat Fehler gefunden** (kritisch) | der letzte Scrub Fehler fand oder der Pool dauerhaft beschädigte Dateien meldet |
+| **Temperatur über kritisch** (kritisch) | ein Sensor die kritische Schwelle überschreitet, **die seine eigene Hardware deklariert** — kein Wert ist fest codiert, denn 85 °C sind bei einer Platte ein Notfall und bei einer Laptop-CPU ein normaler Nachmittag |
 
-Drei weitere beobachten, was Sie selbst deklarieren oder ausführen,
-und bleiben sonst still: **WireGuard peer silent** (ein Peer mit
-dauerhaftem Keepalive und seit 15 Minuten ohne Handshake),
-**restic/Borg backup too old** (kein Snapshot seit 48 Stunden) und
-**restic/Borg repository unreachable** — siehe
-[WireGuard-Tunnel](#wireguard-tunnel) und
-[restic- und Borg-Backups](#restic--und-borg-backups).
+Drei weitere überwachen, was Sie selbst deklarieren oder ausführen, und bleiben sonst still:
+**WireGuard-Peer still** (ein Peer mit persistentem Keepalive und 15 Minuten ohne Handshake),
+**restic/Borg-Backup zu alt** (48 Stunden kein Snapshot) und **restic/Borg-Repository nicht
+erreichbar** — siehe [WireGuard-Tunnel](#wireguard-tunnels) und
+[restic- und Borg-Backups](#restic-and-borg-backups).
 
-Auf einem Windows-Server, der MDaemon ausführt, beobachten drei
-weitere seine Warteschlangen: **MDaemon mail queue growing**,
-**MDaemon Bad queue not empty** und **MDaemon Retry queue high**
-(siehe [Regeln](../alerting/rules.md#mdaemon-and-securitygateway)).
-Auf einem Hyper-V-Host beobachten drei die virtuellen Maschinen:
-**Hyper-V VM health critical**, **Hyper-V host CPU high** und
-**Hyper-V virtual disk errors** (siehe
-[Hyper-V-Hosts](#hyper-v-hosts)).
+Auf einem Windows-Server mit MDaemon überwachen drei weitere dessen Queues: **MDaemon-Mail-Queue
+wächst**, **MDaemon-Bad-Queue nicht leer** und **MDaemon-Retry-Queue hoch** (siehe
+[Regeln](../alerting/rules.md#mdaemon-and-securitygateway)). Auf einem Hyper-V-Host überwachen drei
+die virtuellen Maschinen: **Hyper-V-VM-Zustand kritisch**, **Hyper-V-Host-CPU hoch** und
+**Hyper-V-virtuelle-Platte-Fehler** (siehe [Hyper-V-Hosts](#hyper-v-hosts)).
 
-## Installation
+## Installieren {#install}
 
-Die Schritte unten sind die, die der Hinweis neben dem Formular
-zeigt. Es gibt kein auf der Maschine zu erstellendes Konto: Das
-Enrollment-Token ist das einzige Secret.
+Die folgenden Schritte sind die, die der Hinweis neben dem Formular zeigt. Auf dem Rechner ist
+kein Konto zu erstellen: Das Enrollment-Token ist das einzige Geheimnis.
 
-1. Speichern Sie das Gerät in DumbMonit: Ein Enrollment-Token
-   (dmon_…) wird einmal angezeigt, mit dem fertigen
-   Installationsbefehl für Linux und für Windows. (Ein Token kann
-   auch unter **Settings → Agents** erstellt werden.)
-2. Dieses Token ist der Schlüssel des Agents, um seine Messungen an
-   DumbMonit zu pushen. Es ist kein Konto auf der Maschine: Nichts
-   dort zu erstellen. Ein aus dem Gerätedialog erstelltes Token ist
-   einmalig nutzbar: Es registriert diese eine Maschine und nichts
-   sonst. Für eine Flotte erstellen Sie ein wiederverwendbares Token
-   unter Settings → Agents.
-3. Führen Sie den Installationsbefehl auf der zu überwachenden
-   Maschine mit erhöhten Rechten aus (sudo auf Linux und macOS, ein
-   erhöhtes PowerShell auf Windows). Er lädt den Agent herunter,
-   schreibt das Token in agent.yaml und startet den Dienst.
-4. Die Maschine erscheint von selbst innerhalb weniger Sekunden,
-   nach ihrem Hostnamen benannt. Bei diesem ersten Batch gibt der
-   Server dem Agent ein eigenes Secret und speichert es in
-   `/etc/dumbmonit/agent-secret`, für niemand anderen lesbar: Von da
-   an ist diese Maschine die einzige, die unter diesem Gerät melden
-   kann. Token verloren? Settings → Agents erlaubt, es zu widerrufen
-   und ein neues zu erstellen.
-5. Docker: Um die Container zu sehen und DumbMonit sie neu starten
-   oder aktualisieren zu lassen, muss der Agent den Docker-Socket
-   erreichen. Der vom Installer registrierte Dienst kann das schon;
-   führen Sie den Agent stattdessen unter einem dedizierten Benutzer
-   aus, fügen Sie diesen Benutzer der Gruppe "docker" hinzu und
-   starten Sie ihn neu. Restart- und Auto-Update-Richtlinien werden
-   dann pro Container auf der Geräteseite gesetzt.
+1. Speichern Sie das Gerät in DumbMonit: Ein Enrollment-Token (dmon_…) wird einmalig angezeigt,
+   mit dem kopierfertigen Installationsbefehl für Linux und Windows. (Ein Token lässt sich auch
+   unter **Einstellungen → Agenten** erstellen.)
+2. Dieses Token ist der Schlüssel des Agenten, um seine Messungen an DumbMonit zu senden. Es ist
+   kein Konto auf dem Rechner: Dort ist nichts zu erstellen. Ein aus dem Gerätformular erstelltes
+   Token ist einmalig verwendbar: Es meldet genau diesen Rechner an und sonst nichts. Für eine
+   Flotte erstellen Sie unter Einstellungen → Agenten ein wiederverwendbares Token.
+3. Führen Sie den Installationsbefehl auf dem zu überwachenden Rechner mit erhöhten Rechten aus
+   (sudo unter Linux und macOS, eine PowerShell als Administrator unter Windows). Er lädt den
+   Agenten herunter, schreibt das Token in agent.yaml und startet den Dienst.
+4. Der Rechner erscheint innerhalb weniger Sekunden von selbst, nach seinem Hostnamen benannt. Bei
+   diesem ersten Batch gibt der Server dem Agenten ein eigenes Geheimnis und speichert es in
+   `/etc/dumbmonit/agent-secret`, für niemand sonst lesbar: Von da an ist dieser Rechner der
+   einzige, der unter diesem Gerät melden kann. Token verloren? Unter Einstellungen → Agenten
+   können Sie es widerrufen und ein anderes erstellen.
+5. Docker: Um die Container zu sehen und DumbMonit sie neu starten oder aktualisieren zu lassen,
+   muss der Agent den Docker-Socket erreichen. Der vom Installer registrierte Dienst kann das
+   bereits; betreiben Sie den Agenten stattdessen unter einem dedizierten Benutzer, fügen Sie
+   diesen Benutzer der Gruppe „docker“ hinzu und starten Sie ihn neu. Neustart- und
+   Auto-Update-Richtlinien werden dann pro Container auf der Geräteseite festgelegt.
 
-Zwei Dinge lohnen sich zu lesen, bevor Sie das auf mehr als eine
-Maschine ausrollen:
-[Binding](#binding-eine-maschine-ein-agent), was ein Gerät wirklich
-zu einer Agent-Installation gehören lässt, und
-[Einmalig oder Flotte](#einmalig-oder-flotte), die Wahl, die Sie beim
-Erstellen eines Tokens treffen.
+Zwei Dinge sollten Sie lesen, bevor Sie dies auf mehr als einem Rechner ausrollen:
+[Bindung](#binding-one-machine-one-agent), die dafür sorgt, dass ein Gerät wirklich zu einer
+Agent-Installation gehört, und [Einmalig oder Flotte](#single-use-or-fleet), die Wahl, die Sie
+beim Erstellen eines Tokens treffen.
 
     ```
     usermod -aG docker dumbmonit
     ```
 
-6. Plakar-Backups: automatisch erkannt — das Backups-Panel erscheint,
-   wenn das plakar-Binary oder ein Kloset
-   (~/.config/plakar/stores.yml jedes Benutzers, ~/.plakar,
-   /var/lib/plakar) gefunden wird, und wird sonst nicht angezeigt.
-   Setzen Sie "plakar_klosets" in agent.yaml, um eine feste Liste zu
-   beobachten, oder "plakar: false", um auszusteigen.
+6. Plakar-Backups: automatisch erkannt — das Panel Backups erscheint, wenn das Binary plakar oder
+   ein Kloset (~/.config/plakar/stores.yml jedes Benutzers, ~/.plakar, /var/lib/plakar) gefunden
+   wird, sonst wird nichts angezeigt. Setzen Sie „plakar_klosets“ in agent.yaml, um eine feste
+   Liste zu überwachen, oder „plakar: false“, um sich abzumelden.
 
 !!! note
-    Der Agent kontaktiert den Server, nie umgekehrt: Kein Port muss
-    auf der überwachten Maschine geöffnet werden.
+    Der Agent kontaktiert den Server, nie umgekehrt: Auf dem überwachten Rechner muss kein Port
+    geöffnet werden.
 
 === "Linux (systemd oder OpenRC)"
 
@@ -176,40 +148,33 @@ Erstellen eines Tokens treffen.
     curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
     ```
 
-    Das Skript ist POSIX `sh` (BusyBox und dash funktionieren), lädt
-    das Binary für die Architektur der Maschine (x86_64 oder
-    aarch64) vom Server, schreibt `/etc/dumbmonit/agent.yaml` (Modus
-    0600) und registriert `dumbmonit-agent` bei systemd, oder bei
-    OpenRC auf Alpine. Die systemd-Unit ist gehärtet
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
-    `CPUQuota=20%`).
+    Das Skript ist POSIX-`sh` (BusyBox und dash funktionieren), lädt das Binary für die
+    Architektur des Rechners (x86_64 oder aarch64) vom Server herunter, schreibt
+    `/etc/dumbmonit/agent.yaml` (Modus 0600) und registriert `dumbmonit-agent` bei systemd oder
+    unter Alpine bei OpenRC. Die systemd-Unit ist gehärtet (`ProtectSystem=strict`,
+    `NoNewPrivileges`, `MemoryMax=128M`, `CPUQuota=20%`).
 
 === "macOS (launchd)"
 
-    Derselbe Befehl wie auf Linux, mit `sudo` ausgeführt:
+    Derselbe Befehl wie unter Linux, mit `sudo` ausgeführt:
 
     ```sh
     curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
     ```
 
-    Die macOS-Binaries sind **nicht** im DumbMonit-Image: Sie zu
-    bauen braucht Apples SDK, dessen Lizenz die Weiterverbreitung
-    verbietet. Sie sind stattdessen an jedem
-    [GitHub-Release](https://github.com/laupernoe/dumbmonit/releases/latest)
-    angehängt — `dumbmonit-agent-macos-aarch64` (Apple Silicon) und
-    `dumbmonit-agent-macos-x86_64` (Intel), jeweils mit seinem
-    `.sha256` — und der Server leitet `/download/dumbmonit-agent-macos-…`
-    dorthin weiter, sodass das Skript die zur Architektur des Macs
-    passende wählt (`uname -m`). Der Server liefert diese Binaries
-    nicht mit, daher trägt der Installationsbefehl keine Prüfsumme
-    dafür: Fügen Sie `--sha256=macos-aarch64:<hex>` (oder
-    `macos-x86_64`) mit dem Wert der `.sha256` des Releases hinzu,
-    sonst lehnt der Installer den Download ab. Der Mac braucht auch
-    Zugriff auf github.com.
+    Die macOS-Binaries sind **nicht** im DumbMonit-Image: Sie zu bauen erfordert das SDK von
+    Apple, dessen Lizenz die Weiterverbreitung verbietet. Sie hängen stattdessen an jedem
+    [GitHub-Release](https://github.com/laupernoe/dumbmonit/releases/latest) —
+    `dumbmonit-agent-macos-aarch64` (Apple Silicon) und `dumbmonit-agent-macos-x86_64` (Intel),
+    jeweils mit seiner `.sha256` — und der Server leitet `/download/dumbmonit-agent-macos-…` dorthin
+    um, sodass das Skript das für die Architektur des Macs (`uname -m`) wählt. Der Server liefert
+    diese Binaries nicht mit, daher trägt der Installationsbefehl dafür keine Prüfsumme: Ergänzen
+    Sie `--sha256=macos-aarch64:<hex>` (oder `macos-x86_64`) mit dem Wert der `.sha256` des
+    Releases, sonst lehnt der Installer den Download ab. Der Mac muss außerdem github.com
+    erreichen.
 
-    Ohne diesen Zugriff, oder um ein schon vorhandenes Binary zu
-    installieren, laden Sie es herunter und übergeben Sie es mit
-    `--bin` (vergleichen Sie es zuerst mit der `.sha256` des
+    Ohne diesen Zugriff oder um ein bereits vorhandenes Binary zu installieren, laden Sie es
+    herunter und übergeben es mit `--bin` (vergleichen Sie es zuerst mit der `.sha256` des
     Releases: `--bin` installiert, was Sie ihm geben):
 
     ```sh
@@ -218,19 +183,17 @@ Erstellen eines Tokens treffen.
         --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
-    Das Skript installiert das Binary in `/usr/local/bin` (und
-    entfernt das Quarantäne-Attribut, das ein Browser-Download
-    trägt, das Gatekeeper sonst den Start verweigern ließe),
-    schreibt `/usr/local/etc/dumbmonit/agent.yaml` (Modus 0600) und
-    registriert den Systemdaemon `com.dumbmonit.agent` in
-    `/Library/LaunchDaemons`, mit `launchctl bootstrap system`
-    gestartet. Er läuft beim Boot, ohne dass jemand eingeloggt ist.
+    Das Skript installiert das Binary in `/usr/local/bin` (und entfernt das
+    Quarantäne-Attribut, das ein Browser-Download trägt und das Gatekeeper das Starten
+    verweigern ließe), schreibt `/usr/local/etc/dumbmonit/agent.yaml` (Modus 0600) und
+    registriert den System-Daemon `com.dumbmonit.agent` in `/Library/LaunchDaemons`, gestartet
+    mit `launchctl bootstrap system`. Er läuft beim Booten, ohne dass jemand angemeldet ist.
 
     !!! note "Lieber selbst bauen?"
         Auf dem Mac selbst, mit installiertem Rust:
         `cargo build --release -p dumbmonit-agent`, dann
-        `--bin=target/release/dumbmonit-agent`. Das ist dasselbe
-        Binary, das der Release-Job erzeugt.
+        `--bin=target/release/dumbmonit-agent`. Das ist dasselbe Binary, das der Release-Job
+        erzeugt.
 
 === "FreeBSD (rc.d)"
 
@@ -238,16 +201,14 @@ Erstellen eines Tokens treffen.
     fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
     ```
 
-    Nur x86_64. Das Skript lädt `dumbmonit-agent-freebsd-x86_64` vom
-    Server, schreibt `/usr/local/etc/dumbmonit/agent.yaml` (Modus
-    0600) und installiert `/usr/local/etc/rc.d/dumbmonit_agent`, mit
-    `service dumbmonit_agent enable` aktiviert. `daemon(8)`
-    überwacht den Agent, startet ihn neu, falls er stoppt, und
-    schreibt `/var/log/dumbmonit-agent.log`.
+    Nur x86_64. Das Skript lädt `dumbmonit-agent-freebsd-x86_64` vom Server herunter, schreibt
+    `/usr/local/etc/dumbmonit/agent.yaml` (Modus 0600) und installiert
+    `/usr/local/etc/rc.d/dumbmonit_agent`, aktiviert mit `service dumbmonit_agent enable`.
+    `daemon(8)` überwacht den Agenten, startet ihn neu, wenn er stoppt, und schreibt
+    `/var/log/dumbmonit-agent.log`.
 
-    Funktioniert genauso auf TrueNAS CORE und anderen
-    FreeBSD-basierten Appliances, wo die ZFS-Zeitreihen der Sinn der
-    Übung sind.
+    Funktioniert genauso auf TrueNAS CORE und anderen FreeBSD-basierten Appliances, wo die
+    ZFS-Serien der eigentliche Zweck sind.
 
 === "Windows (Dienst)"
 
@@ -255,59 +216,51 @@ Erstellen eines Tokens treffen.
     & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
     ```
 
-    Das Skript lädt `dumbmonit-agent-windows-x86_64.exe` vom Server,
-    prüft es gegen seinen SHA-256, installiert es als
-    `C:\Program Files\DumbMonit\dumbmonit-agent.exe`, schreibt
-    `C:\ProgramData\DumbMonit\agent.yaml` (nur von SYSTEM und
-    Administrators lesbar) und registriert den Windows-Dienst
-    `DumbMonitAgent` ("DumbMonit system agent"): automatisch beim
-    Boot als LocalSystem gestartet, und nach einem Fehlschlag neu
-    gestartet (10 s, 30 s, dann 60 s). Der Agent spricht mit dem
-    Dienstmanager selbst (`--service`), daher lässt ihn das Stoppen
-    des Dienstes senden, was er noch hält, bevor er beendet.
+    Das Skript lädt `dumbmonit-agent-windows-x86_64.exe` vom Server herunter, prüft es gegen
+    dessen SHA-256, installiert es als `C:\Program Files\DumbMonit\dumbmonit-agent.exe`, schreibt
+    `C:\ProgramData\DumbMonit\agent.yaml` (nur für SYSTEM und Administratoren lesbar) und
+    registriert den Windows-Dienst `DumbMonitAgent` („DumbMonit system agent“): beim Booten
+    automatisch gestartet, als LocalSystem, und nach einem Fehler neu gestartet (10 s, 30 s, dann
+    60 s). Der Agent spricht selbst mit dem Dienstmanager (`--service`), sodass das Stoppen des
+    Dienstes ihn senden lässt, was er noch hält, bevor er beendet.
 
     Ein Dienst hat keine Konsole: Der Agent schreibt sein Log nach
-    `C:\ProgramData\DumbMonit\agent.log`, über 10 MB als
-    `agent.log.old` zur Seite gelegt.
+    `C:\ProgramData\DumbMonit\agent.log`, ab 10 MB als `agent.log.old` beiseitegelegt.
 
-    Es gibt keinen nativen ARM64-Build: Auf Windows 11 für ARM
-    installiert das Skript das x86_64-Binary, das unter
-    x64-Emulation läuft.
+    Es gibt keinen nativen ARM64-Build: Unter Windows 11 für ARM installiert das Skript das
+    x86_64-Binary, das unter x64-Emulation läuft.
 
-Ein Token kann mehrere Maschinen registrieren: Benennen Sie es nach
-einer Gruppe oder einer Maschine.
+Ein Token kann mehrere Rechner anmelden: Benennen Sie es nach einer Gruppe oder einem Rechner.
 
-### Native Binaries
+### Native Binaries {#native-binaries}
 
-Der Agent ist eine einzelne statische ausführbare Datei pro System,
-mit nichts daneben zu installieren:
+Der Agent ist eine einzelne statische ausführbare Datei pro System, ohne dass daneben etwas zu
+installieren wäre:
 
-| System | Datei | Wo zu bekommen |
+| System | Datei | Bezugsquelle |
 |---|---|---|
 | Linux x86_64 | `dumbmonit-agent-linux-x86_64` | der Server, `/download/…` |
 | Linux aarch64 (64-Bit-ARM: Raspberry Pi OS 64-Bit, ARM-Server) | `dumbmonit-agent-linux-aarch64` | der Server, `/download/…` |
 | Windows x86_64 | `dumbmonit-agent-windows-x86_64.exe` | der Server, `/download/…` |
 | FreeBSD x86_64 | `dumbmonit-agent-freebsd-x86_64` | der Server, `/download/…` |
-| macOS Apple Silicon | `dumbmonit-agent-macos-aarch64` | das GitHub-Release (der Server leitet dorthin weiter) |
-| macOS Intel | `dumbmonit-agent-macos-x86_64` | das GitHub-Release (der Server leitet dorthin weiter) |
+| macOS Apple Silicon | `dumbmonit-agent-macos-aarch64` | das GitHub-Release (der Server leitet dorthin um) |
+| macOS Intel | `dumbmonit-agent-macos-x86_64` | das GitHub-Release (der Server leitet dorthin um) |
 
-Die Linux-Binaries sind statisch gegen musl gelinkt: Sie laufen auf
-jeder Distribution, glibc oder nicht (Alpine, NAS-Firmwares), ohne
-passende Bibliothek. Jede Datei hat ihre Prüfsumme daneben,
-`<file>.sha256`, im `sha256sum`-Format. Jedes
-[GitHub-Release](https://github.com/laupernoe/dumbmonit/releases/latest)
-trägt alle sechs Binaries und ihre Prüfsummen, für Maschinen, die
-`/download/` des Servers nicht erreichen können, oder zum
-Installieren mit `--bin`.
+Die Linux-Binaries sind statisch gegen musl gelinkt: Sie laufen auf jeder Distribution, glibc oder
+nicht (Alpine, NAS-Firmware), ohne passende Bibliothek. Jede Datei hat ihre Prüfsumme daneben,
+`<file>.sha256`, im Format von `sha256sum`. Jedes
+[GitHub-Release](https://github.com/laupernoe/dumbmonit/releases/latest) enthält alle sechs
+Binaries und ihre Prüfsummen, für Rechner, die `/download/` des Servers nicht erreichen können,
+oder zum Installieren mit `--bin`.
 
-Um die Linux-, Windows- und FreeBSD-Binaries selbst zu bauen, aus
-einem Klon des Repositorys (Docker ist die einzige Anforderung):
+Um die Linux-, Windows- und FreeBSD-Binaries selbst aus einem Klon des Repositorys zu bauen
+(Docker ist die einzige Voraussetzung):
 
 ```sh
 docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 ```
 
-### Den Dienst verwalten
+### Den Dienst verwalten {#managing-the-service}
 
 | | Linux (systemd) | Linux (OpenRC) | macOS (launchd) | FreeBSD (rc.d) | Windows (PowerShell) |
 |---|---|---|---|---|---|
@@ -318,74 +271,63 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 | Konfiguration | `/etc/dumbmonit/agent.yaml` | `/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` | `/usr/local/etc/dumbmonit/agent.yaml` | `C:\ProgramData\DumbMonit\agent.yaml` |
 | Dienstdatei | `/etc/systemd/system/dumbmonit-agent.service` | `/etc/init.d/dumbmonit-agent` | `/Library/LaunchDaemons/com.dumbmonit.agent.plist` | `/usr/local/etc/rc.d/dumbmonit_agent` | Dienst `DumbMonitAgent` (`services.msc`) |
 
-`--uninstall` (`-Uninstall` auf Windows) entfernt alles davon,
-Dienst eingeschlossen, auf jedem System.
+`--uninstall` (`-Uninstall` unter Windows) entfernt auf jedem System alles, den Dienst
+eingeschlossen.
 
 !!! note "Der Download wird verifiziert — immer"
-    Der von DumbMonit gezeigte Installationsbefehl trägt den
-    erwarteten SHA-256 jedes vom Server gelieferten Agent-Binaries
-    (`--sha256=linux-x86_64:…,linux-aarch64:…,freebsd-x86_64:…`,
-    `-Sha256 windows-x86_64:…` auf Windows). Beide Installer prüfen
-    die heruntergeladene Datei dagegen, bevor sie irgendetwas
-    installieren, und **lehnen ab**, wenn sie nicht passt, wenn
-    keine Prüfsumme für die Plattform gegeben ist, oder wenn kein
-    SHA-256-Tool (`sha256sum`, `shasum`, `sha256`) verfügbar ist.
+    Der von DumbMonit angezeigte Installationsbefehl trägt die erwartete SHA-256 jedes vom Server
+    ausgelieferten Agent-Binarys (`--sha256=linux-x86_64:…,linux-aarch64:…,freebsd-x86_64:…`,
+    `-Sha256 windows-x86_64:…` unter Windows). Beide Installer prüfen die heruntergeladene Datei
+    dagegen, bevor sie etwas installieren, und **verweigern** die Installation, wenn sie nicht
+    passt, wenn für die Plattform keine Prüfsumme angegeben ist oder wenn kein SHA-256-Werkzeug
+    (`sha256sum`, `shasum`, `sha256`) verfügbar ist.
 
-    Die Prüfsummen ändern sich mit jedem Server-Release: Kopieren
-    Sie nach einem DumbMonit-Upgrade einen frischen
-    Installationsbefehl aus **Settings → Agents** (oder von einem
-    neuen Token), statt einen alten erneut auszuführen, der mit
-    "checksum mismatch" stoppen würde. Dieselben Prüfsummen werden
-    unter dem Installationsbefehl angezeigt, und unter
+    Die Prüfsummen ändern sich mit jedem Server-Release: Kopieren Sie nach dem Upgrade von
+    DumbMonit einen frischen Installationsbefehl aus **Einstellungen → Agenten** (oder von einem
+    neuen Token), statt einen alten erneut auszuführen, der mit „checksum mismatch“ anhalten
+    würde. Dieselben Prüfsummen stehen unter dem Installationsbefehl und sind unter
     `/download/<file>.sha256` veröffentlicht.
 
-    Für Air-Gapped- oder manuelle Setups installiert
-    `--insecure-skip-checksum` (`-InsecureSkipChecksum`) ein
-    heruntergeladenes Binary unverifiziert und sagt das laut;
-    `--bin=PATH` installiert eine lokale Datei unverändert, wobei
-    die Datei Ihnen zu verifizieren überlassen bleibt.
+    Für Air-Gap- oder manuelle Setups installiert `--insecure-skip-checksum`
+    (`-InsecureSkipChecksum`) ein heruntergeladenes Binary unverifiziert und sagt das laut;
+    `--bin=PATH` installiert eine lokale Datei unverändert, deren Verifizierung Ihre Sache ist.
 
-### Installer-Flags
+### Installer-Flags {#installer-flags}
 
 | `install.sh` | `install.ps1` | Wirkung |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Enrollment-Token (erforderlich). |
-| `--url=URL` | `-Url` | Server-URL, zum Beispiel `http://server:8080`. Auf Linux wird `DUMBMONIT_URL` in der Umgebung genutzt, wenn das Flag fehlt. |
-| `--interval=N` | `-Interval` | Sampling-Periode in Sekunden (standardmäßig 30). |
-| `--services=a,b,c` | `-Services @('a','b')` | Dienste, deren Zustand gemeldet wird, so benannt wie das Host-System sie nennt: systemd-Units auf Linux, launchd-Labels (`com.apple.sshd`) auf macOS, rc.d-Namen auf FreeBSD, Windows-Dienste. |
-| `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, auf jeder Zeitreihe als `tag_<key>` kopiert. |
-| `--hostname=NAME` | `-HostName` | Dem Server angekündigter Name (Standard: der der Maschine). |
-| `--bin=PATH` | `-BinPath` | Lokales Binary, statt es herunterzuladen, zu installieren. |
-| `--sha256=LIST` | `-Sha256` | Erwarteter SHA-256 des Downloads, als `platform-arch:hex`-Paare, kommagetrennt (ein blanker Hex-Wert funktioniert auch). Im von DumbMonit gezeigten Befehl eingeschlossen; erforderlich, sofern nicht das nächste Flag gegeben wird. |
-| `--insecure-skip-checksum` | `-InsecureSkipChecksum` | Ein heruntergeladenes Binary ohne Verifizierung installieren, mit einer Warnung. Nur für Air-Gapped- oder manuelle Setups. |
-| `--no-start` | | Alles installieren, aber den Server nicht kontaktieren oder den Dienst starten (Maschinen-Image, Testen). |
-| `--uninstall` | `-Uninstall` | Den Agent deinstallieren und seine Konfiguration löschen. |
-| `--help` | | Die Hilfe zeigen. |
+| `--url=URL` | `-Url` | Server-URL, zum Beispiel `http://server:8080`. Unter Linux wird `DUMBMONIT_URL` in der Umgebung verwendet, wenn das Flag fehlt. |
+| `--interval=N` | `-Interval` | Abtastperiode in Sekunden (Standard 30). |
+| `--services=a,b,c` | `-Services @('a','b')` | Dienste, deren Zustand gemeldet wird, benannt wie das Hostsystem sie nennt: systemd-Units unter Linux, launchd-Labels (`com.apple.sshd`) unter macOS, rc.d-Namen unter FreeBSD, Windows-Dienste. |
+| `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, auf jeder Serie als `tag_<key>` kopiert. |
+| `--hostname=NAME` | `-HostName` | Dem Server angekündigter Name (Standard: der des Rechners). |
+| `--bin=PATH` | `-BinPath` | Lokales Binary, das statt eines Downloads installiert wird. |
+| `--sha256=LIST` | `-Sha256` | Erwartete SHA-256 des Downloads, als durch Kommas getrennte Paare `platform-arch:hex` (ein nackter Hex-Wert funktioniert auch). Im von DumbMonit gezeigten Befehl enthalten; erforderlich, sofern nicht das nächste Flag gegeben ist. |
+| `--insecure-skip-checksum` | `-InsecureSkipChecksum` | Installiert ein heruntergeladenes Binary ohne Verifizierung, mit einer Warnung. Nur für Air-Gap- oder manuelle Setups. |
+| `--no-start` | | Installiert alles, kontaktiert aber den Server nicht und startet den Dienst nicht (Maschinen-Image, Tests). |
+| `--uninstall` | `-Uninstall` | Deinstalliert den Agenten und löscht seine Konfiguration. |
+| `--help` | | Zeigt die Hilfe. |
 
-### Upgrade
+### Upgrade {#upgrade}
 
-Beide Skripte sind idempotent: Den Installationsbefehl mit demselben
-Token und derselben URL erneut auszuführen, ersetzt das Binary,
-schreibt die Konfiguration neu und startet den Dienst neu. Das ist
-die Upgrade-Prozedur. Nehmen Sie den Befehl vom aktuellen Server
-(Settings → Agents): Sein `--sha256` muss zu den Binaries der
-Server-Version passen, auf die Sie aktualisiert haben.
+Beide Skripte sind idempotent: Den Installationsbefehl mit demselben Token und derselben URL
+erneut auszuführen ersetzt das Binary, schreibt die Konfiguration neu und startet den Dienst neu.
+Das ist die Upgrade-Prozedur. Nehmen Sie den Befehl vom aktuellen Server (Einstellungen →
+Agenten): Sein `--sha256` muss zu den Binaries der Serverversion passen, auf die Sie aktualisiert
+haben.
 
-Derselbe Befehl migriert eine noch mit dem EzyMonit-Agent laufende
-Maschine, auf Linux und auf Windows. Der Installer stoppt und
-entfernt den alten Dienst (`ezymonit-agent`, oder `EzyMonitAgent`
-auf Windows), verschiebt die Konfiguration zum neuen Pfad
-(`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yaml`)
-und installiert `dumbmonit-agent` an seiner Stelle. Das alte Token
-`ezym_…` bleibt gültig, daher funktioniert der Befehl, der bei der
-Token-Erstellung gezeigt wurde, immer noch; nichts muss zuerst
-widerrufen werden.
+Derselbe Befehl migriert einen Rechner, auf dem noch der EzyMonit-Agent läuft, unter Linux und
+Windows. Der Installer stoppt und entfernt den alten Dienst (`ezymonit-agent`, oder
+`EzyMonitAgent` unter Windows), verschiebt die Konfiguration an den neuen Pfad
+(`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yaml`) und installiert an seiner
+Stelle `dumbmonit-agent`. Das alte Token `ezym_…` bleibt gültig, der beim Erstellen des Tokens
+gezeigte Befehl funktioniert also weiterhin; es muss nichts zuvor widerrufen werden.
 
 ## Konfigurationsdatei {#configuration-file}
 
-`/etc/dumbmonit/agent.yaml` auf Linux,
-`/usr/local/etc/dumbmonit/agent.yaml` auf macOS und FreeBSD,
-`C:\ProgramData\DumbMonit\agent.yaml` auf Windows:
+`/etc/dumbmonit/agent.yaml` unter Linux, `/usr/local/etc/dumbmonit/agent.yaml` unter macOS und
+FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` unter Windows:
 
 ```yaml
 server_url: http://server:8080
@@ -420,92 +362,86 @@ max_buffered_samples: 20000
 log_level: info
 ```
 
-`sensors`, `smart` und `zfs` werden erkannt, nie angenommen: Bei
-`true` gelassen auf einer Maschine ohne Sonde, ohne `smartctl` oder
-ohne Pool, kosten sie einen Blick pro Periode und veröffentlichen
-überhaupt nichts. Setzen Sie eines auf `false`, um nicht einmal mehr
-nachzusehen — lohnend auf einem NAS, dessen Platten Sie lieber nie
-von `smartctl` berühren lassen wollen, obwohl der Agent schon
-`-n standby` übergibt, sodass eine schlafende Platte nur gemessen
-wird, wenn sie aus anderen Gründen wach ist.
+`sensors`, `smart` und `zfs` werden erkannt, nie vorausgesetzt: Auf `true` belassen, kosten sie auf
+einem Rechner ohne Sonde, ohne `smartctl` oder ohne Pool einen Blick pro Periode und geben gar
+nichts aus. Setzen Sie eines auf `false`, um gar nicht erst hinzusehen — sinnvoll auf einem NAS,
+dessen Platten Sie lieber nie von `smartctl` berühren lassen, obwohl der Agent bereits
+`-n standby` übergibt, sodass eine schlafende Platte nur gemessen wird, wenn sie aus anderen
+Gründen wach ist.
 
-Daneben hält `/etc/dumbmonit/agent-secret`
-(`C:\ProgramData\DumbMonit\agent-secret` auf Windows) das
-Binding-Secret, das der Server dieser Maschine gegeben hat. Der
-Agent schreibt es mit Modus `0600` und liest es bei jedem Start neu;
-es ist nicht Teil von `agent.yaml`, weil es nichts ist, das Sie
-setzen — siehe [Binding](#binding-eine-maschine-ein-agent).
-`DUMBMONIT_AGENT_SECRET_FILE` verschiebt es, was Sie für einen Agent
-in einem Container wollen.
+Daneben enthält `/etc/dumbmonit/agent-secret` (`C:\ProgramData\DumbMonit\agent-secret` unter
+Windows) das Bindungsgeheimnis, das der Server diesem Rechner gegeben hat. Der Agent schreibt es
+mit Modus `0600` und liest es bei jedem Start neu; es ist nicht Teil von `agent.yaml`, weil Sie es
+nicht festlegen — siehe [Bindung](#binding-one-machine-one-agent). `DUMBMONIT_AGENT_SECRET_FILE`
+verschiebt es, was Sie für einen Agenten in einem Container wollen.
 
-Jeder Schlüssel kann von der Umgebung überschrieben werden, was den
-Agent in einem Container nutzbar macht, ohne eine Datei einzuhängen:
+Jeder Schlüssel kann durch die Umgebung überschrieben werden, wodurch der Agent in einem
+Container ohne Einbinden einer Datei nutzbar ist:
 
 | Variable | Wirkung |
 |---|---|
 | `DUMBMONIT_AGENT_CONFIG` | Pfad der Konfigurationsdatei |
 | `DUMBMONIT_AGENT_URL` | Server-URL |
 | `DUMBMONIT_AGENT_TOKEN` | Enrollment-Token |
-| `DUMBMONIT_AGENT_SECRET_FILE` | Wo das Binding-Secret gehalten wird (Standard: `agent-secret`, neben der Konfigurationsdatei) |
-| `DUMBMONIT_AGENT_INTERVAL_SECS` | Sampling-Periode |
+| `DUMBMONIT_AGENT_SECRET_FILE` | Wo das Bindungsgeheimnis aufbewahrt wird (Standard: `agent-secret`, neben der Konfigurationsdatei) |
+| `DUMBMONIT_AGENT_INTERVAL_SECS` | Abtastperiode |
 | `DUMBMONIT_AGENT_HOSTNAME` | Dem Server angekündigter Name |
-| `DUMBMONIT_AGENT_SERVICES` | Zu beobachtende Dienste, kommagetrennt |
+| `DUMBMONIT_AGENT_SERVICES` | Zu überwachende Dienste, kommagetrennt |
 | `DUMBMONIT_AGENT_TAGS` | `key=value`, kommagetrennt |
 | `DUMBMONIT_AGENT_DOCKER` | `true` / `false` |
 | `DUMBMONIT_AGENT_DOCKER_SOCKET` | Pfad des Docker-Sockets |
-| `DUMBMONIT_AGENT_DOCKER_MAX_CONTAINERS` | Pro Host detailliert betrachtete Container, standardmäßig `200` (`0`: nur Zählungen) |
-| `DUMBMONIT_AGENT_INTERFACES_IGNORE` | Ausgelassene Schnittstellen, kommagetrennte Namen oder Regexe; Standard `^(veth\|br-\|docker\|virbr\|lo$\|vEthernet)` |
-| `DUMBMONIT_AGENT_INTERFACES_ONLY` | Zu behaltende Schnittstellen; wenn gesetzt, ersetzt die Ignore-Liste |
-| `DUMBMONIT_AGENT_MOUNTS_IGNORE` | Aus Dateisystemen und Disk-I/O ausgelassene Einhängepunkte; Standard überspringt `/var/lib/docker/`, `/run/…`, `/sys/`, `/proc/`, `/dev/`, `/snap/` |
-| `DUMBMONIT_AGENT_CPU_PER_CORE` | `true`, um auch eine CPU-Zeitreihe pro Kern zu senden (Standard `false`) |
+| `DUMBMONIT_AGENT_DOCKER_MAX_CONTAINERS` | Pro Host detaillierte Container, Standard `200` (`0`: nur zählen) |
+| `DUMBMONIT_AGENT_INTERFACES_IGNORE` | Ausgelassene Schnittstellen, kommagetrennte Namen oder Regexe; Standard `^(veth|br-|docker|virbr|lo$|vEthernet)` |
+| `DUMBMONIT_AGENT_INTERFACES_ONLY` | Zu behaltende Schnittstellen; wenn gesetzt, ersetzt es die Ignore-Liste |
+| `DUMBMONIT_AGENT_MOUNTS_IGNORE` | Aus Dateisystemen und Platten-I/O ausgelassene Mountpunkte; der Standard überspringt `/var/lib/docker/`, `/run/…`, `/sys/`, `/proc/`, `/dev/`, `/snap/` |
+| `DUMBMONIT_AGENT_CPU_PER_CORE` | `true`, um zusätzlich eine CPU-Serie pro Kern zu senden (Standard `false`) |
 | `DUMBMONIT_AGENT_SENSORS` | `true` / `false`: Temperaturen und Lüfter (Standard `true`) |
-| `DUMBMONIT_AGENT_SMART` | `true` / `false`: Plattengesundheit über `smartctl` (Standard `true`) |
+| `DUMBMONIT_AGENT_SMART` | `true` / `false`: Plattenzustand über `smartctl` (Standard `true`) |
 | `DUMBMONIT_AGENT_SMART_BIN` | Pfad von `smartctl` |
-| `DUMBMONIT_AGENT_SMART_INTERVAL_SECS` | Periode zwischen zwei SMART-Lesungen, Standard `300`, Minimum `60` |
+| `DUMBMONIT_AGENT_SMART_INTERVAL_SECS` | Periode zwischen zwei SMART-Messungen, Standard `300`, Minimum `60` |
 | `DUMBMONIT_AGENT_ZFS` | `true` / `false`: ZFS-Pools über `zpool` (Standard `true`) |
 | `DUMBMONIT_AGENT_ZFS_BIN` | Pfad von `zpool` |
-| `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | Periode zwischen zwei ZFS-Lesungen, Standard `120`, Minimum `30` |
+| `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | Periode zwischen zwei ZFS-Messungen, Standard `120`, Minimum `30` |
 | `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`: WireGuard-Tunnel über `wg` (Standard `true`) |
 | `DUMBMONIT_AGENT_WIREGUARD_BIN` | Pfad von `wg` |
 | `DUMBMONIT_AGENT_RESTIC_BIN` | Pfad von `restic` |
 | `DUMBMONIT_AGENT_BORG_BIN` | Pfad von `borg` |
-| `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | Periode zwischen zwei Lesungen der restic- und Borg-Repositories, Standard `600`, Minimum `60` |
-| `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` oder `auto`: MDaemons Leistungszähler (Standard `auto`, gelesen, wenn der Windows-Dienst `MDaemon` existiert) |
-| `DUMBMONIT_AGENT_HYPERV` | `true`, `false` oder `auto`: Hyper-Vs Leistungszähler (Standard `auto`, gelesen, wenn der Windows-Dienst `vmms` existiert) |
-| `DUMBMONIT_AGENT_PERF_COUNTERS` | Pfade der Windows-Leistungszähler, durch **Semikolons** getrennt (ein Komma kann Teil eines Instanznamens sein); ersetzt `perf_counters` |
-| `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Größe des Nachholpuffers |
+| `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | Periode zwischen zwei Messungen der restic- und Borg-Repositories, Standard `600`, Minimum `60` |
+| `DUMBMONIT_AGENT_MDAEMON` | `true`, `false` oder `auto`: Leistungsindikatoren von MDaemon (Standard `auto`, gelesen, wenn der Windows-Dienst `MDaemon` existiert) |
+| `DUMBMONIT_AGENT_HYPERV` | `true`, `false` oder `auto`: Leistungsindikatoren von Hyper-V (Standard `auto`, gelesen, wenn der Windows-Dienst `vmms` existiert) |
+| `DUMBMONIT_AGENT_PERF_COUNTERS` | Pfade von Windows-Leistungsindikatoren, durch **Semikolons** getrennt (ein Komma kann Teil eines Instanznamens sein); ersetzt `perf_counters` |
+| `DUMBMONIT_AGENT_SYSTEM_HEALTH` | `true` / `false`: Zustand des Betriebssystems, der Hauptschalter der nächsten vier (Standard `true`) |
+| `DUMBMONIT_AGENT_CHECK_UPDATES` | `true` / `false`: ausstehende Updates (Standard `true`) |
+| `DUMBMONIT_AGENT_UPDATES_INTERVAL_SECS` | Periode zwischen zwei Prüfungen auf ausstehende Updates, Standard `3600`, Minimum `300` |
+| `DUMBMONIT_AGENT_CHECK_REBOOT` | `true` / `false`: Neustart erforderlich (Standard `true`) |
+| `DUMBMONIT_AGENT_CHECK_FAILED_UNITS` | `true` / `false`: fehlgeschlagene systemd-Units (Standard `true`) |
+| `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Größe des Aufhol-Puffers |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
-| `DUMBMONIT_AGENT_RELAY` | `true`, um für den Server die Abfragen der diesem Agent zugewiesenen Geräte auszuführen (siehe [Den Agent in Docker / einem anderen Netzwerk betreiben](#run-the-agent-in-docker--on-another-network)) |
-| `DUMBMONIT_AGENT_SITE` | Standort-Label, neben dem Agent gezeigt, wenn er als Relay angeboten wird |
+| `DUMBMONIT_AGENT_RELAY` | `true`, um für den Server die Prüfungen der diesem Agenten zugewiesenen Geräte auszuführen (siehe [Den Agenten in Docker / in einem anderen Netzwerk betreiben](#run-the-agent-in-docker--on-another-network)) |
+| `DUMBMONIT_AGENT_SITE` | Standortlabel, das neben dem Agenten angezeigt wird, wenn er als Relay angeboten wird |
 
-## Windows-Leistungszähler {#windows-performance-counters}
+## Windows-Leistungsindikatoren {#windows-performance-counters}
 
-Auf Windows liest der Agent Leistungszähler — die Werte, die der
-Leistungsindikator (`perfmon`) zeigt — über die PDH-Bibliothek, und
-veröffentlicht sie bei jeder Sampling-Periode. Manche Software
-veröffentlicht ihren Zustand nirgendwo sonst.
+Unter Windows liest der Agent Leistungsindikatoren — die Werte, die der Leistungsmonitor
+(`perfmon`) zeigt — über die PDH-Bibliothek und veröffentlicht sie in jeder Abtastperiode.
+Manche Software veröffentlicht ihren Zustand sonst nirgends.
 
-**MDaemon.** Wenn der Windows-Dienst namens `MDaemon` existiert,
-liest der Agent das MDaemon-Leistungsobjekt: Warteschlangengrößen,
-Sitzungen, Nachrichten- und Spam-Totals, den Zustand der internen
-Server von MDaemon und seine Uptime. Die Zeitreihen, die Regeln und
-die Seite, die sie zeigt, sind auf der
-[MDaemon](mdaemon.md#mail-queues-through-the-agent)-Seite
-beschrieben. `mdaemon: true` liest sie auch ohne den Dienst (ein
-umbenannter Dienst), `mdaemon: false` nie. Das Vorhandensein des
-Dienstes wird alle zehn Perioden erneut geprüft, daher wird ein nach
-dem Agent installiertes MDaemon ohne Neustart erkannt.
+**MDaemon.** Existiert der Windows-Dienst namens `MDaemon`, liest der Agent das
+MDaemon-Leistungsobjekt: Queue-Größen, Sitzungen, Nachrichten- und Spam-Summen, den Zustand der
+internen Server von MDaemon und seine Laufzeit. Die Serien, die Regeln und die Seite, die sie
+zeigt, sind auf der Seite [MDaemon](mdaemon.md#mail-queues-through-the-agent) beschrieben.
+`mdaemon: true` liest sie auch ohne den Dienst (ein umbenannter Dienst), `mdaemon: false` nie.
+Das Vorhandensein des Dienstes wird alle zehn Perioden neu geprüft, sodass ein nach dem Agenten
+installiertes MDaemon ohne Neustart erfasst wird.
 
-**Hyper-V.** Wenn der Hyper-V-Virtual-Machine-Management-Dienst
-(`vmms`) existiert, liest der Agent Hyper-Vs Leistungsobjekte; siehe
-[Hyper-V-Hosts](#hyper-v-hosts). `hyperv: true` und `hyperv: false`
-erzwingen die Wahl, wie bei MDaemon.
+**Hyper-V.** Existiert der Dienst Hyper-V Virtual Machine Management (`vmms`), liest der Agent die
+Leistungsobjekte von Hyper-V; siehe [Hyper-V-Hosts](#hyper-v-hosts). `hyperv: true` und
+`hyperv: false` erzwingen die Wahl, wie bei MDaemon.
 
-**Jeder andere Zähler.** Listen Sie seinen vollen Pfad unter
-`perf_counters`, als `\Object(Instance)\Counter` oder
-`\Object\Counter` für ein Objekt mit einer einzelnen Instanz, und er
-wird als `dumbmonit_agent_perf_counter{counter="…"}` veröffentlicht,
-mit dem von Ihnen gegebenen Namen oder dem Pfad selbst:
+**Jeder andere Indikator.** Führen Sie seinen vollständigen Pfad unter `perf_counters` auf, als
+`\Object(Instance)\Counter` oder `\Object\Counter` für ein Objekt mit einer einzigen Instanz, und er
+wird als `dumbmonit_agent_perf_counter{counter="…"}` veröffentlicht, mit dem von Ihnen
+angegebenen Namen oder dem Pfad selbst:
 
 ```yaml
 perf_counters:
@@ -514,88 +450,73 @@ perf_counters:
     name: exchange_queue
 ```
 
-- Schreiben Sie die Zählernamen **auf Englisch**, wie sie im
-  Leistungsindikator auf einem englischen Windows erscheinen: Der
-  Agent fügt sie mit `PdhAddEnglishCounterW` hinzu, daher
-  funktioniert dieselbe `agent.yaml` auf einem französischen oder
-  deutschen Windows.
-- Setzen Sie jeden Pfad in einfache Anführungszeichen in YAML,
-  sodass die Backslashes und das `%` unverändert bleiben.
-- Ein fehlerhafter Pfad stoppt den Agent beim Start, mit dem
-  Schlüssel und dem Grund. Ein Pfad, den Windows nicht kennt (die
-  Software ist nicht installiert, der Name ist falsch geschrieben),
-  wird einmal im Log gemeldet, `performance counter not available`,
-  und die anderen Zähler werden weiter gelesen; er wird alle zehn
-  Perioden erneut versucht.
-- Raten (`…/sec`) brauchen zwei Lesungen: Sie erscheinen ab der
-  zweiten Periode.
-- Höchstens 200 Zähler werden gelesen. Auf Linux, macOS und FreeBSD
-  wird die Einstellung akzeptiert, und nichts wird gelesen.
+- Schreiben Sie die Indikatornamen **auf Englisch**, wie sie im Leistungsmonitor eines englischen
+  Windows erscheinen: Der Agent fügt sie mit `PdhAddEnglishCounterW` hinzu, sodass dieselbe
+  `agent.yaml` auch auf einem französischen oder deutschen Windows funktioniert.
+- Setzen Sie jeden Pfad in YAML in einfache Anführungszeichen, damit die Backslashes und das `%`
+  unverändert bleiben.
+- Ein fehlerhaft geformter Pfad stoppt den Agenten beim Start mit Schlüssel und Grund. Ein Pfad, den
+  Windows nicht kennt (die Software ist nicht installiert, der Name ist falsch geschrieben), wird
+  einmal im Log gemeldet, `performance counter not available`, und die übrigen Indikatoren werden
+  weiter gelesen; er wird alle zehn Perioden erneut versucht.
+- Raten (`…/sec`) brauchen zwei Messungen: Sie erscheinen ab der zweiten Periode.
+- Es werden höchstens 200 Indikatoren gelesen. Unter Linux, macOS und FreeBSD wird die Einstellung
+  akzeptiert und nichts gelesen.
 
-Um die genauen Namen auf der Maschine zu sehen, führen Sie
-`typeperf -q MDaemon` (oder jeden anderen Objektnamen) in einer
-Eingabeaufforderung aus.
+Um die genauen Namen auf dem Rechner zu sehen, führen Sie `typeperf -q MDaemon` (oder einen
+anderen Objektnamen) in einer Eingabeaufforderung aus.
 
 ## Hyper-V-Hosts {#hyper-v-hosts}
 
-Auf einem Hyper-V-Host installiert — Windows Server mit der
-Hyper-V-Rolle, oder Windows mit aktiviertem Hyper-V — findet der
-Agent den `vmms`-Dienst und liest Hyper-Vs eigene Leistungszähler,
-ohne etwas zu konfigurieren. Die Geräteseite des Agents zeigt dann
-ein Hyper-V-Panel: wie viele virtuelle Maschinen sich gesund melden,
-die echte CPU-Last des Hosts, der Speicher, den jede laufende VM
-hält, und der Durchsatz, die Latenz und Fehler jeder virtuellen
-Platte.
+Auf einem Hyper-V-Host installiert — Windows Server mit der Hyper-V-Rolle oder Windows mit
+aktiviertem Hyper-V — findet der Agent den Dienst `vmms` und liest die eigenen
+Leistungsindikatoren von Hyper-V, ohne dass etwas zu konfigurieren wäre. Die Geräteseite des
+Agenten zeigt dann ein Hyper-V-Panel: wie viele virtuelle Maschinen gesund melden, die echte
+CPU-Last des Hosts, den Speicher, den jede laufende VM hält, und Durchsatz, Latenz und Fehler
+jeder virtuellen Platte.
 
-!!! warning "Nur gegen die Herstellerdokumentation validiert — noch nicht an einem echten System getestet"
+!!! warning "Nur gegen die Herstellerdokumentation validiert — noch nicht auf einem echten System getestet"
 
-    Die Zählernamen stammen aus Microsofts Hyper-V-Leistungs-
-    dokumentation und wurden gegen die Logik mit einer simulierten
-    Zählerquelle geprüft, nicht auf einem laufenden Hyper-V-Host.
-    Ein Windows unbekannter Zähler wird einmal im Log des Agents
-    gemeldet, und die anderen werden weiter gelesen. Sagen Sie uns,
-    was kaputt ist.
+    Die Indikatornamen stammen aus der Hyper-V-Leistungsdokumentation von Microsoft und wurden mit
+    einer simulierten Indikatorquelle gegen die Logik geprüft, nicht auf einem laufenden
+    Hyper-V-Host. Ein Indikator, den Windows nicht kennt, wird einmal im Log des Agenten gemeldet,
+    und die übrigen werden weiter gelesen. Sagen Sie uns, was kaputtgeht.
 
-| Zähler | Zeitreihe | Labels |
+| Indikator | Serien | Labels |
 |---|---|---|
 | `\Hyper-V Virtual Machine Health Summary\Health Ok`, `…\Health Critical` | `hyperv_vms_health_ok`, `hyperv_vms_health_critical`: virtuelle Maschinen in jedem Zustand | |
 | `\Hyper-V Hypervisor Logical Processor(_Total)\% Total Run Time` | `hyperv_host_cpu_percent`: die Last des Hosts, Gäste eingeschlossen | |
-| `\Hyper-V Hypervisor Logical Processor(_Total)\% Guest Run Time` | `hyperv_host_cpu_guest_percent`: der für laufende Gäste verbrachte Anteil | |
+| `\Hyper-V Hypervisor Logical Processor(_Total)\% Guest Run Time` | `hyperv_host_cpu_guest_percent`: der Anteil, der für den Betrieb von Gästen aufgewendet wird | |
 | `\Hyper-V Hypervisor\Partitions` | `hyperv_partitions`: laufende VMs plus der Host selbst | |
 | `\Hyper-V Dynamic Memory VM(*)\Physical Memory`, `…\Guest Visible Physical Memory` | `hyperv_vm_physical_memory_megabytes`, `hyperv_vm_guest_visible_memory_megabytes` | `vm` |
-| `\Hyper-V Dynamic Memory VM(*)\Current Pressure` | `hyperv_vm_memory_pressure_percent`: Speicherbedarf über zugewiesenem Speicher; über 100 will die VM mehr, als sie hat | `vm` |
+| `\Hyper-V Dynamic Memory VM(*)\Current Pressure` | `hyperv_vm_memory_pressure_percent`: Speicherbedarf gegenüber zugewiesenem Speicher; über 100 will die VM mehr, als sie hat | `vm` |
 | `\Hyper-V Virtual Storage Device(*)\Read Bytes/sec`, `…\Write Bytes/sec` | `hyperv_vhd_read_bytes_per_second`, `hyperv_vhd_write_bytes_per_second` | `disk` |
 | `\Hyper-V Virtual Storage Device(*)\Latency`, `…\Queue Length` | `hyperv_vhd_latency_seconds` (Durchschnitt), `hyperv_vhd_queue_length` | `disk` |
 | `\Hyper-V Virtual Storage Device(*)\Error Count` | `hyperv_vhd_errors_total`, ein Zähler | `disk` |
 
-Auf einem Hyper-V-Host misst `\Processor(_Total)\% Processor Time`
-nur die eigene Partition des Hosts, nicht, was die virtuellen
-Maschinen verbrauchen: Der Zähler für logische Prozessoren des
-Hypervisors ist der, der sagt, ob die Maschine gesättigt ist. `vm`
-ist der Name der virtuellen Maschine, wie der Hyper-V-Manager ihn
-zeigt; `disk` ist der Instanzname, den Windows jeder virtuellen
-Platte gibt, von ihrem Dateipfad abgeleitet. Die
-`_Total`-Instanzen werden ausgelassen, und höchstens 200 VMs oder
-Platten werden pro Zähler gelesen.
+Auf einem Hyper-V-Host misst `\Processor(_Total)\% Processor Time` nur die eigene Partition des
+Hosts, nicht was die virtuellen Maschinen verbrauchen: Der Indikator für logische Prozessoren des
+Hypervisors ist der, der sagt, ob die Maschine gesättigt ist. `vm` ist der Name der virtuellen
+Maschine, wie ihn der Hyper-V-Manager zeigt; `disk` ist der Instanzname, den Windows jeder
+virtuellen Platte gibt, abgeleitet von ihrem Dateipfad. Die Instanzen `_Total` werden
+ausgelassen, und pro Indikator werden höchstens 200 VMs oder Platten gelesen.
 
-Drei [eingebaute Regeln](../alerting/rules.md#hyper-v) gelten:
+Drei [integrierte Regeln](../alerting/rules.md#hyper-v) gelten:
 
-- **Hyper-V VM health critical**: Hyper-V meldet eine VM seit fünf
-  Minuten in kritischer Gesundheit (Warning) — meist eine Platte,
-  der der Platz ausging.
-- **Hyper-V host CPU high**: die logischen Prozessoren seit
-  fünfzehn Minuten mehr als 90 % beschäftigt (Advisory).
-- **Hyper-V virtual disk errors**: eine virtuelle Platte meldete in
-  der letzten Stunde I/O-Fehler (Advisory).
+- **Hyper-V-VM-Zustand kritisch**: Hyper-V meldet eine VM fünf Minuten lang in kritischem Zustand
+  (Warnung) — meist eine Platte, der der Platz ausgegangen ist.
+- **Hyper-V-Host-CPU hoch**: die logischen Prozessoren fünfzehn Minuten lang zu mehr als 90 %
+  ausgelastet (Hinweis).
+- **Hyper-V-virtuelle-Platte-Fehler**: Eine virtuelle Platte meldete in der letzten Stunde
+  I/O-Fehler (Hinweis).
 
-## Den Agent in Docker / einem anderen Netzwerk betreiben {#run-the-agent-in-docker--on-another-network}
+## Den Agenten in Docker / in einem anderen Netzwerk betreiben {#run-the-agent-in-docker--on-another-network}
 
-Der Agent wird auch als Container-Image veröffentlicht, mit
-denselben Tags wie der Server: `ghcr.io/laupernoe/dumbmonit-agent:latest`
-(letztes Release), `:edge` (letzter Commit auf `main`). Es ist ein
-`FROM scratch`-Image, das das Agent-Binary und das Mozilla-CA-Bundle
-hält, vollständig über Umgebungsvariablen konfiguriert. Das
-Repository liefert eine fertige `docker-compose.agent.yml`:
+Der Agent wird auch als Container-Image veröffentlicht, mit denselben Tags wie der Server:
+`ghcr.io/laupernoe/dumbmonit-agent:latest` (letztes Release), `:edge` (letzter Commit auf
+`main`). Es ist ein `FROM scratch`-Image mit dem Agent-Binary und dem Mozilla-CA-Bundle,
+vollständig über Umgebungsvariablen konfiguriert. Das Repository liefert eine einsatzbereite
+`docker-compose.agent.yml` mit:
 
 ```sh
 DUMBMONIT_AGENT_URL=https://monitor.example.org \
@@ -604,99 +525,85 @@ DUMBMONIT_AGENT_HOSTNAME=docker-host-1 \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Was der Container sieht, und was einzuhängen ist:
+Was der Container sieht und was einzubinden ist:
 
 | Bedarf | Was zu tun ist | Warum |
 |---|---|---|
-| CPU, Speicher, Last, Disk-I/O des Hosts | Nichts | `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` und `/proc/diskstats` sind hostweit innerhalb jedes Containers. |
+| CPU, Speicher, Last, Platten-I/O des Hosts | Nichts | `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` und `/proc/diskstats` sind in jedem Container hostweit. |
 | Hostname | `DUMBMONIT_AGENT_HOSTNAME` | Der Hostname eines Containers ist eine zufällige ID; das Gerät würde danach benannt. |
-| Container des Hosts | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optional. Nur-lesendes Listen und Inspizieren; Restart-/Update-Aktionen brauchen ihn schreibbar und `DUMBMONIT_AGENT_COMMANDS=true`. Ohne den Socket meldet der Agent einfach keine Container. |
+| Container des Hosts | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optional. Schreibgeschützt listet und inspiziert es; die Aktionen Neustart/Update brauchen es beschreibbar und `DUMBMONIT_AGENT_COMMANDS=true`. Ohne den Socket meldet der Agent schlicht keine Container. |
 | Dateisystemnutzung | `- /:/host:ro` (oder die Mounts, die Sie interessieren) | Der Agent meldet die *innerhalb* des Containers sichtbaren Mounts, unter ihrem Container-Pfad. |
-| Host-Netzwerkzähler | `network_mode: host` | Schnittstellen sind Namespace-getrennt: ohne das sieht der Agent nur ein `veth`. |
-| Über diesen Agent relayte Ping-Monitore | `cap_add: [NET_RAW]` | ICMP braucht einen Raw-Socket. |
-| Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server hinter einem internen Reverse Proxy, Geräte mit selbstsignierten Zertifikaten. |
-| Das Binding über Neuerstellungen hinweg behalten | `- agent-state:/var/lib/dumbmonit-agent` und `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Das Binding-Secret lebt im Dateisystem des Containers, das ein `docker compose up --force-recreate` wegwirft. Ohne das Volume kommt der Agent ungebunden zurück, und jemand muss jedes Mal die Neu-Registrierung von der Geräteseite erlauben. |
+| Netzwerkzähler des Hosts | `network_mode: host` | Schnittstellen sind per Namespace getrennt: Ohne das sieht der Agent ein `veth`. |
+| Über diesen Agenten weitergeleitete Ping-Monitore | `cap_add: [NET_RAW]` | ICMP braucht einen Raw-Socket. |
+| Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server hinter einem internen Reverse-Proxy, Geräte mit selbstsignierten Zertifikaten. |
+| Bindung über Neuerstellungen hinweg behalten | `- agent-state:/var/lib/dumbmonit-agent` und `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Das Bindungsgeheimnis liegt im Dateisystem des Containers, das ein `docker compose up --force-recreate` wegwirft. Ohne das Volume kommt der Agent ungebunden zurück, und jemand muss jedes Mal auf der Geräteseite die Neuanmeldung erlauben. |
 
-`pid: host` und `privileged: true` werden nie gebraucht: Der Agent
-sammelt keine Pro-Prozess-Metriken.
+`pid: host` und `privileged: true` sind nie nötig: Der Agent erfasst keine Metriken pro Prozess.
 
-### Relay-Modus: einen anderen Standort überwachen
+### Relay-Modus: einen anderen Standort überwachen {#relay-mode-monitor-another-site}
 
-Ein Agent kann mehr als seine eigene Maschine beobachten. Mit
-`relay: true` (oder `DUMBMONIT_AGENT_RELAY=true`) **delegiert** der
-Server ihm **Abfragen**: Geräte, deren Einstellung *Reached
-through* diesen Agent benennt, werden nicht vom Server abgefragt,
-sondern vom Agent, von seinem eigenen Netzwerk aus, mit genau
-denselben Collectors — SNMP, Proxmox VE, Proxmox Backup Server,
-Synology, HTTP, TCP, DNS, Ping, TLS. Die Ergebnisse landen unter dem
-Gerät, als hätte der Server es abgefragt: dieselben Metriken,
-dieselbe *letzte Abfrage*, dieselben Alarme. Ein entferntes Büro,
-ein zweites Homelab oder das Netzwerk eines Kunden zeigen sich so in
-dem einen DumbMonit, das Sie schon haben, ohne VPN und ohne etwas
-auf der entfernten Seite zu öffnen.
+Ein Agent kann mehr tun, als seinen eigenen Rechner zu beobachten. Mit `relay: true` (oder
+`DUMBMONIT_AGENT_RELAY=true`) **delegiert der Server Prüfungen** an ihn: Geräte, deren
+Einstellung *Erreicht über* diesen Agenten nennt, werden nicht vom Server abgefragt, sondern vom
+Agenten, aus seinem eigenen Netzwerk, mit genau denselben Collectors — SNMP, Proxmox VE, Proxmox
+Backup Server, Synology, HTTP, TCP, DNS, Ping, TLS. Die Ergebnisse landen unter dem Gerät, als
+hätte der Server es abgefragt: dieselben Metriken, dieselbe *letzte Prüfung*, dieselben Alarme. Ein
+entferntes Büro, ein zweites Homelab oder das Netzwerk eines Kunden erscheinen so in dem einen
+DumbMonit, das Sie bereits haben, ohne VPN und ohne dass auf der entfernten Seite etwas zu öffnen
+wäre.
 
-Wie Sie das Schritt für Schritt einrichten, steht in
+Wie man es Schritt für Schritt einrichtet, steht unter
 [Einen entfernten Standort überwachen](../install/remote-site.md).
 
-## Binding: eine Maschine, ein Agent {#binding-eine-maschine-ein-agent}
+## Bindung: ein Rechner, ein Agent {#binding-one-machine-one-agent}
 
-Ein Enrollment-Token sagt *diese Maschine darf sprechen*. Es sagt
-nicht, *welche* Maschine spricht — dafür ist der Identitätsschlüssel
-(`/etc/machine-id`, oder der Hostname), und dieser Schlüssel ist
-kein Secret: Er kann auf jeder Maschine innerhalb von Sekunden
-gelesen werden.
+Ein Enrollment-Token sagt *dieser Rechner darf sprechen*. Es sagt nicht, *welcher* Rechner
+spricht — dafür ist der Identitätsschlüssel (`/etc/machine-id` oder der Hostname) da, und dieser
+Schlüssel ist kein Geheimnis: Er lässt sich auf jedem Rechner in Sekunden lesen.
 
-Daher gibt der Server beim ersten Batch jeder Maschine ein eigenes
-**Binding-Secret**. Er behält nur einen Fingerprint; der Agent
-schreibt das Secret nach `/etc/dumbmonit/agent-secret` mit Modus
-`0600` und präsentiert es danach im Header
-`X-DumbMonit-Agent-Secret` bei jedem Request — Messungen,
-Container-Befehle und relayte Abfragen gleichermaßen. Von da an:
+Beim ersten Batch gibt der Server daher jedem Rechner ein eigenes **Bindungsgeheimnis**. Er
+behält nur einen Fingerprint; der Agent schreibt das Geheimnis mit Modus `0600` nach
+`/etc/dumbmonit/agent-secret` und legt es danach bei jeder Anfrage im Header
+`X-DumbMonit-Agent-Secret` vor — Messungen, Container-Befehle und weitergeleitete Prüfungen
+gleichermaßen. Von da an gilt:
 
-- kann keine andere Maschine Messungen unter diesem Gerät pushen,
-  oder seinen Hostnamen und Betriebssystem umschreiben;
-- kann keine andere Maschine die für sie eingereihten Restart- und
-  Update-Befehle abholen — und daher verbrauchen.
+- Kein anderer Rechner kann Messungen unter diesem Gerät senden oder dessen Hostnamen und
+  Betriebssystem überschreiben;
+- kein anderer Rechner kann die für ihn eingereihten Befehle Neustart und Update abrufen — und
+  damit verbrauchen.
 
-Die Geräteseite zeigt, wo eine Maschine steht, unter **Agent →
-Binding**:
+Die Geräteseite zeigt unter **Agent → Bindung**, wo ein Rechner steht:
 
 | Zustand | Was es bedeutet | Was zu tun ist |
 |---|---|---|
-| **Bound** | Der Agent hält ein eigenes Secret. | Nichts. |
-| **Not bound — re-enrol this host** | Ein Host, der vor der Existenz von Binding registriert wurde, und seitdem nie gebunden wurde. Der Server lehnt seine Messungen, Container-Befehle und relayten Abfragen ab. | Klicken Sie **Allow re-enrolment** auf der Geräteseite, starten Sie dann den Agent neu. Stammt der Agent von vor Binding, führen Sie zuerst den Installationsbefehl erneut auf dem Host aus. |
+| **Gebunden** | Der Agent hält ein eigenes Geheimnis. | Nichts. |
+| **Nicht gebunden — diesen Host neu anmelden** | Ein Host, der angemeldet wurde, bevor es die Bindung gab, und seither nie gebunden wurde. Der Server lehnt seine Messungen, Container-Befehle und weitergeleiteten Prüfungen ab. | Klicken Sie auf der Geräteseite auf **Neuanmeldung erlauben** und starten Sie dann den Agenten neu. Ist der Agent älter als die Bindung, führen Sie zuerst den Installationsbefehl auf dem Host erneut aus. |
 
-### Hosts von vor der Existenz von Binding
+### Hosts, die vor der Bindung angemeldet wurden {#hosts-that-predate-binding}
 
 !!! warning "Geändert: ungebundene Hosts werden abgelehnt"
-    Frühere Releases akzeptierten weiterhin Hosts, die vor der
-    Existenz von Binding registriert wurden, solange sie das Token
-    nutzten, das sie registriert hatte, und banden sie leise, sobald
-    ihr Agent aktualisiert wurde. Dieses Übergangsfenster ist
-    geschlossen: Ein Host, der nie gebunden wurde, wird jetzt **auf
-    jeder Agent-Route abgelehnt** — Messungen, Container-Befehle und
-    relayte Abfragen — bis ein Administrator ihn neu registriert.
-    Ein Flotten-Token wird von vielen Maschinen geteilt, und der
-    Identitätsschlüssel kann erraten werden, daher beweist nichts
-    sonst, dass der anfragende Agent der eigene des Hosts ist.
+    Frühere Releases akzeptierten weiter Hosts, die vor der Bindung angemeldet wurden, solange sie
+    das Token verwendeten, mit dem sie angemeldet wurden, und banden sie still, sobald ihr Agent
+    aktualisiert war. Dieses Übergangsfenster ist geschlossen: Ein Host, der nie gebunden wurde,
+    wird jetzt auf **jeder Agent-Route abgelehnt** — Messungen, Container-Befehle und
+    weitergeleitete Prüfungen —, bis ein Administrator ihn neu anmeldet. Ein Flotten-Token wird von
+    vielen Rechnern geteilt, und der Identitätsschlüssel lässt sich erraten, daher beweist nichts
+    anderes, dass der anfragende Agent der eigene des Hosts ist.
 
-    Ein für Binding zu altes Agent-Binary wird ebenfalls abgelehnt,
-    einschließlich bei seiner ersten Registrierung.
+    Ein Agent-Binary, das zu alt ist, um ein Bindungsgeheimnis zu erhalten, wird ebenfalls
+    abgelehnt, auch bei seiner ersten Anmeldung.
 
-Um einen solchen Host zurückzubringen:
+Um einen solchen Host zurückzuholen:
 
-1. Stammt sein Agent von vor Binding, führen Sie den
-   Installationsbefehl erneut darauf aus (das Agent-Binary muss ein
-   Binding-Secret speichern können).
-2. Öffnen Sie seine Geräteseite und klicken Sie **Agent → Allow
-   re-enrolment**. Das öffnet ein einstündiges Fenster.
-3. Starten Sie den Agent neu, oder warten Sie auf seinen nächsten
-   Versuch: Dieser Batch bindet den Host mit einem frischen Secret
-   und schließt das Fenster. Ein anderes Token als das, das den
-   Host registrierte, muss weiterhin registrieren können (nicht
-   aufgebraucht, nicht abgelaufen).
+1. Ist sein Agent älter als die Bindung, führen Sie den Installationsbefehl erneut auf ihm aus (das
+   Agent-Binary muss ein Bindungsgeheimnis speichern können).
+2. Öffnen Sie seine Geräteseite und klicken Sie auf **Agent → Neuanmeldung erlauben**. Das öffnet
+   ein einstündiges Fenster.
+3. Starten Sie den Agenten neu oder warten Sie auf seinen nächsten Versuch: Dieser Batch bindet den
+   Host mit einem frischen Geheimnis und schließt das Fenster. Ein anderes Token als das, mit dem
+   der Host angemeldet wurde, muss weiterhin anmelden können (nicht aufgebraucht, nicht abgelaufen).
 
-Bis dahin trägt das Log des Agents die Erklärung des Servers:
+Bis dahin trägt das Log des Agenten die Erklärung des Servers:
 
 ```
 WARN this agent is not recognised for this machine
@@ -707,27 +614,21 @@ WARN this agent is not recognised for this machine
      older than binding).
 ```
 
-### Neu-Registrierung nach einer Neuinstallation
+### Neuanmeldung nach einer Neuinstallation {#re-enrolment-after-a-reinstall}
 
-Wird die Maschine neu aufgesetzt, ihre Platte ersetzt, oder ihr
-Agent-Container ohne das Volume mit dem Secret neu erstellt, kommt
-der Agent ohne es zurück, und der Server lehnt seine Batches ab.
-Diese Ablehnung ist Absicht: Eine gebundene Maschine bleibt
-gebunden, bis ein Mensch anders sagt, sonst würde das Binding nichts
-schützen.
+Wird der Rechner neu aufgebaut, seine Platte ersetzt oder sein Agent-Container ohne das Volume mit
+dem Geheimnis neu erstellt, kommt der Agent ohne es zurück, und der Server lehnt seine Batches ab.
+Diese Ablehnung ist Absicht: Ein gebundener Rechner bleibt gebunden, bis ein Mensch etwas anderes
+sagt, sonst würde die Bindung nichts schützen.
 
-Der Weg zurück liegt auf der Geräteseite: **Agent → Allow
-re-enrolment**. Es öffnet ein einstündiges Fenster, während dem ein
-Agent, der ein gültiges Enrollment-Token präsentiert, diese Maschine
-mit einem frischen Secret erneut bindet; das alte Secret funktioniert
-nicht mehr, und das Fenster schließt sich, sobald es genutzt wird.
-Der Agent versucht es in der Zwischenzeit selbst erneut, daher ist
-auf der Maschine nichts neu zu starten — und nichts geht verloren,
-da seine Messwerte gepuffert bleiben, bis der Link wieder akzeptiert
-wird.
+Der Weg zurück liegt auf der Geräteseite: **Agent → Neuanmeldung erlauben**. Das öffnet ein
+einstündiges Fenster, in dem ein Agent, der ein gültiges Enrollment-Token vorlegt, diesen Rechner
+mit einem frischen Geheimnis erneut bindet; das alte Geheimnis funktioniert nicht mehr, und das
+Fenster schließt sich, sobald es genutzt wurde. Der Agent versucht es in der Zwischenzeit selbst
+erneut, auf dem Rechner ist also nichts neu zu starten — und nichts geht verloren, da seine
+Messwerte gepuffert bleiben, bis die Verbindung wieder akzeptiert wird.
 
-Bis jemand dieses Fenster öffnet, sagt das Log des Agents, was zu
-tun ist:
+Solange niemand dieses Fenster öffnet, sagt das Log des Agenten, was zu tun ist:
 
 ```
 WARN this agent is not recognised for this machine
@@ -736,54 +637,44 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
-## Enrollment-Tokens
+## Enrollment-Tokens {#enrolment-tokens}
 
-- Tokens werden unter **Settings → Agents** oder beim Hinzufügen
-  eines Geräts der Art agent erstellt. Der Server behält nur einen
-  Fingerprint: Das Klartext-Token wird einmal gezeigt, in der
-  Erstellungsantwort, mit den zwei Installationsbefehlen.
-- Der Agent sendet es als `Authorization: Bearer dmon_…` auf
-  `POST /api/ingest`. Es erscheint nie in den Logs des Agents, nicht
-  einmal abgeschnitten.
-- **Settings → Agents** listet Tokens mit ihrem Präfix, Scope,
-  Erstellungsdatum und letzter Nutzung. **Revoke** stoppt jeden
-  Agent, der dieses Token nutzt, bei seinem nächsten Push; die
-  Maschinen werden dann nach drei verpassten Perioden *unreachable*.
-  Führen Sie den Installer mit einem neuen Token erneut aus, um sie
-  neu zu registrieren.
-- Maschinen sind getrennte Geräte: Ein Token zu widerrufen löscht
-  sie nicht.
+- Tokens werden unter **Einstellungen → Agenten** oder beim Hinzufügen eines Geräts vom Typ Agent
+  erstellt. Der Server behält nur einen Fingerprint: Das Klartext-Token wird einmalig in der
+  Antwort auf die Erstellung angezeigt, mit den beiden Installationsbefehlen.
+- Der Agent sendet es als `Authorization: Bearer dmon_…` auf `POST /api/ingest`. Es erscheint nie
+  in den Logs des Agenten, auch nicht gekürzt.
+- **Einstellungen → Agenten** listet Tokens mit Präfix, Umfang, Erstellungsdatum und letzter
+  Verwendung. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem nächsten
+  Push; die Rechner werden dann nach drei verpassten Perioden *nicht erreichbar*. Führen Sie den
+  Installer mit einem neuen Token erneut aus, um sie neu anzumelden.
+- Rechner sind getrennte Geräte: Das Widerrufen eines Tokens löscht sie nicht.
 
-### Einmalig oder Flotte {#einmalig-oder-flotte}
+### Einmalig oder Flotte {#single-use-or-fleet}
 
-Der Scope eines Tokens wird bei seiner Erstellung gewählt, und es
-ist eine Wahl, kein Standard, der Ihnen passiert:
+Der Umfang eines Tokens wird beim Erstellen gewählt, und es ist eine Wahl, kein Standard, der
+Ihnen widerfährt:
 
-| Scope | Was es registriert | Wann |
+| Umfang | Was es anmeldet | Wann |
 |---|---|---|
-| **Single use** (der Standard) | Genau eine Maschine. | Eine Installation. Ein Installationsbefehl lebt in der Shell-Historie weiter, in einem Ticket, in einem Chat-Log; ein einmaliger ist nichts mehr wert, sobald er genutzt ist. |
-| **Reusable for a fleet** | So viele Maschinen, wie Sie erlauben — eine Zahl, oder kein Limit. | Ein Playbook, ein Maschinen-Image, ein Stapel Installationen. |
+| **Einmalig** (der Standard) | Genau einen Rechner. | Eine Installation. Ein Installationsbefehl lebt in der Shell-Historie, in einem Ticket, in einem Chatlog weiter; ein einmaliger ist nach der Verwendung wertlos. |
+| **Wiederverwendbar für eine Flotte** | So viele Rechner, wie Sie erlauben — eine Zahl oder unbegrenzt. | Ein Playbook, ein Maschinen-Image, eine Reihe von Installationen. |
 
-Beide können eine Frist in Tagen tragen. Eine Frist stoppt nur
-*Registrierungen*: schon registrierte Maschinen melden nach ihrem
-Ablauf weiter, was Sie für ein Installationsfenster wollen.
-Widerrufen ist, was eine Flotte abschneidet.
+Beide können eine Frist in Tagen tragen. Eine Frist stoppt nur *Anmeldungen*: Bereits angemeldete
+Rechner melden auch nach ihrem Ablauf weiter, was für ein Installationsfenster das ist, was Sie
+wollen. Das Widerrufen ist es, was eine Flotte abschneidet.
 
-Ein Token, das nicht mehr registrieren kann — aufgebraucht, oder
-über seine Frist hinaus — wird in Settings → Agents als **Enrols no
-more** gezeigt. Seine Maschinen melden weiter; es kann nur keine
-neue hereinlassen.
+Ein Token, das nicht mehr anmelden kann — aufgebraucht oder über seine Frist —, wird unter
+Einstellungen → Agenten als **Meldet nicht mehr an** angezeigt. Seine Rechner melden weiter; es
+kann nur keinen neuen mehr hereinlassen.
 
-## Ausfälle und Diagnose
+## Ausfälle und Diagnose {#outages-and-diagnostics}
 
-Wenn der Server nicht erreichbar ist, misst der Agent weiter und
-puffert seine Messwerte im Speicher mit ihren ursprünglichen
-Zeitstempeln. Sie werden gesendet, sobald der Link zurück ist: Ein
-Server-Neustart hinterlässt kein Loch in den Diagrammen. Der Puffer
-ist begrenzt (`max_buffered_samples`, standardmäßig etwa eine
-Stunde) und verwirft die ältesten Messwerte, wenn er voll ist.
-Wiederholungsversuche steigen von 5 Sekunden bis 5 Minuten mit
-Jitter.
+Ist der Server nicht erreichbar, misst der Agent weiter und puffert seine Messwerte mit ihren
+ursprünglichen Zeitstempeln im Speicher. Sie werden gesendet, sobald die Verbindung wieder steht:
+Ein Serverneustart hinterlässt kein Loch in den Diagrammen. Der Puffer ist begrenzt
+(`max_buffered_samples`, standardmäßig etwa eine Stunde) und verwirft bei Überlauf die ältesten
+Messwerte. Wiederholungen weichen von 5 Sekunden bis 5 Minuten mit Jitter zurück.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing
@@ -792,220 +683,178 @@ journalctl -u dumbmonit-agent -f   # service log (systemd)
 tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 ```
 
-## Häufige Fehler
+## Häufige Fehler {#common-errors}
 
 | Symptom | Wahrscheinliche Ursache |
 |---|---|
-| Installer sagt "could not reach the server" | Falsche URL oder Token. Die Konfiguration wird geschrieben: Korrigieren Sie `agent.yaml`, starten Sie dann den Dienst neu. |
-| Download schlägt mit 404 fehl | Der Server hat keine Agent-Binaries (`DUMBMONIT_AGENT_DIR` leer). Nutzen Sie `--bin=PATH` mit einem selbst gebauten Binary. |
-| Installer stoppt mit "checksum mismatch" | Der Befehl wurde vor einem Server-Upgrade kopiert (kopieren Sie einen frischen aus Settings → Agents), oder das empfangene Binary ist nicht das, was der Server liefert: ein Proxy oder Cache im Weg, oder ein manipulierter Download. |
-| Installer stoppt mit "no expected checksum" | Der Befehl hat kein `--sha256` für diese Plattform: ein alter Befehl, oder ein macOS-Binary (vom Server nicht mitgeliefert). Kopieren Sie einen frischen Befehl, oder übergeben Sie `--sha256=<platform>-<arch>:<hex>` aus der `.sha256` des Releases. |
-| Maschine erscheint nie | Der Push geht an `/api/ingest` auf der URL im Installationsbefehl; stellen Sie hinter einem Reverse Proxy sicher, dass sie weitergeleitet wird und Bodies bis 16 MB erlaubt sind. |
-| *Unreachable*, obwohl der Agent läuft | Das Token wurde widerrufen, oder die Pushes werden abgelehnt. Prüfen Sie `journalctl -u dumbmonit-agent`: Der Fehler wird dort protokolliert. |
-| Log sagt "this agent is not recognised for this machine" | Die Maschine ist an eine Agent-Installation gebunden, deren Secret diese nicht hat — eine Neuinstallation, oder ein ohne sein State-Volume neu erstellter Container. Öffnen Sie die Geräteseite und klicken Sie **Allow re-enrolment**; siehe [Neu-Registrierung nach einer Neuinstallation](#neu-registrierung-nach-einer-neuinstallation). |
-| Log sagt "this machine was enrolled before agent binding" | Ein Host, der nie an seinen Agent gebunden wurde. Klicken Sie **Allow re-enrolment** auf seiner Geräteseite, starten Sie dann den Agent neu; siehe [Hosts von vor der Existenz von Binding](#hosts-von-vor-der-existenz-von-binding). |
-| Log sagt "this agent is too old to be bound to its machine" | Das Agent-Binary kann kein Binding-Secret speichern. Führen Sie den Installationsbefehl erneut auf dem Host aus; existiert das Gerät schon, klicken Sie zuerst **Allow re-enrolment**. |
-| Log sagt "this enrollment token has already enrolled all the machines it was allowed to" | Ein wiederverwendetes Single-Use-Token. Erstellen Sie ein neues, oder ein wiederverwendbares Token unter Settings → Agents. |
-| Windows | Die Windows-Dienst-Teile waren zum Zeitpunkt des Schreibens im Build-Image des Projekts nicht geübt; melden Sie Probleme auf GitHub. |
+| Installer meldet „could not reach the server“ | Falsche URL oder falsches Token. Die Konfiguration ist geschrieben: Korrigieren Sie `agent.yaml` und starten Sie den Dienst neu. |
+| Download scheitert mit 404 | Der Server hat keine Agent-Binaries (`DUMBMONIT_AGENT_DIR` leer). Verwenden Sie `--bin=PATH` mit einem selbst gebauten Binary. |
+| Installer stoppt mit „checksum mismatch“ | Der Befehl wurde vor einem Server-Upgrade kopiert (kopieren Sie einen frischen aus Einstellungen → Agenten), oder das erhaltene Binary ist nicht das, das der Server ausliefert: ein Proxy oder Cache im Weg, oder ein manipulierter Download. |
+| Installer stoppt mit „no expected checksum“ | Der Befehl hat kein `--sha256` für diese Plattform: ein alter Befehl oder ein macOS-Binary (nicht vom Server ausgeliefert). Kopieren Sie einen frischen Befehl oder übergeben Sie `--sha256=<platform>-<arch>:<hex>` aus der `.sha256` des Releases. |
+| Rechner erscheint nie | Der Push geht an `/api/ingest` auf der URL im Installationsbefehl; stellen Sie hinter einem Reverse-Proxy sicher, dass sie weitergeleitet wird und Bodies bis 16 MB erlaubt sind. |
+| *Nicht erreichbar*, obwohl der Agent läuft | Das Token wurde widerrufen, oder die Pushes werden abgelehnt. Prüfen Sie `journalctl -u dumbmonit-agent`: Der Fehler wird dort protokolliert. |
+| Log meldet „this agent is not recognised for this machine“ | Der Rechner ist an eine Agent-Installation gebunden, deren Geheimnis dieser nicht hat — eine Neuinstallation oder ein ohne sein Zustands-Volume neu erstellter Container. Öffnen Sie die Geräteseite und klicken Sie auf **Neuanmeldung erlauben**; siehe [Neuanmeldung nach einer Neuinstallation](#re-enrolment-after-a-reinstall). |
+| Log meldet „this machine was enrolled before agent binding“ | Ein Host, der nie an seinen Agenten gebunden wurde. Klicken Sie auf seiner Geräteseite auf **Neuanmeldung erlauben** und starten Sie dann den Agenten neu; siehe [Hosts, die vor der Bindung angemeldet wurden](#hosts-that-predate-binding). |
+| Log meldet „this agent is too old to be bound to its machine“ | Das Agent-Binary kann kein Bindungsgeheimnis speichern. Führen Sie den Installationsbefehl auf dem Host erneut aus; existiert das Gerät bereits, klicken Sie zuerst auf **Neuanmeldung erlauben**. |
+| Log meldet „this enrollment token has already enrolled all the machines it was allowed to“ | Ein einmaliges Token wird wiederverwendet. Erstellen Sie ein neues oder ein wiederverwendbares Token unter Einstellungen → Agenten. |
+| Windows | Die Windows-Dienstteile waren zum Zeitpunkt des Schreibens im Build-Image des Projekts nicht erprobt; melden Sie Probleme auf GitHub. |
 
-## Docker-Container
+## Docker-Container {#docker-containers}
 
-Wenn der Agent den Docker-Socket lesen kann (`docker: true`, der
-Standard, und ein Benutzer in der Gruppe `docker` oder root —
-`usermod -aG docker dumbmonit`, dann den Agent neu starten), wird
-jeder Container zu einer Handvoll Zeitreihen, mit `container` und
-`image` beschriftet (das `name:tag`, das `docker ps` zeigt). Sagt
-die Geräteseite "No Docker on this machine", während Docker
-installiert ist, ist das als Erstes zu prüfen.
+Kann der Agent den Docker-Socket lesen (`docker: true`, der Standard, und ein Benutzer in der
+Gruppe `docker` oder root — `usermod -aG docker dumbmonit`, dann den Agenten neu starten), wird
+jeder Container zu einer Handvoll Serien, mit den Labels `container` und `image` (das `name:tag`,
+das `docker ps` zeigt). Sagt die Geräteseite „Kein Docker auf diesem Rechner“, obwohl Docker
+installiert ist, ist das das Erste, was zu prüfen ist.
 
 | Metrik | Bedeutung |
 |---|---|
-| `container_up` | 1 laufend, sonst 0 |
-| `container_health` | 0 kein Healthcheck, 1 healthy, 2 unhealthy, 3 starting |
-| `container_restart_count` | Dockers Neustart-Zähler für den Container |
+| `container_up` | 1 läuft, 0 sonst |
+| `container_health` | 0 kein Healthcheck, 1 gesund, 2 ungesund, 3 startet |
+| `container_restart_count` | Neustartzähler von Docker für den Container |
 | `container_started_seconds` | Sekunden seit dem letzten Start des Containers (0, wenn gestoppt) |
 | `container_image_age_seconds` | Sekunden seit dem Bau des Images |
-| `container_update_available` | 1, wenn die Registry ein neueres Image für denselben Tag hat, 0, wenn aktuell, -1 unbekannt |
+| `container_update_available` | 1, wenn die Registry ein neueres Image für dasselbe Tag hat, 0, wenn aktuell, -1 unbekannt |
 
-Der Update-Check vergleicht den Digest des lokalen Images mit dem,
-den die Registry für den Tag ankündigt (`HEAD /v2/<name>/manifests/<tag>`,
-anonymer Token-Flow auf Docker Hub und GHCR). Er läuft im
-Hintergrund höchstens einmal pro Stunde pro Image und verzögert nie
-den 30-Sekunden-Zyklus; eine private Registry, die anonymen Zugriff
-abweist, liest sich einfach als -1. Deaktivieren Sie ihn mit
-`docker_update_check: false` (`DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK`).
+Die Update-Prüfung vergleicht den Digest des lokalen Images mit dem, den die Registry für das Tag
+ankündigt (`HEAD /v2/<name>/manifests/<tag>`, anonymer Token-Ablauf bei Docker Hub und GHCR). Sie
+läuft im Hintergrund höchstens einmal pro Stunde und Image und verzögert nie den 30-Sekunden-Zyklus;
+eine private Registry, die anonymen Zugriff verweigert, liest sich schlicht als -1. Deaktivieren Sie
+sie mit `docker_update_check: false` (`DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK`).
 
-Eingebaute Regeln: **Container stopped** (`container_up == 0` seit
-2 Minuten), **Container unhealthy** (`container_health == 2` seit
-3 Minuten), **Container restarting** (drei oder mehr Neustarts in
-15 Minuten), **Container update available** (Info, nach einer
-Stunde, täglich wiederholt). Der Alarm benennt den Container.
+Integrierte Regeln: **Container gestoppt** (`container_up == 0` für 2 Minuten), **Container
+ungesund** (`container_health == 2` für 3 Minuten), **Container startet immer wieder neu** (drei
+oder mehr Neustarts in 15 Minuten), **Container-Update verfügbar** (Info, nach einer Stunde,
+täglich wiederholt). Der Alarm nennt den Container.
 
-### Aktionen
+### Aktionen {#actions}
 
-Auf der Geräteseite hat jeder Container zwei Aktionen und zwei
-Schalter. Aktionen reisen durch einen **Befehlskanal**: Der Server
-reiht den Befehl ein, der Agent holt ihn nach seinem nächsten Batch
-ab (`GET /api/agent/commands`, dasselbe Enrollment-Token), führt ihn
-aus und meldet das Ergebnis (`queued → running → done | failed`),
-mit einem kurzen Log, das Sie in der Oberfläche aufklappen können.
-Befehle älter als zehn Minuten werden nie ausgeführt; der Agent
-führt einen Befehl zur Zeit aus.
+Auf der Geräteseite hat jeder Container zwei Aktionen und zwei Schalter. Aktionen laufen über einen
+**Befehlskanal**: Der Server reiht den Befehl ein, der Agent ruft ihn nach seinem nächsten Batch ab
+(`GET /api/agent/commands`, dasselbe Enrollment-Token), führt ihn aus und meldet das Ergebnis
+(`queued → running → done | failed`), mit einem kurzen Log, das Sie in der Oberfläche aufklappen
+können. Befehle, die älter als zehn Minuten sind, werden nie ausgeführt; der Agent führt jeweils
+einen Befehl aus.
 
-Ein eingereihter Befehl kann aus der Oberfläche **abgebrochen**
-werden, solange der Agent ihn nicht abgeholt hat. Ein Befehl, den
-niemand abholt, **läuft** nach zehn Minuten **ab**, auf dem Server,
-egal ob der Agent jemals abfragt — daher behält eine Maschine, deren
-Agent gestoppt ist, nie ein "Queued" für immer, und blockiert nie
-die nächste Aktion auf diesem Container.
+Ein eingereihter Befehl kann in der Oberfläche **abgebrochen** werden, solange der Agent ihn nicht
+aufgenommen hat. Ein Befehl, den niemand abgeholt hat, **verfällt** nach zehn Minuten auf dem
+Server, ob der Agent je abfragt oder nicht — sodass ein Rechner mit gestopptem Agenten nie ein
+veraltetes „In Warteschlange“ behält und nie die nächste Aktion auf diesem Container blockiert.
 
-Der Agent sagt dem Server, mit jedem Batch, ob er Befehle akzeptiert.
-Tut er das nicht — ein älterer Agent als der Befehlskanal, oder mit
-`commands: false` installiert — sagt die Geräteseite das, statt
-Restart und Update zu zeigen, die API lehnt die Befehle ab (`409`),
-und Richtlinien reihen nichts ein. Installieren Sie den Agent mit
-dem aktuellen Installer neu, um Aktionen zu aktivieren.
+Der Agent teilt dem Server mit jedem Batch mit, ob er Befehle akzeptiert. Tut er es nicht — ein
+Agent, der älter als der Befehlskanal ist, oder mit `commands: false` installiert —, sagt die
+Geräteseite das, statt Neustart und Update zu zeigen, die API lehnt die Befehle ab (`409`), und
+Richtlinien reihen nichts ein. Installieren Sie den Agenten mit dem aktuellen Installer neu, um
+Aktionen zu aktivieren.
 
-- **Restart** — `docker restart` für einen laufenden Container,
-  `docker start` für einen gestoppten, dann eine
-  20-Sekunden-Prüfung, dass er läuft.
-- **Update now** — zieht den Tag, den der Container schon nutzt,
-  erstellt einen neuen Container mit derselben Konfiguration
-  (Umgebung, Mounts, Ports, Labels, Netzwerke, Restart-Richtlinie),
-  stoppt den alten, tauscht die Namen, startet den neuen und wartet
-  auf seinen Healthcheck (oder 20 Sekunden plus eine Lauf-Prüfung,
-  wenn das Image keinen hat). Schlägt etwas fehl, **rollt der Agent
-  zurück**: Der neue Container wird entfernt und der alte neu
-  gestartet, und der Befehl meldet `failed` mit dem Grund. Bei
-  Erfolg wird der alte Container entfernt und, wenn "prune" an ist,
-  das alte Image auch — sofern kein anderer Container es noch nutzt.
+- **Neustart** — `docker restart` für einen laufenden Container, `docker start` für einen
+  gestoppten, dann eine 20-Sekunden-Prüfung, dass er läuft.
+- **Jetzt aktualisieren** — zieht das Tag, das der Container bereits verwendet, erstellt einen
+  neuen Container mit derselben Konfiguration (Umgebung, Mounts, Ports, Labels, Netzwerke,
+  Neustartrichtlinie), stoppt den alten, tauscht die Namen, startet den neuen und wartet auf
+  seinen Healthcheck (oder 20 Sekunden plus eine Prüfung auf Laufen, wenn das Image keinen hat).
+  Schlägt irgendetwas fehl, führt der Agent ein **Rollback** durch: Der neue Container wird entfernt
+  und der alte neu gestartet, und der Befehl meldet `failed` mit dem Grund. Bei Erfolg wird der
+  alte Container entfernt und, wenn „Prune“ an ist, auch das alte Image — es sei denn, ein anderer
+  Container verwendet es noch.
 
-Compose-verwaltete Container (Labels `com.docker.compose.*`) werden
-genauso aktualisiert, aber das Ergebnis warnt, dass der nächste
-`docker compose up` den Container aus der Compose-Datei neu
-erstellen wird. Container, deren Name mit `dumbmonit` oder
-`dumbmonit` beginnt, werden abgelehnt: Der Monitor aktualisiert sich
-nie selbst.
+Von Compose verwaltete Container (Labels `com.docker.compose.*`) werden trotzdem aktualisiert, aber
+das Ergebnis warnt, dass das nächste `docker compose up` den Container aus der Compose-Datei neu
+erstellen wird. Container, deren Name mit `dumbmonit` oder `dumbmonit` beginnt, werden abgelehnt: Der
+Monitor aktualisiert sich nie selbst.
 
-### Richtlinien
+### Richtlinien {#policies}
 
-Eine Pro-Container-**Richtlinie** wird vom Server jede Minute
-ausgewertet:
+Eine **Richtlinie** pro Container wird vom Server jede Minute ausgewertet:
 
-- **Restart if down** — ein Container, der `container_up == 0`
-  meldet, wird automatisch neu gestartet, höchstens einmal alle
-  zehn Minuten.
-- **Auto-update in maintenance windows** — ein Container mit
-  verfügbarem Update wird automatisch aktualisiert, aber nur,
-  während ein Wartungsfenster (Silence) das Gerät abdeckt,
-  höchstens einmal alle sechs Stunden. Planen Sie eines auf der
-  Alerts-Seite, oder schalten Sie das Gerät von seiner Seite
-  stumm. Richtlinien bereinigen standardmäßig das alte Image und
-  nur innerhalb von Wartungsfenstern.
+- **Neustart, wenn ausgefallen** — ein Container, der `container_up == 0` meldet, wird automatisch
+  neu gestartet, höchstens einmal alle zehn Minuten.
+- **Auto-Update in Wartungsfenstern** — ein Container mit verfügbarem Update wird automatisch
+  aktualisiert, aber nur, solange ein Wartungsfenster (Stummschaltung) das Gerät abdeckt,
+  höchstens einmal alle sechs Stunden. Planen Sie eines auf der Seite Alarme oder schalten Sie das
+  Gerät auf seiner Seite stumm. Richtlinien bereinigen standardmäßig das alte Image und gelten nur
+  in Wartungsfenstern.
 
-Zwei Orte setzen sie:
+Zwei Stellen legen sie fest:
 
-- der **Docker-Streifen** unter dem Gerätekopf: "28 containers · 27
-  running · 3 updates available · policies: 2 auto-restart, 0
-  auto-update", die letzte Aktion und ihr Status, **Manage
-  containers** (öffnet die Liste unten) und **Policies…**, eine
-  Tabelle jedes Containers mit den zwei Schaltern und einer "Apply
-  to all"-Zeile — der schnellste Weg, Auto-Restart für eine ganze
-  Maschine einzuschalten;
-- die Schalter innerhalb jeder Zeile des Abschnitts **Containers**,
-  neben den Schaltflächen Restart und Update now.
+- der **Docker-Streifen** unter dem Geräte-Header: „28 Container · 27 laufen · 3 Updates verfügbar ·
+  Richtlinien: 2 Auto-Neustart, 0 Auto-Update“, die letzte Aktion und ihr Status, **Container
+  verwalten** (öffnet die untenstehende Liste) und **Richtlinien …**, eine Tabelle aller Container
+  mit den beiden Schaltern und einer Zeile „Auf alle anwenden“ — der schnellste Weg, den
+  Auto-Neustart für einen ganzen Rechner einzuschalten;
+- die Schalter in jeder Zeile des Abschnitts **Container**, neben den Schaltflächen Neustart und
+  Jetzt aktualisieren.
 
-Jeder Schalter speichert für sich
-(`PUT /api/targets/<id>/containers/<name>/policy`); ein Fehlschlag
-betrifft nur diese Zeile und wird daneben angezeigt.
+Jeder Schalter speichert für sich (`PUT /api/targets/<id>/containers/<name>/policy`); ein Fehler
+betrifft nur diese Zeile und wird neben ihr angezeigt.
 
-Automatische Aktionen zeigen sich in "Recent actions" als von
-`policy` angefragt.
+Automatische Aktionen erscheinen unter „Letzte Aktionen“ als von `policy` angefordert.
 
-### Sicherheitsregeln
+### Sicherheitsregeln {#safety-rules}
 
-- Der Agent handelt nur, wenn `commands: true` (der Standard);
-  setzen Sie es auf `false` für eine Maschine, die nur gemessen
-  werden darf.
-- Der Agent holt Befehle selbst ab, mit seinem Enrollment-Token —
-  nichts verbindet sich mit der Maschine. Sie laufen nach zehn
-  Minuten ab und laufen eine Zeit; der Agent zieht nie einen
-  anderen Tag als den, den der Container schon nutzt.
-- Ein Update, das nicht gesund zurückkommt, wird auf den vorherigen
-  Container zurückgerollt, und das alte Image wird nur entfernt,
-  sobald der neue Container läuft.
-- Container namens `dumbmonit*` oder `ezymonit*` werden abgelehnt,
-  von Hand oder durch Richtlinie: Der Monitor handelt nie an seinen
-  eigenen Containern. Die Prüfung erfolgt zweimal — der Server
-  lehnt ab, den Befehl einzureihen, und der Agent lehnt ab, ihn
-  auszuführen — und der Agent macht sie erneut am Namen, den Docker
-  nach der Inspektion des Containers meldet, sodass einen bei
-  seiner ID zu benennen nichts ändert. Der Agent weigert sich auch,
-  an seinem eigenen Container zu handeln, wie er auch heißt: Er
-  wäre nicht da, um die Arbeit zu beenden oder zu melden.
-- Compose-verwaltete Container werden aktualisiert, aber der
-  nächste `docker compose up` erstellt sie aus der Compose-Datei
-  neu: Heben Sie den Tag auch dort an.
+- Der Agent handelt nur bei `commands: true` (dem Standard); setzen Sie es auf `false` für einen
+  Rechner, der nur gemessen werden soll.
+- Der Agent ruft Befehle selbst mit seinem Enrollment-Token ab — nichts verbindet sich mit dem
+  Rechner. Sie verfallen nach zehn Minuten und laufen einzeln; der Agent zieht nie ein anderes
+  Tag als das, das der Container bereits verwendet.
+- Ein Update, das nicht gesund zurückkommt, wird auf den vorherigen Container zurückgerollt, und
+  das alte Image wird erst entfernt, wenn der neue Container läuft.
+- Container mit Namen `dumbmonit*` oder `ezymonit*` werden abgelehnt, von Hand oder per Richtlinie:
+  Der Monitor handelt nie an seinen eigenen Containern. Die Prüfung erfolgt zweimal — der Server
+  weigert sich, den Befehl einzureihen, und der Agent weigert sich, ihn auszuführen — und der Agent
+  wiederholt sie am Namen, den Docker nach dem Inspizieren des Containers meldet, sodass das
+  Benennen über seine ID nichts ändert. Der Agent weigert sich auch, an seinem eigenen Container zu
+  handeln, wie auch immer er heißt: Er wäre nicht mehr da, um die Arbeit abzuschließen oder
+  darüber zu berichten.
+- Von Compose verwaltete Container werden aktualisiert, aber das nächste `docker compose up`
+  erstellt sie aus der Compose-Datei neu: Erhöhen Sie das Tag auch dort.
 
-## Plakar-Backups
+## Plakar-Backups {#plakar-backups}
 
-Der Agent kann [Plakar](https://plakar.io)-Klosets (Repositories)
-beobachten: Alle zehn Minuten, im Hintergrund, führt er
-`plakar at <kloset> ls` und `info` auf jedem aus und gibt die letzte
-Lesung bei jedem Zyklus erneut aus.
+Der Agent kann [Plakar](https://plakar.io)-Klosets (Repositories) überwachen: Alle zehn Minuten
+führt er im Hintergrund `plakar at <kloset> ls` und `info` auf jedem aus und gibt die letzte
+Messung in jedem Zyklus erneut aus.
 
-Plakar wird **erkannt, nie angenommen**. Beim Start und dann bei
-jedem Zyklus, bis er etwas findet, sucht der Agent nach dem
-`plakar`-Binary (auf `PATH`, oder `plakar_bin`) und nach Klosets in
-den Standardorten. Gibt es kein Binary, kein Kloset und keine Spur
-von Plakar (`~/.cache/plakar`), gibt der Agent überhaupt keine
-`backup_*`-Zeitreihe aus, sagt das einmal auf `debug`-Ebene, und die
-Geräteseite zeigt kein Backups-Panel — nichts zu konfigurieren auf
-Maschinen ohne Plakar. Um die Erkennung ganz zu überspringen:
+Plakar wird **erkannt, nie vorausgesetzt**. Beim Start und dann in jedem Zyklus, bis er etwas
+findet, sucht der Agent das Binary `plakar` (im `PATH` oder `plakar_bin`) und Klosets an den
+Standardorten. Gibt es kein Binary, kein Kloset und keine Spur von Plakar (`~/.cache/plakar`),
+gibt der Agent gar keine Serien `backup_*` aus, sagt das einmal auf Stufe `debug`, und die
+Geräteseite zeigt kein Panel Backups — auf Rechnern ohne Plakar ist nichts zu konfigurieren. Um die
+Erkennung ganz zu überspringen:
 
 ```yaml
 plakar: false                        # or DUMBMONIT_AGENT_PLAKAR=false
 ```
 
-### Discovery
+### Erkennung {#discovery}
 
-Nichts zu konfigurieren: Wenn `plakar_klosets` leer ist, findet der
-Agent die Klosets selbst, in dieser Reihenfolge, und liest jeden Ort
-nur einmal:
+Nichts zu konfigurieren: Ist `plakar_klosets` leer, findet der Agent die Klosets selbst, in dieser
+Reihenfolge, und liest jeden Ort nur einmal:
 
-1. das eigene Konfigurationsverzeichnis des Agents —
-   `$XDG_CONFIG_HOME/plakar`, oder `~/.config/plakar` des Kontos,
-   unter dem er läuft (`plakar_home`, wenn gesetzt);
+1. das eigene Konfigurationsverzeichnis des Agenten — `$XDG_CONFIG_HOME/plakar` oder
+   `~/.config/plakar` des Kontos, unter dem er läuft (`plakar_home`, wenn gesetzt);
 2. `/root/.config/plakar`;
 3. `/home/*/.config/plakar`, alphabetisch;
 4. `/var/lib/plakar`, wenn dieses Verzeichnis existiert.
 
-In jedem Verzeichnis liest er `stores.yml` (oder `stores.yaml`; das
-Legacy `plakar.yml` wird auch akzeptiert) und nimmt jeden Eintrag
-der `stores`-Map (auch `repositories` und `klosets`), der eine
-`location` hat. Nur der Ort wird gelesen: Passphrasen und
-rclone-Secrets daneben werden nie behalten noch protokolliert. Jeder
-Eintrag wird zum Kloset `@<name>`, gelesen mit `plakar -configdir
-<dir> at @<name>`, daher wird ein von einem Benutzer erstelltes
-Kloset gelesen, auch wenn der Agent als root läuft. `~/.plakar`
-jedes Kontos wird hinzugefügt, wenn es existiert (das Standard-
-Kloset von `plakar create`). Zwei Konten, die unterschiedliche
-Klosets gleich benennen, werden als `@name` und `<user>:@name`
-unterschieden.
+In jedem Verzeichnis liest er `stores.yml` (oder `stores.yaml`; das veraltete `plakar.yml` wird
+ebenfalls akzeptiert) und nimmt jeden Eintrag der Map `stores` (auch `repositories` und `klosets`),
+der eine `location` hat. Nur die Location wird gelesen: Daneben stehende Passphrasen und
+rclone-Geheimnisse werden nie behalten oder protokolliert. Jeder Eintrag wird zum Kloset
+`@<name>`, gelesen mit `plakar -configdir <dir> at @<name>`, sodass ein von einem Benutzer erstelltes
+Kloset auch gelesen wird, wenn der Agent als root läuft. `~/.plakar` jedes Kontos wird ergänzt,
+wenn es existiert (das Standard-Kloset von `plakar create`). Zwei Konten, die verschiedene Klosets
+gleich benennen, werden als `@name` und `<user>:@name` unterschieden.
 
-Das Ergebnis wird einmal auf `info`-Ebene protokolliert (und erneut
-nur, wenn es sich ändert). Zwei Gauges, nur veröffentlicht, sobald
-Plakar erkannt ist, lassen die Oberfläche die übrigen Fälle
-unterscheiden: `backup_plakar_present` (1, wenn das Binary läuft)
-und `backup_klosets_found` (Anzahl gelesener Klosets). Die
-Geräteseite sagt dann "Plakar is installed but no kloset was
-found", oder listet die Klosets. Existieren Klosets, aber das
-Binary läuft nicht (ein Dienst-`PATH` ohne `plakar`, typischerweise),
-werden sie als nicht lesbar mit einem Hinweis gelistet, `plakar_bin`
-zu setzen, und der Agent warnt einmal.
+Das Ergebnis wird einmal auf Stufe `info` protokolliert (und erneut nur, wenn es sich ändert). Zwei
+Gauges, erst ausgegeben, wenn Plakar erkannt ist, lassen die Oberfläche die übrigen Fälle
+unterscheiden: `backup_plakar_present` (1, wenn das Binary läuft) und `backup_klosets_found`
+(Anzahl gelesener Klosets). Die Geräteseite sagt dann „Plakar ist installiert, aber es wurde kein
+Kloset gefunden“ oder listet die Klosets auf. Existieren Klosets, aber das Binary läuft nicht (ein
+Dienst-`PATH` ohne `plakar`, typischerweise), werden sie als nicht lesbar aufgeführt, mit einem
+Hinweis, `plakar_bin` zu setzen, und der Agent warnt einmal.
 
-Um stattdessen eine feste Liste zu beobachten, benennen Sie sie —
-Discovery wird dann übersprungen:
+Um stattdessen eine feste Liste zu überwachen, nennen Sie sie — die Erkennung wird dann übersprungen:
 
 ```yaml
 plakar: true                         # default: detect Plakar; false hides it entirely
@@ -1019,43 +868,38 @@ plakar_interval_secs: 600            # minimum 60
 
 | Variable | Wirkung |
 |---|---|
-| `DUMBMONIT_AGENT_PLAKAR` | `true` / `false` — Plakar-Backups beobachten, wenn erkannt (Standard `true`) |
-| `DUMBMONIT_AGENT_PLAKAR_BIN` | Pfad des `plakar`-Binaries |
-| `DUMBMONIT_AGENT_PLAKAR_KLOSETS` | Klosets, kommagetrennt (überschreibt Discovery) |
-| `DUMBMONIT_AGENT_PLAKAR_HOME` | Beim Ausführen von `plakar` genutztes Home-Verzeichnis |
-| `DUMBMONIT_AGENT_PLAKAR_INTERVAL_SECS` | Sekunden zwischen zwei Lesungen |
-| `DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK` | `true` / `false` — Registry-Check für Container-Updates |
+| `DUMBMONIT_AGENT_PLAKAR` | `true` / `false` — Plakar-Backups überwachen, wenn erkannt (Standard `true`) |
+| `DUMBMONIT_AGENT_PLAKAR_BIN` | Pfad des Binarys `plakar` |
+| `DUMBMONIT_AGENT_PLAKAR_KLOSETS` | Klosets, kommagetrennt (überschreibt die Erkennung) |
+| `DUMBMONIT_AGENT_PLAKAR_HOME` | Beim Ausführen von `plakar` verwendetes Home-Verzeichnis |
+| `DUMBMONIT_AGENT_PLAKAR_INTERVAL_SECS` | Sekunden zwischen zwei Messungen |
+| `DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK` | `true` / `false` — Registry-Prüfung auf Container-Updates |
 | `DUMBMONIT_AGENT_COMMANDS` | `true` / `false` — Aktionen vom Server akzeptieren |
 
-Ein verschlüsseltes Kloset braucht seine Passphrase: Legen Sie sie
-in den Store-Eintrag (`plakar store set <name> passphrase=…`, was
-`plakar store add` tut) oder exportieren Sie `PLAKAR_PASSPHRASE` in
-der Dienstumgebung des Agents. Ohne sie liest sich das Kloset als
-"Cannot be opened" (`backup_last_status = 0`).
+Ein verschlüsseltes Kloset braucht seine Passphrase: Tragen Sie sie im Store-Eintrag ein
+(`plakar store set <name> passphrase=…`, was `plakar store add` tut) oder exportieren Sie
+`PLAKAR_PASSPHRASE` in der Dienstumgebung des Agenten. Ohne sie liest sich das Kloset als „Kann
+nicht geöffnet werden“ (`backup_last_status = 0`).
 
-### Metriken und Regeln
+### Metriken und Regeln {#metrics-and-rules}
 
-Metriken, beschriftet mit `kloset` und `source` (das gesicherte
-Verzeichnis): `backup_last_success_seconds` (Alter des neuesten
-Snapshots), `backup_snapshot_count`, `backup_last_status` (1, wenn
-der neueste Snapshot keinen Fehler hat, 0, wenn er Fehler hat oder
-das Kloset nicht geöffnet werden kann), `backup_size_bytes{kloset}`
-(Storage-Größe des Repositorys), plus `backup_plakar_present` und
-`backup_klosets_found`, oben beschrieben. Keine davon existiert,
-solange Plakar nicht erkannt ist, daher können die eingebauten
-Regeln unten auf einer Maschine ohne Plakar nicht feuern.
+Metriken mit den Labels `kloset` und `source` (das gesicherte Verzeichnis):
+`backup_last_success_seconds` (Alter des neuesten Snapshots), `backup_snapshot_count`,
+`backup_last_status` (1, wenn der neueste Snapshot keinen Fehler hat, 0, wenn er Fehler hat oder das
+Kloset nicht geöffnet werden kann), `backup_size_bytes{kloset}` (Speichergröße des Repositorys),
+dazu `backup_plakar_present` und `backup_klosets_found`, wie oben beschrieben. Keine davon existiert,
+solange Plakar nicht erkannt ist, sodass die folgenden integrierten Regeln auf einem Rechner ohne
+Plakar nicht auslösen können.
 
-Eingebaute Regeln: **Plakar backup too old** (advisory, kein
-Snapshot seit mehr als zwei Tagen) und **Plakar backup failed**
-(warning). Die Geräteseite zeigt einen Block pro Kloset — Alter des
-letzten Backups, Snapshot-Anzahl, Größe, letzter Status — und eine
-Zeile pro Quelle, mit einem "Backup too old"-Hinweis nach zwei
-Tagen.
+Integrierte Regeln: **Plakar-Backup zu alt** (Hinweis, seit mehr als zwei Tagen kein Snapshot) und
+**Plakar-Backup fehlgeschlagen** (Warnung). Die Geräteseite zeigt einen Block pro Kloset — Alter des
+letzten Backups, Snapshot-Anzahl, Größe, letzter Status — und eine Zeile pro Quelle, mit dem
+Hinweis „Backup zu alt“ nach mehr als zwei Tagen.
 
-### Ein erstes Backup durchführen
+### Ein erstes Backup ausführen {#run-a-first-backup}
 
-Mit installiertem Plakar 1.1 auf der Maschine (`plakar version`),
-als der Benutzer, dem die Backups gehören werden:
+Mit auf dem Rechner installiertem Plakar 1.1 (`plakar version`), als der Benutzer, dem die Backups
+gehören sollen:
 
 ```sh
 # 1. a kloset store, named so the agent finds it in ~/.config/plakar/stores.yml
@@ -1067,13 +911,11 @@ plakar at @diskext backup /srv/photos
 plakar at @diskext ls
 ```
 
-`plakar at <path> create` und `plakar at <path> backup <dir>`
-funktionieren genauso mit einem einfachen Verzeichnis statt
-`@name`; `plakar create` ohne `at` nutzt `~/.plakar`, das der Agent
-auch findet. Planen Sie `plakar at @diskext backup /srv/photos` mit
-Cron oder einem systemd-Timer: Der Agent meldet das Alter des
-neuesten Snapshots, und alarmiert, wenn ein Tag ohne einen vergeht —
-zwei Tage für die eingebaute Regel.
+`plakar at <path> create` und `plakar at <path> backup <dir>` funktionieren genauso mit einem
+schlichten Verzeichnis statt `@name`; `plakar create` ohne `at` verwendet `~/.plakar`, das der Agent
+ebenfalls findet. Planen Sie `plakar at @diskext backup /srv/photos` mit Cron oder einem
+systemd-Timer: Der Agent meldet das Alter des neuesten Snapshots und alarmiert, wenn ein Tag ohne
+einen vergeht — zwei Tage bei der integrierten Regel.
 
 Um es lokal mit einem unverschlüsselten Kloset auszuprobieren:
 
@@ -1084,26 +926,21 @@ plakar at /tmp/plakar-demo backup /tmp/plakar-demo-src
 plakar at /tmp/plakar-demo ls
 ```
 
-fügen Sie dann `plakar_klosets: ["/tmp/plakar-demo"]` zu
-`agent.yaml` hinzu (ein blanker Pfad außerhalb eines Homes wird
-nicht entdeckt) und prüfen Sie mit `dumbmonit-agent --dry-run`, dass
-`backup_*`-Samples erscheinen.
+Ergänzen Sie dann `plakar_klosets: ["/tmp/plakar-demo"]` in `agent.yaml` (ein bloßer Pfad außerhalb
+eines Home wird nicht erkannt) und prüfen Sie mit `dumbmonit-agent --dry-run`, dass Samples
+`backup_*` erscheinen.
 
-## restic- und Borg-Backups {#restic--und-borg-backups}
+## restic- und Borg-Backups {#restic-and-borg-backups}
 
-Der Agent kann [restic](https://restic.net)- und
-[Borg](https://www.borgbackup.org)-Repositories beobachten: Alle
-zehn Minuten, im Hintergrund, öffnet er jedes von Ihnen deklarierte
-Repository und meldet, ob es gelesen werden konnte und wie alt sein
-neuester Snapshot ist. Nichts wird entdeckt: Ein Repository hat
-keinen Standardort und kann ohne sein Passwort nicht geöffnet
-werden, daher wird jedes in `agent.yaml` gelistet, mit dem Weg, an
-sein Passwort zu kommen.
+Der Agent kann [restic](https://restic.net)- und [Borg](https://www.borgbackup.org)-Repositories
+überwachen: Alle zehn Minuten öffnet er im Hintergrund jedes von Ihnen deklarierte Repository und
+meldet, ob es gelesen werden konnte und wie alt sein neuester Snapshot ist. Nichts wird erkannt:
+Ein Repository hat keinen Standardort und lässt sich ohne sein Passwort nicht öffnen, daher wird
+jedes in `agent.yaml` aufgeführt, mit dem Weg, sein Passwort zu erhalten.
 
-**Das Passwort verlässt die Maschine nie.** Der Agent gibt es nur
-über die Umgebung des Kindprozesses an `restic` oder `borg` weiter;
-es wird nie protokolliert, nie an den Server gesendet, und die
-Zeitreihen tragen nur den Namen des Repositorys.
+**Das Passwort verlässt den Rechner nie.** Der Agent übergibt es `restic` oder `borg` nur über die
+Umgebung des Kindprozesses; es wird nie protokolliert, nie an den Server gesendet, und die Serien
+tragen nur den Namen des Repositorys.
 
 ```yaml
 restic_repos:
@@ -1130,93 +967,72 @@ borg_bin: borg
 backup_repos_interval_secs: 600                 # minimum 60
 ```
 
-Halten Sie `agent.yaml` und die Passwortdateien nur für root lesbar
-(`chmod 600`), wie es der Installer für `agent.yaml` tut.
-`password_command` wird zu `RESTIC_PASSWORD_COMMAND` oder
-`BORG_PASSCOMMAND`. Alles, was die Tools aus ihrer Umgebung lesen,
-kann unter `env` liegen (`RESTIC_PASSWORD`, `BORG_PASSPHRASE`,
-Cloud-Keys, `BORG_RSH`…), und die eigene Dienstumgebung des Agents
-wird auch durchgereicht.
+Halten Sie `agent.yaml` und die Passwortdateien nur für root lesbar (`chmod 600`), wie es der
+Installer für `agent.yaml` tut. `password_command` entspricht `RESTIC_PASSWORD_COMMAND` oder
+`BORG_PASSCOMMAND`. Alles, was die Werkzeuge aus ihrer Umgebung lesen, kann unter `env` stehen
+(`RESTIC_PASSWORD`, `BORG_PASSPHRASE`, Cloud-Schlüssel, `BORG_RSH` …), und die eigene
+Dienstumgebung des Agenten wird ebenfalls durchgereicht.
 
-Was der Agent ausführt, im strengsten Sinne nur-lesend:
+Was der Agent ausführt, im strengsten Sinn nur lesend:
 
-- `restic snapshots --json --latest 1 --no-lock --no-cache`: kein
-  Lock wird geschrieben, daher kann ein nur-lesendes oder
-  Append-Only-Repository beobachtet werden, und ein `prune`, der den
-  exklusiven Lock hält, lässt das Repository nicht down aussehen;
-  auch kein Cache, da der installierte Dienst nicht nach `/root`
-  schreiben kann.
-- `borg --bypass-lock list --json --last 1`: ohne
-  `--bypass-lock` würde das Lesen für die gesamte Dauer jedes `borg
-  create` fehlschlagen, der den exklusiven Lock hält. Borg schreibt
-  einen kleinen Sicherheitsdatensatz unter `~/.config/borg`; wenn
-  dieses Home nicht schreibbar ist (der installierte Dienst läuft
-  mit `ProtectHome=yes`), richtet der Agent `BORG_BASE_DIR`
-  stattdessen auf sein privates `/tmp`, sofern Sie `BORG_BASE_DIR`
-  nicht selbst setzen. Ein Repository im `keyfile`-Modus braucht
-  dann `BORG_KEY_FILE` in seinem `env`.
+- `restic snapshots --json --latest 1 --no-lock --no-cache`: Es wird keine Sperre geschrieben,
+  sodass ein schreibgeschütztes oder Append-only-Repository überwacht werden kann und ein `prune`,
+  das die exklusive Sperre hält, das Repository nicht ausgefallen aussehen lässt; auch kein Cache,
+  da der installierte Dienst nicht nach `/root` schreiben kann.
+- `borg --bypass-lock list --json --last 1`: Ohne `--bypass-lock` würde die Messung für die ganze
+  Dauer jedes `borg create` scheitern, das die exklusive Sperre hält. Borg schreibt einen kleinen
+  Sicherheitsdatensatz unter `~/.config/borg`; ist dieses Home nicht beschreibbar (der installierte
+  Dienst läuft mit `ProtectHome=yes`), verweist der Agent `BORG_BASE_DIR` stattdessen auf sein
+  privates `/tmp`, sofern Sie `BORG_BASE_DIR` nicht selbst setzen. Ein Repository im Modus
+  `keyfile` braucht dann `BORG_KEY_FILE` in seinem `env`.
 
-Da der Dienst mit `ProtectHome=yes` läuft, halten Sie, was die Tools
-brauchen, außerhalb der Home-Verzeichnisse: Passwortdateien,
-SSH-Schlüssel und `known_hosts` unter `/etc/dumbmonit/`, wie im
-Beispiel, und lokale Repositories unter `/srv`, `/mnt` oder `/var`
-statt `/home`. Die Lesungen laufen eine nach der anderen, innerhalb
-des Speicherlimits des Dienstes (128 MiB mit dem Agent selbst).
+Da der Dienst mit `ProtectHome=yes` läuft, halten Sie, was die Werkzeuge brauchen, außerhalb der
+Home-Verzeichnisse: Passwortdateien, SSH-Schlüssel und `known_hosts` unter `/etc/dumbmonit/`, wie im
+Beispiel, und lokale Repositories unter `/srv`, `/mnt` oder `/var` statt `/home`. Die Messungen
+laufen nacheinander, innerhalb des Speicherlimits des Dienstes (128 MiB mit dem Agenten selbst).
 
-Metriken, beschriftet mit `tool` (`restic` oder `borg`) und `repo`:
-`agent_backup_repo_reachable` (1, wenn die letzte Lesung gelang,
-sonst 0: Repository nicht erreichbar, Passwort abgelehnt, Binary
-fehlt — der Agent protokolliert den Grund einmal, und erneut, wenn
-er sich ändert), `agent_backup_repo_last_snapshot_age_seconds`
-(Alter des neuesten Snapshots, fehlt, während das Repository leer
-ist), und `agent_backup_repo_last_snapshot_bytes` (vom neuesten
-restic-Snapshot verarbeitete Bytes, restic 0.17 und später). Mit
-`--latest 1` gibt restic den neuesten Snapshot jedes Hosts und
-Pfad-Sets zurück; der neueste von allen wird behalten, setzen Sie
-daher `host` für ein von mehreren Maschinen geteiltes Repository.
+Metriken mit den Labels `tool` (`restic` oder `borg`) und `repo`: `agent_backup_repo_reachable` (1,
+wenn die letzte Messung erfolgreich war, sonst 0: Repository nicht erreichbar, Passwort abgelehnt,
+Binary fehlt — der Agent protokolliert den Grund einmal und erneut, wenn er sich ändert),
+`agent_backup_repo_last_snapshot_age_seconds` (Alter des neuesten Snapshots, fehlt, solange das
+Repository leer ist) und `agent_backup_repo_last_snapshot_bytes` (vom neuesten restic-Snapshot
+verarbeitete Bytes, restic 0.17 und neuer). Mit `--latest 1` liefert restic den neuesten Snapshot
+jedes Hosts und Pfadsatzes; der neueste von allen wird behalten, setzen Sie daher `host` bei einem
+von mehreren Rechnern geteilten Repository.
 
-Eingebaute Regeln: **restic/Borg backup too old** (kein Snapshot
-seit mehr als 48 Stunden) und **restic/Borg repository unreachable**
-(seit 30 Minuten). Die Geräteseite zeigt ein
-Backup-Repositories-Panel, eine Zeile pro Repository.
+Integrierte Regeln: **restic/Borg-Backup zu alt** (seit mehr als 48 Stunden kein Snapshot) und
+**restic/Borg-Repository nicht erreichbar** (30 Minuten lang). Die Geräteseite zeigt ein Panel
+Backup-Repositories, eine Zeile pro Repository.
 
-Um eine Deklaration zu prüfen, führen Sie den Agent einmal im
-Vordergrund aus und suchen Sie nach den `agent_backup_repo_*`-Samples:
+Um eine Deklaration zu prüfen, führen Sie den Agenten einmal im Vordergrund aus und achten Sie auf
+die Samples `agent_backup_repo_*`:
 
 ```sh
 sudo dumbmonit-agent --config /etc/dumbmonit/agent.yaml --dry-run
 ```
 
-## WireGuard-Tunnel {#wireguard-tunnel}
+## WireGuard-Tunnel {#wireguard-tunnels}
 
-Auf einer Maschine, die WireGuard ausführt, liest der Agent jede
-Schnittstelle und jeden Peer mit `wg show all dump`, bei jedem
-Zyklus. Nichts zu konfigurieren: Ohne den Befehl `wg`
-(wireguard-tools) oder ohne Schnittstelle wird keine Zeitreihe
-ausgegeben und kein Panel gezeigt. `wg` braucht root
-(`CAP_NET_ADMIN`); der installierte Dienst hat das, ein von Hand
-unter Ihrem eigenen Konto gestarteter Agent protokolliert die
-Ablehnung einmal und meldet nichts.
+Auf einem Rechner, auf dem WireGuard läuft, liest der Agent in jedem Zyklus jede Schnittstelle und
+jeden Peer mit `wg show all dump`. Nichts zu konfigurieren: Ohne den Befehl `wg` (wireguard-tools)
+oder ohne Schnittstelle wird keine Serie ausgegeben und kein Panel gezeigt. `wg` braucht root
+(`CAP_NET_ADMIN`); der installierte Dienst hat es, ein von Hand unter Ihrem eigenen Konto
+gestarteter Agent protokolliert die Ablehnung einmal und meldet nichts.
 
-Der Dump hält auch den privaten Schlüssel der Schnittstelle und den
-Pre-Shared-Key jedes Peers: Der Agent überspringt beide Felder, ohne
-sie je zu kopieren.
+Der Dump enthält auch den privaten Schlüssel der Schnittstelle und den Preshared Key jedes Peers:
+Der Agent überspringt beide Felder, ohne sie je zu kopieren.
 
-Pro Peer, beschriftet mit `interface`, `peer` (sein öffentlicher
-Schlüssel) und `allowed_ips`:
-`agent_wireguard_peer_handshake_age_seconds` (Sekunden seit dem
-letzten Handshake), `agent_wireguard_peer_has_handshake` (0, solange
-der Peer nie einen abgeschlossen hat),
-`agent_wireguard_peer_keepalive_seconds` (sein dauerhaftes
-Keepalive, 0, wenn aus), und die Zähler
-`agent_wireguard_peer_rx_bytes` und `agent_wireguard_peer_tx_bytes`;
-pro Schnittstelle, `agent_wireguard_interface_peers`. Für einen
-Peer, der nie einen Handshake abgeschlossen hat, zählt das Alter ab
-dem Moment, in dem der Agent ihn zuerst sah: Ein Tunnel, der nie
-hochkam, ist auch still und wird als solcher gemeldet.
+Pro Peer, mit den Labels `interface`, `peer` (sein öffentlicher Schlüssel) und `allowed_ips`:
+`agent_wireguard_peer_handshake_age_seconds` (Sekunden seit dem letzten Handshake),
+`agent_wireguard_peer_has_handshake` (0, solange der Peer nie einen abgeschlossen hat),
+`agent_wireguard_peer_keepalive_seconds` (sein persistenter Keepalive, 0 wenn aus) und die Zähler
+`agent_wireguard_peer_rx_bytes` und `agent_wireguard_peer_tx_bytes`; pro Schnittstelle
+`agent_wireguard_interface_peers`. Bei einem Peer, der nie einen Handshake abgeschlossen hat, zählt
+das Alter ab dem Moment, in dem der Agent ihn zum ersten Mal sah: Ein Tunnel, der nie hochkam, ist
+ebenfalls still und wird als solcher gemeldet.
 
-WireGuard hat keine Peer-Namen. Geben Sie Ihre in `agent.yaml`, nach
-öffentlichem Schlüssel, und sie werden das Label `name`:
+WireGuard kennt keine Peer-Namen. Geben Sie Ihre in `agent.yaml` an, nach öffentlichem Schlüssel,
+und sie werden zum Label `name`:
 
 ```yaml
 wireguard: true                     # default; false stops even looking
@@ -1226,44 +1042,32 @@ wireguard_peer_names:
   "UsKpqhrXNlYy/+rh2DLAOOEqesn8L8okEwNNorZ09lQ=": laptop
 ```
 
-Die eingebaute Regel **WireGuard peer silent** feuert, wenn ein Peer
-**mit dauerhaftem Keepalive** seit mehr als 15 Minuten keinen
-Handshake abgeschlossen hat. Während ein Tunnel up ist, erneuert
-WireGuard seinen Handshake alle zwei Minuten, und ein Keepalive
-hält ihn auch ohne Traffic auf. Ein Peer ohne Keepalive (ein
-Telefon, ein Laptop) kann tagelang untätig sein, ohne dass etwas
-kaputt ist, daher wird er ausgelassen. Setzen Sie
-`PersistentKeepalive = 25` auf den Tunneln, die up bleiben müssen
-(Site-to-Site-Links, entfernte Gateways). N ist der Schwellenwert
-der Regel: Ändern Sie ihn unter **Alerts → Rules**, oder entfernen
-Sie den `and on (…)`-Teil ihrer Abfrage, um jeden Peer zu
-beobachten. Die Geräteseite zeigt ein WireGuard-Panel mit jedem
-Peer, der Zeit seit seinem letzten Handshake, seinem Traffic und
-seinem Keepalive.
+Die integrierte Regel **WireGuard-Peer still** löst aus, wenn ein Peer **mit persistentem
+Keepalive** seit mehr als 15 Minuten keinen Handshake abgeschlossen hat. Solange ein Tunnel steht,
+erneuert WireGuard seinen Handshake alle zwei Minuten, und ein Keepalive hält ihn auch ohne Verkehr
+oben; ein Peer ohne Keepalive (ein Smartphone, ein Laptop) kann tagelang ruhen, ohne dass etwas
+kaputt ist, und bleibt daher außen vor. Setzen Sie `PersistentKeepalive = 25` auf den Tunneln, die
+oben bleiben müssen (Site-to-Site-Verbindungen, entfernte Gateways). N ist der Schwellenwert der
+Regel: Ändern Sie ihn unter **Alarme → Regeln** oder entfernen Sie den Teil `and on (…)` ihrer
+Abfrage, um jeden Peer zu überwachen. Die Geräteseite zeigt ein WireGuard-Panel mit jedem Peer, der
+Zeit seit seinem letzten Handshake, seinem Verkehr und seinem Keepalive.
 
-## TLS-Zertifikate (Certbot / Let's Encrypt)
+## TLS-Zertifikate (Certbot / Let's Encrypt) {#tls-certificates-certbot-lets-encrypt}
 
-Der Agent liest `/etc/letsencrypt` nicht direkt. Jedes von Certbot
-erneuerte Zertifikat wird irgendwo ausgeliefert — ein Webserver, ein
-Mailserver, ein Reverse Proxy — und dort liest DumbMonit es: Fügen
-Sie einen [TLS-Zertifikat](services.md#tls)-Monitor hinzu (oder
-einen [Website or web API](services.md#http), für eine schon so
-beobachtete Site), der auf den Port zeigt, auf dem das Zertifikat
-tatsächlich präsentiert wird. Er liest das lebende Zertifikat, keine
-Datei auf der Platte, daher fängt er auch eine Erneuerung, die in
-`/etc/letsencrypt` gelang, aber vom Dienst nie übernommen wurde
-(ein Reverse Proxy, der einen Reload braucht, um die neue Datei zu
-sehen, ist der übliche Fall, und genau die Lücke, die wichtig ist).
+Der Agent liest `/etc/letsencrypt` nicht direkt. Jedes von Certbot erneuerte Zertifikat wird
+irgendwo ausgeliefert — von einem Webserver, einem Mailserver, einem Reverse-Proxy — und dort liest
+DumbMonit es: Fügen Sie einen [TLS-Zertifikat](services.md#tls)-Monitor hinzu (oder einen
+[Website oder Web-API](services.md#http)-Monitor für eine bereits so überwachte Website), der auf
+den Port zeigt, auf dem das Zertifikat tatsächlich präsentiert wird. Er liest das Live-Zertifikat,
+nicht eine Datei auf der Platte, und fängt daher auch eine Erneuerung ab, die in `/etc/letsencrypt`
+gelang, aber vom Dienst nie übernommen wurde (ein Reverse-Proxy, der einen Reload braucht, um die
+neue Datei zu sehen, ist der übliche Fall und genau die Lücke, auf die es ankommt).
 
-`/etc/letsencrypt/live/*/cert.pem`, die Erneuerungskonfiguration und
-das Certbot-Log vom Agent aus zu lesen wurde in Betracht gezogen und
-verworfen: Es würde das Ablaufdatum duplizieren, das der
-TLS-Monitor schon meldet, während ein zweiter, host-lokaler Pfad zu
-derselben Information hinzugefügt wird — eine weitere Sache, die
-synchron zu halten ist, nachdem ein Zertifikat verschoben oder eine
-Domain umbenannt wurde. Ein Host, auf dem Certbot läuft, aber nichts
-ausliefert, das DumbMonit direkt erreichen kann (ein interner
-CA-Schritt, ein DNS-Validierungs-Hook), ist der eine Fall, den das
-unabgedeckt lässt; es ist auch der Fall, in dem ein TLS-Monitor
-ebenfalls nicht helfen könnte, da nichts auf diesem Host TLS zum
-Abfragen spricht.
+Das Lesen von `/etc/letsencrypt/live/*/cert.pem`, der Erneuerungskonfiguration und des
+Certbot-Logs durch den Agenten wurde erwogen und verworfen: Es würde das Ablaufdatum duplizieren,
+das der TLS-Monitor bereits meldet, und einen zweiten, hostlokalen Weg zur selben Information
+hinzufügen — eine Sache mehr, die nach dem Verschieben eines Zertifikats oder dem Umbenennen einer
+Domain synchron zu halten ist. Ein Host, auf dem Certbot läuft, aber nichts ausliefert, was
+DumbMonit direkt erreichen kann (ein interner CA-Schritt, ein DNS-Validierungs-Hook), ist der eine
+Fall, den das unabgedeckt lässt; es ist auch der Fall, in dem ein TLS-Monitor ebenfalls nicht
+helfen könnte, da auf diesem Host nichts TLS spricht, das man prüfen könnte.

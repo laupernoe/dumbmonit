@@ -1,4 +1,4 @@
-# Páginas de status
+# Páginas de status {#status-pages}
 
 ![A página de Status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
 
@@ -14,7 +14,7 @@ serviço, seu estado, sua disponibilidade e seu tempo de resposta. Nomes
 de dispositivo, endereços, tipos e identificadores nunca saem do
 servidor — não na página, não em um badge, não em um e-mail.
 
-## 1. Criar uma página
+## 1. Criar uma página {#1-create-a-page}
 
 **Status** na barra superior → **Nova página**. Essa página lista suas
 páginas de status (abrir, editar, excluir) com os anúncios abaixo
@@ -40,7 +40,7 @@ na ordem em que você organiza os serviços.
 Salve, e o link está pronto para copiar. A página se atualiza
 automaticamente a cada minuto.
 
-### Aparência
+### Aparência {#look}
 
 A seção **Aparência** do editor veste a página com suas cores sem abri-la
 a código arbitrário:
@@ -52,7 +52,7 @@ a código arbitrário:
 | **Site da organização** | Um link `http://` ou `https://` mostrado ao lado do título, como o nome de host do site. |
 | **Texto de rodapé** | Texto simples abaixo da página, até 280 caracteres: quem a administra, como contatá-los. Quebras de linha são mantidas; nada é interpretado como HTML ou Markdown. |
 
-### Cenário
+### Cenário {#scene}
 
 A configuração **Cenário** desenha um horizonte de cidade detrás do
 banner. Páginas novas começam com Paris, e páginas existentes que não
@@ -74,7 +74,7 @@ Deliberadamente não há CSS ou HTML personalizado: uma página de status
 é pública e vive na mesma origem que sua interface administrativa, sob a
 mesma [política de segurança de conteúdo](../reference/api.md).
 
-## 2. O que os visitantes veem
+## 2. O que os visitantes veem {#2-what-visitors-see}
 
 - Um banner com a resposta de um segundo, lida dos serviços: **Todos os
   sistemas operacionais**, **Indisponibilidade parcial** (alguns fora do
@@ -94,7 +94,7 @@ mesma [política de segurança de conteúdo](../reference/api.md).
   e-mail quando você configurar um (veja
   [Inscritos por e-mail](#email-subscribers)).
 
-### A barra de histórico
+### A barra de histórico {#the-history-bar}
 
 Cada quadrado é um dia (UTC), tonalizado pela disponibilidade daquele
 dia: cor plena a 99,5% e acima, âmbar a partir de 95%, vermelho abaixo.
@@ -126,7 +126,7 @@ minutos em que o dispositivo reportou ao menos uma vez
 adicionado ontem não está "fora do ar" pelos 89 dias anteriores a isso
 — e a indisponibilidade de um dia são seus intervalos silenciosos.
 
-## 3. Anunciar incidentes e manutenção
+## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
 Na página **Status**, sob a lista de páginas, **Incidentes e
 manutenção** → **Novo anúncio** (também ++ctrl+k++ → *Anunciar um
@@ -154,7 +154,7 @@ privados.
 
 Um anúncio é mostrado em uma página ou em **todas as páginas**.
 
-### Inscritos por e-mail
+### Inscritos por e-mail {#email-subscribers}
 
 Visitantes podem se inscrever em seus anúncios por e-mail uma vez que
 você escolha um **canal de e-mail (SMTP)** no editor, sob **Inscritos
@@ -192,7 +192,7 @@ partir da **URL pública** da
 `DUMBMONIT_PUBLIC_URL`); sem uma, do endereço que você usou quando
 salvou a página por último — nunca da requisição de um visitante.
 
-## 4. Compartilhar o link
+## 4. Compartilhar o link {#4-share-the-link}
 
 A página vive em `https://your-server/s/<address>`. Tudo sob `/s/` e
 `/api/public/` é servido sem autenticação; o resto do DumbMonit
@@ -201,7 +201,7 @@ permanece detrás do login.
 O painel **Compartilhar** do editor constrói os trechos abaixo para
 você, com uma pré-visualização.
 
-### Badges
+### Badges {#badges}
 
 Toda página publicada serve badges SVG — planos, com texto branco em
 cor sólida, legíveis tanto no tema claro quanto escuro de um README do
@@ -237,7 +237,7 @@ Badges são armazenados em cache por um minuto
 GitHub e seus visitantes não custam nada ao banco de dados de séries
 temporais.
 
-### Embutir
+### Embutir {#embed}
 
 `/s/<address>/embed` é uma visão compacta para um iframe: o estado
 geral e uma linha por serviço com seu estado e 30 dias de histórico, e
@@ -255,7 +255,7 @@ terceiros pode colocar em um frame; tudo mais (as páginas de
 confirmação e cancelamento de inscrição incluídas) responde com
 `frame-ancestors 'none'` e `X-Frame-Options: DENY`.
 
-### Domínio personalizado
+### Domínio personalizado {#custom-domain}
 
 Uma página pode ter seu próprio endereço, como
 `status.example.com`, da forma que o Uptime Kuma faz. Digite o nome no
@@ -357,7 +357,7 @@ server {
   navegando através do domínio da página. Use o próprio endereço do
   DumbMonit, ou limpe o **Domínio público** da página.
 
-### Detrás de um proxy reverso
+### Detrás de um proxy reverso {#behind-a-reverse-proxy}
 
 Um [domínio personalizado](#custom-domain) é a forma mais simples de
 expor só a página de status. Se você prefere manter o caminho
@@ -389,7 +389,7 @@ deles para renderizar. Encaminhe `X-Forwarded-Proto` e
 defina a URL pública (veja acima) para que e-mails de inscritos também
 façam.
 
-### Feed e documento
+### Feed e documento {#feed-and-document}
 
 - `GET /api/public/status/<address>/rss` — um feed RSS de incidentes e
   janelas de manutenção, um item por anúncio com sua atualização mais

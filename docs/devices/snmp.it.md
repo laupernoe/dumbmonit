@@ -47,7 +47,7 @@ reale.
 miliardi di jumbo frame perfettamente sani, e una serie che sale sempre su
 una rete sana insegna solo a ignorarla.
 
-### Controller di gestione server (BMC)
+### Controller di gestione server (BMC) {#server-management-controllers-bmc}
 
 L'agent SNMP proprio di un BMC descrive il BMC, non il server: il suo
 piccolo Linux ARM, la sua memoria, i suoi collegamenti di rete. Un BMC

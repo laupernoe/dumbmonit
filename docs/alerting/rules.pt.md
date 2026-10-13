@@ -16,7 +16,7 @@ distribuída ativada em toda instância.
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Device unreachable | Nenhuma medição recebida há mais de três minutos. `time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 min | Warning (`critical`) | 6 h |
+| Device unreachable | Nenhuma medição recebida há mais de três minutos. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 min | Warning (`critical`) | 6 h |
 | High CPU | Carga de CPU sustida acima de 90%, em média por dispositivo entre fontes SNMP, Proxmox e agente; limpa-se abaixo de 85%. | > 90 % | 10 min | Advisory (`warning`), agrava depois de 1 h | 6 h |
 | Unusual CPU | Carga de CPU notavelmente diferente do habitual a esta hora e dia da semana (linha de base sazonal). | pontuação > 3,5 | 15 min | Info (`info`) | 6 h |
 | Disk almost full | Sistema de ficheiros 90% cheio ou mais, por ponto de montagem (SNMP, armazenamentos Proxmox e sistemas de ficheiros raiz); limpa-se abaixo de 88%. | ≥ 90 % | 15 min | Advisory (`warning`), agrava depois de 24 h | 6 h |
@@ -105,6 +105,17 @@ Reportados pelo agente; ver [Agente](../devices/agent.md#wireguard-tunnels).
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | WireGuard peer silent | Um par com um keepalive persistente não completou um handshake há mais de 15 minutos: o túnel está em baixo (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Um par que nunca se ligou conta o seu silêncio a partir do momento em que o agente o viu por primeira vez. Pares sem keepalive (um telefone, um portátil) ficam inativos durante dias e são deixados de fora; altere o limiar para mudar N, ou retire a parte `and on …` para monitorizar todo par. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
+
+### Discos do agente, ZFS e sensores {#agent-disks-zfs-and-sensors}
+
+Reportados pelo agente; ver [Agente](../devices/agent.md).
+
+| Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| Disk SMART failing | A autoavaliação SMART do próprio disco reporta-o como a falhar (`dumbmonit_agent_disk_smart_ok == bool 0`). Substitua-o e verifique as cópias de segurança. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| ZFS pool degraded | Uma pool ZFS já não está saudável: um dispositivo está em falta, com falha ou removido (`dumbmonit_agent_zfs_pool_health`: 0 online, 1 degraded, 2 qualquer outro estado). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| ZFS scrub found errors | O último scrub ZFS encontrou erros nesta pool, ou há ficheiros permanentemente perdidos (`dumbmonit_agent_zfs_pool_scrub_errors or dumbmonit_agent_zfs_pool_data_errors`). A pool pode continuar `ONLINE`. | > 0 | 10 min | Warning (`critical`) | 24 h |
+| Temperature above critical | Um sensor está acima da temperatura crítica que o seu próprio hardware declara (`dumbmonit_agent_sensor_temperature_celsius >= dumbmonit_agent_sensor_temperature_critical_celsius`); sem valor fixo. | > 0 | 5 min | Warning (`critical`) | 6 h |
 
 ### Proxmox VE {#proxmox-ve}
 
@@ -252,6 +263,7 @@ Reportados pelo agente; ver [Agente](../devices/agent.md#wireguard-tunnels).
 | Synology disk bad sectors growing | Novos setores ilegíveis apareceram nas últimas 24 horas (`delta(dumbmonit_synology_disk_unc_count[24h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Synology SSD wearing out | Um SSD tem menos de 10% da sua vida nominal restante (`dumbmonit_synology_disk_remaining_life_percent`); limpa-se acima de 12%. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
 | Synology volume degraded | Um volume está degradado ou avariado: a sua redundância desapareceu (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
+| Synology storage pool degraded | Uma storage pool ou cache SSD está degradada ou avariada: um disco falhou e a redundância desapareceu ou está a ser reconstruída (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
 | Synology volume almost full | Um volume está 90% cheio ou mais (`dumbmonit_synology_volume_used_percent`); limpa-se abaixo de 88%. | ≥ 90 % | 15 min | Advisory (`warning`), agrava depois de 24 h | 6 h |
 | Synology temperature high | Um disco está acima de 55 °C, ou o DSM levantou o seu próprio aviso de temperatura (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); limpa-se abaixo de 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
 | Synology memory high | Uso de memória do NAS acima de 95% (`dumbmonit_synology_memory_usage_percent`); limpa-se abaixo de 90%. | > 95 % | 15 min | Advisory (`warning`) | 6 h |
@@ -454,9 +466,7 @@ não tem série `device_up` e nunca conta como offline.
 
 ### VMware vSphere {#vmware-vsphere}
 
-[Página do dispositivo](../devices/vsphere.md). As séries de
-anfitrião transportam `host`, as de VM `vm`, as de datastore
-`datastore`, por isso a notificação nomeia o objeto.
+[Página do dispositivo](../devices/vsphere.md). As séries de anfitriões trazem `esxi`, as de VM `vm`, as de datastores `datastore`, pelo que a notificação nomeia o objeto.
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -502,14 +512,7 @@ dispositivo.
 
 ### Proxies inversos e domínios {#reverse-proxies-and-domains}
 
-Traefik, Caddy, Nginx Proxy Manager e registos de domínio
-([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md),
-[Nginx Proxy Manager](../devices/npm.md),
-[Expiração de domínio](../devices/domain.md)), e a opção *Alert when
-the answer changes* da verificação DNS
-([Serviços](../devices/services.md#alerting-when-the-answer-changes)).
-As séries transportam `router`, `service`, `server`, `upstream`,
-`host` ou `cert`, por isso a notificação nomeia o que falhou.
+Traefik, Caddy, Nginx Proxy Manager e registos de domínio ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Expiração de domínio](../devices/domain.md)), e a opção *Alertar quando a resposta muda* da verificação DNS ([Serviços](../devices/services.md#alerting-when-the-answer-changes)). As séries trazem `router`, `service`, `server`, `upstream`, `proxy_host` ou `cert`, pelo que a notificação nomeia o que falhou.
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -599,7 +602,7 @@ e `role` (`parity`, `data`, `cache`), os contentores `container`.
 | Unraid cache nearly full | Uma pool de cache Unraid está mais de 90% cheia: as escritas recuam para o array lento, ou falham (`dumbmonit_unraid_disk_used_percent{role="cache"}`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Unraid container stopped | Um contentor Docker definido para iniciar com o array não está em execução (`dumbmonit_unraid_container_autostart_stopped`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
 
-### Veeam Backup & Replication {#veeam-backup-replication}
+### Veeam Backup & Replication {#veeam-backup--replication}
 
 Ver [Veeam Backup & Replication](../devices/veeam.md). As tarefas são
 etiquetadas `job` e `type`, os repositórios `repository`.
@@ -685,14 +688,13 @@ Na página **Alerts**, a secção *Rules* lista toda regra com a sua
 severidade, uma marca *Built-in* e, quando relevante, quantos alertas
 está a disparar agora. Cada regra tem:
 
-- um interruptor para **ativar ou desativar** a regra;
-- **Edit**, que desdobra um editor em linha para nome, descrição,
-  operador, limiar, retenção (`for`), severidade, lembrete (`repeat
-  every`) e escalonamento (`escalate after`). A consulta de uma regra
-  incorporada é mostrada mas não editável; a consulta das suas
-  próprias regras é. As regras de linha de base mostram os seus
-  parâmetros de deteção só de leitura;
-- **Delete**, só para as suas próprias regras.
+- um interruptor para a **ativar ou desativar**;
+- **Edit**, que desdobra um editor em linha para nome, descrição, operador,
+  limiar, retenção (`for`), severidade, lembrete (`repeat every`) e escalonamento
+  (`escalate after`). A consulta de uma regra incorporada é mostrada mas não
+  editável; a das suas próprias regras é. As regras de linha de base mostram
+  os seus parâmetros de deteção só de leitura;
+- **Delete**, apenas para as suas próprias regras.
 
 ## Substituições por dispositivo {#per-device-overrides}
 
@@ -744,22 +746,22 @@ uma etiqueta `host` (o seu nome).
 Alguns padrões usados pelas regras incorporadas:
 
 ```
-# Idade da última amostra: o que "unreachable" significa
-time() - tlast_over_time(dumbmonit_up[7d])
+# Age of the last sample, freshest series per device: what "unreachable" means
+bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))
 
-# Um valor por dispositivo, seja qual for a fonte
+# One value per device, whatever the source
 avg by (target, host) (dumbmonit_cpu_load_percent or dumbmonit_proxmox_node_cpu_percent or dumbmonit_cpu_usage_percent)
 
-# Uma percentagem calculada a partir de dois gauges
+# A percentage computed from two gauges
 100 * dumbmonit_storage_bytes_used / dumbmonit_storage_bytes_total
 
-# Uma condição booleana: a série só é devolvida quando verdadeira
+# A boolean condition: the series is returned only when true
 dumbmonit_ups_output_source == 5
 
-# Extrapolação feita pela VictoriaMetrics
+# Extrapolation done by VictoriaMetrics
 predict_linear(dumbmonit_pbs_datastore_used_percent[6h], 345600) and deriv(dumbmonit_pbs_datastore_used_percent[6h]) > 0
 
-# Disponibilidade de um serviço ao longo de trinta dias
+# Availability of a service over thirty days
 avg_over_time(dumbmonit_probe_success[30d])
 ```
 

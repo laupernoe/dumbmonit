@@ -1,4 +1,4 @@
-# RabbitMQ
+# RabbitMQ {#rabbitmq}
 
 O message broker: alarmes de memória e disco, nós parados e partições de
 rede, filas que enchem sem ninguém as lendo, filas que não estão mais em
@@ -15,7 +15,7 @@ dispara um alarme e bloqueia todo publicador no cluster: as aplicações
 simplesmente ficam presas em `publish`, sem erro nenhum. A segunda é uma fila
 que continua enchendo porque o serviço que a consumia parou.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_rabbitmq_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -44,7 +44,7 @@ que se aplicam: RabbitMQ memory or disk alarm, RabbitMQ node down, RabbitMQ
 network partition, RabbitMQ queue without consumer, RabbitMQ queue
 unavailable, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o RabbitMQ. Ele diz o que está errado em uma frase (alarmes,
@@ -54,7 +54,7 @@ publicadas e entregues por segundo, conexões, consumidores e filas, depois as
 dez filas mais cheias com seus consumidores e a memória e disco livre de cada
 nó.
 
-## Criar um usuário RabbitMQ marcado monitoring
+## Criar um usuário RabbitMQ marcado monitoring {#create-a-rabbitmq-user-tagged-monitoring}
 
 1. Ative o plugin de gerenciamento se ainda não estiver ativo (as imagens
    Docker de management já o têm). Sua API escuta na porta 15672.
@@ -90,7 +90,7 @@ nó.
     observadas uma a uma (100 por padrão); os totais sempre cobrem todas as
     filas.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

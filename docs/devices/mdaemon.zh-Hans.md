@@ -1,4 +1,4 @@
-# MDaemon Email Server
+# MDaemon Email Server {#mdaemon-email-server}
 
 从外部检查 MDaemon 服务器的邮件服务:SMTP、IMAP、POP3、网页邮件
 和远程管理是否接受连接,并给出正确的问候。配合一个账户,

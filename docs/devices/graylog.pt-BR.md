@@ -1,4 +1,4 @@
-# Graylog
+# Graylog {#graylog}
 
 O servidor de logs e o cluster de busca detrás dele: se o Graylog processa
 mensagens, quantas esperam em seu journal, quão cheios estão seus buffers, o
@@ -17,7 +17,7 @@ nada recente. O journal cresce até ficar cheio, então mensagens são
 descartadas. O acúmulo do journal, a saúde do cluster de busca e as falhas
 de indexação avisam isso muito antes.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_graylog_`. O journal, os buffers e
 a vazão são os **do nó com o qual o DumbMonit fala**: em um cluster Graylog,
@@ -52,7 +52,7 @@ aplicam: Graylog not processing, Graylog search cluster down, Graylog search
 cluster yellow, Graylog journal filling, Graylog input failed, Graylog
 indexing failures, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Graylog. Ele diz o que está errado em uma frase
@@ -62,7 +62,7 @@ entrando e saindo por segundo, o acúmulo do journal e o número de nós,
 depois os buffers, os shards por estado e as próprias notificações do
 Graylog.
 
-## Criar um usuário e token somente leitura no Graylog
+## Criar um usuário e token somente leitura no Graylog {#create-a-read-only-user-and-token-in-graylog}
 
 1. No Graylog: System → Users and Teams → Create user. Nomeie o usuário como
    abaixo, dê a ele uma senha longa e aleatória, e atribua apenas o papel
@@ -113,7 +113,7 @@ ele: não compartilhe nenhum. Detalhes de falha de indexação
 (`indices:failures`) não são necessários: o DumbMonit conta falhas a partir
 das próprias métricas do Graylog.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

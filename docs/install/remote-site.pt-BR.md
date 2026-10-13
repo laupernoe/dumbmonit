@@ -1,128 +1,123 @@
-# Monitorar um site remoto
+# Monitorar um site remoto {#monitor-a-remote-site}
 
-Um DumbMonit, várias redes. Um **agente relay** instalado no site remoto
-executa, em nome do servidor, as sondagens dos dispositivos que você
-atribui a ele, e reporta os resultados pela mesma conexão de saída que já
-usa para enviar suas próprias métricas. Nada para abrir no site remoto,
-nenhuma VPN, nenhuma segunda instância para observar.
+Um DumbMonit, várias redes. Um **agente de retransmissão** instalado no site remoto
+executa, em nome do servidor, as sondagens dos dispositivos que você atribui a ele, e
+relata os resultados pela mesma conexão de saída que já usa para enviar
+suas próprias métricas. Nada a abrir no site remoto, sem VPN, sem uma segunda
+instância para consultar.
 
 ```
- matriz                                    site remoto (NAT, firewall)
- ┌──────────────────┐   HTTPS, saída      ┌──────────────────────────────┐
- │ servidor DumbMonit│◀────────────────────│ agente relay                 │
- │  agendador        │  sondagens a rodar──▶│  roda SNMP / Proxmox / HTTP…│──▶ switch, NAS,
- │  alertas, UI      │◀── amostras, veredito│  também envia suas métricas │    hipervisor…
- └──────────────────┘                      └──────────────────────────────┘
+ escritório principal                    site remoto (NAT, firewall)
+ ┌──────────────────┐   HTTPS, saída    ┌──────────────────────────────┐
+ │ Servidor DumbMonit │◀────────────────────│ agente de retransmissão       │
+ │  agendador       │  sondagens para executar  ──▶ │  executa SNMP / Proxmox / HTTP… │──▶ switch, NAS,
+ │  alertas, UI     │◀── amostras, veredicto │  envia suas próprias métricas também  │    hipervisor…
+ └──────────────────┘                     └──────────────────────────────┘
 ```
 
-## 1. Publicar o servidor via HTTPS
+## 1. Publicar o servidor sobre HTTPS {#1-publish-the-server-over-https}
 
-O relay busca seus jobs do servidor: o servidor precisa ser acessível a
-partir do site remoto, tipicamente `https://monitor.example.org` detrás de
-um proxy reverso. Duas coisas viajam nesse link:
+O agente de retransmissão busca seus trabalhos do servidor: o servidor deve ser acessível a partir do
+site remoto, normalmente `https://monitor.example.org` atrás de um proxy reverso. Duas coisas viajam nesse link:
 
-- o **token de cadastro** (`dmon_…`), no cabeçalho `Authorization` de toda
-  requisição — como para qualquer agente;
-- as **credenciais de dispositivo** dos dispositivos que o relay sonda
-  (comunidade SNMP, token de API do Proxmox…), descriptografadas, dentro de
-  cada job de sondagem.
+- o **token de inscrição** (`dmon_…`), no cabeçalho `Authorization` de cada
+  solicitação — como para qualquer agente;
+- as **credenciais de dispositivo** dos dispositivos que o agente de retransmissão sonda (comunidade SNMP,
+  token API Proxmox…), descriptografadas, dentro de cada trabalho de sonda.
 
-Em HTTP simples pela internet, ambos seriam legíveis no caminho: coloque o
-servidor detrás de HTTPS antes de fazer relay de qualquer coisa fora da sua
-própria rede. Em uma LAN ou VPN, HTTP é aceitável e o token é o único
-segredo em trânsito até você atribuir dispositivos ao relay. Credenciais
-nunca são escritas em disco em nenhum dos lados: um job de sondagem vive na
-memória do servidor até o relay reportá-lo, e o agente não mantém nada
-entre duas sondagens.
+Sobre HTTP simples através da internet, ambas seriam legíveis no caminho: coloque o
+servidor atrás de HTTPS antes de retransmitir nada fora de sua própria rede. Em uma
+LAN ou VPN, HTTP é aceitável e o token é o único segredo em trânsito
+até que você atribua dispositivos ao agente de retransmissão. As credenciais nunca são escritas em disco
+em nenhum lado: um trabalho de sonda vive na memória do servidor até o agente de retransmissão
+relatá-lo, e o agente não mantém nada entre duas sondas.
 
-O proxy reverso precisa encaminhar `/api/agent/relay` como `/api/ingest`,
-permitir corpos de requisição de até 16 MB (um hipervisor ocupado reporta
-milhares de amostras), e manter conexões ociosas abertas por pelo menos 60
-segundos: o servidor mantém uma requisição de relay por até 25 segundos
-enquanto espera por trabalho (long polling).
+O proxy reverso deve encaminhar `/api/agent/relay` como `/api/ingest`, permitir
+corpos de solicitação até 16 MB (um hipervisor ocupado relata milhares de amostras),
+e manter conexões ociosas abertas por pelo menos 60 segundos: o servidor mantém uma
+solicitação de agente de retransmissão por até 25 segundos enquanto aguarda trabalho (enquete longa).
 
-## 2. Criar um token de cadastro
+## 2. Criar um token de inscrição {#2-create-an-enrollment-token}
 
-**Configurações → Agentes → Novo token**, ou adicione um dispositivo do
-tipo *agent*. Copie o valor `dmon_…`: ele é mostrado uma vez.
+**Configurações → Agentes → Novo token**, ou adicione um dispositivo do tipo *agente*. Copie o
+valor `dmon_…`: é mostrado uma única vez.
 
-## 3. Iniciar o relay no site remoto
+## 3. Iniciar o agente de retransmissão no site remoto {#3-start-the-relay-at-the-remote-site}
 
-Qualquer máquina no site remoto com Docker, usando
-`docker-compose.agent.yml` do repositório:
+Qualquer máquina no site remoto com Docker, usando `docker-compose.agent.yml`
+do repositório:
 
 ```sh
 DUMBMONIT_AGENT_URL=https://monitor.example.org \
 DUMBMONIT_AGENT_TOKEN=dmon_… \
 DUMBMONIT_AGENT_HOSTNAME=relay-lyon \
 DUMBMONIT_AGENT_RELAY=true \
-DUMBMONIT_AGENT_SITE="Lyon office" \
+DUMBMONIT_AGENT_SITE="Escritório Lyon" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Ou o agente comum instalado com o instalador de uma linha, com duas chaves
-mais em `/etc/dumbmonit/agent.yaml`:
+Ou o agente regular instalado com o instalador de uma linha, com duas chaves adicionais
+em `/etc/dumbmonit/agent.yaml`:
 
 ```yaml
 relay: true
-site: Lyon office
+site: Escritório Lyon
 ```
 
-A máquina aparece no DumbMonit em segundos, como um dispositivo de agente
-comum, e sua página diz *Relay · site Lyon office · faz relay de 0
-dispositivos*. O log do agente diz `relay mode enabled: waiting for probes
-from the server` uma vez que seu primeiro lote é aceito.
+A máquina aparece em DumbMonit em segundos, como um dispositivo de agente comum,
+e sua página diz *Retransmissão · site Escritório Lyon · retransmite 0 dispositivos*. O
+log do agente diz `relay mode enabled: waiting for probes from the server` uma vez que seu
+primeiro lote é aceito.
 
-!!! note "O que o relay precisa alcançar"
-    O relay sonda dispositivos a partir de sua própria rede: ele precisa do
-    mesmo acesso que o servidor precisaria se estivesse lá — UDP 161 para
-    SNMP, 8006 para Proxmox, 5001 para DSM, e assim por diante. Para
-    monitores de **ping**, o contêiner precisa de `cap_add: [NET_RAW]`
-    (veja o arquivo compose). Para dispositivos em uma VLAN ou rede
-    link-local, ou para alvos `localhost`, use `network_mode: host`.
+!!! note "O que o agente de retransmissão precisa alcançar"
+    O agente de retransmissão sonda dispositivos de sua própria rede: ele precisa do mesmo acesso
+    que o servidor precisaria se estivesse lá — UDP 161 para SNMP, 8006 para
+    Proxmox, 5001 para DSM, e assim por diante. Para sondagens de **ping**, o contêiner
+    precisa de `cap_add: [NET_RAW]` (consulte o arquivo compose). Para dispositivos em uma VLAN
+    ou rede link-local, ou para alvos `localhost`, use
+    `network_mode: host`.
 
-## 4. Atribuir dispositivos ao relay
+## 4. Atribuir dispositivos ao agente de retransmissão {#4-assign-devices-to-the-relay}
 
-Adicione os dispositivos remotos como de costume — switch SNMP, nó Proxmox,
-verificação HTTP — com seu endereço **como visto do site remoto**
-(`192.168.10.1`, `https://pve.lan:8006`). No formulário do dispositivo, sob
-*Mais opções*, defina **Alcançado através de** para o agente relay em vez
-de *Direto*. Dispositivos existentes podem ser trocados da mesma forma;
-trocar de volta para *Direto* faz o servidor sondá-los de novo.
+Adicione os dispositivos remotos como usual — switch SNMP, nó Proxmox, verificação HTTP —
+com seu endereço **visto do site remoto** (`192.168.10.1`,
+`https://pve.lan:8006`). No formulário do dispositivo, em *Mais opções*, defina
+**Alcançado através de** para o agente de retransmissão em vez de *Direto*. Dispositivos existentes
+podem ser alternados da mesma forma; alternar de volta para *Direto* faz o servidor
+consultá-los novamente.
 
-A partir de então:
+De então em diante:
 
-- o servidor enfileira uma sondagem para o dispositivo em cada intervalo; o
-  relay a pega dentro de milissegundos (ele espera no servidor por
-  trabalho), executa o coletor e reporta;
-- **Sondar agora** e a detecção de perfil na página do dispositivo também
-  passam pelo relay;
-- a *última sondagem* e erro do dispositivo seguem o veredito do relay.
-  Quando o relay não pega uma sondagem a tempo, o dispositivo mostra
-  *Tempo esgotado: o agente relay … não pegou a sondagem* — verifique que o
-  agente roda com `relay: true`;
-- a página do agente mostra *Relay para N dispositivos*, e
-  `GET /api/relays` lista os relays com seu site e contagem.
+- o servidor enfileira uma sonda para o dispositivo em cada intervalo; o agente de retransmissão
+  a pega dentro de milissegundos (aguarda no servidor para trabalho), executa o
+  coletor e relata;
+- **Sondar agora** e detecção de perfil na página do dispositivo também passam pelo
+  agente de retransmissão;
+- a *última sonda* e erro do dispositivo seguem o veredicto do agente de retransmissão. Quando o
+  agente de retransmissão não pega uma sonda no tempo, o dispositivo mostra *Tempo esgotado: agente de retransmissão
+  … não pegou a sonda* — verifique se o agente está executando com
+  `relay: true`;
+- a página do agente mostra *Retransmissão para N dispositivos*, e `GET /api/relays` lista
+  os agentes de retransmissão com seu site e contagem.
 
-## Alertando quando o relay está fora do ar
+## Alertar quando o agente de retransmissão está inativo {#alerting-when-the-relay-is-down}
 
-Um relay que fica silencioso leva seus dispositivos com ele: suas sondagens
-param, e todos ficariam *inacessíveis* de uma vez. O relay é tratado como
-um **pai** de todo dispositivo que sonda (além do pai que você pode ter
-definido): quando o próprio relay está *inacessível*, os alertas de seus
-dispositivos são mostrados como `suppressed` com `suppressed_by` = o relay,
-e apenas uma notificação sai — para o relay. O pai que você definiu
-explicitamente mantém seu papel e vence quando ambos estão fora do ar.
+Um agente de retransmissão que fica silencioso leva seus dispositivos com ele: suas sondas param, e
+todas se tornariam *inacessíveis* de uma vez. O agente de retransmissão é tratado como um
+**pai** de cada dispositivo que sonda (além do pai que você pode ter
+definido): quando o agente de retransmissão está *inacessível*, os alertas de seus dispositivos são
+mostrados como `suppressed` com `suppressed_by` = o agente de retransmissão, e apenas uma
+notificação sai — para o agente de retransmissão. O pai que você definiu explicitamente mantém seu
+papel e vence quando ambos estão desativados.
 
-## Limites
+## Limites {#limits}
 
-- Um relay por dispositivo. Um dispositivo sondado pelo relay não é também
-  sondado pelo servidor.
-- Dispositivos de agente em si não podem ser retransmitidos: eles enviam
-  suas próprias métricas.
-- O relay executa no máximo 8 sondagens por vez; uma sondagem é limitada
-  pelo tempo limite de sondagem do servidor (`DUMBMONIT_PROBE_TIMEOUT`),
-  limitado a 120 s no agente.
-- Um agente relay precisa dos coletores compilados: agentes mais antigos
-  que esta funcionalidade ignoram `relay: true`, e o servidor reporta suas
-  sondagens como expiradas. Reinstale com o binário ou imagem atual.
+- Um agente de retransmissão por dispositivo. Um dispositivo sondado pelo agente de retransmissão não é também sondado pelo
+  servidor.
+- Dispositivos de agente em si não podem ser retransmitidos: eles enviam suas próprias métricas.
+- O agente de retransmissão executa no máximo 8 sondas por vez; uma sonda é limitada pelo
+  tempo limite de sonda do servidor (`DUMBMONIT_PROBE_TIMEOUT_SECS`), limitado a 120 s no
+  agente.
+- Um agente de retransmissão precisa dos coletores compilados: agentes mais antigos que este
+  recurso ignoram `relay: true`, e o servidor relata suas sondas como expiradas.
+  Reinstale com o binário ou imagem atual.

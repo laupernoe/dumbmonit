@@ -1,4 +1,4 @@
-# Escreva seu primeiro pacote
+# Escreva seu primeiro pacote {#write-your-first-pack}
 
 Em cerca de dez minutos, esta página constrói o pacote de referência
 `shelly-plug` do zero: uma tomada inteligente Shelly (Plus, Pro ou Gen3)
@@ -8,7 +8,7 @@ alerta quando ela sobreaquece.
 Você precisa do Docker, e de uma tomada Shelly em sua rede ou da resposta
 capturada abaixo.
 
-## 1. Veja o que o dispositivo responde
+## 1. Veja o que o dispositivo responde {#1-look-at-what-the-device-answers}
 
 Dispositivos de segunda geração da Shelly descrevem um relé com uma
 chamada:
@@ -34,7 +34,7 @@ Salve esta resposta como `shelly-plug/fixtures/status.json`: é a fixture
 contra a qual o pacote será testado, então você pode trabalhar sem o
 dispositivo à mão.
 
-## 2. O cabeçalho
+## 2. O cabeçalho {#2-the-header}
 
 Crie `shelly-plug/pack.yaml`:
 
@@ -53,7 +53,7 @@ credentials: [none]
 O `id` decide dois nomes: o tipo de dispositivo `pack.shelly-plug`, e o
 prefixo de métrica `dumbmonit_shelly_plug_`.
 
-## 3. Uma fonte
+## 3. Uma fonte {#3-one-source}
 
 Uma fonte é uma requisição, sempre para o próprio endereço do
 dispositivo:
@@ -77,7 +77,7 @@ dispositivo, mostrada no formulário do dispositivo como **Switch
 channel**. O nome do arquivo da fixture, `status.json`, corresponde ao
 `id` da fonte.
 
-## 4. As métricas
+## 4. As métricas {#4-the-metrics}
 
 Cada métrica escolhe um valor com uma expressão
 [JSONPath](https://www.rfc-editor.org/rfc/rfc9535). Nomes são escritos
@@ -111,7 +111,7 @@ metrics:
 cresce, então é um `counter`: gráficos e regras o leem com `rate()`, e um
 reinício da tomada não parece uma queda.
 
-## 5. Verifique-o
+## 5. Verifique-o {#5-check-it}
 
 ```bash
 docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
@@ -138,7 +138,7 @@ Leia-o uma vez. A partir de agora, `pack test` sem `--update` falha se
 uma mudança no pacote alterar o que ele extrai, e imprime as linhas que
 diferem.
 
-## 6. Uma regra de alerta
+## 6. Uma regra de alerta {#6-an-alert-rule}
 
 Regras vêm com o pacote e usam suas métricas pelo nome completo. O limite
 pode vir de uma opção, então cada tomada pode ter o seu próprio:
@@ -171,7 +171,7 @@ que apontar para outro lugar são reportados com onde estão.
 docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
-## 7. Instale-o
+## 7. Instale-o {#7-install-it}
 
 Com um token de API que tenha o escopo `write`:
 

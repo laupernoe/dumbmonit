@@ -1,4 +1,4 @@
-# SecurityGateway for Email Servers
+# SecurityGateway for Email Servers {#securitygateway-for-email-servers}
 
 Os serviços de um gateway de e-mail SecurityGateway, verificados de fora, e
 no SecurityGateway 12.5 ou posterior, a versão e os contadores de desempenho
@@ -14,7 +14,7 @@ que sua API REST publica: fila de entrega, quarentena, sessões SMTP.
     sob o nome que a API lhe dá. Ninguém ainda o executou contra um gateway
     em funcionamento. Avise-nos o que não funcionar.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_securitygateway_`.
 
@@ -56,7 +56,7 @@ se aplicam: SecurityGateway service down, SecurityGateway API not
 answering, SecurityGateway delivery queue growing, além de Device
 unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 Um dispositivo SecurityGateway mostra um painel **Serviços de e-mail** acima
 dos gráficos, lido da última medição armazenada: abrir a página nunca se
@@ -65,7 +65,7 @@ palavra e uma cor (Respondendo, Fora do ar) e seu tempo de resposta, a
 versão, e com uma chave de API, todo contador de desempenho com seu valor
 mais recente.
 
-## Observar os serviços do gateway, e opcionalmente a API REST
+## Observar os serviços do gateway, e opcionalmente a API REST {#watch-the-gateway-services-and-optionally-the-rest-api}
 
 1. Nada para instalar no servidor. Sem credencial, o DumbMonit se conecta ao
    SMTP (25) e à interface web (4000) de fora e lê a saudação SMTP. Mude a
@@ -117,7 +117,7 @@ mais recente.
     conexão for recusada por esse motivo, marque "Aceitar um certificado não
     verificável" nas opções.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -128,7 +128,7 @@ Endereço: o nome de host ou IP do gateway, por exemplo `sg.example.com`.
 Uma porta escrita no endereço (`sg.example.com:8443`) é tomada como a porta
 da API.
 
-## Opções
+## Opções {#options}
 
 | Opção | Padrão | Efeito |
 |---|---|---|

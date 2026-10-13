@@ -1,4 +1,4 @@
-# MongoDB
+# MongoDB {#mongodb}
 
 O banco de dados de documentos em si: o replica set (membros, seu estado,
 uma primary ausente, quão atrasada está cada secondary), conexões contra o
@@ -18,7 +18,7 @@ escritas mais recentes; no limite de conexões novos clientes são recusados;
 com mais de 20% do cache do WiredTiger sujo, as consultas têm que despejar
 páginas elas mesmas e tudo fica mais lento.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_mongodb_`. Os totais são
 contadores: gráficos e regras os transformam em taxas.
@@ -52,7 +52,7 @@ unreachable, MongoDB replication lag, MongoDB connections near the limit,
 MongoDB cache under pressure, MongoDB internal errors, além de Device
 unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o MongoDB. Ele diz o que está errado em uma frase (replica
@@ -61,7 +61,7 @@ segundo, cache usado, memória residente, operações na fila e tempo de
 atividade, depois o estado e atraso de cada membro do replica set e as
 operações por segundo por tipo.
 
-## Criar uma conta MongoDB com o papel clusterMonitor
+## Criar uma conta MongoDB com o papel clusterMonitor {#create-a-mongodb-account-with-the-clustermonitor-role}
 
 1. No mongosh, conectado com um usuário autorizado a criar usuários, crie uma
    conta apenas com o papel embutido clusterMonitor. Ela lê o status do
@@ -90,7 +90,7 @@ operações por segundo por tipo.
     membro em vez disso. MongoDB mais antigo que 3.6 e roteadores mongos não
     são suportados.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

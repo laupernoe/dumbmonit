@@ -1,4 +1,4 @@
-# Veeam Backup & Replication
+# Veeam Backup & Replication {#veeam-backup--replication}
 
 Um servidor Veeam Backup & Replication através de sua API REST: jobs cuja
 última execução falhou ou terminou com um aviso, sessões com falha das
@@ -30,7 +30,7 @@ tratado da mesma forma: nenhum dispositivo, nenhum erro.
     um servidor de backup em execução. Quais rotas o papel Viewer pode ler
     varia com a versão: avise-nos o que seu servidor recusa.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_veeam_`.
 
@@ -51,7 +51,7 @@ Todas as métricas têm o prefixo `dumbmonit_veeam_`.
 | `license_instances_licensed`, `license_instances_used` | | Uso de licença de instância. |
 | `section_readable` | `section`: `sessions`, `repositories`, `license`, `restore_points` | 1 quando a conta pode lê-la, 0 quando o Veeam recusou. |
 
-As [regras integradas](../alerting/rules.md#veeam-backup-replication) que
+As [regras integradas](../alerting/rules.md#veeam-backup--replication) que
 se aplicam:
 
 - **Veeam job failed**: a última execução de um job ativado falhou
@@ -65,7 +65,7 @@ se aplicam:
   `device_stale_days` sem um backup bem sucedido (Advisory, lembrada
   diariamente); veja [Dispositivos](#devices) abaixo.
 
-## Dispositivos
+## Dispositivos {#devices}
 
 Todo objeto com pelo menos um ponto de restauração — uma VM, um computador
 físico ou virtual protegido por agente, um compartilhamento de arquivo — é
@@ -92,7 +92,7 @@ tabela da página do dispositivo. O `type` do dispositivo é o próprio nome
 de plataforma do Veeam (`VSphere`, `WindowsPhysical`, `HyperV`…), mostrado
 como está.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Backups diz o que está errado em uma frase, mostra os jobs com
 falha, as sessões com falha das últimas 24 horas, os jobs em execução e a
@@ -101,7 +101,7 @@ licença, depois lista os jobs ativados — falhas primeiro — com seu tipo e
 tabela de dispositivos protegidos (nome, plataforma, último backup,
 status) segue, da família genérica acima.
 
-## Dar ao DumbMonit uma conta Veeam Backup Viewer
+## Dar ao DumbMonit uma conta Veeam Backup Viewer {#give-dumbmonit-a-veeam-backup-viewer-account}
 
 1. No servidor de backup, crie uma conta Windows local para o DumbMonit
    com uma senha longa e aleatória e nenhum outro direito na máquina (uma
@@ -127,7 +127,7 @@ status) segue, da família genérica acima.
     Viewer o DumbMonit lê os jobs, sessões, repositórios e pontos de
     restauração, e mostra a licença como não legível: ele nunca pede mais.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -145,7 +145,7 @@ URL. Opções:
 - **Desatualização de dispositivo** (`device_stale_days`, 3 dias por
   padrão): veja [Dispositivos](#devices) acima.
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 "Veeam refused the login": o nome de usuário precisa de seu host ou
 domínio (`VBR01\dumbmonit`), ou a conta não tem papel Veeam.
