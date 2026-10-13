@@ -1,12 +1,30 @@
 <script lang="ts">
 	/**
-	 * The Pharos of Alexandria: a three-stage lighthouse (square, octagonal, round) with a fire in its lantern, on its rock in the harbour, with feluccas and palms. Static, no animation. Follows the scene contract: fills its
-	 * positioned parent, the headline zone (top left) is left clear, the
-	 * palette lives here with a light and a dark set.
+	 * The Pharos of Alexandria: a three-stage lighthouse with a fire in its lantern, on its rock in the harbour.
+	 * `down`: the fire gutters out; `up`: it relights; `resolved`: it flares and throws sparks.
+	 *
+	 * `mood` is the weather (ok/calm: clear, warn/clouded: cloud, critical/storm:
+	 * rain and lightning). `pulse` plays one gesture whenever its `at` changes.
+	 * Fills its positioned parent, the headline zone (top left) is left clear.
+	 * Reduced motion keeps the still image.
 	 */
+	import SceneWeather from './SceneWeatherA.svelte';
+	import SceneSparkles from './SceneSparkles.svelte';
+	import { createPulse } from './pulseA.svelte';
+	import { level, type Mood, type PulseProp } from './weather';
+
+	let { mood = 'ok', pulse = null }: { mood?: Mood; pulse?: PulseProp } = $props();
+	const p = createPulse(() => pulse);
+	const wx = $derived(level(mood));
 </script>
 
-<div class="scene scene-alexandria" aria-hidden="true">
+<div
+	class="scene scene-alexandria"
+	class:p-down={p.active === 'down'}
+	class:p-up={p.active === 'up'}
+	class:p-resolved={p.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 <defs><linearGradient id="al-wat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--water1)"/><stop offset="1" stop-color="var(--water2)"/></linearGradient><radialGradient id="al-fire"><stop offset="0" stop-color="var(--flame)" stop-opacity=".95"/><stop offset="1" stop-color="var(--flame)" stop-opacity="0"/></radialGradient></defs>
 <g fill="var(--star)"><circle cx="1010" cy="118" r="2"/><circle cx="1250" cy="104" r="2.2"/><circle cx="1560" cy="120" r="2"/><circle cx="1650" cy="230" r="2.2"/><circle cx="1130" cy="190" r="1.8"/><circle cx="1440" cy="160" r="1.8"/><circle cx="780" cy="200" r="2"/></g>
@@ -43,11 +61,18 @@
 <g fill="var(--dark)" opacity=".85"><rect x="1183" y="150" width="6" height="18"/><rect x="1197" y="150" width="6" height="18"/><rect x="1211" y="150" width="6" height="18"/></g>
 <path d="M1176 146H1228L1202 122Z" fill="var(--stone2)"/>
 <path d="M1202 122v-14" stroke="var(--stone2)" stroke-width="3"/>
-<circle cx="1202" cy="157" r="46" fill="url(#al-fire)"/>
+<g class="fire"><circle cx="1202" cy="157" r="46" fill="url(#al-fire)"/>
 <path d="M1202 168C1188 160 1192 150 1202 138C1206 148 1216 152 1214 162C1214 166 1208 168 1202 168Z" fill="var(--flame)"/>
 <path d="M1202 166C1196 160 1200 154 1202 148C1206 154 1208 160 1202 166Z" fill="var(--flame2)"/>
-<path d="M1196 108l6-12 6 12z" fill="var(--flame)"/>
+<path d="M1196 108l6-12 6 12z" fill="var(--flame)"/></g>
 </g>
+
+		<SceneWeather level={wx} />
+		{#if p.active === 'resolved'}
+			{#key p.key}
+				<SceneSparkles x={1202} y={140} colors={['#f2a53a', '#fff0a8', '#ffd37a']} count={16} spread={120} />
+			{/key}
+		{/if}
 	</svg>
 </div>
 
@@ -60,4 +85,22 @@
 	:global(.dark) .scene-alexandria {
 		--sky1: #0b1026; --sky2: #26203f; --sun: #e8eef8; --star: #e8eef8; --cloud: #2a3658; --water1: #17305a; --water2: #0a1530; --wave: #9fb6e0; --foam: #9fb6e0; --town: #4a4670; --rock: #3a3858; --stone: #7d7f9c; --stone2: #5a5c7a; --dark: #0e0d22; --trunk: #3f3646; --tree: #1f4a4f; --flame: #ffb347; --flame2: #fff0a8; --hull: #14122a; --sail: #8a90a8; --sail2: #8a6a60;
 	}
+
+	.fire { transform-box: fill-box; transform-origin: 50% 100%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.fire { animation: al-flicker 2.4s ease-in-out infinite alternate; }
+		.p-down .fire { animation: al-out 4.6s ease-in both; }
+		.p-up .fire { animation: al-in 3s ease-out both; }
+		.p-resolved .fire { animation: al-flare 3.4s ease-out both; }
+	}
+	@keyframes al-flicker { to { transform: scale(1.04, 0.96); opacity: 0.92; } }
+	@keyframes al-out {
+		0% { transform: none; opacity: 1; } 12% { transform: scale(0.8, 0.6); } 20% { transform: scale(1.05); opacity: 0.8; }
+		42% { transform: scale(0.15, 0.08); opacity: 0.1; } 85% { transform: scale(0.1, 0.05); opacity: 0; } 100% { transform: none; opacity: 1; }
+	}
+	@keyframes al-in {
+		0% { transform: scale(0.1, 0.05); opacity: 0; } 25% { transform: scale(0.7, 0.8); opacity: 1; } 38% { transform: scale(0.3, 0.3); opacity: 0.4; }
+		60% { transform: scale(1.25, 1.3); opacity: 1; } 100% { transform: none; }
+	}
+	@keyframes al-flare { 0% { transform: none; } 25% { transform: scale(1.7, 1.9); } 100% { transform: none; } }
 </style>

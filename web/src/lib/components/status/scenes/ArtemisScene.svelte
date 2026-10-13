@@ -1,13 +1,30 @@
 <script lang="ts">
 	/**
-	 * The Temple of Artemis at Ephesus — a vast Ionic temple on its stepped
-	 * platform, double colonnade, painted pediment, cypresses and a hill behind.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * The Temple of Artemis at Ephesus: a vast Ionic temple on its stepped platform, cypresses and a hill behind, a sacred flame in a brazier on each side.
+	 * `down`: the flames die; `up`: they are relit; `resolved`: they flare and doves fly up from the pediment.
+	 *
+	 * `mood` is the weather (ok/calm: clear, warn/clouded: cloud, critical/storm:
+	 * rain and lightning). `pulse` plays one gesture whenever its `at` changes.
+	 * Fills its positioned parent, the headline zone (top left) is left clear.
+	 * Reduced motion keeps the still image.
 	 */
+	import SceneWeather from './SceneWeatherA.svelte';
+	import SceneSparkles from './SceneSparkles.svelte';
+	import { createPulse } from './pulseA.svelte';
+	import { level, type Mood, type PulseProp } from './weather';
+
+	let { mood = 'ok', pulse = null }: { mood?: Mood; pulse?: PulseProp } = $props();
+	const p = createPulse(() => pulse);
+	const wx = $derived(level(mood));
 </script>
 
-<div class="scene scene-artemis" aria-hidden="true">
+<div
+	class="scene scene-artemis"
+	class:p-down={p.active === 'down'}
+	class:p-up={p.active === 'up'}
+	class:p-resolved={p.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<g id="ar-cypress"><path d="M0 0V-10C-14-30-12-70 0-120C12-70 14-30 0-10z" fill="var(--cypress)" /></g>
@@ -77,6 +94,30 @@
 		<!-- olive trees -->
 		<g fill="var(--olive)"><ellipse cx="840" cy="500" rx="26" ry="16" /><ellipse cx="1790" cy="506" rx="26" ry="14" /></g>
 		<g stroke="var(--trunk)" stroke-width="4" stroke-linecap="round"><path d="M840 500v14M1790 506v12" /></g>
+		<g class="braz" transform="translate(990 472) scale(1.7)">
+			<path d="M-9-18h18l-4 18h-10z" fill="var(--door)" /><rect x="-12" y="-21" width="24" height="4" rx="1.5" fill="var(--door)" />
+			<g class="bflame">
+				<circle cy="-32" r="17" fill="#f2a53a" opacity=".3" />
+				<path d="M0-21C-8-27-6-35 0-44C6-35 8-27 0-21z" fill="#f2a53a" /><path d="M0-22C-4-26-3-31 0-36C3-31 4-26 0-22z" fill="#fff0a8" />
+			</g>
+		</g>
+		<g class="braz" transform="translate(1610 472) scale(1.7)">
+			<path d="M-9-18h18l-4 18h-10z" fill="var(--door)" /><rect x="-12" y="-21" width="24" height="4" rx="1.5" fill="var(--door)" />
+			<g class="bflame">
+				<circle cy="-32" r="17" fill="#f2a53a" opacity=".3" />
+				<path d="M0-21C-8-27-6-35 0-44C6-35 8-27 0-21z" fill="#f2a53a" /><path d="M0-22C-4-26-3-31 0-36C3-31 4-26 0-22z" fill="#fff0a8" />
+			</g>
+		</g>
+		<g class="doves" fill="none" stroke="#fffaf0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+			<path class="dv dv1" d="M1284 182q8-12 16 0q8-12 16 0" /><path class="dv dv2" d="M1306 196q6-9 12 0q6-9 12 0" /><path class="dv dv3" d="M1270 196q5-8 10 0q5-8 10 0" />
+		</g>
+
+		<SceneWeather level={wx} />
+		{#if p.active === 'resolved'}
+			{#key p.key}
+				<SceneSparkles x={1300} y={200} colors={['#f2c14e', '#fff0a8', '#fff']} count={12} spread={130} />
+			{/key}
+		{/if}
 	</svg>
 </div>
 
@@ -171,5 +212,31 @@
 		--blade: #2a4a4a;
 		--olive: #1f3a3a;
 		--trunk: #14182a;
+	}
+
+	.bflame { transform-box: fill-box; transform-origin: 50% 100%; }
+	.dv { opacity: 0; }
+	@media (prefers-reduced-motion: no-preference) {
+		.bflame { animation: ar-flicker 1.8s ease-in-out infinite alternate; }
+		.p-down .bflame { animation: ar-out 4.4s ease-in both; }
+		.p-up .bflame { animation: ar-in 2.8s ease-out both; }
+		.p-resolved .bflame { animation: ar-flare 3s ease-out both; }
+		.p-resolved .dv { animation: ar-fly 3.6s ease-out both; }
+		.p-resolved .dv2 { animation-delay: 0.3s; }
+		.p-resolved .dv3 { animation-delay: 0.6s; }
+	}
+	@keyframes ar-flicker { to { transform: scale(1.06, 0.94); } }
+	@keyframes ar-out {
+		0% { transform: none; opacity: 1; } 15% { transform: scale(0.7, 0.55); } 28% { transform: scale(1, 0.9); }
+		50%, 85% { transform: scale(0.1, 0.05); opacity: 0; } 100% { transform: none; opacity: 1; }
+	}
+	@keyframes ar-in {
+		0% { transform: scale(0.1, 0.05); opacity: 0; } 30% { transform: scale(0.6, 0.7); opacity: 1; } 45% { transform: scale(0.3, 0.3); }
+		70% { transform: scale(1.2, 1.3); } 100% { transform: none; }
+	}
+	@keyframes ar-flare { 30% { transform: scale(1.6, 1.9); } 100% { transform: none; } }
+	@keyframes ar-fly {
+		0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 80% { opacity: 1; }
+		100% { opacity: 0; transform: translate(120px, -150px); }
 	}
 </style>
