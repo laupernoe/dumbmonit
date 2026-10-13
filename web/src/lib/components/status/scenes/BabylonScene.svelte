@@ -1,14 +1,30 @@
 <script lang="ts">
 	/**
-	 * The Hanging Gardens of Babylon — a stepped ziggurat of brick terraces
-	 * planted with palms and trailing vines, the blue Ishtar Gate in the
-	 * distance, the Euphrates in front. Static, no animation. Follows the scene
-	 * contract: fills its positioned parent, the headline zone (top left) is
-	 * left clear, the palette lives here.
+	 * The Hanging Gardens of Babylon: a stepped ziggurat of brick terraces planted with palms and vines, the blue Ishtar Gate beyond, the Euphrates in front.
+	 * `down`: the palms wilt and droop; `up`: they spring back upright; `resolved`: the terraces burst into blossom.
+	 *
+	 * `mood` is the weather (ok/calm: clear, warn/clouded: cloud, critical/storm:
+	 * rain and lightning). `pulse` plays one gesture whenever its `at` changes.
+	 * Fills its positioned parent, the headline zone (top left) is left clear.
+	 * Reduced motion keeps the still image.
 	 */
+	import SceneWeather from './SceneWeatherA.svelte';
+	import SceneSparkles from './SceneSparkles.svelte';
+	import { createPulse } from './pulseA.svelte';
+	import { level, type Mood, type PulseProp } from './weather';
+
+	let { mood = 'ok', pulse = null }: { mood?: Mood; pulse?: PulseProp } = $props();
+	const p = createPulse(() => pulse);
+	const wx = $derived(level(mood));
 </script>
 
-<div class="scene scene-babylon" aria-hidden="true">
+<div
+	class="scene scene-babylon"
+	class:p-down={p.active === 'down'}
+	class:p-up={p.active === 'up'}
+	class:p-resolved={p.active === 'resolved'}
+	aria-hidden="true"
+>
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="bb-wat" x1="0" y1="0" x2="0" y2="1">
@@ -78,13 +94,13 @@
 		<path d="M1128 262c-3 9 3 18 0 28M1144 262c-3 14 3 28 0 42M1160 262c-3 7 3 14 0 21M1176 262c-3 11 3 23 0 35M1192 262c-3 4 3 9 0 14M1208 262c-3 9 3 18 0 28M1224 262c-3 14 3 28 0 42M1240 262c-3 7 3 14 0 21M1256 262c-3 11 3 23 0 35M1272 262c-3 4 3 9 0 14M1288 262c-3 9 3 18 0 28M1304 262c-3 14 3 28 0 42M1320 262c-3 7 3 14 0 21M1336 262c-3 11 3 23 0 35M1352 262c-3 4 3 9 0 14" stroke="var(--leaf2)" stroke-width="3.2" stroke-linecap="round" />
 		</g>
 		<rect x="930" y="474" width="630" height="8" fill="var(--soil)" />
-		<use href="#bb-palm" transform="translate(1190 258) scale(1.15)" />
-		<use href="#bb-palm" transform="translate(1260 256) scale(1.45)" />
-		<use href="#bb-palm" transform="translate(1330 258) scale(1.1)" />
-		<use href="#bb-palm" transform="translate(1100 302) scale(1)" />
-		<use href="#bb-palm" transform="translate(1420 302) scale(1.05)" />
-		<use href="#bb-palm" transform="translate(1000 346) scale(0.95)" />
-		<use href="#bb-palm" transform="translate(1520 346) scale(0.9)" />
+		<g class="palm" style="--s:1;--i:1"><use href="#bb-palm" transform="translate(1190 258) scale(1.15)" /></g>
+		<g class="palm" style="--s:-1;--i:2"><use href="#bb-palm" transform="translate(1260 256) scale(1.45)" /></g>
+		<g class="palm" style="--s:1;--i:3"><use href="#bb-palm" transform="translate(1330 258) scale(1.1)" /></g>
+		<g class="palm" style="--s:-1;--i:4"><use href="#bb-palm" transform="translate(1100 302) scale(1)" /></g>
+		<g class="palm" style="--s:1;--i:5"><use href="#bb-palm" transform="translate(1420 302) scale(1.05)" /></g>
+		<g class="palm" style="--s:-1;--i:6"><use href="#bb-palm" transform="translate(1000 346) scale(0.95)" /></g>
+		<g class="palm" style="--s:1;--i:7"><use href="#bb-palm" transform="translate(1520 346) scale(0.9)" /></g>
 
 		<!-- bank -->
 		<path d="M560 482H1780V496C1500 490 1100 492 560 498z" fill="var(--bank)" />
@@ -100,8 +116,15 @@
 			<path d="M56-34l-22 18" stroke="var(--hull)" stroke-width="3" stroke-linecap="round" />
 		</g>
 		<!-- foreground bank palms -->
-		<g transform="translate(878 502)"><use href="#bb-palm" transform="translate(0 0) scale(1.7)" /></g>
-		<g transform="translate(1600 502)"><use href="#bb-palm" transform="translate(0 0) scale(1.9)" /></g>
+		<g transform="translate(878 502)"><g class="palm" style="--s:-1;--i:8"><use href="#bb-palm" transform="translate(0 0) scale(1.7)" /></g></g>
+		<g transform="translate(1600 502)"><g class="palm" style="--s:1;--i:9"><use href="#bb-palm" transform="translate(0 0) scale(1.9)" /></g></g>
+
+		<SceneWeather level={wx} />
+		{#if p.active === 'resolved'}
+			{#key p.key}
+				<SceneSparkles x={1250} y={290} colors={['#f08cb0', '#ffd45a', '#fff', '#d7567e']} shape="petal" count={24} spread={280} />
+			{/key}
+		{/if}
 	</svg>
 </div>
 
@@ -181,4 +204,22 @@
 		--glint: #9fb4e0;
 		--hull: #0e0b1a;
 	}
+
+	.palm { transform-box: fill-box; transform-origin: 50% 100%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.palm { animation: bb-sway 5s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -0.6s); }
+		.p-down .palm { animation: bb-wilt 4.6s ease-in-out both; animation-delay: calc(var(--i) * 80ms); }
+		.p-up .palm { animation: bb-spring 2.2s cubic-bezier(0.2, 1.2, 0.4, 1) both; animation-delay: calc(var(--i) * 90ms); }
+		.p-resolved .palm { animation: bb-bloom 2.4s ease-in-out both; animation-delay: calc(var(--i) * 60ms); }
+	}
+	@keyframes bb-sway { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
+	@keyframes bb-wilt {
+		0%, 100% { transform: none; filter: none; }
+		35%, 75% { transform: rotate(calc(var(--s) * 22deg)) scaleY(0.84); filter: saturate(0.25) brightness(0.85); }
+	}
+	@keyframes bb-spring {
+		0% { transform: rotate(calc(var(--s) * 22deg)) scaleY(0.84); filter: saturate(0.25); }
+		60% { transform: rotate(calc(var(--s) * -6deg)); filter: none; } 100% { transform: none; }
+	}
+	@keyframes bb-bloom { 50% { transform: scale(1.12); filter: brightness(1.15) saturate(1.3); } }
 </style>
