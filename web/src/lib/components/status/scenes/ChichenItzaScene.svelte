@@ -1,13 +1,25 @@
 <script lang="ts">
 	/**
-	 * Chichen Itza — El Castillo, the stepped pyramid of Kukulkan with its four
-	 * staircases and the temple on top, in the Yucatan jungle. Static, no
-	 * animation. Follows the scene contract: fills its positioned parent, the
-	 * headline zone (top left) is left clear, the palette lives here.
+	 * Chichen Itza — El Castillo, the stepped pyramid of Kukulkan with its four staircases and the temple on top, in the Yucatan jungle.
+	 * `mood` is the weather (ok: clear, warn: clouds, critical: rain and
+	 * lightning; `calm|clouded|storm` accepted too). `pulse` plays one gesture
+	 * whenever its `at` changes: down snuffs the two stair-top torches and darkens the temple, up relights them while the serpent of light climbs the stairs, resolved lets the serpent descend to its stone heads, which glow.
+	 * Fills its positioned parent; the headline zone (top left) is left clear.
+	 * Reduced motion freezes every animation.
 	 */
+	import SceneWeather from './SceneWeather.svelte';
+	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
+
+	interface Props {
+		mood?: Mood;
+		pulse?: Pulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const g = createGesture(() => pulse);
+	const level = $derived(moodLevel(mood));
 </script>
 
-<div class="scene scene-chichenitza" aria-hidden="true">
+<div class="scene scene-chichenitza" class:p-down={g.kind === 'down'} class:p-up={g.kind === 'up'} class:p-resolved={g.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<!-- arbre de jungle : origine = pied du tronc -->
@@ -72,6 +84,17 @@
 		<path d="M1130 489H1370L1420 540H1080z" fill="var(--ci-path)" opacity=".7" />
 		<g fill="var(--ci-stone2)"><ellipse cx="1010" cy="520" rx="22" ry="7" /><ellipse cx="1490" cy="528" rx="26" ry="8" /><ellipse cx="760" cy="540" rx="18" ry="6" /></g>
 		<g stroke="var(--ci-blade)" stroke-width="2" stroke-linecap="round" opacity=".6"><path d="M620 520h100M820 550h120M1560 512h130M1660 560h100M1240 560h90" /></g>
+
+		<!-- gestes : torches, ombre du serpent -->
+		<g transform="translate(1250 482) scale(1.18) translate(-1250 -482)">
+			<rect class="ci-dark" x="1060" y="240" width="380" height="244" fill="#05060f" />
+			<g transform="translate(1210 311)"><g class="ci-torch"><circle r="13" fill="var(--ci-fire)" opacity=".22" /><path d="M0 0C-6-8-3-14 0-22C3-14 6-8 0 0z" fill="var(--ci-fire)" /></g></g>
+			<g transform="translate(1290 311)"><g class="ci-torch"><circle r="13" fill="var(--ci-fire)" opacity=".22" /><path d="M0 0C-6-8-3-14 0-22C3-14 6-8 0 0z" fill="var(--ci-fire)" /></g></g>
+			<path class="ci-serp ci-serp-down" d="M1250 314L1268.64 325.7L1230.71 337.4L1269.93 349.1L1229.43 360.9L1271.21 372.6L1228.14 384.3L1272.5 396L1226.86 407.7L1273.79 419.4L1225.57 431.1L1275.07 442.9L1224.29 454.6L1276.36 466.3L1223 478L1250 478" pathLength="1" />
+			<path class="ci-serp ci-serp-up" d="M1250 478L1223 478L1276.36 466.3L1224.29 454.6L1275.07 442.9L1225.57 431.1L1273.79 419.4L1226.86 407.7L1272.5 396L1228.14 384.3L1271.21 372.6L1229.43 360.9L1269.93 349.1L1230.71 337.4L1268.64 325.7L1250 314" pathLength="1" />
+			<g class="ci-eyes" fill="var(--ci-fire)"><circle cx="1209" cy="473" r="3.4" /><circle cx="1291" cy="473" r="3.4" /></g>
+		</g>
+		<SceneWeather {level} bolt={1250} />
 	</svg>
 </div>
 
@@ -145,4 +168,25 @@
 		--ci-leaf2: #163b3a;
 		--ci-leaf3: #2a5e50;
 	}
+	.scene-chichenitza { --ci-fire: #ffb347; --ci-serp: #3b2d22; }
+	.ci-torch { transform-box: fill-box; transform-origin: 50% 100%; }
+	.ci-dark { opacity: 0; }
+	.ci-serp { stroke: var(--ci-serp); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; }
+	.ci-eyes { opacity: 0; }
+	:global(.dark) .scene-chichenitza { --ci-serp: #05060f; --ci-fire: #ffc25c; }
+	@media (prefers-reduced-motion: no-preference) {
+		.ci-torch { animation: ci-flick 1.3s ease-in-out infinite alternate; }
+		.p-down .ci-torch { animation: ci-out 5s ease-out both; }
+		.p-down .ci-dark { animation: ci-dim 5s ease-out both; }
+		.p-up .ci-torch, .p-resolved .ci-torch { animation: ci-ignite 2.6s ease-out both; }
+		.p-up .ci-serp-up { animation: ci-draw 3.6s ease-in-out both; }
+		.p-resolved .ci-serp-down { animation: ci-draw 3.8s ease-in-out both; }
+		.p-resolved .ci-eyes { animation: ci-glow 6s ease-out both; }
+	}
+	@keyframes ci-flick { to { transform: scale(1.08, 0.94); } }
+	@keyframes ci-out { 0% { opacity: 1; } 10% { opacity: 0.1; transform: scale(0.5); } 14% { opacity: 0.6; } 22%, 85% { opacity: 0; transform: scale(0.2); } 100% { opacity: 1; transform: none; } }
+	@keyframes ci-dim { 0%, 100% { opacity: 0; } 20%, 80% { opacity: 0.5; } }
+	@keyframes ci-ignite { 0% { opacity: 0; transform: scale(0.2); } 30% { opacity: 1; transform: scale(1.4); } 45% { opacity: 0.4; } 60%, 100% { opacity: 1; transform: none; } }
+	@keyframes ci-draw { 0% { stroke-dashoffset: 1; opacity: 0.85; } 70% { stroke-dashoffset: 0; opacity: 0.85; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+	@keyframes ci-glow { 0%, 45% { opacity: 0; } 55%, 80% { opacity: 1; } 100% { opacity: 0; } }
 </style>
