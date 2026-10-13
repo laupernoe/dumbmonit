@@ -120,19 +120,27 @@ As métricas aparecem uma vez que a primeira verificação é feita.
 ## Capturas de tela {#screenshots}
 
 A imagem DumbMonit não tem navegador: capturas de tela vêm de um Chromium
-headless opcional, controlado via Chrome DevTools Protocol. O arquivo
-Compose entrega um como o serviço `browser`, sob o perfil `screenshots`,
-então só inicia quando solicitado:
+headless opcional, controlado via Chrome DevTools Protocol. Adicione um como serviço `browser` ao lado do DumbMonit em `docker-compose.yml`
+e aponte o servidor para ele:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Depois execute `docker compose up -d`. Nada publica a porta do navegador: só o
+servidor DumbMonit fala com ele, pela rede do Compose.
 
 `DUMBMONIT_BROWSER_URL` aponta o DumbMonit para o navegador (qualquer
 Chromium iniciado com `--remote-debugging-port`, por exemplo
 `chromedp/headless-shell`; o servidor lê `/json/version` e fala com o
-endereço para o qual o nome de host resolve). Coloque a variável em um
-arquivo `.env` ao lado de `docker-compose.yml` para mantê-la.
+endereço para o qual o nome de host resolve).
 
 Uma captura de tela é tirada apenas quando uma página recebe um novo
 snapshot (a referência, e toda mudança), nunca em uma verificação sem
@@ -171,12 +179,9 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
    partir de então, cada verificação compara o texto visível página por
    página e mantém uma cópia antes/depois de toda mudança, mostrada na
    página do dispositivo; o alerta "Website changed" avisa você.
-4. Para uma captura de tela de cada versão, inicie o serviço de
-   navegador opcional do arquivo Compose e aponte o DumbMonit para ele:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Para uma captura de tela de cada versão, adicione um serviço de navegador
+   headless ao seu arquivo Compose e aponte o DumbMonit para ele, como mostrado em
+   [Capturas de tela](#screenshots).
 
 !!! warning
     Só o texto que o servidor envia é comparado: uma página desenhada

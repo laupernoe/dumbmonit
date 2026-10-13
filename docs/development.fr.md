@@ -32,8 +32,6 @@ La compilation se fait dans Docker ; rien liée à Rust n'a besoin d'être insta
 
 \`\`\`bash
 # Pile complète (construit l'image: environ 10 min à froid) — UI sur http://localhost:8080
-docker compose up -d --build
-# superposition développeur: VictoriaMetrics intégré publié sur :8428 pour les requêtes MetricsQL directes
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, dans l'étape constructeur (musl/alpine)

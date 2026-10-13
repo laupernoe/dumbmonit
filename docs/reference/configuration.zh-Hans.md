@@ -43,7 +43,7 @@
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | 两个备份之间的小时，1 到 8760。第一个发生一个间隔在启动之后，不是启动。 |
 | `DUMBMONIT_DEMO` | *(off)* | `1` 对于公开、只读演示有一个固定虚构地产，签入 `demo` / `demo`。**在每个启动时重新创建数据库**：从不在真实数据卷上。请参阅 [Run a demo instance](../install/demo.md)。 |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | 多少备份被保留，1 到 365。最旧的被移除其 `.key`。 |
-| `DUMBMONIT_BROWSER_URL` | *(unset)* | [website changes](../devices/webchange.md#screenshots) 的屏幕截图用的 Headless Chromium，如 `http://host:9222`（其 DevTools 端口）。Compose 文件在 `screenshots` 配置文件下装运一个：`DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d`。未设置：仅文本比较。 |
+| `DUMBMONIT_BROWSER_URL` | *(unset)* | [website changes](../devices/webchange.md#screenshots) 的屏幕截图用的 Headless Chromium，如 `http://host:9222`（其 DevTools 端口）。在你的 Compose 文件中添加一个 `chromedp/headless-shell` 服务，如 [Screenshots](../devices/webchange.md#screenshots) 所示。未设置：仅文本比较。 |
 
 基线保留（60 天）和 14 天学习周期不可配置。
 
@@ -69,15 +69,13 @@ DumbMonit 被称为 EzyMonit 直到 2026 年 9 月。每个 `DUMBMONIT_*` 变量
 
 与 `DUMBMONIT_VM_URL` 设置，无一适用：服务器使用您命名的实例，嵌入式从不启动。`GET /api/health` 说哪个情况您在（`victoria.embedded`）。
 
-## Compose-level variables {#compose-level-variables}
+## Compose-level settings {#compose-level-variables}
 
-这些由 `docker-compose.yml` 读，不是由服务器：
-
-| Variable | Default | Role |
-|---|---|---|
-| `DUMBMONIT_PORT` | `8080` | 为 UI 发布的主机端口。 |
-| `DUMBMONIT_VM_RETENTION`, `DUMBMONIT_VM_MEMORY` | `12`, `256MB` | 通过给服务器；见上。 |
-| `DUMBMONIT_VM_PORT` | `8428` | 嵌入式 VictoriaMetrics 的主机端口，仅开发覆盖。 |
+随附的 `docker-compose.yml` 不读取任何变量，也不需要 `.env` 文件。
+一切都在服务的 `environment:` 下设置，或直接编辑该文件；参见
+[高级选项](../install/docker.md#advanced-options)（端口、密钥、保留期与内存、
+外部 VictoriaMetrics、密码重置、截图）。开发覆盖文件 `docker-compose.dev.yml`
+读取 `DUMBMONIT_VM_PORT`（默认 `8428`），作为内嵌 VictoriaMetrics 的主机端口。
 
 ## Ports {#ports}
 

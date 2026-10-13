@@ -9,16 +9,18 @@ dia a dia — uma instância com duas contas de administrador nunca precisa
 do resto desta página.
 
 Quando ninguém mais consegue iniciar sessão, não há email de recuperação:
-inicie o servidor uma vez com `DUMBMONIT_RESET_PASSWORD=1`:
+inicie o servidor uma vez com `DUMBMONIT_RESET_PASSWORD=1`: acrescente a linha
+em `environment:` do serviço no `docker-compose.yml` e execute
+`docker compose up -d`:
 
-```bash
-DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
 ```
 
 Toda conta e toda sessão são removidas no arranque e a interface mostra
 `/setup` de novo. Crie o primeiro administrador, depois inicie de novo sem
-a variável (`docker compose up -d dumbmonit`, com a variável por definir
-ou vazia no seu ambiente). Os dispositivos, regras, canais e as
+a linha (remova-a do `docker-compose.yml` e execute `docker compose up -d`). Os dispositivos, regras, canais e as
 definições de sign-on único não são tocados.
 
 ## Sem dados depois de adicionar um dispositivo {#no-data-after-adding-a-device}
@@ -71,11 +73,12 @@ Ver [Agente Linux, macOS, FreeBSD e Windows](devices/agent.md).
 ## Alterar a porta {#changing-the-port}
 
 O contentor escuta na 8080; a porta do anfitrião é a que o
-`docker-compose.yml` publica. Defina `DUMBMONIT_PORT` (num ficheiro `.env`
-junto ao ficheiro Compose, ou na linha de comandos):
+`docker-compose.yml` publica. Edite o lado esquerdo do mapeamento e execute
+`docker compose up -d`:
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
 Para alterar a porta *dentro* do contentor, defina `DUMBMONIT_BIND`, por

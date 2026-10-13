@@ -16,9 +16,9 @@ the `Dockerfile` doubles as a development environment.
 ### Full stack
 
 ```bash
-docker compose up -d --build                     # one container (server + embedded VictoriaMetrics), UI on http://localhost:8080
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-                                                 # developer overlay: the embedded VictoriaMetrics is published on :8428
+# one container (server + embedded VictoriaMetrics) built from the sources, UI on
+# http://localhost:8080; the overlay also publishes the embedded VictoriaMetrics on :8428
 ```
 
 The first build takes about ten minutes; later ones reuse the dependency layers.
@@ -60,7 +60,7 @@ npm run check      # svelte-check (CI runs this)
 npm run build      # static build into web/build, embedded by rust_embed at cargo build
 ```
 
-The dev server needs the Rust server running (`docker compose up -d`) to answer
+The dev server needs the Rust server running (`docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build`) to answer
 API calls. Never run two `vite build`s at once: they share `.svelte-kit/output`.
 
 To see a page as CI and users see it, use the headless browser skill in
