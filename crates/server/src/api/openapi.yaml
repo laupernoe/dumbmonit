@@ -882,9 +882,12 @@ paths:
         Creates one `website` device per CSV row. Body: `text/csv`, or JSON
         `{"csv": "..."}`. A header row is required; columns are `url`
         (required), `name`, `folder`, `tags` (`k=v;k=v`), `interval`
-        (`300`, `5m`, `1h`) and `expect_text`. At most 1000 rows. Without
-        `folder`, the folder is `Websites/<platform>` (platform detected by
-        one GET per site, 4 at a time, 10 s each) or `Websites/Other`. Rows
+        (`300`, `5m`, `1h`), `expect_text` and `category` (free text, stored
+        as the `category` option). At most 1000 rows. Without `folder`, the
+        folder is `Websites/<category>` (the given category, else one guessed
+        from the page: E-commerce, Blog, Web app, Showcase), otherwise
+        `Websites/<platform>` (platform detected by one GET per site, 4 at a
+        time, 10 s each) or `Websites/Other`. Rows
         already monitored are skipped and reported. With `dry_run=true`
         nothing is created and rows come back with status `ok`. Admin only.
       x-token-scope: write
@@ -4874,6 +4877,7 @@ components:
               name: { type: string }
               folder: { type: string }
               platform: { type: [string, "null"] }
+              category: { type: [string, "null"], description: "Category from the CSV column, else guessed from the page." }
               status: { type: string, enum: [ok, created, skipped, error] }
               message: { type: [string, "null"] }
               id: { type: [integer, "null"], format: int64 }
@@ -5810,7 +5814,7 @@ components:
 
     WebsiteProbe:
       type: object
-      required: [requested_url, final_url, status, response_ms, redirects, platform, content_type, text_chars, blank, expect_text_found, metadata]
+      required: [requested_url, final_url, status, response_ms, redirects, platform, category, content_type, text_chars, blank, expect_text_found, metadata]
       properties:
         requested_url: { type: string }
         final_url: { type: string, description: "Where the redirects lead." }
@@ -5826,6 +5830,7 @@ components:
               url: { type: string }
               status: { type: integer }
         platform: { $ref: "#/components/schemas/WebsitePlatform" }
+        category: { type: [string, "null"], description: "The `category` option, else a guess (`ecommerce`, `blog`, `app`, `showcase`); null when unclear." }
         content_type: { type: string }
         text_chars: { type: [integer, "null"], description: "Characters of visible text; null unless the final answer is 2xx." }
         blank: { type: [boolean, "null"], description: "Visible text below `min_text_chars`." }
@@ -5837,7 +5842,7 @@ components:
 
     WebsiteMetadata:
       type: object
-      required: [title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count, noindex, nofollow]
+      required: [title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count, hreflang, google_verification, og_type, noindex, nofollow]
       properties:
         title: { type: [string, "null"] }
         description: { type: [string, "null"] }
@@ -5848,6 +5853,9 @@ components:
         lang: { type: [string, "null"], description: "`<html lang>`." }
         h1_count: { type: integer }
         hreflang_count: { type: integer }
+        hreflang: { type: array, items: { type: string }, description: Languages of the hreflang alternates, sorted. }
+        google_verification: { type: array, items: { type: string }, description: "`google-site-verification` tokens, sorted." }
+        og_type: { type: [string, "null"] }
         noindex: { type: boolean }
         nofollow: { type: boolean }
 
@@ -5860,7 +5868,7 @@ components:
       type: object
       required: [field, value, pending, changed_at, recently_changed]
       properties:
-        field: { type: string, enum: [final_url, title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count] }
+        field: { type: string, enum: [final_url, title, description, canonical, robots, og_title, og_description, lang, h1_count, hreflang_count, hreflang, google_verification] }
         value: { type: [string, "null"], description: "Confirmed value; empty string when the page has none." }
         pending: { type: [string, "null"], description: "A different value seen once, confirmed if the next check sees it again." }
         changed_at: { type: [string, "null"], description: "Last confirmed change. UTC, without suffix." }

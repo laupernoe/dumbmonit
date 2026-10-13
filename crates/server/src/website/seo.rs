@@ -13,6 +13,7 @@ use crate::webchange::html;
 
 /// Les métadonnées d'une page, telles que lues (espaces réduites).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Metadata {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -25,6 +26,12 @@ pub struct Metadata {
     pub lang: Option<String>,
     pub h1_count: usize,
     pub hreflang_count: usize,
+    /// Langues des variantes `hreflang`, triées et sans doublon.
+    pub hreflang: Vec<String>,
+    /// Jetons `google-site-verification` (Search Console), triés.
+    pub google_verification: Vec<String>,
+    /// `og:type` (`website`, `article`, `product`…), minuscules.
+    pub og_type: Option<String>,
     pub noindex: bool,
     pub nofollow: bool,
 }
@@ -57,6 +64,12 @@ pub fn extract(final_url: &Url, headers: &HeaderMap, body: &str) -> Metadata {
                     }
                     // `googlebot` précise `robots` pour Google : les deux comptent.
                     (Some("robots" | "googlebot"), _) => robots.push(content),
+                    (Some("google-site-verification"), _) => {
+                        meta.google_verification.push(content);
+                    }
+                    (_, Some("og:type")) | (Some("og:type"), _) if meta.og_type.is_none() => {
+                        meta.og_type = Some(content.to_lowercase());
+                    }
                     (_, Some("og:title")) | (Some("og:title"), _) if meta.og_title.is_none() => {
                         meta.og_title = Some(content);
                     }
@@ -81,13 +94,21 @@ pub fn extract(final_url: &Url, headers: &HeaderMap, body: &str) -> Metadata {
                             url.to_string()
                         });
                 }
-                if rels.contains(&"alternate") && element.attribute("hreflang").is_some() {
+                if rels.contains(&"alternate")
+                    && let Some(lang) = element.attribute("hreflang")
+                {
                     meta.hreflang_count += 1;
+                    meta.hreflang.push(lang.trim().to_ascii_lowercase());
                 }
             }
             _ => {}
         }
     }
+
+    meta.hreflang.sort();
+    meta.hreflang.dedup();
+    meta.google_verification.sort();
+    meta.google_verification.dedup();
 
     // `X-Robots-Tag: noindex` ou `X-Robots-Tag: googlebot: noindex` ; une
     // consigne réservée à un autre robot (`otherbot: noindex`) ne compte pas.
@@ -149,6 +170,9 @@ mod tests {
   <meta name="description" content="Une   description">
   <meta property="og:title" content="OG titre">
   <meta property="og:description" content="OG desc">
+  <meta property="og:type" content="Article">
+  <meta name="google-site-verification" content="tok_B">
+  <meta name="google-site-verification" content="tok_A">
   <link rel="canonical" href="/blog/article?utm=1#x">
   <link rel="alternate" hreflang="en" href="/en/">
   <link rel="alternate" hreflang="de" href="/de/">
@@ -168,6 +192,9 @@ mod tests {
         assert_eq!(meta.lang.as_deref(), Some("fr-FR"));
         assert_eq!(meta.h1_count, 2, "ni le commentaire ni le script ne comptent");
         assert_eq!(meta.hreflang_count, 2);
+        assert_eq!(meta.hreflang, ["de", "en"]);
+        assert_eq!(meta.google_verification, ["tok_A", "tok_B"]);
+        assert_eq!(meta.og_type.as_deref(), Some("article"));
         assert!(!meta.noindex && !meta.nofollow && meta.robots.is_none());
     }
 

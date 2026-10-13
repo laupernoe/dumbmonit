@@ -3477,6 +3477,8 @@ export interface TargetImportRow {
 	name: string;
 	folder: string;
 	platform: string | null;
+	/** Category from the CSV column, else guessed from the page. */
+	category: string | null;
 	status: TargetImportStatus;
 	message: string | null;
 	id: number | null;
@@ -3510,6 +3512,11 @@ export interface WebsiteMetadata {
 	lang: string | null;
 	h1_count: number;
 	hreflang_count: number;
+	/** Languages of the hreflang alternates, sorted. */
+	hreflang: string[];
+	/** google-site-verification tokens, sorted. */
+	google_verification: string[];
+	og_type: string | null;
 	noindex: boolean;
 	nofollow: boolean;
 }
@@ -3521,6 +3528,8 @@ export interface WebsiteProbe {
 	response_ms: number;
 	redirects: WebsiteHop[];
 	platform: string;
+	/** The `category` option, else a guess (`ecommerce`, `blog`, `app`, `showcase`); null when unclear. */
+	category: string | null;
 	content_type: string;
 	text_chars: number | null;
 	blank: boolean | null;

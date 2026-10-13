@@ -254,6 +254,99 @@ pub fn detect_platform(final_url: &Url, headers: &HeaderMap, html: &str) -> Plat
     Platform::Other
 }
 
+/// Genre d'un site, déduit de signaux simples. Moins sûr que la plateforme :
+/// sans indice net, on ne range pas (`None`) et l'appelant retombe sur la
+/// plateforme, voire le domaine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Category {
+    Ecommerce,
+    Blog,
+    App,
+    Showcase,
+}
+
+impl Category {
+    pub const ALL: [Category; 4] = [Self::Ecommerce, Self::Blog, Self::App, Self::Showcase];
+
+    /// Identifiant stable (métrique, étiquette `category`, API).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Ecommerce => "ecommerce",
+            Self::Blog => "blog",
+            Self::App => "app",
+            Self::Showcase => "showcase",
+        }
+    }
+
+    /// Nom affiché, celui du dossier `Websites/<label>` de l'import.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Ecommerce => "E-commerce",
+            Self::Blog => "Blog",
+            Self::App => "Web app",
+            Self::Showcase => "Showcase",
+        }
+    }
+
+    /// Lit un identifiant ou un nom affiché, sans tenir compte de la casse
+    /// (colonne `category` de l'import).
+    pub fn parse(text: &str) -> Option<Self> {
+        let text = text.trim().to_ascii_lowercase();
+        Self::ALL.into_iter().find(|c| {
+            c.as_str() == text
+                || c.label().to_ascii_lowercase() == text
+                || (*c == Self::Ecommerce && matches!(text.as_str(), "e-commerce" | "shop"))
+        })
+    }
+}
+
+/// Devine le genre d'un site d'après sa plateforme et sa page. `og_type` est
+/// la valeur de `og:type` de la page, en minuscules. Seuls les signaux nets
+/// comptent : une plateforme généraliste (WordPress, Drupal, Hugo…) sans autre
+/// indice rend `None`.
+pub fn categorize(
+    platform: Platform,
+    final_url: &Url,
+    html: &str,
+    og_type: Option<&str>,
+) -> Option<Category> {
+    let mut end = html.len().min(512 * 1024);
+    while !html.is_char_boundary(end) {
+        end -= 1;
+    }
+    let lower = html[..end].to_ascii_lowercase();
+    let host = final_url.host_str().unwrap_or_default().to_ascii_lowercase();
+
+    if matches!(platform, Platform::Shopify | Platform::PrestaShop | Platform::Magento)
+        || og_type == Some("product")
+        || ["woocommerce", "add_to_cart", "add-to-cart", "cdn.shopify.com"]
+            .iter()
+            .any(|mark| lower.contains(mark))
+    {
+        return Some(Category::Ecommerce);
+    }
+    if platform == Platform::Ghost
+        || og_type == Some("article")
+        || [".blogspot.com", ".substack.com", ".wordpress.com", ".medium.com"]
+            .iter()
+            .any(|suffix| host.ends_with(suffix))
+        || host.starts_with("blog.")
+    {
+        return Some(Category::Blog);
+    }
+    if matches!(platform, Platform::NextJs | Platform::Nuxt)
+        || lower.contains("<div id=\"root\"></div>")
+        || lower.contains("<div id=\"app\"></div>")
+    {
+        return Some(Category::App);
+    }
+    if matches!(platform, Platform::Wix | Platform::Squarespace | Platform::Webflow) {
+        return Some(Category::Showcase);
+    }
+    None
+}
+
 /// Ce que l'import apprend d'un site en une requête.
 #[derive(Debug, Clone)]
 pub struct Identity {
@@ -261,6 +354,7 @@ pub struct Identity {
     pub final_url: Url,
     pub status: u16,
     pub platform: Platform,
+    pub category: Option<Category>,
 }
 
 /// Lit `address` une fois (redirections suivies, au plus 10, garde-fou des
@@ -292,7 +386,17 @@ pub async fn identify(
     .await?;
     let platform =
         detect_platform(&followed.final_url, &followed.answer.headers, &followed.answer.body);
-    Ok(Identity { final_url: followed.final_url, status: followed.answer.status, platform })
+    let og_type =
+        super::seo::extract(&followed.final_url, &followed.answer.headers, &followed.answer.body)
+            .og_type;
+    let category =
+        categorize(platform, &followed.final_url, &followed.answer.body, og_type.as_deref());
+    Ok(Identity {
+        final_url: followed.final_url,
+        status: followed.answer.status,
+        platform,
+        category,
+    })
 }
 
 #[cfg(test)]
@@ -409,5 +513,43 @@ mod tests {
         }
         assert_eq!(Platform::NextJs.label(), "Next.js");
         assert_eq!(Platform::Other.label(), "Other");
+    }
+
+    #[test]
+    fn genres_nets_et_incertains() {
+        let cat = |platform, url: &str, html: &str, og: Option<&str>| {
+            categorize(platform, &Url::parse(url).unwrap(), html, og)
+        };
+        let ex = "https://ex.fr/";
+        assert_eq!(cat(Platform::Shopify, ex, "", None), Some(Category::Ecommerce));
+        assert_eq!(
+            cat(Platform::WordPress, ex, "<body class=\"woocommerce\">", None),
+            Some(Category::Ecommerce)
+        );
+        assert_eq!(cat(Platform::Other, ex, "", Some("product")), Some(Category::Ecommerce));
+        assert_eq!(cat(Platform::Ghost, ex, "", None), Some(Category::Blog));
+        assert_eq!(cat(Platform::WordPress, ex, "", Some("article")), Some(Category::Blog));
+        assert_eq!(cat(Platform::Other, "https://blog.ex.fr/", "", None), Some(Category::Blog));
+        assert_eq!(cat(Platform::NextJs, ex, "", None), Some(Category::App));
+        assert_eq!(
+            cat(Platform::Other, ex, "<body><div id=\"root\"></div>", None),
+            Some(Category::App)
+        );
+        assert_eq!(cat(Platform::Wix, ex, "", None), Some(Category::Showcase));
+        for platform in [Platform::WordPress, Platform::Drupal, Platform::Hugo, Platform::Other] {
+            assert_eq!(
+                cat(platform, ex, "<h1>Bonjour</h1>", Some("website")),
+                None,
+                "{platform:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn genre_lu_depuis_un_texte() {
+        assert_eq!(Category::parse(" E-Commerce "), Some(Category::Ecommerce));
+        assert_eq!(Category::parse("web app"), Some(Category::App));
+        assert_eq!(Category::parse("blog"), Some(Category::Blog));
+        assert_eq!(Category::parse("clients"), None);
     }
 }

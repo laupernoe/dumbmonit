@@ -19,6 +19,7 @@ export function importTargets(csv: string, dryRun: boolean): Promise<TargetImpor
 
 /** The template offered for download: header, one fully filled row, one minimal row. */
 export const IMPORT_TEMPLATE_CSV =
-	'url,name,folder,tags,interval,expect_text\n' +
-	'https://example.com,Example,Clients/Acme,env=prod;team=web,5m,Welcome\n' +
-	'blog.example.org,,,,,\n';
+	'url,name,folder,tags,interval,expect_text,category\n' +
+	'https://example.com,Example,Clients/Acme,env=prod;team=web,5m,Welcome,\n' +
+	'shop.example.org,,,,,,E-commerce\n' +
+	'blog.example.org,,,,,,\n';
