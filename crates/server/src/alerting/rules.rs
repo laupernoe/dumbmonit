@@ -6258,6 +6258,7 @@ mod tests {
             "dumbmonit_victoriametrics_rows_rejected_total",
             "dumbmonit_victorialogs_rows_rejected_total",
             "dumbmonit_victoriametrics_slow_inserts_total",
+            "dumbmonit_victoriametrics_uptime_seconds",
             "dumbmonit_victoriametrics_rows_added_total",
             "dumbmonit_loki_ready",
             "dumbmonit_loki_discarded_lines_total",
