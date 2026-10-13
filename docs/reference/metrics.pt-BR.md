@@ -1,11 +1,11 @@
-# Métricas
+# Métricas {#metrics}
 
 O DumbMonit armazena toda medição no VictoriaMetrics e a lê de volta com
 MetricsQL, através do [proxy de métricas](api.md#metrics) do servidor.
 Esta página descreve a nomenclatura, os rótulos e a retenção. Listas de
 métricas por tipo estão nas [páginas de dispositivo](../devices/index.md).
 
-## Nomenclatura
+## Nomenclatura {#naming}
 
 Toda métrica tem o prefixo `dumbmonit_`, então o DumbMonit pode
 compartilhar uma instância VictoriaMetrics com outras ferramentas sem
@@ -33,7 +33,7 @@ dispositivo como armazenada, então um contador aparece como uma linha
 subindo. Um reinício aparece como um reset de contador, nunca como um
 pico falso.
 
-## `dumbmonit_up`
+## `dumbmonit_up` {#dumbmonit_up}
 
 Depois de toda sondagem bem sucedida, o servidor escreve
 `dumbmonit_up = 1` para o dispositivo. Nada é escrito quando uma sondagem
@@ -47,7 +47,7 @@ serviço está bem. Os dois sinais são mantidos separados de propósito: um
 `probe_success` de 0 diz que o serviço está fora do ar, uma interrupção
 de `up` diz que o monitoramento está fora do ar.
 
-## `dumbmonit_security_score`
+## `dumbmonit_security_score` {#dumbmonit_security_score}
 
 A cada 15 minutos o servidor calcula a
 [pontuação de segurança](../using/security-score.md) de cada dispositivo
@@ -55,7 +55,7 @@ cujo tipo tem verificações de segurança, e escreve
 `dumbmonit_security_score` (0–100, ausente enquanto nada pode ser
 avaliado) e `dumbmonit_security_checks_failed`, ambos rotulados `target`.
 
-## Rótulos
+## Rótulos {#labels}
 
 | Rótulo | Definido por | Significado |
 |---|---|---|
@@ -76,7 +76,7 @@ série de outra máquina.
     regras reiniciam a partir da atualização, e regras personalizadas
     ainda nomeando `ezymonit_…` precisam ser editadas.
 
-## Retenção e armazenamento
+## Retenção e armazenamento {#retention-and-storage}
 
 O VictoriaMetrics embutido mantém 12 meses de dados
 (`DUMBMONIT_VM_RETENTION`) sob `/data/vm`, no volume `dumbmonit-data`. O
@@ -88,7 +88,7 @@ O histórico de alertas é mantido por 90 dias e as linhas de base de
 séries que desapareceram por 60 dias, ambos em SQLite (veja a
 [referência de configuração](configuration.md)).
 
-## Consultando
+## Consultando {#querying}
 
 - Através do servidor: `GET /api/metrics/query` e
   `GET /api/metrics/query_range`, com o cookie de sessão. Resultados de
@@ -115,7 +115,7 @@ avg by (host) (avg_over_time(dumbmonit_probe_success[30d]))
 time() - tlast_over_time(dumbmonit_up[7d]) > 300
 ```
 
-## Coletando do DumbMonit
+## Coletando do DumbMonit {#scraping-dumbmonit}
 
 Se você já roda um Prometheus ou um Grafana, não precisa de uma segunda
 stack. Três rotas ficam fora de `/api`, onde um coletor as procura:
@@ -137,7 +137,7 @@ suficiente para um painel Grafana de algumas dezenas de painéis — dê a
 um painel ocupado seu próprio token em vez de compartilhar um com um
 coletor.
 
-### Prometheus
+### Prometheus {#prometheus}
 
 ```yaml
 # prometheus.yml — a própria saúde do DumbMonit, depois as medições que coleta.
@@ -191,7 +191,7 @@ curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
-### Grafana
+### Grafana {#grafana}
 
 Aponte o Grafana para o **DumbMonit**, não para o VictoriaMetrics que
 ele executa: o processo filho escuta no loopback do contêiner, não tem
@@ -219,7 +219,7 @@ Se você já roda um Prometheus, o outro caminho funciona igualmente bem:
 o Prometheus federa o DumbMonit com o job acima, o Grafana lê o
 Prometheus, e as consultas são idênticas.
 
-### Métricas da instância
+### Métricas da instância {#instance-metrics}
 
 Tudo que `GET /metrics` expõe. Valores são lidos quando você coleta; os
 contadores `_total` são monotônicos e reiniciam só quando o servidor
@@ -270,7 +270,7 @@ up{job="dumbmonit"} == 0
 dumbmonit_samples_pending > 0 and increase(dumbmonit_sample_writes_failed_total[10m]) > 0
 ```
 
-### Abrindo as rotas sem um token
+### Abrindo as rotas sem um token {#opening-the-routes-without-a-token}
 
 `DUMBMONIT_METRICS_PUBLIC=true` serve `/metrics`, `/federate` e
 `/prometheus/api/v1/…` a qualquer um que possa alcançar a porta, para

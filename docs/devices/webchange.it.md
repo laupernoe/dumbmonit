@@ -120,7 +120,7 @@ canale come qualsiasi altra regola, oppure alza la sua severità, in
 
 Le metriche appaiono una volta eseguito il primo controllo.
 
-## Screenshot
+## Screenshot {#screenshots}
 
 L'immagine DumbMonit non ha un browser: gli screenshot provengono da un
 Chromium headless opzionale, guidato tramite il Chrome DevTools Protocol.

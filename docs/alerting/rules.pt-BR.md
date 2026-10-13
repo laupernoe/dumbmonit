@@ -1,17 +1,17 @@
-# Regras
+# Regras {#rules}
 
 Regras são inseridas na primeira inicialização, depois pertencem a você: o
 DumbMonit nunca reescreve uma regra que você alterou, ele só recria as que
 faltam. Regras integradas podem ser editadas e desativadas, não excluídas.
 
-## Regras integradas
+## Regras integradas {#built-in-rules}
 
 Severidades são mostradas com a palavra da interface; o valor da API está
 entre parênteses. Uma regra cuja métrica nenhum dispositivo produz não tem
 série e nunca dispara, então toda regra abaixo é entregue ativada em toda
 instância.
 
-### Todo dispositivo
+### Todo dispositivo {#every-device}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -21,21 +21,21 @@ instância.
 | Disk almost full | Sistema de arquivos 90% cheio ou mais, por ponto de montagem (SNMP, storages Proxmox e sistemas de arquivos raiz); limpa abaixo de 88%. | ≥ 90 % | 15 min | Aviso (`warning`), escala depois de 24 h | 6 h |
 | Filesystem almost full | Nesse ritmo, o sistema de arquivos ficará cheio dentro de quatro dias (`predict_linear` sobre 6 h; apenas sistemas de arquivos crescendo). | ≥ 100 % | 30 min | Aviso (`warning`) | 6 h |
 
-### UPS
+### UPS {#ups}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | UPS on battery | O UPS está alimentando a carga pela bateria (`dumbmonit_ups_output_source == 5`). | > 0 | 30 s | Alerta (`critical`) | 15 min |
 | UPS battery low | A bateria do UPS está baixa ou esgotada (`dumbmonit_ups_battery_status`, 3 = baixa, 4 = esgotada). | ≥ 3 | 1 min | Alerta (`critical`) | 30 min |
 
-### Portas de rede (SNMP)
+### Portas de rede (SNMP) {#network-ports-snmp}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | Port accumulating errors | Uma porta de rede registrou mais de cinquenta erros na última hora: geralmente um cabo falhando, uma fibra suja ou um desencontro de duplex (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; nada dispara durante a primeira hora de um dispositivo novo, então erros contados antes dele ser adicionado não são reportados como novos). | > 50 | 15 min | Aviso (`warning`) | 24 h |
 | Port flapping | Uma porta de rede caiu e subiu de novo mais de duas vezes em trinta minutos (`changes_prometheus(dumbmonit_if_oper_status[30m])`). Uma porta desativada de propósito não tem série e nunca dispara. | > 4 | 5 min | Aviso (`warning`) | 1 h |
 
-### Hardware de servidor (Redfish)
+### Hardware de servidor (Redfish) {#server-hardware-redfish}
 
 Séries de saúde são 0 (OK), 1 (Aviso) ou 2 (Crítico). Um slot vazio
 (`Absent`) ou desativado não tem série, então um servidor entregue com uma
@@ -50,7 +50,7 @@ fonte de alimentação de duas nunca dispara.
 | Drive failure predicted | Um disco reporta uma falha prevista: substitua-o enquanto ainda funciona (`dumbmonit_redfish_drive_failure_predicted`). | > 0 | 10 min | Aviso (`warning`) | 24 h |
 | Server health critical | O controlador reporta a própria saúde do sistema como Crítica (`dumbmonit_redfish_system_health`). | ≥ 2 | 2 min | Alerta (`critical`) | 6 h |
 
-### Monitores de disponibilidade e heartbeats
+### Monitores de disponibilidade e heartbeats {#uptime-monitors-and-heartbeats}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -61,7 +61,7 @@ fonte de alimentação de duas nunca dispara.
 | Certificate expiring soon | O certificado expira em menos de quatorze dias. | < 14 d | 1 h | Aviso (`warning`) | 24 h |
 | Certificate expired | O certificado expirou. | < 0 d | 5 min | Alerta (`critical`) | 24 h |
 
-### Contêineres Docker
+### Contêineres Docker {#docker-containers}
 
 Reportado pelo agente; veja [Agente](../devices/agent.md). O alerta nomeia
 o contêiner.
@@ -73,7 +73,7 @@ o contêiner.
 | Container restarting | O contêiner reiniciou três vezes ou mais em quinze minutos (`increase(dumbmonit_container_restart_count[15m])`): raramente fica parado o suficiente para a regra anterior. | ≥ 3 | 1 min | Aviso (`warning`) | 1 h |
 | Container update available | Uma imagem mais nova está disponível no registro para este contêiner (`dumbmonit_container_update_available == 1`). | > 0 | 1 h | Info (`info`) | 24 h |
 
-### Backups Plakar
+### Backups Plakar {#plakar-backups}
 
 Reportado pelo agente, por kloset e por fonte. Nenhuma dessas séries existe
 enquanto o Plakar não é detectado, então nenhuma regra pode disparar em
@@ -84,7 +84,7 @@ uma máquina sem ele.
 | Plakar backup too old | Nenhum snapshot Plakar novo para essa fonte por mais de dois dias (`dumbmonit_backup_last_success_seconds`). | > 2 d | 1 h | Aviso (`warning`) | 24 h |
 | Plakar backup failed | O snapshot mais recente tem erros, ou o kloset não pode ser lido (`dumbmonit_backup_last_status < 1`). | < 1 | 10 min | Alerta (`critical`) | 24 h |
 
-### Backups restic e Borg
+### Backups restic e Borg {#restic-and-borg-backups}
 
 Reportado pelo agente para cada repositório declarado sob `restic_repos`
 ou `borg_repos` em agent.yaml; veja
@@ -96,7 +96,7 @@ declarado não há série, então nenhuma regra pode disparar.
 | restic/Borg backup too old | Nenhum snapshot restic ou Borg novo neste repositório por mais de 48 horas (`dumbmonit_agent_backup_repo_last_snapshot_age_seconds`). | > 48 h | 1 h | Aviso (`warning`) | 24 h |
 | restic/Borg repository unreachable | O agente não consegue ler o repositório: inacessível, senha recusada ou binário faltando; o log do agente diz qual (`dumbmonit_agent_backup_repo_reachable < 1`). | < 1 | 30 min | Aviso (`warning`) | 24 h |
 
-### Túneis WireGuard
+### Túneis WireGuard {#wireguard-tunnels}
 
 Reportado pelo agente; veja
 [Agente](../devices/agent.md#wireguard-tunnels).
@@ -105,7 +105,18 @@ Reportado pelo agente; veja
 |---|---|---|---|---|---|
 | WireGuard peer silent | Um peer com keepalive persistente não completou um handshake por mais de 15 minutos: o túnel está fora do ar (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Um peer que nunca conectou conta seu silêncio a partir do momento em que o agente o viu primeiro. Peers sem keepalive (um celular, um laptop) ficam inativos por dias e são deixados de fora; mude o limite para mudar N, ou remova a parte `and on …` para observar todo peer. | > 15 min | 5 min | Aviso (`warning`) | 6 h |
 
-### Proxmox VE
+### Discos do agente, ZFS e sensores {#agent-disks-zfs-and-sensors}
+
+Reportado pelo agente; veja [Agente](../devices/agent.md).
+
+| Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| Disk SMART failing | A própria autoavaliação SMART do disco o reporta como em falha (`dumbmonit_agent_disk_smart_ok == bool 0`). Substitua-o e verifique os backups. | > 0 | 10 min | Alerta (`critical`) | 24 h |
+| ZFS pool degraded | Um pool ZFS não está mais saudável: um dispositivo está ausente, com falha ou removido (`dumbmonit_agent_zfs_pool_health`: 0 online, 1 degradado, 2 qualquer outro). | > 0 | 5 min | Alerta (`critical`) | 6 h |
+| ZFS scrub found errors | O último scrub ZFS encontrou erros neste pool, ou arquivos foram perdidos permanentemente (`dumbmonit_agent_zfs_pool_scrub_errors or dumbmonit_agent_zfs_pool_data_errors`). O pool pode continuar `ONLINE`. | > 0 | 10 min | Alerta (`critical`) | 24 h |
+| Temperature above critical | Um sensor está acima da temperatura crítica declarada por seu próprio hardware (`dumbmonit_agent_sensor_temperature_celsius >= dumbmonit_agent_sensor_temperature_critical_celsius`); sem valor fixo. | > 0 | 5 min | Alerta (`critical`) | 6 h |
+
+### Proxmox VE {#proxmox-ve}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -142,7 +153,7 @@ Reportado pelo agente; veja
 | Proxmox packages changed | A versão instalada de um pacote Proxmox mudou entre duas sondagens — alguém executou `apt upgrade` (`dumbmonit_proxmox_node_packages_changed`, publicado por uma hora com o detalhe em seu rótulo `changes`: `pve1 · pve-manager 8.2.4→8.2.7`). Resolve por conta própria uma hora depois. | > 0 | 1 min | Info (`info`) | 24 h |
 | Node certificate expiring | Um certificado de nó Proxmox expira em menos de quatorze dias (`dumbmonit_proxmox_node_certificate_expiry_days`). | < 14 d | 1 h | Aviso (`warning`) | 24 h |
 
-### Proxmox Backup Server
+### Proxmox Backup Server {#proxmox-backup-server}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -168,7 +179,7 @@ Reportado pelo agente; veja
 | PBS restart pending after upgrade | O pacote foi atualizado mas o daemon em execução ainda é o antigo (`dumbmonit_pbs_node_running_version_stale`). | > 0 | 6 h | Info (`info`) | 7 d |
 | PBS updates pending | Mais de vinte atualizações de pacote estão pendentes no servidor de backup (`dumbmonit_pbs_node_updates_pending`). | > 20 | 1 h | Info (`info`) | 7 d |
 
-### Proxmox Datacenter Manager
+### Proxmox Datacenter Manager {#proxmox-datacenter-manager}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -179,7 +190,7 @@ Reportado pelo agente; veja
 | Datacenter console certificate expiring | Um certificado da console do datacenter expira em menos de quatorze dias (`dumbmonit_pdm_node_certificate_expiry_days`). | < 14 d | 1 h | Aviso (`warning`) | 24 h |
 | Datacenter console updates pending | Mais de vinte atualizações de pacote estão pendentes na console do datacenter (`dumbmonit_pdm_node_updates_pending`). | > 20 | 1 h | Info (`info`) | 7 d |
 
-### Proxmox Mail Gateway
+### Proxmox Mail Gateway {#proxmox-mail-gateway}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -193,7 +204,7 @@ Reportado pelo agente; veja
 | Mail gateway certificate expiring | Um certificado do gateway de e-mail expira em menos de quatorze dias (`dumbmonit_pmg_certificate_expires_in_seconds`). | < 14 d | 1 h | Aviso (`warning`) | 24 h |
 | Mail gateway updates pending | Mais de vinte atualizações de pacote estão pendentes no gateway de e-mail (`dumbmonit_pmg_node_updates_pending`). | > 20 | 1 h | Info (`info`) | 7 d |
 
-### MDaemon e SecurityGateway
+### MDaemon e SecurityGateway {#mdaemon-and-securitygateway}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -206,7 +217,7 @@ Reportado pelo agente; veja
 | SecurityGateway API not answering | A API REST parou de responder enquanto os serviços ainda respondem (`dumbmonit_securitygateway_api_up`). Só um dispositivo com uma chave de API tem a série. | < 1 | 15 min | Aviso (`warning`) | 12 h |
 | SecurityGateway delivery queue growing | A fila de entrega cresceu mais de cem mensagens em duas horas (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): o servidor de e-mail detrás do gateway provavelmente está recusando e-mail. Os nomes de contador vêm da API como estão; se sua versão nomeia a fila diferente, ajuste o matcher. | > 100 | 15 min | Aviso (`warning`) | 6 h |
 
-### OPNsense
+### OPNsense {#opnsense}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -223,7 +234,7 @@ Reportado pelo agente; veja
 | Firewall reboot pending | Uma atualização está instalada mas precisa de um reinício para ter efeito (`dumbmonit_opnsense_firmware_reboot_required`). | > 0 | 1 h | Info (`info`) | 7 d |
 | Firewall updates pending | O firewall tem pacotes esperando para serem atualizados (`dumbmonit_opnsense_firmware_updates_pending`). É a máquina mais exposta na rede. | > 0 | 1 h | Info (`info`) | 7 d |
 
-### TrueNAS
+### TrueNAS {#truenas}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -241,7 +252,7 @@ Reportado pelo agente; veja
 | TrueNAS alert raised | O próprio TrueNAS disparou um alerta de nível ERROR ou acima (`dumbmonit_truenas_alerts`). Sua própria frase está na página do dispositivo. | > 0 | 10 min | Aviso (`warning`) | 12 h |
 | NAS service stopped | Um serviço configurado para iniciar com o NAS está parado (`dumbmonit_truenas_service_running`). Um serviço desligado de propósito não tem série. | < 1 | 10 min | Aviso (`warning`) | 6 h |
 
-### Synology DSM
+### Synology DSM {#synology-dsm}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -260,7 +271,7 @@ Reportado pelo agente; veja
 | Active Backup device overdue | Um dispositivo passou mais tempo sem uma execução bem sucedida do Active Backup for Business do que seu próprio ritmo permite, dias de descanso excluídos (`dumbmonit_abb_device_overdue`, veja [Synology](../devices/synology.md#how-overdue-is-judged)). | > 0 | 30 min | Aviso (`warning`) | 24 h |
 | Active Backup device failing | As duas últimas ou mais tentativas de um dispositivo falharam (`dumbmonit_abb_device_consecutive_failures`); uma execução cancelada não conta como nenhum dos dois. | ≥ 2 | 10 min | Alerta (`critical`) | 24 h |
 
-### Servidores de logs e métricas
+### Servidores de logs e métricas {#log-and-metrics-servers}
 
 VictoriaMetrics, VictoriaLogs, Loki e Graylog
 ([dispositivos](../devices/victoriametrics.md)). Contadores passam por
@@ -286,7 +297,7 @@ dados recusados não dispara em sua primeira medição.
 | Graylog input failed | Uma entrada falhou ao iniciar (`dumbmonit_graylog_inputs_failed`). | > 0 | 5 min | Aviso (`warning`) | 24 h |
 | Graylog indexing failures | Escritas no cluster de busca ou processamento de mensagens falharam na última hora (`increase_prometheus(dumbmonit_graylog_output_failures_total[1h]) + increase_prometheus(dumbmonit_graylog_processing_failures_total[1h])`). | > 0 | 15 min | Aviso (`warning`) | 24 h |
 
-### Aplicações autoalojadas
+### Aplicações autoalojadas {#self-hosted-applications}
 
 Nextcloud, Immich, Paperless-ngx, Jellyfin e Plex
 ([dispositivos](../devices/nextcloud.md)). Elas raramente caem
@@ -317,7 +328,7 @@ unreachable.
 | Jellyfin restart pending | O Jellyfin espera um dia por um reinício depois de instalar ou atualizar um plugin (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Plex update available | A verificação de atualização do Plex encontrou uma versão mais nova (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 
-### Forges autoalojadas
+### Forges autoalojadas {#self-hosted-forges}
 
 GitLab (self-managed) e Forgejo/Gitea
 ([dispositivos](../devices/gitlab.md)). Uma instância que não responde de
@@ -334,7 +345,7 @@ Sidekiq, executores de CI/CD, uma tarefa agendada que parou de rodar.
 | Forgejo/Gitea runners all offline | Todo executor de Actions está offline, e ao menos um está registrado (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Aviso (`warning`) | 6 h |
 | Forgejo/Gitea scheduled task overdue | Uma tarefa agendada (verificação de repositório, limpeza, verificador de atualizações) não rodou em seu próprio intervalo (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Aviso (`warning`) | 24 h |
 
-### Dispositivos clientes
+### Dispositivos clientes {#client-devices}
 
 Uma regra, compartilhada por toda integração que rastreia dispositivos se
 conectando e fazendo backup — os celulares, tablets e desktops do Immich
@@ -357,7 +368,7 @@ separadamente, através de um mecanismo consciente de ritmo
 |---|---|---|---|---|---|
 | Client device stale | Um dispositivo não se conectou nem fez backup dentro da janela de desatualização configurada para este alvo (`dumbmonit_client_device_stale_seconds`). | > 0 | 1 h | Aviso (`warning`) | 24 h |
 
-### Pi-hole
+### Pi-hole {#pi-hole}
 
 [Pi-hole](../devices/pihole.md) v6, lido através de sua API REST.
 
@@ -368,7 +379,7 @@ separadamente, através de um mecanismo consciente de ritmo
 | Pi-hole update available | Uma versão mais nova está disponível (`dumbmonit_pihole_updates_available`): a imagem no Docker, core, interface web ou FTL senão. O Pi-hole verifica uma vez por dia. | > 0 | 1 h | Info (`info`) | 7 d |
 | Pi-hole diagnosis messages | O Pi-hole lista mensagens em sua página de diagnóstico (`dumbmonit_pihole_messages`): uma lista de bloqueio que falhou ao baixar, um cliente com taxa limitada, um host sobrecarregado. | > 0 | 15 min | Info (`info`) | 24 h |
 
-### AdGuard Home
+### AdGuard Home {#adguard-home}
 
 O filtro DNS ([dispositivo](../devices/adguard.md)). Números de consulta e
 bloqueio são somas sobre a própria janela de estatísticas do AdGuard Home,
@@ -382,7 +393,7 @@ não contadores: nenhuma regra é construída sobre eles.
 | AdGuard Home filter lists stale | A atualização mais antiga de uma lista de filtro ativada tem mais de três dias (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 dias | 1 h | Aviso (`warning`) | 24 h |
 | AdGuard Home update available | Uma versão mais nova é anunciada pela própria verificação de versão do AdGuard Home (`dumbmonit_adguard_update_available`); nunca dispara quando essa verificação está desativada, como na imagem Docker oficial. | > 0 | 1 h | Info (`info`) | 7 dias |
 
-### UPS via NUT
+### UPS via NUT {#ups-behind-nut}
 
 UPS lido de um [servidor NUT](../devices/nut.md). Toda série carrega o
 rótulo `ups`, então um alerta nomeia o UPS quando um servidor publica
@@ -399,7 +410,7 @@ lidos via SNMP são cobertos pelas regras [UPS](#ups) acima.
 | UPS runtime short (NUT) | O UPS estima menos de cinco minutos de execução na bateria (`dumbmonit_nut_battery_runtime_seconds`); limpa acima de seis. Com energia da rede, uma bateria desgastada ou um UPS pequeno demais para sua carga. | < 300 s | 5 min | Aviso (`warning`) | 24 h |
 | UPS data stale (NUT) | O servidor NUT responde mas não tem dados recentes do UPS: cabo, driver ou UPS silencioso (`dumbmonit_nut_ups_data_stale`). Uma queda passaria sem ser vista nesse meio tempo. | > 0 | 5 min | Aviso (`warning`), escala depois de 1 h | 6 h |
 
-### MikroTik RouterOS
+### MikroTik RouterOS {#mikrotik-routeros}
 
 Séries carregam o rótulo `interface` ou `sensor`, então uma notificação
 nomeia a porta ou o sensor ([dispositivo](../devices/mikrotik.md)).
@@ -418,7 +429,7 @@ anos de erros atrás dele não dispara em sua primeira medição.
 | MikroTik RouterOS update available | Um RouterOS mais novo está disponível no canal de atualização do roteador (`dumbmonit_mikrotik_update_available`). Só conhecido quando o roteador verifica atualizações ele mesmo: veja o passo opcional da [configuração](../devices/mikrotik.md). | > 0 | 1 h | Info (`info`) | 7 d |
 | MikroTik firmware upgrade pending | O RouterBOOT é mais antigo que o firmware empacotado com o RouterOS instalado (`dumbmonit_mikrotik_firmware_upgrade_pending`); é atualizado só sob pedido, depois no próximo reinício. | > 0 | 1 h | Info (`info`) | 7 d |
 
-### UniFi Network
+### UniFi Network {#unifi-network}
 
 [Página do dispositivo](../devices/unifi.md). Séries de dispositivo
 carregam o nome, modelo e tipo do dispositivo, então a notificação diz
@@ -435,7 +446,7 @@ carregam o nome, modelo e tipo do dispositivo, então a notificação diz
 | UniFi firmware update available | Uma atualização de firmware está disponível para dispositivos UniFi (`dumbmonit_unifi_devices_upgradable`). | > 0 | 1 h | Info (`info`) | 7 d |
 | UniFi alarms | O UniFi registrou eventos críticos ou disparou alarmes nas últimas 24 horas (`dumbmonit_unifi_alarms`). Só lido com uma conta View Only. | > 0 | 5 min | Aviso (`warning`) | 24 h |
 
-### Home Assistant
+### Home Assistant {#home-assistant}
 
 [Página do dispositivo](../devices/homeassistant.md).
 
@@ -448,7 +459,7 @@ carregam o nome, modelo e tipo do dispositivo, então a notificação diz
 | Home Assistant update available | O Home Assistant tem atualizações esperando: core, sistema operacional, add-ons ou firmware de dispositivo (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 | Home Assistant repair to address | O Home Assistant tem um reparo aberto de severidade erro ou crítica (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Aviso (`warning`) | 24 h |
 
-### VMware vSphere
+### VMware vSphere {#vmware-vsphere}
 
 [Página do dispositivo](../devices/vsphere.md). Séries de host carregam
 `host`, séries de VM `vm`, séries de datastore `datastore`, então a
@@ -464,7 +475,7 @@ notificação nomeia o objeto.
 | vSphere VM tools not running | As VMware Tools estão instaladas mas não rodando em uma VM ligada: o guest pode estar travado (`dumbmonit_vsphere_vm_tools_status == 2`). VMs sem Tools não disparam. | > 0 | 30 min | Info (`info`) | 24 h |
 | vSphere red alarm | O vSphere disparou um alarme vermelho que ninguém reconheceu (`dumbmonit_vsphere_alarm{status="red"}`, uma série por alarme, nomeada após o alarme e o objeto). | > 0 | 5 min | Aviso (`warning`) | 6 h |
 
-### Bancos de dados, message broker e motor de segurança
+### Bancos de dados, message broker e motor de segurança {#databases-message-broker-and-security-engine}
 
 Redis / Valkey, MongoDB, RabbitMQ e CrowdSec
 ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md),
@@ -495,7 +506,7 @@ nada dispara na primeira medição de um dispositivo.
 | CrowdSec bouncer stopped pulling | As requisições de um bouncer não mudaram em 30 minutos (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Aviso (`warning`) | 6 h |
 | CrowdSec reads no logs | Nenhuma linha de log lida em seis horas (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Aviso (`warning`) | 24 h |
 
-### Proxies reversos e domínios
+### Proxies reversos e domínios {#reverse-proxies-and-domains}
 
 Traefik, Caddy, Nginx Proxy Manager e registros de domínio
 ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md),
@@ -523,7 +534,7 @@ Séries carregam `router`, `service`, `server`, `upstream`, `host` ou
 | Domain in redemption | O domínio está em `redemptionPeriod`, `pendingDelete` ou `pendingRestore`: já expirou (`dumbmonit_domain_redemption`). | > 0 | 30 min | Alerta (`critical`) | 12 h |
 | DNS answer changed | A resposta de uma verificação DNS com *Alertar quando a resposta mudar* difere da anterior (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolve por conta própria uma hora depois. | > 0 | 1 min | Aviso (`warning`) | 24 h |
 
-### Mudanças no site
+### Mudanças no site {#website-changes}
 
 Veja [Mudanças no site](../devices/webchange.md). A página do dispositivo
 mostra cada mudança antes e depois.
@@ -532,7 +543,7 @@ mostra cada mudança antes e depois.
 |---|---|---|---|---|---|
 | Website changed | A última verificação de uma página ou site observado encontrou páginas que mudaram, apareceram ou desapareceram (`dumbmonit_webchange_last_check_changes`). Resolve na próxima verificação que não encontra nenhuma. | > 0 | 30 s | Info (`info`) | nenhum |
 
-### Kubernetes
+### Kubernetes {#kubernetes}
 
 Veja [Kubernetes / k3s](../devices/kubernetes.md). Toda série é rotulada
 com o nó, ou o namespace e o pod, workload ou reivindicação envolvida.
@@ -547,7 +558,7 @@ com o nó, ou o namespace e o pod, workload ou reivindicação envolvida.
 | Kubernetes workload missing replicas | Um Deployment, StatefulSet ou DaemonSet tem menos réplicas disponíveis do que pede (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Aviso (`warning`), escala depois de 1 h | 6 h |
 | Kubernetes volume claim pending | Uma PersistentVolumeClaim que um pod precisa, ou que um erro de provisionamento envolve, ainda não está vinculada (`dumbmonit_k8s_pvc_pending`). | > 0 | 15 min | Aviso (`warning`) | 6 h |
 
-### Active Directory
+### Active Directory {#active-directory}
 
 Veja [Active Directory](../devices/activedirectory.md). O controlador de
 domínio que o DumbMonit consulta é cobertor por *Device unreachable*; os
@@ -562,7 +573,7 @@ unreachable* (rótulo `dc`).
 | Active Directory replication failing | O controlador de domínio consultado não consegue replicar de um parceiro (`dumbmonit_ad_replication_consecutive_failures`). Só quando a conta pode ler o status de replicação. | > 0 | 30 min | Aviso (`warning`) | 6 h |
 | krbtgt password older than 180 days | A senha krbtgt foi alterada por último há mais de 180 dias (`dumbmonit_ad_krbtgt_password_age_seconds`). | > 180 dias | 10 min | Info (`info`) | nenhum |
 
-### pfSense
+### pfSense {#pfsense}
 
 Veja [pfSense](../devices/pfsense.md). Gateways são rotulados `gateway`,
 interfaces `interface` e `descr`, serviços `service`.
@@ -576,7 +587,7 @@ interfaces `interface` e `descr`, serviços `service`.
 | pfSense service stopped | Um serviço pfSense ativado não está rodando: resolvedor DNS, VPN, NTP… (`dumbmonit_pfsense_service_stopped`). | > 0 | 5 min | Aviso (`warning`) | 6 h |
 | pfSense disk nearly full | O disco do pfSense está mais de 90% cheio: logs, relatórios e atualizações de pacote param de ser escritos (`dumbmonit_pfsense_disk_used_percent`). | > 90 % | 30 min | Aviso (`warning`) | 1 d |
 
-### Unraid
+### Unraid {#unraid}
 
 Veja [Unraid](../devices/unraid.md). Discos são rotulados `disk` e `role`
 (`parity`, `data`, `cache`), contêineres `container`.
@@ -592,7 +603,7 @@ Veja [Unraid](../devices/unraid.md). Discos são rotulados `disk` e `role`
 | Unraid cache nearly full | Um pool de cache Unraid está mais de 90% cheio: escritas recorrem ao array lento, ou falham (`dumbmonit_unraid_disk_used_percent{role="cache"}`). | > 90 % | 30 min | Aviso (`warning`) | 1 d |
 | Unraid container stopped | Um contêiner Docker configurado para iniciar com o array não está rodando (`dumbmonit_unraid_container_autostart_stopped`). | > 0 | 10 min | Aviso (`warning`) | 6 h |
 
-### Veeam Backup & Replication
+### Veeam Backup & Replication {#veeam-backup--replication}
 
 Veja [Veeam Backup & Replication](../devices/veeam.md). Jobs são rotulados
 `job` e `type`, repositórios `repository`.
@@ -604,7 +615,7 @@ Veja [Veeam Backup & Replication](../devices/veeam.md). Jobs são rotulados
 | Veeam repository nearly full | Um repositório de backup Veeam está mais de 90% cheio: os próximos jobs falharão por falta de espaço (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Aviso (`warning`) | 1 d |
 | Veeam license expiring | A licença Veeam expira em menos de 30 dias: jobs param no fim do período de tolerância (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Aviso (`warning`) | 1 d |
 
-### Tailscale
+### Tailscale {#tailscale}
 
 Veja [Tailscale](../devices/tailscale.md). Dispositivos são rotulados
 `device`, o primeiro rótulo de seu nome MagicDNS.
@@ -616,7 +627,7 @@ Veja [Tailscale](../devices/tailscale.md). Dispositivos são rotulados
 | Tailscale device awaiting approval | Um dispositivo entrou na tailnet e espera aprovação: aprove-o se é esperado, remova-o caso contrário (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Aviso (`warning`) | 1 d |
 | Tailscale client update | Um dispositivo Tailscale que precisa permanecer online roda um cliente com atualização disponível (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
 
-### FortiGate
+### FortiGate {#fortigate}
 
 Veja [FortiGate](../devices/fortigate.md). Túneis são rotulados `tunnel`,
 interfaces `interface` e `alias`, licenças `license`.
@@ -632,7 +643,7 @@ interfaces `interface` e `alias`, licenças `license`.
 | FortiGate licence expiring | Uma licença FortiGuard ou FortiCare do FortiGate expira em menos de 30 dias, ou já expirou (`dumbmonit_fortigate_license_expiry_seconds`). | < 30 d | 1 h | Aviso (`warning`) | 1 d |
 | FortiGate firmware update | O FortiGuard oferece uma versão de patch mais nova do branch FortiOS que o FortiGate roda (`dumbmonit_fortigate_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 
-### Sophos Firewall
+### Sophos Firewall {#sophos-firewall}
 
 Veja [Sophos Firewall](../devices/sophos.md).
 
@@ -640,7 +651,7 @@ Veja [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Sophos interface without link | Uma interface Sophos Firewall que está ligada e vinculada a uma zona não tem link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Aviso (`warning`) | 6 h |
 
-### Hyper-V
+### Hyper-V {#hyper-v}
 
 Reportado pelo agente Windows em um host Hyper-V; veja
 [Agente](../devices/agent.md#hyper-v-hosts).
@@ -651,7 +662,7 @@ Reportado pelo agente Windows em um host Hyper-V; veja
 | Hyper-V host CPU high | Os processadores lógicos do host Hyper-V estiveram mais de 90% ocupados por quinze minutos, guests incluídos (`dumbmonit_hyperv_host_cpu_percent`). | > 90 % | 15 min | Aviso (`warning`) | 6 h |
 | Hyper-V virtual disk errors | Um disco virtual Hyper-V reportou erros de E/S na última hora (`increase_prometheus(dumbmonit_hyperv_vhd_errors_total[1h])`). | > 0 | 5 min | Aviso (`warning`) | 6 h |
 
-### Pontuação de segurança
+### Pontuação de segurança {#security-score}
 
 Calculada pelo servidor a cada 15 minutos para todo dispositivo cujo tipo
 tem verificações de segurança, e armazenada como `dumbmonit_security_score`
@@ -662,7 +673,7 @@ tem verificações de segurança, e armazenada como `dumbmonit_security_score`
 | Security score dropped | A pontuação caiu 10 pontos ou mais contra seu melhor valor das últimas 24 horas (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): uma verificação começou a falhar. | ≥ 10 pts | 30 min | Aviso (`warning`) | 24 h |
 | Security score low | A pontuação está abaixo de 40, nota F (`dumbmonit_security_score`). Aumente ou diminua o limite para corresponder à sua própria barra. | < 40 | 1 h | Info (`info`) | 7 d |
 
-### O próprio DumbMonit
+### O próprio DumbMonit {#dumbmonit-itself}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -670,7 +681,7 @@ tem verificações de segurança, e armazenada como `dumbmonit_security_score`
 
 Toda regra integrada se aplica a todo dispositivo e a todo canal ativado.
 
-## Editando uma regra na interface
+## Editando uma regra na interface {#editing-a-rule-in-the-ui}
 
 Na página **Alertas**, a seção *Regras* lista toda regra com sua
 severidade, uma marca *Integrada* e, quando relevante, quantos alertas
@@ -685,7 +696,7 @@ está disparando agora. Cada regra tem:
   somente leitura;
 - **Excluir**, apenas para suas próprias regras.
 
-## Substituições por dispositivo
+## Substituições por dispositivo {#per-device-overrides}
 
 Uma regra pode ser ajustada para um dispositivo sem tocar na própria regra:
 um limite diferente, um limite de limpeza diferente, ou desligada apenas
@@ -703,7 +714,7 @@ por dispositivo a remove. Veja
 [Substituições por dispositivo](../reference/api.md#per-device-overrides)
 para a API.
 
-## Criando uma regra de limite
+## Criando uma regra de limite {#creating-a-threshold-rule}
 
 Clique em **Nova regra**. O formulário precisa de:
 
@@ -724,7 +735,7 @@ rótulos `host` e `tag_*` sempre que `target` está presente, então renomear
 um dispositivo mantém seus alertas; uma série cujo `target` não corresponde
 a um dispositivo existente e ativado é ignorada.
 
-## A linguagem de consulta
+## A linguagem de consulta {#the-query-language}
 
 Consultas são [MetricsQL](https://docs.victoriametrics.com/metricsql/), o
 superconjunto PromQL do VictoriaMetrics. As métricas são as séries
@@ -760,7 +771,7 @@ avg_over_time(dumbmonit_probe_success[30d])
     desenvolvimento, a camada publica o VictoriaMetrics embutido em
     `:8428` do host, com sua interface de consulta.
 
-## Tipos de regra na API
+## Tipos de regra na API {#rule-kinds-in-the-api}
 
 `kind` é `threshold` (compara com um limite), `predict` (mesma comparação,
 em uma consulta `predict_linear`; mostrada como uma previsão) ou `anomaly`

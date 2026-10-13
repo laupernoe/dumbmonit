@@ -1,4 +1,4 @@
-# Immich
+# Immich {#immich}
 
 Se o Immich acompanha o que é enviado: filas de jobs que travam ou ficam
 pausadas, atualizações, o disco que contém a biblioteca, quantas fotos e
@@ -15,7 +15,7 @@ parou, e fotos novas não recebem miniatura, nem metadados, nem
 reconhecimento facial e nem busca inteligente, enquanto os envios continuam
 tendo sucesso. O Immich só mostra isso em sua página Jobs.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_immich_`.
 
@@ -39,7 +39,7 @@ As [regras integradas](../alerting/rules.md#self-hosted-applications) que se
 aplicam: Immich jobs stalled, Immich queue paused, Immich storage almost
 full, Immich update available, além de Device unreachable.
 
-## Dispositivos
+## Dispositivos {#devices}
 
 Todo dispositivo conectado à conta que possui a chave, com sua última
 conexão e último backup, é publicado sob uma família genérica compartilhada
@@ -66,7 +66,7 @@ dispositivo esteve ativa — é genuinamente por dispositivo.
 A tabela da página do dispositivo mostra esses números para cada
 dispositivo, com um status de OK ou Desatualizado.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Immich. Ele diz primeiro o que está errado (filas travadas,
@@ -75,7 +75,7 @@ tamanho da biblioteca, disco usado e jobs esperando e em execução, depois as
 filas que têm trabalho, pelo nome, depois a tabela de dispositivos (nome,
 tipo, SO, última conexão, último backup, status).
 
-## Criar uma chave de API somente leitura no Immich
+## Criar uma chave de API somente leitura no Immich {#create-a-read-only-api-key-in-immich}
 
 1. Entre no Immich com uma conta que possa abrir Administration: o Immich
    só permite que essas contas leiam contagens de fotos e filas de jobs.
@@ -124,7 +124,7 @@ dispositivos da conta (`/api/sessions`), `asset.read` o envio mais recente
 da biblioteca (`/api/search/metadata`), `user.read` o nome de exibição da
 conta (`/api/users/me`).
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

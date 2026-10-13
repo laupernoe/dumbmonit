@@ -1,4 +1,4 @@
-# Nginx
+# Nginx {#nginx}
 
 O servidor web e proxy reverso: conexões ativas e em espera, as taxas de
 accept/handled/request, e a saúde dos upstreams quando a API comercial NGINX
@@ -10,7 +10,7 @@ corretamente filtrada. Quando o NGINX Plus comercial está instalado, o
 DumbMonit também pode ler sua API JSON para saúde de upstream e contadores
 por zona.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_nginx_`. As métricas `_total` são
 contadores: gráficos e regras as transformam em taxas.
@@ -32,14 +32,14 @@ atingido). As métricas `plus_*` só aparecem quando "Ler a API do NGINX Plus"
 está marcado e o NGINX Plus responde; a versão de código aberto não tem um
 "upstream" para reportar apenas com `stub_status`.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Nginx. Ele mostra conexões ativas, lendo, escrevendo e em
 espera, as taxas de accept/handled/request nas últimas 24 horas, e, com
 NGINX Plus, a saúde de upstream e o tráfego por zona.
 
-## Ativar o módulo stub_status do Nginx
+## Ativar o módulo stub_status do Nginx {#enable-nginxs-stub_status-module}
 
 1. O Nginx já vem com o stub_status embutido: só precisa de um local que o
    ative. Adicione isto ao bloco de servidor que o Nginx já serve (ou a seu
@@ -88,7 +88,7 @@ não puder ficar detrás de uma regra de firewall própria. O `stub_status` em
 si não pode ser protegido por senha diretamente pelo Nginx — a senha, se
 houver, pertence ao bloco `location` ao redor.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|

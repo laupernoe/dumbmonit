@@ -30,7 +30,7 @@ Push**渠道决定哪些告警会发到那里([通知渠道](../notifications.md
 
 ## 在手机或电脑上启用 {#enable-on-a-phone-or-computer}
 
-### Android、Windows、macOS、Linux
+### Android、Windows、macOS、Linux {#android-windows-macos-linux}
 
 1. 在 Chrome、Edge、Firefox 或 Safari 中打开 DumbMonit 并登录。
 2. 可选:将其安装为应用(地址栏 → **安装**,或浏览器菜单 →
@@ -40,7 +40,7 @@ Push**渠道决定哪些告警会发到那里([通知渠道](../notifications.md
 4. **发送测试。** 几秒钟内应该会出现一条 *DumbMonit — test
    notification*。
 
-### iPhone 和 iPad
+### iPhone 和 iPad {#iphone-and-ipad}
 
 Apple 只向添加到主屏幕的网站提供推送功能(iOS 和 iPadOS 16.4
 或更高版本):

@@ -1,4 +1,4 @@
-# Proxmox VE
+# Proxmox VE {#proxmox-ve}
 
 Hipervisor: nós com seus daemons e rede, máquinas virtuais, contêineres,
 storages, pools LVM thin, backups, alta disponibilidade, snapshots,
@@ -6,7 +6,7 @@ replicação, Ceph até o OSD, discos físicos e pools ZFS, atualizações
 pendentes, mudanças de pacote, assinatura e certificados. Um dispositivo
 pode cobrir um cluster inteiro.
 
-## O painel de nós
+## O painel de nós {#the-nodes-panel}
 
 A página do dispositivo abre com um cartão por nó: CPU, memória e
 sistema de arquivos raiz como três medidores, o tempo de atividade e a
@@ -48,7 +48,7 @@ versão e um atrasado é visível sem abrir um shell.
 Os dados vêm de `GET /api/targets/{id}/proxmox/nodes`, lido da última
 sondagem no armazenamento de métricas.
 
-## O painel de guests
+## O painel de guests {#the-guests-panel}
 
 ![O painel Guests: uma linha por VM e contêiner, agrupados por nó](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
 
@@ -91,7 +91,7 @@ custa duas chamadas de API menos por nó do que percorrer
 `/nodes/{node}/qemu` e `/nodes/{node}/lxc`, que é o que a opção
 `cluster_resources` recorre quando desligada.
 
-### Uso de disco dentro de uma VM: o agente QEMU guest
+### Uso de disco dentro de uma VM: o agente QEMU guest {#disk-usage-inside-a-vm-the-qemu-guest-agent}
 
 O Proxmox vê o disco de uma VM como um volume opaco: `disk` é sempre 0
 para uma VM, só seu tamanho é conhecido. Para ler o uso de dentro, o
@@ -116,7 +116,7 @@ a configuração da VM ativa o agente, `guest_agent_running` se ele
 respondeu. Sem o agente ou o direito, a VM mantém seu tamanho e
 simplesmente não tem uso — nunca um "0%" enganoso.
 
-### O sistema operacional e endereços de um guest
+### O sistema operacional e endereços de um guest {#the-operating-system-and-addresses-of-a-guest}
 
 O Proxmox só conhece o tipo de SO escrito na configuração de um guest
 (`l26`, `win11`), não o que realmente roda. Com a opção `guest_os`
@@ -141,7 +141,7 @@ Proxmox VE 7 não tinha isso e usava `VM.Monitor`; o Proxmox VE 9 removeu
 versão conhece, as duas séries simplesmente ficam ausentes; nada mais
 muda.
 
-## O painel Ceph
+## O painel Ceph {#the-ceph-panel}
 
 Uma seção **Ceph** aparece na página do dispositivo só quando o cluster
 realmente tem Ceph: saúde e as palavras detrás dela, capacidade total e
@@ -164,7 +164,7 @@ desenhar a seção de forma alguma. O detalhe custa três chamadas em um
 único nó mais duas em todo o cluster, qualquer que seja o tamanho do
 cluster, e precisa da opção `ceph_detail` além de `ceph`.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_proxmox_`.
 
@@ -280,7 +280,7 @@ network interface down, Ceph OSD down, Ceph OSD nearly full, Ceph pool
 almost full, Ceph noout flag left on, HA manager not reporting, Backup
 job excludes a disk, Guest locked.
 
-### O fluxo RRD completo
+### O fluxo RRD completo {#the-full-rrd-stream}
 
 `/cluster/metrics/export` é o endpoint que os próprios servidores de
 métrica do Proxmox (InfluxDB, Graphite) consomem: tudo que `pvestatd`
@@ -307,7 +307,7 @@ tabela de tradução escrita aqui estaria errada na próxima. Precisa de
 `Sys.Audit` em `/` — que o papel `DumbMonit` já tem quando concedido em
 `/` como abaixo.
 
-## O que preparar no Proxmox
+## O que preparar no Proxmox {#what-to-prepare-in-proxmox}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra. O
 princípio: um usuário reservado para monitoramento, um papel que só
@@ -389,7 +389,7 @@ pode ler, um token — nunca a conta com a qual você entra.
 
 Documentação do fornecedor: [Proxmox VE user management](https://pve.proxmox.com/wiki/User_Management).
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -440,7 +440,7 @@ Endereço: `10.0.0.10`, `pve.lan`, `pve.lan:8006`, `[fd00::1]` ou uma
 URL completa `https://pve.example.net`. O esquema `https` e a porta
 8006 são adicionados se faltando.
 
-## Opções
+## Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -472,7 +472,7 @@ URL completa `https://pve.example.net`. O esquema `https` e a porta
 | `packages` | Detectar mudanças de pacote | `true` | `apt/versions` comparado com a sondagem anterior; uma mudança é reportada por uma hora em `node_packages_changed`. |
 | `subscription` | Observar assinatura e repositórios | `true` | `subscription` e `apt/repositories`: status, avisos, repositórios padrão ativados. |
 
-## Erros comuns
+## Erros comuns {#common-errors}
 
 | Sintoma | Causa provável |
 |---|---|

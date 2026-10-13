@@ -1,4 +1,4 @@
-# Apache httpd
+# Apache httpd {#apache-httpd}
 
 Web 服务器:忙碌和空闲的工作进程数、按状态细分的工作进程记分板,
 以及开启 ExtendedStatus 时的请求/字节速率。

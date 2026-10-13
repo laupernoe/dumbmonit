@@ -69,7 +69,7 @@ s'appliquent :
   `device_stale_days` sans sauvegarde réussie (Avis, rappelé chaque jour) ;
   voir [Appareils](#devices) ci-dessous.
 
-## Appareils
+## Appareils {#devices}
 
 Chaque objet avec au moins un point de restauration — une VM, un
 ordinateur physique ou virtuel protégé par agent, un partage de fichiers —

@@ -1,4 +1,4 @@
-# SecurityGateway for Email Servers
+# SecurityGateway for Email Servers {#securitygateway-for-email-servers}
 
 从外部检查 SecurityGateway 邮件网关的各项服务,以及在
 SecurityGateway 12.5 或更高版本上,其 REST API 公布的版本和性能

@@ -1,4 +1,4 @@
-# Como funciona o sistema de alertas
+# Como funciona o sistema de alertas {#how-alerting-works}
 
 Regras úteis estão ativas logo após a instalação; nada precisa de ajuste. O
 que faz a diferença no uso diário é o que mantém o ruído baixo: supressão
@@ -7,7 +7,7 @@ de base que aprende antes de falar.
 
 ![A página de alertas: o que precisa de você, as regras, manutenção programada e histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-## Severidades
+## Severidades {#severities}
 
 A interface fala a escada do boletim meteorológico. A API e o editor de
 regras armazenam os mesmos três níveis sob seus nomes de motor.
@@ -22,7 +22,7 @@ O escalonamento eleva a severidade de uma regra um nível depois de
 `escalate_after` se o alerta continuar disparando (Info → Aviso → Alerta;
 Alerta permanece).
 
-## Fases
+## Fases {#phases}
 
 Todo alerta é uma máquina de estados, avaliada a cada 30 segundos
 (`DUMBMONIT_ALERT_INTERVAL_SECS`).
@@ -48,7 +48,7 @@ daquele alerta (`silenced: true`), em vez do dispositivo inteiro: uma
 regra irmã no mesmo dispositivo continua falando. Veja
 [Se livrando de um alerta](../using/alerts.md#getting-rid-of-an-alert).
 
-## Supressão por dependência
+## Supressão por dependência {#dependency-suppression}
 
 Qualquer dispositivo pode declarar um **dispositivo pai**. Quando um
 dispositivo está inacessível (a regra "Device unreachable" dispara nele),
@@ -72,7 +72,7 @@ esperar que seu alerta "Device unreachable" dispare: um agente que para de
 enviar leva seus dispositivos com ele um ou dois minutos antes de seu
 próprio alerta, e eles de outra forma notificariam primeiro cada um.
 
-## Agrupamento, deduplicação, lembretes
+## Agrupamento, deduplicação, lembretes {#grouping-deduplication-reminders}
 
 Sem agrupamento, um NAS cujo RAID degrada enviaria uma mensagem por disco,
 por ciclo. O DumbMonit envia no máximo uma mensagem por host e por ciclo,
@@ -83,7 +83,7 @@ começa a disparar (`firing`), depois só como lembrete (`reminder`, a cada
 notificada e, se não, por quê (aprendizado, suprimido, silenciado,
 reconhecido).
 
-## Janelas de manutenção
+## Janelas de manutenção {#maintenance-windows}
 
 Um silêncio interrompe notificações sem parar a avaliação: no fim de uma
 janela, um alerta que ainda está ativo é notificado uma vez, em vez de
@@ -91,7 +91,7 @@ janela, um alerta que ainda está ativo é notificado uma vez, em vez de
 semanais, por dispositivo ou para toda a instância. Veja
 [Janelas de manutenção](maintenance.md).
 
-## Aprendizado de linha de base
+## Aprendizado de linha de base {#baseline-learning}
 
 A regra "CPU inusual" não precisa de limite. Para cada série ela mantém
 168 baldes, um por (dia da semana, hora), e compara cada ponto com o que é
@@ -105,7 +105,7 @@ distinguir "inusual" de "nunca observado". Nesse meio tempo é mostrada com
 uma marca de *aprendendo* e só diz o que teria disparado. Linhas de base de
 séries que desapareceram são esquecidas depois de 60 dias.
 
-## Previsões
+## Previsões {#forecasts}
 
 Dois tipos de alerta preveem em vez de reportar, e a visão geral os lista
 sob *Previsões*: a anomalia de linha de base, e as regras `predict` que
@@ -113,14 +113,14 @@ extrapolam uma série com `predict_linear()` do lado do VictoriaMetrics
 ("Filesystem almost full" dentro de quatro dias). A estimativa de
 datastore do PBS é um limite simples sobre a própria previsão do PBS.
 
-## Para onde vão as notificações
+## Para onde vão as notificações {#where-notifications-go}
 
 Regras integradas não têm canal associado, o que significa **todo canal
 ativado**. Uma regra que você edita pode nomear canais específicos. Canais
 são configurados em Alertas → Notificações; veja
 [Canais de notificação](../notifications.md).
 
-## Notificações inteligentes
+## Notificações inteligentes {#smart-notifications}
 
 Tudo acima decide *se* um alerta pode falar. Um segundo estágio, a política
 de notificação, decide *quando* e *em qual canal*, para que ninguém seja

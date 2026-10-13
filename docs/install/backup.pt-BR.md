@@ -1,4 +1,4 @@
-# Backup e restauração
+# Backup e restauração {#backup-and-restore}
 
 Duas coisas diferentes, para dois acidentes diferentes.
 
@@ -29,7 +29,7 @@ gráficos de volta também; isso está no final desta página.
     recriptografados com sua frase secreta, então ele restaura em uma
     instância nova que tem seu próprio segredo, recém-criado.
 
-## O pacote criptografado
+## O pacote criptografado {#the-encrypted-bundle}
 
 **Configurações → Backup → Baixar o pacote.** Escolha uma frase secreta
 de pelo menos 16 caracteres — três palavras são suficientes — e a
@@ -58,7 +58,7 @@ pacote cuja frase secreta se perde está perdido.
     Qualquer um com o arquivo e a frase secreta pode ler a senha de todo
     dispositivo que você monitora. Mantenha-o onde você mantém senhas.
 
-### O que está nele
+### O que está nele {#what-is-in-it}
 
 | Seção | Conteúdo |
 |---|---|
@@ -79,7 +79,7 @@ Dispositivos são correspondidos por **tipo + endereço**, que também é a
 chave única da tabela: importar o mesmo pacote duas vezes nunca cria uma
 segunda cópia de nada.
 
-### Senhas de conta
+### Senhas de conta {#account-passwords}
 
 Por padrão contas são exportadas **sem** seu hash de senha, segredo TOTP
 ou códigos de recuperação. Contas restauradas então existem com o nome e
@@ -92,7 +92,7 @@ uma instância em vez de copiar sua configuração. Um hash Argon2 em um
 arquivo que viaja pode ser atacado offline por tanto tempo quanto o
 atacante quiser; o padrão é o seguro.
 
-### O que não está nele
+### O que não está nele {#what-is-not-in-it}
 
 Histórico de métricas (que vive no VictoriaMetrics, não no banco de
 dados), estado e histórico de alertas, linhas de base de anomalia, o log
@@ -104,7 +104,7 @@ E **não o segredo da instância**. Esse é o ponto: o pacote carrega seus
 segredos recriptografados sob sua frase secreta precisamente para que
 possa ser restaurado em algum lugar que nunca viu `secret.key`.
 
-### Restaurando em uma instância nova
+### Restaurando em uma instância nova {#restoring-onto-a-fresh-instance}
 
 1. Inicie o novo contêiner e crie a primeira conta de administrador em
    `/setup`, com o código de configuração impresso em seus logs. Essa
@@ -140,7 +140,7 @@ diz isso — atualize primeiro, depois restaure. Um pacote que foi
 modificado, ou cuja frase secreta está errada, também é recusado: o
 AES-GCM não consegue distinguir os dois, e nem a mensagem.
 
-### Pela linha de comando
+### Pela linha de comando {#from-the-command-line}
 
 Ambos os caminhos precisam de uma **sessão** de administrador, não um
 token de API: um token vive em um script, e um script não tem nada a ver
@@ -165,7 +165,7 @@ curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
   -d @restore.json | jq
 ```
 
-## Backups locais programados
+## Backups locais programados {#scheduled-local-backups}
 
 O DumbMonit escreve uma cópia de seu próprio banco de dados em uma
 programação, por padrão **uma vez por dia, mantendo as últimas sete**,
@@ -187,7 +187,7 @@ Eles vivem no mesmo volume que o banco de dados, então desfazem um erro,
 não um disco perdido. Copie-os para fora da máquina se você quer mais
 que isso.
 
-### Configurações
+### Configurações {#settings}
 
 | Variável | Padrão | Função |
 |---|---|---|
@@ -204,7 +204,7 @@ para copiar, e nenhum é escrito — mantenha esse valor em seu gerenciador
 de senhas em vez disso. A seção Backup diz em qual dos dois casos você
 está.
 
-### Saber que rodou
+### Saber que rodou {#knowing-that-it-ran}
 
 Cada execução publica três séries:
 
@@ -224,7 +224,7 @@ instância com a programação desligada nunca é incomodada com isso.
 execução e se teve sucesso, os arquivos mantidos e seu tamanho, e
 **Fazer backup agora** para escrever um imediatamente.
 
-### Restaurando um
+### Restaurando um {#restoring-one}
 
 Pare a stack, coloque o arquivo de volta sob o nome do banco de dados, e
 restaure a chave ao lado dele:
@@ -254,7 +254,7 @@ sqlite3 dumbmonit-20260922-030000.db 'SELECT name, kind, address FROM targets;'
 Credenciais nesse arquivo permanecem ilegíveis sem o `secret.key`
 correspondente.
 
-## Arquivando todo o volume
+## Arquivando todo o volume {#archiving-the-whole-volume}
 
 A única forma de manter os gráficos também. Um volume nomeado,
 `dumbmonit-data`, mantém tudo: o banco de dados, o segredo, os backups
@@ -273,7 +273,7 @@ depois `docker compose up -d`.
 Se o espaço importa, `--exclude=./vm` mantém o arquivo pequeno: o banco
 de dados e o segredo são a configuração, `vm/` é só o histórico.
 
-## O que fazer antes de uma atualização
+## O que fazer antes de uma atualização {#what-to-do-before-an-upgrade}
 
 1. **Configurações → Backup → Fazer backup agora** — trinta segundos, e
    inclui o segredo.

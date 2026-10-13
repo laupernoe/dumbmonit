@@ -1,4 +1,4 @@
-# Nginx
+# Nginx {#nginx}
 
 Web 服务器与反向代理:活动和等待中的连接数、接受/处理/请求速率,
 以及在商业版 NGINX Plus API 可用时的上游健康状况。

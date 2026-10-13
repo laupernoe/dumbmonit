@@ -155,7 +155,7 @@ della finestra restano privati.
 
 Un annuncio viene mostrato su una pagina oppure su **tutte le pagine**.
 
-### Iscritti email
+### Iscritti email {#email-subscribers}
 
 I visitatori possono iscriversi ai tuoi annunci via email una volta che
 scegli un **canale email (SMTP)** nell'editor, sotto **Email
@@ -201,7 +201,7 @@ DumbMonit resta dietro l'accesso.
 Il pannello **Share** dell'editor costruisce gli snippet sotto per te,
 con un'anteprima.
 
-### Badge
+### Badge {#badges}
 
 Ogni pagina pubblicata serve badge SVG — piatti, con testo bianco su
 colore solido, leggibili sia sul tema chiaro che su quello scuro di un
@@ -256,7 +256,7 @@ di terze parti può incorniciare; tutto il resto (incluse le pagine di
 conferma e disiscrizione) risponde con `frame-ancestors 'none'` e
 `X-Frame-Options: DENY`.
 
-### Dominio personalizzato
+### Dominio personalizzato {#custom-domain}
 
 Una pagina può avere il proprio indirizzo, come
 `status.example.com`, nel modo in cui lo fa Uptime Kuma. Digita il nome

@@ -1,4 +1,4 @@
-# Heartbeat (push)
+# Heartbeat (push) {#heartbeat-push}
 
 A falha silenciosa que ninguém nota: o backup noturno que parou de rodar
 depois de uma atualização, o cron de renovação de certificado que perdeu
@@ -10,7 +10,7 @@ monitor *push* no Uptime Kuma) inverte a lógica: o DumbMonit não contata
 nada. O job chama uma URL secreta cada vez que roda, e é a **ausência** de
 uma chamada que gera o alerta.
 
-## Como funciona
+## Como funciona {#how-it-works}
 
 Cada dispositivo heartbeat recebe uma URL da forma
 `https://<seu DumbMonit>/api/push/<token>`. O token é um valor aleatório
@@ -40,7 +40,7 @@ registrada, `404` para um token desconhecido ou regenerado, `400` para um
 de sessenta chamadas por minuto para um token. Tanto `GET` quanto `POST`
 são aceitos; `HEAD` também funciona.
 
-### Parâmetros de consulta
+### Parâmetros de consulta {#query-parameters}
 
 | Parâmetro | Significado |
 |---|---|
@@ -50,7 +50,7 @@ são aceitos; `HEAD` também funciona.
 Esses são os parâmetros do monitor push do Uptime Kuma: um script escrito
 para ele funciona sem alteração.
 
-## Configuração
+## Configuração {#setup}
 
 Os passos abaixo são os que o aviso ao lado do formulário mostra.
 
@@ -81,7 +81,7 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
 
 Credenciais: nenhuma.
 
-### Exemplos
+### Exemplos {#examples}
 
 Uma linha crontab, à noite às 03:00, que só chama quando o backup tem
 sucesso:
@@ -118,7 +118,7 @@ Windows Task Scheduler (PowerShell):
 Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "https://monit.example.com/api/push/<token>" | Out-Null
 ```
 
-### Opções
+### Opções {#options}
 
 | Chave | Rótulo | Padrão | Ajuda |
 |---|---|---|---|
@@ -129,7 +129,7 @@ Durações aceitam sufixos `s`, `m`, `h`, `d`, `w` e podem ser combinadas
 (`1h30m`); um número simples é um número de segundos. O intervalo
 esperado precisa estar entre 10 segundos e um ano.
 
-## Métricas
+## Métricas {#metrics}
 
 Todas rotuladas `probe="push"` além de `target`, `host` e `tag_*`, todas
 com o prefixo `dumbmonit_`.
@@ -149,7 +149,7 @@ regras "Service down" e "Service flapping" ignoram heartbeats, e "Device
 unreachable" nunca dispara para eles: o coletor sempre roda, só seu
 veredito muda.
 
-## API
+## API {#api}
 
 | Rota | Sessão | Propósito |
 |---|---|---|

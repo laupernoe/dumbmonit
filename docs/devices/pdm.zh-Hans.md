@@ -1,4 +1,4 @@
-# Proxmox Datacenter Manager
+# Proxmox Datacenter Manager {#proxmox-datacenter-manager}
 
 联合管理多个 Proxmox VE 集群和 Proxmox Backup Server 实例的
 控制台:它能访问哪些实例、整个资产一览、在任何地方失败的任务,

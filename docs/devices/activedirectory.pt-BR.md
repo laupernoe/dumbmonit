@@ -1,4 +1,4 @@
-# Active Directory
+# Active Directory {#active-directory}
 
 Um domínio Windows via LDAP, somente leitura: os controladores de domínio e
 quem detém cada papel FSMO, os membros dos grupos privilegiados, a
@@ -18,7 +18,7 @@ replicação que exporiam segredos.
 Um dispositivo cobre todo o domínio: aponte-o para um controlador de
 domínio e o DumbMonit encontra os outros na partição de configuração.
 
-## O que o LDAP pode e não pode dizer
+## O que o LDAP pode e não pode dizer {#what-ldap-can-and-cannot-tell}
 
 O LDAP mostra o diretório como está, não os logs do que aconteceu nele. Em
 particular:
@@ -41,7 +41,7 @@ particular:
   primário definido por `primaryGroupID` não é um link `member` e não é
   visto.
 
-## Como ele lê
+## Como ele lê {#how-it-reads}
 
 Dois ritmos:
 
@@ -59,7 +59,7 @@ Dois ritmos:
 A primeira verificação espera alguns segundos pelo inventário; em um
 domínio grande os achados de conta aparecem na próxima verificação.
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_ad_`.
 
@@ -97,7 +97,7 @@ forma: Domain Admins (RID 512), Enterprise Admins (519) e Schema Admins
 embutidos Administrators, Account Operators, Server Operators, Print
 Operators e Backup Operators.
 
-## Achados
+## Achados {#findings}
 
 Achados são fatos brutos — quantos objetos, e quais — não um score; a
 [pontuação de segurança](../using/security-score.md) do dispositivo os
@@ -158,7 +158,7 @@ aplicam:
   por meia hora (Advisory), quando o status de replicação é legível.
 - **krbtgt password older than 180 days** (Info).
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel Active Directory mostra o domínio (níveis funcionais, o
 controlador de domínio consultado, desvio de relógio), os controladores
@@ -166,7 +166,7 @@ de domínio com seu site, papéis e se respondem, os grupos privilegiados
 com seus membros, a política de senha e contagens de conta, e a tabela de
 achados com palavras de severidade.
 
-## Criar uma conta de serviço somente leitura para o DumbMonit
+## Criar uma conta de serviço somente leitura para o DumbMonit {#create-a-read-only-service-account-for-dumbmonit}
 
 1. Crie um usuário dedicado para o DumbMonit, por exemplo
    svc-dumbmonit, e não o adicione a nenhum grupo. Um usuário de domínio
@@ -215,7 +215,7 @@ Policy: um bind LDAP não é afetado. Não a restrinja com *Log On To* ou
 *Deny access to this computer from the network*: os controladores de
 domínio então recusariam o bind.
 
-### Mínimo privilégio, em detalhe
+### Mínimo privilégio, em detalhe {#least-privilege-in-detail}
 
 - A conta não precisa de nenhum grupo além de Domain Users, que toda
   conta tem.
@@ -227,7 +227,7 @@ domínio então recusariam o bind.
 - *Monitor active directory replication* só permite ler metadados de
   replicação (parceiros, último sucesso, códigos de erro). É opcional.
 
-## LDAPS e certificados
+## LDAPS e certificados {#ldaps-and-certificates}
 
 - **LDAPS (porta 636)** é o padrão. Todo controlador de domínio de um
   domínio com uma autoridade de certificação corporativa recebe um
@@ -249,7 +249,7 @@ domínio então recusariam o bind.
   binds NTLM e Kerberos via TLS; o bind simples que o DumbMonit usa não é
   afetado.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Campo | Valor |
 |---|---|
@@ -259,7 +259,7 @@ domínio então recusariam o bind.
 Uma senha vazia é recusada: o Active Directory a aceitaria como um bind
 não autenticado sem verificar nada.
 
-## Opções
+## Opções {#options}
 
 | Opção | Padrão | O que é |
 |---|---|---|
@@ -274,7 +274,7 @@ não autenticado sem verificar nada.
 | Inventário completo a cada (`inventory_minutes`) | 15 | minutos, 1 a 1440 |
 | Tempo limite (`request_timeout_seconds`) | 8 | por operação LDAP, 1 a 60 |
 
-## Solução de problemas
+## Solução de problemas {#troubleshooting}
 
 - **Certificado TLS recusado**: cole o certificado da autoridade como
   certificado CA, e informe o controlador de domínio por um nome que seu

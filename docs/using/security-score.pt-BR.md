@@ -1,4 +1,4 @@
-# Pontuação de segurança
+# Pontuação de segurança {#security-score}
 
 Todo dispositivo suportado recebe uma **pontuação de segurança** de 0 a
 100 e uma nota de **A** a **F**, no espírito do PingCastle ou Microsoft
@@ -10,7 +10,7 @@ A pontuação aparece como um cartão **Segurança** na página do
 dispositivo, e na página **Segurança**, que lista todo dispositivo
 avaliado, o pior primeiro.
 
-## Como a pontuação é calculada
+## Como a pontuação é calculada {#how-the-score-is-computed}
 
 O DumbMonit nunca pede nada extra ao dispositivo para calcular a
 pontuação. As verificações leem os últimos valores que os coletores já
@@ -49,7 +49,7 @@ seja a pontuação: um firewall que não filtra mais, ou um firmware
 ativamente explorado deixado sem correção, não é compensado por dez
 pequenas boas configurações. O cartão avisa isso quando acontece.
 
-## Histórico e alertas
+## Histórico e alertas {#history-and-alerts}
 
 O servidor recalcula toda pontuação a cada 15 minutos e a armazena como
 `dumbmonit_security_score{target="<id>"}` (e o número de verificações
@@ -65,9 +65,9 @@ Duas regras integradas a usam:
 
 Veja [Regras de alerta](../alerting/rules.md#security-score).
 
-## Verificações por tipo
+## Verificações por tipo {#checks-per-kind}
 
-### Proxmox VE
+### Proxmox VE {#proxmox-ve}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -86,7 +86,7 @@ Fontes: [System Software Updates](https://pve.proxmox.com/wiki/System_Software_U
 [Certificate Management](https://pve.proxmox.com/wiki/Certificate_Management),
 [Backup and Restore](https://pve.proxmox.com/wiki/Backup_and_Restore).
 
-### Proxmox Backup Server
+### Proxmox Backup Server {#proxmox-backup-server}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -103,7 +103,7 @@ Fontes: [Maintenance tasks](https://pbs.proxmox.com/docs/maintenance.html),
 [Package repositories](https://pbs.proxmox.com/docs/package-repositories.html),
 [Certificate management](https://pbs.proxmox.com/docs/certificate-management.html).
 
-### Synology DSM
+### Synology DSM {#synology-dsm}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -114,7 +114,7 @@ Fontes: [Maintenance tasks](https://pbs.proxmox.com/docs/maintenance.html),
 Fontes: [Product support status](https://www.synology.com/en-global/products/status),
 [How to add extra security to your Synology NAS](https://kb.synology.com/en-global/DSM/tutorial/How_to_add_extra_security_to_your_Synology_NAS).
 
-### OPNsense e pfSense
+### OPNsense e pfSense {#opnsense-and-pfsense}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -128,7 +128,7 @@ Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 [OPNsense firewall](https://docs.opnsense.org/manual/firewall.html),
 [pfSense REST API](https://pfrest.org/).
 
-### UniFi
+### UniFi {#unifi}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -136,7 +136,7 @@ Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 
 Fonte: [UniFi releases](https://community.ui.com/releases).
 
-### Monitores TLS e HTTPS
+### Monitores TLS e HTTPS {#tls-and-https-monitors}
 
 Para monitores `tls`, `http`, `smtp`, `mqtt` e `websocket` que negociam
 TLS. Um monitor em texto claro não tem cartão Segurança.
@@ -151,7 +151,7 @@ Fontes: [Mozilla Server Side TLS](https://wiki.mozilla.org/Security/Server_Side_
 [NIST SP 800-52 Rev. 2](https://csrc.nist.gov/pubs/sp/800/52/r2/final),
 [Let's Encrypt integration guide](https://letsencrypt.org/docs/integration-guide/).
 
-### Servidores de hora NTP
+### Servidores de hora NTP {#ntp-time-servers}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -168,7 +168,7 @@ configurações de um monitor.
 
 Fonte: [RFC 5905](https://www.rfc-editor.org/rfc/rfc5905).
 
-### Nginx e Apache httpd
+### Nginx e Apache httpd {#nginx-and-apache-httpd}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -183,7 +183,7 @@ scanner quais CVEs tentar.
 Fontes: [Nginx core module reference](https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens),
 [Apache core module reference](https://httpd.apache.org/docs/2.4/mod/core.html#servertokens).
 
-### Máquinas com o agente (e seus contêineres Docker)
+### Máquinas com o agente (e seus contêineres Docker) {#machines-with-the-agent-and-their-docker-containers}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -198,7 +198,7 @@ Fontes: [CIS Control 7 — Continuous Vulnerability Management](https://www.cise
 [Red Hat — Using SELinux](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_selinux/index),
 [Docker build best practices](https://docs.docker.com/build/building/best-practices/#rebuild-your-images-often).
 
-### Atualizações de fornecedor para outras integrações
+### Atualizações de fornecedor para outras integrações {#vendor-updates-for-other-integrations}
 
 Uma verificação de atualização por produto, a partir da informação de
 atualização que cada coletor já lê:
@@ -218,7 +218,7 @@ atualização que cada coletor já lê:
 | Paperless-ngx | Paperless-ngx atualizado | média |
 | Tailscale | Clientes Tailscale atualizados | média |
 
-### Active Directory
+### Active Directory {#active-directory}
 
 Um dispositivo Active Directory é avaliado a partir dos achados estilo
 PingCastle de seu coletor: contas Kerberoastable, contas sem
@@ -233,7 +233,7 @@ Fontes: [PingCastle health check rules](https://www.pingcastle.com/PingCastleFil
 [Windows LAPS](https://learn.microsoft.com/en-us/windows-server/identity/laps/laps-overview),
 [Resetting the krbtgt password](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/forest-recovery-guide/ad-forest-recovery-resetting-the-krbtgt-password).
 
-### GitLab
+### GitLab {#gitlab}
 
 Lido da API de administração, com um token de acesso pessoal de
 administrador; desconhecido com um comum.
@@ -246,7 +246,7 @@ administrador; desconhecido com um comum.
 
 Fonte: [GitLab application settings API](https://docs.gitlab.com/ee/api/settings.html).
 
-### Forgejo e Gitea
+### Forgejo e Gitea {#forgejo-and-gitea}
 
 | Verificação | Severidade | Dados |
 |---|---|---|
@@ -257,7 +257,7 @@ e o Gitea reservam a lista de tarefas agendadas à administração.
 
 Fonte: [Forgejo API](https://forgejo.org/docs/latest/user/api/).
 
-## Limites
+## Limites {#limits}
 
 A pontuação só reflete o que o DumbMonit pode ver. É um convite a olhar,
 não uma auditoria, e uma nota A não significa que um dispositivo é

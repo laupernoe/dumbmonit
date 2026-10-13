@@ -1,4 +1,4 @@
-# AdGuard Home
+# AdGuard Home {#adguard-home}
 
 O próprio filtro DNS: se a proteção está ativa, se seu servidor DNS está
 rodando, o que respondeu e bloqueou, se suas listas de filtro ainda
@@ -15,7 +15,7 @@ O DumbMonit lê a API REST do AdGuard Home (`/control`) com autenticação
 básica HTTP. Testado contra o AdGuard Home v0.107.79 (e a verificação de
 versão v0.107.78).
 
-## O que ele observa
+## O que ele observa {#what-it-watches}
 
 Todas as métricas têm o prefixo `dumbmonit_adguard_`. Números de consulta e
 bloqueio são **somas sobre a janela de estatísticas do AdGuard Home** (24
@@ -67,7 +67,7 @@ AdGuard Home protection off, AdGuard Home DNS not running, AdGuard Home
 upstream failing, AdGuard Home filter lists stale, AdGuard Home update
 available, além de Device unreachable.
 
-## A página do dispositivo
+## A página do dispositivo {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca se conecta ao AdGuard Home. Ele diz se a proteção e o servidor DNS
@@ -76,7 +76,7 @@ tempo de resposta na janela de estatísticas, os servidores upstream com seu
 resultado de teste e tempo de resposta, e as listas de filtro com suas
 regras e última atualização.
 
-## Adicionar um usuário para o DumbMonit no AdGuard Home
+## Adicionar um usuário para o DumbMonit no AdGuard Home {#add-a-user-for-dumbmonit-to-adguard-home}
 
 1. O AdGuard Home não tem conta somente leitura: todo usuário listado em
    AdGuardHome.yaml pode alterar toda configuração. Dê ao DumbMonit um
@@ -134,7 +134,7 @@ O AdGuard Home precisa estar parado enquanto você edita o arquivo: ele
 reescreve AdGuardHome.yaml sempre que uma configuração muda, e descartaria
 uma linha adicionada enquanto roda.
 
-## Credenciais
+## Credenciais {#credentials}
 
 | Credencial | Campos |
 |---|---|
@@ -147,7 +147,7 @@ completa com um prefixo de caminho detrás de um proxy reverso
 protocolo (HTTP por padrão), porta (80), verificação de certificado, tempo
 limite da requisição (5 s) e o teste de upstream (ativado).
 
-## Chamadas
+## Chamadas {#calls}
 
 | Chamada | Por quê |
 |---|---|

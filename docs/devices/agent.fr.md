@@ -539,7 +539,7 @@ Trois [règles intégrées](../alerting/rules.md#hyper-v) s'appliquent :
 - **Erreurs de disque virtuel Hyper-V** : un disque virtuel a rapporté
   des erreurs d'E/S dans la dernière heure (Avis).
 
-## Faire tourner l'agent dans Docker / sur un autre réseau
+## Faire tourner l'agent dans Docker / sur un autre réseau {#run-the-agent-in-docker--on-another-network}
 
 L'agent est aussi publié comme image conteneur, avec les mêmes tags que
 le serveur : `ghcr.io/laupernoe/dumbmonit-agent:latest` (dernière

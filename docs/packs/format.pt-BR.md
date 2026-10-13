@@ -1,4 +1,4 @@
-# Referência do formato de pacote
+# Referência do formato de pacote {#pack-format-reference}
 
 Um pacote é um único arquivo YAML, `pack.yaml`, na versão de formato 1.
 Chaves desconhecidas são erros, não configurações ignoradas: um erro de
@@ -12,7 +12,7 @@ my-pack/
   expected.prom      o que a extração deve produzir a partir das fixtures
 ```
 
-## Cabeçalho
+## Cabeçalho {#header}
 
 | Chave | Obrigatório | Significado |
 |---|---|---|
@@ -30,7 +30,7 @@ my-pack/
 | `credentials` | não | Tipos de credencial aceitos, em ordem de preferência: `none`, `api_token`, `username_password`. Padrão: `[none]`. Uma entrada pode ser `{kind, label, help}` para reformular o formulário. |
 | `options` | não | Configurações mostradas no formulário de dispositivo (abaixo). |
 
-## Opções
+## Opções {#options}
 
 Opções são armazenadas no dispositivo e lidas por `{{option.<key>}}` em
 caminhos, cabeçalhos e corpos, e por limites de regra.
@@ -51,7 +51,7 @@ Todo pacote que sonda também recebe cinco opções de conexão, que não pode
 redeclarar: `scheme`, `port`, `insecure_tls`,
 `request_timeout_seconds` (1 a 120, padrão 10) e `allow_private_targets`.
 
-## Fontes
+## Fontes {#sources}
 
 Uma fonte é uma requisição por sondagem, sempre enviada ao próprio
 endereço do dispositivo.
@@ -88,7 +88,7 @@ sources:
 - Uma sondagem faz no máximo 16 requisições e lê no máximo 4 MiB por
   resposta.
 
-### Fontes Prometheus
+### Fontes Prometheus {#prometheus-sources}
 
 ```yaml
 sources:
@@ -113,7 +113,7 @@ sources:
 - Rótulos que o DumbMonit define ele mesmo (`target`, `host`, `instance`,
   `job`, `tag_*`…) são mantidos como `exported_<name>`.
 
-## Métricas
+## Métricas {#metrics}
 
 Cada métrica tem um nome *sem* prefixo: `power_watts` no pacote
 `shelly-plug` é escrito `dumbmonit_shelly_plug_power_watts`. Nomes são
@@ -142,7 +142,7 @@ texto é buscado em `map`, ou analisado como número quando não há `map`.
 Um valor que está faltando, `null`, ou fora do `map` não produz nada
 nesta sondagem.
 
-## Discover
+## Discover {#discover}
 
 `discover` transforma cada elemento de uma lista em um conjunto de
 séries compartilhando rótulos: uma linha por disco, sensor ou fila.
@@ -167,7 +167,7 @@ discover:
 Métricas de linha aceitam `name`, `help`, `kind`, `json`, `scale` e
 `map`. Linhas além de `max_rows` são ignoradas.
 
-## Regras
+## Regras {#rules}
 
 Regras são instaladas com o pacote, como regras de alerta normais com o
 uid `pack:<id>:<name>`. Elas então pertencem a você: uma atualização do
@@ -197,7 +197,7 @@ rules:
   essa regra (uma substituição por dispositivo, reescrita sempre que o
   dispositivo é salvo).
 
-## Perfis SNMP
+## Perfis SNMP {#snmp-profiles}
 
 Um pacote pode trazer perfis SNMP, escritos exatamente como os
 integrados em
@@ -221,7 +221,7 @@ snmp_profiles:
 O catálogo SNMP é lido na inicialização: reinicie o DumbMonit depois de
 instalar ou atualizar um pacote com perfis SNMP.
 
-## Limites
+## Limites {#limits}
 
 | Limite | Valor |
 |---|---|
@@ -234,7 +234,7 @@ instalar ou atualizar um pacote com perfis SNMP.
 | Linhas por `discover` | 1.000 |
 | Tamanho de valor de rótulo | 200 bytes |
 
-## Fixtures e saída esperada
+## Fixtures e saída esperada {#fixtures-and-expected-output}
 
 `dumbmonit pack test <dir>` lê `fixtures/<source id>.json`, `.txt` ou
 `.prom`, executa a mesma extração que o servidor, e compara o resultado

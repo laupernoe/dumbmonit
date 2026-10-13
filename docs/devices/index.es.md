@@ -1,102 +1,110 @@
-# Tipos de dispositivo {#device-types}
+# Tipos de dispositivos
 
-DumbMonit llama *dispositivo* a todo lo que vigila (la API dice
-*target*), incluso cuando es una página web o un nombre DNS. Cada tipo
-es un recolector en el servidor; el servidor describe cada tipo a la
-interfaz (`GET /api/collectors`), así que el formulario siempre
-coincide con lo que esta versión puede monitorizar.
+DumbMonit llama *dispositivo* (la API dice *objetivo*) a todo lo que vigila, incluso
+cuando es una página web o un nombre de DNS. Cada tipo es un recolector en el servidor; el
+servidor describe cada tipo a la interfaz (`GET /api/collectors`), por lo que el
+formulario siempre coincide con lo que esta versión puede monitorear.
 
 | Tipo | `kind` | Credencial | Uso típico |
 |---|---|---|---|
-| [Dispositivo SNMP](snmp.md) | `snmp` | comunidad o SNMP v3 | Switch, router, NAS, SAI, impresora |
-| [Proxmox VE](proxmox.md) | `proxmox` | token de API o usuario/contraseña | Hipervisor, clúster |
-| [Proxmox Backup Server](pbs.md) | `pbs` | token de API o usuario/contraseña | Servidor de copias de seguridad |
-| [Proxmox Datacenter Manager](pdm.md) | `pdm` | token de API | Consola que federa varios clústeres PVE e instancias PBS |
-| [Proxmox Mail Gateway](pmg.md) | `pmg` | usuario/contraseña | Pasarela de correo que filtra spam y virus |
-| [VMware vSphere](vsphere.md) | `vsphere` | usuario/contraseña | vCenter o ESXi independiente: hosts, VMs, datastores, alarmas |
-| [Synology DSM](synology.md) | `synology` | usuario/contraseña | DiskStation, RackStation |
-| [OPNsense](opnsense.md) | `opnsense` | clave de API y secreto | Cortafuegos, router, borde multi-WAN |
-| [pfSense](pfsense.md) | `pfsense` | clave de API REST (usuario de solo lectura) | Cortafuegos: gateways caídos o con pérdidas, interfaces sin enlace, servicios detenidos |
-| [FortiGate](fortigate.md) | `fortigate` | token de API REST (perfil de solo lectura, host de confianza) | Cortafuegos: túneles IPsec, enlaces, sincronización HA, modo conserve, licencias FortiGuard |
-| [Sophos Firewall](sophos.md) | `sophos` | usuario/contraseña (perfil de solo lectura) | Cortafuegos: solo enlaces de interfaz (la API XML no expone túnel, HA ni estado de licencia) |
-| [UniFi Network](unifi.md) | `unifi` | clave de API o usuario/contraseña | Consola UniFi o servidor autoalojado: dispositivos, WAN, clientes |
-| [Home Assistant](homeassistant.md) | `homeassistant` | token de acceso de larga duración | Hogar inteligente: entidades no disponibles, baterías bajas, actualizaciones, reparaciones |
+| [Dispositivo SNMP](snmp.md) | `snmp` | comunidad o SNMP v3 | Conmutador, enrutador, NAS, SAI, impresora |
+| [Proxmox VE](proxmox.md) | `proxmox` | token de API o nombre de usuario/contraseña | Hipervisor, clúster |
+| [Servidor de copia de seguridad Proxmox](pbs.md) | `pbs` | token de API o nombre de usuario/contraseña | Servidor de copia de seguridad |
+| [Gestor de centro de datos Proxmox](pdm.md) | `pdm` | token de API | Consola que federa varios clústeres PVE e instancias PBS |
+| [Puerta de enlace de correo Proxmox](pmg.md) | `pmg` | nombre de usuario/contraseña | Puerta de enlace de correo filtrando spam y virus |
+| [VMware vSphere](vsphere.md) | `vsphere` | nombre de usuario/contraseña | vCenter o ESXi independiente: hosts, VMs, almacenes de datos, alarmas |
+| [Synology DSM](synology.md) | `synology` | nombre de usuario/contraseña | DiskStation, RackStation |
+| [OPNsense](opnsense.md) | `opnsense` | clave de API y secreto | Firewall, enrutador, borde multi-WAN |
+| [pfSense](pfsense.md) | `pfsense` | clave de API REST (usuario de solo lectura) | Firewall: puertas de enlace abajo o con pérdida, interfaces sin enlace, servicios detenidos |
+| [FortiGate](fortigate.md) | `fortigate` | token de API REST (perfil de solo lectura, host de confianza) | Firewall: túneles IPsec, enlaces, sincronización HA, modo conservador, licencias FortiGuard |
+| [Sophos Firewall](sophos.md) | `sophos` | nombre de usuario/contraseña (perfil de solo lectura) | Firewall: solo enlaces de interfaz (la API XML no expone estado de túnel, HA o licencia) |
+| [UniFi Network](unifi.md) | `unifi` | clave de API o nombre de usuario/contraseña | Consola UniFi o servidor autohospedado: dispositivos, WAN, clientes |
+| [Home Assistant](homeassistant.md) | `homeassistant` | token de acceso de larga duración | Casa inteligente: entidades no disponibles, baterías bajas, actualizaciones, reparaciones |
 | [TrueNAS](truenas.md) | `truenas` | clave de API | Servidor de almacenamiento ZFS (SCALE, Community Edition) |
-| [Unraid](unraid.md) | `unraid` | clave de API (rol Viewer) | NAS: array, discos, comprobaciones de paridad, pools de caché, contenedores, VMs |
-| [MikroTik RouterOS](mikrotik.md) | `mikrotik` | usuario/contraseña (grupo de solo lectura) | Router o switch: versiones y firmware atrasados, CPU, memoria, sensores, errores de interfaz |
-| [SAI con NUT](nut.md) | `nut` | ninguna, o usuario/contraseña | SAI en un NAS, Raspberry Pi o servidor que ejecuta Network UPS Tools |
-| [Hardware de servidor (Redfish)](redfish.md) | `redfish` | usuario/contraseña | Ventiladores, temperaturas, fuentes de alimentación y discos del servidor, leídos desde su BMC |
-| [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | ninguna, usuario/contraseña o token | Base de datos de series temporales: ingestión, muestras rechazadas, margen de disco |
-| [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | ninguna, usuario/contraseña o token | Base de datos de logs: ingestión, líneas rechazadas, margen de disco |
-| [Grafana Loki](loki.md) | `loki` | ninguna, usuario/contraseña o token | Servidor de logs: disponibilidad, líneas rechazadas, fallos de volcado |
-| [Graylog](graylog.md) | `graylog` | token de acceso o usuario/contraseña | Servidor de logs y su clúster OpenSearch: journal, buffers, caudal, inputs |
-| [Pi-hole](pihole.md) | `pihole` | contraseña de app, o ninguna | Bloqueador de anuncios DNS: estado de bloqueo, proporción bloqueada, antigüedad de lista, actualizaciones |
-| [AdGuard Home](adguard.md) | `adguard` | usuario/contraseña | Filtro DNS: protección, bloqueos, listas de filtro, servidores upstream, actualizaciones |
-| [MDaemon Email Server](mdaemon.md) | `mdaemon` | ninguna, o correo/contraseña | Servidor de correo: SMTP, IMAP, POP3, webmail, versión |
-| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | ninguna, o clave de API | Pasarela de correo: servicios, cola de entrega y otros contadores |
-| [Redis / Valkey](redis.md) | `redis` | usuario ACL, solo contraseña, o ninguna | Almacén en memoria: memoria frente a maxmemory, replicación, persistencia, claves |
-| [MongoDB](mongodb.md) | `mongodb` | usuario/contraseña (clusterMonitor) o ninguna | Base de datos de documentos: replica set, retraso, conexiones, caché WiredTiger |
-| [RabbitMQ](rabbitmq.md) | `rabbitmq` | usuario/contraseña (etiqueta monitoring) | Broker de mensajes: alarmas de recursos, nodos, particiones, colas sin consumidor |
-| [CrowdSec](crowdsec.md) | `crowdsec` | ninguna, o clave de API de bouncer | Motor de seguridad: decisiones, alertas, bouncers que dejaron de actualizar, lectura de logs |
-| [Traefik](traefik.md) | `traefik` | ninguna, o usuario basicAuth | Proxy inverso: routers desactivados, servidores backend caídos, certificados no obtenidos o no renovados, proporción de 5xx |
-| [Caddy](caddy.md) | `caddy` | usuario de vista de solo lectura, o ninguna | Servidor web y proxy inverso: salud de upstream, recargas fallidas, errores de handler, proporción de 5xx |
-| [Nginx](nginx.md) | `nginx` | ninguna, o basic auth | Servidor web: conexiones activas/en espera, tasas de accept/handled/request, salud de upstream de NGINX Plus |
-| [Apache httpd](apache.md) | `apache` | ninguna, o basic auth | Servidor web: workers ocupados/libres, scoreboard por estado, tasas de peticiones y bytes |
-| [Nginx Proxy Manager](npm.md) | `npm` | correo y contraseña de usuario (solo vista) | Gestor de proxy: hosts que nginx rechazó, hosts desactivados, certificados servidos |
-| [Caducidad de dominio](domain.md) | `domain` | ninguna | Dominio registrado vía RDAP: días antes de caducar, hold, período de redención, registrador |
-| [Kubernetes / k3s](kubernetes.md) | `kubernetes` | token de cuenta de servicio (ClusterRole de solo lectura) | Clúster: nodos no listos, pods en crash looping o pending, workloads con réplicas faltantes, reclamaciones de volumen atascadas |
-| [Active Directory](activedirectory.md) | `activedirectory` | usuario/contraseña (usuario de dominio corriente) | Dominio Windows vía LDAPS: controladores de dominio y roles FSMO, miembros de grupo privilegiado, política de contraseñas, hallazgos de seguridad |
-| [Veeam Backup & Replication](veeam.md) | `veeam` | usuario/contraseña (Veeam Backup Viewer) | Servidor de copias de seguridad: jobs fallidos, sesiones fallidas, repositorios llenándose, licencia |
-| [Tailscale](tailscale.md) | `tailscale` | cliente OAuth (devices:core:read) o token de acceso de API | Tailnet: servidores fuera de línea, claves de nodo caducando, dispositivos esperando aprobación |
-| [Nextcloud](nextcloud.md) | `nextcloud` | token de monitorización (NC-Token) | Sincronización de archivos: modo mantenimiento, actualización pendiente, actualizaciones, usuarios activos, OPcache |
-| [Immich](immich.md) | `immich` | clave de API | Biblioteca de fotos: colas de trabajos, actualizaciones, disco, recuentos de fotos |
-| [Paperless-ngx](paperless.md) | `paperless` | token de API o usuario/contraseña | Documentos: Redis, Celery, índice, importaciones fallidas, actualizaciones |
-| [Jellyfin](jellyfin.md) | `jellyfin` | clave de API | Servidor multimedia: tareas programadas fallidas, plugins, streams y transcodificaciones |
-| [Plex Media Server](plex.md) | `plex` | X-Plex-Token, o ninguna desde una red permitida | Servidor multimedia: streams, transcodificaciones, bibliotecas, actualizaciones |
-| [GitLab (autoalojado)](gitlab.md) | `gitlab` | token de acceso personal | Forge: backlog de Sidekiq, runners de CI, migraciones pendientes, ajustes de registro/2FA, licencia |
-| [Forgejo / Gitea](forgejo.md) | `forgejo` | token de acceso | Forge: comprobación de salud, tareas programadas, runners de Actions, recuentos de repositorio/cuenta |
-| [Servidor con agente](agent.md) | `agent` | ninguna (token de inscripción) | Linux, Windows, Raspberry Pi, [host Hyper-V](agent.md#hyper-v-hosts) |
-| [Sitio web o API web](services.md#http) | `http` | ninguna, usuario/contraseña o token | Página de salud, API REST |
-| [Puerto de red](services.md#tcp) | `tcp` | ninguna | SSH, SMB, base de datos |
-| [Nombre de dominio](services.md#dns) | `dns` | ninguna | Tu dominio, un nombre interno |
-| [Host accesible](services.md#ping) | `ping` | ninguna | Gateway, punto de acceso, impresora |
-| [Certificado TLS](services.md#tls) | `tls` | ninguna | IMAPS, LDAPS, proxy inverso |
-| [Servidor de hora NTP](services.md#ntp) | `ntp` | ninguna | Router, NAS, servidor de hora interno, servidor de pool público |
-| [Heartbeat](push.md) | `push` | ninguna (URL secreta) | Tarea cron, script de copia de seguridad, automatización que debe avisar |
-| [Cambios en sitios web](webchange.md) | `webchange` | ninguna | Una página o un sitio entero: cambios de texto, páginas nuevas y eliminadas, antes/después con capturas |
-| [Dispositivo de demostración](demo.md) | `dummy` | ninguna | Explora la UI sin hardware |
+| [Unraid](unraid.md) | `unraid` | clave de API (rol Visor) | NAS: matriz, discos, comprobaciones de paridad, grupos de caché, contenedores, VMs |
+| [MikroTik RouterOS](mikrotik.md) | `mikrotik` | nombre de usuario/contraseña (grupo de solo lectura) | Enrutador o conmutador: versiones y firmware atrasados, CPU, memoria, sensores, errores de interfaz |
+| [SAI con NUT](nut.md) | `nut` | ninguno, o nombre de usuario/contraseña | SAI en NAS, Raspberry Pi o servidor que ejecuta Network UPS Tools |
+| [Hardware del servidor (Redfish)](redfish.md) | `redfish` | nombre de usuario/contraseña | Ventiladores del servidor, temperaturas, fuentes de alimentación y unidades, leído desde su BMC |
+| [VictoriaMetrics](victoriametrics.md) | `victoriametrics` | ninguno, nombre de usuario/contraseña o token | Base de datos de series temporales: ingesta, muestras rechazadas, espacio en disco |
+| [VictoriaLogs](victoriametrics.md#let-dumbmonit-read-victorialogs-own-health) | `victorialogs` | ninguno, nombre de usuario/contraseña o token | Base de datos de registros: ingesta, líneas rechazadas, fallos de descarga |
+| [Grafana Loki](loki.md) | `loki` | ninguno, nombre de usuario/contraseña o token | Servidor de registros: disponibilidad, líneas rechazadas, fallos de descarga |
+| [Graylog](graylog.md) | `graylog` | token de acceso o nombre de usuario/contraseña | Servidor de registros y su clúster OpenSearch: diario, búferes, rendimiento, entradas |
+| [Pi-hole](pihole.md) | `pihole` | contraseña de aplicación, o ninguno | Bloqueador DNS: estado de bloqueo, participación bloqueada, antigüedad de lista de bloqueo, actualizaciones |
+| [AdGuard Home](adguard.md) | `adguard` | nombre de usuario/contraseña | Filtro DNS: protección, bloqueos, listas de filtros, servidores ascendentes, actualizaciones |
+| [Servidor de correo MDaemon](mdaemon.md) | `mdaemon` | ninguno, o dirección de correo/contraseña | Servidor de correo: SMTP, IMAP, POP3, correo web, versión |
+| [SecurityGateway para servidores de correo](securitygateway.md) | `securitygateway` | ninguno, o clave de API | Puerta de enlace de correo: servicios, cola de entrega y otros contadores |
+| [Redis / Valkey](redis.md) | `redis` | usuario ACL, solo contraseña, o ninguno | Almacén en memoria: memoria contra maxmemory, replicación, persistencia, claves |
+| [MongoDB](mongodb.md) | `mongodb` | nombre de usuario/contraseña (clusterMonitor) o ninguno | Base de datos de documentos: conjunto de réplicas, retraso, conexiones, caché WiredTiger |
+| [RabbitMQ](rabbitmq.md) | `rabbitmq` | nombre de usuario/contraseña (etiqueta de monitoreo) | Corredor de mensajes: alarmas de recursos, nodos, particiones, colas sin consumidor |
+| [CrowdSec](crowdsec.md) | `crowdsec` | ninguno, o clave de API de bouncer | Motor de seguridad: decisiones, alertas, bouncers que dejaron de extraer, lectura de registro |
+| [Traefik](traefik.md) | `traefik` | ninguno, o usuario basicAuth | Proxy inverso: enrutadores deshabilitados, servidores backend abajo, certificados no obtenidos o no renovados, participación 5xx |
+| [Caddy](caddy.md) | `caddy` | usuario de vista de solo lectura, o ninguno | Servidor web y proxy inverso: salud ascendente, recargas fallidas, errores de manejador, participación 5xx |
+| [Nginx](nginx.md) | `nginx` | ninguno, o autenticación básica | Servidor web: conexiones activas/en espera, tasas aceptadas/manejadas/solicitud, salud ascendente NGINX Plus |
+| [Apache httpd](apache.md) | `apache` | ninguno, o autenticación básica | Servidor web: trabajadores ocupados/inactivos, tablero por estado, tasas de solicitud y byte |
+| [Gestor de proxy Nginx](npm.md) | `npm` | correo de usuario y contraseña (solo vista) | Gestor de proxy: hosts rechazados por nginx, hosts deshabilitados, certificados servidos |
+| [Expiración de dominio](domain.md) | `domain` | ninguno | Dominio registrado sobre RDAP: días antes de la expiración, retención, período de rescate, registrador |
+| [Kubernetes / k3s](kubernetes.md) | `kubernetes` | token de cuenta de servicio (ClusterRole de solo lectura) | Clúster: nodos no listos, pods en bucle de bloqueo o pendientes, cargas de trabajo faltando réplicas, reclamaciones de volumen atascadas |
+| [Active Directory](activedirectory.md) | `activedirectory` | nombre de usuario/contraseña (usuario de dominio plano) | Dominio de Windows sobre LDAPS: controladores de dominio y roles FSMO, miembros de grupos privilegiados, política de contraseña, hallazgos de seguridad |
+| [Veeam Backup & Replication](veeam.md) | `veeam` | nombre de usuario/contraseña (Veeam Backup Viewer) | Servidor de copia de seguridad: trabajos fallidos, sesiones fallidas, repositorios llenándose, licencia |
+| [Tailscale](tailscale.md) | `tailscale` | cliente OAuth (devices:core:read) o token de acceso de API | Tailnet: servidores sin conexión, claves de nodo expirando, dispositivos en espera de aprobación |
+| [Nextcloud](nextcloud.md) | `nextcloud` | token de monitoreo (NC-Token) | Sincronización de archivos: modo mantenimiento, actualización pendiente, actualizaciones, usuarios activos, OPcache |
+| [Immich](immich.md) | `immich` | clave de API | Biblioteca de fotos: colas de trabajos, actualizaciones, disco, conteos de fotos |
+| [Paperless-ngx](paperless.md) | `paperless` | token de API o nombre de usuario/contraseña | Documentos: Redis, Celery, índice, importaciones fallidas, actualizaciones |
+| [Jellyfin](jellyfin.md) | `jellyfin` | clave de API | Servidor multimedia: tareas programadas fallidas, complementos, transmisiones y transcodificaciones |
+| [Plex Media Server](plex.md) | `plex` | X-Plex-Token, o ninguno de una red permitida | Servidor multimedia: transmisiones, transcodificaciones, bibliotecas, actualizaciones |
+| [GitLab (autogestionado)](gitlab.md) | `gitlab` | token de acceso personal | Forja: atraso de cola Sidekiq, ejecutores de CI, migraciones pendientes, configuración de registro/2FA, licencia |
+| [Forgejo / Gitea](forgejo.md) | `forgejo` | token de acceso | Forja: verificación de salud, tareas programadas, ejecutores de Actions, conteos de repositorio/cuenta |
+| [Servidor con agente](agent.md) | `agent` | ninguno (token de inscripción) | Linux, Windows, Raspberry Pi, [anfitrión Hyper-V](agent.md#hyper-v-hosts) |
+| [Sitio web o API web](services.md#http) | `http` | ninguno, nombre de usuario/contraseña o token | Página de salud, API REST |
+| [Puerto de red](services.md#tcp) | `tcp` | ninguno | SSH, SMB, base de datos |
+| [Nombre de dominio](services.md#dns) | `dns` | ninguno | Tu dominio, un nombre interno |
+| [Host alcanzable](services.md#ping) | `ping` | ninguno | Puerta de enlace, punto de acceso, impresora |
+| [Certificado TLS](services.md#tls) | `tls` | ninguno | IMAPS, LDAPS, proxy inverso |
+| [Servidor SMTP](services.md#smtp) | `smtp` | ninguno, o nombre de usuario/contraseña | Servidor de correo: saludo, STARTTLS, certificado, inicio de sesión opcional |
+| [PostgreSQL](services.md#postgresql) | `postgres` | nombre de usuario/contraseña | Base de datos: conexión y una consulta que elijas |
+| [MySQL o MariaDB](services.md#mysql-and-mariadb) | `mysql` | nombre de usuario/contraseña | Base de datos: conexión y una consulta que elijas |
+| [Corredor MQTT](services.md#mqtt) | `mqtt` | ninguno, o nombre de usuario/contraseña | Corredor: conexión, suscripción, mensaje retenido |
+| [WebSocket](services.md#websocket) | `websocket` | ninguno, nombre de usuario/contraseña o token | Punto final WebSocket: apretón de manos, intercambio de mensajes opcional |
+| [Servidor de tiempo NTP](services.md#ntp) | `ntp` | ninguno | Enrutador, NAS, servidor de tiempo interno, servidor de grupo público |
+| [Latido del corazón](push.md) | `push` | ninguno (URL secreta) | Trabajo cron, script de copia de seguridad, automatización que debe llamar |
+| [Cambios del sitio web](webchange.md) | `webchange` | ninguno | Una página o un sitio completo: cambios de texto, páginas nuevas y eliminadas, antes/después con capturas de pantalla |
+| [Salud y SEO del sitio web](website.md) | `website` | ninguno | Sitios en masa: abajo, página en blanco, redireccionamientos, noindex, robots.txt, cambios de título/descripción/canónica, plataforma (importación CSV) |
+| [Dispositivo de demostración](demo.md) | `dummy` | ninguno | Explora la interfaz de usuario sin hardware |
 
-## Cómo se lee un dispositivo {#how-a-device-is-read}
+## Cómo se lee un dispositivo
 
-El scheduler ejecuta cada dispositivo activado en su propio intervalo
-(60 s por defecto, mínimo 10 s) a través del recolector de su tipo, con
-como máximo `DUMBMONIT_MAX_CONCURRENT_PROBES` sondas en vuelo y un
-tiempo de espera máximo de `DUMBMONIT_PROBE_TIMEOUT_SECS` por sonda.
-Cada sonda exitosa escribe sus muestras más `dumbmonit_up = 1`; una sonda
-fallida no escribe nada, y es el silencio de la serie lo que detecta la
-regla «Device unreachable».
+El planificador ejecuta cada dispositivo habilitado en su propio intervalo (predeterminado 60 s,
+mínimo 10 s) a través del recolector para su tipo, con como máximo
+`DUMBMONIT_MAX_CONCURRENT_PROBES` sondeos en vuelo y un tiempo de espera duro de
+`DUMBMONIT_PROBE_TIMEOUT_SECS` por sondeo. Cada sondeo exitoso escribe sus
+muestras más `dumbmonit_up = 1`; un sondeo fallido no escribe nada, y es el
+silencio de la serie lo que la regla "Dispositivo inalcanzable" detecta. La página del dispositivo
+muestra el fallo en el siguiente sondeo, pero la alerta espera a propósito: se
+dispara aproximadamente cuatro minutos después del último sondeo exitoso (tres minutos de
+silencio, luego un minuto de retención), por lo que un único sondeo perdido nunca notifica a nadie.
 
-Los fallos se clasifican. Un dispositivo que no responde es
-*inaccesible* y genera una alerta. Una comunidad incorrecta, un
-certificado rechazado o una capacidad faltante es un *error de
-configuración*: se muestra en la página del dispositivo, en rojo, con
-el motivo, y no se notifica. La distinción importa: un dispositivo mal
-configurado no debería despertar a nadie por la noche.
+Los fallos se clasifican. Un dispositivo que no responde es *inalcanzable* y
+genera una alerta. Una comunidad incorrecta, un certificado rechazado o una
+capacidad faltante es un *error de configuración*: se muestra en la página del dispositivo, en rojo,
+con la razón, y no se notifica. La distinción es importante: un dispositivo mal configurado
+no debe despertar a nadie por la noche.
 
-## Opciones {#options}
+## Opciones
 
-Algunos tipos leen opciones de las etiquetas del dispositivo: el puerto
-de API, si aceptar un certificado autofirmado, qué nodos monitorizar.
-El formulario muestra un campo tipado por opción bajo **More options**,
-con su valor por defecto y texto de ayuda. Las páginas por tipo las
-listan textualmente. Las opciones se copian en cada serie como
-etiquetas `tag_<key>`, así que nunca pongas un secreto en una: usa el
-campo de credencial, que está cifrado.
+Algunos tipos leen opciones de las etiquetas del dispositivo: el puerto de API, si aceptar
+un certificado autofirmado, qué nodos monitorear. El formulario muestra un campo escrito
+por opción bajo **Más opciones**, con su predeterminado y texto de ayuda. Las páginas por tipo
+las enumeran textualmente. Las opciones son configuración, no etiquetas: no se copian
+en la serie. Las etiquetas libres (cualquier otra clave) se copian en cada serie como
+etiquetas `tag_<key>`, excepto claves que nombran un secreto (coincididas por palabra: `password`, `token`,
+`key`, `cert`, `secret`, `pass`, `private`, `pem`…, entonces `primary_key` se omite
+pero `keyboard` no) y valores más largos que 256 caracteres. Nunca pongas un secreto en
+una etiqueta de todos modos: usa el campo de credencial, que está encriptado.
 
-## Dispositivos padre {#parent-devices}
+## Dispositivos padres
 
-Cualquier dispositivo puede declarar otro como su padre. Cuando el
-padre es inaccesible, las alertas de sus descendientes se marcan
-*Suppressed by parent* en lugar de enviarse: un switch que se cae
-produce una notificación, no treinta. En la página Devices, los hijos
-se apilan bajo su padre y se atenúan cuando es inaccesible.
+Cualquier dispositivo puede declarar otro como su padre. Cuando el padre es
+inalcanzable, las alertas de sus descendientes se marcan *Suprimido por padre*
+en lugar de ser enviadas: un conmutador que cae produce una notificación, no
+treinta. En la página de Dispositivos, los hijos se apilan bajo su padre y se oscurecen cuando
+es inalcanzable.

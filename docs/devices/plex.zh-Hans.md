@@ -1,4 +1,4 @@
-# Plex Media Server
+# Plex Media Server {#plex-media-server}
 
 Plex 正在做什么,以及它是否是最新版本:当前正在播放的流、有多少
 经过转码以及是否使用硬件转码、它们占用的带宽、来自外部网络的流、

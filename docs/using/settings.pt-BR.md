@@ -1,4 +1,4 @@
-# Configurações
+# Configurações {#settings}
 
 ![Configurações: conta, usuários, login único, agentes, assistente, aparência, sobre](../assets/screenshots/settings-light.png){ loading=lazy }
 
@@ -18,7 +18,7 @@ administração:
 
 Os links antigos ainda funcionam: eles redirecionam para o novo lugar.
 
-## Conta e segurança
+## Conta e segurança {#account--security}
 
 Esta é a sua própria conta. A primeira é criada na primeira inicialização,
 e mais podem ser adicionadas abaixo. Aqui você muda sua senha: senha
@@ -36,7 +36,7 @@ cliente em vez do do proxy (veja
 Uma senha esquecida é redefinida com `DUMBMONIT_RESET_PASSWORD=1`: veja as
 [Perguntas frequentes](../faq.md#i-lost-the-password).
 
-### Autenticação de dois fatores
+### Autenticação de dois fatores {#two-factor-authentication}
 
 Contas que entram com senha podem adicionar um segundo fator: um código de
 seis dígitos baseado em tempo (TOTP) de um app autenticador — Aegis,
@@ -64,7 +64,7 @@ Administradores também encontram o **log de segurança** nesta seção:
 logins e falhas, mudanças de senha e dois fatores, mudanças de token e
 conta, com o endereço do cliente. Ele mantém as últimas 5.000 entradas.
 
-## Notificações push
+## Notificações push {#push-notifications}
 
 Notificações nativas neste celular ou computador, mesmo com o DumbMonit
 fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada
@@ -75,7 +75,7 @@ localhost), instalação na Tela de Início no iPhone e iPad, e os domínios
 de serviço de push que o servidor precisa alcançar. Guia completo:
 [Notificações push (PWA)](push-notifications.md).
 
-## Usuários
+## Usuários {#users}
 
 Apenas administradores. As contas que podem entrar, e seu papel:
 
@@ -106,7 +106,7 @@ refletem essa regra em vez de reportá-la como um erro: o último
 administrador não pode ser rebaixado, desativado ou excluído, e você não
 pode desativar ou excluir sua própria conta.
 
-## Login único
+## Login único {#single-sign-on}
 
 Apenas administradores. Login através de um provedor OpenID Connect
 (Authelia, Authentik, Keycloak, Pocket ID, Google Workspace…). Preencha o
@@ -168,7 +168,7 @@ ambiente sem `DUMBMONIT_OIDC_AUTO_CREATE`. Versões anteriores tratavam
 esse padrão se aplica. Um valor que você salvou explicitamente é mantido
 como está.
 
-## Agentes
+## Agentes {#agents}
 
 Tokens de cadastro para o
 [agente Linux, macOS, FreeBSD e Windows](../devices/agent.md). Crie um com
@@ -185,7 +185,7 @@ Um token pode cadastrar várias máquinas. Revogá-lo não exclui os
 dispositivos. Visualizadores veem a lista e a seção lê *Visualizador —
 somente leitura*; criar e revogar são para administradores.
 
-## API e assistentes
+## API e assistentes {#api--assistants}
 
 Um tipo de token para ambos: clientes MCP e a [API REST](../reference/api.md).
 Nomeie um token, escolha seu escopo e crie-o — é mostrado uma vez. Um
@@ -206,7 +206,7 @@ bearer. **Acesso à API** mostra o mesmo token na API REST como um exemplo
 ele. Veja [Conectar um assistente](assistant.md) e
 [Coletando do DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
-## Backup
+## Backup {#backup}
 
 Três coisas, na ordem em que você as encontra.
 
@@ -236,14 +236,14 @@ uma atualização.
 Tudo aqui é restrito a administradores. Veja
 [Backup e restauração](../install/backup.md).
 
-## Relatórios
+## Relatórios {#reports}
 
 E-mails periódicos de disponibilidade para a equipe: escolha semanal,
 diário ou mensal, o dia, hora e fuso horário, os destinatários e o canal
 de e-mail, depois **Enviar pré-visualização** para ver o resultado.
 Restrito a administradores. Veja [Relatórios por e-mail](reports.md).
 
-## Aparência
+## Aparência {#appearance}
 
 Três blocos, cada um pré-visualizando seu próprio tema: **Sistema** (segue
 seu dispositivo e muda com ele), **Dia** (o tema "papel de gráfico") e
@@ -255,7 +255,7 @@ entre dia e noite.
 em tela cheia, para um monitor na sala. ++esc++ o deixa, e a paleta de
 comandos o abre de qualquer lugar — veja [Modo parede](overview.md#wall-mode).
 
-## Sobre
+## Sobre {#about}
 
 Versão do servidor e a saúde de seus dois armazenamentos, o banco de dados
 (configuração de dispositivo e histórico de alertas) e o VictoriaMetrics

@@ -1,4 +1,4 @@
-# A página de alertas
+# A página de alertas {#alerts-page}
 
 ![A página de alertas: o que precisa de você, as regras, manutenção programada e histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
 
@@ -18,7 +18,7 @@ uma janela a partir de qualquer aba.
 O mesmo modelo de verdade alimenta o boletim da visão geral e esta página,
 então os dois sempre concordam sobre o que precisa de você.
 
-## Se livrando de um alerta
+## Se livrando de um alerta {#getting-rid-of-an-alert}
 
 Um alerta disparando não é binário — "resolver" ou "viver com o ruído para
 sempre". Quatro ações, para quatro situações diferentes, abertas a
@@ -58,7 +58,7 @@ Páginas de status públicas ignoram reconhecimentos e sonecas: um alerta
 reconhecido ou em soneca ainda é um alerta para o mundo exterior. Uma regra
 ignorada, por outro lado, nunca produziu um alerta em primeiro lugar.
 
-## Notificações
+## Notificações {#notifications}
 
 Canais e a política vivem aqui — sob Alertas, não Configurações — porque
 decidem quem ouve um alerta, o que é uma questão de alerta. Dois painéis:
@@ -104,7 +104,7 @@ rola até o painel de política. Os links antigos de Configurações
 (`/settings#notifications`, `/settings#notifications-policy`) redirecionam
 para aqui.
 
-## Operadores e visualizadores
+## Operadores e visualizadores {#operators-and-viewers}
 
 Um **operador** lida com alertas sem tocar na configuração: eles
 reconhecem, colocam em soneca, ignoram uma regra para um dispositivo,

@@ -4,7 +4,7 @@ Aggiungere qualsiasi cosa funziona sempre nello stesso modo: scegli un
 tipo dall'elenco, una nota a destra spiega cosa preparare sul
 dispositivo, e il modulo mostra solo i campi che contano per quel tipo.
 
-## I tre primi passaggi
+## I tre primi passaggi {#the-three-first-steps}
 
 Su un'istanza completamente nuova la panoramica non mostra un bollettino
 vuoto: mostra una breve guida — **add your first device**, **connect a

@@ -1,4 +1,4 @@
-# Modo parede e música
+# Modo parede e música {#wall-mode-and-music}
 
 `/wall` mostra apenas o boletim, em tela cheia, para uma tela que fica
 ligada em uma sala: a frase, a janela do tempo, três leituras grandes e a
@@ -10,7 +10,7 @@ salva.
 
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
-## Música na parede
+## Música na parede {#music-on-the-wall}
 
 A parede também pode tocar música e mostrar o que está tocando, para que
 você possa iniciar uma playlist do seu celular, ouvi-la pela TV, e vê-la
@@ -31,7 +31,7 @@ Existem duas formas, e você pode usar ambas.
 Conectar o Spotify e enviar links são ações de administrador; uma conta de
 visualizador na parede toca e mostra tudo.
 
-### Spotify Connect: a parede se torna um alto-falante
+### Spotify Connect: a parede se torna um alto-falante {#spotify-connect-the-wall-becomes-a-speaker}
 
 O objetivo: no seu celular, abra o Spotify, toque no ícone de
 dispositivos, escolha a TV — a música toca na TV enquanto a parede mostra
@@ -57,7 +57,7 @@ Widevine usável: eles não podem ser um alto-falante Spotify, o que quer
 que o DumbMonit faça. Para tal TV, veja
 [Quando o navegador da TV não consegue tocar o Spotify](#when-the-tvs-browser-cannot-play-spotify).
 
-#### Configure
+#### Configure {#set-it-up}
 
 1. **Crie um app Spotify.** Abra o
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard),
@@ -135,7 +135,7 @@ e em um navegador que não pode tocar o Spotify. Para usar só isso,
 desligue **Usar esta tela como um alto-falante Spotify** no painel Música
 da parede.
 
-#### Quando o navegador da TV não consegue tocar o Spotify
+#### Quando o navegador da TV não consegue tocar o Spotify {#when-the-tvs-browser-cannot-play-spotify}
 
 Escolha o que corresponde à sua configuração — em todo caso a parede
 continua mostrando o que toca, porque *tocando agora* lê a conta, não o
@@ -163,7 +163,7 @@ monitoramento não deveria ter; e o librespot depende de protocolos Spotify
 não oficiais que quebram de tempos em tempos. Um receptor instalado na
 máquina certa, ao lado do DumbMonit, faz o trabalho melhor.
 
-### Um link enviado para toda parede
+### Um link enviado para toda parede {#a-link-sent-to-every-wall}
 
 Em **Configurações → Música da parede** (ou o próprio painel **Música** da
 parede), cole um link do Spotify, Deezer ou YouTube para uma faixa, álbum,
@@ -179,7 +179,7 @@ API nunca expôs o que está tocando — então um link é a forma para eles. Os
 players embutidos tocam prévias de 30 segundos a menos que o navegador da
 parede esteja conectado ao serviço.
 
-### Privacidade
+### Privacidade {#privacy}
 
 Nada de terceiros carrega na parede até o Spotify ser conectado ou um link
 ser definido. A política de segurança de conteúdo da página permite
@@ -187,7 +187,7 @@ exatamente os três players embutidos, o script do player do Spotify
 (`sdk.scdn.co/spotify-player.js`) e seu frame, e cobre a partir de
 `i.scdn.co` — nada mais, e nada fora da interface web.
 
-### API
+### API {#api}
 
 | Rota | Quem | O que |
 |---|---|---|

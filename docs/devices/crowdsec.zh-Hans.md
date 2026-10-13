@@ -1,4 +1,4 @@
-# CrowdSec
+# CrowdSec {#crowdsec}
 
 安全引擎:当前有效的决策及其来源、告警、停止拉取的 bouncer、
 已读取的日志行以及没有任何解析器识别的日志行,以及本地 API 是否

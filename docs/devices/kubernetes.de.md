@@ -1,101 +1,88 @@
-# Kubernetes / k3s
+# Kubernetes / k3s {#kubernetes-k3s}
 
-Ein Cluster über seinen API-Server: nicht bereite oder unter Druck
-stehende Knoten, Pods, die crash-loopen oder im Pending festsitzen,
-Deployments, StatefulSets und DaemonSets mit fehlenden Replikas,
-Volume Claims, die nie gebunden werden, und die Warning-Events der
+Ein Cluster über seinen API-Server: Knoten, die nicht Ready sind oder unter Druck stehen, Pods
+in Crash-Schleife oder festhängend im Zustand Pending, Deployments, StatefulSets und DaemonSets
+mit fehlenden Replikas, Volume Claims, die nie gebunden werden, und die Warnungsereignisse der
 letzten Stunde.
 
-DumbMonit liest die API mit dem Token eines dedizierten Service
-Accounts, gebunden an eine nur-lesende ClusterRole: `get` und `list`
-auf Knoten, Pods, Workloads, Persistent Volume Claims und Events,
-nichts sonst. Es schreibt nie, und die Rolle gibt keinen Zugriff auf
-Secrets oder ConfigMaps. Ein Gerät deckt den gesamten Cluster ab,
-welche Distribution auch immer: k3s, kubeadm, k0s, MicroK8s, Talos,
-oder ein verwalteter Cluster, dessen API DumbMonit erreichen kann.
+DumbMonit liest die API mit dem Token eines dedizierten Service Accounts, der an eine
+schreibgeschützte ClusterRole gebunden ist: `get` und `list` auf Knoten, Pods, Workloads,
+Persistent Volume Claims und Ereignisse, sonst nichts. Es schreibt nie, und die Rolle gibt keinen
+Zugriff auf Secrets oder ConfigMaps. Ein Gerät deckt den ganzen Cluster ab, gleich welche
+Distribution: k3s, kubeadm, k0s, MicroK8s, Talos oder ein verwalteter Cluster, dessen API
+DumbMonit erreichen kann.
 
-Jede Minute liest DumbMonit acht Collections, parallel: die Version,
-die Knoten, die Pods, die Deployments, StatefulSets und DaemonSets,
-die Persistent Volume Claims, und die Events vom Typ `Warning`
-(vom API-Server gefiltert). Lange Listen werden in Seiten zu 500
-gelesen.
+Jede Minute liest DumbMonit parallel acht Sammlungen: die Version, die Knoten, die Pods, die
+Deployments, StatefulSets und DaemonSets, die Persistent Volume Claims und die Ereignisse vom
+Typ `Warning` (vom API-Server gefiltert). Lange Listen werden in Seiten zu 500 gelesen.
 
-## Was beobachtet wird
+## Was überwacht wird {#what-it-watches}
 
 Alle Metriken haben das Präfix `dumbmonit_k8s_`.
 
 | Metrik | Was | Labels |
 |---|---|---|
 | `version_info` | Wert 1 | `version` (`1.33.4+k3s1`) |
-| `nodes`, `nodes_ready` | Knoten, und die mit wahrer `Ready`-Bedingung | |
+| `nodes`, `nodes_ready` | Knoten und solche, deren Bedingung `Ready` wahr ist | |
 | `node_ready` | 1, wenn der Knoten Ready ist | `node` |
-| `node_pressure` | 1, wenn der Knoten diesen Druck meldet; nur die vom Knoten angegebenen Bedingungen | `node`, `condition`: `memory`, `disk`, `pid`, `network` |
-| `node_unschedulable` | 1, wenn der Knoten cordoned ist | `node` |
+| `node_pressure` | 1, wenn der Knoten diesen Druck meldet; nur die Bedingungen, die der Knoten deklariert | `node`, `condition`: `memory`, `disk`, `pid`, `network` |
+| `node_unschedulable` | 1, wenn der Knoten gesperrt (cordoned) ist | `node` |
 | `node_info` | Wert 1 | `node`, `kubelet_version` |
-| `pods`, `pods_running`, `pods_pending`, `pods_failed`, `pods_crashlooping`, `pods_not_ready` | Pod-Zählungen; abgeschlossene Pods (`Succeeded`) werden ausgelassen | |
+| `pods`, `pods_running`, `pods_pending`, `pods_failed`, `pods_crashlooping`, `pods_not_ready` | Pod-Zahlen; abgeschlossene Pods (`Succeeded`) bleiben außen vor | |
 | `pod_ready`, `pod_crashlooping`, `pod_pending` | 1 oder 0 pro Pod | `namespace`, `pod`, `workload` |
 | `pod_restarts` | Container-Neustarts des Pods, ein Zähler | `namespace`, `pod`, `workload` |
-| `pod_blocked` | 1, während ein Container aus einem anderen Grund als dem Starten wartet: `ImagePullBackOff`, `CreateContainerConfigError`… | `namespace`, `pod`, `workload`, `reason` |
-| `workload_desired`, `workload_ready`, `workload_unavailable` | geforderte, bereite und fehlende Replikas; für ein DaemonSet, Knoten | `kind` (`Deployment`, `StatefulSet`, `DaemonSet`), `namespace`, `workload` |
-| `pvc_pending` | 1, wenn der Claim Pending ist **und** ein Pod ihn braucht oder ein Warning-Event ihn betrifft | `namespace`, `pvc` |
+| `pod_blocked` | 1, solange ein Container aus einem anderen Grund als dem Start wartet: `ImagePullBackOff`, `CreateContainerConfigError` … | `namespace`, `pod`, `workload`, `reason` |
+| `workload_desired`, `workload_ready`, `workload_unavailable` | angeforderte, bereite und fehlende Replikas; bei einem DaemonSet Knoten | `kind` (`Deployment`, `StatefulSet`, `DaemonSet`), `namespace`, `workload` |
+| `pvc_pending` | 1, wenn der Claim Pending ist **und** ein Pod ihn braucht oder ein Warnungsereignis ihn betrifft | `namespace`, `pvc` |
 | `pvc_bound` | 1, wenn der Claim Bound ist | `namespace`, `pvc` |
-| `pvcs`, `pvcs_pending` | Claims, und die wie oben festsitzenden | |
-| `warning_events` | in der letzten Stunde gesehene Warning-Events | |
-| `warning_events_by_reason` | dasselbe nach Grund (`BackOff`, `FailedScheduling`, `ProvisioningFailed`…), höchstens zwanzig Gründe | `reason` |
+| `pvcs`, `pvcs_pending` | Claims und die wie oben festhängenden | |
+| `warning_events` | in der letzten Stunde gesehene Warnungsereignisse | |
+| `warning_events_by_reason` | dasselbe nach Grund (`BackOff`, `FailedScheduling`, `ProvisioningFailed` …), höchstens zwanzig Gründe | `reason` |
 
-`workload` ist der Controller des Pods: das Deployment hinter seinem
-ReplicaSet (`api` für `api-7c9696d669-8tpp6`), das StatefulSet, das
-DaemonSet, oder leer für einen blanken Pod. Pods werden einzeln bis zu
-500 beschrieben, Probleme zuerst; Zählungen decken immer jeden Pod ab.
+`workload` ist der Controller des Pods: das Deployment hinter seinem ReplicaSet (`api` für
+`api-7c9696d669-8tpp6`), das StatefulSet, das DaemonSet oder leer bei einem nackten Pod. Pods
+werden bis zu 500 einzeln beschrieben, Probleme zuerst; die Zahlen decken immer jeden Pod ab.
 
-Ein Claim, der lediglich `Pending` ist, ist kein Fehler: Eine
-`WaitForFirstConsumer`-Storage-Class, die k3s mitliefert
-(`local-path`), lässt einen Claim pending, bis der erste Pod ihn
-nutzt. Er zählt nur als festsitzend, wenn ein Pod ihn verlangt oder
-wenn eine Warnung wie `ProvisioningFailed` ihn betrifft.
+Ein Claim, der bloß `Pending` ist, ist kein Fehler: Eine Storage-Klasse mit `WaitForFirstConsumer`,
+wie sie k3s mitliefert (`local-path`), lässt einen Claim ausstehend, bis der erste Pod ihn
+verwendet. Er zählt erst als festhängend, wenn ein Pod ihn anfordert oder eine Warnung wie
+`ProvisioningFailed` ihn betrifft.
 
-Die geltenden [eingebauten Regeln](../alerting/rules.md#kubernetes):
+Die zutreffenden [integrierten Regeln](../alerting/rules.md#kubernetes):
 
-- **Kubernetes node not ready**: Die `Ready`-Bedingung eines Knotens
-  ist seit fünf Minuten falsch oder unbekannt (Warning).
-- **Kubernetes node under pressure**: Speicher-, Platten- oder
-  PID-Druck seit fünf Minuten (Advisory).
-- **Kubernetes pod crash looping**: ein Container in
-  `CrashLoopBackOff` seit zehn Minuten (Warning). Zwischen zwei
-  Versuchen startet der Container neu, und der Zustand verschwindet
-  kurz; die Regel liest das Maximum über zehn Minuten, damit sie nicht
-  jedes Mal neu beginnt.
-- **Kubernetes pod stuck pending**: ein Pod Pending seit fünfzehn
-  Minuten (Advisory).
-- **Kubernetes pod restarting**: mehr als fünf Neustarts in einer
-  Stunde, für einen Pod, der noch nicht crash-loopt (Advisory).
-- **Kubernetes workload missing replicas**: ein Deployment,
-  StatefulSet oder DaemonSet mit weniger verfügbaren Replikas als
-  gefordert, seit zehn Minuten (Advisory, eskaliert nach einer
-  Stunde). Ein Rolling Update entfernt eine Replika, während es eine
-  andere startet; die zehn Minuten decken das ab.
-- **Kubernetes volume claim pending**: ein festsitzender Claim seit
-  fünfzehn Minuten (Advisory).
+- **Kubernetes-Knoten nicht bereit**: Die Bedingung `Ready` eines Knotens ist fünf Minuten lang
+  falsch oder unbekannt (Warnung).
+- **Kubernetes-Knoten unter Druck**: Speicher-, Platten- oder PID-Druck seit fünf Minuten
+  (Hinweis).
+- **Kubernetes-Pod in Crash-Schleife**: ein Container zehn Minuten lang in `CrashLoopBackOff`
+  (Warnung). Manche Kubelets (k3s 1.37) zeigen den Container zwischen zwei Versuchen als
+  `terminated` mit Grund `Error` und nie `CrashLoopBackOff`: Ein Container, der mindestens
+  zweimal neu gestartet wurde und dessen letzter Stopp innerhalb von zehn Minuten mit einem
+  Exit-Code ungleich null endete, zählt ebenfalls als Crash-Schleife. Zwischen zwei Versuchen
+  startet der Container neu und der Zustand verschwindet kurz; die Regel liest das Maximum über
+  zehn Minuten, damit sie nicht jedes Mal von vorn beginnt.
+- **Kubernetes-Pod hängt in Pending**: ein Pod fünfzehn Minuten lang Pending (Hinweis).
+- **Kubernetes-Pod startet immer wieder neu**: mehr als fünf Neustarts in einer Stunde bei einem
+  Pod, der nicht bereits in Crash-Schleife ist (Hinweis).
+- **Kubernetes-Workload mit fehlenden Replikas**: ein Deployment, StatefulSet oder DaemonSet mit
+  weniger verfügbaren Replikas als angefordert, zehn Minuten lang (Hinweis, eskaliert nach einer
+  Stunde). Ein Rolling Update entfernt eine Replika, während es eine andere startet; die zehn
+  Minuten decken das ab.
+- **Kubernetes-Volume-Claim ausstehend**: ein festhängender Claim fünfzehn Minuten lang (Hinweis).
 
-Plus Device unreachable, wenn der API-Server aufhört zu antworten.
+Dazu Gerät nicht erreichbar, wenn der API-Server nicht mehr antwortet.
 
-## Die Geräteseite
+## Die Geräteseite {#the-device-page}
 
-Das Cluster-Panel sagt in einem Satz, was nicht stimmt, listet dann die
-Knoten (Ready oder nicht, Druck, cordoned, Kubelet-Version), die
-Pods, die Aufmerksamkeit brauchen (crash-loopend, pending, blockiert,
-nicht ready, mit ihren Neustarts), die Workloads mit fehlenden
-Replikas, die festsitzenden Volume Claims, und die Warning-Events der
-letzten Stunde nach Grund. Ein gesunder Cluster zeigt seine Zählungen
-und nichts sonst.
+Das Cluster-Panel nennt in einem Satz, was nicht stimmt, und listet dann die Knoten (Ready oder
+nicht, Druck, gesperrt, Kubelet-Version), die Pods, die Aufmerksamkeit brauchen (in
+Crash-Schleife, Pending, blockiert, nicht bereit, mit ihren Neustarts), die Workloads mit
+fehlenden Replikas, die festhängenden Volume Claims und die Warnungsereignisse der letzten
+Stunde nach Grund. Ein gesunder Cluster zeigt seine Zahlen und sonst nichts.
 
-## Einen nur-lesenden Service Account für DumbMonit erstellen
+## Einen schreibgeschützten Service Account für DumbMonit erstellen {#create-a-read-only-service-account-for-dumbmonit}
 
-1. Erstellen Sie einen Service Account, eine ClusterRole, die nur
-   Knoten, Pods, Workloads, Volume Claims und Events get und list
-   darf, und binden Sie sie zusammen. Die Rolle liest kein Secret und
-   kein ConfigMap. Auf einem k3s-Server führen Sie jeden Befehl mit
-   sudo k3s kubectl aus.
+1. Erstellen Sie einen Service Account, eine ClusterRole, die nur Knoten, Pods, Workloads, Volume Claims und Ereignisse abrufen und auflisten kann, und binden Sie beide aneinander. Die Rolle liest kein Secret und keine ConfigMap. Führen Sie auf einem k3s-Server jeden Befehl als sudo k3s kubectl aus.
 
     ```
     kubectl create serviceaccount dumbmonit -n kube-system
@@ -103,9 +90,7 @@ und nichts sonst.
     kubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit
     ```
 
-2. Geben Sie ihm ein Token, das nicht abläuft: ein Secret vom Typ
-   service-account-token, das Kubernetes befüllt. Geben Sie dann das
-   Token und die Cluster-CA in base64 aus.
+2. Geben Sie ihm ein Token, das nicht abläuft: ein Secret vom Typ service-account-token, das Kubernetes befüllt. Lassen Sie sich dann das Token und die Cluster-CA in Base64 ausgeben.
 
     ```
     echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"dumbmonit-token","namespace":"kube-system","annotations":{"kubernetes.io/service-account.name":"dumbmonit"}},"type":"kubernetes.io/service-account-token"}' | kubectl apply -f -
@@ -113,25 +98,16 @@ und nichts sonst.
     kubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\.crt}'
     ```
 
-3. Geben Sie in DumbMonit die Adresse des API-Servers ein, zum
-   Beispiel "https://k3s.lan:6443". Fügen Sie das Token als Service
-   account token und die base64-CA als Cluster CA certificate ein:
-   Nur dieser CA wird dann vertraut. Ein API-Server meldet den
-   gesamten Cluster.
+3. Geben Sie in DumbMonit die Adresse des API-Servers ein, zum Beispiel „https://k3s.lan:6443“. Fügen Sie das Token als Service-Account-Token und die Base64-CA als Cluster-CA-Zertifikat ein: Nur diese CA wird dann vertraut. Ein API-Server meldet den ganzen Cluster.
 
 !!! warning
-    Das Zertifikat des API-Servers listet nur seine eigenen Namen und
-    Adressen: Eine Adresse, die es nicht listet, schlägt bei der
-    Verifizierung fehl. Nutzen Sie eine, die es listet (eine
-    Knoten-IP-Adresse, oder einen mit --tls-san auf k3s hinzugefügten
-    Namen), oder kreuzen Sie Accept an unverifiable certificate an.
+    Das Zertifikat des API-Servers listet nur seine eigenen Namen und Adressen: Eine nicht aufgeführte Adresse scheitert an der Überprüfung. Verwenden Sie eine aufgeführte (eine Knoten-IP-Adresse oder einen unter k3s mit --tls-san hinzugefügten Namen) oder haken Sie Nicht prüfbares Zertifikat akzeptieren an.
 
-### Dasselbe als Manifest
+### Dasselbe als Manifest {#the-same-thing-as-a-manifest}
 
-Für GitOps, oder um genau zu prüfen, was gewährt wird, wenden Sie
-dieses Manifest an, statt die drei `kubectl create`-Befehle und das
-Secret aus Schritt 2 (`kubectl apply -f dumbmonit.yaml`), geben Sie
-dann das Token und die CA wie in Schritt 2 aus:
+Für GitOps oder um genau zu prüfen, was gewährt wird, wenden Sie dieses Manifest statt der drei
+`kubectl create`-Befehle und des Secrets aus Schritt 2 an (`kubectl apply -f dumbmonit.yaml`)
+und lassen Sie sich dann Token und CA wie in Schritt 2 ausgeben:
 
 ```yaml
 apiVersion: v1
@@ -175,59 +151,51 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Um die Rolle vor dem Hinzufügen des Geräts zu prüfen, fragen Sie den
-API-Server, was das Konto darf; der erste Befehl muss `yes`
-antworten, der zweite `no`:
+Um die Rolle vor dem Hinzufügen des Geräts zu prüfen, fragen Sie den API-Server, was das Konto
+darf; der erste Befehl muss `yes` antworten, der zweite `no`:
 
 ```
 kubectl auth can-i list pods --as=system:serviceaccount:kube-system:dumbmonit
 kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
-Ein mit `kubectl create token dumbmonit -n kube-system` erstelltes
-Token funktioniert auch, läuft aber ab (standardmäßig nach einer
-Stunde): Das Gerät schlägt dann mit "The API server refused the token
-(401)" fehl. Das Secret oben ist die von Kubernetes für diesen Zweck
-dokumentierte langlebige Form. Um DumbMonits Zugriff zu widerrufen,
-löschen Sie das Secret, oder den Service Account.
+Ein mit `kubectl create token dumbmonit -n kube-system` erstelltes Token funktioniert ebenfalls,
+läuft aber ab (standardmäßig nach einer Stunde): Das Gerät scheitert dann mit „Der API-Server hat
+das Token abgelehnt (401)“. Das obige Secret ist die langlebige Form, die Kubernetes für diesen
+Zweck dokumentiert. Um den Zugriff von DumbMonit zu widerrufen, löschen Sie das Secret oder den
+Service Account.
 
-## Credentials
+## Zugangsdaten {#credentials}
 
-| Credential | Felder |
+| Zugangsdaten | Felder |
 |---|---|
-| Service-Account-Token | Das vom ersten `kubectl get secret`-Befehl ausgegebene Token, als `Authorization: Bearer` gesendet. |
+| Service-Account-Token | Das vom ersten Befehl `kubectl get secret` ausgegebene Token, gesendet als `Authorization: Bearer`. |
 
-Adresse: der API-Server als URL (`https://k3s.lan:6443`), ein
-Hostname oder eine IP (`192.0.2.10`, dann Port 6443), oder
-`host:port`. Hinter einem Load Balancer oder einem hochverfügbaren
-k3s geben Sie die Adresse an, die die API bedient, die in Ihrer
-kubeconfig.
+Adresse: der API-Server als URL (`https://k3s.lan:6443`), ein Hostname oder eine IP (`192.0.2.10`,
+dann Port 6443) oder `host:port`. Geben Sie hinter einem Load Balancer oder einem hochverfügbaren
+k3s die Adresse an, die die API ausliefert, die aus Ihrer kubeconfig.
 
 Optionen:
 
 - **Port** (6443), wenn die Adresse keinen angibt.
-- **Cluster CA certificate**: der base64-Wert von `ca.crt`, wie der
-  letzte Befehl von Schritt 2 ihn ausgibt; ein PEM-Zertifikat
-  funktioniert auch, selbst in einer Zeile eingefügt. Damit vertraut
-  DumbMonit dieser CA und keiner anderen.
-- **Accept an unverifiable certificate**: überspringt jede Prüfung,
-  für ein Netzwerk, dem Sie vertrauen.
-- **Timeout pro Request** (10 s).
-- **Ignored namespaces**: Pods, Workloads, Claims und Events dieser
-  Namespaces werden ausgelassen, zum Beispiel ein CI-Namespace voller
-  kurzlebiger Pods. Knoten-Events werden immer behalten.
+- **Cluster-CA-Zertifikat**: der Base64-Wert von `ca.crt`, wie ihn der letzte Befehl von
+  Schritt 2 ausgibt; ein PEM-Zertifikat funktioniert ebenfalls, auch in einer Zeile eingefügt.
+  Damit vertraut DumbMonit dieser CA und sonst keiner.
+- **Nicht prüfbares Zertifikat akzeptieren**: überspringt jede Prüfung, für ein Netzwerk, dem
+  Sie vertrauen.
+- **Timeout pro Anfrage** (10 s).
+- **Ignorierte Namespaces**: Pods, Workloads, Claims und Ereignisse dieser Namespaces werden
+  ausgelassen, zum Beispiel ein CI-Namespace voller kurzlebiger Pods. Knotenereignisse bleiben
+  immer erhalten.
 
-## Fehlerbehebung
+## Fehlerbehebung {#troubleshooting}
 
-"The certificate of the API server could not be verified": entweder
-fehlt die CA (fügen Sie sie wie in Schritt 2 ein), oder die Adresse
-ist keiner der Namen im Zertifikat des Servers. k3s listet
-`kubernetes`, `localhost`, den Hostnamen des Knotens und seine
-IP-Adressen; fügen Sie mit `--tls-san` einen weiteren Namen hinzu (in
-`/etc/rancher/k3s/config.yaml`: `tls-san: [k3s.lan]`) und starten Sie
-k3s neu.
+„Das Zertifikat des API-Servers konnte nicht überprüft werden“: Entweder fehlt die CA (fügen Sie
+sie ein, wie in Schritt 2), oder die Adresse gehört nicht zu den Namen im Zertifikat des Servers.
+k3s listet `kubernetes`, `localhost`, den Hostnamen des Knotens und seine IP-Adressen; fügen Sie
+einen weiteren Namen mit `--tls-san` hinzu (in `/etc/rancher/k3s/config.yaml`:
+`tls-san: [k3s.lan]`) und starten Sie k3s neu.
 
-"The service account may not read … (403)": Die ClusterRole oder ihre
-Bindung fehlt oder ist unvollständig. Die Meldung benennt die vom
-API-Server abgelehnte Ressource; wenden Sie das obige Manifest erneut
-an.
+„Das Service Account darf … nicht lesen (403)“: Die ClusterRole oder ihre Bindung fehlt oder ist
+unvollständig. Die Meldung nennt die Ressource, die der API-Server abgelehnt hat; wenden Sie das
+obige Manifest erneut an.

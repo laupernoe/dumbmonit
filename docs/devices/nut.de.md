@@ -1,134 +1,105 @@
-# USV mit NUT
+# USV mit NUT {#ups-with-nut}
 
-Eine USV, die über USB an einem NAS, einem Raspberry Pi oder einem
-Server angeschlossen ist, wird meist von Network UPS Tools (NUT)
-beobachtet: dessen Daemon `upsd` veröffentlicht, was die USV sagt, auf
-TCP-Port 3493. DumbMonit liest diesen Server, wie jeder NUT-Client: ob
-die USV am Netz oder im Akkubetrieb läuft, ob der Akku schwach oder
-abgenutzt ist, den Ladezustand, die verbleibende Laufzeit, die Last,
-die Eingangsspannung und das Alter des Akkus. Ein Server veröffentlicht
-oft mehrere USVs; alle werden in einer Verbindung gelesen, und jede
-Zeitreihe trägt den Namen ihrer USV.
+Eine per USB an ein NAS, einen Raspberry Pi oder einen Server angeschlossene USV wird meist von
+Network UPS Tools (NUT) überwacht: Dessen Daemon `upsd` veröffentlicht auf TCP-Port 3493, was
+die USV meldet. DumbMonit liest diesen Server wie jeder NUT-Client: ob die USV am Netz oder
+an der Batterie läuft, ob die Batterie schwach oder verschlissen ist, die Ladung, die
+verbleibende Laufzeit, die Last, die Eingangsspannung und das Alter der Batterie. Ein Server
+veröffentlicht oft mehrere USV; alle werden in einer Verbindung gelesen, und jede Serie trägt
+den Namen ihrer USV.
 
-Für eine USV mit eigener Netzwerkkarte liest die Art
-[SNMP-Gerät](snmp.md) stattdessen die Standard-UPS-MIB.
+Für eine USV mit eigener Netzwerkkarte liest der [SNMP-Gerätetyp](snmp.md) stattdessen die
+Standard-UPS-MIB.
 
-## Was beobachtet wird
+## Was überwacht wird {#what-it-watches}
 
-Alle Metriken haben das Präfix `dumbmonit_nut_` und tragen das Label
-`ups`, den USV-Namen in `ups.conf` (`ups` auf einem Synology-NAS,
-`qnapups` auf einem QNAP). Eine von der USV nicht veröffentlichte
-Variable erzeugt keine Zeitreihe.
+Alle Metriken haben das Präfix `dumbmonit_nut_` und tragen das Label `ups`, den USV-Namen in
+`ups.conf` (`ups` auf einem Synology-NAS, `qnapups` auf einem QNAP). Eine Variable, die die USV
+nicht veröffentlicht, erzeugt keine Serie.
 
 | Metrik | Was | Labels |
 |---|---|---|
-| `ups_on_line`, `ups_on_battery`, `ups_low_battery`, `ups_high_battery`, `ups_replace_battery`, `ups_charging`, `ups_discharging`, `ups_bypass`, `ups_calibrating`, `ups_off`, `ups_overload`, `ups_trim`, `ups_boost`, `ups_forced_shutdown`, `ups_alarm` | Die Flags von `ups.status` (`OL`, `OB`, `LB`, `HB`, `RB`, `CHRG`, `DISCHRG`, `BYPASS`, `CAL`, `OFF`, `OVER`, `TRIM`, `BOOST`, `FSD`, `ALARM`): 1, wenn gesetzt, sonst 0, alle bei jeder Lesung | `ups` |
+| `ups_on_line`, `ups_on_battery`, `ups_low_battery`, `ups_high_battery`, `ups_replace_battery`, `ups_charging`, `ups_discharging`, `ups_bypass`, `ups_calibrating`, `ups_off`, `ups_overload`, `ups_trim`, `ups_boost`, `ups_forced_shutdown`, `ups_alarm` | Die Flags von `ups.status` (`OL`, `OB`, `LB`, `HB`, `RB`, `CHRG`, `DISCHRG`, `BYPASS`, `CAL`, `OFF`, `OVER`, `TRIM`, `BOOST`, `FSD`, `ALARM`): 1 wenn gesetzt, sonst 0, bei jedem Lesen alle | `ups` |
 | `ups_status_info` | Wert 1, das rohe `ups.status` | `ups`, `status` |
-| `battery_charge_percent`, `battery_charge_low_percent` | Ladezustand, und der Ladezustand, unter dem die USV einen schwachen Akku meldet | `ups` |
-| `battery_runtime_seconds`, `battery_runtime_low_seconds` | verbleibende Laufzeit im Akkubetrieb bei der aktuellen Last, und die Low-Battery-Laufzeit | `ups` |
+| `battery_charge_percent`, `battery_charge_low_percent` | Ladung und die Ladung, unter der die USV eine schwache Batterie meldet | `ups` |
+| `battery_runtime_seconds`, `battery_runtime_low_seconds` | verbleibende Laufzeit an der Batterie bei der aktuellen Last und die Laufzeit bei schwacher Batterie | `ups` |
 | `battery_voltage_volts`, `battery_temperature_celsius` | | `ups` |
 | `battery_age_seconds` | Zeit seit `battery.date` (installiert oder ersetzt), sonst `battery.mfr.date` | `ups`, `source` (`installed`, `manufactured`) |
-| `input_voltage_volts`, `input_voltage_nominal_volts`, `input_frequency_hertz` | Netzseite; 0 V während eines Ausfalls | `ups` |
+| `input_voltage_volts`, `input_voltage_nominal_volts`, `input_frequency_hertz` | Netzseite; 0 V bei einem Ausfall | `ups` |
 | `output_voltage_volts`, `output_frequency_hertz` | Lastseite | `ups` |
-| `ups_load_percent` | Last, in Prozent der USV-Kapazität | `ups` |
-| `ups_realpower_watts`, `ups_realpower_nominal_watts`, `ups_power_va`, `ups_power_nominal_va` | aufgenommene Leistung und Nennwert, wenn die USV sie meldet | `ups` |
+| `ups_load_percent` | Last in Prozent der USV-Kapazität | `ups` |
+| `ups_realpower_watts`, `ups_realpower_nominal_watts`, `ups_power_va`, `ups_power_nominal_va` | aufgenommene Leistung und Nennleistung, wenn die USV sie meldet | `ups` |
 | `ups_temperature_celsius` | | `ups` |
-| `ups_self_test_failed` | 1, wenn der letzte Selbsttest (`ups.test.result`) einen Fehler oder eine Warnung meldet, 0, wenn er bestanden hat; fehlt, wenn kein Test lief | `ups`, `result` |
+| `ups_self_test_failed` | 1, wenn der letzte Selbsttest (`ups.test.result`) einen Fehler oder eine Warnung meldet, 0, wenn er bestanden wurde; fehlt, wenn kein Test lief | `ups`, `result` |
 | `ups_info` | Wert 1 | `ups`, `manufacturer`, `model`, `firmware`, `driver`, `battery_type`, `description` |
 | `ups_data_stale` | 1, wenn `upsd` antwortet, aber keine frischen Daten von der USV hat (`DATA-STALE`, `DRIVER-NOT-CONNECTED`) | `ups` |
 | `ups_driver_connected` | 0, wenn der NUT-Treiber dieser USV nicht läuft | `ups` |
-| `server_ups` | Anzahl der vom Server veröffentlichten USVs | |
+| `server_ups` | Anzahl der vom Server veröffentlichten USV | |
 | `server_info` | Wert 1 | `version` |
 
-Seriennummern werden nie in ein Label gelegt. Höchstens 32 USVs werden
-pro Server gelesen.
+Seriennummern kommen nie in ein Label. Pro Server werden höchstens 32 USV gelesen.
 
-Die geltenden [eingebauten Regeln](../alerting/rules.md#ups-behind-nut):
-UPS on battery, UPS battery low, UPS battery needs replacing, UPS load
-high, UPS runtime short, UPS data stale, plus Device unreachable, wenn
-der NUT-Server selbst aufhört zu antworten.
+Die zutreffenden [integrierten Regeln](../alerting/rules.md#ups-behind-nut): USV an der
+Batterie, USV-Batterie schwach, USV-Batterie muss ersetzt werden, USV-Last hoch, USV-Laufzeit
+kurz, USV-Daten veraltet, außerdem Gerät nicht erreichbar, wenn der NUT-Server selbst nicht
+mehr antwortet.
 
-## Die Geräteseite
+## Die Geräteseite {#the-device-page}
 
-Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
-Öffnen der Seite verbindet sich nie mit dem NUT-Server. Eine Karte pro
-USV: ihr Zustand in Worten (am Netz, im Akkubetrieb, schwacher Akku,
-Akku ersetzen, Bypass, Überlast…), der Ladezustand, die verbleibende
-Laufzeit, die Last, die Eingangsspannung und das Alter des Akkus.
+Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
+verbindet sich nie mit dem NUT-Server. Eine Karte pro USV: ihr Zustand in Worten (am Netz, an
+der Batterie, Batterie schwach, Batterie ersetzen, Bypass, Überlast …), die Ladung, die
+verbleibende Laufzeit, die Last, die Eingangsspannung und das Alter der Batterie.
 
-## DumbMonit den NUT-Server lesen lassen
+## DumbMonit den NUT-Server lesen lassen {#let-dumbmonit-read-the-nut-server}
 
-1. Finden Sie den NUT-Server: Die Maschine, an die die USV angeschlossen
-   ist (ein NAS, ein Raspberry Pi, ein Server), führt upsd auf
-   TCP-Port 3493 aus. Prüfen Sie vom DumbMonit-Host aus, dass er
-   antwortet, und merken Sie sich die Namen seiner USVs.
+1. Finden Sie den NUT-Server: Der Rechner, an den die USV angeschlossen ist (ein NAS, ein Raspberry Pi, ein Server), führt upsd auf TCP-Port 3493 aus. Prüfen Sie vom DumbMonit-Host aus, dass er antwortet, und notieren Sie die Namen seiner USV.
 
     ```
     printf 'LIST UPS\nLOGOUT\n' | nc nas.lan 3493
     ```
 
-    Mit installierten NUT-Client-Tools gibt `upsc -l nas.lan` dieselbe
-    Liste.
+    Mit installierten NUT-Client-Tools liefert `upsc -l nas.lan` dieselbe Liste.
 
-2. Lassen Sie auf einer gewöhnlichen NUT-Installation upsd auf einer
-   für den DumbMonit-Host erreichbaren Adresse hören: Fügen Sie diese
-   Zeile zu upsd.conf hinzu, öffnen Sie TCP-Port 3493 in der Firewall
-   für den DumbMonit-Host, und starten Sie upsd neu. Das Lesen braucht
-   kein Konto: upsd lässt jeden Host, den es akzeptiert, die Variablen
-   lesen, und ändert nichts ohne einen Benutzer mit dem Recht dazu.
+2. Bei einer einfachen NUT-Installation lassen Sie upsd auf einer Adresse lauschen, die der DumbMonit-Host erreichen kann: Fügen Sie diese Zeile in upsd.conf ein, öffnen Sie TCP-Port 3493 in der Firewall für den DumbMonit-Host und starten Sie upsd neu. Zum Lesen ist kein Konto nötig: upsd lässt jeden akzeptierten Host die Variablen lesen und ändert nichts ohne einen Benutzer mit dem Recht dazu.
 
     ```
     LISTEN 0.0.0.0 3493
     ```
 
-3. Auf einem NAS hat derselbe Schalter einen anderen Namen. Synology
-   DSM: Control Panel → Hardware & Power → UPS, Enable network UPS
-   server ankreuzen, und den DumbMonit-Host unter Permitted DiskStation
-   Devices hinzufügen; die USV heißt ups. QNAP: die UPS-Seite des
-   Control Panel, Enable network UPS master, mit dem DumbMonit-Host
-   unter den erlaubten Adressen; die USV heißt qnapups. TrueNAS: der
-   UPS-Dienst mit angekreuztem Remote Monitor.
+3. Bei einem NAS heißt derselbe Schalter anders. Synology DSM: Systemsteuerung → Hardware & Energie → USV, haken Sie Netzwerk-USV-Server aktivieren an und fügen Sie den DumbMonit-Host unter Zugelassene DiskStation-Geräte hinzu; die USV heißt ups. QNAP: die USV-Seite der Systemsteuerung, Netzwerk-USV-Master aktivieren, mit dem DumbMonit-Host unter den erlaubten Adressen; die USV heißt qnapups. TrueNAS: der USV-Dienst mit angehaktem Remote Monitor.
 
-4. Optional: DumbMonit sendet einen Benutzernamen und ein Passwort nur,
-   wenn Sie eines eingeben, und upsd verlangt keines zum Lesen. Wenn
-   Ihre Richtlinie will, dass jeder Client benannt ist, fügen Sie
-   upsd.users einen Benutzer ohne Actions oder Instcmds mit einem
-   langen Zufallspasswort hinzu und starten Sie upsd neu.
+4. Optional: DumbMonit sendet Benutzername und Passwort nur, wenn Sie welche eingeben, und upsd verlangt zum Lesen keine. Wenn Ihre Richtlinie jeden Client benannt sehen will, fügen Sie in upsd.users einen Benutzer ohne actions oder instcmds mit einem langen zufälligen Passwort hinzu und starten Sie upsd neu.
 
     ```
     [dumbmonit]
     password = a-long-random-password
     ```
 
-5. Geben Sie in DumbMonit die Adresse des NUT-Servers ein, zum Beispiel
-   "nas.lan". Jede von ihm veröffentlichte USV wird beobachtet; um nur
-   manche zu beobachten, listen Sie ihre Namen in der UPS-Option.
+5. Geben Sie in DumbMonit die Adresse des NUT-Servers ein, zum Beispiel „nas.lan“. Jede von ihm veröffentlichte USV wird überwacht; um nur einige zu überwachen, tragen Sie deren Namen in die Option USV ein.
 
-6. DumbMonit liest nur: Es sendet LIST UPS und LIST VAR, nie LOGIN, SET,
-   INSTCMD oder FSD, sodass der Server es nie als Sekundärgerät zählt,
-   auf das vor dem Herunterfahren gewartet werden muss.
+6. DumbMonit liest nur: Es sendet LIST UPS und LIST VAR, nie LOGIN, SET, INSTCMD oder FSD, sodass der Server es nie als Secondary zählt, auf den er vor dem Herunterfahren warten müsste.
 
 !!! warning
-    DumbMonit beobachtet die USV; es fährt nichts herunter. Die von der
-    USV versorgten Maschinen brauchen weiterhin ihren eigenen
-    NUT-Client (upsmon), um sauber herunterzufahren, wenn der Akku
-    schwach wird.
+    DumbMonit überwacht die USV; es fährt nichts herunter. Die von der USV versorgten Rechner brauchen weiterhin einen eigenen NUT-Client (upsmon), um bei schwacher Batterie sauber herunterzufahren.
 
-## Credentials
+## Zugangsdaten {#credentials}
 
-| Credential | Felder |
+| Zugangsdaten | Felder |
 |---|---|
-| Keine Authentifizierung | Der Standard: `upsd` lässt jeden Host, den es akzeptiert, die USV-Variablen lesen. |
-| upsd-Benutzername / Passwort | Mit `USERNAME` und `PASSWORD` vor dem Lesen gesendet. `upsd` prüft sie nur für Befehle, die DumbMonit nie sendet. |
+| Keine Authentifizierung | Der Standard: `upsd` lässt jeden akzeptierten Host die USV-Variablen lesen. |
+| upsd-Benutzername / Passwort | Wird vor dem Lesen mit `USERNAME` und `PASSWORD` gesendet. `upsd` prüft sie nur bei Befehlen, die DumbMonit nie sendet. |
 
-Adresse: ein Hostname oder eine IP (`nas.lan`), `host:port`, oder die
-Form `ups@host` von `upsc`, von der nur der Host behalten wird.
-Optionen: Port (3493), die zu beobachtende USV (standardmäßig alle) und
-der Timeout pro Austausch (10 s).
+Adresse: ein Hostname oder eine IP (`nas.lan`), `host:port` oder die Form `ups@host` von `upsc`,
+von der nur der Host behalten wird. Optionen: Port (3493), die zu überwachende USV (standardmäßig
+alle) und das Timeout pro Austausch (10 s).
 
-Eine abgelehnte Verbindung oder keine Antwort zählt als nicht
-erreichbares Gerät. `ACCESS-DENIED` wird als Credential-Fehler
-angezeigt, und ein vom Server nicht veröffentlichter USV-Name als
-Konfigurationsfehler; keiner weckt jemanden nachts. Die Verbindung ist
-reines TCP: `STARTTLS` wird nicht genutzt, und nichts Gelesenes ist
-geheim.
+Eine abgelehnte Verbindung oder keine Antwort gilt als Gerät nicht erreichbar. Fährt der Rechner,
+auf dem der NUT-Server läuft, bei dem von ihm gemeldeten Ausfall herunter (er ist oft sein
+eigener upsmon-Primary), werden die USV-Alarme als unterdrückt ausgeblendet, während Gerät nicht
+erreichbar für dasselbe Gerät auslöst: Lesen Sie den Alarm Gerät nicht erreichbar als Zeichen,
+dass der Stromausfall gewonnen hat. Betreiben Sie den NUT-Server auf einem Rechner, der die
+anderen überlebt, oder überwachen Sie die USV von einem zweiten NUT-Server aus. `ACCESS-DENIED`
+wird als Zugangsdatenfehler angezeigt und ein vom Server nicht veröffentlichter USV-Name als
+Konfigurationsfehler; keiner von beiden weckt nachts jemanden. Die Verbindung ist reines TCP:
+`STARTTLS` wird nicht verwendet, und nichts Gelesenes ist geheim.

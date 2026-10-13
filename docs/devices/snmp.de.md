@@ -47,7 +47,7 @@ zählt es Milliarden völlig gesunder Jumbo-Frames, und eine Zeitreihe,
 die auf einem gesunden Netzwerk immer steigt, lehrt Menschen nur, sie
 zu ignorieren.
 
-### Server-Management-Controller (BMC)
+### Server-Management-Controller (BMC) {#server-management-controllers-bmc}
 
 Der eigene SNMP-Agent eines BMC beschreibt den BMC, nicht den Server:
 sein kleines ARM-Linux, seinen Speicher, seine Netzwerkverbindungen. Ein
