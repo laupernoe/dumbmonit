@@ -27,6 +27,7 @@
 	import CredentialFields from './CredentialFields.svelte';
 	import OptionsFields from './OptionsFields.svelte';
 	import TagsEditor from './TagsEditor.svelte';
+	import RequirementNotice from './RequirementNotice.svelte';
 	import {
 		draftTouched,
 		emptyDraft,
@@ -249,6 +250,7 @@
 </script>
 
 <form onsubmit={submit} class="grid gap-5" novalidate>
+	<RequirementNotice requirements={collector.requirements} />
 	<div class="grid gap-4 sm:grid-cols-2">
 		<Field label={m.deviceform_form_name_label()} for="target-name" required error={shown('name', nameError)} help={m.deviceform_form_name_help()}>
 			<input

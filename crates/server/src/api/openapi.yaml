@@ -4738,6 +4738,23 @@ components:
           type: array
           description: Settings read from the device's `tags`, in display order.
           items: { $ref: "#/components/schemas/OptionDescription" }
+        requirements:
+          type: array
+          description: >-
+            What the server's deployment (not the device) must provide for this type to work fully,
+            with whether the server found it in place. Omitted when the type needs nothing. The
+            interface writes the sentences from `id` and shows the notice while `satisfied` is false.
+          items: { $ref: "#/components/schemas/Requirement" }
+    Requirement:
+      type: object
+      required: [id, satisfied, doc_url, compose_snippet]
+      properties:
+        id:
+          type: string
+          description: "Stable identifier: `browser` (headless Chromium for website-change screenshots) or `icmp` (ICMP echo sockets for ping)."
+        satisfied: { type: boolean, description: "True when the server found the requirement met (browser answering, ICMP socket opened)." }
+        doc_url: { type: string, description: Documentation section that explains it. }
+        compose_snippet: { type: string, description: YAML to add to docker-compose.yml, as is. }
     SetupDescription:
       type: object
       properties:

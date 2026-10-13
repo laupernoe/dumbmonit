@@ -490,6 +490,25 @@ export interface CollectorSetup {
 	doc_url: string;
 }
 
+/**
+ * Something the server's deployment must provide for a device type to work
+ * fully (not something to do on the device): a headless browser, ICMP rights.
+ *
+ * The server only sends the identifier, whether it found the requirement in
+ * place and the exact YAML to copy; the sentences are written by the interface
+ * from `id` (see `RequirementNotice.svelte`), and an unknown `id` still renders.
+ */
+export interface CollectorRequirement {
+	/** Stable identifier: `browser`, `icmp`, or one a later server adds. */
+	id: string;
+	/** True when the server found the requirement met; the notice is then hidden. */
+	satisfied: boolean;
+	/** Documentation section that explains it. */
+	doc_url: string;
+	/** YAML to add to docker-compose.yml, as is. */
+	compose_snippet: string;
+}
+
 /** Input shapes a collector option can ask for. */
 export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select';
 
@@ -538,6 +557,8 @@ export interface CollectorInfo {
 	setup: CollectorSetup;
 	/** Settings specific to this type. Empty for types that have none. */
 	options: CollectorOption[];
+	/** Server-side prerequisites of this type; the server omits the field when there are none. */
+	requirements: CollectorRequirement[];
 }
 
 /**
@@ -578,7 +599,17 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		},
 		options: options
 			.filter((option) => option && typeof option.key === 'string' && option.key.trim())
-			.map(normalizeOption)
+			.map(normalizeOption),
+		requirements: Array.isArray(raw.requirements)
+			? raw.requirements
+					.filter((r) => r && typeof r.id === 'string' && r.id.trim())
+					.map((r) => ({
+						id: r.id.trim(),
+						satisfied: r.satisfied === true,
+						doc_url: r.doc_url?.trim() ?? '',
+						compose_snippet: r.compose_snippet?.trim() ?? ''
+					}))
+			: []
 	};
 }
 

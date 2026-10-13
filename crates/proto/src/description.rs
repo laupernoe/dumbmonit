@@ -39,6 +39,28 @@ pub struct KindDescription {
     pub setup: SetupDescription,
     /// Réglages lus dans `Target::tags`, dans l'ordre d'affichage.
     pub options: Vec<OptionDescription>,
+    /// Prérequis de l'installation (et non de l'équipement) : ce qu'il faut ajouter
+    /// au déploiement du serveur pour que ce type fonctionne pleinement. Absent
+    /// du JSON quand il n'y en a aucun.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requirements: Vec<Requirement>,
+}
+
+/// Un prérequis côté serveur : un composant ou un droit que le déploiement doit
+/// fournir (navigateur pour les captures, socket ICMP pour le ping).
+///
+/// Le serveur ne donne que des identifiants et des valeurs à copier ; les phrases
+/// affichées sont traduites par l'interface d'après `id`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Requirement {
+    /// Identifiant stable (`browser`, `icmp`), clé des textes de l'interface.
+    pub id: Text,
+    /// Vrai si le serveur a constaté que le prérequis est rempli.
+    pub satisfied: bool,
+    /// Section de la documentation qui l'explique.
+    pub doc_url: Text,
+    /// Bloc YAML à ajouter au fichier Compose, tel quel.
+    pub compose_snippet: Text,
 }
 
 /// Notice de mise en route affichée à côté du formulaire.

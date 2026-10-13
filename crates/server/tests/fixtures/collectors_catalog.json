@@ -7741,8 +7741,8 @@
       "steps": [
         "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
         "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
-        "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once two checks in a row have seen it, so A/B tests and flaky caches stay quiet.",
-        "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<platform> (WordPress, Shopify…) unless you give a folder."
+        "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.",
+        "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder."
       ],
       "warning": "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
       "doc_url": ""
@@ -7782,6 +7782,17 @@
         "group": ""
       },
       {
+        "key": "category",
+        "label": "Category",
+        "help": "A label of your own (Shop, Blog, Client: Acme…), shown with the site and in its metrics. Set by the CSV import, which also guesses one (E-commerce, Blog, Web app, Showcase) when the page gives a clear sign. Empty: none.",
+        "placeholder": "Shop",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "user_agent",
         "label": "User agent",
         "help": "Sent instead of DumbMonit's own, for a site that serves robots differently. Empty: DumbMonit/<version>.",
@@ -7813,6 +7824,138 @@
         "input": "number",
         "choices": [],
         "group": "Pacing"
+      },
+      {
+        "key": "confirm_checks",
+        "label": "Confirm a change after (checks)",
+        "help": "A different title, description, canonical URL or other watched value is only reported once it was read this many times in a row, from 1 to 10. Keeps A/B tests and flaky caches quiet. Also applies to the sharp drop of the page text.",
+        "placeholder": "2",
+        "default": "2",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": "Change detection"
+      },
+      {
+        "key": "text_drop_percent",
+        "label": "Near-empty page: text drop (%)",
+        "help": "Reports a page whose visible text falls by more than this percentage below its usual size (a 200+ character reference is needed), from 0 to 99, confirmed like any change. Catches a page that is no longer blank but almost. 0 turns the check off.",
+        "placeholder": "80",
+        "default": "80",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": "Change detection"
+      },
+      {
+        "key": "watch_final_url",
+        "label": "Watch the final address",
+        "help": "Report when, after its redirects, the site lands somewhere else (another host or path). http to https, www and trailing slashes never count.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_title",
+        "label": "Watch the title",
+        "help": "Report a changed or missing <title>.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_description",
+        "label": "Watch the meta description",
+        "help": "Report a changed or missing meta description.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_canonical",
+        "label": "Watch the canonical URL",
+        "help": "Report a changed or missing canonical link.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_robots",
+        "label": "Watch the robots directives",
+        "help": "Report a changed robots meta tag or X-Robots-Tag header (noindex, nofollow…).",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_open_graph",
+        "label": "Watch Open Graph",
+        "help": "Report a changed og:title or og:description.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_lang",
+        "label": "Watch the page language",
+        "help": "Report a changed <html lang>.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_h1",
+        "label": "Watch the h1 count",
+        "help": "Report a different number of <h1> headings.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_hreflang",
+        "label": "Watch hreflang",
+        "help": "Report a changed set of hreflang language alternates.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
+      },
+      {
+        "key": "watch_google_verification",
+        "label": "Watch the Google verification tag",
+        "help": "Report a changed or missing google-site-verification meta tag (losing it can cut access to Search Console).",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": "Watched metadata"
       },
       {
         "key": "host_spacing_seconds",
