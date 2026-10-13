@@ -143,6 +143,17 @@ fn client_for(address: IpAddr) -> Result<Client, ProbeError> {
     Client::new(&config).map_err(|error| stats::socket_error(&error))
 }
 
+/// Le serveur peut-il ouvrir une socket ICMP ? Réponse du système, calculée une
+/// fois : un droit ne change pas sans redémarrage du conteneur.
+///
+/// Sert à l'interface (`GET /api/collectors`) pour n'afficher la consigne du
+/// `sysctl` que si le ping est réellement impossible. Doit être appelée depuis un
+/// runtime tokio : le client lance sa tâche de réception.
+pub fn icmp_available() -> bool {
+    static AVAILABLE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *AVAILABLE.get_or_init(|| Client::new(&Config::default()).is_ok())
+}
+
 /// Envoie la salve, séquentiellement, en s'arrêtant si le budget s'épuise.
 async fn send_burst(client: &Client, address: IpAddr, target_id: i64, options: &Options) -> Burst {
     // L'identifiant ICMP distingue nos échos de ceux des autres sondes en vol.

@@ -110,7 +110,7 @@ pub use dns::DnsCollector;
 pub use http::HttpCollector;
 pub use mqtt::MqttCollector;
 pub use ntp::NtpCollector;
-pub use ping::PingCollector;
+pub use ping::{PingCollector, icmp_available};
 pub use smtp::SmtpCollector;
 pub use sql::{MysqlCollector, PostgresCollector};
 pub use tcp::TcpCollector;

@@ -304,8 +304,15 @@ homelab 用 256 MB 就够）：
       DUMBMONIT_RESET_PASSWORD: "1"
 ```
 
-**网站变化的截图**：在服务器旁边放一个无头 Chromium。只有 DumbMonit 通过
-Compose 网络与它通信；没有任何东西发布它的端口。
+**网站变更截图**：服务器旁的无头 Chromium；见下文[网站变更截图](#website-screenshots)。
+
+更多变量：[配置参考](../reference/configuration.md)。
+
+## 网站变更截图 {#website-screenshots}
+
+[网站变更监视器](../devices/webchange.md)始终会比较页面的可见文本。要为每个新版本保存截图，需要一个浏览器，而 DumbMonit 镜像不含浏览器：无头 Chromium 作为第二个服务运行，`DUMBMONIT_BROWSER_URL` 告诉服务器在哪里找到它。
+
+将以下几行添加到 `docker-compose.yml`，然后运行 `docker compose up -d`：
 
 ```yaml
 services:
@@ -314,11 +321,16 @@ services:
       DUMBMONIT_BROWSER_URL: http://browser:9222
   browser:
     image: chromedp/headless-shell:stable
-    shm_size: 256m   # Chromium 在 /dev/shm 中渲染；64 MB 对长页面太小
+    shm_size: 256m
     restart: unless-stopped
 ```
 
-更多变量：[配置参考](../reference/configuration.md)。
+- `browser` 是服务名；在 Compose 网络中，`http://browser:9222` 会解析到它。没有任何端口被发布：只有 DumbMonit 与它通信。
+- `shm_size: 256m`：Chromium 在 `/dev/shm` 中渲染，Docker 默认的 64 MB 对于长页面太小。
+- 任何以 `--remote-debugging-port` 启动的 Chromium 都可以；这里使用的镜像是 `chromedp/headless-shell`。
+
+没有浏览器时，其余功能照常工作（文本比较、告警、前后对照副本）；快照只是没有图像。只要服务器连不上浏览器，网站变更设备的表单就会显示一条包含这些行的提示。
+如果重启后提示仍然存在，请检查 `docker compose logs browser`，确认 `DUMBMONIT_BROWSER_URL` 中的主机名就是服务名，并且两个服务在同一个 Compose 项目中。
 
 ## 反向代理 {#reverse-proxy}
 
@@ -398,6 +410,8 @@ cookie 只通过 HTTPS 发送。纯 HTTP 部署中不要设置它：
 在容器自己的网络命名空间内设置了该 sysctl：
 
 ```yaml
+services:
+  dumbmonit:
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
 ```
@@ -406,7 +420,7 @@ cookie 只通过 HTTPS 发送。纯 HTTP 部署中不要设置它：
 容器中设置此范围；显式写出这几行是为了让它在较旧的引擎和
 Podman 上同样生效。没有它时，检查会报告配置错误（显示在
 设备上，不会发送通知），而绝不会误报“主机宕机”。使用 `docker run` 时，请传入
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`。
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`。 只要服务器无法打开 ICMP 套接字，ping 设备的表单就会显示一条包含这些行的提示。
 
 ## 无硬件测试 {#testing-without-hardware}
 
