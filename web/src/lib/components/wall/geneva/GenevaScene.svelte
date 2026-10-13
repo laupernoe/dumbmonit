@@ -204,6 +204,14 @@
 	const sign = $derived(
 		trouble ? m.wall_scene_sign_problems({ count: problems }).toLocaleUpperCase(getLocale()) : null
 	);
+
+	/** Arcs de l'arc-en-ciel : couleur et rayon. */
+	const RAINBOW: { c: string; r: number }[] = [
+		{ c: '#ff8a8a', r: 340 },
+		{ c: '#ffd27a', r: 328 },
+		{ c: '#9be39b', r: 316 },
+		{ c: '#8ec5ff', r: 304 }
+	];
 </script>
 
 <div
@@ -355,7 +363,7 @@
 				{#key playKey}
 					<svg class="layer" viewBox="0 0 {STAGE_W} {STAGE_H}">
 						<g class="rainbow" fill="none" stroke-linecap="round" stroke-width="9">
-							{#each [['#ff8a8a', 340], ['#ffd27a', 328], ['#9be39b', 316], ['#8ec5ff', 304]] as [c, r] (c)}
+							{#each RAINBOW as { c, r } (c)}
 								<path d="M{JET.x - r} {JET.base + 4} A{r} {r} 0 0 1 {JET.x + r} {JET.base + 4}" stroke={c} pathLength="1" />
 							{/each}
 						</g>
