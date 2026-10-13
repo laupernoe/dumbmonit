@@ -7,7 +7,7 @@
 	 * Fills its positioned parent; the headline zone (top left) is left clear.
 	 * Reduced motion freezes every animation.
 	 */
-	import SceneWeather from './SceneWeather.svelte';
+	import SceneWeather from './SceneWeatherB.svelte';
 	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
 
 	interface Props {
