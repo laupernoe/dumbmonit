@@ -1,10 +1,31 @@
 <script lang="ts">
 	/**
-	 * Dubai at dusk — the Burj Khalifa's stepped, needle-thin tower amid
-	 * skyscrapers, the Burj Al Arab sail on the gulf and a dune on the shore.
-	 * Static, no animation. Follows the scene contract: fills its positioned
-	 * parent, the headline zone (top left) is left clear, the palette lives here.
+	 * Dubai at dusk — the Burj Khalifa's stepped, needle-thin tower amid skyscrapers, the Burj Al Arab sail on the gulf and a dune on the shore.
+	 * `mood` is the weather (ok: clear, warn: clouds, critical: rain and
+	 * lightning; `calm|clouded|storm` accepted too). `pulse` plays one gesture
+	 * whenever its `at` changes: down switches the Burj Khalifa's lights off floor by floor from the top, up relights them from the base up, resolved fires a burst of fireworks around the spire.
+	 * Fills its positioned parent; the headline zone (top left) is left clear.
+	 * Reduced motion freezes every animation.
 	 */
+	import SceneWeather from './SceneWeatherB.svelte';
+	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
+
+	interface Props {
+		mood?: Mood;
+		pulse?: Pulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const g = createGesture(() => pulse);
+	const level = $derived(moodLevel(mood));
+	const bursts = [
+		{ x: 1130, y: 150, d: 0 },
+		{ x: 1050, y: 210, d: 450 },
+		{ x: 1215, y: 190, d: 900 }
+	];
+	const rays = Array.from({ length: 12 }, (_, i) => {
+		const a = (i / 12) * Math.PI * 2;
+		return `M${Math.round(Math.cos(a) * 10)} ${Math.round(Math.sin(a) * 10)}L${Math.round(Math.cos(a) * 40)} ${Math.round(Math.sin(a) * 40)}`;
+	}).join('');
 	// Burj Khalifa: setback tiers, [half width at the base, top y, half width at the top]
 	const tiers = [
 		[34, 400, 30],
@@ -24,7 +45,7 @@
 		.join('');
 </script>
 
-<div class="scene scene-dubai" aria-hidden="true">
+<div class="scene scene-dubai" class:p-down={g.kind === 'down'} class:p-up={g.kind === 'up'} class:p-resolved={g.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<linearGradient id="db-wat" x1="0" y1="0" x2="0" y2="1">
@@ -123,6 +144,22 @@
 			<circle cx="1010" cy="566" r="22" fill="var(--scene-tone, var(--c-signal))" opacity=".25" />
 			<rect x="1006" y="574" width="8" height="10" fill="var(--burj2)" />
 		</g>
+		<!-- lumières de la Burj Khalifa -->
+		<g class="db-lights">
+			{#each tiers as [w, y], i}
+				<rect class="db-lt" style="--i:{tiers.length - i}; --j:{i}" x={bx - w + 5} y={y + 8} width={2 * w - 10} height="3" />
+				<rect class="db-lt" style="--i:{tiers.length - i}; --j:{i}" x={bx - w + 5} y={y + 34} width={2 * w - 10} height="3" />
+			{/each}
+			<circle class="db-lt db-beacon" style="--i:0; --j:6" cx={bx} cy="84" r="3" />
+		</g>
+		{#if g.kind === 'resolved'}
+			{#key g.key}
+				{#each bursts as b}
+					<g transform="translate({b.x} {b.y})"><g class="db-burst" style="animation-delay:{b.d}ms"><path d={rays} /></g></g>
+				{/each}
+			{/key}
+		{/if}
+		<SceneWeather {level} bolt={1130} />
 	</svg>
 </div>
 
@@ -195,4 +232,19 @@
 	.win {
 		fill: var(--win);
 	}
+	.db-lt { fill: var(--lamp, #fff3d0); opacity: 0.6; }
+	.db-beacon { fill: #ff5a4a; opacity: 1; }
+	:global(.dark) .scene-dubai { --lamp: #ffd27a; }
+	:global(.dark) .db-lt { opacity: 0.9; }
+	.db-burst { opacity: 0; stroke: #ffb84a; stroke-width: 3; stroke-linecap: round; }
+	@media (prefers-reduced-motion: no-preference) {
+		.p-down .db-lt { animation: db-off 5s ease-out both; animation-delay: calc(var(--j) * 260ms); }
+		.p-up .db-lt { animation: db-on 4s ease-out both; animation-delay: calc(var(--i) * 260ms); }
+		.p-resolved .db-lt { animation: db-sparkle 2s ease-in-out 3 both; animation-delay: calc(var(--i) * 120ms); }
+		.db-burst { transform-box: fill-box; transform-origin: center; animation: db-pop 2.4s ease-out both; }
+	}
+	@keyframes db-off { 0% { opacity: 0.9; } 8% { opacity: 0.2; } 14% { opacity: 0.7; } 22%, 85% { opacity: 0; } 100% { opacity: 0.9; } }
+	@keyframes db-on { 0%, 10% { opacity: 0; } 25% { opacity: 1; } 35% { opacity: 0.2; } 50%, 100% { opacity: 1; } }
+	@keyframes db-sparkle { 50% { opacity: 1; filter: drop-shadow(0 0 4px #ffd27a); } }
+	@keyframes db-pop { 0% { opacity: 1; transform: scale(0.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(10px); } }
 </style>

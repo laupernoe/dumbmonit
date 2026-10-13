@@ -1,13 +1,26 @@
 <script lang="ts">
 	/**
-	 * Giza at sunset — the Great Pyramid of Khufu with Khafre and Menkaure
-	 * behind and beside it, dunes, a small camel caravan. Static, no animation.
-	 * Follows the scene contract: fills its positioned parent, the headline
-	 * zone (top left) is left clear, the palette lives here.
+	 * Giza at sunset — the Great Pyramid of Khufu with Khafre and Menkaure behind and beside it, dunes, a small camel caravan and the Sphinx.
+	 * `mood` is the weather (ok: clear, warn: clouds, critical: rain and
+	 * lightning; `calm|clouded|storm` accepted too). `pulse` plays one gesture
+	 * whenever its `at` changes: down puts out the golden capstone of the Great Pyramid while a gust of sand sweeps the plain, up relights it with a beam shooting skyward, resolved makes the Sphinx open an eye and the capstone glitter.
+	 * Fills its positioned parent; the headline zone (top left) is left clear.
+	 * Reduced motion freezes every animation.
 	 */
+	import SceneWeather from './SceneWeatherB.svelte';
+	import { createGesture, moodLevel, type Mood, type Pulse } from './sceneGesture.svelte.js';
+
+	interface Props {
+		mood?: Mood;
+		pulse?: Pulse;
+	}
+	let { mood = 'ok', pulse = null }: Props = $props();
+	const g = createGesture(() => pulse);
+	const level = $derived(moodLevel(mood));
+	const spark = 'M0-9L2.4-2.4L9 0L2.4 2.4L0 9L-2.4 2.4L-9 0L-2.4-2.4z';
 </script>
 
-<div class="scene scene-giza" aria-hidden="true">
+<div class="scene scene-giza" class:p-down={g.kind === 'down'} class:p-up={g.kind === 'up'} class:p-resolved={g.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<clipPath id="gz-khufu"><path d="M1086 482L1350 226L1396 482z" /></clipPath>
@@ -84,6 +97,28 @@
 			<path d="M0 0C2-14 0-26 2-38" stroke="var(--palm)" stroke-width="3" stroke-linecap="round" />
 			<g fill="var(--palm)"><path d="M2-38C-8-46-20-44-28-36C-16-40-8-40 2-38zM2-38C12-46 24-44 32-36C20-40 12-40 2-38zM2-38C-4-50-14-54-22-52C-12-50-6-46 2-38zM2-38C8-50 18-54 26-52C16-50 10-46 2-38z" /></g>
 		</g>
+
+		<!-- le Sphinx, l'oeil clos -->
+		<g transform="translate(940 528) scale(1.15)">
+			<path d="M-64 0V-16C-64-30-46-34-30-30L14-28L92-22V0Z" fill="var(--stone-shade)" />
+			<path d="M-64 0V-16C-64-30-46-34-30-30L-10-29V0Z" fill="var(--stone-lit)" opacity=".5" />
+			<path d="M14 -30V-56C14 -70 24 -78 36 -78C48 -78 58 -70 58 -56V-30Z" fill="var(--stone-lit)" />
+			<path d="M14 -30V-62H24V-30ZM48 -62H58V-30H48Z" fill="var(--stone-shade)" opacity=".7" />
+			<path class="gz-lid" d="M40 -57h9" stroke="var(--edge)" stroke-width="2.2" stroke-linecap="round" />
+			<ellipse class="gz-eye" cx="44.5" cy="-57" rx="4.6" ry="3.4" fill="var(--sun)" />
+			<circle class="gz-eye" cx="45.5" cy="-57" r="1.6" fill="var(--edge)" />
+		</g>
+		<!-- pyramidion -->
+		<g class="gz-cap">
+			<path d="M1350 226L1335 241H1353z" fill="#ffcf5a" />
+			<circle cx="1350" cy="236" r="16" fill="#ffd978" opacity=".35" />
+		</g>
+		<path class="gz-beam" d="M1350 222V90" stroke="#ffe29a" stroke-width="5" stroke-linecap="round" />
+		<g class="gz-gust" stroke="var(--sun-halo)" stroke-width="3" stroke-linecap="round" opacity="0"><path d="M600 500h120M700 540h160M620 580h100M760 520h90" /></g>
+		<g class="gz-sparks" fill="#ffe29a">
+			<path d={spark} transform="translate(1322 214)" /><path d={spark} transform="translate(1382 238) scale(.8)" /><path d={spark} transform="translate(1350 190) scale(1.1)" />
+		</g>
+		<SceneWeather {level} bolt={1350} />
 	</svg>
 </div>
 
@@ -157,4 +192,25 @@
 		--camel: #120f20;
 		--palm: #1f3a3a;
 	}
+	.gz-eye { transform-box: fill-box; transform-origin: center; transform: scaleY(0); }
+	.gz-beam, .gz-sparks, .gz-gust { opacity: 0; }
+	.gz-cap { transform-box: fill-box; transform-origin: 50% 100%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.gz-cap { animation: gz-pulse 3s ease-in-out infinite alternate; }
+		.p-down .gz-cap { animation: gz-out 5s ease-out both; }
+		.p-down .gz-gust { animation: gz-blow 4.2s ease-in-out both; }
+		.p-up .gz-cap { animation: gz-in 2.4s ease-out both; }
+		.p-up .gz-beam { animation: gz-shoot 2.6s ease-out both; }
+		.p-resolved .gz-eye { animation: gz-open 6s ease-in-out both; }
+		.p-resolved .gz-lid { animation: gz-lid 6s ease-in-out both; }
+		.p-resolved .gz-sparks { animation: gz-twinkle 3s ease-in-out 2 both; }
+	}
+	@keyframes gz-pulse { to { filter: brightness(1.2); } }
+	@keyframes gz-out { 0% { opacity: 1; } 10% { opacity: 0.1; } 16% { opacity: 0.7; } 24%, 85% { opacity: 0; } 100% { opacity: 1; } }
+	@keyframes gz-in { 0% { opacity: 0; } 25% { opacity: 1; transform: scale(1.5); } 40% { opacity: 0.3; } 60%, 100% { opacity: 1; transform: none; } }
+	@keyframes gz-shoot { 0% { opacity: 0; transform: scaleY(0); } 20% { opacity: 0.9; transform: scaleY(1); } 100% { opacity: 0; } }
+	@keyframes gz-blow { 0% { opacity: 0; transform: translateX(-60px); } 30%, 60% { opacity: 0.7; } 100% { opacity: 0; transform: translateX(900px); } }
+	@keyframes gz-open { 0%, 15% { transform: scaleY(0); } 28%, 70% { transform: scaleY(1); } 80% { transform: scaleY(0.1); } 85%, 100% { transform: scaleY(0); } }
+	@keyframes gz-lid { 0%, 15% { opacity: 1; } 28%, 78% { opacity: 0; } 85%, 100% { opacity: 1; } }
+	@keyframes gz-twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 </style>
