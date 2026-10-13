@@ -438,7 +438,11 @@ async fn calendar_covers_ninety_days_when_enabled_and_flags_are_kept_when_omitte
     assert_eq!(reply.body["show_calendar"], json!(true));
     assert_eq!(reply.body["show_latency"], json!(true));
     let reply = app
-        .put(&url, json!({ "title": "Acme services", "slug": "acme", "published": true }), Some(&admin))
+        .put(
+            &url,
+            json!({ "title": "Acme services", "slug": "acme", "published": true }),
+            Some(&admin),
+        )
         .await;
     assert_eq!(reply.body["show_calendar"], json!(true), "omitted: kept");
 
