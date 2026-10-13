@@ -106,7 +106,7 @@
 							<strong class="text-ink">{m.settings_update_pull_lead()}</strong>, {m.settings_update_pull_body()}
 						</li>
 					</ol>
-					<CopyBlock value={COMMAND} label={m.settings_update_copy_command()} />
+					<CopyBlock sudo value={COMMAND} label={m.settings_update_copy_command()} />
 					<p class="text-ink-2">
 						{m.settings_update_data_kept()}
 					</p>

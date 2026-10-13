@@ -466,6 +466,7 @@
 	"app_security_worst_first": "Dal punteggio peggiore.",
 	"app_ui_copied": "Copiato",
 	"app_ui_copy": "Copia",
+	"app_ui_run_with_sudo": "Esegui con sudo",
 	"app_ui_select_copy": "Seleziona e copia",
 	"app_ui_tone_advisory": "Avviso",
 	"app_ui_tone_ghost": "Sconosciuto",
