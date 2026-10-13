@@ -33,8 +33,6 @@ host.
 
 ```bash
 # Stack completa (constrói a imagem: cerca de 10 min a frio) — interface em http://localhost:8080
-docker compose up -d --build
-# camada de desenvolvedor: o VictoriaMetrics embutido é publicado em :8428 para consultas MetricsQL diretas
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, dentro do estágio builder (musl/alpine)

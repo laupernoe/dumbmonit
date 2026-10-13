@@ -24,6 +24,10 @@ All notable changes to this project are documented here. The format follows
   `Websites/<category>` and keeps `Websites/<platform>` when the page does not
   say. The category is the `category` label of `dumbmonit_website_info`.
 
+### Changed
+
+- **Minimal `docker-compose.yml`.** About 15 lines, no `.env` and no `${VAR}`: port, secret, retention, external VictoriaMetrics, password reset and the screenshots browser are now `environment:` examples in the [installation guide](docs/install/docker.md#advanced-options). To build from a checkout, add the `docker-compose.dev.yml` overlay.
+
 ## 0.1.0-alpha.7 — 2026-10-13
 
 ### Security

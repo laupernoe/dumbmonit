@@ -9,8 +9,9 @@ SQLite. Один том, `/data`, содержит базу данных, сек
 !!! note "Альфа-образ"
     `ghcr.io/laupernoe/dumbmonit:latest` — последняя помеченная альфа-сборка (amd64;
     образы arm64 пока приостановлены); `:edge` следует за последним коммитом в `main`. Чтобы запустить из исходников,
-    `docker compose up -d --build` собирает тот же образ локально (около десяти
-    минут в первый раз; нужен только Docker).
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    --build` собирает тот же образ локально (около десяти минут в первый раз;
+    нужен только Docker).
 
 ## Требования {#prerequisites}
 
@@ -18,79 +19,32 @@ SQLite. Один том, `/data`, содержит базу данных, сек
 - Машина, которая может обращаться к отслеживаемым устройствам. Достижимость самой машины
   с этих устройств не требуется, кроме [агентов](../devices/agent.md), которые отправляют
   свои измерения на сервер по HTTP.
-- Свободный порт `8080` на хосте или другой порт на ваш выбор (см. ниже).
+- Свободный порт `8080` на хосте или другой порт на ваш выбор ([см. ниже](#advanced-options)).
 
 ## Файл Compose {#the-compose-file}
 
-Это `docker-compose.yml` из репозитория; сохраните его в отдельном
-каталоге:
+Это весь `docker-compose.yml` (файл `.env` не нужен); сохраните его в
+отдельном каталоге:
 
 ```yaml
-# Один контейнер: сервер DumbMonit запускает собственную VictoriaMetrics (встроенную в
-# образ) и хранит всё в одном томе. Чтобы использовать вместо неё внешнюю
-# VictoriaMetrics, задайте DUMBMONIT_VM_URL — встроенная тогда не запускается.
-name: dumbmonit
-
 services:
   dumbmonit:
-    # `docker compose up -d` загружает опубликованный образ (последний релиз; используйте
-    # `:edge` для последнего коммита в main). Чтобы вместо этого собрать образ из этой копии,
-    # выполните `docker compose up -d --build`: результат получит то же имя
-    # и будет использоваться в дальнейшем.
     image: ghcr.io/laupernoe/dumbmonit:latest
-    build: .
     ports:
-      # Порт хоста настраивается: 8080 — оживлённый порт на машине
-      # домашней лаборатории. `DUMBMONIT_PORT=8099 docker compose up -d` меняет его.
-      - "${DUMBMONIT_PORT:-8080}:8080"
+      - "8080:8080"
     volumes:
-      # База данных SQLite, секрет экземпляра и временные ряды (/data/vm).
-      #
-      # Сервер работает от пользователя 65532 (не root). Именованный том, созданный
-      # Docker, наследует этого владельца из образа: делать ничего не нужно. Привязанный каталог
-      # (`./data:/data`) или том, созданный до этого изменения, нужно один раз передать:
-      #   docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-      # или, чтобы оставить файлы как есть, запустите контейнер от их владельца
-      # с `user: "1000:1000"` (подойдёт любой uid: в образе нет /etc/passwd).
       - dumbmonit-data:/data
-    environment:
-      # Раскомментируйте, чтобы задать секрет самостоятельно, а не позволять DumbMonit
-      # создать его в /data/secret.key. Он шифрует учётные данные устройств: потеряв
-      # его, придётся заново вводить каждую из них.
-      # DUMBMONIT_SECRET: replace-me-with-32-random-characters
-      # Потерян пароль: `DUMBMONIT_RESET_PASSWORD=1 docker compose up -d` сбрасывает
-      # пароль при запуске, и UI запросит новый; затем запустите снова
-      # без этой переменной.
-      DUMBMONIT_RESET_PASSWORD: ${DUMBMONIT_RESET_PASSWORD:-}
-      # Встроенная VictoriaMetrics: срок хранения (месяцы или, например, 30d / 2y) и
-      # бюджет памяти её кэшей. Домашней лаборатории из нескольких десятков устройств хватает
-      # 256 МБ; увеличьте его, когда мониторите сотни хостов.
-      DUMBMONIT_VM_RETENTION: ${DUMBMONIT_VM_RETENTION:-12}
-      DUMBMONIT_VM_MEMORY: ${DUMBMONIT_VM_MEMORY:-256MB}
-      # Внешняя VictoriaMetrics вместо встроенной:
-      # DUMBMONIT_VM_URL: http://victoriametrics:8428
-    # Минимум привилегий: никаких capabilities, без повышения привилегий, а
-    # файловая система образа доступна только для чтения — /data (том) и /tmp (tmpfs) —
-    # единственные места для записи. Мониторам ICMP «ping» capability тоже не нужна: sysctl
-    # ниже позволяет (непривилегированному) серверу открывать сокеты ICMP echo внутри
-    # собственного сетевого пространства имён контейнера. Удалите его, если ping не используется.
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
     read_only: true
-    tmpfs:
-      - /tmp
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
-    # Сервер сам останавливает VictoriaMetrics: оставьте ему на это время.
-    stop_grace_period: 30s
-    restart: unless-stopped
 
 volumes:
   dumbmonit-data:
-    # Фиксированное имя, не зависящее от имени проекта compose: том — это то, что
-    # вы резервируете и что должно найтись после обновления.
     name: dumbmonit-data
 ```
 
@@ -100,12 +54,18 @@ volumes:
 docker compose up -d
 ```
 
+Загружается опубликованный образ; файловая система только для чтения, снятые
+capabilities и sysctl `ping_group_range` объяснены в разделах
+[Работа от имени обычного пользователя](#runs-as-a-non-root-user) и
+[Ping ICMP без capability](#icmp-ping-without-a-capability). Параметры (порт,
+секрет, срок хранения, внешняя VictoriaMetrics, снимки экрана) —
+[переменные окружения, которые вы добавляете сами](#advanced-options).
+
 !!! tip "Сборка образа самостоятельно"
-    `docker compose up -d` загружает опубликованный образ и игнорирует `build: .`.
-    Из клона репозитория `docker compose up -d --build` вместо этого собирает
-    тот же образ локально (около десяти минут при холодном кэше; тулчейн Rust или Node
-    на хосте не нужен). Используйте это, чтобы запускать из исходников или из
-    ветки.
+    Из клона репозитория `docker compose -f docker-compose.yml -f
+    docker-compose.dev.yml up -d --build` собирает тот же образ локально
+    (около десяти минут при холодном кэше; тулчейн Rust или Node на хосте не
+    нужен). Используйте это, чтобы запускать из исходников или из ветки.
 
 ## Встроенная VictoriaMetrics {#embedded-victoriametrics}
 
@@ -154,7 +114,9 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 
 ## Переменные окружения {#environment-variables}
 
-Всё настраивается через переменные окружения; ни одна не обязательна.
+Всё настраивается через переменные окружения; ни одна не обязательна. Добавьте
+нужные в `environment:` службы, как показано в разделе
+[Дополнительные параметры](#advanced-options).
 
 | Переменная | По умолчанию | Назначение |
 |---|---|---|
@@ -195,7 +157,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
     копируют его за вас — см. [Резервное копирование и восстановление](backup.md).
 
 Если вы предпочитаете управлять секретом сами, задайте `DUMBMONIT_SECRET` в файле Compose
-(32 случайных символа или больше). Храните его в менеджере паролей.
+([пример](#advanced-options)) (32 случайных символа или больше). Храните его в менеджере паролей.
 
 ## Обновление {#upgrading}
 
@@ -302,15 +264,69 @@ docker compose start
 Если важен объём, `--exclude=./vm` делает архив небольшим: база данных и
 секрет — это настройка, а `vm/` — только графики.
 
-## Смена порта {#changing-the-port}
+## Дополнительные параметры {#advanced-options}
 
-Задайте `DUMBMONIT_PORT` при запуске:
+В файле Compose выше переменных нет намеренно. Чтобы изменить настройку,
+добавьте блок `environment:` (или строку в него) в `dumbmonit:` вашего
+`docker-compose.yml` и снова выполните `docker compose up -d`. Контейнер
+пересоздаётся; том с данными сохраняется.
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+**Другой порт.** Измените левую часть привязки; контейнер по-прежнему слушает
+на 8080:
+
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
-Или поместите `DUMBMONIT_PORT=8099` в файл `.env` рядом с файлом Compose.
+**Собственный секрет** вместо сгенерированного в `/data/secret.key`. Он шифрует
+учётные данные устройств: потеряв его, придётся вводить их все заново.
+
+```yaml
+    environment:
+      DUMBMONIT_SECRET: replace-me-with-32-random-characters
+```
+
+**Срок хранения и память** встроенной VictoriaMetrics (месяцы или `30d` /
+`2y`; домашней лаборатории из нескольких десятков устройств хватает 256 MB):
+
+```yaml
+    environment:
+      DUMBMONIT_VM_RETENTION: "24"
+      DUMBMONIT_VM_MEMORY: 512MB
+```
+
+**Внешняя VictoriaMetrics**; встроенная тогда не запускается:
+
+```yaml
+    environment:
+      DUMBMONIT_VM_URL: http://victoriametrics:8428
+```
+
+**Потерян пароль.** Добавьте строку ниже, выполните `docker compose up -d`,
+снова создайте первого администратора в интерфейсе (устройства, правила и каналы
+сохраняются), затем удалите строку и ещё раз выполните `docker compose up -d`:
+
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
+```
+
+**Снимки экрана изменений сайтов**: headless Chromium рядом с сервером.
+С ним общается только DumbMonit, по сети Compose; его порт никуда не публикуется.
+
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m   # Chromium рендерит в /dev/shm; 64 MB мало для длинной страницы
+    restart: unless-stopped
+```
+
+Другие переменные: [справочник по конфигурации](../reference/configuration.md).
 
 ## Обратный прокси {#reverse-proxy}
 

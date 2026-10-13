@@ -48,7 +48,7 @@ zum Einbinden.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Stunden zwischen zwei Sicherungen, 1 bis 8760. Die erste erfolgt ein Intervall nach dem Start, nicht beim Start. |
 | `DUMBMONIT_DEMO` | *(aus)* | `1` für eine öffentliche, schreibgeschützte Demo mit einem festen fiktiven Bestand, Anmeldung `demo` / `demo`. **Erstellt die Datenbank bei jedem Start neu**: nie auf einem echten Datenvolume. Siehe [Eine Demo-Instanz betreiben](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Wie viele Sicherungen aufbewahrt werden, 1 bis 365. Die ältesten werden samt ihrer `.key` entfernt. |
-| `DUMBMONIT_BROWSER_URL` | *(nicht gesetzt)* | Headless Chromium für die Screenshots von [Website-Änderungen](../devices/webchange.md#screenshots), als `http://host:9222` (sein DevTools-Port). Die Compose-Datei liefert eines unter dem Profil `screenshots` mit: `DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d`. Nicht gesetzt: nur Textvergleich. |
+| `DUMBMONIT_BROWSER_URL` | *(nicht gesetzt)* | Headless Chromium für die Screenshots von [Website-Änderungen](../devices/webchange.md#screenshots), als `http://host:9222` (sein DevTools-Port). Fügen Sie Ihrer Compose-Datei einen `chromedp/headless-shell`-Dienst hinzu, wie unter [Screenshots](../devices/webchange.md#screenshots) gezeigt. Nicht gesetzt: nur Textvergleich. |
 
 Die Aufbewahrung der Baseline (60 Tage) und die 14-tägige Lernphase sind nicht konfigurierbar.
 
@@ -86,15 +86,15 @@ Ist `DUMBMONIT_VM_URL` gesetzt, entfällt all das: Der Server verwendet die von 
 Instanz, und die eingebettete wird nie gestartet. `GET /api/health` sagt, in welchem Fall Sie sind
 (`victoria.embedded`).
 
-## Variablen auf Compose-Ebene {#compose-level-variables}
+## Einstellungen auf Compose-Ebene {#compose-level-variables}
 
-Diese werden von `docker-compose.yml` gelesen, nicht vom Server:
-
-| Variable | Standard | Rolle |
-|---|---|---|
-| `DUMBMONIT_PORT` | `8080` | Für die Oberfläche veröffentlichter Host-Port. |
-| `DUMBMONIT_VM_RETENTION`, `DUMBMONIT_VM_MEMORY` | `12`, `256MB` | An den Server durchgereicht; siehe oben. |
-| `DUMBMONIT_VM_PORT` | `8428` | Host-Port für das eingebettete VictoriaMetrics, nur Entwicklungs-Overlay. |
+Die mitgelieferte `docker-compose.yml` liest keine Variable und braucht keine
+`.env`-Datei. Alles wird unter `environment:` des Dienstes gesetzt oder durch
+Bearbeiten der Datei; siehe [Erweiterte Optionen](../install/docker.md#advanced-options)
+(Port, Geheimnis, Aufbewahrung und Speicher, externes VictoriaMetrics,
+Passwort-Reset, Screenshots). Das Entwicklungs-Overlay `docker-compose.dev.yml`
+liest `DUMBMONIT_VM_PORT` (Standard `8428`) für den Host-Port des eingebetteten
+VictoriaMetrics.
 
 ## Ports {#ports}
 
@@ -124,9 +124,11 @@ vorgegeben, wie auch immer das Projekt heißt.
 ## Das Passwort zurücksetzen {#resetting-the-password}
 
 ```bash
-DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
+# DUMBMONIT_RESET_PASSWORD: "1" unter environment: in docker-compose.yml einfügen
+docker compose up -d
 # open the UI: /setup asks for a new password
-docker compose up -d dumbmonit   # start again without the variable
+# Zeile wieder entfernen, dann:
+docker compose up -d
 ```
 
 Das Zurücksetzen löscht das Passwort und jede Sitzung; Geräte, Regeln und Kanäle bleiben

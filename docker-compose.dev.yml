@@ -1,15 +1,19 @@
-# Developer overlay: publishes the embedded VictoriaMetrics on the host, so
-# MetricsQL can be queried directly while debugging.
+# Developer overlay, for a checkout of the repository: builds the image from the
+# sources instead of pulling it, and publishes the embedded VictoriaMetrics on
+# the host so MetricsQL can be queried directly while debugging.
 #
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 #   curl -s 'localhost:8428/api/v1/query?query=dumbmonit_up'
 
 services:
   dumbmonit:
+    build: .
     environment:
       # The embedded VictoriaMetrics listens on the loopback by default; open it
       # inside the container so the port below reaches it.
       DUMBMONIT_VM_LISTEN: 0.0.0.0:8428
+      # Optional, from the shell (no .env needed): DUMBMONIT_BROWSER_URL, ...
+      DUMBMONIT_BROWSER_URL: ${DUMBMONIT_BROWSER_URL:-}
     ports:
       # Loopback only: the embedded VictoriaMetrics has no authentication, and
       # its admin API (series deletion) must not be reachable from the LAN.

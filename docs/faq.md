@@ -8,16 +8,18 @@ row clears a second factor that locks you out. That is the everyday answer —
 an instance with two admin accounts never needs the rest of this page.
 
 When nobody can sign in any more, there is no recovery e-mail: start the
-server once with `DUMBMONIT_RESET_PASSWORD=1`:
+server once with `DUMBMONIT_RESET_PASSWORD=1`, set in `docker-compose.yml`:
 
-```bash
-DUMBMONIT_RESET_PASSWORD=1 docker compose up -d dumbmonit
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
 ```
+
+Then `docker compose up -d`.
 
 Every account and every session is removed at startup and the UI shows
 `/setup` again. Create the first administrator, then start again without the
-variable (`docker compose up -d dumbmonit`, with the variable unset or empty in
-your environment). Devices, rules, channels and the single sign-on settings are
+line, and run `docker compose up -d` again. Devices, rules, channels and the single sign-on settings are
 untouched.
 
 ## No data after adding a device
@@ -65,12 +67,12 @@ See [Linux, macOS, FreeBSD and Windows agent](devices/agent.md).
 
 ## Changing the port
 
-The container listens on 8080; the host port is whatever `docker-compose.yml`
-publishes. Set `DUMBMONIT_PORT` (in a `.env` file next to the Compose file, or
-on the command line):
+The container listens on 8080; the host port is the left side of the mapping in
+`docker-compose.yml`. Edit it, then run `docker compose up -d`:
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
 To change the port *inside* the container, set `DUMBMONIT_BIND`, for example

@@ -119,19 +119,28 @@ As métricas aparecem depois de a primeira verificação estar concluída.
 ## Capturas de ecrã {#screenshots}
 
 A imagem DumbMonit não tem navegador: as capturas de ecrã vêm de um
-Chromium headless opcional, controlado via Chrome DevTools Protocol. O
-ficheiro Compose vem com um como serviço `browser`, sob o perfil
-`screenshots`, por isso só inicia quando pedido:
+Chromium headless opcional, controlado via Chrome DevTools Protocol.
+Acrescente um como serviço `browser` ao lado do DumbMonit no
+`docker-compose.yml` e aponte o servidor para ele:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Depois execute `docker compose up -d`. Nada publica a porta do navegador: só o
+servidor DumbMonit fala com ele, pela rede do Compose.
 
 `DUMBMONIT_BROWSER_URL` aponta o DumbMonit para o navegador (qualquer
 Chromium iniciado com `--remote-debugging-port`, por exemplo
 `chromedp/headless-shell`; o servidor lê `/json/version` e fala com o
-endereço para o qual o nome de anfitrião resolve). Coloque a variável num
-ficheiro `.env` junto ao `docker-compose.yml` para a manter.
+endereço para o qual o nome de anfitrião resolve).
 
 Uma captura de ecrã só é feita quando uma página recebe um novo
 instantâneo (a referência, e cada alteração), nunca numa verificação sem
@@ -162,11 +171,7 @@ Os passos abaixo são os que o aviso junto ao formulário mostra.
 1. No endereço, cole a página a monitorizar, com http:// ou https://. Para monitorizar um site inteiro ou uma das suas secções, cole a sua página inicial e defina «Scope» para «site»: toda página sob a mesma pasta é seguida, até «Max pages».
 2. Linhas que mudam a cada visita (um relógio, um contador de visitantes, «atualizado há 5 minutos») seriam reportadas cada vez: liste-as em «Ignore lines» como expressões regulares.
 3. A primeira verificação só regista a referência, nada é reportado. A partir daí, cada verificação compara o texto visível página por página e guarda uma cópia antes/depois de cada alteração, mostrada na página do dispositivo; o alerta «Website changed» avisa-o.
-4. Para uma captura de ecrã de cada versão, inicie o serviço de navegador opcional do ficheiro Compose e aponte o DumbMonit para ele:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Para uma captura de ecrã de cada versão, acrescente um serviço de navegador headless ao seu ficheiro Compose e aponte o DumbMonit para ele, como mostrado em [Capturas de ecrã](#screenshots).
 
 !!! warning
     Só o texto que o servidor envia é comparado: uma página desenhada inteiramente por JavaScript mostra pouco ou nada à verificação. Páginas atrás de um início de sessão também não são alcançáveis.
