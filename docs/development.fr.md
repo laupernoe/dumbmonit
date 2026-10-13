@@ -198,3 +198,12 @@ pip install -r docs/requirements.txt
 mkdocs serve
 mkdocs build --strict   # ce que Read the Docs exécute ; doit réussir sans avertissements
 \`\`\`
+
+Chaque langue est un projet Read the Docs distinct (`dumbmonit` pour l'anglais, puis
+`dumbmonit-fr`, `dumbmonit-de`, ... liés comme traductions), tous construits depuis le même
+`mkdocs.yml`. `hooks/rtd_language.py` lit `READTHEDOCS_LANGUAGE` et construit cette seule langue
+à la racine du site : les fichiers `page.<lang>.md` remplacent les pages anglaises, une page non
+traduite reste en anglais avec un bandeau, et les titres de navigation viennent de
+`hooks/nav_translations.yml`. En local la variable est absente et le build est en anglais ;
+pour prévisualiser une autre langue : `READTHEDOCS_LANGUAGE=fr mkdocs serve` (`de`, `es`, `it`,
+`pt`, `pt-br`, `ru`, `zh-cn`).
