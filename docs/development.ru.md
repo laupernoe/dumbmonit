@@ -28,8 +28,6 @@ docs/            эта документация (MkDocs, опубликован
 
 ```bash
 # Полный стек (создает образ: около 10 мин в холодном состоянии) — интерфейс на http://localhost:8080
-docker compose up -d --build
-# наложение разработчика: встроенный VictoriaMetrics опубликован на :8428 для прямых запросов MetricsQL
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, внутри этапа builder (musl/alpine)

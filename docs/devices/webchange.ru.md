@@ -111,19 +111,27 @@ link-local targets**; адреса частной LAN разрешены все�
 ## Снимки экрана {#screenshots}
 
 В образе DumbMonit нет браузера: снимки экрана делает необязательный headless
-Chromium, управляемый по Chrome DevTools Protocol. Файл Compose поставляется с
-ним как со службой `browser` в профиле `screenshots`, поэтому он запускается
-только по запросу:
+Chromium, управляемый по Chrome DevTools Protocol. Добавьте его как службу `browser` рядом с DumbMonit в `docker-compose.yml` и
+укажите на него серверу:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Затем выполните `docker compose up -d`. Порт браузера никуда не публикуется: с
+ним общается только сервер DumbMonit, по сети Compose.
 
 `DUMBMONIT_BROWSER_URL` указывает DumbMonit на браузер (подойдёт любой Chromium,
 запущенный с `--remote-debugging-port`, например `chromedp/headless-shell`;
 сервер читает `/json/version` и обращается к адресу, в который разрешается имя
-хоста). Поместите переменную в файл `.env` рядом с `docker-compose.yml`, чтобы
-сохранить её.
+хоста).
 
 Снимок экрана делается только тогда, когда страница получает новый снимок
 (эталон и каждое изменение), и никогда при неизменённой проверке: окно 1366 × 900,
@@ -159,12 +167,9 @@ DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots u
    этого момента каждая проверка сравнивает видимый текст страница за страницей и
    сохраняет копию «до/после» каждого изменения, показываемую на странице
    устройства; об изменении сообщает оповещение «Website changed».
-4. Чтобы получать снимок экрана каждой версии, запустите необязательную службу
-   браузера из файла Compose и укажите DumbMonit на неё:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Чтобы получать снимок экрана каждой версии, добавьте в файл Compose службу
+   headless-браузера и укажите на неё DumbMonit, как показано в разделе
+   [Снимки экрана](#screenshots).
 
 !!! warning
     Сравнивается только текст, который отправляет сервер: страница, целиком

@@ -125,19 +125,27 @@ Die Metriken erscheinen, sobald die erste Prüfung erledigt ist.
 
 Das DumbMonit-Image hat keinen Browser: Screenshots stammen von einem
 optionalen Headless-Chromium, über das Chrome DevTools Protocol
-gesteuert. Die Compose-Datei liefert eines als `browser`-Dienst, unter
-dem Profil `screenshots`, sodass es nur startet, wenn verlangt:
+gesteuert. Fügen Sie in `docker-compose.yml` neben DumbMonit einen
+`browser`-Dienst hinzu und richten Sie den Server darauf:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Führen Sie dann `docker compose up -d` aus. Nichts veröffentlicht den Port des
+Browsers: Nur der DumbMonit-Server spricht mit ihm, über das Compose-Netzwerk.
 
 `DUMBMONIT_BROWSER_URL` richtet DumbMonit auf den Browser (jedes mit
 `--remote-debugging-port` gestartete Chromium, zum Beispiel
 `chromedp/headless-shell`; der Server liest `/json/version` und
-spricht mit der Adresse, zu der der Hostname aufgelöst wird). Setzen
-Sie die Variable in eine `.env`-Datei neben `docker-compose.yml`, um
-sie zu behalten.
+spricht mit der Adresse, zu der der Hostname aufgelöst wird).
 
 Ein Screenshot wird nur aufgenommen, wenn eine Seite einen neuen
 Snapshot erhält (die Referenz, und jede Änderung), nie bei einer
@@ -178,12 +186,9 @@ Die Schritte unten sind die, die der Hinweis neben dem Formular zeigt.
    Seite für Seite und behält eine Vorher/Nachher-Kopie jeder
    Änderung, auf der Geräteseite angezeigt; der Alarm "Website
    changed" sagt es Ihnen.
-4. Für einen Screenshot jeder Version starten Sie den optionalen
-   Browser-Dienst der Compose-Datei und richten Sie DumbMonit darauf:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Für einen Screenshot jeder Version fügen Sie Ihrer Compose-Datei einen
+   Headless-Browser-Dienst hinzu und richten Sie DumbMonit darauf, wie unter
+   [Screenshots](#screenshots) gezeigt.
 
 !!! warning
     Nur der vom Server gesendete Text wird verglichen: Eine komplett

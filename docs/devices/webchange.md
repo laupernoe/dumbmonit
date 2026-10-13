@@ -106,18 +106,27 @@ The metrics appear once the first check is done.
 ## Screenshots
 
 The DumbMonit image has no browser: screenshots come from an optional headless
-Chromium, driven over the Chrome DevTools Protocol. The Compose file ships one
-as the `browser` service, under the `screenshots` profile, so it only starts
-when asked:
+Chromium, driven over the Chrome DevTools Protocol. Add one as a `browser`
+service next to DumbMonit in `docker-compose.yml`, and point the server at it:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Then run `docker compose up -d`. Nothing publishes the browser's port: only the
+DumbMonit server talks to it, over the Compose network.
 
 `DUMBMONIT_BROWSER_URL` points DumbMonit at the browser (any Chromium started
 with `--remote-debugging-port`, for example `chromedp/headless-shell`; the
 server reads `/json/version` and talks to the address the host name resolves
-to). Put the variable in a `.env` file next to `docker-compose.yml` to keep it.
+to).
 
 A screenshot is taken only when a page gets a new snapshot (the reference, and
 every change), never on an unchanged check: a 1366 × 900 window, the full page
@@ -152,12 +161,9 @@ The steps below are the ones the notice next to the form shows.
    on, each check compares the visible text page by page and keeps a
    before/after copy of every change, shown on the device page; the "Website
    changed" alert tells you.
-4. For a screenshot of each version, start the optional browser service of the
-   Compose file and point DumbMonit at it:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. For a screenshot of each version, add a headless browser service to your
+   Compose file and point DumbMonit at it, as shown under
+   [Screenshots](#screenshots).
 
 !!! warning
     Only the text the server sends is compared: a page drawn entirely by

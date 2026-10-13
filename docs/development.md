@@ -32,8 +32,6 @@ Compilation happens in Docker; nothing Rust needs to be installed on the host.
 
 ```bash
 # Full stack (builds the image: about 10 min cold) — UI on http://localhost:8080
-docker compose up -d --build
-# developer overlay: the embedded VictoriaMetrics is published on :8428 for direct MetricsQL queries
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, inside the builder stage (musl/alpine)

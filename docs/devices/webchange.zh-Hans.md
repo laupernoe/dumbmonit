@@ -104,19 +104,27 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ## 截图 {#screenshots}
 
 DumbMonit 镜像没有浏览器:截图来自一个可选的无头 Chromium,通过
-Chrome DevTools 协议驱动。Compose 文件自带一个作为 `browser`
-服务的实例,位于 `screenshots` profile 下,因此只有在被要求时
-才会启动:
+Chrome DevTools 协议驱动。在 `docker-compose.yml` 中把它作为 `browser` 服务添加到 DumbMonit 旁边,
+并让服务器指向它:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+然后执行 `docker compose up -d`。没有任何东西发布浏览器的端口:只有
+DumbMonit 服务器通过 Compose 网络与它通信。
 
 `DUMBMONIT_BROWSER_URL` 指向该浏览器(任何以
 `--remote-debugging-port` 启动的 Chromium,例如
 `chromedp/headless-shell`;服务器会读取 `/json/version`,并连接
-到该主机名解析出的地址)。把该变量放进 `docker-compose.yml`
-旁边的 `.env` 文件中以便保留它。
+到该主机名解析出的地址)。
 
 截图只会在某个页面产生新快照时拍摄(参照版本,以及每次变化),
 从不在无变化的检查时拍摄:一个 1366 × 900 的窗口,完整页面最多
@@ -147,12 +155,8 @@ DumbMonit 比较的文本(服务器发送的 HTML)不同。
 3. 第一次检查只会记录参照版本,不会报告任何内容。从那之后,
    每次检查都会逐页比较可见文本,并为每次变化保留一份前后对比,
    显示在设备页面上;"网站已变化"告警会告知你。
-4. 若要为每个版本生成截图,请启动 Compose 文件中的可选浏览器
-   服务,并让 DumbMonit 指向它:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. 若要为每个版本生成截图,请在 Compose 文件中添加一个无头浏览器服务,
+   并让 DumbMonit 指向它,如[截图](#screenshots)所示。
 
 !!! warning "警告"
     只会比较服务器发送的文本:一个完全由 JavaScript 绘制的页面,

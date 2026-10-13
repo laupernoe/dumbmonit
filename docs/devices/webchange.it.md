@@ -124,18 +124,27 @@ Le metriche appaiono una volta eseguito il primo controllo.
 
 L'immagine DumbMonit non ha un browser: gli screenshot provengono da un
 Chromium headless opzionale, guidato tramite il Chrome DevTools Protocol.
-Il file Compose ne fornisce uno come servizio `browser`, sotto il profilo
-`screenshots`, così si avvia solo quando richiesto:
+Aggiungine uno come servizio `browser` accanto a DumbMonit in
+`docker-compose.yml` e punta il server verso di esso:
 
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m
+    restart: unless-stopped
 ```
-DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-```
+
+Poi esegui `docker compose up -d`. Nulla pubblica la porta del browser: solo il
+server DumbMonit gli parla, sulla rete Compose.
 
 `DUMBMONIT_BROWSER_URL` punta DumbMonit verso il browser (qualsiasi
 Chromium avviato con `--remote-debugging-port`, per esempio
 `chromedp/headless-shell`; il server legge `/json/version` e parla con
-l'indirizzo a cui risolve il nome host). Metti la variabile in un file
-`.env` accanto a `docker-compose.yml` per conservarla.
+l'indirizzo a cui risolve il nome host).
 
 Uno screenshot viene preso solo quando una pagina riceve un nuovo
 snapshot (il riferimento, e ogni modifica), mai su un controllo invariato:
@@ -166,11 +175,7 @@ I passaggi seguenti sono quelli mostrati dalla nota accanto al modulo.
 1. Nell'indirizzo, incolla la pagina da osservare, con http:// o https://. Per osservare un intero sito o una delle sue sezioni, incolla la sua pagina iniziale e imposta "Scope" su "site": ogni pagina sotto la stessa cartella viene seguita, fino a "Max pages".
 2. Le righe che cambiano a ogni visita (un orologio, un contatore di visitatori, "aggiornato 5 minuti fa") verrebbero segnalate ogni volta: elencale in "Ignore lines" come espressioni regolari.
 3. Il primo controllo registra solo il riferimento, nulla viene segnalato. Da quel momento, ogni controllo confronta il testo visibile pagina per pagina e conserva una copia prima/dopo di ogni modifica, mostrata sulla pagina del dispositivo; l'avviso "Website changed" te lo dice.
-4. Per uno screenshot di ogni versione, avvia il servizio browser opzionale del file Compose e punta DumbMonit verso di esso:
-
-    ```
-    DUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d
-    ```
+4. Per uno screenshot di ogni versione, aggiungi un servizio browser headless al tuo file Compose e punta DumbMonit verso di esso, come mostrato in [Screenshot](#screenshots).
 
 !!! warning
     Viene confrontato solo il testo che il server invia: una pagina

@@ -9,8 +9,8 @@ DumbMonit 以单个容器运行：`dumbmonit` 服务器（采集、API、
 !!! note "Alpha 镜像"
     `ghcr.io/laupernoe/dumbmonit:latest` 是最近一次打标签的 alpha 构建（amd64；
     arm64 镜像暂时停止发布）；`:edge` 跟随 `main` 上的最新提交。若要从源码运行，
-    `docker compose up -d --build` 会在本地构建同一个镜像（第一次约需十
-    分钟；只需要 Docker）。
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    --build` 会在本地构建同一个镜像（第一次约需十分钟；只需要 Docker）。
 
 ## 前提条件 {#prerequisites}
 
@@ -18,80 +18,32 @@ DumbMonit 以单个容器运行：`dumbmonit` 服务器（采集、API、
 - 一台能够访问你要监控的设备的机器。设备不需要能访问
   这台机器，[代理](../devices/agent.md)除外，它们会通过 HTTP 将
   测量数据推送到服务器。
-- 主机上的 `8080` 端口空闲，或者使用你选择的其他端口（见下文）。
+- 主机上的 `8080` 端口空闲，或者使用你选择的其他端口（[见下文](#advanced-options)）。
 
 ## Compose 文件 {#the-compose-file}
 
-这是仓库中的 `docker-compose.yml`；请将它保存在
+这是完整的 `docker-compose.yml`（不需要 `.env` 文件）；请将它保存在
 单独的目录中：
 
 ```yaml
-# 一个容器：DumbMonit 服务器运行自己的 VictoriaMetrics（内嵌在
-# 镜像中），并把所有数据放在单个卷下。若要改用外部的
-# VictoriaMetrics，请设置 DUMBMONIT_VM_URL，此时不会启动内嵌的那个。
-name: dumbmonit
-
 services:
   dumbmonit:
-    # `docker compose up -d` 会拉取已发布的镜像（最新发行版；使用
-    # `:edge` 可获得 main 上的最新提交）。若要改为从当前检出的代码构建，
-    # 请运行 `docker compose up -d --build`：构建结果会使用相同的名称打标签，
-    # 此后一直使用它。
     image: ghcr.io/laupernoe/dumbmonit:latest
-    build: .
     ports:
-      # 主机端口可配置：8080 在家庭实验室机器上是个很拥挤的端口。
-      # `DUMBMONIT_PORT=8099 docker compose up -d` 可以更改它。
-      - "${DUMBMONIT_PORT:-8080}:8080"
+      - "8080:8080"
     volumes:
-      # SQLite 数据库、实例密钥和时间序列（/data/vm）。
-      #
-      # 服务器以用户 65532（非 root）运行。由 Docker 创建的命名卷
-      # 会从镜像继承该所有者：无需任何操作。绑定挂载
-      # （`./data:/data`）或在此变更之前创建的卷需要
-      # 一次性移交所有权：
-      #   docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-      # 或者，为了保持文件原样，让容器以其所有者身份运行，
-      # 使用 `user: "1000:1000"`（任何 uid 都可以：镜像中没有 /etc/passwd）。
       - dumbmonit-data:/data
-    environment:
-      # 取消注释即可自行设置密钥，而不是让 DumbMonit
-      # 在 /data/secret.key 中生成。它用于加密设备凭据：丢失
-      # 它意味着要重新输入每一个凭据。
-      # DUMBMONIT_SECRET: replace-me-with-32-random-characters
-      # 忘记密码：`DUMBMONIT_RESET_PASSWORD=1 docker compose up -d` 会在启动时
-      # 清除密码，UI 会要求设置新密码；之后请去掉该变量
-      # 再次启动。
-      DUMBMONIT_RESET_PASSWORD: ${DUMBMONIT_RESET_PASSWORD:-}
-      # 内嵌的 VictoriaMetrics：保留期（以月为单位，或如 30d / 2y）以及
-      # 其缓存的内存预算。几十台设备的家庭实验室只需
-      # 256 MB；监控数百台主机时请调大。
-      DUMBMONIT_VM_RETENTION: ${DUMBMONIT_VM_RETENTION:-12}
-      DUMBMONIT_VM_MEMORY: ${DUMBMONIT_VM_MEMORY:-256MB}
-      # 使用外部 VictoriaMetrics 而不是内嵌的：
-      # DUMBMONIT_VM_URL: http://victoriametrics:8428
-    # 最小权限：不授予任何 capability，禁止提权，镜像的
-    # 文件系统为只读——/data（卷）和 /tmp（tmpfs）是仅有的
-    # 可写位置。ICMP “ping” 监控同样不需要 capability：下面的
-    # sysctl 让（非特权的）服务器能在容器自己的网络命名空间内
-    # 打开 ICMP echo 套接字。如果从不使用 ping，可以删除它。
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
     read_only: true
-    tmpfs:
-      - /tmp
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
-    # 服务器会在自己退出后停止 VictoriaMetrics：请给它留出时间。
-    stop_grace_period: 30s
-    restart: unless-stopped
 
 volumes:
   dumbmonit-data:
-    # 固定名称，与 compose 项目名称无关：这个卷就是你要备份的对象，
-    # 也是升级时必须能再次找到的对象。
     name: dumbmonit-data
 ```
 
@@ -101,11 +53,16 @@ volumes:
 docker compose up -d
 ```
 
+会拉取已发布的镜像；只读文件系统、被移除的 capability 以及 `ping_group_range`
+sysctl 的作用，参见[以非 root 用户运行](#runs-as-a-non-root-user)和
+[无需 capability 的 ICMP ping](#icmp-ping-without-a-capability)。各项选项（端口、
+密钥、保留期、外部 VictoriaMetrics、截图）都是
+[由你自己添加的环境变量](#advanced-options)。
+
 !!! tip "自己构建镜像"
-    `docker compose up -d` 会拉取已发布的镜像并忽略 `build: .`。
-    在仓库的克隆目录中，`docker compose up -d --build` 则会在本地构建
-    同一个镜像（冷启动约十分钟；主机上不需要 Rust 或 Node
-    工具链）。需要从源码或某个分支运行时，请使用这种方式。
+    在仓库的克隆目录中，`docker compose -f docker-compose.yml -f
+    docker-compose.dev.yml up -d --build` 会在本地构建同一个镜像（冷启动约十分钟；
+    主机上不需要 Rust 或 Node 工具链）。需要从源码或某个分支运行时，请使用这种方式。
 
 ## 内嵌的 VictoriaMetrics {#embedded-victoriametrics}
 
@@ -153,7 +110,8 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 
 ## 环境变量 {#environment-variables}
 
-一切都通过环境变量完成；没有任何一个是必需的。
+一切都通过环境变量完成；没有任何一个是必需的。把需要的变量添加到服务的
+`environment:` 下，如[高级选项](#advanced-options)所示。
 
 | 变量 | 默认值 | 作用 |
 |---|---|---|
@@ -194,7 +152,7 @@ SNMP 团体名、密码和 API 令牌使用 AES-256-GCM 加密，密钥
     会为你复制它——参见[备份与恢复](backup.md)。
 
 如果你更愿意自己掌管密钥，可以改在 Compose 文件中设置 `DUMBMONIT_SECRET`
-（32 个或更多随机字符）。请把它保存在你的密码管理器中。
+（[示例](#advanced-options)；32 个或更多随机字符）。请把它保存在你的密码管理器中。
 
 ## 升级 {#upgrading}
 
@@ -300,15 +258,67 @@ docker compose start
 如果空间紧张，`--exclude=./vm` 可以让归档保持较小：数据库和
 密钥就是全部设置，`vm/` 只是图表。
 
-## 更改端口 {#changing-the-port}
+## 高级选项 {#advanced-options}
 
-启动时设置 `DUMBMONIT_PORT`：
+上面的 Compose 文件有意不含任何变量。要更改某项设置，请在 `docker-compose.yml`
+的 `dumbmonit:` 下添加一个 `environment:` 块（或在其中加一行），然后再次运行
+`docker compose up -d`。容器会被重新创建；数据卷保持不变。
 
-```bash
-DUMBMONIT_PORT=8099 docker compose up -d
+**更改端口。** 修改映射的左侧；容器内仍监听 8080：
+
+```yaml
+    ports:
+      - "8099:8080"
 ```
 
-或者在 Compose 文件旁边的 `.env` 文件中写入 `DUMBMONIT_PORT=8099`。
+**自己的密钥**，代替 `/data/secret.key` 中生成的那个。它用于加密设备凭据：
+丢失它意味着要重新输入每一个凭据。
+
+```yaml
+    environment:
+      DUMBMONIT_SECRET: replace-me-with-32-random-characters
+```
+
+内嵌 VictoriaMetrics 的**保留期与内存**（月数，或 `30d` / `2y`；几十台设备的
+homelab 用 256 MB 就够）：
+
+```yaml
+    environment:
+      DUMBMONIT_VM_RETENTION: "24"
+      DUMBMONIT_VM_MEMORY: 512MB
+```
+
+**外部 VictoriaMetrics**；此时不会启动内嵌的那个：
+
+```yaml
+    environment:
+      DUMBMONIT_VM_URL: http://victoriametrics:8428
+```
+
+**忘记密码。** 添加下面这一行，运行 `docker compose up -d`，在界面中重新创建
+第一个管理员（设备、规则和渠道都会保留），然后删除这一行，再运行一次
+`docker compose up -d`：
+
+```yaml
+    environment:
+      DUMBMONIT_RESET_PASSWORD: "1"
+```
+
+**网站变化的截图**：在服务器旁边放一个无头 Chromium。只有 DumbMonit 通过
+Compose 网络与它通信；没有任何东西发布它的端口。
+
+```yaml
+services:
+  dumbmonit:
+    environment:
+      DUMBMONIT_BROWSER_URL: http://browser:9222
+  browser:
+    image: chromedp/headless-shell:stable
+    shm_size: 256m   # Chromium 在 /dev/shm 中渲染；64 MB 对长页面太小
+    restart: unless-stopped
+```
+
+更多变量：[配置参考](../reference/configuration.md)。
 
 ## 反向代理 {#reverse-proxy}
 
