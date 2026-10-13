@@ -1,14 +1,21 @@
 <script lang="ts">
 	/**
-	 * Al-Khazneh, the Treasury of Petra — the rose-red rock facade with its
-	 * columns, broken pediment and tholos, framed by the stratified walls of
-	 * the Siq. Static, no animation. Follows the scene contract: fills its
-	 * positioned parent, the headline zone (top left) is left clear, the
-	 * palette lives here.
+	 * Al-Khazneh, the Treasury of Petra. On `down` pebbles and dust fall from the cliff above the facade, on `up` a warm torch glow flickers on in the doorway, and on `resolved` the urn on the tholos throws golden glints.
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
 	 */
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	const PEBBLES = [[1096, 0], [1140, 380], [1190, 140], [1236, 620], [1262, 260], [1300, 500], [1120, 760], [1214, 900]];
+	const GLINTS = [[1200, 168], [1140, 214], [1262, 214], [1200, 236], [1116, 300], [1284, 300], [1200, 130]];
 </script>
 
-<div class="scene scene-petra" aria-hidden="true">
+<div class="scene scene-petra" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
 	<svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
 		<defs>
 			<pattern id="pt-strata" width="40" height="34" patternUnits="userSpaceOnUse">
@@ -20,8 +27,10 @@
 				<stop offset="0" stop-color="var(--shade)" stop-opacity=".55" />
 				<stop offset="1" stop-color="var(--shade)" stop-opacity="0" />
 			</linearGradient>
+			<radialGradient id="pt-torch"><stop offset="0" stop-color="#ffd27a" stop-opacity=".95" /><stop offset="1" stop-color="#ffb347" stop-opacity="0" /></radialGradient>
 		</defs>
 		<circle cx="1480" cy="140" r="36" fill="var(--sun)" opacity=".9" />
+		<SceneWeather mood={wx} layer="back" />
 		<!-- back cliff holding the facade -->
 		<path d="M1010 500V200L1030 186L1046 150L1086 140L1112 112L1170 118L1210 100L1262 120L1304 108L1346 136L1372 150L1380 190L1392 206V500Z" fill="url(#pt-strata)" />
 		<path d="M1010 500V200L1030 186L1046 150L1086 140L1112 112L1170 118L1210 100L1262 120L1304 108L1346 136L1372 150L1380 190L1392 206V500Z" fill="var(--glow)" opacity=".25" />
@@ -82,10 +91,42 @@
 		</g>
 		<!-- boulders -->
 		<g fill="var(--rock3)"><ellipse cx="960" cy="530" rx="46" ry="14" /><ellipse cx="1440" cy="540" rx="58" ry="16" /><ellipse cx="1500" cy="548" rx="30" ry="10" /></g>
+		<!-- gestures -->
+		<ellipse class="torch" cx="1200" cy="446" rx="46" ry="62" fill="url(#pt-torch)" />
+		{#if pl.kind === 'down'}
+			{#key pl.key}
+				<g class="rockfall">
+					{#each PEBBLES as [x, d], i}<rect class="peb" x={x} y="120" width={6 + (i % 3) * 3} height={6 + (i % 2) * 3} rx="2" style="animation-delay:{d}ms" />{/each}
+					<ellipse class="dust" cx="1200" cy="486" rx="90" ry="14" />
+				</g>
+			{/key}
+		{/if}
+		{#if pl.kind === 'resolved'}
+			{#key pl.key}
+				<g class="glints">
+					{#each GLINTS as [x, y], i}<path class="glint" d="M0-14L3-3L14 0L3 3L0 14L-3 3L-14 0L-3-3Z" transform="translate({x} {y})" style="animation-delay:{i * 260}ms" />{/each}
+				</g>
+			{/key}
+		{/if}
+		<SceneWeather mood={wx} layer="front" />
 	</svg>
 </div>
 
 <style>
+	.torch { opacity: 0; }
+	.peb { fill: var(--rock2); opacity: 0; }
+	.dust { fill: var(--sand); opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; }
+	.glint { fill: #fff2b0; opacity: 0; transform-box: fill-box; transform-origin: center; }
+	@media (prefers-reduced-motion: no-preference) {
+		.p-up .torch { animation: pt-torch 5s ease-out both; }
+		.peb { animation: pt-fall 1.4s cubic-bezier(0.5, 0, 1, 0.6) both; }
+		.dust { animation: pt-dust 3.4s ease-out 1.4s both; }
+		.glint { animation: pt-glint 1.6s ease-in-out both; }
+	}
+	@keyframes pt-torch { 0% { opacity: 0; } 12% { opacity: 0.9; } 20% { opacity: 0.3; } 32% { opacity: 1; } 50% { opacity: 0.7; } 70% { opacity: 0.95; } 100% { opacity: 0; } }
+	@keyframes pt-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 90% { opacity: 1; } 100% { opacity: 0; transform: translateY(370px) rotate(200deg); } }
+	@keyframes pt-dust { 0% { opacity: 0.75; transform: scale(0.2); } 100% { opacity: 0; transform: scale(1.5, 2.2); } }
+	@keyframes pt-glint { 0% { opacity: 0; transform: scale(0.2) rotate(0); } 40% { opacity: 1; transform: scale(1) rotate(45deg); } 100% { opacity: 0; transform: scale(0.3) rotate(90deg); } }
 	.scene-petra {
 		--sky1: #f3cfa4;
 		--sky2: #fbe6c4;

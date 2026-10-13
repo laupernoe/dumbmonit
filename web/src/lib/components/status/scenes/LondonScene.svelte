@@ -1,4 +1,20 @@
-<div class="scene scene-london" aria-hidden="true">
+<script lang="ts">
+	/**
+	 * Westminster and Tower Bridge. Big Ben's clock face goes dark on `down`, flickers back on `up`, and on `resolved` the bell chimes (gold rings and sparkles).
+	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
+	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
+	 * Reduced motion freezes everything.
+	 */
+	import SceneWeather from './SceneWeatherC.svelte';
+	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+
+	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
+	const wx = $derived(weatherOf(mood));
+	const pl = usePulse(() => pulse);
+	const SPARKS = [[-40, -380], [40, -372], [-58, -330], [58, -326], [0, -404], [-26, -300], [26, -296]];
+</script>
+
+<div class="scene scene-london" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
   <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
     <defs>
       <!-- fenêtres gothiques (16 x 28) et pinacles (32 x 16) du palais -->
@@ -21,6 +37,8 @@
     <circle cx="1046" cy="330" r="34" fill="var(--sun)" opacity=".85" />
     <g fill="var(--star)"><circle cx="1330" cy="110" r="2" /><circle cx="1560" cy="130" r="2.2" /><circle cx="1650" cy="230" r="2" /><circle cx="1260" cy="196" r="1.8" /><circle cx="1470" cy="102" r="1.8" /></g>
     <g fill="var(--cloud)" opacity=".75"><ellipse cx="1420" cy="140" rx="90" ry="14" /><ellipse cx="1470" cy="124" rx="52" ry="14" /><ellipse cx="1630" cy="190" rx="70" ry="10" /><ellipse cx="1330" cy="236" rx="60" ry="8" /></g>
+
+    <SceneWeather mood={wx} layer="back" />
 
     <!-- London Eye, en retrait -->
     <g transform="translate(1486 360)">
@@ -54,12 +72,20 @@
       <path d="M-4-170h8v22h-8zM-4-120h8v22h-8zM-4-70h8v22h-8z" fill="var(--lon-win)" />
       <rect x="-34" y="-285" width="68" height="82" fill="var(--lon-stone)" /><rect x="-36" y="-206" width="72" height="6" fill="var(--lon-stone2)" />
       <path d="M-38-285V-302L-34-312L-30-302V-285zM30-285V-302L34-312L38-302V-285z" fill="var(--lon-stone2)" />
-      <circle cy="-246" r="27" fill="var(--lon-gold)" /><circle cy="-246" r="22" fill="var(--lon-face)" />
+      <circle cy="-246" r="27" fill="var(--lon-gold)" /><circle cy="-246" r="22" fill="var(--lon-face)" /><circle class="face-off" cy="-246" r="22" fill="var(--lon-hands)" />
       <path d="M0-266v6M0-232v6M-20-246h6M14-246h6M0-246V-262M0-246L10-240" stroke="var(--lon-hands)" stroke-width="2.6" stroke-linecap="round" />
       <rect x="-28" y="-318" width="56" height="34" fill="var(--lon-stone2)" />
       <path d="M-20-286v-18a5 5 0 0 1 10 0v18zM-5-286v-18a5 5 0 0 1 10 0v18zM10-286v-18a5 5 0 0 1 10 0v18z" fill="var(--lon-win)" />
       <path d="M-36-318L-7-356H7L36-318z" fill="var(--lon-roof)" /><path d="M-7-356L-2-370H2L7-356z" fill="var(--lon-roof)" />
       <rect x="-1.5" y="-392" width="3" height="24" fill="var(--lon-gold)" /><circle cy="-374" r="3.6" fill="var(--lon-gold)" />
+      {#if pl.kind === 'resolved'}
+        {#key pl.key}
+          <g class="chime">
+            {#each [0, 350, 700] as d}<circle class="ring" cy="-330" r="30" style="animation-delay:{d}ms" />{/each}
+            {#each SPARKS as [x, y], i}<circle class="spark" cx={x} cy={y} r="3.4" style="animation-delay:{i * 120}ms" />{/each}
+          </g>
+        {/key}
+      {/if}
     </g>
 
     <!-- Tower Bridge : deux tours, passerelle haute, chaînes, tablier et autobus -->
@@ -89,6 +115,8 @@
       <path d="M64-26V-40M64-40l12 4-12 4z" stroke="var(--lon-bus)" stroke-width="2" fill="var(--lon-bus)" />
     </g>
 
+    <SceneWeather mood={wx} layer="front" />
+
     <!-- mascottes : sur le quai et sur le toit du palais -->
     <use href="#dm-mascot" transform="translate(1018 452) scale(.1)" />
     <use href="#dm-mascot" transform="translate(1336 370) scale(.1)" />
@@ -109,6 +137,19 @@
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
   }
+  .face-off { opacity: 0; }
+  .chime .ring { fill: none; stroke: var(--lon-gold); stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .chime .spark { fill: var(--lon-gold); opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .p-down .face-off { animation: lon-off 5s ease-out both; }
+    .p-up .face-off { animation: lon-on 2.4s ease-out both; }
+    .chime .ring { animation: lon-ring 2.2s ease-out both; }
+    .chime .spark { animation: lon-spark 1.6s ease-out both; }
+  }
+  @keyframes lon-off { 0% { opacity: 0; } 8% { opacity: 0.8; } 14% { opacity: 0.2; } 24%, 80% { opacity: 0.94; } 100% { opacity: 0; } }
+  @keyframes lon-on { 0% { opacity: 0.94; } 14% { opacity: 0; } 22% { opacity: 0.8; } 36% { opacity: 0; } 46% { opacity: 0.5; } 60%, 100% { opacity: 0; } }
+  @keyframes lon-ring { 0% { opacity: 0.9; transform: scale(0.3); } 100% { opacity: 0; transform: scale(2.4); } }
+  @keyframes lon-spark { 0% { opacity: 0; transform: translateY(8px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
   .scene-london {
     --sky1: #c5bfd9; --sky2: #eee6ea; --sun: #fbf0dd; --water1: #a5b2c6; --water2: #7b8ba7; --cloud: #fff;
     --crater: transparent; --star: transparent;
