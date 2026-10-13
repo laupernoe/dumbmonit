@@ -460,6 +460,15 @@ pub fn container_samples(inventory: &ContainerInventory, now_ms: i64) -> Vec<Sam
             None => -1.0,
         };
         samples.push(labelled(gauge("container_update_available", update, now_ms)));
+        // Seulement à l'arrêt : 1 quand l'arrêt est voulu (conteneur ponctuel
+        // terminé), 0 sinon. La règle « Container stopped » écarte les premiers.
+        if !container.running {
+            samples.push(labelled(gauge(
+                "container_stop_expected",
+                f64::from(u8::from(container.stop_expected)),
+                now_ms,
+            )));
+        }
     }
     samples
 }
@@ -990,6 +999,13 @@ mod tests {
         assert_eq!(value_of(&samples, &format!("container_started_seconds{key}")), Some(0.0));
         assert_eq!(value_of(&samples, &format!("container_update_available{key}")), Some(-1.0));
         assert_eq!(value_of(&samples, &format!("container_image_age_seconds{key}")), None);
+        assert_eq!(value_of(&samples, &format!("container_stop_expected{key}")), Some(0.0));
+        let key = r#"{container="vaultwarden",image="vaultwarden:1"}"#;
+        assert_eq!(
+            value_of(&samples, &format!("container_stop_expected{key}")),
+            None,
+            "un conteneur en marche n'a pas de série d'arrêt"
+        );
 
         // Seules deux étiquettes identifient un conteneur : en ajouter une
         // (réseau, port, identifiant) multiplierait les séries d'autant.

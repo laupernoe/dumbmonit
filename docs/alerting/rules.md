@@ -65,8 +65,8 @@ container.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| Container stopped | The container has been stopped for two minutes (`dumbmonit_container_up == bool 0`). | > 0 | 2 min | Advisory (`warning`) | 1 h |
-| Container unhealthy | The container's health check has been failing for three minutes (`dumbmonit_container_health == 2`; 0 none, 1 healthy, 3 starting). | > 0 | 3 min | Advisory (`warning`) | 1 h |
+| Container stopped | The container has been stopped for two minutes (`dumbmonit_container_up == bool 0`). A container Docker would not restart is left out (`dumbmonit_container_stop_expected = 1`): a one-shot `docker run` that finished, a container never started, or one stopped by hand without a restart policy. A crash (any other exit code), an out-of-memory kill, or an `always` / `unless-stopped` container still counts. | > 0 | 2 min | Advisory (`warning`) | 1 h |
+| Container unhealthy | The container's health check has been failing for three minutes (`dumbmonit_container_health == 2`; 0 none, 1 healthy, 3 starting). A stopped container is left out: Docker keeps its last verdict, which no longer means anything. | > 0 | 3 min | Advisory (`warning`) | 1 h |
 | Container restarting | The container restarted three times or more in fifteen minutes (`increase(dumbmonit_container_restart_count[15m])`): it is rarely stopped long enough for the previous rule. | ≥ 3 | 1 min | Advisory (`warning`) | 1 h |
 | Container update available | A newer image is available in the registry for this container (`dumbmonit_container_update_available == 1`). | > 0 | 1 h | Info (`info`) | 24 h |
 
@@ -78,7 +78,8 @@ while Plakar is not detected, so neither rule can fire on a machine without it.
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | Plakar backup too old | No new Plakar snapshot for this source for more than two days (`dumbmonit_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
-| Plakar backup failed | The latest snapshot has errors, or the kloset cannot be read (`dumbmonit_backup_last_status < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar backup failed | The latest snapshot has errors (`dumbmonit_backup_last_status{source!="*"} < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar kloset unreadable | The agent cannot open the kloset: storage unreachable, passphrase or plugin missing; the agent's log says which, once (`dumbmonit_backup_last_status{source="*"} < 1`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
 ### restic and Borg backups
 
