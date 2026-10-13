@@ -72,8 +72,8 @@
 						<span class="tnum text-[1.0625rem] text-ink-2">{since(row)}</span>
 					{/if}
 				</span>
-				<span class="display mt-2.5 block truncate text-[2.375rem] text-ink" title={name(row)}>{name(row)}</span>
-				<span class="mt-1 block truncate text-[1.1875rem] text-ink-2" title={what(row)}>{what(row)}</span>
+				<span class="tile-name display mt-2.5 block truncate text-ink" title={name(row)}>{name(row)}</span>
+				<span class="tile-what mt-1 block truncate text-ink-2" title={what(row)}>{what(row)}</span>
 			</svelte:element>
 		{/each}
 
@@ -95,6 +95,29 @@
 {/if}
 
 <style>
+	.tile-name {
+		font-size: 2.375rem;
+	}
+	.tile-what {
+		font-size: 1.1875rem;
+	}
+	/*
+	 * A 720p screen: the tiles keep to a narrow column, so the monument in the
+	 * middle of the scene stays in view instead of hiding behind them.
+	 */
+	@media (min-width: 1024px) and (max-width: 1599px) {
+		.tile {
+			padding: 0.625rem 1rem;
+		}
+		.tile-name {
+			margin-top: 0.25rem;
+			font-size: 1.625rem;
+		}
+		.tile-what {
+			margin-top: 0;
+			font-size: 1rem;
+		}
+	}
 	.tile {
 		transition: transform 300ms var(--ease-out-expo);
 	}

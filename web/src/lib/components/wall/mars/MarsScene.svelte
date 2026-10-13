@@ -245,7 +245,7 @@
 					</g>
 					{#if weather === 'storm'}
 						{#each STREAKS as s, i (i)}
-							<rect class="streak" x="-400" y={s.y} width={s.w} height="3" rx="1.5" fill="var(--dust-streak)" style:animation-duration="{s.dur}s" style:animation-delay="{s.delay}s" />
+							<rect class="streak" x="-400" y={s.y} width={s.w} height="5" rx="2.5" fill="var(--dust-streak)" style:animation-duration="{s.dur}s" style:animation-delay="{s.delay}s" />
 						{/each}
 						{#each MOTES as p, i (i)}
 							<circle class="mote" cx="-20" cy={p.y} r={p.r} fill="var(--dust-streak)" style:animation-duration="{p.dur}s" style:animation-delay="{p.delay}s" />
@@ -508,8 +508,10 @@
 	.haze--haze {
 		opacity: 0.3;
 	}
+	/* A real dust storm: the sky goes a rusty brown, not just a warmer tint. */
 	.haze--storm {
-		opacity: 0.55;
+		background: linear-gradient(to bottom, #5a2e1a, #96532f 70%, #b06a40);
+		opacity: 0.68;
 	}
 	.band {
 		animation: drift 80s linear infinite alternate;
