@@ -139,3 +139,24 @@ export function stepIndex(current: number, key: string, length: number): number 
 			return current;
 	}
 }
+
+/** A change and the ones right after it that made the same edit on other pages. */
+export interface SameEdit<T> {
+	lead: T;
+	others: T[];
+}
+
+/**
+ * Folds runs of consecutive items sharing a non-null `signature` (the same
+ * lines removed and added, found by one check on several pages) into one
+ * entry led by the first. Items without a signature stand alone.
+ */
+export function groupSameEdits<T extends { signature: string | null }>(items: T[]): SameEdit<T>[] {
+	const groups: SameEdit<T>[] = [];
+	for (const item of items) {
+		const last = groups.at(-1);
+		if (last && item.signature !== null && last.lead.signature === item.signature) last.others.push(item);
+		else groups.push({ lead: item, others: [] });
+	}
+	return groups;
+}

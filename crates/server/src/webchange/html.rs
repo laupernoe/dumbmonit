@@ -7,6 +7,8 @@
 //! au pire une ligne est coupée ailleurs, ce qui reste stable d'une lecture à
 //! l'autre — et c'est la stabilité qui compte pour détecter un changement.
 
+use super::zones::Zones;
+
 /// Éléments dont le contenu n'est jamais affiché.
 const HIDDEN: &[&str] = &["script", "style", "noscript", "svg", "template", "iframe", "object"];
 
@@ -59,6 +61,16 @@ const BLOCKS: &[&str] = &[
 /// une ligne de texte.
 const CELLS: &[&str] = &["td", "th"];
 
+/// Éléments vides : jamais de contenu, jamais de balise fermante à attendre.
+const VOID: &[&str] = &[
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source",
+    "track", "wbr",
+];
+
+/// Contenus de section, qui font d'un `header` ou d'un `footer` celui d'une
+/// section plutôt que du site.
+const SECTIONING: &[&str] = &["article", "aside", "main", "nav", "section"];
+
 /// Ce qu'une page contient pour nous.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Page {
@@ -73,20 +85,56 @@ pub struct Page {
     pub base: Option<String>,
 }
 
-/// Lit une page HTML.
+/// Lit une page HTML, toute la page.
 pub fn parse(html: &str) -> Page {
+    parse_with(html, &Zones::everything())
+}
+
+/// Une zone ouverte : on attend la balise fermante de même nom qui la
+/// referme, en comptant les éléments de même nom imbriqués dedans.
+struct Region {
+    name: String,
+    depth: usize,
+    skip: bool,
+}
+
+/// Lit une page HTML, en ne gardant du texte que les zones voulues. Les liens
+/// sont relevés sur toute la page : le parcours d'un site suit aussi ceux du
+/// menu.
+pub fn parse_with(html: &str, zones: &Zones) -> Page {
     let mut page = Page::default();
-    let mut text = TextBuilder::default();
+    // Deux lectures du texte en un passage : celle des zones à lire, et celle
+    // de toute la page (zones écartées exceptées) si aucune n'est trouvée.
+    let mut all = TextBuilder::default();
+    let mut content = TextBuilder::default();
+    let mut found_content = false;
+    let mut regions: Vec<Region> = Vec::new();
+    let mut sectioning = 0usize;
+    let mut articles = 0usize;
     let mut rest = html;
     let mut pre_depth = 0usize;
 
+    // Ce que le texte lu à cet instant alimente.
+    let skipping = |regions: &[Region]| regions.iter().any(|r| r.skip);
+    let in_content = |regions: &[Region]| regions.iter().any(|r| !r.skip);
+    macro_rules! emit {
+        ($method:ident $(, $arg:expr)*) => {
+            if !skipping(&regions) {
+                all.$method($($arg),*);
+                if in_content(&regions) {
+                    content.$method($($arg),*);
+                }
+            }
+        };
+    }
+
     while !rest.is_empty() {
         let Some(open) = rest.find('<') else {
-            text.push(&decode_entities(rest), pre_depth > 0);
+            emit!(push, &decode_entities(rest), pre_depth > 0);
             break;
         };
         if open > 0 {
-            text.push(&decode_entities(&rest[..open]), pre_depth > 0);
+            emit!(push, &decode_entities(&rest[..open]), pre_depth > 0);
         }
         rest = &rest[open..];
 
@@ -102,7 +150,7 @@ pub fn parse(html: &str) -> Page {
         let Some(tag) = Tag::read(rest) else {
             // Un `<` qui n'ouvre aucune balise : du texte, comme le ferait un
             // navigateur.
-            text.push("<", pre_depth > 0);
+            emit!(push, "<", pre_depth > 0);
             rest = &rest[1..];
             continue;
         };
@@ -111,14 +159,49 @@ pub fn parse(html: &str) -> Page {
 
         if tag.closing {
             if BLOCKS.contains(&name) {
-                text.break_line();
+                emit!(break_line);
             } else if CELLS.contains(&name) {
-                text.space();
+                emit!(space);
             }
             if name == "pre" {
                 pre_depth = pre_depth.saturating_sub(1);
             }
+            if SECTIONING.contains(&name) {
+                sectioning = sectioning.saturating_sub(1);
+            }
+            if matches!(name, "article" | "main") {
+                articles = articles.saturating_sub(1);
+            }
+            // Chaque zone de ce nom compte les éléments de même nom ouverts
+            // depuis elle ; celle qui revient à zéro se referme, avec ce qui
+            // y était encore ouvert.
+            for region in regions.iter_mut().filter(|region| region.name == name) {
+                region.depth = region.depth.saturating_sub(1);
+            }
+            if let Some(at) = regions.iter().position(|region| region.depth == 0) {
+                regions.truncate(at);
+            }
             continue;
+        }
+
+        // Une balise ouvrante qui aura une fermante : elle peut ouvrir une zone.
+        if !tag.self_closing && !VOID.contains(&name) && !HIDDEN.contains(&name) && name != "title"
+        {
+            for region in regions.iter_mut().filter(|region| region.name == name) {
+                region.depth += 1;
+            }
+            if zones.excludes(name, &tag.attributes, sectioning, articles > 0) {
+                regions.push(Region { name: name.to_string(), depth: 1, skip: true });
+            } else if !in_content(&regions) && zones.starts_content(name, &tag.attributes) {
+                found_content = true;
+                regions.push(Region { name: name.to_string(), depth: 1, skip: false });
+            }
+            if SECTIONING.contains(&name) {
+                sectioning += 1;
+            }
+            if matches!(name, "article" | "main") {
+                articles += 1;
+            }
         }
 
         if HIDDEN.contains(&name) && !tag.self_closing {
@@ -148,13 +231,13 @@ pub fn parse(html: &str) -> Page {
             _ => {}
         }
         if BLOCKS.contains(&name) {
-            text.break_line();
+            emit!(break_line);
         } else if CELLS.contains(&name) {
-            text.space();
+            emit!(space);
         }
     }
 
-    page.lines = text.finish();
+    page.lines = if found_content { content.finish() } else { all.finish() };
     page
 }
 
@@ -485,6 +568,45 @@ fn decode_one(entity: &str) -> Option<char> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::webchange::zones::Selector;
+
+    #[test]
+    fn lhabillage_du_site_est_ecarte_mais_ses_liens_restent() {
+        let html = "<body><header><a href=/>Logo</a><nav><a href=/new>Nouveau</a></nav></header>\
+            <main><article><header><h1>Tarifs</h1></header><p>10 CHF</p></article>\
+            <aside>Derniers articles</aside></main>\
+            <aside>Publicité</aside><footer>© 2026</footer></body>";
+        let zones = Zones { drop_chrome: true, ..Zones::everything() };
+        let page = parse_with(html, &zones);
+        assert_eq!(page.lines, vec!["Tarifs", "10 CHF", "Derniers articles"]);
+        assert_eq!(page.links, vec!["/", "/new"]);
+        assert_eq!(parse(html).lines.len(), 7, "sans zones, tout est lu");
+    }
+
+    #[test]
+    fn la_zone_a_lire_et_les_zones_ecartees_se_combinent() {
+        let html = "<div id=top>Menu</div><div id=content><div>A</div>\
+            <div class=\"ad x\">Pub</div><div>B</div></div><div>Après</div>";
+        let zones = Zones {
+            content: Selector::parse_list("#content").unwrap(),
+            exclude: Selector::parse_list(".ad").unwrap(),
+            drop_chrome: false,
+        };
+        assert_eq!(parse_with(html, &zones).lines, vec!["A", "B"]);
+    }
+
+    #[test]
+    fn une_zone_a_lire_absente_laisse_lire_toute_la_page() {
+        let zones = Zones { content: Selector::parse_list("main").unwrap(), ..Zones::everything() };
+        assert_eq!(parse_with("<p>Un</p><p>Deux</p>", &zones).lines, vec!["Un", "Deux"]);
+    }
+
+    #[test]
+    fn les_elements_vides_et_mal_fermes_ne_derangent_pas_les_zones() {
+        let html = "<nav><img src=x><br>Menu<input></nav><p>Texte<br/>suite</p><nav>Pas fermé";
+        let zones = Zones { drop_chrome: true, ..Zones::everything() };
+        assert_eq!(parse_with(html, &zones).lines, vec!["Texte", "suite"]);
+    }
 
     #[test]
     fn le_texte_visible_sort_un_bloc_par_ligne() {

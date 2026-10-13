@@ -60,6 +60,7 @@ pub mod robots;
 pub mod scope;
 pub mod sitemap;
 pub mod store;
+pub mod zones;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -293,6 +294,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed,
                         before,
                         after: None,
+                        signature: None,
                     },
                 )
                 .await?;
@@ -359,6 +361,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed: 0,
                         before: None,
                         after: Some(snapshot),
+                        signature: None,
                     },
                 )
                 .await?;
@@ -373,7 +376,9 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                 };
                 let old_lines: Vec<&str> = old.lines().collect();
                 let new_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-                let (added, removed) = diff::counts(&diff::diff(&old_lines, &new_lines));
+                let edits = diff::diff(&old_lines, &new_lines);
+                let (added, removed) = diff::counts(&edits);
+                let signature = diff::signature(&edits);
                 store::insert_change(
                     pool,
                     id,
@@ -384,6 +389,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed: removed as i64,
                         before,
                         after: Some(snapshot),
+                        signature: Some(&signature),
                     },
                 )
                 .await?;
@@ -427,6 +433,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed,
                         before: page.latest_snapshot,
                         after: None,
+                        signature: None,
                     },
                 )
                 .await?;

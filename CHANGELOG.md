@@ -129,6 +129,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Website changes ignore the site's menus, header and footer.** They are the
+  same on every page, so one new menu entry used to mark every page of a
+  watched site as changed. The navigation, the site header and footer and the
+  sidebars are now left out of the comparison (their links are still
+  followed); **Compare menus, header and footer** brings them back. New
+  options: **Watched area** compares only some elements (`main`, `#content`),
+  **Excluded areas** leaves more out (`.cookie-banner`). The same edit found on
+  several pages by one check is shown once, "+N pages"; changing **Max pages**
+  now takes a new reference instead of reporting every added page as new; and
+  500 changes are kept per device instead of 100. Existing watches take a new
+  reference at their next check after the update. See
+  [What part of the page](docs/devices/webchange.md#what-part-of-the-page).
 - **The tip bubbles are gone.** Pip's tips and the "Did you know" card on the
   overview are removed.
 - **The documentation is available in 9 languages** (English, German, Spanish,

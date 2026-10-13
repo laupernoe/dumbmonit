@@ -1,7 +1,7 @@
 // Website-changes panel helpers. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent, groupByDay, daysBetween, stepIndex } from '../src/lib/components/devices/webchange/format.ts';
+import { pagePath, shortenPath, skipLabel, clampPercent, stepPercent, groupByDay, daysBetween, stepIndex, groupSameEdits } from '../src/lib/components/devices/webchange/format.ts';
 
 test('pagePath keeps only the path, query and hash', () => {
 	assert.equal(pagePath('https://example.com/'), '/');
@@ -89,4 +89,14 @@ test('stepIndex walks a list by keyboard and stays within it', () => {
 	assert.equal(stepIndex(-1, 'ArrowDown', 3), 0);
 	assert.equal(stepIndex(1, 'Tab', 3), 1);
 	assert.equal(stepIndex(0, 'ArrowDown', 0), -1);
+});
+
+test('groupSameEdits folds consecutive changes with the same signature', () => {
+	const c = (id, signature) => ({ id, signature });
+	const groups = groupSameEdits([c(1, 'a'), c(2, 'a'), c(3, 'a'), c(4, null), c(5, null), c(6, 'b'), c(7, 'a')]);
+	assert.deepEqual(
+		groups.map((g) => [g.lead.id, g.others.map((o) => o.id)]),
+		[[1, [2, 3]], [4, []], [5, []], [6, []], [7, []]]
+	);
+	assert.deepEqual(groupSameEdits([]), []);
 });
