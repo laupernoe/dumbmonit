@@ -43,6 +43,9 @@ EXPECTED_SHA256=""
 SKIP_CHECKSUM=0
 UNINSTALL=0
 NO_START=0
+MODULES=""
+MODULES_SET=0
+PLAKAR_KLOSETS=""
 
 SERVICE_NAME="dumbmonit-agent"
 # Étiquette launchd et nom rc.d : ni l'un ni l'autre n'accepte le nom Linux tel
@@ -68,6 +71,15 @@ OPTIONS:
     --services=a,b,c    Services whose state is reported: systemd units on
                         Linux, launchd labels on macOS, rc.d names on FreeBSD
     --tags=key=value    Tags, comma-separated
+    --modules=a,b,c     Optional modules to run, comma-separated: docker,
+                        plakar, system_health (pending updates, reboot needed,
+                        failed units), sensors, smart, zfs, wireguard. System
+                        metrics (CPU, memory, disks, network) are always on.
+                        Without this option every module detects itself;
+                        --modules=none keeps system metrics only.
+    --plakar-klosets=a,b
+                        Plakar klosets to read (@name from stores.yml, or a
+                        path). Default: every kloset found on this machine.
     --hostname=NAME     Name announced to the server (default: the machine's)
     --bin=PATH          Local binary to install instead of downloading it
     --sha256=LIST       Expected SHA-256 of the downloaded binary, as
@@ -111,6 +123,8 @@ for argument in "$@"; do
         --interval=*) INTERVAL="${argument#*=}" ;;
         --services=*) SERVICES="${argument#*=}" ;;
         --tags=*)     TAGS="${argument#*=}" ;;
+        --modules=*)  MODULES="${argument#*=}"; MODULES_SET=1 ;;
+        --plakar-klosets=*) PLAKAR_KLOSETS="${argument#*=}" ;;
         --hostname=*) HOSTNAME_OVERRIDE="${argument#*=}" ;;
         --bin=*)      LOCAL_BIN="${argument#*=}" ;;
         --sha256=*)   EXPECTED_SHA256="${argument#*=}" ;;
@@ -121,6 +135,17 @@ for argument in "$@"; do
         *)            echec "unknown option '$argument' (see --help)" ;;
     esac
 done
+
+# Les noms de modules sont vérifiés avant toute chose : une faute de frappe
+# ferait refuser le démarrage de l'agent, une fois tout installé.
+if [ "$MODULES_SET" -eq 1 ]; then
+    for module in $(echo "$MODULES" | tr ',' ' '); do
+        case "$module" in
+            docker|plakar|system_health|sensors|smart|zfs|wireguard|perf_counters|none) ;;
+            *) echec "unknown module '$module' (known: docker, plakar, system_health, sensors, smart, zfs, wireguard, or none)" ;;
+        esac
+    done
+fi
 
 [ "$(id -u)" -eq 0 ] || echec "this installer must run as root (try with sudo)"
 
@@ -489,6 +514,29 @@ umask 077
             if [ -n "$cle" ]; then echo "  $cle: $valeur"; fi
         done
     fi
+
+    # Modules choisis : seuls ceux-là tournent, les autres ne produisent ni
+    # série ni alerte. Sans --modules, la clé est absente et chacun se détecte.
+    if [ "$MODULES_SET" -eq 1 ]; then
+        liste="$(echo "$MODULES" | tr ',' ' ')"
+        liste="$(for module in $liste; do [ "$module" = "none" ] || echo "$module"; done)"
+        if [ -z "$liste" ]; then
+            # `none` : la collecte système seule.
+            echo "modules: []"
+        else
+            echo "modules:"
+            for module in $liste; do echo "  - $module"; done
+        fi
+    fi
+
+    if [ -n "$PLAKAR_KLOSETS" ]; then
+        echo "plakar_klosets:"
+        echo "$PLAKAR_KLOSETS" | tr ',' '\n' | while read -r kloset; do
+            kloset="$(echo "$kloset" | sed "s/^ *//; s/ *$//; s/'/''/g")"
+            # Entre apostrophes : `@nom` ouvrirait sinon une erreur YAML.
+            if [ -n "$kloset" ]; then echo "  - '$kloset'"; fi
+        done
+    fi
 } >> "$CONFIG_FILE"
 
 chmod 0600 "$CONFIG_FILE"
@@ -521,8 +569,13 @@ RestartSec=10
 # écrire hors de son propre répertoire, ni obtenir de nouveaux privilèges.
 NoNewPrivileges=yes
 ProtectSystem=strict
-ProtectHome=yes
+# Lecture seule, pas `yes` : la détection de Plakar lit les stores.yml rangés
+# dans les foyers (~/.config/plakar), et `yes` les rendait invisibles.
+ProtectHome=read-only
 PrivateTmp=yes
+# Seul endroit inscriptible hors /tmp : le cache de Plakar
+# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY).
+CacheDirectory=dumbmonit-agent
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes

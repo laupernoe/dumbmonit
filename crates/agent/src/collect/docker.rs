@@ -70,6 +70,10 @@ pub struct ContainerStat {
     pub image_age_secs: Option<u64>,
     /// `None` : pas encore vérifié, ou vérification impossible.
     pub update_available: Option<bool>,
+    /// Arrêté, et Docker ne le relancerait pas de lui-même : conteneur
+    /// ponctuel terminé, jamais démarré, ou arrêté par `docker stop` sans
+    /// politique de redémarrage. Un tel arrêt est voulu, pas une panne.
+    pub stop_expected: bool,
     pub labels: BTreeMap<String, String>,
 }
 
@@ -350,6 +354,8 @@ pub struct ContainerDetail {
     pub restart_count: u64,
     /// Secondes depuis le démarrage ; zéro à l'arrêt ou sans horodatage.
     pub uptime_secs: u64,
+    /// Voir [`ContainerStat::stop_expected`].
+    pub stop_expected: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -358,12 +364,32 @@ struct InspectContainer {
     restart_count: u64,
     #[serde(rename = "State", default)]
     state: InspectState,
+    #[serde(rename = "HostConfig", default)]
+    host_config: InspectHostConfig,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct InspectHostConfig {
+    #[serde(rename = "RestartPolicy", default)]
+    restart_policy: InspectRestartPolicy,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct InspectRestartPolicy {
+    #[serde(rename = "Name", default)]
+    name: String,
 }
 
 #[derive(Debug, Deserialize, Default)]
 struct InspectState {
+    #[serde(rename = "Status", default)]
+    status: String,
     #[serde(rename = "Running", default)]
     running: bool,
+    #[serde(rename = "ExitCode", default)]
+    exit_code: i64,
+    #[serde(rename = "OOMKilled", default)]
+    oom_killed: bool,
     #[serde(rename = "StartedAt", default)]
     started_at: String,
     #[serde(rename = "Health")]
@@ -427,12 +453,52 @@ pub fn parse_container_detail(body: &[u8], now_secs: i64) -> Result<ContainerDet
     } else {
         0
     };
+    // Docker garde le dernier verdict de santé d'un conteneur arrêté : il ne
+    // dit plus rien, et le remonter ferait sonner « unhealthy » pour un
+    // conteneur que l'on a simplement éteint.
+    let health = if raw.state.running {
+        raw.state.health.map(|h| Health::parse(&h.status)).unwrap_or_default()
+    } else {
+        Health::None
+    };
     Ok(ContainerDetail {
         running: raw.state.running,
-        health: raw.state.health.map(|h| Health::parse(&h.status)).unwrap_or_default(),
+        health,
         restart_count: raw.restart_count,
         uptime_secs,
+        stop_expected: stop_expected(
+            raw.state.running,
+            &raw.state.status,
+            raw.state.exit_code,
+            raw.state.oom_killed,
+            &raw.host_config.restart_policy.name,
+        ),
     })
+}
+
+/// Un arrêt est-il voulu ? Oui pour un conteneur jamais démarré (`created`),
+/// et pour un conteneur sans politique de redémarrage (ou `on-failure`) sorti
+/// proprement (0) ou arrêté de l'extérieur (130, 137, 143 : `docker stop`,
+/// `docker kill`, Ctrl-C) — sauf tué faute de mémoire. Avec `always` ou
+/// `unless-stopped`, le conteneur est fait pour tourner : son arrêt compte
+/// toujours. Un plantage (tout autre code) compte toujours aussi.
+fn stop_expected(
+    running: bool,
+    status: &str,
+    exit_code: i64,
+    oom_killed: bool,
+    policy: &str,
+) -> bool {
+    if running {
+        return false;
+    }
+    if status == "created" {
+        return true;
+    }
+    match policy {
+        "" | "no" | "on-failure" => !oom_killed && matches!(exit_code, 0 | 130 | 137 | 143),
+        _ => false,
+    }
 }
 
 pub fn parse_image_detail(body: &[u8]) -> Result<ImageDetail> {
@@ -521,6 +587,7 @@ impl DockerProbe {
                             container.health = detail.health;
                             container.restart_count = detail.restart_count;
                             container.uptime_secs = detail.uptime_secs;
+                            container.stop_expected = detail.stop_expected;
                         }
                         Err(error) => {
                             tracing::debug!(%error, name = container.name, "container detail skipped")
@@ -690,7 +757,8 @@ mod tests {
                 running: true,
                 health: Health::Healthy,
                 restart_count: 3,
-                uptime_secs: 3_600
+                uptime_secs: 3_600,
+                stop_expected: false,
             }
         );
     }
@@ -703,6 +771,45 @@ mod tests {
         assert_eq!(detail.uptime_secs, 0);
         assert_eq!(detail.health, Health::None);
         assert!(!detail.running);
+    }
+
+    #[test]
+    fn a_stopped_container_forgets_its_last_health_verdict() {
+        // Relevé sur un conteneur `unless-stopped` arrêté depuis des semaines :
+        // Docker dit encore « unhealthy ».
+        let body = br#"{"RestartCount":0,"HostConfig":{"RestartPolicy":{"Name":"unless-stopped"}},
+            "State":{"Status":"exited","Running":false,"ExitCode":137,
+                     "Health":{"Status":"unhealthy"}}}"#;
+        let detail = parse_container_detail(body, 1_800_000_000).unwrap();
+        assert_eq!(detail.health, Health::None);
+        assert!(!detail.stop_expected, "unless-stopped : fait pour tourner");
+    }
+
+    #[test]
+    fn a_one_shot_container_that_finished_is_an_expected_stop() {
+        let inspect = |status: &str, code: i64, policy: &str, oom: bool| {
+            let body = format!(
+                r#"{{"HostConfig":{{"RestartPolicy":{{"Name":"{policy}"}}}},
+                    "State":{{"Status":"{status}","Running":false,"ExitCode":{code},"OOMKilled":{oom}}}}}"#
+            );
+            parse_container_detail(body.as_bytes(), 0).unwrap().stop_expected
+        };
+        // `docker run python:3.13 …` terminé, `docker stop` sur un conteneur
+        // lancé à la main, conteneur créé jamais démarré : rien à signaler.
+        assert!(inspect("exited", 0, "no", false));
+        assert!(inspect("exited", 137, "no", false));
+        assert!(inspect("exited", 143, "", false));
+        assert!(inspect("created", 0, "no", false));
+        assert!(inspect("exited", 0, "on-failure", false));
+        // Un plantage, une mort par manque de mémoire, ou un conteneur fait
+        // pour tourner : ça compte.
+        assert!(!inspect("exited", 1, "no", false));
+        assert!(!inspect("exited", 137, "no", true));
+        assert!(!inspect("exited", 0, "always", false));
+        assert!(!inspect("exited", 137, "unless-stopped", false));
+        // Un inventaire ancien sans `HostConfig` reste lisible.
+        let detail = parse_container_detail(br#"{"State":{"Running":true}}"#, 0).expect("lisible");
+        assert!(!detail.stop_expected);
     }
 
     #[test]

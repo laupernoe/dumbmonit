@@ -132,6 +132,7 @@ mod tests {
             hostname: hostname.map(str::to_string),
             services: Vec::new(),
             tags: std::collections::BTreeMap::from([("role".to_string(), "nas".to_string())]),
+            modules: None,
             docker: false,
             docker_socket: std::path::PathBuf::from("/var/run/docker.sock"),
             docker_update_check: false,

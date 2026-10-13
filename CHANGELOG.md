@@ -23,6 +23,40 @@ All notable changes to this project are documented here. The format follows
   The CSV import takes a `category` column, files unclassified sites under
   `Websites/<category>` and keeps `Websites/<platform>` when the page does not
   say. The category is the `category` label of `dumbmonit_website_info`.
+- **Agent: choose its modules.** A `modules` list in `agent.yaml`
+  (`--modules=docker,plakar` for `install.sh`, `-Modules` for `install.ps1`,
+  `DUMBMONIT_AGENT_MODULES`) runs only the listed optional modules: the others
+  send nothing and raise no alert. The enrolment screen and Settings → Agents
+  have a **Choose the modules** switch that writes it into the install
+  commands. Without a list, every module still detects itself.
+  `install.sh --plakar-klosets=@name` picks the Plakar klosets to read.
+- **Rule "Plakar kloset unreadable"** (warning, 30 min): a kloset the agent
+  cannot open no longer raises the critical "Plakar backup failed", which now
+  only means a snapshot with errors.
+
+### Fixed
+
+- **Instant metric reads failed with "latency_offset=0ms is out of allowed
+  range".** VictoriaMetrics refuses a zero offset, so every panel reading the
+  latest value (device pages, Docker, Plakar…) showed an error. The offset is
+  now 1 ms.
+- **Plakar was never found by an agent installed as a systemd service.** The
+  unit hid `/home` (`ProtectHome=yes`), so `~/.config/plakar/stores.yml` was
+  invisible, and Plakar refused to start without `HOME`. The unit now uses
+  `ProtectHome=read-only` and a `CacheDirectory`; the agent runs `plakar` with
+  the owner's `HOME` and plugins (`-datadir`) and its own `-cachedir`, and
+  warns when `/home` looks empty. Re-run the install command to get the new
+  unit.
+- **Docker alerts for containers nobody expects to run.** A one-shot
+  `docker run` that finished, a container never started, or one stopped by
+  hand without a restart policy no longer raises "Container stopped"
+  (new series `dumbmonit_container_stop_expected`). A stopped container no
+  longer reports its stale health verdict, so "Container unhealthy" stops
+  firing next to "Container stopped".
+- **Plakar log noise.** An unreadable kloset is logged once, again when the
+  reason changes, and when it recovers — not every ten minutes.
+- With `system_health` switched off, the agent still reports the OS identity
+  (`dumbmonit_agent_os_info`) the device page shows.
 
 ### Changed
 

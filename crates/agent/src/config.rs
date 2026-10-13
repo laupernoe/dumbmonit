@@ -5,7 +5,7 @@
 //! de lancer l'agent dans un conteneur ou de tester une nouvelle URL sans toucher
 //! au disque.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -49,6 +49,12 @@ pub const DEFAULT_UPDATES_INTERVAL_SECS: u64 = 3600;
 /// En dessous, l'agent passerait son temps à relancer `dnf`.
 pub const MIN_UPDATES_INTERVAL_SECS: u64 = 300;
 
+/// Modules optionnels qu'une liste `modules` peut retenir. La collecte système
+/// de base (processeur, mémoire, disques, réseau) n'en fait pas partie : elle
+/// est toujours là, c'est elle qui dit que la machine répond.
+pub const MODULES: &[&str] =
+    &["docker", "plakar", "system_health", "sensors", "smart", "zfs", "wireguard", "perf_counters"];
+
 /// Ce que le fichier YAML peut contenir.
 ///
 /// Tous les champs sont optionnels : un fichier ne portant que l'URL et le jeton
@@ -64,6 +70,7 @@ struct FileConfig {
     hostname: Option<String>,
     services: Option<Vec<String>>,
     tags: Option<BTreeMap<String, String>>,
+    modules: Option<Patterns>,
     docker: Option<bool>,
     docker_socket: Option<String>,
     docker_update_check: Option<bool>,
@@ -186,6 +193,9 @@ pub struct Config {
     /// Unités systemd ou services Windows dont l'état est remonté.
     pub services: Vec<String>,
     pub tags: BTreeMap<String, String>,
+    /// Modules retenus par la liste `modules`. `None` : pas de liste, chaque
+    /// module se détecte seul.
+    pub modules: Option<BTreeSet<String>>,
     pub docker: bool,
     pub docker_socket: PathBuf,
     /// Comparer les images des conteneurs à leur dépôt, une fois par heure.
@@ -245,6 +255,7 @@ impl fmt::Debug for Config {
             .field("hostname", &self.hostname)
             .field("services", &self.services)
             .field("tags", &self.tags)
+            .field("modules", &self.modules)
             .field("docker", &self.docker)
             .field("docker_socket", &self.docker_socket)
             .field("docker_update_check", &self.docker_update_check)
@@ -395,7 +406,15 @@ impl Config {
                 None => Ok(from_file.unwrap_or(default)),
             }
         };
-        let docker = flag("DUMBMONIT_AGENT_DOCKER", file.docker, true)?;
+        // Sans liste, chaque module se détecte seul (comportement historique).
+        // Avec une liste, seuls ceux qu'elle nomme tournent : un drapeau
+        // explicite (`smart: true`, `DUMBMONIT_AGENT_SMART=1`) reste maître.
+        let modules = parse_modules(
+            env.get("DUMBMONIT_AGENT_MODULES").map(|raw| split_list(&raw)),
+            file.modules.map(Patterns::into_items),
+        )?;
+        let wanted = |module: &str| modules.as_ref().is_none_or(|list| list.contains(module));
+        let docker = flag("DUMBMONIT_AGENT_DOCKER", file.docker, wanted("docker"))?;
         let docker_update_check =
             flag("DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK", file.docker_update_check, true)?;
         let commands = flag("DUMBMONIT_AGENT_COMMANDS", file.commands, true)?;
@@ -463,7 +482,7 @@ impl Config {
             );
         }
         let plakar = PlakarConfig {
-            enabled: flag("DUMBMONIT_AGENT_PLAKAR", file.plakar, true)?,
+            enabled: flag("DUMBMONIT_AGENT_PLAKAR", file.plakar, wanted("plakar"))?,
             bin: env
                 .get("DUMBMONIT_AGENT_PLAKAR_BIN")
                 .or(file.plakar_bin)
@@ -491,9 +510,9 @@ impl Config {
         // Matériel : sondes, disques, pools ZFS. Chacun se détecte tout seul et
         // se tait quand il ne trouve rien ; le drapeau ne sert qu'à couper la
         // détection elle-même.
-        let sensors = flag("DUMBMONIT_AGENT_SENSORS", file.sensors, true)?;
+        let sensors = flag("DUMBMONIT_AGENT_SENSORS", file.sensors, wanted("sensors"))?;
         let smart = SmartConfig {
-            enabled: flag("DUMBMONIT_AGENT_SMART", file.smart, true)?,
+            enabled: flag("DUMBMONIT_AGENT_SMART", file.smart, wanted("smart"))?,
             bin: command_name(env.get("DUMBMONIT_AGENT_SMART_BIN").or(file.smart_bin), "smartctl"),
             interval: Duration::from_secs(read_interval(
                 &env,
@@ -505,7 +524,7 @@ impl Config {
             )?),
         };
         let zfs = ZfsConfig {
-            enabled: flag("DUMBMONIT_AGENT_ZFS", file.zfs, true)?,
+            enabled: flag("DUMBMONIT_AGENT_ZFS", file.zfs, wanted("zfs"))?,
             bin: command_name(env.get("DUMBMONIT_AGENT_ZFS_BIN").or(file.zfs_bin), "zpool"),
             interval: Duration::from_secs(read_interval(
                 &env,
@@ -518,7 +537,7 @@ impl Config {
         };
 
         let wireguard = WireguardConfig {
-            enabled: flag("DUMBMONIT_AGENT_WIREGUARD", file.wireguard, true)?,
+            enabled: flag("DUMBMONIT_AGENT_WIREGUARD", file.wireguard, wanted("wireguard"))?,
             bin: command_name(
                 env.get("DUMBMONIT_AGENT_WIREGUARD_BIN").or(file.wireguard_bin),
                 "wg",
@@ -548,8 +567,13 @@ impl Config {
             )?),
         };
 
-        let perf_counters =
-            Self::merge_perf_counters(file.perf_counters, file.mdaemon, file.hyperv, &env)?;
+        let perf_counters = Self::merge_perf_counters(
+            file.perf_counters,
+            file.mdaemon,
+            file.hyperv,
+            &env,
+            wanted("perf_counters"),
+        )?;
 
         let max_buffered_samples = match env.get("DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES") {
             Some(raw) => raw.trim().parse::<usize>().with_context(|| {
@@ -566,8 +590,11 @@ impl Config {
             None => tracing::Level::INFO,
         };
 
-        let system_health =
-            Self::merge_system_health(file.system_health.unwrap_or_default(), &env)?;
+        let system_health = Self::merge_system_health(
+            file.system_health.unwrap_or_default(),
+            &env,
+            wanted("system_health"),
+        )?;
 
         Ok(Self {
             server_url,
@@ -580,6 +607,7 @@ impl Config {
                 .filter(|name| !name.is_empty()),
             services,
             tags,
+            modules,
             docker,
             docker_socket: env
                 .get("DUMBMONIT_AGENT_DOCKER_SOCKET")
@@ -626,6 +654,7 @@ impl Config {
         mdaemon: Option<FlagOrAuto>,
         hyperv: Option<FlagOrAuto>,
         env: &EnvSource,
+        wanted: bool,
     ) -> Result<PerfCountersConfig> {
         let counters: Vec<CustomCounter> = match env.get("DUMBMONIT_AGENT_PERF_COUNTERS") {
             Some(raw) => raw
@@ -666,25 +695,29 @@ impl Config {
                 perf_counters::MAX_CUSTOM_COUNTERS
             );
         }
-        let mdaemon = Self::preset_mode("mdaemon", "DUMBMONIT_AGENT_MDAEMON", mdaemon, env)?;
-        let hyperv = Self::preset_mode("hyperv", "DUMBMONIT_AGENT_HYPERV", hyperv, env)?;
+        let mdaemon =
+            Self::preset_mode("mdaemon", "DUMBMONIT_AGENT_MDAEMON", mdaemon, env, wanted)?;
+        let hyperv = Self::preset_mode("hyperv", "DUMBMONIT_AGENT_HYPERV", hyperv, env, wanted)?;
         Ok(PerfCountersConfig { counters, mdaemon, hyperv })
     }
 
-    /// Un jeu prédéfini de compteurs : `true`, `false` ou `auto` (le défaut),
-    /// la variable d'environnement primant sur le fichier.
+    /// Un jeu prédéfini de compteurs : `true`, `false` ou `auto` (le défaut —
+    /// `false` quand une liste `modules` omet `perf_counters`), la variable
+    /// d'environnement primant sur le fichier.
     fn preset_mode(
         key: &str,
         variable: &str,
         from_file: Option<FlagOrAuto>,
         env: &EnvSource,
+        wanted: bool,
     ) -> Result<PresetMode> {
         Ok(match env.get(variable) {
             Some(raw) => PresetMode::parse(&raw).with_context(|| {
                 format!("{variable}: expected true, false or auto, got '{raw}'")
             })?,
             None => match from_file {
-                None => PresetMode::Auto,
+                None if wanted => PresetMode::Auto,
+                None => PresetMode::Off,
                 Some(FlagOrAuto::Flag(true)) => PresetMode::On,
                 Some(FlagOrAuto::Flag(false)) => PresetMode::Off,
                 Some(FlagOrAuto::Text(text)) => PresetMode::parse(&text).with_context(|| {
@@ -694,7 +727,11 @@ impl Config {
         })
     }
 
-    fn merge_system_health(file: SystemHealthFile, env: &EnvSource) -> Result<SystemHealthConfig> {
+    fn merge_system_health(
+        file: SystemHealthFile,
+        env: &EnvSource,
+        wanted: bool,
+    ) -> Result<SystemHealthConfig> {
         let flag = |variable: &str, from_file: Option<bool>, default: bool| -> Result<bool> {
             match env.get(variable) {
                 Some(raw) => parse_bool(&raw).with_context(|| format!("{variable}: {raw}")),
@@ -713,7 +750,7 @@ impl Config {
             );
         }
         Ok(SystemHealthConfig {
-            enabled: flag("DUMBMONIT_AGENT_SYSTEM_HEALTH", file.enabled, true)?,
+            enabled: flag("DUMBMONIT_AGENT_SYSTEM_HEALTH", file.enabled, wanted)?,
             check_updates: flag("DUMBMONIT_AGENT_CHECK_UPDATES", file.check_updates, true)?,
             updates_interval: Duration::from_secs(updates_interval_secs),
             check_reboot: flag("DUMBMONIT_AGENT_CHECK_REBOOT", file.check_reboot, true)?,
@@ -811,6 +848,34 @@ fn without_credentials(repository: &str) -> String {
         Some(at) => format!("{}{}", &repository[..authority_start], &rest[at + 1..]),
         None => repository.to_string(),
     }
+}
+
+/// La liste `modules`, validée : `None` sans liste (tout se détecte seul),
+/// l'ensemble des modules nommés sinon. `none` seul vaut liste vide — la
+/// collecte système de base, rien d'autre. Un nom inconnu est refusé au
+/// démarrage plutôt qu'ignoré : une faute de frappe couperait un module en
+/// silence.
+fn parse_modules(
+    from_env: Option<Vec<String>>,
+    from_file: Option<Vec<String>>,
+) -> Result<Option<BTreeSet<String>>> {
+    // Une variable vide vaut absence : un `${X}` non défini dans un fichier
+    // compose ne doit pas couper tous les modules.
+    let Some(items) = from_env.filter(|items| !items.is_empty()).or(from_file) else {
+        return Ok(None);
+    };
+    let mut modules = BTreeSet::new();
+    for item in items {
+        let name = item.trim().to_ascii_lowercase().replace('-', "_");
+        if name.is_empty() || name == "none" {
+            continue;
+        }
+        if !MODULES.contains(&name.as_str()) {
+            bail!("modules: unknown module '{item}' (known: {}, or none)", MODULES.join(", "));
+        }
+        modules.insert(name);
+    }
+    Ok(Some(modules))
 }
 
 fn split_list(raw: &str) -> Vec<String> {
@@ -1512,5 +1577,88 @@ backup_repos_interval_secs: 900
         assert_eq!(without_credentials("ssh://borg@host/./repo"), "ssh://host/./repo");
         assert_eq!(without_credentials("/srv/restic"), "/srv/restic");
         assert_eq!(without_credentials("sftp:user@host:/srv/r"), "sftp:user@host:/srv/r");
+    }
+
+    fn with_yaml(yaml: &str) -> FileConfig {
+        FileConfig {
+            server_url: Some("http://s:8080".into()),
+            token: Some("dmon_abc".into()),
+            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+        }
+    }
+
+    #[test]
+    fn without_a_module_list_everything_is_auto_detected() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.modules, None);
+        assert!(config.docker && config.plakar.enabled && config.sensors);
+        assert!(config.smart.enabled && config.zfs.enabled && config.wireguard.enabled);
+        assert!(config.system_health.enabled);
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Auto);
+    }
+
+    #[test]
+    fn a_module_list_keeps_only_the_modules_it_names() {
+        let config =
+            Config::merge(with_yaml("modules: [docker, plakar]\n"), env(&[])).expect("config");
+        assert!(config.docker);
+        assert!(config.plakar.enabled);
+        assert!(!config.sensors, "non demandé : pas de sondes");
+        assert!(!config.smart.enabled);
+        assert!(!config.zfs.enabled);
+        assert!(!config.wireguard.enabled);
+        assert!(!config.system_health.enabled, "ni mises à jour, ni unités en échec");
+        assert_eq!(config.perf_counters.mdaemon, PresetMode::Off);
+        assert_eq!(config.perf_counters.hyperv, PresetMode::Off);
+        assert_eq!(
+            config.modules.as_ref().map(|m| m.iter().cloned().collect::<Vec<_>>()),
+            Some(vec!["docker".to_string(), "plakar".to_string()])
+        );
+    }
+
+    #[test]
+    fn the_module_list_reads_a_string_the_environment_and_none() {
+        let config = Config::merge(with_yaml("modules: \"smart, System-Health\"\n"), env(&[]))
+            .expect("configuration");
+        assert!(config.smart.enabled && config.system_health.enabled);
+        assert!(!config.docker);
+
+        // L'environnement remplace la liste du fichier.
+        let config = Config::merge(
+            with_yaml("modules: [smart]\n"),
+            env(&[("DUMBMONIT_AGENT_MODULES", "docker")]),
+        )
+        .expect("configuration");
+        assert!(config.docker && !config.smart.enabled);
+
+        // Vide dans l'environnement : ignorée, la liste du fichier tient.
+        let config =
+            Config::merge(with_yaml("modules: [smart]\n"), env(&[("DUMBMONIT_AGENT_MODULES", "")]))
+                .expect("configuration");
+        assert!(config.smart.enabled && !config.docker);
+
+        // `none` : la collecte système de base, rien d'autre.
+        let config =
+            Config::merge(file_with_url_and_token(), env(&[("DUMBMONIT_AGENT_MODULES", "none")]))
+                .expect("configuration");
+        assert_eq!(config.modules.as_ref().map(BTreeSet::len), Some(0));
+        assert!(!config.docker && !config.plakar.enabled && !config.system_health.enabled);
+    }
+
+    #[test]
+    fn an_explicit_flag_still_wins_over_the_module_list() {
+        let config = Config::merge(with_yaml("modules: [docker]\nsmart: true\n"), env(&[]))
+            .expect("configuration");
+        assert!(config.smart.enabled);
+        assert!(!config.zfs.enabled);
+    }
+
+    #[test]
+    fn an_unknown_module_is_refused_with_the_known_names() {
+        let error = Config::merge(with_yaml("modules: [docker, plakr]\n"), env(&[]))
+            .expect_err("module inconnu")
+            .to_string();
+        assert!(error.contains("plakr"), "{error}");
+        assert!(error.contains("plakar"), "{error}");
     }
 }
