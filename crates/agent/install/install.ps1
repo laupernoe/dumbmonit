@@ -25,6 +25,9 @@ param(
     [string[]]$Services = @(),
     [hashtable]$Tags = @{},
     [string]$HostName,
+    # Optional modules to run (docker, plakar, system_health, sensors, smart, zfs,
+    # wireguard, perf_counters, or none). Omitted: every module detects itself.
+    [string[]]$Modules,
     # Local binary to install instead of downloading it.
     [string]$BinPath,
     # Expected SHA-256 of the downloaded binary: windows-x86_64:<hex>, or the bare hex.
@@ -35,6 +38,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Les noms de modules sont vérifiés avant toute chose : une faute de frappe ferait
+# refuser le démarrage de l'agent, une fois tout installé.
+$ModulesConnus = @('docker', 'plakar', 'system_health', 'sensors', 'smart', 'zfs', 'wireguard', 'perf_counters', 'none')
+foreach ($module in @($Modules | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+    if ($ModulesConnus -notcontains $module) {
+        throw "Unknown module '$module' (known: $($ModulesConnus -join ', '))."
+    }
+}
 
 $ServiceName = 'DumbMonitAgent'
 $InstallDir  = Join-Path $env:ProgramFiles 'DumbMonit'
@@ -274,6 +286,18 @@ if ($Services.Count -gt 0) {
 if ($Tags.Count -gt 0) {
     $lignes.Add("tags:")
     foreach ($cle in $Tags.Keys) { $lignes.Add("  ${cle}: $($Tags[$cle])") }
+}
+# Modules choisis : seuls ceux-là tournent. Sans -Modules, la clé est absente et
+# chacun se détecte seul.
+if ($PSBoundParameters.ContainsKey('Modules')) {
+    $choisis = @($Modules | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and $_ -ne 'none' })
+    if ($choisis.Count -eq 0) {
+        $lignes.Add("modules: []")
+    } else {
+        $lignes.Add("modules:")
+        foreach ($module in $choisis) { $lignes.Add("  - $module") }
+    }
 }
 
 # UTF-8 sans marque d'ordre : l'analyseur YAML de l'agent lit de l'UTF-8 brut, et

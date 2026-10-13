@@ -143,6 +143,10 @@ pub struct Kloset {
     pub at: String,
     /// `-configdir` à passer à Plakar. `None` : celui de l'agent.
     pub configdir: Option<PathBuf>,
+    /// Foyer du compte où le kloset a été trouvé : Plakar y lit ses greffons
+    /// (`~/.local/share/plakar`, ceux d'un dépôt `rclone://` ou `sftp://`).
+    /// `None` : kloset donné explicitement.
+    pub home: Option<PathBuf>,
     /// Clé de dédoublonnage : l'emplacement du dépôt, jamais son secret.
     pub location: String,
 }
@@ -154,6 +158,7 @@ impl Kloset {
             label: at.to_string(),
             at: at.to_string(),
             configdir: None,
+            home: None,
             location: at.to_string(),
         }
     }
@@ -339,6 +344,8 @@ pub fn parse_stores(text: &str) -> Vec<(String, String)> {
 /// de son kloset par défaut.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Home {
+    /// Le foyer lui-même.
+    pub path: PathBuf,
     /// Nom court, pour désambiguïser deux `@nom` homonymes.
     pub user: String,
     pub configdir: PathBuf,
@@ -352,6 +359,7 @@ pub struct Home {
 impl Home {
     fn at(home: &Path) -> Self {
         Self {
+            path: home.to_path_buf(),
             user: home.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
             configdir: home.join(".config").join("plakar"),
             default_kloset: home.join(".plakar"),
@@ -391,6 +399,7 @@ pub fn discover_in(homes: &[Home]) -> Vec<Kloset> {
                         label: at.clone(),
                         at,
                         configdir: Some(home.configdir.clone()),
+                        home: Some(home.path.clone()),
                         location: normalise_location(&location, &home.configdir),
                     },
                 );
@@ -404,6 +413,7 @@ pub fn discover_in(homes: &[Home]) -> Vec<Kloset> {
                     label: path.clone(),
                     at: path.clone(),
                     configdir: Some(home.configdir.clone()),
+                    home: Some(home.path.clone()),
                     location: path,
                 },
             );
@@ -497,6 +507,10 @@ pub struct PlakarProbe {
     /// Étiquettes annoncées la dernière fois : on ne rejournalise que si la
     /// liste change.
     announced: Option<Vec<String>>,
+    /// Klosets illisibles déjà signalés, avec leur raison : un kloset
+    /// injoignable ne remplit pas le journal toutes les dix minutes, il est
+    /// signalé quand il tombe, quand la raison change, et quand il revient.
+    failing: BTreeMap<String, String>,
 }
 
 /// Ce que rend la tâche de fond : le rapport (`None` : Plakar absent), et les
@@ -504,6 +518,8 @@ pub struct PlakarProbe {
 struct Outcome {
     report: Option<PlakarReport>,
     labels: Vec<String>,
+    /// Klosets illisibles et la raison donnée par Plakar.
+    failures: BTreeMap<String, String>,
 }
 
 impl PlakarProbe {
@@ -519,6 +535,7 @@ impl PlakarProbe {
             absent: false,
             binary_missing: false,
             announced: None,
+            failing: BTreeMap::new(),
         }
     }
 
@@ -563,6 +580,7 @@ impl PlakarProbe {
 
     /// Dit une fois ce qui a été trouvé — et le redit seulement si ça change.
     fn announce(&mut self, outcome: &Outcome) {
+        self.announce_failures(&outcome.failures);
         let Some(report) = &outcome.report else {
             if !self.absent {
                 debug!(bin = self.config.bin, "plakar not detected, backups not reported");
@@ -593,9 +611,21 @@ impl PlakarProbe {
         }
         if outcome.labels.is_empty() {
             if self.config.klosets.is_empty() {
-                info!(
-                    "plakar is installed but no kloset was found (~/.config/plakar/stores.yml, ~/.plakar)"
-                );
+                // Un `/home` vide vu de l'agent est presque toujours un `/home`
+                // caché par le service (`ProtectHome=yes`, unités d'avant
+                // octobre 2026) : le dire, plutôt que de laisser chercher.
+                let homes_hidden = std::fs::read_dir("/home")
+                    .map(|mut entries| entries.next().is_none())
+                    .unwrap_or(false);
+                if homes_hidden {
+                    warn!(
+                        "plakar is installed but no kloset was found, and /home looks empty to the agent: its service probably hides home directories (ProtectHome=yes). Reinstall the agent with the current install command, or set plakar_klosets and plakar_home in agent.yaml"
+                    );
+                } else {
+                    info!(
+                        "plakar is installed but no kloset was found (~/.config/plakar/stores.yml or ~/.plakar under /root and /home/*); set plakar_klosets in agent.yaml to name them"
+                    );
+                }
             }
         } else if self.config.klosets.is_empty() {
             info!(klosets = ?outcome.labels, "plakar klosets discovered");
@@ -603,6 +633,27 @@ impl PlakarProbe {
             info!(klosets = ?outcome.labels, "plakar klosets from the configuration");
         }
         self.announced = Some(outcome.labels.clone());
+    }
+}
+
+impl PlakarProbe {
+    /// Journalise les klosets qui tombent, changent de raison ou reviennent.
+    fn announce_failures(&mut self, failures: &BTreeMap<String, String>) {
+        for (kloset, why) in failures {
+            if self.failing.get(kloset) != Some(why) {
+                warn!(
+                    kloset,
+                    %why,
+                    "cannot read the Plakar kloset (reported once; set plakar_klosets to watch only some klosets)"
+                );
+            }
+        }
+        for kloset in self.failing.keys() {
+            if !failures.contains_key(kloset) {
+                info!(kloset, "the Plakar kloset is readable again");
+            }
+        }
+        self.failing = failures.clone();
     }
 }
 
@@ -635,31 +686,31 @@ async fn read_all(config: PlakarConfig) -> Outcome {
             installed: false,
             klosets: klosets.iter().map(unreadable).collect(),
         });
-        return Outcome { report, labels };
+        return Outcome { report, labels, failures: BTreeMap::new() };
     }
     let mut stats = Vec::with_capacity(klosets.len());
+    let mut failures = BTreeMap::new();
     for kloset in &klosets {
         match read_kloset(&config, kloset).await {
             Ok(stat) => stats.push(stat),
             Err(RunError::Missing) => {
                 // Disparu entre deux commandes : le prochain cycle redétectera.
-                return Outcome { report: None, labels: Vec::new() };
+                return Outcome { report: None, labels: Vec::new(), failures: BTreeMap::new() };
             }
             Err(RunError::Failed(why)) => {
-                warn!(kloset = kloset.label, %why, "cannot read the Plakar kloset");
+                failures.insert(kloset.label.clone(), why);
                 stats.push(unreadable(kloset));
             }
         }
     }
-    Outcome { report: Some(PlakarReport { installed: true, klosets: stats }), labels }
+    Outcome { report: Some(PlakarReport { installed: true, klosets: stats }), labels, failures }
 }
 
 async fn read_kloset(config: &PlakarConfig, kloset: &Kloset) -> Result<KlosetStat, RunError> {
-    let configdir = kloset.configdir.as_deref();
     let at = kloset.at.as_str();
-    let ls = run(config, configdir, &["at", at, "ls"]).await?;
+    let ls = run(config, Some(kloset), &["at", at, "ls"]).await?;
     let snapshots = parse_ls(&ls);
-    let info = parse_info(&run(config, configdir, &["at", at, "info"]).await?);
+    let info = parse_info(&run(config, Some(kloset), &["at", at, "info"]).await?);
 
     // Une inspection par source, sur son instantané le plus récent seulement :
     // c'est lui qui dit si la dernière sauvegarde s'est bien passée.
@@ -678,7 +729,7 @@ async fn read_kloset(config: &PlakarConfig, kloset: &Kloset) -> Result<KlosetSta
         }
     }
     for id in newest_ids {
-        match run(config, configdir, &["at", at, "info", id]).await {
+        match run(config, Some(kloset), &["at", at, "info", id]).await {
             Ok(text) => {
                 if let Some(count) = parse_snapshot_errors(&text) {
                     errors.insert(id.to_string(), count);
@@ -716,28 +767,91 @@ impl std::fmt::Display for RunError {
     }
 }
 
-/// Lance `plakar` sans interpréteur, avec un délai strict. `configdir` est
-/// passé en option globale, avant le sous-commande : c'est là que Plakar résout
-/// les `@nom`.
+/// Répertoires passés à Plakar pour une commande.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct PlakarDirs {
+    /// `HOME` du processus : sans lui, Plakar refuse de démarrer (« $HOME is
+    /// not defined »), ce qui arrive à un service système sans `User=`.
+    home: PathBuf,
+    /// `-configdir` : là où Plakar résout les `@nom`.
+    configdir: Option<PathBuf>,
+    /// `-cachedir` : toujours un répertoire de l'agent, inscriptible. Celui du
+    /// propriétaire (`~/.cache/plakar`) ne l'est pas sous le durcissement
+    /// systemd (`ProtectHome=read-only`), et l'agent n'a pas à y écrire.
+    cachedir: PathBuf,
+    /// `-datadir` : celui du propriétaire s'il existe (ses greffons, rclone
+    /// compris), sinon un répertoire de l'agent.
+    datadir: PathBuf,
+}
+
+/// Répertoire de travail de l'agent pour Plakar : `$CACHE_DIRECTORY` (posé
+/// par `CacheDirectory=` de systemd), sinon le répertoire temporaire —
+/// privé et inscriptible sous `PrivateTmp=yes`.
+fn scratch_root() -> PathBuf {
+    std::env::var("CACHE_DIRECTORY")
+        .ok()
+        .and_then(|dirs| dirs.split(':').next().map(str::to_string))
+        .filter(|dir| !dir.trim().is_empty())
+        .map(|dir| PathBuf::from(dir).join("plakar"))
+        .unwrap_or_else(|| std::env::temp_dir().join("dumbmonit-agent-plakar"))
+}
+
+fn plakar_dirs(
+    config: &PlakarConfig,
+    kloset: Option<&Kloset>,
+    own_home: Option<PathBuf>,
+    scratch: &Path,
+) -> PlakarDirs {
+    let home = config
+        .home
+        .as_ref()
+        .map(PathBuf::from)
+        .or_else(|| kloset.and_then(|k| k.home.clone()))
+        .or(own_home)
+        .unwrap_or_else(|| scratch.to_path_buf());
+    let owner_data = home.join(".local").join("share").join("plakar");
+    PlakarDirs {
+        configdir: kloset.and_then(|k| k.configdir.clone()),
+        cachedir: scratch.join("cache"),
+        datadir: if owner_data.is_dir() { owner_data } else { scratch.join("data") },
+        home,
+    }
+}
+
+/// Lance `plakar` sans interpréteur, avec un délai strict. Les répertoires
+/// sont passés en options globales, avant la sous-commande.
 async fn run(
     config: &PlakarConfig,
-    configdir: Option<&Path>,
+    kloset: Option<&Kloset>,
     args: &[&str],
 ) -> Result<String, RunError> {
+    let own_home = std::env::var_os("HOME").filter(|h| !h.is_empty()).map(PathBuf::from);
+    let scratch = scratch_root();
+    let dirs = plakar_dirs(config, kloset, own_home, &scratch);
+    for dir in [&dirs.cachedir, &dirs.datadir] {
+        if !dir.starts_with(&scratch) {
+            continue;
+        }
+        if let Err(error) = std::fs::create_dir_all(dir) {
+            debug!(%error, dir = %dir.display(), "plakar scratch directory not created");
+        }
+    }
     let mut command = tokio::process::Command::new(&config.bin);
-    if let Some(dir) = configdir {
+    if let Some(dir) = &dirs.configdir {
         command.arg("-configdir").arg(dir);
     }
     command
+        .arg("-cachedir")
+        .arg(&dirs.cachedir)
+        .arg("-datadir")
+        .arg(&dirs.datadir)
         .args(args)
+        .env("HOME", &dirs.home)
         .env("LC_ALL", "C")
         // Sans terminal, Plakar ne doit jamais demander de phrase de passe : un
         // kloset chiffré sans `PLAKAR_PASSPHRASE` échoue proprement.
         .stdin(std::process::Stdio::null())
         .kill_on_drop(true);
-    if let Some(home) = &config.home {
-        command.env("HOME", home);
-    }
 
     match tokio::time::timeout(COMMAND_TIMEOUT, command.output()).await {
         Ok(Ok(output)) => {
@@ -1047,6 +1161,50 @@ mod tests {
         let mut probe = PlakarProbe::new(&config);
         assert_eq!(probe.read().await, None);
         assert!(probe.task.is_none(), "no background reading was started");
+    }
+
+    #[test]
+    fn a_discovered_kloset_runs_with_its_owners_home_and_the_agents_cache() {
+        // Cas relevé sur une Fedora : agent root sous systemd, sans `HOME`,
+        // kloset `@diskext` dans le `stores.yml` de noe, greffon rclone dans
+        // son `~/.local/share/plakar`.
+        let root = lab_tree();
+        std::fs::create_dir_all(root.join("home/alice/.local/share/plakar")).unwrap();
+        let scratch = root.join("scratch");
+        let found = discover_in(&[Home::at(&root.join("home/alice"))]);
+        let kloset = found.iter().find(|k| k.label == "@diskext").expect("@diskext");
+
+        let dirs = plakar_dirs(&PlakarConfig::default(), Some(kloset), None, &scratch);
+        assert_eq!(dirs.home, root.join("home/alice"));
+        assert_eq!(dirs.configdir, Some(root.join("home/alice/.config/plakar")));
+        assert_eq!(dirs.cachedir, scratch.join("cache"), "jamais le cache du propriétaire");
+        assert_eq!(dirs.datadir, root.join("home/alice/.local/share/plakar"));
+
+        // `plakar version`, sans kloset ni `HOME` : tout dans le répertoire de
+        // l'agent, pour que Plakar démarre quand même.
+        let dirs = plakar_dirs(&PlakarConfig::default(), None, None, &scratch);
+        assert_eq!(dirs.home, scratch);
+        assert_eq!(dirs.configdir, None);
+        assert_eq!(dirs.datadir, scratch.join("data"));
+
+        // `plakar_home` reste maître.
+        let config = PlakarConfig { home: Some("/srv/backup".into()), ..PlakarConfig::default() };
+        let dirs = plakar_dirs(&config, Some(kloset), Some(PathBuf::from("/root")), &scratch);
+        assert_eq!(dirs.home, PathBuf::from("/srv/backup"));
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn an_unreadable_kloset_is_logged_once_then_again_when_it_recovers() {
+        let mut probe = PlakarProbe::new(&PlakarConfig::default());
+        let down: BTreeMap<String, String> =
+            [("@nas".to_string(), "kloset cannot be opened: timeout".to_string())].into();
+        probe.announce_failures(&down);
+        assert_eq!(probe.failing, down);
+        probe.announce_failures(&down);
+        assert_eq!(probe.failing, down);
+        probe.announce_failures(&BTreeMap::new());
+        assert!(probe.failing.is_empty());
     }
 
     /// Demande le kloset de laboratoire créé sur cette machine.

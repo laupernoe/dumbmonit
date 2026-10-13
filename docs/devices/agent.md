@@ -24,7 +24,7 @@ cannot write into another machine's series, even by forging its labels.
 | Disks (counters) | `disk_read_bytes`, `disk_written_bytes`, one series per block device | `device` |
 | Host | `uptime_seconds`, `process_count` | |
 | Services | `service_up` (1 = running) | `service` |
-| Containers | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (containers beyond `docker_max_containers`) | `container`, `image` |
+| Containers | `container_up`, `container_stop_expected` (stopped containers only: 1 when Docker would not restart it — one-shot run finished, never started, stopped by hand without a restart policy), `container_count`, `container_running_count`, `container_series_skipped` (containers beyond `docker_max_containers`) | `container`, `image` |
 | Sensors | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (the threshold the hardware itself declares), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Disk health (SMART) | `agent_disk_smart_ok` (1 = the disk passes its own self-assessment), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 worse), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
@@ -315,6 +315,8 @@ on every system.
 | `--services=a,b,c` | `-Services @('a','b')` | Services whose state is reported, named as the host system names them: systemd units on Linux, launchd labels (`com.apple.sshd`) on macOS, rc.d names on FreeBSD, Windows services. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, copied as `tag_<key>` on every series. |
 | `--hostname=NAME` | `-HostName` | Name announced to the server (default: the machine's). |
+| `--modules=a,b` | `-Modules a,b` | Optional modules to run — see [Choosing the modules](#choosing-the-modules). Without it, every module detects itself; `none` keeps system metrics only. The install command shown by DumbMonit adds it when you tick modules. |
+| `--plakar-klosets=a,b` | | Plakar klosets to read (`@name` or a path); default: every kloset found. |
 | `--bin=PATH` | `-BinPath` | Local binary to install instead of downloading it. |
 | `--sha256=LIST` | `-Sha256` | Expected SHA-256 of the download, as `platform-arch:hex` pairs separated by commas (a bare hex value also works). Included in the command DumbMonit shows; required unless the next flag is given. |
 | `--insecure-skip-checksum` | `-InsecureSkipChecksum` | Install a downloaded binary without verifying it, with a warning. Only for air-gapped or manual setups. |
@@ -337,6 +339,30 @@ the new path (`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yaml`
 and installs `dumbmonit-agent` in its place. The old `ezym_…` token stays
 valid, so the command shown when the token was created still works; nothing
 has to be revoked first.
+
+## Choosing the modules
+
+By default every optional module detects itself and reports what it finds:
+Docker, Plakar, system health (pending updates, reboot required, failed
+units, SELinux), sensors, SMART, ZFS, WireGuard and, on Windows, the MDaemon
+and Hyper-V counter sets. To watch only some of them, list them:
+
+```yaml
+modules: [docker, plakar]
+```
+
+or pick them in the enrolment screen (**Choose the modules**), which adds
+`--modules=docker,plakar` to the install command. Only the listed modules run;
+the others send no series, so they show no panel and raise no alert. CPU,
+memory, filesystems, network and the machine's OS identity are always
+collected. `modules: []` (or `--modules=none`) keeps those only.
+
+Known names: `docker`, `plakar`, `system_health`, `sensors`, `smart`, `zfs`,
+`wireguard`, `perf_counters`. An unknown name stops the agent at start-up with
+the list, rather than silently switching a module off.
+`DUMBMONIT_AGENT_MODULES=docker,plakar` overrides the file (an empty value is
+ignored). An explicit flag (`smart: true`, `DUMBMONIT_AGENT_SMART=1`) still
+wins over the list. The agent logs the modules it runs at start-up.
 
 ## Configuration file
 
@@ -911,7 +937,19 @@ plakar_interval_secs: 600            # minimum 60
 An encrypted kloset needs its passphrase: put it in the store entry
 (`plakar store set <name> passphrase=…`, which is what `plakar store add` does)
 or export `PLAKAR_PASSPHRASE` in the agent's service environment. Without it
-the kloset reads as "Cannot be opened" (`backup_last_status = 0`).
+the kloset reads as "Cannot be opened" (`backup_last_status = 0`), the agent
+logs why once (and again when it recovers), and the rule "Plakar kloset
+unreadable" warns after 30 minutes. A kloset you do not care about (an
+offsite copy only reachable by hand, say) is left out with `plakar_klosets`.
+
+The agent runs `plakar` as root, with `HOME` set to the account where the
+kloset was found, `-datadir` pointing to that account's
+`~/.local/share/plakar` (its plugins, rclone included) and `-cachedir` in the
+agent's own cache directory (`/var/cache/dumbmonit-agent` under systemd).
+Installs made before October 2026 hid `/home` from the agent
+(`ProtectHome=yes`): discovery then found nothing, and the agent now warns
+about it. Run the install command again to get the current unit
+(`ProtectHome=read-only`).
 
 ### Metrics and rules
 

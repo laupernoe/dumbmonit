@@ -19,6 +19,10 @@ use serde::Deserialize;
 /// instance VictoriaMetrics que l'utilisateur partagerait avec d'autres outils.
 pub const METRIC_PREFIX: &str = "dumbmonit_";
 
+/// Décalage des lectures « fraîches ». VictoriaMetrics masque par défaut les
+/// 30 dernières secondes ; il n'accepte pas zéro, mais une milliseconde.
+const FRESH_LATENCY_OFFSET: &str = "1ms";
+
 /// Pourquoi une lecture destinée à un collecteur externe a échoué.
 ///
 /// Trois cas, et trois réponses différentes : ce que l'appelant peut corriger
@@ -291,9 +295,11 @@ impl Victoria {
     /// (`-search.latencyOffset`), prévu pour des scrapes encore incomplets. Nos
     /// lots sont écrits d'un seul tenant : l'interface peut donc lire le
     /// résultat d'une sonde sitôt écrit, en particulier après « Probe now ».
-    /// Depuis la v1.153, VictoriaMetrics refuse `0s` (400) : 1 ms est le minimum.
     pub async fn query_fresh(&self, query: &str) -> Result<Vec<InstantSeries>> {
-        self.query_with(query, &[("latency_offset", "1ms")]).await
+        // `1ms` et non `0s` : VictoriaMetrics refuse zéro (« latency_offset=0ms
+        // is out of allowed range [1ms ...] »), et chaque lecture instantanée de
+        // l'interface échouait alors en 400.
+        self.query_with(query, &[("latency_offset", FRESH_LATENCY_OFFSET)]).await
     }
 
     async fn query_with(&self, query: &str, extra: &[(&str, &str)]) -> Result<Vec<InstantSeries>> {
@@ -469,6 +475,14 @@ mod tests {
     use dumbmonit_proto::MetricKind;
 
     use super::*;
+
+    /// VictoriaMetrics refuse `latency_offset=0s` (plage [1ms …]) : la valeur
+    /// doit rester une durée strictement positive, sans quoi chaque lecture
+    /// instantanée de l'interface part en 400.
+    #[test]
+    fn the_fresh_latency_offset_is_accepted_by_victoriametrics() {
+        assert_eq!(FRESH_LATENCY_OFFSET, "1ms");
+    }
 
     /// Un segment reste un segment : ni `..`, ni `%2e%2e`, ni `?` ne sortent
     /// de `/api/v1/` une fois l'URL construite.

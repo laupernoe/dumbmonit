@@ -88,6 +88,10 @@ fn base(uid: &str, name: &str, kind: RuleKind, query: &str) -> Rule {
 }
 
 /// Les règles livrées avec le produit.
+/// Conteneur arrêté, hors arrêts voulus que l'agent signale.
+const CONTAINER_STOPPED_QUERY: &str = "dumbmonit_container_up == bool 0 \
+     unless on(target, container) dumbmonit_container_stop_expected == 1";
+
 pub fn builtin_rules() -> Vec<Rule> {
     vec![
         // Équipement injoignable.
@@ -609,7 +613,10 @@ pub fn builtin_rules() -> Vec<Rule> {
         // Conteneurs Docker, vus par l'agent. Chaque série porte le nom du
         // conteneur : l'alerte le montre, et une politique peut y répondre.
         Rule {
-            description: "The container has been stopped for two minutes.".to_string(),
+            description: "The container has been stopped for two minutes. A container that \
+                          finished on its own and that Docker would not restart (no restart \
+                          policy, clean exit or `docker stop`) is not reported."
+                .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(2 * 60),
@@ -622,7 +629,10 @@ pub fn builtin_rules() -> Vec<Rule> {
                 // `== bool` rend 1 quand le conteneur est arrêté, 0 sinon ; sans
                 // `bool`, MetricsQL renverrait la valeur de gauche — 0 — qu'un
                 // seuil « > 0 » ne verrait jamais. Voir `service_down`.
-                "dumbmonit_container_up == bool 0",
+                // `unless` écarte les arrêts voulus que l'agent signale
+                // (`container_stop_expected`, conteneur ponctuel terminé) ; un
+                // agent plus ancien n'émet pas cette série et tout reste visé.
+                CONTAINER_STOPPED_QUERY,
             )
         },
         Rule {
@@ -637,8 +647,11 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "container_unhealthy",
                 "Container unhealthy",
                 RuleKind::Threshold,
-                // 2 = unhealthy (0 none, 1 healthy, 3 starting).
-                "dumbmonit_container_health == 2",
+                // 2 = unhealthy (0 none, 1 healthy, 3 starting). Docker garde
+                // le dernier verdict d'un conteneur arrêté : il n'a plus de
+                // sens, et `container_stopped` dit déjà l'essentiel.
+                "dumbmonit_container_health == 2 unless on(target, container) \
+                 dumbmonit_container_up == 0",
             )
         },
         // Un conteneur qui redémarre en boucle est rarement « arrêté » assez
@@ -704,8 +717,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         // La série vaut 1 (dernier instantané sans erreur) ou 0 (erreurs, ou
         // kloset illisible) : « < 1 » ne vise que les vrais échecs.
         Rule {
-            description: "The latest Plakar snapshot has errors, or the kloset cannot be read."
-                .to_string(),
+            description: "The latest Plakar snapshot has errors.".to_string(),
             operator: Operator::Lt,
             threshold: 1.0,
             for_duration: Duration::from_secs(10 * 60),
@@ -715,7 +727,29 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "plakar_backup_failed",
                 "Plakar backup failed",
                 RuleKind::Threshold,
-                "dumbmonit_backup_last_status",
+                // `source="*"` est la série d'un kloset illisible : ce n'est pas
+                // une sauvegarde ratée, la règle suivante s'en charge.
+                "dumbmonit_backup_last_status{source!=\"*\"}",
+            )
+        },
+        // Un kloset que l'agent n'ouvre pas : stockage injoignable, phrase de
+        // passe ou greffon manquant. Rien ne dit que les sauvegardes échouent —
+        // seulement qu'on ne peut plus le vérifier : avertissement, après une
+        // demi-heure, comme pour restic et Borg.
+        Rule {
+            description: "The agent cannot open this Plakar kloset: storage unreachable, \
+                          passphrase or plugin missing (the agent's log says which)."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "plakar_kloset_unreadable",
+                "Plakar kloset unreadable",
+                RuleKind::Threshold,
+                "dumbmonit_backup_last_status{source=\"*\"}",
             )
         },
         // Dépôts restic et Borg déclarés dans `agent.yaml`
@@ -5802,6 +5836,7 @@ mod tests {
             "container_update_available",
             "plakar_backup_too_old",
             "plakar_backup_failed",
+            "plakar_kloset_unreadable",
             // Matériel vu par l'agent (`crates/agent/src/collect/{smart,zfs,sensors}.rs`).
             "disk_smart_failed",
             "zfs_pool_degraded",
@@ -6155,6 +6190,7 @@ mod tests {
             "dumbmonit_container_health",
             "dumbmonit_container_restart_count",
             "dumbmonit_container_update_available",
+            "dumbmonit_container_stop_expected",
             "dumbmonit_backup_last_success_seconds",
             "dumbmonit_backup_last_status",
             // Agent : matériel de la machine (`crates/agent/src/collect/

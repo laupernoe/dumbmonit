@@ -211,6 +211,16 @@ impl Agent {
             period_s = self.interval.as_secs(),
             "agent started"
         );
+        match &self.config.modules {
+            Some(modules) if modules.is_empty() => {
+                info!("modules: none (system metrics only)")
+            }
+            Some(modules) => info!(
+                modules = modules.iter().map(String::as_str).collect::<Vec<_>>().join(","),
+                "modules chosen in the configuration"
+            ),
+            None => info!("modules: auto-detected (set 'modules' in agent.yaml to choose)"),
+        }
         self.probe.warm_up().await;
 
         let mut next_collect = Instant::now();
@@ -410,6 +420,7 @@ mod tests {
             hostname: Some("machine-de-test".into()),
             services: Vec::new(),
             tags: std::collections::BTreeMap::new(),
+            modules: None,
             docker: false,
             docker_socket: std::path::PathBuf::from("/inexistant.sock"),
             docker_update_check: false,

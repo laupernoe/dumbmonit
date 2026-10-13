@@ -493,10 +493,16 @@ mod platform {
             }
         }
 
-        /// Un cycle de lecture. `None` quand le collecteur est désactivé.
+        /// Un cycle de lecture. Collecteur désactivé : seule l'identité du
+        /// système (`agent_os_info`, lue une fois au démarrage) reste — elle ne
+        /// coûte rien, n'alerte jamais, et la page de la machine en a besoin
+        /// pour dire de quel système il s'agit.
         pub async fn read(&mut self) -> Option<SystemHealthStat> {
             if !self.config.enabled {
-                return None;
+                return self
+                    .os
+                    .clone()
+                    .map(|os| SystemHealthStat { os: Some(os), ..SystemHealthStat::default() });
             }
             self.refresh_slow_checks().await;
 
@@ -1075,7 +1081,11 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
     async fn a_disabled_collector_reads_nothing() {
         let config = SystemHealthConfig { enabled: false, ..SystemHealthConfig::default() };
         let mut probe = SystemHealthProbe::new(&config);
-        assert!(probe.read().await.is_none());
+        // Au plus l'identité du système : ni mises à jour, ni redémarrage, ni
+        // unités, ni SELinux — rien qui puisse alerter.
+        if let Some(stat) = probe.read().await {
+            assert_eq!(stat, SystemHealthStat { os: stat.os.clone(), ..Default::default() });
+        }
     }
 
     #[cfg(target_os = "linux")]
