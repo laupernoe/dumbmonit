@@ -199,7 +199,8 @@
 						<stop offset="1" stop-color="var(--ember)" stop-opacity="0" />
 					</radialGradient>
 					<radialGradient id="rw-lamp" cx=".5" cy=".3" r=".6">
-						<stop offset="0" stop-color="var(--lamp-glow)" />
+						<stop offset="0" stop-color="var(--lamp-glow)" stop-opacity=".5" />
+						<stop offset=".55" stop-color="var(--lamp-glow)" stop-opacity=".18" />
 						<stop offset="1" stop-color="var(--lamp-glow)" stop-opacity="0" />
 					</radialGradient>
 					<clipPath id="rw-win"><rect x={WIN.x} y={WIN.y} width={WIN.w} height={WIN.h} /></clipPath>

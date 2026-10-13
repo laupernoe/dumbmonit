@@ -113,6 +113,13 @@
 			night: ['#000', '#000']
 		}
 	};
+	const P = 8;
+	const GROUND = 972;
+	const HERO = { x: 1680, y: 520 };
+	const DROP = GROUND - (HERO.y + 8 * P);
+	const GC_X = 1000; // the gesture cannon's rest column
+	const SLIDE = HERO.x + (11 * P) / 2 - (GC_X + (13 * P) / 2);
+
 	const minuteKey = $derived(Math.floor(now.getTime() / 60_000));
 	const minute = $derived(new Date(minuteKey * 60_000));
 	const phase = $derived(phaseAt(minute));
@@ -125,7 +132,6 @@
 
 	// --- Sprites ---------------------------------------------------------------------
 
-	const P = 8;
 	const COLS = 8;
 	const PITCH = 16; // pixel units between two invaders of a row
 	const FLEET_X = 420;
@@ -180,11 +186,6 @@
 		'...X........X...'
 	]);
 
-	const GROUND = 972;
-	const HERO = { x: 1680, y: 520 };
-	const DROP = GROUND - (HERO.y + 8 * P);
-	const GC_X = 1000; // the gesture cannon's rest column
-	const SLIDE = HERO.x + (11 * P) / 2 - (GC_X + (13 * P) / 2);
 	const BUNKERS = [360, 640, 920, 1200];
 
 	const STARS = Array.from({ length: 70 }, (_, i) => ({
