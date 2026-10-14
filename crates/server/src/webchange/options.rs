@@ -10,6 +10,7 @@ use reqwest::Url;
 use sha2::{Digest, Sha256};
 
 use super::scope::Scope;
+use super::zones::{Selector, Zones};
 
 pub const OPTION_SCOPE: &str = "scope";
 pub const OPTION_MAX_PAGES: &str = "max_pages";
@@ -19,6 +20,18 @@ pub const OPTION_SCREENSHOTS: &str = "screenshots";
 pub const OPTION_CHECK_INTERVAL: &str = "check_interval_minutes";
 pub const OPTION_INSECURE_TLS: &str = "insecure_tls";
 pub const OPTION_ALLOW_PRIVATE: &str = dumbmonit_collectors::uptime::guard::OPTION;
+pub const OPTION_CONTENT_SELECTOR: &str = "content_selector";
+pub const OPTION_EXCLUDE_SELECTOR: &str = "exclude_selector";
+pub const OPTION_KEEP_CHROME: &str = "keep_page_chrome";
+pub const OPTION_USER_AGENT: &str = "user_agent";
+pub const OPTION_IGNORE_QUERY: &str = "ignore_query";
+
+/// Version de la lecture du texte. La relever change l'empreinte de toutes les
+/// surveillances : après une mise à jour qui lit les pages autrement (2 : menu,
+/// en-tête et pied de page écartés ; 3 : paramètres de suivi retirés des
+/// adresses), la vérification suivante reprend une référence au lieu de
+/// signaler chaque page comme modifiée.
+const EXTRACTION_VERSION: &str = "3";
 
 pub const DEFAULT_MAX_PAGES: u32 = 25;
 pub const MAX_MAX_PAGES: u32 = 200;
@@ -47,12 +60,16 @@ pub struct Options {
     pub scope: Scope,
     pub max_pages: usize,
     pub ignore: Vec<Regex>,
+    /// Zones de la page dont le texte est comparé.
+    pub zones: Zones,
     pub screenshots: bool,
     pub check_interval: Duration,
     pub insecure_tls: bool,
     pub allow_private: bool,
+    /// `User-Agent` envoyé à la place de `DumbMonit/<version>`.
+    pub user_agent: Option<String>,
     /// Empreinte de ce qui change la comparaison elle-même : adresse,
-    /// périmètre, exclusions. Quand elle change, la vérification suivante
+    /// périmètre, nombre de pages, zones, exclusions. Quand elle change, la vérification suivante
     /// repart d'une référence neuve au lieu de tout signaler comme modifié.
     pub fingerprint: String,
 }
@@ -79,7 +96,14 @@ impl Options {
                 "\"{OPTION_PATH_PREFIX}\" is a path such as /docs/, got \"{prefix}\""
             )));
         }
-        let scope = Scope::new(&start, prefix);
+        let ignore_query = parse_bool(target, OPTION_IGNORE_QUERY, false)?;
+        let scope = Scope::new(&start, prefix).with_ignore_query(ignore_query);
+        let user_agent = tag(target, OPTION_USER_AGENT).map(str::to_string);
+        if user_agent.as_deref().is_some_and(|agent| agent.chars().any(char::is_control)) {
+            return Err(ProbeError::Config(format!(
+                "\"{OPTION_USER_AGENT}\" must fit on one line"
+            )));
+        }
         let raw_ignore = tag(target, OPTION_IGNORE).unwrap_or_default();
         let ignore = parse_ignore(raw_ignore)?;
         let minutes = parse_u32(
@@ -89,12 +113,35 @@ impl Options {
             MIN_CHECK_INTERVAL_MINUTES..=MAX_CHECK_INTERVAL_MINUTES,
         )?;
 
+        let raw_content = tag(target, OPTION_CONTENT_SELECTOR).unwrap_or_default();
+        let raw_exclude = tag(target, OPTION_EXCLUDE_SELECTOR).unwrap_or_default();
+        let keep_chrome = parse_bool(target, OPTION_KEEP_CHROME, false)?;
+        let selectors = |key: &str, raw: &str| {
+            Selector::parse_list(raw)
+                .map_err(|error| ProbeError::Config(format!("\"{key}\": {error}")))
+        };
+        let zones = Zones {
+            content: selectors(OPTION_CONTENT_SELECTOR, raw_content)?,
+            exclude: selectors(OPTION_EXCLUDE_SELECTOR, raw_exclude)?,
+            drop_chrome: !keep_chrome,
+        };
+        let max_pages = if mode == Mode::Page { 1 } else { max_pages };
+
+        // Plus de pages lues, ce sont des pages que la référence n'a jamais
+        // vues : sans nouvelle référence, chacune passerait pour « nouvelle ».
+        let max_pages_text = max_pages.to_string();
         let mut hasher = Sha256::new();
         for part in [
+            EXTRACTION_VERSION,
             scope.start().as_str(),
             if mode == Mode::Site { "site" } else { "page" },
             scope.prefix(),
             raw_ignore.trim(),
+            max_pages_text.as_str(),
+            raw_content.trim(),
+            raw_exclude.trim(),
+            if keep_chrome { "chrome" } else { "" },
+            if ignore_query { "no-query" } else { "" },
         ] {
             hasher.update(part.as_bytes());
             hasher.update([0]);
@@ -104,12 +151,14 @@ impl Options {
         Ok(Self {
             mode,
             scope,
-            max_pages: if mode == Mode::Page { 1 } else { max_pages },
+            max_pages,
             ignore,
+            zones,
             screenshots: parse_bool(target, OPTION_SCREENSHOTS, true)?,
             check_interval: Duration::from_secs(u64::from(minutes) * 60),
             insecure_tls: parse_bool(target, OPTION_INSECURE_TLS, false)?,
             allow_private: parse_bool(target, OPTION_ALLOW_PRIVATE, false)?,
+            user_agent,
             fingerprint,
         })
     }
@@ -251,6 +300,10 @@ mod tests {
             ("https://ex.fr/", &[("screenshots", "peut-être")][..]),
             ("https://ex.fr/", &[("ignore", "(non fermée")][..]),
             ("https://ex.fr/", &[("path_prefix", "https://ex.fr/docs")][..]),
+            ("https://ex.fr/", &[("content_selector", "main p")][..]),
+            ("https://ex.fr/", &[("exclude_selector", "a:hover")][..]),
+            ("https://ex.fr/", &[("keep_page_chrome", "parfois")][..]),
+            ("https://ex.fr/", &[("ignore_query", "bof")][..]),
         ] {
             let error = Options::from_target(&target(address, tags)).unwrap_err();
             assert!(matches!(error, ProbeError::Config(_)), "{address} {tags:?} : {error}");
@@ -283,5 +336,31 @@ mod tests {
             Options::from_target(&target("https://ex.fr/", &[("screenshots", "false")])).unwrap();
         assert_ne!(a.fingerprint, b.fingerprint);
         assert_eq!(a.fingerprint, c.fingerprint, "les captures ne changent pas la comparaison");
+    }
+
+    #[test]
+    fn le_nombre_de_pages_et_les_zones_changent_lempreinte() {
+        let site = |tags: &[(&str, &str)]| {
+            let mut all = vec![("scope", "site")];
+            all.extend_from_slice(tags);
+            Options::from_target(&target("https://ex.fr/", &all)).unwrap().fingerprint
+        };
+        let base = site(&[]);
+        assert_ne!(base, site(&[("max_pages", "100")]));
+        assert_ne!(base, site(&[("content_selector", "main")]));
+        assert_ne!(base, site(&[("exclude_selector", ".ad")]));
+        assert_ne!(base, site(&[("keep_page_chrome", "true")]));
+        assert_ne!(base, site(&[("ignore_query", "true")]));
+        assert_eq!(base, site(&[("user_agent", "Mozilla/5.0")]), "l'agent ne change pas le texte");
+        assert_eq!(base, site(&[("max_pages", "25")]), "la valeur par défaut, écrite");
+    }
+
+    #[test]
+    fn lhabillage_est_ecarte_par_defaut() {
+        let options = Options::from_target(&target("https://ex.fr/", &[])).unwrap();
+        assert!(options.zones.drop_chrome);
+        let kept = Options::from_target(&target("https://ex.fr/", &[("keep_page_chrome", "yes")]))
+            .unwrap();
+        assert!(!kept.zones.drop_chrome);
     }
 }

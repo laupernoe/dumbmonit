@@ -490,7 +490,7 @@ See [Website changes](../devices/webchange.md). The device page shows each chang
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| Website changed | The last check of a watched page or site found pages that changed, appeared or disappeared (`dumbmonit_webchange_last_check_changes`). Resolves at the next check that finds none. | > 0 | 30 s | Info (`info`) | none |
+| Website changed | A check of a watched page or site found pages that changed, appeared or disappeared (`dumbmonit_webchange_last_check_changes`). Each such check is notified on its own and names the pages; it resolves at the next check. | > 0 | 30 s | Info (`info`) | none |
 
 ### Kubernetes
 

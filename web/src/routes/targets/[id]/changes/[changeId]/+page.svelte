@@ -8,16 +8,11 @@
 	 * assumed from the device panel that usually links here.
 	 */
 	import { page } from '$app/state';
-	import {
-		getWebchangeChange,
-		webchangeScreenshotUrl,
-		type WebchangeChangeDetail,
-		type WebchangeChangeKind
-	} from '#lib/api/index.js';
-	import { formatDateTime, formatRelative } from '#lib/format.js';
-	import { Button, ErrorNotice, PageHeader, Panel, Skeleton } from '#lib/ui/index.js';
+	import { getWebchangeChange, type WebchangeChangeDetail, type WebchangeChangeKind } from '#lib/api/index.js';
+	import { formatRelative } from '#lib/format.js';
+	import { ErrorNotice, PageHeader, Panel, Skeleton } from '#lib/ui/index.js';
 	import { FileDiff, FileMinus, FilePlus } from 'lucide-svelte';
-	import CompareSlider from '#lib/components/devices/webchange/CompareSlider.svelte';
+	import ChangeScreenshots from '#lib/components/devices/webchange/ChangeScreenshots.svelte';
 	import DiffView from '#lib/components/devices/webchange/DiffView.svelte';
 	import { pagePath } from '#lib/components/devices/webchange/format.js';
 
@@ -27,7 +22,6 @@
 	let detail = $state<WebchangeChangeDetail | null>(null);
 	let loading = $state(true);
 	let error = $state<unknown>(null);
-	let sideBySide = $state(false);
 
 	const KIND_ICON: Record<WebchangeChangeKind, typeof FileDiff> = {
 		changed: FileDiff,
@@ -39,11 +33,6 @@
 		new_page: m.app_change_new_page(),
 		removed_page: m.app_change_removed_page()
 	};
-
-	const hasBefore = $derived(detail?.before_snapshot?.has_screenshot ?? false);
-	const hasAfter = $derived(detail?.after_snapshot?.has_screenshot ?? false);
-	const bothShots = $derived(hasBefore && hasAfter);
-	const anyShot = $derived(hasBefore || hasAfter);
 
 	async function load(signal?: AbortSignal) {
 		error = null;
@@ -97,65 +86,7 @@
 	</PageHeader>
 
 	<Panel title={m.app_change_screenshots()} class="rise-in">
-		{#snippet aside()}
-			{#if bothShots}
-				<Button variant="ghost" size="sm" onclick={() => (sideBySide = !sideBySide)} aria-pressed={sideBySide}>
-					{sideBySide ? m.app_change_slider() : m.app_change_side_by_side()}
-				</Button>
-			{/if}
-		{/snippet}
-
-		{#if !anyShot}
-			<p class="text-sm text-ink-2">
-				{m.app_change_no_screenshot_lead()}
-				<a
-					href="https://dumbmonit.readthedocs.io/en/latest/devices/webchange/"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="text-ink underline"
-				>
-					{m.app_change_no_screenshot_link()}
-				</a>
-			</p>
-		{:else if bothShots && !sideBySide}
-			<CompareSlider
-				beforeSrc={webchangeScreenshotUrl(targetId, detail.before_snapshot!.id)}
-				afterSrc={webchangeScreenshotUrl(targetId, detail.after_snapshot!.id)}
-				beforeLabel={m.app_change_before({ date: formatDateTime(detail.before_snapshot!.fetched_at) })}
-				afterLabel={m.app_change_after({ date: formatDateTime(detail.after_snapshot!.fetched_at) })}
-			/>
-		{:else if bothShots && sideBySide}
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				<figure class="flex flex-col gap-1.5">
-					<figcaption class="text-[0.8125rem] font-semibold text-ink-2">{m.app_change_before_caption({ date: formatDateTime(detail.before_snapshot!.fetched_at) })}</figcaption>
-					<img
-						src={webchangeScreenshotUrl(targetId, detail.before_snapshot!.id)}
-						alt={m.app_change_before({ date: formatDateTime(detail.before_snapshot!.fetched_at) })}
-						class="w-full rounded-[var(--radius-card)] border border-line bg-canvas-deep object-contain"
-					/>
-				</figure>
-				<figure class="flex flex-col gap-1.5">
-					<figcaption class="text-[0.8125rem] font-semibold text-ink-2">{m.app_change_after_caption({ date: formatDateTime(detail.after_snapshot!.fetched_at) })}</figcaption>
-					<img
-						src={webchangeScreenshotUrl(targetId, detail.after_snapshot!.id)}
-						alt={m.app_change_after({ date: formatDateTime(detail.after_snapshot!.fetched_at) })}
-						class="w-full rounded-[var(--radius-card)] border border-line bg-canvas-deep object-contain"
-					/>
-				</figure>
-			</div>
-		{:else}
-			{@const only = hasBefore ? detail.before_snapshot! : detail.after_snapshot!}
-			<figure class="flex flex-col gap-1.5">
-				<figcaption class="text-[0.8125rem] font-semibold text-ink-2">
-					{hasBefore ? m.app_change_last_capture({ date: formatDateTime(only.fetched_at) }) : m.app_change_first_capture({ date: formatDateTime(only.fetched_at) })}
-				</figcaption>
-				<img
-					src={webchangeScreenshotUrl(targetId, only.id)}
-					alt={hasBefore ? m.app_change_last_alt() : m.app_change_first_alt()}
-					class="w-full max-w-2xl rounded-[var(--radius-card)] border border-line bg-canvas-deep object-contain"
-				/>
-			</figure>
-		{/if}
+		<ChangeScreenshots {targetId} {detail} />
 	</Panel>
 
 	<Panel title={m.app_change_text_changes()} description={m.app_change_text_desc()} padded={false} class="mt-6 rise-in">

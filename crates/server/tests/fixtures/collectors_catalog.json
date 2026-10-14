@@ -7667,6 +7667,61 @@
         "group": ""
       },
       {
+        "key": "content_selector",
+        "label": "Watched area",
+        "help": "Compare only the text inside these elements: a tag, #id, .class or [attribute=value], several separated by commas, for example main or #content. Empty, or not found on a page: the whole page.",
+        "placeholder": "main, #content",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "exclude_selector",
+        "label": "Excluded areas",
+        "help": "Leave the text of these elements out, same syntax: a cookie banner, a \"latest posts\" box, an ad slot. For example .cookie-banner, #sidebar.",
+        "placeholder": ".cookie-banner, #sidebar",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "keep_page_chrome",
+        "label": "Compare menus, header and footer",
+        "help": "Off by default: the site's navigation, header, footer and sidebars are the same on every page, so a new menu entry would mark every page as changed. Their links are still followed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "ignore_query",
+        "label": "Ignore query strings",
+        "help": "Site scope: addresses that differ only by their ?… part are one page. Tracking parameters (utm_…, fbclid, gclid…) are always left out.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "user_agent",
+        "label": "User agent",
+        "help": "Sent instead of DumbMonit's own, for a site that turns robots away. Empty: DumbMonit/<version>.",
+        "placeholder": "Mozilla/5.0 (compatible; DumbMonit)",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "screenshots",
         "label": "Screenshots",
         "help": "Keep a screenshot of each new version. Needs the optional browser service (DUMBMONIT_BROWSER_URL); without it, only the text is kept.",

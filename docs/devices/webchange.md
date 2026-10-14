@@ -12,6 +12,26 @@ space is collapsed and each block (paragraph, heading, list item, table row)
 becomes one line. A new build of the same page, a reordered attribute or a
 fresh cache-busting asset name changes nothing; a reworded sentence does.
 
+### What part of the page
+
+The site's **navigation, header, footer and sidebars** are left out: they are
+the same on every page, so a new menu entry would otherwise mark every page as
+changed in one check. They follow the roles HTML gives them: every `nav`, a
+`header` or `footer` that is not inside an `article`, `aside`, `main`, `nav` or
+`section` (the header of an article is kept), an `aside` outside `article` and
+`main`, and any element with the role `navigation`, `banner`, `contentinfo` or
+`search`. Their links are still followed to find the pages of a site. **Compare
+menus, header and footer** turns this off.
+
+**Watched area** narrows the comparison to some elements, for example `main` or
+`#content`; a page where none of them is found is read whole rather than as
+empty. **Excluded areas** leaves more elements out: a cookie banner, a "latest
+posts" box, an ad slot. Both take simple selectors, separated by commas: a tag
+(`main`), an id (`#content`), classes (`.cookie-banner`), attributes
+(`[role=alert]`, `[data-ad]`), or several of them together
+(`div.notice[role=alert]`). Descendant (`main p`) and other combinators are not
+supported.
+
 ## Page or site
 
 **Page** (the default) reads the address of the device and nothing else. It
@@ -26,17 +46,24 @@ may also be a plain text or JSON document, compared line by line.
 2. failing that, or when the sitemap lists nothing under the folder, by
    following the links of each page, breadth first.
 
-Only pages of the same origin (scheme, host and port) are followed; links to
+Only pages of the same origin (scheme, host and port) are followed; when the
+start page redirects to another host (`example.com` to `www.example.com`), the
+site is taken to live there, and links to the first host are read on the second. links to
 images, style sheets, scripts, PDFs, archives and other files are skipped by
 their extension, and any answer that is not HTML is ignored. Fragments
-(`#section`) are dropped and empty queries removed, so one page is one address.
+(`#section`), tracking parameters (`utm_…`, `fbclid`, `gclid` and the like) and
+empty queries are removed, so one page is one address; **Ignore query strings**
+drops the whole `?…` part.
 `robots.txt` is honoured for the pages found this way: the group that names
 `DumbMonit`, or else the `*` group, with `Allow`, `Disallow`, `*` and `$`.
 
 The crawl is polite: two requests at a time at most, half a second between two
 batches, the `User-Agent` `DumbMonit/<version>`, a 15-second timeout per
 request and 5 MB read at most per page. It stops at **Max pages** (25 by
-default, 200 at most) or after ten minutes.
+default, 200 at most) or after ten minutes. When **Max pages** stopped it, the
+device page says how many pages were found, so that the unwatched part of the
+site is never a surprise. **User agent** replaces `DumbMonit/<version>` for a
+site that turns robots away.
 
 ## How a check works
 
@@ -58,8 +85,14 @@ nothing is reported. From then on, for each page:
 | Site scope: a complete crawl no longer reaches a known page | A **removed page** event too ("No longer linked"). A crawl stopped by **Max pages** or by its time limit never concludes that a page has gone. |
 | Any other error on a page (timeout, 403, 500 on a sub-page) | The error is shown on the page; no event. |
 
-Changing the address, the scope, the path prefix or **Ignore lines** makes the
-next check a new reference instead of reporting every page as changed.
+Changing the address, the scope, the path prefix, **Max pages**, the areas or
+**Ignore lines** makes the next check a new reference instead of reporting every
+page as changed (or, for a higher **Max pages**, every page it adds as new). An
+update of DumbMonit that reads pages differently does the same once.
+
+When one check finds the **same change on several pages** (the same lines
+removed and added, such as a banner), the device page shows it once, with the
+pages it was made on.
 
 ### Ignore lines
 
@@ -89,8 +122,10 @@ targets** is enabled; private LAN addresses are always allowed.
 ## Alerts
 
 The built-in rule **Website changed** (`webchange_detected`, Info) fires after
-a check that found at least one change (changed, new or removed page), and
-resolves at the next check that finds none. It reads
+each check that found at least one change (changed, new or removed page), and
+the notification names the pages: "/pricing, /contact and 2 more". Two checks
+in a row that both find changes are two notifications, even on the same pages;
+the alert of a check resolves at the next check. It reads
 `dumbmonit_webchange_last_check_changes`; attach it to a channel like any other
 rule, or raise its severity, in **Alerts → Rules**. See
 [Built-in rules](../alerting/rules.md#website-changes).
@@ -99,7 +134,7 @@ rule, or raise its severity, in **Alerts → Rules**. See
 |---|---|
 | `dumbmonit_webchange_pages` | Pages followed (removed pages excluded). |
 | `dumbmonit_webchange_pages_failed` | Pages followed whose last read failed. |
-| `dumbmonit_webchange_last_check_changes` | Changes found by the last check. |
+| `dumbmonit_webchange_last_check_changes` | Changes found by the last check; when there are some, the `changes` label lists the pages and `check` the time of the check. |
 
 The metrics appear once the first check is done.
 
@@ -143,7 +178,7 @@ sent.
 
 The text of each snapshot is kept in the database (1 MB at most per page);
 screenshots are files under `/data/webchange/<device id>/`. Per device, the
-last hundred changes are kept; a snapshot is kept while it is the latest of a
+last 500 changes are kept; a snapshot is kept while it is the latest of a
 page or a kept change refers to it, and everything else, files included, is
 removed after each check. Deleting the device removes all of it.
 
@@ -182,6 +217,11 @@ cannot go through a relay agent.
 | Max pages (`max_pages`) | `25` | Site scope: pages read at most per check, 1 to 200. |
 | Path prefix (`path_prefix`) | folder of the address | Site scope: only pages whose path starts with this (`/docs/`). |
 | Ignore lines (`ignore`) | — | Regular expressions; matching text lines are not compared. |
+| Watched area (`content_selector`) | — | Simple selectors; only the text inside them is compared. |
+| Excluded areas (`exclude_selector`) | — | Simple selectors; their text is not compared. |
+| Compare menus, header and footer (`keep_page_chrome`) | `false` | Compare the site's navigation, header, footer and sidebars too. |
+| Ignore query strings (`ignore_query`) | `false` | Site scope: addresses that differ only by their `?…` part are one page. |
+| User agent (`user_agent`) | — | Sent instead of `DumbMonit/<version>`. |
 | Screenshots (`screenshots`) | `true` | Keep a screenshot of each new version, when a browser is configured. |
 | Check every (`check_interval_minutes`) | `60` | Minutes between two checks, 5 to 10080. |
 | Accept an unverifiable certificate (`insecure_tls`) | `false` | For a site of your own behind a self-signed certificate. |

@@ -19,7 +19,7 @@ use dumbmonit_proto::TargetId;
 use sqlx::{FromRow, SqlitePool};
 
 /// Changements gardés par cible.
-pub const KEEP_CHANGES: i64 = 100;
+pub const KEEP_CHANGES: i64 = 500;
 /// Texte gardé au plus par instantané, en octets.
 const MAX_CONTENT_BYTES: usize = 1024 * 1024;
 /// Un verrou plus vieux que ceci est celui d'une vérification interrompue.
@@ -54,12 +54,16 @@ pub struct State {
     pub last_check_changes: i64,
     pub last_error: Option<String>,
     pub last_error_kind: Option<String>,
+    /// Pages changées par la dernière vérification, résumées.
+    pub last_check_summary: Option<String>,
+    /// Pages trouvées quand « Max pages » a arrêté le dernier parcours.
+    pub last_check_found: Option<i64>,
 }
 
 pub async fn state(pool: &SqlitePool, target: TargetId) -> Result<Option<State>> {
     sqlx::query_as(
         "SELECT fingerprint, running_since, last_check_at, last_check_changes, last_error,
-                last_error_kind
+                last_error_kind, last_check_summary, last_check_found
          FROM webchange_state WHERE target_id = ?",
     )
     .bind(target)
@@ -126,16 +130,20 @@ pub async fn finish_ok(
     target: TargetId,
     fingerprint: &str,
     changes: i64,
+    summary: Option<&str>,
+    found: Option<i64>,
     error: Option<(&str, &str)>,
 ) -> Result<()> {
     sqlx::query(
         "UPDATE webchange_state
          SET fingerprint = ?, last_check_at = datetime('now'), last_check_changes = ?,
-             last_error = ?, last_error_kind = ?
+             last_check_summary = ?, last_check_found = ?, last_error = ?, last_error_kind = ?
          WHERE target_id = ?",
     )
     .bind(fingerprint)
     .bind(changes)
+    .bind(summary)
+    .bind(found)
     .bind(error.map(|(_, message)| message))
     .bind(error.map(|(kind, _)| kind))
     .bind(target)
@@ -155,7 +163,7 @@ pub async fn finish_failed(
 ) -> Result<()> {
     sqlx::query(
         "UPDATE webchange_state
-         SET last_check_at = datetime('now'), last_check_changes = 0,
+         SET last_check_at = datetime('now'), last_check_changes = 0, last_check_summary = NULL,
              last_error = ?, last_error_kind = ?
          WHERE target_id = ?",
     )
@@ -367,6 +375,8 @@ pub struct NewChange<'a> {
     pub removed: i64,
     pub before: Option<i64>,
     pub after: Option<i64>,
+    /// Empreinte des lignes retirées et ajoutées (voir la migration 0051).
+    pub signature: Option<&'a str>,
 }
 
 pub async fn insert_change(
@@ -376,8 +386,8 @@ pub async fn insert_change(
 ) -> Result<()> {
     sqlx::query(
         "INSERT INTO webchange_changes
-            (target_id, url, kind, added, removed, before_snapshot, after_snapshot)
-         VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (target_id, url, kind, added, removed, before_snapshot, after_snapshot, signature)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(target)
     .bind(change.url)
@@ -386,6 +396,7 @@ pub async fn insert_change(
     .bind(change.removed)
     .bind(change.before)
     .bind(change.after)
+    .bind(change.signature)
     .execute(pool)
     .await
     .context("enregistrement d'un changement")?;
@@ -402,6 +413,7 @@ pub struct ChangeRow {
     pub removed: i64,
     pub before_snapshot: Option<i64>,
     pub after_snapshot: Option<i64>,
+    pub signature: Option<String>,
 }
 
 /// Colonnes d'un changement. Une macro plutôt qu'une constante : `sqlx` 0.9
@@ -409,7 +421,7 @@ pub struct ChangeRow {
 /// littéraux.
 macro_rules! change_columns {
     () => {
-        "id, url, kind, detected_at, added, removed, before_snapshot, after_snapshot"
+        "id, url, kind, detected_at, added, removed, before_snapshot, after_snapshot, signature"
     };
 }
 
