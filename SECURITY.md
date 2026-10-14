@@ -19,8 +19,9 @@ in the next tagged release and in the `edge` image.
 
 **Please do not open a public issue for a security problem.**
 
-Report it privately through GitHub's vulnerability reporting:
-**https://github.com/laupernoe/dumbmonit/security/advisories/new**
+Report it privately through GitHub's private vulnerability reporting: open the
+repository's **Security** tab, then **Report a vulnerability**
+(**https://github.com/laupernoe/dumbmonit/security/advisories/new**).
 
 Include what you can of: the affected component (see the scope below), steps to
 reproduce or a proof of concept, the impact as you understand it, and the
@@ -34,7 +35,10 @@ unless you prefer not to be.
 - A first assessment (confirmed / not a vulnerability / need more information)
   within **14 days**.
 - A fix on `main` as soon as it is ready, a tagged release, and a published
-  advisory. For confirmed issues we aim for a fix within 90 days and usually
+  advisory (with a CVE or GHSA identifier). Fixed vulnerabilities are listed in
+  the release notes, and the reporter is credited unless they prefer not to be.
+  Disclosure is coordinated: the advisory stays private until a fix is
+  released. For confirmed issues we aim for a fix within 90 days and usually
   much sooner: this is a small codebase.
 
 This is a volunteer-maintained project; there is no bug bounty.
