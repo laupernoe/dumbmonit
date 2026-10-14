@@ -373,7 +373,7 @@
 			<details class={`group ${changedRows.length > 0 ? 'mt-1 border-t border-line pt-1' : ''}`} open={changedRows.length === 0 || needle !== ''}>
 				<summary class="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] font-semibold text-ink-2 select-none hover:bg-surface-2">
 					<ChevronDown class="size-3.5 -rotate-90 transition-transform group-open:rotate-0" aria-hidden="true" />
-					{m.devicesb_webchange_list_quiet({ count: quiet.length })}
+					{(quiet.length === 1 ? m.devicesb_webchange_list_quiet_one : m.devicesb_webchange_list_quiet_other)({ count: quiet.length })}
 				</summary>
 				<ul class="divide-y divide-line/60">
 					{#each quiet as page (page.url)}

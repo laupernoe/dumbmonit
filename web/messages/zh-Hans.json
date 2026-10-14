@@ -3034,7 +3034,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} 行未更改",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} 行未更改",
 	"devicesb_webchange_list_earlier": "以往的变更（{count}）",
-	"devicesb_webchange_list_quiet": "{count} 个页面无变化",
+	"devicesb_webchange_list_quiet_one": "1 个页面无变化",
+	"devicesb_webchange_list_quiet_other": "{count} 个页面无变化",
 	"devicesb_webchange_list_screenshots": "{path} 的截图",
 	"devicesb_webchange_pages_empty": "尚未监控任何页面。",
 	"devicesb_webchange_pages_empty_hint": "首次探测时会将设备地址作为基准进行检查。",
@@ -5989,5 +5990,10 @@
 	"website_sitemap_ok": "可访问",
 	"website_status": "状态",
 	"website_unknown": "尚未检查",
-	"website_value_empty": "（无）"
+	"website_value_empty": "（无）",
+	"whatsnew_dialog_close": "关闭新功能窗口",
+	"whatsnew_dialog_notes": "完整发行说明",
+	"whatsnew_dialog_ok": "知道了",
+	"whatsnew_dialog_title": "v{version} 新功能",
+	"whatsnew_dialog_updated": "更新于 · {date}"
 }
