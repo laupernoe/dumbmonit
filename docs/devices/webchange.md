@@ -98,6 +98,9 @@ When one check finds the **same change on several pages** (the same lines
 removed and added, such as a banner), the device page shows it once, with the
 pages it was made on.
 
+In the diff, a replaced line shows which words changed: underlined on the added
+side, struck through on the removed side.
+
 ### Ignore lines
 
 Lines that change at every visit — a clock, a visitor counter, "updated 5

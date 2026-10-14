@@ -119,6 +119,12 @@ struct ChangesQuery {
     url: Option<String>,
     #[serde(default)]
     limit: Option<i64>,
+    /// `changed`, `new_page` ou `removed_page`.
+    #[serde(default)]
+    kind: Option<String>,
+    /// Identifiant du dernier changement déjà reçu : la suite de la liste.
+    #[serde(default)]
+    before: Option<i64>,
 }
 
 /// `GET /api/targets/{id}/webchange/pages`
@@ -146,7 +152,7 @@ async fn pages(
     Ok(Json(PagesView { screenshots_available, found, pages }))
 }
 
-/// `GET /api/targets/{id}/webchange/changes?url=…&limit=…`
+/// `GET /api/targets/{id}/webchange/changes?url=…&kind=…&before=…&limit=…`
 async fn changes(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
@@ -155,7 +161,16 @@ async fn changes(
     load(&state, id).await?;
     let limit = query.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
     let url = query.url.as_deref().map(str::trim).filter(|url| !url.is_empty());
-    let rows = store::changes(&state.pool, id, url, limit).await?;
+    let kind = query.kind.as_deref().map(str::trim).filter(|kind| !kind.is_empty());
+    if let Some(kind) = kind
+        && !matches!(kind, "changed" | "new_page" | "removed_page")
+    {
+        return Err(ApiError::BadRequest(format!(
+            "unknown change kind \"{kind}\": changed, new_page or removed_page"
+        )));
+    }
+    let filter = store::ChangesFilter { url, kind, before: query.before };
+    let rows = store::changes(&state.pool, id, filter, limit).await?;
     Ok(Json(rows.into_iter().map(ChangeView::from).collect()))
 }
 
