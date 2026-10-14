@@ -3078,7 +3078,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} строка без изменений",
 	"devicesb_webchange_diff_skip_other": "⋯ строк без изменений: {count}",
 	"devicesb_webchange_list_earlier": "Предыдущие изменения ({count})",
-	"devicesb_webchange_list_quiet": "Страниц без изменений: {count}",
+	"devicesb_webchange_list_quiet_one": "Страниц без изменений: 1",
+	"devicesb_webchange_list_quiet_other": "Страниц без изменений: {count}",
 	"devicesb_webchange_list_screenshots": "Скриншоты {path}",
 	"devicesb_webchange_pages_empty": "Пока не отслеживается ни одна страница.",
 	"devicesb_webchange_pages_empty_hint": "Адрес устройства проверяется как эталон при первом опросе.",
@@ -6280,5 +6281,10 @@
 	"website_sitemap_ok": "Доступна",
 	"website_status": "Статус",
 	"website_unknown": "Ещё не проверялось",
-	"website_value_empty": "(нет)"
+	"website_value_empty": "(нет)",
+	"whatsnew_dialog_close": "Закрыть «Что нового»",
+	"whatsnew_dialog_notes": "Полные примечания к выпуску",
+	"whatsnew_dialog_ok": "Понятно",
+	"whatsnew_dialog_title": "Что нового в v{version}",
+	"whatsnew_dialog_updated": "Обновлено · {date}"
 }

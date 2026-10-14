@@ -23,6 +23,16 @@ All notable changes to this project are documented here. The format follows
   rules: a crashed domain, a pool almost full. See
   [the agent page](docs/devices/agent.md#kvm-virtual-machines-through-libvirt).
 
+### Security
+
+- **Bundled VictoriaMetrics 1.153.0 → 1.154.0.** Built with Go 1.27.2 and
+  `golang.org/x/net` 0.60.0, which fix CVE-2026-97031, CVE-2026-78667 and
+  CVE-2026-78669 (all high) in the binary shipped in the image. No change to the
+  flags or query parameters the server uses.
+- **rustls 0.23.46** (RUSTSEC-2026-0346 to RUSTSEC-2026-0349: TLS secrets in
+  `Debug` output, ECH rejection data leak, Brotli decompression allocation,
+  key-exchange downgrade).
+
 ## 0.1.0-alpha.8 — 2026-10-14
 
 ### Added

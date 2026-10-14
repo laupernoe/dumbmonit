@@ -97,7 +97,7 @@
 	{/if}
 	<button
 		type="button"
-		class="flex min-w-0 flex-1 items-center gap-2 text-left"
+		class="flex min-h-10 min-w-0 flex-1 items-center gap-2 text-left"
 		onclick={ontoggle}
 		ondblclick={() => {
 			if (canManage) startRename();
@@ -142,7 +142,7 @@
 			{#snippet trigger({ toggle, open })}
 				<button
 					type="button"
-					class="-my-1.5 rounded-md p-2.5 text-ink-3 hover:bg-surface-2 hover:text-ink"
+					class="-my-2 rounded-md p-3 sm:p-2.5 sm:-my-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink"
 					onclick={toggle}
 					aria-haspopup="menu"
 					aria-expanded={open}
