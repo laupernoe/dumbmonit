@@ -20,6 +20,7 @@ DumbMonit называет *устройством* (в API — *target*) всё
 | [pfSense](pfsense.md) | `pfsense` | ключ REST API (пользователь только для чтения) | Межсетевой экран: шлюзы недоступны или с потерями, интерфейсы без линка, остановленные службы |
 | [FortiGate](fortigate.md) | `fortigate` | токен REST API (профиль только для чтения, trusted host) | Межсетевой экран: туннели IPsec, линки, синхронизация HA, conserve mode, лицензии FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | имя пользователя/пароль (профиль только для чтения) | Межсетевой экран: только линки интерфейсов (XML API не раскрывает состояние туннелей, HA и лицензий) |
+| [Сервер OpenVPN](openvpn.md) | `openvpn` | нет или пароль управления | Сервер OpenVPN через интерфейс управления: версия, состояние, подключённые клиенты |
 | [UniFi Network](unifi.md) | `unifi` | ключ API или имя пользователя/пароль | Консоль UniFi или собственный сервер: устройства, WAN, клиенты |
 | [Home Assistant](homeassistant.md) | `homeassistant` | долгоживущий токен доступа | Умный дом: недоступные сущности, низкий заряд батарей, обновления, ремонты |
 | [TrueNAS](truenas.md) | `truenas` | ключ API | Сервер хранения ZFS (SCALE, Community Edition) |

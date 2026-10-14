@@ -104,6 +104,28 @@
 |---|---|---|---|---|---|
 | WireGuard peer silent | Peer с persistent keepalive не завершал handshake более 15 минут: туннель не работает (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Peer, который никогда не подключался, отсчитывает свою тишину с момента, когда агент впервые его увидел. Peer без keepalive (телефон, ноутбук) простаивают днями и исключены; измените порог, чтобы изменить N, или уберите часть `and on …`, чтобы следить за каждым peer. | > 15 мин | 5 мин | Advisory (`warning`) | 6 ч |
 
+### Туннели IPsec {#ipsec-tunnels}
+
+Сообщаются агентом; см. [Агент](../devices/agent.md#ipsec-tunnels). Ряд
+существует только для CHILD_SA, объявленного в конфигурации strongSwan, поэтому
+правило срабатывает и на туннеле, который так и не поднялся, а не только на оборвавшемся.
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| IPsec tunnel down | У настроенного туннеля IPsec нет установленной сессии (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 мин | Advisory (`warning`) | 6 ч |
+
+### Тест скорости Интернета {#internet-speed-test}
+
+Сообщается агентом; см. [Агент](../devices/agent.md#internet-speed-test).
+Тест по умолчанию выключен, и каждое правило молчит, пока в `agent.yaml` не задан
+соответствующий порог: никто не может угадать, что значит «медленно» для вашего канала.
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| Internet download rate low | Последний тест показал скорость загрузки ниже `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 мин | Advisory (`warning`) | 24 ч |
+| Internet upload rate low | То же, для `speedtest_min_upload_mbps`. | > 0 | 10 мин | Advisory (`warning`) | 24 ч |
+| Internet latency high | Последний тест показал задержку выше `speedtest_max_latency_ms`. | > 0 | 10 мин | Advisory (`warning`) | 24 ч |
+
 ### Диски агента, ZFS и датчики
 
 Сообщаются агентом; см. [Агент](../devices/agent.md).

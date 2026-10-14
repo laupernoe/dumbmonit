@@ -99,6 +99,30 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md#wireguard-tunnels).
 |---|---|---|---|---|---|
 | WireGuard-Peer still | Ein Peer mit persistentem Keepalive hat seit mehr als 15 Minuten keinen Handshake abgeschlossen: Der Tunnel ist unten (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Bei einem Peer, der nie verbunden war, zählt die Stille ab dem Moment, in dem der Agent ihn zum ersten Mal sah. Peers ohne Keepalive (ein Smartphone, ein Laptop) ruhen tagelang und bleiben außen vor; ändern Sie die Schwelle, um N zu ändern, oder streichen Sie den Teil `and on …`, um jeden Peer zu überwachen. | > 15 Min. | 5 Min. | Hinweis (`warning`) | 6 h |
 
+### IPsec-Tunnel {#ipsec-tunnels}
+
+Vom Agenten gemeldet; siehe [Agent](../devices/agent.md#ipsec-tunnels). Die
+Serie existiert nur für eine in der strongSwan-Konfiguration deklarierte
+CHILD_SA, sodass die Regel auch bei einem Tunnel auslöst, der nie oben war,
+nicht nur bei einem, der abgebrochen ist.
+
+| Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
+|---|---|---|---|---|---|
+| IPsec-Tunnel ausgefallen | Ein konfigurierter IPsec-Tunnel hat keine installierte Sitzung (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 Min. | Hinweis (`warning`) | 6 h |
+
+### Internet-Speedtest {#internet-speed-test}
+
+Vom Agenten gemeldet; siehe [Agent](../devices/agent.md#internet-speed-test).
+Der Test ist standardmäßig aus, und jede Regel bleibt still, bis die
+passende Schwelle in `agent.yaml` gesetzt ist: Niemand kann erraten, was
+"langsam" für Ihre Leitung bedeutet.
+
+| Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
+|---|---|---|---|---|---|
+| Internet-Downloadrate niedrig | Der letzte Test maß eine Downloadrate unter `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 Min. | Hinweis (`warning`) | 24 h |
+| Internet-Uploadrate niedrig | Dasselbe für `speedtest_min_upload_mbps`. | > 0 | 10 Min. | Hinweis (`warning`) | 24 h |
+| Internet-Latenz hoch | Der letzte Test maß eine Latenz über `speedtest_max_latency_ms`. | > 0 | 10 Min. | Hinweis (`warning`) | 24 h |
+
 ### Agent-Platten, ZFS und Sensoren {#agent-disks-zfs-and-sensors}
 
 Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).

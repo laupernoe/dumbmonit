@@ -17,6 +17,7 @@ DumbMonit chiama tutto quello che controlla un *dispositivo* (l'API dice *target
 | [pfSense](pfsense.md) | `pfsense` | chiave API REST (utente di sola lettura) | Firewall: gateway giù o lossy, interfacce senza link, servizi arrestati |
 | [FortiGate](fortigate.md) | `fortigate` | token API REST (profilo di sola lettura, host attendibile) | Firewall: tunnel IPsec, link, sincronizzazione HA, modalità conservare, licenze FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | nome utente/password (profilo di sola lettura) | Firewall: link di interfaccia solo (l'API XML non espone nessun tunnel, HA o stato della licenza) |
+| [Server OpenVPN](openvpn.md) | `openvpn` | nessuna, o password di gestione | Server OpenVPN tramite la sua management interface: versione, stato, client connessi |
 | [UniFi Network](unifi.md) | `unifi` | chiave API o nome utente/password | Console UniFi o server auto-ospitato: dispositivi, WAN, client |
 | [Home Assistant](homeassistant.md) | `homeassistant` | token di accesso di lunga durata | Casa intelligente: entità non disponibili, batterie basse, aggiornamenti, riparazioni |
 | [TrueNAS](truenas.md) | `truenas` | chiave API | Server di archiviazione ZFS (SCALE, Community Edition) |

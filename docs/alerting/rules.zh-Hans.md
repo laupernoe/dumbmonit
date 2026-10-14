@@ -100,6 +100,24 @@
 |---|---|---|---|---|---|
 | WireGuard 对等点沉默 | 持久保活的对等点在 15 分钟内未完成握手:隧道关闭(`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`)。从代理首次看到它的时刻计算从未连接过的对等点的沉默。没有保活的对等点(电话、笔记本电脑)闲置数天并被遗漏;改变阈值改变 N,或丢弃`and on …`部分监视每个对等点。 | > 15 分钟 | 5 分钟 | 通知 (`warning`) | 6 小时 |
 
+### IPsec 隧道 {#ipsec-tunnels}
+
+由代理报告;见[代理](../devices/agent.md#ipsec-tunnels)。该系列仅对在 strongSwan 配置中声明的 CHILD_SA 存在,因此该规则不仅对中断的隧道触发,也对从未建立的隧道触发。
+
+| 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| IPsec 隧道宕机 | 已配置的 IPsec 隧道没有已安装的会话(`dumbmonit_agent_ipsec_tunnel_up < 1`)。 | < 1 | 10 分钟 | 通知 (`warning`) | 6 小时 |
+
+### 互联网速度测试 {#internet-speed-test}
+
+由代理报告;见[代理](../devices/agent.md#internet-speed-test)。该测试默认关闭,在 `agent.yaml` 中设置相应阈值之前,每条规则都保持沉默:没有人能猜出"慢"对您的线路意味着什么。
+
+| 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| 互联网下载速率低 | 最近一次测试测得的下载速率低于 `speedtest_min_download_mbps`(`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`)。 | > 0 | 10 分钟 | 通知 (`warning`) | 24 小时 |
+| 互联网上传速率低 | 同上,针对 `speedtest_min_upload_mbps`。 | > 0 | 10 分钟 | 通知 (`warning`) | 24 小时 |
+| 互联网延迟高 | 最近一次测试测得的延迟高于 `speedtest_max_latency_ms`。 | > 0 | 10 分钟 | 通知 (`warning`) | 24 小时 |
+
 ### 代理磁盘、ZFS 和传感器 {#agent-disks-zfs-and-sensors}
 
 由代理报告;见[代理](../devices/agent.md)。
