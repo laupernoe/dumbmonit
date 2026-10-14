@@ -3487,6 +3487,8 @@
 	"misc_nav_docs": "文档",
 	"misc_nav_docs_sr": "文档，在新标签页打开",
 	"misc_nav_docs_title": "文档（在新标签页打开）",
+	"misc_nav_github": "GitHub，在新标签页中打开",
+	"misc_nav_github_title": "GitHub 上的源代码（新标签页）",
 	"misc_nav_home": "DumbMonit，概览",
 	"misc_nav_main": "主导航",
 	"misc_nav_overview": "概览",

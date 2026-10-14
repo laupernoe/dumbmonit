@@ -3589,6 +3589,8 @@
 	"misc_nav_docs": "Документация",
 	"misc_nav_docs_sr": "Документация, откроется в новой вкладке",
 	"misc_nav_docs_title": "Документация (откроется в новой вкладке)",
+	"misc_nav_github": "GitHub, откроется в новой вкладке",
+	"misc_nav_github_title": "Исходный код на GitHub (новая вкладка)",
 	"misc_nav_home": "DumbMonit, обзор",
 	"misc_nav_main": "Главное",
 	"misc_nav_overview": "Обзор",
