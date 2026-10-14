@@ -444,23 +444,39 @@ macro_rules! change_columns {
     };
 }
 
+/// Ce qui restreint une lecture des changements.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ChangesFilter<'a> {
+    /// Une page seulement.
+    pub url: Option<&'a str>,
+    /// Un type seulement (`changed`, `new_page`, `removed_page`).
+    pub kind: Option<&'a str>,
+    /// Plus anciens que ce changement : la page suivante d'une liste.
+    pub before: Option<i64>,
+}
+
 /// Changements de la cible, du plus récent au plus ancien.
 pub async fn changes(
     pool: &SqlitePool,
     target: TargetId,
-    url: Option<&str>,
+    filter: ChangesFilter<'_>,
     limit: i64,
 ) -> Result<Vec<ChangeRow>> {
     sqlx::query_as(concat!(
         "SELECT ",
         change_columns!(),
         " FROM webchange_changes
-         WHERE target_id = ? AND (? IS NULL OR url = ?)
+         WHERE target_id = ? AND (? IS NULL OR url = ?) AND (? IS NULL OR kind = ?)
+           AND (? IS NULL OR id < ?)
          ORDER BY id DESC LIMIT ?"
     ))
     .bind(target)
-    .bind(url)
-    .bind(url)
+    .bind(filter.url)
+    .bind(filter.url)
+    .bind(filter.kind)
+    .bind(filter.kind)
+    .bind(filter.before)
+    .bind(filter.before)
     .bind(limit)
     .fetch_all(pool)
     .await
