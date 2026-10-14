@@ -53,7 +53,7 @@ pub struct Manifest {
     pub rules: Vec<RuleSpec>,
     /// Profils SNMP, repris tels quels du format de `profiles/*.yaml`.
     #[serde(default)]
-    pub snmp_profiles: Vec<serde_yaml_ng::Value>,
+    pub snmp_profiles: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]

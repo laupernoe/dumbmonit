@@ -339,7 +339,7 @@ impl Config {
     /// « tout est dans l'environnement », typique d'un déploiement en conteneur.
     pub fn load(path: &Path) -> Result<Self> {
         let file = match std::fs::read_to_string(path) {
-            Ok(text) => serde_yaml_ng::from_str::<FileConfig>(&text)
+            Ok(text) => dumbmonit_collectors::yaml::from_str::<FileConfig>(&text)
                 .with_context(|| format!("unreadable configuration file: {}", path.display()))?,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => FileConfig::default(),
             Err(error) => {
@@ -1041,7 +1041,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert_eq!(config.probe.interfaces_ignore.source(), ["^veth", "wlan0"]);
@@ -1065,7 +1065,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(
             file,
@@ -1091,7 +1091,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert!(config.probe.interfaces_ignore.is_empty());
@@ -1116,7 +1116,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let error = Config::merge(file, env(&[])).expect_err("expression invalide").to_string();
         assert!(error.contains("mounts_ignore"), "{error}");
@@ -1158,7 +1158,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert!(config.plakar.enabled, "la détection est active par défaut");
@@ -1180,7 +1180,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str("plakar: false\n").expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str("plakar: false\n").expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert!(!config.plakar.enabled);
@@ -1218,7 +1218,7 @@ docker_max_containers: 20
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert!(!config.sensors);
@@ -1347,7 +1347,7 @@ system_health:
   check_updates: false
   updates_interval_secs: 900
 "#;
-        let file: FileConfig = serde_yaml_ng::from_str(yaml).expect("YAML valide");
+        let file: FileConfig = dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide");
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert_eq!(config.interval, Duration::from_secs(15));
         assert_eq!(config.services, vec!["sshd", "nginx"]);
@@ -1397,7 +1397,7 @@ system_health:
         let file = FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
         let config = Config::merge(file, env(&[])).expect("configuration");
         assert_eq!(config.system_health.updates_interval, Duration::from_secs(1800));
@@ -1415,7 +1415,7 @@ system_health:
         FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }
     }
 
@@ -1521,7 +1521,7 @@ borg_repos:
     glob_archives: "web-01-*"
 backup_repos_interval_secs: 900
 "#;
-        let file: FileConfig = serde_yaml_ng::from_str(yaml).expect("yaml");
+        let file: FileConfig = dumbmonit_collectors::yaml::from_str(yaml).expect("yaml");
         let config = Config::merge(file, env(&[("DUMBMONIT_AGENT_BORG_BIN", "/opt/borg")]))
             .expect("configuration");
         let repos = &config.backup_repos.repos;
@@ -1544,17 +1544,17 @@ backup_repos_interval_secs: 900
 
     #[test]
     fn a_repository_entry_must_be_complete_and_unique() {
-        let missing: FileConfig = serde_yaml_ng::from_str(
+        let missing: FileConfig = dumbmonit_collectors::yaml::from_str(
             "server_url: http://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
         )
         .expect("yaml");
         assert!(Config::merge(missing, env(&[])).is_err());
-        let twice: FileConfig = serde_yaml_ng::from_str(
+        let twice: FileConfig = dumbmonit_collectors::yaml::from_str(
             "server_url: http://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
         )
         .expect("yaml");
         assert!(Config::merge(twice, env(&[])).is_err());
-        let too_fast: FileConfig = serde_yaml_ng::from_str(
+        let too_fast: FileConfig = dumbmonit_collectors::yaml::from_str(
             "server_url: http://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
         )
         .expect("yaml");
@@ -1583,7 +1583,7 @@ backup_repos_interval_secs: 900
         FileConfig {
             server_url: Some("http://s:8080".into()),
             token: Some("dmon_abc".into()),
-            ..serde_yaml_ng::from_str(yaml).expect("YAML valide")
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }
     }
 
