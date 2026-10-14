@@ -168,7 +168,7 @@ pub(crate) fn compile(yaml: &str) -> Result<Pack, PackError> {
             )],
         });
     }
-    let manifest: Manifest = serde_yaml_ng::from_str(yaml)
+    let manifest: Manifest = dumbmonit_collectors::yaml::from_str(yaml)
         .map_err(|error| PackError { errors: vec![format!("invalid YAML: {error}")] })?;
     let mut problems = Problems::default();
 
@@ -779,7 +779,8 @@ fn snmp_profiles(
     let mut profiles = Vec::new();
     for (index, value) in manifest.snmp_profiles.iter().enumerate() {
         let at = format!("snmp_profiles[{index}]");
-        let source = match serde_yaml_ng::to_string(value) {
+        // Du JSON, que le lecteur YAML lit tel quel : YAML 1.2 en est un sur-ensemble.
+        let source = match serde_json::to_string(value) {
             Ok(source) => source,
             Err(error) => {
                 problems.error(&at, error);
