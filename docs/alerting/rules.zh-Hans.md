@@ -54,7 +54,7 @@
 | 服务关闭 | 服务在三分钟内没有正确响应(`dumbmonit_probe_success{probe!="push"} == bool 0`)。 | > 0 | 3 分钟 | 警告 (`critical`) | 30 分钟 |
 | 心跳错过 | 工作在其预期间隔加宽限期内没有调用,或报告了故障本身(`dumbmonit_probe_success{probe="push"} == bool 0`;延迟按设备设置,见[心跳](../devices/push.md))。 | > 0 | 2 分钟 | 通知 (`warning`) | 6 小时 |
 | 服务飘动 | 服务在 30 分钟内改变状态超过 6 次(`changes(dumbmonit_probe_success{probe!="push"}[30m])`)。 | > 6 | 5 分钟 | 通知 (`warning`) | 1 小时 |
-| 缓慢服务 | 服务需要超过三秒来响应。 | > 3 秒 | 10 分钟 | 通知 (`warning`) | 6 小时 |
+| 缓慢服务 | 服务需要超过三秒来响应;失败的检查不计入(`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`)。 | > 3 秒 | 10 分钟 | 通知 (`warning`) | 6 小时 |
 | 证书即将过期 | 证书在少于 14 天内过期。 | < 14 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
 | 证书已过期 | 证书已过期。 | < 0 天 | 5 分钟 | 警告 (`critical`) | 24 小时 |
 
@@ -65,8 +65,8 @@
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| 容器停止 | 容器已停止两分钟(`dumbmonit_container_up == bool 0`)。 | > 0 | 2 分钟 | 通知 (`warning`) | 1 小时 |
-| 容器不健康 | 容器的健康检查已失败三分钟(`dumbmonit_container_health == 2`;0 无,1 健康,3 启动中)。 | > 0 | 3 分钟 | 通知 (`warning`) | 1 小时 |
+| 容器停止 | 容器已停止两分钟(`dumbmonit_container_up == bool 0`)。Docker 不会重启的容器不计入(`dumbmonit_container_stop_expected = 1`):已结束的一次性 `docker run`、从未启动过的容器,或没有重启策略而被手动停止的容器。崩溃(任何其他退出码)、内存不足被终止,或 `always` / `unless-stopped` 容器仍会计入。 | > 0 | 2 分钟 | 通知 (`warning`) | 1 小时 |
+| 容器不健康 | 容器的健康检查已失败三分钟(`dumbmonit_container_health == 2`;0 无,1 健康,3 启动中)。已停止的容器不计入:Docker 保留其最后的结论,而它已不再有意义。 | > 0 | 3 分钟 | 通知 (`warning`) | 1 小时 |
 | 容器重启中 | 容器在 15 分钟内重启 3 次或更多(`increase(dumbmonit_container_restart_count[15m])`):`它很少停止足够长的时间让前一个规则通过。 | ≥ 3 | 1 分钟 | 通知 (`warning`) | 1 小时 |
 | 容器更新可用 | 此容器的注册表中有更新的镜像(`dumbmonit_container_update_available == 1`)。 | > 0 | 1 小时 | 信息 (`info`) | 24 小时 |
 
@@ -78,7 +78,8 @@
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | Plakar 备份太旧 | 此源没有新的 Plakar 快照超过两天(`dumbmonit_backup_last_success_seconds`)。 | > 2 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
-| Plakar 备份失败 | 最新的快照有错误,或 kloset 无法读取(`dumbmonit_backup_last_status < 1`)。 | < 1 | 10 分钟 | 警告 (`critical`) | 24 小时 |
+| Plakar 备份失败 | 最新的快照有错误(`dumbmonit_backup_last_status{source!="*"} < 1`)。 | < 1 | 10 分钟 | 警告 (`critical`) | 24 小时 |
+| Plakar kloset 无法读取 | 代理无法打开 kloset:存储不可达、缺少口令或插件;代理的日志会说明是哪一种,仅一次(`dumbmonit_backup_last_status{source="*"} < 1`)。 | < 1 | 30 分钟 | 通知 (`warning`) | 24 小时 |
 
 ### restic 和 Borg 备份 {#restic-and-borg-backups}
 
@@ -276,7 +277,7 @@ VictoriaMetrics、VictoriaLogs、Loki 和 Graylog([设备](../devices/victoriame
 | 度量或日志存储几乎只读 | 少于 10% 磁盘左在只读前(`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`);在 12% 上清除。 | < 10 % | 30 分钟 | 通知 (`warning`) | 24 小时 |
 | 度量或日志服务器不健康 | `/health`不应答 OK(`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`)。 | < 1 | 3 分钟 | 警告 (`critical`) | 6 小时 |
 | 度量或日志数据被拒绝 | 样本或日志行在最后一小时被拒绝:时间戳在保留之外,标签太长,系列限制(`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
-| VictoriaMetrics 缓慢插入 | 超过 5% 新样本在 15 分钟内走了缓慢路径:没有足够内存对活跃系列(`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`);在 3% 下清除。 | > 5 % | 30 分钟 | 通知 (`warning`) | 24 小时 |
+| VictoriaMetrics 缓慢插入 | 超过 5% 新样本在 15 分钟内走了缓慢路径:没有足够内存对活跃系列(`(100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) and on (target) dumbmonit_victoriametrics_uptime_seconds > 900`);在 3% 下清除。只有在服务器运行满 15 分钟后才会判断,因此重启(缓存变冷、计数器在窗口内归零)不会让它一直处于待定状态。 | > 5 % | 30 分钟 | 通知 (`warning`) | 24 小时 |
 | Loki 未就绪 | `/ready`不应答就绪(`dumbmonit_loki_ready`)。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | Loki 拒绝日志行 | 行在最后一小时被拒绝:太旧,速率或流限制,行太长(`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
 | Loki 无法刷新到存储 | 块未能在最后 30 分钟到达存储;如果 Loki 重启它们丢失(`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`)。 | > 0 | 10 分钟 | 警告 (`critical`) | 1 小时 |
@@ -489,7 +490,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| 网站已变化 | 对被监视页面或站点的上一次检查发现有页面变化、出现或消失(`dumbmonit_webchange_last_check_changes`)。在下一次未发现变化的检查时解决。 | > 0 | 30 秒 | 信息 (`info`) | 无 |
+| 网站已变化 | 对被监视页面或站点的一次检查发现有页面变化、出现或消失(`dumbmonit_webchange_last_check_changes`)。每次这样的检查都会发出通知并列出这些页面,触发期间属于同一条告警;在第一次未发现新内容的检查时解决。 | > 0 | 30 秒 | 信息 (`info`) | 无 |
 
 ### Kubernetes {#kubernetes}
 
@@ -499,7 +500,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 |---|---|---|---|---|---|
 | Kubernetes 节点未就绪 | 节点不是 Ready:其 kubelet 不再汇报,其 Pod 将被驱逐(`dumbmonit_k8s_node_ready == bool 0`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | Kubernetes 节点承压 | 节点报告内存、磁盘或 PID 压力(`dumbmonit_k8s_node_pressure`,标签 `condition`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
-| Kubernetes Pod 崩溃循环 | 容器处于 `CrashLoopBackOff`(`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`:每次重启尝试时该状态会短暂消失)。 | > 0 | 10 分钟 | 警告 (`critical`) | 6 小时 |
+| Kubernetes Pod 崩溃循环 | 容器处于 `CrashLoopBackOff` 且仍在重启:15 分钟内至少重启两次(`max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2`;每次重启尝试时该状态会短暂消失)。因节点或运行时重启而被终止的容器(退出码 137、143 或 255,非 `OOMKilled`)不计入,因此重启机器不会看起来像崩溃循环。 | > 0 | 10 分钟 | 警告 (`critical`) | 6 小时 |
 | Kubernetes Pod 卡在 Pending | Pod 已 Pending 十五分钟:没有节点能接纳它,或它需要的卷或镜像迟迟未到(`dumbmonit_k8s_pod_pending`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | Kubernetes Pod 反复重启 | Pod 在最近一小时内重启超过五次,但不处于 `CrashLoopBackOff`(`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`)。 | > 5 | 5 分钟 | 通知 (`warning`) | 6 小时 |
 | Kubernetes 工作负载缺少副本 | Deployment、StatefulSet 或 DaemonSet 的可用副本少于所要求的(`dumbmonit_k8s_workload_unavailable`)。 | > 0 | 10 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |

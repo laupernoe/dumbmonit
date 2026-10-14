@@ -10,6 +10,79 @@ toccare la tua preferenza salvata.
 
 ![Modalità Wall](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Ogni problema a sinistra porta l'icona del prodotto del suo dispositivo (gli
+stessi simboli degli elenchi dei dispositivi). L'elenco non esce mai dal suo
+spazio: su uno schermo piccolo, o con molti problemi, i grandi riquadri si
+riducono a una riga ciascuno, poi si raccolgono in *E altri N*, invece di
+sovrapporsi ai dispositivi sottostanti.
+
+## Notizie sul wall
+
+Un amministratore può aggiungere al wall dei **titoli** e un **canale in
+diretta** in **Impostazioni → Notizie del wall**. Entrambi sono disattivati
+per impostazione predefinita.
+
+- **Banda dei titoli.** Una fascia lungo il bordo inferiore del wall fa
+  scorrere gli ultimi titoli, ciascuno con la sua fonte e la sua età, e si
+  aggiorna ogni cinque minuti. Con il *movimento ridotto* attivo nel sistema
+  del display, nulla scorre: un titolo alla volta compare e svanisce in
+  dissolvenza.
+- **Video in diretta.** Un canale in diretta senza audio in un riquadro, nella
+  colonna destra sotto l'orologio (o al centro della scena), piccolo, medio o
+  grande. Il riquadro si adatta allo spazio rimasto; non copre mai lo stato.
+
+È il server a leggere i feed, non il browser (i browser non possono leggere i
+feed di altri siti). Segue al massimo tre redirect, rifiuta gli indirizzi
+interni, rinuncia dopo otto secondi o 2 MB per feed, e mette in cache la
+risposta per cinque minuti per tutti i wall. Legge RSS 2.0, RSS 1.0 (RDF) e
+Atom.
+
+### Scegliere le fonti
+
+Scegli un **paese** (preselezionato dalla regione e dalla lingua del tuo
+browser), poi spunta le sue fonti: fino a otto feed in tutto. Per usare un
+altro feed, incolla il suo indirizzo RSS o Atom sotto **Aggiungi un feed
+personalizzato** e premi **Prova**: DumbMonit lo legge davvero e mostra
+l'ultimo titolo prima che tu lo aggiunga.
+
+Per il video, scegli uno dei canali del paese oppure **Un altro link…** e
+incolla un normale indirizzo YouTube, Dailymotion o Twitch (un video, una
+diretta, o la pagina `/live` di un canale YouTube); DumbMonit lo converte nel
+player incorporabile. Si possono mostrare solo questi tre player. Una diretta
+viene proposta come preset solo quando il canale ne ha una ufficiale e stabile.
+
+| Paese | Titoli | Video in diretta |
+|---|---|---|
+| Francia | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Svizzera | RTS Info, SRF News, Le Temps, NZZ | nessuno |
+| Belgio | RTBF, VRT NWS, La DH | nessuno |
+| Germania | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Regno Unito | BBC News, The Guardian | Sky News |
+| Stati Uniti | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Canada | Radio-Canada, CBC News | CBC News |
+| Spagna | RTVE, 20minutos, El País, El Mundo | nessuno |
+| Italia | ANSA, RaiNews | nessuno |
+| Portogallo | RTP Notícias, Público | nessuno |
+| Brasile | G1, Folha de S.Paulo | CNN Brasil |
+| Russia | Interfax, Meduza, Kommersant | nessuno |
+| Cina | CGTN, South China Morning Post, Xinhua | CGTN |
+| Internazionale | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+Il feed di BFM TV è `https://www.bfmtv.com/rss/news-24-7/`. L'elenco è stato
+verificato al momento della stesura; un sito può spostare il proprio feed in
+qualsiasi momento, e allora la banda lo salta semplicemente. Usa **Prova** per
+il sostituto e aggiungilo come feed personalizzato.
+
+La content security policy del wall consente alla pagina di incorporare solo i
+player di YouTube (`youtube-nocookie.com`), Dailymotion, Twitch, Spotify e
+Deezer.
+
+### API
+
+`GET /api/wall/news` (ciò che interrogano i wall), `GET|PUT
+/api/wall/news/settings` e `POST /api/wall/news/test` (admin), `GET
+/api/wall/news/presets`.
+
 ## Musica sul wall
 
 Il wall può anche riprodurre musica e mostrare cosa sta suonando, così
