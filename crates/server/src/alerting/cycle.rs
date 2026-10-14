@@ -106,6 +106,31 @@ pub struct CycleInput {
     /// acquittement, l'alerte part aussi sur le canal d'escalade. `None` quand
     /// l'instance n'en a pas configuré, et c'est le cas par défaut.
     pub unacked_after: Option<std::time::Duration>,
+    /// Faits nouveaux survenus sur une alerte qui reste active, par règle
+    /// (`uid`) et par cible : voir [`Occurrence`].
+    pub occurrences: HashMap<(String, TargetId), Occurrence>,
+}
+
+/// Le dernier fait qu'une alerte « événement » a constaté.
+///
+/// Certaines règles ne mesurent pas un état mais comptent des faits : « la
+/// dernière vérification du site a trouvé 3 changements ». Tant que chaque
+/// vérification en trouve, la condition reste vraie et l'alerte ne ferait
+/// qu'une annonce, pour la première. Une alerte active dont la cible a
+/// produit un fait plus récent que son déclenchement reparle donc
+/// ([`crate::alerting::group::NotifyReason::Recurrence`]) sous la même
+/// identité : silences, acquittements et graphe restent ceux de la même
+/// alerte, et rien n'est résolu entre deux faits.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Occurrence {
+    /// Quand le fait a été constaté (fin de la vérification).
+    pub at: DateTime<Utc>,
+    /// Valeur que la série prend pour ce fait. Tant que la série n'a pas
+    /// encore été réécrite (la mesure suit la base d'une période de sonde), le
+    /// fait attend : le message citerait sinon la valeur du précédent.
+    pub value: f64,
+    /// Ce que le message en dit (« /pricing, /contact and 2 more »).
+    pub detail: Option<String>,
 }
 
 /// Une transition à journaliser.
@@ -281,6 +306,9 @@ struct Evaluated {
     /// Seuil réellement appliqué, surcharge comprise : c'est lui que le message
     /// doit citer, pas celui de la règle.
     threshold: f64,
+    /// Un fait nouveau est survenu pendant que l'alerte était active.
+    recurred: bool,
+    detail: Option<String>,
 }
 
 /// Évalue un cycle complet.
@@ -417,6 +445,22 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             state.score = score;
             state.learning = learning;
 
+            // Un fait plus récent que le déclenchement, sur une alerte déjà
+            // partie : elle repart de ce fait, sans changer d'identité. Dater le
+            // déclenchement du fait le consomme, qu'il soit notifié ou tu
+            // (maintenance, acquittement) : il ne reparlera pas au cycle suivant.
+            let occurrence = target.and_then(|t| input.occurrences.get(&(rule.uid.clone(), t.id)));
+            let recurred = occurrence.is_some_and(|occurrence| {
+                transition.is_none()
+                    && state.phase == Phase::Firing
+                    && state.firing_since.is_some_and(|since| occurrence.at > since)
+                    && point.value == occurrence.value
+            });
+            if recurred {
+                state.firing_since = Some(now);
+            }
+            let detail = occurrence.and_then(|occurrence| occurrence.detail.clone());
+
             let target_name = target
                 .map(|t| t.name.clone())
                 .or_else(|| TARGET_NAME_LABELS.iter().find_map(|l| point.labels.get(*l).cloned()))
@@ -434,6 +478,8 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                 value: Some(point.value),
                 score,
                 threshold: effective.threshold,
+                recurred,
+                detail,
             });
         }
 
@@ -471,6 +517,8 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                 value: None,
                 score: None,
                 threshold: overrides.effective(rule, stored.target_id).threshold,
+                recurred: false,
+                detail: None,
             });
         }
     }
@@ -549,6 +597,8 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             escalate_after: rule.escalate_after,
             unacked_after: input.unacked_after,
             just_transitioned: entry.transition.is_some(),
+            recurred: entry.recurred,
+            detail: entry.detail,
         });
     }
 
@@ -759,7 +809,70 @@ mod tests {
             silences: Vec::new(),
             unacked_after: None,
             overrides: Vec::new(),
+            occurrences: HashMap::new(),
         }
+    }
+
+    #[test]
+    fn chaque_fait_nouveau_reparle_sous_la_meme_alerte() {
+        let web = rule("webchange_detected", RuleKind::Threshold, 0.0, 30);
+        let mut baselines = BaselineStore::default();
+        let occurrence = |at_s: i64, value: f64, detail: &str| {
+            HashMap::from([(
+                ("webchange_detected".to_string(), 1),
+                Occurrence { at: at(at_s), value, detail: Some(detail.to_string()) },
+            )])
+        };
+        let mut stored: Vec<StoredAlert> = Vec::new();
+        let mut run = |now: i64, value: f64, occurrences, stored: &mut Vec<StoredAlert>| {
+            let mut cycle_input = input(
+                at(now),
+                vec![RuleObservations { rule: web.clone(), series: Some(vec![point(1, value)]) }],
+                vec![node(1, None)],
+                stored.clone(),
+            );
+            cycle_input.occurrences = occurrences;
+            let outcome = plan_cycle(cycle_input, &mut baselines);
+            *stored = to_stored(&outcome);
+            mark_notified(stored, &outcome, at(now));
+            outcome
+        };
+
+        // Première vérification : déclenchement, avec les pages.
+        assert!(run(0, 2.0, occurrence(-10, 2.0, "/a"), &mut stored).groups.is_empty());
+        let fired = run(30, 2.0, occurrence(-10, 2.0, "/a"), &mut stored);
+        let item = &fired.groups[0].items[0];
+        assert_eq!(item.reason, NotifyReason::Firing);
+        assert_eq!(item.detail.as_deref(), Some("/a"));
+        let fingerprint = item.fingerprint.clone();
+        assert!(run(60, 2.0, occurrence(-10, 2.0, "/a"), &mut stored).groups.is_empty());
+
+        // Vérification suivante, encore des changements : la base le sait avant
+        // la mesure, le fait attend qu'elle suive pour ne pas citer l'ancienne
+        // valeur.
+        assert!(run(3600, 2.0, occurrence(3590, 3.0, "/b"), &mut stored).groups.is_empty());
+        let again = run(3630, 3.0, occurrence(3590, 3.0, "/b"), &mut stored);
+        let item = &again.groups[0].items[0];
+        assert_eq!(item.reason, NotifyReason::Recurrence);
+        assert_eq!(item.detail.as_deref(), Some("/b"));
+        assert_eq!(item.fingerprint, fingerprint, "same alert: silences and acks still apply");
+        assert_eq!(again.alerts[0].state.firing_since, Some(at(3630)));
+        assert!(again.history.is_empty(), "no resolve, no new firing in between");
+        assert!(run(3660, 3.0, occurrence(3590, 3.0, "/b"), &mut stored).groups.is_empty());
+
+        // Acquittée : le fait suivant est consommé sans bruit.
+        stored[0].state.acked_until = Some(at(100_000));
+        let acked = run(7230, 3.0, occurrence(7200, 3.0, "/b"), &mut stored);
+        assert!(acked.groups.is_empty());
+        assert_eq!(acked.alerts[0].state.firing_since, Some(at(7230)));
+        stored[0].state.acked_until = None;
+        assert!(run(7260, 3.0, occurrence(7200, 3.0, "/b"), &mut stored).groups.is_empty());
+
+        // Une vérification sans changement : une seule résolution, sans détail.
+        let resolved = run(10_830, 0.0, HashMap::new(), &mut stored);
+        let item = &resolved.groups[0].items[0];
+        assert_eq!(item.reason, NotifyReason::Resolved);
+        assert_eq!(item.detail, None);
     }
 
     #[test]

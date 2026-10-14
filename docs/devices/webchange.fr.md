@@ -50,10 +50,15 @@ aussi être un document texte brut ou JSON, comparé ligne par ligne.
 2. à défaut, ou quand le sitemap ne liste rien sous le dossier, en suivant
    les liens de chaque page, en largeur d'abord.
 
-Seules les pages de la même origine (schéma, hôte et port) sont suivies ;
-quand la page de départ redirige vers un autre hôte (`example.com` vers
-`www.example.com`), le site est tenu pour être là-bas, et les liens vers le
-premier hôte sont lus sur le second. Les liens vers images, feuilles de style, scripts, PDF, archives et autres
+Seules les pages de la même origine (schéma, hôte et port) sont suivies.
+Quand la page de départ redirige vers un autre hôte du même site
+(`example.com` vers `www.example.com`, `http` vers `https`, ou un
+sous-domaine comme `docs.example.com`), le site est tenu pour être là-bas, et
+les liens vers le premier hôte sont lus sur le second. Quand elle redirige
+vers un tout autre site (une page de connexion comme
+`login.microsoftonline.com`, un domaine tiers), ce site n'est pas parcouru :
+seule la page de départ est lue, et aucune page n'est déclarée supprimée. Les
+liens vers images, feuilles de style, scripts, PDF, archives et autres
 fichiers sont ignorés par leur extension, et toute réponse qui n'est pas
 HTML est ignorée. Les fragments (`#section`), les paramètres de suivi
 (`utm_…`, `fbclid`, `gclid` et consorts) et les requêtes vides sont retirés,
@@ -136,11 +141,14 @@ LAN privées sont toujours autorisées.
 ## Alertes
 
 La règle intégrée **Site web changé** (`webchange_detected`, Info) se
-déclenche après chaque vérification qui a trouvé au moins un changement
-(page changée, nouvelle ou supprimée), et la notification nomme les pages :
-« /tarifs, /contact and 2 more ». Deux vérifications de suite qui trouvent
-toutes deux des changements donnent deux notifications, même sur les mêmes
-pages ; l'alerte d'une vérification se résout à la suivante. Elle lit
+déclenche après une vérification qui a trouvé au moins un changement (page
+changée, nouvelle ou supprimée), et la notification nomme les pages :
+« /tarifs, /contact and 2 more ». Tant qu'elle est active, chaque nouvelle
+vérification qui trouve des changements est notifiée à nouveau, avec ses
+propres pages, même si ce sont les mêmes ; l'alerte se résout à la première
+vérification qui ne trouve rien de nouveau. Elle reste une seule alerte par
+appareil du début à la fin : l'acquitter ou la mettre en sourdine depuis
+l'alerte couvre aussi les vérifications suivantes. Elle lit
 `dumbmonit_webchange_last_check_changes` ; attachez-la à un canal comme
 toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 [Règles intégrées](../alerting/rules.md#website-changes).
@@ -149,7 +157,7 @@ toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 |---|---|
 | `dumbmonit_webchange_pages` | Pages suivies (pages supprimées exclues). |
 | `dumbmonit_webchange_pages_failed` | Pages suivies dont la dernière lecture a échoué. |
-| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification ; quand il y en a, l'étiquette `changes` liste les pages et `check` l'heure de la vérification. |
+| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification. |
 
 Les métriques apparaissent une fois la première vérification faite.
 

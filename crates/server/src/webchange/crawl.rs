@@ -74,6 +74,9 @@ pub struct Crawl {
     /// en attente) : de quoi dire à l'utilisateur ce qu'il ne surveille pas.
     /// `None` quand le parcours n'a pas été arrêté par ce plafond.
     pub found: Option<usize>,
+    /// Ce qui a réduit le parcours à la page de départ, à dire à
+    /// l'utilisateur (une redirection hors du site).
+    pub notice: Option<String>,
 }
 
 /// Lit la page de départ, et le reste du site en mode site.
@@ -99,19 +102,24 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
             first.status
         )));
     }
-    // Une redirection de la page de départ vers un autre hôte (`ex.fr` →
-    // `www.ex.fr`) : le site est là-bas, ses liens aussi.
+    // Une redirection de la page de départ vers un autre hôte du même site
+    // (`ex.fr` → `www.ex.fr`) : le site est là-bas, ses liens aussi. Vers un
+    // autre site (connexion unique, domaine tiers), on ne lit que la page.
     let mut scope = options.scope.clone();
-    scope.follow(&first.final_url);
+    let left_site = scope.follow(&first.final_url).err();
     let (start_result, start_links) =
         read_page(&start, first, options.mode == Mode::Page, &options.zones);
     let start_ok = start_result.error.is_none();
     let mut pages = vec![start_result];
     if options.mode == Mode::Page {
-        return Ok(Crawl { pages, complete: start_ok, found: None });
+        return Ok(Crawl { pages, complete: start_ok, found: None, notice: None });
     }
     if !start_ok {
-        return Ok(Crawl { pages, complete: false, found: None });
+        return Ok(Crawl { pages, complete: false, found: None, notice: None });
+    }
+    if let Some(notice) = left_site {
+        // Incomplet : aucune page connue n'est déclarée disparue pour autant.
+        return Ok(Crawl { pages, complete: false, found: None, notice: Some(notice) });
     }
 
     let robots = client.robots(scope.site_root()).await;
@@ -155,7 +163,7 @@ pub async fn crawl(options: &Options) -> Result<Crawl, ProbeError> {
             pages.push(result);
         }
     }
-    Ok(Crawl { pages, complete, found })
+    Ok(Crawl { pages, complete, found, notice: None })
 }
 
 /// Ajoute à la file ce qui est dans le périmètre, permis par `robots.txt` et

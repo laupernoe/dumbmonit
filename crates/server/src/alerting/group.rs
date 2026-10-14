@@ -24,6 +24,11 @@ pub enum NotifyReason {
     Resolved,
     /// Rappel périodique tant que l'alerte dure.
     Reminder,
+    /// Un fait nouveau sur une alerte encore active (une nouvelle vérification
+    /// d'un site qui trouve des changements, voir
+    /// [`crate::alerting::cycle::Occurrence`]) : annoncé comme un
+    /// déclenchement, sans compter comme un battement.
+    Recurrence,
     /// La sévérité est relevée d'un cran, l'alerte s'éternisant.
     Escalation,
     /// Personne n'a acquitté au bout du délai d'escalade : l'alerte part aussi
@@ -43,6 +48,7 @@ impl NotifyReason {
             Self::Firing => "firing",
             Self::Resolved => "resolved",
             Self::Reminder => "reminder",
+            Self::Recurrence => "recurrence",
             Self::Escalation => "escalation",
             Self::Unacked => "unacked",
             Self::Flapping => "flapping",
@@ -54,6 +60,7 @@ impl NotifyReason {
             "firing" => Some(Self::Firing),
             "resolved" => Some(Self::Resolved),
             "reminder" => Some(Self::Reminder),
+            "recurrence" => Some(Self::Recurrence),
             "escalation" => Some(Self::Escalation),
             "unacked" => Some(Self::Unacked),
             "flapping" => Some(Self::Flapping),
@@ -97,6 +104,11 @@ pub struct AlertOutcome {
     pub unacked_after: Option<Duration>,
     /// Vrai quand la transition vient d'être franchie à ce cycle.
     pub just_transitioned: bool,
+    /// Un fait nouveau est survenu sur l'alerte active (voir
+    /// [`crate::alerting::cycle::Occurrence`]) : elle reparle.
+    pub recurred: bool,
+    /// Ce que le message dit du fait, après le nom de la série.
+    pub detail: Option<String>,
 }
 
 impl AlertOutcome {
@@ -154,6 +166,9 @@ pub fn decide(outcome: &AlertOutcome, now: DateTime<Utc>) -> Option<NotifyReason
             }
             if state.notify_count == 0 {
                 return Some(NotifyReason::Firing);
+            }
+            if outcome.recurred {
+                return Some(NotifyReason::Recurrence);
             }
             let last = state.last_notified_at?;
 
@@ -217,6 +232,10 @@ pub struct GroupItem {
     /// in 30 min »), affichée en fin de ligne.
     #[serde(default)]
     pub note: Option<String>,
+    /// Ce que l'alerte a constaté, cité après le nom de la série (les pages
+    /// changées d'un site).
+    #[serde(default)]
+    pub detail: Option<String>,
 }
 
 /// Un message : un hôte, ses alertes du cycle.
@@ -284,6 +303,9 @@ pub fn group(outcomes: &[AlertOutcome], now: DateTime<Utc>) -> Vec<AlertGroup> {
             since: outcome.state.firing_since,
             phase: outcome.effective_phase(),
             note: None,
+            // Le fait ne se cite que tant que l'alerte en parle : une résolution
+            // n'a rien constaté.
+            detail: outcome.detail.clone().filter(|_| reason.is_firing_like()),
         };
 
         let group = groups.entry(outcome.target_id).or_insert_with(|| AlertGroup {
@@ -358,7 +380,27 @@ mod tests {
             escalate_after: None,
             unacked_after: None,
             just_transitioned: true,
+            recurred: false,
+            detail: None,
         }
+    }
+
+    #[test]
+    fn un_fait_nouveau_reparle_sauf_acquittement() {
+        let mut o = outcome("a", 1, "nas");
+        o.state.notify_count = 1;
+        o.state.last_notified_at = Some(at(0));
+        o.repeat_interval = None;
+        assert_eq!(decide(&o, at(600)), None);
+        o.recurred = true;
+        o.detail = Some("/pricing".to_string());
+        assert_eq!(decide(&o, at(600)), Some(NotifyReason::Recurrence));
+        let groups = group(std::slice::from_ref(&o), at(600));
+        assert_eq!(groups[0].items[0].detail.as_deref(), Some("/pricing"));
+        o.state.acked_until = Some(at(3600));
+        assert_eq!(decide(&o, at(600)), None, "acked: the new fact stays quiet");
+        assert!(NotifyReason::Recurrence.is_firing_like());
+        assert_eq!(NotifyReason::parse("recurrence"), Some(NotifyReason::Recurrence));
     }
 
     #[test]

@@ -5903,9 +5903,12 @@ components:
 
     WebchangePages:
       type: object
-      required: [screenshots_available, pages]
+      required: [screenshots_available, found, pages]
       properties:
         screenshots_available: { type: boolean }
+        found:
+          type: [integer, "null"]
+          description: "Pages found (read and still queued) when **Max pages** stopped the last crawl; null when the crawl was not stopped by it, or when the last check failed."
         pages:
           type: array
           items: { $ref: "#/components/schemas/WebchangePage" }
@@ -5925,7 +5928,7 @@ components:
 
     WebchangeChange:
       type: object
-      required: [id, url, kind, detected_at, added, removed, before, after]
+      required: [id, url, kind, detected_at, added, removed, before, after, signature]
       properties:
         id: { type: integer, format: int64 }
         url: { type: string }
@@ -5935,6 +5938,9 @@ components:
         removed: { type: integer, description: Lines removed. }
         before: { type: [integer, "null"], format: int64, description: Snapshot before the change. }
         after: { type: [integer, "null"], format: int64, description: Snapshot after the change. }
+        signature:
+          type: [string, "null"]
+          description: "Same value for the same edit (the same lines removed and added) made on several pages, so that it can be shown once; null for a new or removed page."
 
     WebchangeSnapshot:
       type: object
