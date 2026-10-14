@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.1.0-alpha.8',
+		date: '2026-10-14',
+		highlights: [
+			{
+				title: 'Charts are back',
+				text: 'Alpha 7 could not read fresh metrics from VictoriaMetrics, so panels stayed empty and monitors showed Unknown. Fixed.'
+			},
+			{
+				title: 'News on the wall',
+				text: 'An optional headline ticker and live news channel on the wall, with sources for many countries or any RSS feed of your own.'
+			},
+			{
+				title: 'Quieter website-change alerts',
+				text: 'Menus, headers and footers are left out of the comparison, every check that finds changes names the pages, and all changes sit in one list.'
+			},
+			{
+				title: 'Agents pick their modules',
+				text: 'Choose which collectors an agent runs when you install it, and Plakar now works when the agent runs as a service.'
+			}
+		]
+	},
+	{
 		version: '0.1.0-alpha.7',
 		date: '2026-10-08',
 		highlights: [

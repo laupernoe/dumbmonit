@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.1.0-alpha.8 — 2026-10-14
+
 ### Added
 
 - **News on the wall.** Off by default, set in **Settings → Wall news**: a
@@ -162,6 +164,8 @@ All notable changes to this project are documented here. The format follows
   else on the network can no longer keep the owner locked out of `/setup`.
 - The WordPress status banner escapes the fetch error it shows in the settings
   screen.
+
+### Added
 
 - **Website health & SEO, in bulk.** A new `website` device type reads a
   site once per check, following its redirects (http → https and example.com
