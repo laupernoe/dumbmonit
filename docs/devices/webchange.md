@@ -161,9 +161,10 @@ The steps below are the ones the notice next to the form shows.
    on, each check compares the visible text page by page and keeps a
    before/after copy of every change, shown on the device page; the "Website
    changed" alert tells you.
-4. For a screenshot of each version, add a headless browser service to your
-   Compose file and point DumbMonit at it, as shown under
-   [Screenshots](#screenshots).
+4. For a screenshot of each version, add a headless browser to your Compose
+   file; the exact lines are in the documentation (Advanced options,
+   "Screenshots of website changes").
+   See [Screenshots of website changes](../install/docker.md#website-screenshots).
 
 !!! warning
     Only the text the server sends is compared: a page drawn entirely by
