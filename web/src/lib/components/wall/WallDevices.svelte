@@ -114,7 +114,7 @@
 			</li>
 		{/each}
 		{#if more > 0}
-			<li class="min-w-0"><span class="chip chip--more">{m.wall_devices_more({ count: more })}</span></li>
+			<li class="more min-w-0"><span class="chip chip--more whitespace-nowrap">{m.wall_devices_more({ count: more })}</span></li>
 		{/if}
 	</ul>
 </div>
@@ -129,7 +129,8 @@
 	}
 	/* A device in trouble takes two cells: its name and its state both fit. */
 	@media (min-width: 640px) {
-		.wide {
+		.wide,
+		.more {
 			grid-column: span 2;
 		}
 	}
