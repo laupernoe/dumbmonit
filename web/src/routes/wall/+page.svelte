@@ -80,6 +80,9 @@
 		type WallThemeChoice
 	} from '#lib/components/wall/wallTheme.js';
 	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '#lib/api/music.js';
+	import { getWallNews, type WallNews } from '#lib/api/wallNews.js';
+	import WallNewsTicker from '#lib/components/wall/WallNewsTicker.svelte';
+	import WallNewsVideo from '#lib/components/wall/WallNewsVideo.svelte';
 	import { parseMusicLink } from '#lib/wall/music.js';
 	import { cardVisible, displaySpeakerName, pickPlaying } from '#lib/wall/spotify.js';
 	import { WallSpeaker } from '#lib/wall/speaker.svelte.js';
@@ -94,6 +97,38 @@
 	let error = $state<unknown>(null);
 	let lastChecked = $state<Date | null>(null);
 	let now = $state(new Date());
+
+	// --- News -------------------------------------------------------------------
+
+	/**
+	 * Headlines and the live tile, off unless an admin turned them on in Settings.
+	 * The server reads the feeds and caches them for five minutes; the wall asks
+	 * as often, only while visible, and keeps the last answer when a read fails.
+	 */
+	const NEWS_MS = 5 * 60_000;
+	let news = $state<WallNews | null>(null);
+	const headlines = $derived(news?.ticker ? news.items : []);
+	const newsVideo = $derived(news?.video ?? null);
+
+	$effect(() => {
+		const controller = new AbortController();
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const poll = async () => {
+			if (document.visibilityState === 'visible') {
+				try {
+					news = await getWallNews(controller.signal);
+				} catch (cause) {
+					if (cause instanceof DOMException && cause.name === 'AbortError') return;
+				}
+			}
+			if (!controller.signal.aborted) timer = setTimeout(poll, NEWS_MS);
+		};
+		void poll();
+		return () => {
+			controller.abort();
+			clearTimeout(timer);
+		};
+	});
 
 	// --- Music ------------------------------------------------------------------
 
@@ -559,6 +594,23 @@
 	);
 
 	const firstLoad = $derived(loading && targets.length === 0);
+
+	/**
+	 * From 1024 px the board is a fixed-height column: the problems get what the
+	 * devices below do not need (two rows of chips are always kept). Below, the
+	 * page scrolls and nothing is capped.
+	 */
+	const DEVICES_MIN_PX = 104;
+	let leftRoom = $state(0);
+	let wide = $state(false);
+	$effect(() => {
+		const query = window.matchMedia('(min-width: 1024px)');
+		const sync = () => (wide = query.matches);
+		sync();
+		query.addEventListener('change', sync);
+		return () => query.removeEventListener('change', sync);
+	});
+	const problemsRoom = $derived(wide && leftRoom > 0 ? Math.max(120, leftRoom - DEVICES_MIN_PX - 16) : Infinity);
 </script>
 
 <svelte:head><title>{m.wall_page_title()}</title></svelte:head>
@@ -571,6 +623,7 @@
 	-->
 	<div
 		class="wall-stage relative h-full"
+		class:has-news={headlines.length > 0}
 		style:transform={oledActive ? `translate(${oledShift[0]}px, ${oledShift[1]}px)` : undefined}
 	>
 		<div class="scene-box">
@@ -627,8 +680,8 @@
 						{/each}
 					</div>
 
-					<div class="mt-7 flex min-h-0 flex-1 flex-col gap-4 lg:mt-9">
-						<WallProblems {sky} {now} />
+					<div class="mt-7 flex min-h-0 flex-1 flex-col gap-4 lg:mt-9" bind:clientHeight={leftRoom}>
+						<WallProblems {sky} {now} room={problemsRoom} />
 						<WallDevices {targets} {probes} {sky} />
 					</div>
 				</div>
@@ -662,8 +715,20 @@
 						/>
 					</div>
 				{/if}
+
+				{#if newsVideo?.position === 'right'}
+					<div class="news-video-slot"><WallNewsVideo video={newsVideo} /></div>
+				{/if}
 			</div>
+
+			{#if newsVideo?.position === 'center'}
+				<div class="board-center"><WallNewsVideo video={newsVideo} /></div>
+			{/if}
 		</div>
+
+		{#if headlines.length > 0}
+			<div class="news-band"><WallNewsTicker items={headlines} {now} paused={hidden} /></div>
+		{/if}
 
 		<!-- Tools, top right; Music and Theme show on hover, focus or touch. -->
 		<div class="wall-tools absolute top-3 right-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end rounded-xl bg-surface/85 p-1 shadow-lift lg:top-4 lg:right-4">
@@ -803,6 +868,17 @@
 		transform-origin: left;
 		transition: transform 1s linear;
 	}
+	/* The headline band: stuck to the bottom of the visible wall, above the scene. */
+	.news-band {
+		position: sticky;
+		bottom: 0;
+		z-index: 12;
+	}
+	.news-video-slot,
+	.board-center {
+		width: 100%;
+		margin-top: 1.25rem;
+	}
 	.music-slot {
 		position: relative;
 		width: 100%;
@@ -865,6 +941,30 @@
 		.music-slot {
 			height: 11.5rem;
 			margin-top: 2rem;
+		}
+		.news-band {
+			position: absolute;
+			inset-inline: 0;
+			bottom: 0;
+		}
+		/* With headlines, the pigeons' parapet and the board both clear the band. */
+		.has-news .board {
+			padding-bottom: calc(12.5vh + var(--news-h, 2.75rem));
+		}
+		/* The live tile takes what the right column leaves, and shrinks to it. */
+		.news-video-slot {
+			display: flex;
+			flex: 1 1 0;
+			min-height: 0;
+			margin-top: 1rem;
+		}
+		.board-center {
+			grid-column: 2;
+			grid-row: 1;
+			display: flex;
+			min-width: 0;
+			min-height: 0;
+			margin-top: 0;
 		}
 		.music-slot :global(.music-dock) {
 			justify-content: flex-end;

@@ -9,6 +9,71 @@ display without touching your saved preference.
 
 ![Wall mode](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Every problem on the left wears the product icon of its device (the same marks
+as the device lists). The list never outgrows its space: on a small screen, or
+with many problems, the big tiles shrink to one line each, then fold into
+*And N more*, instead of overlapping the devices below.
+
+## News on the wall
+
+An admin can add **headlines** and a **live channel** to the wall in
+**Settings → Wall news**. Both are off by default.
+
+- **Headline ticker.** A band along the bottom of the wall scrolls the latest
+  headlines, each with its source and age, and refreshes every five minutes. With
+  *reduced motion* enabled in the display's system, nothing slides: one
+  headline at a time fades in and out.
+- **Live video.** A muted live channel in a tile, in the right column under the
+  clock (or in the middle of the scene), small, medium or large. The tile
+  shrinks to the room left; it never covers the status.
+
+The server reads the feeds, not the browser (browsers cannot read other sites'
+feeds). It follows at most three redirects, refuses internal addresses, gives up
+after eight seconds or 2 MB per feed, and caches the answer for five minutes
+for every wall. It reads RSS 2.0, RSS 1.0 (RDF) and Atom.
+
+### Choosing sources
+
+Pick a **country** (preselected from your browser's region and language), then
+tick its sources: up to eight feeds in all. To use any other feed, paste its RSS
+or Atom address under **Add a custom feed** and press **Test**: DumbMonit reads
+it for real and shows the latest headline before you add it.
+
+For the video, pick one of the country's channels or **Another link…** and paste
+a normal YouTube, Dailymotion or Twitch address (a video, a live, or a YouTube
+channel's `/live` page); DumbMonit converts it into the embeddable player. Only
+these three players can be shown. A live is offered as a preset only when the
+channel has a stable official one.
+
+| Country | Headlines | Live video |
+|---|---|---|
+| France | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Switzerland | RTS Info, SRF News, Le Temps, NZZ | none |
+| Belgium | RTBF, VRT NWS, La DH | none |
+| Germany | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| United Kingdom | BBC News, The Guardian | Sky News |
+| United States | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Canada | Radio-Canada, CBC News | CBC News |
+| Spain | RTVE, 20minutos, El País, El Mundo | none |
+| Italy | ANSA, RaiNews | none |
+| Portugal | RTP Notícias, Público | none |
+| Brazil | G1, Folha de S.Paulo | CNN Brasil |
+| Russia | Interfax, Meduza, Kommersant | none |
+| China | CGTN, South China Morning Post, Xinhua | CGTN |
+| International | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+The BFM TV feed is `https://www.bfmtv.com/rss/news-24-7/`. The list was checked
+when it was written; a site can move its feed at any time, and then the ticker
+simply skips it. **Test** the replacement and add it as a custom feed.
+
+The wall's content security policy lets the page frame only YouTube
+(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify and Deezer players.
+
+### API
+
+`GET /api/wall/news` (what walls poll), `GET|PUT /api/wall/news/settings` and
+`POST /api/wall/news/test` (admin), `GET /api/wall/news/presets`.
+
 ## Music on the wall
 
 The wall can also play music and show what is playing, so that you can start a
