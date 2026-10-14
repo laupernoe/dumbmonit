@@ -498,7 +498,7 @@ fn when(text: &str) -> Option<String> {
 }
 
 /// Lit un document RSS 2.0 (ou RDF/RSS 1.0) ou Atom.
-fn parse(xml: &str, source: &str) -> Result<Vec<NewsItem>, String> {
+pub(super) fn parse(xml: &str, source: &str) -> Result<Vec<NewsItem>, String> {
     let doc = roxmltree::Document::parse(xml).map_err(|_| "not a readable RSS or Atom feed")?;
     let root = doc.root_element();
     let atom = root.tag_name().name() == "feed";
