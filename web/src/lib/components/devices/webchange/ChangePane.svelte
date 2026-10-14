@@ -20,9 +20,11 @@
 		/** Changes making the same edit on other pages, found by the same check. */
 		sameEdit?: WebchangeChange[];
 		onselect?: (change: WebchangeChange) => void;
+		/** Opened from a row's camera button: the screenshots lead, the text diff follows. */
+		screenshotsFirst?: boolean;
 	}
 
-	let { targetId, changeId, sameEdit = [], onselect }: Props = $props();
+	let { targetId, changeId, sameEdit = [], onselect, screenshotsFirst = false }: Props = $props();
 
 	let detail = $state<WebchangeChangeDetail | null>(null);
 	let error = $state<unknown>(null);
@@ -55,7 +57,7 @@
 		<Skeleton class="h-48 w-full" />
 	</div>
 {:else}
-	<article class="flex flex-col gap-5">
+	<article class="flex flex-col gap-4">
 		<header class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
 			<div class="min-w-0 flex-1">
 				<h3 class="flex min-w-0 items-center gap-1.5 text-base font-semibold text-ink">
@@ -77,8 +79,8 @@
 					<span class="text-warning-ink">−{detail.removed}</span>
 				</p>
 			</div>
-			<Button variant="secondary" size="sm" href={`/targets/${targetId}/changes/${detail.id}`}>
-				<Maximize2 class="size-3.5" aria-hidden="true" />
+			<Button variant="secondary" href={`/targets/${targetId}/changes/${detail.id}`}>
+				<Maximize2 class="size-4" aria-hidden="true" />
 				{m.devicesb_webchange_pane_open()}
 			</Button>
 		</header>
@@ -114,7 +116,7 @@
 			<DiffView diff={detail.diff} />
 		</section>
 
-		<section class="flex flex-col gap-2">
+		<section class={`flex flex-col gap-2 ${screenshotsFirst ? 'order-first' : ''}`}>
 			<h4 class="text-sm font-semibold text-ink">{m.app_change_screenshots()}</h4>
 			<ChangeScreenshots {targetId} {detail} />
 		</section>
