@@ -826,6 +826,8 @@
 	"deviceform_modules_choose_on": "Nur die angehakten Module laufen; die anderen senden nichts und lösen keinen Alarm aus. CPU, Arbeitsspeicher, Datenträger und Netzwerk werden immer erfasst. Die Installationsbefehle unten übernehmen Ihre Auswahl.",
 	"deviceform_modules_docker": "Docker-Container",
 	"deviceform_modules_docker_hint": "Zustand, Health-Check, Neustarts und Image-Updates.",
+	"deviceform_modules_libvirt": "KVM-VMs",
+	"deviceform_modules_libvirt_hint": "libvirt-Domänen und Speicherpools, über virsh.",
 	"deviceform_modules_none": "Kein Modul angehakt: Der Agent sendet nur CPU, Arbeitsspeicher, Datenträger und Netzwerk.",
 	"deviceform_modules_perf_counters": "Windows-Leistungsindikatoren",
 	"deviceform_modules_perf_counters_hint": "Vorlagen für MDaemon und Hyper-V.",

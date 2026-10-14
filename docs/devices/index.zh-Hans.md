@@ -10,6 +10,8 @@ DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），�
 | [Proxmox 数据中心管理器](pdm.md) | `pdm` | API 令牌 | 联合多个 PVE 群集和 PBS 实例的控制台 |
 | [Proxmox 邮件网关](pmg.md) | `pmg` | 用户名/密码 | 邮件网关，过滤垃圾邮件和病毒 |
 | [VMware vSphere](vsphere.md) | `vsphere` | 用户名/密码 | vCenter 或独立 ESXi：主机、虚拟机、数据存储、警报 |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | 用户名/密码（只读 XAPI 角色） | 通过 XAPI 监控池：主机、虚拟机、存储库、高可用 |
+| [Nutanix AHV](nutanix.md) | `nutanix` | 用户名/密码（Prism Viewer） | Prism Central v4 API：集群、主机、AHV 虚拟机、存储容器、告警 |
 | [Synology DSM](synology.md) | `synology` | 用户名/密码 | DiskStation、RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | API 密钥和密钥 | 防火墙、路由器、多 WAN 边缘 |
 | [pfSense](pfsense.md) | `pfsense` | REST API 密钥（仅读用户） | 防火墙：网关掉线或有损、没有链接的接口、停止的服务 |

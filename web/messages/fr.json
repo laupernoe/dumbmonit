@@ -826,6 +826,8 @@
 	"deviceform_modules_choose_on": "Seuls les modules cochés tournent ; les autres n'envoient rien et ne déclenchent aucune alerte. Processeur, mémoire, disques et réseau sont toujours collectés. Les commandes d'installation ci-dessous reprennent votre choix.",
 	"deviceform_modules_docker": "Conteneurs Docker",
 	"deviceform_modules_docker_hint": "État, santé, redémarrages et mises à jour d'image.",
+	"deviceform_modules_libvirt": "Machines virtuelles KVM",
+	"deviceform_modules_libvirt_hint": "Domaines et pools de stockage libvirt, via virsh.",
 	"deviceform_modules_none": "Aucun module coché : l'agent n'envoie que processeur, mémoire, disques et réseau.",
 	"deviceform_modules_perf_counters": "Compteurs de performance Windows",
 	"deviceform_modules_perf_counters_hint": "Jeux MDaemon et Hyper-V.",

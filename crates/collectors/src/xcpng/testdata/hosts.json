@@ -1,0 +1,26 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:host-master": {
+      "uuid": "2c9a1b9e-0000-0000-0000-000000000001",
+      "name_label": "xcp01",
+      "hostname": "xcp01",
+      "address": "10.0.0.11",
+      "enabled": true,
+      "software_version": { "product_version": "8.2.1", "platform_version": "3.3.0" },
+      "cpu_info": { "cpu_count": "8", "vendor": "GenuineIntel", "modelname": "Xeon E-2278G" },
+      "metrics": "OpaqueRef:host-master-metrics"
+    },
+    "OpaqueRef:host-slave": {
+      "uuid": "2c9a1b9e-0000-0000-0000-000000000002",
+      "name_label": "xcp02",
+      "hostname": "xcp02",
+      "address": "10.0.0.12",
+      "enabled": false,
+      "software_version": { "product_version": "8.2.1", "platform_version": "3.3.0" },
+      "cpu_info": { "cpu_count": "8", "vendor": "GenuineIntel", "modelname": "Xeon E-2278G" },
+      "metrics": "OpaqueRef:host-slave-metrics"
+    }
+  }
+}

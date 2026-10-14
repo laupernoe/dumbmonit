@@ -28,6 +28,7 @@
 		sensors: m.deviceform_modules_sensors,
 		smart: m.deviceform_modules_smart,
 		zfs: m.deviceform_modules_zfs,
+		libvirt: m.deviceform_modules_libvirt,
 		wireguard: m.deviceform_modules_wireguard,
 		perf_counters: m.deviceform_modules_perf_counters
 	};
@@ -38,6 +39,7 @@
 		sensors: m.deviceform_modules_sensors_hint,
 		smart: m.deviceform_modules_smart_hint,
 		zfs: m.deviceform_modules_zfs_hint,
+		libvirt: m.deviceform_modules_libvirt_hint,
 		wireguard: m.deviceform_modules_wireguard_hint,
 		perf_counters: m.deviceform_modules_perf_counters_hint
 	};

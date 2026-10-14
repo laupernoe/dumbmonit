@@ -5,6 +5,24 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
+  (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
+  state, storage repositories filling up, and high availability (protected VMs
+  found halted, an overcommitted pool). A pool member's `HOST_IS_SLAVE` answer
+  is followed to the coordinator. Four built-in rules. See
+  [XCP-ng / XenServer](docs/devices/xcpng.md).
+- **Nutanix AHV.** A new `nutanix` device reads Prism Central's v4 API
+  (pc.2024.3 or later, Prism Viewer role): clusters, hosts degraded or in
+  maintenance, AHV VMs, storage container fill level and unresolved alerts by
+  severity. Three built-in rules. See [Nutanix AHV](docs/devices/nutanix.md).
+- **KVM virtual machines on the Linux agent.** A new `libvirt` module reads
+  `virsh -c qemu:///system` (domains, their state, vCPUs and memory; storage
+  pools and their fill level), silent where `virsh` is absent. Two built-in
+  rules: a crashed domain, a pool almost full. See
+  [the agent page](docs/devices/agent.md#kvm-virtual-machines-through-libvirt).
+
 ## 0.1.0-alpha.8 — 2026-10-14
 
 ### Added

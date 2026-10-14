@@ -591,6 +591,36 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 |---|---|---|---|---|---|
 | Sophos 接口无链路 | 已开启并绑定到区域的 Sophos Firewall 接口没有链路(`dumbmonit_sophos_interface_down`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
 
+### KVM (libvirt) {#kvm-libvirt}
+
+由 KVM 主机上的 Linux 代理报告;参见[代理](../devices/agent.md#kvm-virtual-machines-through-libvirt)。
+
+| 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| KVM 域崩溃 | libvirt 将某个 KVM 域报告为已崩溃:虚拟机监控程序不得不停止它(`dumbmonit_agent_libvirt_domain_crashed`)。 | > 0 | 1 分钟 | 警告 (`critical`) | 1 小时 |
+| libvirt 池即将满 | 某个 libvirt 存储池的分配量达到其容量的 90%(`dumbmonit_agent_libvirt_pool_used_percent`)。 | ≥ 90 %(在 88% 下清除) | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
+
+### XCP-ng / XenServer {#xcp-ng-xenserver}
+
+参见 [XCP-ng / XenServer](../devices/xcpng.md)。
+
+| 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| XCP-ng 主机离线 | XCP-ng 池中的某台主机不再响应协调器(`dumbmonit_xcpng_host_live`)。 | < 1 | 5 分钟 | 警告 (`critical`) | 1 小时 |
+| XCP-ng SR 即将满 | 某个 XCP-ng 存储库(SR)已使用超过 90%(`dumbmonit_xcpng_sr_used_percent`)。 | ≥ 90 %(在 88% 下清除) | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
+| XCP-ng HA 保护的虚拟机宕机 | 受池高可用保护的虚拟机已停止(`dumbmonit_xcpng_vm_ha_protected_down`)。 | > 0 | 2 分钟 | 警告 (`critical`) | 1 小时 |
+| XCP-ng 池 HA 超额分配 | 池不再有方案来应对它被设定为可容忍的主机故障(`dumbmonit_xcpng_pool_ha_overcommitted`)。 | > 0 | 5 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |
+
+### Nutanix {#nutanix}
+
+参见 [Nutanix AHV](../devices/nutanix.md)。
+
+| 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| Nutanix 主机降级 | Prism 将某台 Nutanix 主机报告为降级(`dumbmonit_nutanix_host_degraded`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 1 小时 |
+| Nutanix 存储容器即将满 | 某个 Nutanix 存储容器已使用超过 90%(`dumbmonit_nutanix_storage_container_used_percent`)。 | ≥ 90 %(在 88% 下清除) | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
+| Nutanix 严重告警 | Prism Central 报告了一个或多个未解决的严重告警(`dumbmonit_nutanix_alerts_critical`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 1 小时 |
+
 ### Hyper-V {#hyper-v}
 
 由 Hyper-V 主机上的 Windows 代理报告;参见[代理](../devices/agent.md#hyper-v-hosts)。

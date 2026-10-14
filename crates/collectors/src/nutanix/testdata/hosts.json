@@ -1,0 +1,70 @@
+{
+  "data": [
+    {
+      "extId": "a1",
+      "hostName": "ntnx-a1",
+      "cluster": {
+        "uuid": "0006241f-7b1a-4f8c-0000-0000000000a1",
+        "name": "homelab-cluster"
+      },
+      "hypervisor": {
+        "fullName": "AHV 10.0.1",
+        "type": "AHV",
+        "state": "ACROPOLIS_NORMAL",
+        "numberOfVms": 2
+      },
+      "numberOfCpuCores": 24,
+      "numberOfCpuSockets": 2,
+      "memorySizeBytes": 274877906944,
+      "isDegraded": false
+    },
+    {
+      "extId": "a2",
+      "hostName": "ntnx-a2",
+      "cluster": {
+        "uuid": "0006241f-7b1a-4f8c-0000-0000000000a1",
+        "name": "homelab-cluster"
+      },
+      "hypervisor": {
+        "fullName": "AHV 10.0.1",
+        "type": "AHV",
+        "state": "ACROPOLIS_NORMAL"
+      },
+      "numberOfCpuCores": 24,
+      "memorySizeBytes": 274877906944,
+      "isDegraded": true
+    },
+    {
+      "extId": "a3",
+      "hostName": "ntnx-a3",
+      "cluster": {
+        "uuid": "0006241f-7b1a-4f8c-0000-0000000000a1",
+        "name": "homelab-cluster"
+      },
+      "hypervisor": {
+        "fullName": "AHV 10.0.1",
+        "type": "AHV",
+        "state": "ENTERED_MAINTENANCE_MODE"
+      },
+      "numberOfCpuCores": 24,
+      "memorySizeBytes": 274877906944,
+      "isDegraded": false
+    }
+  ],
+  "metadata": {
+    "flags": [
+      {
+        "name": "hasError",
+        "value": false
+      },
+      {
+        "name": "isPaginated",
+        "value": true
+      }
+    ],
+    "links": [],
+    "totalAvailableResults": 3,
+    "$objectType": "common.v1.response.ApiResponseMetadata"
+  },
+  "$objectType": "clustermgmt.v4.config.ListHostsApiResponse"
+}

@@ -14,6 +14,7 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod filter;
+pub mod libvirt;
 pub mod perf_counters;
 pub mod plakar;
 pub mod registry;
@@ -34,6 +35,7 @@ use sysinfo::{
 use crate::collect::backup_repos::BackupReposReport;
 use crate::collect::docker::ContainerInventory;
 use crate::collect::filter::NameFilter;
+use crate::collect::libvirt::LibvirtReport;
 use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
 use crate::collect::sensors::SensorsStat;
@@ -249,6 +251,9 @@ pub struct Snapshot {
     pub wireguard: Option<WireguardReport>,
     /// Dépôts restic et Borg déclarés. `None` : aucun, ou première lecture en cours.
     pub backup_repos: Option<BackupReposReport>,
+    /// Domaines KVM et pools libvirt. `None` : pas de `virsh` sur cette machine,
+    /// ou première lecture en cours.
+    pub libvirt: Option<LibvirtReport>,
 }
 
 impl Snapshot {
@@ -292,6 +297,9 @@ impl Snapshot {
         }
         if let Some(repos) = &self.backup_repos {
             samples.extend(backup_repos::samples(repos, now_ms));
+        }
+        if let Some(report) = &self.libvirt {
+            samples.extend(libvirt::samples(report, now_ms));
         }
         samples
     }
@@ -568,6 +576,7 @@ impl SystemProbe {
             perf_counters: None,
             wireguard: None,
             backup_repos: None,
+            libvirt: None,
         }
     }
 
@@ -1136,6 +1145,22 @@ mod tests {
                     last: None,
                 }],
             }),
+            libvirt: Some(libvirt::LibvirtReport {
+                domains: vec![libvirt::DomainStat {
+                    name: "ubuntu-vm".into(),
+                    state: libvirt::DomainState::Running,
+                    vcpus: Some(2),
+                    max_memory_bytes: Some(2_147_483_648),
+                    used_memory_bytes: Some(2_147_483_648),
+                }],
+                pools: vec![libvirt::PoolStat {
+                    name: "default".into(),
+                    state: libvirt::PoolState::Running,
+                    capacity_bytes: Some(100),
+                    allocation_bytes: Some(40),
+                    available_bytes: Some(60),
+                }],
+            }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1163,6 +1188,9 @@ mod tests {
             "mdaemon_queue_messages",
             "agent_wireguard_interface_peers",
             "agent_backup_repo_reachable",
+            "agent_libvirt_domains",
+            "agent_libvirt_domain_running",
+            "agent_libvirt_pool_active",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }

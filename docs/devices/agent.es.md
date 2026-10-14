@@ -2,7 +2,7 @@
 
 Un pequeño binario instalado en la máquina a monitorizar. Mide CPU,
 memoria, discos, red, servicios y contenedores — y, donde la máquina
-los expone, temperaturas, salud de disco y pools ZFS — y luego **envía**
+los expone, temperaturas, salud de disco, pools ZFS y máquinas virtuales KVM — y luego **envía**
 sus lecturas al servidor DumbMonit por HTTP.
 
 La dirección es deliberada: el agente llama al servidor, nunca al
@@ -28,6 +28,7 @@ otra máquina, ni siquiera falsificando sus etiquetas.
 | Contenedores | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (contenedores más allá de `docker_max_containers`) | `container`, `image` |
 | Sensores | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (el umbral que el propio hardware declara), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Salud de disco (SMART) | `agent_disk_smart_ok` (1 = el disco pasa su propia autoevaluación), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
+| KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; por dominio `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; por pool de almacenamiento `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — consulta [Máquinas virtuales KVM con libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
 | ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 peor), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
 | WireGuard | `agent_wireguard_interface_peers`; por peer `agent_wireguard_peer_handshake_age_seconds`, `agent_wireguard_peer_has_handshake`, `agent_wireguard_peer_keepalive_seconds`, `agent_wireguard_peer_rx_bytes`, `agent_wireguard_peer_tx_bytes` (contadores) — consulta [Túneles WireGuard](#wireguard-tunnels) | `interface`, `peer`, `allowed_ips`, `name` |
 | restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — consulta [Copias de seguridad restic y Borg](#restic-and-borg-backups) | `tool`, `repo` |
@@ -38,7 +39,7 @@ otra máquina, ni siquiera falsificando sus etiquetas.
 
 Una serie que no se puede medir está **ausente**, nunca en cero: sin
 `smartctl`, sin `agent_disk_*`; sin sonda legible, sin
-`agent_sensor_*`; sin ZFS, sin `agent_zfs_*`. Una temperatura fuera de
+`agent_sensor_*`; sin ZFS, sin `agent_zfs_*`; sin `virsh`, sin `agent_libvirt_*`. Una temperatura fuera de
 1–150 °C se descarta en lugar de publicarse, y una lectura de
 ventilador de 0 rpm también se descarta — una placa base tiene más
 conectores de ventilador que ventiladores, y uno vacío lee cero igual
@@ -56,6 +57,7 @@ que lo haría un ventilador muerto.
 | Ventiladores | `/sys/class/hwmon` | no | no | no |
 | Salud de disco (SMART) | `smartctl` | `smartctl` (Homebrew) | `smartctl` (`sysutils/smartmontools`) | `smartctl` |
 | Pools ZFS | `zpool` (OpenZFS) | no | `zpool` | no |
+| Máquinas virtuales KVM (libvirt) | `virsh` | no | no | no |
 | Salud del SO (actualizaciones, reinicio, unidades fallidas, SELinux) | sí | no | no | no |
 | Copias de seguridad Plakar | sí | sí | sí | sí |
 | Túneles WireGuard | `wg show` | cuando `wg` está instalado (no probado) | cuando `wg` está instalado (no probado) | no |
@@ -69,9 +71,9 @@ ahí significa pasar por WMI, con derechos administrativos, para
 valores que la mayoría de máquinas no exponen en absoluto. No publicar
 nada es la respuesta honesta.
 
-`smartctl` (smartmontools) y `zpool` se buscan en cada período de
+`smartctl` (smartmontools), `zpool` y `virsh` se buscan en cada período de
 lectura y se usan cuando están presentes; ninguno lo instala el
-agente, y ninguno es obligatorio. Ambos necesitan root — el servicio
+agente, y ninguno es obligatorio. Todos necesitan root (`virsh` también funciona para un miembro del grupo `libvirt`) — el servicio
 que registra el instalador se ejecuta como root, un agente iniciado a
 mano con tu propia cuenta no encontrará nada.
 
@@ -92,6 +94,8 @@ pueden activarse en una máquina sin el hardware:
 | **Disk SMART failing** (critical) | la propia autoevaluación de un disco lo reporta como failing |
 | **ZFS pool degraded** (critical) | un pool ya no está `ONLINE` durante cinco minutos |
 | **ZFS scrub found errors** (critical) | el último scrub encontró errores, o el pool reporta archivos permanentemente corruptos |
+| **KVM domain crashed** (critical) | libvirt reporta un dominio como `crashed` |
+| **libvirt pool almost full** (warning) | la asignación de un pool de almacenamiento alcanza el 90 % de su capacidad durante quince minutos |
 | **Temperature above critical** (critical) | un sensor supera el umbral crítico que declara **su propio hardware** — ningún valor está escrito a fuego, siendo 85 °C una emergencia en un disco y una tarde normal en la CPU de un portátil |
 
 Tres más vigilan lo que tú declaras o ejecutas tú mismo, y permanecen
@@ -409,6 +413,10 @@ smart_interval_secs: 300   # mínimo 60: un disco dormido nunca se despierta par
 zfs: true                  # pools ZFS a través de zpool (por defecto: true)
 zfs_bin: zpool
 zfs_interval_secs: 120     # mínimo 30
+libvirt: true              # dominios KVM y pools de almacenamiento a través de virsh (por defecto: true)
+libvirt_bin: virsh
+libvirt_uri: qemu:///system
+libvirt_interval_secs: 60  # mínimo 15
 wireguard: true            # túneles WireGuard a través de wg (por defecto: true), ver abajo
 restic_repos: []           # repositorios restic a vigilar, ver "copias de seguridad restic y Borg"
 borg_repos: []             # repositorios Borg a vigilar
@@ -422,13 +430,32 @@ max_buffered_samples: 20000
 log_level: info
 ```
 
-`sensors`, `smart` y `zfs` se detectan, nunca se asumen: dejados en
-`true` en una máquina sin sonda, sin `smartctl` ni sin pool, cuestan
+`sensors`, `smart`, `zfs` y `libvirt` se detectan, nunca se asumen: dejados en
+`true` en una máquina sin sonda, sin `smartctl`, sin pool o sin `virsh`, cuestan
 una mirada por período y no emiten nada en absoluto. Define uno como
 `false` para dejar de mirar incluso así — vale la pena hacerlo en un
 NAS cuyos discos prefieras que `smartctl` nunca toque, aunque el
 agente ya pasa `-n standby` para que un disco dormido se mida solo
 cuando está despierto por otras razones.
+
+### Máquinas virtuales KVM con libvirt {#kvm-virtual-machines-through-libvirt}
+
+En un hipervisor KVM (un host Linux normal con libvirt, no Proxmox VE, que
+tiene su [propia integración](proxmox.md)), instala el agente en el propio
+host, no en un invitado. El agente ejecuta `virsh -c qemu:///system` con
+`list --all --name`, `dominfo --domain <nombre>`, `pool-list --all --name` y
+`pool-info --pool <nombre>`: nunca define, arranca, detiene ni migra un
+dominio, y nunca modifica un pool de almacenamiento. La URI explícita
+`qemu:///system` importa para un agente ejecutado por un miembro del grupo
+`libvirt` en lugar de root: sin ella, `virsh` leería la sesión privada y vacía
+de ese usuario. Define `libvirt_uri` para leer otra conexión.
+
+`agent_libvirt_domain_memory_used_bytes` está ausente para un dominio apagado:
+libvirt solo conoce su máximo configurado. Los tamaños de los pools de
+almacenamiento provienen de la salida legible de `virsh`, redondeada a dos
+decimales, así que `agent_libvirt_pool_used_percent` es una aproximación,
+suficientemente cercana para avisar antes de que un pool se llene. Se detallan
+como máximo 200 dominios y 64 pools.
 
 Junto a él, `/etc/dumbmonit/agent-secret`
 (`C:\ProgramData\DumbMonit\agent-secret` en Windows) contiene el
@@ -466,6 +493,10 @@ usable en un contenedor sin montar un archivo:
 | `DUMBMONIT_AGENT_ZFS` | `true` / `false`: pools ZFS a través de `zpool` (por defecto `true`) |
 | `DUMBMONIT_AGENT_ZFS_BIN` | Ruta de `zpool` |
 | `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | Período entre dos lecturas ZFS, por defecto `120`, mínimo `30` |
+| `DUMBMONIT_AGENT_LIBVIRT` | `true` / `false`: dominios KVM y pools de almacenamiento a través de `virsh` (por defecto `true`) |
+| `DUMBMONIT_AGENT_LIBVIRT_BIN` | Ruta de `virsh` |
+| `DUMBMONIT_AGENT_LIBVIRT_URI` | URI de conexión de libvirt, por defecto `qemu:///system` |
+| `DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS` | Período entre dos lecturas de libvirt, por defecto `60`, mínimo `15` |
 | `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`: túneles WireGuard a través de `wg` (por defecto `true`) |
 | `DUMBMONIT_AGENT_WIREGUARD_BIN` | Ruta de `wg` |
 | `DUMBMONIT_AGENT_RESTIC_BIN` | Ruta de `restic` |

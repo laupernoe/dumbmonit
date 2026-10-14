@@ -826,6 +826,8 @@
 	"deviceform_modules_choose_on": "Only the ticked modules run; the others send nothing and raise no alert. CPU, memory, disks and network are always collected. The install commands below include your choice.",
 	"deviceform_modules_docker": "Docker containers",
 	"deviceform_modules_docker_hint": "State, health, restarts and image updates.",
+	"deviceform_modules_libvirt": "KVM virtual machines",
+	"deviceform_modules_libvirt_hint": "libvirt domains and storage pools, through virsh.",
 	"deviceform_modules_none": "No module ticked: the agent sends CPU, memory, disks and network only.",
 	"deviceform_modules_perf_counters": "Windows performance counters",
 	"deviceform_modules_perf_counters_hint": "MDaemon and Hyper-V presets.",

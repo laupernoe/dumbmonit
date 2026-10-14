@@ -10,6 +10,8 @@ DumbMonit chiama tutto quello che controlla un *dispositivo* (l'API dice *target
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | token API | Console che federalizza più cluster PVE e istanze PBS |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | nome utente/password | Gateway di posta che filtra spam e virus |
 | [VMware vSphere](vsphere.md) | `vsphere` | nome utente/password | vCenter o ESXi autonomo: host, VM, datastore, allarmi |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | nome utente/password (ruolo XAPI di sola lettura) | Pool tramite XAPI: host, VM, storage repository, alta disponibilità |
+| [Nutanix AHV](nutanix.md) | `nutanix` | nome utente/password (Prism Viewer) | API v4 di Prism Central: cluster, host, VM AHV, storage container, avvisi |
 | [Synology DSM](synology.md) | `synology` | nome utente/password | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | chiave API e secret | Firewall, router, multi-WAN edge |
 | [pfSense](pfsense.md) | `pfsense` | chiave API REST (utente di sola lettura) | Firewall: gateway giù o lossy, interfacce senza link, servizi arrestati |
