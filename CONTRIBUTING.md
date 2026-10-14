@@ -69,17 +69,73 @@ screenshots of every route in both themes and both viewports).
 
 ## What CI checks
 
-`.github/workflows/ci.yml` runs on every push and pull request:
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
 1. `cargo fmt --all --check`
 2. `cargo clippy --all-targets --all-features -- -D warnings`
 3. `cargo test --all-features`
-4. `cargo deny check licenses bans`
-5. `npm run check` and `npm run build` in `web/`
-6. A multi-arch Docker build (amd64 + arm64), not pushed
+4. `cargo deny check licenses bans` and `cargo deny check advisories`
+   (licences, banned crates, RustSec advisories)
+5. In `web/`: `npm run check` (svelte-check, which also compiles the Paraglide
+   messages), `npm test` (unit tests, including `i18n:check`, which fails when a
+   locale lacks a key or changes its `{variables}`) and `npm run build`
+6. A Docker build of the server image and of the agent image, not pushed
 
-Run the first five locally before opening a PR; the sixth only matters if you
+Other automated checks, outside the pull request gate:
+
+- **CodeQL** code scanning (GitHub default setup).
+- **`security.yml`** (weekly and after each release): a Trivy scan of the
+  published server and agent images, and the OpenSSF Scorecard.
+- **Dependabot** opens pull requests for dependency and Actions updates.
+
+Run checks 1 to 5 locally before opening a PR; the sixth only matters if you
 touched the `Dockerfile`.
+
+## Test policy
+
+- New behaviour comes with automated tests in the same pull request: unit tests
+  next to the code, Rust integration tests under `crates/server/tests/` for
+  anything with an API surface, `web/tests/*.test.mjs` for logic in the web UI.
+- Every bug fix comes with a regression test that fails without the fix. If a
+  fix cannot reasonably be tested, say why in the pull request.
+- Run them with `cargo test --all-features` (see above for Docker) and
+  `npm test` in `web/`. A pull request is not merged while CI is red.
+
+## Coding standards
+
+- **Rust:** `rustfmt` with the repository's `rustfmt.toml` (`max_width = 100`,
+  `use_small_heuristics = "Max"`), edition 2024, and `clippy` clean with
+  `-D warnings`. Comments are in French, as in the rest of the Rust code.
+- **Web UI:** Svelte 5 runes only (no `export let`, no `on:` handlers); imports
+  use the `#lib/...` alias; all network access goes through `src/lib/api/`.
+  Every user-visible string goes through Paraglide
+  (`m.<zone>_<component>_<meaning>()`).
+- **Accessibility and design:** token colours only (`signal`, `advisory`,
+  `warning`, `info`, `ink`, `surface`, `line`) and the primitives in
+  `src/lib/ui/`; a status is never conveyed by colour alone; no horizontal
+  overflow at 390 px width and tap targets of at least 40 px;
+  `prefers-reduced-motion` is respected.
+- **Secrets:** never return a secret from the API; never log one.
+
+## Developer Certificate of Origin
+
+Contributions are accepted under the project licence (Apache-2.0) and must be
+signed off to certify the
+[Developer Certificate of Origin](https://developercertificate.org/): that you
+wrote the change or have the right to submit it under that licence. Add a
+`Signed-off-by: Your Name <you@example.com>` line to each commit with
+`git commit -s`.
+
+## Security design
+
+DumbMonit holds the credentials of every device it watches, so changes are
+reviewed with secure design principles in mind: least privilege, secure
+defaults, no secret ever returned by the API, vetted cryptography only, and
+untrusted input from devices and agents. The
+[security model](https://dumbmonit.readthedocs.io/en/latest/development/security-model/)
+lists the trust boundaries and where each countermeasure lives. Report
+vulnerabilities privately, as described in [SECURITY.md](SECURITY.md). The
+release notes list every fixed vulnerability with its CVE or GHSA identifier.
 
 ## Project layout
 
@@ -212,7 +268,7 @@ docs/install/docker.zh-Hans.md Simplified Chinese
 
 ## Conventions
 
-**Commits** follow [Conventional Commits](https://www.conventionalcommits.org/):
+**Commits** are signed off (see above) and follow [Conventional Commits](https://www.conventionalcommits.org/):
 `feat(snmp): add Mikrotik profile`, `fix(alerting): keep silences across
 restarts`, `docs: ...`, `chore(deps): ...`. Scopes are free-form; the crate or
 area name is a good one.

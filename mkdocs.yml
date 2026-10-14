@@ -162,5 +162,9 @@ nav:
       - HTTP API: reference/api.md
       - Configuration: reference/configuration.md
       - Metrics: reference/metrics.md
-  - Development: development.md
+  - Development:
+      - Overview: development.md
+      - Architecture: development/architecture.md
+      - Security model: development/security-model.md
+      - Roadmap: development/roadmap.md
   - FAQ: faq.md
