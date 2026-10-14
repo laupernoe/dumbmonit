@@ -598,6 +598,36 @@ Vedi [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Interfaccia Sophos senza link | Un'interfaccia Sophos Firewall accesa e associata a una zona non ha link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avviso (`warning`) | 6 h |
 
+### KVM (libvirt)
+
+Segnalato dall'agent Linux su un host KVM; vedi [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Dominio KVM in crash | libvirt segnala un dominio KVM come in crash: l'hypervisor ha dovuto fermarlo (`dumbmonit_agent_libvirt_domain_crashed`). | > 0 | 1 min | Avvertenza (`critical`) | 1 h |
+| Pool libvirt quasi pieno | L'allocazione di un pool di storage libvirt raggiunge il 90% della sua capacità (`dumbmonit_agent_libvirt_pool_used_percent`). | ≥ 90 % (rientra sotto l'88 %) | 15 min | Avviso (`warning`), escalation dopo 24 h | 6 h |
+
+### XCP-ng / XenServer
+
+Vedi [XCP-ng / XenServer](../devices/xcpng.md).
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Host XCP-ng offline | Un host del pool XCP-ng non risponde più al coordinatore (`dumbmonit_xcpng_host_live`). | < 1 | 5 min | Avvertenza (`critical`) | 1 h |
+| SR XCP-ng quasi pieno | Uno storage repository XCP-ng è pieno oltre il 90% (`dumbmonit_xcpng_sr_used_percent`). | ≥ 90 % (rientra sotto l'88 %) | 15 min | Avviso (`warning`), escalation dopo 24 h | 6 h |
+| VM XCP-ng protetta da HA ferma | Una VM protetta dall'alta disponibilità del pool è ferma (`dumbmonit_xcpng_vm_ha_protected_down`). | > 0 | 2 min | Avvertenza (`critical`) | 1 h |
+| HA del pool XCP-ng in overcommit | Il pool non ha più un piano per sopravvivere ai guasti di host che è configurato per tollerare (`dumbmonit_xcpng_pool_ha_overcommitted`). | > 0 | 5 min | Avviso (`warning`), escalation dopo 1 h | 6 h |
+
+### Nutanix
+
+Vedi [Nutanix AHV](../devices/nutanix.md).
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Host Nutanix degradato | Prism segnala un host Nutanix come degradato (`dumbmonit_nutanix_host_degraded`). | > 0 | 5 min | Avvertenza (`critical`) | 1 h |
+| Storage container Nutanix quasi pieno | Uno storage container Nutanix è pieno oltre il 90% (`dumbmonit_nutanix_storage_container_used_percent`). | ≥ 90 % (rientra sotto l'88 %) | 15 min | Avviso (`warning`), escalation dopo 24 h | 6 h |
+| Avvisi critici Nutanix | Prism Central segnala uno o più avvisi critici non risolti (`dumbmonit_nutanix_alerts_critical`). | > 0 | 5 min | Avvertenza (`critical`) | 1 h |
+
 ### Hyper-V
 
 Segnalati dall'agent Windows su un host Hyper-V; vedi [Agent](../devices/agent.md#hyper-v-hosts).

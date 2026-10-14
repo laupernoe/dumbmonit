@@ -14,6 +14,7 @@ use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
 use crate::collect::ipsec::IpsecProbe;
+use crate::collect::libvirt::LibvirtProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
@@ -78,6 +79,8 @@ pub struct Agent {
     sensors: SensorsProbe,
     smart: SmartProbe,
     zfs: ZfsProbe,
+    /// Domaines KVM et pools libvirt. Muet sans `virsh` ni domaine.
+    libvirt: LibvirtProbe,
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
@@ -132,6 +135,7 @@ impl Agent {
             sensors: SensorsProbe::new(config.sensors),
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
+            libvirt: LibvirtProbe::new(&config.libvirt),
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
@@ -164,6 +168,7 @@ impl Agent {
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
         snapshot.zfs = self.zfs.read().await;
+        snapshot.libvirt = self.libvirt.read().await;
         snapshot.perf_counters = self.perf_counters.read();
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
@@ -446,6 +451,7 @@ mod tests {
             sensors: false,
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
+            libvirt: crate::collect::libvirt::LibvirtConfig::default(),
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),

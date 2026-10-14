@@ -34,7 +34,7 @@ Cada alerta es una máquina de estados, evaluada cada 30 segundos
 | `pending` | Building up | La condición es verdadera pero el tiempo de espera de la regla (`for`) aún no ha transcurrido. No se envía nada. |
 | `firing` | Firing | La condición se ha mantenido el tiempo suficiente. Se envía la primera notificación, luego recordatorios cada `repeat_interval` (6 horas por defecto para la mayoría de reglas integradas), luego una escalada si está configurada. |
 | `resolved` | Resolved | Vuelta a la normalidad. Una notificación de resolución se envía solo si la activación había sido anunciada. |
-| `suppressed` | Suppressed by parent | La alerta está activa, pero un dispositivo padre es inaccesible: consulta abajo. |
+| `suppressed` | Suppressed by parent | La alerta está activa, pero un dispositivo padre, o el propio dispositivo, es inaccesible: consulta abajo. |
 
 `phase` es el estado del motor; `effective_phase` es lo que lees. Una
 alerta cuyo `effective_phase` es `suppressed` conserva `phase = firing`
@@ -58,6 +58,12 @@ dispositivo es inaccesible (la regla «Device unreachable» se activa en
 lugar de enviarse: un switch que se cae produce una notificación, no
 treinta. El ancestro inaccesible más cercano se nombra como la causa
 (`suppressed_by`), y la cadena se sigue hasta 64 niveles.
+
+Lo mismo vale para el propio dispositivo inaccesible: sus demás alertas
+(disco lleno, CPU, etc.) se suprimen por su propia caída, con `suppressed_by`
+nombrando al propio dispositivo, ya que sus valores están desactualizados y
+solo son un síntoma del mismo fallo. Solo su alerta «Device unreachable» nunca
+se oculta por su propia caída, así que se te avisa una vez.
 
 Define el padre en el formulario del dispositivo. En la página Devices,
 los hijos se apilan bajo su padre y se atenúan cuando es inaccesible.

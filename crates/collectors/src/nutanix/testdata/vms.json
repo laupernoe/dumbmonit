@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "extId": "v1",
+      "name": "web01",
+      "powerState": "ON",
+      "numSockets": 1,
+      "numCoresPerSocket": 2,
+      "numThreadsPerCore": 1,
+      "memorySizeBytes": 4294967296,
+      "cluster": {
+        "extId": "0006241f-7b1a-4f8c-0000-0000000000a1"
+      },
+      "host": {
+        "extId": "a1"
+      }
+    },
+    {
+      "extId": "v2",
+      "name": "db01",
+      "powerState": "OFF",
+      "numSockets": 2,
+      "numCoresPerSocket": 2,
+      "memorySizeBytes": 8589934592,
+      "cluster": {
+        "extId": "0006241f-7b1a-4f8c-0000-0000000000a1"
+      }
+    },
+    {
+      "extId": "v3",
+      "name": "dns01",
+      "powerState": "ON",
+      "numSockets": 1,
+      "memorySizeBytes": 1073741824,
+      "cluster": {
+        "extId": "0006241f-7b1a-4f8c-0000-0000000000a1"
+      },
+      "host": {
+        "extId": "a2"
+      }
+    }
+  ],
+  "metadata": {
+    "flags": [
+      {
+        "name": "hasError",
+        "value": false
+      },
+      {
+        "name": "isPaginated",
+        "value": true
+      }
+    ],
+    "links": [],
+    "totalAvailableResults": 3,
+    "$objectType": "common.v1.response.ApiResponseMetadata"
+  },
+  "$objectType": "vmm.v4.ahv.config.ListVmsApiResponse"
+}

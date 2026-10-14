@@ -834,6 +834,8 @@
 	"deviceform_modules_docker_hint": "Zustand, Health-Check, Neustarts und Image-Updates.",
 	"deviceform_modules_ipsec": "IPsec-Tunnel",
 	"deviceform_modules_ipsec_hint": "Tunnel, gelesen mit swanctl.",
+	"deviceform_modules_libvirt": "KVM-VMs",
+	"deviceform_modules_libvirt_hint": "libvirt-Domänen und Speicherpools, über virsh.",
 	"deviceform_modules_none": "Kein Modul angehakt: Der Agent sendet nur CPU, Arbeitsspeicher, Datenträger und Netzwerk.",
 	"deviceform_modules_perf_counters": "Windows-Leistungsindikatoren",
 	"deviceform_modules_perf_counters_hint": "Vorlagen für MDaemon und Hyper-V.",
@@ -3087,7 +3089,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} unveränderte Zeile",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} unveränderte Zeilen",
 	"devicesb_webchange_list_earlier": "Frühere Änderungen ({count})",
-	"devicesb_webchange_list_quiet": "{count} Seiten ohne Änderung",
+	"devicesb_webchange_list_quiet_one": "1 Seite ohne Änderung",
+	"devicesb_webchange_list_quiet_other": "{count} Seiten ohne Änderung",
 	"devicesb_webchange_list_screenshots": "Screenshots von {path}",
 	"devicesb_webchange_pages_empty": "Es wird noch keine Seite überwacht.",
 	"devicesb_webchange_pages_empty_hint": "Die Adresse des Geräts wird bei der ersten Abfrage als Ausgangsbasis geprüft.",
@@ -6134,5 +6137,10 @@
 	"website_sitemap_ok": "Erreichbar",
 	"website_status": "Status",
 	"website_unknown": "Noch nicht geprüft",
-	"website_value_empty": "(keine)"
+	"website_value_empty": "(keine)",
+	"whatsnew_dialog_close": "Neuigkeiten schließen",
+	"whatsnew_dialog_notes": "Vollständige Versionshinweise",
+	"whatsnew_dialog_ok": "Verstanden",
+	"whatsnew_dialog_title": "Neu in v{version}",
+	"whatsnew_dialog_updated": "Aktualisiert · {date}"
 }

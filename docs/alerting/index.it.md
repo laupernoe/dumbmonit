@@ -34,7 +34,7 @@ Ogni avviso è una macchina a stati, valutata ogni 30 secondi
 | `pending` | Building up | La condizione è vera ma l'attesa della regola (`for`) non è ancora trascorsa. Nulla viene inviato. |
 | `firing` | Firing | La condizione è durata abbastanza. La prima notifica esce, poi ricordi ogni `repeat_interval` (6 ore per impostazione predefinita per la maggior parte delle regole integrate), poi un'escalation se configurata. |
 | `resolved` | Resolved | Tornato alla normalità. Una notifica di risoluzione viene inviata solo se l'attivazione era stata annunciata. |
-| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un dispositivo genitore è irraggiungibile: vedi sotto. |
+| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un dispositivo genitore, o il dispositivo stesso, è irraggiungibile: vedi sotto. |
 
 `phase` è lo stato del motore; `effective_phase` è ciò che leggi. Un
 avviso il cui `effective_phase` è `suppressed` mantiene `phase = firing`
@@ -60,6 +60,13 @@ attiva su di esso), ogni avviso sui suoi discendenti viene contrassegnato
 produce una notifica, non trenta. L'antenato irraggiungibile più vicino
 viene nominato come causa (`suppressed_by`), e la catena viene seguita
 fino a 64 livelli.
+
+Lo stesso vale per il dispositivo irraggiungibile stesso: i suoi altri avvisi
+(disco pieno, CPU, ecc.) vengono soppressi dal suo stesso guasto, con
+`suppressed_by` che nomina il dispositivo stesso, perché i loro valori non sono
+più aggiornati e sono solo un sintomo dello stesso guasto. Solo il suo avviso
+"Device unreachable" non viene mai nascosto dal proprio guasto, quindi vieni
+avvisato una volta.
 
 Imposta il genitore nel modulo del dispositivo. Nella pagina Devices, i
 figli si impilano sotto il loro genitore e si attenuano quando è

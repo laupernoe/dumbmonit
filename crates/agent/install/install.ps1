@@ -26,7 +26,7 @@ param(
     [hashtable]$Tags = @{},
     [string]$HostName,
     # Optional modules to run (docker, plakar, system_health, sensors, smart, zfs,
-    # wireguard, ipsec, perf_counters, or none). Omitted: every module detects itself.
+    # libvirt, wireguard, ipsec, perf_counters, or none). Omitted: every module detects itself.
     [string[]]$Modules,
     # Local binary to install instead of downloading it.
     [string]$BinPath,
@@ -41,7 +41,7 @@ $ErrorActionPreference = 'Stop'
 
 # Les noms de modules sont vérifiés avant toute chose : une faute de frappe ferait
 # refuser le démarrage de l'agent, une fois tout installé.
-$ModulesConnus = @('docker', 'plakar', 'system_health', 'sensors', 'smart', 'zfs', 'wireguard', 'ipsec', 'perf_counters', 'none')
+$ModulesConnus = @('docker', 'plakar', 'system_health', 'sensors', 'smart', 'zfs', 'libvirt', 'wireguard', 'ipsec', 'perf_counters', 'none')
 foreach ($module in @($Modules | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
     if ($ModulesConnus -notcontains $module) {
         throw "Unknown module '$module' (known: $($ModulesConnus -join ', '))."

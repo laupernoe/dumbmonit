@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "extId": "al1",
+      "title": "Disk space usage high",
+      "severity": "CRITICAL",
+      "isResolved": false,
+      "isAcknowledged": false,
+      "clusterUUID": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "creationTime": "2026-10-14T08:00:00Z"
+    },
+    {
+      "extId": "al2",
+      "title": "NTP is not configured",
+      "severity": "WARNING",
+      "isResolved": false,
+      "isAcknowledged": true,
+      "clusterUUID": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "creationTime": "2026-10-13T08:00:00Z"
+    }
+  ],
+  "metadata": {
+    "flags": [
+      {
+        "name": "hasError",
+        "value": false
+      },
+      {
+        "name": "isPaginated",
+        "value": true
+      }
+    ],
+    "links": [],
+    "totalAvailableResults": 2,
+    "$objectType": "common.v1.response.ApiResponseMetadata"
+  },
+  "$objectType": "monitoring.v4.serviceability.ListAlertsApiResponse"
+}

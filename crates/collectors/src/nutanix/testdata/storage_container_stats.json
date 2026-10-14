@@ -1,0 +1,27 @@
+{
+  "data": {
+    "$objectType": "clustermgmt.v4.stats.StorageContainerStats",
+    "containerExtId": "c1a7e8a0-0000-4000-8000-000000000001",
+    "storageCapacityBytes": [
+      {
+        "timestamp": "2026-10-14T10:05:00Z",
+        "value": 10000000000000
+      },
+      {
+        "timestamp": "2026-10-14T10:00:00Z",
+        "value": 10000000000000
+      }
+    ],
+    "storageUsageBytes": [
+      {
+        "timestamp": "2026-10-14T10:05:00Z",
+        "value": 9200000000000
+      },
+      {
+        "timestamp": "2026-10-14T10:00:00Z",
+        "value": 8000000000000
+      }
+    ]
+  },
+  "$objectType": "clustermgmt.v4.stats.GetStorageContainerStatsApiResponse"
+}

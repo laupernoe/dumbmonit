@@ -33,7 +33,7 @@ Chaque alerte est une machine à états, évaluée toutes les 30 secondes
 | `pending` | En construction | La condition est vraie mais le délai de maintien de la règle (`for`) ne s'est pas encore écoulé. Rien n'est envoyé. |
 | `firing` | Active | La condition a tenu assez longtemps. La première notification sort, puis des rappels toutes les `repeat_interval` (6 heures par défaut pour la plupart des règles intégrées), puis une escalade si configurée. |
 | `resolved` | Résolue | Retour à la normale. Une notification de résolution n'est envoyée que si l'activation avait été annoncée. |
-| `suppressed` | Supprimée par le parent | L'alerte est active, mais un appareil parent est inaccessible : voir ci-dessous. |
+| `suppressed` | Supprimée par le parent | L'alerte est active, mais un appareil parent, ou l'appareil lui-même, est inaccessible : voir ci-dessous. |
 
 `phase` est l'état du moteur ; `effective_phase` est ce que vous lisez. Une
 alerte dont `effective_phase` est `suppressed` garde `phase = firing` en
@@ -57,6 +57,13 @@ parent* plutôt qu'envoyée : un commutateur qui tombe produit une
 notification, pas trente. L'ancêtre inaccessible le plus proche est nommé
 comme la cause (`suppressed_by`), et la chaîne est suivie jusqu'à 64
 niveaux.
+
+Il en va de même pour l'appareil inaccessible lui-même : ses autres alertes
+(disque plein, CPU, etc.) sont supprimées par sa propre panne, avec
+`suppressed_by` qui le désigne lui-même, car leurs valeurs ne sont plus à jour
+et elles ne sont qu'un symptôme de la même panne. Seule son alerte « Appareil
+inaccessible » n'est jamais masquée par sa propre panne : vous êtes donc
+prévenu une fois.
 
 Réglez le parent dans le formulaire de l'appareil. Sur la page Appareils,
 les enfants s'empilent sous leur parent et s'atténuent quand il est

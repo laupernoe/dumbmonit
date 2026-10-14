@@ -10,6 +10,7 @@ export const AGENT_MODULES = [
 	'sensors',
 	'smart',
 	'zfs',
+	'libvirt',
 	'wireguard',
 	'ipsec',
 	'perf_counters'

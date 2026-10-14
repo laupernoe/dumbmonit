@@ -13,6 +13,8 @@ form always matches what this version can monitor.
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | API token | Console federating several PVE clusters and PBS instances |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | username/password | Mail gateway filtering spam and viruses |
 | [VMware vSphere](vsphere.md) | `vsphere` | username/password | vCenter or standalone ESXi: hosts, VMs, datastores, alarms |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | username/password (read-only XAPI role) | Pool through XAPI: hosts, VMs, storage repositories, high availability |
+| [Nutanix AHV](nutanix.md) | `nutanix` | username/password (Prism Viewer) | Prism Central v4 API: clusters, hosts, AHV VMs, storage containers, alerts |
 | [Synology DSM](synology.md) | `synology` | username/password | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | API key and secret | Firewall, router, multi-WAN edge |
 | [pfSense](pfsense.md) | `pfsense` | REST API key (read-only user) | Firewall: gateways down or lossy, interfaces without link, stopped services |

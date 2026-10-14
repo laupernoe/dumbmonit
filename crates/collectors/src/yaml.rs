@@ -42,9 +42,7 @@ mod tests {
 
     #[test]
     fn errors_do_not_quote_the_source() {
-        let err = super::from_str::<serde_json::Value>("token: dmon_secret
-url: [
-")
+        let err = super::from_str::<serde_json::Value>("token: dmon_secret\nurl: [\n")
             .unwrap_err()
             .to_string();
         assert!(!err.contains("dmon_secret"), "{err}");

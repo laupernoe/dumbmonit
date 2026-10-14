@@ -600,6 +600,36 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 |---|---|---|---|---|---|
 | Sophos interface without link | У включённого интерфейса Sophos Firewall, привязанного к зоне, нет линка (`dumbmonit_sophos_interface_down`). | > 0 | 5 мин | Advisory (`warning`) | 6 ч |
 
+### KVM (libvirt)
+
+Сообщается агентом Linux на хосте KVM; см. [Агент](../devices/agent.md#kvm-virtual-machines-through-libvirt).
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| KVM domain crashed | libvirt сообщает о домене KVM как об аварийно завершившемся: гипервизору пришлось его остановить (`dumbmonit_agent_libvirt_domain_crashed`). | > 0 | 1 мин | Warning (`critical`) | 1 ч |
+| libvirt pool almost full | Выделенное место пула хранилища libvirt достигает 90 % его ёмкости (`dumbmonit_agent_libvirt_pool_used_percent`). | ≥ 90 % (сбрасывается ниже 88 %) | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
+
+### XCP-ng / XenServer
+
+См. [XCP-ng / XenServer](../devices/xcpng.md).
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| XCP-ng host offline | Хост пула XCP-ng больше не отвечает координатору (`dumbmonit_xcpng_host_live`). | < 1 | 5 мин | Warning (`critical`) | 1 ч |
+| XCP-ng SR almost full | Репозиторий хранилища (SR) XCP-ng заполнен более чем на 90 % (`dumbmonit_xcpng_sr_used_percent`). | ≥ 90 % (сбрасывается ниже 88 %) | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
+| XCP-ng HA-protected VM down | ВМ, защищённая высокой доступностью пула, остановлена (`dumbmonit_xcpng_vm_ha_protected_down`). | > 0 | 2 мин | Warning (`critical`) | 1 ч |
+| XCP-ng pool HA overcommitted | У пула больше нет плана, как пережить отказы хостов, которые он настроен выдерживать (`dumbmonit_xcpng_pool_ha_overcommitted`). | > 0 | 5 мин | Advisory (`warning`), эскалируется через 1 ч | 6 ч |
+
+### Nutanix
+
+См. [Nutanix AHV](../devices/nutanix.md).
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| Nutanix host degraded | Prism сообщает о хосте Nutanix как о деградировавшем (`dumbmonit_nutanix_host_degraded`). | > 0 | 5 мин | Warning (`critical`) | 1 ч |
+| Nutanix storage container almost full | Контейнер хранилища Nutanix заполнен более чем на 90 % (`dumbmonit_nutanix_storage_container_used_percent`). | ≥ 90 % (сбрасывается ниже 88 %) | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
+| Nutanix critical alerts | Prism Central сообщает об одном или нескольких неустранённых критических оповещениях (`dumbmonit_nutanix_alerts_critical`). | > 0 | 5 мин | Warning (`critical`) | 1 ч |
+
 ### Hyper-V
 
 Сообщается агентом Windows на хосте Hyper-V; см. [Агент](../devices/agent.md#hyper-v-hosts).

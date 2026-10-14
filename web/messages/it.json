@@ -834,6 +834,8 @@
 	"deviceform_modules_docker_hint": "Stato, salute, riavvii e aggiornamenti dell'immagine.",
 	"deviceform_modules_ipsec": "Tunnel IPsec",
 	"deviceform_modules_ipsec_hint": "Tunnel letti con swanctl.",
+	"deviceform_modules_libvirt": "Macchine virtuali KVM",
+	"deviceform_modules_libvirt_hint": "Domini e pool di archiviazione libvirt, tramite virsh.",
 	"deviceform_modules_none": "Nessun modulo spuntato: l'agente invia solo CPU, memoria, dischi e rete.",
 	"deviceform_modules_perf_counters": "Contatori di prestazioni di Windows",
 	"deviceform_modules_perf_counters_hint": "Set per MDaemon e Hyper-V.",
@@ -3087,7 +3089,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} riga invariata",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} righe invariate",
 	"devicesb_webchange_list_earlier": "Modifiche precedenti ({count})",
-	"devicesb_webchange_list_quiet": "{count} pagine senza modifiche",
+	"devicesb_webchange_list_quiet_one": "1 pagina senza modifiche",
+	"devicesb_webchange_list_quiet_other": "{count} pagine senza modifiche",
 	"devicesb_webchange_list_screenshots": "Screenshot di {path}",
 	"devicesb_webchange_pages_empty": "Nessuna pagina è ancora monitorata.",
 	"devicesb_webchange_pages_empty_hint": "L’indirizzo del dispositivo viene controllato come riferimento alla prima sonda.",
@@ -6134,5 +6137,10 @@
 	"website_sitemap_ok": "Raggiungibile",
 	"website_status": "Stato",
 	"website_unknown": "Non ancora verificato",
-	"website_value_empty": "(nessuno)"
+	"website_value_empty": "(nessuno)",
+	"whatsnew_dialog_close": "Chiudi le novità",
+	"whatsnew_dialog_notes": "Note di rilascio complete",
+	"whatsnew_dialog_ok": "Ho capito",
+	"whatsnew_dialog_title": "Novità della v{version}",
+	"whatsnew_dialog_updated": "Aggiornato · {date}"
 }
