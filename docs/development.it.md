@@ -44,7 +44,7 @@ docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo fmt --all --ch
 ```
 
 Con Rust installato in locale, `cargo test` e `cargo clippy -- -D warnings`
-funzionano direttamente. Edition 2024, MSRV 1.88; `rustfmt.toml` imposta
+funzionano direttamente. Edition 2024, MSRV 1.95; `rustfmt.toml` imposta
 `max_width = 100` e `use_small_heuristics = "Max"`.
 
 La build Docker è a livelli: build web → dipendenze Rust su sorgenti fittizi →

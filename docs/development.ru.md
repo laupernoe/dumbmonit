@@ -39,7 +39,7 @@ docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo clippy --all-t
 docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo fmt --all --check
 ```
 
-С установленным локально Rust, `cargo test` и `cargo clippy -- -D warnings` работают напрямую. Edition 2024, MSRV 1.88; `rustfmt.toml` устанавливает `max_width = 100` и `use_small_heuristics = "Max"`.
+С установленным локально Rust, `cargo test` и `cargo clippy -- -D warnings` работают напрямую. Edition 2024, MSRV 1.95; `rustfmt.toml` устанавливает `max_width = 100` и `use_small_heuristics = "Max"`.
 
 Сборка Docker слоистая: сборка веб → зависимости Rust на dummy sources → реальные sources (с `touch` перед второй `cargo build`, иначе cargo повторно использует артефакты dummy) → агент кросс-компилируется с cargo-zigbuild для `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl` и `x86_64-pc-windows-gnu` → `FROM scratch`. `web/build` должен существовать перед `cargo build`, или сервер отправляется без интерфейса.
 
