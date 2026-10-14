@@ -166,5 +166,6 @@ nav:
       - Overview: development.md
       - Architecture: development/architecture.md
       - Security model: development/security-model.md
+      - Assurance case: development/assurance-case.md
       - Roadmap: development/roadmap.md
   - FAQ: faq.md

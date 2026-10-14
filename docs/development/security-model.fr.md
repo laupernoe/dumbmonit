@@ -77,6 +77,9 @@ dépendances et l'analyse CodeQL. L'OpenSSF Scorecard tourne périodiquement. Un
 correctif de sécurité vient avec un test de non-régression et figure, avec son
 identifiant CVE ou GHSA, dans les notes de version.
 
+L'[argumentaire d'assurance](assurance-case.md) détaille le modèle de menace,
+l'argument de conception sûre et les preuves de chaque affirmation.
+
 ## Limites connues
 
 - Le serveur intégré parle en HTTP clair ; placez du TLS devant.

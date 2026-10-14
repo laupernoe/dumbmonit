@@ -75,6 +75,9 @@ the web tests under `web/tests/`, dependency checks and CodeQL analysis. The
 OpenSSF Scorecard runs on a schedule. Security fixes come with a regression
 test and are listed, with their CVE or GHSA identifier, in the release notes.
 
+The [assurance case](assurance-case.md) gives the full threat model, the secure
+design argument and the evidence behind each claim.
+
 ## Known limits
 
 - The built-in server speaks plain HTTP; put TLS in front of it.
