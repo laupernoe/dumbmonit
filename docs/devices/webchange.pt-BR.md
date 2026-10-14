@@ -14,6 +14,27 @@ título, item de lista, linha de tabela) se torna uma linha. Um novo build
 da mesma página, um atributo reordenado ou um novo nome de arquivo de
 cache-busting não mudam nada; uma frase reescrita muda.
 
+### Que parte da página {#what-part-of-the-page}
+
+A **navegação, o cabeçalho, o rodapé e as barras laterais** do site ficam
+de fora: são iguais em todas as páginas, então uma nova entrada de menu
+marcaria todas as páginas como mudadas em uma única verificação. Seguem os
+papéis que o HTML lhes dá: todo `nav`, um `header` ou `footer` que não esteja
+dentro de um `article`, `aside`, `main`, `nav` ou `section` (o cabeçalho de
+um artigo é mantido), um `aside` fora de `article` e `main`, e qualquer
+elemento com o papel `navigation`, `banner`, `contentinfo` ou `search`. Seus
+links ainda são seguidos para encontrar as páginas de um site. **Comparar
+menus, cabeçalho e rodapé** desativa isso.
+
+**Área observada** restringe a comparação a alguns elementos, por exemplo
+`main` ou `#content`; uma página em que nenhum deles é encontrado é lida
+inteira em vez de vazia. **Áreas excluídas** deixa mais elementos de fora: um
+banner de cookies, uma caixa de "últimas publicações", um espaço de anúncio.
+Ambos aceitam seletores simples, separados por vírgulas: uma tag (`main`), um
+id (`#content`), classes (`.cookie-banner`), atributos (`[role=alert]`,
+`[data-ad]`), ou vários juntos (`div.notice[role=alert]`). Descendentes
+(`main p`) e outros combinadores não são suportados.
+
 ## Página ou site {#page-or-site}
 
 **Página** (o padrão) lê o endereço do dispositivo e nada mais. Também
@@ -29,11 +50,20 @@ linha.
 2. faltando isso, ou quando o sitemap não lista nada sob a pasta,
    seguindo os links de cada página, em largura.
 
-Apenas páginas da mesma origem (esquema, host e porta) são seguidas;
-links para imagens, folhas de estilo, scripts, PDFs, arquivos compactados
-e outros arquivos são pulados por sua extensão, e qualquer resposta que
-não seja HTML é ignorada. Fragmentos (`#section`) são descartados e
-consultas vazias removidas, então uma página é um endereço.
+Apenas páginas da mesma origem (esquema, host e porta) são seguidas. Quando
+a página inicial redireciona para outro host do mesmo site (`example.com`
+para `www.example.com`, `http` para `https`, ou um subdomínio como
+`docs.example.com`), considera-se que o site mora lá, e os links para o
+primeiro host são lidos no segundo. Quando redireciona para outro site
+completamente diferente (uma página de login como
+`login.microsoftonline.com`, um domínio de terceiros), esse site não é
+varrido: só a página inicial é lida, e nenhuma página é reportada como
+removida. Links para imagens, folhas de estilo, scripts, PDFs, arquivos
+compactados e outros arquivos são pulados por sua extensão, e qualquer
+resposta que não seja HTML é ignorada. Fragmentos (`#section`), parâmetros
+de rastreamento (`utm_…`, `fbclid`, `gclid` e similares) e consultas vazias
+são removidos, então uma página é um endereço; **Ignorar query strings**
+descarta toda a parte `?…`.
 `robots.txt` é respeitado para as páginas encontradas desse jeito: o
 grupo que nomeia `DumbMonit`, ou senão o grupo `*`, com `Allow`,
 `Disallow`, `*` e `$`.
@@ -42,7 +72,10 @@ A varredura é educada: duas requisições por vez no máximo, meio segundo
 entre dois lotes, o `User-Agent` `DumbMonit/<version>`, um tempo limite
 de 15 segundos por requisição e 5 MB lidos no máximo por página. Ela para
 em **Máximo de páginas** (25 por padrão, 200 no máximo) ou depois de dez
-minutos.
+minutos. Quando **Máximo de páginas** a interrompeu, a página do dispositivo
+diz quantas páginas foram encontradas, para que a parte não observada do
+site nunca seja uma surpresa. **User agent** substitui `DumbMonit/<version>`
+para um site que barra robôs.
 
 ## Como uma verificação funciona {#how-a-check-works}
 
@@ -66,9 +99,15 @@ e mantida, nada é reportado. A partir de então, para cada página:
 | Escopo de site: uma varredura completa não alcança mais uma página conhecida | Um evento de **página removida** também ("Não mais vinculada"). Uma varredura interrompida por **Máximo de páginas** ou por seu limite de tempo nunca conclui que uma página desapareceu. |
 | Qualquer outro erro em uma página (tempo esgotado, 403, 500 em uma subpágina) | O erro é mostrado na página; nenhum evento. |
 
-Mudar o endereço, o escopo, o prefixo de caminho ou **Ignorar linhas**
-faz a próxima verificação uma nova referência em vez de reportar toda
-página como mudada.
+Mudar o endereço, o escopo, o prefixo de caminho, **Máximo de páginas**, as
+áreas ou **Ignorar linhas** faz a próxima verificação uma nova referência em
+vez de reportar toda página como mudada (ou, para um **Máximo de páginas**
+maior, toda página que ele acrescenta como nova). Uma atualização do
+DumbMonit que lê as páginas de outro jeito faz o mesmo uma vez.
+
+Quando uma verificação encontra a **mesma mudança em várias páginas** (as
+mesmas linhas removidas e adicionadas, como um banner), a página do
+dispositivo a mostra uma só vez, com as páginas em que foi feita.
 
 ### Ignorar linhas {#ignore-lines}
 
@@ -103,8 +142,13 @@ LAN privados são sempre permitidos.
 
 A regra integrada **Website changed** (`webchange_detected`, Info)
 dispara depois de uma verificação que encontrou ao menos uma mudança
-(mudada, nova ou página removida), e resolve na próxima verificação que
-não encontra nenhuma. Ela lê `dumbmonit_webchange_last_check_changes`;
+(mudada, nova ou página removida), e a notificação nomeia as páginas:
+"/pricing, /contact e mais 2". Enquanto está disparando, toda nova
+verificação que encontra mudanças é notificada de novo, com suas próprias
+páginas, mesmo nas mesmas páginas; o alerta resolve na primeira verificação
+que não encontra nada novo. Continua sendo um alerta por dispositivo o
+tempo todo, então reconhecê-lo ou adiá-lo pelo alerta cobre também as
+verificações seguintes. Ela lê `dumbmonit_webchange_last_check_changes`;
 conecte-a a um canal como qualquer outra regra, ou aumente sua
 severidade, em **Alertas → Regras**. Veja
 [Regras integradas](../alerting/rules.md#website-changes).
@@ -158,7 +202,7 @@ HTML que o servidor enviou.
 
 O texto de cada snapshot é mantido no banco de dados (1 MB no máximo por
 página); capturas de tela são arquivos sob
-`/data/webchange/<device id>/`. Por dispositivo, as últimas cem mudanças
+`/data/webchange/<device id>/`. Por dispositivo, as últimas 500 mudanças
 são mantidas; um snapshot é mantido enquanto é o mais recente de uma
 página ou uma mudança mantida se refere a ele, e tudo mais, arquivos
 incluídos, é removido depois de cada verificação. Excluir o dispositivo
@@ -179,9 +223,10 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
    partir de então, cada verificação compara o texto visível página por
    página e mantém uma cópia antes/depois de toda mudança, mostrada na
    página do dispositivo; o alerta "Website changed" avisa você.
-4. Para uma captura de tela de cada versão, adicione um serviço de navegador
-   headless ao seu arquivo Compose e aponte o DumbMonit para ele, como mostrado em
-   [Capturas de tela](#screenshots).
+4. Para uma captura de tela de cada versão, adicione um navegador headless ao
+   seu arquivo Compose; as linhas exatas estão na documentação (Opções
+   avançadas, "Capturas de tela das mudanças de sites").
+   Veja [Capturas de tela das mudanças de sites](../install/docker.md#website-screenshots).
 
 !!! warning
     Só o texto que o servidor envia é comparado: uma página desenhada
@@ -199,6 +244,11 @@ uma observação de site não pode passar por um agente relay.
 | Máximo de páginas (`max_pages`) | `25` | Escopo de site: páginas lidas no máximo por verificação, 1 a 200. |
 | Prefixo de caminho (`path_prefix`) | pasta do endereço | Escopo de site: só páginas cujo caminho começa com isso (`/docs/`). |
 | Ignorar linhas (`ignore`) | — | Expressões regulares; linhas de texto correspondentes não são comparadas. |
+| Área observada (`content_selector`) | — | Seletores simples; só o texto dentro deles é comparado. |
+| Áreas excluídas (`exclude_selector`) | — | Seletores simples; o texto deles não é comparado. |
+| Comparar menus, cabeçalho e rodapé (`keep_page_chrome`) | `false` | Compara também a navegação, o cabeçalho, o rodapé e as barras laterais do site. |
+| Ignorar query strings (`ignore_query`) | `false` | Escopo de site: endereços que diferem só pela parte `?…` são uma página. |
+| User agent (`user_agent`) | — | Enviado no lugar de `DumbMonit/<version>`. |
 | Capturas de tela (`screenshots`) | `true` | Mantém uma captura de tela de cada versão nova, quando um navegador está configurado. |
 | Verificar cada (`check_interval_minutes`) | `60` | Minutos entre duas verificações, 5 a 10080. |
 | Aceitar um certificado não verificável (`insecure_tls`) | `false` | Para um site próprio detrás de um certificado autoassinado. |

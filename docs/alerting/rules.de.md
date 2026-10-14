@@ -54,7 +54,7 @@ Zustandsserien sind 0 (OK), 1 (Warnung) oder 2 (Kritisch). Ein leerer Steckplatz
 | Dienst ausgefallen | Der Dienst hat drei Minuten lang nicht korrekt geantwortet (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 Min. | Warnung (`critical`) | 30 Min. |
 | Heartbeat verpasst | Der Job hat sich nicht innerhalb seines erwarteten Intervalls plus Karenzzeit gemeldet oder selbst einen Fehler gemeldet (`dumbmonit_probe_success{probe="push"} == bool 0`; die Verzögerung wird pro Gerät festgelegt, siehe [Heartbeat](../devices/push.md)). | > 0 | 2 Min. | Hinweis (`warning`) | 6 h |
 | Dienst flattert | Der Dienst hat in dreißig Minuten mehr als sechsmal den Zustand gewechselt (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 Min. | Hinweis (`warning`) | 1 h |
-| Langsamer Dienst | Der Dienst braucht mehr als drei Sekunden zum Antworten. | > 3 s | 10 Min. | Hinweis (`warning`) | 6 h |
+| Langsamer Dienst | Der Dienst braucht mehr als drei Sekunden zum Antworten; fehlgeschlagene Prüfungen bleiben außen vor (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 Min. | Hinweis (`warning`) | 6 h |
 | Zertifikat läuft bald ab | Das Zertifikat läuft in weniger als vierzehn Tagen ab. | < 14 T. | 1 h | Hinweis (`warning`) | 24 h |
 | Zertifikat abgelaufen | Das Zertifikat ist abgelaufen. | < 0 T. | 5 Min. | Warnung (`critical`) | 24 h |
 
@@ -64,8 +64,8 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md). Der Alarm nennt den Co
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| Container gestoppt | Der Container ist seit zwei Minuten gestoppt (`dumbmonit_container_up == bool 0`). | > 0 | 2 Min. | Hinweis (`warning`) | 1 h |
-| Container ungesund | Der Health-Check des Containers schlägt seit drei Minuten fehl (`dumbmonit_container_health == 2`; 0 keiner, 1 gesund, 3 startet). | > 0 | 3 Min. | Hinweis (`warning`) | 1 h |
+| Container gestoppt | Der Container ist seit zwei Minuten gestoppt (`dumbmonit_container_up == bool 0`). Ein Container, den Docker nicht neu starten würde, bleibt außen vor (`dumbmonit_container_stop_expected = 1`): ein abgeschlossenes einmaliges `docker run`, ein nie gestarteter Container oder einer, der von Hand ohne Restart-Policy gestoppt wurde. Ein Absturz (jeder andere Exit-Code), ein Out-of-Memory-Kill oder ein Container mit `always` / `unless-stopped` zählt weiterhin. | > 0 | 2 Min. | Hinweis (`warning`) | 1 h |
+| Container ungesund | Der Health-Check des Containers schlägt seit drei Minuten fehl (`dumbmonit_container_health == 2`; 0 keiner, 1 gesund, 3 startet). Ein gestoppter Container bleibt außen vor: Docker behält sein letztes Urteil, das nichts mehr bedeutet. | > 0 | 3 Min. | Hinweis (`warning`) | 1 h |
 | Container startet immer wieder neu | Der Container ist in fünfzehn Minuten dreimal oder öfter neu gestartet (`increase(dumbmonit_container_restart_count[15m])`): Er ist selten lange genug gestoppt für die vorherige Regel. | ≥ 3 | 1 Min. | Hinweis (`warning`) | 1 h |
 | Container-Update verfügbar | In der Registry ist ein neueres Image für diesen Container verfügbar (`dumbmonit_container_update_available == 1`). | > 0 | 1 h | Info (`info`) | 24 h |
 
@@ -77,7 +77,8 @@ nicht erkannt ist, sodass keine der beiden Regeln auf einem Rechner ohne Plakar 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
 | Plakar-Backup zu alt | Seit mehr als zwei Tagen kein neuer Plakar-Snapshot für diese Quelle (`dumbmonit_backup_last_success_seconds`). | > 2 T. | 1 h | Hinweis (`warning`) | 24 h |
-| Plakar-Backup fehlgeschlagen | Der neueste Snapshot hat Fehler, oder das Kloset kann nicht gelesen werden (`dumbmonit_backup_last_status < 1`). | < 1 | 10 Min. | Warnung (`critical`) | 24 h |
+| Plakar-Backup fehlgeschlagen | Der neueste Snapshot hat Fehler (`dumbmonit_backup_last_status{source!="*"} < 1`). | < 1 | 10 Min. | Warnung (`critical`) | 24 h |
+| Plakar-Kloset nicht lesbar | Der Agent kann das Kloset nicht öffnen: Speicher nicht erreichbar, Passphrase oder Plugin fehlt; das Log des Agenten sagt einmalig, was davon (`dumbmonit_backup_last_status{source="*"} < 1`). | < 1 | 30 Min. | Hinweis (`warning`) | 24 h |
 
 ### restic- und Borg-Backups {#restic-and-borg-backups}
 
@@ -275,7 +276,7 @@ VictoriaMetrics, VictoriaLogs, Loki und Graylog ([Geräte](../devices/victoriame
 | Metrik- oder Logspeicher fast schreibgeschützt | Weniger als 10 % der Platte verbleiben bis Read-only (`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`); löst sich über 12 %. | < 10 % | 30 Min. | Hinweis (`warning`) | 24 h |
 | Metrik- oder Logserver fehlerhaft | `/health` antwortet nicht mit OK (`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`). | < 1 | 3 Min. | Warnung (`critical`) | 6 h |
 | Metrik- oder Logdaten abgelehnt | In der letzten Stunde abgelehnte Messwerte oder Logzeilen: Zeitstempel außerhalb der Aufbewahrung, zu lange Labels, Serienlimit (`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`). | > 0 | 15 Min. | Hinweis (`warning`) | 24 h |
-| VictoriaMetrics Slow Inserts | Mehr als 5 % der neuen Messwerte nahmen über 15 Minuten den langsamen Pfad: nicht genug Speicher für die aktiven Serien (`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`); löst sich unter 3 %. | > 5 % | 30 Min. | Hinweis (`warning`) | 24 h |
+| VictoriaMetrics Slow Inserts | Mehr als 5 % der neuen Messwerte nahmen über 15 Minuten den langsamen Pfad: nicht genug Speicher für die aktiven Serien (`(100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) and on (target) dumbmonit_victoriametrics_uptime_seconds > 900`); löst sich unter 3 %. Wird erst beurteilt, wenn der Server 15 Minuten läuft, sodass ein Neustart (kalter Cache, Zähler im Fenster zurück auf null) sie nicht im Wartezustand hängen lässt. | > 5 % | 30 Min. | Hinweis (`warning`) | 24 h |
 | Loki nicht bereit | `/ready` antwortet nicht mit ready (`dumbmonit_loki_ready`). | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
 | Loki lehnt Logzeilen ab | In der letzten Stunde abgelehnte Zeilen: zu alt, Raten- oder Stream-Limit, Zeile zu lang (`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`). | > 0 | 15 Min. | Hinweis (`warning`) | 24 h |
 | Loki kann nicht in den Speicher flushen | Chunks haben es in den letzten 30 Minuten nicht in den Speicher geschafft; sie gehen verloren, wenn Loki neu startet (`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`). | > 0 | 10 Min. | Warnung (`critical`) | 1 h |
@@ -488,7 +489,7 @@ Siehe [Website-Änderungen](../devices/webchange.md). Die Geräteseite zeigt jed
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| Website geändert | Die letzte Prüfung einer überwachten Seite oder Website hat Seiten gefunden, die sich geändert haben, hinzugekommen oder verschwunden sind (`dumbmonit_webchange_last_check_changes`). Löst sich bei der nächsten Prüfung, die keine findet. | > 0 | 30 s | Info (`info`) | keine |
+| Website geändert | Eine Prüfung einer überwachten Seite oder Website hat Seiten gefunden, die sich geändert haben, hinzugekommen oder verschwunden sind (`dumbmonit_webchange_last_check_changes`). Jede solche Prüfung wird gemeldet und nennt die Seiten, unter demselben Alarm, solange er feuert; er löst sich bei der ersten Prüfung, die nichts Neues findet. | > 0 | 30 s | Info (`info`) | keine |
 
 ### Kubernetes {#kubernetes}
 
@@ -499,7 +500,7 @@ Namespace und des betroffenen Pods, Workloads oder Claims.
 |---|---|---|---|---|---|
 | Kubernetes-Knoten nicht bereit | Ein Knoten ist nicht Ready: Sein Kubelet meldet nicht mehr, und seine Pods werden evakuiert (`dumbmonit_k8s_node_ready == bool 0`). | > 0 | 5 Min. | Warnung (`critical`) | 6 h |
 | Kubernetes-Knoten unter Druck | Ein Knoten meldet Speicher-, Platten- oder PID-Druck (`dumbmonit_k8s_node_pressure`, Label `condition`). | > 0 | 5 Min. | Hinweis (`warning`) | 6 h |
-| Kubernetes-Pod in Crash-Schleife | Ein Container ist in `CrashLoopBackOff` (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`: Der Zustand verschwindet bei jedem Neustartversuch kurz). | > 0 | 10 Min. | Warnung (`critical`) | 6 h |
+| Kubernetes-Pod in Crash-Schleife | Ein Container ist in `CrashLoopBackOff` und startet weiter neu: mindestens zwei Neustarts in 15 Minuten (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2`; der Zustand verschwindet bei jedem Neustartversuch kurz). Container, die durch einen Neustart des Knotens oder der Runtime beendet wurden (Exit 137, 143 oder 255, nicht `OOMKilled`), zählen nicht, sodass ein Reboot nicht wie eine Crash-Schleife aussieht. | > 0 | 10 Min. | Warnung (`critical`) | 6 h |
 | Kubernetes-Pod hängt in Pending | Ein Pod ist seit fünfzehn Minuten Pending: Kein Knoten kann ihn aufnehmen, oder ein Volume oder Image, das er braucht, kommt nicht (`dumbmonit_k8s_pod_pending`). | > 0 | 15 Min. | Hinweis (`warning`) | 6 h |
 | Kubernetes-Pod startet immer wieder neu | Ein Pod ist in der letzten Stunde mehr als fünfmal neu gestartet, ohne in `CrashLoopBackOff` zu sein (`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`). | > 5 | 5 Min. | Hinweis (`warning`) | 6 h |
 | Kubernetes-Workload mit fehlenden Replikas | Ein Deployment, StatefulSet oder DaemonSet hat weniger verfügbare Replikas als angefordert (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 Min. | Hinweis (`warning`), eskaliert nach 1 h | 6 h |

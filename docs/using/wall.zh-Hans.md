@@ -9,6 +9,69 @@
 
 ![大屏模式](../assets/screenshots/wall-light.png){ loading=lazy }
 
+左侧的每个问题都带有其设备的产品图标(与设备列表中的标记相同)。
+列表永远不会超出自己的空间:在小屏幕上,或问题很多时,大图块会
+缩成每项一行,然后折叠为*另有 N 项*,而不是与下方的设备重叠。
+
+## 大屏上的新闻 {#news-on-the-wall}
+
+管理员可以在**设置 → 墙面新闻**中为大屏添加**头条新闻**和一个
+**直播频道**。两者默认都是关闭的。
+
+- **头条滚动条。** 大屏底部的一条横带会滚动显示最新的头条,每条
+  都带有来源和时间,每五分钟刷新一次。如果显示设备的系统启用了
+  *减少动态效果*,则不会滑动:一次只淡入淡出一条头条。
+- **直播视频。** 一个静音的直播频道显示在图块中,位于右栏的时钟
+  下方(或场景中央),可选小、中、大。该图块会缩小到剩余的空间;
+  它绝不会盖住状态。
+
+读取订阅源的是服务器,而不是浏览器(浏览器无法读取其他站点的
+订阅源)。服务器最多跟随三次重定向,拒绝内部地址,每个订阅源在
+八秒或 2 MB 后放弃,并将应答缓存五分钟,供所有大屏共用。它支持
+RSS 2.0、RSS 1.0(RDF)和 Atom。
+
+### 选择来源 {#choosing-sources}
+
+选择一个**国家/地区**(根据你浏览器的地区和语言预先选定),然后
+勾选它的来源:总共最多八个订阅源。若要使用其他任何订阅源,请在
+**添加自定义订阅源**下粘贴其 RSS 或 Atom 地址并点击**测试**:
+DumbMonit 会真正读取它,并在你添加之前显示最新的一条头条。
+
+对于视频,可以选择该国家/地区的某个频道,或选择**其他链接…**并
+粘贴一个普通的 YouTube、Dailymotion 或 Twitch 地址(视频、直播,
+或 YouTube 频道的 `/live` 页面);DumbMonit 会把它转换为可嵌入的
+播放器。只能显示这三种播放器。只有当频道有稳定的官方直播时,才
+会作为预设提供。
+
+| 国家/地区 | 头条新闻 | 直播视频 |
+|---|---|---|
+| 法国 | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| 瑞士 | RTS Info, SRF News, Le Temps, NZZ | 无 |
+| 比利时 | RTBF, VRT NWS, La DH | 无 |
+| 德国 | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| 英国 | BBC News, The Guardian | Sky News |
+| 美国 | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| 加拿大 | Radio-Canada, CBC News | CBC News |
+| 西班牙 | RTVE, 20minutos, El País, El Mundo | 无 |
+| 意大利 | ANSA, RaiNews | 无 |
+| 葡萄牙 | RTP Notícias, Público | 无 |
+| 巴西 | G1, Folha de S.Paulo | CNN Brasil |
+| 俄罗斯 | Interfax, Meduza, Kommersant | 无 |
+| 中国 | CGTN, South China Morning Post, Xinhua | CGTN |
+| 国际 | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+BFM TV 的订阅源是 `https://www.bfmtv.com/rss/news-24-7/`。该列表在编写时
+经过检查;站点随时可能更换其订阅源,届时滚动条会直接跳过它。请
+**测试**替代的地址,并将其作为自定义订阅源添加。
+
+大屏的内容安全策略只允许页面嵌入 YouTube(`youtube-nocookie.com`)、
+Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
+
+### API {#news-api}
+
+`GET /api/wall/news`(大屏轮询的接口)、`GET|PUT /api/wall/news/settings`
+和 `POST /api/wall/news/test`(管理员),以及 `GET /api/wall/news/presets`。
+
 ## 大屏上的音乐 {#music-on-the-wall}
 
 大屏还可以播放音乐并显示正在播放的内容,因此你可以从手机启动
