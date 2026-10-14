@@ -3449,6 +3449,81 @@
     ]
   },
   {
+    "kind": "openvpn",
+    "label": "OpenVPN server",
+    "summary": "An OpenVPN server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic.",
+    "examples": [
+      "OpenVPN Access Server",
+      "A plain openvpn --server on Linux",
+      "pfSense or OPNsense OpenVPN (management enabled)"
+    ],
+    "credential_types": [
+      "none",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No password",
+        "help": "Only for a management interface started without a password-file argument.",
+        "fields": []
+      },
+      {
+        "kind": "api_token",
+        "label": "Management password",
+        "help": "The shared password set by the third argument of the server's \"management\" directive.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Management password",
+            "help": "The one word every management client sends; OpenVPN has no account for this interface.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "vpn.lan",
+    "default_port": 7505,
+    "setup": {
+      "title": "Turn on the management interface",
+      "steps": [
+        "The management interface is a separate listener, off by default: add this to the server's configuration (server.conf, or the OpenVPN Access Server's as.conf under a different name) and restart it. Bind it to an address the DumbMonit host can reach, or to 127.0.0.1 and reach it through an SSH tunnel or a relay agent on the same machine.\nmanagement 0.0.0.0 7505",
+        "Optional but recommended: the management interface has no account of its own, only a shared password. Put one in a file readable by the OpenVPN process alone and add it as a third argument.\nmanagement 0.0.0.0 7505 /etc/openvpn/management-password",
+        "In DumbMonit, enter the server's address, for example \"vpn.lan\" (port 7505), and the management password if one is set.",
+        "DumbMonit only reads: it sends version, state and status 3, never signal, kill or client-kill. It cannot disconnect a client, change a setting or stop the server."
+      ],
+      "warning": "Anyone who reaches the management port and knows the password can disconnect clients, read all of their real IP addresses, and reconfigure the running server: keep it off the public network, behind a firewall rule that allows only the DumbMonit host, with a password set.",
+      "doc_url": "https://openvpn.net/community-resources/management-interface/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "The management interface's port, used if the address does not give one.",
+        "placeholder": "7505",
+        "default": "7505",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per exchange (seconds)",
+        "help": "Time allowed for the connection and each answer, from 1 to 60.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "opnsense",
     "label": "OPNsense",
     "summary": "Gateway latency and loss, VPN tunnels, DHCP leases, services and pending updates.",
