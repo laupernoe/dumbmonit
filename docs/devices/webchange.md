@@ -46,11 +46,15 @@ may also be a plain text or JSON document, compared line by line.
 2. failing that, or when the sitemap lists nothing under the folder, by
    following the links of each page, breadth first.
 
-Only pages of the same origin (scheme, host and port) are followed; when the
-start page redirects to another host (`example.com` to `www.example.com`), the
-site is taken to live there, and links to the first host are read on the second. links to
-images, style sheets, scripts, PDFs, archives and other files are skipped by
-their extension, and any answer that is not HTML is ignored. Fragments
+Only pages of the same origin (scheme, host and port) are followed. When the
+start page redirects to another host of the same site (`example.com` to
+`www.example.com`, `http` to `https`, or a subdomain such as
+`docs.example.com`), the site is taken to live there, and links to the first
+host are read on the second. When it redirects to another site altogether (a
+sign-in page such as `login.microsoftonline.com`, a third-party domain), that
+site is not crawled: only the start page is read, and no page is reported as
+removed. Links to images, style sheets, scripts, PDFs, archives and other files
+are skipped by their extension, and any answer that is not HTML is ignored. Fragments
 (`#section`), tracking parameters (`utm_…`, `fbclid`, `gclid` and the like) and
 empty queries are removed, so one page is one address; **Ignore query strings**
 drops the whole `?…` part.
@@ -122,10 +126,12 @@ targets** is enabled; private LAN addresses are always allowed.
 ## Alerts
 
 The built-in rule **Website changed** (`webchange_detected`, Info) fires after
-each check that found at least one change (changed, new or removed page), and
-the notification names the pages: "/pricing, /contact and 2 more". Two checks
-in a row that both find changes are two notifications, even on the same pages;
-the alert of a check resolves at the next check. It reads
+a check that found at least one change (changed, new or removed page), and the
+notification names the pages: "/pricing, /contact and 2 more". While it is
+firing, every further check that finds changes is notified again, with its own
+pages, even on the same pages; the alert resolves at the first check that finds
+nothing new. It stays one alert per device all along, so acknowledging it or
+snoozing it from the alert covers the following checks too. It reads
 `dumbmonit_webchange_last_check_changes`; attach it to a channel like any other
 rule, or raise its severity, in **Alerts → Rules**. See
 [Built-in rules](../alerting/rules.md#website-changes).
@@ -134,7 +140,7 @@ rule, or raise its severity, in **Alerts → Rules**. See
 |---|---|
 | `dumbmonit_webchange_pages` | Pages followed (removed pages excluded). |
 | `dumbmonit_webchange_pages_failed` | Pages followed whose last read failed. |
-| `dumbmonit_webchange_last_check_changes` | Changes found by the last check; when there are some, the `changes` label lists the pages and `check` the time of the check. |
+| `dumbmonit_webchange_last_check_changes` | Changes found by the last check. |
 
 The metrics appear once the first check is done.
 

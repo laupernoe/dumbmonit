@@ -4846,14 +4846,14 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // Contenu d'un site modifié (`webchange`) : la jauge vaut le nombre de
         // changements (page modifiée, apparue ou disparue) trouvés par la
-        // dernière vérification. Quand il y en a, la série porte les pages
-        // (`changes`) et l'heure de la vérification (`check`) : chaque
-        // vérification qui trouve quelque chose est une alerte nouvelle, donc
-        // notifiée, et celle d'avant se résout quand sa série n'est plus
-        // écrite. Pas de rappel : le changement est un fait, pas une panne en
-        // cours.
+        // dernière vérification. Une seule série, donc une seule alerte, par
+        // surveillance : tant qu'elle reste active, le moteur annonce chaque
+        // nouvelle vérification qui trouve des changements (voir
+        // `cycle::Occurrence`), en citant les pages lues en base. Elle se
+        // résout à la première vérification sans changement. Pas de rappel :
+        // le changement est un fait, pas une panne en cours.
         Rule {
-            description: "A check of a watched website found pages that changed, appeared or disappeared. Every such check is notified on its own, naming the pages; the device page shows each change before and after."
+            description: "A check of a watched website found pages that changed, appeared or disappeared. Every such check is notified, naming the pages, until a check finds nothing new; the device page shows each change before and after."
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,

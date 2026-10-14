@@ -173,6 +173,8 @@ impl TestApp {
             escalate_after: None,
             unacked_after: None,
             just_transitioned: false,
+            recurred: false,
+            detail: None,
         }
     }
 

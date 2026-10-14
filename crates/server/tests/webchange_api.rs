@@ -258,8 +258,8 @@ async fn reference_puis_changements_pages_nouvelles_et_disparues() {
     set(&site, "/docs/c.html", 200, html("Page C", "<p>Nouveauté</p><p>Deux</p>"));
     s.check(id).await;
 
-    // La mesure nomme les pages changées, et l'heure de la vérification : une
-    // notification par vérification qui trouve quelque chose.
+    // Une seule série, sans étiquette propre à la vérification : l'alerte garde
+    // son identité, et le moteur lit les pages changées en base.
     let probe = s.app.post(&format!("/api/targets/{id}/probe"), json!({}), Some(&s.cookie)).await;
     let changed_series: Vec<String> = probe.body["series"]
         .as_array()
@@ -270,11 +270,11 @@ async fn reference_puis_changements_pages_nouvelles_et_disparues() {
         .map(str::to_string)
         .collect();
     assert_eq!(changed_series.len(), 1, "{changed_series:?}");
-    assert!(
-        changed_series[0].contains("changes=\"/docs/, /docs/a.html, /docs/b.html and 1 more\""),
-        "{changed_series:?}"
-    );
-    assert!(changed_series[0].contains("check=\""), "{changed_series:?}");
+    assert!(!changed_series[0].contains("check="), "{changed_series:?}");
+    let checks = webchange::store::changed_checks(&s.pool).await.unwrap();
+    let (target, _, count, summary) = &checks[0];
+    assert_eq!((*target, *count), (id, 4));
+    assert_eq!(summary.as_deref(), Some("/docs/, /docs/a.html, /docs/b.html and 1 more"));
 
     let changes = s.get(&format!("/api/targets/{id}/webchange/changes")).await;
     assert_eq!(
@@ -449,52 +449,90 @@ fn urlencode(text: &str) -> String {
         .collect()
 }
 
-#[tokio::test]
-async fn une_redirection_vers_un_autre_hote_emmene_le_parcours_et_le_plafond_se_signale() {
-    let (base, site) = fake_site().await;
-    // `localhost` et `127.0.0.1` sont deux origines : le départ redirige de
-    // l'une vers l'autre, comme `ex.fr` vers `www.ex.fr`.
-    let port = base.rsplit(':').next().unwrap();
-    let other = format!("http://localhost:{port}");
-    set(&site, "/", 301, format!("{base}/docs/"));
+/// Une page d'accueil qui redirige vers `/docs/`, quatre pages derrière.
+fn redirecting_site(site: &Pages, base: &str) {
+    set(site, "/", 301, format!("{base}/docs/"));
     set(
-        &site,
+        site,
         "/docs/",
         200,
         html(
             "Accueil",
-            &format!(
-                "<p>Bienvenue</p><a href=a.html?utm_source=x>A</a><a href={other}/docs/b.html>B</a>\
-         <a href=c.html>C</a><a href=d.html>D</a>"
-            ),
+            "<p>Bienvenue</p><a href=a.html?utm_source=x>A</a><a href=b.html>B</a>\
+             <a href=c.html>C</a><a href=d.html>D</a>",
         ),
     );
     for page in ["a", "b", "c", "d"] {
-        set(&site, &format!("/docs/{page}.html"), 200, html(page, "<p>Texte</p>"));
+        set(site, &format!("/docs/{page}.html"), 200, html(page, "<p>Texte</p>"));
     }
+}
+
+async fn page_urls(s: &Setup, id: i64) -> (Vec<String>, Value) {
+    let pages = s.get(&format!("/api/targets/{id}/webchange/pages")).await;
+    (urls(&pages), pages["found"].clone())
+}
+
+#[tokio::test]
+async fn une_redirection_emmene_le_parcours_et_le_plafond_se_signale() {
+    let (base, site) = fake_site().await;
+    redirecting_site(&site, &base);
     let s = setup().await;
     let id = s
         .create(
-            &format!("{other}/"),
+            &format!("{base}/"),
             json!({ "scope": "site", "max_pages": "3", "allow_private_targets": "true" }),
         )
         .await;
     s.check(id).await;
 
-    let pages = s.get(&format!("/api/targets/{id}/webchange/pages")).await;
-    let mut urls: Vec<String> = pages["pages"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|p| p["url"].as_str().unwrap().to_string())
-        .collect();
-    urls.sort();
+    let (urls, found) = page_urls(&s, id).await;
     assert_eq!(
         urls,
-        [format!("{base}/docs/a.html"), format!("{base}/docs/b.html"), format!("{other}/")],
-        "liens suivis sur l'hôte de la redirection, suivi publicitaire retiré"
+        [format!("{base}/"), format!("{base}/docs/a.html"), format!("{base}/docs/b.html")],
+        "liens suivis depuis la page de la redirection, suivi publicitaire retiré"
     );
-    assert_eq!(pages["found"], 5, "3 lues, 2 encore en attente");
+    assert_eq!(found, 5, "3 lues, 2 encore en attente");
+}
+
+#[tokio::test]
+async fn une_redirection_vers_un_autre_site_ne_lit_que_la_page_de_depart() {
+    let (base, site) = fake_site().await;
+    redirecting_site(&site, &base);
+    // `localhost` redirige vers `127.0.0.1` : pour le périmètre, deux sites
+    // sans rapport, comme un intranet qui renvoie vers sa page de connexion.
+    let port = base.rsplit(':').next().unwrap();
+    let other = format!("http://localhost:{port}");
+    let s = setup().await;
+    let id = s
+        .create(&format!("{other}/"), json!({ "scope": "site", "allow_private_targets": "true" }))
+        .await;
+    s.check(id).await;
+
+    let (urls, found) = page_urls(&s, id).await;
+    assert_eq!(urls, [format!("{other}/")], "rien n'est lu sur l'autre site");
+    assert!(found.is_null());
+    // La page de départ, elle, a été lue : la surveillance tourne.
+    let probe = s.app.post(&format!("/api/targets/{id}/probe"), json!({}), Some(&s.cookie)).await;
+    assert_eq!(probe.status, StatusCode::OK, "{}", probe.body);
+}
+
+#[tokio::test]
+async fn une_verification_en_echec_efface_le_compte_des_pages_trouvees() {
+    let (base, site) = fake_site().await;
+    redirecting_site(&site, &base);
+    let s = setup().await;
+    let id = s
+        .create(
+            &format!("{base}/"),
+            json!({ "scope": "site", "max_pages": "3", "allow_private_targets": "true" }),
+        )
+        .await;
+    s.check(id).await;
+    assert_eq!(page_urls(&s, id).await.1, 5);
+    // La page de départ tombe en 5xx : la vérification échoue.
+    set(&site, "/", 503, "maintenance".into());
+    s.check(id).await;
+    assert!(page_urls(&s, id).await.1.is_null(), "le compte d'une vérification qui n'a rien lu");
 }
 
 #[tokio::test]

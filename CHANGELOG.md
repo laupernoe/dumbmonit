@@ -44,7 +44,10 @@ All notable changes to this project are documented here. The format follows
 
 - **Watching a site that redirects to another host reads the whole site.** A
   start page redirecting from `example.com` to `www.example.com` used to leave
-  every link outside the watch, which then only covered the start page.
+  every link outside the watch, which then only covered the start page. Only
+  a host of the same site is adopted (`www.`, the bare domain, a subdomain,
+  `http` to `https`): a start page that redirects to a sign-in page or a
+  third-party domain only has its start page read.
   Tracking parameters (`utm_…`, `fbclid`, `gclid`…) no longer make one page
   several; **Ignore query strings** drops the whole `?…` part. When **Max
   pages** stops a crawl, the device page now says how many pages were found.
@@ -52,8 +55,11 @@ All notable changes to this project are documented here. The format follows
 - **Every website check that finds changes is notified, and says which
   pages.** The "Website changed" alert stayed open while consecutive checks
   kept finding changes, so only the first of them was ever notified, and the
-  message only gave a count. Each such check is now an alert of its own, whose
-  notification names the pages ("/pricing, /contact and 2 more"). See
+  message only gave a count. While the alert fires, every further check that
+  finds changes is now notified again, naming the pages ("/pricing, /contact
+  and 2 more"); it stays one alert per device, so an acknowledgement or a
+  snooze taken on it covers the following checks, and it resolves once, at the
+  first check that finds nothing new. See
   [Alerts](docs/devices/webchange.md#alerts).
 - **Dragging a monitor into a folder works again.** Pressing a row on its name
   or address grabbed the link instead: the browser started its own drag of it,
