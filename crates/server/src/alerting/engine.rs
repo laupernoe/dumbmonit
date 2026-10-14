@@ -5,6 +5,7 @@
 //! La règle qui gouverne le fichier : rien de ce qui échoue ici — VictoriaMetrics
 //! muet, canal en panne, base verrouillée — ne doit interrompre la boucle.
 
+use std::collections::HashMap;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -193,6 +194,31 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
     Ok(())
 }
 
+/// Faits que les alertes « événement » annoncent un par un (voir
+/// [`cycle::Occurrence`]). Aujourd'hui une seule source : les vérifications
+/// de site qui trouvent des changements, pour la règle livrée
+/// [`crate::webchange::ALERT_RULE`]. Une lecture qui échoue n'empêche pas le
+/// cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
+async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurrence> {
+    let checks = match crate::webchange::store::changed_checks(pool).await {
+        Ok(checks) => checks,
+        Err(error) => {
+            warn!(?error, "website checks not read for alerting");
+            return HashMap::new();
+        }
+    };
+    checks
+        .into_iter()
+        .filter_map(|(target, at, changes, summary)| {
+            // `datetime('now')` de SQLite : UTC, sans fuseau.
+            let at = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S").ok()?;
+            let occurrence =
+                cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
+            Some(((crate::webchange::ALERT_RULE.to_string(), target), occurrence))
+        })
+        .collect()
+}
+
 /// Exécute un cycle complet et renvoie son bilan.
 ///
 /// Testable indépendamment de la boucle : `now` et la source de métriques sont des
@@ -242,6 +268,7 @@ pub async fn evaluate_once(
     // participe à la décision de notifier, au même titre que le rappel d'une
     // règle.
     let global = policy_store::load_global(pool).await?;
+    let occurrences = occurrences(pool).await;
     let outcome = cycle::plan_cycle(
         CycleInput {
             now,
@@ -251,6 +278,7 @@ pub async fn evaluate_once(
             silences,
             overrides,
             unacked_after: global.escalation().map(|(after, _)| after.to_std().unwrap_or_default()),
+            occurrences,
         },
         &mut baselines,
     );

@@ -20,7 +20,6 @@ const ASSET_EXTENSIONS: &[&str] = &[
     "xz", "zip", "zst",
 ];
 
-/// Le périmètre d'une surveillance de site.
 /// Paramètres d'URL de suivi publicitaire ou analytique : ils ne changent
 /// jamais la page, seulement l'adresse, et en feraient autant de pages.
 const TRACKING_PARAMS: &[&str] = &[
@@ -28,12 +27,14 @@ const TRACKING_PARAMS: &[&str] = &[
     "mc_eid", "_ga", "_gl", "_hsenc", "_hsmi", "mkt_tok",
 ];
 
+/// Le périmètre d'une surveillance de site.
 #[derive(Debug, Clone)]
 pub struct Scope {
     start: Url,
     prefix: String,
     /// Origine où la page de départ a mené, quand une redirection a changé
-    /// d'hôte (`ex.fr` → `www.ex.fr`) : c'est là qu'est le site.
+    /// d'origine sans quitter le site (`ex.fr` → `www.ex.fr`, `http` →
+    /// `https`) : c'est là qu'est le site.
     redirected: Option<Url>,
     /// Retirer toute la requête (`?…`) des adresses suivies.
     ignore_query: bool,
@@ -58,12 +59,28 @@ impl Scope {
     }
 
     /// La page de départ a été servie depuis `final_url` : si l'origine a
-    /// changé, le site est là, et les liens vers l'origine de départ y sont
-    /// ramenés plutôt que lus deux fois.
-    pub fn follow(&mut self, final_url: &Url) {
-        if final_url.origin() != self.start.origin() {
-            self.redirected = Some(final_url.clone());
+    /// changé sans quitter le site, le site est là, et les liens vers
+    /// l'origine de départ y sont ramenés plutôt que lus deux fois.
+    ///
+    /// Une redirection vers un autre site (une page de connexion
+    /// `login.microsoftonline.com`, un domaine tiers) n'est pas adoptée : on
+    /// n'irait pas parcourir le site de quelqu'un d'autre. L'erreur dit
+    /// pourquoi ; le périmètre reste celui de départ.
+    pub fn follow(&mut self, final_url: &Url) -> Result<(), String> {
+        if final_url.origin() == self.start.origin() {
+            return Ok(());
         }
+        let host = |url: &Url| url.host_str().unwrap_or_default().to_ascii_lowercase();
+        if !matches!(final_url.scheme(), "http" | "https")
+            || !same_site(&host(&self.start), &host(final_url))
+        {
+            return Err(format!(
+                "the start page redirects to {}, outside the watched site: only the start page is read",
+                final_url.origin().ascii_serialization()
+            ));
+        }
+        self.redirected = Some(final_url.clone());
+        Ok(())
     }
 
     /// `url`, de l'origine de départ, ramenée à celle de la redirection.
@@ -129,23 +146,47 @@ impl Scope {
     }
 }
 
+/// Deux hôtes du même site : le même, ou l'un sous-domaine de l'autre une fois
+/// `www.` retiré (`ex.fr`, `www.ex.fr`, `docs.ex.fr`). Sans liste des suffixes
+/// publics, c'est une approximation prudente : elle refuse tout domaine sans
+/// rapport, et ne remonte jamais jusqu'à un nom sans point (`fr`). Une adresse
+/// IP ne vaut que pour elle-même.
+fn same_site(a: &str, b: &str) -> bool {
+    if a == b {
+        return true;
+    }
+    let is_ip = |host: &str| host.starts_with('[') || host.parse::<std::net::IpAddr>().is_ok();
+    if is_ip(a) || is_ip(b) {
+        return false;
+    }
+    let a = a.strip_prefix("www.").unwrap_or(a);
+    let b = b.strip_prefix("www.").unwrap_or(b);
+    let below = |child: &str, parent: &str| {
+        parent.contains('.') && child.strip_suffix(parent).is_some_and(|label| label.ends_with('.'))
+    };
+    a == b || below(a, b) || below(b, a)
+}
+
 /// Forme canonique : sans fragment, sans paramètres de suivi (`utm_…`,
 /// `fbclid`…), sans `?` vide. `Url` s'occupe déjà de la
 /// casse du schéma et de l'hôte, du port par défaut et des `.`/`..`.
+///
+/// Les paramètres gardés le sont tels qu'écrits : les relire puis les
+/// réécrire changerait leur encodage (`%20` en `+`, `/` en `%2F`), donc
+/// l'adresse, donc la page.
 pub fn normalise(mut url: Url) -> Url {
     url.set_fragment(None);
-    if url.query().is_some() {
-        let kept: Vec<(String, String)> = url
-            .query_pairs()
-            .filter(|(key, _)| !is_tracking(key))
-            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+    let rewritten = url.query().and_then(|query| {
+        let segments: Vec<&str> = query.split('&').collect();
+        let kept: Vec<&str> = segments
+            .iter()
+            .copied()
+            .filter(|segment| !is_tracking(segment.split('=').next().unwrap_or_default()))
             .collect();
-        let had_tracking = url.query_pairs().count() != kept.len();
-        if kept.is_empty() {
-            url.set_query(None);
-        } else if had_tracking {
-            url.query_pairs_mut().clear().extend_pairs(kept);
-        }
+        if query.is_empty() || kept.len() != segments.len() { Some(kept.join("&")) } else { None }
+    });
+    if let Some(query) = rewritten {
+        url.set_query(Some(query.as_str()).filter(|q| !q.is_empty()));
     }
     url
 }
@@ -192,7 +233,7 @@ mod tests {
     #[test]
     fn une_redirection_vers_un_autre_hote_deplace_le_site() {
         let mut scope = Scope::new(&url("https://ex.fr/"), None);
-        scope.follow(&url("https://www.ex.fr/accueil"));
+        scope.follow(&url("https://www.ex.fr/accueil")).unwrap();
         let base = url("https://www.ex.fr/accueil");
         let accept = |href: &str| scope.accept(&base, href).map(|u| u.to_string());
         assert_eq!(accept("/tarifs").as_deref(), Some("https://www.ex.fr/tarifs"));
@@ -201,8 +242,61 @@ mod tests {
         assert_eq!(accept("https://autre.fr/"), None);
 
         let mut same = Scope::new(&url("https://ex.fr/"), None);
-        same.follow(&url("https://ex.fr/fr/"));
+        same.follow(&url("https://ex.fr/fr/")).unwrap();
         assert_eq!(same.site_root().as_str(), "https://ex.fr/");
+    }
+
+    #[test]
+    fn une_redirection_ne_quitte_pas_le_site() {
+        let adopted = |start: &str, to: &str| {
+            let mut scope = Scope::new(&url(start), None);
+            let result = scope.follow(&url(to));
+            (result.is_ok(), scope.site_root().as_str().to_string())
+        };
+        for (start, to) in [
+            ("https://ex.fr/", "https://www.ex.fr/"),
+            ("https://www.ex.fr/", "https://ex.fr/"),
+            ("http://ex.fr/", "https://ex.fr/"),
+            ("https://ex.fr/", "https://docs.ex.fr/"),
+            ("https://www.ex.fr/", "https://fr.ex.fr/"),
+            ("https://docs.ex.fr/", "https://ex.fr/"),
+            ("https://ex.fr/", "https://ex.fr:8443/"),
+            ("http://10.0.0.1/", "https://10.0.0.1/"),
+        ] {
+            let (ok, root) = adopted(start, to);
+            assert!(ok, "{start} → {to}");
+            assert_eq!(root, url(to).as_str(), "{start} → {to}");
+        }
+        for (start, to) in [
+            ("https://intranet.ex.fr/", "https://login.microsoftonline.com/x"),
+            ("https://ex.fr/", "https://autre.fr/"),
+            ("https://ex.fr/", "https://notex.fr/"),
+            ("https://ex.fr/", "https://ex.fr.evil.com/"),
+            ("https://a.ex.fr/", "https://b.ex.fr/"),
+            ("http://localhost/", "http://127.0.0.1/"),
+            ("http://10.0.0.1/", "http://10.0.0.2/"),
+        ] {
+            let mut scope = Scope::new(&url(start), None);
+            let error = scope.follow(&url(to)).unwrap_err();
+            assert!(error.contains("outside the watched site"), "{error}");
+            assert_eq!(scope.site_root().as_str(), url(start).as_str(), "{start} → {to}");
+            let base = url(to);
+            assert_eq!(scope.accept(&base, "/page"), None, "les liens de l'autre site");
+        }
+    }
+
+    #[test]
+    fn les_parametres_gardes_gardent_leur_encodage() {
+        let scope = Scope::new(&url("https://ex.fr/"), None);
+        let base = url("https://ex.fr/");
+        let accept = |href: &str| scope.accept(&base, href).map(|u| u.to_string());
+        assert_eq!(
+            accept("/a?q=a%20b&utm_source=x&path=%2Fdocs/x&k").as_deref(),
+            Some("https://ex.fr/a?q=a%20b&path=%2Fdocs/x&k")
+        );
+        assert_eq!(accept("/a?q=a+b&fbclid=1").as_deref(), Some("https://ex.fr/a?q=a+b"));
+        assert_eq!(accept("/a?fbclid=1&_ga=2").as_deref(), Some("https://ex.fr/a"));
+        assert_eq!(accept("/a?").as_deref(), Some("https://ex.fr/a"));
     }
 
     #[test]

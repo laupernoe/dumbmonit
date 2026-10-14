@@ -29,8 +29,8 @@ impl Selector {
     /// Lit une liste de sélecteurs séparés par des virgules ; vide si `input`
     /// l'est.
     pub fn parse_list(input: &str) -> Result<Vec<Selector>, String> {
-        input
-            .split([',', '\n'])
+        split_outside_quotes(input)?
+            .into_iter()
             .map(str::trim)
             .filter(|part| !part.is_empty())
             .map(Selector::parse)
@@ -40,19 +40,19 @@ impl Selector {
     fn parse(input: &str) -> Result<Selector, String> {
         let invalid =
             || format!("\"{input}\" is not a simple selector (tag, #id, .class, [attr=value])");
-        if input.chars().any(|c| c.is_whitespace() || matches!(c, '>' | '+' | '~' | ':' | '*')) {
-            return Err(invalid());
-        }
         let mut selector =
             Selector { tag: None, id: None, classes: Vec::new(), attributes: Vec::new() };
         let mut rest = input;
         let name_end = rest.find(['#', '.', '[']).unwrap_or(rest.len());
         if name_end > 0 {
-            selector.tag = Some(name(&rest[..name_end]).ok_or_else(invalid)?);
+            // Le lecteur rend les noms de balises en minuscules : `DIV` doit
+            // trouver `<div>`.
+            selector.tag = Some(name(&rest[..name_end]).ok_or_else(invalid)?.to_ascii_lowercase());
         }
         rest = &rest[name_end..];
         while let Some(first) = rest.chars().next() {
-            rest = &rest[1..];
+            // Avancer d'un caractère, pas d'un octet : `é` en prend deux.
+            rest = &rest[first.len_utf8()..];
             match first {
                 '#' | '.' => {
                     let end = rest.find(['#', '.', '[']).unwrap_or(rest.len());
@@ -65,17 +65,10 @@ impl Selector {
                     rest = &rest[end..];
                 }
                 '[' => {
-                    let end = rest.find(']').ok_or_else(invalid)?;
-                    let inner = &rest[..end];
-                    let (key, value) = match inner.split_once('=') {
-                        Some((key, value)) => {
-                            let value = value.trim_matches(|c| c == '"' || c == '\'');
-                            (key, Some(value.to_string()))
-                        }
-                        None => (inner, None),
-                    };
-                    selector.attributes.push((name(key).ok_or_else(invalid)?, value));
-                    rest = &rest[end + 1..];
+                    let (key, value, after) = attribute(rest).ok_or_else(invalid)?;
+                    let key = name(key).ok_or_else(invalid)?.to_ascii_lowercase();
+                    selector.attributes.push((key, value));
+                    rest = after;
                 }
                 _ => return Err(invalid()),
             }
@@ -108,6 +101,62 @@ impl Selector {
             (Some(value), Some(wanted)) => value == wanted,
         })
     }
+}
+
+/// Coupe `input` aux virgules et aux fins de ligne, sauf entre guillemets :
+/// `[title="a, b"]` reste un seul sélecteur.
+fn split_outside_quotes(input: &str) -> Result<Vec<&str>, String> {
+    let mut parts = Vec::new();
+    let mut quote = None;
+    let mut start = 0;
+    for (at, c) in input.char_indices() {
+        match (quote, c) {
+            (Some(open), c) if c == open => quote = None,
+            (Some(_), _) => {}
+            (None, '"' | '\'') => quote = Some(c),
+            (None, ',' | '\n') => {
+                parts.push(&input[start..at]);
+                start = at + 1;
+            }
+            (None, _) => {}
+        }
+    }
+    if quote.is_some() {
+        return Err(format!("\"{}\" has an unclosed quote", input.trim()));
+    }
+    parts.push(&input[start..]);
+    Ok(parts)
+}
+
+/// Lit `nom]`, `nom=valeur]` ou `nom="valeur"]` (le `[` déjà lu) : rend le
+/// nom, la valeur attendue et ce qui suit le `]`.
+fn attribute(input: &str) -> Option<(&str, Option<String>, &str)> {
+    let key_end = input.find(['=', ']'])?;
+    let key = &input[..key_end];
+    let rest = &input[key_end..];
+    if let Some(after) = rest.strip_prefix(']') {
+        return Some((key, None, after));
+    }
+    let rest = &rest[1..];
+    let (value, rest) = match rest.chars().next()? {
+        quote @ ('"' | '\'') => {
+            let inner = &rest[1..];
+            let end = inner.find(quote)?;
+            (&inner[..end], &inner[end + 1..])
+        }
+        _ => {
+            let end = rest.find(']')?;
+            let value = &rest[..end];
+            let plain = !value.is_empty()
+                && !value.chars().any(|c| c.is_whitespace() || matches!(c, '"' | '\'' | '['));
+            if !plain {
+                return None;
+            }
+            (value, &rest[end..])
+        }
+    };
+    let after = rest.strip_prefix(']')?;
+    Some((key, Some(value.to_string()), after))
 }
 
 /// Un nom de balise, d'id, de classe ou d'attribut. Les noms de balises et
@@ -211,9 +260,57 @@ mod tests {
 
     #[test]
     fn les_selecteurs_composes_sont_refuses() {
-        for input in ["main p", "ul > li", "a:hover", "*", "div.", "#", "[x", "di$v"] {
+        for input in [
+            "main p",
+            "ul > li",
+            "a:hover",
+            "*",
+            "div.",
+            "#",
+            "[x",
+            "di$v",
+            "[lang=fr]é",
+            "[a=b c]",
+            "[a=\"x]",
+            "[a=\"x\"y]",
+            "[=x]",
+            "div.x:hover",
+            "[a=\"x, y]",
+        ] {
             assert!(Selector::parse_list(input).is_err(), "{input}");
         }
+    }
+
+    #[test]
+    fn les_caracteres_non_ascii_ne_font_pas_paniquer() {
+        let list = Selector::parse_list("#été, .café[lang=fr]").unwrap();
+        assert!(list[0].matches("div", &attrs(&[("id", "été")])));
+        assert!(list[1].matches("p", &attrs(&[("class", "café"), ("lang", "fr")])));
+        assert!(Selector::parse_list("[lang=fr]é").is_err());
+        assert!(Selector::parse_list("é[").is_err());
+    }
+
+    #[test]
+    fn les_noms_de_balises_et_dattributs_ignorent_la_casse() {
+        let list = Selector::parse_list("DIV[Data-Ad], Main").unwrap();
+        assert!(list[0].matches("div", &attrs(&[("data-ad", "")])));
+        assert!(list[1].matches("main", &[]));
+        // L'id et les classes gardent leur casse.
+        assert!(!Selector::parse_list("#Top").unwrap()[0].matches("div", &attrs(&[("id", "top")])));
+    }
+
+    #[test]
+    fn une_valeur_entre_guillemets_peut_contenir_virgules_et_espaces() {
+        let list =
+            Selector::parse_list("[aria-label=\"Cookies, consent\"], [title='a ] b'], .x").unwrap();
+        assert_eq!(list.len(), 3);
+        assert!(list[0].matches("div", &attrs(&[("aria-label", "Cookies, consent")])));
+        assert!(list[1].matches("div", &attrs(&[("title", "a ] b")])));
+        assert!(list[2].matches("div", &attrs(&[("class", "x")])));
+        assert!(
+            Selector::parse_list("[data-x=\"\"]").unwrap()[0]
+                .matches("div", &attrs(&[("data-x", "")]))
+        );
     }
 
     #[test]

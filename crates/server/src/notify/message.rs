@@ -414,6 +414,9 @@ fn line(item: &GroupItem, now: DateTime<Utc>) -> String {
     if let Some(series) = series_identity(&item.series_key) {
         line.push_str(&format!(" — {series}"));
     }
+    if let Some(detail) = &item.detail {
+        line.push_str(&format!(" — {detail}"));
+    }
     if let Some(value) = item.value
         && !is_boolean(item)
     {
@@ -745,7 +748,24 @@ mod tests {
             since: Some(at(0)),
             phase: EffectivePhase::Firing,
             note: None,
+            detail: None,
         }
+    }
+
+    #[test]
+    fn la_ligne_cite_ce_que_l_alerte_a_constate() {
+        let mut web = item("Website changed", NotifyReason::Recurrence, Severity::Info);
+        web.series_key = r#"dumbmonit_webchange_last_check_changes{host="site",target="3"}"#.into();
+        web.detail = Some("/pricing, /contact and 2 more".to_string());
+        web.value = Some(4.0);
+        web.threshold = 0.0;
+        web.unit = String::new();
+        web.since = Some(at(3600));
+        let message = render(&group(vec![web]));
+        assert_eq!(
+            message.text,
+            "ℹ️ Info · Website changed — /pricing, /contact and 2 more — 4 (threshold > 0), for 0 s"
+        );
     }
 
     fn group(items: Vec<GroupItem>) -> AlertGroup {

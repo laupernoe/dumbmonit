@@ -496,10 +496,11 @@ fn route(
     match existing {
         Some(pos) => {
             let (queued, dirty) = &mut queue[pos];
-            // Un rappel qui rattrape un déclenchement pas encore parti ne le
-            // rétrograde pas en rappel : la première annonce reste une annonce.
-            let keep_firing =
-                queued.item.reason == NotifyReason::Firing && item.reason == NotifyReason::Reminder;
+            // Un rappel (ou un fait nouveau) qui rattrape un déclenchement pas
+            // encore parti ne le rétrograde pas : la première annonce reste une
+            // annonce, avec le contenu le plus récent.
+            let keep_firing = queued.item.reason == NotifyReason::Firing
+                && matches!(item.reason, NotifyReason::Reminder | NotifyReason::Recurrence);
             let mut merged = item.clone();
             if keep_firing {
                 merged.reason = NotifyReason::Firing;
@@ -754,6 +755,32 @@ mod tests {
             since: Some(at(0)),
             phase: EffectivePhase::Firing,
             note: None,
+            detail: None,
+        }
+    }
+
+    #[test]
+    fn un_fait_nouveau_ne_compte_pas_comme_un_battement() {
+        // Un site vérifié toutes les cinq minutes qui change à chaque fois : six
+        // faits en une demi-heure, autant d'annonces, aucune retenue.
+        let recipients = [recipient(1, ChannelPolicy::default())];
+        let mut ledger = Ledger::default();
+        for (n, reason) in std::iter::once(NotifyReason::Firing)
+            .chain(std::iter::repeat_n(NotifyReason::Recurrence, 5))
+            .enumerate()
+        {
+            let now = at(n as i64 * 300);
+            let plan = plan(
+                &[group(1, vec![item("web", reason, Severity::Info)], now)],
+                &recipients,
+                &immediate(),
+                &ledger,
+                now,
+            );
+            assert!(plan.flap_holds.is_empty(), "check {n}");
+            assert_eq!(plan.outgoing.len(), 1, "check {n}");
+            assert_eq!(plan.outgoing[0].digest.groups[0].items[0].reason, reason);
+            apply(&mut ledger, &plan, now);
         }
     }
 

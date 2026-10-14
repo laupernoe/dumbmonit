@@ -535,7 +535,7 @@ l'appareil montre chaque changement avant et après.
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
-| Site web changé | Une vérification d'une page ou d'un site surveillé a trouvé des pages qui ont changé, sont apparues ou ont disparu (`dumbmonit_webchange_last_check_changes`). Chacune de ces vérifications est notifiée à part et nomme les pages ; elle se résout à la vérification suivante. | > 0 | 30 s | Info (`info`) | aucun |
+| Site web changé | Une vérification d'une page ou d'un site surveillé a trouvé des pages qui ont changé, sont apparues ou ont disparu (`dumbmonit_webchange_last_check_changes`). Chacune de ces vérifications est notifiée et nomme les pages, sous la même alerte tant qu'elle est active ; elle se résout à la première vérification qui ne trouve rien de nouveau. | > 0 | 30 s | Info (`info`) | aucun |
 
 ### Kubernetes {#kubernetes}
 

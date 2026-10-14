@@ -32,7 +32,9 @@
 //! - Un changement : la règle livrée `webchange_detected` lit
 //!   `webchange_last_check_changes`, le nombre de changements trouvés par la
 //!   dernière vérification. Elle se déclenche après une vérification qui en a
-//!   trouvé, et se résout à la suivante qui n'en trouve aucun.
+//!   trouvé, reparle à chaque nouvelle vérification qui en trouve (même
+//!   alerte, voir [`ALERT_RULE`]), et se résout à la première qui n'en
+//!   trouve aucun.
 //!
 //! La première vérification sert de référence : aucun changement n'y est
 //! compté. Changer l'adresse, le périmètre ou les exclusions refait une
@@ -77,6 +79,13 @@ use options::{Mode, Options};
 
 /// Type de cible, tel qu'enregistré dans `Target::kind`.
 pub const KIND: &str = "webchange";
+
+/// `uid` de la règle livrée « Website changed ». Le moteur d'alerte lui
+/// fournit la dernière vérification qui a trouvé des changements
+/// ([`store::changed_checks`]) : tant que l'alerte est active, chaque
+/// nouvelle vérification de ce genre est annoncée, avec les pages, sous la
+/// même identité.
+pub const ALERT_RULE: &str = "webchange_detected";
 
 /// Durée maximale d'une vérification, captures comprises.
 const CHECK_BUDGET: Duration = Duration::from_secs(20 * 60);
@@ -181,25 +190,19 @@ impl Collector for WebchangeCollector {
     }
 }
 
-/// Changements de la dernière vérification. Quand il y en a, la série porte
-/// les pages concernées (`changes`, que la notification affiche) et l'heure de
-/// la vérification (`check`) : chaque vérification qui trouve quelque chose est
-/// une série, donc une alerte, nouvelle, et notifiée même si la précédente
-/// n'était pas encore résolue ; celle d'avant, qui n'est plus écrite, se
-/// résout d'elle-même.
+/// Changements de la dernière vérification, sur une série sans autre
+/// étiquette que celles de la cible : une seule série par surveillance, donc
+/// une seule alerte, que silences et acquittements suivent d'une vérification
+/// à l'autre. Chaque nouvelle vérification qui trouve des changements est
+/// annoncée par le moteur d'alerte, qui lit la fin de la vérification et le
+/// résumé des pages en base (voir [`ALERT_RULE`]).
 fn last_check_changes(state: &store::State, now: i64) -> Sample {
-    let sample = Sample::new(
+    Sample::new(
         "webchange_last_check_changes",
         state.last_check_changes as f64,
         MetricKind::Gauge,
         now,
-    );
-    match (&state.last_check_summary, &state.last_check_at) {
-        (Some(summary), Some(at)) if state.last_check_changes > 0 => {
-            sample.with_label("changes", summary.as_str()).with_label("check", at.as_str())
-        }
-        _ => sample,
-    }
+    )
 }
 
 /// Les pages d'une vérification en quelques mots, dans l'ordre où elles ont
@@ -303,6 +306,9 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
             return Ok(0);
         }
     };
+    if let Some(notice) = &crawl.notice {
+        warn!(target = id, "{notice}");
+    }
 
     if baseline {
         // Nouvelle référence : ce que les anciens réglages suivaient et que
@@ -629,7 +635,7 @@ mod tests {
     }
 
     #[test]
-    fn chaque_verification_qui_trouve_des_changements_est_une_serie_nouvelle() {
+    fn la_serie_des_changements_garde_la_meme_identite_d_une_verification_a_l_autre() {
         let state = |changes: i64, summary: Option<&str>, at: &str| store::State {
             last_check_changes: changes,
             last_check_summary: summary.map(str::to_string),
@@ -637,11 +643,9 @@ mod tests {
             ..Default::default()
         };
         let quiet = last_check_changes(&state(0, None, "2026-10-13 10:00:00"), 0);
-        assert!(quiet.labels.is_empty());
-        assert_eq!(quiet.value, 0.0);
         let first = last_check_changes(&state(2, Some("/a, /b"), "2026-10-13 10:00:00"), 0);
-        let second = last_check_changes(&state(2, Some("/a, /b"), "2026-10-13 11:00:00"), 0);
-        assert_eq!(first.labels.get("changes").map(String::as_str), Some("/a, /b"));
-        assert_ne!(first.labels, second.labels, "mêmes pages, autre vérification");
+        let second = last_check_changes(&state(3, Some("/c"), "2026-10-13 11:00:00"), 0);
+        assert_eq!((quiet.value, first.value, second.value), (0.0, 2.0, 3.0));
+        assert!(quiet.labels.is_empty() && first.labels.is_empty() && second.labels.is_empty());
     }
 }
