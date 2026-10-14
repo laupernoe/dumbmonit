@@ -89,6 +89,8 @@ nav:
       - Proxmox Datacenter Manager: devices/pdm.md
       - Proxmox Mail Gateway: devices/pmg.md
       - VMware vSphere: devices/vsphere.md
+      - XCP-ng / XenServer: devices/xcpng.md
+      - Nutanix AHV: devices/nutanix.md
       - Synology DSM: devices/synology.md
       - OPNsense: devices/opnsense.md
       - pfSense: devices/pfsense.md

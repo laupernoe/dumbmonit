@@ -5733,6 +5733,144 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
+        // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
+        Rule {
+            description: "libvirt reports a KVM domain as crashed: the hypervisor had to stop it.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "libvirt_domain_crashed",
+                "KVM domain crashed",
+                RuleKind::Threshold,
+                "dumbmonit_agent_libvirt_domain_crashed",
+            )
+        },
+        Rule {
+            description: "A libvirt storage pool's allocation reaches 90% of its capacity.".to_string(),
+            operator: Operator::Ge,
+            threshold: 90.0,
+            clear_threshold: Some(88.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            escalate_after: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "libvirt_pool_almost_full",
+                "libvirt pool almost full",
+                RuleKind::Threshold,
+                "dumbmonit_agent_libvirt_pool_used_percent",
+            )
+        },
+        // --- XCP-ng / XenServer (`collectors/xcpng`) ---
+        Rule {
+            description: "A host of the XCP-ng pool no longer answers the coordinator.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "xcpng_host_offline",
+                "XCP-ng host offline",
+                RuleKind::Threshold,
+                "dumbmonit_xcpng_host_live",
+            )
+        },
+        Rule {
+            description: "An XCP-ng storage repository is more than 90% full.".to_string(),
+            operator: Operator::Ge,
+            threshold: 90.0,
+            clear_threshold: Some(88.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            escalate_after: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "xcpng_sr_almost_full",
+                "XCP-ng SR almost full",
+                RuleKind::Threshold,
+                "dumbmonit_xcpng_sr_used_percent",
+            )
+        },
+        // Une VM que la haute disponibilité du pool doit garder en marche
+        // (`ha_restart_priority` non vide, HA active) est arrêtée : HA ne l'a
+        // pas relancée, ou n'a pas pu (ressources insuffisantes).
+        Rule {
+            description: "A VM protected by the pool's high availability is halted.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "xcpng_vm_ha_protected_down",
+                "XCP-ng HA-protected VM down",
+                RuleKind::Threshold,
+                "dumbmonit_xcpng_vm_ha_protected_down",
+            )
+        },
+        Rule {
+            description: "The pool is overcommitted: it no longer has a plan to survive the host failures it is set to tolerate.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            escalate_after: Some(Duration::from_secs(3600)),
+            ..base(
+                "xcpng_pool_ha_overcommitted",
+                "XCP-ng pool HA overcommitted",
+                RuleKind::Threshold,
+                "dumbmonit_xcpng_pool_ha_overcommitted",
+            )
+        },
+        // --- Nutanix, par Prism Central (`collectors/nutanix`) ---
+        Rule {
+            description: "Prism reports a Nutanix host as degraded.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "nutanix_host_degraded",
+                "Nutanix host degraded",
+                RuleKind::Threshold,
+                "dumbmonit_nutanix_host_degraded",
+            )
+        },
+        Rule {
+            description: "A Nutanix storage container is more than 90% full.".to_string(),
+            operator: Operator::Ge,
+            threshold: 90.0,
+            clear_threshold: Some(88.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            escalate_after: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "nutanix_storage_container_almost_full",
+                "Nutanix storage container almost full",
+                RuleKind::Threshold,
+                "dumbmonit_nutanix_storage_container_used_percent",
+            )
+        },
+        Rule {
+            description: "Prism Central reports one or more unresolved critical alerts.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "nutanix_alerts_critical",
+                "Nutanix critical alerts",
+                RuleKind::Threshold,
+                "dumbmonit_nutanix_alerts_critical",
+            )
+        },
         // --- Hyper-V, par l'agent Windows (`agent/src/collect/perf_counters.rs`) ---
         Rule {
             description: "Hyper-V reports a virtual machine in critical health: a resource it needs, most often disk space, is exhausted.".to_string(),
@@ -6204,6 +6342,15 @@ mod tests {
             "fortigate_license_expiring",
             "fortigate_firmware_update",
             "sophos_interface_down",
+            "libvirt_domain_crashed",
+            "libvirt_pool_almost_full",
+            "xcpng_host_offline",
+            "xcpng_sr_almost_full",
+            "xcpng_vm_ha_protected_down",
+            "xcpng_pool_ha_overcommitted",
+            "nutanix_host_degraded",
+            "nutanix_storage_container_almost_full",
+            "nutanix_alerts_critical",
             "hyperv_vm_critical",
             "hyperv_host_cpu_high",
             "hyperv_vhd_errors",
@@ -6633,6 +6780,15 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            "dumbmonit_agent_libvirt_domain_crashed",
+            "dumbmonit_agent_libvirt_pool_used_percent",
+            "dumbmonit_xcpng_host_live",
+            "dumbmonit_xcpng_sr_used_percent",
+            "dumbmonit_xcpng_vm_ha_protected_down",
+            "dumbmonit_xcpng_pool_ha_overcommitted",
+            "dumbmonit_nutanix_host_degraded",
+            "dumbmonit_nutanix_storage_container_used_percent",
+            "dumbmonit_nutanix_alerts_critical",
             "dumbmonit_hyperv_vms_health_critical",
             "dumbmonit_hyperv_host_cpu_percent",
             "dumbmonit_hyperv_vhd_errors_total",

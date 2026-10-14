@@ -146,6 +146,7 @@ mod tests {
             sensors: false,
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
+            libvirt: crate::collect::libvirt::LibvirtConfig::default(),
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),

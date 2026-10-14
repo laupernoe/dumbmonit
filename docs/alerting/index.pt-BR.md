@@ -33,7 +33,7 @@ Todo alerta é uma máquina de estados, avaliada a cada 30 segundos
 | `pending` | Acumulando | A condição é verdadeira mas a retenção da regra (`for`) ainda não decorreu. Nada é enviado. |
 | `firing` | Disparando | A condição se manteve por tempo suficiente. A primeira notificação sai, depois lembretes a cada `repeat_interval` (6 horas por padrão para a maioria das regras integradas), depois um escalonamento se configurado. |
 | `resolved` | Resolvido | De volta ao normal. Uma notificação de resolução é enviada apenas se o disparo havia sido anunciado. |
-| `suppressed` | Suprimido pelo pai | O alerta está disparando, mas um dispositivo pai está inacessível: veja abaixo. |
+| `suppressed` | Suprimido pelo pai | O alerta está disparando, mas um dispositivo pai, ou o próprio dispositivo, está inacessível: veja abaixo. |
 
 `phase` é o estado do motor; `effective_phase` é o que você lê. Um alerta
 cujo `effective_phase` é `suppressed` mantém `phase = firing` por baixo,
@@ -56,6 +56,13 @@ todo alerta em seus descendentes é marcado *Suprimido pelo pai* em vez de
 ser enviado: um switch que cai produz uma notificação, não trinta. O
 ancestral inacessível mais próximo é nomeado como a causa
 (`suppressed_by`), e a cadeia é seguida até 64 níveis.
+
+O mesmo vale para o próprio dispositivo inacessível: seus outros alertas
+(disco cheio, CPU etc.) são suprimidos pela sua própria queda, com
+`suppressed_by` apontando o próprio dispositivo, já que seus valores estão
+desatualizados e são apenas um sintoma da mesma falha. Só o alerta "Device
+unreachable" dele nunca é ocultado pela própria queda, então você é avisado
+uma vez.
 
 Defina o pai no formulário do dispositivo. Na página Dispositivos, os
 filhos se agrupam sob seu pai e escurecem quando ele está inacessível.

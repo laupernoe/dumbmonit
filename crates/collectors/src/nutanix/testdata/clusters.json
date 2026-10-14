@@ -1,0 +1,57 @@
+{
+  "data": [
+    {
+      "extId": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "name": "homelab-cluster",
+      "$objectType": "clustermgmt.v4.config.Cluster",
+      "config": {
+        "buildInfo": {
+          "version": "6.10.1",
+          "fullVersion": "el8.5-release-fraser-6.10.1-stable"
+        },
+        "clusterFunction": [
+          "AOS"
+        ],
+        "hypervisorTypes": [
+          "AHV"
+        ],
+        "isAvailable": true,
+        "redundancyFactor": 2
+      },
+      "nodes": {
+        "numberOfNodes": 3
+      },
+      "vmCount": 3
+    },
+    {
+      "extId": "0006241f-7b1a-4f8c-0000-0000000000pc",
+      "name": "pc-main",
+      "$objectType": "clustermgmt.v4.config.Cluster",
+      "config": {
+        "buildInfo": {
+          "version": "pc.2024.3"
+        },
+        "clusterFunction": [
+          "PRISM_CENTRAL"
+        ],
+        "isAvailable": true
+      }
+    }
+  ],
+  "metadata": {
+    "flags": [
+      {
+        "name": "hasError",
+        "value": false
+      },
+      {
+        "name": "isPaginated",
+        "value": true
+      }
+    ],
+    "links": [],
+    "totalAvailableResults": 2,
+    "$objectType": "common.v1.response.ApiResponseMetadata"
+  },
+  "$objectType": "clustermgmt.v4.config.ListClustersApiResponse"
+}

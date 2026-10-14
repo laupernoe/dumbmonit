@@ -118,6 +118,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	unifi: Router,
 	homeassistant: House,
 	vsphere: Layers,
+	xcpng: Layers,
+	nutanix: Layers,
 	redis: DatabaseZap,
 	mongodb: Leaf,
 	rabbitmq: Inbox,
@@ -146,7 +148,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -189,6 +191,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	unifi: 'ubiquiti wifi access point ap switch gateway udm dream machine cloud key controller network',
 	homeassistant: 'home assistant hass smart home zigbee z-wave iot automation battery sensors',
 	vsphere: 'vmware esxi vcenter hypervisor virtual machine vm datastore',
+	xcpng: 'xcp-ng xcpng xen xenserver citrix hypervisor xapi xen orchestra pool virtual machine vm storage repository sr',
+	nutanix: 'nutanix ahv prism central element hci hyperconverged hypervisor cluster virtual machine vm storage container',
 	redis: 'redis valkey keydb cache key value in-memory database db replication',
 	mongodb: 'mongo database db nosql document replica set wiredtiger',
 	rabbitmq: 'rabbit amqp mqtt message broker queue messaging erlang',

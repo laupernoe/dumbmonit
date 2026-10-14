@@ -1,0 +1,45 @@
+{
+  "data": [
+    {
+      "containerExtId": "c1a7e8a0-0000-4000-8000-000000000001",
+      "name": "default-container",
+      "clusterExtId": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "clusterName": "homelab-cluster",
+      "maxCapacityBytes": 10995116277760,
+      "replicationFactor": 2,
+      "isInternal": false
+    },
+    {
+      "containerExtId": "c1a7e8a0-0000-4000-8000-000000000002",
+      "name": "images",
+      "clusterExtId": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "clusterName": "homelab-cluster",
+      "maxCapacityBytes": 1099511627776,
+      "isInternal": false
+    },
+    {
+      "containerExtId": "c1a7e8a0-0000-4000-8000-000000000003",
+      "name": "NutanixManagementShare",
+      "clusterExtId": "0006241f-7b1a-4f8c-0000-0000000000a1",
+      "clusterName": "homelab-cluster",
+      "maxCapacityBytes": 10995116277760,
+      "isInternal": true
+    }
+  ],
+  "metadata": {
+    "flags": [
+      {
+        "name": "hasError",
+        "value": false
+      },
+      {
+        "name": "isPaginated",
+        "value": true
+      }
+    ],
+    "links": [],
+    "totalAvailableResults": 3,
+    "$objectType": "common.v1.response.ApiResponseMetadata"
+  },
+  "$objectType": "clustermgmt.v4.config.ListStorageContainersApiResponse"
+}

@@ -1,6 +1,6 @@
 # Linux、macOS、FreeBSD 和 Windows 代理 {#linux-macos-freebsd-and-windows-agent}
 
-一个安装在要监视的机器上的小二进制文件。它测量 CPU、内存、磁盘、网络、服务和容器 — 以及机器公开的地方，还有温度、磁盘健康和 ZFS 池 — 随后通过 HTTP **推送** 其读数到 DumbMonit 服务器。
+一个安装在要监视的机器上的小二进制文件。它测量 CPU、内存、磁盘、网络、服务和容器 — 以及机器公开的地方，还有温度、磁盘健康、ZFS 池和 KVM 虚拟机 — 随后通过 HTTP **推送** 其读数到 DumbMonit 服务器。
 
 方向是故意的：代理调用服务器，永远不是相反的方式。它穿过 NAT 和家庭防火墙，并要求在监视的机器上打开 **没有端口**。
 
@@ -20,6 +20,7 @@
 | 容器 | `container_up`、`container_count`、`container_running_count`、`container_series_skipped`（超过 `docker_max_containers` 的容器） | `container`、`image` |
 | 传感器 | `agent_sensor_temperature_celsius`、`agent_sensor_temperature_critical_celsius`（硬件本身声明的阈值）、`agent_sensor_fan_rpm` | `sensor`、`fan` |
 | 磁盘健康（SMART） | `agent_disk_smart_ok`（1 = 磁盘通过其自身自我评估）、`agent_disk_temperature_celsius`、`agent_disk_power_on_hours`、`agent_disk_wearout_percent`、`agent_disk_reallocated_sectors`、`agent_disk_pending_sectors`、`agent_disk_media_errors` | `device`、`model` |
+| KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`；每个域 `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`；每个存储池 `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — 参见 [通过 libvirt 监视 KVM 虚拟机](#kvm-virtual-machines-through-libvirt) | `domain`、`pool`、`state` |
 | ZFS | `agent_zfs_pool_health`（0 在线，1 降级，2 更差）、`agent_zfs_pool_size/used/free_bytes`、`agent_zfs_pool_used_percent`、`agent_zfs_pool_fragmentation_percent`、`agent_zfs_pool_device_errors`、`agent_zfs_pool_data_errors`、`agent_zfs_pool_scrub_running`、`agent_zfs_pool_scrub_errors`、`agent_zfs_pool_scrub_age_seconds` | `pool` |
 | WireGuard | `agent_wireguard_interface_peers`；每个对等体 `agent_wireguard_peer_handshake_age_seconds`、`agent_wireguard_peer_has_handshake`、`agent_wireguard_peer_keepalive_seconds`、`agent_wireguard_peer_rx_bytes`、`agent_wireguard_peer_tx_bytes`（计数器） — 参见 [WireGuard 隧道](#wireguard-tunnels) | `interface`、`peer`、`allowed_ips`、`name` |
 | restic / Borg | `agent_backup_repo_reachable`、`agent_backup_repo_last_snapshot_age_seconds`、`agent_backup_repo_last_snapshot_bytes`（restic） — 参见 [restic 和 Borg 备份](#restic-and-borg-backups) | `tool`、`repo` |
@@ -28,7 +29,7 @@
 | Hyper-V（Windows） | `hyperv_vms_health_ok`、`hyperv_vms_health_critical`、`hyperv_host_cpu_percent`、`hyperv_host_cpu_guest_percent`、`hyperv_partitions`；每个 VM `hyperv_vm_physical_memory_megabytes`、`hyperv_vm_guest_visible_memory_megabytes`、`hyperv_vm_memory_pressure_percent`；每个虚拟磁盘 `hyperv_vhd_read_bytes_per_second`、`hyperv_vhd_write_bytes_per_second`、`hyperv_vhd_latency_seconds`、`hyperv_vhd_queue_length`、`hyperv_vhd_errors_total` — 参见 [Hyper-V 主机](#hyper-v-hosts) | `vm`、`disk` |
 | 代理 | `agent_collect_seconds`、`agent_buffered_samples`、`agent_dropped_samples` | |
 
-无法测量的系列是 **不存在的**，永不为零：没有 `smartctl`，没有 `agent_disk_*`；没有可读的探测，没有 `agent_sensor_*`；没有 ZFS，没有 `agent_zfs_*`。1–150 °C 之外的温度被丢弃而不是发布，读取 0 rpm 的风扇也被丢弃 — 主板的风扇头多于风扇，空的读取零，就像死亡风扇一样。
+无法测量的系列是 **不存在的**，永不为零：没有 `smartctl`，没有 `agent_disk_*`；没有可读的探测，没有 `agent_sensor_*`；没有 ZFS，没有 `agent_zfs_*`；没有 `virsh`，没有 `agent_libvirt_*`。1–150 °C 之外的温度被丢弃而不是发布，读取 0 rpm 的风扇也被丢弃 — 主板的风扇头多于风扇，空的读取零，就像死亡风扇一样。
 
 ### 在哪里收集什么 {#what-is-collected-where}
 
@@ -42,6 +43,7 @@
 | 风扇 | `/sys/class/hwmon` | 否 | 否 | 否 |
 | 磁盘健康（SMART） | `smartctl` | `smartctl`（Homebrew） | `smartctl`（`sysutils/smartmontools`） | `smartctl` |
 | ZFS 池 | `zpool`（OpenZFS） | 否 | `zpool` | 否 |
+| KVM 虚拟机（libvirt） | `virsh` | 否 | 否 | 否 |
 | OS 健康（更新、重启、失败的单元、SELinux） | 是 | 否 | 否 | 否 |
 | Plakar 备份 | 是 | 是 | 是 | 是 |
 | WireGuard 隧道 | `wg show` | 当 `wg` 被安装时（未测试） | 当 `wg` 被安装时（未测试） | 否 |
@@ -52,7 +54,7 @@
 
 Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进行，具有管理权限，对于大多数机器根本不公开的值。发布什么都不是诚实的回答。
 
-`smartctl`（smartmontools）和 `zpool` 在每个读取期间被查找并在存在时使用；代理既不安装，也不是必需的。两者都需要 root — 安装程序注册的服务以 root 运行，手启动的代理在您自己的账户下将找到什么都没有。
+`smartctl`（smartmontools）、`zpool` 和 `virsh` 在每个读取期间被查找并在存在时使用；代理既不安装，也不是必需的。它们都需要 root（`virsh` 对 `libvirt` 组成员同样有效） — 安装程序注册的服务以 root 运行，手启动的代理在您自己的账户下将找到什么都没有。
 
 计数器被原始发送，所以代理的重启永不产生虚假速率；在查询中应用 `rate()`。
 
@@ -65,6 +67,8 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 | **磁盘 SMART 故障**（关键） | 磁盘的自我评估将其报告为故障 |
 | **ZFS 池降级**（关键） | 池不再是五分钟的 `ONLINE` |
 | **ZFS 清洁发现错误**（关键） | 最后清洁发现错误，或池报告永久损坏的文件 |
+| **KVM 域崩溃**（关键） | libvirt 将某个域报告为 `crashed` |
+| **libvirt 池将满**（通知） | 某个存储池的分配量连续十五分钟达到其容量的 90% |
 | **温度超过关键**（关键） | 传感器超过关键阈值 **其自己的硬件声明** — 没有硬编码的值，85 °C 是磁盘上的紧急，是笔记本电脑 CPU 上的正常下午 |
 
 三个更多监视您声明或运行的东西，否则保持沉默：**WireGuard 对等体沉默**（一个具有持久保活且 15 分钟内没有握手的对等体）、**restic/Borg 备份太旧**（48 小时内没有快照）和 **restic/Borg 存储库不可达** — 参见 [WireGuard 隧道](#wireguard-tunnels) 和 [restic 和 Borg 备份](#restic-and-borg-backups)。
@@ -248,6 +252,10 @@ smart_interval_secs: 300   # 最小 60：睡着的磁盘永不被唤醒来被读
 zfs: true                  # 通过 zpool 的 ZFS 池（默认：true）
 zfs_bin: zpool
 zfs_interval_secs: 120     # 最小 30
+libvirt: true              # 通过 virsh 的 KVM 域和存储池（默认：true）
+libvirt_bin: virsh
+libvirt_uri: qemu:///system
+libvirt_interval_secs: 60  # 最小 15
 wireguard: true            # WireGuard 隧道通过 wg（默认：true），见下文
 restic_repos: []           # restic 存储库来监视，见"restic 和 Borg 备份"
 borg_repos: []             # Borg 存储库来监视
@@ -261,7 +269,22 @@ max_buffered_samples: 20000
 log_level: info
 ```
 
-`sensors`、`smart` 和 `zfs` 被检测，从不假定：在没有探测、没有 `smartctl` 或没有池的机器上，留在 `true` 在每个期间花费一次查找并发出什么都没有。设置一个为 `false` 停止甚至查找 — 值得在 NAS 上做，其磁盘您宁愿 `smartctl` 永不接触，尽管代理已经传递 `-n standby` 以便睡着的磁盘仅在为其他原因清醒时被测量。
+`sensors`、`smart`、`zfs` 和 `libvirt` 被检测，从不假定：在没有探测、没有 `smartctl`、没有池或没有 `virsh` 的机器上，留在 `true` 在每个期间花费一次查找并发出什么都没有。设置一个为 `false` 停止甚至查找 — 值得在 NAS 上做，其磁盘您宁愿 `smartctl` 永不接触，尽管代理已经传递 `-n standby` 以便睡着的磁盘仅在为其他原因清醒时被测量。
+
+### 通过 libvirt 监视 KVM 虚拟机 {#kvm-virtual-machines-through-libvirt}
+
+在 KVM 虚拟化主机上（装有 libvirt 的普通 Linux 主机，不是 Proxmox VE，后者有
+[自己的集成](proxmox.md)），请把代理安装在主机本身，而不是客户机里。代理运行
+`virsh -c qemu:///system`，使用 `list --all --name`、`dominfo --domain <名称>`、
+`pool-list --all --name` 和 `pool-info --pool <名称>`：它从不定义、启动、停止或
+迁移域，也从不更改存储池。对于由 `libvirt` 组成员而不是 root 运行的代理，显式的
+`qemu:///system` URI 很重要：没有它，`virsh` 会读取该用户私有的、空的会话。
+设置 `libvirt_uri` 可读取其他连接。
+
+对于已关机的域，`agent_libvirt_domain_memory_used_bytes` 不存在：libvirt 只知道它
+配置的最大值。存储池的大小来自 `virsh` 的人类可读输出，四舍五入到两位小数，因此
+`agent_libvirt_pool_used_percent` 是一个近似值，足够接近，可以在存储池写满之前发出
+警告。最多详细列出 200 个域和 64 个存储池。
 
 旁边它，`/etc/dumbmonit/agent-secret`（Windows 上的 `C:\ProgramData\DumbMonit\agent-secret`）持有服务器交给这台机器的绑定密钥。代理用模式 `0600` 写它并在每次启动时重新读取它；它不是 `agent.yaml` 的一部分，因为它不是您设置的东西 — 参见 [绑定](#binding-one-machine-one-agent)。`DUMBMONIT_AGENT_SECRET_FILE` 移动它，这是您对一个容器中的代理想要的。
 
@@ -291,6 +314,10 @@ log_level: info
 | `DUMBMONIT_AGENT_ZFS` | `true` / `false`：通过 `zpool` 的 ZFS 池（默认 `true`） |
 | `DUMBMONIT_AGENT_ZFS_BIN` | `zpool` 的路径 |
 | `DUMBMONIT_AGENT_ZFS_INTERVAL_SECS` | 两次 ZFS 读取间的期间，默认 `120`，最小 `30` |
+| `DUMBMONIT_AGENT_LIBVIRT` | `true` / `false`：通过 `virsh` 的 KVM 域和存储池（默认 `true`） |
+| `DUMBMONIT_AGENT_LIBVIRT_BIN` | `virsh` 的路径 |
+| `DUMBMONIT_AGENT_LIBVIRT_URI` | libvirt 连接 URI，默认 `qemu:///system` |
+| `DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS` | 两次 libvirt 读取间的期间，默认 `60`，最小 `15` |
 | `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`：通过 `wg` 的 WireGuard 隧道（默认 `true`） |
 | `DUMBMONIT_AGENT_WIREGUARD_BIN` | `wg` 的路径 |
 | `DUMBMONIT_AGENT_RESTIC_BIN` | `restic` 的路径 |

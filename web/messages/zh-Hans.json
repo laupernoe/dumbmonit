@@ -820,6 +820,8 @@
 	"deviceform_modules_docker_hint": "状态、健康检查、重启次数和镜像更新。",
 	"deviceform_modules_ipsec": "IPsec 隧道",
 	"deviceform_modules_ipsec_hint": "通过 swanctl 读取的隧道。",
+	"deviceform_modules_libvirt": "KVM 虚拟机",
+	"deviceform_modules_libvirt_hint": "通过 virsh 读取 libvirt 域和存储池。",
 	"deviceform_modules_none": "未勾选任何模块：代理只发送 CPU、内存、磁盘和网络。",
 	"deviceform_modules_perf_counters": "Windows 性能计数器",
 	"deviceform_modules_perf_counters_hint": "MDaemon 和 Hyper-V 预设。",
@@ -3073,7 +3075,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} 行未更改",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} 行未更改",
 	"devicesb_webchange_list_earlier": "以往的变更（{count}）",
-	"devicesb_webchange_list_quiet": "{count} 个页面无变化",
+	"devicesb_webchange_list_quiet_one": "1 个页面无变化",
+	"devicesb_webchange_list_quiet_other": "{count} 个页面无变化",
 	"devicesb_webchange_list_screenshots": "{path} 的截图",
 	"devicesb_webchange_pages_empty": "尚未监控任何页面。",
 	"devicesb_webchange_pages_empty_hint": "首次探测时会将设备地址作为基准进行检查。",
@@ -6029,5 +6032,10 @@
 	"website_sitemap_ok": "可访问",
 	"website_status": "状态",
 	"website_unknown": "尚未检查",
-	"website_value_empty": "（无）"
+	"website_value_empty": "（无）",
+	"whatsnew_dialog_close": "关闭新功能窗口",
+	"whatsnew_dialog_notes": "完整发行说明",
+	"whatsnew_dialog_ok": "知道了",
+	"whatsnew_dialog_title": "v{version} 新功能",
+	"whatsnew_dialog_updated": "更新于 · {date}"
 }

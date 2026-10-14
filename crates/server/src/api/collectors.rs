@@ -3357,6 +3357,41 @@ const SOPHOS_OPTIONS: &[OptionView] = &[
     VENDOR_TIMEOUT,
 ];
 
+/// Sujet XAPI de `collectors/xcpng` : un compte de l'annuaire du pool (Active
+/// Directory, ou PAM sur les hôtes), au rôle intégré `read-only`.
+const XCPNG_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account, registered on the pool as a subject with the read-only role.",
+    fields: &[
+        cred_text("username", "User name", "As the pool's directory knows it.", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const XCPNG_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "Used if the address does not give a port.", "443", "443"),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Utilisateur Prism Central de `collectors/nutanix`.
+const NUTANIX_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit local user of Prism Central, with the Prism Viewer role.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const NUTANIX_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "Used if the address does not give a port.", "9440", "9440"),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
 /// Racine de la documentation en ligne, vers laquelle pointent les prérequis.
 const DOCS_INSTALL: &str = "https://dumbmonit.readthedocs.io/en/latest/install/docker/";
 
@@ -4610,6 +4645,51 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: VSPHERE_OPTIONS,
         },
+        "xcpng" => CollectorView {
+            kind: "xcpng",
+            label: "XCP-ng / XenServer",
+            summary: "An XCP-ng or XenServer pool through XAPI: hosts disabled or offline, VMs and their power state, storage repositories filling up, and a high-availability pool that can no longer survive the host failures it is set to tolerate.",
+            examples: &["XCP-ng 8.2 and 8.3", "XenServer / Citrix Hypervisor"],
+            credential_types: &["username_password"],
+            credentials: &[XCPNG_LOGIN],
+            address_hint: "xcp01.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Give DumbMonit a read-only XAPI account",
+                steps: &[
+                    "XAPI only accepts accounts other than its built-in superuser once the pool uses external authentication. If the pool is already joined to Active Directory, create a dumbmonit account there and go to step 3.",
+                    "Otherwise, create a local account with a long random password on every host of the pool, then turn on PAM authentication once, from the pool coordinator. Until a role is given, the account can call nothing.\nuseradd -M -s /sbin/nologin dumbmonit\npasswd dumbmonit\nxe pool-enable-external-auth auth-type=PAM service-name=pam",
+                    "On the pool coordinator, register the account as a subject, then give that subject the built-in read-only role, with the UUID the first command prints.\nxe subject-add subject-name=dumbmonit\nxe subject-role-add uuid=SUBJECT_UUID role-name=read-only",
+                    "In DumbMonit, enter the address of the pool coordinator, for example \"xcp01.lan\", with that user name and password. Add the pool once: the coordinator reports every host, VM and storage repository. A pool member answers with the coordinator's address, which DumbMonit then follows.",
+                    "DumbMonit only reads, through XAPI's JSON-RPC interface (/jsonrpc): it never starts, stops or migrates a VM and never changes a storage repository or the pool's high availability.",
+                ],
+                warning: "Never give DumbMonit the superuser password of the hosts: with the read-only role, a leaked password cannot change anything. XCP-ng and XenServer ship a self-signed certificate: enable \"Accept an unverifiable certificate\" unless the DumbMonit host trusts the certificate the pool presents.",
+                doc_url: "",
+            },
+            options: XCPNG_OPTIONS,
+        },
+        "nutanix" => CollectorView {
+            kind: "nutanix",
+            label: "Nutanix AHV (Prism Central)",
+            summary: "Nutanix clusters through the v4 API of Prism Central: hosts degraded or in maintenance, AHV VMs and their power state, storage containers filling up, and unresolved alerts by severity.",
+            examples: &["Prism Central pc.2024.3 or later", "AHV clusters"],
+            credential_types: &["username_password"],
+            credentials: &[NUTANIX_LOGIN],
+            address_hint: "prism-central.lan",
+            default_port: 9440,
+            setup: Setup {
+                title: "Create a read-only user in Prism Central",
+                steps: &[
+                    "In Prism Central, open Admin Center > IAM > Identities and add a local user with a long random password, named as follows.\ndumbmonit",
+                    "Under Admin Center > IAM > Authorization Policies, create a policy with the built-in Prism Viewer role, for all entities, and assign it to that user. Prism Viewer reads clusters, hosts, VMs, storage containers and alerts, and changes nothing.",
+                    "In DumbMonit, enter the address of Prism Central, for example \"prism-central.lan\", with that user name and password. One Prism Central reports every cluster registered to it.",
+                    "DumbMonit only reads the v4 API (clustermgmt, vmm and monitoring, version 4.0): it never powers a VM on or off, never resolves an alert and never changes a storage container.",
+                ],
+                warning: "The v4 API is served by Prism Central pc.2024.3 or later; a cluster managed by Prism Element alone, or by an older Prism Central, is not supported. Prism Central ships a self-signed certificate: enable \"Accept an unverifiable certificate\" unless the DumbMonit host trusts its certificate authority.",
+                doc_url: "https://developers.nutanix.com/",
+            },
+            options: NUTANIX_OPTIONS,
+        },
         "redis" => CollectorView {
             kind: "redis",
             label: "Redis / Valkey",
@@ -5194,6 +5274,8 @@ mod tests {
         "fortigate",
         "sophos",
         "openvpn",
+        "xcpng",
+        "nutanix",
         "agent",
         "http",
         "tcp",
@@ -5723,6 +5805,8 @@ mod tests {
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
         for (kind, cles) in attendues {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
@@ -5899,11 +5983,15 @@ mod tests {
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+            ("xcpng", dumbmonit_collectors::xcpng::DEFAULT_PORT),
+            ("nutanix", dumbmonit_collectors::nutanix::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos"] {
+        for kind in
+            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
+        {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -6154,6 +6242,8 @@ mod tests {
             ("tailscale", "devices:core:read"),
             ("fortigate", "dumbmonit"),
             ("sophos", "dumbmonit"),
+            ("xcpng", "dumbmonit"),
+            ("nutanix", "dumbmonit"),
             ("nextcloud", "token"),
             ("immich", "dumbmonit"),
             ("paperless", "dumbmonit"),
@@ -6198,7 +6288,10 @@ mod tests {
                 .replace("type administrator", "")
                 // Le domaine virtuel par défaut de FortiOS s'appelle `root` :
                 // un nom de VDOM, pas un compte.
-                .replace("set vdom \"root\"", "");
+                .replace("set vdom \"root\"", "")
+                // L'application « Admin Center » de Prism Central, où se
+                // gèrent les identités : un menu, pas un compte.
+                .replace("admin center", "");
             for word in allowed.split(|c: char| !c.is_alphanumeric()) {
                 assert!(
                     !matches!(word, "root" | "admin" | "administrator"),
@@ -6283,6 +6376,8 @@ mod tests {
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
+            ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
+            ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("webchange", include_str!("../../../../docs/devices/webchange.md")),

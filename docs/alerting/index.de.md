@@ -33,7 +33,7 @@ Jeder Alarm ist eine Zustandsmaschine, die alle 30 Sekunden ausgewertet wird
 | `pending` | Baut sich auf | Die Bedingung ist wahr, aber die Haltezeit der Regel (`for`) ist noch nicht abgelaufen. Es wird nichts gesendet. |
 | `firing` | Feuert | Die Bedingung hat lange genug angehalten. Die erste Benachrichtigung geht raus, danach Erinnerungen alle `repeat_interval` (standardmäßig 6 Stunden für die meisten eingebauten Regeln), dann eine Eskalation, falls konfiguriert. |
 | `resolved` | Behoben | Zurück zum Normalzustand. Eine Behoben-Benachrichtigung wird nur gesendet, wenn das Feuern zuvor gemeldet wurde. |
-| `suppressed` | Durch übergeordnetes Gerät unterdrückt | Der Alarm feuert, aber ein übergeordnetes Gerät ist nicht erreichbar: siehe unten. |
+| `suppressed` | Durch übergeordnetes Gerät unterdrückt | Der Alarm feuert, aber ein übergeordnetes Gerät oder das Gerät selbst ist nicht erreichbar: siehe unten. |
 
 `phase` ist der Zustand der Engine; `effective_phase` ist das, was Sie lesen.
 Ein Alarm, dessen `effective_phase` gleich `suppressed` ist, behält darunter
@@ -58,6 +58,13 @@ markiert, statt gesendet zu werden: ein ausfallender Switch erzeugt eine
 Benachrichtigung, nicht dreißig. Der nächstgelegene nicht erreichbare
 Vorfahre wird als Ursache genannt (`suppressed_by`), und die Kette wird bis
 zu 64 Ebenen verfolgt.
+
+Dasselbe gilt für das nicht erreichbare Gerät selbst: Seine übrigen Alarme
+(Festplatte voll, CPU usw.) werden durch seinen eigenen Ausfall unterdrückt,
+wobei `suppressed_by` das Gerät selbst nennt, denn ihre Werte sind veraltet
+und nur ein Symptom desselben Ausfalls. Nur sein Alarm „Device unreachable“
+wird nie durch den eigenen Ausfall verborgen, sodass Sie einmal benachrichtigt
+werden.
 
 Das übergeordnete Gerät wird im Gerätedialog gesetzt. Auf der Geräteseite
 stapeln sich Kinder unter ihrem Elternteil und werden abgedunkelt, wenn

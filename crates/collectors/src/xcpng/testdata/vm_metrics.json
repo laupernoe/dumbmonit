@@ -1,0 +1,10 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:vm-web-metrics": {
+      "memory_actual": "1879048192",
+      "VCPUs_number": "2"
+    }
+  }
+}

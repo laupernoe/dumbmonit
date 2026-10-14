@@ -32,7 +32,7 @@ Every alert is a state machine, evaluated every 30 seconds
 | `pending` | Building up | The condition is true but the rule's hold (`for`) has not elapsed yet. Nothing is sent. |
 | `firing` | Firing | The condition has held long enough. The first notification goes out, then reminders every `repeat_interval` (6 hours by default for most built-in rules), then an escalation if configured. |
 | `resolved` | Resolved | Back to normal. A resolution notification is sent only if the firing had been announced. |
-| `suppressed` | Suppressed by parent | The alert is firing, but a parent device is unreachable: see below. |
+| `suppressed` | Suppressed by parent | The alert is firing, but a parent device, or the device itself, is unreachable: see below. |
 
 `phase` is the engine's state; `effective_phase` is what you read. An alert
 whose `effective_phase` is `suppressed` keeps `phase = firing` underneath, so it
@@ -54,6 +54,12 @@ marked *Suppressed by parent* instead of being sent: a switch going down
 produces one notification, not thirty. The nearest unreachable ancestor is
 named as the cause (`suppressed_by`), and the chain is followed up to 64
 levels.
+
+The same applies to the unreachable device itself: its other alerts (disk
+full, CPU, and so on) are suppressed by its own outage, with `suppressed_by`
+naming the device itself, since their readings are stale and they are only a
+symptom of the same failure. Its "Device unreachable" alert is the only one
+never hidden by its own outage, so you are still told once.
 
 Set the parent on the device form. On the Devices page, children stack under
 their parent and dim when it is unreachable.

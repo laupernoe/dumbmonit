@@ -1,0 +1,33 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:sr-local": {
+      "uuid": "3d9a1b9e-0000-0000-0000-000000000021",
+      "name_label": "Local storage",
+      "physical_size": "500107862016",
+      "physical_utilisation": "480107862016",
+      "type": "ext",
+      "content_type": "user",
+      "shared": false
+    },
+    "OpaqueRef:sr-shared": {
+      "uuid": "3d9a1b9e-0000-0000-0000-000000000022",
+      "name_label": "NFS backup",
+      "physical_size": "2000000000000",
+      "physical_utilisation": "500000000000",
+      "type": "nfs",
+      "content_type": "user",
+      "shared": true
+    },
+    "OpaqueRef:sr-iso": {
+      "uuid": "3d9a1b9e-0000-0000-0000-000000000023",
+      "name_label": "DVD drives",
+      "physical_size": "0",
+      "physical_utilisation": "0",
+      "type": "udev",
+      "content_type": "iso",
+      "shared": false
+    }
+  }
+}

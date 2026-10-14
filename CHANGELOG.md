@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
+  (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
+  state, storage repositories filling up, and high availability (protected VMs
+  found halted, an overcommitted pool). A pool member's `HOST_IS_SLAVE` answer
+  is followed to the coordinator. Four built-in rules. See
+  [XCP-ng / XenServer](docs/devices/xcpng.md).
+- **Nutanix AHV.** A new `nutanix` device reads Prism Central's v4 API
+  (pc.2024.3 or later, Prism Viewer role): clusters, hosts degraded or in
+  maintenance, AHV VMs, storage container fill level and unresolved alerts by
+  severity. Three built-in rules. See [Nutanix AHV](docs/devices/nutanix.md).
+- **KVM virtual machines on the Linux agent.** A new `libvirt` module reads
+  `virsh -c qemu:///system` (domains, their state, vCPUs and memory; storage
+  pools and their fill level), silent where `virsh` is absent. Two built-in
+  rules: a crashed domain, a pool almost full. See
+  [the agent page](docs/devices/agent.md#kvm-virtual-machines-through-libvirt).
 - **OpenVPN server** device kind: version, whether the server reports itself
   connected, and every client in session with its addresses and traffic, read
   through the management interface (read-only: `version`, `state`, `status 3`).
@@ -19,6 +34,16 @@ All notable changes to this project are documented here. The format follows
   most once per period (6 h by default, 5 min minimum). Off by default since
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
+
+### Security
+
+- **Bundled VictoriaMetrics 1.153.0 → 1.154.0.** Built with Go 1.27.2 and
+  `golang.org/x/net` 0.60.0, which fix CVE-2026-97031, CVE-2026-78667 and
+  CVE-2026-78669 (all high) in the binary shipped in the image. No change to the
+  flags or query parameters the server uses.
+- **rustls 0.23.46** (RUSTSEC-2026-0346 to RUSTSEC-2026-0349: TLS secrets in
+  `Debug` output, ECH rejection data leak, Brotli decompression allocation,
+  key-exchange downgrade).
 
 ## 0.1.0-alpha.8 — 2026-10-14
 
