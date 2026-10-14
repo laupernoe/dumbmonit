@@ -204,7 +204,7 @@
 					class={`relative flex h-14 flex-col items-center justify-center gap-0.5 px-0.5 text-[0.625rem] font-semibold min-[400px]:text-[0.6875rem] ${active ? 'text-signal-ink' : 'text-ink-3'}`}
 				>
 					<link.icon class="size-5" aria-hidden="true" />
-					<span class="max-w-full truncate">{link.label}</span>
+					<span class="max-w-full text-center leading-[1.1] [overflow-wrap:anywhere] hyphens-auto">{link.label}</span>
 					{#if link.href === '/alerts' && badge > 0}
 						<span bind:this={badgeBottom} in:scale={badgeOut()} out:scale={badgeOut()} class="tnum absolute top-1.5 right-[calc(50%-1.5rem)] inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[0.625rem] font-bold text-white"><RollingNumber value={badge} /></span>
 					{/if}

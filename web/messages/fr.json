@@ -3048,7 +3048,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} ligne inchangée",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} lignes inchangées",
 	"devicesb_webchange_list_earlier": "Changements précédents ({count})",
-	"devicesb_webchange_list_quiet": "{count} pages sans changement",
+	"devicesb_webchange_list_quiet_one": "1 page sans changement",
+	"devicesb_webchange_list_quiet_other": "{count} pages sans changement",
 	"devicesb_webchange_list_screenshots": "Captures d’écran de {path}",
 	"devicesb_webchange_pages_empty": "Aucune page n’est surveillée pour l’instant.",
 	"devicesb_webchange_pages_empty_hint": "L’adresse de l’appareil est vérifiée comme référence lors de la première sonde.",
@@ -6094,5 +6095,10 @@
 	"website_sitemap_ok": "Accessible",
 	"website_status": "Statut",
 	"website_unknown": "Pas encore vérifié",
-	"website_value_empty": "(aucune)"
+	"website_value_empty": "(aucune)",
+	"whatsnew_dialog_close": "Fermer les nouveautés",
+	"whatsnew_dialog_notes": "Notes de version complètes",
+	"whatsnew_dialog_ok": "Compris",
+	"whatsnew_dialog_title": "Nouveautés de la v{version}",
+	"whatsnew_dialog_updated": "Mis à jour · {date}"
 }

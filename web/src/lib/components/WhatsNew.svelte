@@ -10,6 +10,7 @@
 	import { X, ExternalLink } from 'lucide-svelte';
 	import { getHealth } from '#lib/api/index.js';
 	import { Button } from '#lib/ui/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { whatsNew } from '#lib/stores/whatsnew.svelte.js';
 	import { releaseFor, releaseNotesUrl, type Release } from '#lib/whatsnew/releases.js';
 	import { readSeen, releaseToShow, writeSeen } from '#lib/whatsnew/seen.js';
@@ -98,14 +99,14 @@
 		<div class="flex items-start justify-between gap-3">
 			<div>
 				<p class="tnum text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
-					Updated · {release.date}
+					{m.whatsnew_dialog_updated({ date: release.date })}
 				</p>
-				<h2 id="whatsnew-title" class="mt-1 text-lg font-semibold">What's new in v{release.version}</h2>
+				<h2 id="whatsnew-title" class="mt-1 text-lg font-semibold">{m.whatsnew_dialog_title({ version: release.version })}</h2>
 			</div>
 			<button
 				type="button"
-				class="-mt-1.5 -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
-				aria-label="Close What's new"
+				class="-mt-2.5 -mr-2.5 sm:-mt-1.5 sm:-mr-2 inline-flex size-10 shrink-0 sm:size-8 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
+				aria-label={m.whatsnew_dialog_close()}
 				onclick={close}
 			>
 				<X class="size-4" aria-hidden="true" />
@@ -128,10 +129,10 @@
 				rel="noopener"
 				class="inline-flex items-center gap-1.5 text-sm font-medium text-signal-ink hover:underline"
 			>
-				Full release notes
+				{m.whatsnew_dialog_notes()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>
-			<Button variant="primary" onclick={close}>Got it</Button>
+			<Button variant="primary" onclick={close}>{m.whatsnew_dialog_ok()}</Button>
 		</div>
 	</div>
 {/if}
