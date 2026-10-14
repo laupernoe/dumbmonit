@@ -225,7 +225,7 @@ ENTRYPOINT ["/dumbmonit-agent"]
 # externe n'est désignée (DUMBMONIT_VM_URL) — un seul conteneur suffit.
 # Version épinglée : le serveur en connaît les options.
 # ---------------------------------------------------------------------------
-FROM victoriametrics/victoria-metrics:v1.153.0@sha256:5eff7af5341e401471002f58d106d399e614a62f3d240f2dbc21901e49eed5dd AS victoriametrics
+FROM victoriametrics/victoria-metrics:v1.154.0@sha256:4bd592341587d669b7f57d54bbb82bd21ac8675f4e24234b7703a7c0f85197d8 AS victoriametrics
 
 # ---------------------------------------------------------------------------
 # Image finale : les deux binaires et rien d'autre.
