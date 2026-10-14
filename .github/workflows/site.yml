@@ -12,10 +12,9 @@ on:
       - ".github/workflows/site.yml"
   workflow_dispatch:
 
+# Read-only by default; the deploy job asks for the Pages scopes.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # One deployment at a time; a newer push replaces a queued one, never an
 # in-progress one.
@@ -27,6 +26,10 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
