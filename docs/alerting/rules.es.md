@@ -108,6 +108,31 @@ Reportado por el agente; consulta
 |---|---|---|---|---|---|
 | WireGuard peer silent | Un peer con keepalive persistente no ha completado un handshake en más de 15 minutos: el túnel está caído (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Un peer que nunca se conectó cuenta su silencio desde el momento en que el agente lo vio por primera vez. Los peers sin keepalive (un teléfono, un portátil) están inactivos durante días y se excluyen; cambia el umbral para cambiar N, o quita la parte `and on …` para vigilar cada peer. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
 
+### Túneles IPsec {#ipsec-tunnels}
+
+Reportado por el agente; consulta
+[Agente](../devices/agent.md#ipsec-tunnels). La serie existe solo para un
+CHILD_SA declarado en la configuración de strongSwan, así que la regla se
+activa con un túnel que nunca subió, y no solo con uno que se cayó.
+
+| Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
+|---|---|---|---|---|---|
+| IPsec tunnel down | Un túnel IPsec configurado no tiene ninguna sesión instalada (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+
+### Prueba de velocidad de Internet {#internet-speed-test}
+
+Reportado por el agente; consulta
+[Agente](../devices/agent.md#internet-speed-test). La prueba está desactivada
+por defecto y cada regla permanece en silencio hasta que se define el umbral
+correspondiente en `agent.yaml`: nadie puede adivinar qué significa «lento»
+para tu línea.
+
+| Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
+|---|---|---|---|---|---|
+| Internet download rate low | La última prueba midió una velocidad de descarga inferior a `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 min | Advisory (`warning`) | 24 h |
+| Internet upload rate low | Lo mismo, para `speedtest_min_upload_mbps`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
+| Internet latency high | La última prueba midió una latencia superior a `speedtest_max_latency_ms`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
+
 ### Discos, ZFS y sensores del agente {#agent-disks-zfs-and-sensors}
 
 Reportado por el agente; consulta [Agente](../devices/agent.md).

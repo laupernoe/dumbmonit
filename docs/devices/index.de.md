@@ -20,6 +20,7 @@ diese Version überwachen kann.
 | [pfSense](pfsense.md) | `pfsense` | REST-API-Schlüssel (Nur-Lese-Benutzer) | Firewall: ausgefallene oder verlustbehaftete Gateways, Schnittstellen ohne Link, gestoppte Dienste |
 | [FortiGate](fortigate.md) | `fortigate` | REST-API-Token (Nur-Lese-Profil, Trusted Host) | Firewall: IPsec-Tunnel, Links, HA-Sync, Conserve Mode, FortiGuard-Lizenzen |
 | [Sophos Firewall](sophos.md) | `sophos` | Benutzername/Passwort (Nur-Lese-Profil) | Firewall: nur Schnittstellen-Links (die XML-API zeigt keinen Tunnel-, HA- oder Lizenzstatus) |
+| [OpenVPN-Server](openvpn.md) | `openvpn` | keine, oder Management-Passwort | OpenVPN-Server über seine Management-Schnittstelle: Version, Zustand, verbundene Clients |
 | [UniFi Network](unifi.md) | `unifi` | API-Schlüssel oder Benutzername/Passwort | UniFi-Konsole oder selbst gehosteter Server: Geräte, WAN, Clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | Langlebiges Zugriffstoken | Smart Home: nicht verfügbare Entitäten, schwache Batterien, Updates, Reparaturen |
 | [TrueNAS](truenas.md) | `truenas` | API-Schlüssel | ZFS-Speicherserver (SCALE, Community Edition) |

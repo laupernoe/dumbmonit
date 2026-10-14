@@ -20,6 +20,7 @@ pelo que o formulário corresponde sempre ao que esta versão pode monitorizar.
 | [pfSense](pfsense.md) | `pfsense` | chave de API REST (utilizador só de leitura) | Firewall: gateways em baixo ou com perdas, interfaces sem ligação, serviços parados |
 | [FortiGate](fortigate.md) | `fortigate` | token de API REST (perfil só de leitura, anfitrião de confiança) | Firewall: túneis IPsec, ligações, sincronização HA, modo conserve, licenças FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | utilizador/palavra-passe (perfil só de leitura) | Firewall: apenas ligações de interface (a API XML não expõe estado de túneis, HA nem licenças) |
+| [Servidor OpenVPN](openvpn.md) | `openvpn` | nenhuma, ou palavra-passe de gestão | Servidor OpenVPN através da sua interface de gestão: versão, estado, clientes ligados |
 | [UniFi Network](unifi.md) | `unifi` | chave de API ou utilizador/palavra-passe | Consola UniFi ou servidor auto-alojado: dispositivos, WAN, clientes |
 | [Home Assistant](homeassistant.md) | `homeassistant` | token de acesso de longa duração | Casa inteligente: entidades indisponíveis, baterias fracas, atualizações, reparações |
 | [TrueNAS](truenas.md) | `truenas` | chave de API | Servidor de armazenamento ZFS (SCALE, Community Edition) |

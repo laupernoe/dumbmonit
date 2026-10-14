@@ -103,6 +103,29 @@ Segnalati dall'agent; vedi [Agent](../devices/agent.md#wireguard-tunnels).
 |---|---|---|---|---|---|
 | Peer WireGuard silenzioso | Un peer con keepalive persistente non completa un handshake da più di 15 minuti: il tunnel è caduto (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Un peer che non si è mai connesso conta il suo silenzio dal momento in cui l'agent lo ha visto per la prima volta. I peer senza keepalive (un telefono, un portatile) restano inattivi per giorni e vengono esclusi; cambia la soglia per cambiare N, oppure elimina la parte `and on …` per sorvegliare ogni peer. | > 15 min | 5 min | Avviso (`warning`) | 6 h |
 
+### Tunnel IPsec
+
+Segnalati dall'agent; vedi [Agent](../devices/agent.md#ipsec-tunnels). La serie
+esiste solo per un CHILD_SA dichiarato nella configurazione di strongSwan, quindi
+la regola scatta su un tunnel che non si è mai avviato, non solo su uno caduto.
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Tunnel IPsec non attivo | Un tunnel IPsec configurato non ha una sessione installata (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 min | Avviso (`warning`) | 6 h |
+
+### Speed test di Internet
+
+Segnalato dall'agent; vedi [Agent](../devices/agent.md#internet-speed-test).
+Il test è disattivato per impostazione predefinita e ogni regola resta silenziosa
+finché la soglia corrispondente non viene impostata in `agent.yaml`: nessuno può
+indovinare che cosa significhi "lento" per la tua linea.
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Velocità di download Internet bassa | L'ultimo test ha misurato una velocità di download inferiore a `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 min | Avviso (`warning`) | 24 h |
+| Velocità di upload Internet bassa | Lo stesso, per `speedtest_min_upload_mbps`. | > 0 | 10 min | Avviso (`warning`) | 24 h |
+| Latenza Internet alta | L'ultimo test ha misurato una latenza superiore a `speedtest_max_latency_ms`. | > 0 | 10 min | Avviso (`warning`) | 24 h |
+
 ### Dischi, ZFS e sensori dell'agent
 
 Segnalati dall'agent; vedi [Agent](../devices/agent.md).

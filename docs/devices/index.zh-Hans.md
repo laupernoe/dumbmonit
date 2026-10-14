@@ -17,6 +17,7 @@ DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），�
 | [pfSense](pfsense.md) | `pfsense` | REST API 密钥（仅读用户） | 防火墙：网关掉线或有损、没有链接的接口、停止的服务 |
 | [FortiGate](fortigate.md) | `fortigate` | REST API 令牌（仅读配置文件、受信主机） | 防火墙：IPsec 隧道、链接、HA 同步、保守模式、FortiGuard 许可证 |
 | [Sophos 防火墙](sophos.md) | `sophos` | 用户名/密码（仅读配置文件） | 防火墙：仅接口链接（XML API 不公开隧道、HA 或许可证状态） |
+| [OpenVPN 服务器](openvpn.md) | `openvpn` | 无，或管理密码 | 通过其管理接口的 OpenVPN 服务器：版本、状态、已连接的客户端 |
 | [UniFi 网络](unifi.md) | `unifi` | API 密钥或用户名/密码 | UniFi 控制台或自托管服务器：设备、WAN、客户端 |
 | [Home Assistant](homeassistant.md) | `homeassistant` | 长期有效的访问令牌 | 智能家居：不可用的实体、低电池、更新、修复 |
 | [TrueNAS](truenas.md) | `truenas` | API 密钥 | ZFS 存储服务器（SCALE、社区版） |

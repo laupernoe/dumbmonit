@@ -31,6 +31,8 @@ suas etiquetas.
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; por domínio `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; por pool de armazenamento `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — ver [Máquinas virtuais KVM através do libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
 | ZFS | `agent_zfs_pool_health` (0 online, 1 degraded, 2 pior), `agent_zfs_pool_size/used/free_bytes`, `agent_zfs_pool_used_percent`, `agent_zfs_pool_fragmentation_percent`, `agent_zfs_pool_device_errors`, `agent_zfs_pool_data_errors`, `agent_zfs_pool_scrub_running`, `agent_zfs_pool_scrub_errors`, `agent_zfs_pool_scrub_age_seconds` | `pool` |
 | WireGuard | `agent_wireguard_interface_peers`; por peer `agent_wireguard_peer_handshake_age_seconds`, `agent_wireguard_peer_has_handshake`, `agent_wireguard_peer_keepalive_seconds`, `agent_wireguard_peer_rx_bytes`, `agent_wireguard_peer_tx_bytes` (contadores) — veja [Túneis WireGuard](#wireguard-tunnels) | `interface`, `peer`, `allowed_ips`, `name` |
+| IPsec (strongSwan) | `agent_ipsec_tunnel_up`; quando de pé, `agent_ipsec_tunnel_bytes_in/out` (contadores) e `agent_ipsec_tunnel_rekey_seconds` — veja [Túneis IPsec](#ipsec-tunnels) | `connection`, `tunnel` |
+| Teste de velocidade da Internet | `agent_speedtest_ok`, `agent_speedtest_age_seconds`, `agent_speedtest_download_bytes_per_second`, `agent_speedtest_upload_bytes_per_second`, `agent_speedtest_latency_ms`, `agent_speedtest_jitter_ms`; os limiares configurados repetidos como `agent_speedtest_download_min_bytes_per_second`, `agent_speedtest_upload_min_bytes_per_second`, `agent_speedtest_max_latency_ms` — veja [Teste de velocidade da Internet](#internet-speed-test) | |
 | restic / Borg | `agent_backup_repo_reachable`, `agent_backup_repo_last_snapshot_age_seconds`, `agent_backup_repo_last_snapshot_bytes` (restic) — veja [Cópias de segurança restic e Borg](#restic-and-borg-backups) | `tool`, `repo` |
 | Contadores de desempenho do Windows | `agent_perf_counter`, uma série por contador listado em `perf_counters` | `counter` |
 | MDaemon (Windows) | `mdaemon_queue_messages`, `mdaemon_queue_frozen`, `mdaemon_sessions_active`, `mdaemon_sessions_total`, `mdaemon_messages_total`, `mdaemon_filtered_messages_total`, `mdaemon_server_active`, `mdaemon_running`, `mdaemon_uptime_seconds` — veja [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`, `protocol`, `filter`, `verdict`, `server` |
@@ -59,6 +61,8 @@ de ventoinha do que ventoinhas, e uma vazia lê zero como uma ventoinha morta.
 | Saúde do SO (atualizações, reinício, units falhadas, SELinux) | sim | não | não | não |
 | Cópias de segurança Plakar | sim | sim | sim | sim |
 | Túneis WireGuard | `wg show` | quando o `wg` está instalado (não testado) | quando o `wg` está instalado (não testado) | não |
+| Túneis IPsec | `swanctl` | quando o `swanctl` está instalado (não testado) | quando o `swanctl` está instalado (não testado) | não |
+| Teste de velocidade da Internet | sim, opcional | sim, opcional | sim, opcional | sim, opcional |
 | Cópias de segurança restic e Borg | sim | sim | sim | apenas restic (não testado; o Borg não tem build para Windows) |
 | Contadores de desempenho, filas MDaemon, Hyper-V | não | não | não | sim |
 | Identidade da máquina | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`, `/etc/hostid` | nome do anfitrião |
@@ -94,12 +98,16 @@ hardware:
 | **libvirt pool almost full** (warning) | a alocação de uma pool de armazenamento atinge 90% da sua capacidade durante quinze minutos |
 | **Temperature above critical** (critical) | um sensor excede o limiar crítico que **o seu próprio hardware declara** — nenhum valor é codificado, sendo 85 °C uma emergência num disco e uma tarde normal num CPU de portátil |
 
-Mais três vigiam o que você declara ou executa, e ficam em silêncio caso
+Mais alguns vigiam o que você declara ou executa, e ficam em silêncio caso
 contrário: **WireGuard peer silent** (um peer com keepalive persistente e sem
-handshake há 15 minutos), **restic/Borg backup too old** (sem snapshot há 48
-horas) e **restic/Borg repository unreachable** — veja
-[Túneis WireGuard](#wireguard-tunnels) e
-[Cópias de segurança restic e Borg](#restic-and-borg-backups).
+handshake há 15 minutos), **IPsec tunnel down** (um túnel configurado sem sessão
+instalada há dez minutos), **restic/Borg backup too old** (sem snapshot há 48
+horas), **restic/Borg repository unreachable** e **Internet download rate low** /
+**Internet upload rate low** / **Internet latency high** (só depois de definida
+uma opção de limiar) — veja [Túneis WireGuard](#wireguard-tunnels),
+[Túneis IPsec](#ipsec-tunnels),
+[Cópias de segurança restic e Borg](#restic-and-borg-backups) e
+[Teste de velocidade da Internet](#internet-speed-test).
 
 Num servidor Windows que corre MDaemon, mais três vigiam as suas filas:
 **MDaemon mail queue growing**, **MDaemon Bad queue not empty** e **MDaemon Retry
@@ -374,6 +382,10 @@ libvirt_bin: virsh
 libvirt_uri: qemu:///system
 libvirt_interval_secs: 60  # minimum 15
 wireguard: true            # WireGuard tunnels through wg (default: true), see below
+ipsec: true                # IPsec tunnels through swanctl (default: true), see below
+speedtest: false           # Internet speed test (default: false, opt-in), see below
+speedtest_download_url: https://speed.example.lan/backend/garbage.php?ckSize=50
+speedtest_upload_url: https://speed.example.lan/backend/empty.php
 restic_repos: []           # restic repositories to watch, see "restic and Borg backups"
 borg_repos: []             # Borg repositories to watch
 mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
@@ -452,6 +464,17 @@ num contentor sem montar um ficheiro:
 | `DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS` | Período entre duas leituras do libvirt, predefinição `60`, mínimo `15` |
 | `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`: túneis WireGuard através do `wg` (predefinição `true`) |
 | `DUMBMONIT_AGENT_WIREGUARD_BIN` | Caminho do `wg` |
+| `DUMBMONIT_AGENT_IPSEC` | `true` / `false`: túneis IPsec através do `swanctl` (predefinição `true`) |
+| `DUMBMONIT_AGENT_IPSEC_BIN` | Caminho do `swanctl` |
+| `DUMBMONIT_AGENT_SPEEDTEST` | `true` / `false`: executar o teste de velocidade da Internet (predefinição `false`) |
+| `DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_URL` | Endereço descarregado para medir o débito de descarga |
+| `DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_URL` | Endereço para onde se envia, para medir o débito de envio |
+| `DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_BYTES_CAP` | Máximo de bytes lidos por teste, predefinição `50000000` |
+| `DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_BYTES` | Bytes enviados por teste, predefinição `10000000` |
+| `DUMBMONIT_AGENT_SPEEDTEST_INTERVAL_SECS` | Período entre dois testes, predefinição `21600` (6 h), mínimo `300` |
+| `DUMBMONIT_AGENT_SPEEDTEST_MIN_DOWNLOAD_MBPS` | Limiar de alerta, débito de descarga em Mbps (não definido: sem alerta) |
+| `DUMBMONIT_AGENT_SPEEDTEST_MIN_UPLOAD_MBPS` | Limiar de alerta, débito de envio em Mbps (não definido: sem alerta) |
+| `DUMBMONIT_AGENT_SPEEDTEST_MAX_LATENCY_MS` | Limiar de alerta, latência em milissegundos (não definido: sem alerta) |
 | `DUMBMONIT_AGENT_RESTIC_BIN` | Caminho do `restic` |
 | `DUMBMONIT_AGENT_BORG_BIN` | Caminho do `borg` |
 | `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | Período entre duas leituras dos repositórios restic e Borg, predefinição `600`, mínimo `60` |
@@ -1132,6 +1155,101 @@ fica de fora. Defina `PersistentKeepalive = 25` nos túneis que têm de ficar de
 **Alertas → Regras**, ou remova a parte `and on (…)` da sua consulta para vigiar
 todos os peers. A página do dispositivo mostra um painel WireGuard com cada peer, o
 tempo desde o seu último handshake, o seu tráfego e o seu keepalive.
+
+## Túneis IPsec {#ipsec-tunnels}
+
+Numa máquina que corre strongSwan, o agente lê cada túnel configurado com dois
+comandos só de leitura: `swanctl --list-conns`, para as CHILD_SA declaradas em
+`swanctl.conf` (ou em `ipsec.conf` através de `swanctl --load-all`, a camada de
+compatibilidade do próprio strongSwan — ao agente é indiferente qual escreveu a
+configuração), e `swanctl --list-sas`, para as que estão realmente instaladas.
+Nada a configurar: sem o comando `swanctl` ou sem ligação configurada, nenhuma
+série é emitida e nenhum painel é mostrado. O agente nunca envia `--initiate`,
+`--terminate` nem qualquer outro comando que altere o estado de um túnel; lê
+apenas o que o `swanctl` já mostra na linha de comandos.
+
+Ler os dois comandos, e não apenas o ativo, é o que permite que um túnel que
+**nunca** subiu seja reportado como em baixo em vez de invisível: uma CHILD_SA
+declarada na configuração mas ausente de `--list-sas` conta como em baixo desde
+o primeiro ciclo.
+
+Por túnel, com as etiquetas `connection` (o nome da IKE_SA) e `tunnel` (o nome da
+CHILD_SA): `agent_ipsec_tunnel_up` (1 instalado, 0 caso contrário) e, apenas
+enquanto de pé, os contadores `agent_ipsec_tunnel_bytes_in` /
+`agent_ipsec_tunnel_bytes_out` e `agent_ipsec_tunnel_rekey_seconds` (tempo que
+falta até à próxima renegociação de chaves).
+
+```yaml
+ipsec: true                # default; false stops even looking
+ipsec_bin: swanctl          # default: on PATH
+```
+
+A regra incorporada **IPsec tunnel down** dispara quando um túnel configurado não
+tem CHILD_SA instalada durante dez minutos. A página do dispositivo mostra um
+painel IPsec com cada túnel, de pé ou em baixo, o seu tráfego e o tempo até à
+próxima renegociação de chaves.
+
+## Teste de velocidade da Internet {#internet-speed-test}
+
+Desativado por predefinição: ao contrário de tudo o resto que o agente mede, este
+teste **consome largura de banda** — e, numa ligação com tarifa por consumo ou
+limitada, dinheiro — de cada vez que corre. Ativá-lo exige `speedtest: true` e um
+endereço de descarga; sem o endereço, nada corre mesmo que `speedtest` seja `true`.
+
+**Nenhum servidor é escolhido por si.** O DumbMonit não inclui um ponto de acesso
+predefinido e nunca contacta um terceiro a menos que o nomeie: é você quem decide
+contra o servidor de quem a sua linha é medida, e quem vê o endereço do agente
+enquanto corre.
+
+O teste é HTTP simples, só de leitura do lado remoto: um `GET` em
+`speedtest_download_url`, lido em blocos e interrompido assim que
+`speedtest_download_bytes_cap` bytes tenham sido lidos (50 MB por predefinição,
+o que terminar primeiro), dá o débito de descarga; um `POST` de
+`speedtest_upload_bytes` bytes (10 MB por predefinição) para `speedtest_upload_url`,
+se definido, dá o débito de envio; alguns pedidos `HEAD` ao endereço de descarga
+dão a latência (o menor tempo de ida e volta) e o jitter (a diferença entre o
+menor e o maior). Um servidor que recuse `HEAD` deixa simplesmente a latência e o
+jitter por medir — o resto do teste não depende disso.
+
+Funciona contra um backend [LibreSpeed](https://github.com/librespeed/speedtest)
+auto-alojado (`backend/garbage.php?ckSize=N` para a descarga, `backend/empty.php`
+para o envio), contra os [pontos de acesso de teste de velocidade da Cloudflare](https://speed.cloudflare.com/)
+(`https://speed.cloudflare.com/__down?bytes=N` e
+`https://speed.cloudflare.com/__up`, que qualquer pessoa pode chamar sem conta),
+ou contra qualquer ficheiro HTTP simples e ponto de envio seus — não há nenhum
+protocolo específico de um fornecedor a implementar, nem nova dependência para
+além do cliente HTTP que o agente já usa.
+
+```yaml
+speedtest: false                    # default: opt-in, this test uses bandwidth
+speedtest_download_url: https://speed.cloudflare.com/__down?bytes=50000000
+speedtest_upload_url: https://speed.cloudflare.com/__up
+speedtest_download_bytes_cap: 50000000   # default; read at most this many bytes
+speedtest_upload_bytes: 10000000         # default; sent in one block
+speedtest_interval_secs: 21600           # default: 6 hours, minimum 300
+speedtest_min_download_mbps: 50          # optional: arms "Internet download rate low"
+speedtest_min_upload_mbps: 10            # optional: arms "Internet upload rate low"
+speedtest_max_latency_ms: 80             # optional: arms "Internet latency high"
+```
+
+O teste corre em segundo plano, no máximo uma vez por `speedtest_interval_secs`
+(6 horas por predefinição, nunca menos de 300 segundos: um valor menor impede o
+agente de arrancar); um teste corre também alguns segundos após cada arranque do
+agente; o ciclo de recolha apenas lê o seu último resultado, exatamente como as
+leituras restic/Borg e Plakar. `agent_speedtest_ok` é 0 quando a própria descarga
+falhou (endereço inacessível, tempo limite, erro HTTP) — a única falha que impede
+o teste de medir fosse o que fosse.
+
+As três opções de limiar são deliberadamente opcionais: sem
+`speedtest_min_download_mbps`, ninguém no DumbMonit sabe o que «lento» significa
+para a sua linha, pelo que **Internet download rate low**, **Internet upload rate
+low** e **Internet latency high** ficam em silêncio até definir a que se aplica.
+Cada limiar é publicado como a sua própria série
+(`agent_speedtest_download_min_bytes_per_second`, e assim por diante), que é
+aquilo com que as regras incorporadas comparam a medição; altere o limiar em
+`agent.yaml`, não em **Alertas → Regras**. A página do dispositivo mostra um painel
+de teste de velocidade com o último débito de descarga e de envio, a latência, o
+jitter e há quanto tempo o teste correu.
 
 ## Certificados TLS (Certbot / Let's Encrypt) {#tls-certificates-certbot-lets-encrypt}
 

@@ -23,6 +23,8 @@
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`；每个域 `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`；每个存储池 `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — 参见 [通过 libvirt 监视 KVM 虚拟机](#kvm-virtual-machines-through-libvirt) | `domain`、`pool`、`state` |
 | ZFS | `agent_zfs_pool_health`（0 在线，1 降级，2 更差）、`agent_zfs_pool_size/used/free_bytes`、`agent_zfs_pool_used_percent`、`agent_zfs_pool_fragmentation_percent`、`agent_zfs_pool_device_errors`、`agent_zfs_pool_data_errors`、`agent_zfs_pool_scrub_running`、`agent_zfs_pool_scrub_errors`、`agent_zfs_pool_scrub_age_seconds` | `pool` |
 | WireGuard | `agent_wireguard_interface_peers`；每个对等体 `agent_wireguard_peer_handshake_age_seconds`、`agent_wireguard_peer_has_handshake`、`agent_wireguard_peer_keepalive_seconds`、`agent_wireguard_peer_rx_bytes`、`agent_wireguard_peer_tx_bytes`（计数器） — 参见 [WireGuard 隧道](#wireguard-tunnels) | `interface`、`peer`、`allowed_ips`、`name` |
+| IPsec (strongSwan) | `agent_ipsec_tunnel_up`；建立时，`agent_ipsec_tunnel_bytes_in/out`（计数器）和 `agent_ipsec_tunnel_rekey_seconds` — 参见 [IPsec 隧道](#ipsec-tunnels) | `connection`、`tunnel` |
+| 互联网速度测试 | `agent_speedtest_ok`、`agent_speedtest_age_seconds`、`agent_speedtest_download_bytes_per_second`、`agent_speedtest_upload_bytes_per_second`、`agent_speedtest_latency_ms`、`agent_speedtest_jitter_ms`；配置的阈值回显为 `agent_speedtest_download_min_bytes_per_second`、`agent_speedtest_upload_min_bytes_per_second`、`agent_speedtest_max_latency_ms` — 参见 [互联网速度测试](#internet-speed-test) | |
 | restic / Borg | `agent_backup_repo_reachable`、`agent_backup_repo_last_snapshot_age_seconds`、`agent_backup_repo_last_snapshot_bytes`（restic） — 参见 [restic 和 Borg 备份](#restic-and-borg-backups) | `tool`、`repo` |
 | Windows 性能计数器 | `agent_perf_counter`，每个在 `perf_counters` 中列出的计数器一个系列 | `counter` |
 | MDaemon（Windows） | `mdaemon_queue_messages`、`mdaemon_queue_frozen`、`mdaemon_sessions_active`、`mdaemon_sessions_total`、`mdaemon_messages_total`、`mdaemon_filtered_messages_total`、`mdaemon_server_active`、`mdaemon_running`、`mdaemon_uptime_seconds` — 参见 [MDaemon](mdaemon.md#mail-queues-through-the-agent) | `queue`、`protocol`、`filter`、`verdict`、`server` |
@@ -47,6 +49,8 @@
 | OS 健康（更新、重启、失败的单元、SELinux） | 是 | 否 | 否 | 否 |
 | Plakar 备份 | 是 | 是 | 是 | 是 |
 | WireGuard 隧道 | `wg show` | 当 `wg` 被安装时（未测试） | 当 `wg` 被安装时（未测试） | 否 |
+| IPsec 隧道 | `swanctl` | 当 `swanctl` 被安装时（未测试） | 当 `swanctl` 被安装时（未测试） | 否 |
+| 互联网速度测试 | 是，需主动启用 | 是，需主动启用 | 是，需主动启用 | 是，需主动启用 |
 | restic 和 Borg 备份 | 是 | 是 | 是 | 仅 restic（未测试；Borg 没有 Windows 构建） |
 | 性能计数器、MDaemon 队列、Hyper-V | 否 | 否 | 否 | 是 |
 | 机器身份 | `/etc/machine-id` | `IOPlatformUUID` | `kern.hostuuid`、`/etc/hostid` | 主机名 |
@@ -71,7 +75,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 | **libvirt 池将满**（通知） | 某个存储池的分配量连续十五分钟达到其容量的 90% |
 | **温度超过关键**（关键） | 传感器超过关键阈值 **其自己的硬件声明** — 没有硬编码的值，85 °C 是磁盘上的紧急，是笔记本电脑 CPU 上的正常下午 |
 
-三个更多监视您声明或运行的东西，否则保持沉默：**WireGuard 对等体沉默**（一个具有持久保活且 15 分钟内没有握手的对等体）、**restic/Borg 备份太旧**（48 小时内没有快照）和 **restic/Borg 存储库不可达** — 参见 [WireGuard 隧道](#wireguard-tunnels) 和 [restic 和 Borg 备份](#restic-and-borg-backups)。
+五个更多监视您声明或运行的东西，否则保持沉默：**WireGuard 对等体沉默**（一个具有持久保活且 15 分钟内没有握手的对等体）、**IPsec 隧道宕机**（一个已配置的隧道十分钟内没有已安装的会话）、**restic/Borg 备份太旧**（48 小时内没有快照）、**restic/Borg 存储库不可达**，以及 **互联网下载速率低** / **互联网上传速率低** / **互联网延迟高**（仅在设置了阈值选项之后） — 参见 [WireGuard 隧道](#wireguard-tunnels)、[IPsec 隧道](#ipsec-tunnels)、[restic 和 Borg 备份](#restic-and-borg-backups) 和 [互联网速度测试](#internet-speed-test)。
 
 在运行 MDaemon 的 Windows 服务器上，三个更多监视其队列：**MDaemon 邮件队列增长**、**MDaemon 坏队列不为空** 和 **MDaemon 重试队列高**（参见[规则](../alerting/rules.md#mdaemon-and-securitygateway)）。
 在 Hyper-V 主机上，三个监视虚拟机：**Hyper-V VM 健康关键**、**Hyper-V 主机 CPU 高** 和 **Hyper-V 虚拟磁盘错误**（参见 [Hyper-V 主机](#hyper-v-hosts)）。
@@ -257,6 +261,10 @@ libvirt_bin: virsh
 libvirt_uri: qemu:///system
 libvirt_interval_secs: 60  # 最小 15
 wireguard: true            # WireGuard 隧道通过 wg（默认：true），见下文
+ipsec: true                # 通过 swanctl 的 IPsec 隧道（默认：true），见下文
+speedtest: false           # 互联网速度测试（默认：false，需主动启用），见下文
+speedtest_download_url: https://speed.example.lan/backend/garbage.php?ckSize=50
+speedtest_upload_url: https://speed.example.lan/backend/empty.php
 restic_repos: []           # restic 存储库来监视，见"restic 和 Borg 备份"
 borg_repos: []             # Borg 存储库来监视
 mdaemon: auto              # Windows：MDaemon 队列当其服务存在时（true / false / auto）
@@ -320,6 +328,17 @@ log_level: info
 | `DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS` | 两次 libvirt 读取间的期间，默认 `60`，最小 `15` |
 | `DUMBMONIT_AGENT_WIREGUARD` | `true` / `false`：通过 `wg` 的 WireGuard 隧道（默认 `true`） |
 | `DUMBMONIT_AGENT_WIREGUARD_BIN` | `wg` 的路径 |
+| `DUMBMONIT_AGENT_IPSEC` | `true` / `false`：通过 `swanctl` 的 IPsec 隧道（默认 `true`） |
+| `DUMBMONIT_AGENT_IPSEC_BIN` | `swanctl` 的路径 |
+| `DUMBMONIT_AGENT_SPEEDTEST` | `true` / `false`：运行互联网速度测试（默认 `false`） |
+| `DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_URL` | 为测量下载速率而下载的地址 |
+| `DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_URL` | 为测量上传速率而向其 POST 的地址 |
+| `DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_BYTES_CAP` | 每次测试最多读取的字节数，默认 `50000000` |
+| `DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_BYTES` | 每次测试发送的字节数，默认 `10000000` |
+| `DUMBMONIT_AGENT_SPEEDTEST_INTERVAL_SECS` | 两次测试之间的期间，默认 `21600`（6 小时），最小 `300` |
+| `DUMBMONIT_AGENT_SPEEDTEST_MIN_DOWNLOAD_MBPS` | 警报阈值，下载速率（Mbps）（未设置：无警报） |
+| `DUMBMONIT_AGENT_SPEEDTEST_MIN_UPLOAD_MBPS` | 警报阈值，上传速率（Mbps）（未设置：无警报） |
+| `DUMBMONIT_AGENT_SPEEDTEST_MAX_LATENCY_MS` | 警报阈值，延迟（毫秒）（未设置：无警报） |
 | `DUMBMONIT_AGENT_RESTIC_BIN` | `restic` 的路径 |
 | `DUMBMONIT_AGENT_BORG_BIN` | `borg` 的路径 |
 | `DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS` | 两次 restic 和 Borg 存储库读取间的期间，默认 `600`，最小 `60` |
@@ -725,6 +744,47 @@ wireguard_peer_names:
 ```
 
 内置规则 **WireGuard 对等体沉默** 在一个对等体 **有持久保活** 没完成握手超过 15 分钟时触发。当隧道上，WireGuard 每两分钟更新其握手，保活保持它上即使不带流量；一个对等体不带保活（一个电话，一个笔记本电脑）可能闲达为没什么破的天，所以它被忽略。在隧道上设置 `PersistentKeepalive = 25` 它们必须保持上（网站到网站链接，远程网关）。N 是规则的阈值：在 **警报 → 规则** 中改变它，或移除其查询的 `and on (…)` 部分来监视每个对等体。设备页面显示一个 WireGuard 面板带每个对等体，自其最后握手的时间，其流量及其保活。
+
+## IPsec 隧道 {#ipsec-tunnels}
+
+在运行 strongSwan 的机器上，代理用两个只读命令读取每个已配置的隧道：`swanctl --list-conns`，用于在 `swanctl.conf` 中声明的 CHILD_SA（或通过 `swanctl --load-all` 读取 `ipsec.conf`，这是 strongSwan 自己的兼容层 — 代理不关心是哪一个写了配置），以及 `swanctl --list-sas`，用于实际已安装的 CHILD_SA。无需配置：没有 `swanctl` 命令或没有已配置的连接时，不会发出任何系列，也不会显示面板。代理从不发送 `--initiate`、`--terminate` 或任何会改变隧道状态的命令；它只读取 `swanctl` 已在命令行上显示的内容。
+
+同时读取两个命令，而不只读活动的那个，才能让**从未**建立过的隧道被报告为宕机，而不是不可见：在配置中声明但不在 `--list-sas` 中的 CHILD_SA，从第一个周期起就算作宕机。
+
+每个隧道，标记为 `connection`（IKE_SA 的名称）和 `tunnel`（CHILD_SA 的名称）：`agent_ipsec_tunnel_up`（1 已安装，否则 0），并且仅在隧道建立时提供计数器 `agent_ipsec_tunnel_bytes_in` / `agent_ipsec_tunnel_bytes_out` 和 `agent_ipsec_tunnel_rekey_seconds`（距下次重新协商密钥的剩余时间）。
+
+```yaml
+ipsec: true                # 默认；false 停止甚至查找
+ipsec_bin: swanctl          # 默认：在 PATH 上
+```
+
+内置规则 **IPsec 隧道宕机** 在已配置的隧道十分钟内没有已安装的 CHILD_SA 时触发。设备页面显示一个 IPsec 面板，列出每个隧道（建立或宕机）、其流量以及距下次重新协商密钥的时间。
+
+## 互联网速度测试 {#internet-speed-test}
+
+默认关闭：与代理测量的其他所有内容不同，此测试每次运行都会**消耗带宽** — 在按流量计费或有上限的连接上，还会消耗金钱。启用它需要同时设置 `speedtest: true` 和一个下载地址；没有该地址，即使 `speedtest` 为 `true` 也不会运行任何内容。
+
+**不会为您选择服务器。** DumbMonit 不附带默认端点，除非您指定，否则从不联系第三方：由您决定您的线路对照谁的服务器测量，以及测试运行时谁能看到代理的地址。
+
+测试是纯 HTTP，对远端只读：对 `speedtest_download_url` 的 `GET`，逐块读取，一读到 `speedtest_download_bytes_cap` 字节就停止（默认 50 MB，以先结束者为准），得出下载速率；如果设置了 `speedtest_upload_url`，向其 `POST` `speedtest_upload_bytes` 字节（默认 10 MB），得出上传速率；对下载地址的少量 `HEAD` 请求得出延迟（最小往返时间）和抖动（最小与最大之间的差距）。拒绝 `HEAD` 的服务器只会让延迟和抖动无法测量 — 测试的其余部分不依赖于它。
+
+它适用于自托管的 [LibreSpeed](https://github.com/librespeed/speedtest) 后端（下载用 `backend/garbage.php?ckSize=N`，上传用 `backend/empty.php`）、[Cloudflare 的速度测试端点](https://speed.cloudflare.com/)（`https://speed.cloudflare.com/__down?bytes=N` 和 `https://speed.cloudflare.com/__up`，任何人无需账户即可调用），或您自己的任何普通 HTTP 文件和上传端点 — 无需实现特定供应商的协议，也没有超出代理已使用的 HTTP 客户端的新依赖。
+
+```yaml
+speedtest: false                    # 默认：需主动启用，此测试会使用带宽
+speedtest_download_url: https://speed.cloudflare.com/__down?bytes=50000000
+speedtest_upload_url: https://speed.cloudflare.com/__up
+speedtest_download_bytes_cap: 50000000   # 默认；最多读取这么多字节
+speedtest_upload_bytes: 10000000         # 默认；一次性发送
+speedtest_interval_secs: 21600           # 默认：6 小时，最小 300
+speedtest_min_download_mbps: 50          # 可选：启用"互联网下载速率低"
+speedtest_min_upload_mbps: 10            # 可选：启用"互联网上传速率低"
+speedtest_max_latency_ms: 80             # 可选：启用"互联网延迟高"
+```
+
+测试在后台运行，每 `speedtest_interval_secs` 最多一次（默认 6 小时，不少于 300 秒：更小的值会使代理在启动时停止）；每次代理启动后几秒也会运行一次测试；采集周期只读取其最后的结果，与 restic/Borg 和 Plakar 的读取完全一样。当下载本身失败（地址不可达、超时、HTTP 错误）时 `agent_speedtest_ok` 为 0 — 这是唯一会使测试完全无法测量任何内容的失败。
+
+三个阈值选项有意设为可选：没有 `speedtest_min_download_mbps`，DumbMonit 无从知道"慢"对您的线路意味着什么，所以 **互联网下载速率低**、**互联网上传速率低** 和 **互联网延迟高** 保持沉默，直到您设置适用的那一个。每个阈值都作为自己的系列发布（`agent_speedtest_download_min_bytes_per_second`，等等），内置规则就是将测量值与它们比较；请在 `agent.yaml` 中改变阈值，而不是在 **警报 → 规则** 中。设备页面显示一个速度测试面板，带有最近的下载和上传速率、延迟、抖动以及测试在多久之前运行。
 
 ## TLS 证书（Certbot / Let's Encrypt） {#tls-certificates-certbot--lets-encrypt}
 

@@ -106,6 +106,30 @@ Reportado pelo agente; veja
 |---|---|---|---|---|---|
 | WireGuard peer silent | Um peer com keepalive persistente não completou um handshake por mais de 15 minutos: o túnel está fora do ar (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Um peer que nunca conectou conta seu silêncio a partir do momento em que o agente o viu primeiro. Peers sem keepalive (um celular, um laptop) ficam inativos por dias e são deixados de fora; mude o limite para mudar N, ou remova a parte `and on …` para observar todo peer. | > 15 min | 5 min | Aviso (`warning`) | 6 h |
 
+### Túneis IPsec {#ipsec-tunnels}
+
+Reportado pelo agente; veja [Agente](../devices/agent.md#ipsec-tunnels). A
+série existe apenas para um CHILD_SA declarado na configuração do
+strongSwan, então a regra dispara em um túnel que nunca subiu, e não só em
+um que caiu.
+
+| Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| IPsec tunnel down | Um túnel IPsec configurado não tem sessão instalada (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 min | Aviso (`warning`) | 6 h |
+
+### Teste de velocidade da Internet {#internet-speed-test}
+
+Reportado pelo agente; veja [Agente](../devices/agent.md#internet-speed-test).
+O teste vem desativado e cada regra fica silenciosa até que o limite
+correspondente seja definido em `agent.yaml`: ninguém pode adivinhar o que
+"lento" significa para a sua linha.
+
+| Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| Internet download rate low | O último teste mediu uma velocidade de download abaixo de `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 min | Aviso (`warning`) | 24 h |
+| Internet upload rate low | Idem, para `speedtest_min_upload_mbps`. | > 0 | 10 min | Aviso (`warning`) | 24 h |
+| Internet latency high | O último teste mediu uma latência acima de `speedtest_max_latency_ms`. | > 0 | 10 min | Aviso (`warning`) | 24 h |
+
 ### Discos do agente, ZFS e sensores {#agent-disks-zfs-and-sensors}
 
 Reportado pelo agente; veja [Agente](../devices/agent.md).
