@@ -10,6 +10,77 @@ salva.
 
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Cada problema à esquerda traz o ícone de produto do seu dispositivo (as
+mesmas marcas das listas de dispositivos). A lista nunca ultrapassa seu
+espaço: em uma tela pequena, ou com muitos problemas, os cartões grandes
+encolhem para uma linha cada e depois se dobram em *E mais N*, em vez de
+se sobrepor aos dispositivos abaixo.
+
+## Notícias na parede {#news-on-the-wall}
+
+Um administrador pode adicionar **manchetes** e um **canal ao vivo** à
+parede em **Configurações → Notícias do mural**. Ambos vêm desativados.
+
+- **Faixa de manchetes.** Uma faixa na parte inferior da parede rola as
+  manchetes mais recentes, cada uma com sua fonte e idade, e é atualizada a
+  cada cinco minutos. Com *movimento reduzido* ativado no sistema da tela,
+  nada desliza: uma manchete por vez aparece e some suavemente.
+- **Vídeo ao vivo.** Um canal ao vivo sem som em um cartão, na coluna da
+  direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
+  cartão encolhe para o espaço que sobra; nunca cobre o status.
+
+Quem lê os feeds é o servidor, não o navegador (navegadores não podem ler
+feeds de outros sites). Ele segue no máximo três redirecionamentos, recusa
+endereços internos, desiste após oito segundos ou 2 MB por feed e guarda a
+resposta em cache por cinco minutos para todas as paredes. Lê RSS 2.0,
+RSS 1.0 (RDF) e Atom.
+
+### Escolher as fontes {#choosing-sources}
+
+Escolha um **país** (pré-selecionado a partir da região e do idioma do seu
+navegador) e marque suas fontes: até oito feeds no total. Para usar
+qualquer outro feed, cole o endereço RSS ou Atom dele em **Adicionar um feed
+personalizado** e pressione **Testar**: o DumbMonit o lê de verdade e mostra a
+manchete mais recente antes de você adicioná-lo.
+
+Para o vídeo, escolha um dos canais do país ou **Outro link…** e cole um
+endereço normal do YouTube, Dailymotion ou Twitch (um vídeo, uma live ou a
+página `/live` de um canal do YouTube); o DumbMonit o converte no player
+incorporável. Só esses três players podem ser exibidos. Uma live é oferecida
+como predefinição apenas quando o canal tem uma oficial e estável.
+
+| País | Manchetes | Vídeo ao vivo |
+|---|---|---|
+| França | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Suíça | RTS Info, SRF News, Le Temps, NZZ | nenhum |
+| Bélgica | RTBF, VRT NWS, La DH | nenhum |
+| Alemanha | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Reino Unido | BBC News, The Guardian | Sky News |
+| Estados Unidos | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Canadá | Radio-Canada, CBC News | CBC News |
+| Espanha | RTVE, 20minutos, El País, El Mundo | nenhum |
+| Itália | ANSA, RaiNews | nenhum |
+| Portugal | RTP Notícias, Público | nenhum |
+| Brasil | G1, Folha de S.Paulo | CNN Brasil |
+| Rússia | Interfax, Meduza, Kommersant | nenhum |
+| China | CGTN, South China Morning Post, Xinhua | CGTN |
+| Internacional | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+O feed da BFM TV é `https://www.bfmtv.com/rss/news-24-7/`. A lista foi
+verificada quando foi escrita; um site pode mudar seu feed a qualquer
+momento, e então a faixa simplesmente o ignora. Use **Testar** no substituto
+e adicione-o como feed personalizado.
+
+A política de segurança de conteúdo da parede só deixa a página incorporar
+players do YouTube (`youtube-nocookie.com`), Dailymotion, Twitch, Spotify e
+Deezer.
+
+### API {#api}
+
+`GET /api/wall/news` (o que as paredes consultam), `GET|PUT
+/api/wall/news/settings` e `POST /api/wall/news/test` (admin),
+`GET /api/wall/news/presets`.
+
 ## Música na parede {#music-on-the-wall}
 
 A parede também pode tocar música e mostrar o que está tocando, para que

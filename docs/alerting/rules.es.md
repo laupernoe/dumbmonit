@@ -69,8 +69,8 @@ alerta nombra el contenedor.
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
 |---|---|---|---|---|---|
-| Container stopped | El contenedor lleva dos minutos detenido (`dumbmonit_container_up == bool 0`). | > 0 | 2 min | Advisory (`warning`) | 1 h |
-| Container unhealthy | La comprobación de salud del contenedor lleva tres minutos fallando (`dumbmonit_container_health == 2`; 0 ninguna, 1 sano, 3 iniciando). | > 0 | 3 min | Advisory (`warning`) | 1 h |
+| Container stopped | El contenedor lleva dos minutos detenido (`dumbmonit_container_up == bool 0`). Se excluye un contenedor que Docker no reiniciaría (`dumbmonit_container_stop_expected = 1`): un `docker run` puntual que terminó, un contenedor que nunca se inició, o uno detenido a mano sin política de reinicio. Un fallo (cualquier otro código de salida), una terminación por falta de memoria, o un contenedor `always` / `unless-stopped` sí cuentan. | > 0 | 2 min | Advisory (`warning`) | 1 h |
+| Container unhealthy | La comprobación de salud del contenedor lleva tres minutos fallando (`dumbmonit_container_health == 2`; 0 ninguna, 1 sano, 3 iniciando). Un contenedor detenido se excluye: Docker conserva su último veredicto, que ya no significa nada. | > 0 | 3 min | Advisory (`warning`) | 1 h |
 | Container restarting | El contenedor se reinició tres veces o más en quince minutos (`increase(dumbmonit_container_restart_count[15m])`): raramente está detenido lo suficiente para la regla anterior. | ≥ 3 | 1 min | Advisory (`warning`) | 1 h |
 | Container update available | Hay una imagen más reciente disponible en el registro para este contenedor (`dumbmonit_container_update_available == 1`). | > 0 | 1 h | Info (`info`) | 24 h |
 
@@ -83,7 +83,8 @@ dos reglas puede activarse en una máquina sin él.
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
 |---|---|---|---|---|---|
 | Plakar backup too old | Ningún snapshot Plakar nuevo para esta fuente en más de dos días (`dumbmonit_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
-| Plakar backup failed | El snapshot más reciente tiene errores, o el kloset no se puede leer (`dumbmonit_backup_last_status < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar backup failed | El snapshot más reciente tiene errores (`dumbmonit_backup_last_status{source!="*"} < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar kloset unreadable | El agente no puede abrir el kloset: almacenamiento inaccesible, falta la frase de contraseña o el plugin; el log del agente dice cuál, una sola vez (`dumbmonit_backup_last_status{source="*"} < 1`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
 ### Copias de seguridad restic y Borg {#restic-and-borg-backups}
 
@@ -550,7 +551,7 @@ del dispositivo muestra cada cambio antes y después.
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
 |---|---|---|---|---|---|
-| Website changed | La última comprobación de una página o sitio vigilado encontró páginas que cambiaron, aparecieron o desaparecieron (`dumbmonit_webchange_last_check_changes`). Se resuelve en la siguiente comprobación que no encuentra ninguna. | > 0 | 30 s | Info (`info`) | ninguno |
+| Website changed | Una comprobación de una página o sitio vigilado encontró páginas que cambiaron, aparecieron o desaparecieron (`dumbmonit_webchange_last_check_changes`). Cada comprobación así se notifica y nombra las páginas, bajo la misma alerta mientras está activa; se resuelve en la primera comprobación que no encuentra nada nuevo. | > 0 | 30 s | Info (`info`) | ninguno |
 
 ### Kubernetes
 

@@ -16,6 +16,27 @@ zu einer Zeile. Ein neuer Build derselben Seite, ein umgeordnetes
 Attribut oder ein frischer Cache-Busting-Asset-Name ändert nichts; ein
 umformulierter Satz schon.
 
+### Welcher Teil der Seite
+
+**Navigation, Kopfbereich, Fußbereich und Seitenleisten** der Site bleiben außen
+vor: Sie sind auf jeder Seite gleich, sodass ein neuer Menüeintrag sonst in einer
+einzigen Prüfung jede Seite als geändert markieren würde. Sie folgen den Rollen,
+die HTML ihnen gibt: jedes `nav`, ein `header` oder `footer`, der nicht in einem
+`article`, `aside`, `main`, `nav` oder `section` steht (der Kopf eines Artikels
+bleibt erhalten), ein `aside` außerhalb von `article` und `main`, und jedes
+Element mit der Rolle `navigation`, `banner`, `contentinfo` oder `search`. Ihren
+Links wird weiterhin gefolgt, um die Seiten einer Site zu finden. **Compare
+menus, header and footer** schaltet das ab.
+
+**Watched area** beschränkt den Vergleich auf bestimmte Elemente, zum Beispiel
+`main` oder `#content`; eine Seite, auf der keines davon gefunden wird, wird
+ganz gelesen statt als leer. **Excluded areas** lässt weitere Elemente aus: ein
+Cookie-Banner, ein Kasten "neueste Beiträge", ein Werbeplatz. Beide nehmen
+einfache Selektoren, durch Kommas getrennt: ein Tag (`main`), eine ID
+(`#content`), Klassen (`.cookie-banner`), Attribute (`[role=alert]`,
+`[data-ad]`) oder mehrere zusammen (`div.notice[role=alert]`). Nachfahren
+(`main p`) und andere Kombinatoren werden nicht unterstützt.
+
 ## Seite oder Site
 
 **Page** (der Standard) liest nur die Adresse des Geräts. Es kann auch
@@ -33,12 +54,19 @@ gefunden:
 2. falls das nicht klappt, oder wenn die Sitemap nichts unter dem
    Ordner listet, durch Folgen der Links jeder Seite, in Breitensuche.
 
-Nur Seiten derselben Origin (Schema, Host und Port) werden gefolgt;
-Links zu Bildern, Stylesheets, Skripten, PDFs, Archiven und anderen
-Dateien werden anhand ihrer Erweiterung übersprungen, und jede Antwort,
-die kein HTML ist, wird ignoriert. Fragmente (`#section`) werden
-verworfen und leere Queries entfernt, sodass eine Seite eine Adresse
-ist. `robots.txt` wird für so gefundene Seiten beachtet: die Gruppe,
+Nur Seiten derselben Origin (Schema, Host und Port) werden gefolgt. Leitet
+die Startseite auf einen anderen Host derselben Site um (`example.com` auf
+`www.example.com`, `http` auf `https` oder eine Subdomain wie
+`docs.example.com`), gilt die Site als dort beheimatet, und Links zum ersten
+Host werden auf dem zweiten gelesen. Leitet sie auf eine ganz andere Site um
+(eine Anmeldeseite wie `login.microsoftonline.com`, eine Drittanbieter-Domain),
+wird diese Site nicht gecrawlt: Nur die Startseite wird gelesen, und keine Seite
+wird als entfernt gemeldet. Links zu Bildern, Stylesheets, Skripten, PDFs,
+Archiven und anderen Dateien werden anhand ihrer Erweiterung übersprungen, und
+jede Antwort, die kein HTML ist, wird ignoriert. Fragmente (`#section`),
+Tracking-Parameter (`utm_…`, `fbclid`, `gclid` und ähnliche) und leere Queries
+werden entfernt, sodass eine Seite eine Adresse ist; **Ignore query strings**
+verwirft den ganzen `?…`-Teil. `robots.txt` wird für so gefundene Seiten beachtet: die Gruppe,
 die `DumbMonit` benennt, oder sonst die Gruppe `*`, mit `Allow`,
 `Disallow`, `*` und `$`.
 
@@ -46,7 +74,10 @@ Das Crawling ist höflich: höchstens zwei Requests gleichzeitig, eine
 halbe Sekunde zwischen zwei Batches, der `User-Agent`
 `DumbMonit/<version>`, ein 15-Sekunden-Timeout pro Request und
 höchstens 5 MB pro Seite gelesen. Es stoppt bei **Max pages**
-(standardmäßig 25, höchstens 200) oder nach zehn Minuten.
+(standardmäßig 25, höchstens 200) oder nach zehn Minuten. Hat **Max pages** es
+gestoppt, sagt die Geräteseite, wie viele Seiten gefunden wurden, damit der
+nicht beobachtete Teil der Site nie eine Überraschung ist. **User agent** ersetzt
+`DumbMonit/<version>` für eine Site, die Roboter abweist.
 
 ## Wie eine Prüfung funktioniert
 
@@ -70,9 +101,15 @@ gelesen und behalten, nichts wird gemeldet. Von da an, für jede Seite:
 | Site-Scope: ein vollständiger Crawl erreicht eine bekannte Seite nicht mehr | Auch ein **removed page**-Event ("No longer linked"). Ein durch **Max pages** oder sein Zeitlimit gestoppter Crawl schließt nie, dass eine Seite weg ist. |
 | Jeder andere Fehler auf einer Seite (Timeout, 403, 500 auf einer Unterseite) | Der Fehler wird auf der Seite angezeigt; kein Event. |
 
-Das Ändern der Adresse, des Scope, des Path-Präfixes oder von **Ignore
-lines** macht die nächste Prüfung zu einer neuen Referenz, statt jede
-Seite als geändert zu melden.
+Das Ändern der Adresse, des Scope, des Path-Präfixes, von **Max pages**, der
+Bereiche oder von **Ignore lines** macht die nächste Prüfung zu einer neuen
+Referenz, statt jede Seite als geändert zu melden (oder, bei höherem **Max
+pages**, jede neu hinzukommende Seite als neu). Ein Update von DumbMonit, das
+Seiten anders liest, bewirkt einmalig dasselbe.
+
+Findet eine Prüfung **dieselbe Änderung auf mehreren Seiten** (dieselben Zeilen
+entfernt und hinzugefügt, etwa ein Banner), zeigt die Geräteseite sie einmal,
+mit den Seiten, auf denen sie vorgenommen wurde.
 
 ### Ignore lines
 
@@ -107,8 +144,12 @@ LAN-Adressen sind immer erlaubt.
 
 Die eingebaute Regel **Website changed** (`webchange_detected`, Info)
 feuert nach einer Prüfung, die mindestens eine Änderung fand (changed,
-new oder removed page), und löst sich bei der nächsten Prüfung, die
-keine findet. Sie liest `dumbmonit_webchange_last_check_changes`;
+new oder removed page), und die Benachrichtigung nennt die Seiten: "/pricing,
+/contact und 2 weitere". Solange sie feuert, wird jede weitere Prüfung, die
+Änderungen findet, erneut gemeldet, mit ihren eigenen Seiten, auch auf denselben
+Seiten; der Alarm löst sich bei der ersten Prüfung, die nichts Neues findet. Es
+bleibt die ganze Zeit ein Alarm pro Gerät, sodass Bestätigen oder Snoozen am
+Alarm auch die folgenden Prüfungen abdeckt. Sie liest `dumbmonit_webchange_last_check_changes`;
 weisen Sie sie wie jede andere Regel einem Kanal zu, oder heben Sie
 ihren Schweregrad an, unter **Alerts → Rules**. Siehe
 [Eingebaute Regeln](../alerting/rules.md#website-changes).
@@ -163,7 +204,7 @@ DumbMonit verglichen hat, was das vom Server gesendete HTML ist.
 
 Der Text jedes Snapshots wird in der Datenbank gehalten (höchstens
 1 MB pro Seite); Screenshots sind Dateien unter
-`/data/webchange/<device id>/`. Pro Gerät werden die letzten hundert
+`/data/webchange/<device id>/`. Pro Gerät werden die letzten 500
 Änderungen behalten; ein Snapshot wird behalten, während er der
 neueste einer Seite ist oder eine behaltene Änderung auf ihn verweist,
 und alles andere, Dateien eingeschlossen, wird nach jeder Prüfung
@@ -187,8 +228,9 @@ Die Schritte unten sind die, die der Hinweis neben dem Formular zeigt.
    Änderung, auf der Geräteseite angezeigt; der Alarm "Website
    changed" sagt es Ihnen.
 4. Für einen Screenshot jeder Version fügen Sie Ihrer Compose-Datei einen
-   Headless-Browser-Dienst hinzu und richten Sie DumbMonit darauf, wie unter
-   [Screenshots](#screenshots) gezeigt.
+   Headless-Browser-Dienst hinzu; die genauen Zeilen stehen in der Dokumentation
+   (Advanced options, "Screenshots of website changes").
+   Siehe [Screenshots von Website-Änderungen](../install/docker.md#website-screenshots).
 
 !!! warning
     Nur der vom Server gesendete Text wird verglichen: Eine komplett
@@ -206,6 +248,11 @@ Eine Website-Beobachtung kann nicht über einen Relay-Agent laufen.
 | Max pages (`max_pages`) | `25` | Site-Scope: höchstens pro Prüfung gelesene Seiten, 1 bis 200. |
 | Path prefix (`path_prefix`) | Ordner der Adresse | Site-Scope: nur Seiten, deren Pfad damit beginnt (`/docs/`). |
 | Ignore lines (`ignore`) | — | Reguläre Ausdrücke; passende Textzeilen werden nicht verglichen. |
+| Watched area (`content_selector`) | — | Einfache Selektoren; nur der Text darin wird verglichen. |
+| Excluded areas (`exclude_selector`) | — | Einfache Selektoren; ihr Text wird nicht verglichen. |
+| Compare menus, header and footer (`keep_page_chrome`) | `false` | Navigation, Kopf, Fuß und Seitenleisten der Site ebenfalls vergleichen. |
+| Ignore query strings (`ignore_query`) | `false` | Site-Scope: Adressen, die sich nur im `?…`-Teil unterscheiden, sind eine Seite. |
+| User agent (`user_agent`) | — | Wird statt `DumbMonit/<version>` gesendet. |
 | Screenshots (`screenshots`) | `true` | Einen Screenshot jeder neuen Version behalten, wenn ein Browser konfiguriert ist. |
 | Check every (`check_interval_minutes`) | `60` | Minuten zwischen zwei Prüfungen, 5 bis 10080. |
 | Accept an unverifiable certificate (`insecure_tls`) | `false` | Für eine eigene Site hinter einem selbstsignierten Zertifikat. |
