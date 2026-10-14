@@ -544,7 +544,7 @@ O que o contentor vê, e o que montar:
 | Contentores do anfitrião | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Opcional. Só de leitura lista e inspeciona; as ações Restart/Update precisam dele gravável e de `DUMBMONIT_AGENT_COMMANDS=true`. Sem o socket, o agente simplesmente não reporta contentores. |
 | Uso do sistema de ficheiros | `- /:/host:ro` (ou as montagens que lhe interessam) | O agente reporta as montagens visíveis *dentro* do contentor, sob o caminho do contentor. |
 | Contadores de rede do anfitrião | `network_mode: host` | As interfaces têm namespace: sem isto o agente vê um `veth`. |
-| Monitores de ping retransmitidos por este agente | `cap_add: [NET_RAW]` | O ICMP precisa de um socket raw. |
+| Monitores de ping retransmitidos por este agente | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | O ICMP usa um socket de eco, permitido por este sysctl: sem capability. Veja [Ping ICMP sem capability](../install/docker.md#icmp-ping-without-a-capability). |
 | CA privada | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Servidor atrás de um proxy inverso interno, dispositivos com certificados autoassinados. |
 | Manter a associação entre recriações | `- agent-state:/var/lib/dumbmonit-agent` e `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | O segredo de associação vive no sistema de ficheiros do contentor, que um `docker compose up --force-recreate` deita fora. Sem o volume, o agente volta sem associação e alguém tem de permitir o novo registo a partir da página do dispositivo de cada vez. |
 

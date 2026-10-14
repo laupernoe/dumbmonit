@@ -73,7 +73,8 @@ e la sua pagina dice *Relay · site Lyon office · relays 0 devices*. Il log del
     L'agente relè esegue il probe dei dispositivi dalla sua stessa rete: ha bisogno dello stesso accesso
     che il server avrebbe se fosse lì — UDP 161 per SNMP, 8006 per
     Proxmox, 5001 per DSM, e così via. Per i monitor di **ping**, il contenitore
-    ha bisogno di `cap_add: [NET_RAW]` (vedi il file compose). Per dispositivi su una VLAN
+    ha bisogno del sysctl `net.ipv4.ping_group_range`, già impostato
+    nel file compose (vedi [Ping ICMP senza capability](docker.md#icmp-ping-without-a-capability)). Per dispositivi su una VLAN
     o rete link-local, o per target `localhost`, usa
     `network_mode: host`.
 

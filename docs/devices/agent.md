@@ -581,7 +581,7 @@ What the container sees, and what to mount:
 | Containers of the host | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optional. Read-only lists and inspects; Restart/Update actions need it writable and `DUMBMONIT_AGENT_COMMANDS=true`. Without the socket, the agent simply reports no containers. |
 | Filesystem usage | `- /:/host:ro` (or the mounts you care about) | The agent reports the mounts visible *inside* the container, under their container path. |
 | Host network counters | `network_mode: host` | Interfaces are namespaced: without it the agent sees one `veth`. |
-| Ping monitors relayed through this agent | `cap_add: [NET_RAW]` | ICMP needs a raw socket. |
+| Ping monitors relayed through this agent | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP uses an echo socket, which this sysctl allows: no capability needed. See [ICMP ping without a capability](../install/docker.md#icmp-ping-without-a-capability). |
 | Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server behind an internal reverse proxy, devices with self-signed certificates. |
 | Keeping the binding across recreations | `- agent-state:/var/lib/dumbmonit-agent` and `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | The binding secret lives in the container's filesystem, which a `docker compose up --force-recreate` throws away. Without the volume, the agent comes back unbound and someone has to allow re-enrolment from the device page each time. |
 

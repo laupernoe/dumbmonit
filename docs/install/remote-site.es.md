@@ -79,8 +79,8 @@ probes from the server` una vez que se acepta su primer lote.
     El relay sondea los dispositivos desde su propia red: necesita el
     mismo acceso que necesitaría el servidor si estuviera ahí — UDP 161
     para SNMP, 8006 para Proxmox, 5001 para DSM, y así. Para los
-    monitores de **ping**, el contenedor necesita `cap_add: [NET_RAW]`
-    (consulta el archivo compose). Para dispositivos en una VLAN o una
+    monitores de **ping**, el contenedor necesita el sysctl `net.ipv4.ping_group_range`, ya definido
+    en el archivo compose (ver [Ping ICMP sin capability](docker.md#icmp-ping-without-a-capability)). Para dispositivos en una VLAN o una
     red link-local, o para objetivos `localhost`, usa `network_mode:
     host`.
 

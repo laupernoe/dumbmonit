@@ -76,8 +76,8 @@ assim que o seu primeiro lote é aceite.
     O retransmissor sonda dispositivos a partir da sua própria rede: precisa do
     mesmo acesso de que o servidor precisaria se lá estivesse — UDP 161 para
     SNMP, 8006 para Proxmox, 5001 para DSM, e assim por diante. Para monitores
-    de **ping**, o contentor precisa de `cap_add: [NET_RAW]` (veja o ficheiro
-    compose). Para dispositivos numa VLAN ou rede link-local, ou para alvos
+    de **ping**, o contentor precisa do sysctl `net.ipv4.ping_group_range`, já definido
+    no ficheiro compose (veja [Ping ICMP sem capability](docker.md#icmp-ping-without-a-capability)). Para dispositivos numa VLAN ou rede link-local, ou para alvos
     `localhost`, use `network_mode: host`.
 
 ## 4. Atribuir dispositivos ao retransmissor {#4-assign-devices-to-the-relay}

@@ -49,7 +49,7 @@ site: Lyon office
 机器在几秒内出现在DumbMonit中，作为常规代理设备，其页面说*中继·网站Lyon办公室·中继0设备*。代理的日志说`中继模式启用：等待来自服务器的探针`一旦其第一个批被接受。
 
 !!! note "中继需要到达什么"
-    中继从其自己的网络探针设备：它需要相同的访问服务器在那里需要的——SNMP的UDP 161、Proxmox的8006、DSM的5001，等等。对于**ping**监控，容器需要 `cap_add: [NET_RAW]` （见compose文件）。对于VLAN或链路本地网络上的设备，或对于 `localhost` 目标，使用 `network_mode: host`。
+    中继从其自己的网络探针设备：它需要相同的访问服务器在那里需要的——SNMP的UDP 161、Proxmox的8006、DSM的5001，等等。对于**ping**监控，容器需要 `net.ipv4.ping_group_range` sysctl（compose文件中已设置，见[无需 capability 的 ICMP ping](docker.md#icmp-ping-without-a-capability)）。对于VLAN或链路本地网络上的设备，或对于 `localhost` 目标，使用 `network_mode: host`。
 
 ## 4. 分配设备给中继 {#4-assign-devices-to-the-relay}
 

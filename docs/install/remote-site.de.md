@@ -73,7 +73,8 @@ Batch akzeptiert wurde.
 !!! note "Was das Relay erreichen muss"
     Das Relay prüft Geräte aus seinem eigenen Netzwerk: Es braucht denselben Zugriff, den der
     Server dort bräuchte — UDP 161 für SNMP, 8006 für Proxmox, 5001 für DSM usw. Für
-    **Ping**-Monitore braucht der Container `cap_add: [NET_RAW]` (siehe die Compose-Datei).
+    **Ping**-Monitore braucht der Container den Sysctl `net.ipv4.ping_group_range`, der in der
+    Compose-Datei bereits gesetzt ist (siehe [ICMP-Ping ohne Capability](docker.md#icmp-ping-without-a-capability)).
     Für Geräte in einem VLAN oder Link-Local-Netz oder für `localhost`-Ziele verwenden Sie
     `network_mode: host`.
 

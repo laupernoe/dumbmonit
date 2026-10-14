@@ -76,8 +76,8 @@ from the server`, как только принят его первый паке�
 !!! note "До чего должен дотягиваться релей"
     Релей опрашивает устройства из своей сети: ему нужен тот же доступ, который
     понадобился бы серверу, окажись он там, — UDP 161 для SNMP, 8006 для
-    Proxmox, 5001 для DSM и так далее. Для мониторов **ping** контейнеру нужно
-    `cap_add: [NET_RAW]` (см. файл compose). Для устройств в VLAN или
+    Proxmox, 5001 для DSM и так далее. Для мониторов **ping** контейнеру нужен sysctl
+    `net.ipv4.ping_group_range` (уже задан в файле compose, см. [Ping ICMP без capability](docker.md#icmp-ping-without-a-capability)). Для устройств в VLAN или
     link-local сети, а также для целей `localhost` используйте
     `network_mode: host`.
 
