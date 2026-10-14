@@ -29,6 +29,7 @@
 		smart: m.deviceform_modules_smart,
 		zfs: m.deviceform_modules_zfs,
 		wireguard: m.deviceform_modules_wireguard,
+		ipsec: m.deviceform_modules_ipsec,
 		perf_counters: m.deviceform_modules_perf_counters
 	};
 	const hints: Record<AgentModule, () => string> = {
@@ -39,6 +40,7 @@
 		smart: m.deviceform_modules_smart_hint,
 		zfs: m.deviceform_modules_zfs_hint,
 		wireguard: m.deviceform_modules_wireguard_hint,
+		ipsec: m.deviceform_modules_ipsec_hint,
 		perf_counters: m.deviceform_modules_perf_counters_hint
 	};
 

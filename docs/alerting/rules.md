@@ -100,6 +100,28 @@ Reported by the agent; see [Agent](../devices/agent.md#wireguard-tunnels).
 |---|---|---|---|---|---|
 | WireGuard peer silent | A peer with a persistent keepalive has not completed a handshake for more than 15 minutes: the tunnel is down (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). A peer that never connected counts its silence from the moment the agent first saw it. Peers without keepalive (a phone, a laptop) idle for days and are left out; change the threshold to change N, or drop the `and on …` part to watch every peer. | > 15 min | 5 min | Advisory (`warning`) | 6 h |
 
+### IPsec tunnels
+
+Reported by the agent; see [Agent](../devices/agent.md#ipsec-tunnels). The
+series exists only for a CHILD_SA declared in the strongSwan configuration, so
+the rule fires on a tunnel that never came up, not only on one that dropped.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| IPsec tunnel down | A configured IPsec tunnel has no installed session (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+
+### Internet speed test
+
+Reported by the agent; see [Agent](../devices/agent.md#internet-speed-test).
+The test is off by default and each rule stays silent until the matching
+threshold is set in `agent.yaml`: nobody can guess what "slow" means for your line.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Internet download rate low | The last test measured a download rate below `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 min | Advisory (`warning`) | 24 h |
+| Internet upload rate low | Same, for `speedtest_min_upload_mbps`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
+| Internet latency high | The last test measured a latency above `speedtest_max_latency_ms`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
+
 ### Agent disks, ZFS and sensors
 
 Reported by the agent; see [Agent](../devices/agent.md).

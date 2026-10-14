@@ -27,6 +27,7 @@ pub mod nginx;
 pub mod npm;
 pub mod nut;
 pub mod observability;
+pub mod openvpn;
 pub mod opnsense;
 pub mod pbs;
 pub mod pdm;
@@ -76,6 +77,7 @@ pub use nginx::NginxCollector;
 pub use npm::NpmCollector;
 pub use nut::NutCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
+pub use openvpn::OpenvpnCollector;
 pub use opnsense::OpnsenseCollector;
 pub use pbs::PbsCollector;
 pub use pdm::PdmCollector;
@@ -195,6 +197,7 @@ impl Registry {
         registry.register(Arc::new(WebsocketCollector::new()));
         registry.register(Arc::new(NtpCollector::new()));
         registry.register(Arc::new(NginxCollector::new()));
+        registry.register(Arc::new(OpenvpnCollector::new()));
         registry.register(Arc::new(ApacheCollector::new()));
         registry
     }

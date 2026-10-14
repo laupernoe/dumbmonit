@@ -57,6 +57,7 @@ pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaem
 pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
 };
+pub use dumbmonit_collectors::{OpenvpnCollector, openvpn};
 pub use dumbmonit_collectors::{RedfishCollector, redfish};
 #[allow(unused_imports)]
 pub use dumbmonit_proto::Collector;

@@ -11,6 +11,7 @@ export const AGENT_MODULES = [
 	'smart',
 	'zfs',
 	'wireguard',
+	'ipsec',
 	'perf_counters'
 ] as const;
 

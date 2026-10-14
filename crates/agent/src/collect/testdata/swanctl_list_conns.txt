@@ -1,0 +1,24 @@
+site-a: IKEv2, reauthentication every 10800s
+  local:  %any
+  remote: 203.0.113.5
+  local pre-shared-key authentication:
+  remote pre-shared-key authentication:
+  net-net: TUNNEL, rekeying every 3600s
+    local:  10.0.1.0/24
+    remote: 10.0.2.0/24
+site-b: IKEv2, reauthentication every 10800s
+  local:  %any
+  remote: 203.0.113.9
+  local pre-shared-key authentication:
+  remote pre-shared-key authentication:
+  office-net: TUNNEL, rekeying every 3600s
+    local:  10.0.3.0/24
+    remote: 10.0.4.0/24
+backup-link: IKEv2, reauthentication every 10800s
+  local:  %any
+  remote: 203.0.113.20
+  local pre-shared-key authentication:
+  remote pre-shared-key authentication:
+  backup-net: TUNNEL, rekeying every 3600s
+    local:  10.0.9.0/24
+    remote: 10.0.10.0/24

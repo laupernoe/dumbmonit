@@ -94,6 +94,7 @@ nav:
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
       - Sophos Firewall: devices/sophos.md
+      - OpenVPN server: devices/openvpn.md
       - UniFi Network: devices/unifi.md
       - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md

@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **OpenVPN server** device kind: version, whether the server reports itself
+  connected, and every client in session with its addresses and traffic, read
+  through the management interface (read-only: `version`, `state`, `status 3`).
+- **IPsec tunnels** in the agent (module `ipsec`): every strongSwan tunnel
+  configured, up or down, read with `swanctl --list-conns` / `--list-sas`, with
+  traffic and time to the next rekey, an IPsec panel on the device page, and
+  the **IPsec tunnel down** rule.
+- **Internet speed test** in the agent: download and upload rate, latency and
+  jitter against an endpoint you name (LibreSpeed, Cloudflare, your own), at
+  most once per period (6 h by default, 5 min minimum). Off by default since
+  it uses bandwidth; the **Internet download rate low**, **upload rate low**
+  and **latency high** rules stay silent until a threshold is set.
+
 ## 0.1.0-alpha.8 — 2026-10-14
 
 ### Added

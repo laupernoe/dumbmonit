@@ -18,6 +18,8 @@
 	import MdaemonQueues from '#lib/components/devices/mdaemon/MdaemonQueues.svelte';
 	import BackupReposPanel from './BackupReposPanel.svelte';
 	import WireguardPanel from './WireguardPanel.svelte';
+	import IpsecPanel from './IpsecPanel.svelte';
+	import SpeedtestPanel from './SpeedtestPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
 	interface Props {
@@ -150,6 +152,10 @@
 <BackupReposPanel {target} />
 
 <WireguardPanel {target} />
+
+<IpsecPanel {target} />
+
+<SpeedtestPanel {target} />
 
 <!-- Shown only on a Hyper-V host, where the agent reads Hyper-V's performance counters. -->
 <AppliancePanel {target} variant="hyperv" />

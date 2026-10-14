@@ -16,13 +16,19 @@ use serde::Deserialize;
 use crate::collect::backup_repos::{self, BackupReposConfig, RepoConfig, Tool};
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
+use crate::collect::ipsec::IpsecConfig;
 use crate::collect::perf_counters::{self, CustomCounter, PerfCountersConfig, PresetMode};
 use crate::collect::plakar::{self, PlakarConfig};
 use crate::collect::smart::{self, SmartConfig};
+use crate::collect::speedtest::{self, SpeedtestConfig};
 use crate::collect::system_health::SystemHealthConfig;
 use crate::collect::wireguard::WireguardConfig;
 use crate::collect::zfs::{self, ZfsConfig};
 use crate::collect::{DEFAULT_INTERFACES_IGNORE, DEFAULT_MOUNTS_IGNORE, ProbeConfig};
+
+/// Un mégabit par seconde, en octets par seconde : c'est l'unité des options de
+/// seuil du test de débit, plus lisible que des octets pour cette mesure-là.
+const MBPS_IN_BYTES_PER_SECOND: f64 = 125_000.0;
 
 /// Période d'échantillonnage par défaut. Trente secondes donnent des graphes
 /// lisibles sans peser sur une machine modeste.
@@ -52,8 +58,17 @@ pub const MIN_UPDATES_INTERVAL_SECS: u64 = 300;
 /// Modules optionnels qu'une liste `modules` peut retenir. La collecte système
 /// de base (processeur, mémoire, disques, réseau) n'en fait pas partie : elle
 /// est toujours là, c'est elle qui dit que la machine répond.
-pub const MODULES: &[&str] =
-    &["docker", "plakar", "system_health", "sensors", "smart", "zfs", "wireguard", "perf_counters"];
+pub const MODULES: &[&str] = &[
+    "docker",
+    "plakar",
+    "system_health",
+    "sensors",
+    "smart",
+    "zfs",
+    "wireguard",
+    "ipsec",
+    "perf_counters",
+];
 
 /// Ce que le fichier YAML peut contenir.
 ///
@@ -97,6 +112,17 @@ struct FileConfig {
     wireguard: Option<bool>,
     wireguard_bin: Option<String>,
     wireguard_peer_names: Option<BTreeMap<String, String>>,
+    ipsec: Option<bool>,
+    ipsec_bin: Option<String>,
+    speedtest: Option<bool>,
+    speedtest_download_url: Option<String>,
+    speedtest_upload_url: Option<String>,
+    speedtest_download_bytes_cap: Option<u64>,
+    speedtest_upload_bytes: Option<u64>,
+    speedtest_interval_secs: Option<u64>,
+    speedtest_min_download_mbps: Option<f64>,
+    speedtest_min_upload_mbps: Option<f64>,
+    speedtest_max_latency_ms: Option<f64>,
     restic_bin: Option<String>,
     borg_bin: Option<String>,
     restic_repos: Option<Vec<RepoFile>>,
@@ -226,6 +252,10 @@ pub struct Config {
     pub zfs: ZfsConfig,
     /// Tunnels WireGuard, par `wg show all dump`.
     pub wireguard: WireguardConfig,
+    /// Tunnels IPsec (strongSwan), par `swanctl`.
+    pub ipsec: IpsecConfig,
+    /// Test de débit Internet. Désactivé par défaut.
+    pub speedtest: SpeedtestConfig,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
@@ -272,6 +302,8 @@ impl fmt::Debug for Config {
             .field("smart", &self.smart)
             .field("zfs", &self.zfs)
             .field("wireguard", &self.wireguard)
+            .field("ipsec", &self.ipsec)
+            .field("speedtest", &self.speedtest)
             .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
             .finish()
@@ -550,6 +582,71 @@ impl Config {
                 .filter(|(key, name)| !key.is_empty() && !name.is_empty())
                 .collect(),
         };
+        let ipsec = IpsecConfig {
+            enabled: flag("DUMBMONIT_AGENT_IPSEC", file.ipsec, wanted("ipsec"))?,
+            bin: command_name(env.get("DUMBMONIT_AGENT_IPSEC_BIN").or(file.ipsec_bin), "swanctl"),
+        };
+
+        let speedtest_interval_secs = match env.get("DUMBMONIT_AGENT_SPEEDTEST_INTERVAL_SECS") {
+            Some(raw) => raw.trim().parse::<u64>().with_context(|| {
+                format!("DUMBMONIT_AGENT_SPEEDTEST_INTERVAL_SECS: invalid value '{raw}'")
+            })?,
+            None => file.speedtest_interval_secs.unwrap_or(speedtest::DEFAULT_INTERVAL_SECS),
+        };
+        if speedtest_interval_secs < speedtest::MIN_INTERVAL_SECS {
+            bail!("the speedtest period must be at least {} seconds", speedtest::MIN_INTERVAL_SECS);
+        }
+        let clean_url =
+            |raw: Option<String>| raw.map(|u| u.trim().to_string()).filter(|u| !u.is_empty());
+        let opt_f64 = |variable: &str, from_file: Option<f64>| -> Result<Option<f64>> {
+            match env.get(variable) {
+                Some(raw) if raw.trim().is_empty() => Ok(None),
+                Some(raw) => Ok(Some(
+                    raw.trim()
+                        .parse::<f64>()
+                        .with_context(|| format!("{variable}: invalid value '{raw}'"))?,
+                )),
+                None => Ok(from_file),
+            }
+        };
+        let speedtest = SpeedtestConfig {
+            enabled: flag("DUMBMONIT_AGENT_SPEEDTEST", file.speedtest, false)?,
+            download_url: clean_url(
+                env.get("DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_URL").or(file.speedtest_download_url),
+            ),
+            upload_url: clean_url(
+                env.get("DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_URL").or(file.speedtest_upload_url),
+            ),
+            download_bytes_cap: match env.get("DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_BYTES_CAP") {
+                Some(raw) => raw.trim().parse::<u64>().with_context(|| {
+                    format!("DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_BYTES_CAP: invalid value '{raw}'")
+                })?,
+                None => file
+                    .speedtest_download_bytes_cap
+                    .unwrap_or(speedtest::DEFAULT_DOWNLOAD_BYTES_CAP),
+            },
+            upload_bytes: match env.get("DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_BYTES") {
+                Some(raw) => raw.trim().parse::<u64>().with_context(|| {
+                    format!("DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_BYTES: invalid value '{raw}'")
+                })?,
+                None => file.speedtest_upload_bytes.unwrap_or(speedtest::DEFAULT_UPLOAD_BYTES),
+            },
+            interval: Duration::from_secs(speedtest_interval_secs),
+            min_download_bytes_per_second: opt_f64(
+                "DUMBMONIT_AGENT_SPEEDTEST_MIN_DOWNLOAD_MBPS",
+                file.speedtest_min_download_mbps,
+            )?
+            .map(|mbps| mbps * MBPS_IN_BYTES_PER_SECOND),
+            min_upload_bytes_per_second: opt_f64(
+                "DUMBMONIT_AGENT_SPEEDTEST_MIN_UPLOAD_MBPS",
+                file.speedtest_min_upload_mbps,
+            )?
+            .map(|mbps| mbps * MBPS_IN_BYTES_PER_SECOND),
+            max_latency_ms: opt_f64(
+                "DUMBMONIT_AGENT_SPEEDTEST_MAX_LATENCY_MS",
+                file.speedtest_max_latency_ms,
+            )?,
+        };
         let backup_repos = BackupReposConfig {
             restic_bin: command_name(
                 env.get("DUMBMONIT_AGENT_RESTIC_BIN").or(file.restic_bin),
@@ -626,6 +723,8 @@ impl Config {
             smart,
             zfs,
             wireguard,
+            ipsec,
+            speedtest,
             backup_repos,
             perf_counters,
             max_buffered_samples,
