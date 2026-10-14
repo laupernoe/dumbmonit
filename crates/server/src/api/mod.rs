@@ -42,6 +42,8 @@ mod totp;
 mod truenas;
 mod update;
 mod users;
+mod wall_news;
+mod wall_news_presets;
 mod webchange;
 mod webpush;
 mod website;
@@ -166,6 +168,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(website::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
         .merge(music::routes())
+        // Actualités du mur : bandeau de titres et vignette vidéo (`wall_news.rs`).
+        .merge(wall_news::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
@@ -350,6 +354,9 @@ const CSP_IMG_SRC: &str = "img-src 'self' data:";
 ///   parent : l'interface reconstruit chaque adresse à partir d'un identifiant
 ///   validé, et la politique garantit qu'aucune autre origine ne peut être
 ///   encadrée, même si ce contrôle était contourné.
+/// - Les actualités du mur y ajoutent leur vidéo en direct (`wall_news.rs`) : YouTube
+///   (déjà ci-dessus, sans cookies), Dailymotion et Twitch, par leurs seules
+///   adresses d'intégration.
 /// - `script-src` : le script du SDK, et lui seul — le chemin complet, pas
 ///   l'origine. Il ne fait aucune requête depuis la page : il crée l'iframe
 ///   ci-dessus et lui parle par `postMessage`.
@@ -359,7 +366,8 @@ const CSP_IMG_SRC: &str = "img-src 'self' data:";
 /// Rien en `connect-src` ni en `media-src` : c'est le serveur qui parle à l'API
 /// Spotify, et l'audio est joué dans l'iframe du SDK, sous sa propre politique.
 const CSP_MUSIC_FRAME_SRC: &str = "https://open.spotify.com https://widget.deezer.com \
-     https://www.youtube-nocookie.com https://sdk.scdn.co";
+     https://www.youtube-nocookie.com https://sdk.scdn.co \
+     https://www.dailymotion.com https://player.twitch.tv";
 const CSP_MUSIC_SCRIPT_SRC: &str = "https://sdk.scdn.co/spotify-player.js";
 const CSP_MUSIC_IMG_SRC: &str = "https://i.scdn.co";
 
@@ -459,7 +467,9 @@ mod tests {
                 "https://open.spotify.com",
                 "https://widget.deezer.com",
                 "https://www.youtube-nocookie.com",
-                "https://sdk.scdn.co"
+                "https://sdk.scdn.co",
+                "https://www.dailymotion.com",
+                "https://player.twitch.tv"
             ]
         );
         // Un seul script tiers, désigné par son chemin complet.

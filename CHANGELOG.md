@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **News on the wall.** Off by default, set in **Settings → Wall news**: a
+  headline ticker along the bottom (smooth marquee; one fading headline at a time
+  under reduced motion) and a muted live channel in a tile (YouTube, Dailymotion
+  or Twitch, small to large, right column or centre). Pick a country and tick
+  its sources (France, Switzerland, Belgium, Germany, UK, US, Canada, Spain,
+  Italy, Portugal, Brazil, Russia, China, international; each feed checked), or
+  add any RSS/Atom feed with a **Test** that shows its first headline. The server
+  reads the feeds (RSS 2.0, RDF, Atom) behind the internal-address guard with
+  time and size limits and a five-minute cache. New routes `GET /api/wall/news`,
+  `GET|PUT /api/wall/news/settings`, `GET /api/wall/news/presets`,
+  `POST /api/wall/news/test`. See [Wall mode](docs/using/wall.md).
+- **Product icons on the wall's problems**, as in the device lists.
+
 - **Missing server prerequisites are shown where they matter.** Adding or editing
   a website-change device (headless browser for screenshots) or a ping device
   (ICMP sysctl) shows a notice when the server cannot do it, with the Compose
@@ -42,6 +55,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Wall: the problems on the left no longer overlap the devices or run past
+  the screen.** With many problems or on a 720p display, the big tiles used to
+  spill over the device tiles below; they now shrink to one line each, then fold
+  into "And N more". A long device name no longer pushes the cause out of a row.
 - **Watching a site that redirects to another host reads the whole site.** A
   start page redirecting from `example.com` to `www.example.com` used to leave
   every link outside the watch, which then only covered the start page.
