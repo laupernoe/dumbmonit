@@ -311,10 +311,6 @@ pub fn group_by_source(
 
 // --------------------------------------------------------------- découverte
 
-/// Clés de premier niveau qui listent des dépôts. `stores` est celle de Plakar
-/// 1.1 ; les deux autres couvrent d'anciens fichiers `plakar.yml`.
-const STORE_KEYS: &[&str] = &["stores", "repositories", "klosets"];
-
 /// Fichiers de configuration lus dans `~/.config/plakar`.
 const STORE_FILES: &[&str] = &["stores.yml", "stores.yaml", "plakar.yml", "plakar.yaml"];
 
@@ -322,13 +318,12 @@ const STORE_FILES: &[&str] = &["stores.yml", "stores.yaml", "plakar.yml", "plaka
 /// location)` dans l'ordre du fichier. Une entrée sans `location` est ignorée,
 /// tout autre champ (phrase de passe comprise) n'est jamais regardé.
 pub fn parse_stores(text: &str) -> Vec<(String, String)> {
-    let Ok(root) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(text) else {
+    let Ok(root) = dumbmonit_collectors::yaml::from_str::<StoresFile>(text) else {
         return Vec::new();
     };
     let mut stores = Vec::new();
-    for key in STORE_KEYS {
-        let Some(serde_yaml_ng::Value::Mapping(entries)) = root.get(*key) else { continue };
-        for (name, entry) in entries {
+    for entries in [root.stores, root.repositories, root.klosets] {
+        for (name, entry) in entries.0 {
             let Some(name) = name.as_str() else { continue };
             let Some(location) = entry.get("location").and_then(|l| l.as_str()) else { continue };
             if name.is_empty() || location.is_empty() {
@@ -338,6 +333,73 @@ pub fn parse_stores(text: &str) -> Vec<(String, String)> {
         }
     }
     stores
+}
+
+/// Clés de premier niveau qui listent des dépôts : `stores` est celle de Plakar
+/// 1.1, les deux autres couvrent d'anciens fichiers `plakar.yml`. Le reste est ignoré.
+#[derive(Default, serde::Deserialize)]
+#[serde(default)]
+struct StoresFile {
+    stores: Entries,
+    repositories: Entries,
+    klosets: Entries,
+}
+
+/// Les entrées d'une section, **dans l'ordre du fichier** (un `Map` les
+/// trierait). Une section qui n'est pas un dictionnaire ne compte pas : elle
+/// ne doit pas faire échouer la lecture des autres.
+#[derive(Default)]
+struct Entries(Vec<(serde_json::Value, serde_json::Value)>);
+
+impl<'de> serde::Deserialize<'de> for Entries {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = Entries;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a mapping of stores")
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<Entries, A::Error> {
+                let mut entries = Vec::new();
+                while let Some(entry) = map.next_entry()? {
+                    entries.push(entry);
+                }
+                Ok(Entries(entries))
+            }
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut seq: A,
+            ) -> Result<Entries, A::Error> {
+                while seq.next_element::<serde::de::IgnoredAny>()?.is_some() {}
+                Ok(Entries::default())
+            }
+            fn visit_bool<E>(self, _: bool) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_i64<E>(self, _: i64) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_u64<E>(self, _: u64) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_f64<E>(self, _: f64) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_str<E>(self, _: &str) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_unit<E>(self) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+            fn visit_none<E>(self) -> Result<Entries, E> {
+                Ok(Entries::default())
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
 }
 
 /// Un foyer à fouiller : son répertoire de configuration Plakar et l'endroit

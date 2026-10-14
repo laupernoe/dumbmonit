@@ -51,6 +51,7 @@ pub mod unraid;
 pub mod uptime;
 pub mod veeam;
 pub mod vsphere;
+pub mod yaml;
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};

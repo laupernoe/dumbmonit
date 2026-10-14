@@ -47,10 +47,6 @@ sysinfo = { version = "0.39", default-features = false, features = [
     "system", "disk", "network",
 ] }
 
-# Même moteur YAML que les profils de collecte du serveur : un seul format de
-# configuration à connaître dans tout le produit.
-serde_yaml_ng = "0.10"
-
 # Filtres d'interfaces et de points de montage. Sans les fonctionnalités par
 # défaut (« perf », Unicode complet) : les noms filtrés font quelques
 # caractères, et le moteur complet pèserait lourd dans un binaire qui se veut

@@ -235,8 +235,7 @@ pub struct Profile {
 
 impl Profile {
     pub fn parse(source: &str) -> Result<Self, String> {
-        let profile: Profile =
-            serde_yaml_ng::from_str(source).map_err(|error| error.to_string())?;
+        let profile: Profile = crate::yaml::from_str(source).map_err(|error| error.to_string())?;
         profile.validate()?;
         Ok(profile)
     }

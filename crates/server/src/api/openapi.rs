@@ -40,7 +40,8 @@ const SPEC_YAML: &str = include_str!("openapi.yaml");
 static SPEC: LazyLock<Result<Value, String>> = LazyLock::new(|| build(SPEC_YAML));
 
 fn build(yaml: &str) -> Result<Value, String> {
-    let mut spec: Value = serde_yaml_ng::from_str(yaml).map_err(|error| error.to_string())?;
+    let mut spec: Value =
+        dumbmonit_collectors::yaml::from_str(yaml).map_err(|error| error.to_string())?;
     let info = spec
         .get_mut("info")
         .and_then(Value::as_object_mut)
