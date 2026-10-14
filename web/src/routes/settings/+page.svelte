@@ -26,6 +26,7 @@
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
+	import WallNewsSection from '#lib/components/settings/WallNewsSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
 
@@ -70,7 +71,8 @@
 			label: m["settings.group.wall_display"](),
 			items: [
 				{ id: 'appearance', label: m["settings.section.appearance"]() },
-				{ id: 'music', label: m["settings.section.music"]() }
+				{ id: 'music', label: m["settings.section.music"]() },
+				...(auth.isAdmin ? [{ id: 'news', label: m.settings_nav_news() }] : [])
 			]
 		},
 		{ label: null, items: [{ id: 'about', label: m["settings.section.about"]() }] }
@@ -207,6 +209,9 @@
 		{/if}
 		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AppearanceSection /></div>
 		<div class="min-w-0 rise-in" style="--rise-delay: 300ms"><MusicSection /></div>
+		{#if auth.isAdmin}
+			<div class="min-w-0 rise-in" style="--rise-delay: 310ms"><WallNewsSection /></div>
+		{/if}
 		<div class="min-w-0 rise-in" style="--rise-delay: 320ms"><AboutSection /></div>
 	</div>
 </div>

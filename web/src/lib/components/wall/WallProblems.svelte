@@ -7,32 +7,78 @@
 	 * ever blinking. Past three tiles, and for what is only building up,
 	 * suppressed or acknowledged, the rows shrink to one line each.
 	 *
+	 * Each tile wears the product icon of its device (the same marks as the
+	 * device lists). The block never outgrows the room the wall gives it: when
+	 * the tiles do not fit (720p, many problems) they shrink to one-line rows,
+	 * then fold into "and N more", instead of overlapping the devices below.
+	 *
 	 * Same rows as the Overview's "Needs you" (`readSky`): the two can never
 	 * disagree. Nothing to act on here — a wall is read, not operated — but
 	 * each tile opens its device for whoever walks up with a mouse.
 	 */
+	import { untrack } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import type { Sky, SkyRow } from '#lib/components/overview/sky.js';
 	import { formatRelative } from '#lib/format.js';
 	import { Plate } from '#lib/ui/index.js';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	interface Props {
 		sky: Sky;
 		/** Re-read every second by the wall, so "since" stays current. */
 		now: Date;
+		/** Height in px the problems may take; `Infinity` when the page simply scrolls. */
+		room?: number;
 	}
 
-	let { sky, now }: Props = $props();
+	let { sky, now, room = Infinity }: Props = $props();
 
 	const BIG = 3;
 	const SMALL = 5;
 
 	const serious = $derived(sky.needsYou.filter((row) => row.rank <= 2));
 	const quieter = $derived(sky.needsYou.filter((row) => row.rank > 2));
-	const big = $derived(serious.slice(0, BIG));
-	const small = $derived([...serious.slice(BIG), ...quieter]);
-	const shownSmall = $derived(small.slice(0, SMALL));
+	/** 0: big tiles as designed; 1: one line per problem; 2: and fewer of them (`cut`). */
+	let level = $state(0);
+	let cut = $state(Infinity);
+	const big = $derived(level === 0 ? serious.slice(0, BIG) : []);
+	const small = $derived(level === 0 ? [...serious.slice(BIG), ...quieter] : sky.needsYou);
+	const smallCap = $derived(level === 0 ? SMALL : Math.min(cut, level === 1 ? 12 : Infinity));
+	const shownSmall = $derived(small.slice(0, smallCap));
 	const hiddenCount = $derived(small.length - shownSmall.length);
+
+	let box = $state<HTMLElement | null>(null);
+	const signature = $derived(sky.needsYou.map((row) => row.key).join('|') + `@${Math.round(room)}`);
+	let lastSignature = '';
+
+	// Fit to the room: measured after each render; each pass takes one step down.
+	$effect(() => {
+		const sig = signature;
+		const wanted = room;
+		void level;
+		void cut;
+		untrack(() => {
+			if (sig !== lastSignature) {
+				lastSignature = sig;
+				level = 0;
+				cut = Infinity;
+			}
+		});
+		if (wanted === Infinity) return;
+		const frame = requestAnimationFrame(() => {
+			const el = box;
+			if (!el || el.scrollHeight <= wanted + 1) return;
+			if (level === 0) {
+				level = 1;
+				return;
+			}
+			const rows = Array.from(el.querySelectorAll<HTMLElement>('[data-row]'));
+			const firstOut = rows.findIndex((row) => row.offsetTop + row.offsetHeight > wanted - 36);
+			cut = Math.max(1, firstOut === -1 ? rows.length - 1 : firstOut);
+			level = 2;
+		});
+		return () => cancelAnimationFrame(frame);
+	});
 
 	function name(row: SkyRow): string {
 		if (row.kind === 'device') return row.target.name;
@@ -50,6 +96,11 @@
 		return row.since ? formatRelative(row.since) : '';
 	}
 
+	/** The device's kind, for its product icon; an alert with no device has none. */
+	function kindOf(row: SkyRow): string | null {
+		return row.target?.kind ?? null;
+	}
+
 	function href(row: SkyRow): string | null {
 		const id = row.kind === 'device' ? row.target.id : row.target?.id;
 		return id !== undefined ? `/targets/${id}` : null;
@@ -57,22 +108,31 @@
 </script>
 
 {#if big.length > 0 || shownSmall.length > 0}
-	<section class="flex min-h-0 flex-col gap-3" aria-label={m.wall_problems_aria()}>
+	<section
+		class="relative -m-2 flex min-h-0 flex-col gap-3 overflow-hidden p-2"
+		style:max-height={room === Infinity ? undefined : `${room}px`}
+		aria-label={m.wall_problems_aria()}
+		bind:this={box}
+	>
 		{#each big as row (row.key)}
 			{@const link = href(row)}
+			{@const kind = kindOf(row)}
 			<svelte:element
 				this={link ? 'a' : 'div'}
 				href={link}
-				class="tile tile--{row.tone} relative block rounded-[var(--radius-card)] border-2 bg-surface px-6 py-5 shadow-float"
+				class="tile tile--{row.tone} relative block shrink-0 rounded-[var(--radius-card)] border-2 bg-surface px-6 py-5 shadow-float"
 			>
 				<span class="ring" aria-hidden="true"></span>
 				<span class="flex items-center justify-between gap-4">
 					<Plate tone={row.tone} label={row.plate} size="md" class="plate-xl" />
 					{#if row.since}
-						<span class="tnum text-[1.0625rem] text-ink-2">{since(row)}</span>
+						<span class="tnum shrink-0 text-[1.0625rem] text-ink-2">{since(row)}</span>
 					{/if}
 				</span>
-				<span class="tile-name display mt-2.5 block truncate text-ink" title={name(row)}>{name(row)}</span>
+				<span class="mt-2.5 flex min-w-0 items-center gap-3">
+					{#if kind}<KindIcon {kind} class="tile-icon text-ink-2" />{/if}
+					<span class="tile-name display block min-w-0 flex-1 truncate text-ink" title={name(row)}>{name(row)}</span>
+				</span>
 				<span class="tile-what mt-1 block truncate text-ink-2" title={what(row)}>{what(row)}</span>
 			</svelte:element>
 		{/each}
@@ -80,10 +140,12 @@
 		{#if shownSmall.length > 0}
 			<ul class="flex flex-col gap-1.5">
 				{#each shownSmall as row (row.key)}
-					<li class="flex min-w-0 items-center gap-3 rounded-[10px] bg-surface/90 px-4 py-2.5 shadow-lift">
+					{@const kind = kindOf(row)}
+					<li class="flex min-w-0 shrink-0 items-center gap-3 rounded-[10px] bg-surface/90 px-4 py-2.5 shadow-lift" data-row>
 						<Plate tone={row.tone} label={row.plate} size="md" class="shrink-0" />
-						<span class="min-w-0 truncate text-[1.1875rem] font-semibold text-ink">{name(row)}</span>
-						<span class="min-w-0 flex-1 truncate text-[1.0625rem] text-ink-2">{what(row)}</span>
+						{#if kind}<KindIcon {kind} class="size-5 text-ink-2" />{/if}
+						<span class="row-name min-w-0 truncate text-[1.1875rem] font-semibold text-ink" title={name(row)}>{name(row)}</span>
+						<span class="min-w-0 flex-1 truncate text-[1.0625rem] text-ink-2" title={what(row)}>{what(row)}</span>
 					</li>
 				{/each}
 				{#if hiddenCount > 0}
@@ -97,6 +159,27 @@
 <style>
 	.tile-name {
 		font-size: 2.375rem;
+		white-space: nowrap;
+	}
+	/* A phone has the height: a long name takes two lines rather than lose its end. */
+	@media (max-width: 1023px) {
+		.tile-name {
+			display: -webkit-box;
+			-webkit-box-orient: vertical;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			white-space: normal;
+			overflow-wrap: anywhere;
+			font-size: 1.75rem;
+		}
+	}
+	.tile :global(.tile-icon) {
+		width: 2rem;
+		height: 2rem;
+	}
+	/* A long name never squeezes the cause out of a one-line row: it gives way past 55%. */
+	.row-name {
+		max-width: 45%;
 	}
 	.tile-what {
 		font-size: 1.1875rem;
@@ -116,6 +199,10 @@
 		.tile-what {
 			margin-top: 0;
 			font-size: 1rem;
+		}
+		.tile :global(.tile-icon) {
+			width: 1.5rem;
+			height: 1.5rem;
 		}
 	}
 	.tile {

@@ -10,6 +10,76 @@ sans toucher votre préférence enregistrée.
 
 ![Mode mur](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Chaque problème, à gauche, porte l'icône du produit de son équipement (les
+mêmes marques que dans les listes d'équipements). La liste ne déborde jamais de
+sa place : sur un petit écran, ou avec beaucoup de problèmes, les grandes
+tuiles se réduisent à une ligne chacune, puis se replient en *Et N de plus*,
+au lieu de recouvrir les équipements en dessous.
+
+## Actualités sur le mur
+
+Un administrateur peut ajouter des **titres** et une **chaîne en direct** au
+mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par défaut.
+
+- **Bandeau de titres.** Une bande en bas du mur fait défiler les derniers
+  titres, chacun avec sa source et son âge, et se rafraîchit toutes les cinq
+  minutes. Si le système de l'écran demande de *réduire les animations*, rien ne
+  défile : un titre à la fois apparaît et disparaît en fondu.
+- **Vidéo en direct.** Une chaîne en direct, sans le son, dans une vignette, dans
+  la colonne de droite sous l'horloge (ou au milieu de la scène), petite, moyenne
+  ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
+  jamais l'état.
+
+C'est le serveur qui lit les flux, pas le navigateur (un navigateur ne peut pas
+lire les flux d'autres sites). Il suit au plus trois redirections, refuse les
+adresses internes, abandonne après huit secondes ou 2 Mo par flux, et garde la
+réponse cinq minutes pour tous les murs. Il lit RSS 2.0, RSS 1.0 (RDF) et Atom.
+
+### Choisir les sources
+
+Choisissez un **pays** (présélectionné d'après la région et la langue de votre
+navigateur), puis cochez ses sources : huit flux au plus en tout. Pour un autre
+flux, collez son adresse RSS ou Atom sous **Ajouter un flux personnalisé** et
+appuyez sur **Tester** : DumbMonit le lit pour de vrai et montre le dernier titre
+avant l'ajout.
+
+Pour la vidéo, choisissez une chaîne du pays ou **Un autre lien…** et collez une
+adresse YouTube, Dailymotion ou Twitch ordinaire (une vidéo, un direct, ou la
+page `/live` d'une chaîne YouTube) ; DumbMonit la convertit en lecteur
+intégrable. Seuls ces trois lecteurs peuvent être affichés. Un direct n'est
+proposé que lorsque la chaîne en a un officiel et stable.
+
+| Pays | Titres | Vidéo en direct |
+|---|---|---|
+| France | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Suisse | RTS Info, SRF News, Le Temps, NZZ | aucune |
+| Belgique | RTBF, VRT NWS, La DH | aucune |
+| Allemagne | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Royaume-Uni | BBC News, The Guardian | Sky News |
+| États-Unis | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Canada | Radio-Canada, CBC News | CBC News |
+| Espagne | RTVE, 20minutos, El País, El Mundo | aucune |
+| Italie | ANSA, RaiNews | aucune |
+| Portugal | RTP Notícias, Público | aucune |
+| Brésil | G1, Folha de S.Paulo | CNN Brasil |
+| Russie | Interfax, Meduza, Kommersant | aucune |
+| Chine | CGTN, South China Morning Post, Xinhua | CGTN |
+| International | Deutsche Welle, France 24, BBC News (monde) | DW News, France 24 English, Euronews English |
+
+Le flux de BFM TV est `https://www.bfmtv.com/rss/news-24-7/`. La liste a été
+vérifiée à sa rédaction ; un site peut déplacer son flux à tout moment, le
+bandeau l'ignore alors simplement. **Testez** le remplaçant et ajoutez-le comme
+flux personnalisé.
+
+La politique de sécurité du mur n'autorise que les lecteurs YouTube
+(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify et Deezer dans un cadre.
+
+### API
+
+`GET /api/wall/news` (ce que les murs interrogent), `GET|PUT
+/api/wall/news/settings` et `POST /api/wall/news/test` (admin), `GET
+/api/wall/news/presets`.
+
 ## Musique sur le mur
 
 Le mur peut aussi jouer de la musique et montrer ce qui joue, pour que

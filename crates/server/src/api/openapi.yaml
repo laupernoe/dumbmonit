@@ -162,6 +162,10 @@ tags:
     description: Encrypted export and restore of the instance. Session only.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
+  - name: Wall news
+    description: >-
+      Optional headlines (RSS/Atom, read by the server) and a live video tile
+      on the wall display. Off by default.
   - name: Wall music
     description: >-
       Music on the wall display: what plays on the connected Spotify account,
@@ -3989,6 +3993,101 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/wall/news:
+    get:
+      operationId: getWallNews
+      tags: [Wall news]
+      summary: Headlines and live video for the walls
+      description: >-
+        The latest headlines of the configured RSS/Atom feeds (read by the
+        server, cached five minutes) and the embeddable address of the live
+        video. Both are off by default. Walls poll it every five minutes.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Headlines, feed problems and the video tile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallNews" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/news/settings:
+    get:
+      operationId: getWallNewsSettings
+      tags: [Wall news]
+      summary: Wall news settings
+      x-token-scope: read
+      responses:
+        "200":
+          description: The settings (defaults while never saved).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallNewsSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putWallNewsSettings
+      tags: [Wall news]
+      summary: Save the wall news settings
+      description: >-
+        At most eight feeds (http or https). `video_url` must be a YouTube,
+        Dailymotion or Twitch link the server can turn into a player address.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WallNewsSettings" }
+      responses:
+        "200":
+          description: The settings as saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallNewsSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/news/presets:
+    get:
+      operationId: getWallNewsPresets
+      tags: [Wall news]
+      summary: News sources offered per country
+      x-token-scope: read
+      responses:
+        "200":
+          description: Countries with their feeds and live channels.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WallNewsCountry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/news/test:
+    post:
+      operationId: testWallNewsFeed
+      tags: [Wall news]
+      summary: Read a feed once and show its first headline
+      description: Uncached; refuses internal addresses like every wall fetch.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Whether the feed could be read, and why not.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallNewsTest" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /api/music/now:
     get:
       operationId: getWallMusic
@@ -6516,6 +6615,87 @@ components:
         progress_ms: { type: integer }
         device_name: { type: [string, "null"] }
         device_type: { type: [string, "null"] }
+    WallNewsItem:
+      type: object
+      required: [title, link, source]
+      properties:
+        title: { type: string }
+        link: { type: string }
+        source: { type: string }
+        published: { type: [string, "null"], description: UTC, without suffix. }
+    WallNews:
+      type: object
+      required: [ticker, items, problems]
+      properties:
+        ticker: { type: boolean }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/WallNewsItem" }
+        problems:
+          type: array
+          items:
+            type: object
+            required: [feed, message]
+            properties:
+              feed: { type: string }
+              message: { type: string }
+        video:
+          type: [object, "null"]
+          required: [embed_url, position, size]
+          properties:
+            embed_url: { type: string, description: A fixed https player origin. }
+            position: { type: string, enum: [right, center] }
+            size: { type: string, enum: [small, medium, large] }
+    WallNewsSettings:
+      type: object
+      required: [ticker, feeds, video, video_url, video_position, video_size]
+      properties:
+        ticker: { type: boolean }
+        feeds:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required: [url]
+            properties:
+              url: { type: string }
+              label: { type: string, maxLength: 40 }
+        video: { type: boolean }
+        video_url: { type: string }
+        video_position: { type: string, enum: [right, center] }
+        video_size: { type: string, enum: [small, medium, large] }
+    WallNewsCountry:
+      type: object
+      required: [code, feeds, videos]
+      properties:
+        code: { type: string, description: ISO 3166-1 alpha-2, or INT. }
+        feeds:
+          type: array
+          items:
+            type: object
+            required: [label, url]
+            properties:
+              label: { type: string }
+              url: { type: string }
+        videos:
+          type: array
+          items:
+            type: object
+            required: [label, url]
+            properties:
+              label: { type: string }
+              url: { type: string }
+    WallNewsTest:
+      type: object
+      required: [ok, count]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"] }
+        count: { type: integer }
+        first:
+          oneOf:
+            - { $ref: "#/components/schemas/WallNewsItem" }
+            - { type: "null" }
     WallLink:
       type: object
       required: [link, set_by, set_at]
