@@ -262,6 +262,20 @@ porte les six binaires et leurs sommes de contrôle, pour les machines qui
 ne peuvent pas atteindre le `/download/` du serveur ou pour installer avec
 `--bin`.
 
+Depuis la version 0.1.0-alpha.9, chaque binaire d'une release est aussi signé
+sans clé avec [Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) et
+accompagné d'une attestation de provenance SLSA. Pour vérifier qu'un binaire a
+bien été construit par le workflow de release de ce dépôt :
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# ou, avec la CLI GitHub :
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 Pour construire vous-même les binaires Linux, Windows et FreeBSD, depuis
 un clone du dépôt (Docker est le seul prérequis) :
 

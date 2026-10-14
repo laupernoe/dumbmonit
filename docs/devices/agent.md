@@ -265,6 +265,20 @@ format. Every [GitHub release](https://github.com/laupernoe/dumbmonit/releases/l
 carries all six binaries and their checksums, for machines that cannot reach
 the server's `/download/` or for installing with `--bin`.
 
+Since 0.1.0-alpha.9, every binary of a release is also signed keylessly with
+[Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) and comes with
+a SLSA provenance attestation. To check that a binary was built by this
+repository's release workflow:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 To build the Linux, Windows and FreeBSD binaries yourself, from a clone of the
 repository (Docker is the only requirement):
 
