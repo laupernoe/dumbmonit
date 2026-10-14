@@ -14,6 +14,8 @@ que cette version peut surveiller.
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | jeton d'API | Console fédérant plusieurs clusters PVE et instances PBS |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | nom d'utilisateur/mot de passe | Passerelle mail filtrant spam et virus |
 | [VMware vSphere](vsphere.md) | `vsphere` | nom d'utilisateur/mot de passe | vCenter ou ESXi autonome : hôtes, VM, datastores, alarmes |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | nom d'utilisateur/mot de passe (rôle XAPI en lecture seule) | Pool via XAPI : hôtes, VM, référentiels de stockage, haute disponibilité |
+| [Nutanix AHV](nutanix.md) | `nutanix` | nom d'utilisateur/mot de passe (Prism Viewer) | API v4 de Prism Central : clusters, hôtes, VM AHV, conteneurs de stockage, alertes |
 | [Synology DSM](synology.md) | `synology` | nom d'utilisateur/mot de passe | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | clé et secret d'API | Pare-feu, routeur, bordure multi-WAN |
 | [pfSense](pfsense.md) | `pfsense` | clé d'API REST (utilisateur en lecture seule) | Pare-feu : passerelles en panne ou avec pertes, interfaces sans lien, services arrêtés |

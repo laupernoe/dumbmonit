@@ -13,6 +13,8 @@ DumbMonit называет *устройством* (в API — *target*) всё
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | API-токен | Консоль, объединяющая несколько кластеров PVE и экземпляров PBS |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | имя пользователя/пароль | Почтовый шлюз, фильтрующий спам и вирусы |
 | [VMware vSphere](vsphere.md) | `vsphere` | имя пользователя/пароль | vCenter или отдельный ESXi: хосты, ВМ, хранилища данных, тревоги |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | имя пользователя/пароль (роль XAPI только для чтения) | Пул через XAPI: хосты, ВМ, репозитории хранилища, высокая доступность |
+| [Nutanix AHV](nutanix.md) | `nutanix` | имя пользователя/пароль (Prism Viewer) | API v4 Prism Central: кластеры, хосты, ВМ AHV, контейнеры хранилища, оповещения |
 | [Synology DSM](synology.md) | `synology` | имя пользователя/пароль | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | ключ API и секрет | Межсетевой экран, маршрутизатор, граница с несколькими WAN |
 | [pfSense](pfsense.md) | `pfsense` | ключ REST API (пользователь только для чтения) | Межсетевой экран: шлюзы недоступны или с потерями, интерфейсы без линка, остановленные службы |

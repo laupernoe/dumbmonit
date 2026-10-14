@@ -26,6 +26,7 @@ pub mod mongodb;
 pub mod nginx;
 pub mod npm;
 pub mod nut;
+pub mod nutanix;
 pub mod observability;
 pub mod opnsense;
 pub mod pbs;
@@ -51,6 +52,7 @@ pub mod unraid;
 pub mod uptime;
 pub mod veeam;
 pub mod vsphere;
+pub mod xcpng;
 pub mod yaml;
 
 use std::collections::{BTreeMap, HashMap};
@@ -75,6 +77,7 @@ pub use mongodb::MongodbCollector;
 pub use nginx::NginxCollector;
 pub use npm::NpmCollector;
 pub use nut::NutCollector;
+pub use nutanix::NutanixCollector;
 pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use opnsense::OpnsenseCollector;
 pub use pbs::PbsCollector;
@@ -105,6 +108,7 @@ pub use uptime::{
 };
 pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
+pub use xcpng::XcpngCollector;
 
 /// Les collecteurs connus, par type de cible.
 ///
@@ -165,6 +169,8 @@ impl Registry {
         registry.register(Arc::new(NutCollector::new()));
         registry.register(Arc::new(MikrotikCollector::new()));
         registry.register(Arc::new(VsphereCollector::new()));
+        registry.register(Arc::new(XcpngCollector::new()));
+        registry.register(Arc::new(NutanixCollector::new()));
         registry.register(Arc::new(HomeAssistantCollector::new()));
         registry.register(Arc::new(UnifiCollector::new()));
         registry.register(Arc::new(RedisCollector::new()));

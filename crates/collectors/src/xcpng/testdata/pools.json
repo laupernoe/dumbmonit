@@ -1,0 +1,15 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:pool-main": {
+      "uuid": "4e9a1b9e-0000-0000-0000-000000000031",
+      "name_label": "Production pool",
+      "master": "OpaqueRef:host-master",
+      "ha_enabled": true,
+      "ha_host_failures_to_tolerate": "1",
+      "ha_overcommitted": true,
+      "ha_plan_exists_for": "0"
+    }
+  }
+}

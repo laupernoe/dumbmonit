@@ -13,6 +13,8 @@ formulario siempre coincide con lo que esta versión puede monitorear.
 | [Gestor de centro de datos Proxmox](pdm.md) | `pdm` | token de API | Consola que federa varios clústeres PVE e instancias PBS |
 | [Puerta de enlace de correo Proxmox](pmg.md) | `pmg` | nombre de usuario/contraseña | Puerta de enlace de correo filtrando spam y virus |
 | [VMware vSphere](vsphere.md) | `vsphere` | nombre de usuario/contraseña | vCenter o ESXi independiente: hosts, VMs, almacenes de datos, alarmas |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | nombre de usuario/contraseña (rol XAPI de solo lectura) | Pool a través de XAPI: hosts, VMs, repositorios de almacenamiento, alta disponibilidad |
+| [Nutanix AHV](nutanix.md) | `nutanix` | nombre de usuario/contraseña (Prism Viewer) | API v4 de Prism Central: clústeres, hosts, VMs AHV, contenedores de almacenamiento, alertas |
 | [Synology DSM](synology.md) | `synology` | nombre de usuario/contraseña | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | clave de API y secreto | Firewall, enrutador, borde multi-WAN |
 | [pfSense](pfsense.md) | `pfsense` | clave de API REST (usuario de solo lectura) | Firewall: puertas de enlace abajo o con pérdida, interfaces sin enlace, servicios detenidos |

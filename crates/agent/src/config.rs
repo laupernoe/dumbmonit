@@ -16,6 +16,7 @@ use serde::Deserialize;
 use crate::collect::backup_repos::{self, BackupReposConfig, RepoConfig, Tool};
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
+use crate::collect::libvirt::{self, LibvirtConfig};
 use crate::collect::perf_counters::{self, CustomCounter, PerfCountersConfig, PresetMode};
 use crate::collect::plakar::{self, PlakarConfig};
 use crate::collect::smart::{self, SmartConfig};
@@ -52,8 +53,17 @@ pub const MIN_UPDATES_INTERVAL_SECS: u64 = 300;
 /// Modules optionnels qu'une liste `modules` peut retenir. La collecte système
 /// de base (processeur, mémoire, disques, réseau) n'en fait pas partie : elle
 /// est toujours là, c'est elle qui dit que la machine répond.
-pub const MODULES: &[&str] =
-    &["docker", "plakar", "system_health", "sensors", "smart", "zfs", "wireguard", "perf_counters"];
+pub const MODULES: &[&str] = &[
+    "docker",
+    "plakar",
+    "system_health",
+    "sensors",
+    "smart",
+    "zfs",
+    "libvirt",
+    "wireguard",
+    "perf_counters",
+];
 
 /// Ce que le fichier YAML peut contenir.
 ///
@@ -94,6 +104,10 @@ struct FileConfig {
     zfs: Option<bool>,
     zfs_bin: Option<String>,
     zfs_interval_secs: Option<u64>,
+    libvirt: Option<bool>,
+    libvirt_bin: Option<String>,
+    libvirt_uri: Option<String>,
+    libvirt_interval_secs: Option<u64>,
     wireguard: Option<bool>,
     wireguard_bin: Option<String>,
     wireguard_peer_names: Option<BTreeMap<String, String>>,
@@ -224,6 +238,8 @@ pub struct Config {
     pub smart: SmartConfig,
     /// Pools ZFS, par `zpool`.
     pub zfs: ZfsConfig,
+    /// Domaines KVM et pools de stockage libvirt, par `virsh`.
+    pub libvirt: LibvirtConfig,
     /// Tunnels WireGuard, par `wg show all dump`.
     pub wireguard: WireguardConfig,
     /// Dépôts restic et Borg déclarés.
@@ -271,6 +287,7 @@ impl fmt::Debug for Config {
             .field("sensors", &self.sensors)
             .field("smart", &self.smart)
             .field("zfs", &self.zfs)
+            .field("libvirt", &self.libvirt)
             .field("wireguard", &self.wireguard)
             .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
@@ -535,6 +552,22 @@ impl Config {
                 "the ZFS reading period",
             )?),
         };
+        let libvirt = LibvirtConfig {
+            enabled: flag("DUMBMONIT_AGENT_LIBVIRT", file.libvirt, wanted("libvirt"))?,
+            bin: command_name(env.get("DUMBMONIT_AGENT_LIBVIRT_BIN").or(file.libvirt_bin), "virsh"),
+            uri: command_name(
+                env.get("DUMBMONIT_AGENT_LIBVIRT_URI").or(file.libvirt_uri),
+                libvirt::DEFAULT_URI,
+            ),
+            interval: Duration::from_secs(read_interval(
+                &env,
+                "DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS",
+                file.libvirt_interval_secs,
+                libvirt::DEFAULT_INTERVAL_SECS,
+                libvirt::MIN_INTERVAL_SECS,
+                "the libvirt reading period",
+            )?),
+        };
 
         let wireguard = WireguardConfig {
             enabled: flag("DUMBMONIT_AGENT_WIREGUARD", file.wireguard, wanted("wireguard"))?,
@@ -625,6 +658,7 @@ impl Config {
             sensors,
             smart,
             zfs,
+            libvirt,
             wireguard,
             backup_repos,
             perf_counters,
@@ -1196,6 +1230,37 @@ docker_max_containers: 20
     }
 
     #[test]
+    fn libvirt_reads_the_system_uri_by_default_and_both_sources() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.libvirt, LibvirtConfig::default());
+        assert_eq!(config.libvirt.uri, "qemu:///system");
+
+        let yaml = "libvirt_bin: /usr/bin/virsh\nlibvirt_uri: qemu+ssh://kvm/system\n\
+                    libvirt_interval_secs: 30\n";
+        let file = FileConfig {
+            server_url: Some("http://s:8080".into()),
+            token: Some("dmon_abc".into()),
+            ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
+        };
+        let config =
+            Config::merge(file, env(&[("DUMBMONIT_AGENT_LIBVIRT_URI", "qemu:///session")]))
+                .expect("configuration");
+        assert_eq!(config.libvirt.bin, "/usr/bin/virsh");
+        assert_eq!(config.libvirt.uri, "qemu:///session", "l'environnement prime");
+        assert_eq!(config.libvirt.interval, Duration::from_secs(30));
+
+        let too_fast = Config::merge(
+            file_with_url_and_token(),
+            env(&[("DUMBMONIT_AGENT_LIBVIRT_INTERVAL_SECS", "5")]),
+        );
+        assert!(too_fast.is_err());
+        let off =
+            Config::merge(file_with_url_and_token(), env(&[("DUMBMONIT_AGENT_LIBVIRT", "0")]))
+                .expect("configuration");
+        assert!(!off.libvirt.enabled);
+    }
+
+    #[test]
     fn too_frequent_a_plakar_reading_is_refused() {
         let config = Config::merge(
             file_with_url_and_token(),
@@ -1593,6 +1658,7 @@ backup_repos_interval_secs: 900
         assert_eq!(config.modules, None);
         assert!(config.docker && config.plakar.enabled && config.sensors);
         assert!(config.smart.enabled && config.zfs.enabled && config.wireguard.enabled);
+        assert!(config.libvirt.enabled);
         assert!(config.system_health.enabled);
         assert_eq!(config.perf_counters.mdaemon, PresetMode::Auto);
     }
@@ -1606,6 +1672,7 @@ backup_repos_interval_secs: 900
         assert!(!config.sensors, "non demandé : pas de sondes");
         assert!(!config.smart.enabled);
         assert!(!config.zfs.enabled);
+        assert!(!config.libvirt.enabled);
         assert!(!config.wireguard.enabled);
         assert!(!config.system_health.enabled, "ni mises à jour, ni unités en échec");
         assert_eq!(config.perf_counters.mdaemon, PresetMode::Off);

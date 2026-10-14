@@ -854,6 +854,8 @@
 	"deviceform_modules_choose_on": "Работают только отмеченные модули; остальные ничего не отправляют и не вызывают оповещений. Процессор, память, диски и сеть собираются всегда. Команды установки ниже учитывают ваш выбор.",
 	"deviceform_modules_docker": "Контейнеры Docker",
 	"deviceform_modules_docker_hint": "Состояние, health-check, перезапуски и обновления образов.",
+	"deviceform_modules_libvirt": "Виртуальные машины KVM",
+	"deviceform_modules_libvirt_hint": "Домены и пулы хранения libvirt через virsh.",
 	"deviceform_modules_none": "Ни один модуль не отмечен: агент отправляет только процессор, память, диски и сеть.",
 	"deviceform_modules_perf_counters": "Счётчики производительности Windows",
 	"deviceform_modules_perf_counters_hint": "Наборы для MDaemon и Hyper-V.",

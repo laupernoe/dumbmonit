@@ -14,6 +14,8 @@ versão pode monitorar.
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | token de API | Console federando vários clusters PVE e instâncias PBS |
 | [Proxmox Mail Gateway](pmg.md) | `pmg` | usuário/senha | Gateway de e-mail filtrando spam e vírus |
 | [VMware vSphere](vsphere.md) | `vsphere` | usuário/senha | vCenter ou ESXi autônomo: hosts, VMs, datastores, alarmes |
+| [XCP-ng / XenServer](xcpng.md) | `xcpng` | usuário/senha (papel XAPI somente leitura) | Pool via XAPI: hosts, VMs, repositórios de armazenamento, alta disponibilidade |
+| [Nutanix AHV](nutanix.md) | `nutanix` | usuário/senha (Prism Viewer) | API v4 do Prism Central: clusters, hosts, VMs AHV, contêineres de armazenamento, alertas |
 | [Synology DSM](synology.md) | `synology` | usuário/senha | DiskStation, RackStation |
 | [OPNsense](opnsense.md) | `opnsense` | chave e segredo de API | Firewall, roteador, borda multi-WAN |
 | [pfSense](pfsense.md) | `pfsense` | chave da API REST (usuário somente leitura) | Firewall: gateways fora do ar ou com perdas, interfaces sem link, serviços parados |

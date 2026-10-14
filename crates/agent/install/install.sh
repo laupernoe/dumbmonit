@@ -73,7 +73,8 @@ OPTIONS:
     --tags=key=value    Tags, comma-separated
     --modules=a,b,c     Optional modules to run, comma-separated: docker,
                         plakar, system_health (pending updates, reboot needed,
-                        failed units), sensors, smart, zfs, wireguard. System
+                        failed units), sensors, smart, zfs, libvirt,
+                        wireguard. System
                         metrics (CPU, memory, disks, network) are always on.
                         Without this option every module detects itself;
                         --modules=none keeps system metrics only.
@@ -141,8 +142,8 @@ done
 if [ "$MODULES_SET" -eq 1 ]; then
     for module in $(echo "$MODULES" | tr ',' ' '); do
         case "$module" in
-            docker|plakar|system_health|sensors|smart|zfs|wireguard|perf_counters|none) ;;
-            *) echec "unknown module '$module' (known: docker, plakar, system_health, sensors, smart, zfs, wireguard, or none)" ;;
+            docker|plakar|system_health|sensors|smart|zfs|libvirt|wireguard|perf_counters|none) ;;
+            *) echec "unknown module '$module' (known: docker, plakar, system_health, sensors, smart, zfs, libvirt, wireguard, or none)" ;;
         esac
     done
 fi

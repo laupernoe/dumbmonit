@@ -1,0 +1,66 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:vm-web": {
+      "uuid": "9f9a1b9e-0000-0000-0000-000000000011",
+      "name_label": "web01",
+      "power_state": "Running",
+      "VCPUs_at_startup": "2",
+      "memory_dynamic_max": "2147483648",
+      "resident_on": "OpaqueRef:host-master",
+      "is_a_template": false,
+      "is_control_domain": false,
+      "ha_restart_priority": "restart",
+      "metrics": "OpaqueRef:vm-web-metrics"
+    },
+    "OpaqueRef:vm-down": {
+      "uuid": "9f9a1b9e-0000-0000-0000-000000000012",
+      "name_label": "db01",
+      "power_state": "Halted",
+      "VCPUs_at_startup": "4",
+      "memory_dynamic_max": "4294967296",
+      "resident_on": "OpaqueRef:NULL",
+      "is_a_template": false,
+      "is_control_domain": false,
+      "ha_restart_priority": "restart",
+      "metrics": "OpaqueRef:NULL"
+    },
+    "OpaqueRef:vm-stopped": {
+      "uuid": "9f9a1b9e-0000-0000-0000-000000000013",
+      "name_label": "scratch01",
+      "power_state": "Halted",
+      "VCPUs_at_startup": "1",
+      "memory_dynamic_max": "1073741824",
+      "resident_on": "OpaqueRef:NULL",
+      "is_a_template": false,
+      "is_control_domain": false,
+      "ha_restart_priority": "",
+      "metrics": "OpaqueRef:NULL"
+    },
+    "OpaqueRef:vm-template": {
+      "uuid": "9f9a1b9e-0000-0000-0000-000000000014",
+      "name_label": "Debian 12 template",
+      "power_state": "Halted",
+      "VCPUs_at_startup": "1",
+      "memory_dynamic_max": "1073741824",
+      "resident_on": "OpaqueRef:NULL",
+      "is_a_template": true,
+      "is_control_domain": false,
+      "ha_restart_priority": "",
+      "metrics": "OpaqueRef:NULL"
+    },
+    "OpaqueRef:dom0": {
+      "uuid": "9f9a1b9e-0000-0000-0000-000000000000",
+      "name_label": "Control domain on host: xcp01",
+      "power_state": "Running",
+      "VCPUs_at_startup": "8",
+      "memory_dynamic_max": "4294967296",
+      "resident_on": "OpaqueRef:host-master",
+      "is_a_template": false,
+      "is_control_domain": true,
+      "ha_restart_priority": "",
+      "metrics": "OpaqueRef:NULL"
+    }
+  }
+}

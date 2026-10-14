@@ -812,6 +812,8 @@
 	"deviceform_modules_choose_on": "只运行勾选的模块；其他模块不发送任何数据，也不触发告警。CPU、内存、磁盘和网络始终采集。下方的安装命令已包含你的选择。",
 	"deviceform_modules_docker": "Docker 容器",
 	"deviceform_modules_docker_hint": "状态、健康检查、重启次数和镜像更新。",
+	"deviceform_modules_libvirt": "KVM 虚拟机",
+	"deviceform_modules_libvirt_hint": "通过 virsh 读取 libvirt 域和存储池。",
 	"deviceform_modules_none": "未勾选任何模块：代理只发送 CPU、内存、磁盘和网络。",
 	"deviceform_modules_perf_counters": "Windows 性能计数器",
 	"deviceform_modules_perf_counters_hint": "MDaemon 和 Hyper-V 预设。",

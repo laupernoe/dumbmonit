@@ -826,6 +826,8 @@
 	"deviceform_modules_choose_on": "Solo se ejecutan los módulos marcados; los demás no envían nada ni generan alertas. CPU, memoria, discos y red se recogen siempre. Los comandos de instalación de abajo incluyen tu elección.",
 	"deviceform_modules_docker": "Contenedores Docker",
 	"deviceform_modules_docker_hint": "Estado, salud, reinicios y actualizaciones de imagen.",
+	"deviceform_modules_libvirt": "Máquinas virtuales KVM",
+	"deviceform_modules_libvirt_hint": "Dominios y pools de almacenamiento de libvirt, mediante virsh.",
 	"deviceform_modules_none": "Ningún módulo marcado: el agente solo envía CPU, memoria, discos y red.",
 	"deviceform_modules_perf_counters": "Contadores de rendimiento de Windows",
 	"deviceform_modules_perf_counters_hint": "Conjuntos para MDaemon y Hyper-V.",

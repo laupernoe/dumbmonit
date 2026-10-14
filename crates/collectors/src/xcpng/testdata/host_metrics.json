@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "OpaqueRef:host-master-metrics": {
+      "memory_total": "33737859072",
+      "memory_free": "9663676416",
+      "live": true
+    },
+    "OpaqueRef:host-slave-metrics": {
+      "memory_total": "33737859072",
+      "memory_free": "0",
+      "live": false
+    }
+  }
+}
