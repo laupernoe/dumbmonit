@@ -43,7 +43,7 @@ docker run --rm -v "$PWD:/build" -w /build dumbmonit-devenv cargo fmt --all --ch
 ```
 
 安装了 Rust 本地,`cargo test`和`cargo clippy -- -D warnings`
-直接工作。Edition 2024,MSRV 1.88;`rustfmt.toml`设置`max_width = 100`
+直接工作。Edition 2024,MSRV 1.95;`rustfmt.toml`设置`max_width = 100`
 和`use_small_heuristics = "Max"`。
 
 Docker 构建分层:web 构建 → 假源上的 Rust 依赖 →
