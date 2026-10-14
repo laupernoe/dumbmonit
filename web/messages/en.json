@@ -3050,7 +3050,8 @@
 	"devicesb_webchange_diff_skip_one": "⋯ {count} unchanged line",
 	"devicesb_webchange_diff_skip_other": "⋯ {count} unchanged lines",
 	"devicesb_webchange_list_earlier": "Earlier changes ({count})",
-	"devicesb_webchange_list_quiet": "{count} pages without changes",
+	"devicesb_webchange_list_quiet_one": "1 page without changes",
+	"devicesb_webchange_list_quiet_other": "{count} pages without changes",
 	"devicesb_webchange_list_screenshots": "Screenshots of {path}",
 	"devicesb_webchange_pages_empty": "No page is watched yet.",
 	"devicesb_webchange_pages_empty_hint": "The device’s address is checked as the baseline on the first probe.",
@@ -6096,5 +6097,10 @@
 	"website_sitemap_ok": "Reachable",
 	"website_status": "Status",
 	"website_unknown": "Not checked yet",
-	"website_value_empty": "(none)"
+	"website_value_empty": "(none)",
+	"whatsnew_dialog_close": "Close What's new",
+	"whatsnew_dialog_notes": "Full release notes",
+	"whatsnew_dialog_ok": "Got it",
+	"whatsnew_dialog_title": "What's new in v{version}",
+	"whatsnew_dialog_updated": "Updated · {date}"
 }
