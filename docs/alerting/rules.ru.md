@@ -56,7 +56,7 @@
 | Service down | Служба не отвечала корректно три минуты (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 мин | Warning (`critical`) | 30 мин |
 | Heartbeat missed | Задание не вышло на связь в течение ожидаемого интервала плюс льготного периода или само сообщило о сбое (`dumbmonit_probe_success{probe="push"} == bool 0`; задержка задаётся для каждого устройства, см. [Heartbeat](../devices/push.md)). | > 0 | 2 мин | Advisory (`warning`) | 6 ч |
 | Service flapping | Служба сменила состояние более шести раз за тридцать минут (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 мин | Advisory (`warning`) | 1 ч |
-| Slow service | Служба отвечает дольше трёх секунд. | > 3 с | 10 мин | Advisory (`warning`) | 6 ч |
+| Slow service | Служба отвечает дольше трёх секунд; неудачные проверки не учитываются (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 с | 10 мин | Advisory (`warning`) | 6 ч |
 | Certificate expiring soon | Сертификат истекает менее чем через четырнадцать дней. | < 14 дн | 1 ч | Advisory (`warning`) | 24 ч |
 | Certificate expired | Срок действия сертификата истёк. | < 0 дн | 5 мин | Warning (`critical`) | 24 ч |
 
@@ -67,8 +67,8 @@
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| Container stopped | Контейнер остановлен в течение двух минут (`dumbmonit_container_up == bool 0`). | > 0 | 2 мин | Advisory (`warning`) | 1 ч |
-| Container unhealthy | Проверка работоспособности контейнера не проходит три минуты (`dumbmonit_container_health == 2`; 0 нет, 1 здоров, 3 запускается). | > 0 | 3 мин | Advisory (`warning`) | 1 ч |
+| Container stopped | Контейнер остановлен в течение двух минут (`dumbmonit_container_up == bool 0`). Контейнер, который Docker не стал бы перезапускать, не учитывается (`dumbmonit_container_stop_expected = 1`): одноразовый `docker run`, завершившийся штатно, контейнер, который так и не запускали, или остановленный вручную без политики перезапуска. Сбой (любой другой код выхода), завершение по нехватке памяти или контейнер с `always` / `unless-stopped` по-прежнему учитываются. | > 0 | 2 мин | Advisory (`warning`) | 1 ч |
+| Container unhealthy | Проверка работоспособности контейнера не проходит три минуты (`dumbmonit_container_health == 2`; 0 нет, 1 здоров, 3 запускается). Остановленный контейнер не учитывается: Docker хранит его последний вердикт, который уже ничего не значит. | > 0 | 3 мин | Advisory (`warning`) | 1 ч |
 | Container restarting | Контейнер перезапускался три раза или более за пятнадцать минут (`increase(dumbmonit_container_restart_count[15m])`): он редко остаётся остановленным достаточно долго для предыдущего правила. | ≥ 3 | 1 мин | Advisory (`warning`) | 1 ч |
 | Container update available | В реестре доступен более новый образ для этого контейнера (`dumbmonit_container_update_available == 1`). | > 0 | 1 ч | Info (`info`) | 24 ч |
 
@@ -81,7 +81,8 @@
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
 | Plakar backup too old | Нет нового снимка Plakar для этого источника более двух дней (`dumbmonit_backup_last_success_seconds`). | > 2 дн | 1 ч | Advisory (`warning`) | 24 ч |
-| Plakar backup failed | Последний снимок содержит ошибки или kloset не удаётся прочитать (`dumbmonit_backup_last_status < 1`). | < 1 | 10 мин | Warning (`critical`) | 24 ч |
+| Plakar backup failed | Последний снимок содержит ошибки (`dumbmonit_backup_last_status{source!="*"} < 1`). | < 1 | 10 мин | Warning (`critical`) | 24 ч |
+| Plakar kloset unreadable | Агент не может открыть kloset: хранилище недоступно, не хватает парольной фразы или плагина; в журнале агента указано, чего именно, один раз (`dumbmonit_backup_last_status{source="*"} < 1`). | < 1 | 30 мин | Advisory (`warning`) | 24 ч |
 
 ### Резервные копии restic и Borg
 
@@ -280,7 +281,7 @@ VictoriaMetrics, VictoriaLogs, Loki и Graylog ([устройства](../device
 | Metrics or log storage almost read-only | Осталось менее 10% диска до перехода в режим только для чтения (`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`); сбрасывается выше 12 %. | < 10 % | 30 мин | Advisory (`warning`) | 24 ч |
 | Metrics or log server unhealthy | `/health` не отвечает OK (`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`). | < 1 | 3 мин | Warning (`critical`) | 6 ч |
 | Metrics or log data refused | Сэмплы или строки логов отклонены за последний час: метки времени вне срока хранения, слишком длинные метки, лимит рядов (`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
-| VictoriaMetrics slow inserts | Более 5% новых сэмплов за 15 минут пошли по медленному пути: не хватает памяти для активных рядов (`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`); сбрасывается ниже 3 %. | > 5 % | 30 мин | Advisory (`warning`) | 24 ч |
+| VictoriaMetrics slow inserts | Более 5% новых сэмплов за 15 минут пошли по медленному пути: не хватает памяти для активных рядов (`(100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) and on (target) dumbmonit_victoriametrics_uptime_seconds > 900`); сбрасывается ниже 3 %. Оценивается, только когда сервер проработал 15 минут, поэтому перезапуск (холодный кэш, счётчики обнулились внутри окна) не оставляет правило в ожидании. | > 5 % | 30 мин | Advisory (`warning`) | 24 ч |
 | Loki not ready | `/ready` не отвечает ready (`dumbmonit_loki_ready`). | < 1 | 5 мин | Warning (`critical`) | 6 ч |
 | Loki refusing log lines | Строки отклонены за последний час: слишком старые, лимит скорости или потока, слишком длинная строка (`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
 | Loki cannot flush to storage | Чанки не смогли попасть в хранилище за последние 30 минут; они теряются, если Loki перезапустится (`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`). | > 0 | 10 мин | Warning (`critical`) | 1 ч |
@@ -494,7 +495,7 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| Website changed | Последняя проверка отслеживаемой страницы или сайта нашла страницы, которые изменились, появились или исчезли (`dumbmonit_webchange_last_check_changes`). Разрешается при следующей проверке, которая ничего не находит. | > 0 | 30 с | Info (`info`) | нет |
+| Website changed | Проверка отслеживаемой страницы или сайта нашла страницы, которые изменились, появились или исчезли (`dumbmonit_webchange_last_check_changes`). О каждой такой проверке уведомляют с перечислением страниц, в рамках того же оповещения, пока оно активно; оно снимается при первой проверке, не нашедшей ничего нового. | > 0 | 30 с | Info (`info`) | нет |
 
 ### Kubernetes
 
@@ -506,7 +507,7 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 |---|---|---|---|---|---|
 | Kubernetes node not ready | Узел не Ready: его kubelet больше не сообщает, и его поды будут вытеснены (`dumbmonit_k8s_node_ready == bool 0`). | > 0 | 5 мин | Warning (`critical`) | 6 ч |
 | Kubernetes node under pressure | Узел сообщает о нехватке памяти, диска или PID (`dumbmonit_k8s_node_pressure`, метка `condition`). | > 0 | 5 мин | Advisory (`warning`) | 6 ч |
-| Kubernetes pod crash looping | Контейнер в состоянии `CrashLoopBackOff` (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`: состояние на мгновение исчезает при каждой попытке перезапуска). | > 0 | 10 мин | Warning (`critical`) | 6 ч |
+| Kubernetes pod crash looping | Контейнер в состоянии `CrashLoopBackOff` и всё ещё перезапускается: не менее двух перезапусков за 15 минут (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2`; состояние на мгновение исчезает при каждой попытке перезапуска). Контейнеры, убитые перезапуском узла или среды выполнения (код выхода 137, 143 или 255, не `OOMKilled`), не учитываются, поэтому перезагрузка не выглядит как цикл сбоев. | > 0 | 10 мин | Warning (`critical`) | 6 ч |
 | Kubernetes pod stuck pending | Под находится в Pending пятнадцать минут: ни один узел не может его принять или не появляется необходимый ему том или образ (`dumbmonit_k8s_pod_pending`). | > 0 | 15 мин | Advisory (`warning`) | 6 ч |
 | Kubernetes pod restarting | Под перезапускался более пяти раз за последний час, не находясь в `CrashLoopBackOff` (`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`). | > 5 | 5 мин | Advisory (`warning`) | 6 ч |
 | Kubernetes workload missing replicas | У Deployment, StatefulSet или DaemonSet меньше доступных реплик, чем он запрашивает (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 мин | Advisory (`warning`), эскалируется через 1 ч | 6 ч |

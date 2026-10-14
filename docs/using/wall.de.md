@@ -10,6 +10,77 @@ für diese Anzeige, ohne Ihre gespeicherte Präferenz zu berühren.
 
 ![Wall-Modus](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Jedes Problem links trägt das Produktsymbol seines Geräts (dieselben Zeichen wie
+in den Gerätelisten). Die Liste wächst nie über ihren Platz hinaus: Auf einem
+kleinen Bildschirm oder bei vielen Problemen schrumpfen die großen Kacheln auf
+je eine Zeile und fassen sich dann zu *Und N weitere* zusammen, statt die
+darunterliegenden Geräte zu überdecken.
+
+## Nachrichten an der Wand
+
+Ein Admin kann der Wall unter **Settings → Wall-Nachrichten** **Schlagzeilen**
+und einen **Live-Kanal** hinzufügen. Beides ist standardmäßig aus.
+
+- **Schlagzeilen-Ticker.** Ein Band am unteren Rand der Wall lässt die
+  neuesten Schlagzeilen durchlaufen, jeweils mit Quelle und Alter, und
+  aktualisiert sich alle fünf Minuten. Ist im System der Anzeige *reduzierte
+  Bewegung* aktiviert, gleitet nichts: Eine Schlagzeile nach der anderen blendet
+  ein und aus.
+- **Live-Video.** Ein stummer Live-Kanal in einer Kachel, in der rechten Spalte
+  unter der Uhr (oder in der Mitte der Szene), klein, mittel oder groß. Die
+  Kachel schrumpft auf den verbleibenden Platz; sie verdeckt nie den Status.
+
+Der Server liest die Feeds, nicht der Browser (Browser können die Feeds anderer
+Sites nicht lesen). Er folgt höchstens drei Weiterleitungen, lehnt interne
+Adressen ab, gibt nach acht Sekunden oder 2 MB pro Feed auf und hält die Antwort
+fünf Minuten für alle Walls im Cache. Er liest RSS 2.0, RSS 1.0 (RDF) und Atom.
+
+### Quellen wählen
+
+Wählen Sie ein **Land** (vorausgewählt anhand von Region und Sprache Ihres
+Browsers) und haken Sie dann seine Quellen an: insgesamt bis zu acht Feeds. Um
+einen beliebigen anderen Feed zu nutzen, fügen Sie seine RSS- oder
+Atom-Adresse unter **Eigenen Feed hinzufügen** ein und drücken Sie **Testen**:
+DumbMonit liest ihn wirklich und zeigt die neueste Schlagzeile, bevor Sie ihn
+hinzufügen.
+
+Für das Video wählen Sie einen der Kanäle des Landes oder **Anderer Link…** und
+fügen eine normale YouTube-, Dailymotion- oder Twitch-Adresse ein (ein Video,
+ein Live oder die `/live`-Seite eines YouTube-Kanals); DumbMonit wandelt sie in
+den einbettbaren Player um. Nur diese drei Player können gezeigt werden. Ein
+Live wird nur dann als Voreinstellung angeboten, wenn der Kanal einen stabilen
+offiziellen hat.
+
+| Land | Schlagzeilen | Live-Video |
+|---|---|---|
+| Frankreich | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Schweiz | RTS Info, SRF News, Le Temps, NZZ | keine |
+| Belgien | RTBF, VRT NWS, La DH | keine |
+| Deutschland | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Vereinigtes Königreich | BBC News, The Guardian | Sky News |
+| Vereinigte Staaten | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Kanada | Radio-Canada, CBC News | CBC News |
+| Spanien | RTVE, 20minutos, El País, El Mundo | keine |
+| Italien | ANSA, RaiNews | keine |
+| Portugal | RTP Notícias, Público | keine |
+| Brasilien | G1, Folha de S.Paulo | CNN Brasil |
+| Russland | Interfax, Meduza, Kommersant | keine |
+| China | CGTN, South China Morning Post, Xinhua | CGTN |
+| International | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+Der Feed von BFM TV ist `https://www.bfmtv.com/rss/news-24-7/`. Die Liste wurde
+bei ihrer Erstellung geprüft; eine Site kann ihren Feed jederzeit verschieben,
+und dann überspringt der Ticker ihn einfach. **Testen** Sie den Ersatz und
+fügen Sie ihn als eigenen Feed hinzu.
+
+Die Content Security Policy der Wall erlaubt der Seite nur Player von YouTube
+(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify und Deezer einzubetten.
+
+### API
+
+`GET /api/wall/news` (was die Walls abfragen), `GET|PUT /api/wall/news/settings`
+und `POST /api/wall/news/test` (Admin), `GET /api/wall/news/presets`.
+
 ## Musik an der Wand
 
 Die Wall kann auch Musik abspielen und zeigen, was läuft, sodass Sie

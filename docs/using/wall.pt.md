@@ -10,6 +10,77 @@ esse ecrã sem tocar na sua preferência guardada.
 
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
+Cada problema à esquerda leva o ícone do produto do seu dispositivo (as
+mesmas marcas das listas de dispositivos). A lista nunca ultrapassa o seu
+espaço: num ecrã pequeno, ou com muitos problemas, os mosaicos grandes
+encolhem para uma linha cada, depois recolhem-se em *E mais N*, em vez de
+se sobreporem aos dispositivos de baixo.
+
+## Notícias na parede {#news-on-the-wall}
+
+Um administrador pode acrescentar **títulos** e um **canal em direto** à
+parede em **Settings → Wall news**. Ambos vêm desativados por predefinição.
+
+- **Faixa de títulos.** Uma faixa ao longo da base da parede faz deslizar os
+  últimos títulos, cada um com a sua fonte e idade, e atualiza-se de cinco em
+  cinco minutos. Com *reduced motion* ativo no sistema do ecrã, nada desliza:
+  um título de cada vez aparece e desaparece gradualmente.
+- **Vídeo em direto.** Um canal em direto sem som, num mosaico, na coluna
+  direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
+  mosaico encolhe para o espaço que sobra; nunca tapa o estado.
+
+É o servidor que lê os feeds, não o navegador (os navegadores não podem ler
+os feeds de outros sites). Segue no máximo três redirecionamentos, recusa
+endereços internos, desiste ao fim de oito segundos ou 2 MB por feed, e
+guarda a resposta em cache durante cinco minutos para todas as paredes. Lê
+RSS 2.0, RSS 1.0 (RDF) e Atom.
+
+### Escolher as fontes {#choosing-sources}
+
+Escolha um **país** (pré-selecionado a partir da região e do idioma do seu
+navegador), depois marque as suas fontes: até oito feeds no total. Para usar
+qualquer outro feed, cole o seu endereço RSS ou Atom em **Add a custom feed**
+e prima **Test**: o DumbMonit lê-o a sério e mostra o último título antes de
+o acrescentar.
+
+Para o vídeo, escolha um dos canais do país ou **Another link…** e cole um
+endereço normal do YouTube, Dailymotion ou Twitch (um vídeo, um direto, ou a
+página `/live` de um canal do YouTube); o DumbMonit converte-o no leitor
+incorporável. Só estes três leitores podem ser mostrados. Um direto só é
+oferecido como predefinição quando o canal tem um oficial estável.
+
+| País | Títulos | Vídeo em direto |
+|---|---|---|
+| França | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| Suíça | RTS Info, SRF News, Le Temps, NZZ | nenhum |
+| Bélgica | RTBF, VRT NWS, La DH | nenhum |
+| Alemanha | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Reino Unido | BBC News, The Guardian | Sky News |
+| Estados Unidos | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
+| Canadá | Radio-Canada, CBC News | CBC News |
+| Espanha | RTVE, 20minutos, El País, El Mundo | nenhum |
+| Itália | ANSA, RaiNews | nenhum |
+| Portugal | RTP Notícias, Público | nenhum |
+| Brasil | G1, Folha de S.Paulo | CNN Brasil |
+| Rússia | Interfax, Meduza, Kommersant | nenhum |
+| China | CGTN, South China Morning Post, Xinhua | CGTN |
+| Internacional | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+
+O feed da BFM TV é `https://www.bfmtv.com/rss/news-24-7/`. A lista foi
+verificada quando foi escrita; um site pode mudar o seu feed a qualquer
+momento, e então a faixa limita-se a ignorá-lo. Use **Test** na substituição
+e acrescente-a como feed personalizado.
+
+A política de segurança de conteúdo da parede só deixa a página enquadrar
+leitores do YouTube (`youtube-nocookie.com`), Dailymotion, Twitch, Spotify e
+Deezer.
+
+### API {#api}
+
+`GET /api/wall/news` (o que as paredes consultam), `GET|PUT
+/api/wall/news/settings` e `POST /api/wall/news/test` (admin), `GET
+/api/wall/news/presets`.
+
 ## Música na parede {#music-on-the-wall}
 
 A parede também pode reproduzir música e mostrar o que está a tocar,
@@ -172,7 +243,7 @@ permite exatamente os três leitores incorporados, o script de leitor
 do Spotify (`sdk.scdn.co/spotify-player.js`) e a sua frame, e cobre
 de `i.scdn.co` — nada mais, e nada fora da interface web.
 
-### API {#api}
+### API {#api_1}
 
 | Rota | Quem | O quê |
 |---|---|---|

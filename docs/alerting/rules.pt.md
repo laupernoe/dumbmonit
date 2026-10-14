@@ -58,7 +58,7 @@ entregue com uma fonte de alimentação de duas nunca dispara.
 | Service down | O serviço não respondeu corretamente durante três minutos (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 min | Warning (`critical`) | 30 min |
 | Heartbeat missed | A tarefa não chamou dentro do seu intervalo esperado mais o período de margem, ou reportou uma falha ela própria (`dumbmonit_probe_success{probe="push"} == bool 0`; o prazo é definido por dispositivo, ver [Heartbeat](../devices/push.md)). | > 0 | 2 min | Advisory (`warning`) | 6 h |
 | Service flapping | O serviço mudou de estado mais de seis vezes em trinta minutos (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 min | Advisory (`warning`) | 1 h |
-| Slow service | O serviço demora mais de três segundos a responder. | > 3 s | 10 min | Advisory (`warning`) | 6 h |
+| Slow service | O serviço demora mais de três segundos a responder; as verificações falhadas ficam de fora (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 min | Advisory (`warning`) | 6 h |
 | Certificate expiring soon | O certificado expira em menos de catorze dias. | < 14 d | 1 h | Advisory (`warning`) | 24 h |
 | Certificate expired | O certificado expirou. | < 0 d | 5 min | Warning (`critical`) | 24 h |
 
@@ -69,8 +69,8 @@ nomeia o contentor.
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Container stopped | O contentor está parado há dois minutos (`dumbmonit_container_up == bool 0`). | > 0 | 2 min | Advisory (`warning`) | 1 h |
-| Container unhealthy | A verificação de saúde do contentor está a falhar há três minutos (`dumbmonit_container_health == 2`; 0 nenhuma, 1 saudável, 3 a iniciar). | > 0 | 3 min | Advisory (`warning`) | 1 h |
+| Container stopped | O contentor está parado há dois minutos (`dumbmonit_container_up == bool 0`). Um contentor que o Docker não reiniciaria fica de fora (`dumbmonit_container_stop_expected = 1`): um `docker run` pontual que terminou, um contentor nunca iniciado, ou um parado à mão sem política de reinício. Uma falha (qualquer outro código de saída), um encerramento por falta de memória, ou um contentor `always` / `unless-stopped` continua a contar. | > 0 | 2 min | Advisory (`warning`) | 1 h |
+| Container unhealthy | A verificação de saúde do contentor está a falhar há três minutos (`dumbmonit_container_health == 2`; 0 nenhuma, 1 saudável, 3 a iniciar). Um contentor parado fica de fora: o Docker guarda o seu último veredicto, que já não significa nada. | > 0 | 3 min | Advisory (`warning`) | 1 h |
 | Container restarting | O contentor reiniciou três vezes ou mais em quinze minutos (`increase(dumbmonit_container_restart_count[15m])`): raramente fica parado o tempo suficiente para a regra anterior. | ≥ 3 | 1 min | Advisory (`warning`) | 1 h |
 | Container update available | Uma imagem mais recente está disponível no registo para este contentor (`dumbmonit_container_update_available == 1`). | > 0 | 1 h | Info (`info`) | 24 h |
 
@@ -83,7 +83,8 @@ disparar numa máquina sem ele.
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | Plakar backup too old | Nenhum snapshot Plakar novo para esta fonte há mais de dois dias (`dumbmonit_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
-| Plakar backup failed | O snapshot mais recente tem erros, ou o kloset não pode ser lido (`dumbmonit_backup_last_status < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar backup failed | O snapshot mais recente tem erros (`dumbmonit_backup_last_status{source!="*"} < 1`). | < 1 | 10 min | Warning (`critical`) | 24 h |
+| Plakar kloset unreadable | O agente não consegue abrir o kloset: armazenamento inacessível, senha ou plugin em falta; o registo do agente diz qual, uma vez (`dumbmonit_backup_last_status{source="*"} < 1`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
 ### Cópias de segurança restic e Borg {#restic-and-borg-backups}
 
@@ -286,7 +287,7 @@ histórico de dados recusados não dispara na sua primeira medição.
 | Metrics or log storage almost read-only | Menos de 10% do disco restante antes de só leitura (`dumbmonit_victoriametrics_disk_headroom_percent or dumbmonit_victorialogs_disk_headroom_percent`); limpa-se acima de 12%. | < 10 % | 30 min | Advisory (`warning`) | 24 h |
 | Metrics or log server unhealthy | `/health` não responde OK (`dumbmonit_victoriametrics_healthy or dumbmonit_victorialogs_healthy`). | < 1 | 3 min | Warning (`critical`) | 6 h |
 | Metrics or log data refused | Amostras ou linhas de log recusadas na última hora: data-horas fora da retenção, etiquetas demasiado longas, limite de série (`increase_prometheus(dumbmonit_victoriametrics_rows_rejected_total[1h]) or increase_prometheus(dumbmonit_victorialogs_rows_rejected_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
-| VictoriaMetrics slow inserts | Mais de 5% das novas amostras seguiram o caminho lento ao longo de 15 minutos: memória insuficiente para as séries ativas (`100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])`); limpa-se abaixo de 3%. | > 5 % | 30 min | Advisory (`warning`) | 24 h |
+| VictoriaMetrics slow inserts | Mais de 5% das novas amostras seguiram o caminho lento ao longo de 15 minutos: memória insuficiente para as séries ativas (`(100 * increase_prometheus(dumbmonit_victoriametrics_slow_inserts_total[15m]) / increase_prometheus(dumbmonit_victoriametrics_rows_added_total[15m])) and on (target) dumbmonit_victoriametrics_uptime_seconds > 900`); limpa-se abaixo de 3%. Só é avaliada depois de o servidor estar em execução há 15 minutos, para que um reinício (cache fria, contadores a zero dentro da janela) não a deixe pendente. | > 5 % | 30 min | Advisory (`warning`) | 24 h |
 | Loki not ready | `/ready` não responde ready (`dumbmonit_loki_ready`). | < 1 | 5 min | Warning (`critical`) | 6 h |
 | Loki refusing log lines | Linhas recusadas na última hora: demasiado antigas, limite de taxa ou stream, linha demasiado longa (`increase_prometheus(dumbmonit_loki_discarded_lines_total[1h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Loki cannot flush to storage | Chunks falharam ao chegar ao armazenamento nos últimos 30 minutos; perdem-se se o Loki reiniciar (`increase_prometheus(dumbmonit_loki_flush_failures_total[30m])`). | > 0 | 10 min | Warning (`critical`) | 1 h |
@@ -538,7 +539,7 @@ dispositivo mostra cada alteração antes e depois.
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Website changed | A última verificação de uma página ou site monitorizado encontrou páginas que mudaram, apareceram ou desapareceram (`dumbmonit_webchange_last_check_changes`). Resolve-se na verificação seguinte que não encontra nenhuma. | > 0 | 30 s | Info (`info`) | nenhum |
+| Website changed | Uma verificação de uma página ou site monitorizado encontrou páginas que mudaram, apareceram ou desapareceram (`dumbmonit_webchange_last_check_changes`). Cada verificação assim é notificada e nomeia as páginas, sob o mesmo alerta enquanto dispara; resolve-se na primeira verificação que não encontra nada de novo. | > 0 | 30 s | Info (`info`) | nenhum |
 
 ### Kubernetes {#kubernetes}
 
@@ -550,7 +551,7 @@ reivindicação em causa.
 |---|---|---|---|---|---|
 | Kubernetes node not ready | Um nó não está Ready: o seu kubelet já não reporta, e os seus pods serão despejados (`dumbmonit_k8s_node_ready == bool 0`). | > 0 | 5 min | Warning (`critical`) | 6 h |
 | Kubernetes node under pressure | Um nó reporta pressão de memória, disco ou PID (`dumbmonit_k8s_node_pressure`, etiqueta `condition`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
-| Kubernetes pod crash looping | Um contentor está em `CrashLoopBackOff` (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m])`: o estado desaparece por um momento a cada tentativa de reinício). | > 0 | 10 min | Warning (`critical`) | 6 h |
+| Kubernetes pod crash looping | Um contentor está em `CrashLoopBackOff` e ainda a reiniciar: pelo menos dois reinícios em 15 minutos (`max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) >= 2`; o estado desaparece por um momento a cada tentativa de reinício). Contentores mortos por um reinício do nó ou do runtime (saída 137, 143 ou 255, não `OOMKilled`) não contam, para que um reboot não pareça um ciclo de falhas. | > 0 | 10 min | Warning (`critical`) | 6 h |
 | Kubernetes pod stuck pending | Um pod está Pending há quinze minutos: nenhum nó o pode levar, ou um volume ou imagem que precisa não chega (`dumbmonit_k8s_pod_pending`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
 | Kubernetes pod restarting | Um pod reiniciou mais de cinco vezes na última hora sem estar em `CrashLoopBackOff` (`increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) > 0`). | > 5 | 5 min | Advisory (`warning`) | 6 h |
 | Kubernetes workload missing replicas | Um Deployment, StatefulSet ou DaemonSet tem menos réplicas disponíveis do que pede (`dumbmonit_k8s_workload_unavailable`). | > 0 | 10 min | Advisory (`warning`), agrava depois de 1 h | 6 h |
