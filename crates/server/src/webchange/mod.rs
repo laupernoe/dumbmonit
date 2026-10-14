@@ -60,6 +60,7 @@ pub mod robots;
 pub mod scope;
 pub mod sitemap;
 pub mod store;
+pub mod zones;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -157,11 +158,13 @@ impl Collector for WebchangeCollector {
         }
 
         let Some(state) = state else { return Ok(Vec::new()) };
-        if let (Some(message), Some(kind)) = (state.last_error, state.last_error_kind.as_deref()) {
+        if let (Some(message), Some(kind)) =
+            (state.last_error.as_deref(), state.last_error_kind.as_deref())
+        {
             return Err(match kind {
-                "down" => ProbeError::Unreachable(message),
-                "auth" => ProbeError::Auth(message),
-                _ => ProbeError::Config(message),
+                "down" => ProbeError::Unreachable(message.to_string()),
+                "auth" => ProbeError::Auth(message.to_string()),
+                _ => ProbeError::Config(message.to_string()),
             });
         }
         if state.last_check_at.is_none() {
@@ -173,14 +176,63 @@ impl Collector for WebchangeCollector {
         Ok(vec![
             Sample::new("webchange_pages", pages as f64, MetricKind::Gauge, now),
             Sample::new("webchange_pages_failed", failed as f64, MetricKind::Gauge, now),
-            Sample::new(
-                "webchange_last_check_changes",
-                state.last_check_changes as f64,
-                MetricKind::Gauge,
-                now,
-            ),
+            last_check_changes(&state, now),
         ])
     }
+}
+
+/// Changements de la dernière vérification. Quand il y en a, la série porte
+/// les pages concernées (`changes`, que la notification affiche) et l'heure de
+/// la vérification (`check`) : chaque vérification qui trouve quelque chose est
+/// une série, donc une alerte, nouvelle, et notifiée même si la précédente
+/// n'était pas encore résolue ; celle d'avant, qui n'est plus écrite, se
+/// résout d'elle-même.
+fn last_check_changes(state: &store::State, now: i64) -> Sample {
+    let sample = Sample::new(
+        "webchange_last_check_changes",
+        state.last_check_changes as f64,
+        MetricKind::Gauge,
+        now,
+    );
+    match (&state.last_check_summary, &state.last_check_at) {
+        (Some(summary), Some(at)) if state.last_check_changes > 0 => {
+            sample.with_label("changes", summary.as_str()).with_label("check", at.as_str())
+        }
+        _ => sample,
+    }
+}
+
+/// Les pages d'une vérification en quelques mots, dans l'ordre où elles ont
+/// été lues : « /tarifs, /contact, / and 4 more ».
+fn summarise(urls: &[String]) -> Option<String> {
+    const SHOWN: usize = 3;
+    const MAX_PATH: usize = 60;
+    if urls.is_empty() {
+        return None;
+    }
+    let path = |url: &String| {
+        let path = reqwest::Url::parse(url).map_or_else(
+            |_| url.clone(),
+            |u| {
+                let mut path = u.path().to_string();
+                if let Some(query) = u.query() {
+                    path = format!("{path}?{query}");
+                }
+                path
+            },
+        );
+        if path.chars().count() > MAX_PATH {
+            format!("{}…", path.chars().take(MAX_PATH - 1).collect::<String>())
+        } else {
+            path
+        }
+    };
+    let shown: Vec<String> = urls.iter().take(SHOWN).map(path).collect();
+    let mut summary = shown.join(", ");
+    if urls.len() > SHOWN {
+        summary.push_str(&format!(" and {} more", urls.len() - SHOWN));
+    }
+    Some(summary)
 }
 
 /// Lance une vérification en tâche de fond, sauf si une autre est en cours.
@@ -267,6 +319,8 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
     let known: HashMap<String, store::PageRow> =
         store::pages(pool, id).await?.into_iter().map(|page| (page.url.clone(), page)).collect();
     let mut changes = 0i64;
+    // Adresses des pages changées, dans l'ordre du parcours, pour le résumé.
+    let mut changed: Vec<String> = Vec::new();
     let mut to_capture: Vec<(i64, String)> = Vec::new();
     let mut seen = HashSet::new();
 
@@ -293,10 +347,12 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed,
                         before,
                         after: None,
+                        signature: None,
                     },
                 )
                 .await?;
                 changes += 1;
+                changed.push(url.to_string());
             }
             let removed = page.gone || stored.is_some_and(|s| s.removed);
             store::save_page(
@@ -359,6 +415,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed: 0,
                         before: None,
                         after: Some(snapshot),
+                        signature: None,
                     },
                 )
                 .await?;
@@ -373,7 +430,9 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                 };
                 let old_lines: Vec<&str> = old.lines().collect();
                 let new_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-                let (added, removed) = diff::counts(&diff::diff(&old_lines, &new_lines));
+                let edits = diff::diff(&old_lines, &new_lines);
+                let (added, removed) = diff::counts(&edits);
+                let signature = diff::signature(&edits);
                 store::insert_change(
                     pool,
                     id,
@@ -384,6 +443,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed: removed as i64,
                         before,
                         after: Some(snapshot),
+                        signature: Some(&signature),
                     },
                 )
                 .await?;
@@ -392,6 +452,7 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
         }
         if recorded {
             changes += 1;
+            changed.push(url.to_string());
         }
         store::save_page(
             pool,
@@ -427,10 +488,12 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
                         removed,
                         before: page.latest_snapshot,
                         after: None,
+                        signature: None,
                     },
                 )
                 .await?;
                 changes += 1;
+                changed.push(url.to_string());
             }
             store::save_page(
                 pool,
@@ -474,6 +537,8 @@ async fn run_check(context: &Context, target: &Target) -> anyhow::Result<i64> {
         id,
         &options.fingerprint,
         changes,
+        summarise(&changed).as_deref(),
+        crawl.found.map(|found| found as i64),
         start_error.as_ref().map(|(kind, message)| (*kind, message.as_str())),
     )
     .await?;
@@ -541,5 +606,42 @@ async fn capture_all(
                 return;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn le_resume_cite_trois_pages_puis_compte_les_autres() {
+        let urls = |paths: &[&str]| -> Vec<String> {
+            paths.iter().map(|p| format!("https://ex.fr{p}")).collect()
+        };
+        assert_eq!(summarise(&[]), None);
+        assert_eq!(summarise(&urls(&["/"])).as_deref(), Some("/"));
+        assert_eq!(
+            summarise(&urls(&["/tarifs", "/contact?lang=fr", "/a", "/b", "/c"])).as_deref(),
+            Some("/tarifs, /contact?lang=fr, /a and 2 more")
+        );
+        let long = format!("/{}", "x".repeat(100));
+        assert_eq!(summarise(&urls(&[&long])).unwrap().chars().count(), 60);
+    }
+
+    #[test]
+    fn chaque_verification_qui_trouve_des_changements_est_une_serie_nouvelle() {
+        let state = |changes: i64, summary: Option<&str>, at: &str| store::State {
+            last_check_changes: changes,
+            last_check_summary: summary.map(str::to_string),
+            last_check_at: Some(at.to_string()),
+            ..Default::default()
+        };
+        let quiet = last_check_changes(&state(0, None, "2026-10-13 10:00:00"), 0);
+        assert!(quiet.labels.is_empty());
+        assert_eq!(quiet.value, 0.0);
+        let first = last_check_changes(&state(2, Some("/a, /b"), "2026-10-13 10:00:00"), 0);
+        let second = last_check_changes(&state(2, Some("/a, /b"), "2026-10-13 11:00:00"), 0);
+        assert_eq!(first.labels.get("changes").map(String::as_str), Some("/a, /b"));
+        assert_ne!(first.labels, second.labels, "mêmes pages, autre vérification");
     }
 }

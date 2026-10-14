@@ -72,6 +72,23 @@ pub fn counts(edits: &[(Edit, &str)]) -> (usize, usize) {
     (added, removed)
 }
 
+/// Empreinte de ce qui a bougé : les lignes retirées puis les lignes
+/// ajoutées, dans l'ordre, sans le contexte. Une même modification faite sur
+/// plusieurs pages (un bandeau ajouté partout) a la même empreinte, quel que
+/// soit le reste de chaque page.
+pub fn signature(edits: &[(Edit, &str)]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    for wanted in [Edit::Delete, Edit::Insert] {
+        for (_, line) in edits.iter().filter(|(edit, _)| *edit == wanted) {
+            hasher.update(line.as_bytes());
+            hasher.update([0]);
+        }
+        hasher.update([1]);
+    }
+    hex::encode(&hasher.finalize()[..12])
+}
+
 /// Le diff à afficher : `context` lignes autour de chaque modification, le
 /// reste des plages inchangées réduit à une ligne `skip`.
 pub fn render(edits: &[(Edit, &str)], context: usize) -> Vec<DiffLine> {
@@ -208,6 +225,18 @@ mod tests {
         let before = edits.iter().filter(|(e, _)| *e != Edit::Insert).map(|(_, t)| t.to_string());
         let after = edits.iter().filter(|(e, _)| *e != Edit::Delete).map(|(_, t)| t.to_string());
         (before.collect(), after.collect())
+    }
+
+    #[test]
+    fn la_meme_modification_sur_deux_pages_a_la_meme_signature() {
+        let a =
+            diff(&["Accueil", "Ancien bandeau", "Page A"], &["Accueil", "Bandeau neuf", "Page A"]);
+        let b = diff(&["Ancien bandeau", "Page B", "Fin"], &["Bandeau neuf", "Page B", "Fin"]);
+        let c = diff(&["Ancien bandeau"], &["Autre bandeau"]);
+        assert_eq!(signature(&a), signature(&b));
+        assert_ne!(signature(&a), signature(&c));
+        // Retirer une ligne n'est pas l'ajouter.
+        assert_ne!(signature(&diff(&["x"], &[])), signature(&diff(&[], &["x"])));
     }
 
     #[test]

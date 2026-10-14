@@ -36,6 +36,9 @@ struct PagesView {
     /// Un navigateur est configuré et répond : les nouveaux instantanés
     /// auront une capture.
     screenshots_available: bool,
+    /// Pages trouvées quand « Max pages » a arrêté le dernier parcours ; absent
+    /// quand tout le site a été lu.
+    found: Option<i64>,
     pages: Vec<PageView>,
 }
 
@@ -62,6 +65,8 @@ struct ChangeView {
     removed: i64,
     before: Option<i64>,
     after: Option<i64>,
+    /// Même valeur pour une même modification faite sur plusieurs pages.
+    signature: Option<String>,
 }
 
 impl From<store::ChangeRow> for ChangeView {
@@ -75,6 +80,7 @@ impl From<store::ChangeRow> for ChangeView {
             removed: row.removed,
             before: row.before_snapshot,
             after: row.after_snapshot,
+            signature: row.signature,
         }
     }
 }
@@ -136,7 +142,8 @@ async fn pages(
         })
         .collect();
     let screenshots_available = Context::from_state(&state).screenshots_available().await;
-    Ok(Json(PagesView { screenshots_available, pages }))
+    let found = store::state(&state.pool, id).await?.and_then(|state| state.last_check_found);
+    Ok(Json(PagesView { screenshots_available, found, pages }))
 }
 
 /// `GET /api/targets/{id}/webchange/changes?url=…&limit=…`

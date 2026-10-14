@@ -1097,6 +1097,39 @@ const WEBCHANGE_OPTIONS: &[OptionView] = &[
         "Updated \\d+ minutes ago|Visitors: \\d+",
         "",
     ),
+    text(
+        "content_selector",
+        "Watched area",
+        "Compare only the text inside these elements: a tag, #id, .class or [attribute=value], several separated by commas, for example main or #content. Empty, or not found on a page: the whole page.",
+        "main, #content",
+        "",
+    ),
+    text(
+        "exclude_selector",
+        "Excluded areas",
+        "Leave the text of these elements out, same syntax: a cookie banner, a \"latest posts\" box, an ad slot. For example .cookie-banner, #sidebar.",
+        ".cookie-banner, #sidebar",
+        "",
+    ),
+    boolean(
+        "keep_page_chrome",
+        "Compare menus, header and footer",
+        "Off by default: the site's navigation, header, footer and sidebars are the same on every page, so a new menu entry would mark every page as changed. Their links are still followed.",
+        false,
+    ),
+    boolean(
+        "ignore_query",
+        "Ignore query strings",
+        "Site scope: addresses that differ only by their ?… part are one page. Tracking parameters (utm_…, fbclid, gclid…) are always left out.",
+        false,
+    ),
+    text(
+        "user_agent",
+        "User agent",
+        "Sent instead of DumbMonit's own, for a site that turns robots away. Empty: DumbMonit/<version>.",
+        "Mozilla/5.0 (compatible; DumbMonit)",
+        "",
+    ),
     boolean(
         "screenshots",
         "Screenshots",
@@ -5427,6 +5460,11 @@ mod tests {
                     "max_pages",
                     "path_prefix",
                     "ignore",
+                    "content_selector",
+                    "exclude_selector",
+                    "keep_page_chrome",
+                    "ignore_query",
+                    "user_agent",
                     "screenshots",
                     "check_interval_minutes",
                     "insecure_tls",
@@ -6258,9 +6296,14 @@ mod tests {
             Some(o::DEFAULT_CHECK_INTERVAL_MINUTES.to_string().as_str())
         );
         assert_eq!(defaut(o::OPTION_SCREENSHOTS), Some("true"));
+        assert_eq!(defaut(o::OPTION_KEEP_CHROME), Some("false"));
         for cle in [
             o::OPTION_PATH_PREFIX,
             o::OPTION_IGNORE,
+            o::OPTION_CONTENT_SELECTOR,
+            o::OPTION_EXCLUDE_SELECTOR,
+            o::OPTION_IGNORE_QUERY,
+            o::OPTION_USER_AGENT,
             o::OPTION_INSECURE_TLS,
             o::OPTION_ALLOW_PRIVATE,
         ] {

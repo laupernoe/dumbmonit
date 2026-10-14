@@ -173,6 +173,8 @@ export interface WebchangePage {
 export interface WebchangePagesResponse {
 	/** False when the server has no headless browser configured: text diffing still works. */
 	screenshots_available: boolean;
+	/** Pages found when Max pages stopped the last crawl (read and still queued); `null` when the whole site was read. */
+	found: number | null;
 	pages: WebchangePage[];
 }
 
@@ -190,6 +192,8 @@ export interface WebchangeChange {
 	before: number | null;
 	/** Id of the snapshot taken after the change, or `null` for a removed page. */
 	after: number | null;
+	/** Same value for the same lines removed and added on several pages; `null` for a new or removed page. */
+	signature: string | null;
 }
 
 /** One fetched copy of a page, referenced by a change's `before`/`after`. */

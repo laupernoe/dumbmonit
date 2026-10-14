@@ -14,6 +14,28 @@ abandonnés, les espaces sont réduits et chaque bloc (paragraphe, titre,
 compilation de la même page, un attribut réordonné ou un nouveau nom de
 ressource anti-cache ne change rien ; une phrase reformulée si.
 
+### Quelle partie de la page {#what-part-of-the-page}
+
+La **navigation, l'en-tête, le pied de page et les encadrés latéraux** du site
+sont écartés : ils sont les mêmes sur toutes les pages, et une nouvelle entrée
+de menu ferait sinon signaler chaque page comme changée en une seule
+vérification. Ils suivent les rôles que leur donne le HTML : chaque `nav`, un
+`header` ou un `footer` qui n'est pas dans un `article`, `aside`, `main`, `nav`
+ou `section` (l'en-tête d'un article est gardé), un `aside` hors d'un `article`
+et d'un `main`, et tout élément de rôle `navigation`, `banner`, `contentinfo` ou
+`search`. Leurs liens restent suivis pour trouver les pages d'un site.
+**Comparer menus, en-tête et pied de page** désactive cela.
+
+**Zone surveillée** restreint la comparaison à certains éléments, par exemple
+`main` ou `#content` ; une page où aucun n'est trouvé est lue en entier plutôt
+que comme vide. **Zones exclues** écarte d'autres éléments : un bandeau de
+cookies, un encadré « derniers articles », un emplacement publicitaire. Les
+deux prennent des sélecteurs simples, séparés par des virgules : une balise
+(`main`), un id (`#content`), des classes (`.cookie-banner`), des attributs
+(`[role=alert]`, `[data-ad]`), ou plusieurs ensemble
+(`div.notice[role=alert]`). Les descendants (`main p`) et autres combinateurs
+ne sont pas pris en charge.
+
 ## Page ou site
 
 **Page** (le défaut) lit l'adresse de l'appareil et rien d'autre. Ça peut
@@ -29,17 +51,25 @@ aussi être un document texte brut ou JSON, comparé ligne par ligne.
    les liens de chaque page, en largeur d'abord.
 
 Seules les pages de la même origine (schéma, hôte et port) sont suivies ;
-les liens vers images, feuilles de style, scripts, PDF, archives et autres
+quand la page de départ redirige vers un autre hôte (`example.com` vers
+`www.example.com`), le site est tenu pour être là-bas, et les liens vers le
+premier hôte sont lus sur le second. Les liens vers images, feuilles de style, scripts, PDF, archives et autres
 fichiers sont ignorés par leur extension, et toute réponse qui n'est pas
-HTML est ignorée. Les fragments (`#section`) sont abandonnés et les
-requêtes vides retirées, une page est donc une adresse. `robots.txt` est
+HTML est ignorée. Les fragments (`#section`), les paramètres de suivi
+(`utm_…`, `fbclid`, `gclid` et consorts) et les requêtes vides sont retirés,
+une page est donc une adresse ; **Ignorer les paramètres d'URL** retire toute
+la partie `?…`. `robots.txt` est
 respecté pour les pages trouvées ainsi : le groupe qui nomme `DumbMonit`,
 ou sinon le groupe `*`, avec `Allow`, `Disallow`, `*` et `$`.
 
 Le crawl est poli : deux requêtes à la fois au plus, une demi-seconde
 entre deux lots, le `User-Agent` `DumbMonit/<version>`, un délai de 15
 secondes par requête et 5 Mo lus au plus par page. Il s'arrête à
-**Pages maximum** (25 par défaut, 200 au plus) ou après dix minutes.
+**Pages maximum** (25 par défaut, 200 au plus) ou après dix minutes. Quand
+**Pages maximum** l'a arrêté, la page de l'appareil dit combien de pages ont
+été trouvées : la partie du site non surveillée n'est jamais une surprise.
+**User agent** remplace `DumbMonit/<version>` pour un site qui refuse les
+robots.
 
 ## Comment une vérification fonctionne
 
@@ -64,9 +94,15 @@ page :
 | Portée site : un crawl complet n'atteint plus une page connue | Un événement **page supprimée** aussi (« Plus liée »). Un crawl arrêté par **Pages maximum** ou par sa limite de temps ne conclut jamais qu'une page a disparu. |
 | Toute autre erreur sur une page (délai dépassé, 403, 500 sur une sous-page) | L'erreur est montrée sur la page ; aucun événement. |
 
-Changer l'adresse, la portée, le préfixe de chemin ou
-**Ignorer les lignes** fait de la prochaine vérification une nouvelle
-référence plutôt que de rapporter chaque page comme changée.
+Changer l'adresse, la portée, le préfixe de chemin, **Pages maximum**, les
+zones ou **Ignorer les lignes** fait de la prochaine vérification une nouvelle
+référence plutôt que de rapporter chaque page comme changée (ou, pour un
+**Pages maximum** plus élevé, chaque page ajoutée comme nouvelle). Une mise à
+jour de DumbMonit qui lit les pages autrement fait de même, une fois.
+
+Quand une vérification trouve la **même modification sur plusieurs pages**
+(les mêmes lignes retirées et ajoutées, comme un bandeau), la page de
+l'appareil la montre une seule fois, avec les pages concernées.
 
 ### Ignorer les lignes
 
@@ -100,9 +136,11 @@ LAN privées sont toujours autorisées.
 ## Alertes
 
 La règle intégrée **Site web changé** (`webchange_detected`, Info) se
-déclenche après une vérification qui a trouvé au moins un changement
-(page changée, nouvelle ou supprimée), et se résout à la prochaine
-vérification qui n'en trouve aucun. Elle lit
+déclenche après chaque vérification qui a trouvé au moins un changement
+(page changée, nouvelle ou supprimée), et la notification nomme les pages :
+« /tarifs, /contact and 2 more ». Deux vérifications de suite qui trouvent
+toutes deux des changements donnent deux notifications, même sur les mêmes
+pages ; l'alerte d'une vérification se résout à la suivante. Elle lit
 `dumbmonit_webchange_last_check_changes` ; attachez-la à un canal comme
 toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 [Règles intégrées](../alerting/rules.md#website-changes).
@@ -111,7 +149,7 @@ toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
 |---|---|
 | `dumbmonit_webchange_pages` | Pages suivies (pages supprimées exclues). |
 | `dumbmonit_webchange_pages_failed` | Pages suivies dont la dernière lecture a échoué. |
-| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification. |
+| `dumbmonit_webchange_last_check_changes` | Changements trouvés par la dernière vérification ; quand il y en a, l'étiquette `changes` liste les pages et `check` l'heure de la vérification. |
 
 Les métriques apparaissent une fois la première vérification faite.
 
@@ -157,7 +195,7 @@ qui est le HTML envoyé par le serveur.
 
 Le texte de chaque instantané est gardé dans la base de données (1 Mo au
 plus par page) ; les captures d'écran sont des fichiers sous
-`/data/webchange/<id de l'appareil>/`. Par appareil, les cent derniers
+`/data/webchange/<id de l'appareil>/`. Par appareil, les 500 derniers
 changements sont gardés ; un instantané est gardé tant qu'il est le plus
 récent d'une page ou qu'un changement gardé s'y réfère, et tout le reste,
 fichiers inclus, est supprimé après chaque vérification. Supprimer
@@ -199,6 +237,11 @@ relais.
 | Pages maximum (`max_pages`) | `25` | Portée site : pages lues au plus par vérification, de 1 à 200. |
 | Préfixe de chemin (`path_prefix`) | dossier de l'adresse | Portée site : seulement les pages dont le chemin commence par ceci (`/docs/`). |
 | Ignorer les lignes (`ignore`) | — | Expressions régulières ; les lignes de texte correspondantes ne sont pas comparées. |
+| Zone surveillée (`content_selector`) | — | Sélecteurs simples ; seul le texte qu'ils contiennent est comparé. |
+| Zones exclues (`exclude_selector`) | — | Sélecteurs simples ; leur texte n'est pas comparé. |
+| Comparer menus, en-tête et pied de page (`keep_page_chrome`) | `false` | Comparer aussi la navigation, l'en-tête, le pied de page et les encadrés du site. |
+| Ignorer les paramètres d'URL (`ignore_query`) | `false` | Portée site : les adresses qui ne diffèrent que par leur partie `?…` sont une même page. |
+| User agent (`user_agent`) | — | Envoyé à la place de `DumbMonit/<version>`. |
 | Captures d'écran (`screenshots`) | `true` | Garder une capture d'écran de chaque nouvelle version, quand un navigateur est configuré. |
 | Vérifier toutes les (`check_interval_minutes`) | `60` | Minutes entre deux vérifications, de 5 à 10080. |
 | Accepter un certificat non vérifiable (`insecure_tls`) | `false` | Pour un site propre derrière un certificat autosigné. |
