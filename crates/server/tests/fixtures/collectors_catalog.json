@@ -4370,9 +4370,9 @@
         "In the address, write the host name or IP address: \"192.168.1.1\" or \"router.home.lan\".",
         "On each poll, the check sends four echoes and measures the response time, along with the share of lost packets.",
         "By default, only a total loss counts as down; partial loss stays visible in the charts. Lower \"Tolerated loss\" to be warned earlier.",
-        "If DumbMonit runs in Docker, add the NET_RAW capability to the container: in docker-compose.yml, uncomment the \"cap_add: - NET_RAW\" lines under the dumbmonit service, then restart it."
+        "If DumbMonit runs in Docker, keep the \"sysctls:\" lines of the shipped docker-compose.yml under the dumbmonit service: they allow the container's unprivileged user to open ICMP echo sockets. No capability is needed."
       ],
-      "warning": "Without the NET_RAW capability, the check cannot open an ICMP socket: it reports this as a configuration error, not as a host failure. Some devices also ignore pings on purpose: check that before drawing conclusions.",
+      "warning": "Without that sysctl, the check cannot open an ICMP socket: it reports this as a configuration error, not as a host failure. Some devices also ignore pings on purpose: check that before drawing conclusions.",
       "doc_url": ""
     },
     "options": [
@@ -7613,7 +7613,7 @@
         "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
         "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
         "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
-        "For a screenshot of each version, start the optional browser service of the Compose file and point DumbMonit at it:\nDUMBMONIT_BROWSER_URL=http://browser:9222 docker compose --profile screenshots up -d"
+        "For a screenshot of each version, add a headless browser to your Compose file; the exact lines are in the documentation (Advanced options, \"Screenshots of website changes\")."
       ],
       "warning": "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.",
       "doc_url": ""

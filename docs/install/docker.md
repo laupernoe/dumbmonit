@@ -409,7 +409,7 @@ from the image: nothing to do. Two cases need one command:
   Either `chown -R 65532:65532 ./data`, or run the container as the directory's
   owner: `user: "1000:1000"` under the service, any uid works.
 
-## ICMP ping without a capability
+## ICMP ping without a capability {#icmp-ping-without-a-capability}
 
 The [ping monitor](../devices/services.md#ping) sends ICMP echoes. Rather than
 a raw socket — which needs `NET_RAW`, and a capability granted to a non-root
