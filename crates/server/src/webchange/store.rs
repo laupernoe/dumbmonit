@@ -72,6 +72,22 @@ pub async fn state(pool: &SqlitePool, target: TargetId) -> Result<Option<State>>
     .context("lecture de l'état de la surveillance")
 }
 
+/// Dernière vérification de chaque surveillance qui a trouvé des changements :
+/// `(cible, fin de la vérification, changements, résumé des pages)`. C'est ce
+/// que l'alerte « Website changed » annonce, une fois par vérification.
+pub async fn changed_checks(
+    pool: &SqlitePool,
+) -> Result<Vec<(TargetId, String, i64, Option<String>)>> {
+    sqlx::query_as(
+        "SELECT target_id, last_check_at, last_check_changes, last_check_summary
+         FROM webchange_state
+         WHERE last_check_changes > 0 AND last_check_at IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des dernières vérifications")
+}
+
 /// Âge de la dernière vérification, en secondes ; `None` s'il n'y en a pas eu.
 pub async fn last_check_age(pool: &SqlitePool, target: TargetId) -> Result<Option<i64>> {
     let age: Option<Option<i64>> = sqlx::query_scalar(
@@ -154,7 +170,10 @@ pub async fn finish_ok(
 }
 
 /// Fin d'une vérification qui n'a pas pu lire la page de départ : rien n'est
-/// comparé, la référence ne bouge pas.
+/// comparé, la référence ne bouge pas. Les champs `last_check_*` décrivent
+/// tous la même vérification, celle-ci : elle n'a rien trouvé, pas même de
+/// pages au-delà de « Max pages ». Garder le compte d'avant l'attribuerait à
+/// une vérification qui n'a rien lu.
 pub async fn finish_failed(
     pool: &SqlitePool,
     target: TargetId,
@@ -164,7 +183,7 @@ pub async fn finish_failed(
     sqlx::query(
         "UPDATE webchange_state
          SET last_check_at = datetime('now'), last_check_changes = 0, last_check_summary = NULL,
-             last_error = ?, last_error_kind = ?
+             last_check_found = NULL, last_error = ?, last_error_kind = ?
          WHERE target_id = ?",
     )
     .bind(message)

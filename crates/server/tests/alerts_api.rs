@@ -223,6 +223,8 @@ impl TestApp {
             escalate_after: None,
             unacked_after: None,
             just_transitioned: false,
+            recurred: false,
+            detail: None,
         }
     }
 
@@ -451,6 +453,8 @@ async fn the_active_alerts_route_exposes_the_effective_phase() {
         escalate_after: None,
         unacked_after: None,
         just_transitioned: true,
+        recurred: false,
+        detail: None,
     };
     db::alerts::save_states(&app.pool, &[outcome]).await.expect("state saved");
 
