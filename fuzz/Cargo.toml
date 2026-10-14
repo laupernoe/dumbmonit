@@ -1,0 +1,65 @@
+# Cibles de fuzzing (cargo-fuzz, libFuzzer) des lecteurs qui reçoivent des
+# données venues de l'extérieur : pages et sitemaps surveillés, flux du mur,
+# profils SNMP importés. Hors du workspace principal : cargo-fuzz exige une
+# toolchain nightly que le reste du projet n'utilise pas.
+#
+#   cargo +nightly fuzz run wall_news -- -max_total_time=60
+#
+# En CI, ClusterFuzzLite (`.clusterfuzzlite/`) les lance sur chaque PR.
+
+[package]
+name = "dumbmonit-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+dumbmonit-server = { path = "../crates/server" }
+dumbmonit-collectors = { path = "../crates/collectors" }
+
+# Workspace à part : voir plus haut.
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "webchange_zones"
+path = "fuzz_targets/webchange_zones.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "webchange_html"
+path = "fuzz_targets/webchange_html.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "webchange_sitemap"
+path = "fuzz_targets/webchange_sitemap.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wall_news"
+path = "fuzz_targets/wall_news.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "snmp_profile"
+path = "fuzz_targets/snmp_profile.rs"
+test = false
+doc = false
+bench = false

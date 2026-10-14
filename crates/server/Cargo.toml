@@ -78,12 +78,11 @@ sha1 = "0.11"
 # Comparaison en temps constant du secret de session.
 subtle = "2.6"
 # Validation des jetons d'identité OpenID Connect (signature RS256/ES256 via le
-# JWKS du fournisseur). `rust_crypto` : pas de dépendance C, compatible musl.
-jsonwebtoken = { version = "11", default-features = false, features = ["use_pem", "rust_crypto"] }
+# JWKS du fournisseur). `aws_lc_rs` : le moteur que rustls compile déjà ; `rust_crypto`
+# tirerait la crate `rsa`, sujette à RUSTSEC-2023-0071 (Marvin) sans correctif amont.
+jsonwebtoken = { version = "11", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 # Encodage base64url du défi PKCE.
 base64 = "0.23"
-# Spécification OpenAPI de l'API, écrite en YAML et servie en JSON (`api/openapi.rs`).
-serde_yaml_ng = "0.10"
 
 # Surveillance des changements de sites (`webchange`) : expressions d'exclusion
 # saisies par l'utilisateur, plans de site XML, et le protocole DevTools d'un

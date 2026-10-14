@@ -66,6 +66,13 @@ use crate::auth::AuthState;
 use crate::auth::cors::CorsPolicy;
 use crate::state::AppState;
 
+/// Lecteur des flux RSS/Atom du mur, exposé pour les cibles de fuzzing
+/// (`fuzz/`) seulement : le reste de l'API n'en a pas besoin.
+#[doc(hidden)]
+pub fn fuzz_wall_news(xml: &str) -> usize {
+    wall_news::parse(xml, "fuzz").map_or(0, |items| items.len())
+}
+
 pub fn router(state: AppState) -> Router {
     router_with(state, crate::music::MusicHub::from_env())
 }
