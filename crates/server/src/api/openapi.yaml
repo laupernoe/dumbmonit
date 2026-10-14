@@ -2799,6 +2799,16 @@ paths:
           required: false
           description: Only the changes of this exact page address.
           schema: { type: string }
+        - name: kind
+          in: query
+          required: false
+          description: Only this kind of change.
+          schema: { type: string, enum: [changed, new_page, removed_page] }
+        - name: before
+          in: query
+          required: false
+          description: Only the changes older than the one with this id (the last one received), to read the list page by page.
+          schema: { type: integer, format: int64 }
         - name: limit
           in: query
           required: false

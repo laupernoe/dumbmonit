@@ -2,11 +2,14 @@
 	/**
 	 * Visible-text diff of a change: one line per row, a `+`/`−` gutter marker
 	 * next to the colour so an inserted or deleted line never reads by colour
-	 * alone, and a collapsed run of unchanged lines folds into one notice.
+	 * alone, and a collapsed run of unchanged lines folds into one notice. A
+	 * deleted line followed by the line that replaced it shows which words
+	 * moved, underlined and tinted darker, so one changed word in a long
+	 * paragraph is found at a glance.
 	 */
 	import type { WebchangeDiffLine } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { skipLabel } from './format';
+	import { pairWords, skipLabel } from './format';
 
 	interface Props {
 		diff: WebchangeDiffLine[];
@@ -14,10 +17,18 @@
 
 	let { diff }: Props = $props();
 
+	const rows = $derived(pairWords(diff));
+
 	function gutter(op: WebchangeDiffLine['op']): string {
 		if (op === 'insert') return '+';
 		if (op === 'delete') return '−';
 		return ' ';
+	}
+
+	function wordClass(op: WebchangeDiffLine['op']): string {
+		if (op === 'insert') return 'rounded-sm bg-signal-ink/20 font-semibold underline decoration-2 underline-offset-2';
+		if (op === 'delete') return 'rounded-sm bg-warning-ink/20 font-semibold line-through decoration-2';
+		return '';
 	}
 
 	function rowClass(op: WebchangeDiffLine['op']): string {
@@ -39,11 +50,11 @@
 	};
 </script>
 
-{#if diff.length === 0}
+{#if rows.length === 0}
 	<p class="px-3 py-3 text-sm text-ink-2">{m.devicesb_webchange_diff_empty()}</p>
 {:else}
 	<div class="overflow-x-auto rounded-lg border border-line bg-canvas-deep">
 		<!-- A <pre> preserves every whitespace character, including template indentation: the loop stays on one line. -->
-		<pre class="min-w-full whitespace-pre-wrap break-all font-mono text-[0.8125rem] leading-relaxed"><code>{#each diff as line, i (i)}{#if line.op === 'skip'}<span class="my-0.5 block px-3 py-1 text-center text-[0.75rem] text-ink-3 select-none">{skipLabel(line.count, SKIP_WORDS)}</span>{:else}<span class={rowClass(line.op)}><span class="mr-2 inline-block w-3 shrink-0 text-center font-semibold select-none" aria-hidden="true">{gutter(line.op)}</span><span class="sr-only">{spoken(line.op)}</span>{line.text || ' '}</span>{/if}{/each}</code></pre>
+		<pre class="min-w-full whitespace-pre-wrap break-all font-mono text-[0.8125rem] leading-relaxed"><code>{#each rows as line, i (i)}{#if line.op === 'skip'}<span class="my-0.5 block px-3 py-1 text-center text-[0.75rem] text-ink-3 select-none">{skipLabel(line.count, SKIP_WORDS)}</span>{:else}<span class={rowClass(line.op)}><span class="mr-2 inline-block w-3 shrink-0 text-center font-semibold select-none" aria-hidden="true">{gutter(line.op)}</span><span class="sr-only">{spoken(line.op)}</span>{#each line.segments as segment, k (k)}{#if segment.changed}<span class={wordClass(line.op)}>{segment.text}</span>{:else}{segment.text}{/if}{/each}{#if line.segments.every((segment) => segment.text === '')}{' '}{/if}</span>{/if}{/each}</code></pre>
 	</div>
 {/if}

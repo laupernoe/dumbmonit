@@ -109,6 +109,9 @@ Quand une vérification trouve la **même modification sur plusieurs pages**
 (les mêmes lignes retirées et ajoutées, comme un bandeau), la page de
 l'appareil la montre une seule fois, avec les pages concernées.
 
+Dans le diff, une ligne remplacée montre quels mots ont changé : soulignés côté
+ajout, barrés côté retrait.
+
 ### Ignorer les lignes
 
 Des lignes qui changent à chaque visite — une horloge, un compteur de

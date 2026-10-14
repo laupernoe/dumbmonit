@@ -44,6 +44,7 @@ import type {
 	TargetPayload,
 	WebchangeChange,
 	WebchangeChangeDetail,
+	WebchangeChangeKind,
 	WebchangePagesResponse,
 	ChannelMatcher,
 	MatchPreview,
@@ -119,11 +120,11 @@ export function getWebchangePages(id: TargetId, signal?: AbortSignal): Promise<W
 /** Changes detected on this device, newest first; `url` narrows to one page. */
 export function listWebchangeChanges(
 	id: TargetId,
-	options: { url?: string; limit?: number } = {},
+	options: { url?: string; limit?: number; kind?: WebchangeChangeKind; before?: number } = {},
 	signal?: AbortSignal
 ): Promise<WebchangeChange[]> {
 	return request<WebchangeChange[]>(`/targets/${id}/webchange/changes`, {
-		query: { url: options.url, limit: options.limit },
+		query: { url: options.url, limit: options.limit, kind: options.kind, before: options.before },
 		signal
 	});
 }
