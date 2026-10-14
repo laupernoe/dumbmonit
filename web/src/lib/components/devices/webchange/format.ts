@@ -2,7 +2,7 @@
  * Pure helpers for the website-changes panel: shortening a page's URL down to
  * something that fits a table cell, wording a collapsed run of unchanged
  * diff lines, clamping the before/after slider's position, and grouping the
- * change timeline by day and walking it by keyboard.
+ * same edits found on several pages and walking the list by keyboard.
  *
  * Pure module, no imports: `npm test` (tests/webchange.test.mjs) runs it as is.
  */
@@ -79,44 +79,6 @@ export function stepPercent(current: number, key: string, step = 2): number {
 		default:
 			return current;
 	}
-}
-
-/** Local calendar day of a date as `YYYY-MM-DD`. */
-function dayKey(date: Date): string {
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${date.getFullYear()}-${month}-${day}`;
-}
-
-/** A run of items sharing one local calendar day; `key` is `''` and `day` `null` for undated items. */
-export interface DayGroup<T> {
-	key: string;
-	day: Date | null;
-	items: T[];
-}
-
-/**
- * Groups items, already sorted newest first, by the local calendar day of
- * `dateOf(item)`. Consecutive items of the same day share a group; the order
- * of groups and of items within them is the input's.
- */
-export function groupByDay<T>(items: T[], dateOf: (item: T) => Date | null): DayGroup<T>[] {
-	const groups: DayGroup<T>[] = [];
-	for (const item of items) {
-		const date = dateOf(item);
-		const key = date ? dayKey(date) : '';
-		const last = groups.at(-1);
-		if (last && last.key === key) last.items.push(item);
-		else groups.push({ key, day: date, items: [item] });
-	}
-	return groups;
-}
-
-/** Calendar days from `date` to `now` in local time: 0 the same day, 1 the day before. */
-export function daysBetween(date: Date, now: Date): number {
-	const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-	const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	return Math.round((end.getTime() - start.getTime()) / 86_400_000);
 }
 
 /**
