@@ -245,7 +245,8 @@ Before tagging `vX.Y.Z`:
    shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the
    `Cargo.toml` version has no entry.
 3. Bump the version in `Cargo.toml`, then tag `vX.Y.Z`; `release.yml` publishes
-   the images, and the window links to the GitHub release of that tag.
+   the images and the GitHub release, whose notes are that version's CHANGELOG
+   section; the window links to that release.
 
 ## Licence
 
