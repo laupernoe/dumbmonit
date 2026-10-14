@@ -42,6 +42,23 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Watching a site that redirects to another host reads the whole site.** A
+  start page redirecting from `example.com` to `www.example.com` used to leave
+  every link outside the watch, which then only covered the start page.
+  Tracking parameters (`utm_…`, `fbclid`, `gclid`…) no longer make one page
+  several; **Ignore query strings** drops the whole `?…` part. When **Max
+  pages** stops a crawl, the device page now says how many pages were found.
+  New **User agent** option for sites that turn robots away.
+- **Every website check that finds changes is notified, and says which
+  pages.** The "Website changed" alert stayed open while consecutive checks
+  kept finding changes, so only the first of them was ever notified, and the
+  message only gave a count. Each such check is now an alert of its own, whose
+  notification names the pages ("/pricing, /contact and 2 more"). See
+  [Alerts](docs/devices/webchange.md#alerts).
+- **Dragging a monitor into a folder works again.** Pressing a row on its name
+  or address grabbed the link instead: the browser started its own drag of it,
+  cancelled the gesture, and the monitor never moved. Rows can be dragged from
+  anywhere again, onto another row or onto a folder header.
 - **Instant metric reads failed with "latency_offset=0ms is out of allowed
   range".** VictoriaMetrics refuses a zero offset, so every panel reading the
   latest value (device pages, Docker, Plakar…) showed an error. The offset is
@@ -66,6 +83,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Website changes ignore the site's menus, header and footer.** They are the
+  same on every page, so one new menu entry used to mark every page of a
+  watched site as changed. The navigation, the site header and footer and the
+  sidebars are now left out of the comparison (their links are still
+  followed); **Compare menus, header and footer** brings them back. New
+  options: **Watched area** compares only some elements (`main`, `#content`),
+  **Excluded areas** leaves more out (`.cookie-banner`). The same edit found on
+  several pages by one check is shown once, "+N pages"; changing **Max pages**
+  now takes a new reference instead of reporting every added page as new; and
+  500 changes are kept per device instead of 100. Existing watches take a new
+  reference at their next check after the update. See
+  [What part of the page](docs/devices/webchange.md#what-part-of-the-page).
 - **Minimal `docker-compose.yml`.** About 15 lines, no `.env` and no `${VAR}`: port, secret, retention, external VictoriaMetrics, password reset and the screenshots browser are now `environment:` examples in the [installation guide](docs/install/docker.md#advanced-options). To build from a checkout, add the `docker-compose.dev.yml` overlay.
 
 ## 0.1.0-alpha.7 — 2026-10-13
@@ -194,18 +223,6 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **Website changes ignore the site's menus, header and footer.** They are the
-  same on every page, so one new menu entry used to mark every page of a
-  watched site as changed. The navigation, the site header and footer and the
-  sidebars are now left out of the comparison (their links are still
-  followed); **Compare menus, header and footer** brings them back. New
-  options: **Watched area** compares only some elements (`main`, `#content`),
-  **Excluded areas** leaves more out (`.cookie-banner`). The same edit found on
-  several pages by one check is shown once, "+N pages"; changing **Max pages**
-  now takes a new reference instead of reporting every added page as new; and
-  500 changes are kept per device instead of 100. Existing watches take a new
-  reference at their next check after the update. See
-  [What part of the page](docs/devices/webchange.md#what-part-of-the-page).
 - **The tip bubbles are gone.** Pip's tips and the "Did you know" card on the
   overview are removed.
 - **The documentation is available in 9 languages** (English, German, Spanish,
@@ -214,19 +231,6 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **Watching a site that redirects to another host reads the whole site.** A
-  start page redirecting from `example.com` to `www.example.com` used to leave
-  every link outside the watch, which then only covered the start page.
-  Tracking parameters (`utm_…`, `fbclid`, `gclid`…) no longer make one page
-  several; **Ignore query strings** drops the whole `?…` part. When **Max
-  pages** stops a crawl, the device page now says how many pages were found.
-  New **User agent** option for sites that turn robots away.
-- **Every website check that finds changes is notified, and says which
-  pages.** The "Website changed" alert stayed open while consecutive checks
-  kept finding changes, so only the first of them was ever notified, and the
-  message only gave a count. Each such check is now an alert of its own, whose
-  notification names the pages ("/pricing, /contact and 2 more"). See
-  [Alerts](docs/devices/webchange.md#alerts).
 - **Every channel type can be saved.** The database still only accepted the
   first seven channel types (Discord, ntfy, Gotify, Telegram, Slack, webhook,
   email): saving a Matrix, Teams, Pushover or other channel failed with an
