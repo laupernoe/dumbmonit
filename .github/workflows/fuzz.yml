@@ -2,7 +2,8 @@ name: Fuzzing
 
 # ClusterFuzzLite runs the cargo-fuzz targets of fuzz/ (built by
 # .clusterfuzzlite/build.sh) against the parsers that read outside input:
-#   - pull requests: the targets touched by the change, 5 minutes in all;
+#   - pull requests: every target, 5 minutes in all (picking only the targets
+#     a change touches would need coverage reports, which are not produced);
 #   - push to main and weekly: every target, 5 minutes in all, corpus kept
 #     between runs as a workflow artifact.
 # A crash fails the job and leaves the reproducer as an artifact.
