@@ -534,7 +534,7 @@ Was der Container sieht und was einzubinden ist:
 | Container des Hosts | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optional. Schreibgeschützt listet und inspiziert es; die Aktionen Neustart/Update brauchen es beschreibbar und `DUMBMONIT_AGENT_COMMANDS=true`. Ohne den Socket meldet der Agent schlicht keine Container. |
 | Dateisystemnutzung | `- /:/host:ro` (oder die Mounts, die Sie interessieren) | Der Agent meldet die *innerhalb* des Containers sichtbaren Mounts, unter ihrem Container-Pfad. |
 | Netzwerkzähler des Hosts | `network_mode: host` | Schnittstellen sind per Namespace getrennt: Ohne das sieht der Agent ein `veth`. |
-| Über diesen Agenten weitergeleitete Ping-Monitore | `cap_add: [NET_RAW]` | ICMP braucht einen Raw-Socket. |
+| Über diesen Agenten weitergeleitete Ping-Monitore | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP nutzt einen Echo-Socket, den dieser Sysctl erlaubt: keine Capability nötig. Siehe [ICMP-Ping ohne Capability](../install/docker.md#icmp-ping-without-a-capability). |
 | Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server hinter einem internen Reverse-Proxy, Geräte mit selbstsignierten Zertifikaten. |
 | Bindung über Neuerstellungen hinweg behalten | `- agent-state:/var/lib/dumbmonit-agent` und `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Das Bindungsgeheimnis liegt im Dateisystem des Containers, das ein `docker compose up --force-recreate` wegwirft. Ohne das Volume kommt der Agent ungebunden zurück, und jemand muss jedes Mal auf der Geräteseite die Neuanmeldung erlauben. |
 

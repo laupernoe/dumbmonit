@@ -56,9 +56,10 @@ services:
     #   - pid: host / privileged — never needed: the agent collects no
     #     per-process metrics.
     # network_mode: host
-    # Only for "ping" (ICMP) monitors relayed through this agent:
-    # cap_add:
-    #   - NET_RAW
+    # Ping (ICMP) monitors relayed through this agent use an ICMP echo socket,
+    # which this sysctl allows: no capability needed (see docs/install/docker.md).
+    sysctls:
+      net.ipv4.ping_group_range: "0 2147483647"
     # A private CA (server behind an internal reverse proxy, devices with
     # self-signed certificates):
     # - ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro

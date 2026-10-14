@@ -564,7 +564,7 @@ Ce que le conteneur voit, et quoi monter :
 | Conteneurs de l'hôte | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optionnel. Listes et inspections en lecture seule ; les actions Redémarrer/Mettre à jour demandent qu'il soit accessible en écriture et `DUMBMONIT_AGENT_COMMANDS=true`. Sans le socket, l'agent rapporte simplement aucun conteneur. |
 | Usage du système de fichiers | `- /:/host:ro` (ou les montages qui vous intéressent) | L'agent rapporte les montages visibles *à l'intérieur* du conteneur, sous leur chemin de conteneur. |
 | Compteurs réseau de l'hôte | `network_mode: host` | Les interfaces sont namespacées : sans ça l'agent voit un `veth`. |
-| Moniteurs ping relayés via cet agent | `cap_add: [NET_RAW]` | ICMP a besoin d'une socket brute. |
+| Moniteurs ping relayés via cet agent | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP utilise une socket d'écho, autorisée par ce sysctl : aucune capacité requise. Voir [Ping ICMP sans capacité](../install/docker.md#icmp-ping-without-a-capability). |
 | CA privée | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Serveur derrière un reverse proxy interne, appareils avec des certificats autosignés. |
 | Garder la liaison à travers les recréations | `- agent-state:/var/lib/dumbmonit-agent` et `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Le secret de liaison vit dans le système de fichiers du conteneur, qu'un `docker compose up --force-recreate` jette. Sans le volume, l'agent revient non lié et quelqu'un doit autoriser le réenrôlement depuis la page de l'appareil chaque fois. |
 

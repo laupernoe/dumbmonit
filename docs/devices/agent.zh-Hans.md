@@ -371,7 +371,7 @@ docker compose -f docker-compose.agent.yml up -d
 | 主机的容器 | `- /var/run/docker.sock:/var/run/docker.sock:ro` | 可选。只读列表和检查；重启/更新操作需要它可写和 `DUMBMONIT_AGENT_COMMANDS=true`。没有套接字，代理简单地报告没有容器。 |
 | 文件系统使用 | `- /:/host:ro`（或您关心的挂载） | 代理报告容器内可见的挂载点，在它们的容器路径下。 |
 | 主机网络计数器 | `network_mode: host` | 接口被隔离：没有它代理看到一个 `veth`。 |
-| 通过这个代理中继的 Ping 监视器 | `cap_add: [NET_RAW]` | ICMP 需要原始套接字。 |
+| 通过这个代理中继的 Ping 监视器 | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP 使用此 sysctl 允许的 echo 套接字，无需 capability。参见 [无需 capability 的 ICMP ping](../install/docker.md#icmp-ping-without-a-capability)。 |
 | 私有 CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | 内部反向代理后的服务器，自签名证书的设备。 |
 | 跨重新创建保留绑定 | `- agent-state:/var/lib/dumbmonit-agent` 和 `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | 绑定密钥在容器的文件系统中，`docker compose up --force-recreate` 丢弃。没有卷，代理回来未绑定，某人必须每次允许从设备页面重新注册。 |
 

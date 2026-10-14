@@ -73,7 +73,8 @@ primeiro lote é aceito.
     O agente de retransmissão sonda dispositivos de sua própria rede: ele precisa do mesmo acesso
     que o servidor precisaria se estivesse lá — UDP 161 para SNMP, 8006 para
     Proxmox, 5001 para DSM, e assim por diante. Para sondagens de **ping**, o contêiner
-    precisa de `cap_add: [NET_RAW]` (consulte o arquivo compose). Para dispositivos em uma VLAN
+    precisa do sysctl `net.ipv4.ping_group_range`, já definido no arquivo
+    compose (consulte [Ping ICMP sem capability](docker.md#icmp-ping-without-a-capability)). Para dispositivos em uma VLAN
     ou rede link-local, ou para alvos `localhost`, use
     `network_mode: host`.
 

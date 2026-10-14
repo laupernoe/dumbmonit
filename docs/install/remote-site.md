@@ -74,7 +74,8 @@ first batch is accepted.
     The relay probes devices from its own network: it needs the same access
     the server would need if it were there — UDP 161 for SNMP, 8006 for
     Proxmox, 5001 for DSM, and so on. For **ping** monitors, the container
-    needs `cap_add: [NET_RAW]` (see the compose file). For devices on a VLAN
+    needs the `net.ipv4.ping_group_range` sysctl, already set in the compose
+    file (see [ICMP ping without a capability](docker.md#icmp-ping-without-a-capability)). For devices on a VLAN
     or link-local network, or for `localhost` targets, use
     `network_mode: host`.
 

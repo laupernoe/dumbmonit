@@ -583,7 +583,7 @@ O que o contêiner vê, e o que montar:
 | Contêineres do host | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Opcional. Listas e inspeções somente leitura; ações Restart/Update precisam dele gravável e `DUMBMONIT_AGENT_COMMANDS=true`. Sem o socket, o agente simplesmente não reporta contêineres. |
 | Uso de sistema de arquivos | `- /:/host:ro` (ou as montagens que importam) | O agente reporta as montagens visíveis *dentro* do contêiner, sob seu caminho de contêiner. |
 | Contadores de rede do host | `network_mode: host` | Interfaces têm namespace: sem isso o agente vê um `veth`. |
-| Monitores de ping retransmitidos por este agente | `cap_add: [NET_RAW]` | ICMP precisa de um socket bruto. |
+| Monitores de ping retransmitidos por este agente | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP usa um socket de eco, permitido por esse sysctl: sem capability. Veja [Ping ICMP sem capability](../install/docker.md#icmp-ping-without-a-capability). |
 | CA privada | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Servidor detrás de um proxy reverso interno, dispositivos com certificados autoassinados. |
 | Manter o vínculo entre recriações | `- agent-state:/var/lib/dumbmonit-agent` e `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | O segredo de vínculo vive no sistema de arquivos do contêiner, que um `docker compose up --force-recreate` descarta. Sem o volume, o agente volta desvinculado e alguém precisa permitir o recadastramento da página do dispositivo a cada vez. |
 
