@@ -46,6 +46,14 @@
 		}
 	}
 
+	// Landing from a row's camera button (`#screenshots`): the content arrives
+	// after the navigation, so the browser's own jump to the anchor misses it.
+	$effect(() => {
+		if (detail && page.url.hash === '#screenshots') {
+			requestAnimationFrame(() => document.getElementById('screenshots')?.scrollIntoView({ block: 'start' }));
+		}
+	});
+
 	$effect(() => {
 		void targetId;
 		void changeId;
@@ -85,7 +93,7 @@
 		{/snippet}
 	</PageHeader>
 
-	<Panel title={m.app_change_screenshots()} class="rise-in">
+	<Panel id="screenshots" title={m.app_change_screenshots()} class="rise-in scroll-mt-20">
 		<ChangeScreenshots {targetId} {detail} />
 	</Panel>
 

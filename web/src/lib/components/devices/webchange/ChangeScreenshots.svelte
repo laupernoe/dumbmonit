@@ -39,7 +39,7 @@
 {:else if before && after}
 	<div class="flex flex-col gap-2">
 		<div class="flex justify-end">
-			<Button variant="ghost" size="sm" onclick={() => (sideBySide = !sideBySide)} aria-pressed={sideBySide}>
+			<Button variant="ghost" onclick={() => (sideBySide = !sideBySide)} aria-pressed={sideBySide}>
 				{sideBySide ? m.app_change_slider() : m.app_change_side_by_side()}
 			</Button>
 		</div>
