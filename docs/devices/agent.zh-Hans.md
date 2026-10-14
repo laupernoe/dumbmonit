@@ -163,6 +163,17 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 
 Linux 二进制文件静态链接反对 musl：它们在任何分发上运行，glibc 或不（Alpine、NAS 固件），没有要匹配的库。每个文件在旁边有其校验和，`<file>.sha256`，在 `sha256sum` 格式。每个 [GitHub 发行版](https://github.com/laupernoe/dumbmonit/releases/latest) 带有全六个二进制文件和它们的校验和，对于无法到达服务器的 `/download/` 的机器或用 `--bin` 安装。
 
+自 0.1.0-alpha.9 起,发行版的每个二进制文件还使用 [Sigstore](https://www.sigstore.dev/) 进行了无密钥签名(`<file>.sigstore.json`),并附带 SLSA 来源证明。要验证某个二进制文件确实由本仓库的发行工作流构建:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 要自己构建 Linux、Windows 和 FreeBSD 二进制文件，从存储库的克隆（Docker 是唯一的要求）：
 
 ```sh

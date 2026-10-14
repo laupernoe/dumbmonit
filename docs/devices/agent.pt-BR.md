@@ -282,6 +282,21 @@ lado, `<file>.sha256`, no formato `sha256sum`. Todo
 carrega os seis binários e seus checksums, para máquinas que não podem
 alcançar o `/download/` do servidor ou para instalar com `--bin`.
 
+Desde a 0.1.0-alpha.9, todo binário de um lançamento também é assinado sem
+chave (keyless) com o [Sigstore](https://www.sigstore.dev/)
+(`<file>.sigstore.json`) e acompanha uma atestação de proveniência SLSA. Para
+verificar que um binário foi construído pelo workflow de lançamento deste
+repositório:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 Para construir os binários Linux, Windows e FreeBSD você mesmo, a partir
 de um clone do repositório (o Docker é o único requisito):
 

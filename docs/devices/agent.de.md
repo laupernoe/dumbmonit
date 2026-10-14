@@ -253,6 +253,20 @@ nicht (Alpine, NAS-Firmware), ohne passende Bibliothek. Jede Datei hat ihre Prü
 Binaries und ihre Prüfsummen, für Rechner, die `/download/` des Servers nicht erreichen können,
 oder zum Installieren mit `--bin`.
 
+Seit 0.1.0-alpha.9 ist jedes Binary eines Releases zusätzlich schlüssellos mit
+[Sigstore](https://www.sigstore.dev/) signiert (`<file>.sigstore.json`) und wird von einer
+SLSA-Provenance-Attestierung begleitet. So prüfen Sie, dass ein Binary vom Release-Workflow
+dieses Repositorys gebaut wurde:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 Um die Linux-, Windows- und FreeBSD-Binaries selbst aus einem Klon des Repositorys zu bauen
 (Docker ist die einzige Voraussetzung):
 

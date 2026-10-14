@@ -266,6 +266,20 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 содержит все шесть бинарных файлов и их контрольные суммы — для машин, которые не могут достучаться до
 `/download/` сервера, или для установки через `--bin`.
 
+Начиная с 0.1.0-alpha.9 каждый бинарный файл релиза также подписывается без
+ключей с помощью [Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) и
+сопровождается аттестацией происхождения SLSA. Чтобы проверить, что бинарный файл
+собран рабочим процессом релиза этого репозитория:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 Чтобы самостоятельно собрать бинарные файлы для Linux, Windows и FreeBSD из клона
 репозитория (требуется только Docker):
 

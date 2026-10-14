@@ -250,6 +250,21 @@ corresponder. Cada ficheiro tem a sua soma de verificação ao lado,
 os seis binários e as suas somas de verificação, para máquinas que não conseguem
 alcançar o `/download/` do servidor ou para instalar com `--bin`.
 
+Desde a 0.1.0-alpha.9, todos os binários de uma versão são também assinados
+sem chave (keyless) com o [Sigstore](https://www.sigstore.dev/)
+(`<file>.sigstore.json`) e acompanhados de uma atestação de proveniência SLSA.
+Para verificar que um binário foi compilado pelo fluxo de trabalho de versões
+deste repositório:
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+# or, with the GitHub CLI:
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+```
+
 Para compilar você próprio os binários Linux, Windows e FreeBSD, a partir de um
 clone do repositório (o Docker é o único requisito):
 
