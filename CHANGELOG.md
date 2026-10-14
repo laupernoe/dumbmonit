@@ -21,6 +21,10 @@ All notable changes to this project are documented here. The format follows
   `GET|PUT /api/wall/news/settings`, `GET /api/wall/news/presets`,
   `POST /api/wall/news/test`. See [Wall mode](docs/using/wall.md).
 - **Product icons on the wall's problems**, as in the device lists.
+- **Website changes show which words changed.** A replaced line underlines the
+  new words and strikes through the old ones, so one edit in a long paragraph is
+  found at a glance. `GET …/webchange/changes` takes `kind` and `before` (the id
+  of the last change received) to filter and page through the list.
 
 - **Missing server prerequisites are shown where they matter.** Adding or editing
   a website-change device (headless browser for screenshots) or a ping device
