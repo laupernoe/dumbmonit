@@ -34,6 +34,7 @@ import {
 	Network,
 	Plug,
 	Radio,
+	Gauge,
 	Server,
 	ServerCog,
 	ShieldCheck,
@@ -125,6 +126,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	caddy: Route,
 	nginx: Route,
 	apache: Route,
+	openvpn: Cable,
 	npm: Split,
 	domain: CalendarClock,
 	kubernetes: ShipWheel,
@@ -144,7 +146,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -195,6 +197,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	caddy: 'reverse proxy web server upstream load balancer certificate acme lets encrypt 502 503',
 	nginx: 'web server reverse proxy stub_status nginx plus upstream connections requests',
 	apache: 'web server httpd apache2 mod_status workers scoreboard busy idle lamp',
+	openvpn: 'vpn tunnel openvpn easy-rsa tap tun client server certificate ovpn remote access site-to-site management interface',
 	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
 	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	kubernetes: 'k8s k3s k0s microk8s talos rke2 cluster container orchestration pod node deployment helm',
@@ -279,6 +282,22 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		next: m.deviceform_feature_wireguard_next(),
 		keywords: 'wireguard wg vpn tunnel peer handshake site-to-site wg-quick wg-easy',
 		icon: Waypoints
+	},
+	{
+		id: 'ipsec',
+		label: m.deviceform_feature_ipsec_label(),
+		summary: m.deviceform_feature_ipsec_summary(),
+		next: m.deviceform_feature_ipsec_next(),
+		keywords: 'ipsec strongswan swanctl vici tunnel ike child sa vpn site-to-site racoon libreswan',
+		icon: Cable
+	},
+	{
+		id: 'speedtest',
+		label: m.deviceform_feature_speedtest_label(),
+		summary: m.deviceform_feature_speedtest_summary(),
+		next: m.deviceform_feature_speedtest_next(),
+		keywords: 'speedtest speed test bandwidth throughput latency jitter librespeed cloudflare download upload isp line',
+		icon: Gauge
 	},
 	{
 		id: 'hyperv',

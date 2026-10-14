@@ -169,6 +169,17 @@ ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_PLAKAR_INTERVAL_SECS  Seconds between two kloset readings
     DUMBMONIT_AGENT_WIREGUARD        Watch WireGuard tunnels when present (true/false, default true)
     DUMBMONIT_AGENT_WIREGUARD_BIN    Path to the wg binary (default: wg on PATH)
+    DUMBMONIT_AGENT_IPSEC            Watch IPsec tunnels when present (true/false, default true)
+    DUMBMONIT_AGENT_IPSEC_BIN        Path to the swanctl binary (default: swanctl on PATH)
+    DUMBMONIT_AGENT_SPEEDTEST        Run the Internet speed test (true/false, default false)
+    DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_URL   Address downloaded to measure the download rate
+    DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_URL     Address posted to, to measure the upload rate
+    DUMBMONIT_AGENT_SPEEDTEST_DOWNLOAD_BYTES_CAP  Bytes read at most per test (default 50000000)
+    DUMBMONIT_AGENT_SPEEDTEST_UPLOAD_BYTES   Bytes sent per test (default 10000000)
+    DUMBMONIT_AGENT_SPEEDTEST_INTERVAL_SECS  Seconds between two tests (default 21600)
+    DUMBMONIT_AGENT_SPEEDTEST_MIN_DOWNLOAD_MBPS  Alert threshold, download (Mbps)
+    DUMBMONIT_AGENT_SPEEDTEST_MIN_UPLOAD_MBPS    Alert threshold, upload (Mbps)
+    DUMBMONIT_AGENT_SPEEDTEST_MAX_LATENCY_MS     Alert threshold, latency (ms)
     DUMBMONIT_AGENT_RESTIC_BIN       Path to the restic binary (default: restic on PATH)
     DUMBMONIT_AGENT_BORG_BIN         Path to the borg binary (default: borg on PATH)
     DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS  Seconds between two restic/Borg readings

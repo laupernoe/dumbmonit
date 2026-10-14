@@ -1,0 +1,14 @@
+site-a: #3, ESTABLISHED, IKEv2, 7f6e5d4c3b2a1908:1a2b3c4d5e6f7089
+  local  'moon.strongswan.org' @ 192.0.2.1[500]
+  remote 'sun.strongswan.org' @ 203.0.113.5[500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 3618s ago, rekeying in 10642s
+  net-net: #4, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 3618s ago, rekeying in 2782s, expires in 3582s
+    in  c1234567,    147852 bytes,     987 packets,    12s ago
+    out c7654321,     98765 bytes,     543 packets,    12s ago
+    local  10.0.1.0/24
+    remote 10.0.2.0/24
+site-b: #7, CONNECTING, IKEv2, 0000000000000000:0000000000000000
+  local  'moon.strongswan.org' @ 192.0.2.1[500]
+  remote @ 203.0.113.9[500]

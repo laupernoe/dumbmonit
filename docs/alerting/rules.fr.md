@@ -106,6 +106,31 @@ Rapporté par l'agent ; voir
 |---|---|---|---|---|---|
 | Pair WireGuard silencieux | Un pair avec un keepalive persistant n'a pas terminé de handshake depuis plus de 15 minutes : le tunnel est en panne (`dumbmonit_agent_wireguard_peer_handshake_age_seconds and on (target, interface, peer) dumbmonit_agent_wireguard_peer_keepalive_seconds > 0`). Un pair qui ne s'est jamais connecté compte son silence depuis le moment où l'agent l'a vu pour la première fois. Les pairs sans keepalive (un téléphone, un portable) sont inactifs pendant des jours et sont laissés de côté ; changez le seuil pour changer N, ou retirez la partie `and on …` pour surveiller chaque pair. | > 15 min | 5 min | Avis (`warning`) | 6 h |
 
+### Tunnels IPsec
+
+Rapporté par l'agent ; voir [Agent](../devices/agent.md#ipsec-tunnels). La série
+n'existe que pour une CHILD_SA déclarée dans la configuration strongSwan : la
+règle se déclenche donc aussi sur un tunnel qui n'a jamais monté, pas
+seulement sur un tunnel qui est tombé.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Tunnel IPsec hors service | Un tunnel IPsec configuré n'a aucune session installée (`dumbmonit_agent_ipsec_tunnel_up < 1`). | < 1 | 10 min | Avis (`warning`) | 6 h |
+
+### Test de débit Internet
+
+Rapporté par l'agent ; voir
+[Agent](../devices/agent.md#internet-speed-test). Le test est désactivé par
+défaut et chaque règle reste silencieuse tant que le seuil correspondant n'est
+pas réglé dans `agent.yaml` : personne ne peut deviner ce que « lent » veut dire
+pour votre ligne.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Débit descendant Internet bas | Le dernier test a mesuré un débit descendant sous `speedtest_min_download_mbps` (`dumbmonit_agent_speedtest_download_min_bytes_per_second - dumbmonit_agent_speedtest_download_bytes_per_second > 0`). | > 0 | 10 min | Avis (`warning`) | 24 h |
+| Débit montant Internet bas | Idem, pour `speedtest_min_upload_mbps`. | > 0 | 10 min | Avis (`warning`) | 24 h |
+| Latence Internet élevée | Le dernier test a mesuré une latence au-dessus de `speedtest_max_latency_ms`. | > 0 | 10 min | Avis (`warning`) | 24 h |
+
 ### Proxmox VE
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |

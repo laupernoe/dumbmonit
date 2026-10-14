@@ -3409,6 +3409,44 @@ async fn requirements(kind: &str, browser_url: Option<&str>) -> Vec<Requirement>
     }
 }
 
+const OPENVPN_NONE: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "Only for a management interface started without a password-file argument.",
+    fields: &[],
+};
+
+const OPENVPN_PASSWORD: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Management password",
+    help: "The shared password set by the third argument of the server's \"management\" directive.",
+    fields: &[cred_secret(
+        "token",
+        "Management password",
+        "The one word every management client sends; OpenVPN has no account for this interface.",
+        "",
+        true,
+    )],
+};
+
+/// Options lues par `collectors/openvpn/mod.rs`.
+const OPENVPN_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "The management interface's port, used if the address does not give one.",
+        "7505",
+        "7505",
+    ),
+    number(
+        "request_timeout_seconds",
+        "Timeout per exchange (seconds)",
+        "Time allowed for the connection and each answer, from 1 to 60.",
+        "10",
+        "10",
+    ),
+];
+
 pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let registry = &state.collectors;
     let mut kinds = Vec::new();
@@ -4985,6 +5023,32 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SOPHOS_OPTIONS,
         },
+        "openvpn" => CollectorView {
+            kind: "openvpn",
+            label: "OpenVPN server",
+            summary: "An OpenVPN server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic.",
+            examples: &[
+                "OpenVPN Access Server",
+                "A plain openvpn --server on Linux",
+                "pfSense or OPNsense OpenVPN (management enabled)",
+            ],
+            credential_types: &["none", "api_token"],
+            credentials: &[OPENVPN_NONE, OPENVPN_PASSWORD],
+            address_hint: "vpn.lan",
+            default_port: dumbmonit_collectors::openvpn::DEFAULT_PORT,
+            setup: Setup {
+                title: "Turn on the management interface",
+                steps: &[
+                    "The management interface is a separate listener, off by default: add this to the server's configuration (server.conf, or the OpenVPN Access Server's as.conf under a different name) and restart it. Bind it to an address the DumbMonit host can reach, or to 127.0.0.1 and reach it through an SSH tunnel or a relay agent on the same machine.\nmanagement 0.0.0.0 7505",
+                    "Optional but recommended: the management interface has no account of its own, only a shared password. Put one in a file readable by the OpenVPN process alone and add it as a third argument.\nmanagement 0.0.0.0 7505 /etc/openvpn/management-password",
+                    "In DumbMonit, enter the server's address, for example \"vpn.lan\" (port 7505), and the management password if one is set.",
+                    "DumbMonit only reads: it sends version, state and status 3, never signal, kill or client-kill. It cannot disconnect a client, change a setting or stop the server.",
+                ],
+                warning: "Anyone who reaches the management port and knows the password can disconnect clients, read all of their real IP addresses, and reconfigure the running server: keep it off the public network, behind a firewall rule that allows only the DumbMonit host, with a password set.",
+                doc_url: "https://openvpn.net/community-resources/management-interface/",
+            },
+            options: OPENVPN_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -5129,6 +5193,7 @@ mod tests {
         "tailscale",
         "fortigate",
         "sophos",
+        "openvpn",
         "agent",
         "http",
         "tcp",
@@ -5511,6 +5576,7 @@ mod tests {
                 &["scheme", "port", "insecure_tls", "request_timeout_seconds", "upstream_check"],
             ),
             ("nut", &["port", "ups", "request_timeout_seconds"]),
+            ("openvpn", &["port", "request_timeout_seconds"]),
             (
                 "mikrotik",
                 &[
@@ -5907,6 +5973,16 @@ mod tests {
             dumbmonit_collectors::nut::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
         );
         assert_eq!(defaut("nut", "ups"), "");
+        // `collectors/openvpn/mod.rs`.
+        assert_eq!(
+            defaut("openvpn", "port"),
+            dumbmonit_collectors::openvpn::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("openvpn", "request_timeout_seconds"),
+            dumbmonit_collectors::openvpn::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
+        );
+        assert_eq!(describe("openvpn").default_port, dumbmonit_collectors::openvpn::DEFAULT_PORT);
         // `collectors/mikrotik/options.rs` : le port dépend du protocole.
         assert_eq!(defaut("mikrotik", "scheme"), "https");
         assert_eq!(defaut("mikrotik", "port"), "");
@@ -6195,6 +6271,7 @@ mod tests {
             ("traefik", include_str!("../../../../docs/devices/traefik.md")),
             ("caddy", include_str!("../../../../docs/devices/caddy.md")),
             ("nginx", include_str!("../../../../docs/devices/nginx.md")),
+            ("openvpn", include_str!("../../../../docs/devices/openvpn.md")),
             ("apache", include_str!("../../../../docs/devices/apache.md")),
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),

@@ -14,12 +14,14 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod filter;
+pub mod ipsec;
 pub mod perf_counters;
 pub mod plakar;
 pub mod registry;
 pub mod sensors;
 pub mod services;
 pub mod smart;
+pub mod speedtest;
 pub mod system_health;
 pub mod wireguard;
 pub mod zfs;
@@ -34,11 +36,13 @@ use sysinfo::{
 use crate::collect::backup_repos::BackupReposReport;
 use crate::collect::docker::ContainerInventory;
 use crate::collect::filter::NameFilter;
+use crate::collect::ipsec::IpsecReport;
 use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
 use crate::collect::sensors::SensorsStat;
 use crate::collect::services::ServiceState;
 use crate::collect::smart::SmartReport;
+use crate::collect::speedtest::SpeedtestReport;
 use crate::collect::system_health::SystemHealthStat;
 use crate::collect::wireguard::WireguardReport;
 use crate::collect::zfs::ZfsReport;
@@ -247,6 +251,10 @@ pub struct Snapshot {
     pub perf_counters: Option<PerfReport>,
     /// Tunnels WireGuard. `None` : pas de `wg`, ou aucune interface.
     pub wireguard: Option<WireguardReport>,
+    /// Tunnels IPsec (strongSwan). `None` : pas de `swanctl`, ou aucune connexion.
+    pub ipsec: Option<IpsecReport>,
+    /// Dernier test de débit Internet. `None` : désactivé, ou aucun test terminé.
+    pub speedtest: Option<SpeedtestReport>,
     /// Dépôts restic et Borg déclarés. `None` : aucun, ou première lecture en cours.
     pub backup_repos: Option<BackupReposReport>,
 }
@@ -289,6 +297,12 @@ impl Snapshot {
         }
         if let Some(tunnels) = &self.wireguard {
             samples.extend(wireguard::samples(tunnels, now_ms));
+        }
+        if let Some(tunnels) = &self.ipsec {
+            samples.extend(ipsec::samples(tunnels, now_ms));
+        }
+        if let Some(result) = &self.speedtest {
+            samples.extend(speedtest::samples(result, now_ms));
         }
         if let Some(repos) = &self.backup_repos {
             samples.extend(backup_repos::samples(repos, now_ms));
@@ -567,6 +581,8 @@ impl SystemProbe {
             zfs: None,
             perf_counters: None,
             wireguard: None,
+            ipsec: None,
+            speedtest: None,
             backup_repos: None,
         }
     }
@@ -1128,6 +1144,24 @@ mod tests {
                 }],
                 peers: Vec::new(),
             }),
+            ipsec: Some(ipsec::IpsecReport {
+                tunnels: vec![ipsec::TunnelStat {
+                    connection: "site-a".into(),
+                    name: "net-net".into(),
+                    up: true,
+                    bytes_in: Some(10),
+                    bytes_out: Some(20),
+                    rekey_in_seconds: Some(3600),
+                }],
+            }),
+            speedtest: Some(speedtest::SpeedtestReport {
+                download_bytes_per_second: Some(12_500_000.0),
+                upload_bytes_per_second: Some(1_250_000.0),
+                latency_ms: Some(14.0),
+                jitter_ms: Some(2.0),
+                ok: true,
+                age_seconds: 30,
+            }),
             backup_repos: Some(backup_repos::BackupReposReport {
                 repos: vec![backup_repos::RepoStat {
                     tool: backup_repos::Tool::Restic,
@@ -1162,6 +1196,8 @@ mod tests {
             "agent_zfs_pool_health",
             "mdaemon_queue_messages",
             "agent_wireguard_interface_peers",
+            "agent_ipsec_tunnel_up",
+            "agent_speedtest_download_bytes_per_second",
             "agent_backup_repo_reachable",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");

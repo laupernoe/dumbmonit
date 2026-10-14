@@ -517,6 +517,41 @@ function apache(series: MetricSeries[]): ApplianceView {
 	};
 }
 
+// --------------------------------------------------------------------- OpenVPN
+
+function openvpn(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'openvpn');
+	const version = ps.find((p) => p.name === 'server_info')?.labels.version ?? null;
+	const up = single(ps, 'server_up');
+	const clients = single(ps, 'clients_connected') ?? 0;
+	const received = byLabel(ps, 'client_bytes_received', 'common_name');
+	const sent = byLabel(ps, 'client_bytes_sent', 'common_name');
+	const rows: Row[] = [...byLabel(ps, 'client_connected_seconds', 'common_name').values()].map((p) => {
+		const name = p.labels.common_name;
+		const rx = received.get(name)?.value ?? 0;
+		const tx = sent.get(name)?.value ?? 0;
+		return {
+			key: name,
+			name,
+			tone: 'signal',
+			plate: m.devices_openvpn_connected_ago({ age: formatAge(p.value) }),
+			details: [p.labels.real_address, `↓ ${formatBytes(rx)} · ↑ ${formatBytes(tx)}`].filter((d): d is string => !!d)
+		};
+	});
+	rows.sort(byName);
+	const down = up !== null && up < 1;
+	return {
+		title: 'OpenVPN',
+		description: version ? m.devices_openvpn_description_version({ version }) : m.devices_openvpn_description(),
+		verdict: verdict(down ? [{ text: m.devices_openvpn_verdict_down(), severe: true }] : [], m.devices_openvpn_verdict_ok()),
+		figures: [
+			{ label: m.devices_openvpn_clients_connected(), value: String(clients) },
+			{ label: m.devices_openvpn_version(), value: version }
+		],
+		sections: [{ title: m.devices_openvpn_section_clients(), rows, more: m.devices_openvpn_clients_note() }]
+	};
+}
+
 // --------------------------------------------------------------------- Hyper-V
 
 function hyperv(series: MetricSeries[]): ApplianceView {
@@ -584,5 +619,6 @@ export const FOLDS: Record<string, Fold> = {
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
 	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },
 	apache: { prefix: 'apache', title: 'Web server', fold: apache },
+	openvpn: { prefix: 'openvpn', title: 'VPN', fold: openvpn },
 	hyperv: { prefix: 'hyperv', title: 'Hyper-V', fold: hyperv }
 };

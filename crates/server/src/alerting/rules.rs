@@ -817,6 +817,77 @@ pub fn builtin_rules() -> Vec<Rule> {
                  dumbmonit_agent_wireguard_peer_keepalive_seconds > 0",
             )
         },
+        // IPsec (strongSwan) : la série n'existe que pour une CHILD_SA
+        // *configurée* (`swanctl --list-conns`) — une qui n'a jamais été montée
+        // alerte donc aussi, exactement comme pour OPNsense et FortiGate.
+        Rule {
+            description: "A configured IPsec tunnel has no installed session.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ipsec_tunnel_down",
+                "IPsec tunnel down",
+                RuleKind::Threshold,
+                "dumbmonit_agent_ipsec_tunnel_up",
+            )
+        },
+        // Test de débit Internet (`agent/src/collect/speedtest.rs`). Les trois
+        // règles ne visent que les séries jumelles des seuils : sans seuil
+        // configuré, aucune ne peut se déclencher — c'est une option, pas un
+        // défaut imposé à une ligne dont personne ne connaît le débit réel.
+        Rule {
+            description: "The last Internet speed test measured a download rate below the \
+                          configured minimum."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "speedtest_download_slow",
+                "Internet download rate low",
+                RuleKind::Threshold,
+                "dumbmonit_agent_speedtest_download_min_bytes_per_second \
+                 - dumbmonit_agent_speedtest_download_bytes_per_second",
+            )
+        },
+        Rule {
+            description: "The last Internet speed test measured an upload rate below the \
+                          configured minimum."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "speedtest_upload_slow",
+                "Internet upload rate low",
+                RuleKind::Threshold,
+                "dumbmonit_agent_speedtest_upload_min_bytes_per_second \
+                 - dumbmonit_agent_speedtest_upload_bytes_per_second",
+            )
+        },
+        Rule {
+            description: "The last Internet speed test measured a latency above the configured \
+                          maximum."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "speedtest_latency_high",
+                "Internet latency high",
+                RuleKind::Threshold,
+                "dumbmonit_agent_speedtest_latency_ms - dumbmonit_agent_speedtest_max_latency_ms",
+            )
+        },
         // ------------------------------------------------------------------
         // Matériel remonté par l'agent : disques, pools ZFS, sondes.
         //
@@ -6098,6 +6169,10 @@ mod tests {
             "backup_repo_too_old",
             "backup_repo_unreachable",
             "wireguard_peer_silent",
+            "ipsec_tunnel_down",
+            "speedtest_download_slow",
+            "speedtest_upload_slow",
+            "speedtest_latency_high",
             "pfsense_gateway_down",
             "pfsense_gateway_loss",
             "pfsense_gateway_latency",
@@ -6514,6 +6589,15 @@ mod tests {
             "dumbmonit_agent_backup_repo_reachable",
             "dumbmonit_agent_wireguard_peer_handshake_age_seconds",
             "dumbmonit_agent_wireguard_peer_keepalive_seconds",
+            // Agent : tunnels IPsec et test de débit Internet
+            // (`agent/src/collect/{ipsec,speedtest}.rs`).
+            "dumbmonit_agent_ipsec_tunnel_up",
+            "dumbmonit_agent_speedtest_download_min_bytes_per_second",
+            "dumbmonit_agent_speedtest_download_bytes_per_second",
+            "dumbmonit_agent_speedtest_upload_min_bytes_per_second",
+            "dumbmonit_agent_speedtest_upload_bytes_per_second",
+            "dumbmonit_agent_speedtest_latency_ms",
+            "dumbmonit_agent_speedtest_max_latency_ms",
             // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos
             // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`),
             // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).

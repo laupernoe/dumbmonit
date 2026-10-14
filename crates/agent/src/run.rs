@@ -13,11 +13,13 @@ use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::ipsec::IpsecProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
 use crate::collect::sensors::SensorsProbe;
 use crate::collect::smart::SmartProbe;
+use crate::collect::speedtest::SpeedtestProbe;
 use crate::collect::system_health::SystemHealthProbe;
 use crate::collect::wireguard::WireguardProbe;
 use crate::collect::zfs::ZfsProbe;
@@ -67,6 +69,10 @@ pub struct Agent {
     backup_repos: BackupReposProbe,
     /// Tunnels WireGuard : muet sans `wg` ni interface.
     wireguard: WireguardProbe,
+    /// Tunnels IPsec : muet sans `swanctl` ni connexion.
+    ipsec: IpsecProbe,
+    /// Test de débit Internet : muet tant qu'il n'est pas activé.
+    speedtest: SpeedtestProbe,
     /// Matériel : sondes de température, santé des disques, pools ZFS. Chacun
     /// se tait complètement là où la machine n'a rien à en dire.
     sensors: SensorsProbe,
@@ -121,6 +127,8 @@ impl Agent {
             plakar: PlakarProbe::new(&config.plakar),
             backup_repos: BackupReposProbe::new(&config.backup_repos),
             wireguard: WireguardProbe::new(&config.wireguard),
+            ipsec: IpsecProbe::new(&config.ipsec),
+            speedtest: SpeedtestProbe::new(&config.speedtest),
             sensors: SensorsProbe::new(config.sensors),
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
@@ -151,6 +159,8 @@ impl Agent {
         snapshot.backups = self.plakar.read().await;
         snapshot.backup_repos = self.backup_repos.read().await;
         snapshot.wireguard = self.wireguard.read().await;
+        snapshot.ipsec = self.ipsec.read().await;
+        snapshot.speedtest = self.speedtest.read().await;
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
         snapshot.zfs = self.zfs.read().await;
@@ -160,6 +170,8 @@ impl Agent {
         // comparables entre elles à l'instant près.
         let now_ms = chrono::Utc::now().timestamp_millis();
         let mut samples = snapshot.to_samples(now_ms);
+        samples
+            .extend(crate::collect::speedtest::threshold_samples(&self.config.speedtest, now_ms));
         samples.extend(agent_samples(
             started.elapsed(),
             self.buffer.len(),
@@ -435,6 +447,8 @@ mod tests {
             smart: crate::collect::smart::SmartConfig::default(),
             zfs: crate::collect::zfs::ZfsConfig::default(),
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
+            ipsec: crate::collect::ipsec::IpsecConfig::default(),
+            speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
