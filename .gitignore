@@ -16,3 +16,4 @@ site/
 
 # Agent binaries extracted locally (docker buildx build --target agent-dist)
 /dist
+__pycache__/
