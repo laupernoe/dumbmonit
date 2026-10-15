@@ -9,6 +9,13 @@ test('bumpToastCount starts at 1 and increments', () => {
 	assert.equal(bumpToastCount({ count: 4 }), 5);
 });
 
+test('bumpToastCount never merges a toast with an action', () => {
+	assert.equal(bumpToastCount(null, true), 1);
+	assert.equal(bumpToastCount({ count: 1 }, true), 1);
+	assert.equal(bumpToastCount({ count: 3 }, true), 1);
+	assert.equal(bumpToastCount({ error: 'x' }, true), 1);
+});
+
 test('toastText appends the counter only when merged', () => {
 	assert.equal(toastText('Saved'), 'Saved');
 	assert.equal(toastText('Saved', 1), 'Saved');
