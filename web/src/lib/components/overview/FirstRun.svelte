@@ -59,7 +59,7 @@
 			title: m.overview_first_channel_title(),
 			text: m.overview_first_channel_text(),
 			action: m.overview_first_channel_action(),
-			href: '/alerts#notifications-channels',
+			href: '/settings/notifications#notifications-channels',
 			done: guide.has_channel
 		},
 		{
@@ -68,7 +68,7 @@
 			title: m.overview_first_test_title(),
 			text: m.overview_first_test_text(),
 			action: m.overview_first_test_action(),
-			href: '/alerts#notifications-channels',
+			href: '/settings/notifications#notifications-channels',
 			done: guide.notification_confirmed
 		}
 	]);
