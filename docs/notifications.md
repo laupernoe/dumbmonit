@@ -12,6 +12,7 @@ token to copy, and what to type into the form.
 - [Creating and testing a channel](#creating-and-testing-a-channel)
 - [Settings or secrets: the difference](#settings-or-secrets-the-difference)
 - [Self-signed certificates](#self-signed-certificates)
+- [Acknowledge or snooze from the notification](#acknowledge-or-snooze-from-the-notification)
 - [The custom channel](#the-custom-channel)
   - [Available variables](#available-variables)
   - [Example 1 — an internal JSON API](#example-1--an-internal-json-api)
@@ -91,6 +92,49 @@ Turning it on keeps the connection encrypted but stops checking the identity of
 the server, so use it only for a server you control, on a network you trust. When a
 certificate is the reason for a failure, the error shown for the channel names it
 (for example "invalid peer certificate: UnknownIssuer").
+
+---
+
+## Acknowledge or snooze from the notification
+
+When a public URL is set (**Alerts → Notifications → Notification policy**, or
+`DUMBMONIT_PUBLIC_URL`), every alert message carries two actions:
+
+- **Acknowledge**: no more reminders until the alert resolves. The resolution is
+  still announced.
+- **Snooze 1 h**: no reminders for one hour; they resume afterwards if the alert is
+  still active. A snooze never shortens a longer acknowledgement.
+
+How they show up depends on the channel:
+
+| Channel | Shown as |
+|---|---|
+| ntfy, Telegram, Web Push | Buttons under the notification |
+| Discord, Slack, email and every other channel | Links at the end of the message |
+| Custom webhook | Links in `{{message}}`, and the `{{ack_url}}` / `{{snooze_url}}` variables |
+| PagerDuty, Opsgenie | Nothing: acknowledge in the service itself |
+
+Telegram only accepts buttons pointing to an `https` address with a domain name;
+with an IP address or a plain `http` URL, the actions stay as links in the text.
+Web Push only shows the buttons on devices of operators and admins: a viewer sees
+the alert, not a way to silence it.
+
+A link opens a short confirmation page in DumbMonit: **nothing happens until you
+press the button**. Mail clients, chat apps and antivirus scanners open links to
+build previews; they only load the page. No sign-in is needed: the link itself is
+the permission, and only for that gesture, on the alerts of that message, once, for
+24 hours. The action is recorded in the audit log, and the alert shows
+"acknowledged by via notification link".
+
+Security, in short: each link is signed with a key derived from the instance secret
+(changing the secret invalidates every link), carries no session, and travels after
+the `#` of the address, which browsers never send to a server, so it appears in no
+access or proxy log. A forged, altered or expired link gets the same answer as any
+other invalid link, and repeated attempts from one address are slowed down.
+
+Turn **Acknowledge and snooze from notifications** off in the notification policy
+to stop adding them; this also invalidates the links already sent. Clearing the
+public URL has the same effect.
 
 ---
 
@@ -189,6 +233,8 @@ write your JSON normally.
 | `{{link}}` | Link to the device in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Always `dumbmonit` | `dumbmonit` |
 | `{{token}}` | The channel's `token` secret | *(your token)* |
+| `{{ack_url}}` | Signed link that acknowledges the alert until it resolves, empty if [action links](#acknowledge-or-snooze-from-the-notification) are off | `https://dumbmonit.home/alert-action#…` |
+| `{{snooze_url}}` | Signed link that snoozes the alert for one hour, empty if action links are off | `https://dumbmonit.home/alert-action#…` |
 
 Two useful remarks:
 

@@ -8,6 +8,7 @@
 //! chiffré en base par [`crate::crypto::Cipher`], porté par
 //! [`secret::SecretString`] en mémoire, et expurgé de tout message d'erreur.
 
+pub mod action_link;
 pub mod channel;
 pub mod chat;
 pub mod custom;
@@ -44,6 +45,32 @@ pub trait Notifier: Send + Sync {
     /// Envoie un message. L'implémentation ne journalise rien : c'est
     /// [`dispatch`] qui décide de la trace, avec le nom du canal en contexte.
     async fn send(&self, message: &Message) -> Result<(), NotifyError>;
+
+    /// Vrai si [`Notifier::send`] présente lui-même `message.actions` (boutons,
+    /// liens Markdown). Faux : [`deliver`] les ajoute en fin de texte.
+    fn renders_actions(&self) -> bool {
+        false
+    }
+}
+
+/// Le message tel que ce canal doit le recevoir, liens d'action compris.
+fn with_actions_for<'a>(
+    kind: &str,
+    notifier: &dyn Notifier,
+    message: &'a Message,
+) -> std::borrow::Cow<'a, Message> {
+    use std::borrow::Cow;
+    if message.actions.is_empty() {
+        return Cow::Borrowed(message);
+    }
+    if catalog::action_style(kind) == "none" {
+        return Cow::Owned(message.without_actions());
+    }
+    if notifier.renders_actions() {
+        Cow::Borrowed(message)
+    } else {
+        Cow::Owned(message.with_action_links())
+    }
 }
 
 /// Construit le client HTTP partagé par les canaux web.
@@ -193,7 +220,8 @@ pub async fn deliver(
         }
     };
 
-    match notifier.send(message).await {
+    let message = with_actions_for(&config.kind, notifier.as_ref(), message);
+    match notifier.send(&message).await {
         Ok(()) => {
             debug!(channel = %config.name, kind = %config.kind, "notification sent");
             report(None)
@@ -348,6 +376,34 @@ mod tests {
                 "{kind} is not wired in build()"
             );
         }
+    }
+
+    #[test]
+    fn chaque_canal_recoit_les_liens_d_action_sous_la_forme_qu_il_sait_rendre() {
+        let http = http_client();
+        let mut message = test_message("x");
+        let key = action_link::ActionKey::from_bytes([2; 32]);
+        message.actions =
+            action_link::build(&key, "https://m.lan", &["a@1".into()], chrono::Utc::now());
+
+        // ntfy rend ses boutons : le texte reste intact.
+        let ntfy = build(&http, &channel(1, "ntfy", true)).unwrap();
+        let sent = with_actions_for("ntfy", ntfy.as_ref(), &message);
+        assert_eq!(sent.text, message.text);
+        assert_eq!(sent.actions.len(), 2);
+
+        // Gotify ne sait pas : les liens partent dans le texte.
+        let mut gotify = channel(2, "gotify", true);
+        gotify.settings = json!({"server_url": "https://gotify.lan"});
+        gotify.secrets = json!({"token": "abc"});
+        let gotify = build(&http, &gotify).unwrap();
+        let sent = with_actions_for("gotify", gotify.as_ref(), &message);
+        assert!(sent.text.contains("Acknowledge: https://m.lan/alert-action#"), "{}", sent.text);
+
+        // PagerDuty a son propre acquittement : aucun lien.
+        let sent = with_actions_for("pagerduty", gotify.as_ref(), &message);
+        assert!(sent.actions.is_empty());
+        assert!(!sent.text.contains("alert-action"));
     }
 
     #[test]

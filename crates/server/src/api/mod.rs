@@ -1,7 +1,8 @@
 mod activedirectory;
 mod agent_commands;
 mod agent_files;
-mod alerts;
+mod alert_actions;
+pub(crate) mod alerts;
 mod auth;
 mod backends;
 mod backup;
@@ -235,6 +236,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         )
         // Pages de statut publiques : lecture seule, sans session, par conception.
         .merge(status_pages::public_routes())
+        // Liens d'action des notifications : le jeton signé est l'autorisation
+        // (`alert_actions.rs`).
+        .merge(alert_actions::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())

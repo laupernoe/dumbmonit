@@ -50,7 +50,7 @@ export const PUBLIC_ROUTES = ['/login', '/setup'];
  * pages (`/s/<slug>`). They never redirect to sign-in, and never bounce a
  * signed-in user away either.
  */
-export const STANDALONE_PREFIXES = ['/s/'];
+export const STANDALONE_PREFIXES = ['/s/', '/alert-action'];
 
 export function isStandaloneRoute(pathname: string): boolean {
 	return STANDALONE_PREFIXES.some((prefix) => pathname.startsWith(prefix));

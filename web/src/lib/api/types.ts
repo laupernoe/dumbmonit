@@ -915,6 +915,9 @@ export interface ChannelKindInfo {
 	doc_url: string;
 	settings: ChannelField[];
 	secrets: ChannelField[];
+	/** How the channel shows Acknowledge / Snooze links: native buttons, links in the
+	 *  message, or not at all (services with their own acknowledgement). */
+	actions?: 'buttons' | 'links' | 'none' | string;
 }
 
 /** A channel as returned on read: never its secrets. */
@@ -1142,6 +1145,38 @@ export interface NotificationPolicy {
 	escalate_after_secs: number;
 	/** Channel told second. `null` = no escalation, whatever the delay. */
 	escalate_channel: number | null;
+	/** Acknowledge / Snooze links in notifications; only effective with a public URL.
+	 *  Switching it off also revokes the links already sent. */
+	action_links: boolean;
+}
+
+/** What a notification action link does (`/alert-action#<token>`). */
+export type AlertLinkAction = 'ack' | 'snooze';
+
+/** An alert named by an action link, reduced to what is needed to decide. */
+export interface AlertLinkTarget {
+	rule_name: string;
+	target_name: string | null;
+	severity: AlertSeverity;
+	acked: boolean;
+	acked_until: string | null;
+}
+
+/** `POST /api/public/alert-action/inspect`: what the link would do. */
+export interface AlertLinkView {
+	action: AlertLinkAction;
+	expires_at: string;
+	used: boolean;
+	/** The link's alerts that are still active. */
+	alerts: AlertLinkTarget[];
+}
+
+/** `POST /api/public/alert-action`: what the link did. */
+export interface AlertLinkResult {
+	action: AlertLinkAction;
+	until: string;
+	acked: number;
+	alerts: AlertLinkTarget[];
 }
 
 export type NotificationPolicyPayload = Partial<NotificationPolicy>;

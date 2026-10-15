@@ -18,6 +18,10 @@ const CANARY: &[u8] = b"ezymonit-canary-v1";
 
 pub struct Cipher {
     inner: Aes256Gcm,
+    /// Racine des sous-clés d'authentification ([`Cipher::subkey`]), tirée de la
+    /// clé de chiffrement par HMAC : jamais la clé AES elle-même, pour qu'un
+    /// usage ne puisse pas servir d'oracle à l'autre.
+    subkey_root: [u8; 32],
 }
 
 impl Cipher {
@@ -45,8 +49,17 @@ impl Cipher {
     /// Argon2id qui leur sont propres et inscrits dans le lot — et non du secret
     /// d'instance, qui n'existe pas encore sur la machine de destination.
     pub fn from_key(key_bytes: [u8; 32]) -> Self {
+        let subkey_root = hmac_sha256(&key_bytes, b"dumbmonit/subkey-root/v1");
         let key = Key::<Aes256Gcm>::from(key_bytes);
-        Self { inner: Aes256Gcm::new(&key) }
+        Self { inner: Aes256Gcm::new(&key), subkey_root }
+    }
+
+    /// Sous-clé de 32 octets propre à un usage (`label`), dérivée du secret
+    /// d'instance : signer des liens sans stocker une clé de plus, et les
+    /// invalider tous en changeant le secret. Deux libellés différents donnent
+    /// deux clés indépendantes.
+    pub fn subkey(&self, label: &[u8]) -> [u8; 32] {
+        hmac_sha256(&self.subkey_root, label)
     }
 
     /// Chiffre en préfixant le nonce aléatoire au texte chiffré.
@@ -99,6 +112,16 @@ impl Cipher {
     }
 }
 
+/// HMAC-SHA256, qui accepte une clé de toute longueur.
+fn hmac_sha256(key: &[u8], data: &[u8]) -> [u8; 32] {
+    use hmac::{Hmac, KeyInit, Mac};
+    let mut mac = Hmac::<sha2::Sha256>::new_from_slice(key).expect("HMAC accepts any key length");
+    mac.update(data);
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&mac.finalize().into_bytes());
+    out
+}
+
 /// Génère un secret d'instance hexadécimal de 32 octets.
 pub fn generate_secret() -> String {
     hex::encode(rand::random::<[u8; 32]>())
@@ -139,6 +162,16 @@ mod tests {
 
         let right = Cipher::derive("le-bon-secret-bien-long", &salt).unwrap();
         assert!(right.verify_canary(&canary).is_ok());
+    }
+
+    #[test]
+    fn subkeys_depend_on_the_label_and_the_secret() {
+        let salt = generate_salt();
+        let a = Cipher::derive("un-secret-suffisamment-long", &salt).unwrap();
+        let b = Cipher::derive("un-autre-secret-assez-long", &salt).unwrap();
+        assert_eq!(a.subkey(b"x"), a.subkey(b"x"), "stable");
+        assert_ne!(a.subkey(b"x"), a.subkey(b"y"), "one key per purpose");
+        assert_ne!(a.subkey(b"x"), b.subkey(b"x"), "tied to the instance secret");
     }
 
     #[test]

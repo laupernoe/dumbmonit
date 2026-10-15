@@ -32,6 +32,7 @@ s'appliquent dès la sortie de boîte.
 | Fenêtre de regroupement | Alertes → Notifications → Politique de notification | 60 s |
 | Messages par canal par heure | Alertes → Notifications → Politique de notification | 20 |
 | URL publique (liens profonds) | Alertes → Notifications → Politique de notification, ou `DUMBMONIT_PUBLIC_URL` | vide |
+| Liens Acquitter / Pause dans les messages | Alertes → Notifications → Politique de notification | activés (si une URL publique est connue) |
 
 ## Hystérésis et surcharges par appareil
 
@@ -254,11 +255,13 @@ Chaque message se termine par un lien vers l'appareil
 personnalisés l'obtiennent aussi comme variable `{{link}}` sauf si leur
 propre `base_url` est réglé.
 
-Il n'y a délibérément pas de lien « silence 1 h » dans les messages : les
-services de chat récupèrent chaque lien qu'ils affichent pour construire
-un aperçu, ce qui déclencherait le silence au moment même où le message
-est posté. Mettez en silence depuis la page de l'appareil ou la page
-Alertes à la place.
+Les messages portent aussi des liens **Acquitter** et **Pause 1 h** (des
+boutons sur ntfy, Telegram et Web Push). Les services de chat récupèrent
+chaque lien affiché pour construire un aperçu : un lien n'agit donc jamais
+seul, il ouvre une page de confirmation, et seul le bouton de cette page
+acquitte. Chaque lien est signé, ne sert qu'une fois et pendant 24 heures,
+sans connexion. Voir
+[Acquitter ou mettre en pause depuis la notification](../notifications.md#acknowledge-or-snooze-from-the-notification).
 
 ## Ce qui a été emprunté à Pulse, et ce qui ne l'a pas été
 

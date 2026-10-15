@@ -2388,6 +2388,63 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/public/alert-action/inspect:
+    post:
+      operationId: inspectAlertAction
+      tags: [Public status]
+      summary: Describe a notification action link
+      description: |
+        Read-only: what the signed link from a notification would do (acknowledge, or snooze for one
+        hour) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
+        which reads the token from the URL fragment so it never reaches a server log. Any refused
+        token (forged, altered, expired, or action links switched off) gets the same `404`; repeated
+        refusals from one client get `429`. Requires `X-Requested-With: DumbMonit`.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertActionToken" }
+      responses:
+        "200":
+          description: What the link would do.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertActionView" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/public/alert-action:
+    post:
+      operationId: executeAlertAction
+      tags: [Public status]
+      summary: Run a notification action link
+      description: |
+        Acknowledges the link's still-active alerts until they resolve (`ack`) or for one hour
+        (`snooze`, which never shortens a longer acknowledgement), as "via notification link", and
+        records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
+        when the token is refused or none of its alerts is still active.
+        Requires `X-Requested-With: DumbMonit`.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertActionToken" }
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertActionResult" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
   /api/public/status/{slug}/confirm:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -5508,12 +5565,16 @@ components:
         matcher: { $ref: "#/components/schemas/ChannelMatcher" }
     ChannelKind:
       type: object
-      required: [kind, label, summary, doc_url, settings, secrets]
+      required: [kind, label, summary, doc_url, settings, secrets, actions]
       properties:
         kind: { type: string }
         label: { type: string }
         summary: { type: string }
         doc_url: { type: string }
+        actions:
+          type: string
+          enum: [buttons, links, none]
+          description: "How the channel shows the Acknowledge / Snooze action links: native buttons, links in the message, or not at all."
         settings:
           type: array
           items: { $ref: "#/components/schemas/ChannelField" }
@@ -5619,7 +5680,7 @@ components:
         message: { type: string }
     NotifyPolicy:
       type: object
-      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel]
+      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel, action_links]
       properties:
         batch_window_secs: { type: integer, description: "0: send at once." }
         max_per_hour: { type: integer, description: "Per channel; 0: unlimited." }
@@ -5629,6 +5690,7 @@ components:
         public_url: { type: string, description: "Links in messages; empty: `DUMBMONIT_PUBLIC_URL`." }
         escalate_after_secs: { type: integer, description: "0: no escalation." }
         escalate_channel: { type: [integer, "null"], format: int64 }
+        action_links: { type: boolean, description: "Acknowledge / Snooze links in notifications; only effective with a public URL. Off also revokes links already sent." }
     NotifyPolicyUpdate:
       type: object
       properties:
@@ -5640,6 +5702,42 @@ components:
         public_url: { type: string }
         escalate_after_secs: { type: integer }
         escalate_channel: { type: [integer, "null"], format: int64 }
+        action_links: { type: boolean }
+    AlertActionToken:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, description: "The part after `#` in the link." }
+    AlertActionLinked:
+      type: object
+      required: [rule_name, target_name, severity, acked, acked_until]
+      properties:
+        rule_name: { type: string }
+        target_name: { type: [string, "null"] }
+        severity: { $ref: "#/components/schemas/Severity" }
+        acked: { type: boolean }
+        acked_until: { type: [string, "null"], format: date-time }
+    AlertActionView:
+      type: object
+      required: [action, expires_at, used, alerts]
+      properties:
+        action: { type: string, enum: [ack, snooze] }
+        expires_at: { type: string, format: date-time }
+        used: { type: boolean, description: "The link has already been used." }
+        alerts:
+          type: array
+          description: The link's alerts that are still active.
+          items: { $ref: "#/components/schemas/AlertActionLinked" }
+    AlertActionResult:
+      type: object
+      required: [action, until, acked, alerts]
+      properties:
+        action: { type: string, enum: [ack, snooze] }
+        until: { type: string, format: date-time }
+        acked: { type: integer, description: "Alerts acknowledged by this action." }
+        alerts:
+          type: array
+          items: { $ref: "#/components/schemas/AlertActionLinked" }
     MatchPreviewRequest:
       type: object
       required: [matcher]

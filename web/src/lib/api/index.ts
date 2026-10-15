@@ -8,6 +8,8 @@
 import { request, ApiError } from './client';
 import { normalizeCollector } from './types';
 import type {
+	AlertLinkResult,
+	AlertLinkView,
 	AgentHost,
 	AgentToken,
 	AgentTokenPayload,
@@ -749,6 +751,19 @@ export function subscribeToStatus(slug: string, email: string): Promise<{ status
 }
 
 /** Public: confirms a subscription with the token from the email. */
+/**
+ * Public: what a notification action link would do. The token travels in the body,
+ * never in a URL, so it reaches no access log.
+ */
+export function inspectAlertLink(token: string): Promise<AlertLinkView> {
+	return request<AlertLinkView>('/public/alert-action/inspect', { method: 'POST', body: { token }, allowUnauthorized: true });
+}
+
+/** Public: runs a notification action link, once. */
+export function runAlertLink(token: string): Promise<AlertLinkResult> {
+	return request<AlertLinkResult>('/public/alert-action', { method: 'POST', body: { token }, allowUnauthorized: true });
+}
+
 export function confirmStatusSubscription(slug: string, token: string): Promise<{ status: string }> {
 	return request(`/public/status/${encodeURIComponent(slug)}/confirm`, { method: 'POST', query: { token } });
 }

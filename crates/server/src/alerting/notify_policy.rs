@@ -76,6 +76,16 @@ pub struct GlobalPolicy {
     /// Canal prévenu en second. `None` : pas d'escalade, quel que soit le délai.
     #[serde(default)]
     pub escalate_channel: Option<i64>,
+    /// Liens « Acknowledge » et « Snooze 1 h » dans les notifications
+    /// (`notify::action_link`). Vrai par défaut, mais sans effet tant
+    /// qu'aucune URL publique n'est connue. Le couper invalide aussi les liens
+    /// déjà envoyés.
+    #[serde(default = "default_true")]
+    pub action_links: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for GlobalPolicy {
@@ -89,6 +99,7 @@ impl Default for GlobalPolicy {
             public_url: String::new(),
             escalate_after_secs: 0,
             escalate_channel: None,
+            action_links: true,
         }
     }
 }
