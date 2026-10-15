@@ -896,10 +896,10 @@
 			/>
 		</label>
 		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} class="max-sm:w-full max-sm:flex-wrap" />
-		<div class="flex min-w-0 items-center justify-between gap-3 lg:contents">
-			<label class="min-w-0">
+		<div class="flex min-w-0 flex-wrap items-center justify-between gap-3 lg:contents">
+			<label class="min-w-0 max-sm:w-full">
 				<span class="sr-only">{m.devices_targets_filter_kind()}</span>
-				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={kind}>
+				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={kind}>
 					<option value="">{m.devices_targets_all_kinds()}</option>
 					{#each kinds as [value, label] (value)}
 						<option {value}>{label}</option>
