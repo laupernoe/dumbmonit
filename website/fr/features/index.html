@@ -87,7 +87,7 @@
 		<p class="lede">Alertes, pages de statut, agents et le reste, dans un seul conteneur. Ce que remonte chaque type d'appareil est détaillé dans les pages Appareils.</p>
 		<ul class="toc" aria-label="Sur cette page">
 			<li><a href="#alerting">Des alertes sans le bruit</a></li>
-			<li><a href="#notifications">23 canaux de notification</a></li>
+			<li><a href="#notifications"><span class="num" data-n="23">23</span> canaux de notification</a></li>
 			<li><a href="#agent">Un agent pour ce qui ne parle pas SNMP</a></li>
 			<li><a href="#status">Des pages de statut pour ceux que vous servez</a></li>
 			<li><a href="#wall">Mode mur</a></li>
@@ -119,10 +119,16 @@
 			</div>
 			<figure>
 				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/alerts-light.webp" alt="Page des alertes : alertes en cours regroupées sous leur hôte, chacune avec une plaque Avertissement ou Avis, Acquitter, Silence 1 h et Ouvrir l’appareil" width="1440" height="760" loading="lazy">
-					</picture>
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.avif 1440w, ../../assets/shots/alerts-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.webp 1440w, ../../assets/shots/alerts-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Page des alertes : alertes en cours regroupées par appareil, chacune avec une plaque Injoignable, Avertissement, Avis ou En formation, Acquitter et Ouvrir la sonde" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
 				</div>
 				<figcaption>Alertes regroupées par hôte. Les niveaux de gravité se lisent comme un service météo : info, avis, avertissement.</figcaption>
 			</figure>
@@ -133,7 +139,7 @@
 <section class="block" id="notifications">
 	<div class="wrap">
 		<div class="section-head">
-			<h2>23 canaux de notification</h2>
+			<h2><span class="num" data-n="23">23</span> canaux de notification</h2>
 			<p>Chacun a un bouton Tester et une page de configuration dans la <a href="https://dumbmonit.readthedocs.io/fr/latest/notifications/">documentation</a>.</p>
 		</div>
 		<ul class="chips" aria-label="Canaux de notification" style="margin-top:0">
@@ -204,30 +210,51 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>Seuls les libellés que vous choisissez quittent le serveur. Les noms, adresses et types d’appareils n’apparaissent jamais sur la page, dans un badge ou dans un e-mail.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/fr/latest/using/status-pages/">Les pages de statut dans la documentation</a></p>
 			</div>
-			<ul class="points">
-				<li><strong>Sur un téléphone</strong><p>Lire l’état, acquitter une alerte, lancer une fenêtre de maintenance. Installable sur l’écran d’accueil, volontairement sans mode hors ligne : il n’affiche jamais l’état d’hier.</p></li>
-			</ul>
+			<div>
+				<ul class="points">
+					<li><strong>Sur un téléphone</strong><p>Lire l’état, acquitter une alerte, lancer une fenêtre de maintenance. Installable sur l’écran d’accueil, volontairement sans mode hors ligne : il n’affiche jamais l’état d’hier.</p></li>
+				</ul>
+				<figure style="margin-top:32px">
+					<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.avif 1440w, ../../assets/shots/status-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.webp 1440w, ../../assets/shots/status-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/status-light-1x.avif 1440w, ../../assets/shots/status-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/status-light-1x.webp" srcset="../../assets/shots/status-light-1x.webp 1440w, ../../assets/shots/status-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Une page de statut publique intitulée Home services : tous les systèmes opérationnels, puis chaque service avec sa barre de disponibilité sur 7 jours et son temps de réponse" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+					</div>
+					<figcaption>Une page de statut publique : ce que la famille peut vérifier avant de demander si internet est en panne.</figcaption>
+				</figure>
+			</div>
 		</div>
 	</div>
 </section>
 
 <section class="block" id="wall">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>Mode mur</h2>
-				<p>Le bulletin seul, en plein écran, pour un moniteur de salle : une scène vivante (toit parisien avec la tour Eiffel et les pigeons DumbMonit par défaut, ou l’une de nombreuses autres) dont la météo suit vos alertes, un thème OLED pour un écran allumé des jours durant, et la musique du mur &mdash; Spotify Connect transforme l’écran en enceinte.</p>
-			</div>
-			<figure class="phone-shot" style="max-width:360px">
-				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/wall-phone-light.webp" alt="Le bulletin sur un téléphone : la phrase, les indicateurs, la fenêtre météo avec le pigeon, et la première alerte qui a besoin de vous" width="390" height="844" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Le même bulletin en largeur de téléphone.</figcaption>
-			</figure>
+		<div class="section-head">
+			<h2>Mode mur</h2>
+			<p>Le bulletin seul, en plein écran, pour un moniteur de salle : une scène vivante (toit parisien avec la tour Eiffel et les pigeons DumbMonit par défaut, ou l’une de nombreuses autres) dont la météo suit vos alertes, un thème OLED pour un écran allumé des jours durant, et la musique du mur &mdash; Spotify Connect transforme l’écran en enceinte.</p>
 		</div>
+		<figure>
+			<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.avif 1440w, ../../assets/shots/wall-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.webp 1440w, ../../assets/shots/wall-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Mode mur : « 4 problèmes » en grand, la liste des alertes, les appareils qui répondent, une horloge et un toit parisien sous la pluie avec les pigeons" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+			</div>
+			<figcaption>Le mode mur sur un écran de salle : la météo du toit parisien suit vos alertes.</figcaption>
+		</figure>
 	</div>
 </section>
 

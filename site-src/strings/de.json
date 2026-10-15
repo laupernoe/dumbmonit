@@ -205,5 +205,14 @@
  "sev_warning": "Warnung",
  "sev_advisory": "Hinweis",
  "sev_info": "Info",
- "in_l_guide": "Vollständige Installationsanleitung"
+ "in_l_guide": "Vollständige Installationsanleitung",
+ "sh_ov_alt": "Die Übersicht der Live-Demo: der Satz „2 Warnungen, 1 Hinweis, 1 nicht erreichbar, 5 im Aufbau.“ über einem verregneten Wetterfenster, die Statusschilder, was sich seit dem letzten Besuch geändert hat, und die Alarme, die Sie brauchen",
+ "sh_ov_cap": "Die Übersicht der Live-Demo mit fiktiven Geräten und einigen eingeschalteten Ausfällen. An einem ruhigen Tag lautet der Satz „Klarer Himmel.“",
+ "sh_dev_alt": "Ein Proxmox-VE-Monitor: sein Status, seine Alarme und jeder Knoten mit CPU, Speicher, Root-Dateisystem, ausstehenden Updates, nötigen Neustarts und gestoppten Diensten",
+ "sh_dev_cap": "Eine Seite pro Gerät: hier ein Proxmox-Cluster, Knoten für Knoten, mit allem, was einen Neustart oder ein Update braucht.",
+ "sh_st_alt": "Eine öffentliche Statusseite mit dem Titel Home services: alle Systeme betriebsbereit, darunter jeder Dienst mit seinem 7-Tage-Verfügbarkeitsbalken und seiner Antwortzeit",
+ "sh_st_cap": "Eine öffentliche Statusseite: was die Familie prüfen kann, bevor sie fragt, ob das Internet ausgefallen ist.",
+ "sh_wall_alt": "Wandmodus: „4 Probleme“ in großer Schrift, die Liste der Alarme, die meldenden Geräte, eine Uhr und ein verregnetes Pariser Dach mit den Tauben",
+ "sh_wall_cap": "Der Wandmodus auf einem Raummonitor: Das Wetter über dem Pariser Dach folgt Ihren Alarmen.",
+ "sh_al_alt": "Alarmseite: aktuelle Alarme nach Gerät gruppiert, jeweils mit einem Schild Nicht erreichbar, Warnung, Hinweis oder Im Aufbau, Bestätigen und Monitor öffnen"
 }

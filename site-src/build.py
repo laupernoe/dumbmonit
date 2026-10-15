@@ -57,6 +57,8 @@ SEVERITY = {"warning": ("sev_warning", "plate-warning"), "advisory": ("sev_advis
 RULES_SHOWN = 6
 
 KEY = r"[A-Za-z_][A-Za-z0-9_]*"
+# Strings whose counters (@@NDEV@@...) show as animated figures; never ones used in attributes.
+COUNTED = {"hl3_t", "f_notif_h", "dv_lede"}
 
 
 def esc(s):
@@ -78,7 +80,9 @@ def load_strings(counts):
         table = {**base, **tr}
         for k, v in table.items():
             for token, value in counts.items():
-                v = v.replace(token, str(value))
+                # Figures in visible headings count up when they scroll into view (site.js).
+                shown = f'<span class="num" data-n="{value}">{value}</span>' if k in COUNTED else str(value)
+                v = v.replace(token, shown)
             table[k] = v
         out[code] = table
     return base, out
@@ -162,9 +166,9 @@ def device_card(ctx, dev):
     link = ctx["link"](f"devices/{dev['family']}/#{dev['kind']}")
     return (
         f'\t\t\t<li data-family="{dev["family"]}" data-q="{esc(text)}">'
-        f'<a class="dev-card" href="{link}"><span class="name">{esc(dev["label"])}</span>'
+        f'<a class="dev-card" href="{link}"><span class="name"><span class="led" aria-hidden="true"></span>{esc(dev["label"])}</span>'
         f'<span class="what">{esc(dev["summary"])}</span>'
-        f'<span class="fam label-tape">{esc(fam_name(t, dev["family"]))}</span></a></li>'
+        f'<span class="fam label-tape">{esc(fam_name(t, dev["family"]))}<span class="go" aria-hidden="true"></span></span></a></li>'
     )
 
 
@@ -174,7 +178,7 @@ def family_card(ctx, fam, n):
     return (
         f'\t\t\t<li class="card"><h3><a href="{link}">{esc(fam_name(t, fam["id"]))}</a></h3>'
         f'<p>{esc(t[f"fam_{fam["id"]}_blurb"])}</p>'
-        f'<p class="label-tape">{esc(t["fp_n"].replace("{n}", str(n)))}</p></li>'
+        f'<p class="label-tape">{esc(t["fp_n"]).replace("{n}", f'<span class="num" data-n="{n}">{n}</span>')}</p></li>'
     )
 
 
@@ -246,6 +250,41 @@ def render_device(ctx, dev):
     )
     parts.append("</article>")
     return "\n".join(parts)
+
+
+# Screenshots of the live demo (website/assets/shots): desktop at 1440 x 900 CSS px, captured at 2x
+# (2880 x 1800, plus a 1440 wide copy), phone at 390 x 844 at 2x (780 x 1688). Each in light and
+# dark, AVIF with a WebP fallback; the reader's prefers-color-scheme picks the light.
+SHOT_D = (2880, 1800)
+SHOT_M = (780, 1688)
+
+
+def shot(root, name, alt_key, mode):
+    """<picture> for one screenshot. mode: 'hero' (eager, phone image under 600 px),
+    'both' (lazy, phone image under 600 px), 'wide' (lazy, desktop image everywhere)."""
+    base = f"{root}assets/shots/{name}"
+    sizes = "(min-width: 1180px) 1100px, 100vw" if mode == "hero" else "(min-width: 980px) 640px, 100vw"
+    out = ["<picture>"]
+    for scheme, media in (("dark", "(prefers-color-scheme: dark)"), ("light", None)):
+        if mode in ("hero", "both"):
+            m = "(max-width: 599px)" + (f" and {media}" if media else "")
+            for ext in ("avif", "webp"):
+                out.append(f'<source type="image/{ext}" media="{m}" srcset="{base}-phone-{scheme}.{ext}" width="{SHOT_M[0]}" height="{SHOT_M[1]}">')
+        for ext in ("avif", "webp"):
+            if scheme == "light" and ext == "webp":
+                break
+            mq = f' media="{media}"' if media else ""
+            out.append(
+                f'<source type="image/{ext}"{mq} srcset="{base}-{scheme}-1x.{ext} 1440w, {base}-{scheme}.{ext} 2880w" '
+                f'sizes="{sizes}" width="{SHOT_D[0]}" height="{SHOT_D[1]}">'
+            )
+    load = 'fetchpriority="high"' if mode == "hero" else 'loading="lazy" decoding="async"'
+    out.append(
+        f'<img src="{base}-light-1x.webp" srcset="{base}-light-1x.webp 1440w, {base}-light.webp 2880w" sizes="{sizes}" '
+        f'alt="{{{{{alt_key}}}}}" width="{SHOT_D[0]}" height="{SHOT_D[1]}" {load}>'
+    )
+    out.append("</picture>")
+    return "\n".join(out)
 
 
 def fragments(ctx, page, data):
@@ -366,6 +405,7 @@ def build_page(templates, svgs, strings, data, page, code):
         title, desc = t[page["title"]], t[page["desc"]]
 
     body = templates[page["tmpl"]]
+    body = re.sub(r"@@SHOT:([a-z]+):(" + KEY + r"):([a-z]+)@@", lambda m: shot(root_of(code, path), *m.groups()), body)
     frag = fragments(ctx, page, data)
     for name, value in frag.items():
         body = body.replace(f"@@{name}@@", value)

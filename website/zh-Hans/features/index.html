@@ -87,7 +87,7 @@
 		<p class="lede">告警、状态页、代理等功能，全在一个容器里。每种设备上报的内容见“设备”页面。</p>
 		<ul class="toc" aria-label="本页内容">
 			<li><a href="#alerting">没有噪音的告警</a></li>
-			<li><a href="#notifications">23 个通知渠道</a></li>
+			<li><a href="#notifications"><span class="num" data-n="23">23</span> 个通知渠道</a></li>
 			<li><a href="#agent">为不支持 SNMP 的设备准备的代理</a></li>
 			<li><a href="#status">面向你的服务对象的状态页</a></li>
 			<li><a href="#wall">墙面模式</a></li>
@@ -119,10 +119,16 @@
 			</div>
 			<figure>
 				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/alerts-light.webp" alt="告警页面：按主机分组的触发中告警，每条带有 Warning 或 Advisory 标牌，以及 Ack、Silence 1 h 和 Open device" width="1440" height="760" loading="lazy">
-					</picture>
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.avif 1440w, ../../assets/shots/alerts-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.webp 1440w, ../../assets/shots/alerts-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="告警页面：当前告警按设备分组，每条都有“不可达”“警告”“提醒”或“正在形成”标牌，以及“确认”和“打开监控”" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
 				</div>
 				<figcaption>按主机分组的告警。严重程度的读法像天气预报：信息、提示、警告。</figcaption>
 			</figure>
@@ -133,7 +139,7 @@
 <section class="block" id="notifications">
 	<div class="wrap">
 		<div class="section-head">
-			<h2>23 个通知渠道</h2>
+			<h2><span class="num" data-n="23">23</span> 个通知渠道</h2>
 			<p>每个渠道都有测试按钮，并在<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/notifications/">文档</a>中有配置页面。</p>
 		</div>
 		<ul class="chips" aria-label="通知渠道" style="margin-top:0">
@@ -204,30 +210,51 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>只有你选择的标签会离开服务器。设备名称、地址和类型绝不会出现在页面、徽章或邮件中。</p>
 				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/status-pages/">文档中的状态页</a></p>
 			</div>
-			<ul class="points">
-				<li><strong>在手机上</strong><p>查看状态、确认告警、开启维护窗口。可安装到主屏幕，刻意不提供离线模式：它绝不会显示昨天的状态。</p></li>
-			</ul>
+			<div>
+				<ul class="points">
+					<li><strong>在手机上</strong><p>查看状态、确认告警、开启维护窗口。可安装到主屏幕，刻意不提供离线模式：它绝不会显示昨天的状态。</p></li>
+				</ul>
+				<figure style="margin-top:32px">
+					<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.avif 1440w, ../../assets/shots/status-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.webp 1440w, ../../assets/shots/status-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/status-light-1x.avif 1440w, ../../assets/shots/status-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/status-light-1x.webp" srcset="../../assets/shots/status-light-1x.webp 1440w, ../../assets/shots/status-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="一个名为 Home services 的公开状态页：所有系统运行正常，下方是每项服务的 7 天可用性条和响应时间" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+					</div>
+					<figcaption>公开状态页：家人在问“是不是断网了”之前可以先看一眼。</figcaption>
+				</figure>
+			</div>
 		</div>
 	</div>
 </section>
 
 <section class="block" id="wall">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>墙面模式</h2>
-				<p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p>
-			</div>
-			<figure class="phone-shot" style="max-width:360px">
-				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/wall-phone-light.webp" alt="手机上的概览：句子、读数、带鸽子的天气窗口，以及第一条需要你处理的告警" width="390" height="844" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>同一份概览，手机宽度下的样子。</figcaption>
-			</figure>
+		<div class="section-head">
+			<h2>墙面模式</h2>
+			<p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p>
 		</div>
+		<figure>
+			<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.avif 1440w, ../../assets/shots/wall-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.webp 1440w, ../../assets/shots/wall-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="墙面模式：大字显示“4 个问题”、告警列表、在线设备、时钟，以及雨中的巴黎屋顶和鸽子们" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+			</div>
+			<figcaption>房间显示器上的墙面模式：巴黎屋顶上的天气随你的告警而变化。</figcaption>
+		</figure>
 	</div>
 </section>
 

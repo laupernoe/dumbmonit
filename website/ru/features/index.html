@@ -87,7 +87,7 @@
 		<p class="lede">Оповещения, страницы статуса, агенты и всё остальное в одном контейнере. Что сообщает каждый тип устройств, описано на страницах «Устройства».</p>
 		<ul class="toc" aria-label="На этой странице">
 			<li><a href="#alerting">Оповещения без шума</a></li>
-			<li><a href="#notifications">23 каналов уведомлений</a></li>
+			<li><a href="#notifications"><span class="num" data-n="23">23</span> каналов уведомлений</a></li>
 			<li><a href="#agent">Агент для того, что не говорит по SNMP</a></li>
 			<li><a href="#status">Страницы статуса для тех, кому вы служите</a></li>
 			<li><a href="#wall">Режим стены</a></li>
@@ -119,10 +119,16 @@
 			</div>
 			<figure>
 				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/alerts-light.webp" alt="Страница оповещений: активные оповещения, сгруппированные по хосту, у каждого плашка Warning или Advisory, кнопки Ack, Silence 1 h и Open device" width="1440" height="760" loading="lazy">
-					</picture>
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.avif 1440w, ../../assets/shots/alerts-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.webp 1440w, ../../assets/shots/alerts-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Страница оповещений: текущие оповещения, сгруппированные по устройствам, у каждого табличка «Недоступен», «Предупреждение», «Уведомление» или «Назревает», «Подтвердить» и «Открыть монитор»" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
 				</div>
 				<figcaption>Оповещения, сгруппированные по хосту. Уровни читаются как в метеослужбе: info, advisory, warning.</figcaption>
 			</figure>
@@ -133,7 +139,7 @@
 <section class="block" id="notifications">
 	<div class="wrap">
 		<div class="section-head">
-			<h2>23 каналов уведомлений</h2>
+			<h2><span class="num" data-n="23">23</span> каналов уведомлений</h2>
 			<p>У каждого есть кнопка «Проверить» и страница настройки в <a href="https://dumbmonit.readthedocs.io/ru/latest/notifications/">документации</a>.</p>
 		</div>
 		<ul class="chips" aria-label="Каналы уведомлений" style="margin-top:0">
@@ -204,30 +210,51 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>С сервера уходят только выбранные вами подписи. Имена устройств, адреса и типы никогда не появляются на странице, в бейдже или в письме.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/ru/latest/using/status-pages/">Страницы статуса в документации</a></p>
 			</div>
-			<ul class="points">
-				<li><strong>На телефоне</strong><p>Посмотреть состояние, подтвердить оповещение, начать окно обслуживания. Устанавливается на домашний экран, намеренно без офлайн-режима: вчерашнее состояние он никогда не покажет.</p></li>
-			</ul>
+			<div>
+				<ul class="points">
+					<li><strong>На телефоне</strong><p>Посмотреть состояние, подтвердить оповещение, начать окно обслуживания. Устанавливается на домашний экран, намеренно без офлайн-режима: вчерашнее состояние он никогда не покажет.</p></li>
+				</ul>
+				<figure style="margin-top:32px">
+					<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.avif 1440w, ../../assets/shots/status-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.webp 1440w, ../../assets/shots/status-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/status-light-1x.avif 1440w, ../../assets/shots/status-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/status-light-1x.webp" srcset="../../assets/shots/status-light-1x.webp 1440w, ../../assets/shots/status-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Публичная страница статуса Home services: все системы работают, ниже каждый сервис с полосой доступности за 7 дней и временем ответа" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+					</div>
+					<figcaption>Публичная страница статуса: что семья может проверить, прежде чем спрашивать, не упал ли интернет.</figcaption>
+				</figure>
+			</div>
 		</div>
 	</div>
 </section>
 
 <section class="block" id="wall">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>Режим стены</h2>
-				<p>Только сводка, на весь экран, для монитора в комнате: живая сцена (по умолчанию парижская крыша с Эйфелевой башней и голубями DumbMonit или одна из многих других), погода в которой следует за вашими оповещениями, OLED-тема для экрана, включённого сутками, и музыка для стены &mdash; Spotify Connect превращает экран в колонку.</p>
-			</div>
-			<figure class="phone-shot" style="max-width:360px">
-				<div class="shot">
-					<picture>
-						<source srcset="../../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../../assets/shots/wall-phone-light.webp" alt="Сводка на телефоне: фраза, показатели, окно погоды с голубем и первое оповещение, требующее вас" width="390" height="844" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Та же сводка в ширину телефона.</figcaption>
-			</figure>
+		<div class="section-head">
+			<h2>Режим стены</h2>
+			<p>Только сводка, на весь экран, для монитора в комнате: живая сцена (по умолчанию парижская крыша с Эйфелевой башней и голубями DumbMonit или одна из многих других), погода в которой следует за вашими оповещениями, OLED-тема для экрана, включённого сутками, и музыка для стены &mdash; Spotify Connect превращает экран в колонку.</p>
 		</div>
+		<figure>
+			<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.avif 1440w, ../../assets/shots/wall-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.webp 1440w, ../../assets/shots/wall-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Настенный режим: «4 проблемы» крупным шрифтом, список оповещений, отвечающие устройства, часы и дождливая парижская крыша с голубями" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+			</div>
+			<figcaption>Настенный режим на мониторе в комнате: погода над парижской крышей следует за вашими оповещениями.</figcaption>
+		</figure>
 	</div>
 </section>
 

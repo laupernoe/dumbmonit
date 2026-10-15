@@ -205,5 +205,14 @@
  "sev_warning": "Alerta",
  "sev_advisory": "Aviso",
  "sev_info": "Info",
- "in_l_guide": "Guía de instalación completa"
+ "in_l_guide": "Guía de instalación completa",
+ "sh_ov_alt": "La vista general de la demo: la frase «2 avisos graves, 1 aviso, 1 inaccesible, 5 en formación.» sobre una ventana del tiempo lluviosa, las placas de estado, lo que cambió desde la última visita y las alertas que te necesitan",
+ "sh_ov_cap": "La vista general de la demo, con dispositivos ficticios y algunos fallos activados. En un día tranquilo la frase dice «Cielo despejado».",
+ "sh_dev_alt": "Un monitor de Proxmox VE: su estado, sus alertas y cada nodo con CPU, memoria, sistema de archivos raíz, actualizaciones pendientes, reinicios necesarios y servicios caídos",
+ "sh_dev_cap": "Una página por dispositivo: aquí un clúster Proxmox, nodo a nodo, con lo que necesita un reinicio o una actualización.",
+ "sh_st_alt": "Una página de estado pública titulada Home services: todos los sistemas operativos y, debajo, cada servicio con su barra de disponibilidad de 7 días y su tiempo de respuesta",
+ "sh_st_cap": "Una página de estado pública: lo que la familia puede consultar antes de preguntar si se ha caído internet.",
+ "sh_wall_alt": "Modo pared: «4 problemas» en grande, la lista de alertas, los dispositivos que responden, un reloj y un tejado de París bajo la lluvia con las palomas",
+ "sh_wall_cap": "El modo pared en una pantalla de sala: el tiempo sobre el tejado de París sigue tus alertas.",
+ "sh_al_alt": "Página de alertas: alertas en curso agrupadas por dispositivo, cada una con una placa Inaccesible, Aviso grave, Aviso o En formación, Confirmar y Abrir monitor"
 }

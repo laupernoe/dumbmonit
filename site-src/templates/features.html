@@ -36,10 +36,7 @@
 			</div>
 			<figure>
 				<div class="shot">
-					<picture>
-						<source srcset="@@ROOT@@assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="@@ROOT@@assets/shots/alerts-light.webp" alt="{{k179}}" width="1440" height="760" loading="lazy">
-					</picture>
+@@SHOT:alerts:sh_al_alt:both@@
 				</div>
 				<figcaption>{{k068}}</figcaption>
 			</figure>
@@ -99,30 +96,33 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>{{k110}}</p>
 				<p>{{k111}}</p>
 			</div>
-			<ul class="points">
-				<li><strong>{{k124}}</strong><p>{{k125}}</p></li>
-			</ul>
+			<div>
+				<ul class="points">
+					<li><strong>{{k124}}</strong><p>{{k125}}</p></li>
+				</ul>
+				<figure style="margin-top:32px">
+					<div class="shot">
+@@SHOT:status:sh_st_alt:both@@
+					</div>
+					<figcaption>{{sh_st_cap}}</figcaption>
+				</figure>
+			</div>
 		</div>
 	</div>
 </section>
 
 <section class="block" id="wall">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>{{k112}}</h2>
-				<p>{{k113}}</p>
-			</div>
-			<figure class="phone-shot" style="max-width:360px">
-				<div class="shot">
-					<picture>
-						<source srcset="@@ROOT@@assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="@@ROOT@@assets/shots/wall-phone-light.webp" alt="{{k181}}" width="390" height="844" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>{{k126}}</figcaption>
-			</figure>
+		<div class="section-head">
+			<h2>{{k112}}</h2>
+			<p>{{k113}}</p>
 		</div>
+		<figure>
+			<div class="shot">
+@@SHOT:wall:sh_wall_alt:both@@
+			</div>
+			<figcaption>{{sh_wall_cap}}</figcaption>
+		</figure>
 	</div>
 </section>
 

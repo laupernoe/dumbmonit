@@ -69,43 +69,106 @@
 		}
 	});
 
-	// ---- the sky (home): a click pokes the pigeon; it rests when nobody can see it ----
-	var sky = d.getElementById('sky');
-	if (sky) {
-		var visible = true;
-		var pause = function () { sky.classList.toggle('paused', !visible || d.hidden); };
-		d.addEventListener('visibilitychange', pause);
-		if (IO) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; pause(); }).observe(sky);
-		var flight = sky.querySelector('.flight');
-		var timer;
-		sky.addEventListener('click', function () {
-			if (still.matches) return;
-			// A roll the reader cannot see is wasted: bring the bird back into view first.
-			var a = flight.getAnimations && flight.getAnimations()[0];
-			var t = a && a.effect && a.effect.getComputedTiming();
-			if (t && typeof t.duration === 'number') {
-				var x = -36 + 272 * (t.progress || 0);
-				if (x < 20 || x > 180) a.currentTime = t.duration * 0.55;
-			}
-			sky.classList.remove('poke');
+	// ---- the mascot (home): moods, eyes that follow the pointer, a poke ----
+	var bird = d.getElementById('mascot');
+	if (bird) {
+		var look = bird.querySelector('.m-look');
+		var moodTimer;
+		var mood = function (name, ms) {
+			['is-happy', 'is-startled', 'is-dizzy', 'is-party'].forEach(function (c) { bird.classList.remove(c); });
+			clearTimeout(moodTimer);
+			if (!name) return;
+			// Restart the keyframes even when the same mood comes twice in a row.
 			requestAnimationFrame(function () {
-				sky.classList.add('poke');
-				clearTimeout(timer);
-				timer = setTimeout(function () { sky.classList.remove('poke'); }, 700);
+				bird.classList.add(name);
+				if (ms) moodTimer = setTimeout(function () { mood(null); }, ms);
 			});
+		};
+		var pokes = [];
+		bird.addEventListener('click', function () {
+			var now = Date.now();
+			pokes = pokes.filter(function (t) { return now - t < 2500; }).concat(now);
+			if (pokes.length >= 4) {
+				pokes = [];
+				mood('is-dizzy', 2400);
+			} else {
+				mood('is-startled', 900);
+			}
 		});
+		var cta = d.querySelector('.hero .cta .btn-primary');
+		if (cta) {
+			['pointerenter', 'focus'].forEach(function (ev) { cta.addEventListener(ev, function () { mood('is-happy'); }); });
+			['pointerleave', 'blur'].forEach(function (ev) { cta.addEventListener(ev, function () { mood(null); }); });
+		}
+		var copyBtn = d.querySelector('.hero [data-copy]');
+		if (copyBtn) copyBtn.addEventListener('click', function () { mood('is-party', 1200); });
+
+		// The eyes follow a mouse; the bird rests when nobody can see it.
+		var seen = true;
+		var rest = function () { bird.classList.toggle('paused', !seen || d.hidden); };
+		d.addEventListener('visibilitychange', rest);
+		if (IO) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; rest(); }).observe(bird);
+		if (fine.matches && !still.matches) {
+			var raf = 0, px = 0, py = 0;
+			window.addEventListener('pointermove', function (e) {
+				if (e.pointerType !== 'mouse' || !seen) return;
+				px = e.clientX;
+				py = e.clientY;
+				if (raf) return;
+				raf = requestAnimationFrame(function () {
+					raf = 0;
+					var r = bird.getBoundingClientRect();
+					var dx = px - (r.left + r.width * 0.45), dy = py - (r.top + r.height * 0.4);
+					var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+					var k = Math.min(dist / 260, 1) * 10 / dist;
+					bird.classList.add('is-tracking');
+					look.style.transform = 'translate(' + (dx * k).toFixed(1) + 'px,' + (dy * k).toFixed(1) + 'px)';
+				});
+			}, { passive: true });
+			d.documentElement.addEventListener('pointerleave', function () {
+				bird.classList.remove('is-tracking');
+				look.style.transform = '';
+			});
+		}
 	}
 
 	if (still.matches) return;
 
-	// ---- sections rise in as they scroll into view ----
+	// ---- figures count up when they come into view (CountUp in the app) ----
+	var nums = d.querySelectorAll('.num[data-n]');
+	if (IO && nums.length) {
+		var nio = new IntersectionObserver(function (entries) {
+			entries.forEach(function (en) {
+				if (!en.isIntersecting) return;
+				var el = en.target, n = +el.dataset.n, t0 = 0;
+				nio.unobserve(el);
+				el.style.minWidth = el.getBoundingClientRect().width + 'px';
+				var step = function (now) {
+					if (!t0) t0 = now;
+					var t = Math.min(1, (now - t0) / 1100);
+					el.textContent = Math.round(n * (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)));
+					if (t < 1) requestAnimationFrame(step);
+				};
+				el.textContent = '0';
+				requestAnimationFrame(step);
+			});
+		}, { rootMargin: '0px 0px -10% 0px' });
+		[].forEach.call(nums, function (el) { nio.observe(el); });
+	}
+
+	// ---- blocks and list items rise in, in cascades, as they scroll into view ----
 	// Only what is below the fold at this moment is marked: nothing the reader
 	// already sees ever blinks out, and without this script nothing is hidden.
-	var SEL = 'main .section-head, main .split > *, main .points > li, main .cards > li, main .chips, main .os-list, main .feedback, main figure, main .dev, main .facts, main .badges, main .notice, main .catalog > li';
+	var SEL = [
+		'.section-head', 'figure', '.feedback', '.notice', '.code', '.h-sm', '.dev > header', '.dev .summary',
+		'.dev-grid h3', '.setup', '.dev-doc', '.cards > li', '.catalog > li', '.points > li', '.chips > li',
+		'.os-list > li', '.facts > li', '.badges > li', '.fam-chips > li', '.rules > li', '.needs > li',
+		'.steps > li', '.cta > *', 'main > section.block > .wrap > p', 'footer .wrap > *'
+	].join(', ');
 	if (IO) {
 		var vh = window.innerHeight;
 		var marked = [].filter.call(d.querySelectorAll(SEL), function (el) {
-			if (el.closest('.hero, .page-head')) return false;
+			if (el.closest('.hero, .page-head, .filter, details:not([open])')) return false;
 			if (el.parentElement.closest(SEL)) return false;
 			return el.getBoundingClientRect().top > vh;
 		});
@@ -115,14 +178,14 @@
 				if (!en.isIntersecting) return;
 				var el = en.target;
 				io.unobserve(el);
-				el.style.setProperty('--rd', Math.min(k++, 5) * 70 + 'ms');
+				el.style.setProperty('--rd', Math.min(k++, 9) * 55 + 'ms');
 				el.classList.add('in');
 				setTimeout(function () {
 					el.classList.remove('reveal', 'in');
 					el.style.removeProperty('--rd');
-				}, 1200);
+				}, 1400);
 			});
-		}, { rootMargin: '0px 0px -8% 0px' });
+		}, { rootMargin: '0px 0px -6% 0px' });
 		marked.forEach(function (el) {
 			el.classList.add('reveal');
 			io.observe(el);
@@ -146,7 +209,7 @@
 
 	// ---- cards and screenshots lean toward a mouse (never on touch) ----
 	if (!fine.matches) return;
-	[].forEach.call(d.querySelectorAll('.card, .dev-card, .shot'), function (el) {
+	[].forEach.call(d.querySelectorAll('.card, .dev-card, .shot:not(.hero-shot .shot)'), function (el) {
 		var max = el.classList.contains('shot') ? 2.5 : 5;
 		el.classList.add('tilt');
 		el.addEventListener('pointermove', function (e) {

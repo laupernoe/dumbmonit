@@ -442,7 +442,7 @@ p {
 		padding: 88px 0 56px;
 	}
 	.hero-grid {
-		grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+		grid-template-columns: minmax(0, 1fr) 300px;
 	}
 }
 .hero h1 {
@@ -539,14 +539,6 @@ figcaption {
 }
 .hero-shot {
 	margin-top: 48px;
-}
-@media (max-width: 599px) {
-	.hero-shot .shot {
-		max-width: 360px;
-	}
-	.phone-shot {
-		display: none;
-	}
 }
 
 /* ---------- alpha notice ---------- */
@@ -1413,260 +1405,403 @@ footer nav a,
 
 /* =====================================================================
    Motion. Ported from the app's effects (web/src/lib/ui/effects: BlurText,
-   Tilt, Spotlight, SkyScene) to plain CSS and a small script (site.js).
+   Tilt, Spotlight, CountUp, Mascot) to plain CSS and a small script (site.js).
    Rules: transform and opacity only, nothing hides content without JS,
-   one signature per page (home: the sky; install: the steps lighting up;
+   a signature per page (home: the mascot; install: the steps lighting up;
    the other pages: the title arriving out of a blur), and
    prefers-reduced-motion stills everything that moves.
    ===================================================================== */
 
-/* ---------- the sky (home): the app's weather window, clear weather ---------- */
-.sky {
-	--sky-top: #8fc3ea;
-	--sky-bottom: #dcebf6;
-	--sky-ink: #1e2640;
-	--cloud: #fbf9f4;
-	--sun: #f6c453;
-	--moon: #ebe6d2;
-	--hill: #b9d3a6;
-	--body: #6f83a3;
+/* ---------- the mascot (home): the app's pigeon, alive ----------
+   It drops onto the page, breathes, sways, blinks, flutters now and then and
+   follows the pointer with its eyes. Moods, as in the app (Mascot.svelte):
+   happy (the primary button is hovered), startled (a poke), dizzy (four quick
+   pokes), celebrating (the quickstart was copied). site.js sets the classes. */
+.mascot {
 	position: relative;
-	aspect-ratio: 2 / 1;
-	max-width: 640px;
-	border: 1px solid var(--c-line);
-	border-radius: var(--radius-card);
-	overflow: hidden;
-	background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
-	box-shadow: var(--shadow-lift);
-	contain: paint;
+	justify-self: center;
+	width: min(100%, 300px);
+	aspect-ratio: 340 / 360;
 	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
 }
-@media (min-width: 980px) {
-	.sky {
-		aspect-ratio: 10 / 7;
-		box-shadow: var(--shadow-float);
-	}
+.mascot::before {
+	/* a soft halo, the signal colour, behind the bird */
+	content: '';
+	position: absolute;
+	inset: 6% 4% 14%;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, var(--c-signal-soft), transparent);
 }
-@media (prefers-color-scheme: dark) {
-	.sky {
-		--sky-top: #101a36;
-		--sky-bottom: #1b2a4d;
-		--sky-ink: #0a0f1f;
-		--cloud: #3d4a66;
-		--hill: #16233f;
-	}
-}
-.sky > svg {
+.mascot svg {
+	position: relative;
 	display: block;
 	width: 100%;
 	height: 100%;
+	overflow: visible;
 }
-.sky .ink {
-	stroke: var(--sky-ink);
-	stroke-width: 2;
+@media (max-width: 979px) {
+	.mascot {
+		width: 150px;
+		order: -1;
+		justify-self: start;
+		margin-bottom: -16px;
+	}
+}
+.m-feet {
+	fill: #e97b3a;
+	stroke: #1e2640;
+	stroke-width: 12;
 	stroke-linejoin: round;
 }
-.sky .ink-thin {
-	stroke: var(--sky-ink);
-	stroke-width: 1.5;
-	stroke-linejoin: round;
+.m-body {
+	fill: #6f83a3;
+	stroke: #1e2640;
+	stroke-width: 12;
 }
-.sky .body {
-	fill: var(--body);
+.m-wing {
+	fill: none;
+	stroke: #1e2640;
+	stroke-width: 11;
+	stroke-linecap: round;
+	transform-box: fill-box;
+	transform-origin: top center;
 }
-.sky .chest {
+.m-chest {
 	fill: #4c9d6f;
 }
-.sky .eye {
+.m-line {
+	fill: none;
+	stroke: #1e2640;
+	stroke-width: 10;
+	stroke-linecap: round;
+}
+.m-eye {
+	fill: #fff;
+	stroke: #1e2640;
+	stroke-width: 12;
+	transform-box: fill-box;
+	transform-origin: center;
+	transition: transform 200ms var(--ease-out-expo);
+}
+.m-pupil {
+	fill: #1e2640;
+	transform-box: fill-box;
+	transform-origin: center;
+	transition: transform 180ms var(--ease-out-expo);
+}
+.m-glint {
 	fill: #fff;
 }
-.sky .pupil {
-	fill: var(--sky-ink);
+.m-lid {
+	fill: #6f83a3;
+	stroke: #1e2640;
+	stroke-width: 12;
+	transform-box: fill-box;
+	transform-origin: top;
+	transform: scaleY(0);
 }
-.sky .beak {
+.m-beak {
 	fill: #e97b3a;
-}
-.sky .cloud {
-	fill: var(--cloud);
-	stroke: var(--sky-ink);
-	stroke-width: 2;
+	stroke: #1e2640;
+	stroke-width: 10;
 	stroke-linejoin: round;
 }
-.sky .hill {
-	fill: var(--hill);
-	stroke: var(--sky-ink);
-	stroke-width: 2;
-}
-.sky .mast-frame {
+.m-shine {
 	fill: none;
-	stroke: var(--sky-ink);
-	stroke-width: 1.6;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-}
-.sky .mast-led {
-	fill: var(--c-signal);
-	stroke: var(--sky-ink);
-	stroke-width: 1.2;
-}
-.sky .halo {
-	fill: var(--sun);
-	opacity: 0.22;
-}
-.sky .moon .halo {
-	fill: var(--moon);
-	opacity: 0.1;
-}
-.sky .sun-disc {
-	fill: var(--sun);
-	stroke: var(--sky-ink);
-	stroke-width: 2;
-}
-.sky .rays line {
-	stroke: var(--sky-ink);
-	stroke-width: 2;
+	stroke: #fff;
+	stroke-width: 7;
 	stroke-linecap: round;
 }
-.sky .moon-disc {
-	fill: var(--moon);
-	stroke: var(--sky-ink);
-	stroke-width: 2;
-	stroke-linejoin: round;
-}
-.sky .crater {
-	fill: rgb(30 38 64 / 0.18);
-}
-.sky .stars circle {
-	fill: #fbf9f4;
-	opacity: 0.7;
-}
-.sky .moon,
-.sky .stars {
-	display: none;
-}
-@media (prefers-color-scheme: dark) {
-	.sky .sun {
-		display: none;
-	}
-	.sky .moon,
-	.sky .stars {
-		display: inline;
-	}
-}
-/* Resting pose (reduced motion): mid-sky, wings up. */
-.sky .flight {
-	transform: translate(96px, 64px);
-}
-.sky .wing--down {
+.m-cheeks {
+	fill: #f08a8a;
 	opacity: 0;
+	transition: opacity 300ms;
+}
+.m-shadow {
+	fill: var(--c-ink);
+	opacity: 0.12;
+	transform-box: fill-box;
+	transform-origin: center;
+}
+.m-bang {
+	font: 800 64px var(--font-sans);
+	fill: var(--c-warning);
+	opacity: 0;
+}
+.m-look {
+	transition: transform 260ms var(--ease-out-expo);
+}
+/* moods move the pupils, like the app's `mood` prop */
+.m-pl,
+.m-pr {
+	transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mascot.is-happy .m-pl {
+	transform: translate(14px, -2px);
+}
+.mascot.is-happy .m-pr {
+	transform: translate(-6px, 8px);
+}
+.mascot.is-happy .m-cheeks {
+	opacity: 0.55;
+}
+.mascot.is-dizzy .m-pl {
+	transform: translate(22px, 10px);
+}
+.mascot.is-dizzy .m-pr {
+	transform: translate(-14px, -6px);
+}
+.mascot.is-startled .m-pupil {
+	transform: scale(0.5);
+}
+.mascot.is-startled .m-eye {
+	transform: scale(1.06);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-	.sky .flight {
-		animation: sky-fly 17s linear -6s infinite;
-	}
-	.sky .bob {
-		animation: sky-bob 2.3s ease-in-out infinite;
-	}
-	.sky .wing--up {
-		animation: sky-frame-a 0.38s steps(1, end) infinite;
-	}
-	.sky .wing--down {
-		animation: sky-frame-b 0.38s steps(1, end) infinite;
-	}
-	.sky .rays {
+	.m-drop {
 		transform-box: fill-box;
-		transform-origin: center;
-		animation: sky-shimmer 6s ease-in-out infinite;
+		transform-origin: 50% 100%;
+		animation: m-drop 900ms cubic-bezier(0.34, 1.3, 0.64, 1) 250ms both;
 	}
-	.sky .stars circle {
+	.m-shadow {
+		animation:
+			m-shadow-in 900ms var(--ease-out-expo) 250ms both,
+			m-shadow 3.6s ease-in-out 1.2s infinite;
+	}
+	.m-breathe {
 		transform-box: fill-box;
-		transform-origin: center;
-		animation: sky-twinkle 4s ease-in-out infinite;
-		animation-delay: calc(var(--i) * -0.55s);
+		transform-origin: 50% 100%;
+		animation: m-breathe 3.6s ease-in-out infinite;
 	}
-	.sky .drift {
-		animation: sky-drift 13s ease-in-out infinite alternate;
-	}
-	.sky .drift--slow {
-		animation-duration: 18s;
-		animation-direction: alternate-reverse;
-	}
-	/* The mast's LED breathes, like a steady Led in the app. */
-	.sky .mast-led {
+	.m-sway {
 		transform-box: fill-box;
-		transform-origin: center;
-		animation: sky-led 2.8s ease-in-out infinite;
+		transform-origin: 50% 100%;
+		animation: m-sway 7s ease-in-out infinite;
 	}
-	/* A click on the sky pokes the pigeon: one barrel roll. */
-	.sky.poke .ruffle {
+	.m-lid {
+		animation: m-blink 5.8s ease-in-out 1.6s infinite;
+	}
+	.m-lid-r {
+		animation-delay: 1.64s;
+	}
+	/* a little ruffle every few seconds: two quick beats of the wings */
+	.m-wing-l {
+		animation: m-ruffle-l 9s ease-in-out 3s infinite;
+	}
+	.m-wing-r {
+		animation: m-ruffle-r 9s ease-in-out 3s infinite;
+	}
+	/* when nobody points at it, it looks around on its own */
+	.mascot:not(.is-tracking) .m-glance {
+		animation: m-glance 11s ease-in-out 2s infinite;
+	}
+	.mascot.is-happy .m-hop,
+	.mascot.is-party .m-hop {
 		transform-box: fill-box;
-		transform-origin: center;
-		animation: sky-loop 640ms cubic-bezier(0.65, 0, 0.35, 1) 1;
+		transform-origin: 50% 100%;
+		animation: m-hop 520ms cubic-bezier(0.34, 1.4, 0.64, 1);
 	}
-	/* Off screen or in a hidden tab: nothing to spend motion on. */
-	.sky.paused * {
+	.mascot.is-party .m-hop {
+		animation-iteration-count: 2;
+	}
+	.mascot.is-party .m-wing-l,
+	.mascot.is-startled .m-wing-l {
+		animation: m-flap-l 180ms ease-in-out 4;
+	}
+	.mascot.is-party .m-wing-r,
+	.mascot.is-startled .m-wing-r {
+		animation: m-flap-r 180ms ease-in-out 4;
+	}
+	.mascot.is-startled .m-hop {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+		animation: m-jolt 900ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.mascot.is-startled .m-bang {
+		animation: m-bang 900ms var(--ease-out-expo);
+	}
+	.mascot.is-dizzy .m-dizzy {
+		animation: m-swirl 0.5s linear infinite;
+	}
+	.mascot.is-dizzy .m-sway {
+		animation: m-wobble 0.6s ease-in-out infinite alternate;
+	}
+	.mascot.paused * {
 		animation-play-state: paused !important;
 	}
 }
-@keyframes sky-fly {
-	from {
-		transform: translate(-36px, 72px);
-	}
-	to {
-		transform: translate(236px, 54px);
-	}
-}
-@keyframes sky-bob {
-	50% {
-		transform: translateY(-5px);
-	}
-}
-@keyframes sky-frame-a {
-	50%,
-	100% {
+@keyframes m-drop {
+	0% {
 		opacity: 0;
+		transform: translateY(-90px) scale(0.92, 1.08);
 	}
-}
-@keyframes sky-frame-b {
-	0%,
-	49.9% {
-		opacity: 0;
-	}
-	50%,
-	100% {
+	55% {
 		opacity: 1;
+		transform: translateY(0) scale(1.08, 0.9);
+	}
+	75% {
+		transform: translateY(-8px) scale(0.97, 1.03);
+	}
+	100% {
+		transform: none;
 	}
 }
-@keyframes sky-shimmer {
-	50% {
-		transform: rotate(22deg);
-		opacity: 0.75;
-	}
-}
-@keyframes sky-twinkle {
-	50% {
-		opacity: 0.3;
-		transform: scale(0.8);
-	}
-}
-@keyframes sky-drift {
+@keyframes m-shadow-in {
 	from {
-		transform: translateX(-8px);
-	}
-	to {
-		transform: translateX(10px);
+		opacity: 0;
+		transform: scale(0.4);
 	}
 }
-@keyframes sky-led {
+@keyframes m-shadow {
 	50% {
-		opacity: 0.45;
-		transform: scale(0.85);
+		transform: scale(1.04);
 	}
 }
-@keyframes sky-loop {
+@keyframes m-breathe {
+	50% {
+		transform: scale(1.018, 1.03);
+	}
+}
+@keyframes m-sway {
+	0%,
+	100% {
+		transform: rotate(-1.6deg);
+	}
+	50% {
+		transform: rotate(1.6deg);
+	}
+}
+@keyframes m-blink {
+	0%,
+	93% {
+		transform: scaleY(0);
+	}
+	95.5% {
+		transform: scaleY(1);
+	}
+	98%,
+	100% {
+		transform: scaleY(0);
+	}
+}
+@keyframes m-ruffle-l {
+	0%,
+	90%,
+	100% {
+		transform: none;
+	}
+	92%,
+	96% {
+		transform: rotate(18deg);
+	}
+	94%,
+	98% {
+		transform: rotate(2deg);
+	}
+}
+@keyframes m-ruffle-r {
+	0%,
+	90%,
+	100% {
+		transform: none;
+	}
+	92%,
+	96% {
+		transform: rotate(-18deg);
+	}
+	94%,
+	98% {
+		transform: rotate(-2deg);
+	}
+}
+@keyframes m-flap-l {
+	50% {
+		transform: rotate(26deg);
+	}
+}
+@keyframes m-flap-r {
+	50% {
+		transform: rotate(-26deg);
+	}
+}
+@keyframes m-glance {
+	0%,
+	30%,
+	100% {
+		transform: none;
+	}
+	36%,
+	48% {
+		transform: translate(-9px, 3px);
+	}
+	56%,
+	70% {
+		transform: translate(8px, -4px);
+	}
+	76% {
+		transform: none;
+	}
+}
+@keyframes m-hop {
+	40% {
+		transform: translateY(-26px) scale(0.96, 1.05);
+	}
+	75% {
+		transform: translateY(0) scale(1.05, 0.95);
+	}
+}
+@keyframes m-jolt {
+	12% {
+		transform: translate(-3px, -30px) rotate(-8deg);
+	}
+	28% {
+		transform: translate(2px, -22px) rotate(5deg);
+	}
+	45%,
+	70% {
+		transform: translate(0, -24px) rotate(-1deg);
+	}
+}
+@keyframes m-bang {
+	0% {
+		opacity: 0;
+		transform: translateY(10px) scale(0.6);
+	}
+	20%,
+	70% {
+		opacity: 1;
+		transform: none;
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+}
+@keyframes m-swirl {
+	0% {
+		transform: translate(5px, 0);
+	}
+	25% {
+		transform: translate(0, 5px);
+	}
+	50% {
+		transform: translate(-5px, 0);
+	}
+	75% {
+		transform: translate(0, -5px);
+	}
+	100% {
+		transform: translate(5px, 0);
+	}
+}
+@keyframes m-wobble {
+	from {
+		transform: rotate(-4deg);
+	}
 	to {
-		transform: rotate(-360deg);
+		transform: rotate(4deg);
 	}
 }
 
@@ -2018,6 +2153,422 @@ footer nav a,
 	.tilt,
 	.btn,
 	.btn:active {
+		transform: none !important;
+	}
+}
+
+/* =====================================================================
+   Motion on every page. Entrances above the fold are CSS keyframes that
+   end visible (no JS needed); below the fold site.js reveals blocks and
+   list items in cascades; scroll-linked effects use CSS scroll timelines
+   where the browser has them and are simply absent elsewhere.
+   ===================================================================== */
+
+/* ---------- entrances above the fold: an orchestrated cascade ---------- */
+@media (prefers-reduced-motion: no-preference) {
+	.hero-grid > div:first-child > *,
+	.page-head .wrap > :not(h1),
+	.hero-shot {
+		animation: rise 720ms var(--ease-out-expo) both;
+	}
+	.hero-grid > div:first-child > :nth-child(1) {
+		animation-delay: 40ms;
+	}
+	.hero-grid > div:first-child > :nth-child(2) {
+		animation-delay: 110ms;
+	}
+	.hero-grid > div:first-child > :nth-child(3) {
+		animation-delay: 180ms;
+	}
+	.hero-grid > div:first-child > :nth-child(4) {
+		animation-delay: 250ms;
+	}
+	.hero-grid > div:first-child > :nth-child(5) {
+		animation-delay: 310ms;
+	}
+	.hero-grid > div:first-child > :nth-child(6) {
+		animation-delay: 360ms;
+	}
+	.hero .cta > * {
+		animation: rise 640ms var(--ease-out-expo) both;
+	}
+	.hero .cta > :nth-child(1) {
+		animation-delay: 380ms;
+	}
+	.hero .cta > :nth-child(2) {
+		animation-delay: 440ms;
+	}
+	.hero .cta > :nth-child(3) {
+		animation-delay: 500ms;
+	}
+	.hero-shot {
+		animation-duration: 1000ms;
+		animation-delay: 420ms;
+	}
+	.page-head .wrap > :nth-child(2) {
+		animation-delay: 220ms;
+	}
+	.page-head .wrap > :nth-child(3) {
+		animation-delay: 300ms;
+	}
+	.page-head .wrap > :nth-child(4) {
+		animation-delay: 360ms;
+	}
+	.page-head .wrap > :nth-child(5) {
+		animation-delay: 420ms;
+	}
+	/* the table of contents arrives chip by chip */
+	.page-head .toc {
+		animation: none;
+	}
+	.page-head .toc > li {
+		animation: pop-in 520ms var(--ease-out-expo) both;
+		animation-delay: calc(380ms + var(--n, 0) * 40ms);
+	}
+	.page-head .toc > li:nth-child(2) { --n: 1; }
+	.page-head .toc > li:nth-child(3) { --n: 2; }
+	.page-head .toc > li:nth-child(4) { --n: 3; }
+	.page-head .toc > li:nth-child(5) { --n: 4; }
+	.page-head .toc > li:nth-child(6) { --n: 5; }
+	.page-head .toc > li:nth-child(7) { --n: 6; }
+	.page-head .toc > li:nth-child(8) { --n: 7; }
+	.page-head .toc > li:nth-child(9) { --n: 8; }
+	.page-head .toc > li:nth-child(n + 10) { --n: 9; }
+}
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+}
+@keyframes pop-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px) scale(0.9);
+	}
+}
+
+/* ---------- the dot field behind every page head, as in the hero ---------- */
+.page-head {
+	position: relative;
+	overflow: hidden;
+}
+.page-head::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-image: radial-gradient(var(--dot) 1.2px, transparent 1.3px);
+	background-size: 22px 22px;
+	mask-image: linear-gradient(to bottom, #000 0%, transparent 90%);
+	-webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 90%);
+	pointer-events: none;
+}
+.page-head .wrap {
+	position: relative;
+}
+
+/* ---------- scroll-linked depth (CSS scroll timelines; absent where unsupported) ---------- */
+@supports (animation-timeline: scroll()) {
+	@media (prefers-reduced-motion: no-preference) {
+		/* the dots drift slower than the page: a light parallax */
+		.hero::before,
+		.page-head::before {
+			animation: par-dots linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0 700px;
+		}
+		.mascot {
+			animation: par-mascot linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0 600px;
+		}
+		/* the big screenshot unfolds flat as it comes up the screen */
+		.hero-shot .shot {
+			transform-origin: 50% 0;
+			animation: unfold linear both;
+			animation-timeline: view();
+			animation-range: entry 0% cover 40%;
+		}
+	}
+}
+@keyframes par-dots {
+	to {
+		transform: translateY(140px);
+	}
+}
+@keyframes par-mascot {
+	to {
+		transform: translateY(70px) rotate(-3deg);
+	}
+}
+@keyframes unfold {
+	from {
+		transform: perspective(1600px) rotateX(16deg) scale(0.94);
+	}
+	to {
+		transform: none;
+	}
+}
+
+/* ---------- screenshots ---------- */
+.shot picture,
+.shot img {
+	display: block;
+}
+@media (max-width: 599px) {
+	.shot {
+		max-width: 320px;
+	}
+	.hero-shot .shot,
+	.home-device .shot {
+		margin-inline: auto;
+	}
+}
+.home-device {
+	margin-top: 48px;
+}
+
+/* ---------- reveal variants: lists arrive item by item ---------- */
+.chips > li.reveal,
+.fam-chips > li.reveal,
+.badges > li.reveal {
+	transform: translateY(8px) scale(0.88);
+}
+.points > li.reveal,
+.facts > li.reveal,
+.rules > li.reveal,
+.needs > li.reveal,
+.os-list > li.reveal {
+	transform: translateX(-16px);
+}
+.reveal.in {
+	transform: none;
+}
+/* the rule on the left of a point draws itself as it arrives */
+.points > li {
+	border-left: 0;
+	position: relative;
+}
+.points > li::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: var(--c-line-strong);
+	transform-origin: top;
+	transition:
+		transform 700ms var(--ease-out-expo) 120ms,
+		background-color 300ms;
+}
+.points > li.reveal::before {
+	transform: scaleY(0);
+}
+.points > li.reveal.in::before {
+	transform: none;
+}
+.points > li:hover::before {
+	background: var(--c-signal);
+}
+
+/* ---------- figures count up (site.js); fixed width so nothing shifts ---------- */
+.num {
+	display: inline-block;
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------- device cards are alive: a LED that breathes, an arrow on hover ---------- */
+.dev-card .name {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+}
+.dev-card .led {
+	width: 8px;
+	height: 8px;
+	box-shadow: 0 0 0 3px var(--c-signal-soft);
+}
+.dev-card .fam {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.go::before,
+.more::after,
+.card h3 a::after {
+	content: '\2192';
+	display: inline-block;
+	transition:
+		transform 320ms var(--ease-out-expo),
+		opacity 200ms;
+}
+.go::before {
+	font-size: 1rem;
+	color: var(--c-signal-ink);
+	opacity: 0;
+	transform: translateX(-8px);
+}
+.dev-card:hover .go::before,
+.dev-card:focus-visible .go::before {
+	opacity: 1;
+	transform: none;
+}
+.more::after,
+.card h3 a::after {
+	margin-left: 0.35em;
+}
+.more:hover::after,
+.card:hover h3 a::after {
+	transform: translateX(4px);
+}
+.dev-card,
+.card {
+	transition:
+		transform 220ms var(--ease-out-expo),
+		box-shadow 220ms var(--ease-out-expo),
+		border-color 160ms;
+}
+.dev-card:hover,
+.card:hover {
+	border-color: color-mix(in srgb, var(--c-signal) 55%, var(--c-line));
+	box-shadow: var(--shadow-float);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.dev-card .led {
+		animation: led-breathe 3.2s ease-in-out infinite;
+	}
+	.catalog > li:nth-child(3n) .led {
+		animation-delay: -1.1s;
+	}
+	.catalog > li:nth-child(3n + 1) .led {
+		animation-delay: -2.3s;
+	}
+	.catalog > li:nth-child(5n) .led {
+		animation-duration: 3.9s;
+	}
+	.dev-card:hover .led {
+		animation: led-ping 900ms var(--ease-out-expo) infinite;
+	}
+	/* without a fine pointer (no tilt), cards still lift */
+	@media (hover: hover) {
+		.dev-card:not(.tilt):hover,
+		.card:not(.tilt):hover {
+			transform: translateY(-3px);
+		}
+	}
+	.chips > li,
+	.fam-chips a,
+	.toc a,
+	.badges a {
+		transition:
+			transform 220ms var(--ease-out-expo),
+			background-color 160ms,
+			border-color 160ms,
+			color 160ms;
+	}
+	.chips > li:hover,
+	.fam-chips a:hover,
+	.toc a:hover,
+	.badges a:hover {
+		transform: translateY(-2px);
+	}
+}
+@keyframes led-breathe {
+	50% {
+		box-shadow: 0 0 0 6px transparent;
+		opacity: 0.7;
+	}
+}
+@keyframes led-ping {
+	0% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-signal) 55%, transparent);
+	}
+	100% {
+		box-shadow: 0 0 0 9px transparent;
+	}
+}
+.chips > li:hover,
+.fam-chips a:hover,
+.toc a:hover,
+.badges a:hover {
+	border-color: var(--c-signal);
+}
+
+/* ---------- links: underlines that wipe in ---------- */
+footer a,
+.facts a {
+	text-decoration: none;
+	background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
+	transition:
+		background-size 320ms var(--ease-out-expo),
+		color 160ms;
+}
+.facts a {
+	background-size: 100% 1px;
+}
+footer a:hover,
+footer a:focus-visible {
+	background-size: 100% 1px;
+	color: var(--c-ink);
+}
+.facts a:hover {
+	background-size: 100% 2px;
+}
+@media (min-width: 900px) {
+	.nav a {
+		position: relative;
+	}
+	.nav a::after {
+		content: '';
+		position: absolute;
+		left: 10px;
+		right: 10px;
+		bottom: 6px;
+		height: 2px;
+		border-radius: 2px;
+		background: var(--c-signal);
+		transform: scaleX(0);
+		transition: transform 320ms var(--ease-out-expo);
+	}
+	.nav a:hover::after,
+	.nav a[aria-current]::after {
+		transform: none;
+	}
+}
+
+/* ---------- disclosures open smoothly ---------- */
+@media (prefers-reduced-motion: no-preference) {
+	details[open] > :not(summary) {
+		animation: rise 360ms var(--ease-out-expo);
+	}
+}
+
+details > summary::before {
+	content: '';
+	width: 8px;
+	height: 8px;
+	margin-right: 10px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 260ms var(--ease-out-expo);
+	flex: none;
+}
+details[open] > summary::before {
+	transform: rotate(45deg);
+}
+details > summary::-webkit-details-marker {
+	display: none;
+}
+.lang > summary::before {
+	content: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.points > li::before {
 		transform: none !important;
 	}
 }

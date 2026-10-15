@@ -205,5 +205,14 @@
  "sev_warning": "Alerte",
  "sev_advisory": "Avis",
  "sev_info": "Info",
- "in_l_guide": "Guide d'installation complet"
+ "in_l_guide": "Guide d'installation complet",
+ "sh_ov_alt": "La vue d’ensemble de la démo : la phrase « 2 avertissements, 1 avis, 1 injoignable, 5 en formation. » sur une fenêtre météo pluvieuse, les plaques d’état, ce qui a changé depuis la dernière visite et les alertes qui ont besoin de vous",
+ "sh_ov_cap": "La vue d’ensemble de la démo, avec des appareils fictifs et quelques pannes activées. Un jour calme, la phrase dit « Ciel dégagé ».",
+ "sh_dev_alt": "Une sonde Proxmox VE : son état, ses alertes, et chaque nœud avec processeur, mémoire, système de fichiers racine, mises à jour en attente, redémarrages requis et services arrêtés",
+ "sh_dev_cap": "Une page par appareil : ici un cluster Proxmox, nœud par nœud, avec ce qui attend un redémarrage ou une mise à jour.",
+ "sh_st_alt": "Une page de statut publique intitulée Home services : tous les systèmes opérationnels, puis chaque service avec sa barre de disponibilité sur 7 jours et son temps de réponse",
+ "sh_st_cap": "Une page de statut publique : ce que la famille peut vérifier avant de demander si internet est en panne.",
+ "sh_wall_alt": "Mode mur : « 4 problèmes » en grand, la liste des alertes, les appareils qui répondent, une horloge et un toit parisien sous la pluie avec les pigeons",
+ "sh_wall_cap": "Le mode mur sur un écran de salle : la météo du toit parisien suit vos alertes.",
+ "sh_al_alt": "Page des alertes : alertes en cours regroupées par appareil, chacune avec une plaque Injoignable, Avertissement, Avis ou En formation, Acquitter et Ouvrir la sonde"
 }

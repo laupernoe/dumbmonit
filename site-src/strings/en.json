@@ -210,5 +210,14 @@
  "fam_data_name": "Databases and observability",
  "fam_data_blurb": "PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT, and the VictoriaMetrics, Loki and Graylog servers.",
  "sev_advisory": "Advisory",
- "in_l_guide": "Full install guide"
+ "in_l_guide": "Full install guide",
+ "sh_ov_alt": "The overview of the live demo: the sentence “2 warnings, 1 advisory, 1 unreachable, 5 building up.” over a rainy weather window, the status plates, what changed since the last visit and the alerts that need you",
+ "sh_ov_cap": "The overview of the live demo, with fictional devices and a few failures switched on. On a quiet day the sentence reads “Clear skies.”",
+ "sh_dev_alt": "A Proxmox VE monitor: its status, the alerts on it, and every node with CPU, memory, root file system, pending updates, reboots required and services down",
+ "sh_dev_cap": "One page per device: here a Proxmox cluster, node by node, with what needs a reboot or an update.",
+ "sh_st_alt": "A public status page titled Home services: All systems operational, then each service with its 7-day uptime bar and response time",
+ "sh_st_cap": "A public status page: what the family can check before asking whether the internet is down.",
+ "sh_wall_alt": "Wall mode: “4 problems” in large type, the list of alerts, the devices that report, a clock, and a rainy Paris rooftop with the pigeons",
+ "sh_wall_cap": "Wall mode on a room monitor: the weather over the Paris rooftop follows your alerts.",
+ "sh_al_alt": "Alerts page: current alerts grouped by device, each with an Unreachable, Warning, Advisory or Building up plate, Ack and Open monitor"
 }
