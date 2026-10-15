@@ -2,8 +2,8 @@
 
 Web UI 所做的一切都经过 `/api/*`，同一套 API 也向你自己的脚本、仪表板和助手开放：不存在私有的另一半。它是基于 HTTP 的纯 JSON，通过会话 cookie（Web UI）或 API 令牌（其他一切）认证。
 
-!!! warning "Alpha"
-    DumbMonit 处于 alpha 阶段，其 API 也是如此：路由和字段仍可能变化。每当删除或重命名某个路由或字段时，API 版本（见下文）就会变化，因此客户端可以据此判断。
+!!! warning "1.0 之前"
+    DumbMonit 尚未到达 1.0，其 API 也是如此：路由和字段仍可能变化。每当删除或重命名某个路由或字段时，API 版本（见下文）就会变化，因此客户端可以据此判断。
 
 ## OpenAPI 描述 {#openapi-description}
 

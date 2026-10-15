@@ -6,8 +6,8 @@ nenhuma metade privada. É JSON simples sobre HTTP, autenticado por um
 cookie de sessão (a interface web) ou por um token de API (tudo o
 resto).
 
-!!! warning "Alpha"
-    O DumbMonit é uma alpha e a sua API também: as rotas e campos
+!!! warning "Antes da 1.0"
+    O DumbMonit está numa versão anterior à 1.0 e a sua API também: as rotas e campos
     ainda podem mudar. A versão da API (abaixo) muda sempre que uma
     rota ou campo é removido ou renomeado, para que um cliente possa
     distinguir.

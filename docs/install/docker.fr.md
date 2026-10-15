@@ -6,9 +6,9 @@ binaire est fourni dans l'image. La configuration et l'état vivent dans une bas
 embarquée. Un seul volume, `/data`, contient la base, le secret de l'instance et les
 séries temporelles.
 
-!!! note "Image alpha"
-    `ghcr.io/laupernoe/dumbmonit:latest` est le dernier build alpha étiqueté (amd64 ;
-    les images arm64 sont suspendues pour l'instant) ; `:edge` suit le dernier commit de `main`. Pour exécuter depuis les sources,
+!!! note "Tags d'image"
+    `ghcr.io/laupernoe/dumbmonit:latest` est la dernière version étiquetée (amd64 ;
+    les images arm64 sont suspendues pour l'instant) ; `:edge` suit le dernier commit de `dev`. Pour exécuter depuis les sources,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` construit la même image en local (environ dix minutes la première
     fois ; seul Docker est nécessaire).

@@ -4,9 +4,7 @@ Monitoraggio semplice, dall'homelab alla piccola impresa. Un container, un indir
 da digitare, grafici utili e avvisi in meno di un minuto.
 
 !!! warning "Lavori in corso"
-    DumbMonit è in sviluppo attivo; l'immagine attuale
-    (`ghcr.io/laupernoe/dumbmonit:latest`) è un'alpha per i primi tester. Aspettati
-    qualche asperità e modifiche incompatibili fino alla prima release.
+    DumbMonit è in sviluppo attivo; fino alla 1.0 l'API HTTP e il modello dei dati possono ancora cambiare tra versioni minori (0.x). Il changelog elenca ogni modifica.
 
 DumbMonit legge la rete come un **bollettino meteo**: la home page descrive
 il cielo in una frase ("Cielo sereno." oppure "2 avvisi, 1 irraggiungibile.") e

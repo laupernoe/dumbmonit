@@ -12,7 +12,7 @@
   请先开一个 issue。
 - **安全修复**会在发行说明和 GitHub 安全公告中公布,并附有 CVE 或 GHSA 编号。
 
-DumbMonit 目前处于 alpha 阶段:在宣布稳定版本线之前,API 和数据模型会持续演进。
+DumbMonit 目前尚未到达 1.0:在宣布稳定版本线之前,API 和数据模型会持续演进。
 如需参与,请参阅
 [贡献指南](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
 和

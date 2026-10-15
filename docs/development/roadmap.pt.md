@@ -15,7 +15,7 @@ promessa.
 - **As correções de segurança** são anunciadas nas notas de versão e como
   avisos de segurança do GitHub, com o respetivo identificador CVE ou GHSA.
 
-O DumbMonit está em alfa: espere que a API e o modelo de dados continuem a
+O DumbMonit está antes da 1.0: espere que a API e o modelo de dados continuem a
 evoluir até ser anunciada uma linha estável. Consulte o
 [guia de contribuição](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
 e a

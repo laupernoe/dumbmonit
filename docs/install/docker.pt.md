@@ -6,9 +6,9 @@ temporais; o binário vem na imagem. A configuração e o estado vivem numa base
 dados SQLite integrada. Um volume, `/data`, contém a base de dados, o segredo da
 instância e as séries temporais.
 
-!!! note "Imagem alfa"
-    `ghcr.io/laupernoe/dumbmonit:latest` é a última compilação alfa etiquetada (amd64;
-    as imagens arm64 estão suspensas por agora); `:edge` segue o último commit em `main`. Para correr a partir do código-fonte,
+!!! note "Tags de imagem"
+    `ghcr.io/laupernoe/dumbmonit:latest` é a última versão etiquetada (amd64;
+    as imagens arm64 estão suspensas por agora); `:edge` segue o último commit em `dev`. Para correr a partir do código-fonte,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` compila a mesma imagem localmente (cerca de dez minutos da
     primeira vez; só é necessário o Docker).

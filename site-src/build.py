@@ -37,7 +37,8 @@ def project_version():
     """The workspace version, read from Cargo.toml: the site never carries a hard-coded release."""
     m = re.search(r'^version\s*=\s*"([^"]+)"', (HERE.parent / "Cargo.toml").read_text(), re.M)
     assert m, "no version in Cargo.toml"
-    return m.group(1)
+    # The site announces the release, not its candidates: 0.9.0-rc.1 shows as 0.9.0.
+    return re.sub(r"-rc\.\d+$", "", m.group(1))
 
 
 VERSION = project_version()

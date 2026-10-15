@@ -6,9 +6,9 @@ Binärdatei ist im Image enthalten. Konfiguration und Zustand liegen in einer ei
 Datenbank. Ein Volume, `/data`, enthält die Datenbank, das Instanz-Geheimnis und die
 Zeitreihen.
 
-!!! note "Alpha-Image"
-    `ghcr.io/laupernoe/dumbmonit:latest` ist der letzte getaggte Alpha-Build (amd64;
-    arm64-Images sind vorerst pausiert); `:edge` folgt dem letzten Commit auf `main`. Um aus dem Quellcode zu starten,
+!!! note "Image-Tags"
+    `ghcr.io/laupernoe/dumbmonit:latest` ist der letzte getaggte Release (amd64;
+    arm64-Images sind vorerst pausiert); `:edge` folgt dem letzten Commit auf `dev`. Um aus dem Quellcode zu starten,
     baut `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` dasselbe Image lokal (beim ersten Mal etwa zehn Minuten; nur Docker
     wird benötigt).

@@ -84,4 +84,4 @@ Argument für sicheres Design und die Belege hinter jeder Aussage.
 - Monitoroptionen werden unverschlüsselt gespeichert. Legen Sie Geheimnisse in
   Zugangsdatenfeldern ab.
 - Das eingebettete VictoriaMetrics hat keine Authentifizierung.
-- DumbMonit ist eine Alpha; Routen und Felder können sich noch ändern.
+- DumbMonit befindet sich vor 1.0; Routen und Felder können sich noch ändern.

@@ -330,7 +330,8 @@ pipeline to try it out: the images get only `:0.9.0-rc.1` (never `:latest`,
 `:0.9`, `:0`), and the GitHub release is a **draft**, marked pre-release and
 never latest. Its notes are its own CHANGELOG section, else the `0.9.0` one,
 else `Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release
-version first, but do not run `site-src/build.py` for it.
+version first; the website shows the version without its `-rc.N`, so
+`site-src/build.py` can be run or skipped.
 
 The draft carries every binary, checksum, signature and the provenance, but
 only maintainers see it: running servers never learn about it. Once

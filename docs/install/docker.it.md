@@ -6,9 +6,9 @@ binario è incluso nell'immagine. Configurazione e stato risiedono in un databas
 SQLite integrato. Un solo volume, `/data`, contiene il database, il segreto dell'istanza e le
 serie temporali.
 
-!!! note "Immagine alpha"
-    `ghcr.io/laupernoe/dumbmonit:latest` è l'ultima build alpha taggata (amd64;
-    le immagini arm64 sono per ora sospese); `:edge` segue l'ultimo commit su `main`. Per eseguirlo dai sorgenti,
+!!! note "Tag dell'immagine"
+    `ghcr.io/laupernoe/dumbmonit:latest` è l'ultima release taggata (amd64;
+    le immagini arm64 sono per ora sospese); `:edge` segue l'ultimo commit su `dev`. Per eseguirlo dai sorgenti,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` costruisce la stessa immagine in locale (circa dieci minuti la
     prima volta; serve solo Docker).
