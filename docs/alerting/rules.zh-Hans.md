@@ -663,6 +663,14 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | DumbMonit 备份未运行 | DumbMonit 数据库的计划本地备份已超过两天未运行(`time() - dumbmonit_instance_backup_last_success_seconds`)。 | > 2 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 数据卷即将写满 | 存放 `/data` 的卷可用空间不足 10%(`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`)。 | < 10 % | 15 分钟 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 指标数据库循环重启 | 内置 VictoriaMetrics 在 30 分钟内重启了三次或更多(`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`)。 | ≥ 3 | 1 分钟 | 警告 (`critical`) | 6 小时 |
+| DumbMonit 调度器停滞 | 超过两分钟没有完成调度轮次:设备不再被轮询(`dumbmonit_instance_scheduler_lag_seconds`)。 | > 120 秒 | 5 分钟 | 警告 (`critical`) | 6 小时 |
+| DumbMonit 轮询滞后 | 每轮调度后仍有设备逾期未轮询(`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 指标写入失败 | 最近 15 分钟内有批次被 VictoriaMetrics 拒绝或有测量值被丢弃(`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
+| DumbMonit 数据库增长过快 | `dumbmonit.db` 一天内增长超过一倍且大于 100 MB(`dumbmonit_instance_database_bytes`)。 | > 2× | 1 小时 | 通知 (`warning`) | 24 小时 |
+
+这些规则和外发心跳的说明见 [Watching DumbMonit itself](../install/self-monitoring.md)。
 
 每条内置规则都适用于所有设备和每个已启用的通道。
 

@@ -734,6 +734,14 @@ Configurações (desativada por padrão). Veja [Pontuação de segurança](../us
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | DumbMonit backup did not run | O backup local programado do banco de dados DumbMonit não rodou por mais de dois dias (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 d | 1 h | Aviso (`warning`) | 24 h |
+| DumbMonit data volume almost full | O volume que contém `/data` tem menos de 10% de espaço livre (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Aviso (`warning`) | 24 h |
+| DumbMonit metrics database restarting in a loop | O VictoriaMetrics embutido foi reiniciado três vezes ou mais em 30 minutos (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Alerta (`critical`) | 6 h |
+| DumbMonit scheduler stalled | Nenhuma rodada de agendamento há mais de dois minutos: os dispositivos não são mais consultados (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Alerta (`critical`) | 6 h |
+| DumbMonit polls running late | Dispositivos continuam atrasados após cada rodada (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Aviso (`warning`) | 24 h |
+| DumbMonit metric writes failing | Lotes recusados pelo VictoriaMetrics ou medições descartadas nos últimos 15 minutos (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Aviso (`warning`) | 6 h |
+| DumbMonit database growing fast | O `dumbmonit.db` mais que dobrou em um dia e passa de 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Aviso (`warning`) | 24 h |
+
+Essas regras e o heartbeat de saída são explicados em [Watching DumbMonit itself](../install/self-monitoring.md).
 
 Toda regra integrada se aplica a todo dispositivo e a todo canal ativado.
 

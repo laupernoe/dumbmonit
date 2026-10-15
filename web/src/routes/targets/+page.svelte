@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
@@ -12,7 +9,11 @@
 	 * the root layout, see `alertsStore`); this page only adds the sparklines,
 	 * from one batched query refreshed every 30 s.
 	 */
+	import { untrack } from 'svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import {
+		deleteTarget,
 		listCollectors,
 		reorderTargets,
 		updateTarget,
@@ -27,22 +28,30 @@
 	import type { Serie } from '#lib/components/Chart.svelte';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
+	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
 	import RackList from '#lib/components/devices/RackList.svelte';
-	import type { ReorderControls } from '#lib/components/devices/RackList.svelte';
+	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import ViewSwitcher from '#lib/components/devices/ViewSwitcher.svelte';
-	import {
-		hasAllTags,
-		parseFilters,
-		serializeFilters,
-		tagCounts
-	} from '#lib/components/devices/listFilters.js';
 	import { loadRackView, saveRackView, type RackView } from '#lib/components/devices/view.js';
-	import { nearestRow, needsAttention } from '#lib/components/devices/rack.js';
+	import { buildRack, nearestRow, needsAttention, type RackRow } from '#lib/components/devices/rack.js';
+	import {
+		SORT_KEYS,
+		hasAllTags,
+		parseListQuery,
+		runBulk,
+		serializeListQuery,
+		sortTargets,
+		splitDisabled,
+		tagCounts,
+		type Segment,
+		type SortDir,
+		type SortKey
+	} from '#lib/components/devices/listState.js';
 	import {
 		buildFolders,
+		knownFolders,
 		compareFolderSections,
 		folderKeyOf,
 		moveWithinScope,
@@ -51,9 +60,7 @@
 		rootOf,
 		worstState
 	} from '#lib/components/devices/folders.js';
-	import { FolderPlus, Network, Plus, Search } from 'lucide-svelte';
-
-	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
+	import { ArrowUpDown, ChevronRight, FolderInput, FolderPlus, Network, Plus, Power, PowerOff, Search, Trash2, X } from 'lucide-svelte';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -68,29 +75,60 @@
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
 	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
 
-	// Search, state, kind and tags live in the URL (?q=&state=&kind=&tag=key=value),
-	// read once on arrival and rewritten (history replaced) as they change.
-	const initial = untrack(() => parseFilters(page.url.searchParams));
+	// Filters, sort and layout live in the URL (`?q=&state=&kind=&sort=&dir=&view=`):
+	// a filtered view is linkable and survives a reload. The URL is read once
+	// here, then kept in step in both directions by the two effects below.
+	const initial = untrack(() => parseListQuery(page.url.searchParams));
 	let search = $state(initial.search);
 	let segment = $state<Segment>(initial.segment);
 	let kind = $state(initial.kind);
 	let tagFilter = $state<string[]>(initial.tags);
+	let sort = $state<SortKey>(initial.sort);
+	let sortDir = $state<SortDir>(initial.dir);
 
-	$effect(() => {
-		const query = serializeFilters({ search, segment, kind, tags: tagFilter });
-		untrack(() => {
-			if (query === page.url.search) return;
-			void goto(`${page.url.pathname}${query}`, { replaceState: true });
-		});
-	});
-
-	/** Rows, tiles or compact: remembered per viewer, in this browser only. */
-	let view = $state<RackView>(loadRackView());
+	/** Rows, tiles or compact: remembered per viewer in this browser; the URL wins when it names one. */
+	let view = $state<RackView>(initial.view ?? loadRackView());
 	function setView(next: RackView) {
 		view = next;
 		saveRackView(next);
 	}
 	const names = $derived(new Map(targets.map((t) => [t.id, t.name])));
+
+	const urlSearch = $derived(
+		serializeListQuery({
+			search,
+			segment,
+			kind,
+			tags: tagFilter,
+			sort,
+			dir: sortDir,
+			view: view === 'rows' ? null : view
+		})
+	);
+	// Writes still in flight: when one lands, the URL differs from a newer
+	// state for a moment, which must not be mistaken for an outside navigation.
+	const inflight = new Set<string>();
+	$effect(() => {
+		const want = urlSearch;
+		if (want === untrack(() => page.url.search)) return;
+		inflight.add(want);
+		void goto(`${untrack(() => page.url.pathname)}${want}`, {
+			replace: true,
+			reset: false
+		}).finally(() => inflight.delete(want));
+	});
+	$effect(() => {
+		const have = page.url.search;
+		if (have === untrack(() => urlSearch) || inflight.has(have)) return;
+		const next = parseListQuery(page.url.searchParams);
+		search = next.search;
+		segment = next.segment;
+		kind = next.kind;
+		tagFilter = next.tags;
+		sort = next.sort;
+		sortDir = next.dir;
+		view = next.view ?? loadRackView();
+	});
 
 	const stateOf = (target: Target) => displayState(target, probes.get(target.id));
 
@@ -177,11 +215,29 @@
 	// empty one exists only for this session — it is slotted in alongside the
 	// real sections, in the same order, until a device is dropped into it.
 	let pendingEmptyFolders = $state<Set<string>>(new Set());
-	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '' || tagFilter.length > 0);
-	/** Reordering hit-tests rows top to bottom: offered in the two list layouts only. */
-	const canReorder = $derived(auth.isAdmin && !filtered && view !== 'tiles');
+	const filtered = $derived(
+		search.trim() !== '' || segment !== 'all' || kind !== '' || tagFilter.length > 0
+	);
+	const sorted = $derived(sort !== 'default');
+	/** Reordering hit-tests rows top to bottom: offered in the two list layouts only, on the unfiltered rack order. */
+	const canReorder = $derived(auth.isAdmin && !filtered && !sorted && view !== 'tiles');
+	// Disabled devices leave the rack proper for a collapsible section at the bottom.
+	const split = $derived(splitDisabled(targets, stateOf));
+	const activeVisible = $derived(new Set([...visible].filter((id) => split.active.has(id))));
+	const disabledVisible = $derived(new Set([...visible].filter((id) => split.disabled.has(id))));
+	const kindText = (value: string) => kindLabels.get(value) ?? value;
 	const folderSections = $derived.by(() => {
-		const base = buildFolders(effectiveTargets, stateOf, visible);
+		if (sorted) {
+			const rows = sortTargets(
+				effectiveTargets.filter((t) => activeVisible.has(t.id)),
+				stateOf,
+				kindText,
+				sort as Exclude<SortKey, 'default'>,
+				sortDir
+			);
+			return rows.length > 0 ? [{ key: '', label: '', rows }] : [];
+		}
+		const base = buildFolders(effectiveTargets, stateOf, activeVisible);
 		if (filtered || pendingEmptyFolders.size === 0) return base;
 		const extra = [...pendingEmptyFolders]
 			.filter((key) => !base.some((s) => s.key === key))
@@ -189,7 +245,21 @@
 		if (extra.length === 0) return base;
 		return [...base, ...extra].sort(compareFolderSections);
 	});
-	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0));
+	const disabledRows = $derived.by((): RackRow[] =>
+		sorted
+			? sortTargets(
+					effectiveTargets.filter((t) => disabledVisible.has(t.id)),
+					stateOf,
+					kindText,
+					sort as Exclude<SortKey, 'default'>,
+					sortDir
+				)
+			: buildRack(effectiveTargets, stateOf, disabledVisible)
+	);
+	let disabledOpen = $state(false);
+	/** The "Disabled" segment is about nothing else: no point folding it. */
+	const disabledExpanded = $derived(segment === 'disabled' || disabledOpen);
+	const totalRows = $derived(folderSections.reduce((n, s) => n + s.rows.length, 0) + disabledRows.length);
 	/** A single, group-less section looks exactly like the old flat list — no header shown. */
 	const showFolderHeaders = $derived(folderSections.length > 1 || (folderSections[0]?.key ?? '') !== '');
 
@@ -199,6 +269,19 @@
 		kind = '';
 		tagFilter = [];
 	}
+
+	const sortOptions = $derived<{ id: SortKey; label: string }[]>(
+		SORT_KEYS.map((id) => ({
+			id,
+			label: {
+				default: m.devices_list_sort_default(),
+				name: m.devices_list_sort_name(),
+				status: m.devices_list_sort_status(),
+				kind: m.devices_list_sort_kind(),
+				checked: m.devices_list_sort_checked()
+			}[id]
+		}))
+	);
 
 	// --- Folders & manual order (admin only, and only while unfiltered: the
 	// reorder scope is computed from the full fleet, not the narrowed view) ---
@@ -334,6 +417,83 @@
 		nextCollapsed.delete(trimmed);
 		collapsedFolders = nextCollapsed;
 	}
+
+	// --- Bulk actions (admin only): a checkbox per row, then the existing
+	// per-device API looped one device at a time. Failures do not stop the
+	// run; they are reported together and stay selected for a retry. ---
+
+	let selected = $state<Set<TargetId>>(new Set());
+	let bulkBusy = $state(false);
+	let bulkReport = $state<{ failed: { name: string; error: unknown }[]; total: number } | null>(null);
+	let bulkFolderDraft = $state('');
+
+	/** Ids on screen in an unfolded list: what "select all" and the bulk actions can reach. */
+	const shownIds = $derived.by(() => {
+		const ids: TargetId[] = [];
+		for (const section of folderSections) {
+			if (showFolderHeaders && collapsedFolders.has(section.key)) continue;
+			for (const row of section.rows) ids.push(row.target.id);
+		}
+		if (disabledExpanded) for (const row of disabledRows) ids.push(row.target.id);
+		return ids;
+	});
+	const shownSet = $derived(new Set(shownIds));
+	/** Selected devices still on screen: a filter change quietly drops the others from the actions. */
+	const selectedTargets = $derived(effectiveTargets.filter((t) => selected.has(t.id) && shownSet.has(t.id)));
+	const allShownSelected = $derived(shownIds.length > 0 && shownIds.every((id) => selected.has(id)));
+	const selection = $derived<RowSelection | null>(
+		auth.isAdmin
+			? {
+					selected,
+					toggle: (id) => {
+						const next = new Set(selected);
+						if (next.has(id)) next.delete(id);
+						else next.add(id);
+						selected = next;
+					}
+				}
+			: null
+	);
+	const folderChoices = $derived([...new Set([...knownFolders(targets), ...pendingEmptyFolders])]);
+
+	function toggleAllShown() {
+		const next = new Set(selected);
+		if (allShownSelected) for (const id of shownIds) next.delete(id);
+		else for (const id of shownIds) next.add(id);
+		selected = next;
+	}
+
+	async function bulk(subjects: Target[], action: (target: Target) => Promise<unknown>) {
+		if (bulkBusy || subjects.length === 0) return;
+		bulkBusy = true;
+		bulkReport = null;
+		try {
+			const outcome = await runBulk(subjects, action);
+			await alertsStore.refresh();
+			// What went through leaves the selection; what failed stays for a retry.
+			selected = new Set(outcome.failed.map((f) => f.id));
+			if (outcome.failed.length > 0) {
+				bulkReport = {
+					failed: outcome.failed.map((f) => ({ name: f.name, error: f.error })),
+					total: subjects.length
+				};
+			}
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
+	const bulkSetEnabled = (enabled: boolean) =>
+		bulk(
+			selectedTargets.filter((t) => t.enabled !== enabled),
+			(t) => updateTarget(t.id, targetToPayload(t, { enabled }))
+		);
+	const bulkMove = (group: string) =>
+		bulk(
+			selectedTargets.filter((t) => (t.group_name || '') !== group),
+			(t) => updateTarget(t.id, targetToPayload(t, { group_name: group }))
+		);
+	const bulkDelete = () => bulk(selectedTargets, (t) => deleteTarget(t.id));
 
 	async function persistOrder(order: TargetId[]) {
 		const prev = new Map(positionOverride);
@@ -756,16 +916,38 @@
 			/>
 		</label>
 		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} class="max-sm:w-full max-sm:flex-wrap" />
-		<div class="flex min-w-0 items-center justify-between gap-3 lg:contents">
-			<label class="min-w-0">
+		<div class="flex min-w-0 flex-wrap items-center justify-between gap-3 lg:contents">
+			<label class="min-w-0 max-sm:w-full">
 				<span class="sr-only">{m.devices_targets_filter_kind()}</span>
-				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={kind}>
+				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={kind}>
 					<option value="">{m.devices_targets_all_kinds()}</option>
 					{#each kinds as [value, label] (value)}
 						<option {value}>{label}</option>
 					{/each}
 				</select>
 			</label>
+			<div class="flex items-center gap-1">
+				<label class="min-w-0">
+					<span class="sr-only">{m.devices_list_sort_label()}</span>
+					<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={sort}>
+						{#each sortOptions as option (option.id)}
+							<option value={option.id}>{option.id === 'default' ? option.label : `${m.devices_list_sort_label()}: ${option.label}`}</option>
+						{/each}
+					</select>
+				</label>
+				{#if sorted}
+					<button
+						type="button"
+						class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink"
+						aria-pressed={sortDir === 'desc'}
+						aria-label={m.devices_list_sort_reverse()}
+						title={m.devices_list_sort_reverse()}
+						onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}
+					>
+						<ArrowUpDown class="size-4" aria-hidden="true" />
+					</button>
+				{/if}
+			</div>
 			<div class="lg:ml-auto"><ViewSwitcher value={view} onchange={setView} /></div>
 		</div>
 	</div>
@@ -841,6 +1023,89 @@
 			<button type="button" class="ml-1 inline-flex min-h-10 items-center text-ink-2 underline hover:text-ink" onclick={clearFilters}>{m.devices_targets_clear_filters()}</button>
 		</p>
 	{/if}
+	{#if sorted && auth.isAdmin}
+		<p class="mb-2 text-[0.8125rem] text-ink-3">{m.devices_list_sort_no_reorder()}</p>
+	{/if}
+	{#if selection}
+		<div class="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label={m.devices_list_bulk_aria()}>
+			<label class="-ml-1 flex min-h-10 cursor-pointer items-center gap-2 pr-2 pl-1 text-[0.8125rem] text-ink-2">
+				<input
+					type="checkbox"
+					class="size-5 shrink-0 accent-[var(--c-signal)]"
+					checked={allShownSelected}
+					indeterminate={selectedTargets.length > 0 && !allShownSelected}
+					onchange={toggleAllShown}
+				/>
+				{m.devices_list_select_all()}
+			</label>
+			{#if selectedTargets.length > 0}
+				<span class="tnum text-[0.8125rem] font-semibold text-ink" aria-live="polite">{m.devices_list_selected({ count: selectedTargets.length })}</span>
+				<Button size="sm" variant="secondary" disabled={bulkBusy} onclick={() => void bulkSetEnabled(true)}>
+					<Power class="size-4" aria-hidden="true" />
+					{m.devices_list_bulk_enable()}
+				</Button>
+				<Button size="sm" variant="secondary" disabled={bulkBusy} onclick={() => void bulkSetEnabled(false)}>
+					<PowerOff class="size-4" aria-hidden="true" />
+					{m.devices_list_bulk_disable()}
+				</Button>
+				<Menu label={m.devices_list_bulk_move()} align="left">
+					{#snippet trigger({ toggle, open })}
+						<Button size="sm" variant="secondary" disabled={bulkBusy} aria-haspopup="menu" aria-expanded={open} onclick={() => { bulkFolderDraft = ''; toggle(); }}>
+							<FolderInput class="size-4" aria-hidden="true" />
+							{m.devices_list_bulk_move()}
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<ul class="flex min-w-48 flex-col gap-0.5">
+							<li>
+								<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(''); }}>
+									{m.devices_list_bulk_no_folder()}
+								</button>
+							</li>
+							{#each folderChoices as folder (folder)}
+								<li>
+									<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(folder); }}>
+										{folder}
+									</button>
+								</li>
+							{/each}
+						</ul>
+						<form
+							class="mt-1 flex items-center gap-1 border-t border-line p-0.5 pt-1.5"
+							onsubmit={(e) => {
+								e.preventDefault();
+								const name = bulkFolderDraft.trim();
+								if (!name) return;
+								close();
+								void bulkMove(name);
+							}}
+						>
+							<input class="input !h-10 min-w-0 flex-1 text-[0.8125rem]" bind:value={bulkFolderDraft} placeholder={m.devices_list_bulk_folder_placeholder()} aria-label={m.devices_list_bulk_folder_placeholder()} maxlength="80" />
+							<button type="submit" class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50" disabled={!bulkFolderDraft.trim()}>
+								{m.devices_list_bulk_folder_apply()}
+							</button>
+						</form>
+					{/snippet}
+				</Menu>
+				<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy} onconfirm={bulkDelete}>
+					<Trash2 class="size-4" aria-hidden="true" />
+					{m.devices_list_bulk_delete()}
+				</Confirm>
+				<Button size="sm" variant="ghost" disabled={bulkBusy} onclick={() => (selected = new Set())}>
+					<X class="size-4" aria-hidden="true" />
+					{m.devices_list_clear_selection()}
+				</Button>
+			{/if}
+		</div>
+	{/if}
+	{#if bulkReport}
+		<div class="mb-3">
+			<ErrorNotice error={bulkReport.failed[0].error} title={m.devices_list_bulk_partial_title({ failed: bulkReport.failed.length, total: bulkReport.total })}>
+				<p class="text-sm text-ink-2">{m.devices_list_bulk_partial_names({ names: bulkReport.failed.map((f) => f.name).join(', ') })}</p>
+				<Button size="sm" variant="ghost" class="mt-1" onclick={() => (bulkReport = null)}>{m.devices_list_bulk_dismiss()}</Button>
+			</ErrorNotice>
+		</div>
+	{/if}
 	<div class={`flex flex-col ${view === 'compact' ? 'gap-3' : 'gap-4'}`}>
 		{#each folderSections as section (section.key)}
 			{@const collapsed = collapsedFolders.has(section.key)}
@@ -870,9 +1135,30 @@
 					layout={view}
 					{names}
 					{security}
+					{selection}
 				/>
 			{/if}
 		{/each}
+		{#if disabledRows.length > 0}
+			<section aria-label={m.devices_list_disabled_section({ count: disabledRows.length })}>
+				{#if segment === 'disabled'}
+					<h2 class="mb-2 text-sm font-semibold text-ink-2">{m.devices_list_disabled_section({ count: disabledRows.length })}</h2>
+				{:else}
+					<button
+						type="button"
+						class="mb-2 flex min-h-10 items-center gap-1.5 rounded-lg text-sm font-semibold text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
+						aria-expanded={disabledOpen}
+						onclick={() => (disabledOpen = !disabledOpen)}
+					>
+						<ChevronRight class={`size-4 transition-transform motion-reduce:transition-none ${disabledOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
+						{m.devices_list_disabled_section({ count: disabledRows.length })}
+					</button>
+				{/if}
+				{#if disabledExpanded}
+					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {selection} />
+				{/if}
+			</section>
+		{/if}
 	</div>
 {/if}
 

@@ -1,0 +1,39 @@
+name: Upgrade test
+
+# Starts the last published release, fills it with data, then starts the image
+# built from this commit on the same /data volume (scripts/upgrade-test.sh).
+# Not a required check: it is a release gate, see "Releasing" in CONTRIBUTING.md.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upgrade-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upgrade:
+    name: Upgrade from the last release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # Same Dockerfile and gha cache as the "Docker image (build only)" job in
+      # ci.yml, so the layers are reused. Loaded locally, never pushed.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: dumbmonit-candidate:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upgrade test (latest release -> this commit)
+        run: scripts/upgrade-test.sh dumbmonit-candidate:ci

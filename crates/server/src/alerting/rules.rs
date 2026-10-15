@@ -5944,6 +5944,126 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "time() - dumbmonit_instance_backup_last_success_seconds",
             )
         },
+        // Le reste de l'auto-surveillance (`selfmon.rs`), publié chaque minute.
+        // Ce qu'aucune règle ne peut voir — VictoriaMetrics lui-même arrêté, qui
+        // porte leur évaluation — c'est le battement de cœur sortant qui le dit.
+        //
+        // Volume `/data` presque plein : la base, les sauvegardes locales et les
+        // séries y vivent ensemble, et SQLite comme VictoriaMetrics refusent
+        // d'écrire quand il n'y a plus de place.
+        Rule {
+            description: "The volume that holds DumbMonit's data (/data) has less than 10% free \
+                          space: free some, or grow the volume, before writes start to fail."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 10.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "instance_data_volume_low",
+                "DumbMonit data volume almost full",
+                RuleKind::Threshold,
+                "100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes",
+            )
+        },
+        // Le superviseur relance VictoriaMetrics après chaque arrêt, avec un délai
+        // croissant : trois relances en une demi-heure, c'est une boucle (disque
+        // plein, mémoire trop basse, fichier corrompu), pas un accident.
+        Rule {
+            description: "The embedded VictoriaMetrics was restarted three times or more in the \
+                          last 30 minutes: read the server log for the reason."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 3.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "instance_vm_restarting",
+                "DumbMonit metrics database restarting in a loop",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])",
+            )
+        },
+        // La boucle du planificateur tourne chaque seconde : deux minutes sans
+        // tour, plus rien n'est interrogé.
+        Rule {
+            description: "DumbMonit's scheduler has not completed a round for more than two \
+                          minutes: devices are no longer being polled."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 120.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "instance_scheduler_stalled",
+                "DumbMonit scheduler stalled",
+                RuleKind::Threshold,
+                "dumbmonit_instance_scheduler_lag_seconds",
+            )
+        },
+        // Des cibles restées dues après chaque tour : plus de sondes que de
+        // jetons d'exécution. Un quart d'heure, ce n'est plus un pic.
+        Rule {
+            description: "Devices stay overdue after every scheduling round for 15 minutes: \
+                          polls are late. Raise DUMBMONIT_MAX_CONCURRENT_PROBES or lengthen \
+                          some intervals."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "instance_scheduler_behind",
+                "DumbMonit polls running late",
+                RuleKind::Threshold,
+                "min_over_time(dumbmonit_instance_scheduler_backlog[15m])",
+            )
+        },
+        // Lots refusés par VictoriaMetrics, ou mesures perdues faute de place
+        // dans le tampon : des trous dans les graphes et des règles aveugles.
+        Rule {
+            description: "DumbMonit could not write some measurements to its metrics database \
+                          in the last 15 minutes: graphs will have gaps."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "instance_write_errors",
+                "DumbMonit metric writes failing",
+                RuleKind::Threshold,
+                "increase_prometheus(dumbmonit_instance_sample_writes_failed_total[15m]) \
+                 + increase_prometheus(dumbmonit_instance_samples_dropped_total[15m])",
+            )
+        },
+        // Base de configuration qui double en une journée, au-delà de 100 Mo :
+        // un journal qui ne se purge plus, pas l'ajout de quelques équipements.
+        Rule {
+            description: "DumbMonit's SQLite database more than doubled in a day and is over \
+                          100 MB: something keeps writing to it."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "×".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "instance_database_growth",
+                "DumbMonit database growing fast",
+                RuleKind::Threshold,
+                "dumbmonit_instance_database_bytes / dumbmonit_instance_database_bytes offset 1d \
+                 and dumbmonit_instance_database_bytes > 100e6",
+            )
+        },
 
         // --- Note de sécurité (`security/`) ---
         //
@@ -6356,6 +6476,13 @@ mod tests {
             "hyperv_vhd_errors",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
+            // Auto-surveillance de l'instance (`selfmon.rs`).
+            "instance_data_volume_low",
+            "instance_vm_restarting",
+            "instance_scheduler_stalled",
+            "instance_scheduler_behind",
+            "instance_write_errors",
+            "instance_database_growth",
             // Note de sécurité (`security/`).
             "security_score_drop",
             "security_score_low",
@@ -6446,6 +6573,15 @@ mod tests {
             "dumbmonit_abb_device_consecutive_failures",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "dumbmonit_instance_backup_last_success_seconds",
+            // Auto-surveillance de l'instance (`selfmon.rs`).
+            "dumbmonit_instance_data_free_bytes",
+            "dumbmonit_instance_data_size_bytes",
+            "dumbmonit_instance_vm_restarts_total",
+            "dumbmonit_instance_scheduler_lag_seconds",
+            "dumbmonit_instance_scheduler_backlog",
+            "dumbmonit_instance_sample_writes_failed_total",
+            "dumbmonit_instance_samples_dropped_total",
+            "dumbmonit_instance_database_bytes",
             // Proxmox VE, parité avec Pulse (`collectors/proxmox/{metrics,ha,
             // snapshots,replication,ceph}.rs`).
             "dumbmonit_proxmox_guest_running",

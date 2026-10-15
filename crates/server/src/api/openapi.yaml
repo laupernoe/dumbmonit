@@ -160,6 +160,8 @@ tags:
       evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
+  - name: Self-monitoring
+    description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
   - name: Wall news
@@ -795,6 +797,27 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/discovery/subnets:
+    get:
+      operationId: localSubnets
+      tags: [Discovery]
+      summary: Suggested networks for the scan form
+      description: >-
+        In order, `DUMBMONIT_SCAN_SUBNETS`, /24 networks of the private IPv4
+        addresses of monitored devices (most devices first), then the server's
+        connected networks (not when the server runs in a container, where they
+        are the container's own networks). Docker bridge ranges are excluded; the
+        list is empty when nothing reliable is known. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Suggested IPv4 networks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocalSubnets" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -921,6 +944,33 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TargetImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/test:
+    post:
+      operationId: testTargetConnection
+      tags: [Devices]
+      summary: Probe a device once without saving it
+      description: >-
+        Reads the identity of an SNMP device once with the submitted address and
+        credentials and reports the result; nothing is stored. The device answers
+        with its `sysName` / `sysDescr`. A failed probe is a `200` with `ok: false`
+        and the probe's message. SNMP only (other kinds are a `400`), and not
+        available through a relay.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TargetTestRequest" }
+      responses:
+        "200":
+          description: The outcome of the probe.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetTestReport" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -1099,6 +1149,52 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listTargetRules
+      tags: [Rules]
+      summary: Alert rules that watch a device
+      description: >-
+        The rules whose query reads a metric the device has written in the last
+        24 hours, with whether each is turned off for this device (a rule
+        override with `enabled: false`) and firing on it now.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device's rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, rules]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, no_data, unavailable]
+                    description: >-
+                      `no_data`: nothing written in the last 24 hours;
+                      `unavailable`: VictoriaMetrics did not answer.
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, uid, name, description, severity, enabled, ignored, custom_threshold, firing]
+                      properties:
+                        id: { type: integer, format: int64 }
+                        uid: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        severity: { type: string, enum: [info, warning, critical] }
+                        enabled: { type: boolean, description: Enabled for every device. }
+                        ignored: { type: boolean, description: Turned off for this device. }
+                        custom_threshold: { type: boolean, description: A threshold is set for this device. }
+                        firing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   # ---------------------------------------------------------------- mesures
   /api/metrics/query:
@@ -3290,6 +3386,81 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ----------------------------------------------------- auto-surveillance
+  /api/self-monitoring:
+    get:
+      operationId: getSelfMonitoring
+      tags: [Self-monitoring]
+      summary: Health of DumbMonit itself and the heartbeat setting
+      description: >-
+        The three conditions of a heartbeat (scheduler running, database
+        answering, VictoriaMetrics reachable), the data volume, the database
+        size, restarts of the embedded VictoriaMetrics, and the heartbeat
+        setting. The heartbeat URL itself is never returned, only its host.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SelfMonitoring" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/self-monitoring/heartbeat:
+    put:
+      operationId: setHeartbeat
+      tags: [Self-monitoring]
+      summary: Configure the outgoing heartbeat
+      description: >-
+        `url` omitted keeps the stored URL, an empty string clears it. Turning
+        the heartbeat on needs a URL. The interval is 30 to 3600 seconds.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HeartbeatUpdate" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Heartbeat" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/self-monitoring/heartbeat/test:
+    post:
+      operationId: testHeartbeat
+      tags: [Self-monitoring]
+      summary: Send one heartbeat now
+      description: >-
+        A plain "up" call to `url`, or to the stored URL when `url` is absent,
+        whatever the engine's health. Errors never quote the URL.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url: { type: [string, "null"] }
+      responses:
+        "200":
+          description: Whether the service accepted the call.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HeartbeatTestResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
   # --------------------------------------------------- panneaux par intégration
   /api/targets/{id}/proxmox/guests:
     parameters:
@@ -5101,6 +5272,44 @@ components:
               sysobjectid: { type: [string, "null"] }
               suggested_profile: { type: [string, "null"] }
 
+    LocalSubnets:
+      type: object
+      required: [subnets]
+      properties:
+        subnets:
+          type: array
+          description: Suggested IPv4 networks, most reliable source first.
+          items:
+            type: object
+            required: [cidr, source]
+            properties:
+              cidr: { type: string, example: 192.168.1.0/24 }
+              source:
+                type: string
+                enum: [config, devices, server]
+              interface: { type: string, description: Server interface; `server` source only. }
+    TargetTestRequest:
+      description: A `TargetPayload`, plus the id of the device being edited.
+      allOf:
+        - $ref: "#/components/schemas/TargetPayload"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: >-
+                When editing, reuses the stored credential if `credential` is
+                omitted (refused if the address or connection settings changed).
+    TargetTestReport:
+      type: object
+      required: [ok, unreachable]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"], description: The probe error message. }
+        unreachable: { type: boolean, description: True when the failure means "device down". }
+        sysname: { type: [string, "null"] }
+        sysdescr: { type: [string, "null"] }
+        profile_id: { type: [string, "null"], description: Profile auto-detection would pick. }
     Onboarding:
       type: object
       required: [skipped, complete, dismissed, has_target, has_channel, notification_confirmed]
@@ -6780,6 +6989,70 @@ components:
         product: { type: string, examples: [Proxmox VE, Linux host] }
         steps: { type: array, items: { type: string }, description: Concrete steps, in order. }
         doc_url: { type: string, format: uri, description: Matching section of the documentation. }
+    SelfMonitoringComponent:
+      type: object
+      required: [name, ok]
+      properties:
+        name: { type: string, enum: [scheduler, database, victoria] }
+        ok: { type: boolean }
+        error: { type: string }
+    HeartbeatPing:
+      type: object
+      required: [at, outcome, ok, failed]
+      properties:
+        at: { type: string, description: "UTC, without suffix." }
+        outcome:
+          type: string
+          enum: [up, fail, withheld]
+          description: "`withheld`: a component was down and nothing was sent."
+        ok: { type: boolean, description: The call left and the service accepted it. }
+        error: { type: string }
+        failed:
+          type: array
+          items: { type: string }
+    Heartbeat:
+      type: object
+      required: [enabled, interval_seconds, send_fail, has_url, url_host, last_ping]
+      properties:
+        enabled: { type: boolean }
+        interval_seconds: { type: integer, minimum: 30, maximum: 3600 }
+        send_fail: { type: boolean, description: Send a failure signal instead of staying silent. }
+        has_url: { type: boolean }
+        url_host: { type: [string, "null"] }
+        last_ping:
+          oneOf:
+            - { $ref: "#/components/schemas/HeartbeatPing" }
+            - { type: "null" }
+    HeartbeatUpdate:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        interval_seconds: { type: integer, minimum: 30, maximum: 3600 }
+        send_fail: { type: boolean }
+        url: { type: string, description: "Omitted: kept. Empty: cleared." }
+    HeartbeatTestResult:
+      type: object
+      required: [ok, error]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"] }
+    SelfMonitoring:
+      type: object
+      required: [status, components, data_free_bytes, data_total_bytes, database_bytes, vm_embedded, vm_restarts, scheduler_idle_seconds, scheduler_backlog, heartbeat]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        components:
+          type: array
+          items: { $ref: "#/components/schemas/SelfMonitoringComponent" }
+        data_free_bytes: { type: [integer, "null"] }
+        data_total_bytes: { type: [integer, "null"] }
+        database_bytes: { type: integer }
+        vm_embedded: { type: boolean }
+        vm_restarts: { type: integer }
+        scheduler_idle_seconds: { type: integer }
+        scheduler_backlog: { type: integer }
+        heartbeat: { $ref: "#/components/schemas/Heartbeat" }
     SecuritySettings:
       type: object
       required: [enabled]

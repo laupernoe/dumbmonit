@@ -9,7 +9,7 @@
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { page as route } from '$app/state';
-	import { ExternalLink, LayoutList, Plus } from 'lucide-svelte';
+	import { EllipsisVertical, ExternalLink, LayoutList, Plus } from 'lucide-svelte';
 	import {
 		deleteStatusPage,
 		listIncidents,
@@ -19,7 +19,7 @@
 	} from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, Confirm, CopyBlock, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, ClickSpark, Confirm, CopyBlock, EmptyState, ErrorNotice, Menu, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import IncidentsPanel from '#lib/components/status/IncidentsPanel.svelte';
 
 	let pages = $state<StatusPage[]>([]);
@@ -132,7 +132,7 @@
 			<Panel id="pages" title={m.status_list_pages()} padded={false}>
 				{#if pages.length === 0}
 					<div class="px-5 py-4">
-						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()} />
+						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()} primary={auth.isAdmin ? { label: m.status_list_new_page(), href: '/status/new' } : undefined} />
 					</div>
 				{:else}
 					<ul class="divide-y divide-line" role="list">
@@ -144,6 +144,7 @@
 											<a href={`/status/${item.id}`} class="font-semibold text-ink hover:underline">{item.title}</a>
 											<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">/s/{item.slug}</code>
 											<Plate tone={item.published ? 'signal' : 'ghost'} label={item.published ? m.status_list_published() : m.status_list_draft()} />
+											{#if item.domain}<Plate tone="info" label={item.domain} />{/if}
 										</div>
 										<p class="mt-1 text-sm text-ink-2">
 											{m.status_list_services({ count: item.items.length })}
@@ -157,7 +158,26 @@
 										</Button>
 										{#if auth.isAdmin}
 											<Button variant="ghost" size="sm" href={`/status/${item.id}`}>{m.status_list_edit()}</Button>
-											<Confirm confirmLabel={m.status_incidents_delete_confirm()} loading={deleting === item.id} onconfirm={() => remove(item)}>{m.status_incidents_delete()}</Confirm>
+											<Menu label={m.status_list_more()}>
+												{#snippet trigger({ toggle, open })}
+													<Button
+														variant="ghost"
+														size="sm"
+														class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+														aria-haspopup="menu"
+														aria-expanded={open}
+														aria-label={m.status_list_more()}
+														title={m.status_list_more()}
+														disabled={deleting === item.id}
+														onclick={toggle}
+													>
+														<EllipsisVertical class="size-3.5" aria-hidden="true" />
+													</Button>
+												{/snippet}
+												{#snippet children()}
+													<Confirm confirmLabel={m.status_incidents_delete_confirm()} loading={deleting === item.id} onconfirm={() => remove(item)}>{m.status_incidents_delete()}</Confirm>
+												{/snippet}
+											</Menu>
 										{/if}
 									</div>
 								</div>

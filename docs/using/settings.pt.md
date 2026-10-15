@@ -239,6 +239,22 @@ de uma atualização.
 Tudo aqui é só para administradores. Veja
 [Cópia de segurança e restauro](../install/backup.md).
 
+## O próprio DumbMonit {#self-monitoring}
+
+O estado do motor neste momento — agendador, base de dados SQLite, base de
+métricas — com o espaço livre do volume de dados, o tamanho da base e, para o
+VictoriaMetrics incorporado, quantas vezes foi reiniciado. Regras incorporadas
+já o avisam quando algo disto corre mal.
+
+Por baixo, o **batimento de saída**: um URL seu (Healthchecks.io, um monitor
+push do Uptime Kuma, Better Stack…) que o DumbMonit chama a intervalos
+regulares, apenas enquanto está saudável, para que alguém de fora repare
+quando este anfitrião se cala. **Testar** envia uma chamada de imediato;
+**Sinalizar falhas** chama o URL de falha em vez de ficar calado. O URL é
+guardado cifrado e nunca mais é mostrado, apenas o anfitrião. Só um
+administrador o pode alterar. Ver
+[Watching DumbMonit itself](../install/self-monitoring.md).
+
 ## Relatórios {#reports}
 
 Emails periódicos de disponibilidade para a equipa: escolha semanal, diário ou

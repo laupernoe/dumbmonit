@@ -671,6 +671,14 @@ Vom Server alle 15 Minuten für jedes Gerät berechnet, dessen Art Sicherheitspr
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
 | DumbMonit-Backup lief nicht | Das geplante lokale Backup der DumbMonit-Datenbank ist seit mehr als zwei Tagen nicht gelaufen (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 T. | 1 h | Hinweis (`warning`) | 24 h |
+| DumbMonit-Datenvolume fast voll | Das Volume mit `/data` hat weniger als 10 % freien Platz (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Hinweis (`warning`) | 24 h |
+| DumbMonit-Metrikdatenbank startet in Schleife neu | Das eingebettete VictoriaMetrics wurde in 30 Minuten dreimal oder öfter neu gestartet (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Warnung (`critical`) | 6 h |
+| DumbMonit-Planer hängt | Seit mehr als zwei Minuten keine Planungsrunde: Geräte werden nicht mehr abgefragt (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Warnung (`critical`) | 6 h |
+| DumbMonit-Abfragen im Verzug | Geräte bleiben nach jeder Planungsrunde überfällig (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Hinweis (`warning`) | 24 h |
+| DumbMonit-Metrikschreibvorgänge schlagen fehl | Von VictoriaMetrics abgelehnte Batches oder verworfene Messwerte in den letzten 15 Minuten (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Hinweis (`warning`) | 6 h |
+| DumbMonit-Datenbank wächst schnell | `dumbmonit.db` hat sich an einem Tag mehr als verdoppelt und ist größer als 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Hinweis (`warning`) | 24 h |
+
+Diese Regeln und der ausgehende Heartbeat werden in [Watching DumbMonit itself](../install/self-monitoring.md) erklärt.
 
 Jede integrierte Regel gilt für alle Geräte und für jeden aktivierten Kanal.
 
