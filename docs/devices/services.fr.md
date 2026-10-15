@@ -16,8 +16,8 @@ de NTP, assez pour lire l'horloge du serveur sans session.
 
 ## Venir d'Uptime Kuma
 
-**Moniteurs > Ajouter un moniteur > Importer depuis Uptime Kuma**
-(administrateurs) lit le fichier de sauvegarde d'Uptime Kuma 1.x
+**Surveillances > ⋯ > Importer depuis Uptime Kuma**, aussi sur
+**Surveillances > Ajouter une surveillance** (administrateurs), lit le fichier de sauvegarde d'Uptime Kuma 1.x
 (**Réglages > Sauvegarde > Exporter**, un fichier `.json` de 4 Mo au plus).
 Uptime Kuma 2.x n'a plus d'export de sauvegarde : il n'y a donc rien à
 importer depuis cette version. Rien n'est créé avant que vous ayez vu l'aperçu :

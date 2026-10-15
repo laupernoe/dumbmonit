@@ -263,7 +263,7 @@ corresponder. Cada ficheiro tem a sua soma de verificação ao lado,
 os seis binários e as suas somas de verificação, para máquinas que não conseguem
 alcançar o `/download/` do servidor ou para instalar com `--bin`.
 
-Desde a 0.1.0-alpha.9, todos os binários de uma versão são também assinados
+Desde a 0.9.0, todos os binários de uma versão são também assinados
 sem chave (keyless) com o [Sigstore](https://www.sigstore.dev/)
 (`<file>.sigstore.json`) e acompanhados de uma atestação de proveniência SLSA.
 Para verificar que um binário foi compilado pelo fluxo de trabalho de versões

@@ -5,7 +5,7 @@
 	 * (icon + word, so the state never rests on the LED's colour alone).
 	 * Columns drop out as the line narrows; the name and the state stay.
 	 * Opened through a stretched link on the name, so the security badge can
-	 * link to the report on its own (see `Faceplate`).
+	 * link to the report on its own.
 	 */
 	import type { Target } from '#lib/api/index.js';
 	import type { TargetState } from '#lib/format.js';
@@ -58,8 +58,11 @@
 			{/if}
 		</span>
 	</span>
-	{#if security}
-		<SecurityBadge grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
+	{#if security?.grade}
+		<!-- Secondary: dropped on a narrow line, where the name needs the room. -->
+		<span class="hidden @md:contents">
+			<SecurityBadge quiet grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
+		</span>
 	{/if}
 	<Plate {tone} label={STATE_LABEL[state]} pulse={blink} class="shrink-0" />
 </div>
