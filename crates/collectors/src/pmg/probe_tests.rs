@@ -195,30 +195,37 @@ async fn une_interrogation_complete_publie_tout_ce_que_la_passerelle_sait() {
     let errors = samples.iter().find(|s| s.metric == "pmg_scrape_errors").unwrap();
     assert_eq!(errors.value, 0.0, "aucune erreur de collecte attendue");
 
-    let views = capture.0.lock().unwrap();
-    let view = &views[0];
-    assert_eq!(view.version.as_deref(), Some("9.1.2"));
-    // Deux nœuds, interrogés dans l'ordre alphabétique.
-    assert_eq!(view.nodes.iter().map(|n| n.name.as_str()).collect::<Vec<_>>(), ["pmg1", "pmg2"]);
-    let node = &view.nodes[0];
-    assert_eq!(node.cpu_count, Some(4.0));
-    assert_eq!(node.services.len(), 2, "le service absent n'est pas listé");
-    assert!(node.subscription.is_some());
-    assert_eq!(node.updates_pending, Some(2.0));
-    assert_eq!(node.updates_security_pending, Some(1.0));
-    assert!(!node.certificates.is_empty() && !node.virus_databases.is_empty());
-    assert!(!node.spam_rules.is_empty());
-    // Files agrégées sur la grappe ; la file `hold` refusée n'apparaît pas.
-    let queue_names: Vec<&str> = view.queues.iter().map(|q| q.queue.as_str()).collect();
-    assert!(queue_names.contains(&"deferred") && !queue_names.contains(&"hold"), "{queue_names:?}");
-    let deferred = view.queues.iter().find(|q| q.queue == "deferred").unwrap();
-    assert_eq!(deferred.messages, 84.0, "42 messages par nœud, deux nœuds");
-    assert_eq!(view.cluster.len(), 2);
-    let quarantine = view.quarantine.as_ref().expect("quarantaine");
-    assert_eq!(quarantine.attachment_count, Some(2.0));
-    assert!(view.mail.is_some() && !view.recent.is_empty());
-    assert!(!view.spam_scores.is_empty() && !view.viruses.is_empty());
-    drop(views);
+    {
+        let views = capture.0.lock().unwrap();
+        let view = &views[0];
+        assert_eq!(view.version.as_deref(), Some("9.1.2"));
+        // Deux nœuds, interrogés dans l'ordre alphabétique.
+        assert_eq!(
+            view.nodes.iter().map(|n| n.name.as_str()).collect::<Vec<_>>(),
+            ["pmg1", "pmg2"]
+        );
+        let node = &view.nodes[0];
+        assert_eq!(node.cpu_count, Some(4.0));
+        assert_eq!(node.services.len(), 2, "le service absent n'est pas listé");
+        assert!(node.subscription.is_some());
+        assert_eq!(node.updates_pending, Some(2.0));
+        assert_eq!(node.updates_security_pending, Some(1.0));
+        assert!(!node.certificates.is_empty() && !node.virus_databases.is_empty());
+        assert!(!node.spam_rules.is_empty());
+        // Files agrégées sur la grappe ; la file `hold` refusée n'apparaît pas.
+        let queue_names: Vec<&str> = view.queues.iter().map(|q| q.queue.as_str()).collect();
+        assert!(
+            queue_names.contains(&"deferred") && !queue_names.contains(&"hold"),
+            "{queue_names:?}"
+        );
+        let deferred = view.queues.iter().find(|q| q.queue == "deferred").unwrap();
+        assert_eq!(deferred.messages, 84.0, "42 messages par nœud, deux nœuds");
+        assert_eq!(view.cluster.len(), 2);
+        let quarantine = view.quarantine.as_ref().expect("quarantaine");
+        assert_eq!(quarantine.attachment_count, Some(2.0));
+        assert!(view.mail.is_some() && !view.recent.is_empty());
+        assert!(!view.spam_scores.is_empty() && !view.viruses.is_empty());
+    }
 
     // Un seul ticket pour toute l'interrogation, présenté en cookie.
     assert_eq!(seen.tickets.load(Ordering::SeqCst), 1);
