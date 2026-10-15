@@ -16,6 +16,8 @@
 		children: Snippet<[{ close: () => void }]>;
 		label: string;
 		align?: 'left' | 'right';
+		/** Open above the trigger (in a bar pinned to the bottom of the screen). */
+		placement?: 'down' | 'up';
 		open?: boolean;
 		class?: string;
 	}
@@ -25,6 +27,7 @@
 		children,
 		label,
 		align = 'right',
+		placement = 'down',
 		open = $bindable(false),
 		class: className = ''
 	}: Props = $props();
@@ -64,7 +67,7 @@
 		<div
 			role="menu"
 			aria-label={label}
-			class={`absolute top-full z-30 mt-1 min-w-48 rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left shadow-float ${align === 'right' ? 'right-0' : 'left-0'}`}
+			class={`absolute z-30 min-w-48 ${placement === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'} rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left shadow-float ${align === 'right' ? 'right-0' : 'left-0'}`}
 		>
 			{@render children({ close })}
 		</div>

@@ -65,7 +65,7 @@
 	transition:fly={enter()}
 >
 	<div
-		class="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius-card)] border border-line-strong bg-surface px-3 py-2 shadow-float"
+		class="pointer-events-auto flex w-full max-w-4xl flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius-card)] border border-line-strong bg-surface px-3 py-2 shadow-float"
 		role="toolbar"
 		aria-label={label}
 	>
@@ -81,7 +81,7 @@
 			<span class="max-sm:sr-only">{selectAllLabel}</span>
 		</label>
 		<span
-			class={`tnum min-w-0 flex-1 text-[0.8125rem] ${message?.error ? 'font-medium text-warning-ink' : 'text-ink-2'}`}
+			class={`tnum min-w-0 flex-1 text-[0.8125rem] sm:whitespace-nowrap ${message?.error ? 'font-medium text-warning-ink' : 'text-ink-2'}`}
 			aria-live="polite"
 			role={message?.error ? 'alert' : undefined}
 		>
