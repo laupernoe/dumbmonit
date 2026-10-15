@@ -360,7 +360,11 @@ async fn an_existing_install_moves_its_settings_and_alerts_to_the_new_service_de
     .fetch_all(&pool)
     .await
     .unwrap();
-    assert_eq!(silenced, [(5,), (docker,)], "la fenêtre de maintenance vaut aussi pour le service");
+    // Chaque service de la machine (ici Docker et ZFS) reçoit sa copie.
+    let zfs = service(&list, "zfs").expect("appareil ZFS créé")["id"].as_i64().unwrap();
+    let mut expected = vec![(5,), (docker,), (zfs,)];
+    expected.sort();
+    assert_eq!(silenced, expected, "la fenêtre de maintenance vaut aussi pour les services");
 
     // L'alerte en cours est reprise sous le service, avec l'empreinte que le
     // moteur lui calculera : elle ne se résout pas pour se redéclencher.
@@ -386,5 +390,5 @@ async fn an_existing_install_moves_its_settings_and_alerts_to_the_new_service_de
     assert_eq!(again.status, StatusCode::OK);
     let count: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM silences").fetch_one(&pool).await.unwrap();
-    assert_eq!(count.0, 2);
+    assert_eq!(count.0, 3);
 }
