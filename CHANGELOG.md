@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
+  and an entry in the command palette) draws the whole infrastructure from the
+  links DumbMonit already knows, nothing to type in: declared parents, relay
+  agents, hypervisor guests (Proxmox, XCP-ng, Nutanix, vSphere, libvirt) and
+  LLDP neighbours of SNMP switches, matched to a monitor only when the name is
+  unambiguous. What is down and what sits behind it (impacted, alerts
+  suppressed) stand out, in words as well as colour. Zoom and pan, a folder or
+  relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
+  clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
+  [Topology map](docs/using/topology.md).
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
