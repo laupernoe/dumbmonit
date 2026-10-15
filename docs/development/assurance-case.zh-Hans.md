@@ -59,10 +59,10 @@
   安全性不依赖于设计的保密。
 - **权限分离。** 会话、API 令牌和代理令牌是不同的凭据。API 令牌带有 `read` 或 `write` 范围
   (`auth/token.rs`),用户则具有查看者、操作员或管理员角色。
-- **最小权限。** 服务器以 UID 65532（或 `PUID`）运行：以 root 启动后，它只把数据目录
-  移交给该用户（不跟随链接），然后永久放弃 root 并确认无法再取回，之后才打开其他任何
-  内容（`privileges.rs`）。Compose 文件只保留这一步所需的四个 capability，设置只读根文件
-  系统和 `no-new-privileges`（`docker-compose.yml`）。
+- **最小权限。** 镜像以 UID 65532 运行（`Dockerfile`）。以 root 启动时（`user: "0:0"`，用于绑定挂载），
+  服务器只把数据目录移交给该用户（不跟随链接），然后永久放弃 root 并确认无法再取回，之后才打开其他任何
+  内容（`privileges.rs`）。Compose 文件只保留这一步所需的四个 capability，设置只读根文件系统和
+  `no-new-privileges`（`docker-compose.yml`）。
 - **最小公共机制。** 代理使用各自的令牌进行身份验证,因此撤销一台机器不会影响任何用户或其他代理。
 - **心理可接受性。** 安全行为是默认的,无需额外步骤:cookie 为 `HttpOnly` 和 `SameSite=Lax`,
   CSRF 标头由 Web 客户端添加,机密在界面中只写不读。

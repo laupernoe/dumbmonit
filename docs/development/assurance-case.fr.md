@@ -76,13 +76,13 @@ L'argument suit les principes de conception de Saltzer et Schroeder.
   des identifiants différents. Les jetons d'API ont une portée `read` ou
   `write` (`auth/token.rs`), et les utilisateurs un rôle lecteur, opérateur ou
   admin.
-- **Moindre privilège.** Le serveur s'exécute sous l'UID 65532 (ou `PUID`) :
-  démarré sous root, il se contente de transférer le répertoire de données à cet
-  utilisateur, sans suivre les liens, puis abandonne root définitivement et
-  vérifie qu'il ne peut pas le retrouver, avant d'ouvrir quoi que ce soit
-  d'autre (`privileges.rs`). Le fichier Compose ne garde que les quatre
-  capacités dont cette étape a besoin, monte le système de fichiers racine en
-  lecture seule et active `no-new-privileges` (`docker-compose.yml`).
+- **Moindre privilège.** L'image s'exécute sous l'UID 65532 (`Dockerfile`). Démarré sous root (`user:
+  "0:0"`, pour les bind mounts), le serveur se contente de transférer le
+  répertoire de données à cet utilisateur, sans suivre les liens, puis abandonne
+  root définitivement et vérifie qu'il ne peut pas le retrouver, avant d'ouvrir
+  quoi que ce soit d'autre (`privileges.rs`). Le fichier Compose ne garde que
+  les quatre capacités dont cette étape a besoin, monte le système de fichiers
+  racine en lecture seule et active `no-new-privileges` (`docker-compose.yml`).
 - **Moindre mécanisme commun.** Les agents s'authentifient avec leur propre
   jeton : révoquer une machine ne touche ni utilisateur ni autre agent.
 - **Acceptabilité psychologique.** Le comportement sûr est le défaut et ne

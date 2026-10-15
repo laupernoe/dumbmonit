@@ -70,13 +70,13 @@ Das Argument folgt den Entwurfsprinzipien von Saltzer und Schroeder.
 - **Trennung der Privilegien.** Sessions, API-Tokens und Agent-Tokens sind verschiedene
   Zugangsdaten. API-Tokens tragen einen Scope `read` oder `write` (`auth/token.rs`), und
   Benutzer haben die Rolle Betrachter, Operator oder Admin.
-- **Minimale Rechte.** Der Server läuft als UID 65532 (oder `PUID`): Als root
-  gestartet, übergibt er nur das Datenverzeichnis an diesen Benutzer, ohne
-  Links zu folgen, gibt dann root endgültig ab und prüft, dass er es nicht
-  zurückerlangen kann, bevor er irgendetwas anderes öffnet (`privileges.rs`).
-  Die Compose-Datei behält nur die vier Capabilities, die dieser Schritt
-  braucht, setzt ein schreibgeschütztes Root-Dateisystem und
-  `no-new-privileges` (`docker-compose.yml`).
+- **Minimale Rechte.** Das Image läuft als UID 65532 (`Dockerfile`). Als root gestartet (`user: "0:0"`,
+  für Bind-Mounts), übergibt der Server nur das Datenverzeichnis an diesen
+  Benutzer, ohne Links zu folgen, gibt dann root endgültig ab und prüft, dass er
+  es nicht zurückerlangen kann, bevor er irgendetwas anderes öffnet
+  (`privileges.rs`). Die Compose-Datei behält nur die vier Capabilities, die
+  dieser Schritt braucht, setzt ein schreibgeschütztes Root-Dateisystem und `no-
+  new-privileges` (`docker-compose.yml`).
 - **Minimale gemeinsame Mechanismen.** Agents authentifizieren sich mit ihrem eigenen Token;
   den Zugang eines Rechners zu widerrufen berührt also weder einen Benutzer noch andere Agents.
 - **Psychologische Akzeptanz.** Sicheres Verhalten ist der Standard und braucht keinen

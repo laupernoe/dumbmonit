@@ -561,7 +561,9 @@ pub fn explain_not_writable(dir: &Path, d: &Diagnosis) -> String {
                 && owner != 0
             {
                 text.push_str(&if d.startup.started_as_root {
-                    format!(" Or set PUID={owner} and PGID={group} to run as the owner of the files.")
+                    format!(
+                        " Or set PUID={owner} and PGID={group} to run as the owner of the files."
+                    )
                 } else {
                     format!(" Or run as the owner of the files: `--user {owner}:{group}`.")
                 });

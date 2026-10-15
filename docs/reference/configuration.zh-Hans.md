@@ -7,7 +7,7 @@
 | Variable | Default | Role |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | API 和 web UI 的监听地址，在容器内。 |
-| `PUID` / `PGID` | `65532` | 容器以 root 启动（镜像默认）时服务器运行所用的用户和组：启动时数据目录会被移交给它们，随后放弃 root。`0` 会被拒绝。`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 优先。若容器以 `user:` / `--user` 启动，则被忽略。参见[权限](../install/docker.md#permissions)。 |
+| `PUID` / `PGID` | `65532` | 容器以 root 启动（`user: "0:0"`，如随附的 `docker-compose.yml`）时服务器运行所用的用户和组：启动时数据目录会被移交给它们，随后放弃 root。`0` 会被拒绝。`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 优先。其他情况下被忽略。参见[权限](../install/docker.md#permissions)。 |
 | `DUMBMONIT_DATA_DIR` | `/data` | 持久目录：`dumbmonit.db`（SQLite）、`secret.key`、`vm/`（嵌入式 VictoriaMetrics）和 `webchange/`（网站更改的屏幕截图）。 |
 | `DUMBMONIT_VM_URL` | *(unset)* | 外部 VictoriaMetrics 的基 URL（`http://host:8428`）。当设置时，嵌入式未启动；见[下方](#embedded-victoriametrics)。 |
 | `DUMBMONIT_SECRET` | *(generated)* | 实例秘密。如果空，从 `<data dir>/secret.key` 读，在第一次启动时生成。用 AES-256-GCM 加密设备凭证、通道秘密和代理令牌。 |

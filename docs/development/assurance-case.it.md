@@ -76,12 +76,13 @@ L'argomentazione segue i principi di design di Saltzer e Schroeder.
   credenziali diverse. I token API hanno uno scope `read` o `write`
   (`auth/token.rs`) e gli utenti hanno un ruolo di visualizzatore, operatore o
   admin.
-- **Privilegio minimo.** Il server gira con UID 65532 (o `PUID`): avviato come
-  root, si limita a cedere la directory dei dati a quell'utente, senza seguire
-  i link, poi abbandona root per sempre e verifica di non poterlo riottenere,
-  prima di aprire qualsiasi altra cosa (`privileges.rs`). Il file Compose tiene
-  solo le quattro capability che questo passo richiede, imposta un file system
-  root in sola lettura e `no-new-privileges` (`docker-compose.yml`).
+- **Privilegio minimo.** L'immagine gira con UID 65532 (`Dockerfile`). Avviato come root (`user: "0:0"`,
+  per i bind mount), il server si limita a cedere la directory dei dati a
+  quell'utente, senza seguire i link, poi abbandona root per sempre e verifica
+  di non poterlo riottenere, prima di aprire qualsiasi altra cosa
+  (`privileges.rs`). Il file Compose tiene solo le quattro capability che questo
+  passo richiede, imposta un file system root in sola lettura e `no-new-
+  privileges` (`docker-compose.yml`).
 - **Minimo meccanismo comune.** Gli agent si autenticano con il proprio token,
   quindi revocare una macchina non tocca alcun utente né altri agent.
 - **Accettabilità psicologica.** Il comportamento sicuro è quello predefinito e

@@ -77,13 +77,13 @@ O argumento segue os princípios de conceção de Saltzer e Schroeder.
   credenciais diferentes. Os tokens de API têm um âmbito `read` ou `write`
   (`auth/token.rs`) e os utilizadores têm a função de leitor, operador ou
   administrador.
-- **Privilégio mínimo.** O servidor corre com o UID 65532 (ou `PUID`): arrancado
-  como root, limita-se a entregar a diretoria de dados a esse utilizador, sem
-  seguir ligações, e depois abandona o root de vez e verifica que não o consegue
-  recuperar, antes de abrir qualquer outra coisa (`privileges.rs`). O ficheiro
-  Compose mantém apenas as quatro capabilities de que este passo precisa,
-  define um sistema de ficheiros raiz só de leitura e `no-new-privileges`
-  (`docker-compose.yml`).
+- **Privilégio mínimo.** A imagem corre com o UID 65532 (`Dockerfile`). Arrancado como root (`user:
+  "0:0"`, para os bind mounts), o servidor limita-se a entregar a diretoria de
+  dados a esse utilizador, sem seguir ligações, e depois abandona o root de vez
+  e verifica que não o consegue recuperar, antes de abrir qualquer outra coisa
+  (`privileges.rs`). O ficheiro Compose mantém apenas as quatro capabilities de
+  que este passo precisa, define um sistema de ficheiros raiz só de leitura e
+  `no-new-privileges` (`docker-compose.yml`).
 - **Menor mecanismo comum.** Os agentes autenticam-se com o seu próprio token,
   pelo que revogar uma máquina não afeta nenhum utilizador nem outro agente.
 - **Aceitabilidade psicológica.** O comportamento seguro é o predefinido e não
