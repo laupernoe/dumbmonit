@@ -322,7 +322,15 @@ Before tagging `vX.Y.Z`:
 3. Bump the version in `Cargo.toml`, run `python3 site-src/build.py` (the website
    reads the version from `Cargo.toml`), then tag `vX.Y.Z`; `release.yml` publishes
    the images and the GitHub release, whose notes are that version's CHANGELOG
-   section; the window links to that release.
+   section; the window links to that release. The workflow refuses a tag
+   that does not match the `Cargo.toml` and `Cargo.lock` version.
+
+A pre-release tag (anything with a `-`, e.g. `v0.9.0-rc.1`) runs the same
+pipeline to try it out: the images get only `:0.9.0-rc.1` (never `:latest`,
+`:0.9`, `:0`), and the GitHub release is marked pre-release and never latest.
+Its notes are its own CHANGELOG section, else the `0.9.0` one, else
+`Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release version
+first, but do not run `site-src/build.py` for it.
 
 ## Licence
 

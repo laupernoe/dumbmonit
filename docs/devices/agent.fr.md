@@ -277,7 +277,7 @@ porte les six binaires et leurs sommes de contrôle, pour les machines qui
 ne peuvent pas atteindre le `/download/` du serveur ou pour installer avec
 `--bin`.
 
-Depuis la version 0.1.0-alpha.9, chaque binaire d'une release est aussi signé
+Depuis la version 0.9.0, chaque binaire d'une release est aussi signé
 sans clé avec [Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) et
 accompagné d'une attestation de provenance SLSA. Pour vérifier qu'un binaire a
 bien été construit par le workflow de release de ce dépôt :

@@ -270,7 +270,7 @@ nicht (Alpine, NAS-Firmware), ohne passende Bibliothek. Jede Datei hat ihre Prü
 Binaries und ihre Prüfsummen, für Rechner, die `/download/` des Servers nicht erreichen können,
 oder zum Installieren mit `--bin`.
 
-Seit 0.1.0-alpha.9 ist jedes Binary eines Releases zusätzlich schlüssellos mit
+Seit 0.9.0 ist jedes Binary eines Releases zusätzlich schlüssellos mit
 [Sigstore](https://www.sigstore.dev/) signiert (`<file>.sigstore.json`) und wird von einer
 SLSA-Provenance-Attestierung begleitet. So prüfen Sie, dass ein Binary vom Release-Workflow
 dieses Repositorys gebaut wurde:

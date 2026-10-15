@@ -4,7 +4,9 @@ name: Release
 # ghcr.io/laupernoe/dumbmonit (server) and ghcr.io/laupernoe/dumbmonit-agent (agent,
 # `--target agent-image`), with the same tags:
 #   - every push to dev    -> :edge (development; main only gets dev through a PR)
-#   - every tag v*         -> :X.Y.Z, :X.Y, :X and :latest
+#   - every tag vX.Y.Z     -> :X.Y.Z, :X.Y, :X and :latest
+#   - every pre-release tag (with a `-`, e.g. v0.9.0-rc.1)
+#                          -> :X.Y.Z-rc.N only: never :latest, :X.Y, :X or :edge
 # CI (ci.yml) builds the same images without pushing, on every push and PR.
 #
 # It also delivers the agent as native binaries: Linux x86_64/aarch64 (static
@@ -15,7 +17,8 @@ name: Release
 #   - every tag v*         -> attached to the GitHub release of that tag, each
 #                             signed with Sigstore (keyless, `<file>.sigstore.json`)
 #                             and covered by a SLSA build provenance
-#                             (`dumbmonit-agent.intoto.jsonl`)
+#                             (`dumbmonit-agent.intoto.jsonl`). A pre-release tag
+#                             gives a GitHub pre-release, never marked latest.
 # Both images also get a build provenance attestation, pushed to ghcr.io.
 
 on:
@@ -30,6 +33,12 @@ permissions:
 env:
   IMAGE: ghcr.io/laupernoe/dumbmonit
   AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
+  # Decided once here, read by every job ("true"/"false" strings):
+  # a tag v* with a `-` (v0.9.0-rc.1, v1.0.0-beta.2) is a pre-release, any
+  # other tag v* a stable release; a push to dev is neither.
+  RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+  PRERELEASE: ${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-') }}
+  STABLE_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
 
 # Only the newest :edge matters: a newer push to dev cancels the build in
 # progress. Tags each get their own group and are never cancelled.
@@ -52,6 +61,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # The server reports the Cargo.toml version (update check, /api/health,
+      # "What's new"): a tag that does not match it would publish images and
+      # binaries that announce another version. Cargo.lock must follow too,
+      # or the macOS build (`--locked`) fails late.
+      - name: Check the tag against Cargo.toml
+        if: env.RELEASE_TAG == 'true'
+        run: |
+          set -eu
+          tag="${GITHUB_REF_NAME#v}"
+          cargo=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          lock=$(grep -A1 '^name = "dumbmonit-server"$' Cargo.lock | sed -n 's/^version = "\(.*\)"$/\1/p')
+          echo "tag $tag, Cargo.toml $cargo, Cargo.lock $lock, pre-release $PRERELEASE"
+          test "$tag" = "$cargo" || { echo "::error::tag $GITHUB_REF_NAME but Cargo.toml says $cargo"; exit 1; }
+          test "$tag" = "$lock" || { echo "::error::tag $GITHUB_REF_NAME but Cargo.lock says $lock"; exit 1; }
+
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
@@ -67,11 +91,14 @@ jobs:
           tags: |
             type=edge,branch=dev
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-          # `latest` follows tagged releases only, never dev.
+            type=semver,pattern={{major}}.{{minor}},enable=${{ env.STABLE_RELEASE }}
+            type=semver,pattern={{major}},enable=${{ env.STABLE_RELEASE }}
+          # :X.Y, :X and :latest follow stable releases only: never dev, never
+          # a pre-release. (metadata-action v6 already reduces {{major}} and
+          # {{major}}.{{minor}} to the full version for a pre-release, but a
+          # forced `latest=true` would still apply: both are spelled out.)
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/v') }}
+            latest=${{ env.STABLE_RELEASE }}
           labels: |
             org.opencontainers.image.title=DumbMonit
             org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
@@ -135,10 +162,10 @@ jobs:
           tags: |
             type=edge,branch=dev
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ env.STABLE_RELEASE }}
+            type=semver,pattern={{major}},enable=${{ env.STABLE_RELEASE }}
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/v') }}
+            latest=${{ env.STABLE_RELEASE }}
           labels: |
             org.opencontainers.image.title=DumbMonit agent
             org.opencontainers.image.description=DumbMonit agent, for Docker hosts and remote sites (relay mode)
@@ -229,9 +256,13 @@ jobs:
   # deux jobs qui la créent chacun de leur côté se la disputent, et l'un des
   # deux finit par en ouvrir une seconde.
   #
-  # Jamais marquée « pre-release », même pour une étiquette -alpha : GitHub ne
+  # Une étiquette stable donne une publication « latest » ; une pré-version
+  # (étiquette avec un `-`) une « pre-release » jamais marquée latest. GitHub ne
   # compte pas les pre-releases dans /releases/latest, l'adresse où le serveur
-  # renvoie pour l'agent macOS et que la documentation donne.
+  # renvoie pour l'agent macOS et que la documentation donne : elle reste donc
+  # sur la dernière version stable pendant l'essai d'une pré-version. (La
+  # recherche de mise à jour, elle, lit /releases et écarte les pré-versions
+  # d'après l'étiquette : voir crates/server/src/update.rs.)
   # ---------------------------------------------------------------------------
   github-release:
     name: Publish the GitHub release
@@ -263,6 +294,9 @@ jobs:
           sha256sum -c ./*.sha256
 
       # Les notes de la publication sont la section du CHANGELOG de cette version.
+      # Une pré-version (0.9.0-rc.1) prend sa propre section, sinon celle de
+      # 0.9.0, sinon Unreleased, sinon un renvoi au CHANGELOG : elle n'échoue
+      # jamais ici. Une version stable sans section échoue.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: src
@@ -273,12 +307,28 @@ jobs:
         run: |
           set -eu
           version="${GITHUB_REF_NAME#v}"
-          awk -v v="$version" '
-            index($0, "## " v " ") == 1 { found = 1; next }
-            found && /^## / { exit }
-            found { print }
-          ' src/CHANGELOG.md > notes.md
-          test -s notes.md || { echo "no CHANGELOG section for $version"; exit 1; }
+          # `## <heading>` alone or followed by a space (`## 0.9.0 — 2026-10-20`).
+          section() {
+            awk -v h="$1" '
+              $0 == "## " h || index($0, "## " h " ") == 1 { found = 1; next }
+              found && /^## / { exit }
+              found { print }
+            ' src/CHANGELOG.md
+          }
+          has_text() { grep -q '[^[:space:]]' "$1"; }
+          section "$version" > notes.md
+          if [ "$PRERELEASE" = true ] && ! has_text notes.md; then
+            section "${version%%-*}" > notes.md
+            has_text notes.md || section Unreleased > notes.md
+            has_text notes.md ||
+              echo "See [CHANGELOG.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/CHANGELOG.md)." > notes.md
+          fi
+          has_text notes.md || { echo "::error::no CHANGELOG section for $version"; exit 1; }
+          if [ "$PRERELEASE" = true ]; then
+            { printf '> Pre-release %s, for testing: not the latest release, not offered as an update to stable installs.\n\n' "$version"
+              cat notes.md; } > notes.tmp
+            mv notes.tmp notes.md
+          fi
 
       # Keyless signatures: each binary gets `<binary>.sigstore.json`, checked
       # with `cosign verify-blob` against this workflow's identity (see the
@@ -318,5 +368,5 @@ jobs:
           body_path: notes.md
           files: dist/*
           fail_on_unmatched_files: true
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ env.PRERELEASE == 'true' }}
+          make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
