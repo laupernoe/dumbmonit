@@ -18,7 +18,7 @@ name: Release
 #                             signed with Sigstore (keyless, `<file>.sigstore.json`)
 #                             and covered by a SLSA build provenance
 #                             (`dumbmonit-agent.intoto.jsonl`). A pre-release tag
-#                             gives a GitHub pre-release, never marked latest.
+#                             gives a draft GitHub pre-release, never latest.
 # Both images also get a build provenance attestation, pushed to ghcr.io.
 
 on:
@@ -116,6 +116,11 @@ jobs:
           build-args: DUMBMONIT_BUILD=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # SBOM (SPDX) and full SLSA provenance, attached to the image index
+          # by BuildKit: `docker buildx imagetools inspect <image> --format
+          # '{{ json .SBOM }}'` (or `.Provenance`).
+          sbom: true
+          provenance: mode=max
 
       # `gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:<tag> -R laupernoe/dumbmonit`
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -184,6 +189,11 @@ jobs:
           annotations: ${{ steps.agent-meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # SBOM (SPDX) and full SLSA provenance, attached to the image index
+          # by BuildKit: `docker buildx imagetools inspect <image> --format
+          # '{{ json .SBOM }}'` (or `.Provenance`).
+          sbom: true
+          provenance: mode=max
 
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
@@ -260,9 +270,15 @@ jobs:
   # (étiquette avec un `-`) une « pre-release » jamais marquée latest. GitHub ne
   # compte pas les pre-releases dans /releases/latest, l'adresse où le serveur
   # renvoie pour l'agent macOS et que la documentation donne : elle reste donc
-  # sur la dernière version stable pendant l'essai d'une pré-version. (La
-  # recherche de mise à jour, elle, lit /releases et écarte les pré-versions
-  # d'après l'étiquette : voir crates/server/src/update.rs.)
+  # sur la dernière version stable pendant l'essai d'une pré-version.
+  #
+  # Une pré-version reste de plus en brouillon : la recherche de mise à jour
+  # (crates/server/src/update.rs) lit /releases et propose une pré-version plus
+  # récente à toute instance qui en exécute déjà une (toutes les 0.1.0-alpha.N) ;
+  # l'API anonyme ne montre pas les brouillons. Les signatures et attestations
+  # ne dépendent pas de la publication (faites avant, sur les fichiers), et
+  # l'envoi des pièces jointes marche sur un brouillon. Publication à la main :
+  # voir « Releasing » dans CONTRIBUTING.md.
   # ---------------------------------------------------------------------------
   github-release:
     name: Publish the GitHub release
@@ -368,5 +384,6 @@ jobs:
           body_path: notes.md
           files: dist/*
           fail_on_unmatched_files: true
+          draft: ${{ env.PRERELEASE == 'true' }}
           prerelease: ${{ env.PRERELEASE == 'true' }}
           make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}

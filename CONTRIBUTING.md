@@ -327,10 +327,20 @@ Before tagging `vX.Y.Z`:
 
 A pre-release tag (anything with a `-`, e.g. `v0.9.0-rc.1`) runs the same
 pipeline to try it out: the images get only `:0.9.0-rc.1` (never `:latest`,
-`:0.9`, `:0`), and the GitHub release is marked pre-release and never latest.
-Its notes are its own CHANGELOG section, else the `0.9.0` one, else
-`Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release version
-first, but do not run `site-src/build.py` for it.
+`:0.9`, `:0`), and the GitHub release is a **draft**, marked pre-release and
+never latest. Its notes are its own CHANGELOG section, else the `0.9.0` one,
+else `Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release
+version first, but do not run `site-src/build.py` for it.
+
+The draft carries every binary, checksum, signature and the provenance, but
+only maintainers see it: running servers never learn about it. Once
+published, every instance already on a pre-release (all `0.1.0-alpha.N`) is
+offered it as an update; stable instances never are. To publish it anyway,
+open the draft on the Releases page, check that **Set as a pre-release** is
+ticked and **Set as the latest release** is not, then **Publish release**; or
+`gh release edit v0.9.0-rc.1 --draft=false --prerelease --latest=false`. To
+drop it, delete the draft and the tag (`gh release delete v0.9.0-rc.1
+--cleanup-tag`); the `:0.9.0-rc.1` images stay on ghcr.io until deleted there.
 
 ## Licence
 
