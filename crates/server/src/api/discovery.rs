@@ -10,12 +10,14 @@
 //! serveur ni dans ceux d'un mandataire, contrairement à une chaîne de requête.
 
 use axum::Json;
+use axum::extract::State;
 use dumbmonit_proto::Credential;
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
 use crate::collectors::snmp::{DiscoveredDevice, ScanOptions, scan_network};
+use crate::state::AppState;
 
 #[derive(Deserialize)]
 pub struct ScanRequest {
@@ -97,27 +99,100 @@ pub async fn scan(
     Ok(Json(ScanResponse { devices, scanned }))
 }
 
-/// Réseau directement connecté au serveur, proposé comme valeur par défaut du
-/// balayage.
+/// D'où vient une suggestion de réseau.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SubnetSource {
+    /// Réglage explicite `DUMBMONIT_SCAN_SUBNETS`.
+    Config,
+    /// Déduit des adresses IPv4 privées des équipements déjà surveillés.
+    Devices,
+    /// Réseau relevé dans la table de routage du serveur.
+    Server,
+}
+
+/// Réseau proposé comme valeur par défaut du balayage.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LocalSubnet {
     pub cidr: String,
-    pub interface: String,
+    pub source: SubnetSource,
+    /// Interface du serveur, pour la seule source `server`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interface: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct LocalSubnets {
-    /// Du plus probable au moins probable : réseaux privés « maison » d'abord,
-    /// puis le reste (les ponts Docker, en 172.x, ferment la marche).
+    /// Du plus fiable au moins fiable : réglage explicite, équipements connus,
+    /// puis routes du serveur. Vide si rien n'est sûr : l'interface laisse alors le
+    /// champ libre plutôt que de proposer le réseau d'un pont Docker.
     pub subnets: Vec<LocalSubnet>,
 }
 
-/// `GET /api/discovery/subnets` — réseaux IPv4 directement connectés au serveur.
+/// `GET /api/discovery/subnets` — réseaux à proposer pour le balayage.
 /// Lecture seule, réservée aux administrateurs : c'est une carte du réseau.
-pub async fn local_subnets(_: AdminIdentity) -> Json<LocalSubnets> {
-    // Hors Linux, ou sans `/proc` : liste vide, l'interface laisse le champ libre.
+pub async fn local_subnets(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+) -> ApiResult<Json<LocalSubnets>> {
+    let targets = crate::db::targets::list(&state.pool, &state.cipher).await?;
+    let addresses: Vec<&str> = targets.iter().map(|t| t.address.as_str()).collect();
+    // Hors Linux, ou sans `/proc` : pas de routes, ce n'est pas une erreur.
     let table = tokio::fs::read_to_string("/proc/net/route").await.unwrap_or_default();
-    Json(LocalSubnets { subnets: subnets_from_route_table(&table) })
+    let in_container = std::path::Path::new("/.dockerenv").exists();
+    Ok(Json(LocalSubnets {
+        subnets: suggest_subnets(&state.config.scan_subnets, &addresses, &table, in_container),
+    }))
+}
+
+/// Assemble les suggestions, sans doublon, dans l'ordre réglage > équipements > routes.
+pub fn suggest_subnets(
+    configured: &[ipnet::Ipv4Net],
+    addresses: &[&str],
+    route_table: &str,
+    in_container: bool,
+) -> Vec<LocalSubnet> {
+    let mut out: Vec<LocalSubnet> = Vec::new();
+    let mut push = |cidr: String, source, interface| {
+        if !out.iter().any(|s| s.cidr == cidr) {
+            out.push(LocalSubnet { cidr, source, interface });
+        }
+    };
+    for net in configured {
+        push(net.to_string(), SubnetSource::Config, None);
+    }
+    for cidr in subnets_from_addresses(addresses) {
+        push(cidr, SubnetSource::Devices, None);
+    }
+    for (cidr, interface) in subnets_from_route_table(route_table, in_container) {
+        push(cidr, SubnetSource::Server, Some(interface));
+    }
+    out
+}
+
+/// Adresse IPv4 littérale de l'adresse d'un équipement : IP seule, `hôte:port`
+/// ou URL. Un nom d'hôte ne donne rien (pas de résolution DNS ici).
+fn literal_ipv4(address: &str) -> Option<std::net::Ipv4Addr> {
+    let rest = address.trim();
+    let rest = rest.split_once("://").map_or(rest, |(_, after)| after);
+    let rest = rest.split(['/', '?', '#']).next().unwrap_or(rest);
+    let rest = rest.rsplit('@').next().unwrap_or(rest);
+    let host = rest.split(':').next().unwrap_or(rest);
+    host.parse().ok()
+}
+
+/// Regroupe en /24 les IPv4 privées des équipements ; les plus peuplés d'abord,
+/// à égalité l'ordre numérique.
+pub fn subnets_from_addresses(addresses: &[&str]) -> Vec<String> {
+    let mut counts: std::collections::BTreeMap<u32, usize> = std::collections::BTreeMap::new();
+    for ip in addresses.iter().filter_map(|a| literal_ipv4(a)) {
+        if ip.is_private() {
+            *counts.entry(u32::from(ip) & (u32::MAX << 8)).or_default() += 1;
+        }
+    }
+    let mut groups: Vec<(u32, usize)> = counts.into_iter().collect();
+    groups.sort_by_key(|g| std::cmp::Reverse(g.1));
+    groups.into_iter().map(|(net, _)| format!("{}/24", std::net::Ipv4Addr::from(net))).collect()
 }
 
 /// Plus large préfixe proposé tel quel : au-delà de 4096 adresses, le balayage
@@ -131,7 +206,7 @@ const FALLBACK_PREFIX: u32 = 24;
 /// (`/proc/net/route`) : les routes sans passerelle, hors boucle locale et
 /// lien-local. Aucune dépendance ni appel système : c'est la même information que
 /// celle d'`ip route`.
-pub fn subnets_from_route_table(table: &str) -> Vec<LocalSubnet> {
+pub fn subnets_from_route_table(table: &str, in_container: bool) -> Vec<(String, String)> {
     let mut found: Vec<(std::net::Ipv4Addr, u32, String)> = Vec::new();
     for line in table.lines().skip(1) {
         let fields: Vec<&str> = line.split_whitespace().collect();
@@ -157,6 +232,16 @@ pub fn subnets_from_route_table(table: &str) -> Vec<LocalSubnet> {
         if destination.is_loopback() || destination.is_link_local() || prefix > 30 {
             continue;
         }
+        // Ponts créés par Docker : jamais le réseau de l'utilisateur. Dans un conteneur,
+        // tout le bloc 172.16/12 est suspect (Docker y puise ses plages).
+        let docker_interface = ["docker", "br-", "veth"].iter().any(|p| fields[0].starts_with(p));
+        if docker_interface
+            || (in_container
+                && destination.octets()[0] == 172
+                && (16..=31).contains(&destination.octets()[1]))
+        {
+            continue;
+        }
         let mut network = destination;
         if prefix < WIDEST_PREFIX {
             prefix = FALLBACK_PREFIX;
@@ -176,10 +261,7 @@ pub fn subnets_from_route_table(table: &str) -> Vec<LocalSubnet> {
     });
     found
         .into_iter()
-        .map(|(network, prefix, interface)| LocalSubnet {
-            cidr: format!("{network}/{prefix}"),
-            interface,
-        })
+        .map(|(network, prefix, interface)| (format!("{network}/{prefix}"), interface))
         .collect()
 }
 
@@ -197,19 +279,69 @@ eth1\t0000FEA9\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
 ";
 
     #[test]
-    fn route_table_keeps_connected_networks_lan_first() {
-        let subnets = subnets_from_route_table(TABLE);
-        let cidrs: Vec<_> =
-            subnets.iter().map(|s| (s.cidr.as_str(), s.interface.as_str())).collect();
-        // 192.168.0.0/24 d'abord ; le /16 du pont Docker est ramené à un /24 ;
-        // passerelle par défaut, boucle locale et lien-local écartés.
-        assert_eq!(cidrs, vec![("192.168.0.0/24", "eth0"), ("172.17.0.0/24", "docker0")]);
+    fn route_table_keeps_connected_networks_without_docker_bridges() {
+        let cidrs = subnets_from_route_table(TABLE, false);
+        // Pont docker0 écarté ; passerelle par défaut, boucle locale et lien-local aussi.
+        assert_eq!(cidrs, vec![("192.168.0.0/24".to_string(), "eth0".to_string())]);
+    }
+
+    #[test]
+    fn route_table_in_container_drops_the_whole_172_block() {
+        let table =
+            "Iface\tDestination\tGateway\tFlags\tRefCnt\tUse\tMetric\tMask\tMTU\tWindow\tIRTT
+eth0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
+eth1\t0000140A\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
+";
+        // eth0 = 172.17.0.0/16 : seul le bloc 172 est écarté.
+        assert_eq!(subnets_from_route_table(table, true).len(), 1);
+        assert_eq!(subnets_from_route_table(table, false).len(), 2);
+        // Seulement Docker : aucune suggestion.
+        assert!(subnets_from_route_table(TABLE, true).len() == 1);
+        assert!(suggest_subnets(&[], &[], &TABLE.replace("0000A8C0", "000011AC"), true).is_empty());
     }
 
     #[test]
     fn route_table_garbage_gives_nothing() {
-        assert!(subnets_from_route_table("").is_empty());
-        assert!(subnets_from_route_table("Iface\nx y z").is_empty());
+        assert!(subnets_from_route_table("", false).is_empty());
+        assert!(subnets_from_route_table("Iface\nx y z", false).is_empty());
+    }
+
+    #[test]
+    fn addresses_group_by_24_most_devices_first() {
+        let addresses = [
+            "10.0.5.7",
+            "192.168.1.10",
+            "192.168.1.11:161",
+            "https://192.168.1.12/status",
+            "http://admin@192.168.1.13:8006/x",
+            "nas.local",
+            "8.8.8.8",
+            "172.17.0.2",
+            "169.254.1.1",
+        ];
+        assert_eq!(
+            subnets_from_addresses(&addresses),
+            vec!["192.168.1.0/24", "10.0.5.0/24", "172.17.0.0/24"]
+        );
+    }
+
+    #[test]
+    fn suggestions_are_ordered_by_source_and_deduplicated() {
+        let configured = crate::config::parse_scan_subnets("10.1.0.0/16, bogus, 192.168.1.5/24");
+        assert_eq!(configured.len(), 2);
+        let got = suggest_subnets(&configured, &["192.168.1.9", "192.168.7.2"], TABLE, false);
+        let view: Vec<_> = got.iter().map(|s| (s.cidr.as_str(), s.source)).collect();
+        assert_eq!(
+            view,
+            vec![
+                ("10.1.0.0/16", SubnetSource::Config),
+                ("192.168.1.0/24", SubnetSource::Config),
+                ("192.168.7.0/24", SubnetSource::Devices),
+                ("192.168.0.0/24", SubnetSource::Server),
+            ]
+        );
+        assert_eq!(got[3].interface.as_deref(), Some("eth0"));
+        assert_eq!(got[0].interface, None);
     }
 
     #[test]

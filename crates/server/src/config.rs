@@ -84,6 +84,10 @@ pub struct Config {
     /// compteurs de tentatives et le journal d'audit. Derrière un mandataire,
     /// tout le monde partagerait sinon le même seau — le sien.
     pub trusted_proxies: Vec<ipnet::IpNet>,
+    /// Réseaux proposés d'office au balayage (`DUMBMONIT_SCAN_SUBNETS`, CIDR IPv4
+    /// séparés par des virgules). Derrière le pont Docker, le serveur ne voit pas le
+    /// réseau local : c'est le seul moyen de l'annoncer sans le deviner.
+    pub scan_subnets: Vec<ipnet::Ipv4Net>,
     /// Accepte un fournisseur OIDC en `http://` (`DUMBMONIT_OIDC_ALLOW_HTTP`).
     ///
     /// Un émetteur en clair livre le code d'autorisation et le secret client à
@@ -200,6 +204,7 @@ impl Config {
                 "DUMBMONIT_TRUSTED_PROXIES",
                 "",
             )),
+            scan_subnets: parse_scan_subnets(&env_or("DUMBMONIT_SCAN_SUBNETS", "")),
             oidc_allow_http: env_flag("DUMBMONIT_OIDC_ALLOW_HTTP"),
             metrics_public: env_flag("DUMBMONIT_METRICS_PUBLIC"),
             backup_enabled: env_flag_or("DUMBMONIT_BACKUP_ENABLED", true),
@@ -276,6 +281,21 @@ fn default_workers() -> usize {
 /// garantit que l'ancien nom est accepté partout, et signalé une seule fois.
 pub fn env_var(key: &str) -> Option<String> {
     dumbmonit_proto::env::var(key)
+}
+
+/// Lit `DUMBMONIT_SCAN_SUBNETS` : CIDR IPv4 séparés par des virgules, ramenés à
+/// l'adresse du réseau. Une entrée illisible est ignorée (avec un avertissement)
+/// plutôt que de bloquer le démarrage.
+pub fn parse_scan_subnets(raw: &str) -> Vec<ipnet::Ipv4Net> {
+    let mut found: Vec<ipnet::Ipv4Net> = Vec::new();
+    for entry in raw.split(',').map(str::trim).filter(|entry| !entry.is_empty()) {
+        match entry.parse::<ipnet::Ipv4Net>() {
+            Ok(net) if !found.contains(&net.trunc()) => found.push(net.trunc()),
+            Ok(_) => {}
+            Err(_) => tracing::warn!(entry, "DUMBMONIT_SCAN_SUBNETS: entrée ignorée"),
+        }
+    }
+    found
 }
 
 fn env_or(key: &str, default: &str) -> String {

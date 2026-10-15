@@ -8,7 +8,7 @@
 	 */
 	import { onMount } from 'svelte';
 	import { Radar } from 'lucide-svelte';
-	import { ApiError, createTarget, localSubnets, type DiscoveredDevice, type LocalSubnet } from '#lib/api/index.js';
+	import { ApiError, createTarget, localSubnets, type DiscoveredDevice, type LocalSubnet, type SubnetSource } from '#lib/api/index.js';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import { scanNetwork } from './discovery';
 	import { defaultSubnet, usableSubnets } from './test-connection';
@@ -47,6 +47,24 @@
 			// Optional hint: a refusal or an old server just leaves the field empty.
 			.catch(() => {});
 		return () => controller.abort();
+	});
+
+	const sourceLabel = (source: SubnetSource) =>
+		source === 'config'
+			? m.deviceform_discovery_source_config()
+			: source === 'devices'
+				? m.deviceform_discovery_source_devices()
+				: m.deviceform_discovery_source_server();
+	const helpText = $derived.by(() => {
+		if (prefilled && cidr.trim() === prefilled.cidr) {
+			return prefilled.source === 'config'
+				? m.deviceform_discovery_range_prefilled_config()
+				: prefilled.source === 'devices'
+					? m.deviceform_discovery_range_prefilled_devices()
+					: m.deviceform_discovery_range_prefilled_server();
+		}
+		// Nothing suggested: say what to type rather than guess a network.
+		return subnets.length === 0 ? m.deviceform_discovery_range_hint() : m.deviceform_discovery_range_help();
 	});
 
 	const selectable = $derived(devices.filter((d) => !d.already_added && rows[d.address]?.status !== 'added'));
@@ -122,9 +140,7 @@
 
 <div class="grid gap-5">
 	<form onsubmit={scan} class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)_auto] sm:items-end">
-		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={prefilled && cidr.trim() === prefilled.cidr
-				? m.deviceform_discovery_range_prefilled({ interface: prefilled.interface || '—' })
-				: m.deviceform_discovery_range_help()}>
+		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={helpText}>
 			<input
 				id="scan-cidr"
 				class="input font-mono text-[0.8125rem]"
@@ -147,11 +163,12 @@
 	</form>
 
 	{#if subnets.length > 1}
-		<div class="flex flex-wrap items-center gap-2" role="group" aria-label={m.deviceform_discovery_subnets_label()}>
-			<span class="text-[0.8125rem] text-ink-2">{m.deviceform_discovery_subnets_label()}</span>
+		<div class="flex flex-wrap items-center gap-2" role="group" aria-label={m.deviceform_discovery_suggestions_label()}>
+			<span class="text-[0.8125rem] text-ink-2">{m.deviceform_discovery_suggestions_label()}</span>
 			{#each subnets as subnet (subnet.cidr)}
 				<Button size="sm" variant={cidr.trim() === subnet.cidr ? 'secondary' : 'ghost'} onclick={() => (cidr = subnet.cidr)}>
 					<span class="font-mono">{subnet.cidr}</span>
+					<span class="text-ink-2">{sourceLabel(subnet.source)}</span>
 				</Button>
 			{/each}
 		</div>

@@ -163,10 +163,15 @@ export interface TargetTestReport {
 	sample_count: number | null;
 }
 
-/** One network the server is connected to. Mirrors `LocalSubnet` in `api/discovery.rs`. */
+/** Where a suggested scan network comes from. Mirrors `SubnetSource` in `api/discovery.rs`. */
+export type SubnetSource = 'config' | 'devices' | 'server';
+
+/** One suggested scan network. Mirrors `LocalSubnet` in `api/discovery.rs`. */
 export interface LocalSubnet {
 	cidr: string;
-	interface: string;
+	source: SubnetSource;
+	/** Server interface, `server` source only. */
+	interface?: string;
 }
 
 /** Result of an immediate probe — the main diagnostic tool. */

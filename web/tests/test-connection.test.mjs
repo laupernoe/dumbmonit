@@ -23,21 +23,26 @@ test('firstReason skips empty entries', () => {
 
 test('usableSubnets keeps valid, unique CIDRs in server order', () => {
 	const raw = [
-		{ cidr: '192.168.1.0/24', interface: 'eth0' },
-		{ cidr: 'nonsense', interface: 'x' },
-		{ cidr: '192.168.1.0/24', interface: 'dup' },
-		{ cidr: '172.17.0.0/24', interface: 'docker0' }
+		{ cidr: '192.168.1.0/24', source: 'devices' },
+		{ cidr: 'nonsense', source: 'devices' },
+		{ cidr: '192.168.1.0/24', source: 'config' },
+		{ cidr: '10.0.0.0/24', source: 'server', interface: 'eth0' },
+		{ cidr: '10.1.0.0/24', source: 'weird' }
 	];
 	assert.deepEqual(
 		usableSubnets(raw).map((s) => s.cidr),
-		['192.168.1.0/24', '172.17.0.0/24']
+		['192.168.1.0/24', '10.0.0.0/24', '10.1.0.0/24']
 	);
+	const kept = usableSubnets(raw);
+	assert.deepEqual(kept.map((s) => s.source), ['devices', 'server', 'server']);
+	assert.equal(kept[0].interface, undefined);
+	assert.equal(kept[1].interface, 'eth0');
 	assert.deepEqual(usableSubnets(null), []);
 	assert.deepEqual(usableSubnets('no'), []);
 });
 
 test('the default subnet never overwrites what was typed', () => {
-	const subnets = usableSubnets([{ cidr: '10.0.0.0/24', interface: 'eth0' }]);
+	const subnets = usableSubnets([{ cidr: '10.0.0.0/24', source: 'config' }]);
 	assert.equal(defaultSubnet('', subnets), '10.0.0.0/24');
 	assert.equal(defaultSubnet('192.168.5.0/24', subnets), null);
 	assert.equal(defaultSubnet('', []), null);

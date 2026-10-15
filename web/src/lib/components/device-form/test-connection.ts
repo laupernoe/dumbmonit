@@ -1,4 +1,4 @@
-import type { LocalSubnet } from '#lib/api/types.js';
+import type { LocalSubnet, SubnetSource } from '#lib/api/types.js';
 
 /**
  * Pure helpers for the device form's "Test connection" button and for the
@@ -33,7 +33,9 @@ export function firstReason(reasons: ReadonlyArray<string | null | undefined>): 
 
 const CIDR = /^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/;
 
-/** Keeps well-formed IPv4 CIDRs, server order preserved (most likely LAN first). */
+const SOURCES: readonly SubnetSource[] = ['config', 'devices', 'server'];
+
+/** Keeps well-formed IPv4 CIDRs, server order preserved (most reliable source first). */
 export function usableSubnets(raw: unknown): LocalSubnet[] {
 	const list = raw;
 	if (!Array.isArray(list)) return [];
@@ -43,7 +45,12 @@ export function usableSubnets(raw: unknown): LocalSubnet[] {
 		const cidr = typeof item?.cidr === 'string' ? item.cidr.trim() : '';
 		if (!CIDR.test(cidr) || seen.has(cidr)) continue;
 		seen.add(cidr);
-		out.push({ cidr, interface: typeof item.interface === 'string' ? item.interface : '' });
+		const source: SubnetSource = SOURCES.includes(item.source) ? item.source : 'server';
+		out.push({
+			cidr,
+			source,
+			...(typeof item.interface === 'string' ? { interface: item.interface } : {})
+		});
 	}
 	return out;
 }
