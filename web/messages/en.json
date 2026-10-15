@@ -4137,7 +4137,6 @@
 	"overview_page_or_relay": "watch a remote site",
 	"overview_page_since": "Since you last looked",
 	"overview_page_title": "Overview",
-	"overview_page_week": "The week ahead",
 	"overview_scene_asleep": "{label}, the pigeon is asleep",
 	"overview_scene_cloudy": "A few clouds",
 	"overview_scene_overcast": "Overcast",
@@ -4406,132 +4405,12 @@
 	"overview_streaks_reporting_for": "Everything reporting for",
 	"overview_streaks_since_outage": "no monitor unreachable since the last outage",
 	"overview_streaks_under_minute": "under a minute",
-	"overview_tip_agent_action": "Install an agent",
-	"overview_tip_agent_text": "Services, disk health, temperatures, updates waiting, Docker containers you can restart or update from here, Plakar, restic and Borg backups. One command on Linux, Windows, macOS or FreeBSD.",
-	"overview_tip_agent_title": "The agent sees inside a machine.",
-	"overview_tip_api_action": "Create an API token",
-	"overview_tip_api_text": "A scoped token (read, or read and write) opens it to your scripts, and a Prometheus or Grafana you already run can read the measurements with the same token.",
-	"overview_tip_api_title": "Everything here has an HTTP API.",
-	"overview_tip_mcp_action": "Connect an assistant",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor or any MCP client can ask DumbMonit how things are — and, with a write token, silence a monitor or run a probe.",
-	"overview_tip_mcp_title": "An AI assistant can read this bulletin.",
-	"overview_tip_packs_action": "Integration packs",
-	"overview_tip_packs_text": "An integration pack is a monitor type written in YAML: what to ask the monitor, which numbers to keep, when to alert.",
-	"overview_tip_packs_title": "DumbMonit can learn a new monitor.",
-	"overview_tip_palette_action": "Open the palette",
-	"overview_tip_palette_text": "The command palette jumps to any monitor, page or action without leaving the keyboard.",
-	"overview_tip_palette_title": "Every page and action is one shortcut away.",
-	"overview_tip_relay_action": "Watch a remote site",
-	"overview_tip_relay_text": "Put one on a machine at a second site, a client’s office or behind a NAT: it probes the switches, NAS and hypervisors there for this server. Outbound only — nothing to open on that side.",
-	"overview_tip_relay_title": "An agent can watch another network.",
-	"overview_tip_status_action": "Create a status page",
-	"overview_tip_status_text": "A public status page shows the services you pick, their uptime and your announcements — a link to share instead of answering “is it down?”.",
-	"overview_tip_status_title": "Tell people before they ask.",
-	"overview_tip_wall_action": "Open wall mode",
-	"overview_tip_wall_text": "Wall mode shows the sky and what needs you, full screen and readable across the room, and keeps the screen awake.",
-	"overview_tip_wall_title": "The bulletin fits a TV.",
 	"overview_tips_another": "Another tip",
 	"overview_tips_hide": "Hide these tips",
 	"overview_tips_hide_title": "Hide these tips (in this browser)",
 	"overview_tips_label": "Did you know?",
 	"overview_tips_prefix": "Did you know? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Certificate expired {count} day ago",
-				"countPlural=other": "Certificate expired {count} days ago"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Certificate expires",
-	"overview_week_cert_expires_today": "Certificate expires today",
 	"overview_week_days_short": "{days} d",
-	"overview_week_filling": "Filling up at this rate",
-	"overview_week_filling_series": "Filling up at this rate: {series}",
-	"overview_week_from": "{scope}, from {time}",
-	"overview_week_full": "Full at this rate",
-	"overview_week_full_series": "Full at this rate: {series}",
-	"overview_week_later": "Later:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} certificate in {when}",
-				"countPlural=other": "{count} certificates in {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} disk filling up within {days} d",
-				"countPlural=other": "{count} disks filling up within {days} d"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} maintenance window within {days} d",
-				"countPlural=other": "{count} maintenance windows within {days} d"
-			}
-		}
-	],
-	"overview_week_maintenance": "Maintenance",
-	"overview_week_maintenance_all": "Maintenance on all monitors",
-	"overview_week_maintenance_device": "Maintenance on monitor {id}",
-	"overview_week_nothing_due": "Nothing due",
-	"overview_week_plate_certificate": "Certificate",
-	"overview_week_plate_forecast": "Forecast",
-	"overview_week_plate_scheduled": "Scheduled",
-	"overview_week_plate_warning": "Warning",
-	"overview_week_quiet": "A quiet week ahead: no certificate, disk or maintenance due.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} and {count} more",
-				"countPlural=other": "{names} and {count} more"
-			}
-		}
-	],
-	"overview_week_today": "Today",
-	"overview_week_tomorrow": "Tomorrow",
-	"overview_week_until": "{scope} until {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "yesterday {time}",
 	"scene_swiss_board_alerts": "Alerts {count}",

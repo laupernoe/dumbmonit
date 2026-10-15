@@ -4070,7 +4070,6 @@
 	"overview_page_or_relay": "监控远程站点",
 	"overview_page_since": "自你上次查看以来",
 	"overview_page_title": "概览",
-	"overview_page_week": "未来一周",
 	"overview_scene_asleep": "{label}，鸽子睡着了",
 	"overview_scene_cloudy": "少云",
 	"overview_scene_overcast": "阴天",
@@ -4323,127 +4322,12 @@
 	"overview_streaks_reporting_for": "全部正常上报已持续",
 	"overview_streaks_since_outage": "自上次故障以来没有监控项无法访问",
 	"overview_streaks_under_minute": "不到一分钟",
-	"overview_tip_agent_action": "安装 agent",
-	"overview_tip_agent_text": "服务、磁盘健康、温度、待安装的更新，还能在这里重启或更新 Docker 容器，并查看 Plakar、restic 和 Borg 备份。Linux、Windows、macOS 或 FreeBSD 上一条命令即可。",
-	"overview_tip_agent_title": "agent 能看到机器内部。",
-	"overview_tip_api_action": "创建 API 令牌",
-	"overview_tip_api_text": "限定范围的令牌（只读，或读写）即可让你的脚本调用它，已有的 Prometheus 或 Grafana 也能用同一个令牌读取指标。",
-	"overview_tip_api_title": "这里的一切都有 HTTP API。",
-	"overview_tip_mcp_action": "连接助手",
-	"overview_tip_mcp_text": "Claude、ChatGPT、Cursor 或任何 MCP 客户端都可以向 DumbMonit 询问当前状况；持有写入令牌时，还能静音监控项或运行探测。",
-	"overview_tip_mcp_title": "AI 助手可以读取这份简报。",
-	"overview_tip_packs_action": "集成包",
-	"overview_tip_packs_text": "集成包是用 YAML 编写的监控项类型：向监控项查询什么、保留哪些数值、何时告警。",
-	"overview_tip_packs_title": "DumbMonit 可以学会新监控项。",
-	"overview_tip_palette_action": "打开命令面板",
-	"overview_tip_palette_text": "命令面板可以不离开键盘，直接跳转到任何监控项、页面或操作。",
-	"overview_tip_palette_title": "每个页面和操作都只需一个快捷键。",
-	"overview_tip_relay_action": "监控远程站点",
-	"overview_tip_relay_text": "把它装在另一处站点、客户办公室或 NAT 后的机器上：它会替本服务器探测那里的交换机、NAS 和虚拟化主机。仅出站连接，那边无需开放任何端口。",
-	"overview_tip_relay_title": "agent 可以监控另一个网络。",
-	"overview_tip_status_action": "创建状态页",
-	"overview_tip_status_text": "公开状态页会展示你选定的服务、可用率和你的公告。分享一个链接，就不用再回答“是不是挂了？”。",
-	"overview_tip_status_title": "别等别人来问。",
-	"overview_tip_wall_action": "打开墙屏模式",
-	"overview_tip_wall_text": "墙屏模式以全屏显示天空和需要你处理的事项，隔着房间也看得清，并保持屏幕常亮。",
-	"overview_tip_wall_title": "这份简报适合放在电视上。",
 	"overview_tips_another": "换一条",
 	"overview_tips_hide": "隐藏这些提示",
 	"overview_tips_hide_title": "隐藏这些提示（仅限此浏览器）",
 	"overview_tips_label": "你知道吗？",
 	"overview_tips_prefix": "你知道吗？{title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "证书已过期 {count} 天"
-			}
-		}
-	],
-	"overview_week_cert_expires": "证书即将到期",
-	"overview_week_cert_expires_today": "证书今天到期",
 	"overview_week_days_short": "{days} 天",
-	"overview_week_filling": "按当前速度将被占满",
-	"overview_week_filling_series": "按当前速度将被占满:{series}",
-	"overview_week_from": "{scope},从 {time} 起",
-	"overview_week_full": "按当前速度将被占满",
-	"overview_week_full_series": "按当前速度将被占满:{series}",
-	"overview_week_later": "稍后:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个证书将在 {when} 后到期"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个磁盘将在 {days} 天内被占满"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{days} 天内有 {count} 个维护窗口"
-			}
-		}
-	],
-	"overview_week_maintenance": "维护",
-	"overview_week_maintenance_all": "所有监控项维护",
-	"overview_week_maintenance_device": "监控项 {id} 维护",
-	"overview_week_nothing_due": "暂无事项",
-	"overview_week_plate_certificate": "证书",
-	"overview_week_plate_forecast": "预测",
-	"overview_week_plate_scheduled": "已计划",
-	"overview_week_plate_warning": "警告",
-	"overview_week_quiet": "接下来一周很平静:没有证书、磁盘或维护事项。",
-	"overview_week_range": "{scope},{start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 等 {count} 项"
-			}
-		}
-	],
-	"overview_week_today": "今天",
-	"overview_week_tomorrow": "明天",
-	"overview_week_until": "{scope},至 {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "昨天 {time}",
 	"scene_swiss_board_alerts": "告警 {count}",

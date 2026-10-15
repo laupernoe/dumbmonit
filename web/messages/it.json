@@ -4137,7 +4137,6 @@
 	"overview_page_or_relay": "controllare un sito remoto",
 	"overview_page_since": "Dall'ultima volta che hai guardato",
 	"overview_page_title": "Panoramica",
-	"overview_page_week": "La settimana in arrivo",
 	"overview_scene_asleep": "{label}, il piccione dorme",
 	"overview_scene_cloudy": "Qualche nuvola",
 	"overview_scene_overcast": "Coperto",
@@ -4406,132 +4405,12 @@
 	"overview_streaks_reporting_for": "Tutto in linea da",
 	"overview_streaks_since_outage": "nessun monitor irraggiungibile dall'ultimo guasto",
 	"overview_streaks_under_minute": "meno di un minuto",
-	"overview_tip_agent_action": "Installa un agente",
-	"overview_tip_agent_text": "Servizi, stato dei dischi, temperature, aggiornamenti in sospeso, container Docker che puoi riavviare o aggiornare da qui, backup Plakar, restic e Borg. Un solo comando su Linux, Windows, macOS o FreeBSD.",
-	"overview_tip_agent_title": "L'agente vede dentro una macchina.",
-	"overview_tip_api_action": "Crea un token API",
-	"overview_tip_api_text": "Un token con ambito limitato (lettura, o lettura e scrittura) la apre ai tuoi script, e un Prometheus o Grafana che già usi può leggere le misure con lo stesso token.",
-	"overview_tip_api_title": "Tutto qui ha un'API HTTP.",
-	"overview_tip_mcp_action": "Collega un assistente",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor o qualsiasi client MCP può chiedere a DumbMonit come stanno le cose e, con un token di scrittura, silenziare un monitor o lanciare una sonda.",
-	"overview_tip_mcp_title": "Un assistente IA può leggere questo bollettino.",
-	"overview_tip_packs_action": "Pacchetti di integrazione",
-	"overview_tip_packs_text": "Un pacchetto di integrazione è un tipo di monitor scritto in YAML: cosa chiedere al monitor, quali valori conservare, quando avvisare.",
-	"overview_tip_packs_title": "DumbMonit può imparare un monitor nuovo.",
-	"overview_tip_palette_action": "Apri la palette",
-	"overview_tip_palette_text": "La palette dei comandi porta a qualsiasi monitor, pagina o azione senza lasciare la tastiera.",
-	"overview_tip_palette_title": "Ogni pagina e azione è a una scorciatoia di distanza.",
-	"overview_tip_relay_action": "Controlla un sito remoto",
-	"overview_tip_relay_text": "Mettine uno su una macchina in una seconda sede, nell'ufficio di un cliente o dietro un NAT: sonda lì switch, NAS e hypervisor per questo server. Solo in uscita: niente da aprire da quella parte.",
-	"overview_tip_relay_title": "Un agente può controllare un'altra rete.",
-	"overview_tip_status_action": "Crea una pagina di stato",
-	"overview_tip_status_text": "Una pagina di stato pubblica mostra i servizi che scegli, la loro disponibilità e i tuoi annunci: un link da condividere invece di rispondere a «è giù?».",
-	"overview_tip_status_title": "Avvisa prima che te lo chiedano.",
-	"overview_tip_wall_action": "Apri la modalità parete",
-	"overview_tip_wall_text": "La modalità parete mostra il cielo e ciò che richiede te, a schermo intero e leggibile da tutta la stanza, e tiene lo schermo acceso.",
-	"overview_tip_wall_title": "Il bollettino sta su una TV.",
 	"overview_tips_another": "Un altro suggerimento",
 	"overview_tips_hide": "Nascondi questi suggerimenti",
 	"overview_tips_hide_title": "Nascondi questi suggerimenti (in questo browser)",
 	"overview_tips_label": "Lo sapevi?",
 	"overview_tips_prefix": "Lo sapevi? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Certificato scaduto {count} giorno fa",
-				"countPlural=other": "Certificato scaduto {count} giorni fa"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Il certificato scade",
-	"overview_week_cert_expires_today": "Il certificato scade oggi",
 	"overview_week_days_short": "{days} g",
-	"overview_week_filling": "Si riempie a questo ritmo",
-	"overview_week_filling_series": "Si riempie a questo ritmo: {series}",
-	"overview_week_from": "{scope}, dalle {time}",
-	"overview_week_full": "Pieno a questo ritmo",
-	"overview_week_full_series": "Pieno a questo ritmo: {series}",
-	"overview_week_later": "Più avanti:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} certificato tra {when}",
-				"countPlural=other": "{count} certificati tra {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} disco si riempie entro {days} g",
-				"countPlural=other": "{count} dischi si riempiono entro {days} g"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} finestra di manutenzione entro {days} g",
-				"countPlural=other": "{count} finestre di manutenzione entro {days} g"
-			}
-		}
-	],
-	"overview_week_maintenance": "Manutenzione",
-	"overview_week_maintenance_all": "Manutenzione su tutti i monitor",
-	"overview_week_maintenance_device": "Manutenzione sul monitor {id}",
-	"overview_week_nothing_due": "Nulla in scadenza",
-	"overview_week_plate_certificate": "Certificato",
-	"overview_week_plate_forecast": "Previsione",
-	"overview_week_plate_scheduled": "Pianificato",
-	"overview_week_plate_warning": "Avvertimento",
-	"overview_week_quiet": "Una settimana tranquilla in vista: nessun certificato, disco o manutenzione in scadenza.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} e altri {count}",
-				"countPlural=other": "{names} e altri {count}"
-			}
-		}
-	],
-	"overview_week_today": "Oggi",
-	"overview_week_tomorrow": "Domani",
-	"overview_week_until": "{scope} fino a {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "ieri {time}",
 	"scene_swiss_board_alerts": "Allarmi {count}",

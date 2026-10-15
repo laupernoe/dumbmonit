@@ -4137,7 +4137,6 @@
 	"overview_page_or_relay": "einen entfernten Standort überwachen",
 	"overview_page_since": "Seit Ihrem letzten Blick",
 	"overview_page_title": "Übersicht",
-	"overview_page_week": "Die kommende Woche",
 	"overview_scene_asleep": "{label}, die Taube schläft",
 	"overview_scene_cloudy": "Ein paar Wolken",
 	"overview_scene_overcast": "Bedeckt",
@@ -4406,132 +4405,12 @@
 	"overview_streaks_reporting_for": "Alles meldet Daten seit",
 	"overview_streaks_since_outage": "seit dem letzten Ausfall war kein Monitor nicht erreichbar",
 	"overview_streaks_under_minute": "unter einer Minute",
-	"overview_tip_agent_action": "Agent installieren",
-	"overview_tip_agent_text": "Dienste, Festplattenzustand, Temperaturen, ausstehende Updates, Docker-Container, die Sie von hier neu starten oder aktualisieren können, Backups mit Plakar, restic und Borg. Ein Befehl unter Linux, Windows, macOS oder FreeBSD.",
-	"overview_tip_agent_title": "Der Agent sieht in eine Maschine hinein.",
-	"overview_tip_api_action": "API-Token erstellen",
-	"overview_tip_api_text": "Ein Token mit begrenztem Umfang (lesen oder lesen und schreiben) öffnet sie für Ihre Skripte, und ein bereits laufendes Prometheus oder Grafana kann die Messwerte mit demselben Token lesen.",
-	"overview_tip_api_title": "Alles hier hat eine HTTP-API.",
-	"overview_tip_mcp_action": "Assistenten verbinden",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor oder jeder MCP-Client kann DumbMonit nach dem Stand der Dinge fragen — und mit einem Schreib-Token einen Monitor stummschalten oder eine Prüfung starten.",
-	"overview_tip_mcp_title": "Ein KI-Assistent kann dieses Bulletin lesen.",
-	"overview_tip_packs_action": "Integrationspakete",
-	"overview_tip_packs_text": "Ein Integrationspaket ist ein Monitortyp in YAML: was der Monitor gefragt wird, welche Werte gespeichert werden, wann alarmiert wird.",
-	"overview_tip_packs_title": "DumbMonit kann einen neuen Monitor lernen.",
-	"overview_tip_palette_action": "Palette öffnen",
-	"overview_tip_palette_text": "Die Befehlspalette springt zu jedem Monitor, jeder Seite und jeder Aktion, ohne die Tastatur zu verlassen.",
-	"overview_tip_palette_title": "Jede Seite und Aktion ist nur einen Shortcut entfernt.",
-	"overview_tip_relay_action": "Entfernten Standort überwachen",
-	"overview_tip_relay_text": "Installieren Sie einen auf einem Rechner an einem zweiten Standort, im Büro eines Kunden oder hinter einem NAT: Er prüft dort Switches, NAS und Hypervisoren für diesen Server. Nur ausgehend — auf der Gegenseite muss nichts geöffnet werden.",
-	"overview_tip_relay_title": "Ein Agent kann ein anderes Netzwerk überwachen.",
-	"overview_tip_status_action": "Statusseite erstellen",
-	"overview_tip_status_text": "Eine öffentliche Statusseite zeigt die gewählten Dienste, ihre Verfügbarkeit und Ihre Mitteilungen — ein Link zum Teilen statt der Antwort auf „Ist es down?“.",
-	"overview_tip_status_title": "Sagen Sie es, bevor jemand fragt.",
-	"overview_tip_wall_action": "Wandmodus öffnen",
-	"overview_tip_wall_text": "Der Wandmodus zeigt den Himmel und das, was Sie braucht, im Vollbild und aus dem ganzen Raum lesbar, und hält den Bildschirm wach.",
-	"overview_tip_wall_title": "Das Bulletin passt auf einen Fernseher.",
 	"overview_tips_another": "Weiterer Tipp",
 	"overview_tips_hide": "Diese Tipps ausblenden",
 	"overview_tips_hide_title": "Diese Tipps ausblenden (in diesem Browser)",
 	"overview_tips_label": "Wussten Sie schon?",
 	"overview_tips_prefix": "Wussten Sie schon? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Zertifikat vor {count} Tag abgelaufen",
-				"countPlural=other": "Zertifikat vor {count} Tagen abgelaufen"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Zertifikat läuft ab",
-	"overview_week_cert_expires_today": "Zertifikat läuft heute ab",
 	"overview_week_days_short": "{days} T",
-	"overview_week_filling": "Füllt sich in diesem Tempo",
-	"overview_week_filling_series": "Füllt sich in diesem Tempo: {series}",
-	"overview_week_from": "{scope}, ab {time}",
-	"overview_week_full": "Voll in diesem Tempo",
-	"overview_week_full_series": "Voll in diesem Tempo: {series}",
-	"overview_week_later": "Später:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Zertifikat in {when}",
-				"countPlural=other": "{count} Zertifikate in {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Datenträger füllt sich innerhalb von {days} T",
-				"countPlural=other": "{count} Datenträger füllen sich innerhalb von {days} T"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Wartungsfenster innerhalb von {days} T",
-				"countPlural=other": "{count} Wartungsfenster innerhalb von {days} T"
-			}
-		}
-	],
-	"overview_week_maintenance": "Wartung",
-	"overview_week_maintenance_all": "Wartung auf allen Monitoren",
-	"overview_week_maintenance_device": "Wartung auf Monitor {id}",
-	"overview_week_nothing_due": "Nichts fällig",
-	"overview_week_plate_certificate": "Zertifikat",
-	"overview_week_plate_forecast": "Prognose",
-	"overview_week_plate_scheduled": "Geplant",
-	"overview_week_plate_warning": "Warnung",
-	"overview_week_quiet": "Eine ruhige Woche steht an: kein Zertifikat, kein Datenträger und keine Wartung fällig.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} und {count} weiteres",
-				"countPlural=other": "{names} und {count} weitere"
-			}
-		}
-	],
-	"overview_week_today": "Heute",
-	"overview_week_tomorrow": "Morgen",
-	"overview_week_until": "{scope} bis {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "gestern {time}",
 	"scene_swiss_board_alerts": "Meldungen {count}",

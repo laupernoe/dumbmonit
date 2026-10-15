@@ -4137,7 +4137,6 @@
 	"overview_page_or_relay": "surveiller un site distant",
 	"overview_page_since": "Depuis votre dernière visite",
 	"overview_page_title": "Vue d'ensemble",
-	"overview_page_week": "La semaine à venir",
 	"overview_scene_asleep": "{label}, le pigeon dort",
 	"overview_scene_cloudy": "Quelques nuages",
 	"overview_scene_overcast": "Ciel couvert",
@@ -4406,132 +4405,12 @@
 	"overview_streaks_reporting_for": "Tout remonte ses données depuis",
 	"overview_streaks_since_outage": "aucune surveillance injoignable depuis la dernière panne",
 	"overview_streaks_under_minute": "moins d'une minute",
-	"overview_tip_agent_action": "Installer un agent",
-	"overview_tip_agent_text": "Services, santé des disques, températures, mises à jour en attente, conteneurs Docker que vous pouvez redémarrer ou mettre à jour d'ici, sauvegardes Plakar, restic et Borg. Une seule commande sous Linux, Windows, macOS ou FreeBSD.",
-	"overview_tip_agent_title": "L'agent voit l'intérieur d'une machine.",
-	"overview_tip_api_action": "Créer un jeton d'API",
-	"overview_tip_api_text": "Un jeton à portée limitée (lecture, ou lecture et écriture) l'ouvre à vos scripts, et un Prometheus ou Grafana que vous utilisez déjà peut lire les mesures avec le même jeton.",
-	"overview_tip_api_title": "Tout ici a une API HTTP.",
-	"overview_tip_mcp_action": "Connecter un assistant",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor ou tout client MCP peut demander à DumbMonit où en sont les choses — et, avec un jeton en écriture, mettre une surveillance en sourdine ou lancer une sonde.",
-	"overview_tip_mcp_title": "Un assistant IA peut lire ce bulletin.",
-	"overview_tip_packs_action": "Packs d'intégration",
-	"overview_tip_packs_text": "Un pack d'intégration est un type de surveillance écrit en YAML : ce qu'il faut demander à la surveillance, quelles valeurs garder, quand alerter.",
-	"overview_tip_packs_title": "DumbMonit peut apprendre une nouvelle surveillance.",
-	"overview_tip_palette_action": "Ouvrir la palette",
-	"overview_tip_palette_text": "La palette de commandes mène à n'importe quelle surveillance, page ou action sans quitter le clavier.",
-	"overview_tip_palette_title": "Chaque page et chaque action est à un raccourci.",
-	"overview_tip_relay_action": "Surveiller un site distant",
-	"overview_tip_relay_text": "Installez-en un sur une machine d'un second site, du bureau d'un client ou derrière un NAT : il sonde pour ce serveur les switchs, NAS et hyperviseurs sur place. Connexions sortantes uniquement — rien à ouvrir de ce côté.",
-	"overview_tip_relay_title": "Un agent peut surveiller un autre réseau.",
-	"overview_tip_status_action": "Créer une page d'état",
-	"overview_tip_status_text": "Une page d'état publique affiche les services de votre choix, leur disponibilité et vos annonces — un lien à partager plutôt que de répondre à « c'est en panne ? ».",
-	"overview_tip_status_title": "Prévenez avant qu'on vous demande.",
-	"overview_tip_wall_action": "Ouvrir le mode mural",
-	"overview_tip_wall_text": "Le mode mural affiche le ciel et ce qui demande votre attention, en plein écran, lisible de loin, et garde l'écran allumé.",
-	"overview_tip_wall_title": "Le bulletin tient sur une télé.",
 	"overview_tips_another": "Autre astuce",
 	"overview_tips_hide": "Masquer ces astuces",
 	"overview_tips_hide_title": "Masquer ces astuces (dans ce navigateur)",
 	"overview_tips_label": "Le saviez-vous ?",
 	"overview_tips_prefix": "Le saviez-vous ? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Certificat expiré il y a {count} jour",
-				"countPlural=other": "Certificat expiré il y a {count} jours"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Le certificat expire",
-	"overview_week_cert_expires_today": "Le certificat expire aujourd'hui",
 	"overview_week_days_short": "{days} j",
-	"overview_week_filling": "Se remplit à ce rythme",
-	"overview_week_filling_series": "Se remplit à ce rythme : {series}",
-	"overview_week_from": "{scope}, à partir de {time}",
-	"overview_week_full": "Plein à ce rythme",
-	"overview_week_full_series": "Plein à ce rythme : {series}",
-	"overview_week_later": "Plus tard :",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} certificat dans {when}",
-				"countPlural=other": "{count} certificats dans {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} disque se remplit d'ici {days} j",
-				"countPlural=other": "{count} disques se remplissent d'ici {days} j"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} fenêtre de maintenance d'ici {days} j",
-				"countPlural=other": "{count} fenêtres de maintenance d'ici {days} j"
-			}
-		}
-	],
-	"overview_week_maintenance": "Maintenance",
-	"overview_week_maintenance_all": "Maintenance sur toutes les surveillances",
-	"overview_week_maintenance_device": "Maintenance sur la surveillance {id}",
-	"overview_week_nothing_due": "Rien de prévu",
-	"overview_week_plate_certificate": "Certificat",
-	"overview_week_plate_forecast": "Prévision",
-	"overview_week_plate_scheduled": "Planifié",
-	"overview_week_plate_warning": "Avertissement",
-	"overview_week_quiet": "Une semaine calme s'annonce : aucun certificat, disque ni maintenance à prévoir.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} et {count} autre",
-				"countPlural=other": "{names} et {count} autres"
-			}
-		}
-	],
-	"overview_week_today": "Aujourd'hui",
-	"overview_week_tomorrow": "Demain",
-	"overview_week_until": "{scope} jusqu'à {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "hier {time}",
 	"scene_swiss_board_alerts": "Alertes {count}",

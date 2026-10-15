@@ -4245,7 +4245,6 @@
 	"overview_page_or_relay": "следить за удалённой площадкой",
 	"overview_page_since": "С вашего последнего визита",
 	"overview_page_title": "Обзор",
-	"overview_page_week": "Предстоящая неделя",
 	"overview_scene_asleep": "{label}, голубь спит",
 	"overview_scene_cloudy": "Небольшая облачность",
 	"overview_scene_overcast": "Пасмурно",
@@ -4546,142 +4545,12 @@
 	"overview_streaks_reporting_for": "Всё на связи уже",
 	"overview_streaks_since_outage": "ни один монитор не был недоступен с последнего сбоя",
 	"overview_streaks_under_minute": "меньше минуты",
-	"overview_tip_agent_action": "Установить агент",
-	"overview_tip_agent_text": "Службы, состояние дисков, температуры, ожидающие обновления, контейнеры Docker, которые можно перезапустить или обновить отсюда, резервные копии Plakar, restic и Borg. Одна команда на Linux, Windows, macOS или FreeBSD.",
-	"overview_tip_agent_title": "Агент видит, что происходит внутри машины.",
-	"overview_tip_api_action": "Создать токен API",
-	"overview_tip_api_text": "Токен с ограниченными правами (чтение или чтение и запись) открывает её для ваших скриптов, а уже работающие Prometheus или Grafana могут читать измерения с тем же токеном.",
-	"overview_tip_api_title": "У всего здесь есть HTTP API.",
-	"overview_tip_mcp_action": "Подключить ассистента",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor или любой клиент MCP может спросить DumbMonit, как дела, а с токеном на запись, ещё и заглушить монитор или запустить проверку.",
-	"overview_tip_mcp_title": "Этот бюллетень может читать ИИ-ассистент.",
-	"overview_tip_packs_action": "Пакеты интеграций",
-	"overview_tip_packs_text": "Пакет интеграции — это тип монитора, описанный в YAML: что спрашивать у монитора, какие значения хранить и когда поднимать оповещение.",
-	"overview_tip_packs_title": "DumbMonit можно научить новому монитору.",
-	"overview_tip_palette_action": "Открыть палитру",
-	"overview_tip_palette_text": "Палитра команд переходит к любому монитору, странице или действию, не отрывая рук от клавиатуры.",
-	"overview_tip_palette_title": "Любая страница и действие — в одном шорткате.",
-	"overview_tip_relay_action": "Следить за удалённой площадкой",
-	"overview_tip_relay_text": "Установите его на машине на второй площадке, в офисе клиента или за NAT: он опрашивает там коммутаторы, NAS и гипервизоры для этого сервера. Только исходящие соединения — открывать ничего не нужно.",
-	"overview_tip_relay_title": "Агент может следить за другой сетью.",
-	"overview_tip_status_action": "Создать страницу статуса",
-	"overview_tip_status_text": "Публичная страница статуса показывает выбранные вами сервисы, их аптайм и ваши объявления — достаточно поделиться ссылкой вместо ответов на вопрос «оно упало?».",
-	"overview_tip_status_title": "Сообщайте раньше, чем спросят.",
-	"overview_tip_wall_action": "Открыть режим стены",
-	"overview_tip_wall_text": "Режим стены показывает небо и то, что требует вашего внимания, на весь экран, читаемо через всю комнату, и не даёт экрану гаснуть.",
-	"overview_tip_wall_title": "Бюллетень подходит для телевизора.",
 	"overview_tips_another": "Другой совет",
 	"overview_tips_hide": "Скрыть эти советы",
 	"overview_tips_hide_title": "Скрыть эти советы (в этом браузере)",
 	"overview_tips_label": "Знаете ли вы?",
 	"overview_tips_prefix": "Знаете ли вы? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Сертификат истёк {count} день назад",
-				"countPlural=few": "Сертификат истёк {count} дня назад",
-				"countPlural=many": "Сертификат истёк {count} дней назад",
-				"countPlural=other": "Сертификат истёк {count} дней назад"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Сертификат истекает",
-	"overview_week_cert_expires_today": "Сертификат истекает сегодня",
 	"overview_week_days_short": "{days} дн.",
-	"overview_week_filling": "Заполняется с такой скоростью",
-	"overview_week_filling_series": "Заполняется с такой скоростью: {series}",
-	"overview_week_from": "{scope}, с {time}",
-	"overview_week_full": "Будет заполнено с такой скоростью",
-	"overview_week_full_series": "Будет заполнено с такой скоростью: {series}",
-	"overview_week_later": "Позже:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} сертификат через {when}",
-				"countPlural=few": "{count} сертификата через {when}",
-				"countPlural=many": "{count} сертификатов через {when}",
-				"countPlural=other": "{count} сертификатов через {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} диск заполнится в течение {days} дн.",
-				"countPlural=few": "{count} диска заполнятся в течение {days} дн.",
-				"countPlural=many": "{count} дисков заполнятся в течение {days} дн.",
-				"countPlural=other": "{count} дисков заполнятся в течение {days} дн."
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} окно обслуживания в течение {days} дн.",
-				"countPlural=few": "{count} окна обслуживания в течение {days} дн.",
-				"countPlural=many": "{count} окон обслуживания в течение {days} дн.",
-				"countPlural=other": "{count} окон обслуживания в течение {days} дн."
-			}
-		}
-	],
-	"overview_week_maintenance": "Обслуживание",
-	"overview_week_maintenance_all": "Обслуживание всех мониторов",
-	"overview_week_maintenance_device": "Обслуживание монитора {id}",
-	"overview_week_nothing_due": "Ничего нет",
-	"overview_week_plate_certificate": "Сертификат",
-	"overview_week_plate_forecast": "Прогноз",
-	"overview_week_plate_scheduled": "По плану",
-	"overview_week_plate_warning": "Предупреждение",
-	"overview_week_quiet": "Впереди спокойная неделя: ни сертификатов, ни дисков, ни обслуживания.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} и ещё {count}",
-				"countPlural=few": "{names} и ещё {count}",
-				"countPlural=many": "{names} и ещё {count}",
-				"countPlural=other": "{names} и ещё {count}"
-			}
-		}
-	],
-	"overview_week_today": "Сегодня",
-	"overview_week_tomorrow": "Завтра",
-	"overview_week_until": "{scope} до {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "вчера {time}",
 	"scene_swiss_board_alerts": "Тревоги {count}",
