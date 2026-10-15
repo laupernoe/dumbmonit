@@ -255,6 +255,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Agent install on systemd hosts.** The Linux installer ran out of memory
+  while writing the systemd unit (shell killed, empty unit, agent never
+  started): a comment in the unit held `yes` between backticks, which the
+  shell ran. Re-run the install command after upgrading the server.
 - **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
   silence controls on a disabled monitor; an "Enable" button takes their place.
 - **Public status page no longer claims "All systems operational" without
