@@ -3703,6 +3703,9 @@
 	"misc_palette_group_devices": "Monitors",
 	"misc_palette_group_pages": "Pages",
 	"misc_palette_group_recent": "Recent",
+	"misc_palette_hint_close": "close",
+	"misc_palette_hint_navigate": "navigate",
+	"misc_palette_hint_open": "open",
 	"misc_palette_incident": "Announce an incident",
 	"misc_palette_label": "Command palette",
 	"misc_palette_loading": "Looking up monitors…",
@@ -4517,7 +4520,7 @@
 			}
 		}
 	],
-	"overview_streaks_not_now": "Not now",
+	"overview_streaks_not_now": "Incomplete",
 	"overview_streaks_one_unreachable": "{name} is unreachable",
 	"overview_streaks_over": "over {days} d",
 	"overview_streaks_quietest": "Quietest monitor",

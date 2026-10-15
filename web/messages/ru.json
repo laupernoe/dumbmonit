@@ -3755,6 +3755,9 @@
 	"misc_palette_group_devices": "Мониторы",
 	"misc_palette_group_pages": "Страницы",
 	"misc_palette_group_recent": "Недавние",
+	"misc_palette_hint_close": "закрыть",
+	"misc_palette_hint_navigate": "навигация",
+	"misc_palette_hint_open": "открыть",
 	"misc_palette_incident": "Объявить об инциденте",
 	"misc_palette_label": "Палитра команд",
 	"misc_palette_loading": "Поиск мониторов…",
@@ -4637,7 +4640,7 @@
 			}
 		}
 	],
-	"overview_streaks_not_now": "Сейчас нет",
+	"overview_streaks_not_now": "Неполно",
 	"overview_streaks_one_unreachable": "{name} недоступно",
 	"overview_streaks_over": "более {days} дн.",
 	"overview_streaks_quietest": "Самый спокойный монитор",

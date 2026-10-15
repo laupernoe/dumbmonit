@@ -1205,11 +1205,17 @@ fn presence_query(sel: &str, window: &str) -> String {
 /// par des données : avant la première mesure, `default 0` compte des absences
 /// qui n'en sont pas.
 pub(crate) fn rescale(measured: f64, window_secs: f64, covered_secs: f64) -> Option<f64> {
-    if covered_secs <= 0.0 {
+    // Moins d'une tranche de présence (5 min) : la mesure ne repose que sur une
+    // ou deux tranches, le quotient n'est que du bruit de quantification. Mieux
+    // vaut « pas de données » qu'un pourcentage fantaisiste.
+    if covered_secs < MIN_COVERED_SECS || window_secs <= 0.0 {
         return None;
     }
-    Some((measured * window_secs / covered_secs).min(100.0))
+    Some((measured * window_secs / covered_secs).clamp(0.0, 100.0))
 }
+
+/// Durée minimale de données pour publier une disponibilité (une tranche).
+const MIN_COVERED_SECS: f64 = 300.0;
 
 /// Séries de temps de réponse (ms) des sondes, agrégées côté serveur : le public
 /// ne reçoit que des points, jamais la requête.
@@ -1925,6 +1931,25 @@ mod tests {
         assert!((value - 96.0).abs() < 0.01);
         assert_eq!(rescale(100.0, 86_400.0, 86_400.0), Some(100.0));
         assert_eq!(rescale(50.0, 86_400.0, 0.0), None);
+    }
+
+    #[test]
+    fn service_without_samples_has_no_percentage() {
+        // Aucune mesure : pas de couverture, donc ni barre rouge ni pourcentage.
+        assert_eq!(rescale(0.0, 86_400.0, 0.0), None);
+        assert_eq!(rescale(0.0, 90.0 * 86_400.0, -3_600.0), None);
+    }
+
+    #[test]
+    fn service_with_data_only_since_today_is_not_diluted() {
+        // Premier échantillon il y a 2 h sur une fenêtre de 90 j : deux heures
+        // de présence complète valent 100 %, pas 0,09 %.
+        let window = 90.0 * 86_400.0;
+        let measured = 24.0 / (window / 300.0) * 100.0;
+        let value = rescale(measured, window, 2.0 * 3_600.0).unwrap();
+        assert!((value - 100.0).abs() < 0.01, "{value}");
+        // Une seule tranche : trop peu pour un chiffre, donc « sans données ».
+        assert_eq!(rescale(0.0035, window, 60.0), None);
     }
 
     #[test]

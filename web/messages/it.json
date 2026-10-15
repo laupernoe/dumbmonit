@@ -3703,6 +3703,9 @@
 	"misc_palette_group_devices": "Monitor",
 	"misc_palette_group_pages": "Pagine",
 	"misc_palette_group_recent": "Recenti",
+	"misc_palette_hint_close": "chiudere",
+	"misc_palette_hint_navigate": "navigare",
+	"misc_palette_hint_open": "aprire",
 	"misc_palette_incident": "Annuncia un incidente",
 	"misc_palette_label": "Palette dei comandi",
 	"misc_palette_loading": "Ricerca dei monitor…",
@@ -4517,7 +4520,7 @@
 			}
 		}
 	],
-	"overview_streaks_not_now": "Non ora",
+	"overview_streaks_not_now": "Incompleto",
 	"overview_streaks_one_unreachable": "{name} è irraggiungibile",
 	"overview_streaks_over": "oltre {days} g",
 	"overview_streaks_quietest": "Monitor più tranquillo",
