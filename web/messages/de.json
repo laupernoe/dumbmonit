@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", nur für die Regeln {rules}",
 	"alerts_matcher_sentence": "Dieser Kanal erhält {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "mit Tag {tags}",
-	"alerts_needs_dismiss_error": "Diese Warnung konnte nicht verworfen werden.",
 	"alerts_needs_dismissed": "Verworfen",
 	"alerts_needs_dismissed_hint": "Bekannte Probleme: Erinnerungen pausieren, bis die Bestätigung endet oder die Warnung gelöst ist.",
 	"alerts_needs_empty_no_devices": "Noch nichts zu überwachen.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Keine Regel löst aus. Ein Monitor wartet noch auf einen ersten Bericht.",
 	"alerts_needs_snoozed": "Zurückgestellt",
-	"alerts_needs_snoozed_hint": "Vorübergehend ausgeblendet: keine Erinnerung, bis der Zeitraum endet oder die Warnung gelöst ist.",
-	"alerts_needs_toast_dismissed": "Verworfen.",
 	"alerts_nth_1": "1. {day}",
 	"alerts_nth_2": "2. {day}",
 	"alerts_nth_3": "3. {day}",
@@ -874,8 +871,6 @@
 	"deviceform_new_devices": "Monitore",
 	"deviceform_new_door_agent_desc": "Ein Befehl unter Linux, Windows, macOS oder FreeBSD: System, Festplatten, Dienste, Docker-Container und Backups.",
 	"deviceform_new_door_agent_title": "Einen Rechner mit dem Agent überwachen",
-	"deviceform_new_door_relay_desc": "Ein Agent an einem zweiten Standort, im Büro eines Kunden oder hinter einem NAT fragt dort Switches, NAS und Hypervisoren für diesen Server ab und baut nur ausgehende Verbindungen auf — kein VPN, kein Port zu öffnen.",
-	"deviceform_new_door_relay_title": "Ein anderes Netzwerk überwachen (entfernter Standort)",
 	"deviceform_new_door_scan_desc": "Gib einen Bereich wie 192.168.1.0/24 an: Jedes Gerät, das per SNMP antwortet, wird aufgelistet und kann direkt hinzugefügt werden.",
 	"deviceform_new_empty_lead": "Das meiste passt trotzdem in eine dieser Kategorien:",
 	"deviceform_new_guide_hide": "Einrichtungsanleitung ausblenden",
@@ -1633,9 +1628,6 @@
 	"devices_timeline_detail_all": "auf {n}: {labels}",
 	"devices_timeline_detail_count": "auf {n} Instanzen",
 	"devices_timeline_detail_some": "auf {n}, darunter {labels}",
-	"devices_timeline_dismiss": "Verwerfen",
-	"devices_timeline_dismissed": "Verworfen.",
-	"devices_timeline_err_dismiss": "Die Warnung konnte nicht verworfen werden.",
 	"devices_timeline_err_load": "Der Warnungsverlauf konnte nicht geladen werden",
 	"devices_timeline_fired": "Ausgelöst",
 	"devices_timeline_first": "erste {when}",
@@ -1645,27 +1637,24 @@
 	"devices_timeline_last_rows": "Letzte {count} Zeilen.",
 	"devices_timeline_loading": "Warnungsverlauf wird geladen",
 	"devices_timeline_maintenance": "Ruhig · Wartungsfenster",
-	"devices_timeline_never": "Auf diesem Monitor wurde noch nie eine Warnung ausgelöst.",
 	"devices_timeline_not_sent": "Nicht gesendet · {reason}",
 	"devices_timeline_nothing_one": "Auf diesem Monitor wurde nichts ausgelöst. Regeln haben sich {count}-mal aufgebaut und sich von selbst beruhigt.",
 	"devices_timeline_nothing_other": "Auf diesem Monitor wurde nichts ausgelöst. Regeln haben sich {count}-mal aufgebaut und sich von selbst beruhigt.",
 	"devices_timeline_notified": "Benachrichtigt",
 	"devices_timeline_notified_some": "{sent} von {total} benachrichtigt",
-	"devices_timeline_open_alerts": "Warnungen öffnen",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Ausgelöst",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "Baut sich auf",
 	"devices_timeline_phase_resolved": "Behoben",
 	"devices_timeline_quiet": "ruhig",
-	"devices_timeline_reporting": "Meldet",
 	"devices_timeline_show_all": "Alle anzeigen · {count} weitere",
+	"devices_timeline_show_each": "Einzeln anzeigen ({count})",
 	"devices_timeline_show_fewer": "Weniger anzeigen",
 	"devices_timeline_show_quiet": "Ruhige Übergänge anzeigen (Aufbau und Rückgang) · {count}",
 	"devices_timeline_since": "seit {when}",
 	"devices_timeline_stop_ignoring": "Nicht mehr ignorieren",
 	"devices_timeline_suppressed": "Vom übergeordneten Gerät unterdrückt",
-	"devices_timeline_undo": "Rückgängig",
 	"devices_uptime_aria": "{up} Zeitfenster online, {down} offline, {none} ohne Prüfung",
 	"devices_uptime_down": "Offline",
 	"devices_uptime_none": "Keine Prüfung",
@@ -3570,13 +3559,13 @@
 	"misc_nav_github_title": "Quellcode auf GitHub (neuer Tab)",
 	"misc_nav_home": "DumbMonit, Übersicht",
 	"misc_nav_main": "Hauptmenü",
+	"misc_nav_more": "Mehr",
 	"misc_nav_overview": "Übersicht",
 	"misc_nav_palette_open": "Befehlspalette öffnen",
 	"misc_nav_palette_title": "Befehlspalette ({shortcut})",
 	"misc_nav_security": "Sicherheit",
 	"misc_nav_settings": "Einstellungen",
 	"misc_nav_sign_out": "Abmelden",
-	"misc_nav_signed_in": "Angemeldet als {name} ({role})",
 	"misc_nav_status": "Status",
 	"misc_nav_wall": "Wandmodus",
 	"misc_nav_wall_title": "Wandmodus: das Bulletin im Vollbild, für einen Monitor im Raum",
@@ -3658,6 +3647,8 @@
 	"misc_state_unknown": "Unbekannt",
 	"misc_update_available": "Update verfügbar: v{version}",
 	"misc_update_title": "Eine neuere Version ist verfügbar. Unter Einstellungen → Info steht, wie Sie aktualisieren.",
+	"misc_user_menu_account": "Mein Konto",
+	"misc_user_menu_label": "Kontomenü von {name}",
 	"notifications_channels_add": "Kanal hinzufügen",
 	"notifications_channels_description": "Wo DumbMonit Bescheid sagt, wenn etwas Aufmerksamkeit braucht.",
 	"notifications_channels_disabled": "Deaktiviert",
@@ -3830,21 +3821,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} und {count} weiteres",
-				"countPlural=other": "{names} und {count} weitere"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3876,21 +3852,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} war die ganze Zeit nicht erreichbar.",
-				"countPlural=other": "{subject} waren die ganze Zeit nicht erreichbar."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3909,7 +3870,6 @@
 	"overview_brief_dropped_many": "{names} sind ausgefallen und wieder da.",
 	"overview_brief_head_first": "In den letzten 24 Std.",
 	"overview_brief_head_since": "Seit {when}",
-	"overview_brief_intro": "Zum ersten Mal hier? Das weiß die Taube bisher.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4096,25 +4056,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} hat sich von selbst erledigt",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} wurde ausgelöst und ist weiterhin aktiv",
-				"countPlural=other": "{name} wurde {count} Mal ausgelöst und ist weiterhin aktiv"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Während Ihrer Abwesenheit ist nichts passiert.",
 	"overview_brief_quiet_first": "In den letzten 24 Std. ist nichts passiert.",
 	"overview_brief_the_server": "dem Server",
-	"overview_brief_went_down": "{name} war ab {when} nicht erreichbar und ist es noch.",
 	"overview_first_all_done": "Alle drei erledigt. Diese Anleitung kommt nicht wieder.",
 	"overview_first_channel_action": "Kanal hinzufügen",
 	"overview_first_channel_text": "E-Mail, ntfy, Discord, Telegram, PagerDuty — was Sie ohnehin lesen. Es wird nichts gesendet, solange alles in Ordnung ist.",
@@ -4152,7 +4096,6 @@
 	"overview_page_or_relay": "einen entfernten Standort überwachen",
 	"overview_page_since": "Seit Ihrem letzten Blick",
 	"overview_page_title": "Übersicht",
-	"overview_page_week": "Die kommende Woche",
 	"overview_scene_asleep": "{label}, die Taube schläft",
 	"overview_scene_cloudy": "Ein paar Wolken",
 	"overview_scene_overcast": "Bedeckt",
@@ -4421,132 +4364,12 @@
 	"overview_streaks_reporting_for": "Alles meldet Daten seit",
 	"overview_streaks_since_outage": "seit dem letzten Ausfall war kein Monitor nicht erreichbar",
 	"overview_streaks_under_minute": "unter einer Minute",
-	"overview_tip_agent_action": "Agent installieren",
-	"overview_tip_agent_text": "Dienste, Festplattenzustand, Temperaturen, ausstehende Updates, Docker-Container, die Sie von hier neu starten oder aktualisieren können, Backups mit Plakar, restic und Borg. Ein Befehl unter Linux, Windows, macOS oder FreeBSD.",
-	"overview_tip_agent_title": "Der Agent sieht in eine Maschine hinein.",
-	"overview_tip_api_action": "API-Token erstellen",
-	"overview_tip_api_text": "Ein Token mit begrenztem Umfang (lesen oder lesen und schreiben) öffnet sie für Ihre Skripte, und ein bereits laufendes Prometheus oder Grafana kann die Messwerte mit demselben Token lesen.",
-	"overview_tip_api_title": "Alles hier hat eine HTTP-API.",
-	"overview_tip_mcp_action": "Assistenten verbinden",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor oder jeder MCP-Client kann DumbMonit nach dem Stand der Dinge fragen — und mit einem Schreib-Token einen Monitor stummschalten oder eine Prüfung starten.",
-	"overview_tip_mcp_title": "Ein KI-Assistent kann dieses Bulletin lesen.",
-	"overview_tip_packs_action": "Integrationspakete",
-	"overview_tip_packs_text": "Ein Integrationspaket ist ein Monitortyp in YAML: was der Monitor gefragt wird, welche Werte gespeichert werden, wann alarmiert wird.",
-	"overview_tip_packs_title": "DumbMonit kann einen neuen Monitor lernen.",
-	"overview_tip_palette_action": "Palette öffnen",
-	"overview_tip_palette_text": "Die Befehlspalette springt zu jedem Monitor, jeder Seite und jeder Aktion, ohne die Tastatur zu verlassen.",
-	"overview_tip_palette_title": "Jede Seite und Aktion ist nur einen Shortcut entfernt.",
-	"overview_tip_relay_action": "Entfernten Standort überwachen",
-	"overview_tip_relay_text": "Installieren Sie einen auf einem Rechner an einem zweiten Standort, im Büro eines Kunden oder hinter einem NAT: Er prüft dort Switches, NAS und Hypervisoren für diesen Server. Nur ausgehend — auf der Gegenseite muss nichts geöffnet werden.",
-	"overview_tip_relay_title": "Ein Agent kann ein anderes Netzwerk überwachen.",
-	"overview_tip_status_action": "Statusseite erstellen",
-	"overview_tip_status_text": "Eine öffentliche Statusseite zeigt die gewählten Dienste, ihre Verfügbarkeit und Ihre Mitteilungen — ein Link zum Teilen statt der Antwort auf „Ist es down?“.",
-	"overview_tip_status_title": "Sagen Sie es, bevor jemand fragt.",
-	"overview_tip_wall_action": "Wandmodus öffnen",
-	"overview_tip_wall_text": "Der Wandmodus zeigt den Himmel und das, was Sie braucht, im Vollbild und aus dem ganzen Raum lesbar, und hält den Bildschirm wach.",
-	"overview_tip_wall_title": "Das Bulletin passt auf einen Fernseher.",
 	"overview_tips_another": "Weiterer Tipp",
 	"overview_tips_hide": "Diese Tipps ausblenden",
 	"overview_tips_hide_title": "Diese Tipps ausblenden (in diesem Browser)",
 	"overview_tips_label": "Wussten Sie schon?",
 	"overview_tips_prefix": "Wussten Sie schon? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Zertifikat vor {count} Tag abgelaufen",
-				"countPlural=other": "Zertifikat vor {count} Tagen abgelaufen"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Zertifikat läuft ab",
-	"overview_week_cert_expires_today": "Zertifikat läuft heute ab",
 	"overview_week_days_short": "{days} T",
-	"overview_week_filling": "Füllt sich in diesem Tempo",
-	"overview_week_filling_series": "Füllt sich in diesem Tempo: {series}",
-	"overview_week_from": "{scope}, ab {time}",
-	"overview_week_full": "Voll in diesem Tempo",
-	"overview_week_full_series": "Voll in diesem Tempo: {series}",
-	"overview_week_later": "Später:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Zertifikat in {when}",
-				"countPlural=other": "{count} Zertifikate in {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Datenträger füllt sich innerhalb von {days} T",
-				"countPlural=other": "{count} Datenträger füllen sich innerhalb von {days} T"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} Wartungsfenster innerhalb von {days} T",
-				"countPlural=other": "{count} Wartungsfenster innerhalb von {days} T"
-			}
-		}
-	],
-	"overview_week_maintenance": "Wartung",
-	"overview_week_maintenance_all": "Wartung auf allen Monitoren",
-	"overview_week_maintenance_device": "Wartung auf Monitor {id}",
-	"overview_week_nothing_due": "Nichts fällig",
-	"overview_week_plate_certificate": "Zertifikat",
-	"overview_week_plate_forecast": "Prognose",
-	"overview_week_plate_scheduled": "Geplant",
-	"overview_week_plate_warning": "Warnung",
-	"overview_week_quiet": "Eine ruhige Woche steht an: kein Zertifikat, kein Datenträger und keine Wartung fällig.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} und {count} weiteres",
-				"countPlural=other": "{names} und {count} weitere"
-			}
-		}
-	],
-	"overview_week_today": "Heute",
-	"overview_week_tomorrow": "Morgen",
-	"overview_week_until": "{scope} bis {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "gestern {time}",
 	"scene_swiss_board_alerts": "Meldungen {count}",
@@ -4558,13 +4381,7 @@
 	"scene_swiss_board_up": "Wieder da",
 	"scene_swiss_board_warn": "Verspätet",
 	"settings.appearance.language_label": "Sprache",
-	"settings.group.wall_display": "Wand und Anzeige",
-	"settings.hint.notifications_lead": "Suchst du Kanäle und Ruhezeiten? Sie findest du unter",
-	"settings.hint.notifications_link": "Warnungen → Benachrichtigungen",
-	"settings.hint.status_lead": "Öffentliche Seiten findest du unter",
-	"settings.hint.status_link": "Status",
 	"settings.nav.aria_label": "Einstellungsbereiche",
-	"settings.page.description": "Dein Konto, wer sich anmelden darf, was sich verbinden darf und wie DumbMonit aussieht.",
 	"settings.page.title": "Einstellungen",
 	"settings.section.about": "Info",
 	"settings.section.agents": "Agents",
@@ -4747,13 +4564,11 @@
 	"settings_agents_watches_own": "Überwacht seinen eigenen Rechner",
 	"settings_appearance_day": "Tag",
 	"settings_appearance_day_hint": "Diagrammpapier, marineblaue Tinte.",
-	"settings_appearance_description": "Beide Designs sind gleichwertig. „System“ folgt Ihrem Gerät und wechselt mit ihm.",
 	"settings_appearance_night": "Nacht",
 	"settings_appearance_night_hint": "Radarbild, cyanfarbenes Signal.",
 	"settings_appearance_system": "System",
 	"settings_appearance_system_hint": "Folgt Ihrem Gerät.",
 	"settings_appearance_theme": "Design",
-	"settings_appearance_title": "Darstellung",
 	"settings_appearance_wall_description": "Nur das Bulletin im Vollbild für einen Monitor im Raum. Mit Esc verlassen; ⌘K / Strg K öffnet ihn von überall.",
 	"settings_appearance_wall_open": "Wandmodus öffnen",
 	"settings_appearance_wall_title": "Wandmodus",
@@ -4922,6 +4737,8 @@
 	"settings_backup_without_key": "Ohne den Schlüssel",
 	"settings_backup_write_error": "Sicherung konnte nicht geschrieben werden",
 	"settings_language_auto": "Automatisch (Browsersprache)",
+	"settings_language_theme_description": "In diesem Browser gespeichert.",
+	"settings_language_theme_title": "Sprache & Thema",
 	"settings_music_account": "Konto",
 	"settings_music_admin_only": "Ein Admin kann hier ein Spotify-Konto verbinden.",
 	"settings_music_app": "App (Client-ID)",
@@ -5030,6 +4847,10 @@
 	"settings_news_video_hint": "Ein Live-Kanal ohne Ton in einer Kachel. YouTube, Dailymotion oder Twitch.",
 	"settings_news_video_url": "Link zum Video oder Kanal",
 	"settings_news_video_url_help": "Fügen Sie eine normale YouTube-, Dailymotion- oder Twitch-Adresse ein; sie wird automatisch umgewandelt.",
+	"settings_notify_links_channels": "Benachrichtigungskanäle",
+	"settings_notify_links_description": "Kanäle, Ruhezeiten und Empfänger sind bei den Alarmen; öffentliche Seiten unter Status.",
+	"settings_notify_links_status": "Statusseiten",
+	"settings_notify_links_title": "Alarmbenachrichtigungen",
 	"settings_packs_add_device": "{label} hinzufügen",
 	"settings_packs_admin_only_description": "Ein Paket legt fest, was dieser Server Ihre Monitore fragt.",
 	"settings_packs_admin_only_title": "Nur ein Administrator kann Integrationspakete verwalten.",
@@ -5289,6 +5110,24 @@
 	"settings_reports_read_more": "Mehr erfahren",
 	"settings_reports_setup": "Bericht einrichten",
 	"settings_reports_title": "Berichte",
+	"settings_search_kw_about": "Version Aktualisierung Zustand Datenbank victoriametrics",
+	"settings_search_kw_agents": "Agent Token Registrierung installieren Relay",
+	"settings_search_kw_appearance": "Sprache Thema dunkel hell Nacht Tag Erscheinungsbild",
+	"settings_search_kw_assistant": "api Token mcp KI Assistent claude chatgpt",
+	"settings_search_kw_backup": "Sicherung exportieren wiederherstellen Konfiguration",
+	"settings_search_kw_music": "Musik spotify Lautsprecher Wand",
+	"settings_search_kw_news": "Nachrichten Schlagzeilen rss Feeds Wand",
+	"settings_search_kw_notifications": "Kanäle discord E-Mail ntfy telegram Ruhezeiten Statusseite",
+	"settings_search_kw_packs": "Integration Paket yaml Community",
+	"settings_search_kw_push": "Push Telefon Browser Benachrichtigungen",
+	"settings_search_kw_reports": "Bericht E-Mail wöchentlich monatlich Zusammenfassung",
+	"settings_search_kw_security": "Passwort Zwei-Faktor 2fa totp abmelden Sitzung Sicherheit",
+	"settings_search_kw_sso": "openid oidc Anmeldung Anbieter authentik keycloak",
+	"settings_search_kw_users": "Konten Benutzer Personen Rollen Admin Betrachter Operator",
+	"settings_search_kw_wall": "Wand Kiosk TV Raum Monitor Vollbild",
+	"settings_search_label": "Einstellungen durchsuchen",
+	"settings_search_none": "Keine passende Einstellung.",
+	"settings_search_placeholder": "Einstellung suchen…",
 	"settings_security_change": "Passwort ändern",
 	"settings_security_change_error": "Passwort konnte nicht geändert werden",
 	"settings_security_changed": "Passwort geändert — Ihre anderen Sitzungen wurden abgemeldet",
@@ -5407,6 +5246,12 @@
 	"settings_sso_title": "Single Sign-on",
 	"settings_sso_turn_off": "Single Sign-on ausschalten?",
 	"settings_sso_use_env": "Umgebungswerte verwenden?",
+	"settings_tab_account": "Mein Konto",
+	"settings_tab_monitoring": "Überwachung",
+	"settings_tab_notifications": "Benachrichtigungen & Berichte",
+	"settings_tab_system": "System",
+	"settings_tab_team": "Team & Zugang",
+	"settings_tab_wall": "Wandanzeige",
 	"settings_update_available": "Update verfügbar: v{version}",
 	"settings_update_backup_body": "Einstellungen → Sicherung, und bewahren Sie eine Kopie von /data/secret.key auf (ohne sie lassen sich gespeicherte Passwörter und Tokens nicht entschlüsseln).",
 	"settings_update_backup_lead": "Zuerst sichern.",

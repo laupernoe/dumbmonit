@@ -261,6 +261,8 @@
 	let alerts = $state<Alert[]>([]);
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
 	let refreshKey = $state(0);
+	/** The alert story has nothing to tell (never fired, nothing ignored). */
+	let timelineEmpty = $state(false);
 
 	// --- Actions --------------------------------------------------------------
 
@@ -595,13 +597,16 @@
 					</Button>
 				{/if}
 				{#if auth.isAdmin}
-					{#if target.enabled}
-						<SilenceControl {target} {refreshKey} />
-					{/if}
-					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
-						<Pencil class="size-4" aria-hidden="true" />
-						{m.devices_target_edit()}
-					</Button>
+					<!-- Phones keep one button and the menu: silence and edit move into it. -->
+					<div class="hidden sm:contents">
+						{#if target.enabled}
+							<SilenceControl {target} {refreshKey} />
+						{/if}
+						<Button variant="secondary" href={`/targets/${target.id}/edit`}>
+							<Pencil class="size-4" aria-hidden="true" />
+							{m.devices_target_edit()}
+						</Button>
+					</div>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
 					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
 						{#snippet trigger({ toggle, open })}
@@ -618,6 +623,13 @@
 							</button>
 						{/snippet}
 						{#snippet children()}
+							<div class="mb-1 flex flex-col items-stretch gap-1 border-b border-line pb-1.5 sm:hidden">
+								<Button variant="ghost" href={`/targets/${id}/edit`} class="justify-start">
+									<Pencil class="size-4" aria-hidden="true" />
+									{m.devices_target_edit()}
+								</Button>
+								{#if target?.enabled}<SilenceControl {target} {refreshKey} />{/if}
+							</div>
 							<div class="flex min-h-10 items-center gap-2 rounded-lg px-2 py-1.5">
 								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
@@ -670,15 +682,17 @@
 	{/if}
 
 	<!-- The story of this device: what fires now, what fired before -->
-	<section class="mt-6" aria-labelledby="device-alerts">
+	<!-- Nothing ever fired: no section at all, the header already says how it is doing. -->
+	<section class={`mt-6 ${timelineEmpty ? 'hidden' : ''}`} aria-labelledby="device-alerts">
 		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">{m.devices_target_alerts_heading()}</h2>
 		<DeviceTimeline
-		targetId={id}
-		target={target ?? undefined}
-		{alerts}
-		{refreshKey}
-		onackchange={() => void loadContext()}
-	/>
+			targetId={id}
+			target={target ?? undefined}
+			{alerts}
+			{refreshKey}
+			bind:empty={timelineEmpty}
+			onackchange={() => void loadContext()}
+		/>
 	</section>
 
 	<!-- Backups the agent watches; the containers sit with the metrics below -->

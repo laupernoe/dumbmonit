@@ -126,7 +126,6 @@
 	"alerts_matcher_only_rules": ", только для правил {rules}",
 	"alerts_matcher_sentence": "Этот канал получает {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "с тегом {tags}",
-	"alerts_needs_dismiss_error": "Не удалось отклонить это оповещение.",
 	"alerts_needs_dismissed": "Отклонённые",
 	"alerts_needs_dismissed_hint": "Известные проблемы: напоминания приостановлены, пока не закончится подтверждение или оповещение не будет устранено.",
 	"alerts_needs_empty_no_devices": "Пока нечего отслеживать.",
@@ -154,8 +153,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Ни одно правило не срабатывает. Один монитор всё ещё ждёт первого отчёта.",
 	"alerts_needs_snoozed": "Отложенные",
-	"alerts_needs_snoozed_hint": "Скрыты на время: напоминаний не будет, пока не закончится срок или оповещение не будет устранено.",
-	"alerts_needs_toast_dismissed": "Отклонено.",
 	"alerts_nth_1": "1-й ({day})",
 	"alerts_nth_2": "2-й ({day})",
 	"alerts_nth_3": "3-й ({day})",
@@ -902,8 +899,6 @@
 	"deviceform_new_devices": "Мониторы",
 	"deviceform_new_door_agent_desc": "Одна команда в Linux, Windows, macOS или FreeBSD: система, диски, службы, контейнеры Docker и бэкапы.",
 	"deviceform_new_door_agent_title": "Мониторинг машины через агент",
-	"deviceform_new_door_relay_desc": "Агент на второй площадке, в офисе клиента или за NAT опрашивает тамошние коммутаторы, NAS и гипервизоры для этого сервера и только подключается наружу — без VPN и открытых портов.",
-	"deviceform_new_door_relay_title": "Наблюдение за другой сетью (удалённая площадка)",
 	"deviceform_new_door_scan_desc": "Укажите диапазон вроде 192.168.1.0/24: все устройства, отвечающие по SNMP, будут перечислены и готовы к добавлению.",
 	"deviceform_new_empty_lead": "Большинство вещей всё равно подходит под один из этих вариантов:",
 	"deviceform_new_guide_hide": "Скрыть руководство по настройке",
@@ -1661,9 +1656,6 @@
 	"devices_timeline_detail_all": "на {n}: {labels}",
 	"devices_timeline_detail_count": "на {n} экземплярах",
 	"devices_timeline_detail_some": "на {n}, включая {labels}",
-	"devices_timeline_dismiss": "Скрыть",
-	"devices_timeline_dismissed": "Скрыто.",
-	"devices_timeline_err_dismiss": "Не удалось скрыть это оповещение.",
 	"devices_timeline_err_load": "Не удалось загрузить историю оповещений",
 	"devices_timeline_fired": "Сработало",
 	"devices_timeline_first": "первое {when}",
@@ -1673,27 +1665,24 @@
 	"devices_timeline_last_rows": "Последние строки: {count}.",
 	"devices_timeline_loading": "Загрузка истории оповещений",
 	"devices_timeline_maintenance": "Тихо · окно обслуживания",
-	"devices_timeline_never": "На этом мониторе оповещений ещё не было.",
 	"devices_timeline_not_sent": "Не отправлено · {reason}",
 	"devices_timeline_nothing_one": "На этом мониторе ничего не срабатывало. Правила нарастали {count} раз и успокоились сами.",
 	"devices_timeline_nothing_other": "На этом мониторе ничего не срабатывало. Правила нарастали {count} раз и успокоились сами.",
 	"devices_timeline_notified": "Уведомление отправлено",
 	"devices_timeline_notified_some": "Уведомлено {sent} из {total}",
-	"devices_timeline_open_alerts": "Открыть оповещения",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Активна",
 	"devices_timeline_phase_ok": "ОК",
 	"devices_timeline_phase_pending": "Нарастает",
 	"devices_timeline_phase_resolved": "Решена",
 	"devices_timeline_quiet": "тихо",
-	"devices_timeline_reporting": "Работает",
 	"devices_timeline_show_all": "Показать все · ещё {count}",
+	"devices_timeline_show_each": "Показать все по отдельности ({count})",
 	"devices_timeline_show_fewer": "Показать меньше",
 	"devices_timeline_show_quiet": "Показать тихие переходы (нарастание и возврат) · {count}",
 	"devices_timeline_since": "с {when}",
 	"devices_timeline_stop_ignoring": "Перестать игнорировать",
 	"devices_timeline_suppressed": "Подавлено родителем",
-	"devices_timeline_undo": "Отменить",
 	"devices_uptime_aria": "{up} интервалов работало, {down} недоступно, {none} без проверки",
 	"devices_uptime_down": "Недоступно",
 	"devices_uptime_none": "Нет проверки",
@@ -3638,13 +3627,13 @@
 	"misc_nav_github_title": "Исходный код на GitHub (новая вкладка)",
 	"misc_nav_home": "DumbMonit, обзор",
 	"misc_nav_main": "Главное",
+	"misc_nav_more": "Ещё",
 	"misc_nav_overview": "Обзор",
 	"misc_nav_palette_open": "Открыть палитру команд",
 	"misc_nav_palette_title": "Палитра команд ({shortcut})",
 	"misc_nav_security": "Безопасность",
 	"misc_nav_settings": "Настройки",
 	"misc_nav_sign_out": "Выйти",
-	"misc_nav_signed_in": "Вы вошли как {name} ({role})",
 	"misc_nav_status": "Статус",
 	"misc_nav_wall": "Режим настенного экрана",
 	"misc_nav_wall_title": "Режим настенного экрана: сводка на весь экран для монитора в комнате",
@@ -3726,6 +3715,8 @@
 	"misc_state_unknown": "Неизвестно",
 	"misc_update_available": "Доступно обновление: v{version}",
 	"misc_update_title": "Доступна новая версия. Как обновиться, смотрите в Настройки → О программе.",
+	"misc_user_menu_account": "Моя учётная запись",
+	"misc_user_menu_label": "Меню учётной записи {name}",
 	"notifications_channels_add": "Добавить канал",
 	"notifications_channels_description": "Куда DumbMonit сообщает, что что-то требует внимания.",
 	"notifications_channels_disabled": "Отключён",
@@ -3902,23 +3893,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} и ещё {count}",
-				"countPlural=few": "{names} и ещё {count}",
-				"countPlural=many": "{names} и ещё {count}",
-				"countPlural=other": "{names} и ещё {count}"
-			}
-		}
-	],
 	"overview_brief_device_n": "Монитор {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3954,23 +3928,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} недоступно всё это время.",
-				"countPlural=few": "{subject} недоступны всё это время.",
-				"countPlural=many": "{subject} недоступны всё это время.",
-				"countPlural=other": "{subject} недоступны всё это время."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3991,7 +3948,6 @@
 	"overview_brief_dropped_many": "{names} пропадали и вернулись.",
 	"overview_brief_head_first": "За последние 24 ч",
 	"overview_brief_head_since": "С {when}",
-	"overview_brief_intro": "Впервые здесь? Вот что голубь знает на данный момент.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4202,27 +4158,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} устранилось само",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} сработало и всё ещё активно",
-				"countPlural=few": "{name} сработало {count} раза и всё ещё активно",
-				"countPlural=many": "{name} сработало {count} раз и всё ещё активно",
-				"countPlural=other": "{name} сработало {count} раз и всё ещё активно"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Пока вас не было, ничего не произошло.",
 	"overview_brief_quiet_first": "За последние 24 ч ничего не произошло.",
 	"overview_brief_the_server": "сервер",
-	"overview_brief_went_down": "{name} стало недоступно {when} и остаётся таким.",
 	"overview_first_all_done": "Все три шага выполнены. Это руководство больше не появится.",
 	"overview_first_channel_action": "Добавить канал",
 	"overview_first_channel_text": "Почта, ntfy, Discord, Telegram, PagerDuty — то, что вы и так читаете. Пока всё в порядке, ничего не отправляется.",
@@ -4260,7 +4198,6 @@
 	"overview_page_or_relay": "следить за удалённой площадкой",
 	"overview_page_since": "С вашего последнего визита",
 	"overview_page_title": "Обзор",
-	"overview_page_week": "Предстоящая неделя",
 	"overview_scene_asleep": "{label}, голубь спит",
 	"overview_scene_cloudy": "Небольшая облачность",
 	"overview_scene_overcast": "Пасмурно",
@@ -4561,142 +4498,12 @@
 	"overview_streaks_reporting_for": "Всё на связи уже",
 	"overview_streaks_since_outage": "ни один монитор не был недоступен с последнего сбоя",
 	"overview_streaks_under_minute": "меньше минуты",
-	"overview_tip_agent_action": "Установить агент",
-	"overview_tip_agent_text": "Службы, состояние дисков, температуры, ожидающие обновления, контейнеры Docker, которые можно перезапустить или обновить отсюда, резервные копии Plakar, restic и Borg. Одна команда на Linux, Windows, macOS или FreeBSD.",
-	"overview_tip_agent_title": "Агент видит, что происходит внутри машины.",
-	"overview_tip_api_action": "Создать токен API",
-	"overview_tip_api_text": "Токен с ограниченными правами (чтение или чтение и запись) открывает её для ваших скриптов, а уже работающие Prometheus или Grafana могут читать измерения с тем же токеном.",
-	"overview_tip_api_title": "У всего здесь есть HTTP API.",
-	"overview_tip_mcp_action": "Подключить ассистента",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor или любой клиент MCP может спросить DumbMonit, как дела, а с токеном на запись, ещё и заглушить монитор или запустить проверку.",
-	"overview_tip_mcp_title": "Этот бюллетень может читать ИИ-ассистент.",
-	"overview_tip_packs_action": "Пакеты интеграций",
-	"overview_tip_packs_text": "Пакет интеграции — это тип монитора, описанный в YAML: что спрашивать у монитора, какие значения хранить и когда поднимать оповещение.",
-	"overview_tip_packs_title": "DumbMonit можно научить новому монитору.",
-	"overview_tip_palette_action": "Открыть палитру",
-	"overview_tip_palette_text": "Палитра команд переходит к любому монитору, странице или действию, не отрывая рук от клавиатуры.",
-	"overview_tip_palette_title": "Любая страница и действие — в одном шорткате.",
-	"overview_tip_relay_action": "Следить за удалённой площадкой",
-	"overview_tip_relay_text": "Установите его на машине на второй площадке, в офисе клиента или за NAT: он опрашивает там коммутаторы, NAS и гипервизоры для этого сервера. Только исходящие соединения — открывать ничего не нужно.",
-	"overview_tip_relay_title": "Агент может следить за другой сетью.",
-	"overview_tip_status_action": "Создать страницу статуса",
-	"overview_tip_status_text": "Публичная страница статуса показывает выбранные вами сервисы, их аптайм и ваши объявления — достаточно поделиться ссылкой вместо ответов на вопрос «оно упало?».",
-	"overview_tip_status_title": "Сообщайте раньше, чем спросят.",
-	"overview_tip_wall_action": "Открыть режим стены",
-	"overview_tip_wall_text": "Режим стены показывает небо и то, что требует вашего внимания, на весь экран, читаемо через всю комнату, и не даёт экрану гаснуть.",
-	"overview_tip_wall_title": "Бюллетень подходит для телевизора.",
 	"overview_tips_another": "Другой совет",
 	"overview_tips_hide": "Скрыть эти советы",
 	"overview_tips_hide_title": "Скрыть эти советы (в этом браузере)",
 	"overview_tips_label": "Знаете ли вы?",
 	"overview_tips_prefix": "Знаете ли вы? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Сертификат истёк {count} день назад",
-				"countPlural=few": "Сертификат истёк {count} дня назад",
-				"countPlural=many": "Сертификат истёк {count} дней назад",
-				"countPlural=other": "Сертификат истёк {count} дней назад"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Сертификат истекает",
-	"overview_week_cert_expires_today": "Сертификат истекает сегодня",
 	"overview_week_days_short": "{days} дн.",
-	"overview_week_filling": "Заполняется с такой скоростью",
-	"overview_week_filling_series": "Заполняется с такой скоростью: {series}",
-	"overview_week_from": "{scope}, с {time}",
-	"overview_week_full": "Будет заполнено с такой скоростью",
-	"overview_week_full_series": "Будет заполнено с такой скоростью: {series}",
-	"overview_week_later": "Позже:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} сертификат через {when}",
-				"countPlural=few": "{count} сертификата через {when}",
-				"countPlural=many": "{count} сертификатов через {when}",
-				"countPlural=other": "{count} сертификатов через {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} диск заполнится в течение {days} дн.",
-				"countPlural=few": "{count} диска заполнятся в течение {days} дн.",
-				"countPlural=many": "{count} дисков заполнятся в течение {days} дн.",
-				"countPlural=other": "{count} дисков заполнятся в течение {days} дн."
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} окно обслуживания в течение {days} дн.",
-				"countPlural=few": "{count} окна обслуживания в течение {days} дн.",
-				"countPlural=many": "{count} окон обслуживания в течение {days} дн.",
-				"countPlural=other": "{count} окон обслуживания в течение {days} дн."
-			}
-		}
-	],
-	"overview_week_maintenance": "Обслуживание",
-	"overview_week_maintenance_all": "Обслуживание всех мониторов",
-	"overview_week_maintenance_device": "Обслуживание монитора {id}",
-	"overview_week_nothing_due": "Ничего нет",
-	"overview_week_plate_certificate": "Сертификат",
-	"overview_week_plate_forecast": "Прогноз",
-	"overview_week_plate_scheduled": "По плану",
-	"overview_week_plate_warning": "Предупреждение",
-	"overview_week_quiet": "Впереди спокойная неделя: ни сертификатов, ни дисков, ни обслуживания.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} и ещё {count}",
-				"countPlural=few": "{names} и ещё {count}",
-				"countPlural=many": "{names} и ещё {count}",
-				"countPlural=other": "{names} и ещё {count}"
-			}
-		}
-	],
-	"overview_week_today": "Сегодня",
-	"overview_week_tomorrow": "Завтра",
-	"overview_week_until": "{scope} до {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "вчера {time}",
 	"scene_swiss_board_alerts": "Тревоги {count}",
@@ -4708,13 +4515,7 @@
 	"scene_swiss_board_up": "Снова в сети",
 	"scene_swiss_board_warn": "Задержка",
 	"settings.appearance.language_label": "Язык",
-	"settings.group.wall_display": "Стена и дисплей",
-	"settings.hint.notifications_lead": "Ищешь каналы и время тишины? Они находятся в",
-	"settings.hint.notifications_link": "Оповещения → Уведомления",
-	"settings.hint.status_lead": "Публичные страницы находятся в",
-	"settings.hint.status_link": "Статус",
 	"settings.nav.aria_label": "Разделы параметров",
-	"settings.page.description": "Твоя учётная запись, кто может входить, что может подключаться и как выглядит DumbMonit.",
 	"settings.page.title": "Параметры",
 	"settings.section.about": "О приложении",
 	"settings.section.agents": "Агенты",
@@ -4903,13 +4704,11 @@
 	"settings_agents_watches_own": "Следит за собственной машиной",
 	"settings_appearance_day": "День",
 	"settings_appearance_day_hint": "Миллиметровка, тёмно-синие чернила.",
-	"settings_appearance_description": "Обе темы равноправны. «Система» следует за устройством и переключается вместе с ним.",
 	"settings_appearance_night": "Ночь",
 	"settings_appearance_night_hint": "Радарная картинка, бирюзовый сигнал.",
 	"settings_appearance_system": "Система",
 	"settings_appearance_system_hint": "Следует за устройством.",
 	"settings_appearance_theme": "Тема",
-	"settings_appearance_title": "Внешний вид",
 	"settings_appearance_wall_description": "Только сводка на весь экран, для монитора в комнате. Esc — выйти; ⌘K / Ctrl K открывает режим откуда угодно.",
 	"settings_appearance_wall_open": "Открыть режим стенда",
 	"settings_appearance_wall_title": "Режим стенда",
@@ -5080,6 +4879,8 @@
 	"settings_backup_without_key": "Без ключа",
 	"settings_backup_write_error": "Не удалось записать резервную копию",
 	"settings_language_auto": "Автоматически (язык браузера)",
+	"settings_language_theme_description": "Сохраняются в этом браузере.",
+	"settings_language_theme_title": "Язык и тема",
 	"settings_music_account": "Аккаунт",
 	"settings_music_admin_only": "Подключить аккаунт Spotify здесь может администратор.",
 	"settings_music_app": "Приложение (Client ID)",
@@ -5188,6 +4989,10 @@
 	"settings_news_video_hint": "Канал в прямом эфире без звука в плитке. YouTube, Dailymotion или Twitch.",
 	"settings_news_video_url": "Ссылка на видео или канал",
 	"settings_news_video_url_help": "Вставьте обычную ссылку YouTube, Dailymotion или Twitch — она будет преобразована автоматически.",
+	"settings_notify_links_channels": "Каналы уведомлений",
+	"settings_notify_links_description": "Каналы, тихие часы и получатели находятся в оповещениях; публичные страницы — в разделе «Статус».",
+	"settings_notify_links_status": "Страницы статуса",
+	"settings_notify_links_title": "Уведомления об оповещениях",
 	"settings_packs_add_device": "Добавить: {label}",
 	"settings_packs_admin_only_description": "Пакет определяет, что этот сервер запрашивает у ваших мониторов.",
 	"settings_packs_admin_only_title": "Управлять пакетами интеграций может только администратор.",
@@ -5463,6 +5268,24 @@
 	"settings_reports_read_more": "Подробнее",
 	"settings_reports_setup": "Настроить отчёт",
 	"settings_reports_title": "Отчёты",
+	"settings_search_kw_about": "версия обновление состояние база данных victoriametrics",
+	"settings_search_kw_agents": "агент токен регистрация установка ретранслятор",
+	"settings_search_kw_appearance": "язык тема тёмная светлая ночь день оформление",
+	"settings_search_kw_assistant": "api токен mcp ии ассистент claude chatgpt",
+	"settings_search_kw_backup": "резервная копия экспорт восстановление конфигурация",
+	"settings_search_kw_music": "музыка spotify колонка стена",
+	"settings_search_kw_news": "новости заголовки rss ленты стена",
+	"settings_search_kw_notifications": "каналы discord почта ntfy telegram тихие часы страница статуса",
+	"settings_search_kw_packs": "интеграция пакет yaml сообщество",
+	"settings_search_kw_push": "push телефон браузер уведомления",
+	"settings_search_kw_reports": "отчёт почта еженедельный ежемесячный сводка",
+	"settings_search_kw_security": "пароль двухфакторная 2fa totp выход сеанс безопасность",
+	"settings_search_kw_sso": "openid oidc вход провайдер authentik keycloak",
+	"settings_search_kw_users": "учётные записи пользователи роли администратор наблюдатель оператор",
+	"settings_search_kw_wall": "стена киоск тв комната монитор полный экран",
+	"settings_search_label": "Поиск по настройкам",
+	"settings_search_none": "Ничего не найдено.",
+	"settings_search_placeholder": "Найти настройку…",
 	"settings_security_change": "Сменить пароль",
 	"settings_security_change_error": "Не удалось сменить пароль",
 	"settings_security_changed": "Пароль изменён — остальные ваши сеансы завершены",
@@ -5581,6 +5404,12 @@
 	"settings_sso_title": "Единый вход",
 	"settings_sso_turn_off": "Отключить единый вход?",
 	"settings_sso_use_env": "Использовать значения из окружения?",
+	"settings_tab_account": "Моя учётная запись",
+	"settings_tab_monitoring": "Мониторинг",
+	"settings_tab_notifications": "Уведомления и отчёты",
+	"settings_tab_system": "Система",
+	"settings_tab_team": "Команда и доступ",
+	"settings_tab_wall": "Настенный экран",
 	"settings_update_available": "Доступно обновление: v{version}",
 	"settings_update_backup_body": "Настройки → Резервная копия, и сохраните копию /data/secret.key (без неё сохранённые пароли и токены не расшифровать).",
 	"settings_update_backup_lead": "Сначала сделайте резервную копию.",

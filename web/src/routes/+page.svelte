@@ -4,9 +4,7 @@
 	 *
 	 * The sky says how things are right now; "Since you last looked" tells
 	 * what happened while you were away, in sentences; "Needs you" lays out
-	 * what to act on as tiles; "The week ahead" places what is due on its day
-	 * (a quiet week shrinks to one line, no section of its own); "Last 7 days"
-	 * reads three figures off the week's alert history (how long
+	 * what to act on as tiles; "Last 7 days" reads three figures off the week's alert history (how long
 	 * everything has been reporting, the quietest device, the one with the most
 	 * alert events). The last visit lives in the browser, so the story starts
 	 * where the reader left it.
@@ -17,8 +15,7 @@
 	 *
 	 * The pigeon in the sky lives the weather with the reader: it sleeps on a
 	 * wire on a quiet night, startles when something new goes wrong, and loops
-	 * under confetti when the sky clears again. When nothing needs the reader,
-	 * a "Did you know?" strip points at what the navigation does not show.
+	 * under confetti when the sky clears again.
 	 */
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
@@ -29,8 +26,6 @@
 		listChannels,
 		listCollectors,
 		getOnboarding,
-		queryInstant,
-		type TargetId,
 		type AlertRule,
 		type AlertHistoryEntry,
 		type OnboardingState,
@@ -43,12 +38,10 @@
 	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '#lib/ui/index.js';
 	import SkyScene, { type PigeonMood } from '#lib/components/overview/SkyScene.svelte';
 	import Briefing from '#lib/components/overview/Briefing.svelte';
-	import WeekAhead from '#lib/components/overview/WeekAhead.svelte';
 	import Streaks from '#lib/components/overview/Streaks.svelte';
 	import FirstRun from '#lib/components/overview/FirstRun.svelte';
 	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
 	import { buildBriefing } from '#lib/components/overview/briefing.js';
-	import { buildWeek } from '#lib/components/overview/week.js';
 	import { computeStreaks } from '#lib/components/overview/streaks.js';
 	import { readLastVisit, writeLastVisit } from '#lib/components/overview/lastVisit.js';
 	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
@@ -64,7 +57,6 @@
 	let rules = $state<AlertRule[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
 	let silences = $state<Silence[]>([]);
-	let certificates = $state<{ targetId: TargetId; days: number }[]>([]);
 	/** Enabled channel names; `undefined` until read (or when the read failed). */
 	let channels = $state<string[] | undefined>(undefined);
 	let hasDemoKind = $state(false);
@@ -153,34 +145,12 @@
 		});
 	});
 
-	/** The tips strip: only on a quiet sky, never over something that needs the reader. */
-
 	const briefing = $derived(
 		buildBriefing({ history, targets: shownTargets, rules, alerts, unreachable, channels, lastVisit, now })
-	);
-	const week = $derived(
-		buildWeek({ certificates, alerts, rules, silences, targets: shownTargets, now })
 	);
 	const streaks = $derived(
 		computeStreaks({ history, targets: shownTargets, rules, unreachable, now, windowDays: HISTORY_DAYS })
 	);
-
-	/** Days left per service certificate, one reading per device (the soonest wins). */
-	async function loadCertificates(signal?: AbortSignal) {
-		const series = await queryInstant(
-			`last_over_time({__name__=~"dumbmonit_(probe_)?ssl_cert_expiry_days"}[1h])`,
-			signal
-		);
-		const byTarget = new Map<TargetId, number>();
-		for (const item of series) {
-			const id = Number(item.metric?.target);
-			const days = Number(item.values?.[0]?.[1]);
-			if (!Number.isFinite(id) || !Number.isFinite(days)) continue;
-			const known = byTarget.get(id);
-			if (known === undefined || days < known) byTarget.set(id, days);
-		}
-		return [...byTarget].map(([targetId, days]) => ({ targetId, days }));
-	}
 
 	/**
 	 * Reads the first-run guide. Silent on failure: a server without the route,
@@ -220,7 +190,6 @@
 				() => [] as AlertHistoryEntry[]
 			),
 			listSilences(signal).catch(() => [] as Silence[]),
-			loadCertificates(signal).catch(() => [] as { targetId: TargetId; days: number }[]),
 			channels === undefined
 				? listChannels(signal)
 						.then((list) => list.filter((channel) => channel.enabled).map((channel) => channel.name))
@@ -236,7 +205,7 @@
 		} finally {
 			loading = false;
 		}
-		[history, silences, certificates, channels] = await side;
+		[history, silences, channels] = await side;
 		if (shownTargets.length === 0 || demoEmpty) {
 			hasDemoKind = await listCollectors(signal)
 				.then((kinds) => kinds.some((kind) => kind.kind === 'dummy'))
@@ -320,21 +289,13 @@
 		}}
 	/>
 {:else if firstLoad}
-	<!-- Skeleton shaped like the page: the sky band, the briefing, the week, the tiles, the figures. -->
+	<!-- Skeleton shaped like the page: the sky band, the briefing, the tiles, the figures. -->
 	<Skeleton class="h-[200px] w-full rounded-[var(--radius-card)] md:h-[260px]" />
 	<div class="mt-8 space-y-2.5">
 		<Skeleton class="h-5 w-44" />
 		<Skeleton class="h-5 w-3/4" />
 		<Skeleton class="h-4 w-2/3" />
 		<Skeleton class="h-4 w-1/2" />
-	</div>
-	<div class="mt-8">
-		<Skeleton class="mb-3 h-5 w-32" />
-		<div class="grid gap-2 md:grid-cols-7">
-			{#each { length: 7 } as _, i (i)}
-				<Skeleton class="h-24 w-full" />
-			{/each}
-		</div>
 	</div>
 	<div class="mt-8">
 		<Skeleton class="mb-3 h-5 w-24" />
@@ -468,21 +429,9 @@
 			/>
 		</section>
 
-		<!-- The week ahead: a full section when something is due; otherwise one quiet line, no heading or chrome. -->
-		{#if week.empty}
-			<div class="rise-in mt-6 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
-				<WeekAhead {week} />
-			</div>
-		{:else}
-			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
-				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_week()}</h2>
-				<WeekAhead {week} />
-			</section>
-		{/if}
-
 		<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
 		{#if streaks.length > 0}
-			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 4}ms`}>
+			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
 				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_last_days({ days: HISTORY_DAYS })}</h2>
 				<Streaks {streaks} />
 			</section>
