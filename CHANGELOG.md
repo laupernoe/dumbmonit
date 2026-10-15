@@ -22,6 +22,11 @@ All notable changes to this project are documented here. The format follows
   listed and the failed devices stay selected. Search, state, kind, sort (name, status, kind, last
   check) and layout are kept in the URL. Disabled devices now sit in a collapsed "Disabled (N)"
   section at the bottom.
+- **Command palette: recents, more actions, keyboard shortcuts.** Ctrl/⌘ K now lists the last
+  eight opened pages and devices first (kept per browser), offers more actions (silence alerts,
+  open a settings section, keyboard shortcuts, sign out) limited to what your role may do, and
+  shows each shortcut. New global shortcuts outside text fields: `g o` overview, `g d` devices,
+  `g a` alerts, `g s` status pages, `g n` add a monitor, `g t` theme, `?` for the help dialog.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
