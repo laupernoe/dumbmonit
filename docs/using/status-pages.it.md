@@ -17,10 +17,10 @@ server — non nella pagina, non in un badge, non in un'email.
 
 ## 1. Creare una pagina
 
-**Status** nella barra superiore → **New page**. Quella pagina elenca
+**Impostazioni → Pagine di stato** → **New page**. Quella pagina elenca
 le tue pagine di stato (apri, modifica, elimina) con gli annunci sotto
-di esse; l'editor si apre sulla propria rotta (`/status/new`,
-`/status/<id>`). Il rendering pubblico è su `/s/<address>`.
+di esse; l'editor si apre sulla propria rotta (`/settings/status/new`,
+`/settings/status/<id>`). Il rendering pubblico è su `/s/<address>`.
 
 | Campo | Cosa fa |
 | --- | --- |
@@ -129,7 +129,7 @@ silenziosi.
 
 ## 3. Annunciare incidenti e manutenzione
 
-Sulla pagina **Status**, sotto l'elenco delle pagine,
+In **Impostazioni → Pagine di stato**, sotto l'elenco delle pagine,
 **Incidents and maintenance** → **New announcement** (anche ++ctrl+k++
 → *Announce an incident*).
 

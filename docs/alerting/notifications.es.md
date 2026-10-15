@@ -22,16 +22,16 @@ evaluar (histéresis, anulaciones por dispositivo)
 |---|---|---|
 | Umbral de limpieza (histéresis) | Editor de regla → *Clear below / above* | ninguno (CPU: 85 %, disco: 88 % en las reglas distribuidas) |
 | Anulaciones por dispositivo | Editor de regla → *Per-device overrides* | ninguna |
-| Detección de parpadeo | Alerts → Notifications → Notification policy → More options | 4 cambios en 30 min, retención 30 min |
+| Detección de parpadeo | Settings → Notifications & reports → Notification policy → More options | 4 cambios en 30 min, retención 30 min |
 | Severidad mínima | Canal → Delivery options → *Send* | todo |
 | Avisarme cuando se limpia | Canal → Delivery options | activado |
 | Intervalo mínimo por alerta | Canal → Delivery options | ninguno |
 | Horas de silencio | Canal → Delivery options | desactivado |
 | Filtro de enrutado (etiquetas, tipo, regla) | Canal → Delivery options → *Only some alerts* | desactivado (el canal escucha todo) |
-| Escalada si nadie confirma | Alerts → Notifications → Notification policy | desactivado |
-| Ventana de lote | Alerts → Notifications → Notification policy | 60 s |
-| Mensajes por canal por hora | Alerts → Notifications → Notification policy | 20 |
-| URL pública (enlaces profundos) | Alerts → Notifications → Notification policy, o `DUMBMONIT_PUBLIC_URL` | vacía |
+| Escalada si nadie confirma | Settings → Notifications & reports → Notification policy | desactivado |
+| Ventana de lote | Settings → Notifications & reports → Notification policy | 60 s |
+| Mensajes por canal por hora | Settings → Notifications & reports → Notification policy | 20 |
+| URL pública (enlaces profundos) | Settings → Notifications & reports → Notification policy, o `DUMBMONIT_PUBLIC_URL` | vacía |
 
 ## Histéresis y anulaciones por dispositivo {#hysteresis-and-per-device-overrides}
 

@@ -767,8 +767,7 @@ désactivée pour cet appareil seul. L'éditeur de chaque règle a un
 panneau **Surcharges par appareil** pour en ajouter ou en retirer une
 directement.
 
-L'action en un clic **Ignorer** sur une alerte (dans la liste *À
-traiter* ou la page d'appareil de l'alerte) est le même mécanisme,
+L'action en un clic **Ignorer** sur une alerte (dans l'onglet *Maintenant* ou la page d'appareil de l'alerte) est le même mécanisme,
 écrit avec `enabled: false` : l'appareil arrête de porter cette règle,
 immédiatement, réversiblement. La page de l'appareil liste ce qu'il
 ignore, avec **Arrêter d'ignorer** ; la règle elle-même montre *Ignorée

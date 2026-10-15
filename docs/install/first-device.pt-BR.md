@@ -138,8 +138,8 @@ Qualquer que seja o tipo, o formulário tem:
   imediatamente: dispositivo inacessível, CPU saturada, disco quase cheio,
   e assim por diante. Nada para configurar.
 - Para ser notificado, adicione um
-  [canal de notificação](../notifications.md) em **Alertas →
-  Notificações**. Regras integradas notificam todo canal ativado.
+  [canal de notificação](../notifications.md) em **Configurações →
+  Notificações e relatórios**. Regras integradas notificam todo canal ativado.
 
 !!! tip "Sem dados depois de um minuto?"
     Abra a página do dispositivo: um erro de configuração (comunidade

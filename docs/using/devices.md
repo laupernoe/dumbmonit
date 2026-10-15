@@ -19,6 +19,10 @@ Children stack under their parent and dim when the parent is unreachable.
 Filters: a search box, a state segment (All, Needs attention, Reporting,
 Disabled) and a kind filter. **Add a device** is the primary action.
 
+The **Select** button (operators and admins) turns on a checkbox per device
+and a floating bar at the bottom with the bulk actions; **Done** or Escape
+leaves the mode.
+
 ## A device
 
 ![A device page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }
@@ -55,7 +59,7 @@ opens a table with two switches per container and an "Apply to all" row:
   it stopping (at most once every ten minutes);
 - **Auto-update in maintenance windows** — when the registry has a newer image
   for the same tag, the container is recreated during a scheduled maintenance
-  window (Alerts page → Scheduled) and rolled back if it fails its healthcheck.
+  window (Alerts page → Maintenance) and rolled back if it fails its healthcheck.
 
 Each switch saves on its own. Details and safety rules: [Docker
 containers](../devices/agent.md#docker-containers).

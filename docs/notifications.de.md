@@ -44,7 +44,7 @@ Drei Prinzipien gelten für jeden Kanal:
 
 ## Einen Kanal erstellen und testen {#creating-and-testing-a-channel}
 
-1. Öffnen Sie **Alarme → Benachrichtigungen → Kanal hinzufügen** (`/alerts#notifications`).
+1. Öffnen Sie **Einstellungen → Benachrichtigungen & Berichte → Kanal hinzufügen** (`/settings/notifications`).
 2. Geben Sie ihm einen aussagekräftigen Namen („Discord — Familie“, „SMS — Bereitschaft“).
    Diesen Namen wählen Sie später in Ihren Alarmregeln.
 3. Wählen Sie den Kanaltyp und füllen Sie dann die unten beschriebenen Felder aus.

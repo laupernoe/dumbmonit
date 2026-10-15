@@ -8,14 +8,14 @@ Zustand des Servers. Eine Seite, ein Abschnitt pro Thema, mit einer Leiste von A
 breiten Bildschirm und einem Streifen von Chips auf einem Smartphone. Jeder Abschnitt ist
 verlinkbar (`/settings#agents`).
 
-Zwei Dinge lagen früher hier und sind umgezogen, weil sie keine Administration sind:
+Zwei Abschnitte tragen die öffentliche und ausgehende Seite von DumbMonit:
 
-| Gesucht | Jetzt unter | Alter Link |
+| Gesucht | Wo | Link |
 |---|---|---|
-| Benachrichtigungskanäle, Ruhezeiten, Benachrichtigungsrichtlinie | **Alarme → Benachrichtigungen** ([Seite Alarme](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Statusseiten und Ankündigungen | **Status** ([Statusseiten](status-pages.md)) | `/settings#status` |
+| Benachrichtigungskanäle, Ruhezeiten, Benachrichtigungsrichtlinie, Berichte | **Einstellungen → Benachrichtigungen & Berichte** ([Benachrichtigungskanäle](../notifications.md)) | `/settings/notifications` |
+| Statusseiten und Ankündigungen | **Einstellungen → Statusseiten** ([Statusseiten](status-pages.md)) | `/settings/status` |
 
-Die alten Links funktionieren weiter: Sie leiten an die neue Stelle weiter.
+Die alten Links (`/alerts#notifications`, `/status`) leiten an die neue Stelle weiter.
 
 ## Konto & Sicherheit {#account-security}
 
@@ -62,8 +62,8 @@ behält die letzten 5 000 Einträge.
 
 Native Benachrichtigungen auf diesem Smartphone oder Computer, auch bei geschlossenem DumbMonit:
 **Auf diesem Gerät aktivieren**, dann **Test senden**. Jedes Konto verwaltet hier seine eigenen
-Geräte (auch Betrachter); welche Alarme sie erreichen, legt ein Kanal **Web Push** unter Alarme →
-Benachrichtigungen fest. Die Schaltfläche **i** fasst die Voraussetzungen zusammen: HTTPS (oder
+Geräte (auch Betrachter); welche Alarme sie erreichen, legt ein Kanal **Web Push** unter Einstellungen →
+Benachrichtigungen & Berichte fest. Die Schaltfläche **i** fasst die Voraussetzungen zusammen: HTTPS (oder
 localhost), Installation auf dem Home-Bildschirm bei iPhone und iPad und die Domains der
 Push-Dienste, die der Server erreichen muss. Vollständige Anleitung:
 [Push-Benachrichtigungen (PWA)](push-notifications.md).
@@ -230,7 +230,7 @@ nie wieder angezeigt, nur ihr Host. Ändern dürfen nur Administratoren. Siehe
 
 ## Berichte {#reports}
 
-Periodische Verfügbarkeits-E-Mails für das Team: Wählen Sie wöchentlich, täglich oder monatlich,
+Unter **Einstellungen → Benachrichtigungen & Berichte**, unterhalb der Richtlinie: periodische Verfügbarkeits-E-Mails für das Team. Wählen Sie wöchentlich, täglich oder monatlich,
 den Tag, die Uhrzeit und die Zeitzone, die Empfänger und den E-Mail-Kanal, dann **Vorschau
 senden**, um das Ergebnis zu sehen. Nur Admins. Siehe [E-Mail-Berichte](reports.md).
 

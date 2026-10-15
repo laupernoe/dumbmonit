@@ -9,16 +9,15 @@ serveur. Une page, une section par sujet, avec un rail d'ancres sur un
 grand écran et une bande de puces sur un téléphone. Chaque section est
 partageable par lien (`/settings#agents`).
 
-Deux choses vivaient ici et ont été déplacées, parce qu'elles ne sont pas
-de l'administration :
+Deux sections portent le côté public et sortant de DumbMonit :
 
-| Vous cherchez | Maintenant sous | Ancien lien |
+| Vous cherchez | Où | Lien |
 |---|---|---|
-| Canaux de notification, heures calmes, politique de notification | **Alertes → Notifications** ([page Alertes](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Pages d'état et annonces | **État** ([Pages d'état](status-pages.md)) | `/settings#status` |
+| Canaux de notification, heures calmes, politique de notification, rapports | **Réglages → Notifications et rapports** ([Canaux de notification](../notifications.md)) | `/settings/notifications` |
+| Pages d'état et annonces | **Réglages → Pages de statut** ([Pages d'état](status-pages.md)) | `/settings/status` |
 
-Les anciens liens fonctionnent toujours : ils redirigent vers le nouvel
-emplacement.
+Les anciens liens (`/alerts#notifications`, `/status`) redirigent vers le
+nouvel emplacement.
 
 ## Compte et sécurité
 
@@ -79,7 +78,7 @@ Notifications natives sur ce téléphone ou cet ordinateur, même avec
 DumbMonit fermé : **Activer sur cet appareil**, puis **Envoyer un test**.
 Chaque compte gère ses propres appareils ici (les lecteurs aussi) ;
 quelles alertes les atteignent est réglé par un canal **Web Push** dans
-Alertes → Notifications. Le bouton **i** résume les prérequis : HTTPS (ou
+Réglages → Notifications et rapports. Le bouton **i** résume les prérequis : HTTPS (ou
 localhost), installation sur l'écran d'accueil sur iPhone et iPad, et les
 domaines de service de push que le serveur doit atteindre. Guide
 complet : [Notifications push (PWA)](push-notifications.md).
@@ -278,7 +277,8 @@ réservé aux administrateurs. Voir
 
 ## Rapports
 
-Emails de disponibilité périodiques pour l'équipe : choisissez
+Dans **Réglages → Notifications et rapports**, sous la politique : emails de
+disponibilité périodiques pour l'équipe. Choisissez
 hebdomadaire, quotidien ou mensuel, le jour, l'heure et le fuseau
 horaire, les destinataires et le canal email, puis **Envoyer un aperçu**
 pour voir le résultat. Réservé aux administrateurs. Voir

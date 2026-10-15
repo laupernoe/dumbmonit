@@ -702,7 +702,7 @@ different threshold, a different clear threshold, or turned off for that
 device alone. Each rule's editor has a **Per-device overrides** panel to add
 or remove one directly.
 
-The one-click **Ignore** action on an alert (in the *Needs you* list or the
+The one-click **Ignore** action on an alert (in the *Now* tab or the
 alert's device page) is the same mechanism, written with `enabled: false`:
 the device stops carrying that rule, immediately, reversibly. The device page
 lists what it ignores, with **Stop ignoring**; the rule itself shows *Ignored

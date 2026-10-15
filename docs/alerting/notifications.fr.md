@@ -22,17 +22,17 @@ s'appliquent dès la sortie de boîte.
 |---|---|---|
 | Seuil de résolution (hystérésis) | Éditeur de règle → *Se résout sous / au-dessus* | aucun (CPU : 85 %, disque : 88 % sur les règles fournies) |
 | Surcharges par appareil | Éditeur de règle → *Surcharges par appareil* | aucune |
-| Détection de flapping | Alertes → Notifications → Politique de notification → Plus d'options | 4 changements en 30 min, maintien 30 min |
+| Détection de flapping | Réglages → Notifications et rapports → Politique de notification → Plus d'options | 4 changements en 30 min, maintien 30 min |
 | Gravité minimale | Canal → Options de livraison → *Envoyer* | tout |
 | Me dire quand ça se résout | Canal → Options de livraison | activé |
 | Intervalle minimal par alerte | Canal → Options de livraison | aucun |
 | Heures calmes | Canal → Options de livraison | désactivé |
 | Filtre de routage (étiquettes, type, règle) | Canal → Options de livraison → *Seulement certaines alertes* | désactivé (le canal entend tout) |
-| Escalade si personne n'acquitte | Alertes → Notifications → Politique de notification | désactivé |
-| Fenêtre de regroupement | Alertes → Notifications → Politique de notification | 60 s |
-| Messages par canal par heure | Alertes → Notifications → Politique de notification | 20 |
-| URL publique (liens profonds) | Alertes → Notifications → Politique de notification, ou `DUMBMONIT_PUBLIC_URL` | vide |
-| Liens Acquitter / Pause dans les messages | Alertes → Notifications → Politique de notification | activés (si une URL publique est connue) |
+| Escalade si personne n'acquitte | Réglages → Notifications et rapports → Politique de notification | désactivé |
+| Fenêtre de regroupement | Réglages → Notifications et rapports → Politique de notification | 60 s |
+| Messages par canal par heure | Réglages → Notifications et rapports → Politique de notification | 20 |
+| URL publique (liens profonds) | Réglages → Notifications et rapports → Politique de notification, ou `DUMBMONIT_PUBLIC_URL` | vide |
+| Liens Acquitter / Pause dans les messages | Réglages → Notifications et rapports → Politique de notification | activés (si une URL publique est connue) |
 
 ## Hystérésis et surcharges par appareil
 
@@ -67,7 +67,7 @@ résolue 4 fois en 30 minutes est *instable* : un avis sort
 (« instable : 4 changements en 30 min, notifications retenues pendant 30
 min ») et rien d'autre sur cette alerte n'est envoyé jusqu'à la fin du
 maintien. Une résolution après le maintien est quand même annoncée.
-Ajustez ou désactivez-le dans Alertes → Notifications → Politique de
+Ajustez ou désactivez-le dans Réglages → Notifications et rapports → Politique de
 notification → Plus d'options (`flap_events`, `flap_window_secs`,
 `flap_hold_secs` ; `flap_events: 0` le désactive).
 

@@ -768,7 +768,7 @@ para esse dispositivo. O editor de cada regra tem um painel
 **Substituições por dispositivo** para adicionar ou remover uma
 diretamente.
 
-A ação de um clique **Ignorar** em um alerta (na lista *Precisa de você*
+A ação de um clique **Ignorar** em um alerta (na aba *Agora*
 ou na página do dispositivo do alerta) é o mesmo mecanismo, escrito com
 `enabled: false`: o dispositivo para de carregar essa regra,
 imediatamente, reversivelmente. A página do dispositivo lista o que

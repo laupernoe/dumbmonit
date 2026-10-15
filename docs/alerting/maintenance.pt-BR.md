@@ -7,13 +7,13 @@ uma vez, em vez de aparecer do nada depois de duas horas.
 
 ## Onde {#where}
 
-- **Alertas → Manutenção programada**: a lista de janelas, com *Ativa agora*
+- **Alertas → Manutenção**: a lista de janelas, com *Ativa agora*
   ou *Programada*, e o formulário para adicionar uma.
 - **Página do dispositivo → Silenciar 1 h / Silenciar até…**: uma janela
   pontual rápida para o dispositivo inteiro.
 - ++ctrl+k++ → *Programar manutenção*.
 
-**Soneca**, em um alerta na lista *Precisa de você* ou em uma página de
+**Soneca**, em um alerta na aba *Agora* ou em uma página de
 dispositivo, é uma versão menor do mesmo mecanismo: uma janela pontual
 restrita aos rótulos exatos daquele alerta em vez do dispositivo inteiro, de
 modo que uma regra irmã continua falando. Ela também aparece aqui, nomeada

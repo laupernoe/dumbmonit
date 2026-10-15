@@ -5,7 +5,7 @@ nachjustiert werden. Den Unterschied im Alltag macht, was den Lärm
 niedrig hält: Abhängigkeitsunterdrückung, Gruppierung nach Host,
 Wartungsfenster und eine Baseline, die lernt, bevor sie spricht.
 
-![Die Alerts-Seite: was Ihre Aufmerksamkeit braucht, die Regeln, geplante Wartungen und die Historie](../assets/screenshots/alerts-light.png){ loading=lazy }
+![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Schweregrade {#severities}
 
@@ -132,7 +132,7 @@ Vorhersage.
 
 Eingebaute Regeln haben keinen zugewiesenen Kanal, was bedeutet **jeder
 aktivierte Kanal**. Eine selbst bearbeitete Regel kann bestimmte Kanäle
-benennen. Kanäle werden unter Alerts → Notifications konfiguriert; siehe
+benennen. Kanäle werden unter Settings → Notifications & reports konfiguriert; siehe
 [Benachrichtigungskanäle](../notifications.md).
 
 ## Intelligente Benachrichtigungen {#smart-notifications}
@@ -178,6 +178,6 @@ Reihenfolge:
 11. **Senden** — mit einem „In DumbMonit öffnen“-Link pro Gerät, wenn eine
     öffentliche URL bekannt ist.
 
-Die Schritte 6 bis 10 werden unter Alerts → Notifications → Notification
+Die Schritte 6 bis 10 werden unter Settings → Notifications & reports → Notification
 policy (global) und bei jedem Kanal (Delivery options) konfiguriert. Siehe
 [Benachrichtigungsrichtlinie](notifications.md).

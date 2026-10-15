@@ -45,7 +45,7 @@ Três princípios aplicam-se a todos os canais:
 
 ## Criar e testar um canal {#creating-and-testing-a-channel}
 
-1. Abra **Alertas → Notificações → Adicionar canal** (`/alerts#notifications`).
+1. Abra **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
 2. Dê-lhe um nome com significado («Discord — família», «SMS — piquete»). É o
    nome que escolherá mais tarde nas suas regras de alerta.
 3. Escolha o tipo de canal, depois preencha os campos descritos abaixo.

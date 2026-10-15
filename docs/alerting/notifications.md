@@ -21,17 +21,17 @@ evaluate (hysteresis, per-device overrides)
 |---|---|---|
 | Clear threshold (hysteresis) | Rule editor → *Clear below / above* | none (CPU: 85 %, disk: 88 % on the shipped rules) |
 | Per-device overrides | Rule editor → *Per-device overrides* | none |
-| Flap detection | Alerts → Notifications → Notification policy → More options | 4 changes in 30 min, hold 30 min |
+| Flap detection | Settings → Notifications & reports → Notification policy → More options | 4 changes in 30 min, hold 30 min |
 | Minimum severity | Channel → Delivery options → *Send* | everything |
 | Tell me when it clears | Channel → Delivery options | on |
 | Minimum interval per alert | Channel → Delivery options | none |
 | Quiet hours | Channel → Delivery options | off |
 | Routing filter (tags, kind, rule) | Channel → Delivery options → *Only some alerts* | off (the channel hears everything) |
-| Escalation if nobody acknowledges | Alerts → Notifications → Notification policy | off |
-| Batch window | Alerts → Notifications → Notification policy | 60 s |
-| Messages per channel per hour | Alerts → Notifications → Notification policy | 20 |
-| Public URL (deep links) | Alerts → Notifications → Notification policy, or `DUMBMONIT_PUBLIC_URL` | empty |
-| Acknowledge / Snooze links in messages | Alerts → Notifications → Notification policy | on (needs a public URL) |
+| Escalation if nobody acknowledges | Settings → Notifications & reports → Notification policy | off |
+| Batch window | Settings → Notifications & reports → Notification policy | 60 s |
+| Messages per channel per hour | Settings → Notifications & reports → Notification policy | 20 |
+| Public URL (deep links) | Settings → Notifications & reports → Notification policy, or `DUMBMONIT_PUBLIC_URL` | empty |
+| Acknowledge / Snooze links in messages | Settings → Notifications & reports → Notification policy | on (needs a public URL) |
 
 ## Hysteresis and per-device overrides
 
@@ -62,7 +62,7 @@ Regardless of the rule, an alert whose fingerprint fired or resolved 4 times
 within 30 minutes is *flapping*: one notice goes out ("flapping: 4 changes in
 30 min, notifications held for 30 min") and nothing else about that alert is
 sent until the hold ends. A resolution after the hold is still announced.
-Tune or switch it off in Alerts → Notifications → Notification policy → More options
+Tune or switch it off in Settings → Notifications & reports → Notification policy → More options
 (`flap_events`, `flap_window_secs`, `flap_hold_secs`; `flap_events: 0`
 disables it).
 

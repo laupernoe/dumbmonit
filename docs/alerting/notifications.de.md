@@ -22,16 +22,16 @@ evaluate (hysteresis, per-device overrides)
 |---|---|---|
 | Rückstellschwelle (Hysterese) | Regel-Editor → *Clear below / above* | keine (CPU: 85 %, Platte: 88 % bei den mitgelieferten Regeln) |
 | Gerätespezifische Überschreibungen | Regel-Editor → *Per-device overrides* | keine |
-| Flackererkennung | Alerts → Notifications → Notification policy → More options | 4 Änderungen in 30 Min, Sperre 30 Min |
+| Flackererkennung | Settings → Notifications & reports → Notification policy → More options | 4 Änderungen in 30 Min, Sperre 30 Min |
 | Mindest-Schweregrad | Kanal → Delivery options → *Send* | alles |
 | Sag mir, wenn es sich löst | Kanal → Delivery options | ein |
 | Mindestabstand pro Alarm | Kanal → Delivery options | keiner |
 | Ruhezeiten | Kanal → Delivery options | aus |
 | Routing-Filter (Tags, Art, Regel) | Kanal → Delivery options → *Only some alerts* | aus (der Kanal hört alles) |
-| Eskalation, falls niemand bestätigt | Alerts → Notifications → Notification policy | aus |
-| Bündelungsfenster | Alerts → Notifications → Notification policy | 60 s |
-| Nachrichten pro Kanal und Stunde | Alerts → Notifications → Notification policy | 20 |
-| Öffentliche URL (Deep Links) | Alerts → Notifications → Notification policy, oder `DUMBMONIT_PUBLIC_URL` | leer |
+| Eskalation, falls niemand bestätigt | Settings → Notifications & reports → Notification policy | aus |
+| Bündelungsfenster | Settings → Notifications & reports → Notification policy | 60 s |
+| Nachrichten pro Kanal und Stunde | Settings → Notifications & reports → Notification policy | 20 |
+| Öffentliche URL (Deep Links) | Settings → Notifications & reports → Notification policy, oder `DUMBMONIT_PUBLIC_URL` | leer |
 
 ## Hysterese und gerätespezifische Überschreibungen
 
@@ -66,7 +66,7 @@ Unabhängig von der Regel ist ein Alarm, dessen Fingerprint innerhalb von
 Meldung geht raus ("flapping: 4 changes in 30 min, notifications held for
 30 min") und nichts weiteres zu diesem Alarm wird gesendet, bis die Sperre
 endet. Eine Behoben-Meldung nach der Sperre wird trotzdem angekündigt.
-Anpassen oder abschalten unter Alerts → Notifications → Notification
+Anpassen oder abschalten unter Settings → Notifications & reports → Notification
 policy → More options (`flap_events`, `flap_window_secs`, `flap_hold_secs`;
 `flap_events: 0` deaktiviert es).
 

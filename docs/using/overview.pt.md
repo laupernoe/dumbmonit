@@ -99,18 +99,17 @@ campo, resultados em três grupos.
 
 ## Navegação {#navigation}
 
-A barra superior tem Overview, Devices, Alerts (com a contagem do que
-precisa de si), Status e Settings, o atalho da paleta e o alternador de
-tema. Num telefone, torna-se uma barra de separadores inferior com as
-mesmas cinco entradas.
+A barra superior tem Overview, Monitors, Alerts (com a contagem do que
+precisa de si) e Settings, o atalho da paleta e o alternador de tema. Num
+telefone, torna-se uma barra de separadores inferior com esses quatro
+separadores e **More**, que contém o modo parede e a documentação.
 
 - **Overview** — o boletim: está tudo bem, e o que precisa de si.
-- **Devices** — o bastidor; cada fonte que monitoriza. Ver [Página de dispositivos](devices.md).
-- **Alerts** — o que está ativo, manutenção agendada, as regras, e os
-  canais e política de notificação. Ver [Página de alertas](alerts.md).
-- **Status** — as páginas de estado públicas e os seus anúncios. Ver
-  [Páginas de estado](status-pages.md).
+- **Monitors** — o bastidor; cada fonte que monitoriza. Ver [Página de dispositivos](devices.md).
+- **Alerts** — o que está ativo, as janelas de manutenção, o histórico e as
+  regras. Ver [Página de alertas](alerts.md).
 - **Settings** — a sua conta, utilizadores e sign-on único, tokens de
-  agente e assistente, aparência, sobre. Ver [Settings](settings.md). Nada na interface transmite estado só pela
+  agente e assistente, canais de notificação e relatórios, páginas de estado
+  públicas, aparência, sobre. Ver [Settings](settings.md). Nada na interface transmite estado só pela
 cor: uma placa ou um LED vêm sempre com uma palavra (Reporting, Unreachable,
 Advisory, Warning, Suppressed by parent, Building up).

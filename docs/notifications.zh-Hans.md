@@ -36,7 +36,7 @@
 
 ## 创建和测试通道 {#creating-and-testing-a-channel}
 
-1. 打开**警报→通知→添加通道** (`/alerts#notifications`)。
+1. 打开**设置→通知与报告→添加通道** (`/settings/notifications`)。
 2. 给它一个有意义的名称（"Discord——家人"、"SMS——待命"）。这是你稍后在你的警报规则中选择的名称。
 3. 选择通道类型，然后填写下面描述的字段。
 4. 保存，然后点击**发送测试**。

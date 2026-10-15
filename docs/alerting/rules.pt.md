@@ -766,7 +766,7 @@ si: um limiar diferente, um limiar de limpeza diferente, ou desligada
 só para esse dispositivo. O editor de cada regra tem um painel
 **Per-device overrides** para adicionar ou remover uma diretamente.
 
-A ação de um clique **Ignore** num alerta (na lista *Needs you* ou na
+A ação de um clique **Ignore** num alerta (no separador *Now* ou na
 página de dispositivo do alerta) é o mesmo mecanismo, escrito com
 `enabled: false`: o dispositivo deixa de transportar essa regra, de
 imediato, reversivelmente. A página do dispositivo lista o que

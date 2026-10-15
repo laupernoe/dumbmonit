@@ -1,22 +1,43 @@
 # Página de alertas {#alerts-page}
 
-![A página Alerts: o que precisa de si, as regras, a manutenção agendada e o histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
+![A página Alerts: o que se passa agora, a manutenção, o histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tudo sobre alertas numa página, atrás de cinco separadores. O separador está
+Tudo sobre alertas numa página, atrás de quatro separadores. O separador está
 no URL (`/alerts#rules`), por isso uma vista pode ser ligada. **Schedule
 maintenance**, no canto superior direito, abre o formulário para uma janela
 a partir de qualquer separador.
 
 | Separador | O que contém |
 |---|---|
-| **Now** | A lista em direto *Needs you*, agrupada por dispositivo: placa de severidade, motivo, desde quando, e *Ack*, *Snooze*, *Ignore* e *Open device* em cada um. Os alertas confirmados e adiados ficam cada um no seu próprio grupo silencioso no fundo. O emblema no separador, e em Alerts na barra superior, é a contagem do que ainda precisa de si. |
-| **Scheduled** | Janelas de manutenção, *Active now* ou *Scheduled*, pontuais, semanais ou mensais, cada uma com a próxima ocorrência. Ver [Janelas de manutenção](../alerting/maintenance.md). |
-| **Rules** | Todas as regras com a sua severidade, uma marca *Built-in* e, se algum dispositivo a ignora, *Ignored on N devices*; ativar, editar em linha, eliminar as suas próprias, criar uma regra de limiar. Ver [Regras](../alerting/rules.md). |
-| **Notifications** | Onde os alertas o alcançam: os canais e a política de notificação. Detalhes abaixo. |
-| **History** | As últimas 200 transições, cada uma nomeando o dispositivo, a regra e o que aconteceu; as resolvidas podem ser limpas. |
+| **Now** | A lista em direto dos problemas, uma linha cada. Ver [A lista Now](#the-now-list). O emblema no separador, e em Alerts na barra superior, é a contagem do que ainda precisa de si. |
+| **Maintenance** | Janelas de manutenção, *Active now* ou *Scheduled*, pontuais, semanais ou mensais, cada uma com a próxima ocorrência (`#scheduled`). Ver [Janelas de manutenção](../alerting/maintenance.md). |
+| **History** | As últimas 200 transições, cada uma nomeando o monitor, a regra e o que aconteceu; as resolvidas podem ser limpas. |
+| **Rules** | Todas as regras com a sua severidade, uma marca *Built-in* e, se algum monitor a ignora, *Ignored on N devices*; ativar, editar em linha, eliminar as suas próprias, criar uma regra de limiar. Ver [Regras](../alerting/rules.md). |
+
+Os canais de notificação e a política de notificação estão em
+**Settings → Notifications & reports** (ver [Notificações](#notifications)).
 
 O mesmo modelo de verdade alimenta o boletim de visão geral e esta página,
 por isso os dois estão sempre de acordo sobre o que precisa de si.
+
+## A lista Now {#the-now-list}
+
+Uma linha por problema: ícone de estado, o que está mal, que monitor, a causa
+numa linha, há quanto tempo, e **Ack** e **Open** na própria linha. As linhas
+são agrupadas por severidade (Warning, Advisory, Info, Building up,
+Suppressed by parent) ou, com o seletor **Severity | Monitor**, por monitor.
+Os grupos dobram-se; *Suppressed*, *Snoozed* e *Dismissed* (confirmados)
+começam dobrados. Uma regra que dispara em várias séries do mesmo monitor é
+uma única linha («… and 7 more»).
+
+Clique numa linha para desdobrar os detalhes: cada série afetada, desde
+quando, quem a confirmou, porque está suprimida, com **Open monitor**,
+**Snooze** e **Never for this monitor**.
+
+Selecionar várias linhas é um modo. O botão **Select** (operadores e
+administradores) mostra uma caixa de seleção em cada linha e uma barra
+flutuante em baixo com **Select all**, **Acknowledge**, **Unacknowledge**,
+**Ignore for this device** e **Done**. Escape sai do modo.
 
 ## Livrar-se de um alerta {#getting-rid-of-an-alert}
 
@@ -59,10 +80,11 @@ regra ignorada, por outro lado, nunca produziu um alerta, para começar.
 
 ## Notificações {#notifications}
 
-Os canais e a política vivem aqui — sob Alerts, não Settings — porque
-decidem quem ouve um alerta, o que é uma questão de alertas. Dois painéis:
+Os canais e a política vivem em **Settings → Notifications & reports**
+(`/settings/notifications`), seguidos dos [Relatórios](reports.md). Dois
+painéis:
 
-**Channels.** A lista de canais, cada um com o seu tipo, *Enabled* ou
+**Notification channels.** A lista de canais, cada um com o seu tipo, *Enabled* ou
 *Disabled*, quando enviou algo por último, e o seu último erro se existir.
 **Add channel** abre um formulário construído a partir da descrição do
 servidor do tipo escolhido: definições (visíveis) e segredos (só de
@@ -98,10 +120,9 @@ partir do momento em que a primeira mensagem realmente saiu, e confirmar o
 alerta (ou a sua resolução) para o salto. Ver
 [Política de notificação](../alerting/notifications.md).
 
-Ligações: `/alerts#notifications` abre o separador,
-`/alerts#notifications-policy` desloca até ao painel de política. As antigas
-ligações de Settings (`/settings#notifications`,
-`/settings#notifications-policy`) redirecionam para aqui.
+As ligações antigas (`/alerts#notifications`,
+`/alerts#notifications-policy`, `/settings#notifications`) redirecionam para
+aqui.
 
 ## Operadores e leitores {#operators-and-viewers}
 

@@ -6,7 +6,7 @@ quello che mantiene basso il rumore: soppressione per dipendenza,
 raggruppamento per host, finestre di manutenzione, e una baseline che
 apprende prima di parlare.
 
-![La pagina Alerts: cosa richiede attenzione, le regole, la manutenzione pianificata e la cronologia](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severità {#severities}
 
@@ -131,7 +131,7 @@ PBS è una semplice soglia sulla previsione propria di PBS.
 
 Le regole integrate non hanno alcun canale collegato, il che significa
 **ogni canale abilitato**. Una regola che modifichi può nominare canali
-specifici. I canali vengono configurati in Alerts → Notifications; vedi
+specifici. I canali vengono configurati in Settings → Notifications & reports; vedi
 [Canali di notifica](../notifications.md).
 
 ## Notifiche intelligenti {#smart-notifications}
@@ -176,6 +176,6 @@ ordine:
 11. **Inviare** — con un link "Open in DumbMonit" per dispositivo quando
     un URL pubblico è conosciuto.
 
-I passaggi 6 a 10 sono configurati in Alerts → Notifications →
+I passaggi 6 a 10 sono configurati in Settings → Notifications & reports →
 Notification policy (globale) e su ogni canale (Delivery options). Vedi
 [Politica di notifica](notifications.md).

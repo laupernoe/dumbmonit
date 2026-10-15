@@ -189,6 +189,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Alerts → Now is a calm list.** One line per problem — what, which monitor,
+  the cause in one line, since when — with **Ack** and **Open** on the line,
+  grouped by severity or by monitor; groups fold, and suppressed, snoozed and
+  acknowledged problems start folded. One rule on many series stays one line
+  ("… and 7 more"); a click unfolds the details and Snooze / Never for this
+  monitor. The Alerts tabs are now Now, Maintenance, History and Rules.
+- **Selecting is a mode.** On the Alerts page and the Monitors list, checkboxes
+  only appear after **Select**, with a floating action bar that moves nothing
+  on the page; Escape or Done leaves it.
+- **Notifications and status pages are in Settings.** Notification channels and
+  the policy are in **Settings → Notifications & reports**, the public status
+  pages and their announcements in **Settings → Status pages**; the top bar is
+  Overview, Monitors, Alerts, Settings. `/status`, `/status/<id>` and
+  `/alerts#notifications…` forward to the new place; public `/s/<slug>` pages
+  are unchanged.
 - **The security score is opt-in and lives next to each device.** Turn it on in
   **Settings → Account & security → Security score**; rated devices then get a
   grade badge in the device list and on their page. Off, the score is not

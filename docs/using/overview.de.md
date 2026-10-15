@@ -106,22 +106,21 @@ Eingabefeld, Ergebnisse in drei Gruppen.
 
 ## Navigation
 
-Die obere Leiste hat Overview, Devices, Alerts (mit der Anzahl dessen,
-was Ihre Aufmerksamkeit braucht), Status und Settings, den Paletten-
-Shortcut und den Theme-Umschalter. Auf einem Telefon wird sie zu einer
-unteren Tab-Leiste mit denselben fünf Einträgen.
+Die obere Leiste hat Overview, Monitors, Alerts (mit der Anzahl dessen,
+was Ihre Aufmerksamkeit braucht) und Settings, den Paletten-Shortcut und
+den Theme-Umschalter. Auf einem Telefon wird sie zu einer unteren Tab-Leiste
+mit diesen vier Tabs und **More**, das den Wall-Modus und die Dokumentation
+enthält.
 
 - **Overview** — das Bulletin: ist alles in Ordnung, und was Ihre
   Aufmerksamkeit braucht.
-- **Devices** — das Rack; jede überwachte Quelle. Siehe
+- **Monitors** — das Rack; jede überwachte Quelle. Siehe
   [Devices-Seite](devices.md).
-- **Alerts** — was feuert, geplante Wartung, die Regeln, und die
-  Benachrichtigungskanäle und -richtlinie. Siehe
-  [Alerts-Seite](alerts.md).
-- **Status** — die öffentlichen Statusseiten und ihre Ankündigungen.
-  Siehe [Statusseiten](status-pages.md).
+- **Alerts** — was feuert, Wartungsfenster, Historie und die Regeln.
+  Siehe [Alerts-Seite](alerts.md).
 - **Settings** — Ihr Konto, Benutzer und Single Sign-On, Agent- und
-  Assistant-Tokens, Erscheinungsbild, About. Siehe
+  Assistant-Tokens, Benachrichtigungskanäle und Reports, öffentliche
+  Statusseiten, Erscheinungsbild, About. Siehe
   [Settings](settings.md). Nichts auf der Oberfläche vermittelt Status
   allein durch Farbe: Eine Anzeige oder LED kommt immer mit einem Wort
   (Reporting, Unreachable, Advisory, Warning, Suppressed by parent,

@@ -104,21 +104,20 @@ un campo, resultados en tres grupos.
 
 ## Navegación {#navigation}
 
-La barra superior tiene Overview, Devices, Alerts (con el recuento de lo
-que requiere tu atención), Status y Settings, el acceso rápido a la
-paleta y el interruptor de tema. En un teléfono, se convierte en una
-barra de pestañas inferior con las mismas cinco entradas.
+La barra superior tiene Overview, Monitors, Alerts (con el recuento de lo
+que requiere tu atención) y Settings, el acceso rápido a la paleta y el
+interruptor de tema. En un teléfono, se convierte en una barra de
+pestañas inferior con esas cuatro pestañas y **More**, que contiene el
+modo sala y la documentación.
 
 - **Overview** — el boletín: si todo va bien, y qué requiere tu atención.
-- **Devices** — el rack; cada fuente que monitorizas. Consulta [Página de
+- **Monitors** — el rack; cada fuente que monitorizas. Consulta [Página de
   dispositivos](devices.md).
-- **Alerts** — qué está activo, el mantenimiento programado, las reglas,
-  y los canales y política de notificación. Consulta [Página de
-  alertas](alerts.md).
-- **Status** — las páginas de estado públicas y sus anuncios. Consulta
-  [Páginas de estado](status-pages.md).
+- **Alerts** — qué está activo, las ventanas de mantenimiento, el
+  historial y las reglas. Consulta [Página de alertas](alerts.md).
 - **Settings** — tu cuenta, usuarios e inicio de sesión único, tokens de
-  agente y asistente, apariencia, acerca de. Consulta
+  agente y asistente, canales de notificación e informes, páginas de
+  estado públicas, apariencia, acerca de. Consulta
   [Settings](settings.md). Nada en la interfaz transmite el estado solo
   por color: una placa o un LED siempre viene con una palabra (Reporting,
   Unreachable, Advisory, Warning, Suppressed by parent, Building up).

@@ -21,6 +21,10 @@ Filtros: una caja de búsqueda, un segmento de estado (All, Needs attention,
 Reporting, Disabled) y un filtro por tipo. **Add a device** es la acción
 principal.
 
+El botón **Select** (operadores y administradores) activa una casilla por
+dispositivo y una barra flotante abajo con las acciones en bloque; **Done**
+o Escape salen del modo.
+
 ## Un dispositivo {#a-device}
 
 ![Página de un dispositivo: estado, acciones, alertas, el panel específico del tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
@@ -61,7 +65,7 @@ interruptores por contenedor y una fila «Apply to all»:
 - **Auto-update in maintenance windows** — cuando el registro tiene una
   imagen más reciente para la misma etiqueta, el contenedor se recrea
   durante una ventana de mantenimiento programada (página Alerts →
-  Scheduled) y se revierte si falla su healthcheck.
+  Maintenance) y se revierte si falla su healthcheck.
 
 Cada interruptor se guarda por separado. Detalles y reglas de seguridad:
 [Contenedores Docker](../devices/agent.md#docker-containers).

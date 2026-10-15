@@ -22,16 +22,16 @@ evaluate (hysteresis, per-device overrides)
 |---|---|---|
 | Soglia di azzeramento (isteresi) | Editor regola → *Clear below / above* | nessuna (CPU: 85%, disco: 88% sulle regole fornite) |
 | Override per dispositivo | Editor regola → *Per-device overrides* | nessuno |
-| Rilevamento flapping | Alerts → Notifications → Notification policy → More options | 4 cambi in 30 min, attesa 30 min |
+| Rilevamento flapping | Settings → Notifications & reports → Notification policy → More options | 4 cambi in 30 min, attesa 30 min |
 | Severità minima | Canale → Delivery options → *Send* | tutto |
 | Dimmi quando si risolve | Canale → Delivery options | attivo |
 | Intervallo minimo per avviso | Canale → Delivery options | nessuno |
 | Ore silenziose | Canale → Delivery options | disattivate |
 | Filtro di instradamento (tag, tipo, regola) | Canale → Delivery options → *Only some alerts* | disattivato (il canale sente tutto) |
-| Escalation se nessuno conferma | Alerts → Notifications → Notification policy | disattivata |
-| Finestra di batch | Alerts → Notifications → Notification policy | 60 s |
-| Messaggi per canale all'ora | Alerts → Notifications → Notification policy | 20 |
-| URL pubblico (deep link) | Alerts → Notifications → Notification policy, oppure `DUMBMONIT_PUBLIC_URL` | vuoto |
+| Escalation se nessuno conferma | Settings → Notifications & reports → Notification policy | disattivata |
+| Finestra di batch | Settings → Notifications & reports → Notification policy | 60 s |
+| Messaggi per canale all'ora | Settings → Notifications & reports → Notification policy | 20 |
+| URL pubblico (deep link) | Settings → Notifications & reports → Notification policy, oppure `DUMBMONIT_PUBLIC_URL` | vuoto |
 
 ## Isteresi e override per dispositivo
 
@@ -66,7 +66,7 @@ o risolta 4 volte entro 30 minuti è *flapping*: un avviso esce
 ("flapping: 4 changes in 30 min, notifications held for 30 min") e nulla
 altro su quell'avviso viene inviato finché l'attesa non termina. Una
 risoluzione dopo l'attesa viene comunque annunciata. Regola o disattiva
-in Alerts → Notifications → Notification policy → More options
+in Settings → Notifications & reports → Notification policy → More options
 (`flap_events`, `flap_window_secs`, `flap_hold_secs`; `flap_events: 0`
 la disattiva).
 

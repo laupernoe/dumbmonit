@@ -8,14 +8,14 @@ segurança da instância, o tema, e a saúde do servidor. Uma página, uma secç
 por tema, com uma barra lateral de âncoras num ecrã largo e uma faixa de chips
 num telemóvel. Cada secção pode ser ligada diretamente (`/settings#agents`).
 
-Duas coisas viviam aqui e mudaram-se, porque não são administração:
+Duas secções contêm o lado público e de saída do DumbMonit:
 
-| À procura de | Agora em | Ligação antiga |
+| À procura de | Onde | Ligação |
 |---|---|---|
-| Canais de notificação, horas de silêncio, política de notificação | **Alertas → Notificações** ([página Alertas](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Páginas de estado e anúncios | **Estado** ([Páginas de estado](status-pages.md)) | `/settings#status` |
+| Canais de notificação, horas de silêncio, política de notificação, relatórios | **Settings → Notifications & reports** ([Canais de notificação](../notifications.md)) | `/settings/notifications` |
+| Páginas de estado e anúncios | **Settings → Status pages** ([Páginas de estado](status-pages.md)) | `/settings/status` |
 
-As ligações antigas continuam a funcionar: reencaminham para o novo local.
+As ligações antigas (`/alerts#notifications`, `/status`) reencaminham para o novo local.
 
 ## Conta e segurança {#account-security}
 
@@ -69,8 +69,8 @@ alterações de tokens e de contas, com o endereço do cliente. Mantém as últi
 Notificações nativas neste telemóvel ou computador, mesmo com o DumbMonit
 fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada conta
 gere aqui os seus próprios dispositivos (os visualizadores também); os alertas
-que lhes chegam são definidos por um canal **Web Push** em Alertas →
-Notificações. O botão **i** resume os requisitos: HTTPS (ou localhost),
+que lhes chegam são definidos por um canal **Web Push** em Settings →
+Notifications & reports. O botão **i** resume os requisitos: HTTPS (ou localhost),
 instalação no Ecrã Principal no iPhone e iPad, e os domínios dos serviços push
 que o servidor tem de alcançar. Guia completo:
 [Notificações push (PWA)](push-notifications.md).
@@ -257,8 +257,8 @@ administrador o pode alterar. Ver
 
 ## Relatórios {#reports}
 
-Emails periódicos de disponibilidade para a equipa: escolha semanal, diário ou
-mensal, o dia, a hora e o fuso horário, os destinatários e o canal de email,
+Em **Settings → Notifications & reports**, abaixo da política: emails periódicos
+de disponibilidade para a equipa. Escolha semanal, diário ou mensal, o dia, a hora e o fuso horário, os destinatários e o canal de email,
 depois **Enviar uma pré-visualização** para ver o resultado. Apenas
 administradores. Veja [Relatórios por email](reports.md).
 

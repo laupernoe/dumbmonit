@@ -58,7 +58,7 @@ In Safari senza installazione, la sezione indica **Installa prima**.
 
 ## Scegliere quali avvisi arrivano
 
-In **Avvisi → Notifiche**, aggiungi un canale di tipo **Web Push**. Senza
+In **Impostazioni → Notifiche e report**, aggiungi un canale di tipo **Web Push**. Senza
 impostazioni, lo ricevono tutti i dispositivi iscritti di ogni account; elenca i
 nomi degli account in **Account** per rivolgerti solo ad alcune persone. Si
 applica la consueta politica dei canali (gravità minima, ore di silenzio, filtro

@@ -8,15 +8,14 @@ da instância, o tema, e a saúde do servidor. Uma página, uma seção por
 tópico, com uma trilha de âncoras em uma tela larga e uma faixa de chips em
 um celular. Cada seção pode ser compartilhada por link (`/settings#agents`).
 
-Duas coisas costumavam viver aqui e se mudaram, porque não são
-administração:
+Duas seções cuidam do lado público e de saída do DumbMonit:
 
-| Procurando por | Agora sob | Link antigo |
+| Procurando por | Onde | Link |
 |---|---|---|
-| Canais de notificação, horas de silêncio, política de notificação | **Alertas → Notificações** ([Página de alertas](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Páginas de status e anúncios | **Status** ([Páginas de status](status-pages.md)) | `/settings#status` |
+| Canais de notificação, horas de silêncio, política de notificação, relatórios | **Configurações → Notificações e relatórios** ([Canais de notificação](../notifications.md)) | `/settings/notifications` |
+| Páginas de status e anúncios | **Configurações → Páginas de status** ([Páginas de status](status-pages.md)) | `/settings/status` |
 
-Os links antigos ainda funcionam: eles redirecionam para o novo lugar.
+Os links antigos (`/alerts#notifications`, `/status`) redirecionam para o novo lugar.
 
 ## Conta e segurança {#account--security}
 
@@ -70,7 +69,7 @@ Notificações nativas neste celular ou computador, mesmo com o DumbMonit
 fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada
 conta gerencia seus próprios dispositivos aqui (visualizadores também);
 quais alertas chegam até eles é definido por um canal **Web Push** em
-Alertas → Notificações. O botão **i** resume os requisitos: HTTPS (ou
+Configurações → Notificações e relatórios. O botão **i** resume os requisitos: HTTPS (ou
 localhost), instalação na Tela de Início no iPhone e iPad, e os domínios
 de serviço de push que o servidor precisa alcançar. Guia completo:
 [Notificações push (PWA)](push-notifications.md).
@@ -254,7 +253,8 @@ podem alterá-la. Veja
 
 ## Relatórios {#reports}
 
-E-mails periódicos de disponibilidade para a equipe: escolha semanal,
+Em **Configurações → Notificações e relatórios**, abaixo da política: e-mails
+periódicos de disponibilidade para a equipe. Escolha semanal,
 diário ou mensal, o dia, hora e fuso horário, os destinatários e o canal
 de e-mail, depois **Enviar pré-visualização** para ver o resultado.
 Restrito a administradores. Veja [Relatórios por e-mail](reports.md).

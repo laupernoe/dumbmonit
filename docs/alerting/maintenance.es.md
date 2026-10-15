@@ -8,13 +8,13 @@ después de dos horas.
 
 ## Dónde {#where}
 
-- **Alerts → Scheduled maintenance**: la lista de ventanas, con *Active
+- **Alerts → Maintenance**: la lista de ventanas, con *Active
   now* o *Scheduled*, y el formulario para añadir una.
 - **Página del dispositivo → Silence 1 h / Silence until…**: una ventana
   puntual rápida para todo el dispositivo.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, en una alerta de la lista *Needs you* o en una página de
+**Snooze**, en una alerta de la pestaña *Now* o en una página de
 dispositivo, es una versión más pequeña del mismo mecanismo: una ventana
 puntual limitada a las etiquetas exactas de esa alerta en concreto en
 lugar de todo el dispositivo, así que una regla hermana sigue hablando.

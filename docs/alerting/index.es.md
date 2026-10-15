@@ -5,7 +5,7 @@ necesita ajustes. Lo que marca la diferencia en el uso diario es lo que
 mantiene bajo el ruido: supresión por dependencia, agrupación por host,
 ventanas de mantenimiento, y una referencia que aprende antes de hablar.
 
-![La página de alertas: qué requiere tu atención, las reglas, el mantenimiento programado y el historial](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
 
@@ -173,6 +173,6 @@ nadie reciba spam. El camino completo de una alerta, en orden:
 11. **Enviar** — con un enlace «Open in DumbMonit» por dispositivo
     cuando se conoce una URL pública.
 
-Los pasos 6 a 10 se configuran en Alerts → Notifications → Notification
+Los pasos 6 a 10 se configuran en Settings → Notifications & reports → Notification
 policy (global) y en cada canal (Delivery options). Consulta [Política
 de notificación](notifications.md).

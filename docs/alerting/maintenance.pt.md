@@ -7,13 +7,13 @@ em vez de aparecer do nada depois de duas horas.
 
 ## Onde {#where}
 
-- **Alerts → Scheduled maintenance**: a lista de janelas, com *Active now* ou
+- **Alerts → Maintenance**: a lista de janelas, com *Active now* ou
   *Scheduled*, e o formulário para adicionar uma.
 - **Página do dispositivo → Silence 1 h / Silence until…**: uma janela
   pontual rápida para todo o dispositivo.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, num alerta da lista *Needs you* ou numa página de dispositivo, é
+**Snooze**, num alerta do separador *Now* ou numa página de dispositivo, é
 uma versão mais pequena do mesmo mecanismo: uma janela pontual limitada às
 etiquetas exatas desse alerta em vez de todo o dispositivo, para que uma
 regra irmã continue a falar. Também aparece aqui, chamada `Snooze · …`. Ver

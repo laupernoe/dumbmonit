@@ -54,7 +54,7 @@ In Safari ohne Installation zeigt der Abschnitt **Zuerst installieren**.
 
 ## Auswählen, welche Alarme ankommen {#choose-which-alerts-arrive}
 
-Fügen Sie unter **Alarme → Benachrichtigungen** einen Kanal vom Typ **Web Push** hinzu. Ohne
+Fügen Sie unter **Einstellungen → Benachrichtigungen & Berichte** einen Kanal vom Typ **Web Push** hinzu. Ohne
 Einstellung erhält ihn jedes abonnierte Gerät jedes Kontos; tragen Sie Kontonamen unter
 **Konten** ein, um nur bestimmte Personen anzusprechen. Es gilt die übliche Kanalrichtlinie
 (Mindestschweregrad, Ruhezeiten, Routing-Filter …), sodass Sie zum Beispiel ein Smartphone nur

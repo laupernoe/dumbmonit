@@ -5,7 +5,7 @@ the difference in daily use is what keeps the noise down: dependency
 suppression, grouping by host, maintenance windows, and a baseline that learns
 before it speaks.
 
-![The Alerts page: what needs you, the rules, scheduled maintenance and history](../assets/screenshots/alerts-light.png){ loading=lazy }
+![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severities
 
@@ -118,7 +118,7 @@ plain threshold on PBS's own forecast.
 
 Built-in rules have no channel attached, which means **every enabled channel**.
 A rule you edit can name specific channels. Channels are configured in
-Alerts → Notifications; see [Notification channels](../notifications.md).
+Settings → Notifications & reports; see [Notification channels](../notifications.md).
 
 ## Smart notifications
 
@@ -154,5 +154,5 @@ gets spammed. The full path of one alert, in order:
 11. **Send** — with an "Open in DumbMonit" link per device when a public URL
     is known.
 
-Steps 6 to 10 are configured in Alerts → Notifications → Notification policy (global) and
+Steps 6 to 10 are configured in Settings → Notifications & reports → Notification policy (global) and
 on each channel (Delivery options). See [Notification policy](notifications.md).

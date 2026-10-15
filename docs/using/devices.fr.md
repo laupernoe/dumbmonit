@@ -21,6 +21,10 @@ Filtres : une zone de recherche, un segment d'état (Tous, À traiter, Actifs,
 Désactivés) et un filtre de type. **Ajouter un appareil** est l'action
 principale.
 
+Le bouton **Sélectionner** (opérateurs et administrateurs) affiche une case à
+cocher par appareil et une barre flottante en bas avec les actions groupées ;
+**Terminé** ou Échap quitte le mode.
+
 ## Un appareil
 
 ![Page d'un appareil : état, actions, alertes, le panneau spécifique au type, métriques](../assets/screenshots/device-light.png){ loading=lazy }
@@ -60,7 +64,7 @@ et une ligne « Appliquer à tous » :
   qui suit son arrêt (au plus une fois toutes les dix minutes) ;
 - **Mise à jour automatique dans les fenêtres de maintenance** — quand le
   registre a une image plus récente pour le même tag, le conteneur est recréé
-  pendant une fenêtre de maintenance planifiée (page Alertes → Planifiées) et
+  pendant une fenêtre de maintenance planifiée (page Alertes → Maintenance) et
   annulé s'il échoue son test de santé.
 
 Chaque interrupteur s'enregistre seul. Détails et règles de sécurité :

@@ -5,7 +5,7 @@ ajuste. O que faz a diferença no uso diário é o que mantém o ruído
 baixo: supressão por dependência, agrupamento por anfitrião, janelas de
 manutenção, e uma linha de base que aprende antes de falar.
 
-![A página Alerts: o que precisa de si, as regras, a manutenção agendada e o histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
+![A página Alerts: o que se passa agora, a manutenção, o histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
 
@@ -128,7 +128,7 @@ previsão do PBS.
 
 As regras incorporadas não têm nenhum canal associado, o que significa
 **todo canal ativado**. Uma regra que edita pode nomear canais
-específicos. Os canais são configurados em Alerts → Notifications; ver
+específicos. Os canais são configurados em Settings → Notifications & reports; ver
 [Canais de notificação](../notifications.md).
 
 ## Notificações inteligentes {#smart-notifications}
@@ -173,6 +173,6 @@ ordem:
 11. **Enviar** — com uma ligação «Open in DumbMonit» por dispositivo
     quando um URL público é conhecido.
 
-Os passos 6 a 10 são configurados em Alerts → Notifications →
-Notification policy (global) e em cada canal (Delivery options). Ver
+Os passos 6 a 10 são configurados em Settings → Notifications &
+reports → Notification policy (global) e em cada canal (Delivery options). Ver
 [Política de notificação](notifications.md).

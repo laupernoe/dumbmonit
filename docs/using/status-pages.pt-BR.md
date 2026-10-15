@@ -1,6 +1,6 @@
 # Páginas de status {#status-pages}
 
-![A página de Status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
+![A página Páginas de status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
 
 Uma página de status é a face pública do seu monitoramento: uma página
 que qualquer um pode abrir — sem login, sem cookie — que diz se seus
@@ -16,10 +16,10 @@ servidor — não na página, não em um badge, não em um e-mail.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Status** na barra superior → **Nova página**. Essa página lista suas
+**Configurações → Páginas de status** → **Nova página**. Essa página lista suas
 páginas de status (abrir, editar, excluir) com os anúncios abaixo
-delas; o editor abre em sua própria rota (`/status/new`,
-`/status/<id>`). A renderização pública está em `/s/<address>`.
+delas; o editor abre em sua própria rota (`/settings/status/new`,
+`/settings/status/<id>`). A renderização pública está em `/s/<address>`.
 
 | Campo | O que faz |
 | --- | --- |
@@ -128,7 +128,7 @@ adicionado ontem não está "fora do ar" pelos 89 dias anteriores a isso
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Na página **Status**, sob a lista de páginas, **Incidentes e
+Em **Configurações → Páginas de status**, sob a lista de páginas, **Incidentes e
 manutenção** → **Novo anúncio** (também ++ctrl+k++ → *Anunciar um
 incidente*).
 

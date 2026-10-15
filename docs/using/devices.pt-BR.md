@@ -21,6 +21,10 @@ Filtros: uma caixa de busca, um segmento de estado (Todos, Precisa de atenção,
 Reportando, Desativado) e um filtro de tipo. **Adicionar dispositivo** é a ação
 principal.
 
+O botão **Selecionar** (operadores e administradores) liga uma caixa de seleção
+por dispositivo e uma barra flutuante na parte inferior com as ações em lote;
+**Concluir** ou Escape sai do modo.
+
 ## Um dispositivo {#a-device}
 
 ![Uma página de dispositivo: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
@@ -60,7 +64,7 @@ uma linha "Aplicar a todos":
   minuto após ele parar (no máximo uma vez a cada dez minutos);
 - **Atualização automática em janelas de manutenção** — quando o registro tem
   uma imagem mais nova para a mesma tag, o contêiner é recriado durante uma
-  janela de manutenção programada (página Alertas → Programado) e revertido
+  janela de manutenção programada (página Alertas → Manutenção) e revertido
   se falhar na verificação de saúde.
 
 Cada chave salva por conta própria. Detalhes e regras de segurança:

@@ -36,7 +36,7 @@ Tre principi si applicano a ogni canale:
 
 ## Creazione e test di un canale
 
-1. Apri **Avvisi → Notifiche → Aggiungi canale** (`/alerts#notifications`).
+1. Apri **Impostazioni → Notifiche e report → Aggiungi canale** (`/settings/notifications`).
 2. Dagli un nome significativo ("Discord — famiglia", "SMS — on-call"). Questo è il nome che sceglierai in seguito nelle tue regole di avviso.
 3. Scegli il tipo di canale, quindi compila i campi descritti di seguito.
 4. Salva, quindi fai clic su **Invia test**.

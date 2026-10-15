@@ -5,7 +5,7 @@ que faz a diferença no uso diário é o que mantém o ruído baixo: supressão
 por dependência, agrupamento por host, janelas de manutenção, e uma linha
 de base que aprende antes de falar.
 
-![A página de alertas: o que precisa de você, as regras, manutenção programada e histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
+![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
 
@@ -124,7 +124,7 @@ datastore do PBS é um limite simples sobre a própria previsão do PBS.
 
 Regras integradas não têm canal associado, o que significa **todo canal
 ativado**. Uma regra que você edita pode nomear canais específicos. Canais
-são configurados em Alertas → Notificações; veja
+são configurados em Configurações → Notificações e relatórios; veja
 [Canais de notificação](../notifications.md).
 
 ## Notificações inteligentes {#smart-notifications}
@@ -167,6 +167,6 @@ inundado de mensagens. O caminho completo de um alerta, em ordem:
 11. **Enviar** — com um link "Abrir no DumbMonit" por dispositivo quando
     uma URL pública é conhecida.
 
-Os passos 6 a 10 são configurados em Alertas → Notificações → Política de
-notificação (global) e em cada canal (Opções de entrega). Veja
+Os passos 6 a 10 são configurados em Configurações → Notificações e relatórios →
+Política de notificação (global) e em cada canal (Opções de entrega). Veja
 [Política de notificação](notifications.md).

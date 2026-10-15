@@ -784,8 +784,7 @@ desactivada solo para ese dispositivo. El editor de cada regla tiene
 un panel **Per-device overrides** para añadir o eliminar uno
 directamente.
 
-La acción de un clic **Ignore** en una alerta (en la lista *Needs
-you* o en la página de dispositivo de la alerta) es el mismo
+La acción de un clic **Ignore** en una alerta (en la pestaña *Now* o en la página de dispositivo de la alerta) es el mismo
 mecanismo, escrito con `enabled: false`: el dispositivo deja de
 llevar esa regla, de inmediato, de forma reversible. La página del
 dispositivo lista lo que ignora, con **Stop ignoring**; la propia
