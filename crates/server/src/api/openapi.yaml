@@ -3765,7 +3765,9 @@ paths:
       description: >-
         Checks are evaluated on the last values the collectors recorded (6 h
         lookback). `unknown` checks are listed but excluded from the score. A
-        device kind without checks answers `supported: false`.
+        device kind without checks answers `supported: false`. While the score
+        is turned off (`/api/security/settings`), answers `enabled: false` and
+        nothing else, without querying the time-series database.
       x-token-scope: read
       responses:
         "200":
@@ -3783,6 +3785,7 @@ paths:
       operationId: getSecuritySummary
       tags: [Security]
       summary: Security score of every rated device, worst first
+      description: While the score is turned off, answers `enabled: false` and no device.
       x-token-scope: read
       responses:
         "200":
@@ -3790,6 +3793,44 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/SecuritySummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/settings:
+    get:
+      operationId: getSecuritySettings
+      tags: [Security]
+      summary: Is the security score turned on
+      description: Off by default on a new installation.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setSecuritySettings
+      tags: [Security]
+      summary: Turn the security score on or off
+      description: >-
+        Off: no periodic computation, no `dumbmonit_security_score` series, and
+        the security reads answer `enabled: false`. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SecuritySettings" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -6534,10 +6575,26 @@ components:
         evidence: { type: string }
         remediation: { type: string }
         reference: { type: string, format: uri, description: Vendor best-practice page. }
+    SecurityGuide:
+      type: object
+      description: How to raise the score on this kind of device.
+      required: [product, steps, doc_url]
+      properties:
+        product: { type: string, examples: [Proxmox VE, Linux host] }
+        steps: { type: array, items: { type: string }, description: Concrete steps, in order. }
+        doc_url: { type: string, format: uri, description: Matching section of the documentation. }
+    SecuritySettings:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
     SecurityReport:
       type: object
-      required: [target_id, target_name, kind, supported, score, grade, capped, evaluated_at, counts, checks]
+      required: [enabled, target_id, target_name, kind, supported, score, grade, capped, evaluated_at, counts, checks, guide]
       properties:
+        enabled:
+          type: boolean
+          description: "`false`: the score is turned off; `supported` is false and nothing else is filled."
         target_id: { type: integer }
         target_name: { type: string }
         kind: { type: string }
@@ -6558,10 +6615,15 @@ components:
           type: array
           description: Failing checks first (heaviest first), then passing, then unknown.
           items: { $ref: "#/components/schemas/SecurityCheck" }
+        guide:
+          oneOf:
+            - { $ref: "#/components/schemas/SecurityGuide" }
+            - { type: "null" }
     SecuritySummary:
       type: object
-      required: [evaluated_at, devices]
+      required: [enabled, evaluated_at, devices]
       properties:
+        enabled: { type: boolean, description: "`false`: the score is turned off, `devices` is empty." }
         evaluated_at: { type: string }
         devices:
           type: array

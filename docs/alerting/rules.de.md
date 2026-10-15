@@ -659,7 +659,7 @@ Vom Windows-Agenten auf einem Hyper-V-Host gemeldet; siehe [Agent](../devices/ag
 
 ### Sicherheitswert {#security-score}
 
-Vom Server alle 15 Minuten für jedes Gerät berechnet, dessen Art Sicherheitsprüfungen hat, und als `dumbmonit_security_score` (0–100) gespeichert. Siehe [Sicherheitswert](../using/security-score.md).
+Vom Server alle 15 Minuten für jedes Gerät berechnet, dessen Art Sicherheitsprüfungen hat, und als `dumbmonit_security_score` (0–100) gespeichert, nur solange die Sicherheitsbewertung in den Einstellungen eingeschaltet ist (standardmäßig aus). Siehe [Sicherheitswert](../using/security-score.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|

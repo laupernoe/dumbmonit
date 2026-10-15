@@ -78,6 +78,18 @@ pub struct SystemHealthStat {
     pub reboot_required: Option<bool>,
     pub failed_units: Option<Vec<String>>,
     pub selinux: Option<SelinuxMode>,
+    /// Linux : 0 interdit, 1 clé seulement, 2 mot de passe accepté.
+    pub ssh_root_login: Option<u8>,
+    /// Linux : l'authentification par mot de passe est-elle possible via sshd ?
+    pub ssh_password_auth: Option<bool>,
+    /// Linux : un filtrage entrant est-il actif (nftables ou iptables) ?
+    pub firewall_active: Option<bool>,
+    /// Windows : pare-feu activé, par profil (`domain`, `private`, `public`).
+    pub firewall_profiles: Vec<(&'static str, bool)>,
+    pub rdp_enabled: Option<bool>,
+    /// Windows : authentification au niveau du réseau (NLA) exigée pour le RDP.
+    pub rdp_nla: Option<bool>,
+    pub smb1_enabled: Option<bool>,
 }
 
 /// Traduit la photographie en échantillons.
@@ -123,6 +135,27 @@ pub fn samples(stat: &SystemHealthStat, now_ms: i64) -> Vec<Sample> {
 
     if let Some(mode) = stat.selinux {
         samples.push(gauge("agent_selinux_mode", mode.as_value()));
+    }
+
+    if let Some(level) = stat.ssh_root_login {
+        samples.push(gauge("agent_ssh_root_login", f64::from(level)));
+    }
+    let flag = |value: bool| f64::from(u8::from(value));
+    for (metric, value) in [
+        ("agent_ssh_password_auth", stat.ssh_password_auth),
+        ("agent_firewall_active", stat.firewall_active),
+        ("agent_rdp_enabled", stat.rdp_enabled),
+        ("agent_rdp_nla", stat.rdp_nla),
+        ("agent_smb1_enabled", stat.smb1_enabled),
+    ] {
+        if let Some(value) = value {
+            samples.push(gauge(metric, flag(value)));
+        }
+    }
+    for (profile, enabled) in &stat.firewall_profiles {
+        samples.push(
+            gauge("agent_firewall_profile_enabled", flag(*enabled)).with_label("profile", *profile),
+        );
     }
 
     samples
@@ -365,6 +398,146 @@ fn version_key(version: &str) -> Vec<Segment> {
     segments
 }
 
+/// Faits de sécurité de `sshd -T` : (connexion root, mot de passe possible).
+/// `sshd -T` imprime la configuration effective, clés en minuscules. Une
+/// valeur absente ou inconnue donne `None` : pas de zéro mensonger.
+pub fn parse_sshd_config(stdout: &str) -> (Option<u8>, Option<bool>) {
+    let mut root = None;
+    let mut password = None;
+    let mut kbd = false;
+    let mut pam = false;
+    for line in stdout.lines() {
+        let mut words = line.split_whitespace();
+        let (Some(key), Some(value)) = (words.next(), words.next()) else { continue };
+        let value = value.to_ascii_lowercase();
+        let yes = value == "yes";
+        match key.to_ascii_lowercase().as_str() {
+            "permitrootlogin" => {
+                root = match value.as_str() {
+                    "no" => Some(0),
+                    "prohibit-password" | "without-password" | "forced-commands-only" => Some(1),
+                    "yes" => Some(2),
+                    _ => None,
+                };
+            }
+            "passwordauthentication" => password = Some(yes),
+            "kbdinteractiveauthentication" | "challengeresponseauthentication" => kbd |= yes,
+            "usepam" => pam = yes,
+            _ => {}
+        }
+    }
+    // Sans `passwordauthentication`, la sortie n'est pas celle d'un sshd lisible.
+    // Le clavier interactif passe par PAM : il ne vaut mot de passe qu'avec lui.
+    (root, password.map(|direct| direct || (kbd && pam)))
+}
+
+/// Retire les chaînes entre guillemets (commentaires, préfixes de journal) pour
+/// qu'un mot qu'elles contiennent ne passe pas pour une action.
+fn strip_quoted(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+    let mut quoted = false;
+    for c in line.chars() {
+        if c == '"' {
+            quoted = !quoted;
+        } else if !quoted {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// `nft list ruleset` : filtrage entrant actif s'il existe une chaîne
+/// `hook input` dont la policy est `drop` ou qui contient une règle
+/// `drop`/`reject`. Les chaînes forward et nat (Docker) sont ignorées.
+pub fn parse_nft_input_active(ruleset: &str) -> bool {
+    let mut in_chain = false;
+    let mut in_input = false;
+    for raw in ruleset.lines() {
+        let line = strip_quoted(raw);
+        let line = line.trim();
+        if line.starts_with("chain ") {
+            in_chain = true;
+            in_input = false;
+        } else if !in_chain {
+            continue;
+        } else if line.starts_with('}') {
+            in_chain = false;
+            in_input = false;
+        } else if line.contains("hook input") {
+            in_input = true;
+            if line.contains("policy drop") {
+                return true;
+            }
+        } else if in_input
+            && line
+                .split(|c: char| !(c.is_ascii_alphanumeric() || c == '-'))
+                .any(|word| word == "drop" || word == "reject")
+        {
+            return true;
+        }
+    }
+    false
+}
+
+/// `iptables -S INPUT` : policy `DROP`, ou règle qui rejette ou saute vers la
+/// chaîne de Proxmox (`PVEFW-INPUT`, considérée active).
+pub fn parse_iptables_input_active(stdout: &str) -> bool {
+    stdout.lines().any(|line| {
+        let words: Vec<&str> = line.split_whitespace().collect();
+        match words.as_slice() {
+            ["-P", "INPUT", policy] => *policy == "DROP",
+            ["-A", "INPUT", rest @ ..] => rest
+                .windows(2)
+                .any(|w| w[0] == "-j" && matches!(w[1], "DROP" | "REJECT" | "PVEFW-INPUT")),
+            _ => false,
+        }
+    })
+}
+
+/// Valeur `REG_DWORD` d'une sortie de `reg query <clé> /v <valeur>`.
+pub fn parse_reg_dword(stdout: &str, value: &str) -> Option<u32> {
+    stdout.lines().find_map(|line| {
+        let mut words = line.split_whitespace();
+        if !words.next()?.eq_ignore_ascii_case(value) || words.next()? != "REG_DWORD" {
+            return None;
+        }
+        let raw = words.next()?;
+        match raw.strip_prefix("0x").or_else(|| raw.strip_prefix("0X")) {
+            Some(hex) => u32::from_str_radix(hex, 16).ok(),
+            None => raw.parse().ok(),
+        }
+    })
+}
+
+/// État du pare-feu d'un profil Windows : la stratégie de groupe, si elle
+/// existe, prime sur le réglage local.
+pub fn windows_firewall_enabled(policy: Option<u32>, local: Option<u32>) -> Option<bool> {
+    policy.or(local).map(|value| value != 0)
+}
+
+/// RDP actif quand `fDenyTSConnections` vaut 0.
+pub fn windows_rdp_enabled(deny: Option<u32>) -> Option<bool> {
+    deny.map(|value| value == 0)
+}
+
+/// SMB1 actif seulement si la valeur existe et vaut 1 (absente : désactivé
+/// depuis Windows 8.1 et Server 2012 R2).
+pub fn windows_smb1_enabled(value: Option<u32>) -> bool {
+    value == Some(1)
+}
+
+/// Redémarrage Windows requis : l'une des clés existe. Chaque entrée est
+/// `Some(existe)`, ou `None` si illisible ; sans preuve, `None`.
+pub fn windows_reboot_required(keys: &[Option<bool>]) -> Option<bool> {
+    if keys.contains(&Some(true)) {
+        Some(true)
+    } else if !keys.is_empty() && keys.iter().all(|k| *k == Some(false)) {
+        Some(false)
+    } else {
+        None
+    }
+}
+
 // --------------------------------------------------------------- exécution
 
 /// Réglages du collecteur, tels que fixés par la configuration.
@@ -406,8 +579,19 @@ mod platform {
         OsInfo, SelinuxMode, SystemHealthConfig, SystemHealthStat, UpdatesStat,
         newer_kernel_installed, parse_apt_upgradable, parse_dnf_check_update,
         parse_dnf_updateinfo_security, parse_failed_units, parse_getenforce,
-        parse_needs_restarting, parse_os_release, parse_selinux_enforce,
+        parse_iptables_input_active, parse_needs_restarting, parse_nft_input_active,
+        parse_os_release, parse_selinux_enforce, parse_sshd_config,
     };
+
+    /// Les faits de sécurité changent rarement et coûtent trois processus :
+    /// on les relit au plus toutes les cinq minutes.
+    const SECURITY_INTERVAL: Duration = Duration::from_secs(300);
+
+    /// Chemins de `sshd` : souvent hors du PATH d'une unité systemd.
+    const SSHD_CANDIDATES: [&str; 2] = ["sshd", "/usr/sbin/sshd"];
+
+    /// Dernière lecture des faits de sécurité : (ssh root, ssh mot de passe, pare-feu).
+    type SecurityFacts = (Option<u8>, Option<bool>, Option<bool>);
 
     /// `dnf` charge l'intégralité des métadonnées de dépôt avant de répondre :
     /// une à deux secondes à plein régime, dix fois plus sous quota processeur.
@@ -474,6 +658,10 @@ mod platform {
         /// à chaque cycle, et le journal n'a besoin de l'apprendre qu'une fois.
         systemctl_missing: bool,
         getenforce_missing: bool,
+        sshd_missing: bool,
+        nft_missing: bool,
+        iptables_missing: bool,
+        security: Option<(Instant, SecurityFacts)>,
     }
 
     impl SystemHealthProbe {
@@ -490,6 +678,10 @@ mod platform {
                 slow_task: None,
                 systemctl_missing: false,
                 getenforce_missing: false,
+                sshd_missing: false,
+                nft_missing: false,
+                iptables_missing: false,
+                security: None,
             }
         }
 
@@ -512,6 +704,7 @@ mod platform {
                 None
             };
             let selinux = self.read_selinux().await;
+            let (ssh_root_login, ssh_password_auth, firewall_active) = self.read_security().await;
 
             Some(SystemHealthStat {
                 os: self.os.clone(),
@@ -519,7 +712,73 @@ mod platform {
                 reboot_required: self.slow.reboot_required,
                 failed_units,
                 selinux,
+                ssh_root_login,
+                ssh_password_auth,
+                firewall_active,
+                ..SystemHealthStat::default()
             })
+        }
+
+        /// Faits de sécurité (sshd, pare-feu), relus toutes les cinq minutes.
+        async fn read_security(&mut self) -> SecurityFacts {
+            if let Some((at, facts)) = self.security {
+                if at.elapsed() < SECURITY_INTERVAL {
+                    return facts;
+                }
+            }
+            let (root, password) = self.read_sshd().await;
+            let facts = (root, password, self.read_firewall().await);
+            self.security = Some((Instant::now(), facts));
+            facts
+        }
+
+        async fn read_sshd(&mut self) -> (Option<u8>, Option<bool>) {
+            if self.sshd_missing {
+                return (None, None);
+            }
+            for program in SSHD_CANDIDATES {
+                match run(program, &["-T"], QUICK_TIMEOUT).await {
+                    Ok(output) if output.code == Some(0) => {
+                        return parse_sshd_config(&output.stdout);
+                    }
+                    // Présent mais en erreur (clés d'hôte illisibles…) : pas de série.
+                    Ok(_) | Err(RunError::Failed) => return (None, None),
+                    Err(RunError::Missing) => {}
+                }
+            }
+            debug!("sshd not found, SSH settings not reported");
+            self.sshd_missing = true;
+            (None, None)
+        }
+
+        /// `nft` d'abord ; `iptables` s'il ne prouve pas un filtrage actif.
+        async fn read_firewall(&mut self) -> Option<bool> {
+            let mut verdict = None;
+            if !self.nft_missing {
+                match run("nft", &["list", "ruleset"], QUICK_TIMEOUT).await {
+                    Ok(output) if output.code == Some(0) => {
+                        verdict = Some(parse_nft_input_active(&output.stdout));
+                    }
+                    Ok(_) | Err(RunError::Failed) => {}
+                    Err(RunError::Missing) => {
+                        debug!("nft not found, falling back to iptables");
+                        self.nft_missing = true;
+                    }
+                }
+            }
+            if verdict == Some(true) || self.iptables_missing {
+                return verdict;
+            }
+            match run("iptables", &["-S", "INPUT"], QUICK_TIMEOUT).await {
+                Ok(output) if output.code == Some(0) => {
+                    Some(parse_iptables_input_active(&output.stdout))
+                }
+                Ok(_) | Err(RunError::Failed) => verdict,
+                Err(RunError::Missing) => {
+                    self.iptables_missing = true;
+                    verdict
+                }
+            }
         }
 
         /// Relance la tâche de fond quand son résultat a vieilli, et récupère
@@ -744,9 +1003,130 @@ mod platform {
     }
 }
 
-/// Hors Linux, le collecteur existe mais ne mesure rien : Windows a son propre
-/// gestionnaire de mises à jour, sans équivalent lisible depuis un binaire.
-#[cfg(not(target_os = "linux"))]
+/// Windows : pas de mises à jour ni d'unités, mais quelques faits de sécurité
+/// lus dans le registre avec `reg.exe` (sans interpréteur, délai court).
+#[cfg(windows)]
+mod platform {
+    use std::time::Duration;
+
+    use tokio::time::Instant;
+    use tracing::debug;
+
+    use super::{
+        SystemHealthConfig, SystemHealthStat, parse_reg_dword, windows_firewall_enabled,
+        windows_rdp_enabled, windows_reboot_required, windows_smb1_enabled,
+    };
+
+    const REG_TIMEOUT: Duration = Duration::from_secs(5);
+    /// Les lectures du registre sont rapides mais changent rarement.
+    const SECURITY_INTERVAL: Duration = Duration::from_secs(300);
+    /// Pas de fenêtre de console pour le processus fils.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    const FIREWALL_LOCAL: &str =
+        r"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy";
+    const FIREWALL_POLICY: &str = r"HKLM\SOFTWARE\Policies\Microsoft\WindowsFirewall";
+    const TERMINAL_SERVER: &str = r"HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server";
+    const RDP_TCP: &str =
+        r"HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp";
+    const LANMAN: &str = r"HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters";
+    const REBOOT_KEYS: [&str; 2] = [
+        r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired",
+        r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending",
+    ];
+
+    pub struct SystemHealthProbe {
+        config: SystemHealthConfig,
+        cached: Option<(Instant, SystemHealthStat)>,
+    }
+
+    impl SystemHealthProbe {
+        pub fn new(config: &SystemHealthConfig) -> Self {
+            Self { config: config.clone(), cached: None }
+        }
+
+        pub async fn read(&mut self) -> Option<SystemHealthStat> {
+            if !self.config.enabled {
+                return None;
+            }
+            if let Some((at, stat)) = &self.cached {
+                if at.elapsed() < SECURITY_INTERVAL {
+                    return Some(stat.clone());
+                }
+            }
+            let stat = read_security(self.config.check_reboot).await;
+            self.cached = Some((Instant::now(), stat.clone()));
+            Some(stat)
+        }
+    }
+
+    async fn reg(args: &[&str]) -> Option<(Option<i32>, String)> {
+        let mut command = tokio::process::Command::new("reg.exe");
+        command
+            .args(args)
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .creation_flags(CREATE_NO_WINDOW)
+            .kill_on_drop(true);
+        match tokio::time::timeout(REG_TIMEOUT, command.output()).await {
+            Ok(Ok(output)) => {
+                Some((output.status.code(), String::from_utf8_lossy(&output.stdout).into_owned()))
+            }
+            Ok(Err(error)) => {
+                debug!(%error, "reg.exe could not be started");
+                None
+            }
+            Err(_) => None,
+        }
+    }
+
+    /// `None` : valeur ou clé absente, ou illisible.
+    async fn dword(key: &str, value: &str) -> Option<u32> {
+        let (code, stdout) = reg(&["query", key, "/v", value]).await?;
+        if code != Some(0) {
+            return None;
+        }
+        parse_reg_dword(&stdout, value)
+    }
+
+    /// `Some(existe)` ; `None` si `reg.exe` ne répond pas.
+    async fn key_exists(key: &str) -> Option<bool> {
+        match reg(&["query", key]).await?.0 {
+            Some(0) => Some(true),
+            Some(1) => Some(false),
+            _ => None,
+        }
+    }
+
+    async fn read_security(check_reboot: bool) -> SystemHealthStat {
+        let mut stat = SystemHealthStat::default();
+        for (profile, local, policy) in [
+            ("domain", "DomainProfile", "DomainProfile"),
+            ("private", "StandardProfile", "PrivateProfile"),
+            ("public", "PublicProfile", "PublicProfile"),
+        ] {
+            let policy = dword(&format!(r"{FIREWALL_POLICY}\{policy}"), "EnableFirewall").await;
+            let local = dword(&format!(r"{FIREWALL_LOCAL}\{local}"), "EnableFirewall").await;
+            if let Some(enabled) = windows_firewall_enabled(policy, local) {
+                stat.firewall_profiles.push((profile, enabled));
+            }
+        }
+        stat.rdp_enabled = windows_rdp_enabled(dword(TERMINAL_SERVER, "fDenyTSConnections").await);
+        stat.rdp_nla = dword(RDP_TCP, "UserAuthentication").await.map(|value| value == 1);
+        stat.smb1_enabled = Some(windows_smb1_enabled(dword(LANMAN, "SMB1").await));
+        if check_reboot {
+            let mut keys = Vec::with_capacity(REBOOT_KEYS.len());
+            for key in REBOOT_KEYS {
+                keys.push(key_exists(key).await);
+            }
+            stat.reboot_required = windows_reboot_required(&keys);
+        }
+        stat
+    }
+}
+
+/// Ailleurs (macOS…), le collecteur existe mais ne mesure rien.
+#[cfg(not(any(target_os = "linux", windows)))]
 mod platform {
     use super::{SystemHealthConfig, SystemHealthStat};
 
@@ -1018,6 +1398,7 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
             reboot_required: Some(true),
             failed_units: Some(vec!["mdmonitor.service".into()]),
             selinux: Some(SelinuxMode::Enforcing),
+            ..SystemHealthStat::default()
         };
         let samples = samples(&stat, 1_000);
 
@@ -1099,5 +1480,146 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
             .expect("un cycle ne doit pas attendre les vérifications lentes")
             .expect("collecteur actif");
         assert!(samples(&stat, 0).iter().all(|s| s.value.is_finite()));
+    }
+
+    const NFT_FIREWALLD: &str = r#"table inet firewalld {
+	chain filter_INPUT {
+		type filter hook input priority filter + 10; policy accept;
+		ct state { established, related } accept
+		ct status dnat accept
+		iifname "lo" accept
+		jump filter_INPUT_POLICIES
+		reject with icmpx admin-prohibited
+	}
+	chain filter_FORWARD {
+		type filter hook forward priority filter + 10; policy accept;
+	}
+}
+"#;
+
+    const NFT_UFW: &str = r#"table ip filter {
+	chain INPUT {
+		type filter hook input priority filter; policy drop;
+		ct state established,related accept
+	}
+	chain FORWARD {
+		type filter hook forward priority filter; policy drop;
+	}
+}
+"#;
+
+    const NFT_DOCKER_ONLY: &str = r#"table ip nat {
+	chain DOCKER {
+		iifname "docker0" counter packets 0 bytes 0 return
+	}
+	chain POSTROUTING {
+		type nat hook postrouting priority srcnat; policy accept;
+		oifname != "docker0" ip saddr 172.17.0.0/16 counter masquerade
+	}
+}
+table ip filter {
+	chain INPUT {
+		type filter hook input priority filter; policy accept;
+		tcp dport 22 accept comment "do not drop me"
+	}
+	chain FORWARD {
+		type filter hook forward priority filter; policy drop;
+		counter jump DOCKER-USER
+	}
+}
+"#;
+
+    #[test]
+    fn nft_input_filtering_is_detected() {
+        assert!(parse_nft_input_active(NFT_FIREWALLD));
+        assert!(parse_nft_input_active(NFT_UFW));
+        assert!(!parse_nft_input_active(NFT_DOCKER_ONLY));
+        assert!(!parse_nft_input_active(""));
+    }
+
+    #[test]
+    fn iptables_input_filtering_is_detected() {
+        assert!(parse_iptables_input_active("-P INPUT DROP\n-A INPUT -i lo -j ACCEPT\n"));
+        assert!(!parse_iptables_input_active("-P INPUT ACCEPT\n"));
+        assert!(parse_iptables_input_active(
+            "-P INPUT ACCEPT\n-A INPUT -p tcp --dport 23 -j REJECT --reject-with icmp-port-unreachable\n"
+        ));
+        assert!(parse_iptables_input_active("-P INPUT ACCEPT\n-A INPUT -j PVEFW-INPUT\n"));
+        assert!(!parse_iptables_input_active("-P INPUT ACCEPT\n-A INPUT -j ACCEPT\n"));
+    }
+
+    #[test]
+    fn sshd_effective_config_is_summarised() {
+        let hardened = "port 22\npermitrootlogin no\npasswordauthentication no\n\
+kbdinteractiveauthentication no\nusepam yes\n";
+        assert_eq!(parse_sshd_config(hardened), (Some(0), Some(false)));
+
+        let key_only_root = "permitrootlogin without-password\npasswordauthentication no\n";
+        assert_eq!(parse_sshd_config(key_only_root), (Some(1), Some(false)));
+        let prohibit = "permitrootlogin prohibit-password\npasswordauthentication yes\n";
+        assert_eq!(parse_sshd_config(prohibit), (Some(1), Some(true)));
+
+        let open = "permitrootlogin yes\npasswordauthentication no\n\
+kbdinteractiveauthentication yes\nusepam yes\n";
+        assert_eq!(parse_sshd_config(open), (Some(2), Some(true)));
+
+        // Clavier interactif sans PAM : pas de mot de passe.
+        let no_pam = "permitrootlogin no\npasswordauthentication no\n\
+challengeresponseauthentication yes\nusepam no\n";
+        assert_eq!(parse_sshd_config(no_pam), (Some(0), Some(false)));
+
+        assert_eq!(parse_sshd_config("not sshd output"), (None, None));
+    }
+
+    #[test]
+    fn registry_dwords_are_parsed() {
+        let out = "\r\nHKEY_LOCAL_MACHINE\\SYSTEM\\X\r\n    fDenyTSConnections    REG_DWORD    0x1\r\n\r\n";
+        assert_eq!(parse_reg_dword(out, "fDenyTSConnections"), Some(1));
+        assert_eq!(parse_reg_dword(out, "enablefirewall"), None);
+        assert_eq!(parse_reg_dword("    SMB1    REG_DWORD    0x0\n", "SMB1"), Some(0));
+        assert_eq!(parse_reg_dword("    SMB1    REG_SZ    1\n", "SMB1"), None);
+    }
+
+    #[test]
+    fn windows_verdicts_follow_policy_and_defaults() {
+        assert_eq!(windows_firewall_enabled(Some(0), Some(1)), Some(false));
+        assert_eq!(windows_firewall_enabled(None, Some(1)), Some(true));
+        assert_eq!(windows_firewall_enabled(None, None), None);
+        assert_eq!(windows_rdp_enabled(Some(0)), Some(true));
+        assert_eq!(windows_rdp_enabled(Some(1)), Some(false));
+        assert!(!windows_smb1_enabled(None));
+        assert!(windows_smb1_enabled(Some(1)));
+        assert_eq!(windows_reboot_required(&[Some(false), Some(true)]), Some(true));
+        assert_eq!(windows_reboot_required(&[Some(false), Some(false)]), Some(false));
+        assert_eq!(windows_reboot_required(&[Some(false), None]), None);
+    }
+
+    #[test]
+    fn security_facts_become_samples() {
+        let stat = SystemHealthStat {
+            ssh_root_login: Some(2),
+            ssh_password_auth: Some(true),
+            firewall_active: Some(false),
+            firewall_profiles: vec![("domain", true), ("public", false)],
+            rdp_enabled: Some(true),
+            rdp_nla: Some(false),
+            smb1_enabled: Some(false),
+            ..SystemHealthStat::default()
+        };
+        let samples = samples(&stat, 0);
+        assert_eq!(value_of(&samples, "agent_ssh_root_login"), Some(2.0));
+        assert_eq!(value_of(&samples, "agent_ssh_password_auth"), Some(1.0));
+        assert_eq!(value_of(&samples, "agent_firewall_active"), Some(0.0));
+        assert_eq!(
+            value_of(&samples, r#"agent_firewall_profile_enabled{profile="domain"}"#),
+            Some(1.0)
+        );
+        assert_eq!(
+            value_of(&samples, r#"agent_firewall_profile_enabled{profile="public"}"#),
+            Some(0.0)
+        );
+        assert_eq!(value_of(&samples, "agent_rdp_enabled"), Some(1.0));
+        assert_eq!(value_of(&samples, "agent_rdp_nla"), Some(0.0));
+        assert_eq!(value_of(&samples, "agent_smb1_enabled"), Some(0.0));
     }
 }

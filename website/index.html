@@ -317,7 +317,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			<div>
 				<ul class="points">
 					<li><strong>Wall mode</strong><p>The bulletin alone, full screen, for a room monitor: a living scene (Paris rooftop with the Eiffel Tower and the DumbMonit pigeons by default, or one of many others) whose weather follows your alerts, an OLED theme for a screen left on for days, and wall music &mdash; Spotify Connect turns the screen into a speaker.</p></li>
-					<li><strong>Security score</strong><p>Every supported device gets a 0–100 score and an A–F grade from the vendor’s own best-practice checks, PingCastle-style: category, severity, evidence, remediation, and a worst-first Security page.</p></li>
+					<li><strong>Security score</strong><p>Optional: turn it on and hosts, Proxmox, Synology, OPNsense, websites and Active Directory get an A–F grade next to them, with a report of what fails and the concrete steps to fix it. Indicative, not an audit.</p></li>
 					<li><strong>Accounts</strong><p>Admin, operator (handles alerts, changes no configuration) and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), account creation off by default.</p></li>
 					<li><strong>Plays well with what you run</strong><p><code>/metrics</code>, <code>/federate</code> and a Prometheus-compatible endpoint let an existing Grafana read DumbMonit's data.</p></li>
 					<li><strong>Open, documented API</strong><p>Every route behind <code>/api/openapi.json</code> (OpenAPI 3.1): scoped tokens (<code>dmt_…</code>, read or write) that can expire, be restricted to a network, and are rate-limited. <a href="https://dumbmonit.readthedocs.io/en/latest/reference/api/">API reference</a></p></li>

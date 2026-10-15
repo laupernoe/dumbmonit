@@ -160,6 +160,8 @@ https://shop.example.org,Shop,Customers/Acme,,300s,Add to cart
 | `dumbmonit_website_status_code` | HTTP-статус конечного ответа. |
 | `dumbmonit_website_response_seconds` | Общее время, включая перенаправления. |
 | `dumbmonit_website_redirect_hops` | Отслеженные перенаправления. |
+| `dumbmonit_website_https` | 1, когда конечный адрес использует https. |
+| `dumbmonit_website_security_header{header}` | 0/1 для каждой метки `header` (только https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Всегда 1; метка содержит платформу. |
 | `dumbmonit_website_text_chars` | Символов видимого текста (ответы 2xx). |
 | `dumbmonit_website_blank` | 1, когда этот текст ниже порога. |

@@ -19,6 +19,8 @@
 	} from '#lib/api/index.js';
 	import { displayState } from '#lib/format.js';
 	import { loadSparklines } from '#lib/metrics.js';
+	import { getSecuritySummary } from '#lib/api/security.js';
+	import type { SecurityGrade } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -47,6 +49,8 @@
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
 	let sparklines = $state<Map<TargetId, Serie[]>>(new Map());
+	/** Security badges: empty while the score is off in Settings, or for unrated kinds. */
+	let security = $state<Map<TargetId, { grade: SecurityGrade | null; score: number | null }>>(new Map());
 	let kindLabels = $state<Map<string, string>>(new Map());
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
 	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
@@ -596,6 +600,15 @@
 		if (next) sparklines = next;
 	}
 
+	async function loadSecurity(signal?: AbortSignal) {
+		// Decoration too: no badge rather than an error when it cannot be read.
+		const summary = await getSecuritySummary(signal).catch(() => null);
+		if (!summary) return;
+		security = new Map(
+			summary.enabled ? summary.devices.map((d) => [d.target_id, { grade: d.grade, score: d.score }]) : []
+		);
+	}
+
 	async function loadKinds(signal?: AbortSignal) {
 		try {
 			const collectors = await listCollectors(signal);
@@ -609,10 +622,14 @@
 		const controller = new AbortController();
 		void loadKinds(controller.signal);
 		void load(controller.signal);
+		void loadSecurity(controller.signal);
 		const timer = setInterval(() => void load(controller.signal), 30_000);
+		// Scores move slowly (recomputed every 15 min server-side).
+		const securityTimer = setInterval(() => void loadSecurity(controller.signal), 120_000);
 		return () => {
 			controller.abort();
 			clearInterval(timer);
+			clearInterval(securityTimer);
 		};
 	});
 </script>
@@ -794,6 +811,7 @@
 					reorder={canReorder ? reorderControls() : null}
 					layout={view}
 					{names}
+					{security}
 				/>
 			{/if}
 		{/each}

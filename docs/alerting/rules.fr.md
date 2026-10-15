@@ -718,7 +718,8 @@ Rapporté par l'agent Windows sur un hôte Hyper-V ; voir
 
 Calculé par le serveur toutes les 15 minutes pour chaque appareil dont
 le type a des contrôles de sécurité, et stocké comme
-`dumbmonit_security_score` (0–100). Voir
+`dumbmonit_security_score` (0–100), uniquement tant que le score de sécurité
+est activé dans les Paramètres (désactivé par défaut). Voir
 [Score de sécurité](../using/security-score.md).
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |

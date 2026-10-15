@@ -302,7 +302,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			<div>
 				<ul class="points">
 					<li><strong>墙面模式</strong><p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p></li>
-					<li><strong>安全评分</strong><p>每个受支持的设备都会根据厂商自身的最佳实践检查，获得 0–100 的分数和 A–F 的等级，类似 PingCastle：类别、严重程度、证据、修复建议，以及按最差优先排序的“安全”页面。</p></li>
+					<li><strong>安全评分</strong><p>可选：启用后，主机、Proxmox、Synology、OPNsense、网站和 Active Directory 旁边会显示 A–F 等级，并附有失败项的报告和具体的修复步骤。仅供参考，不是审计。</p></li>
 					<li><strong>账户</strong><p>管理员、操作员（处理告警，不改配置）和查看者角色，可选的 TOTP 二次验证，审计日志，以及基于 OpenID Connect 的单点登录（Authentik、Authelia、Keycloak、Pocket ID…），默认关闭账户注册。</p></li>
 					<li><strong>与你正在运行的系统和平共处</strong><p><code>/metrics</code>、<code>/federate</code> 和兼容 Prometheus 的端点，让现有的 Grafana 可以读取 DumbMonit 的数据。</p></li>
 					<li><strong>开放且有文档的 API</strong><p>所有路由都列在 <code>/api/openapi.json</code>（OpenAPI 3.1）中：带作用域的令牌（<code>dmt_…</code>，只读或可写），可设置过期、限制网络来源，并有速率限制。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/reference/api/">API 参考</a></p></li>

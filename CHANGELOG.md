@@ -53,6 +53,40 @@ All notable changes to this project are documented here. The format follows
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
 
+- **The security score is now opt-in and lives next to each device.** The
+  Security page is gone (`/security` opens the setting): turn the score on in
+  **Settings → Account & security → Security score**, and rated devices get a
+  grade badge in the device list and on their page. The badge opens a report:
+  what fails and how to fix it, what passes, concrete steps to improve the
+  score on that product, and a link to its documentation, under a visible
+  "indicative, not a full audit" notice. New installations start with it off;
+  an installation that already monitored a rated device keeps it on. Off, the
+  score is not computed and `dumbmonit_security_score` is no longer written.
+  New `GET`/`PUT /api/security/settings`; both security reads now carry
+  `enabled`, and the device report a `guide`. See
+  [Security score](docs/using/security-score.md).
+- **Security score coverage narrowed to the products where it means
+  something, with new checks.** Linux hosts gain SSH root login, SSH password
+  authentication and host firewall checks; Windows hosts are rated on the
+  firewall profiles, a pending restart, Remote Desktop without Network Level
+  Authentication and SMBv1; websites (HTTP(S) monitors and Website health) on
+  HTTPS and security headers (HSTS, `nosniff`, clickjacking protection, CSP)
+  besides the certificate; Synology on a pending DSM update, the built-in
+  `admin` account, Auto Block and the DSM firewall (administrator account
+  only, read hourly). Proxmox VE, Proxmox Backup Server, OPNsense and Active
+  Directory keep their checks. pfSense, UniFi, NTP,
+  nginx/Apache, GitLab, Forgejo and the vendor-update checks of other
+  integrations are no longer rated: one or two checks gave a grade that meant
+  little.
+- The agent reports `agent_ssh_root_login`, `agent_ssh_password_auth` and
+  `agent_firewall_active` on Linux, and `agent_firewall_profile_enabled`,
+  `agent_reboot_required`, `agent_rdp_enabled`, `agent_rdp_nla` and
+  `agent_smb1_enabled` on Windows. HTTP(S) monitors report
+  `probe_http_security_header`, Website health devices `website_https` and
+  `website_security_header`, Synology `synology_update_available`,
+  `synology_admin_account_enabled`, `synology_autoblock_enabled` and
+  `synology_firewall_enabled`.
+
 ### Security
 
 - **Bundled VictoriaMetrics 1.153.0 → 1.154.0.** Built with Go 1.27.2 and

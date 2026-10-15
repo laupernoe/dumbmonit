@@ -53,6 +53,7 @@ Todos gauges, todos com o prefixo `dumbmonit_`, todos com a etiqueta
 | `probe_http_status_code` | http, websocket | Código de estado obtido. |
 | `probe_http_first_byte_seconds` | http | Tempo até aos cabeçalhos da resposta. |
 | `probe_http_content_bytes` | http | Tamanho do corpo. |
+| `probe_http_security_header{header}` | http | 0/1 por etiqueta `header` (apenas https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | todos exceto dns e ping | Estabelecimento da ligação (início de sessão incluído para bases de dados). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Apenas a negociação TLS. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Presença; etiqueta `version`. |

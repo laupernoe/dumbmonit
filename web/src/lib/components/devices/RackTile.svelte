@@ -4,6 +4,8 @@
 	 * grid as a faceplate (product icon and kind, name, address, state plate,
 	 * last seen) folded into a card, the 24 h sparkline along the bottom.
 	 * A child names the unit it sits behind instead of being indented.
+	 * Opened through a stretched link on the name, so the security badge can
+	 * link to the report on its own (see `Faceplate`).
 	 */
 	import type { Target } from '#lib/api/index.js';
 	import type { TargetState } from '#lib/format.js';
@@ -13,6 +15,8 @@
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { CornerDownRight } from 'lucide-svelte';
+	import SecurityBadge from './SecurityBadge.svelte';
+	import type { SecurityGrade } from '#lib/api/index.js';
 
 	interface Props {
 		target: Target;
@@ -22,27 +26,30 @@
 		/** Name of the unit this one sits behind, when it is a child. */
 		parentName?: string | null;
 		shadowed?: boolean;
+		/** Security grade, when the score is on and this kind is rated. */
+		security?: { grade: SecurityGrade | null; score: number | null } | null;
 	}
 
-	let { target, state, kindLabel, sparkline = null, parentName = null, shadowed = false }: Props = $props();
+	let { target, state, kindLabel, sparkline = null, parentName = null, shadowed = false, security = null }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
 </script>
 
 <Spotlight
-	tag="a"
-	href={`/targets/${target.id}`}
 	class={`faceplate flex h-full flex-col gap-3 p-4 ${shadowed ? 'opacity-60' : ''}`}
 	data-interactive
-	aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 >
 	<div class="flex items-start gap-3">
 		<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
 			<KindIcon kind={target.kind} class="size-[1.125rem]" />
 		</span>
 		<div class="min-w-0 flex-1">
-			<span class="block truncate font-semibold text-ink">{target.name}</span>
+			<a
+				href={`/targets/${target.id}`}
+				class="block truncate font-semibold text-ink after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-signal"
+				aria-label={`${target.name}, ${STATE_LABEL[state]}`}
+			>{target.name}</a>
 			<span class="label-tape mt-0.5 block truncate !text-[0.625rem]">{kindLabel ?? target.kind}</span>
 		</div>
 		<Led {tone} {blink} size="sm" class="mt-1.5" />
@@ -60,6 +67,9 @@
 
 	<div class="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 		<Plate {tone} label={STATE_LABEL[state]} pulse={blink} />
+		{#if security}
+			<SecurityBadge grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
+		{/if}
 		<p class="tnum min-w-0 flex-1 truncate text-[0.8125rem] text-ink-2" title={target.last_error ?? undefined}>
 			{#if target.last_error}
 				<span class={target.error_kind === 'config' ? 'text-advisory-ink' : 'text-warning-ink'}>{target.last_error}</span>

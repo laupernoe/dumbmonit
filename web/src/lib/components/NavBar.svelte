@@ -10,7 +10,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
@@ -27,7 +27,6 @@
 		{ href: '/', label: m.misc_nav_overview(), icon: Gauge, exact: true },
 		{ href: '/targets', label: m.misc_nav_devices(), icon: Server, exact: false },
 		{ href: '/alerts', label: m.misc_nav_alerts(), icon: BellRing, exact: false },
-		{ href: '/security', label: m.misc_nav_security(), icon: ShieldCheck, exact: false },
 		{ href: '/status', label: m.misc_nav_status(), icon: Globe, exact: false },
 		{ href: '/settings', label: m.misc_nav_settings(), icon: Settings2, exact: false }
 	];

@@ -161,6 +161,8 @@ qualquer coisa; um site já monitorizado (mesmo endereço final) é ignorado.
 | `dumbmonit_website_status_code` | Estado HTTP da resposta final. |
 | `dumbmonit_website_response_seconds` | Tempo total, redirecionamentos incluídos. |
 | `dumbmonit_website_redirect_hops` | Redirecionamentos seguidos. |
+| `dumbmonit_website_https` | 1 quando o endereço final é https. |
+| `dumbmonit_website_security_header{header}` | 0/1 por etiqueta `header` (apenas https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Sempre 1; a etiqueta traz a plataforma. |
 | `dumbmonit_website_text_chars` | Caracteres de texto visível (respostas 2xx). |
 | `dumbmonit_website_blank` | 1 quando esse texto está abaixo do limiar. |

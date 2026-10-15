@@ -719,7 +719,8 @@ Reportado pelo agente Windows num anfitrião Hyper-V; ver
 
 Calculada pelo servidor a cada 15 minutos para todo dispositivo cujo
 tipo tem verificações de segurança, e guardada como
-`dumbmonit_security_score` (0–100). Ver
+`dumbmonit_security_score` (0–100), apenas enquanto a pontuação de segurança
+estiver ativada nas Definições (desativada por predefinição). Ver
 [Pontuação de segurança](../using/security-score.md).
 
 | Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |

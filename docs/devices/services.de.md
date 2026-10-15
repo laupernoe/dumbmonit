@@ -49,6 +49,7 @@ mit dem Label `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|n
 | `probe_http_status_code` | http, websocket | Erhaltener Statuscode. |
 | `probe_http_first_byte_seconds` | http | Zeit bis zu den Antwort-Headern. |
 | `probe_http_content_bytes` | http | Größe des Bodys. |
+| `probe_http_security_header{header}` | http | 0/1 je Label `header` (nur https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | alle außer dns und ping | Verbindungsaufbau (bei Datenbanken inklusive Anmeldung). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Nur die TLS-Aushandlung. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Präsenz; Label `version`. |

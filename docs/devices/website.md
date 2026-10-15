@@ -203,6 +203,8 @@ already monitored (same final address) is skipped.
 | `dumbmonit_website_status_code` | HTTP status of the final answer. |
 | `dumbmonit_website_response_seconds` | Total time, redirects included. |
 | `dumbmonit_website_redirect_hops` | Redirects followed. |
+| `dumbmonit_website_https` | 1 when the final address is https. |
+| `dumbmonit_website_security_header{header}` | 0/1 per `header` label (https only): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform,category}` | Always 1; the labels carry the platform and, when known, the category. |
 | `dumbmonit_website_text_chars` | Characters of visible text (2xx answers). |
 | `dumbmonit_website_blank` | 1 when that text is below the threshold. |

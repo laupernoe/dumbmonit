@@ -112,6 +112,22 @@ pub fn probe_samples(kind: &str, name: &str, ts_ms: i64) -> Result<Vec<Sample>, 
                 labelled(gauge("probe_http_status_code", 200.0, ts_ms));
                 labelled(gauge("probe_http_first_byte_seconds", first_byte, ts_ms));
                 labelled(gauge("probe_http_content_bytes", 18_000.0 + (seed % 9000) as f64, ts_ms));
+                for (i, header) in [
+                    "strict-transport-security",
+                    "x-content-type-options",
+                    "content-security-policy",
+                    "x-frame-options",
+                    "frame-ancestors",
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let ok = i < 2 || (seed >> i) % 3 != 0;
+                    labelled(
+                        gauge("probe_http_security_header", f64::from(u8::from(ok)), ts_ms)
+                            .with_label("header", header),
+                    );
+                }
             }
             labelled(gauge("probe_duration_seconds", first_byte + 0.01, ts_ms));
         }

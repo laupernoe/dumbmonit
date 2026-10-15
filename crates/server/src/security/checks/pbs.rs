@@ -6,7 +6,7 @@
 //! documentation.
 
 use super::super::facts::{list, plural};
-use super::super::{Category, Check, CheckDef, Facts, SecurityProvider, Severity};
+use super::super::{Category, Check, CheckDef, Facts, Guide, SecurityProvider, Severity};
 use super::zero_everywhere;
 
 pub const UPDATES: CheckDef = CheckDef {
@@ -83,6 +83,18 @@ pub const CERTIFICATE: CheckDef = CheckDef {
 pub const DEFS: &[&CheckDef] =
     &[&UPDATES, &RESTART, &VERIFY, &PRUNE, &OFFSITE, &INTEGRITY, &CERTIFICATE];
 
+/// Par où commencer pour améliorer la note.
+pub const PBS_GUIDE: Guide = Guide {
+    product: "Proxmox Backup Server",
+    anchor: "proxmox-backup-server",
+    steps: &[
+        "Install updates (Administration > Updates) and reboot when the kernel or the proxmox-backup package changed.",
+        "Schedule a verify job and a prune job on every datastore, so bad chunks are found and old snapshots do not pile up.",
+        "Keep a copy elsewhere: a sync job to a second Backup Server, or a tape backup job.",
+        "Use an ACME certificate for the web interface (Configuration > Certificates).",
+    ],
+};
+
 pub struct Pbs;
 
 impl SecurityProvider for Pbs {
@@ -102,6 +114,10 @@ impl SecurityProvider for Pbs {
             "pbs_gc_bad_chunks",
             "pbs_node_certificate_expires_seconds",
         ]
+    }
+
+    fn guide(&self, _kind: &str, _facts: &Facts) -> Guide {
+        PBS_GUIDE
     }
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
