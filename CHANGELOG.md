@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Import from Uptime Kuma.** On **Add a monitor**, drop the backup file of
+  Uptime Kuma 1.x (Settings, Backup, Export; version 2 has no export) and get a
+  preview of what will be created and what is skipped, and why: HTTP, keyword and
+  JSON-query monitors become `http`, ping, TCP port and DNS keep their type, push
+  monitors become heartbeats (with a new URL), groups become folders and tags
+  become device tags. Notifications, credentials, headers and request bodies are
+  never imported. New endpoint `POST /api/targets/import/kuma`. See
+  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
+- **Filter the Monitors list by tag.** Tags in use appear as chips above the
+  list (the options of a device type are not tags); pick one or several to keep
+  the devices that carry all of them. Search, state, kind and tags are now kept
+  in the URL (`?q=&state=&kind=&tag=env=prod`), so a filtered view can be
+  bookmarked or shared.
 - **Each service an agent finds is its own device.** Docker, Plakar,
   restic/Borg, ZFS, libvirt, WireGuard, IPsec and the speed test no longer pile
   up on the machine's page: each one becomes an `agent_service` device under

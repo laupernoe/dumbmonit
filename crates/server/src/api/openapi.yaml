@@ -925,6 +925,54 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/import/kuma:
+    post:
+      operationId: importKuma
+      tags: [Devices]
+      summary: Import monitors from an Uptime Kuma backup
+      description: >-
+        Body: the JSON file exported by Uptime Kuma 1.x (Settings, Backup,
+        Export; version 2 has no backup export), at most 4 MiB and 2000
+        monitors. `http`, `keyword` and `json-query` monitors become `http`
+        devices, `ping` becomes `ping`, `port` becomes `tcp`, `dns` becomes
+        `dns`, `push` becomes a `push` heartbeat (with a new URL); groups
+        become folders and tags become device tags. Other types, upside-down
+        monitors and devices already monitored are skipped with a reason.
+        Notifications, credentials, headers and request bodies are never
+        imported. With `dry_run=true` nothing is created and rows come back
+        with status `ok`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monitorList]
+              properties:
+                version: { type: string }
+                notificationList: { type: array, items: { type: object } }
+                monitorList: { type: array, items: { type: object } }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { description: The file is larger than 4 MiB. }
+
   /api/targets/reorder:
     post:
       operationId: reorderTargets
@@ -5103,6 +5151,33 @@ components:
     NullableServerTimestamp:
       type: [string, "null"]
       description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
+    KumaImportReport:
+      type: object
+      required: [dry_run, total, created, skipped, errors, notifications_ignored, rows]
+      properties:
+        dry_run: { type: boolean }
+        total: { type: integer }
+        created: { type: integer, description: Devices created (or that would be, in a dry run). }
+        skipped: { type: integer, description: Monitors ignored or already monitored. }
+        errors: { type: integer }
+        notifications_ignored: { type: integer, description: Notifications in the file, never imported. }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [row, name, source_type, address, folder, tags, status]
+            properties:
+              row: { type: integer, description: Position of the monitor in the file, from 1. }
+              name: { type: string }
+              source_type: { type: string, description: Uptime Kuma monitor type. }
+              kind: { type: [string, "null"], description: Device type created; null when skipped. }
+              address: { type: string }
+              folder: { type: string }
+              interval_secs: { type: [integer, "null"] }
+              tags: { type: array, items: { type: string }, description: Uptime Kuma tags as `key=value`. }
+              status: { type: string, enum: [ok, created, skipped, error] }
+              message: { type: [string, "null"], description: Why it was skipped, or what is not imported. }
+              id: { type: [integer, "null"], format: int64 }
     TargetImportReport:
       type: object
       required: [dry_run, total, created, skipped, errors, rows]

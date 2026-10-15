@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
@@ -30,6 +33,12 @@
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import ViewSwitcher from '#lib/components/devices/ViewSwitcher.svelte';
+	import {
+		hasAllTags,
+		parseFilters,
+		serializeFilters,
+		tagCounts
+	} from '#lib/components/devices/listFilters.js';
 	import { loadRackView, saveRackView, type RackView } from '#lib/components/devices/view.js';
 	import { nearestRow, needsAttention } from '#lib/components/devices/rack.js';
 	import {
@@ -52,12 +61,28 @@
 	/** Security badges: empty while the score is off in Settings, or for unrated kinds. */
 	let security = $state<Map<TargetId, { grade: SecurityGrade | null; score: number | null }>>(new Map());
 	let kindLabels = $state<Map<string, string>>(new Map());
+	/** Option keys per device type: what is not an option of its type is a free tag. */
+	let optionKeys = $state<Map<string, Set<string>>>(new Map());
+	const NO_KEYS: ReadonlySet<string> = new Set();
+	const optionKeysOf = (kind: string) => optionKeys.get(kind) ?? NO_KEYS;
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
 	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
 
-	let search = $state('');
-	let segment = $state<Segment>('all');
-	let kind = $state('');
+	// Search, state, kind and tags live in the URL (?q=&state=&kind=&tag=key=value),
+	// read once on arrival and rewritten (history replaced) as they change.
+	const initial = untrack(() => parseFilters(page.url.searchParams));
+	let search = $state(initial.search);
+	let segment = $state<Segment>(initial.segment);
+	let kind = $state(initial.kind);
+	let tagFilter = $state<string[]>(initial.tags);
+
+	$effect(() => {
+		const query = serializeFilters({ search, segment, kind, tags: tagFilter });
+		untrack(() => {
+			if (query === page.url.search) return;
+			void goto(`${page.url.pathname}${query}`, { replaceState: true });
+		});
+	});
 
 	/** Rows, tiles or compact: remembered per viewer, in this browser only. */
 	let view = $state<RackView>(loadRackView());
@@ -92,11 +117,18 @@
 		return [...seen].sort((a, b) => a[1].localeCompare(b[1], 'en'));
 	});
 
-	/** Devices matching the search box and the kind select, before the segment. */
+	/** Free tags in use (with their device count), offered as filter chips. */
+	const tagChips = $derived(tagCounts(targets, optionKeysOf));
+	function toggleTag(tag: string) {
+		tagFilter = tagFilter.includes(tag) ? tagFilter.filter((t) => t !== tag) : [...tagFilter, tag];
+	}
+
+	/** Devices matching the search box, the kind select and the tags, before the segment. */
 	const narrowed = $derived.by(() => {
 		const term = search.trim().toLowerCase();
 		return targets.filter((target) => {
 			if (kind && target.kind !== kind) return false;
+			if (!hasAllTags(target.tags, tagFilter, optionKeysOf(target.kind))) return false;
 			if (!term) return true;
 			const label = kindLabels.get(target.kind) ?? '';
 			return (
@@ -145,7 +177,7 @@
 	// empty one exists only for this session — it is slotted in alongside the
 	// real sections, in the same order, until a device is dropped into it.
 	let pendingEmptyFolders = $state<Set<string>>(new Set());
-	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '');
+	const filtered = $derived(search.trim() !== '' || segment !== 'all' || kind !== '' || tagFilter.length > 0);
 	/** Reordering hit-tests rows top to bottom: offered in the two list layouts only. */
 	const canReorder = $derived(auth.isAdmin && !filtered && view !== 'tiles');
 	const folderSections = $derived.by(() => {
@@ -165,6 +197,7 @@
 		search = '';
 		segment = 'all';
 		kind = '';
+		tagFilter = [];
 	}
 
 	// --- Folders & manual order (admin only, and only while unfiltered: the
@@ -613,6 +646,7 @@
 		try {
 			const collectors = await listCollectors(signal);
 			kindLabels = new Map(collectors.map((c) => [c.kind, kindLabel(c.kind, c.label)]));
+			optionKeys = new Map(collectors.map((c) => [c.kind, new Set(c.options.map((o) => o.key))]));
 		} catch {
 			// The raw kind is a fine label until the server describes it.
 		}
@@ -735,6 +769,24 @@
 			<div class="lg:ml-auto"><ViewSwitcher value={view} onchange={setView} /></div>
 		</div>
 	</div>
+	{#if tagChips.length > 0 || tagFilter.length > 0}
+		<div class="mb-4 flex flex-wrap items-center gap-1.5" role="group" aria-label={m.devices_targets_filter_tags()}>
+			{#each [...new Set([...tagFilter, ...tagChips.map(([tag]) => tag)])] as tag (tag)}
+				{@const active = tagFilter.includes(tag)}
+				<button
+					type="button"
+					aria-pressed={active}
+					onclick={() => toggleTag(tag)}
+					class="inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] {active
+						? 'border-ink bg-ink text-surface'
+						: 'border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink'}"
+				>
+					<span class="break-all">{tag}</span>
+					<span class="tnum opacity-70">{tagChips.find(([t]) => t === tag)?.[1] ?? 0}</span>
+				</button>
+			{/each}
+		</div>
+	{/if}
 {/if}
 
 {#if actionError}
