@@ -7,14 +7,15 @@
 | Variable | Default | Role |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | API 和 web UI 的监听地址，在容器内。 |
+| `PUID` / `PGID` | `65532` | 容器以 root 启动（`user: "0:0"`，如随附的 `docker-compose.yml`）时服务器运行所用的用户和组：启动时数据目录会被移交给它们，随后放弃 root。`0` 会被拒绝。`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 优先。其他情况下被忽略。参见[权限](../install/docker.md#permissions)。 |
 | `DUMBMONIT_DATA_DIR` | `/data` | 持久目录：`dumbmonit.db`（SQLite）、`secret.key`、`vm/`（嵌入式 VictoriaMetrics）和 `webchange/`（网站更改的屏幕截图）。 |
 | `DUMBMONIT_VM_URL` | *(unset)* | 外部 VictoriaMetrics 的基 URL（`http://host:8428`）。当设置时，嵌入式未启动；见[下方](#embedded-victoriametrics)。 |
-| `DUMBMONIT_SECRET` | *(generated)* | 实例秘密。如果空，从 `<data dir>/secret.key` 读，在第一次启动时生成。用 AES-256-GCM 加密设备凭证、通道秘密和代理令牌。 |
+| `DUMBMONIT_SECRET` | *(generated)* | 实例秘密。如果空，从 `<data dir>/secret.key` 读，在第一次启动时生成。用 AES-256-GCM 加密监控项凭证、通道秘密和代理令牌。 |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | 最大同步探针，所有收集器结合。 |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | 一个探针的硬超时。服务监测有其自己的、更短的 `timeout_seconds` 选项。 |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | 批处理写的周期朝向 VictoriaMetrics。 |
 | `DUMBMONIT_FLUSH_BATCH` | `5000` | 缓冲示例数触发在周期之前的写。 |
-| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | 异步运行时的线程。服务器花时间等待网络：四个覆盖家庭实验室，仅为数百设备提高。 |
+| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | 异步运行时的线程。服务器花时间等待网络：四个覆盖家庭实验室，仅为数百监控项提高。 |
 | `DUMBMONIT_DB_POOL` | `4` | 最大开 SQLite 连接。每个成本一个线程和一个 2 MB 页缓存；空闲连接五分钟后关闭。 |
 | `DUMBMONIT_LOG` | `info` | 日志过滤器，`tracing` 语法：`debug`、`warn`、`dumbmonit=debug,sqlx=warn`… |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | 代理二进制目录在 `/download/` 下提供。空或缺失：安装命令失败 `404`，服务器仍运行。 |
@@ -34,7 +35,7 @@
 | `DUMBMONIT_OIDC_GROUPS_CLAIM` | `groups` | 列出用户组的令牌声明。 |
 | `DUMBMONIT_OIDC_ADMIN_GROUPS` | *(empty)* | 逗号分离的组其成员变成管理员。 |
 | `DUMBMONIT_OIDC_OPERATOR_GROUPS` | *(empty)* | 逗号分离的组其他成员变成操作员。请参阅 [Single sign-on](../using/settings.md#single-sign-on)。 |
-| `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` 提供 `/metrics`、`/federate` 和 `/prometheus/api/v1/…` 不用 API 令牌。任何可以到达端口的人然后读每个测量的每个设备和实例的状态；仅在其他东西已限制对端口的访问时设置。请参阅 [Metrics](metrics.md#scraping-dumbmonit)。 |
+| `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` 提供 `/metrics`、`/federate` 和 `/prometheus/api/v1/…` 不用 API 令牌。任何可以到达端口的人然后读每个测量的每个监控项和实例的状态；仅在其他东西已限制对端口的访问时设置。请参阅 [Metrics](metrics.md#scraping-dumbmonit)。 |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | 告警评估周期。低于 10 的值提高到 10。 |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | 告警历史的保留，以天计。 |
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | 数据库的计划本地备份。`0`、`false`、`no` 或 `off` 停止写入它们。请参阅 [Backup and restore](../install/backup.md#scheduled-local-backups)。 |
@@ -61,7 +62,7 @@ DumbMonit 被称为 EzyMonit 直到 2026 年 9 月。每个 `DUMBMONIT_*` 变量
 | `DUMBMONIT_VM_BINARY` | `/victoria-metrics-prod` | 要启动的 VictoriaMetrics 二进制的路径。 |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | 监听地址，在容器内。默认 Loopback：仅服务器与之谈话。开发覆盖设置 `0.0.0.0:8428` 和发布端口。 |
 | `DUMBMONIT_VM_RETENTION` | `12` | 保留，在 `-retentionPeriod` 语法中：月数，或如 `30d` 或 `2y` 的持续时间。 |
-| `DUMBMONIT_VM_MEMORY` | `256MB` | VictoriaMetrics 缓存预算（`-memory.allowedBytes`）。不用预算 VM 为主机 RAM 的 60% 和其驻留内存增长的日子大小它们。几十个设备适合在 256 MB 中；为数百主机提高。 |
+| `DUMBMONIT_VM_MEMORY` | `256MB` | VictoriaMetrics 缓存预算（`-memory.allowedBytes`）。不用预算 VM 为主机 RAM 的 60% 和其驻留内存增长的日子大小它们。几十个监控项适合在 256 MB 中；为数百主机提高。 |
 
 其数据住在 `<data dir>/vm`，在数据库的相同卷上。三个标志由服务器固定，不可配置：
 `-search.maxUniqueTimeseries=100000`（失控查询不能耗尽预算）、`-search.maxConcurrentRequests=4`（一个 UI 加告警引擎）和

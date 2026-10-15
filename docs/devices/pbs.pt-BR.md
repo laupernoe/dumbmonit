@@ -6,11 +6,11 @@ coleta de lixo), datastores, discos e pools ZFS, atualizações pendentes,
 os serviços e versões de pacote do próprio servidor, e o nível de fita
 quando houver um.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-![Um dispositivo PBS: falhas, o calendário de backup de 30 dias, jobs e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![Um monitor PBS: falhas, o calendário de backup de 30 dias, jobs e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Além dos gráficos genéricos, um dispositivo PBS mostra seis painéis,
+Além dos gráficos genéricos, um monitor PBS mostra seis painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
 próprio PBS:
 
@@ -63,7 +63,7 @@ histórico vem da lista de tarefas: a primeira sondagem depois de um
 início lê os últimos 30 dias
 (`/nodes/localhost/tasks?since=…&limit=5000`), sondagens posteriores só a
 janela de tarefas, e o servidor mantém a união em SQLite
-(`pbs_task_history`, 35 dias, no máximo 10.000 tarefas por dispositivo)
+(`pbs_task_history`, 35 dias, no máximo 10.000 tarefas por monitor)
 então o calendário sobrevive a reinícios.
 
 ## O que ele observa {#what-it-watches}
@@ -161,7 +161,7 @@ página do dispositivo. O dispositivo nomeado no alerta é o nome do guest
 das notas do snapshot quando o PVE escreveu uma, senão `type/id`, como o
 calendário de backup.
 
-Regras integradas que se aplicam: Device unreachable, PBS datastore
+Regras integradas que se aplicam: Monitor unreachable, PBS datastore
 almost full, PBS datastore filling up, PBS backup too old (por grupo de
 backup: nenhum snapshot novo por dois dias — edite o limite da regra para
 uma janela mais longa), PBS backup verification failed, PBS task failed,
@@ -234,7 +234,7 @@ papel somente leitura — nunca a conta com a qual você entra.
 4. Antes de deixar o shell, verifique o que o token realmente pode ler.
    O comando imprime seus privilégios efetivos, caminho por caminho; um
    resultado vazio significa que o usuário não tem a ACL que o token
-   tem — o caso onde o dispositivo parece perfeitamente vivo e não
+   tem — o caso onde o monitor parece perfeitamente vivo e não
    reporta nada.
 
     ```
@@ -337,7 +337,7 @@ completa. O esquema `https` e a porta 8007 são adicionados se faltando.
 |---|---|
 | Erro de certificado | Certificado autoassinado: instale um confiável (ACME está embutido no PBS) ou ative `insecure_tls`. |
 | Erro de autenticação | Secret colado em Token ID (ou o contrário), ou o token não tem permissão `Audit` — na maioria das vezes porque o papel foi concedido ao token mas não ao usuário que o possui, o que não falha: as chamadas têm sucesso e retornam listas vazias. Só `GET /version` falhando condena toda a sondagem; qualquer outra chamada falhando é contada em `scrape_errors`. |
-| Tudo lê vazio mas o dispositivo está ativo | O usuário não tem a ACL que o token tem, e o PBS intersecta os dois: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` não imprime nada. Conceda todo papel a `dumbmonit@pbs` também. |
+| Tudo lê vazio mas o monitor está ativo | O usuário não tem a ACL que o token tem, e o PBS intersecta os dois: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` não imprime nada. Conceda todo papel a `dumbmonit@pbs` também. |
 | Nenhuma série `node_updates_pending` | O token não tem `Sys.Audit` em `/`: dê a ele o papel `Audit` em `/`, ou defina `updates` como `false` para parar de pedir. |
 | Um job de sync está faltando | O token não tem `Remote.Audit` no remote do job: adicione o papel `RemoteAudit` em `/remote`. O job não é recusado, simplesmente fica ausente da lista. |
 | Nenhuma expiração de certificado | A opção `certificates` está desligada, que é o padrão: o PBS exige `Sys.Modify` para essa chamada, um privilégio de escrita. |

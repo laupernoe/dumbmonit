@@ -10,11 +10,11 @@ esse ecrã sem tocar na sua preferência guardada.
 
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Cada problema à esquerda leva o ícone do produto do seu dispositivo (as
-mesmas marcas das listas de dispositivos). A lista nunca ultrapassa o seu
+Cada problema à esquerda leva o ícone do produto do seu monitor (as
+mesmas marcas das listas de monitores). A lista nunca ultrapassa o seu
 espaço: num ecrã pequeno, ou com muitos problemas, os mosaicos grandes
 encolhem para uma linha cada, depois recolhem-se em *E mais N*, em vez de
-se sobreporem aos dispositivos de baixo.
+se sobreporem aos monitores de baixo.
 
 ## Notícias na parede {#news-on-the-wall}
 

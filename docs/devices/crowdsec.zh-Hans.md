@@ -44,9 +44,9 @@ CrowdSec 什么都读不到,看不到任何攻击,却仍显示为绿色正常。
 
 适用的[内置规则](../alerting/rules.md#databases-message-broker-and-security-engine):
 CrowdSec 本地 API 宕机、CrowdSec bouncer 停止拉取、CrowdSec 未读取
-任何日志,以及设备不可达。
+任何日志,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询
 CrowdSec。它会用一句话说明哪里出了问题(本地 API、bouncer、日志

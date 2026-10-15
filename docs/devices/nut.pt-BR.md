@@ -43,10 +43,10 @@ lidos por servidor.
 
 As [regras integradas](../alerting/rules.md#ups-behind-nut) que se aplicam:
 UPS on battery, UPS battery low, UPS battery needs replacing, UPS load high,
-UPS runtime short, UPS data stale, além de Device unreachable quando o
+UPS runtime short, UPS data stale, além de Monitor unreachable quando o
 próprio servidor NUT para de responder.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca se conecta ao servidor NUT. Um cartão por UPS: seu estado em palavras
@@ -119,7 +119,7 @@ Endereço: um nome de host ou IP (`nas.lan`), `host:porta`, ou a forma
 `ups@host` do `upsc`, da qual só o host é mantido. Opções: porta (3493), o
 UPS a observar (todos por padrão) e o tempo limite por troca (10 s).
 
-Uma conexão recusada ou sem resposta conta como o dispositivo estando
+Uma conexão recusada ou sem resposta conta como o monitor estando
 inacessível. `ACCESS-DENIED` é mostrado como um erro de credencial, e um nome
 de UPS que o servidor não publica como um erro de configuração; nenhum dos
 dois acorda ninguém à noite. A conexão é TCP simples: `STARTTLS` não é usado,

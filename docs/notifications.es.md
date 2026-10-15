@@ -33,7 +33,7 @@ reglas de alerta eligen a cuáles notificar.
 
 Tres principios se aplican a cada canal:
 
-1. **Las alertas se agrupan.** Un mensaje por dispositivo y por ciclo,
+1. **Las alertas se agrupan.** Un mensaje por monitor y por ciclo,
    incluso si cinco discos se llenan al mismo tiempo. Sin esto,
    silenciarías las notificaciones en una semana.
 2. **Un canal roto nunca bloquea a otro.** El fallo se registra en la
@@ -132,10 +132,10 @@ estructurada que un script puede usar:
 }
 ```
 
-`link` apunta a la página del dispositivo, construida sobre la `public_url` de
+`link` apunta a la página del monitor, construida sobre la `public_url` de
 la [política de notificación](alerting/notifications.md) (o
 `DUMBMONIT_PUBLIC_URL`), o sobre la `base_url` del canal. Un mensaje sobre
-varios dispositivos, y el mensaje de prueba, enlazan a la propia instancia. Sin
+varios monitores, y el mensaje de prueba, enlazan a la propia instancia. Sin
 ninguna URL pública, `link` es `null`.
 
 ### Ajustes del canal personalizado {#custom-channel-settings}
@@ -179,8 +179,8 @@ escribir tu JSON normalmente.
 | `{{message}}` | Cuerpo en texto plano, una línea por alerta | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | El mismo cuerpo en Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Nombre de la regla de alerta | `Disk full` |
-| `{{target}}` | Nombre del dispositivo monitorizado | `nas` |
-| `{{target_id}}` | Identificador numérico del dispositivo | `42` |
+| `{{target}}` | Nombre del monitor | `nas` |
+| `{{target_id}}` | Identificador numérico del monitor | `42` |
 | `{{severity}}` | Severidad técnica | `info`, `warning` o `critical` |
 | `{{severity_fr}}` | Severidad como palabra legible | `information`, `avertissement`, `critique` |
 | `{{status}}` | Estado técnico | `firing` o `resolved` |
@@ -200,7 +200,7 @@ escribir tu JSON normalmente.
 | `{{color}}` | Color de acento, sin almohadilla | `D98A00` |
 | `{{color_hex}}` | Color de acento, con almohadilla | `#D98A00` |
 | `{{emoji}}` | Pictograma de estado | `🔴`, `⚠️`, `ℹ️` o `✅` |
-| `{{link}}` | Enlace al dispositivo en DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Enlace al monitor en DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Siempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | El secret `token` del canal | *(tu token)* |
 
@@ -611,19 +611,19 @@ En <https://www.pushbullet.com/#settings/account>, haz clic en
 **Create Access Token**.
 
 - **Settings** — `device_iden` (opcional; sin él, se notifica a todos
-  tus dispositivos)
+  tus monitores)
 - **Secrets** — `token`
 
 ### Bark (iOS)
 
 Abre la app Bark en tu iPhone: muestra una URL que contiene tu **clave
-de dispositivo**, la cadena larga de caracteres después del nombre de
+de monitor**, la cadena larga de caracteres después del nombre de
 dominio.
 
 - **Settings** — `server_url` (opcional, por defecto
   `https://api.day.app`), `group` (opcional), `level` (opcional),
   `sound` (opcional)
-- **Secrets** — `token` (la clave de dispositivo)
+- **Secrets** — `token` (la clave de monitor)
 
 Sin un ajuste `level`, DumbMonit elige: `passive` para un aviso,
 `active` para un warning, `timeSensitive` para una alerta crítica. El
@@ -643,12 +643,12 @@ alertas incluso con todas las pestañas cerradas.
    inicio. La guía paso a paso está en [Notificaciones push
    (PWA)](using/push-notifications.md).
 2. Crea un canal **Web Push** aquí. No tiene ningún secreto: sus
-   destinatarios son los dispositivos suscritos en el paso 1.
+   destinatarios son los monitores suscritos en el paso 1.
 
 - **Settings** — `users` (opcional; una cuenta por línea, vacío: cada
-  dispositivo suscrito de cada cuenta), `urgency` (`high` por
+  monitor suscrito de cada cuenta), `urgency` (`high` por
   defecto, `normal` o `low`), `ttl` (segundos que el servicio push
-  conserva el mensaje para un dispositivo apagado, por defecto
+  conserva el mensaje para un monitor apagado, por defecto
   `86400`), `contact` (dirección `mailto:` o `https:` opcional dada a
   los servicios push; vacío: `DUMBMONIT_PUBLIC_URL` cuando es HTTPS,
   si no la página del proyecto)
@@ -656,7 +656,7 @@ alertas incluso con todas las pestañas cerradas.
   genera en el primer arranque y se guarda cifrado; la clave privada
   nunca sale del servidor.
 
-El título de la notificación es la severidad y el dispositivo
+El título de la notificación es la severidad y el monitor
 (`Critical · nas01`), el cuerpo un resumen breve; un toque abre la
 página **Alerts**. DumbMonit necesita HTTPS saliente hacia los
 servicios push (`fcm.googleapis.com`, `*.notify.windows.com`,

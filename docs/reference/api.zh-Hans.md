@@ -13,7 +13,7 @@ Web UI 所做的一切都经过 `/api/*`，同一套 API 也向你自己的脚�
 GET /api/openapi.json
 ```
 
-它是公开的——不含机密、地址，也不含任何关于你设备的信息——并且是详尽的参考：客户端可调用的每个路由、其参数、请求和响应格式、错误响应，以及所需的范围（每个操作上的 `x-token-scope` 扩展：`public`、`read`、`write`，或对令牌永远无法调用的路由为 `none`）。本页下文的表格是同一内容的易读摘要。
+它是公开的——不含机密、地址，也不含任何关于你监控项的信息——并且是详尽的参考：客户端可调用的每个路由、其参数、请求和响应格式、错误响应，以及所需的范围（每个操作上的 `x-token-scope` 扩展：`public`、`read`、`write`，或对令牌永远无法调用的路由为 `none`）。本页下文的表格是同一内容的易读摘要。
 
 有意省略的内容：代理协议（`/api/ingest`、`/api/agent/commands*`、`/api/agent/relay*`），只有[代理](../devices/agent.md)使用；SSO 登录的浏览器重定向（`/api/auth/oidc/start`、`/api/auth/oidc/callback`）和 Spotify 的重定向（`/api/music/spotify/callback`）；以及代理下载（`/install.sh`、`/install.ps1`、`/download/*`）。
 
@@ -69,8 +69,8 @@ curl -b cookies.txt -X POST http://monit.lan:8080/api/targets \
 
 | | `read` 令牌 | `write` 令牌 |
 |---|---|---|
-| *查看者*账户可以发起的每个 `GET`（设备、告警、指标、规则、不含机密的渠道、状态页面……） | 是 | 是 |
-| *管理员*可以发起的 `POST`、`PUT`、`DELETE`（设备、规则、静默、渠道、状态页面、包、探测、发现……） | `403` | 是 |
+| *查看者*账户可以发起的每个 `GET`（监控项、告警、指标、规则、不含机密的渠道、状态页面……） | 是 | 是 |
+| *管理员*可以发起的 `POST`、`PUT`、`DELETE`（监控项、规则、静默、渠道、状态页面、包、探测、发现……） | `403` | 是 |
 | `/metrics`、`/federate`、`/prometheus/*`（[抓取](metrics.md#scraping-dumbmonit)） | 是 | 是 |
 | MCP 读取工具 / 写入工具（[助手](../using/assistant.md#what-the-assistant-can-call)） | 仅读取 | 两者 |
 | 账户、会话、双因素、SSO、审计日志（`/api/auth/*`、`/api/users/*`） | `403` | `403` |
@@ -178,7 +178,7 @@ ratelimit-remaining: 0
 
 在下面的表格中，*会话*指会话 cookie **或** API 令牌；*管理员*指管理员会话或 `write` 令牌；*操作员*指操作员或管理员会话，或 `write` 令牌；*仅会话*指会话 cookie，绝不是令牌。
 
-**角色。** `viewer` 账户可发起所有 `GET`。`operator` 可进行同样的读取，外加本页中标为*操作员*的告警处理写入（OpenAPI 文档中为 `x-roles: [admin, operator]`）：确认、暂缓（维护窗口）、对某设备忽略某条规则、清除已解决的历史。其他所有写入仅限管理员，对操作员返回 `403`。
+**角色。** `viewer` 账户可发起所有 `GET`。`operator` 可进行同样的读取，外加本页中标为*操作员*的告警处理写入（OpenAPI 文档中为 `x-roles: [admin, operator]`）：确认、暂缓（维护窗口）、对某监控项忽略某条规则、清除已解决的历史。其他所有写入仅限管理员，对操作员返回 `403`。
 
 | 方法 | 路由 | 认证 | 用途 |
 |---|---|---|---|
@@ -262,11 +262,11 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 
 备份包包含实例的所有凭据，并用口令重新加密，因此这些路由会拒绝 API 令牌并给出说明：只有登录 Web 界面的管理员才能使用。参见[备份与恢复](../install/backup.md)。
 
-## 设备类型 {#device-types}
+## 监控项类型 {#device-types}
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/collectors` | 此服务器可监控的每种设备类型：`kind`、`label`、`summary`、`examples`、`credential_types`、`address_hint`、`default_port`、`setup`（`title`、`steps`、`warning`、`doc_url`）和 `options`（`key`、`label`、`help`、`placeholder`、`default`、`required`、`input`、`choices`）。由[集成包](../packs/index.md)带来的类型以同样方式列出，形式为 `pack.<id>`。 |
+| `GET` | `/api/collectors` | 此服务器可监控的每种监控项类型：`kind`、`label`、`summary`、`examples`、`credential_types`、`address_hint`、`default_port`、`setup`（`title`、`steps`、`warning`、`doc_url`）和 `options`（`key`、`label`、`help`、`placeholder`、`default`、`required`、`input`、`choices`）。由[集成包](../packs/index.md)带来的类型以同样方式列出，形式为 `pack.<id>`。 |
 
 ## 集成包 {#integration-packs}
 
@@ -274,25 +274,25 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/packs` | 已安装的包：`id`、`version`、`label`、`summary`、`kind`（仅含 SNMP 配置文件的包为 `null`）、`enabled`、`installed_at`、`sha256`、`metrics`、`rules`（uid）、`snmp_profiles`、`targets`（使用它的设备）、`warnings`，以及已存储的包不再通过验证时的 `error`。 |
+| `GET` | `/api/packs` | 已安装的包：`id`、`version`、`label`、`summary`、`kind`（仅含 SNMP 配置文件的包为 `null`）、`enabled`、`installed_at`、`sha256`、`metrics`、`rules`（uid）、`snmp_profiles`、`targets`（使用它的监控项）、`warnings`，以及已存储的包不再通过验证时的 `error`。 |
 | `GET` | `/api/packs/{id}` | 一个包。 |
 | `POST` | `/api/packs` | 安装或更新。正文：YAML（`application/yaml`、`text/plain`……）或 JSON 中的 `{"yaml": "…"}`。创建时返回 `201`，更新或未变化时返回 `200`，附带 `outcome`（`created`、`updated`、`unchanged`）、`pack`、`rules_added` 和 `restart_required`（SNMP 配置文件）。`400` 会列出每个验证错误。 |
-| `PUT` | `/api/packs/{id}/enable`、`/api/packs/{id}/disable` | 注册或撤销该包的设备类型；设备、历史和规则保留。 |
-| `DELETE` | `/api/packs/{id}` | 卸载，连同其规则。有设备使用时返回 `409`。 |
+| `PUT` | `/api/packs/{id}/enable`、`/api/packs/{id}/disable` | 注册或撤销该包的监控项类型；监控项、历史和规则保留。 |
+| `DELETE` | `/api/packs/{id}` | 卸载，连同其规则。有监控项使用时返回 `409`。 |
 
-## 目标（设备） {#targets-devices}
+## 目标（监控项） {#targets-devices}
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/targets` | 列出每个设备。 |
-| `POST` | `/api/targets` | 创建一个。`201` 并返回该设备。对 SNMP 会在后台开始配置文件检测。 |
-| `GET` | `/api/targets/{id}` | 一个设备。 |
-| `PUT` | `/api/targets/{id}` | 替换它。省略 `credential` 会保留已存储的凭据；省略 `profile_id` 会保留检测到的配置文件（`""` 清除它）。设置 `enabled: false` 会清除该设备的告警且不发送通知。 |
-| `DELETE` | `/api/targets/{id}` | `204`。清除该设备的告警且不发送通知，并从 VictoriaMetrics 中删除其时间序列（尽力而为）。 |
+| `GET` | `/api/targets` | 列出每个监控项。 |
+| `POST` | `/api/targets` | 创建一个。`201` 并返回该监控项。对 SNMP 会在后台开始配置文件检测。 |
+| `GET` | `/api/targets/{id}` | 一个监控项。 |
+| `PUT` | `/api/targets/{id}` | 替换它。省略 `credential` 会保留已存储的凭据；省略 `profile_id` 会保留检测到的配置文件（`""` 清除它）。设置 `enabled: false` 会清除该监控项的告警且不发送通知。 |
+| `DELETE` | `/api/targets/{id}` | `204`。清除该监控项的告警且不发送通知，并从 VictoriaMetrics 中删除其时间序列（尽力而为）。 |
 | `POST` | `/api/targets/{id}/probe` | 立即探测：`{"sample_count": 42, "series": ["if_octets_in{host=\"Core switch\",ifname=\"eth0\"}", …]}`——序列键与采集器生成的一致，不含写入器在发往 VictoriaMetrics 途中添加的 `dumbmonit_` 前缀。 |
 | `POST` | `/api/targets/{id}/discover` | 重新运行配置文件检测：`{"profile_id": "host-resources"}` 或 `null`。 |
 
-返回的设备：
+返回的监控项：
 
 ```json
 {
@@ -313,7 +313,7 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 }
 ```
 
-机密本身绝不返回：`credential_kind` 只是一个标签。服务器时间戳为不带后缀的 UTC。`error_kind` 对 `last_error` 分类：`down`（设备没有应答）或 `config`（我们这边的问题——凭据、地址、选项），UI 将其显示为*不可达*或*配置错误*；上一次探测成功时为 `null`。
+机密本身绝不返回：`credential_kind` 只是一个标签。服务器时间戳为不带后缀的 UTC。`error_kind` 对 `last_error` 分类：`down`（监控项没有应答）或 `config`（我们这边的问题——凭据、地址、选项），UI 将其显示为*不可达*或*配置错误*；上一次探测成功时为 `null`。
 
 创建一个：
 
@@ -329,9 +329,9 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 }
 ```
 
-凭据格式（`type`）：`none`；`snmp_community`（`community`）；`snmp_v3`（`username`，可选的 `auth: {protocol, passphrase}`，协议为 `md5`、`sha1`、`sha224`、`sha256`、`sha384` 或 `sha512`，可选的 `privacy: {protocol, passphrase}`，协议为 `des`、`aes128`、`aes192` 或 `aes256`，可选的 `context`）；`api_token`（`token`，或两部分 `token_id` 和 `secret`，服务器会为 Proxmox VE 和 PBS 将它们拼接成 `user@realm!name=secret`）；`username_password`（`username`、`password`）。`interval_secs` 默认为 60，不能低于 10。`name` 最多 200 个字符，`address` 最多 253 个（超出则返回 `400`）。`parent_id` 必须指向一个已存在的设备（`400 Parent device N not found.`）。类型选项以其键放在 `tags` 中。
+凭据格式（`type`）：`none`；`snmp_community`（`community`）；`snmp_v3`（`username`，可选的 `auth: {protocol, passphrase}`，协议为 `md5`、`sha1`、`sha224`、`sha256`、`sha384` 或 `sha512`，可选的 `privacy: {protocol, passphrase}`，协议为 `des`、`aes128`、`aes192` 或 `aes256`，可选的 `context`）；`api_token`（`token`，或两部分 `token_id` 和 `secret`，服务器会为 Proxmox VE 和 PBS 将它们拼接成 `user@realm!name=secret`）；`username_password`（`username`、`password`）。`interval_secs` 默认为 60，不能低于 10。`name` 最多 200 个字符，`address` 最多 253 个（超出则返回 `400`）。`parent_id` 必须指向一个已存在的监控项（`400 Parent device N not found.`）。类型选项以其键放在 `tags` 中。
 
-`via_agent` 指明从自己网络探测设备（而不是由服务器探测）的[中继代理](../install/remote-site.md)；`null`（默认）表示由服务器探测。它必须是一个 `agent` 设备（否则 `400`），设备不能中继自己，`agent` 设备不能被中继。在 `PUT` 中，*省略*的 `via_agent` 会保留已存储的值，与 `profile_id` 和 `credential` 相同；发送 `null` 则恢复直接探测。对被中继设备的 `POST /api/targets/{id}/probe` 和 `/discover` 会经由中继并等待其应答（探测已在进行中时返回 `409`，中继没有应答时返回 `400 Timed out: relay agent …`）。
+`via_agent` 指明从自己网络探测监控项（而不是由服务器探测）的[中继代理](../install/remote-site.md)；`null`（默认）表示由服务器探测。它必须是一个 `agent` 监控项（否则 `400`），监控项不能中继自己，`agent` 监控项不能被中继。在 `PUT` 中，*省略*的 `via_agent` 会保留已存储的值，与 `profile_id` 和 `credential` 相同；发送 `null` 则恢复直接探测。对被中继监控项的 `POST /api/targets/{id}/probe` 和 `/discover` 会经由中继并等待其应答（探测已在进行中时返回 `409`，中继没有应答时返回 `400 Timed out: relay agent …`）。
 
 ## 发现 {#discovery}
 
@@ -371,7 +371,7 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 
 `has_target`、`has_channel` 和 `notification_confirmed` 在每次读取时重新计算：它们是关于实例的事实，而不是界面设置的标志。`notification_confirmed` 在确实有消息从某个渠道发出之后为真——测试消息算数，仅仅创建了渠道则不算。
 
-`complete` 是锁存的，永远不会变回 false。服务器在三个步骤都已解决（完成或已收起）时设置它，并且在首次读取一个已经有设备和渠道的实例时也会设置——因此升级一个已有的实例永远不会向它显示首次运行向导。
+`complete` 是锁存的，永远不会变回 false。服务器在三个步骤都已解决（完成或已收起）时设置它，并且在首次读取一个已经有监控项和渠道的实例时也会设置——因此升级一个已有的实例永远不会向它显示首次运行向导。
 
 ## 指标 {#metrics}
 
@@ -397,11 +397,11 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/metrics` | 以 Prometheus 文本展示格式给出实例自身的健康状况：调度器、探测、写入、告警、通知、代理、数据库、VictoriaMetrics。几十条序列，绝不会每个设备一条。 |
+| `GET` | `/metrics` | 以 Prometheus 文本展示格式给出实例自身的健康状况：调度器、探测、写入、告警、通知、代理、数据库、VictoriaMetrics。几十条序列，绝不会每个监控项一条。 |
 | `GET` | `/federate` | 同一格式的测量数据。`match[]` 选择序列（可重复，最多 10 个，默认为 `{__name__=~"dumbmonit_.*"}`），`max_lookback` 放宽查找最后一个点的时间窗口（默认 `5m`）。超过 8 MiB 时返回 `400`，并说明应缩小什么。 |
 | `GET`、`POST` | `/prometheus/api/v1/{route}` | Prometheus API 的读取部分，中继到存储，因此 Grafana 可以把 `http://…/prometheus` 用作 Prometheus 数据源。仅限 `query`、`query_range`、`query_exemplars`、`series`、`labels`、`label/{name}/values`、`metadata` 和 `status/buildinfo`；其他任何路由返回 `404`。 |
 
-`DUMBMONIT_METRICS_PUBLIC=true` 会无需令牌地提供这三者——仅限在防火墙之后使用，因为它们包含每个设备的每一条测量数据。
+`DUMBMONIT_METRICS_PUBLIC=true` 会无需令牌地提供这三者——仅限在防火墙之后使用，因为它们包含每个监控项的每一条测量数据。
 
 ## 其他路由 {#further-routes}
 
@@ -409,9 +409,9 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | 方法 | 路由 | 范围 | 用途 |
 |---|---|---|---|
-| `POST` | `/api/targets/reorder` | write | 重新排序设备。 |
-| `GET` | `/api/targets/{id}/security` | read | 一个设备的安全评分、等级和检查项。 |
-| `GET` | `/api/security/summary` | read | 每个已评级设备的安全评分，最差的在前。 |
+| `POST` | `/api/targets/reorder` | write | 重新排序监控项。 |
+| `GET` | `/api/targets/{id}/security` | read | 一个监控项的安全评分、等级和检查项。 |
+| `GET` | `/api/security/summary` | read | 每个已评级监控项的安全评分，最差的在前。 |
 | `GET` | `/api/targets/{id}/webchange/pages` | read | 网站监视所跟踪的页面。 |
 | `GET` | `/api/targets/{id}/webchange/changes` | read | 在被监视网站上发现的变更，最新的在前。 |
 | `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | 一次变更，附两个版本及逐行差异。 |
@@ -440,7 +440,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/alerts` | 活跃的告警（pending、firing、suppressed、最近已解决）。已删除或已暂停设备的告警绝不会被列出。 |
+| `GET` | `/api/alerts` | 活跃的告警（pending、firing、suppressed、最近已解决）。已删除或已暂停监控项的告警绝不会被列出。 |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | 阶段转换。`since` 为 RFC 3339，默认最近七天；`limit` 必须为正数。`dismissed`（默认 `false`）排除通过下面两个路由清除的条目；清除从不会销毁任何东西，只是在默认视图中隐藏。 |
 | `POST` | `/api/alerts/history/{id}/dismiss` | 从默认历史视图中清除一条 `resolved` 条目。`204`。id 未知或转换仍处于活跃状态时返回 `404`。操作员；会被审计。 |
 | `POST` | `/api/alerts/history/dismiss-resolved` | 一次清除所有尚未清除的 `resolved` 条目（“Clear all resolved”）。返回 `{"dismissed": <count>}`。操作员；会被审计。 |
@@ -531,15 +531,15 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 一次性计划为 `{"kind": "once", "starts_at": "2026-09-20T22:00:00Z", "ends_at": "2026-09-21T02:00:00Z"}`。每月计划为 `{"kind": "monthly", "days": [1], "nth_weekdays": [{"nth": 1, "weekday": 6}], "start_minute": 120, "duration_minutes": 120, "timezone": "Europe/Paris"}`——`nth` 为 1 到 5，或 `-1` 表示该月最后一次；没有该次数的月份会被跳过。星期的取值为 0 = 星期一 … 6 = 星期日（每月的 `days` 为 1–31）；分钟数为自本地午夜起（0–1439）。对于周期性计划，`timezone`（IANA 名称）优先于 `utc_offset_minutes`，并且能让窗口在夏令时变化时仍保持在其本地时刻；未知的时区名称会被拒绝。
 
-### 每设备覆盖 {#per-device-overrides}
+### 每监控项覆盖 {#per-device-overrides}
 
-可以针对某一个设备调整规则，而无需改动规则本身。`{"enabled": false}` 就是 UI 的**忽略**操作（在告警、设备页面或规则上）所写入的内容：该设备被永久（但可逆）地从这一条规则中剔除，而不会对其他任何人禁用该规则。
+可以针对某一个监控项调整规则，而无需改动规则本身。`{"enabled": false}` 就是 UI 的**忽略**操作（在告警、监控项页面或规则上）所写入的内容：该监控项被永久（但可逆）地从这一条规则中剔除，而不会对其他任何人禁用该规则。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/alerts/overrides?target_id=4` | 每个覆盖，或某个设备的覆盖：`rule_uid`、`target_id`、`threshold`、`clear_threshold`、`enabled`。 |
+| `GET` | `/api/alerts/overrides?target_id=4` | 每个覆盖，或某个监控项的覆盖：`rule_uid`、`target_id`、`threshold`、`clear_threshold`、`enabled`。 |
 | `GET` | `/api/alerts/rules/{id}/overrides` | 一条规则的覆盖。 |
-| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}`——每个字段可选；`null` 表示“与规则相同”。创建或替换。操作员只能发送 `{"enabled": false}`（忽略）；该设备的阈值覆盖（如果有）会保留。 |
+| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}`——每个字段可选；`null` 表示“与规则相同”。创建或替换。操作员只能发送 `{"enabled": false}`（忽略）；该监控项的阈值覆盖（如果有）会保留。 |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`。对操作员而言，只解除忽略：阈值覆盖保留。 |
 | `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
@@ -549,7 +549,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 |---|---|---|
 | `GET` | `/api/notify/policy` | 全局策略：`batch_window_secs`（0 = 立即发送）、每个渠道的 `max_per_hour`（0 = 不限）、`flap_events`、`flap_window_secs`、`flap_hold_secs`（0 = 不检测抖动）、`public_url`（消息中的链接；为空 = `DUMBMONIT_PUBLIC_URL`）、`escalate_after_secs` 和 `escalate_channel`（0 / `null` = 不升级）。 |
 | `PUT` | `/api/notify/policy` | 相同的字段，每个都是可选的：省略的字段保留其值。`"escalate_channel": null` 关闭升级。返回该策略。 |
-| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → 渠道路由过滤器会选中哪些设备：`devices`（`id`、`name`、`kind`、`tags`、`matched`）、`matched`、`total`、`rules`、`excluded_rules`。 |
+| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → 渠道路由过滤器会选中哪些监控项：`devices`（`id`、`name`、`kind`、`tags`、`matched`）、`matched`、`total`、`rules`、`excluded_rules`。 |
 
 ## 通知渠道 {#notification-channels}
 
@@ -574,15 +574,15 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 每种类型的确切键来自 `/api/notify/kinds`，并记录在[通知渠道](../notifications.md)中。
 
-### Web Push 设备 {#web-push-devices}
+### Web Push 监控项 {#web-push-devices}
 
 **已登录账户**的设备（仅会话，包括查看者；API 令牌会得到 `401`）。`webpush` 渠道会向它们发送；参见[推送通知（PWA）](../using/push-notifications.md)。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
 | `GET` | `/api/webpush` | `{"public_key": "…", "devices": […]}`：VAPID 公钥（base64url，即订阅时使用的 `applicationServerKey`）以及该账户的设备——`id`、`device`（`Firefox on Android`）、`push_service`（主机）、`fingerprint`（端点的 SHA-256 的前 16 个十六进制字符）、`created_at`、`last_success_at`、`last_error`。端点、浏览器密钥和私钥绝不返回。 |
-| `POST` | `/api/webpush/subscriptions` | `PushSubscription.toJSON()`：`{"endpoint": "https://…", "keys": {"p256dh": "…", "auth": "…"}}`。`201` 并返回该设备。端点必须是公共地址上的 HTTPS：私有、回环和链路本地地址会得到 `400`。同一端点再次提交会替换其行。 |
-| `DELETE` | `/api/webpush/subscriptions/{id}` | `204`；另一个账户的设备返回 `404`。 |
+| `POST` | `/api/webpush/subscriptions` | `PushSubscription.toJSON()`：`{"endpoint": "https://…", "keys": {"p256dh": "…", "auth": "…"}}`。`201` 并返回该监控项。端点必须是公共地址上的 HTTPS：私有、回环和链路本地地址会得到 `400`。同一端点再次提交会替换其行。 |
+| `DELETE` | `/api/webpush/subscriptions/{id}` | `204`；另一个账户的监控项返回 `404`。 |
 | `POST` | `/api/webpush/test` | `{}` 或 `{"id": 3}`。发送测试通知：`{"ok", "delivered", "failed", "removed", "message"}`。返回 `404`/`410` 的订阅会被移除。 |
 
 ## 邮件报告 {#email-reports}
@@ -611,7 +611,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET`、`PUT`、`DELETE` | `/api/status-pages/{id}/logo` | 会话 / 管理员 | 页面的徽标。`PUT` 接受 `{"data": "<base64 或 data: URL>"}`：按内容识别 PNG、JPEG 或 WebP，最大 256 KiB，其他一切返回 `400`。`204`。`GET` 是编辑器的预览（包括草稿）。 |
 | `GET` | `/api/status-pages/{id}/subscribers` | 会话 | 邮件订阅者：`id`、`page_id`、`email`、`confirmed_at`（待确认时为 `null`）、`created_at`。其令牌绝不离开服务器。 |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | 管理员 | 移除一个地址。`204`。 |
-| `PUT` | `/api/status-pages/{id}/items` | 管理员 | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]`——页面上显示的设备的完整有序列表。 |
+| `PUT` | `/api/status-pages/{id}/items` | 管理员 | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]`——页面上显示的监控项的完整有序列表。 |
 | `GET` | `/api/incidents` | 会话 | 每个事故及其更新：`incident`（`id`、`page_id`、`title`、`kind`、`status`、`severity`、`starts_at`、`ends_at`、`created_at`、`updated_at`）和 `updates`。 |
 | `POST` | `/api/incidents` | 管理员 | `{"title", "kind", "status", "severity", "page_id", "starts_at", "ends_at", "body"}`——`body` 是第一条更新。`201`。 |
 | `PUT` | `/api/incidents/{id}` | 管理员 | 相同的字段；省略的字段保留其值。 |
@@ -630,7 +630,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | 方法 | 路由 | 认证 | 用途 |
 |---|---|---|---|
-| `GET` | `/api/agent/tokens` | 仅会话 | 每个令牌：`id`、`name`、`prefix`、`created_at`、`last_used_at`、`revoked_at`、`max_uses`（设备群令牌为 `null`）、`uses`、`expires_at`。 |
+| `GET` | `/api/agent/tokens` | 仅会话 | 每个令牌：`id`、`name`、`prefix`、`created_at`、`last_used_at`、`revoked_at`、`max_uses`（机群令牌为 `null`）、`uses`、`expires_at`。 |
 | `POST` | `/api/agent/tokens` | 管理员，仅会话 | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`。`201`，返回令牌字段外加 `secret`（只显示一次）、`install_linux` 和 `install_windows`。`base_url` 是代理将使用的 URL；默认为监听地址。没有 `reusable` 时，令牌是**一次性**的：只注册一台机器，不能再多。有它时，`max_uses` 限制注册次数（`null`：无限制）。`expires_in_days` 在这么多天之后停止*注册*；已注册的机器继续上报。次数小于 1 时返回 `400`。 |
 | `DELETE` | `/api/agent/tokens/{id}` | 管理员，仅会话 | 吊销。`204`；未知或已吊销时返回 `404`。 |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 接收代理发来的一批样本（正文最大 16 MB）。不应手动调用。该头携带机器的绑定密钥；尚无密钥的代理省略它，这就是它请求密钥的方式。响应会增加 `agent_secret`（密钥，在机器被绑定时仅返回一次）和 `bound`。当机器被绑定到另一个代理安装，或令牌已无法再注册时返回 `403`——消息会说明是哪种情况以及该怎么做。 |
@@ -638,7 +638,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `POST` | `/api/agent/relay/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 被委派探测的结果：`{"duration_ms", "error", "samples", "profile_id"}`（正文最大 16 MB）。`204`；探测已过期或属于另一个代理时返回 `404`。 |
 | `GET` | `/api/agent/commands?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 为代理排队的命令（容器重启或更新），没有待处理项时最多保持 `wait` 秒。不应手动调用。`key` 本身说明不了什么——它是公开的——所以已绑定的机器还必须出示其绑定密钥；否则返回 `403`，这正是阻止一台机器拿走另一台机器命令的机制。 |
 | `POST` | `/api/agent/commands/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 由代理报告的命令进度和结果。`result` 被截断为最后 4 KB，发生截断时开头会加上 `[truncated by the server, beginning dropped]`。 |
-| `GET` | `/api/relays` | 会话 | 每个可能作为中继的代理设备：`id`、`name`、`site`、`relay`（声明了 `relay: true`）、`last_seen_at`、`relayed`（经由它到达的设备）。中继在前，然后按名称排序。 |
+| `GET` | `/api/relays` | 会话 | 每个可能作为中继的代理监控项：`id`、`name`、`site`、`relay`（声明了 `relay: true`）、`last_seen_at`、`relayed`（经由它到达的监控项）。中继在前，然后按名称排序。 |
 
 ```json
 {
@@ -650,26 +650,26 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 }
 ```
 
-## 容器与命令（代理设备） {#containers-and-commands-agent-devices}
+## 容器与命令（代理监控项） {#containers-and-commands-agent-devices}
 
-对运行代理的机器上的容器执行操作。当设备不是 `agent` 目标时，每个路由都返回 `404`。
+对运行代理的机器上的容器执行操作。当监控项不是 `agent` 目标时，每个路由都返回 `404`。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/targets/{id}/agent` | 代理最近一次描述的机器：`hostname`、`os`、`os_version`、`arch`、`agent_version`、`commands_supported`、`relay`、`site`、`relayed`（经由此代理到达的设备）、`last_seen_at`、`binding`、`bound`、`bound_at`、`rebind_until`。在代理上报之前返回 `404`。只有当代理声明它会拉取命令（`commands: true`，当前代理的默认值）时 `commands_supported` 才为 `true`；较旧的代理或 `commands: false` 的代理为 `false`。`binding` 为 `bound`、`pending`（该二进制文件可以被绑定，并将在其下一批数据时绑定）或 `unsupported`（早于绑定功能的代理：请重新安装）。 |
+| `GET` | `/api/targets/{id}/agent` | 代理最近一次描述的机器：`hostname`、`os`、`os_version`、`arch`、`agent_version`、`commands_supported`、`relay`、`site`、`relayed`（经由此代理到达的监控项）、`last_seen_at`、`binding`、`bound`、`bound_at`、`rebind_until`。在代理上报之前返回 `404`。只有当代理声明它会拉取命令（`commands: true`，当前代理的默认值）时 `commands_supported` 才为 `true`；较旧的代理或 `commands: false` 的代理为 `false`。`binding` 为 `bound`、`pending`（该二进制文件可以被绑定，并将在其下一批数据时绑定）或 `unsupported`（早于绑定功能的代理：请重新安装）。 |
 | `POST` | `/api/targets/{id}/agent/rebind` | 管理员。开启一个一小时的窗口，在此期间这台机器可以用有效的注册令牌再次绑定自己——这是重新安装带走了代理密钥之后重新进入的途径。`{"rebind_until", "minutes"}`。窗口一经使用即关闭，旧密钥随即失效。在代理上报之前返回 `404`。 |
 | `GET` | `/api/targets/{id}/containers` | 上一批数据中的每个容器：`name`、`image`、`up`、`health`、`restart_count`、`uptime_seconds`、`image_age_seconds`、`update_available`、`policy`、`last_command`。 |
 | `PUT` | `/api/targets/{id}/containers/{name}/policy` | `{"auto_restart": bool, "auto_update": bool, "prune_old_image": bool, "only_in_maintenance": bool}`。每个字段都是可选的：省略的字段保留其存储值。返回完整的策略。 |
 | `POST` | `/api/targets/{id}/containers/{name}/restart` | 排队一次重启。`201` 并返回该命令。`name` 不在代理的清单中时返回 `404`；相同命令已在排队或运行，或代理无法运行命令时（见 `commands_supported`）返回 `409`。 |
 | `POST` | `/api/targets/{id}/containers/{name}/update` | 排队一次更新；可选的 `{"prune": bool}`（默认取自策略）。状态码与重启相同。 |
 | `GET` | `/api/targets/{id}/commands` | 最近 20 条命令，最新的在前：`id`、`kind`（`container.restart`、`container.update`）、`args`、`status`、`requested_by`（用户，或 `policy`）、`created_at`、`started_at`、`finished_at`、`result`。 |
-| `DELETE` | `/api/targets/{id}/commands/{command_id}` | 取消一条排队中的命令。`204`；代理已领取它或它已结束时返回 `409`；它不属于此设备时返回 `404`。 |
+| `DELETE` | `/api/targets/{id}/commands/{command_id}` | 取消一条排队中的命令。`204`；代理已领取它或它已结束时返回 `409`；它不属于此监控项时返回 `404`。 |
 
 `status` 依次为 `queued → running → done | failed`。另有两种最终状态：`cancelled`（有人撤回了命令）和 `expired`（服务器在十分钟后放弃，因为没有代理来领取——代理已停止、太旧而不支持命令通道，或以 `commands: false` 安装）。服务器每分钟自行让过期的命令失效；排队中的命令阻塞新命令的时间绝不会超过这个时长。
 
 ## Proxmox VE 客户机 {#proxmox-ve-guests}
 
-Proxmox VE 设备的**客户机**面板中的各行，由指标存储中的最近一次探测组装而成（四个即时查询，不向虚拟机管理程序请求任何内容）。设备不存在时返回 `404`，不是 `proxmox` 目标时返回 `400`。
+Proxmox VE 监控项的**客户机**面板中的各行，由指标存储中的最近一次探测组装而成（四个即时查询，不向虚拟机管理程序请求任何内容）。监控项不存在时返回 `404`，不是 `proxmox` 目标时返回 `400`。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
@@ -692,7 +692,7 @@ Proxmox VE 设备的**客户机**面板中的各行，由指标存储中的最�
 
 ## Proxmox VE 节点与 Ceph {#proxmox-ve-nodes-and-ceph}
 
-同一设备页面的**节点**和 **Ceph** 部分，读取自同一次最近探测。状态码同上。
+同一监控项页面的**节点**和 **Ceph** 部分，读取自同一次最近探测。状态码同上。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
@@ -701,7 +701,7 @@ Proxmox VE 设备的**客户机**面板中的各行，由指标存储中的最�
 
 ## Proxmox Backup Server {#proxmox-backup-server}
 
-`pbs` 设备的各面板，读取自最近一次探测（除任务日志外不向服务器请求任何内容）。设备不存在时返回 `404`，不是 `pbs` 目标时返回 `400`。
+`pbs` 监控项的各面板，读取自最近一次探测（除任务日志外不向服务器请求任何内容）。监控项不存在时返回 `404`，不是 `pbs` 目标时返回 `400`。
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
@@ -722,7 +722,7 @@ Proxmox VE 设备的**客户机**面板中的各行，由指标存储中的最�
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/targets/{id}/synology` | 来自最近一次探测的 `synology` 设备概览：`system`（型号、DSM 版本、运行时间、温度、CPU、内存）、`volumes`（`name`、`fs_type`、`raid_type`、`status`、`severity`、`total_bytes`、`used_bytes`）、`disks`（`model`、`serial`、`kind`、`ssd`、`status`、`smart_status`、`temperature_celsius`、`size_bytes`、`remaining_life_percent`、……）和 `sampled_at`。设备不存在时返回 `404`，不是 Synology 时返回 `400`。 |
+| `GET` | `/api/targets/{id}/synology` | 来自最近一次探测的 `synology` 监控项概览：`system`（型号、DSM 版本、运行时间、温度、CPU、内存）、`volumes`（`name`、`fs_type`、`raid_type`、`status`、`severity`、`total_bytes`、`used_bytes`）、`disks`（`model`、`serial`、`kind`、`ssd`、`status`、`smart_status`、`temperature_celsius`、`size_bytes`、`remaining_life_percent`、……）和 `sampled_at`。监控项不存在时返回 `404`，不是 Synology 时返回 `400`。 |
 | `GET` | `/api/targets/{id}/synology/abb` | Active Backup for Business：`tasks`，以及 `devices`——每台受保护设备一份报告，其学习到的节奏在 `assessment` 中（`state`、`last_success_s`、`typical_interval_s`、30 天计数）。 |
 
 ## 心跳（推送监控） {#heartbeats-push-monitors}
@@ -730,7 +730,7 @@ Proxmox VE 设备的**客户机**面板中的各行，由指标存储中的最�
 | 方法 | 路由 | 认证 | 用途 |
 |---|---|---|---|
 | `GET` 或 `POST` | `/api/push/{token}` | 无（令牌即认证） | 任务每次运行时发起的调用。可选的 `?status=up\|down&msg=…`（兼容 Uptime Kuma）。成功时返回空的 `204`，令牌未知返回 `404`，其他 `status` 返回 `400`，每个令牌每分钟超过六十次调用返回 `429` 并带 `Retry-After`。参见[心跳](../devices/push.md)。 |
-| `GET` | `/api/targets/{id}/push` | 会话 | `push` 设备的监控：`token`、`path`（`/api/push/<token>`）、`last_seen_at`、`last_seen_age_secs`、`last_status`、`last_message`、`received_total`、`expected_interval_secs`、`grace_secs`、`settings_error`、`verdict`（`waiting`、`on_time`、`missed`、`reported_down`）。首次读取时创建。设备不是心跳设备时返回 `400`。 |
+| `GET` | `/api/targets/{id}/push` | 会话 | `push` 监控项的监控：`token`、`path`（`/api/push/<token>`）、`last_seen_at`、`last_seen_age_secs`、`last_status`、`last_message`、`received_total`、`expected_interval_secs`、`grace_secs`、`settings_error`、`verdict`（`waiting`、`on_time`、`missed`、`reported_down`）。首次读取时创建。监控项不是心跳监控项时返回 `400`。 |
 | `POST` | `/api/targets/{id}/push/regenerate` | 管理员 | 新令牌；此后旧 URL 返回 `404`。正文与读取相同。 |
 
 ## 助手（MCP） {#assistants-mcp}

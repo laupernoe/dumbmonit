@@ -31,10 +31,10 @@ reconexão atrás de NAT e multiplicaria as séries sem necessidade. No máximo 
 clientes têm cada um uma série detalhada; `clients_connected` continua exato
 para além disso.
 
-Regra incorporada que se aplica: **Device unreachable**, quando a própria
+Regra incorporada que se aplica: **Monitor unreachable**, quando a própria
 ligação de gestão não pode ser estabelecida ou a palavra-passe é recusada.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página nunca
 se liga à interface de gestão. Mostra a versão do servidor, se se declara

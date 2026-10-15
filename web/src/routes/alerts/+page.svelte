@@ -280,9 +280,10 @@
 				role="tab"
 				id={`alerts-tab-${item.id}`}
 				aria-selected={tab === item.id}
+				aria-controls="alerts-panel"
 				tabindex={tab === item.id ? 0 : -1}
 				onkeydown={onTabKey}
-				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 				onclick={() => selectTab(item.id)}
 			>
 				{item.label}
@@ -310,6 +311,13 @@
 	</p>
 {/if}
 
+<div
+	id="alerts-panel"
+	role="tabpanel"
+	aria-labelledby={`alerts-tab-${tab}`}
+	tabindex="0"
+	class="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+>
 {#if pageError}
 	<ErrorNotice
 		error={pageError}
@@ -350,3 +358,4 @@
 {:else if tab === 'history'}
 	<HistorySection entries={history} targets={targetsMap} rules={rulesMap} />
 {/if}
+</div>

@@ -43,9 +43,9 @@ veröffentlicht seine Version nicht über die Admin-API.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
 Caddy upstream unhealthy, Caddy configuration reload failed, Reverse
-proxy answering 5xx, plus Device unreachable.
+proxy answering 5xx, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Caddy nie ab. Es sagt in einem Satz, was nicht

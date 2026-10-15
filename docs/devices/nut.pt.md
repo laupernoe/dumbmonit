@@ -42,10 +42,10 @@ por servidor.
 
 As [regras incorporadas](../alerting/rules.md#ups-behind-nut) que se aplicam:
 UPS on battery, UPS battery low, UPS battery needs replacing, UPS load high,
-UPS runtime short, UPS data stale, mais Device unreachable quando o próprio
+UPS runtime short, UPS data stale, mais Monitor unreachable quando o próprio
 servidor NUT deixa de responder.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca se
 liga ao servidor NUT. Um cartão por UPS: o seu estado por palavras (na rede
@@ -69,7 +69,7 @@ bateria.
     LISTEN 0.0.0.0 3493
     ```
 
-3. Num NAS, o mesmo interruptor tem outro nome. Synology DSM: Painel de Controlo → Hardware e Energia → UPS, marque Ativar servidor UPS de rede, e adicione o anfitrião do DumbMonit em Dispositivos DiskStation Permitidos; a UPS chama-se ups. QNAP: a página UPS do Painel de Controlo, Enable network UPS master, com o anfitrião do DumbMonit entre os endereços permitidos; a UPS chama-se qnapups. TrueNAS: o serviço UPS com Remote Monitor marcado.
+3. Num NAS, o mesmo interruptor tem outro nome. Synology DSM: Painel de Controlo → Hardware e Energia → UPS, marque Ativar servidor UPS de rede, e adicione o anfitrião do DumbMonit em Monitores DiskStation Permitidos; a UPS chama-se ups. QNAP: a página UPS do Painel de Controlo, Enable network UPS master, com o anfitrião do DumbMonit entre os endereços permitidos; a UPS chama-se qnapups. TrueNAS: o serviço UPS com Remote Monitor marcado.
 
 4. Opcional: o DumbMonit só envia nome de utilizador e palavra-passe se introduzir um, e o upsd não pede nenhum para ler. Se a sua política quer todos os clientes identificados, adicione ao upsd.users um utilizador sem actions nem instcmds, com uma palavra-passe longa e aleatória, e reinicie o upsd.
 
@@ -96,11 +96,11 @@ Endereço: um nome de anfitrião ou IP (`nas.lan`), `host:port`, ou a forma
 `ups@host` do `upsc`, da qual só o anfitrião é mantido. Opções: porta (3493), a
 UPS a vigiar (todas por predefinição) e o tempo limite por troca (10 s).
 
-Uma ligação recusada ou a ausência de resposta conta como o dispositivo estar
+Uma ligação recusada ou a ausência de resposta conta como o monitor estar
 inacessível. Quando a máquina que corre o servidor NUT se desliga no corte que
 reporta (é muitas vezes o seu próprio upsmon primário), os alertas da UPS ficam
-ocultos como suprimidos enquanto Device unreachable dispara para esse mesmo
-dispositivo: leia o alerta Device unreachable como o sinal de que a falha
+ocultos como suprimidos enquanto Monitor unreachable dispara para esse mesmo
+monitor: leia o alerta Monitor unreachable como o sinal de que a falha
 de energia venceu. Corra o servidor NUT numa máquina que sobreviva às outras, ou
 vigie a UPS a partir de um segundo servidor NUT. `ACCESS-DENIED` é mostrado como
 erro de credencial, e um nome de UPS que o servidor não publica como erro de

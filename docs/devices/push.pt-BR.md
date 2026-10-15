@@ -12,26 +12,26 @@ uma chamada que gera o alerta.
 
 ## Como funciona {#how-it-works}
 
-Cada dispositivo heartbeat recebe uma URL da forma
+Cada monitor heartbeat recebe uma URL da forma
 `https://<seu DumbMonit>/api/push/<token>`. O token é um valor aleatório
 de 128 bits, armazenado hasheado para busca e criptografado para exibição:
-é mostrado na página do dispositivo, com um botão de copiar, enquanto o
-dispositivo existir. É deliberadamente aberto — nenhuma sessão, nenhum
+é mostrado na página do monitor, com um botão de copiar, enquanto o
+monitor existir. É deliberadamente aberto — nenhuma sessão, nenhum
 token de API, nenhum cabeçalho `X-Requested-With` — porque uma linha
 `curl` em um crontab não tem nenhum desses. Possuir o token só permite
 dizer "o job rodou".
 
-A cada passagem do agendador (o intervalo do dispositivo, 60 s por
+A cada passagem do agendador (o intervalo do monitor, 60 s por
 padrão) o coletor lê o horário da última chamada e escreve:
 
 | Situação | `probe_success` | Efeito |
 |---|---|---|
-| Nenhuma chamada recebida ainda | *(nada escrito)* | O dispositivo mostra **Esperando**. Nenhum alerta: o job ainda não está no lugar. |
+| Nenhuma chamada recebida ainda | *(nada escrito)* | O monitor mostra **Esperando**. Nenhum alerta: o job ainda não está no lugar. |
 | Última chamada dentro do intervalo esperado + tolerância | `1` | **Reportando**. |
 | Última chamada mais antiga que o intervalo esperado + tolerância | `0`, `reason="missed"` | **Fora do ar**; a regra "Heartbeat missed" dispara depois de dois minutos. |
 | Última chamada disse `status=down` | `0`, `reason="reported_down"` | **Fora do ar** imediatamente, qualquer que seja o horário. |
 
-Uma chamada também reavalia o dispositivo imediatamente, então um job que
+Uma chamada também reavalia o monitor imediatamente, então um job que
 retoma limpa seu alerta sem esperar pela próxima passagem do agendador.
 
 O endpoint responde `204` com um corpo vazio quando a chamada é
@@ -45,7 +45,7 @@ são aceitos; `HEAD` também funciona.
 | Parâmetro | Significado |
 |---|---|
 | `status` | `up` (padrão) ou `down`: o job reporta uma falha ele mesmo. |
-| `msg` | Uma palavra livre de explicação, mantida (truncada a 500 caracteres) e mostrada na página do dispositivo. |
+| `msg` | Uma palavra livre de explicação, mantida (truncada a 500 caracteres) e mostrada na página do monitor. |
 
 Esses são os parâmetros do monitor push do Uptime Kuma: um script escrito
 para ele funciona sem alteração.
@@ -59,8 +59,8 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
    entre seus heartbeats.
 2. Defina o intervalo esperado para a programação do job ("24h" para um
    job noturno, "1h" para um de hora em hora) e, se a programação varia,
-   um período de tolerância mais amplo. Salve o dispositivo.
-3. A página do dispositivo mostra a URL a chamar. Adicione-a no final do
+   um período de tolerância mais amplo. Salve o monitor.
+3. A página do monitor mostra a URL a chamar. Adicione-a no final do
    job, para que só seja chamada quando o job tiver sucesso:
 
     ```
@@ -70,9 +70,9 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
 4. Um job que pode dizer quando falhou pode dizer isso em vez de ficar
    silencioso: adicione ?status=down&msg=… à URL, e o alerta dispara
    imediatamente.
-5. Até a primeira chamada chegar o dispositivo mostra "Esperando" e nada
+5. Até a primeira chamada chegar o monitor mostra "Esperando" e nada
    é alertado. URL perdida ou exposta? "Regenerar" na página do
-   dispositivo emite uma nova; a antiga para de responder imediatamente.
+   monitor emite uma nova; a antiga para de responder imediatamente.
 
 !!! warning
     Chame a URL no final do job, depois da parte que importa. Uma chamada

@@ -44,8 +44,8 @@ só mudam uma vez por minuto.
 **Uma falha parcial continua a ser uma verificação bem-sucedida.** Um
 serviço parado dá `service_up 0` para esse serviço e os outros continuam a
 ser medidos. Só quando nenhum serviço e nenhuma API responde de todo é que
-o dispositivo está *inacessível*. Uma chave recusada é um erro de
-configuração, mostrado na página do dispositivo e não notificado.
+o monitor está *inacessível*. Uma chave recusada é um erro de
+configuração, mostrado na página do monitor e não notificado.
 
 **O que não é lido.** A licença e a sua expiração, o espaço em disco e as
 estatísticas de mensagens do painel não são descritos pela documentação
@@ -55,11 +55,11 @@ servidor e liste o serviço na sua definição `services`.
 
 As [regras incorporadas](../alerting/rules.md#mdaemon-and-securitygateway)
 que se aplicam: SecurityGateway service down, SecurityGateway API not
-answering, SecurityGateway delivery queue growing, mais Device unreachable.
+answering, SecurityGateway delivery queue growing, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Um dispositivo SecurityGateway mostra um painel **Mail services** acima dos
+Um monitor SecurityGateway mostra um painel **Mail services** acima dos
 gráficos, lido da última medição guardada: abrir a página nunca liga ao
 gateway. Lista cada serviço monitorizado com a sua porta, uma palavra e uma
 cor (Answering, Down) e o seu tempo de resposta, a versão, e, com uma chave
@@ -73,7 +73,7 @@ de API, cada contador de desempenho com o seu valor mais recente.
     smtp,web_https
     ```
 
-2. Para também ler os contadores de desempenho, é necessário o SecurityGateway 12.5 ou posterior. Crie uma conta dedicada com o seguinte nome, com uma senha longa não usada em nenhum outro lugar, e dê-lhe a função Domain Administrator. Se os contadores continuarem vazios na página do dispositivo, a sua versão reserva-os para a função Global Administrator, e a conta precisa dessa função em vez disso.
+2. Para também ler os contadores de desempenho, é necessário o SecurityGateway 12.5 ou posterior. Crie uma conta dedicada com o seguinte nome, com uma senha longa não usada em nenhum outro lugar, e dê-lhe a função Domain Administrator. Se os contadores continuarem vazios na página do monitor, a sua versão reserva-os para a função Global Administrator, e a conta precisa dessa função em vez disso.
 
     ```
     dumbmonit

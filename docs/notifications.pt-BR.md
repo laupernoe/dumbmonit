@@ -31,7 +31,7 @@ cria quantos quiser, e suas regras de alerta escolhem quais notificar.
 
 Três princípios aplicam-se a cada canal:
 
-1. **Os alertas são agrupados.** Uma mensagem por dispositivo e por ciclo, mesmo que cinco discos
+1. **Os alertas são agrupados.** Uma mensagem por monitor e por ciclo, mesmo que cinco discos
    se encham ao mesmo tempo. Sem isso, você silenciaria notificações em uma
    semana.
 2. **Um canal quebrado nunca bloqueia outro.** A falha é registrada na
@@ -158,8 +158,8 @@ escrever seu JSON normalmente.
 | `{{message}}` | Corpo de texto simples, uma linha por alerta | `⚠️ Aviso · Disco cheio — /data — 95 % (limite > 90 %)` |
 | `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disco cheio**\n• ⚠️ …` |
 | `{{rule}}` | Nome da regra de alerta | `Disco cheio` |
-| `{{target}}` | Nome do dispositivo monitorado | `nas` |
-| `{{target_id}}` | Identificador numérico do dispositivo | `42` |
+| `{{target}}` | Nome do monitor | `nas` |
+| `{{target_id}}` | Identificador numérico do monitor | `42` |
 | `{{severity}}` | Severidade técnica | `info`, `warning` ou `critical` |
 | `{{severity_fr}}` | Severidade como uma palavra legível | `informação`, `aviso`, `crítico` |
 | `{{status}}` | Status técnico | `firing` ou `resolved` |
@@ -179,7 +179,7 @@ escrever seu JSON normalmente.
 | `{{color}}` | Cor de destaque, sem hash | `D98A00` |
 | `{{color_hex}}` | Cor de destaque, com hash | `#D98A00` |
 | `{{emoji}}` | Pictograma de status | `🔴`, `⚠️`, `ℹ️` ou `✅` |
-| `{{link}}` | Link para o dispositivo em DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Link para o monitor em DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | O segredo `token` do canal | *(seu token)* |
 
@@ -594,7 +594,7 @@ DumbMonit, sem aplicativo para instalar e sem conta de terceiros: o navegador
 - **Segredos** — nenhum. O par de chaves VAPID do servidor é gerado na primeira
   inicialização e armazenado criptografado; a chave privada nunca sai do servidor.
 
-O título da notificação é a gravidade e o dispositivo (`Crítico · nas01`), o corpo um
+O título da notificação é a gravidade e o monitor (`Crítico · nas01`), o corpo um
 resumo curto; um toque abre a página **Alertas**. O DumbMonit precisa de HTTPS de saída
 para os serviços de push (`fcm.googleapis.com`, `*.notify.windows.com`,
 `updates.push.services.mozilla.com`, `*.push.apple.com`); as mensagens são

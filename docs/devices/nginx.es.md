@@ -34,7 +34,7 @@ alcanzó `worker_connections`). Las métricas `plus_*` solo aparecen cuando
 de código abierto no tiene «upstream» que reportar solo con
 `stub_status`.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Nginx. Muestra las conexiones activas, en lectura,

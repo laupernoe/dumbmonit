@@ -22,11 +22,11 @@
 ресурс остаётся смонтированным, резервные копии продолжают работать, веб-интерфейс
 любого другого инструмента остаётся зелёным — а у пула больше нет избыточности.
 Второй диск уносит пул. `truenas_pool_healthy` падает до 0 уже на первом,
-срабатывает правило **NAS pool degraded**, и страница устройства называет диск.
+срабатывает правило **NAS pool degraded**, и страница монитора называет диск.
 
-## Страница устройства
+## Страница монитора
 
-Помимо общих графиков, устройство TrueNAS показывает три панели, которые
+Помимо общих графиков, монитор TrueNAS показывает три панели, которые
 читаются из сохранённых опросом данных — открытие страницы никогда не обращается
 к самому NAS:
 
@@ -97,7 +97,7 @@
   `pool/snapshot` в 25.10, и пробуются оба; `smart/test/results` исчез в 25.10 и
   тогда молча пропускается.
 
-Применяемые встроенные правила: Device unreachable, NAS pool degraded, NAS disk
+Применяемые встроенные правила: Monitor unreachable, NAS pool degraded, NAS disk
 errors, NAS pool almost full, NAS scrub found errors, NAS scrub overdue, NAS disk
 failed its SMART test, NAS disk too hot, NAS dataset near its quota, NAS
 replication failed, NAS snapshot task failed, NAS snapshots stale, TrueNAS alert

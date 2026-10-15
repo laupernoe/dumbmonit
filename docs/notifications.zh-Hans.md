@@ -28,7 +28,7 @@
 
 三个原则应用到每个通道：
 
-1. **警报被分组。** 每个设备每个周期一条消息，即使五个磁盘同时填满。没有它，你会在一周内使通知沉默。
+1. **警报被分组。** 每个监控项每个周期一条消息，即使五个磁盘同时填满。没有它，你会在一周内使通知沉默。
 2. **一个破损的通道从不阻止另一个。** 失败记录在通道的"最后错误"列，并继续到其他的。
 3. **一个不回答的服务在15秒后被放弃。** 一个迟到一分钟到达的通知不再有用，监控循环必须不等在不可到达的服务后。
 
@@ -128,8 +128,8 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 | `{{message}}` | 纯文本主体，每个警报一行 | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | 相同主体在Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | 警报规则的名称 | `Disk full` |
-| `{{target}}` | 监控设备的名称 | `nas` |
-| `{{target_id}}` | 设备的数字标识符 | `42` |
+| `{{target}}` | 监控监控项的名称 | `nas` |
+| `{{target_id}}` | 监控项的数字标识符 | `42` |
 | `{{severity}}` | 技术严重程度 | `info`、`warning`或`critical` |
 | `{{severity_fr}}` | 严重程度作为可读单词 | `information`、`avertissement`、`critique` |
 | `{{status}}` | 技术状态 | `firing`或`resolved` |
@@ -149,7 +149,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 | `{{color}}` | 强调颜色，不有散列 | `D98A00` |
 | `{{color_hex}}` | 强调颜色，有散列 | `#D98A00` |
 | `{{emoji}}` | 状态象形文字 | `🔴`、`⚠️`、`ℹ️`或`✅` |
-| `{{link}}` | DumbMonit中的设备链接 | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | DumbMonit中的监控项链接 | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | 总是 `dumbmonit` | `dumbmonit` |
 | `{{token}}` | 通道的 `token` 密钥 | *（你的令牌）* |
 
@@ -461,15 +461,15 @@ DumbMonit发送一个被包装的*自适应卡*，唯一格式这些流正确显
 
 在 <https://www.pushbullet.com/#settings/account>，点击**创建访问令牌**。
 
-- **设置** — `device_iden`（可选；不有它，你的所有设备被通知）
+- **设置** — `device_iden`（可选；不有它，你的所有监控项被通知）
 - **密钥** — `token`
 
 ### Bark (iOS) {#bark-ios}
 
-在iPhone上打开Bark应用：它显示一个URL包含你的**设备密钥**，长字符串后面的域名。
+在iPhone上打开Bark应用：它显示一个URL包含你的**监控项密钥**，长字符串后面的域名。
 
 - **设置** — `server_url`（可选，默认 `https://api.day.app`）、`group` （可选）、`level`（可选）、`sound`（可选）
-- **密钥** — `token` （设备密钥）
+- **密钥** — `token` （监控项密钥）
 
 不有 `level` 设置，DumbMonit选择：`passive` 用于顾问、`active` 用于警告、`timeSensitive` 用于严重警报。 `critical` 级别，其打破通过"请勿打扰"，永不自动选择——如果你想它明确设置。
 
@@ -516,7 +516,7 @@ Apprise是一个**网关**：用单个配置它给访问DumbMonit不实现自己
 |---|---|
 | `persistent_notification.create` | Home Assistant界面中的横幅 |
 | `notify.notify` | 所有配置的通知目标 |
-| `notify.mobile_app_<device>` | 一个特定设备的移动应用 |
+| `notify.mobile_app_<device>` | 一个特定监控项的移动应用 |
 | `light.turn_on` | 打开灯——用 `data` 用于实体和颜色 |
 
 `data` 设置被合并**最后**：它因此可覆盖DumbMonit准备的标题或消息。
@@ -590,7 +590,7 @@ SMS主体在300字符处被截断：超出那个，Twilio分割它进分段单�
 你的服务器使用自签或私有CA证书。见[自签证书](#self-signed-certificates)。
 
 **测试成功，但我接收无。**
-服务接受消息并将其发送别处：错误通道、错误ntfy主题、错误Pushbullet设备。检查目的地设置。
+服务接受消息并将其发送别处：错误通道、错误ntfy主题、错误Pushbullet监控项。检查目的地设置。
 
 **错误消息包含 `***`。**
 这是打算的：你的令牌在记录前被删除消息。没有密钥永显现在日志、在"最后错误"列或在API响应中。

@@ -122,8 +122,8 @@ de alertas, silencios) se prueban en el sitio sin red.
    `kind()`, `probe(&Target) -> Result<Vec<Sample>, ProbeError>` y
    opcionalmente `discover()` para la detección de perfil. Devuelve las
    variantes de `ProbeError` con veracidad: `means_down()` decide si un
-   fallo cuenta como «dispositivo caído» (alertado) o como un error de
-   configuración (mostrado en el dispositivo, no notificado).
+   fallo cuenta como «monitor caído» (alertado) o como un error de
+   configuración (mostrado en el monitor, no notificado).
 2. Lee tus opciones de `Target::tags` en un `options.rs`, con valores por
    defecto.
 3. Regístralo en `crates/server/src/main.rs` con

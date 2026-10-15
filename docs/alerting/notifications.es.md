@@ -10,8 +10,8 @@ se aplican de fábrica.
 ## El flujo, en una lista {#the-pipeline-in-one-list}
 
 ```
-evaluar (histéresis, anulaciones por dispositivo)
-  → deduplicar → suprimir por dependencia → silenciar → agrupar por dispositivo
+evaluar (histéresis, anulaciones por monitor)
+  → deduplicar → suprimir por dependencia → silenciar → agrupar por monitor
     → retención de parpadeo → filtro de severidad del canal → filtro de enrutado del canal
       → resuelto on/off → enfriamiento → horas de silencio → ventana de lote
         → límite por hora → enviar (+ enlace profundo)
@@ -21,7 +21,7 @@ evaluar (histéresis, anulaciones por dispositivo)
 | Etapa | Dónde se define | Por defecto |
 |---|---|---|
 | Umbral de limpieza (histéresis) | Editor de regla → *Clear below / above* | ninguno (CPU: 85 %, disco: 88 % en las reglas distribuidas) |
-| Anulaciones por dispositivo | Editor de regla → *Per-device overrides* | ninguna |
+| Anulaciones por monitor | Editor de regla → *Per-device overrides* | ninguna |
 | Detección de parpadeo | Settings → Notifications & reports → Notification policy → More options | 4 cambios en 30 min, retención 30 min |
 | Severidad mínima | Canal → Delivery options → *Send* | todo |
 | Avisarme cuando se limpia | Canal → Delivery options | activado |
@@ -33,7 +33,7 @@ evaluar (histéresis, anulaciones por dispositivo)
 | Mensajes por canal por hora | Settings → Notifications & reports → Notification policy | 20 |
 | URL pública (enlaces profundos) | Settings → Notifications & reports → Notification policy, o `DUMBMONIT_PUBLIC_URL` | vacía |
 
-## Histéresis y anulaciones por dispositivo {#hysteresis-and-per-device-overrides}
+## Histéresis y anulaciones por monitor {#hysteresis-and-per-device-overrides}
 
 Una regla que se activa por encima del 90 % y se limpia en el momento
 en que el valor cae por debajo del 90 % se activará y limpiará toda la
@@ -44,15 +44,15 @@ va por debajo de él (para reglas «se activa por encima») o por encima
 `clear_threshold` en la regla; el servidor rechaza un umbral de
 limpieza en el lado equivocado del umbral.
 
-Una **anulación por dispositivo** cambia el umbral o umbral de
-limpieza de un dispositivo, o desactiva la regla para ese dispositivo,
+Una **anulación por monitor** cambia el umbral o umbral de
+limpieza de un monitor, o desactiva la regla para ese monitor,
 sin duplicar la regla:
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # o { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # cada anulación de un dispositivo
+GET /api/alerts/overrides?target_id=7           # cada anulación de un monitor
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -88,7 +88,7 @@ Cada canal decide qué escucha (`policy` en la carga del canal):
   Una alerta que se activa y limpia durante las horas de silencio solo
   se menciona en ese resumen como «resolved during quiet hours».
 - `matcher` — qué alertas quiere el canal, por etiqueta, tipo de
-  dispositivo o regla. Vacío (lo por defecto, y lo que conserva cada
+  monitor o regla. Vacío (lo por defecto, y lo que conserva cada
   canal existente) significa todo.
 
 ```
@@ -106,7 +106,7 @@ enrutado.
 
 ## Enrutado por etiqueta {#routing-by-tag}
 
-Los dispositivos llevan etiquetas (`site=cellar`, `role=storage`) y un
+Los monitores llevan etiquetas (`site=cellar`, `role=storage`) y un
 tipo (`snmp`, `proxmox`, `synology`, `agent`…). El **filtro de
 enrutado** de un canal indica qué alertas quiere:
 
@@ -122,8 +122,8 @@ corchetes:
 
 | `field` | Coincide con | Ejemplo |
 |---|---|---|
-| `tag` | Una etiqueta de la propia página del dispositivo | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | El recolector que sondea el dispositivo | `{"field":"kind","value":"proxmox"}` |
+| `tag` | Una etiqueta de la propia página del monitor | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | El recolector que sondea el monitor | `{"field":"kind","value":"proxmox"}` |
 | `rule` | El `uid` de la regla | `{"field":"rule","value":"disk_full"}` |
 
 Cómo se leen las listas:
@@ -136,14 +136,14 @@ Cómo se leen las listas:
 - **`exclude` siempre gana**, incluso sobre un `include` que coincidió.
 
 Así que el ejemplo de arriba se lee, y la UI lo repite exactamente con
-estas palabras: *este canal recibe avisos y superiores de dispositivos
-etiquetados site=cellar, excepto dispositivos etiquetados role=lab*.
+estas palabras: *este canal recibe avisos y superiores de monitores
+etiquetados site=cellar, excepto monitores etiquetados role=lab*.
 
-Bajo el editor, una **vista previa** lista qué dispositivos tuyos
+Bajo el editor, una **vista previa** lista qué monitores tuyos
 actuales selecciona el filtro. No es una aproximación: el servidor
 ejecuta el mismo filtro que ejecuta el motor de alertas, reducido a la
-parte que depende solo del dispositivo. Las condiciones de regla se
-aplican a las alertas en lugar de a los dispositivos, así que la vista
+parte que depende solo del monitor. Las condiciones de regla se
+aplican a las alertas en lugar de a los monitores, así que la vista
 previa las nombra por separado en lugar de pretender contarlas.
 
 ```
@@ -204,8 +204,8 @@ apunta el canal de escalada a PagerDuty u Opsgenie, que lo hacen bien.
 ```
 
 - **Batch window** — las alertas que se activan dentro de la ventana
-  salen como *un* mensaje por canal, agrupadas por dispositivo: «3
-  alerts on 2 devices» con una sección por dispositivo; las
+  salen como *un* mensaje por canal, agrupadas por monitor: «3
+  alerts on 2 devices» con una sección por monitor; las
   resoluciones viajan con ellas («2 resolved»). `0` envía en el
   siguiente ciclo. Un resumen lista como máximo 12 líneas, y luego
   «…and N more alerts».
@@ -213,8 +213,8 @@ apunta el canal de escalada a PagerDuty u Opsgenie, que lo hacen bien.
   mensajes en la última hora, las alertas adicionales esperan y llegan
   como un resumen cuando se libera una ranura. `0` elimina el límite.
 - Los **canales on-call** (PagerDuty, Opsgenie) nunca se agrupan entre
-  dispositivos: abren y cierran un incidente por dispositivo, así que
-  reciben un mensaje por dispositivo sin esperar.
+  monitores: abren y cierran un incidente por monitor, así que
+  reciben un mensaje por monitor sin esperar.
 
 Los fallos de envío mantienen las líneas en cola; el siguiente ciclo
 reintenta.
@@ -235,15 +235,15 @@ Cada alerta es una línea, la misma en correo, ntfy, chat y la variable
   ni emoji.
 - Una regla que vigila varias series nombra la que se activó: la VM y
   su id, el punto de montaje, la interfaz, el grupo de copia, la URL
-  de la sonda. Las reglas de todo el dispositivo (unreachable) no
-  nombran más que el dispositivo.
+  de la sonda. Las reglas de todo el monitor (unreachable) no
+  nombran más que el monitor.
 - El valor y el umbral se muestran para reglas medidas; una regla
   todo-o-nada sobre una métrica 0/1 (con batería, invitado detenido)
   no repite «1 (threshold > 0)».
 
 ## Enlaces profundos {#deep-links}
 
-Cada mensaje termina con un enlace al dispositivo
+Cada mensaje termina con un enlace al monitor
 (`{public_url}/targets/{id}`) cuando se conoce una URL pública — el
 `public_url` de la política, o `DUMBMONIT_PUBLIC_URL`. Los webhooks
 personalizados también lo obtienen como la variable `{{link}}` a menos
@@ -252,7 +252,7 @@ que tengan su propio `base_url` definido.
 Deliberadamente no hay ningún enlace «silence for 1 h» en los mensajes:
 los servicios de chat obtienen cada enlace que muestran para construir
 una vista previa, lo cual activaría el silencio en el momento en que se
-publica el mensaje. Silencia desde la página del dispositivo o la
+publica el mensaje. Silencia desde la página del monitor o la
 página Alerts en su lugar.
 
 ## Qué se tomó prestado de Pulse, y qué no {#what-was-borrowed-from-pulse-and-what-was-not}

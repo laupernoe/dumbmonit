@@ -10,7 +10,7 @@ lascia approfondire su richiesta.
 La fascia in alto è un bollettino meteo per la tua rete. Una frase indica
 il cielo: "Clear skies." quando nulla richiede attenzione, altrimenti un
 conteggio di ciò che la richiede ("9 advisories, 1 unreachable."). Sotto,
-delle targhette contano i dispositivi che riportano e irraggiungibili,
+delle targhette contano i monitor che riportano e irraggiungibili,
 con l'orario dell'ultimo controllo, e tre indicatori: **Reporting**,
 **Needs you**, **Forecasts**.
 
@@ -24,37 +24,37 @@ L'unica azione primaria della pagina è **Add a device**.
 ## La guida al primo avvio {#the-first-run-guide}
 
 Su un'istanza nuova, la pagina sotto il bollettino non è vuota: è una
-guida in tre passaggi — aggiungi un dispositivo, collega un modo per
+guida in tre passaggi — aggiungi un monitor, collega un modo per
 essere avvisato, verifica che arrivi un messaggio. Ogni passaggio è un
 clic, ognuno può essere scartato per conto proprio, e **Skip the guide**
 li elimina tutti e tre. La scelta viene memorizzata sull'istanza, così un
 secondo browser non ricomincia la guida da capo. Vedi
-[Aggiungi il tuo primo dispositivo](../install/first-device.md#the-three-first-steps).
+[Aggiungi il tuo primo monitor](../install/first-device.md#the-three-first-steps).
 
 ## Needs you {#needs-you}
 
 L'elenco di ciò che richiede attenzione ora, il più severo prima:
-dispositivi irraggiungibili, poi avvisi attivi per severità. Ogni riga
-nomina la regola, il dispositivo, il valore attuale, da quanto tempo
+monitor irraggiungibili, poi avvisi attivi per severità. Ogni riga
+nomina la regola, il monitor, il valore attuale, da quanto tempo
 dura, e se raggruppa diverse serie ("×4" per quattro file system sullo
-stesso dispositivo). Quattro azioni: **Ack** (conferma questo avviso per
+stesso monitor). Quattro azioni: **Ack** (conferma questo avviso per
 1 h, 4 h, 24 h oppure until resolved — i ricordi si fermano, la
 risoluzione viene comunque notificata), **Snooze** (nascondi solo questo
 avviso per 1 h, 8 h, 1 giorno oppure until resolved), **Ignore** (impedisci
-che questa regola avvisi mai più su questo dispositivo, reversibilmente),
+che questa regola avvisi mai più su questo monitor, reversibilmente),
 e **Open device**.
 
 Gli avvisi confermati e sospesi si spostano nel loro gruppo più silenzioso
 sotto l'elenco e lasciano il conteggio *Needs you*. Un avviso ignorato
 scompare del tutto — non è "conosciuto", è disattivato per quel
-dispositivo. Vedi
+monitor. Vedi
 [Eliminare un avviso](alerts.md#getting-rid-of-an-alert).
 
-## Riepilogo dispositivi {#devices-summary}
+## Riepilogo monitor {#devices-summary}
 
-Una riga: quanti dispositivi, quanti riportano, quanti irraggiungibili, e
+Una riga: quanti monitor, quanti riportano, quanti irraggiungibili, e
 un link alla pagina Devices completa. La panoramica non elenca mai i
-dispositivi: il rack vive su [Devices](devices.md).
+monitor: il rack vive su [Devices](devices.md).
 
 ## Previsioni e ultime 24 ore {#forecasts-and-last-24-hours}
 
@@ -101,7 +101,7 @@ input, risultati in tre gruppi.
 |---|---|
 | Pages | Overview, Devices, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
 | Actions | Add a device, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
-| Devices | Ogni dispositivo, con il suo LED di stato; ++enter++ lo apre |
+| Devices | Ogni monitor, con il suo LED di stato; ++enter++ lo apre |
 
 ## Navigazione {#navigation}
 
@@ -114,7 +114,7 @@ documentazione.
 - **Overview** — il bollettino: tutto va bene, e cosa richiede
   attenzione.
 - **Monitors** — il rack; ogni fonte che monitori. Vedi
-  [Pagina dei dispositivi](devices.md).
+  [Pagina dei monitor](devices.md).
 - **Alerts** — cosa è attivo, le finestre di manutenzione, la cronologia
   e le regole. Vedi [Pagina Alerts](alerts.md).
 - **Settings** — il tuo account, utenti e single sign-on, token agent e

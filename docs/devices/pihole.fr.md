@@ -44,10 +44,10 @@ numéros de version, et DumbMonit fait de même.
 
 Les [règles intégrées](../alerting/rules.md#pi-hole) qui s'appliquent :
 blocage Pi-hole désactivé, listes de blocage Pi-hole obsolètes, mise à jour
-Pi-hole disponible, messages de diagnostic Pi-hole, plus Appareil
+Pi-hole disponible, messages de diagnostic Pi-hole, plus Surveillance
 inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la vérification a stocké ;
 ouvrir la page ne se connecte jamais à Pi-hole. Il montre si le blocage est

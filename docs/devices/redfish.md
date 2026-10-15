@@ -60,11 +60,11 @@ the first page the controller serves are Critical or Warning.
 The [built-in rules](../alerting/rules.md#server-hardware-redfish) that apply:
 Server fan failed, Server temperature above critical, Power supply redundancy
 lost, Power supply failed, Drive failure predicted, Server health critical,
-plus Device unreachable.
+plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
-A Redfish device gets its own panel on its page, above the charts, read from
+A Redfish monitor gets its own panel on its page, above the charts, read from
 what the last probe stored: opening the page never queries the controller.
 It answers, in this order:
 

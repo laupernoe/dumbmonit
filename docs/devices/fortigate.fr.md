@@ -80,7 +80,7 @@ Les [règles intégrées](../alerting/rules.md#fortigate) qui s'appliquent :
 - **Mise à jour firmware FortiGate** : une release de correctif est
   proposée (Info, rappelée chaque semaine).
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Firewall dit ce qui ne va pas en une phrase, montre le CPU, la
 mémoire, les sessions et l'état HA, puis liste les tunnels IPsec (ceux en

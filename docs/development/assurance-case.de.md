@@ -13,7 +13,7 @@ Dateipfade unten sind relativ zum Wurzelverzeichnis des Repositorys.
 
 1. Nur ein authentifizierter Benutzer mit einer dafür berechtigten Rolle darf die Konfiguration,
    die Alarme oder die Messwerte lesen oder ändern.
-2. Die Zugangsdaten, die DumbMonit für Ihre Geräte speichert, sind weder aus der Datenbankdatei
+2. Die Zugangsdaten, die DumbMonit für Ihre Monitore speichert, sind weder aus der Datenbankdatei
    noch aus einem Backup-Bundle ohne dessen Passphrase noch über die API lesbar.
 3. Nur ein Rechner mit einem gültigen Token darf Messwerte einspeisen, und ein geleaktes Token
    lässt sich einzeln widerrufen.
@@ -30,11 +30,11 @@ Dateipfade unten sind relativ zum Wurzelverzeichnis des Repositorys.
 | Anonymer Netzwerk-Client | Erreicht den HTTP-Port | Ja |
 | Angemeldeter Benutzer mit niedriger Rolle | Gültige Session oder schreibgeschütztes API-Token | Ja (Rechteausweitung) |
 | Bösartige Webseite | Läuft im Browser eines Admins | Ja (CSRF, XSS, Clickjacking) |
-| Kompromittiertes oder bösartiges überwachtes Gerät | Beantwortet Probes mit feindlichem Inhalt | Ja (Parser, Weiterleitungen) |
+| Kompromittiertes oder bösartiges überwachter Monitor | Beantwortet Probes mit feindlichem Inhalt | Ja (Parser, Weiterleitungen) |
 | Bösartiger oder gestohlener Agent | Besitzt ein Agent-Token | Ja (Reichweite eines einzelnen Tokens) |
-| Admin, der eine feindliche URL einträgt | Konfiguriert einen Webhook oder eine Geräteadresse | Ja, für die eigenen Adressen des Servers |
+| Admin, der eine feindliche URL einträgt | Konfiguriert einen Webhook oder eine Monitoradresse | Ja, für die eigenen Adressen des Servers |
 | Jemand mit Zugriff auf den Host, das Volume `/data` oder die Container-Runtime | Volle Kontrolle | Nein: außerhalb des Geltungsbereichs, wie in der Sicherheitsrichtlinie |
-| Schwachstellen in VictoriaMetrics oder in den überwachten Geräten | Upstream-Code | Nein: beim Upstream melden |
+| Schwachstellen in VictoriaMetrics oder in den überwachten Monitoren | Upstream-Code | Nein: beim Upstream melden |
 
 ## Vertrauensgrenzen {#trust-boundaries}
 
@@ -45,7 +45,7 @@ Dateipfade unten sind relativ zum Wurzelverzeichnis des Repositorys.
 | Identity-Provider zu Server | OpenID-Connect-Redirect und ID-Token | State, Nonce und PKCE (S256); die Verknüpfung mit lokalen Konten ist explizit | `crates/server/src/auth/oidc/`; Test `oidc_api.rs` |
 | Agent zu `/api/ingest` | Messwerte, Befehlsergebnisse | Token pro Agent, als SHA-256-Hash gespeichert (Präfix `dmon_`) | `crates/server/src/api/ingest.rs`, `crates/server/src/collectors/agent/token.rs`; Test `agent_binding_api.rs` |
 | Relay-Agent zu Server | Probe-Ergebnisse aus einem anderen Netzwerk | Dieselbe Agent-Token-Prüfung (`agent_commands::authenticate`) | `crates/server/src/api/relay.rs`; Test `relay_api.rs` |
-| Server zu überwachten Geräten | Probe-Anfragen, feindliche Antworten | Weiterleitungen nur auf demselben Host, begrenzte Anzahl Weiterleitungen, Antwort-Parser mit Unit-Tests, Zertifikatsprüfung standardmäßig aktiv | `crates/collectors/src/http.rs` (`same_host_redirects`) |
+| Server zu überwachten Monitoren | Probe-Anfragen, feindliche Antworten | Weiterleitungen nur auf demselben Host, begrenzte Anzahl Weiterleitungen, Antwort-Parser mit Unit-Tests, Zertifikatsprüfung standardmäßig aktiv | `crates/collectors/src/http.rs` (`same_host_redirects`) |
 | Server zu Benachrichtigungskanälen | Webhook- und SMTP-Anfragen | Dieselbe Weiterleitungsrichtlinie plus eine Schutzprüfung, die die eigenen Adressen des Servers ablehnt, vor dem Senden, bei jeder Weiterleitung und bei der DNS-Auflösung | `crates/server/src/notify/guard.rs`; Test `notify_guard_api.rs` |
 | Server zu VictoriaMetrics | Schreib- und Leseabfragen | Der eingebettete Kindprozess lauscht standardmäßig auf `127.0.0.1:8428`; der Prometheus-kompatible Proxy leitet nur die Lese-Routen weiter (query, query_range, series, labels) | `crates/server/src/config.rs` (`DUMBMONIT_VM_LISTEN`), `crates/server/src/api/prometheus.rs` (`readable_segments`) |
 | Server zu SQLite | Konfiguration und Zustand | Gebundene Parameter über `sqlx` | `crates/server/src/db/` |
@@ -70,9 +70,13 @@ Das Argument folgt den Entwurfsprinzipien von Saltzer und Schroeder.
 - **Trennung der Privilegien.** Sessions, API-Tokens und Agent-Tokens sind verschiedene
   Zugangsdaten. API-Tokens tragen einen Scope `read` oder `write` (`auth/token.rs`), und
   Benutzer haben die Rolle Betrachter, Operator oder Admin.
-- **Minimale Rechte.** Das Image läuft als UID 65532 (`Dockerfile`); die Compose-Datei entfernt
-  alle Capabilities, setzt ein schreibgeschütztes Root-Dateisystem und `no-new-privileges`
-  (`docker-compose.yml`).
+- **Minimale Rechte.** Das Image läuft als UID 65532 (`Dockerfile`). Als root gestartet (`user: "0:0"`,
+  für Bind-Mounts), übergibt der Server nur das Datenverzeichnis an diesen
+  Benutzer, ohne Links zu folgen, gibt dann root endgültig ab und prüft, dass er
+  es nicht zurückerlangen kann, bevor er irgendetwas anderes öffnet
+  (`privileges.rs`). Die Compose-Datei behält nur die vier Capabilities, die
+  dieser Schritt braucht, setzt ein schreibgeschütztes Root-Dateisystem und `no-
+  new-privileges` (`docker-compose.yml`).
 - **Minimale gemeinsame Mechanismen.** Agents authentifizieren sich mit ihrem eigenen Token;
   den Zugang eines Rechners zu widerrufen berührt also weder einen Benutzer noch andere Agents.
 - **Psychologische Akzeptanz.** Sicheres Verhalten ist der Standard und braucht keinen
@@ -119,7 +123,7 @@ Das Argument folgt den Entwurfsprinzipien von Saltzer und Schroeder.
 | Mängel bei Protokollierung und Überwachung, CWE-778 | Sicherheitsprotokoll der Anmeldungen und sensiblen Änderungen | `auth/audit.rs`; Test `security_audit_api.rs` |
 
 Bekannte Restrisiken stehen im Sicherheitsmodell (HTTP-Listener ohne Verschlüsselung,
-unverschlüsselte Geräteoptionen, eingebettetes VictoriaMetrics ohne Authentifizierung). Die CSP
+unverschlüsselte Monitoroptionen, eingebettetes VictoriaMetrics ohne Authentifizierung). Die CSP
 erlaubt Inline-Stile (`style-src 'unsafe-inline'`), was sie gegen Style-Injection schwächt, nicht
 aber gegen die Ausführung von Skripten. Es gibt ein akzeptiertes Advisory, `RUSTSEC-2023-0071`,
 das in `deny.toml` mit Begründung ignoriert wird: Die Crate `rsa` prüft RS256-Signaturen mit dem

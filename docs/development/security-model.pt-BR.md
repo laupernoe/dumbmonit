@@ -8,7 +8,7 @@ relatar uma vulnerabilidade, siga a
 ## O que está em jogo
 
 O DumbMonit roda dentro da sua rede. Ele armazena as credenciais de que precisa
-para ler cada dispositivo (communities SNMP, tokens de API, senhas), recebe
+para ler cada monitor (communities SNMP, tokens de API, senhas), recebe
 medições de agentes nas suas máquinas e envia requisições para endereços que
 você configura. Um comprometimento exporia esses segredos e daria a um atacante
 um ponto de apoio na rede monitorada.
@@ -19,7 +19,7 @@ um ponto de apoio na rede monitorada.
 |---|---|---|
 | Navegador ou script para `/api/*` | Admins, operadores e visualizadores | Autenticado por cookie de sessão ou token de API; três papéis limitam o que cada um pode fazer. |
 | Agente para `/api/ingest` | Máquinas em que você instalou um agente | Um token por máquina; um token vazado pode ser revogado isoladamente. |
-| Servidor para dispositivos e serviços | Sistemas de terceiros | Sem confiança: as respostas são analisadas de forma defensiva e os redirecionamentos permanecem no mesmo host. |
+| Servidor para monitores e serviços | Sistemas de terceiros | Sem confiança: as respostas são analisadas de forma defensiva e os redirecionamentos permanecem no mesmo host. |
 | Servidor para canais de notificação | Serviços externos | As credenciais são criptografadas em repouso e nunca retornadas pela API. |
 | Servidor para VictoriaMetrics | Um processo filho em loopback, ou uma instância externa | O embutido não tem autenticação e escuta em loopback; uma instância externa é responsabilidade do operador. |
 | Volume `/data` e host | O operador | Confiável. Um atacante que controle o host ou o volume está fora do escopo. |
@@ -37,7 +37,7 @@ um ponto de apoio na rede monitorada.
 - **Economia de mecanismo.** Um binário, um arquivo SQLite, um processo filho em
   loopback e uma única porta de entrada para todos os clientes: `/api/*`.
 - **Padrões à prova de falhas.** Uma verificação de segurança cujos dados estão
-  ausentes é `unknown`, nunca uma aprovação; um dispositivo inacessível e um
+  ausentes é `unknown`, nunca uma aprovação; um monitor inacessível e um
   erro de configuração são estados diferentes.
 - **Mediação completa.** Um único middleware de autenticação
   (`crates/server/src/auth/middleware.rs`) protege as rotas da API.
@@ -66,7 +66,7 @@ um ponto de apoio na rede monitorada.
 | Falhas de identificação e autenticação | Limite de taxa de login por endereço de cliente e por conta (`auth/rate_limit.rs`), autenticação de dois fatores opcional, OpenID Connect, um admin pode redefinir o segundo fator de um usuário e encerrar suas sessões. |
 | Falhas de integridade de software e dados | Os instaladores do agente verificam o SHA-256 do binário baixado; as imagens de lançamento são construídas pela CI. |
 | Falhas de registro e monitoramento | Um log de segurança de logins e alterações sensíveis (`auth/audit.rs`). |
-| Server-side request forgery | Integrações e canais de notificação seguem redirecionamentos apenas para o mesmo host, de modo que um dispositivo não pode redirecionar uma requisição e sua chave de API para outro lugar. |
+| Server-side request forgery | Integrações e canais de notificação seguem redirecionamentos apenas para o mesmo host, de modo que um monitor não pode redirecionar uma requisição e sua chave de API para outro lugar. |
 | Cross-site request forgery | Requisições que alteram estado e dependem do cookie devem carregar `X-Requested-With: DumbMonit` ou metadados fetch de mesma origem, caso contrário `403`; requisições autenticadas por token não carregam cookie. |
 
 ## Verificação
@@ -84,7 +84,7 @@ o argumento de design seguro e as evidências por trás de cada afirmação.
 ## Limites conhecidos
 
 - O servidor embutido fala HTTP simples; coloque TLS na frente dele.
-- As opções dos dispositivos são armazenadas sem criptografia. Coloque segredos
+- As opções dos monitores são armazenadas sem criptografia. Coloque segredos
   nos campos de credencial.
 - O VictoriaMetrics embutido não tem autenticação.
 - O DumbMonit está antes da 1.0; rotas e campos ainda podem mudar.

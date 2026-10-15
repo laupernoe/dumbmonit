@@ -30,7 +30,7 @@ von `workers_busy`/`workers_idle` und `scoreboard` braucht
 Worker-Slots: Zustände sind waiting, open_slot, starting, reading, sending,
 keepalive, dns_lookup, closing, logging, finishing und idle_cleanup.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Apache nie ab. Es zeigt beschäftigte und untätige

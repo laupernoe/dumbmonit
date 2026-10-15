@@ -9,7 +9,7 @@ deixa você se aprofundar quando quiser.
 
 A faixa no topo é um boletim meteorológico para sua rede. Uma frase declara
 o céu: "Céu limpo." quando nada precisa de você, senão uma contagem do que
-precisa ("9 avisos, 1 inacessível."). Abaixo dela, placas contam dispositivos
+precisa ("9 avisos, 1 inacessível."). Abaixo dela, placas contam monitores
 reportando e inacessíveis, com o horário da última verificação, e três
 leituras: **Reportando**, **Precisa de você**, **Previsões**.
 
@@ -18,41 +18,41 @@ tempestade, dependendo de quantos alertas estão disparando e quão severos
 são, com o pombo voando pela tela. Sob `prefers-reduced-motion`, tudo fica
 imóvel.
 
-A única ação principal da página é **Adicionar dispositivo**.
+A única ação principal da página é **Adicionar monitor**.
 
 ## O guia de primeira execução {#the-first-run-guide}
 
 Em uma instância nova, a página abaixo do boletim não está vazia: é um guia
-de três passos — adicione um dispositivo, conecte uma forma de ser avisado,
+de três passos — adicione um monitor, conecte uma forma de ser avisado,
 verifique que uma mensagem chega. Cada passo é um clique, cada um pode ser
 dispensado por conta própria, e **Pular o guia** afasta todos os três. A
 escolha é armazenada na instância, então um segundo navegador não reinicia
 o guia. Veja
-[Adicione seu primeiro dispositivo](../install/first-device.md#the-three-first-steps).
+[Adicione seu primeiro monitor](../install/first-device.md#the-three-first-steps).
 
 ## Precisa de você {#needs-you}
 
-A lista do que precisa de você agora, mais severo primeiro: dispositivos
+A lista do que precisa de você agora, mais severo primeiro: monitores
 inacessíveis, depois alertas disparando por severidade. Cada linha nomeia a
-regra, o dispositivo, o valor atual, há quanto tempo está acontecendo, e se
+regra, o monitor, o valor atual, há quanto tempo está acontecendo, e se
 agrupa várias séries ("×4" para quatro sistemas de arquivos no mesmo
-dispositivo). Quatro ações: **Reconhecer** (reconhecer este alerta por 1 h,
+monitor). Quatro ações: **Reconhecer** (reconhecer este alerta por 1 h,
 4 h, 24 h ou até resolver — lembretes pausam, a resolução ainda é
 notificada), **Soneca** (ocultar apenas este alerta por 1 h, 8 h, 1 dia ou
 até resolver), **Ignorar** (parar esta regra de jamais alertar neste
-dispositivo de novo, reversivelmente), e **Abrir dispositivo**.
+monitor de novo, reversivelmente), e **Abrir monitor**.
 
 Alertas reconhecidos e em soneca se movem para seu próprio grupo mais
 silencioso sob a lista e saem da contagem de *Precisa de você*. Um alerta
 ignorado desaparece de vez — não é "conhecido", é desligado para esse
-dispositivo. Veja
+monitor. Veja
 [Se livrando de um alerta](alerts.md#getting-rid-of-an-alert).
 
-## Resumo de dispositivos {#devices-summary}
+## Resumo de monitores {#devices-summary}
 
-Uma linha: quantos dispositivos, quantos reportando, quantos inacessíveis, e
-um link para a página completa de Dispositivos. A visão geral nunca lista
-dispositivos: o rack vive em [Dispositivos](devices.md).
+Uma linha: quantos monitores, quantos reportando, quantos inacessíveis, e
+um link para a página completa de Monitores. A visão geral nunca lista
+monitores: o rack vive em [Monitores](devices.md).
 
 ## Previsões e últimas 24 horas {#forecasts-and-last-24-hours}
 
@@ -95,9 +95,9 @@ campo, resultados em três grupos.
 
 | Grupo | Entradas |
 |---|---|
-| Páginas | Visão geral, Dispositivos, Alertas, Notificações, Páginas de status, Configurações, Modo parede, Documentação |
-| Ações | Adicionar dispositivo, Varrer minha rede, Programar manutenção, Adicionar canal de notificação, Nova página de status, Anunciar um incidente, Alternar tema |
-| Dispositivos | Todo dispositivo, com seu LED de estado; ++enter++ o abre |
+| Páginas | Visão geral, Monitores, Alertas, Notificações, Páginas de status, Configurações, Modo parede, Documentação |
+| Ações | Adicionar monitor, Varrer minha rede, Programar manutenção, Adicionar canal de notificação, Nova página de status, Anunciar um incidente, Alternar tema |
+| Monitores | Todo monitor, com seu LED de estado; ++enter++ o abre |
 
 ## Navegação {#navigation}
 
@@ -108,7 +108,7 @@ e **Mais**, que guarda o modo parede e a documentação.
 
 - **Visão geral** — o boletim: tudo está bem, e o que precisa de você.
 - **Monitores** — o rack; toda fonte que você monitora. Veja
-  [Página de dispositivos](devices.md).
+  [Página de monitores](devices.md).
 - **Alertas** — o que está disparando, as janelas de manutenção, o histórico
   e as regras. Veja [Página de alertas](alerts.md).
 - **Configurações** — sua conta, usuários e login único, tokens de agente e

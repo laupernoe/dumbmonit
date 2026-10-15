@@ -14,9 +14,9 @@ certificats et état du cluster.
     des semaines sur une passerelle mail en fonctionnement. Dites-nous ce
     qui casse.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Au-delà des graphiques génériques, un appareil Proxmox Mail Gateway montre
+Au-delà des graphiques génériques, une surveillance Proxmox Mail Gateway montre
 trois panneaux, lus depuis ce que la sonde a stocké — ouvrir la page
 n'interroge jamais la passerelle elle-même :
 
@@ -113,7 +113,7 @@ ans. La même règle s'applique partout : une valeur que l'API ne renvoie
 pas produit une métrique de moins, jamais un zéro qui prétend être une
 mesure.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, file de mail
+Règles intégrées qui s'appliquent : Surveillance inaccessible, file de mail
 qui grandit, mail bloqué dans la file, service de passerelle mail arrêté,
 signatures antivirus obsolètes, règles antispam obsolètes, quarantaine qui
 se remplit, cluster de passerelle mail dégradé, certificat de passerelle

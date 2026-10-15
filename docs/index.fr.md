@@ -16,7 +16,7 @@ de maintenance sont planifiées.
 
 <div class="dm-links" markdown>
 <a href="install/docker/">Installer<small>Docker Compose, premier démarrage, sauvegardes</small></a>
-<a href="install/first-device/">Ajouter votre premier appareil<small>SNMP, scan réseau, la suite</small></a>
+<a href="install/first-device/">Ajouter votre première surveillance<small>SNMP, scan réseau, la suite</small></a>
 <a href="alerting/">Alertes<small>Règles intégrées, silencieuses par construction</small></a>
 </div>
 
@@ -28,16 +28,16 @@ de maintenance sont planifiées.
 | [Proxmox VE](devices/proxmox.md) | Nœuds, machines virtuelles et conteneurs, stockages, quorum du cluster, et l'ancienneté de la dernière sauvegarde réussie de chaque machine. |
 | [Proxmox Backup Server](devices/pbs.md) | Occupation des datastores et prévision de saturation, déduplication, ancienneté et vérification du dernier snapshot de chaque machine, tâches en échec, ramasse-miettes. |
 | [Synology DSM](devices/synology.md) | Volumes, disques et leur état SMART, température, charge, via l'API web du NAS. |
-| [Agent Linux, macOS, FreeBSD et Windows](devices/agent.md) | CPU, mémoire, disques, réseau, services, conteneurs et uptime des machines qui ne parlent pas SNMP, plus les températures, l'état des disques (SMART) et les pools ZFS lorsque la machine les expose. Une seule commande pour l'installer, ou une image Docker ; en [mode relais](install/remote-site.md), il sonde les appareils d'un site distant uniquement par des connexions sortantes. |
+| [Agent Linux, macOS, FreeBSD et Windows](devices/agent.md) | CPU, mémoire, disques, réseau, services, conteneurs et uptime des machines qui ne parlent pas SNMP, plus les températures, l'état des disques (SMART) et les pools ZFS lorsque la machine les expose. Une seule commande pour l'installer, ou une image Docker ; en [mode relais](install/remote-site.md), il sonde les surveillances d'un site distant uniquement par des connexions sortantes. |
 | [Services](devices/services.md) | HTTP(S), port TCP, DNS, ping et expiration des certificats TLS, façon Uptime Kuma, avec une barre d'historique et un pourcentage de disponibilité. |
-| [Packs d'intégration](packs/index.md) | Un type d'appareil déclaré dans un seul fichier YAML — une API HTTP ou une page Prometheus `/metrics` de l'appareil — avec ses propres règles d'alerte, installé sans nouvelle version du serveur. |
+| [Packs d'intégration](packs/index.md) | Un type de surveillance déclaré dans un seul fichier YAML — une API HTTP ou une page Prometheus `/metrics` de la surveillance — avec ses propres règles d'alerte, installé sans nouvelle version du serveur. |
 
 ## Lui parler {#talk-to-it}
 
 - Un [assistant via MCP](using/assistant.md) — Claude Code, Claude Desktop,
   ChatGPT, VS Code, Cursor — avec 27 outils : un jeton `read` ne fait que regarder (état,
-  appareils, alertes, métriques, agents, conteneurs…), un jeton `write` peut aussi agir
-  (mettre en sourdine, acquitter, ajouter un appareil, redémarrer un conteneur, publier un
+  surveillances, alertes, métriques, agents, conteneurs…), un jeton `write` peut aussi agir
+  (mettre en sourdine, acquitter, ajouter une surveillance, redémarrer un conteneur, publier un
   incident sur une page d'état). Les secrets ne sont jamais renvoyés.
 - L'[API HTTP](reference/api.md) derrière tout ce que fait l'interface, décrite à
   `/api/openapi.json` (OpenAPI 3.1). Les jetons (`dmt_…`) sont limités en lecture ou en

@@ -65,10 +65,10 @@ pendant qu'un autre continue d'envoyer. Seul
 `last_seen_timestamp_seconds` — la dernière fois que la session de chaque
 appareil était active — est vraiment par appareil.
 
-Le tableau de la page de l'appareil montre ces chiffres pour chaque appareil,
+Le tableau de la page de la surveillance montre ces chiffres pour chaque appareil,
 avec un statut OK ou Périmé.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Immich. Il dit d'abord ce qui ne va pas (files

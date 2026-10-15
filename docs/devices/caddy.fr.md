@@ -43,9 +43,9 @@ pas sa version via l'API d'administration.
 
 Les [règles intégrées](../alerting/rules.md#reverse-proxies-and-domains) qui
 s'appliquent : upstream Caddy en échec, rechargement de configuration Caddy
-échoué, reverse proxy répondant en 5xx, plus Appareil inaccessible.
+échoué, reverse proxy répondant en 5xx, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Caddy. Il dit ce qui ne va pas en une phrase (pas de

@@ -437,7 +437,7 @@ fn convert_one(monitor: &Value, groups: &Groups) -> Converted {
         "group" => ignore(&mut out, "Groups become folders."),
         "docker" => ignore(
             &mut out,
-            "Containers are watched by the agent, which lists them as devices of their own.",
+            "Containers are watched by the agent, which lists them as monitors of their own.",
         ),
         other => ignore(&mut out, &format!("No equivalent for the \"{other}\" monitor type.")),
     }

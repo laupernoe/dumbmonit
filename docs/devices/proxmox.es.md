@@ -4,12 +4,12 @@ Hipervisor: nodos con sus demonios y redes, máquinas virtuales,
 contenedores, almacenamientos, pools LVM thin, copias de seguridad,
 alta disponibilidad, snapshots, replicación, Ceph hasta el OSD, discos
 físicos y pools ZFS, actualizaciones pendientes, cambios de paquete,
-suscripción y certificados. Un dispositivo puede cubrir todo un
+suscripción y certificados. Un monitor puede cubrir todo un
 clúster.
 
 ## El panel de nodos {#the-nodes-panel}
 
-La página del dispositivo se abre con una tarjeta por nodo: CPU,
+La página del monitor se abre con una tarjeta por nodo: CPU,
 memoria y sistema de archivos raíz como tres medidores, el tiempo de
 actividad y la versión `pve-manager` instalada en ese nodo, luego solo
 lo que va mal — los demonios que no están en ejecución, las interfaces
@@ -148,10 +148,10 @@ nada más cambia.
 
 ## El panel de Ceph {#the-ceph-panel}
 
-Una sección **Ceph** aparece en la página del dispositivo solo cuando
+Una sección **Ceph** aparece en la página del monitor solo cuando
 el clúster realmente tiene Ceph: salud y las palabras detrás de ella,
 capacidad total y usada, cuántos OSD están up e in, una tabla de OSDs
-(host, clase de dispositivo, uso, latencia de apply y commit) y una
+(host, clase de monitor, uso, latencia de apply y commit) y una
 tabla de pools (uso, size y min size, placement groups frente al
 número que elegiría el autoscaler), los sistemas de archivos CephFS,
 las flags de OSD dejadas activas y las comprobaciones de salud
@@ -253,7 +253,7 @@ misma consecuencia — por lo que los dos niveles de llenado son series
 separadas y reglas separadas.
 
 Los cambios de paquete los detecta el propio recolector: recuerda las
-versiones instaladas de la sonda anterior (por dispositivo y nodo, en
+versiones instaladas de la sonda anterior (por monitor y nodo, en
 memoria — un reinicio del servidor vuelve a aprender sin reportar).
 Solo un paquete presente en ambas sondas con una versión distinta
 cuenta; un paquete recién instalado o eliminado no.
@@ -273,7 +273,7 @@ Las temperaturas de placa no están disponibles: la API de Proxmox VE
 no expone sensores, solo la temperatura SMART propia de los discos.
 Instala el agente de DumbMonit en el nodo si necesitas más.
 
-Las reglas integradas que se aplican: Device unreachable, High CPU,
+Las reglas integradas que se aplican: Monitor unreachable, High CPU,
 Disk almost full, Filesystem almost full (forecast), Backup too old,
 Unusual CPU, VM or container stopped, VM or container CPU high, VM or
 container memory high, VM or container disk almost full, HA resource
@@ -300,7 +300,7 @@ hacen valioso.
   está lento» cuando la CPU y la memoria se ven bien.
 * Se lee con `history=1` desde el último punto ya visto, así que cada
   punto entre dos sondas se ingiere con su propio timestamp. Un
-  dispositivo sondeado cada cinco minutos obtiene sus cinco puntos de
+  monitor sondeado cada cinco minutos obtiene sus cinco puntos de
   un minuto en lugar de un único valor actual.
 
 Está **desactivado por defecto**, y eso es una decisión deliberada.
@@ -489,13 +489,13 @@ URL completa `https://pve.example.net`. El esquema `https` y el puerto
 
 | Síntoma | Causa probable |
 |---|---|
-| Error de certificado mostrado en el dispositivo | Certificado autofirmado. O bien instala un certificado de confianza (ACME está integrado en Proxmox) o activa `insecure_tls`. La opción nunca se activa implícitamente. |
+| Error de certificado mostrado en el monitor | Certificado autofirmado. O bien instala un certificado de confianza (ACME está integrado en Proxmox) o activa `insecure_tls`. La opción nunca se activa implícitamente. |
 | Error de autenticación | El secret se pegó en Token ID (o al revés), «Privilege Separation» quedó marcado (el token entonces no tiene derechos), o el rol `DumbMonit` no se aplicó en `/`. |
 | Falta la antigüedad de copia para un invitado | Ninguna tarea `vzdump` en la ventana de observación y ningún archivo encontrado en los almacenamientos; o `scan_backup_storage` desactivado. |
 | Sondas lentas | Un almacenamiento de copia que tarda en listar, o muchos invitados que inventariar para snapshots. Desactiva `scan_backup_storage` o `scan_snapshots`, baja `max_snapshot_guests`, o eleva `request_timeout_seconds`. |
 | Falta `node_updates_pending` | Al usuario o token le falta `Sys.Modify` en `/nodes`. Concede el rol `DumbMonitUpdates` del paso 6, o ignóralo: `node_pve_packages_upgradable` y `node_reboot_required` cubren los paquetes de Proxmox sin él. |
 | Sin porcentaje de memoria para una VM | Proxmox VE 9 reporta, en el inventario de clúster, la memoria que toma la VM **en el host** — sobrecarga incluida, así que regularmente por encima de su asignación. Un porcentaje calculado a partir de ella estaría por encima del 100% para siempre. La cifra honesta viene del driver balloon dentro del invitado; una VM con el ballooning desactivado por tanto muestra bytes y ningún porcentaje. `guest_memory_host_bytes` es la cifra del lado del host. |
-| Sin capacidad para el almacenamiento de copia | Un datastore de Proxmox Backup Server montado en PVE no reporta tamaño: PVE no lo lee. La propia página del dispositivo del datastore lo tiene. |
+| Sin capacidad para el almacenamiento de copia | Un datastore de Proxmox Backup Server montado en PVE no reporta tamaño: PVE no lo lee. La propia página del monitor del datastore lo tiene. |
 | Uso de disco vacío («size only») para una VM | La VM no tiene agente invitado QEMU (no activado en sus opciones, o `qemu-guest-agent` no instalado dentro), o al token le falta `VM.GuestAgent.Audit`. `guest_agent_enabled` y `guest_agent_running` dicen cuál. Los contenedores nunca lo necesitan. |
 | Sin ninguna serie `node_disk_*` | Al token le falta `Sys.Audit` en `/` (el rol `DumbMonit` lo concede), o el nodo se ejecuta detrás de un controlador RAID que oculta SMART: `disks/list` entonces reporta `UNKNOWN` y no se publica ningún `node_disk_smart_failed`. |
 | `node_packages_changed` se activa tras un reinicio del servidor | No lo hace: la primera sonda tras un reinicio solo aprende las versiones. Un cambio se reporta solo entre dos sondas consecutivas del mismo proceso de servidor. |

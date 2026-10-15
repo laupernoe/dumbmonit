@@ -8,7 +8,7 @@ report a vulnerability, follow the
 ## What is at stake
 
 DumbMonit runs inside your network. It stores the credentials it needs to read
-every device (SNMP communities, API tokens, passwords), it receives
+every monitor (SNMP communities, API tokens, passwords), it receives
 measurements from agents on your machines, and it sends requests to addresses
 you configure. A compromise would expose those secrets and give an attacker a
 foothold on the monitored network.
@@ -19,7 +19,7 @@ foothold on the monitored network.
 |---|---|---|
 | Browser or script to `/api/*` | Admins, operators and viewers | Authenticated by a session cookie or an API token; three roles limit what each may do. |
 | Agent to `/api/ingest` | Machines you installed an agent on | A per-machine token; a leaked token can be revoked alone. |
-| Server to devices and services | Third-party systems | Not trusted: responses are parsed defensively and redirects stay on the same host. |
+| Server to monitors and services | Third-party systems | Not trusted: responses are parsed defensively and redirects stay on the same host. |
 | Server to notification channels | External services | Credentials are encrypted at rest and never returned by the API. |
 | Server to VictoriaMetrics | A child process on loopback, or an external instance | The embedded one has no authentication and listens on loopback; an external one is the operator's responsibility. |
 | `/data` volume and host | The operator | Trusted. An attacker who controls the host or the volume is out of scope. |
@@ -36,7 +36,7 @@ foothold on the monitored network.
 - **Economy of mechanism.** One binary, one SQLite file, one loopback child
   process, and one way in for every client: `/api/*`.
 - **Fail-safe defaults.** A security check whose data is missing is `unknown`,
-  never a pass; an unreachable device and a configuration error are different
+  never a pass; an unreachable monitor and a configuration error are different
   states.
 - **Complete mediation.** One authentication middleware
   (`crates/server/src/auth/middleware.rs`) guards the API routes.
@@ -64,7 +64,7 @@ foothold on the monitored network.
 | Identification and authentication failures | Login rate limit per client address and per account (`auth/rate_limit.rs`), optional two-factor authentication, OpenID Connect, an admin can reset a user's second factor and sign them out. |
 | Software and data integrity | Agent installers verify the SHA-256 of the downloaded binary; release images are built by CI. |
 | Logging and monitoring | A security log of sign-ins and sensitive changes (`auth/audit.rs`). |
-| Server-side request forgery | Integrations and notification channels follow redirects to the same host only, so a device cannot bounce a request and its API key elsewhere. |
+| Server-side request forgery | Integrations and notification channels follow redirects to the same host only, so a monitor cannot bounce a request and its API key elsewhere. |
 | Cross-site request forgery | State-changing requests that rely on the cookie must carry `X-Requested-With: DumbMonit` or same-origin fetch metadata, otherwise `403`; token-authenticated requests carry no cookie. |
 
 ## Verification
@@ -81,6 +81,6 @@ design argument and the evidence behind each claim.
 ## Known limits
 
 - The built-in server speaks plain HTTP; put TLS in front of it.
-- Device options are stored unencrypted. Put secrets in credential fields.
+- Monitor options are stored unencrypted. Put secrets in credential fields.
 - The embedded VictoriaMetrics has no authentication.
 - DumbMonit is before 1.0; routes and fields can still change.

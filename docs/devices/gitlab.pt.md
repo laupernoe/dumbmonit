@@ -41,7 +41,7 @@ Todas as métricas têm o prefixo `dumbmonit_gitlab_`.
 
 As [regras incorporadas](../alerting/rules.md#self-hosted-forges) que se
 aplicam: GitLab runners all offline, GitLab Sidekiq backlog high, GitLab
-migrations pending, GitLab license expiring, mais Device unreachable. Uma
+migrations pending, GitLab license expiring, mais Monitor unreachable. Uma
 pontuação de segurança verifica as definições de dois fatores e de registo, e as
 migrações pendentes: veja
 [Atualizações de fornecedores e outras verificações](../using/security-score.md).
@@ -60,7 +60,7 @@ A saúde dos pipelines de CI só é lida para os projetos que listar: a API do
 GitLab não tem um endpoint de toda a instância com «todos os pipelines
 falhados», apenas um por projeto.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 chama o GitLab. Diz primeiro o que está errado (um componente de prontidão

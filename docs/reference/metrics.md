@@ -3,7 +3,7 @@
 DumbMonit stores every measurement in VictoriaMetrics and reads it back with
 MetricsQL, through the server's [metrics proxy](api.md#metrics). This page
 describes the naming, the labels and the retention. Per-type metric lists are
-on the [device pages](../devices/index.md).
+on the [monitor pages](../devices/index.md).
 
 ## Naming
 
@@ -26,18 +26,18 @@ Source-specific families carry their source as a second prefix:
 (`dumbmonit_if_octets_in`, `dumbmonit_cpu_usage_percent`).
 
 Counters (interface octets and packets, disk bytes, pages printed) are stored
-**raw**, as the device reports them: apply `rate()` in your own queries to get
-a throughput. The device page charts every `dumbmonit_*` series of the device as
+**raw**, as the monitor reports them: apply `rate()` in your own queries to get
+a throughput. The monitor page charts every `dumbmonit_*` series of the monitor as
 stored, so a counter appears as a rising line. A reboot shows as a counter
 reset, never as a fake spike.
 
 ## `dumbmonit_up`
 
 After every successful probe, the server writes `dumbmonit_up = 1` for the
-device. Nothing is written when a probe fails: the series simply stops, and the
-"Device unreachable" rule measures the age of the last sample
+monitor. Nothing is written when a probe fails: the series simply stops, and the
+"Monitor unreachable" rule measures the age of the last sample
 (`time() - tlast_over_time(dumbmonit_up[7d])`), keeping only the freshest series
-of each device (`bottomk by (target) (1, …)`): a series no longer written after
+of each monitor (`bottomk by (target) (1, …)`): a series no longer written after
 a tag or label change stays in the 7-day window and must not count.
 
 For services (`http`, `tcp`, `dns`, `ping`, `tls`), `dumbmonit_up = 1` means
@@ -48,7 +48,7 @@ the service is down, an interruption of `up` says the monitoring is down.
 ## `dumbmonit_security_score`
 
 Every 15 minutes the server computes the [security score](../using/security-score.md)
-of each device whose kind has security checks, and writes
+of each monitor whose kind has security checks, and writes
 `dumbmonit_security_score` (0–100, absent while nothing can be rated) and
 `dumbmonit_security_checks_failed`, both labelled `target`.
 
@@ -56,11 +56,11 @@ of each device whose kind has security checks, and writes
 
 | Label | Set by | Meaning |
 |---|---|---|
-| `target` | server | The device id, as in `/api/targets/{id}`. Every rule and every chart selects on it. |
-| `host` | server | The device name. |
-| `tag_<key>` | server | The free tags of the device. Type options (`insecure_tls`, `port`…), tags whose key looks like a secret (matched per word: `key`, `pass`, `cert`, `private`, `pem`…) and values over 256 characters are not copied. Never put a secret in a tag. |
+| `target` | server | The monitor id, as in `/api/targets/{id}`. Every rule and every chart selects on it. |
+| `host` | server | The monitor name. |
+| `tag_<key>` | server | The free tags of the monitor. Type options (`insecure_tls`, `port`…), tags whose key looks like a secret (matched per word: `key`, `pass`, `cert`, `private`, `pem`…) and values over 256 characters are not copied. Never put a secret in a tag. |
 | `probe` | services | `http`, `tcp`, `dns`, `ping` or `tls`. |
-| per-series labels | collector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… as listed on each device page. |
+| per-series labels | collector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… as listed on each monitor page. |
 
 Identity labels always win over collector labels, and for agents they are set
 on reception: a machine cannot write into another machine's series.
@@ -76,7 +76,7 @@ on reception: a machine cannot write into another machine's series.
 The embedded VictoriaMetrics keeps 12 months of data (`DUMBMONIT_VM_RETENTION`)
 under `/data/vm`, in the `dumbmonit-data` volume. The server batches its
 writes and flushes them every 5 seconds (`DUMBMONIT_FLUSH_INTERVAL_SECS`).
-Deleting a device does not delete its series; they age out.
+Deleting a monitor does not delete its series; they age out.
 
 Alert history is kept 90 days and the baselines of series that disappeared for
 60 days, both in SQLite (see the [configuration reference](configuration.md)).
@@ -112,7 +112,7 @@ Three routes sit outside `/api`, where a scraper looks for them:
 
 | Route | What it returns |
 |---|---|
-| `GET /metrics` | The health of the DumbMonit instance itself: scheduler, probes, writes, alerting, notifications, agents, database. A few dozen series, always the same number — never one per device. |
+| `GET /metrics` | The health of the DumbMonit instance itself: scheduler, probes, writes, alerting, notifications, agents, database. A few dozen series, always the same number — never one per monitor. |
 | `GET /federate` | The measurements, selected by `match[]`, exactly as Prometheus federates another Prometheus: the latest point of each selected series. |
 | `GET /prometheus/api/v1/…` | The read half of the Prometheus API, relayed to the store: what a Grafana data source calls. |
 
@@ -162,13 +162,13 @@ if you would rather not have it in the configuration.
 Without `match[]`, `/federate` selects `{__name__=~"dumbmonit_.*"}` — every
 series DumbMonit writes, and nothing belonging to another tool that shares the
 same VictoriaMetrics. Narrow it to keep a federation small:
-`{__name__=~"dumbmonit_.*",target="4"}` for one device,
+`{__name__=~"dumbmonit_.*",target="4"}` for one monitor,
 `{__name__="dumbmonit_up"}` for availability only. At most 10 selectors per
 request, and a response over 8 MiB is refused with a message telling you to
 narrow it — split a large fleet into several jobs with narrower selectors
 rather than one that asks for everything.
 `max_lookback=15m` widens the window in which the last point is looked for,
-for devices probed less often than every five minutes.
+for monitors probed less often than every five minutes.
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
@@ -214,9 +214,9 @@ Everything `GET /metrics` exposes. Values are read when you scrape; the
 | `dumbmonit_uptime_seconds` | gauge | Seconds since the server process started. |
 | `dumbmonit_scheduler_cycles_total` | counter | Scheduler cycles run. The loop ticks once a second, so this doubles as a liveness signal. |
 | `dumbmonit_scheduler_cycle_seconds` | gauge | Duration of the last cycle. Normally under a millisecond: the cycle only dispatches, it does not wait for probes. |
-| `dumbmonit_scheduler_backlog` | gauge | Devices still due for a probe when the last cycle ended. Zero on a healthy instance; a lasting non-zero value means `DUMBMONIT_MAX_CONCURRENT_PROBES` is too low for the number of devices and their intervals. |
-| `dumbmonit_probes_total{kind}` | counter | Probes run, by device kind (`snmp`, `proxmox`, `http`…). Includes the ones a relay agent ran on the server's behalf. |
-| `dumbmonit_probes_failed_total{kind}` | counter | Probes that failed, by kind — an unreachable device or a configuration error. `rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` is the failure ratio. |
+| `dumbmonit_scheduler_backlog` | gauge | Monitors still due for a probe when the last cycle ended. Zero on a healthy instance; a lasting non-zero value means `DUMBMONIT_MAX_CONCURRENT_PROBES` is too low for the number of monitors and their intervals. |
+| `dumbmonit_probes_total{kind}` | counter | Probes run, by monitor kind (`snmp`, `proxmox`, `http`…). Includes the ones a relay agent ran on the server's behalf. |
+| `dumbmonit_probes_failed_total{kind}` | counter | Probes that failed, by kind — an unreachable monitor or a configuration error. `rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` is the failure ratio. |
 | `dumbmonit_samples_written_total` | counter | Samples accepted by VictoriaMetrics. |
 | `dumbmonit_sample_writes_failed_total` | counter | Batches VictoriaMetrics refused or did not answer. The batch stays buffered and is retried; a rising value with a rising `dumbmonit_samples_pending` means the store is down or full. |
 | `dumbmonit_samples_pending` | gauge | Samples still in the write buffer after the last flush. Normally 0. |
@@ -226,7 +226,7 @@ Everything `GET /metrics` exposes. Values are read when you scrape; the
 | `dumbmonit_alerting_rules_evaluated` | gauge | Rules evaluated in the last cycle. |
 | `dumbmonit_alerting_rules_failed` | gauge | Rules whose query failed in the last cycle. Their alerts are frozen, not resolved. Anything but 0 deserves a look at the logs. |
 | `dumbmonit_alerts{phase}` | gauge | Alerts the engine tracks, by phase: `ok`, `pending` (condition true, `for` not elapsed), `firing`, `resolved`. |
-| `dumbmonit_alerts_suppressed` | gauge | Alerts hidden because a parent device is down (the `suppressed` effective phase). |
+| `dumbmonit_alerts_suppressed` | gauge | Alerts hidden because a parent monitor is down (the `suppressed` effective phase). |
 | `dumbmonit_alerts_silenced` | gauge | Alerts covered by a maintenance window. |
 | `dumbmonit_alerts_learning` | gauge | Baseline alerts still learning, and therefore silent. |
 | `dumbmonit_notifications_total{kind}` | counter | Notifications sent, by channel kind (`email`, `discord`, `ntfy`…). |
@@ -238,8 +238,8 @@ Everything `GET /metrics` exposes. Values are read when you scrape; the
 | `dumbmonit_victoriametrics_up` | gauge | 1 when VictoriaMetrics answers — the same check as `/api/health`. 0 while the embedded child is restarting. |
 | `dumbmonit_victoriametrics_embedded` | gauge | 1 when this server runs VictoriaMetrics itself, 0 when `DUMBMONIT_VM_URL` points at an external one. |
 
-No metric on this page carries a per-device label: the document is the same
-size for one device and for a thousand, and no device name leaks to whoever
+No metric on this page carries a per-monitor label: the document is the same
+size for one monitor and for a thousand, and no monitor name leaks to whoever
 can scrape it.
 
 Two alerts worth adding on your side, once DumbMonit is scraped:
@@ -257,6 +257,6 @@ dumbmonit_samples_pending > 0 and increase(dumbmonit_sample_writes_failed_total[
 `DUMBMONIT_METRICS_PUBLIC=true` serves `/metrics`, `/federate` and
 `/prometheus/api/v1/…` to anyone who can reach the port, for people who filter
 the port themselves — **anyone on that network can then read every measurement
-of every device and the state of the instance, so only set it when something
+of every monitor and the state of the instance, so only set it when something
 else already restricts who reaches the port.**
 

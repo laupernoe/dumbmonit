@@ -9,7 +9,7 @@ Site zu veröffentlichen.
 !!! warning "Niemals auf einem echten Datenvolume"
     Der Demo-Modus **erstellt die Datenbank bei jedem Start neu**. Geben
     Sie ihm ein eigenes Volume, oder gar keines: auf das `/data` einer
-    echten Instanz gerichtet, würde er Ihre Geräte, Regeln und Historie
+    echten Instanz gerichtet, würde er Ihre Monitore, Regeln und Historie
     durch den fiktiven Bestand ersetzen.
 
 ## Was der Demo-Modus tut
@@ -17,7 +17,7 @@ Site zu veröffentlichen.
 - **Mit `demo` / `demo` einloggen.** Die Login-Seite sagt das und füllt
   die Felder mit einem Klick. Das Konto sieht jeden Bildschirm, den ein
   Administrator sieht.
-- **Nur lesend.** Jede Änderung — Geräte, Regeln, Stummschaltungen,
+- **Nur lesend.** Jede Änderung — Monitore, Regeln, Stummschaltungen,
   Bestätigungen, Kanäle, Tokens, Benutzer, Einstellungen, Backups und
   Wiederherstellungen, Discovery-Scans, Agent-Registrierung,
   Schreibwerkzeuge des Assistant-Endpunkts — wird vom Server mit `403`
@@ -29,10 +29,10 @@ Site zu veröffentlichen.
   Proxmox-VE-Cluster, ein Synology-NAS, ein Proxmox Backup Server, ein
   TrueNAS, eine OPNsense-Firewall, ein Redfish-Server mit einem
   ausfallenden Teil, ein paar HTTP-, TLS- und Ping-Checks, ein Agent-Host
-  und eine Statusseite. Die Geräte werden von gefälschten Respondern
+  und eine Statusseite. Die Monitore werden von gefälschten Respondern
   innerhalb des Servers beantwortet, an `127.0.0.1` gebunden und
   aufgezeichnete API-Antworten wiedergebend, sodass die echten Collectors
-  und Gerätepanels laufen. Ein Neustart ergibt denselben Bestand.
+  und Monitorpanels laufen. Ein Neustart ergibt denselben Bestand.
 - **Sieben Tage Historie.** Beim Start werden synthetische Metriken in
   VictoriaMetrics geschrieben, sodass Diagramme, *Last 7 days*,
   Vorhersagen und die Alarmhistorie befüllt sind, und ein paar Alarme

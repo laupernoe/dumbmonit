@@ -1,7 +1,7 @@
 # Ventanas de mantenimiento {#maintenance-windows}
 
 Una ventana de mantenimiento (un *silencio* en la API) detiene las
-notificaciones de un dispositivo, o de todo, durante un período. La
+notificaciones de un monitor, o de todo, durante un período. La
 evaluación continúa por debajo: cuando la ventana termina, una alerta que
 todavía está activa se notifica una vez, en lugar de aparecer de la nada
 después de dos horas.
@@ -10,14 +10,14 @@ después de dos horas.
 
 - **Alerts → Maintenance**: la lista de ventanas, con *Active
   now* o *Scheduled*, y el formulario para añadir una.
-- **Página del dispositivo → Silence 1 h / Silence until…**: una ventana
-  puntual rápida para todo el dispositivo.
+- **Página del monitor → Silence 1 h / Silence until…**: una ventana
+  puntual rápida para todo el monitor.
 - ++ctrl+k++ → *Schedule maintenance*.
 
 **Snooze**, en una alerta de la pestaña *Now* o en una página de
-dispositivo, es una versión más pequeña del mismo mecanismo: una ventana
+monitor, es una versión más pequeña del mismo mecanismo: una ventana
 puntual limitada a las etiquetas exactas de esa alerta en concreto en
-lugar de todo el dispositivo, así que una regla hermana sigue hablando.
+lugar de todo el monitor, así que una regla hermana sigue hablando.
 Aparece aquí también, nombrada `Snooze · …`. Consulta [Deshacerse de una
 alerta](../using/alerts.md#getting-rid-of-an-alert).
 
@@ -26,7 +26,7 @@ alerta](../using/alerts.md#getting-rid-of-an-alert).
 | Campo | Significado |
 |---|---|
 | Name | Se muestra en la lista y en el historial. |
-| Device | Déjalo vacío para cubrir todos los dispositivos. |
+| Device | Déjalo vacío para cubrir todos los monitores. |
 | Start, End | Horas absolutas. La ventana incluye el inicio y excluye el fin. |
 | Comment | Opcional. Por qué existe la ventana. |
 
@@ -85,7 +85,7 @@ zona que el servidor no conoce se rechaza al guardar, con un ejemplo.
 Una ventana también puede limitarse por coincidencias exactas de etiqueta
 (`matchers` en la API): todas deben coincidir con las etiquetas de la
 alerta, por ejemplo `tag_role = lab` y `__name__ = dumbmonit_up`. Una
-ventana sin dispositivo y sin coincidencia silencia toda la instancia. Las
+ventana sin monitor y sin coincidencia silencia toda la instancia. Las
 ventanas superpuestas no son un problema; la primera que cubre el momento
 explica el silencio.
 
@@ -97,10 +97,10 @@ ventana (`enabled: false`) la mantiene en la lista sin efecto.
 
 ## En una página de estado pública {#on-a-public-status-page}
 
-Un dispositivo cubierto por una ventana de mantenimiento se muestra como
+Un monitor cubierto por una ventana de mantenimiento se muestra como
 **Maintenance** en cualquier [página de estado](../using/status-pages.md)
 que lo liste, en lugar de rojo. Si nada más en la página está caído o
 degradado, el estado general de la página también indica *Maintenance*.
-Solo las ventanas que nombran un dispositivo — o cuyas coincidencias son
-etiquetas a nivel de dispositivo — se muestran así; una ventana limitada a
+Solo las ventanas que nombran un monitor — o cuyas coincidencias son
+etiquetas a nivel de monitor — se muestran así; una ventana limitada a
 una sola métrica sigue siendo un asunto de alertas.

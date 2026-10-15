@@ -40,7 +40,7 @@ DumbMonit читает публичный `status.php` и статистику �
 
 Пока Nextcloud находится в режиме обслуживания или ждёт обновления, его API
 отвечает 503: тогда записываются только `maintenance`, `needs_db_upgrade` и
-`version_info`, и устройство не сообщается как недоступное.
+`version_info`, и монитор не сообщается как недоступный.
 
 Применяемые [встроенные правила](../alerting/rules.md#self-hosted-applications):
 Nextcloud stuck in maintenance, Nextcloud database upgrade pending, Nextcloud
@@ -84,7 +84,7 @@ sessions» (Settings → Security) перечисляет только учёт�
 последует тому же шаблону [клиентских устройств](../alerting/rules.md), который
 уже используется для Immich, Proxmox Backup Server и Veeam.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранил опрос; открытие страницы никогда не
 обращается к Nextcloud. Сначала она говорит, что не так (обслуживание, ожидающее

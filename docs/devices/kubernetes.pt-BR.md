@@ -9,7 +9,7 @@ O DumbMonit lê a API com o token de uma conta de serviço dedicada
 vinculada a um ClusterRole somente leitura: `get` e `list` em nós, pods,
 workloads, reivindicações de volume persistente e eventos, nada mais. Ele
 nunca escreve, e o papel não dá acesso a Secrets ou ConfigMaps. Um
-dispositivo cobre todo o cluster, qualquer que seja a distribuição: k3s,
+monitor cobre todo o cluster, qualquer que seja a distribuição: k3s,
 kubeadm, k0s, MicroK8s, Talos, ou um cluster gerenciado cuja API o
 DumbMonit possa alcançar.
 
@@ -73,9 +73,9 @@ As [regras integradas](../alerting/rules.md#kubernetes) que se aplicam:
 - **Kubernetes volume claim pending**: uma reivindicação travada por
   quinze minutos (Advisory).
 
-Além de Device unreachable, quando o API server para de responder.
+Além de Monitor unreachable, quando o API server para de responder.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Cluster diz o que está errado em uma frase, depois lista os nós
 (Ready ou não, pressão, cordoned, versão do kubelet), os pods que
@@ -167,7 +167,7 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Para verificar o papel antes de adicionar o dispositivo, pergunte ao API
+Para verificar o papel antes de adicionar o monitor, pergunte ao API
 server o que a conta pode fazer; o primeiro comando precisa responder
 `yes`, o segundo `no`:
 
@@ -178,7 +178,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 
 Um token feito com `kubectl create token dumbmonit -n kube-system`
 também funciona, mas expira (depois de uma hora por padrão): o
-dispositivo então falha com "The API server refused the token (401)". O
+monitor então falha com "The API server refused the token (401)". O
 Secret acima é a forma de longa duração que o Kubernetes documenta para
 este uso. Para revogar o acesso do DumbMonit, exclua o Secret, ou a conta
 de serviço.

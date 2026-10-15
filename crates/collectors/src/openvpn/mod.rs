@@ -66,7 +66,7 @@ fn parse_port(raw: &str) -> Result<u16, ProbeError> {
 fn parse_address(address: &str) -> Result<(String, Option<u16>), ProbeError> {
     let rest = address.trim();
     if rest.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if let Some(inner) = rest.strip_prefix('[') {
         let (name, after) = inner

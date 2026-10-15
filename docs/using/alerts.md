@@ -11,7 +11,7 @@ right, opens the form for a window from any tab.
 | **Now** | The live list of problems, one line each. See [The Now list](#the-now-list). The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
 | **Maintenance** | Maintenance windows, *Active now* or *Scheduled*, one-off, weekly or monthly, each with the next occurrence (`#scheduled`). See [Maintenance windows](../alerting/maintenance.md). |
 | **History** | The last 200 transitions, each naming the monitor, the rule and what happened; resolved ones can be cleared. |
-| **Rules** | Every rule with its severity, a *Built-in* mark and, if any monitor ignores it, *Ignored on N devices*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
+| **Rules** | Every rule with its severity, a *Built-in* mark and, if any monitor ignores it, *Ignored on N monitors*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
 
 Notification channels and the notification policy are under
 **Settings → Notifications & reports** (see [Notifications](#notifications)).
@@ -34,7 +34,7 @@ acknowledged it, why it is suppressed, with **Open monitor**, **Snooze** and
 
 Selecting several lines is a mode. The **Select** button (operators and
 admins) shows a checkbox on each line and a floating bar at the bottom with
-**Select all**, **Acknowledge**, **Unacknowledge**, **Ignore for this device**
+**Select all**, **Acknowledge**, **Unacknowledge**, **Ignore for this monitor**
 and **Done**. Escape leaves the mode.
 
 ## Getting rid of an alert
@@ -55,16 +55,16 @@ Four actions, for four different situations, open to admins and operators
 - **Snooze** is for "not now, check back later" without claiming you are
   doing anything about it: 1 h, 8 h, 1 day or *until resolved*. Unlike Ack,
   it works by opening a maintenance window scoped to that one alert's exact
-  labels — a sibling rule on the same device keeps talking. The card moves to
+  labels — a sibling rule on the same monitor keeps talking. The card moves to
   a quiet *Snoozed* group showing the time left, and offers **Unsnooze**.
   Reminders pause the same way an acknowledgement's do.
 - **Ignore** ("don't alert me about this again") is for a rule that will
-  never make sense on this device: it disables that rule for that device
-  alone (a per-device override — see
-  [Per-device overrides](../alerting/rules.md#per-device-overrides)) and the
+  never make sense on this monitor: it disables that rule for that monitor
+  alone (a per-monitor override — see
+  [Per-monitor overrides](../alerting/rules.md#per-device-overrides)) and the
   alert disappears for good, immediately, not just quietened. It is
-  reversible: **Stop ignoring** on the device page, or from the rule itself in
-  Alerts → Rules, where it reads *Ignored on N devices*.
+  reversible: **Stop ignoring** on the monitor page, or from the rule itself in
+  Alerts → Rules, where it reads *Ignored on N monitors*.
 - **Clear** is for history, not for a live alert: once a transition has
   resolved, *Clear* (or *Clear all resolved*) drops it from the default
   History view. The row stays in the database — nothing is deleted — and
@@ -89,12 +89,12 @@ and its **quiet hours** (weekly, in your time zone: only Warning-level alerts
 come through, the rest waits for a digest).
 
 **Only some alerts.** The same Delivery options hold the channel's **routing
-filter**: which alerts it wants, by device tag (`site=cellar`), by device kind
+filter**: which alerts it wants, by monitor tag (`site=cellar`), by monitor kind
 (`proxmox`), or by rule. Conditions on the same field read as *or*, different
 fields as *and*, and an *Except* row always wins. Under the editor, a preview
-lists which of your devices the filter selects right now, and one sentence
+lists which of your monitors the filter selects right now, and one sentence
 says the whole thing back to you — *this channel receives advisories and above
-from devices tagged site=cellar, except devices tagged role=lab*. A channel
+from monitors tagged site=cellar, except monitors tagged role=lab*. A channel
 with no filter keeps receiving everything, which is what every existing channel
 does.
 
@@ -119,12 +119,12 @@ The former links (`/alerts#notifications`, `/alerts#notifications-policy`,
 ## Operators and viewers
 
 An **operator** handles alerts without touching the configuration: they
-acknowledge, snooze, ignore a rule for one device, schedule or delete
+acknowledge, snooze, ignore a rule for one monitor, schedule or delete
 maintenance windows and clear resolved history. Rules, channels and the
 notification policy stay read-only for them, marked *Operator — config is
-admin only*. Ignoring is the only per-device override an operator can make;
+admin only*. Ignoring is the only per-monitor override an operator can make;
 thresholds remain an admin's call, and an operator's *Ignore* or *Stop
-ignoring* keeps any threshold an admin set for that device.
+ignoring* keeps any threshold an admin set for that monitor.
 
 A viewer sees every tab but no control: the page shows *Viewer — read only*
 where an admin would find the buttons.

@@ -31,7 +31,7 @@ beliebig viele, und Ihre Alarmregeln wählen, welche benachrichtigt werden.
 
 Drei Prinzipien gelten für jeden Kanal:
 
-1. **Alarme werden gruppiert.** Eine Nachricht pro Gerät und Zyklus, auch wenn fünf Platten
+1. **Alarme werden gruppiert.** Eine Nachricht pro Monitor und Zyklus, auch wenn fünf Platten
    gleichzeitig volllaufen. Ohne das würden Sie die Benachrichtigungen binnen einer Woche
    stummschalten.
 2. **Ein defekter Kanal blockiert nie einen anderen.** Der Fehler wird in der Spalte „Letzter
@@ -164,8 +164,8 @@ JSON-Body bleiben wörtlich, Sie können Ihr JSON also normal schreiben.
 | `{{message}}` | Klartext-Body, eine Zeile pro Alarm | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | Derselbe Body in Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Name der Alarmregel | `Disk full` |
-| `{{target}}` | Name des überwachten Geräts | `nas` |
-| `{{target_id}}` | Numerische Kennung des Geräts | `42` |
+| `{{target}}` | Name des Monitors | `nas` |
+| `{{target_id}}` | Numerische Kennung des Monitors | `42` |
 | `{{severity}}` | Technischer Schweregrad | `info`, `warning` oder `critical` |
 | `{{severity_fr}}` | Schweregrad als lesbares Wort | `information`, `avertissement`, `critique` |
 | `{{status}}` | Technischer Status | `firing` oder `resolved` |
@@ -185,7 +185,7 @@ JSON-Body bleiben wörtlich, Sie können Ihr JSON also normal schreiben.
 | `{{color}}` | Akzentfarbe, ohne Raute | `D98A00` |
 | `{{color_hex}}` | Akzentfarbe, mit Raute | `#D98A00` |
 | `{{emoji}}` | Statuspiktogramm | `🔴`, `⚠️`, `ℹ️` oder `✅` |
-| `{{link}}` | Link zum Gerät in DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Link zum Monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Immer `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Das Geheimnis `token` des Kanals | *(Ihr Token)* |
 
@@ -597,7 +597,7 @@ oder nicht) empfängt die Alarme auch bei geschlossenen Tabs.
 - **Geheimnisse** — keine. Das VAPID-Schlüsselpaar des Servers wird beim ersten Start erzeugt und
   verschlüsselt gespeichert; der private Schlüssel verlässt den Server nie.
 
-Der Titel der Benachrichtigung ist der Schweregrad und das Gerät (`Kritisch · nas01`), der Body
+Der Titel der Benachrichtigung ist der Schweregrad und der Monitor (`Kritisch · nas01`), der Body
 eine kurze Zusammenfassung; ein Tipp öffnet die Seite **Alarme**. DumbMonit braucht ausgehendes
 HTTPS zu den Push-Diensten (`fcm.googleapis.com`, `*.notify.windows.com`,
 `updates.push.services.mozilla.com`, `*.push.apple.com`); Nachrichten sind Ende-zu-Ende-

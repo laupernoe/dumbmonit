@@ -61,9 +61,9 @@ down. Untick the Test upstream servers option to turn this off.
 The [built-in rules](../alerting/rules.md#adguard-home) that apply:
 AdGuard Home protection off, AdGuard Home DNS not running, AdGuard Home
 upstream failing, AdGuard Home filter lists stale, AdGuard Home update
-available, plus Device unreachable.
+available, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 connects to AdGuard Home. It says whether protection and the DNS server are on

@@ -37,20 +37,20 @@ Alle Metriken haben das Präfix `dumbmonit_mdaemon_`.
 **Ein teilweiser Ausfall ist weiterhin eine erfolgreiche Prüfung.**
 Ein gestoppter Dienst gibt für diesen Dienst `service_up 0`, und die
 anderen werden weiterhin gemessen. Nur wenn kein Dienst und keine API
-überhaupt antwortet, ist das Gerät *unreachable*.
+überhaupt antwortet, ist der Monitor *unreachable*.
 
 **Ein abgelehntes Konto ist ein Konfigurationsfehler, kein Ausfall.**
 Ein falsches Passwort, eine von der XML-API nicht erlaubte Adresse,
-oder ein falscher Port wird auf der Geräteseite mit dem Grund
+oder ein falscher Port wird auf der Monitorseite mit dem Grund
 angezeigt und nicht benachrichtigt.
 
-**Warteschlangen kommen vom Agent, nicht von diesem Gerät.** MDaemon
+**Warteschlangen kommen vom Agent, nicht von diesem Monitor.** MDaemon
 veröffentlicht seine Warteschlangengrößen (Inbound, Local, Remote,
 Retry, Bad, Holding, Quarantine), seine Sitzungszahlen, seine
 Nachrichtenstatistiken und seine Uptime als Windows-Leistungszähler,
 im Objekt namens MDaemon, und in seinem eigenen Queue and Statistics
 Manager. Keine von MDaemons veröffentlichter Dokumentation beschreibt
-einen XML-API-Aufruf, der sie zurückgibt, daher rät dieses Gerät
+einen XML-API-Aufruf, der sie zurückgibt, daher rät dieser Monitor
 keinen: Der auf dem MDaemon-Server installierte [Agent](agent.md)
 liest stattdessen die Leistungszähler. Siehe
 [Mail-Warteschlangen über den Agent](#mail-queues-through-the-agent).
@@ -65,9 +65,9 @@ MDaemon mail service down, MDaemon XML API not answering, plus Device
 unreachable; mit dem Agent, MDaemon mail queue growing, MDaemon Bad
 queue not empty und MDaemon Retry queue high.
 
-## Die Geräteseite
+## Die Monitorseite
 
-Ein MDaemon-Gerät zeigt ein **Mail services**-Panel über den
+Ein MDaemon-Monitor zeigt ein **Mail services**-Panel über den
 Diagrammen, aus der letzten gespeicherten Messung gelesen: Das Öffnen
 der Seite verbindet sich nie mit dem Server. Es listet jeden
 beobachteten Dienst mit seinem Port, einem Wort und einer Farbe
@@ -92,16 +92,16 @@ Panel erscheint auf der eigenen Seite des Agents.
    es zu erzwingen oder abzuschalten, setzen Sie `mdaemon: true` oder
    `mdaemon: false` in `agent.yaml`.
 2. Die Warteschlangen erscheinen auf der Seite des Agents. Um sie
-   auch auf diesem MDaemon-Gerät anzuzeigen, sucht DumbMonit nach dem
-   Agent auf derselben Maschine: der als übergeordnetes Gerät dieses
-   Geräts gesetzte Agent, oder der es abfragende Relay-Agent, oder der
-   Agent, dessen Hostname zur Adresse dieses Geräts passt (`mail` für
-   `mail.example.com`), oder, wenn es ein MDaemon-Gerät und einen
+   auch auf diesem MDaemon-Monitor anzuzeigen, sucht DumbMonit nach dem
+   Agent auf derselben Maschine: der als übergeordneter Monitor dieses
+   Monitors gesetzte Agent, oder der ihn abfragende Relay-Agent, oder der
+   Agent, dessen Hostname zur Adresse dieses Monitors passt (`mail` für
+   `mail.example.com`), oder, wenn es ein MDaemon-Monitor und einen
    MDaemon-Zähler meldenden Agent gibt, dieser Agent. Passt keiner,
-   bearbeiten Sie dieses Gerät und wählen Sie den Agent als sein
-   **Parent device**: Der Agent und MDaemon teilen sich die Maschine,
+   bearbeiten Sie diesen Monitor und wählen Sie den Agent als seinen
+   **Parent monitor**: Der Agent und MDaemon teilen sich die Maschine,
    daher werden, wenn der Agent verstummt, auch die Alarme dieses
-   Geräts zurückgehalten.
+   Monitors zurückgehalten.
 
 Die Zeitreihen gehören dem Agent, mit seinem `target`-Label. Alle mit
 dem Präfix `dumbmonit_mdaemon_`:
@@ -181,7 +181,7 @@ Preset fehlenden zu lesen, listen Sie ihn unter `perf_counters` in
     Administration nutzt oft ein selbstsigniertes Zertifikat: Wird die
     Verbindung deshalb abgelehnt, kreuzen Sie "Accept an unverifiable
     certificate" in den Optionen an. Mail-Warteschlangengrößen werden
-    von diesem Gerät nicht gelesen: MDaemon veröffentlicht sie nur als
+    von diesem Monitor nicht gelesen: MDaemon veröffentlicht sie nur als
     Windows-Leistungszähler, die der DumbMonit-Agent liest, wenn er
     auf dem Mail-Server installiert ist.
 
@@ -216,4 +216,4 @@ Adresse: der Hostname oder die IP des Servers, zum Beispiel
 Die TLS-Ports (`smtps`, `pop3s`, `imaps`, `remote_admin_https`) werden
 nur per Verbindung geprüft. Um den Ablauf ihrer Zertifikate zu
 beobachten, fügen Sie für jeden ein
-[TLS-Zertifikat](services.md#tls)-Gerät hinzu.
+[TLS-Zertifikat](services.md#tls)-Monitor hinzu.

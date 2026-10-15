@@ -37,7 +37,7 @@ aparece no próprio log do Immich.
 
 As [regras integradas](../alerting/rules.md#self-hosted-applications) que se
 aplicam: Immich jobs stalled, Immich queue paused, Immich storage almost
-full, Immich update available, além de Device unreachable.
+full, Immich update available, além de Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -63,10 +63,10 @@ dispositivo ficando silencioso enquanto outro continua enviando. Apenas
 `last_seen_timestamp_seconds` — a última vez que a sessão de cada
 dispositivo esteve ativa — é genuinamente por dispositivo.
 
-A tabela da página do dispositivo mostra esses números para cada
+A tabela da página do monitor mostra esses números para cada
 dispositivo, com um status de OK ou Desatualizado.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Immich. Ele diz primeiro o que está errado (filas travadas,

@@ -39,11 +39,11 @@ async fn overview(
 ) -> ApiResult<Json<ObservabilityView>> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     let kind = target.kind.as_str();
     if !KINDS.contains(&kind) {
         return Err(ApiError::NotFound(format!(
-            "Device {id} is not a Redis, MongoDB, RabbitMQ or CrowdSec server."
+            "Monitor {id} is not a Redis, MongoDB, RabbitMQ or CrowdSec server."
         )));
     }
     let selector = format!(r#"{{__name__=~"dumbmonit_{kind}_.*", target="{id}"}}"#);

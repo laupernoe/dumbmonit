@@ -7,11 +7,11 @@ datastores, discos e pools ZFS, atualizações pendentes, os serviços e
 versões de pacote do próprio servidor, e o nível de fita quando existe
 um.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-![Um dispositivo PBS: falhas, o calendário de cópias de segurança de 30 dias, tarefas e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![Um monitor PBS: falhas, o calendário de cópias de segurança de 30 dias, tarefas e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Além dos gráficos genéricos, um dispositivo PBS mostra seis painéis,
+Além dos gráficos genéricos, um monitor PBS mostra seis painéis,
 lidos do que a verificação guardou — abrir a página nunca consulta o
 próprio PBS:
 
@@ -68,7 +68,7 @@ arranque lê os últimos 30 dias
 (`/nodes/localhost/tasks?since=…&limit=5000`), as verificações
 seguintes só a janela de tarefas, e o servidor mantém a união em
 SQLite (`pbs_task_history`, 35 dias, no máximo 10000 tarefas por
-dispositivo) para que o calendário sobreviva a reinícios.
+monitor) para que o calendário sobreviva a reinícios.
 
 ## O que monitoriza {#what-it-watches}
 
@@ -168,7 +168,7 @@ nome do convidado das notas do snapshot quando o PVE escreveu uma,
 caso contrário `type/id`, o mesmo que o calendário de cópias de
 segurança.
 
-As regras incorporadas que se aplicam: Device unreachable, PBS
+As regras incorporadas que se aplicam: Monitor unreachable, PBS
 datastore almost full, PBS datastore filling up, PBS backup too old
 (por grupo de cópia de segurança: nenhum snapshot novo há dois dias —
 edite o limiar da regra para uma janela mais longa), PBS backup
@@ -229,7 +229,7 @@ uma função só de leitura — nunca a conta com que inicia sessão.
     proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
     ```
 
-4. Antes de sair da shell, verifique o que o token realmente pode ler. O comando imprime os seus privilégios efetivos, caminho a caminho; um resultado vazio significa que o utilizador não tem a ACL que o token tem — o caso em que o dispositivo parece perfeitamente vivo e não reporta nada.
+4. Antes de sair da shell, verifique o que o token realmente pode ler. O comando imprime os seus privilégios efetivos, caminho a caminho; um resultado vazio significa que o utilizador não tem a ACL que o token tem — o caso em que o monitor parece perfeitamente vivo e não reporta nada.
 
     ```
     proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
@@ -321,7 +321,7 @@ estiverem em falta.
 |---|---|
 | Erro de certificado | Certificado autoassinado: instale um de confiança (ACME está incorporado no PBS) ou ative `insecure_tls`. |
 | Erro de autenticação | O segredo colado em Token ID (ou o inverso), ou o token não tem nenhuma permissão `Audit` — mais frequentemente porque a função foi concedida ao token mas não ao utilizador que o detém, o que não falha: as chamadas têm sucesso e devolvem listas vazias. Só a falha de `GET /version` condena toda a verificação; qualquer outra chamada falhada é contada em `scrape_errors`. |
-| Tudo lê vazio mas o dispositivo está ativo | O utilizador não tem a ACL que o token tem, e o PBS intersecta os dois: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` não imprime nada. Conceda toda função a `dumbmonit@pbs` também. |
+| Tudo lê vazio mas o monitor está ativo | O utilizador não tem a ACL que o token tem, e o PBS intersecta os dois: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` não imprime nada. Conceda toda função a `dumbmonit@pbs` também. |
 | Nenhuma série `node_updates_pending` | O token não tem `Sys.Audit` em `/`: dê-lhe a função `Audit` em `/`, ou defina `updates` para `false` para parar de perguntar. |
 | Uma tarefa de sync está em falta | O token não tem `Remote.Audit` no remoto da tarefa: adicione a função `RemoteAudit` em `/remote`. A tarefa não é recusada, simplesmente está ausente da lista. |
 | Nenhuma expiração de certificado | A opção `certificates` está desligada, o que é a predefinição: o PBS exige `Sys.Modify` para essa chamada, um privilégio de escrita. |

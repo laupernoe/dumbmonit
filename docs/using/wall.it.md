@@ -10,11 +10,11 @@ toccare la tua preferenza salvata.
 
 ![Modalità Wall](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Ogni problema a sinistra porta l'icona del prodotto del suo dispositivo (gli
-stessi simboli degli elenchi dei dispositivi). L'elenco non esce mai dal suo
+Ogni problema a sinistra porta l'icona del prodotto del suo monitor (gli
+stessi simboli degli elenchi dei monitor). L'elenco non esce mai dal suo
 spazio: su uno schermo piccolo, o con molti problemi, i grandi riquadri si
 riducono a una riga ciascuno, poi si raccolgono in *E altri N*, invece di
-sovrapporsi ai dispositivi sottostanti.
+sovrapporsi ai monitor sottostanti.
 
 ## Notizie sul wall
 

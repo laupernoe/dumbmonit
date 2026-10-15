@@ -33,6 +33,11 @@ All notable changes to this project are documented here. The format follows
 - **Heartbeat to set again after a restore.** The outgoing heartbeat URL is not
   part of the encrypted configuration bundle: enter it again after restoring
   onto a new instance (Settings → System → DumbMonit itself).
+- **Bind mounts and file ownership.** Nothing to do: the image still runs as
+  65532 and an existing `docker-compose.yml` keeps working as it is. The new
+  `docker-compose.yml` starts the container as root (`user: "0:0"`, with four
+  capabilities) so that a host directory works without preparation; take it
+  if you want that, see Changed.
 - **New versions of the bundle.** VictoriaMetrics 1.154.0 and rustls 0.23.46
   (see Security); the bundled VictoriaMetrics is replaced when you pull the
   new image.
@@ -194,6 +199,25 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Started as root, the server does not stay root.** With `user: "0:0"`
+  (now in `docker-compose.yml`), before anything else (database,
+  VictoriaMetrics, network) it gives `/data` to `65532:65532` — only the
+  entries that belong to someone else, without following symbolic links — then
+  drops its groups, group and user for good and checks that root cannot be
+  regained. `PUID`/`PGID` (or `DUMBMONIT_PUID`/`DUMBMONIT_PGID`) choose another
+  owner, for example your own user or Unraid's `99:100`. The image itself still
+  runs as 65532, and the healthcheck drops root too when started as root.
+- **Devices are now Monitors.** What DumbMonit watches is called a monitor
+  throughout the interface and the documentation (navigation: Overview /
+  Monitors / Alerts / Settings). Nothing changes under the hood: API routes,
+  `target` labels, URLs and metric names are the same.
+- **A simpler Monitors page.** One toolbar: search, **Filter** (state, kind,
+  sort and tags fold behind it, with a count of those in use), Compact / Tiles,
+  **Select** and **Add a monitor**. The map, **Create folder** and the CSV and
+  Uptime Kuma imports moved to a **⋯** menu next to it. Folder headers are
+  plain lines that show a state only when something inside is not reporting;
+  security grades are quiet in the list, and monitors without a grade show none.
+  The type filter only lists the types you use.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and
@@ -255,11 +279,27 @@ All notable changes to this project are documented here. The format follows
 
 ### Removed
 
+- **The Rows layout of the Monitors page.** Compact and Tiles remain; a
+  remembered Rows choice, and `?view=rows` links, open Compact.
 - **The Security page.** `/security` now opens the security score setting; the
   report moved to each device.
 
 ### Fixed
 
+- **Bind mounts.** `-v ./dumbmonit:/data`, `/mnt/user/appdata/dumbmonit` on
+  Unraid or a directory Docker has just created as `root:root` left the
+  container restarting on "not writable", with a hint that only fitted named
+  volumes. With the new `docker-compose.yml` (or `--user 0:0`) the ownership is
+  fixed at startup. Otherwise the message now suggests `--user 0:0` first, then
+  the right command for a bind mount (`sudo chown -R` on the host path) or a
+  named volume.
+- **SELinux hosts.** A bind mount without a container label (Fedora, RHEL) is
+  refused even to root; the server now says so and asks for `:Z` on the volume,
+  documented with rootless Podman in the install guide.
+- **Agent install on systemd hosts.** The Linux installer ran out of memory
+  while writing the systemd unit (shell killed, empty unit, agent never
+  started): a comment in the unit held `yes` between backticks, which the
+  shell ran. Re-run the install command after upgrading the server.
 - **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
   other overflow menu) now opens above the rest of the page, kept on screen
   and flipped upwards near the bottom, instead of hiding behind the next card

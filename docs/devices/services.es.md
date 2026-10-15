@@ -5,7 +5,7 @@ Uptime Kuma: una página web, un puerto, un nombre DNS, un host, un
 certificado, un servidor de hora, un relay de correo, una base de
 datos, un broker MQTT, un endpoint WebSocket. Cada servicio obtiene una
 barra de historial, un tiempo de respuesta y un porcentaje de
-disponibilidad en su página de dispositivo.
+disponibilidad en su página de monitor.
 
 Los últimos cinco van más allá de abrir una conexión: inician una
 sesión real en el propio protocolo del servicio. Esa es la diferencia
@@ -25,7 +25,7 @@ Eso es lo que hace posible un porcentaje de disponibilidad:
 
 | Situación | Qué ocurre |
 |---|---|
-| Opción o dirección inválida, sockets ICMP no permitidos (ver Ping) | Error de configuración: no se escribe nada, la página del dispositivo muestra el error, sin alerta «down». |
+| Opción o dirección inválida, sockets ICMP no permitidos (ver Ping) | Error de configuración: no se escribe nada, la página del monitor muestra el error, sin alerta «down». |
 | Conexión rechazada, timeout, TLS rechazado, `500`, palabra clave ausente, pérdida total de paquetes, contraseña rechazada, consulta fallida | `probe_success = 0`: la caída se registra, se fecha y se cuenta. |
 | Todo bien | `probe_success = 1`. |
 
@@ -272,7 +272,7 @@ agente ni SNMP, host remoto.
 !!! warning
     Sin ese sysctl, la comprobación no puede abrir un socket ICMP: lo
     reporta como un error de configuración, no como un fallo de host.
-    Algunos dispositivos también ignoran los pings a propósito:
+    Algunos monitores también ignoran los pings a propósito:
     compruébalo antes de sacar conclusiones.
 
 ```yaml
@@ -561,7 +561,7 @@ automatización que lo consume, o usa un heartbeat.
 | `topic` | Topic | *(vacío)* | Topic al que se suscribe la comprobación. Vacío: solo conecta, lo cual ya te dice que el broker está vivo y acepta tu cuenta. |
 | `expect_message` | Expect a retained message | `false` | Debe llegar un mensaje en ese topic antes del timeout. Solo los mensajes retenidos llegan de inmediato: un topic al que simplemente se publica de vez en cuando parecerá silencioso. |
 | `expect` | Expected content | *(vacío)* | Texto que ese mensaje debe contener. Rellenarlo implica esperar un mensaje. |
-| `client_id` | Client identifier | *(derivado)* | Nombre anunciado al broker. El por defecto se deriva del dispositivo, así que dos comprobaciones nunca se desconectan entre sí. |
+| `client_id` | Client identifier | *(derivado)* | Nombre anunciado al broker. El por defecto se deriva del monitor, así que dos comprobaciones nunca se desconectan entre sí. |
 | `server_name` | Server name (SNI) | *(el host)* | Nombre de dominio anunciado al broker y comprobado en el certificado. Defínelo cuando la dirección es una IP. |
 | `insecure_tls` | Accept an unverifiable certificate | `false` | Una cadena no verificable ya no cuenta como fallo: la fecha de caducidad sigue registrándose. |
 | `allow_private_targets` | Allow loopback and link-local targets | `false` | Consulta «Direcciones que las comprobaciones rechazan» abajo. |
@@ -733,7 +733,7 @@ Los valores encontrados en un `json_path` nunca se repiten más allá de
 | Una comprobación muestra un error de configuración nombrando `allow_private_targets` | La dirección es loopback o link-local. Consulta «Direcciones que las comprobaciones rechazan» arriba. |
 | TCP caído aunque `telnet host port` funciona desde tu portátil | El contenedor de DumbMonit no puede alcanzar el host (red Docker, cortafuegos). Prueba desde dentro de la red del contenedor. |
 | DNS caído con `reason="record"` | La respuesta no contiene todos los valores listados en `expect`. |
-| Ping caído con `reason="packet_loss"` | Pérdida por encima de `loss_threshold_percent`; algunos dispositivos limitan la tasa de ICMP. |
+| Ping caído con `reason="packet_loss"` | Pérdida por encima de `loss_threshold_percent`; algunos monitores limitan la tasa de ICMP. |
 | DNS caído con `reason="record"` aunque `expect` coincide | `expect_mode` es `exact` y la respuesta tiene un valor extra, o `forbid` coincidió. |
 | SMTP caído con `reason="protocol"` en `security = starttls` | El relay no anuncia STARTTLS en este puerto. Usa `tls` para 465, `none` para un relay local plano. |
 | Una comprobación de base de datos caída con `reason="auth"` | La cuenta existe pero puede no estar permitida conectar desde la máquina de DumbMonit: comprueba `pg_hba.conf`, o la parte de host del usuario MySQL. |

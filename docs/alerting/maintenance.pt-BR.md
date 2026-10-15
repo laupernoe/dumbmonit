@@ -1,7 +1,7 @@
 # Janelas de manutenção {#maintenance-windows}
 
 Uma janela de manutenção (um *silêncio* na API) interrompe notificações para
-um dispositivo, ou para tudo, durante um período. A avaliação continua por
+um monitor, ou para tudo, durante um período. A avaliação continua por
 baixo: quando a janela termina, um alerta que ainda está ativo é notificado
 uma vez, em vez de aparecer do nada depois de duas horas.
 
@@ -9,13 +9,13 @@ uma vez, em vez de aparecer do nada depois de duas horas.
 
 - **Alertas → Manutenção**: a lista de janelas, com *Ativa agora*
   ou *Programada*, e o formulário para adicionar uma.
-- **Página do dispositivo → Silenciar 1 h / Silenciar até…**: uma janela
-  pontual rápida para o dispositivo inteiro.
+- **Página do monitor → Silenciar 1 h / Silenciar até…**: uma janela
+  pontual rápida para o monitor inteiro.
 - ++ctrl+k++ → *Programar manutenção*.
 
 **Soneca**, em um alerta na aba *Agora* ou em uma página de
-dispositivo, é uma versão menor do mesmo mecanismo: uma janela pontual
-restrita aos rótulos exatos daquele alerta em vez do dispositivo inteiro, de
+monitor, é uma versão menor do mesmo mecanismo: uma janela pontual
+restrita aos rótulos exatos daquele alerta em vez do monitor inteiro, de
 modo que uma regra irmã continua falando. Ela também aparece aqui, nomeada
 `Snooze · …`. Veja
 [Se livrando de um alerta](../using/alerts.md#getting-rid-of-an-alert).
@@ -25,7 +25,7 @@ modo que uma regra irmã continua falando. Ela também aparece aqui, nomeada
 | Campo | Significado |
 |---|---|
 | Nome | Mostrado na lista e no histórico. |
-| Dispositivo | Deixe vazio para cobrir todos os dispositivos. |
+| Monitor | Deixe vazio para cobrir todos os monitores. |
 | Início, Fim | Horários absolutos. A janela inclui o início e exclui o fim. |
 | Comentário | Opcional. Por que a janela existe. |
 
@@ -88,7 +88,7 @@ conhece é recusado ao salvar, com um exemplo.
 Uma janela também pode ser limitada por correspondências exatas de rótulos
 (`matchers` na API): todas precisam corresponder aos rótulos do alerta, por
 exemplo `tag_role = lab` e `__name__ = dumbmonit_up`. Uma janela sem
-dispositivo e sem correspondência silencia toda a instância. Janelas que se
+monitor e sem correspondência silencia toda a instância. Janelas que se
 sobrepõem funcionam bem; a primeira que cobre o momento explica o silêncio.
 
 ## Como um alerta silenciado aparece {#what-a-silenced-alert-looks-like}
@@ -99,10 +99,10 @@ transição com `notified: false` e o motivo. Desativar uma janela
 
 ## Em uma página de status pública {#on-a-public-status-page}
 
-Um dispositivo coberto por uma janela de manutenção é mostrado como
+Um monitor coberto por uma janela de manutenção é mostrado como
 **Manutenção** em qualquer [página de status](../using/status-pages.md) que o
 liste, em vez de vermelho. Se nada mais na página estiver fora do ar ou
 degradado, o estado geral da página também lê *Manutenção*. Apenas janelas
-que nomeiam um dispositivo — ou cujas correspondências são rótulos no nível
-do dispositivo — aparecem desse jeito; uma janela limitada a uma métrica
+que nomeiam um monitor — ou cujas correspondências são rótulos no nível
+do monitor — aparecem desse jeito; uma janela limitada a uma métrica
 permanece uma questão de alerta.

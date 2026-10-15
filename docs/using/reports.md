@@ -14,14 +14,14 @@ reading included, because the page lists the recipients' addresses.
 | Section | Content |
 | --- | --- |
 | **Headline** | Overall availability for the period, the number of incidents, and the change against the previous period. |
-| **Availability by group** | One line per group, then per device (the 40 least available at most), computed the same way as on [status pages](status-pages.md): probes by their success rate, hosts and devices by how often they reported in. Devices without history are shown as "no data" rather than as 100%. |
-| **Incidents** | When each one started, how long it lasted (or that it is still open) and on which device. Up to 25. Informational alerts are left out. |
-| **Least stable devices** | The five devices with the lowest availability or the most incidents. |
+| **Availability by group** | One line per group, then per monitor (the 40 least available at most), computed the same way as on [status pages](status-pages.md): probes by their success rate, hosts and monitors by how often they reported in. Monitors without history are shown as "no data" rather than as 100%. |
+| **Incidents** | When each one started, how long it lasted (or that it is still open) and on which monitor. Up to 25. Informational alerts are left out. |
+| **Least stable monitors** | The five monitors with the lowest availability or the most incidents. |
 | **Comparison** | Availability and incident count against the period of the same length just before. |
 
 The email is plain HTML tables with inline styles and no remote image, so it
 renders the same everywhere and nothing is fetched when it is opened. A text
-version is sent along. Every device name and message is escaped.
+version is sent along. Every monitor name and message is escaped.
 
 ## Settings
 

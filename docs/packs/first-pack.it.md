@@ -50,13 +50,13 @@ default_port: 80
 credentials: [none]
 ```
 
-L'`id` decide due nomi: il tipo di dispositivo `pack.shelly-plug`, e il
+L'`id` decide due nomi: il tipo di monitor `pack.shelly-plug`, e il
 prefisso di metrica `dumbmonit_shelly_plug_`.
 
 ## 3. Una fonte
 
 Una fonte è una richiesta, sempre verso l'indirizzo proprio del
-dispositivo:
+monitor:
 
 ```yaml
 options:
@@ -73,7 +73,7 @@ sources:
 ```
 
 `{{option.switch_id}}` viene sostituito dall'impostazione propria del
-dispositivo, mostrata nel modulo del dispositivo come **Switch channel**.
+monitor, mostrata nel modulo del monitor come **Switch channel**.
 Il nome del file della fixture, `status.json`, corrisponde all'`id`
 della fonte.
 

@@ -66,8 +66,8 @@ conta, com o endereço do cliente. Ele mantém as últimas 5.000 entradas.
 ## Notificações push {#push-notifications}
 
 Notificações nativas neste celular ou computador, mesmo com o DumbMonit
-fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada
-conta gerencia seus próprios dispositivos aqui (visualizadores também);
+fechado: **Ativar neste monitor**, depois **Enviar um teste**. Cada
+conta gerencia seus próprios monitores aqui (visualizadores também);
 quais alertas chegam até eles é definido por um canal **Web Push** em
 Configurações → Notificações e relatórios. O botão **i** resume os requisitos: HTTPS (ou
 localhost), instalação na Tela de Início no iPhone e iPad, e os domínios
@@ -78,7 +78,7 @@ de serviço de push que o servidor precisa alcançar. Guia completo:
 
 Apenas administradores. As contas que podem entrar, e seu papel:
 
-| Papel | Lê tudo | Lida com alertas (reconhecer, soneca, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (dispositivos, regras, canais, páginas de status, configurações, backups, tokens, contas) |
+| Papel | Lê tudo | Lida com alertas (reconhecer, soneca, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (monitores, regras, canais, páginas de status, configurações, backups, tokens, contas) |
 |---|---|---|---|
 | **Visualizador** | sim | não | não |
 | **Operador** | sim | sim | não |
@@ -181,7 +181,7 @@ manualmente. A lista mostra o prefixo de cada token, data de criação,
 token em seu próximo envio.
 
 Um token pode cadastrar várias máquinas. Revogá-lo não exclui os
-dispositivos. Visualizadores veem a lista e a seção lê *Visualizador —
+monitores. Visualizadores veem a lista e a seção lê *Visualizador —
 somente leitura*; criar e revogar são para administradores.
 
 ## API e assistentes {#api--assistants}
@@ -189,8 +189,8 @@ somente leitura*; criar e revogar são para administradores.
 Um tipo de token para ambos: clientes MCP e a [API REST](../reference/api.md).
 Nomeie um token, escolha seu escopo e crie-o — é mostrado uma vez. Um
 token **read** só pode olhar; um token **read and write** também pode
-alterar coisas — silenciar um dispositivo, executar uma sondagem,
-adicionar ou editar dispositivos, regras e canais — mas nunca contas,
+alterar coisas — silenciar um monitor, executar uma sondagem,
+adicionar ou editar monitores, regras e canais — mas nunca contas,
 configurações de login ou outros tokens.
 
 Sob **Conectar**, três abas mantêm os trechos, preenchidos com o token
@@ -210,7 +210,7 @@ ele. Veja [Conectar um assistente](assistant.md) e
 Três coisas, na ordem em que você as encontra.
 
 Um **aviso que você não pode perder**: `/data/secret.key` é o que
-descriptografa credenciais de dispositivo, e uma cópia do banco de dados
+descriptografa credenciais de monitor, e uma cópia do banco de dados
 sem ele restaura uma instância que não pode falar com nada. O texto muda
 quando o segredo vem de `DUMBMONIT_SECRET` em vez disso — não há então
 nenhum arquivo para copiar, e é seu gerenciador de senhas que precisa
@@ -262,7 +262,7 @@ Restrito a administradores. Veja [Relatórios por e-mail](reports.md).
 ## Aparência {#appearance}
 
 Três blocos, cada um pré-visualizando seu próprio tema: **Sistema** (segue
-seu dispositivo e muda com ele), **Dia** (o tema "papel de gráfico") e
+seu monitor e muda com ele), **Dia** (o tema "papel de gráfico") e
 **Noite** (o tema "radar"). A escolha é armazenada no navegador. O
 alternador no cabeçalho e o *Alternar tema* da paleta de comandos mudam
 entre dia e noite.
@@ -274,7 +274,7 @@ comandos o abre de qualquer lugar — veja [Modo parede](overview.md#wall-mode).
 ## Sobre {#about}
 
 Versão do servidor e a saúde de seus dois armazenamentos, o banco de dados
-(configuração de dispositivo e histórico de alertas) e o VictoriaMetrics
+(configuração de monitor e histórico de alertas) e o VictoriaMetrics
 (toda medição nos gráficos), como reportado por `GET /api/health` e
 atualizado a cada 15 segundos. Um armazenamento que para de responder
 mostra um aviso com o erro e o que verificar. A seção também liga para

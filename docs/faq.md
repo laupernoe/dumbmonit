@@ -19,25 +19,25 @@ Then `docker compose up -d`.
 
 Every account and every session is removed at startup and the UI shows
 `/setup` again. Create the first administrator, then start again without the
-line, and run `docker compose up -d` again. Devices, rules, channels and the single sign-on settings are
+line, and run `docker compose up -d` again. Monitors, rules, channels and the single sign-on settings are
 untouched.
 
-## No data after adding a device
+## No data after adding a monitor {#no-data-after-adding-a-device}
 
-Give it a minute: the first probe runs at the device's interval (60 s by
+Give it a minute: the first probe runs at the monitor's interval (60 s by
 default) and writes reach VictoriaMetrics every 5 seconds
 (`DUMBMONIT_FLUSH_INTERVAL_SECS`). Then:
 
-1. Open the device page and click **Probe now**. It reports how many samples
+1. Open the monitor page and click **Probe now**. It reports how many samples
    and series one probe produced, or the exact error.
 2. *Misconfigured* with an error under the address is a configuration
    problem: wrong community or password, refused certificate (enable "Accept
    an unverifiable certificate"), missing capability. It is shown, not alerted.
-3. *Unreachable* with no error means the device did not answer at all. For
-   SNMP, a wrong community looks exactly like a device that is off, because
-   the device never answers it. Check the community, that SNMP is enabled, and
-   that the device allows the server's address.
-4. Check that the container can reach the device: Docker networks and
+3. *Unreachable* with no error means the monitor did not answer at all. For
+   SNMP, a wrong community looks exactly like a monitor that is off, because
+   the monitor never answers it. Check the community, that SNMP is enabled, and
+   that the monitor allows the server's address.
+4. Check that the container can reach the monitor: Docker networks and
    firewalls are the usual culprits.
 
 ## Ping says "configuration error"
@@ -86,7 +86,7 @@ displays them with the weather bulletin's words: Info, Advisory, Warning. See
 
 ## An alert is "Suppressed by parent"
 
-The device has a parent device that is unreachable, so its own alerts are held
+The monitor has a parent monitor that is unreachable, so its own alerts are held
 back rather than sent. Fix the parent; the child's alerts resolve or fire on
 their own afterwards without a second notification. See
 [Dependency suppression](alerting/index.md#dependency-suppression).
@@ -106,7 +106,7 @@ reports `victoria.embedded: false` once the switch is done.
 
 ## Does DumbMonit need to be reachable from the internet?
 
-No. It reaches out to devices and to notification services; nothing calls
+No. It reaches out to monitors and to notification services; nothing calls
 back, except agents, which need to reach the server's URL. Keep it on your
 LAN or behind a VPN; if you expose it, use a reverse proxy with TLS and set
 `DUMBMONIT_COOKIE_SECURE=1`.

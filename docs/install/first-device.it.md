@@ -1,8 +1,8 @@
-# Aggiungi il tuo primo dispositivo
+# Aggiungi il tuo primo monitor
 
 Aggiungere qualsiasi cosa funziona sempre nello stesso modo: scegli un
 tipo dall'elenco, una nota a destra spiega cosa preparare sul
-dispositivo, e il modulo mostra solo i campi che contano per quel tipo.
+monitor, e il modulo mostra solo i campi che contano per quel tipo.
 
 ## I tre primi passaggi {#the-three-first-steps}
 
@@ -16,7 +16,7 @@ non lo spunta.
 La guida viene mantenuta sull'istanza, non nel browser: saltare un
 passaggio, o l'intera guida, lo salta in ogni browser e per ogni utente.
 Scompare per sempre una volta risolti i tre passaggi, e non appare mai su
-un'istanza che aveva già dispositivi e un canale — aggiornare non
+un'istanza che aveva già monitor e un canale — aggiornare non
 consegna a un homelab consolidato un tutorial.
 
 ## Aggiungere un dispositivo SNMP
@@ -33,8 +33,8 @@ parla. Switch, router, NAS, UPS e stampanti sono i soliti sospetti.
 ![Aggiungere un dispositivo SNMP: il modulo a sinistra, la nota di configurazione a destra](../assets/screenshots/add-device-light.png){ loading=lazy }
 
 Il profilo di raccolta viene rilevato automaticamente dal `sysObjectID`
-del dispositivo, in background, così il modulo non attende mai un
-dispositivo irraggiungibile. Le interfacce, e su server e NAS CPU,
+del monitor, in background, così il modulo non attende mai un
+monitor irraggiungibile. Le interfacce, e su server e NAS CPU,
 memoria e storage, appaiono entro un minuto.
 
 !!! warning "Le community viaggiano in chiaro"
@@ -73,7 +73,7 @@ Lo stesso flusso, con una credenziale in due campi invece di uno:
 richiede un account DSM dedicato (nome utente e password); un
 [server con l'agent](../devices/agent.md) non richiede alcuna
 credenziale affatto, solo il token di iscrizione mostrato una volta
-salvato il dispositivo.
+salvato il monitor.
 
 ## La nota di configurazione
 
@@ -99,33 +99,33 @@ Qualunque sia il tipo, il modulo ha:
 
 | Campo | Significato |
 |---|---|
-| Name | Come il dispositivo appare negli elenchi e negli avvisi. |
+| Name | Come il monitor appare negli elenchi e negli avvisi. |
 | Address | IP, nome host, `host:porta` oppure URL a seconda del tipo; il segnaposto mostra la forma attesa. |
 | Credential | Le famiglie che il tipo accetta, ciascuna con i propri campi: community, utente e passphrase SNMP v3, token Proxmox (Token ID + Secret), nome utente e password. I segreti hanno un occhio mostra/nascondi e i valori incollati vengono puliti da spazi, virgolette e interruzioni di riga indesiderati. Memorizzato cifrato, mai restituito dall'API: in modifica, i campi vuoti mantengono ciò che è salvato. |
-| Check interval | Ogni quanto DumbMonit legge il dispositivo. 60 s per impostazione predefinita, minimo 10 s. |
-| Parent device | Se il genitore si spegne, gli avvisi di questo dispositivo vengono soppressi invece che inviati. Vedi [soppressione per dipendenza](../alerting/index.md#dependency-suppression). |
-| Enabled | Un dispositivo in pausa non viene controllato e non genera avvisi. |
+| Check interval | Ogni quanto DumbMonit legge il monitor. 60 s per impostazione predefinita, minimo 10 s. |
+| Parent device | Se il genitore si spegne, gli avvisi di questo monitor vengono soppressi invece che inviati. Vedi [soppressione per dipendenza](../alerting/index.md#dependency-suppression). |
+| Enabled | Un monitor in pausa non viene controllato e non genera avvisi. |
 | Tags | Etichette libere chiave/valore, copiate su ogni serie come `tag_<key>`. Le opzioni specifiche del tipo vivono anche qui, sotto **More options**. |
 
 ## Cosa succede dopo
 
-- Il dispositivo appare sulla pagina **Devices** come una targhetta da
+- Il monitor appare sulla pagina **Devices** come una targhetta da
   rack: LED di stato, nome, tipo, indirizzo, ultima volta visto, e uno
   sparkline.
 - Le misurazioni vengono scritte in VictoriaMetrics ogni 5 secondi
   (`DUMBMONIT_FLUSH_INTERVAL_SECS`), così il primo grafico appare dopo la
   prima sonda più qualche secondo. **Probe now** sulla pagina del
-  dispositivo forza una sonda e riporta quanti campioni e serie ha
+  monitor forza una sonda e riporta quanti campioni e serie ha
   prodotto: è il principale strumento diagnostico.
 - Le [regole di avviso integrate](../alerting/rules.md) si applicano
-  immediatamente: dispositivo irraggiungibile, CPU saturata, disco quasi
+  immediatamente: monitor irraggiungibile, CPU saturata, disco quasi
   pieno, e così via. Nulla da configurare.
 - Per essere avvisato, aggiungi un [canale di notifica](../notifications.md)
   in **Settings → Notifications & reports**. Le regole integrate notificano ogni
   canale abilitato.
 
 !!! tip "Nessun dato dopo un minuto?"
-    Apri la pagina del dispositivo: un errore di configurazione (community
+    Apri la pagina del monitor: un errore di configurazione (community
     errata, certificato rifiutato, funzionalità mancante) viene mostrato
     in rosso sotto l'indirizzo, con il motivo. Vedi la
     [FAQ](../faq.md#no-data-after-adding-a-device).

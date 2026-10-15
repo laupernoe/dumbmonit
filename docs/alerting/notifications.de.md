@@ -10,8 +10,8 @@ Haus aus.
 ## Die Pipeline, in einer Liste
 
 ```
-evaluate (hysteresis, per-device overrides)
-  → deduplicate → suppress by dependency → silence → group by device
+evaluate (hysteresis, per-monitor overrides)
+  → deduplicate → suppress by dependency → silence → group by monitor
     → flap hold → channel severity filter → channel routing filter
       → resolved on/off → cooldown → quiet hours → batch window
         → hourly cap → send (+ deep link)
@@ -21,7 +21,7 @@ evaluate (hysteresis, per-device overrides)
 | Stufe | Wo eingestellt | Standard |
 |---|---|---|
 | Rückstellschwelle (Hysterese) | Regel-Editor → *Clear below / above* | keine (CPU: 85 %, Platte: 88 % bei den mitgelieferten Regeln) |
-| Gerätespezifische Überschreibungen | Regel-Editor → *Per-device overrides* | keine |
+| Monitorspezifische Überschreibungen | Regel-Editor → *Per-monitor overrides* | keine |
 | Flackererkennung | Settings → Notifications & reports → Notification policy → More options | 4 Änderungen in 30 Min, Sperre 30 Min |
 | Mindest-Schweregrad | Kanal → Delivery options → *Send* | alles |
 | Sag mir, wenn es sich löst | Kanal → Delivery options | ein |
@@ -33,7 +33,7 @@ evaluate (hysteresis, per-device overrides)
 | Nachrichten pro Kanal und Stunde | Settings → Notifications & reports → Notification policy | 20 |
 | Öffentliche URL (Deep Links) | Settings → Notifications & reports → Notification policy, oder `DUMBMONIT_PUBLIC_URL` | leer |
 
-## Hysterese und gerätespezifische Überschreibungen
+## Hysterese und monitorspezifische Überschreibungen
 
 Eine Regel, die über 90 % feuert und sich in dem Moment löst, in dem der
 Wert unter 90 % fällt, würde auf einer zwischen 89–91 % schwankenden CPU den
@@ -44,15 +44,15 @@ Wert darunter fällt (für „feuert über“-Regeln) oder darüber steigt (für
 der Server lehnt eine Rückstellschwelle auf der falschen Seite der Schwelle
 ab.
 
-Eine **gerätespezifische Überschreibung** ändert die Schwelle oder
-Rückstellschwelle eines Geräts oder schaltet die Regel für dieses Gerät ab,
+Eine **monitorspezifische Überschreibung** ändert die Schwelle oder
+Rückstellschwelle eines Monitors oder schaltet die Regel für diesen Monitor ab,
 ohne die Regel zu duplizieren:
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # oder { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # jede Überschreibung eines Geräts
+GET /api/alerts/overrides?target_id=7           # jede Überschreibung eines Monitors
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -88,7 +88,7 @@ Jeder Kanal entscheidet, was er hört (`policy` in der Kanal-Payload):
   Zusammenfassung an, wenn sie enden, mit dem Titel "Quiet hours over —
   …". Ein Alarm, der während der Ruhezeiten feuert und sich löst, wird in
   dieser Zusammenfassung nur als "resolved during quiet hours" erwähnt.
-- `matcher` — welche Alarme der Kanal will, nach Tag, Geräteart oder Regel.
+- `matcher` — welche Alarme der Kanal will, nach Tag, Monitorart oder Regel.
   Leer (der Standard, und was jeder bestehende Kanal behält) bedeutet
   alles.
 
@@ -107,7 +107,7 @@ den Routing-Filter.
 
 ## Routing nach Tag
 
-Geräte tragen Tags (`site=cellar`, `role=storage`) und eine Art (`snmp`,
+Monitore tragen Tags (`site=cellar`, `role=storage`) und eine Art (`snmp`,
 `proxmox`, `synology`, `agent`…). Der **Routing-Filter** eines Kanals sagt,
 welche Alarme er möchte:
 
@@ -123,8 +123,8 @@ Klammern:
 
 | `field` | Prüft gegen | Beispiel |
 |---|---|---|
-| `tag` | Ein Tag der Geräteseite selbst | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | Der Collector, der das Gerät abfragt | `{"field":"kind","value":"proxmox"}` |
+| `tag` | Ein Tag der Monitorseite selbst | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | Der Collector, der den Monitor abfragt | `{"field":"kind","value":"proxmox"}` |
 | `rule` | Die `uid` der Regel | `{"field":"rule","value":"disk_full"}` |
 
 Wie die Listen zu lesen sind:
@@ -137,14 +137,14 @@ Wie die Listen zu lesen sind:
 - **`exclude` gewinnt immer**, auch über ein zutreffendes `include`.
 
 Das obige Beispiel liest sich also, und die UI gibt es genau mit diesen
-Worten wieder: *dieser Kanal erhält Advisory und höher von Geräten mit dem
-Tag site=cellar, außer Geräten mit dem Tag role=lab*.
+Worten wieder: *dieser Kanal erhält Advisory und höher von Monitoren mit dem
+Tag site=cellar, außer Monitoren mit dem Tag role=lab*.
 
 Unter dem Editor listet eine **Vorschau** auf, welche Ihrer aktuellen
-Geräte der Filter auswählt. Es ist keine Näherung: Der Server führt genau
+Monitore der Filter auswählt. Es ist keine Näherung: Der Server führt genau
 den Filter aus, den die Alarmierungs-Engine ausführt, reduziert auf den
-Teil, der nur vom Gerät abhängt. Regelbedingungen gelten für Alarme statt
-für Geräte, daher benennt die Vorschau sie gesondert, anstatt vorzugeben,
+Teil, der nur vom Monitor abhängt. Regelbedingungen gelten für Alarme statt
+für Monitore, daher benennt die Vorschau sie gesondert, anstatt vorzugeben,
 sie zu zählen.
 
 ```
@@ -209,7 +209,7 @@ Eskalationskanal auf PagerDuty oder Opsgenie, die das richtig machen.
 
 - **Bündelungsfenster** — Alarme, die innerhalb des Fensters feuern,
   verlassen das System als *eine* Nachricht pro Kanal, gruppiert nach
-  Gerät: "3 alerts on 2 devices" mit einem Abschnitt pro Gerät;
+  Monitor: "3 alerts on 2 monitors" mit einem Abschnitt pro Monitor;
   Behoben-Meldungen fahren mit ("2 resolved"). `0` sendet beim nächsten
   Zyklus. Eine Zusammenfassung listet höchstens 12 Zeilen, dann "…and N
   more alerts".
@@ -217,9 +217,9 @@ Eskalationskanal auf PagerDuty oder Opsgenie, die das richtig machen.
   `max_per_hour` Nachrichten erhalten hat, warten weitere Alarme und
   kommen als eine Zusammenfassung an, wenn ein Platz frei wird. `0` hebt
   das Limit auf.
-- **On-Call-Kanäle** (PagerDuty, Opsgenie) werden nie über Geräte hinweg
-  gebündelt: Sie öffnen und schließen einen Vorfall pro Gerät, erhalten
-  also eine Nachricht pro Gerät, ohne zu warten.
+- **On-Call-Kanäle** (PagerDuty, Opsgenie) werden nie über Monitore hinweg
+  gebündelt: Sie öffnen und schließen einen Vorfall pro Monitor, erhalten
+  also eine Nachricht pro Monitor, ohne zu warten.
 
 Fehlgeschlagene Zustellungen halten die Zeilen in der Warteschlange; der
 nächste Zyklus versucht es erneut.
@@ -239,15 +239,15 @@ Jeder Alarm ist eine Zeile, dieselbe in Mail, ntfy, Chat und der
   Flapping), sodass der Schweregrad ohne Farbe oder Emoji lesbar ist.
 - Eine Regel, die mehrere Zeitreihen beobachtet, benennt diejenige, die
   gefeuert hat: die VM und ihre ID, den Einhängepunkt, die Schnittstelle,
-  die Backup-Gruppe, die URL der Prüfung. Geräteweite Regeln
-  (unreachable) benennen nichts weiter als das Gerät.
+  die Backup-Gruppe, die URL der Prüfung. Monitorweite Regeln
+  (unreachable) benennen nichts weiter als den Monitor.
 - Wert und Schwelle werden bei gemessenen Regeln angezeigt; eine
   Alles-oder-nichts-Regel auf einer 0/1-Metrik (im Akkubetrieb, Gast
   gestoppt) wiederholt nicht "1 (threshold > 0)".
 
 ## Deep Links
 
-Jede Nachricht endet mit einem Link zum Gerät
+Jede Nachricht endet mit einem Link zum Monitor
 (`{public_url}/targets/{id}`), wenn eine öffentliche URL bekannt ist — die
 `public_url` der Richtlinie, oder `DUMBMONIT_PUBLIC_URL`.
 Benutzerdefinierte Webhooks erhalten ihn ebenfalls als `{{link}}`-Variable,
@@ -256,7 +256,7 @@ sofern nicht ihre eigene `base_url` gesetzt ist.
 Es gibt absichtlich keinen "Silence for 1 h"-Link in Nachrichten:
 Chat-Dienste rufen jeden angezeigten Link ab, um eine Vorschau zu bauen,
 was die Stummschaltung in dem Moment auslösen würde, in dem die Nachricht
-gepostet wird. Stummschalten stattdessen von der Geräteseite oder der
+gepostet wird. Stummschalten stattdessen von der Monitorseite oder der
 Alerts-Seite aus.
 
 ## Was von Pulse übernommen wurde, und was nicht

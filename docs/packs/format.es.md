@@ -17,22 +17,22 @@ my-pack/
 | Clave | Obligatorio | Significado |
 |---|---|---|
 | `schema` | sí | Siempre `1`. |
-| `id` | sí | Letras minúsculas, dígitos y guiones simples, empezando por una letra, hasta 40 caracteres: `shelly-plug`. El tipo de dispositivo se convierte en `pack.<id>`, el prefijo de métrica `dumbmonit_<id con guiones bajos>_`. |
+| `id` | sí | Letras minúsculas, dígitos y guiones simples, empezando por una letra, hasta 40 caracteres: `shelly-plug`. El tipo de monitor se convierte en `pack.<id>`, el prefijo de métrica `dumbmonit_<id con guiones bajos>_`. |
 | `version` | sí | [Versión semántica](https://semver.org) del pack: `1.2.0`. |
 | `requires` | no | Versiones de DumbMonit con las que funciona el pack, como un requisito semver: `">=0.2"`. Un servidor fuera del rango rechaza el pack. |
-| `label` | sí | Nombre mostrado en la lista de tipos de dispositivo. |
+| `label` | sí | Nombre mostrado en la lista de tipos de monitor. |
 | `summary` | no | Una frase: qué vigila el pack. |
 | `examples` | no | Productos a los que se aplica, mostrados como pistas. |
 | `address_hint` | no | Placeholder del campo de dirección: `192.168.1.50`. |
 | `default_port` | no | Puerto usado cuando la dirección no tiene uno. |
-| `scheme` | no | `http` (por defecto) o `https`; el dispositivo puede anularlo. |
-| `setup` | no | El aviso mostrado junto al formulario de dispositivo: `title`, `steps` (una lista; lo que sigue a un salto de línea en un paso se muestra como un comando copiable), `warning`, `doc_url`. |
+| `scheme` | no | `http` (por defecto) o `https`; el monitor puede anularlo. |
+| `setup` | no | El aviso mostrado junto al formulario de monitor: `title`, `steps` (una lista; lo que sigue a un salto de línea en un paso se muestra como un comando copiable), `warning`, `doc_url`. |
 | `credentials` | no | Tipos de credencial aceptados, en orden de preferencia: `none`, `api_token`, `username_password`. Por defecto: `[none]`. Una entrada puede ser `{kind, label, help}` para reformular el formulario. |
-| `options` | no | Ajustes mostrados en el formulario de dispositivo (abajo). |
+| `options` | no | Ajustes mostrados en el formulario de monitor (abajo). |
 
 ## Opciones {#options}
 
-Las opciones se guardan en el dispositivo y se leen con
+Las opciones se guardan en el monitor y se leen con
 `{{option.<key>}}` en rutas, cabeceras y cuerpos, y en los umbrales de
 regla.
 
@@ -56,7 +56,7 @@ puede redeclarar: `scheme`, `port`, `insecure_tls`,
 ## Fuentes {#sources}
 
 Una fuente es una petición por sondeo, siempre enviada a la propia
-dirección del dispositivo.
+dirección del monitor.
 
 ```yaml
 sources:
@@ -72,7 +72,7 @@ sources:
 ```
 
 - `path` debe empezar con una única `/`. La URL de la petición es la
-  dirección del dispositivo seguida de la ruta; tras la sustitución
+  dirección del monitor seguida de la ruta; tras la sustitución
   debe conservar el mismo esquema, host y puerto, o se rechaza la
   petición. Los valores de opción se codifican en porcentaje en las
   rutas, así que un valor no puede añadir un segmento ni cambiar el
@@ -199,9 +199,9 @@ rules:
   producido por el pack (`dumbmonit_up` excepto): un pack no puede
   alertar sobre la serie de otro tipo.
 - Un `threshold` de `{{option.x}}` instala el valor por defecto de la
-  opción, y el propio valor de esa opción en cada dispositivo se
+  opción, y el propio valor de esa opción en cada monitor se
   convierte en su umbral para esta regla (una anulación por
-  dispositivo, reescrita cada vez que se guarda el dispositivo).
+  monitor, reescrita cada vez que se guarda el monitor).
 
 ## Perfiles SNMP {#snmp-profiles}
 
@@ -209,7 +209,7 @@ Un pack puede traer perfiles SNMP, escritos exactamente como los
 integrados en
 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles).
 Se unen al catálogo SNMP y se aplican por `sysObjectID` como los demás;
-no crean un tipo de dispositivo propio.
+no crean un tipo de monitor propio.
 
 ```yaml
 snmp_profiles:
@@ -245,7 +245,7 @@ actualizar un pack con perfiles SNMP.
 `dumbmonit pack test <dir>` lee `fixtures/<id de fuente>.json`, `.txt` o
 `.prom`, ejecuta la misma extracción que el servidor, y compara el
 resultado con `expected.prom`: el formato de texto de Prometheus,
-ordenado, sin timestamps y sin las etiquetas de dispositivo (`target`,
+ordenado, sin timestamps y sin las etiquetas de monitor (`target`,
 `host`, `tag_*`) que añade el servidor. `--update` reescribe
 `expected.prom` a partir de los fixtures; revisa el diff antes de
 confirmarlo.

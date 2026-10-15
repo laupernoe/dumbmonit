@@ -49,9 +49,9 @@ os gráficos e as regras convertem-nos em taxas.
 As [regras incorporadas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: MongoDB replica set without primary, MongoDB member unreachable,
 MongoDB replication lag, MongoDB connections near the limit, MongoDB cache
-under pressure, MongoDB internal errors, mais Device unreachable.
+under pressure, MongoDB internal errors, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o MongoDB. Diz numa frase o que está errado (replica set, ligações,

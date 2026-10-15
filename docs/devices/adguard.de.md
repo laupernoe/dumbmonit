@@ -66,9 +66,9 @@ servers", um dies auszuschalten.
 Die geltenden [eingebauten Regeln](../alerting/rules.md#adguard-home):
 AdGuard Home protection off, AdGuard Home DNS not running, AdGuard Home
 upstream failing, AdGuard Home filter lists stale, AdGuard Home update
-available, plus Device unreachable.
+available, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite verbindet sich nie mit AdGuard Home. Es sagt, ob Schutz

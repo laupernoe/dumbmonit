@@ -125,7 +125,7 @@ fn base_url(address: &str, port: u16) -> Result<String, ProbeError> {
     let address = address.trim().trim_end_matches('/');
     let address = address.strip_suffix("/redfish/v1").unwrap_or(address);
     if address.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if address.starts_with("https://") || address.starts_with("http://") {
         return Ok(address.to_string());

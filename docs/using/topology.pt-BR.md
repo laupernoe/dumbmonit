@@ -9,7 +9,7 @@ digitado à mão: cada vínculo vem do que o DumbMonit já sabe.
 | Vínculo | Origem | Traço |
 |---|---|---|
 | Depende de | O **pai** definido em um monitor, o mesmo seguido pela supressão de alertas. | linha contínua |
-| Acessado por um relay | O **agente relay** que consulta um dispositivo em um site remoto. | traços longos |
+| Acessado por um relay | O **agente relay** que consulta um monitor em um site remoto. | traços longos |
 | Hospedado por um hipervisor | Os convidados informados nos últimos 30 minutos pelo Proxmox VE, XCP-ng, Nutanix, vSphere ou pelo módulo libvirt de um agente Linux. | traços curtos |
 | Cabeado a (LLDP) | Um **vizinho LLDP** visto por um switch SNMP em uma porta (perfil `ethernet-switch`). | pontos |
 
@@ -23,7 +23,7 @@ desconhecido é omitido. Um monitor sem vínculos fica em sua pasta.
 
 - O que está acima à esquerda, o que depende à direita; uma seção por pasta.
 - Cada caixa mostra o ícone do tipo, o nome e o estado por extenso. Um
-  dispositivo **fora do ar** tem contorno grosso e um selo `!`; o que está atrás
+  monitor **fora do ar** tem contorno grosso e um selo `!`; o que está atrás
   dele (pai, relay ou hipervisor) é marcado como **Afetado**, com contorno
   tracejado: seus alertas são suprimidos.
 - Um clique abre o monitor; a caixa de um convidado abre o hipervisor.

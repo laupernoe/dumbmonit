@@ -7,9 +7,9 @@
 你需要 Docker,以及网络上的一个 Shelly 插座,或使用下面提供的
 录制应答。
 
-## 1. 查看设备返回的内容 {#1-look-at-what-the-device-answers}
+## 1. 查看监控项返回的内容 {#1-look-at-what-the-device-answers}
 
-Shelly 第二代设备用一次调用就能描述一个继电器:
+Shelly 第二代监控项用一次调用就能描述一个继电器:
 
 ```bash
 curl http://192.168.1.50/rpc/Switch.GetStatus?id=0
@@ -29,7 +29,7 @@ curl http://192.168.1.50/rpc/Switch.GetStatus?id=0
 ```
 
 把这个应答保存为 `shelly-plug/fixtures/status.json`:这就是该
-集成包将被测试的样例文件,因此你可以在没有实际设备的情况下
+集成包将被测试的样例文件,因此你可以在没有实际监控项的情况下
 进行开发。
 
 ## 2. 头部信息 {#2-the-header}
@@ -48,12 +48,12 @@ default_port: 80
 credentials: [none]
 ```
 
-`id` 决定了两个名称:设备类型 `pack.shelly-plug`,以及指标前缀
+`id` 决定了两个名称:监控项类型 `pack.shelly-plug`,以及指标前缀
 `dumbmonit_shelly_plug_`。
 
 ## 3. 一个数据源 {#3-one-source}
 
-一个数据源就是一次请求,始终发往设备自身的地址:
+一个数据源就是一次请求,始终发往监控项自身的地址:
 
 ```yaml
 options:
@@ -69,7 +69,7 @@ sources:
     path: /rpc/Switch.GetStatus?id={{option.switch_id}}
 ```
 
-`{{option.switch_id}}` 会被替换为设备自身的设置,在设备表单中
+`{{option.switch_id}}` 会被替换为监控项自身的设置,在监控项表单中
 显示为**Switch channel**。测试样例文件的名称 `status.json` 与
 数据源的 `id` 相匹配。
 
@@ -174,7 +174,7 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
   --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
 ```
 
-打开**设备 → 添加设备**:*Shelly plug (Gen2+)* 已经在列表中。
+打开**监控项 → 添加监控项**:*Shelly plug (Gen2+)* 已经在列表中。
 用你插座的地址添加它;首次轮询会在一分钟内进行,*Shelly plug
 overheating* 规则会出现在**告警 → 规则**中。
 

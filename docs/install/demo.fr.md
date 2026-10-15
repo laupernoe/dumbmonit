@@ -8,7 +8,7 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
 !!! warning "Jamais sur un vrai volume de données"
     Le mode démo **recrée la base de données à chaque démarrage**. Donnez-lui
     un volume qui lui est propre, ou aucun : pointé sur le `/data` d'une
-    instance réelle, il remplacerait vos appareils, règles et historique par
+    instance réelle, il remplacerait vos surveillances, règles et historique par
     le parc fictif.
 
 ## Ce que fait le mode démo
@@ -16,7 +16,7 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
 - **Connexion avec `demo` / `demo`.** La page de connexion l'indique et
   remplit les champs en un clic. Le compte voit tous les écrans qu'un
   administrateur voit.
-- **Lecture seule.** Chaque modification — appareils, règles, silences,
+- **Lecture seule.** Chaque modification — surveillances, règles, silences,
   acquittements, canaux, jetons, utilisateurs, réglages, sauvegardes et
   restaurations, scans de découverte, enrôlement d'agent, outils d'écriture du
   point de terminaison de l'assistant — est refusée par le serveur avec `403`
@@ -27,10 +27,10 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
   peuplée avec un petit homelab sous `*.home.arpa` : un cluster Proxmox VE, un
   NAS Synology, un Proxmox Backup Server, un TrueNAS, un pare-feu OPNsense, un
   serveur Redfish avec une pièce défaillante, quelques vérifications HTTP, TLS
-  et ping, un hôte avec agent et une page d'état. Les appareils sont répondus
+  et ping, un hôte avec agent et une page d'état. Les surveillances sont répondues
   par de faux répondeurs à l'intérieur du serveur, liés à `127.0.0.1` et
   rejouant des réponses d'API enregistrées, si bien que les vrais collecteurs
-  et panneaux d'appareil fonctionnent. Redémarrer donne le même parc.
+  et panneaux de surveillance fonctionnent. Redémarrer donne le même parc.
 - **Sept jours d'historique.** Des métriques synthétiques sont écrites dans
   VictoriaMetrics au démarrage, si bien que les graphiques, *7 derniers jours*,
   les prévisions et l'historique des alertes sont remplis, et quelques alertes

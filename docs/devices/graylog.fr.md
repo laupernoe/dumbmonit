@@ -21,7 +21,7 @@ de recherche et les échecs d'indexation le disent bien avant.
 
 Toutes les métriques sont préfixées `dumbmonit_graylog_`. Le journal, les
 buffers et le débit sont ceux **du nœud auquel DumbMonit parle** : dans un
-cluster Graylog, ajoutez chaque nœud comme son propre appareil.
+cluster Graylog, ajoutez chaque nœud comme sa propre surveillance.
 
 | Métrique | Quoi | Labels |
 |---|---|---|
@@ -42,16 +42,16 @@ cluster Graylog, ajoutez chaque nœud comme son propre appareil.
 | `cluster_nodes` | nœuds dans le cluster Graylog | |
 | `scrape_errors` | appels qui ont échoué à la dernière sonde | |
 
-Le cluster de recherche est lu via Graylog, un appareil OpenSearch ou
+Le cluster de recherche est lu via Graylog, une surveillance OpenSearch ou
 Elasticsearch séparé n'est donc pas nécessaire pour savoir s'il est vert ;
 quand Graylog ne peut pas l'atteindre du tout, `indexer_status` lit 3.
 
 Les [règles intégrées](../alerting/rules.md#log-and-metrics-servers) qui
 s'appliquent : Graylog ne traite pas, cluster de recherche Graylog en panne,
 cluster de recherche Graylog jaune, journal Graylog qui se remplit, input
-Graylog en échec, échecs d'indexation Graylog, plus Appareil inaccessible.
+Graylog en échec, échecs d'indexation Graylog, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Graylog. Il dit ce qui ne va pas en une phrase

@@ -50,7 +50,7 @@ che si applicano: MongoDB replica set senza primary, MongoDB membro irraggiungib
 MongoDB replication lag, MongoDB connessioni vicine al limite, MongoDB cache sotto pressione,
 MongoDB errori interni, più Device irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina
 non interroga mai MongoDB. Dice cosa c'è che non va in una frase (replica set,

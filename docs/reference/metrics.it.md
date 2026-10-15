@@ -3,7 +3,7 @@
 DumbMonit memorizza ogni misura in VictoriaMetrics e la rilegge con MetricsQL,
 tramite il [proxy delle metriche](api.md#metrics) del server. Questa pagina
 descrive la denominazione, le etichette e la retention. Gli elenchi di metriche
-per tipo si trovano nelle [pagine dei dispositivi](../devices/index.md).
+per tipo si trovano nelle [pagine dei monitor](../devices/index.md).
 
 ## Denominazione
 
@@ -26,19 +26,19 @@ Le famiglie specifiche di una sorgente portano la sorgente come secondo prefisso
 (`dumbmonit_if_octets_in`, `dumbmonit_cpu_usage_percent`).
 
 I contatori (ottetti e pacchetti delle interfacce, byte dei dischi, pagine
-stampate) sono memorizzati **grezzi**, così come li riporta il dispositivo:
+stampate) sono memorizzati **grezzi**, così come li riporta il monitor:
 applica `rate()` nelle tue query per ottenere un throughput. La pagina del
-dispositivo mostra ogni serie `dumbmonit_*` del dispositivo così com'è
+monitor mostra ogni serie `dumbmonit_*` del monitor così com'è
 memorizzata, quindi un contatore appare come una linea crescente. Un riavvio si
 manifesta come un azzeramento del contatore, mai come un falso picco.
 
 ## `dumbmonit_up`
 
 Dopo ogni probe riuscito, il server scrive `dumbmonit_up = 1` per il
-dispositivo. Non viene scritto nulla quando un probe fallisce: la serie
-semplicemente si interrompe, e la regola "Dispositivo non raggiungibile" misura
+monitor. Non viene scritto nulla quando un probe fallisce: la serie
+semplicemente si interrompe, e la regola "Monitor non raggiungibile" misura
 l'età dell'ultimo campione (`time() - tlast_over_time(dumbmonit_up[7d])`),
-mantenendo solo la serie più recente di ciascun dispositivo
+mantenendo solo la serie più recente di ciascun monitor
 (`bottomk by (target) (1, …)`): una serie non più scritta dopo una modifica di
 tag o etichetta resta nella finestra di 7 giorni e non deve contare.
 
@@ -51,7 +51,7 @@ dice che è il monitoraggio a essere fermo.
 ## `dumbmonit_security_score`
 
 Ogni 15 minuti il server calcola il [punteggio di sicurezza](../using/security-score.md)
-di ogni dispositivo il cui tipo prevede controlli di sicurezza, e scrive
+di ogni monitor il cui tipo prevede controlli di sicurezza, e scrive
 `dumbmonit_security_score` (0–100, assente finché nulla può essere valutato) e
 `dumbmonit_security_checks_failed`, entrambi con l'etichetta `target`.
 
@@ -59,11 +59,11 @@ di ogni dispositivo il cui tipo prevede controlli di sicurezza, e scrive
 
 | Etichetta | Impostata da | Significato |
 |---|---|---|
-| `target` | server | L'id del dispositivo, come in `/api/targets/{id}`. Ogni regola e ogni grafico selezionano su di essa. |
-| `host` | server | Il nome del dispositivo. |
-| `tag_<key>` | server | I tag liberi del dispositivo. Le opzioni del tipo (`insecure_tls`, `port`…), i tag la cui chiave sembra un segreto (verificata per parola: `key`, `pass`, `cert`, `private`, `pem`…) e i valori oltre 256 caratteri non vengono copiati. Non mettere mai un segreto in un tag. |
+| `target` | server | L'id del monitor, come in `/api/targets/{id}`. Ogni regola e ogni grafico selezionano su di essa. |
+| `host` | server | Il nome del monitor. |
+| `tag_<key>` | server | I tag liberi del monitor. Le opzioni del tipo (`insecure_tls`, `port`…), i tag la cui chiave sembra un segreto (verificata per parola: `key`, `pass`, `cert`, `private`, `pem`…) e i valori oltre 256 caratteri non vengono copiati. Non mettere mai un segreto in un tag. |
 | `probe` | servizi | `http`, `tcp`, `dns`, `ping` o `tls`. |
-| etichette per serie | collector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… come elencate in ogni pagina dei dispositivi. |
+| etichette per serie | collector | `ifname`, `mountpoint`, `device`, `fstype`, `core`, `service`, `container`, `node`, `vmid`, `name`, `storage`, `datastore`, `group`, `volume`, `disk`, `pool`, `repo`, `changes`, `reason`, `version`, `issuer`… come elencate in ogni pagina dei monitor. |
 
 Le etichette di identità prevalgono sempre su quelle dei collector, e per gli
 agent vengono impostate alla ricezione: una macchina non può scrivere nelle
@@ -81,7 +81,7 @@ serie di un'altra macchina.
 La VictoriaMetrics incorporata conserva 12 mesi di dati
 (`DUMBMONIT_VM_RETENTION`) in `/data/vm`, nel volume `dumbmonit-data`. Il server
 raggruppa le sue scritture e le scarica ogni 5 secondi
-(`DUMBMONIT_FLUSH_INTERVAL_SECS`). Eliminare un dispositivo non ne elimina le
+(`DUMBMONIT_FLUSH_INTERVAL_SECS`). Eliminare un monitor non ne elimina le
 serie; invecchiano fino a scadere.
 
 Lo storico degli avvisi è conservato 90 giorni e le baseline delle serie
@@ -120,7 +120,7 @@ si trovano fuori da `/api`, dove uno scraper le cerca:
 
 | Rotta | Cosa restituisce |
 |---|---|
-| `GET /metrics` | Lo stato di salute dell'istanza DumbMonit stessa: scheduler, probe, scritture, avvisi, notifiche, agent, database. Qualche decina di serie, sempre lo stesso numero — mai una per dispositivo. |
+| `GET /metrics` | Lo stato di salute dell'istanza DumbMonit stessa: scheduler, probe, scritture, avvisi, notifiche, agent, database. Qualche decina di serie, sempre lo stesso numero — mai una per monitor. |
 | `GET /federate` | Le misure, selezionate da `match[]`, esattamente come Prometheus federa un altro Prometheus: l'ultimo punto di ciascuna serie selezionata. |
 | `GET /prometheus/api/v1/…` | La metà in lettura dell'API Prometheus, inoltrata all'archivio: ciò che chiama una sorgente dati di Grafana. |
 
@@ -170,13 +170,13 @@ se preferisci non averlo nella configurazione.
 Senza `match[]`, `/federate` seleziona `{__name__=~"dumbmonit_.*"}` — ogni serie
 che DumbMonit scrive, e nulla che appartenga a un altro strumento che condivide
 la stessa VictoriaMetrics. Restringilo per mantenere piccola una federazione:
-`{__name__=~"dumbmonit_.*",target="4"}` per un dispositivo,
+`{__name__=~"dumbmonit_.*",target="4"}` per un monitor,
 `{__name__="dumbmonit_up"}` solo per la disponibilità. Al massimo 10 selettori
 per richiesta, e una risposta superiore a 8 MiB viene rifiutata con un messaggio
 che invita a restringerla — suddividi una flotta numerosa in più job con
 selettori più stretti invece di un solo job che chiede tutto.
 `max_lookback=15m` amplia la finestra in cui viene cercato l'ultimo punto, per i
-dispositivi interrogati meno spesso di ogni cinque minuti.
+monitor interrogati meno spesso di ogni cinque minuti.
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
@@ -224,9 +224,9 @@ i contatori `_total` sono monotoni e si azzerano solo al riavvio del server
 | `dumbmonit_uptime_seconds` | gauge | Secondi dall'avvio del processo del server. |
 | `dumbmonit_scheduler_cycles_total` | counter | Cicli dello scheduler eseguiti. Il ciclo scatta una volta al secondo, quindi funge anche da segnale di vitalità. |
 | `dumbmonit_scheduler_cycle_seconds` | gauge | Durata dell'ultimo ciclo. Normalmente sotto il millisecondo: il ciclo si limita a distribuire, non attende i probe. |
-| `dumbmonit_scheduler_backlog` | gauge | Dispositivi ancora da interrogare al termine dell'ultimo ciclo. Zero su un'istanza sana; un valore diverso da zero e duraturo significa che `DUMBMONIT_MAX_CONCURRENT_PROBES` è troppo basso per il numero di dispositivi e i loro intervalli. |
-| `dumbmonit_probes_total{kind}` | counter | Probe eseguiti, per tipo di dispositivo (`snmp`, `proxmox`, `http`…). Include quelli eseguiti da un agent relay per conto del server. |
-| `dumbmonit_probes_failed_total{kind}` | counter | Probe falliti, per tipo — un dispositivo non raggiungibile o un errore di configurazione. `rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` è il rapporto di fallimento. |
+| `dumbmonit_scheduler_backlog` | gauge | Monitor ancora da interrogare al termine dell'ultimo ciclo. Zero su un'istanza sana; un valore diverso da zero e duraturo significa che `DUMBMONIT_MAX_CONCURRENT_PROBES` è troppo basso per il numero di monitor e i loro intervalli. |
+| `dumbmonit_probes_total{kind}` | counter | Probe eseguiti, per tipo di monitor (`snmp`, `proxmox`, `http`…). Include quelli eseguiti da un agent relay per conto del server. |
+| `dumbmonit_probes_failed_total{kind}` | counter | Probe falliti, per tipo — un monitor non raggiungibile o un errore di configurazione. `rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` è il rapporto di fallimento. |
 | `dumbmonit_samples_written_total` | counter | Campioni accettati da VictoriaMetrics. |
 | `dumbmonit_sample_writes_failed_total` | counter | Batch che VictoriaMetrics ha rifiutato o a cui non ha risposto. Il batch resta nel buffer e viene ritentato; un valore in crescita con un `dumbmonit_samples_pending` in crescita significa che l'archivio è fermo o pieno. |
 | `dumbmonit_samples_pending` | gauge | Campioni ancora nel buffer di scrittura dopo l'ultimo flush. Normalmente 0. |
@@ -236,7 +236,7 @@ i contatori `_total` sono monotoni e si azzerano solo al riavvio del server
 | `dumbmonit_alerting_rules_evaluated` | gauge | Regole valutate nell'ultimo ciclo. |
 | `dumbmonit_alerting_rules_failed` | gauge | Regole la cui query è fallita nell'ultimo ciclo. I loro avvisi sono congelati, non risolti. Qualsiasi valore diverso da 0 merita uno sguardo ai log. |
 | `dumbmonit_alerts{phase}` | gauge | Avvisi tracciati dal motore, per fase: `ok`, `pending` (condizione vera, `for` non trascorso), `firing`, `resolved`. |
-| `dumbmonit_alerts_suppressed` | gauge | Avvisi nascosti perché un dispositivo padre è fermo (la fase effettiva `suppressed`). |
+| `dumbmonit_alerts_suppressed` | gauge | Avvisi nascosti perché un monitor padre è fermo (la fase effettiva `suppressed`). |
 | `dumbmonit_alerts_silenced` | gauge | Avvisi coperti da una finestra di manutenzione. |
 | `dumbmonit_alerts_learning` | gauge | Avvisi baseline ancora in apprendimento, e quindi silenziosi. |
 | `dumbmonit_notifications_total{kind}` | counter | Notifiche inviate, per tipo di canale (`email`, `discord`, `ntfy`…). |
@@ -248,9 +248,9 @@ i contatori `_total` sono monotoni e si azzerano solo al riavvio del server
 | `dumbmonit_victoriametrics_up` | gauge | 1 quando VictoriaMetrics risponde — lo stesso controllo di `/api/health`. 0 mentre il figlio incorporato si riavvia. |
 | `dumbmonit_victoriametrics_embedded` | gauge | 1 quando questo server esegue VictoriaMetrics da sé, 0 quando `DUMBMONIT_VM_URL` punta a una esterna. |
 
-Nessuna metrica di questa pagina porta un'etichetta per dispositivo: il documento
-ha la stessa dimensione per un dispositivo e per mille, e nessun nome di
-dispositivo viene rivelato a chi può fare lo scrape.
+Nessuna metrica di questa pagina porta un'etichetta per monitor: il documento
+ha la stessa dimensione per un monitor e per mille, e nessun nome di
+monitor viene rivelato a chi può fare lo scrape.
 
 Due avvisi che vale la pena aggiungere dalla tua parte, una volta che DumbMonit è
 sotto scrape:
@@ -268,5 +268,5 @@ dumbmonit_samples_pending > 0 and increase(dumbmonit_sample_writes_failed_total[
 `DUMBMONIT_METRICS_PUBLIC=true` serve `/metrics`, `/federate` e
 `/prometheus/api/v1/…` a chiunque possa raggiungere la porta, per chi filtra
 la porta per conto proprio — **chiunque si trovi su quella rete può allora
-leggere ogni misura di ogni dispositivo e lo stato dell'istanza, quindi
+leggere ogni misura di ogni monitor e lo stato dell'istanza, quindi
 impostalo solo quando qualcos'altro limita già chi raggiunge la porta.**

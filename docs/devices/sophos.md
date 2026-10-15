@@ -47,7 +47,7 @@ The [built-in rule](../alerting/rules.md#sophos-firewall) that applies:
 For traffic counters, add the firewall as an [SNMP device](snmp.md) as well:
 SFOS answers the standard interface MIB.
 
-## The device page
+## The monitor page
 
 The Firewall panel says whether every interface in a zone has its link, then
 lists those interfaces and the IPsec connections with their configured

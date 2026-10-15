@@ -48,9 +48,9 @@ not allowed`, в зависимости от `maxmemory-policy`; без `maxmemo
 Применяемые [встроенные правила](../alerting/rules.md#databases-message-broker-and-security-engine):
 Redis memory near maxmemory, Redis refusing connections, Redis
 replication link down, Redis replica lagging, Redis snapshot failed, Redis
-append-only file write failed, а также Device unreachable.
+append-only file write failed, а также Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками показывает то, что сохранил опрос; открытие страницы никогда не
 обращается к Redis. Она одним предложением сообщает, что не так (репликация, память
@@ -99,7 +99,7 @@ append-only file write failed, а также Device unreachable.
 
 Отклонённый пароль (`WRONGPASS`, `NOAUTH`, `NOPERM`) отображается как ошибка
 учётных данных, и о самой ошибке никто не уведомляется, но DumbMonit при этом ничего
-не собирает: правило Device unreachable продолжает срабатывать, как и для любого устройства, которое он не может
+не собирает: правило Monitor unreachable продолжает срабатывать, как и для любого монитора, который он не может
 прочитать, пока учётные данные не заработают снова. Именно это вызывает перезапуск Redis без его
 пользователя ACL (пользователи, заданные через `ACL SETUSER`, но не сохранённые).
 

@@ -16,7 +16,7 @@ time series.
 ## Prerequisites
 
 - Docker Engine with the Compose plugin (`docker compose version` works).
-- A machine that can reach the devices you want to monitor. It does not need to
+- A machine that can reach the monitors you want to monitor. It does not need to
   be reachable from them, except for [agents](../devices/agent.md), which push
   their measurements to the server over HTTP.
 - Port `8080` free on the host, or another port of your choice ([see below](#advanced-options)).
@@ -34,11 +34,21 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to user 65532 (or PUID/PGID), then
+    # drops root for good: a host directory works as it is. Remove `user` and
+    # `cap_add` to run as 65532 from the start (the files must belong to it).
+    user: "0:0"
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -54,9 +64,9 @@ Then start it:
 docker compose up -d
 ```
 
-The published image is pulled; the read-only file system, the dropped
-capabilities and the `ping_group_range` sysctl are explained in
-[Runs as a non-root user](#runs-as-a-non-root-user) and
+The published image is pulled; the read-only file system, the capabilities,
+`PUID`/`PGID` and the `ping_group_range` sysctl are explained in
+[Permissions and the data directory](#permissions) and
 [ICMP ping without a capability](#icmp-ping-without-a-capability). Options
 (port, secret, retention, external VictoriaMetrics, screenshots) are
 [environment variables you add yourself](#advanced-options).
@@ -110,7 +120,7 @@ attempts are rate-limited. For an automated deployment, set
 
 ![The login screen](../assets/screenshots/login-light.png){ loading=lazy }
 
-Then add your first device: see [Add your first device](first-device.md).
+Then add your first monitor: see [Add your first monitor](first-device.md).
 
 ## Container health
 
@@ -130,12 +140,13 @@ you need under `environment:` of the service, as shown in
 | Variable | Default | Role |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address inside the container. |
+| `PUID` / `PGID` | `65532` | With `user: "0:0"`: user and group the server runs as, and owner of the files in `/data` ([details](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` work too. |
 | `DUMBMONIT_DATA_DIR` | `/data` | SQLite database (`dumbmonit.db`), instance secret (`secret.key`) and the embedded VictoriaMetrics data (`vm/`). |
 | `DUMBMONIT_VM_URL` | *(unset)* | URL of an external VictoriaMetrics. When set, the embedded one is not started. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Retention of the embedded VictoriaMetrics: months, or `30d`, `2y`. |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | Memory budget of the embedded VictoriaMetrics' caches. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Listen address of the embedded VictoriaMetrics, inside the container. |
-| `DUMBMONIT_SECRET` | *(generated)* | Instance secret that encrypts device credentials and tokens. |
+| `DUMBMONIT_SECRET` | *(generated)* | Instance secret that encrypts monitor credentials and tokens. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Concurrent probes, all collectors combined. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Maximum duration of one probe. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Write period towards VictoriaMetrics. |
@@ -159,7 +170,7 @@ key derived from the instance secret. On first start, DumbMonit generates this
 secret in `/data/secret.key` (inside the `dumbmonit-data` volume).
 
 !!! danger "Back up `secret.key` together with the database"
-    Without it, device credentials are unrecoverable: a database restored on its
+    Without it, monitor credentials are unrecoverable: a database restored on its
     own gives an instance that cannot talk to anything. The server detects a
     missing or changed key at startup and refuses to continue with an explicit
     message, rather than failing silently on every probe. The scheduled backups
@@ -183,21 +194,12 @@ Database migrations run at startup. VictoriaMetrics data is untouched.
     you restore from if the upgrade goes wrong. See
     [Backup and restore](backup.md).
 
-### From 0.1.0-alpha.1
+### Bind mounts {#from-cap-drop-all}
 
-Since 0.1.0-alpha.2 the container runs as user 65532 instead of root. A
-volume created by alpha.1 still belongs to root, and the server refuses to
-start (`/data is not writable by the server`). Hand the volume over once:
-
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
-```
-
-Or keep the files as they are and run the container as their owner, with
-`user: "0:0"` (or the uid of a bind mount) under the service in
-`docker-compose.yml`.
+An existing `docker-compose.yml` keeps working as it is: the image still runs
+as user 65532. The new file adds `user: "0:0"` and a `cap_add` line so that a
+host directory works without preparation ([Permissions](#permissions)); copy
+these two lines if you want to move to a bind mount.
 
 ### From EzyMonit, and from the two-container setup
 
@@ -247,13 +249,13 @@ One named volume, `dumbmonit-data`, holds everything:
 
 | Path | Contents |
 |---|---|
-| `dumbmonit.db` | Devices, rules, channels, alert state, sessions. |
+| `dumbmonit.db` | Monitors, rules, channels, alert state, sessions. |
 | `secret.key` | The instance secret. |
 | `backups/` | The scheduled local backups: a copy of the database and of the secret, daily by default, seven kept. |
 | `vm/` | VictoriaMetrics time series (12 months of retention by default). |
 
 DumbMonit backs its own database up on a schedule, and exports the whole
-configuration — devices, credentials, rules, channels — as a single file
+configuration — monitors, credentials, rules, channels — as a single file
 encrypted with a passphrase you choose, which restores onto a fresh instance.
 Both are in **[Backup and restore](backup.md)**, together with what to do before
 an upgrade and the one rule about `secret.key` that is worth reading twice.
@@ -289,7 +291,7 @@ listens on 8080:
 ```
 
 **Your own secret**, instead of the one generated in `/data/secret.key`. It
-encrypts device credentials: losing it means re-entering every one of them.
+encrypts monitor credentials: losing it means re-entering every one of them.
 
 ```yaml
     environment:
@@ -297,7 +299,7 @@ encrypts device credentials: losing it means re-entering every one of them.
 ```
 
 **Retention and memory** of the embedded VictoriaMetrics (months, or `30d` /
-`2y`; a homelab of a few dozen devices fits in 256 MB):
+`2y`; a homelab of a few dozen monitors fits in 256 MB):
 
 ```yaml
     environment:
@@ -313,7 +315,7 @@ encrypts device credentials: losing it means re-entering every one of them.
 ```
 
 **Lost password.** Add the line below, run `docker compose up -d`, create the
-first admin again in the UI (devices, rules and channels stay), then remove the
+first admin again in the UI (monitors, rules and channels stay), then remove the
 line and run `docker compose up -d` once more:
 
 ```yaml
@@ -346,7 +348,7 @@ services:
 - `shm_size: 256m`: Chromium renders in `/dev/shm`, and Docker's default 64 MB is too small for a long page.
 - Any Chromium started with `--remote-debugging-port` works; `chromedp/headless-shell` is the image used here.
 
-Without a browser, everything else works as usual (text comparison, alerts, before/after copies); the snapshots just have no image. While the server cannot reach a browser, the form of a website-change device shows a notice with these lines.
+Without a browser, everything else works as usual (text comparison, alerts, before/after copies); the snapshots just have no image. While the server cannot reach a browser, the form of a website-change monitor shows a notice with these lines.
 If the notice stays after the restart, check `docker compose logs browser`, that the host name in `DUMBMONIT_BROWSER_URL` is the service name, and that both services are in the same Compose project.
 
 ## Reverse proxy
@@ -391,32 +393,70 @@ browser would never send the cookie back and login would be impossible.
     too: make sure `/install.sh`, `/install.ps1`, `/download/…` and `/api/ingest`
     pass through the proxy.
 
-## Runs as a non-root user
+## Permissions and the data directory {#permissions}
 
-The container runs the server as user `65532:65532` (numeric: the `scratch`
-image has no `/etc/passwd`), with every capability dropped, `no-new-privileges`
-and a read-only root file system; `/data` (the volume) and `/tmp` (a tmpfs)
-are the only writable paths. All of this is in the Compose file above.
+The server never runs as root. By default the image runs as user
+`65532:65532`, and a named volume created by Docker already belongs to it.
 
-A named volume created by Docker on first start inherits the owner of `/data`
-from the image: nothing to do. Two cases need one command:
+A bind mount (`./dumbmonit:/data`), on the other hand, keeps the owner of the
+host directory, often root when Docker created it. That is why the Compose file
+above starts the container as root (`user: "0:0"`). The server then stays root
+only for an instant: before it opens the database, starts VictoriaMetrics or
+listens on the network, it gives `/data` to `65532:65532` (only the entries
+that belong to someone else, without following symbolic links), drops root for
+good and checks that it cannot get it back. The four capabilities in `cap_add`
+are only for this step; none is left afterwards. `no-new-privileges` and a
+read-only root file system stay on: `/data` and `/tmp` are the only writable
+paths.
 
-- **A volume created by an earlier version** (the server used to run as root,
-  so the files belong to root). Hand them over once, with the stack stopped:
+**Choosing the owner: `PUID` and `PGID`.** With `user: "0:0"`, set the uid and
+gid the server runs as; the files are handed to them at startup:
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-  The symptom, otherwise, is a container that exits at once with
-  `creating directory /data … Permission denied` (or `unable to open database
-  file`).
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` work too and take precedence. `0` is
+refused. On Unraid, `PUID=99` and `PGID=100` match the usual owner of
+`appdata`. Without `user: "0:0"`, `PUID`/`PGID` are ignored.
 
-- **A bind mount** (`./data:/data`) keeps the ownership of the host directory.
-  Either `chown -R 65532:65532 ./data`, or run the container as the directory's
-  owner: `user: "1000:1000"` under the service, any uid works.
+**Without `user: "0:0"`** (a plain `docker run -v ./data:/data`, or `--user
+1000:1000`), nothing changes owner and `/data` must already be writable. If it
+is not, the server stops and suggests `--user 0:0` first, then
+`sudo chown -R 65532:65532 ./data` on the host for a bind mount, or for a named
+volume:
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
+```
+
+### SELinux and Podman {#selinux-and-podman}
+
+On a host where SELinux is enforcing (Fedora, RHEL, CentOS Stream, AlmaLinux…),
+a bind mount is refused to the container, root included, until it carries a
+container label. Add `:Z` to the volume, or `:z` if other containers share the
+directory:
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+Without it, the server stops with `the host enforces SELinux and the volume has
+no container label`. Named volumes are labelled by Docker and need nothing.
+
+Rootless Podman works the same way, with `--user 0:0`. Root in the container is your own user on
+the host, and the files of a bind mount go to uid 65532 of the container, which
+the host shows as one of your sub-uids (`165531` with the usual
+`/etc/subuid`). Read them with `podman unshare ls -l ./dumbmonit`. To keep them
+under your own uid instead, run the container as yourself; nothing changes
+owner then:
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## ICMP ping without a capability {#icmp-ping-without-a-capability}
 
@@ -436,12 +476,12 @@ services:
 Nothing on the host changes. Docker 20.10 and later set this range in every
 container on their own; the explicit lines make it hold on older engines and
 on Podman. Without it, the check reports a configuration error (shown on the
-device, not notified), never a false "host down". With `docker run`, pass
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`. While the server cannot open an ICMP socket, the form of a ping device shows a notice with these lines.
+monitor, not notified), never a false "host down". With `docker run`, pass
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. While the server cannot open an ICMP socket, the form of a ping monitor shows a notice with these lines.
 
 ## Testing without hardware
 
-Add a [demo device](../devices/demo.md): it produces fake measurements with
+Add a [demo monitor](../devices/demo.md): it produces fake measurements with
 nothing to prepare, so the graphs, rules and notifications can be tried right
 away. For real SNMP data, the machine running Docker is often enough — install
 `snmpd` on it (`apt install snmpd`, allow the `public` community on the Docker

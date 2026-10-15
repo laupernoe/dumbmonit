@@ -557,7 +557,7 @@ async fn une_page_de_depart_injoignable_rend_lequipement_hors_service() {
     let probe = s.app.post(&format!("/api/targets/{id}/probe"), json!({}), Some(&s.cookie)).await;
     assert_eq!(probe.status, StatusCode::BAD_REQUEST);
     let message = probe.body["error"].as_str().unwrap();
-    assert!(message.starts_with("Device unreachable"), "{message}");
+    assert!(message.starts_with("Monitor unreachable"), "{message}");
     let target = s.get(&format!("/api/targets/{id}")).await;
     assert_eq!(target["error_kind"], "down");
 }

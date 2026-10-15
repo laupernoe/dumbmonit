@@ -57,9 +57,9 @@ Tutte le metriche hanno il prefisso `dumbmonit_vsphere_`. I valori di salute seg
 Le [regole integrate](../alerting/rules.md#vmware-vsphere) che si applicano: host vSphere
 non rispondente, salute host vSphere rossa, host vSphere lasciato in
 manutenzione, datastore vSphere quasi pieno, datastore vSphere inaccessibile,
-VM vSphere tools non in esecuzione, allarme vSphere rosso, più dispositivo irraggiungibile.
+VM vSphere tools non in esecuzione, allarme vSphere rosso, più monitor irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge quello che la sonda ha memorizzato; aprire la pagina non
 interroga mai vSphere. Dice per primo cosa è sbagliato (host non rispondenti, allarmi

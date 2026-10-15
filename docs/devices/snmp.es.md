@@ -27,7 +27,7 @@ dispositivo se muestra como un reseteo del contador, nunca como un pico
 falso.
 
 Las [reglas integradas](../alerting/rules.md) que se aplican a los
-dispositivos SNMP: Device unreachable, High CPU, Disk almost full,
+dispositivos SNMP: Monitor unreachable, High CPU, Disk almost full,
 Filesystem almost full (forecast), UPS on battery, UPS battery low, Port
 accumulating errors, Port flapping, Unusual CPU (baseline).
 
@@ -96,5 +96,5 @@ se copian en cada serie como `tag_<key>`.
 | Sin tráfico de interfaz | El dispositivo no expone los contadores de 64 bits de `ifXTable`. |
 | Escaneo vacío | El escaneo prueba una comunidad en cada dirección; los dispositivos con otra comunidad o solo SNMP v3 no responden. |
 
-Usa **Probe now** en la página del dispositivo: reporta el número de
+Usa **Probe now** en la página del monitor: reporta el número de
 muestras y los nombres de serie producidos por una sonda.

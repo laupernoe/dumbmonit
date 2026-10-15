@@ -9,7 +9,7 @@ announcements, and lets visitors follow them by RSS or email. Badges put the
 same answer in a README; a compact view fits in an intranet page.
 
 It only shows what you put on it: the label you give each service, its state,
-its uptime and its response time. Device names, addresses, types and
+its uptime and its response time. Monitor names, addresses, types and
 identifiers never leave the server — not in the page, not in a badge, not in
 an email.
 
@@ -32,8 +32,8 @@ its own route (`/settings/status/new`, `/settings/status/<id>`). The public rend
 | **Response times** | Off by default. Adds a small response-time graph (24 h / 7 days) to each service that has latency data. See [Response times](#response-times). |
 | **Published** | Off = draft: the page, its badges and its logo answer "not found" to visitors until you switch it on. |
 
-Then tick the devices to show. For each one, set the **label** visitors will
-read (it defaults to the device name — you may prefer "Website" to
+Then tick the monitors to show. For each one, set the **label** visitors will
+read (it defaults to the monitor name — you may prefer "Website" to
 "nginx-front-01") and, optionally, a **group** ("Network", "Storage"). Groups
 become blocks on the page, in the order you arrange the services.
 
@@ -126,17 +126,17 @@ How the state is decided:
 
 | State | Meaning |
 | --- | --- |
-| Operational | The last probe succeeded (uptime probes), or the device reported within three polling periods. |
+| Operational | The last probe succeeded (uptime probes), or the monitor reported within three polling periods. |
 | Degraded | Up now, but at least one probe failed within the last hour. |
-| Down | The last probe failed, the device stopped reporting, or its configuration is in error. |
-| Maintenance | A maintenance window is in progress and the service is down: expected, not an outage. Either an announcement on this page, or an alerting [maintenance window](../alerting/maintenance.md) covering that device. |
+| Down | The last probe failed, the monitor stopped reporting, or its configuration is in error. |
+| Maintenance | A maintenance window is in progress and the service is down: expected, not an outage. Either an announcement on this page, or an alerting [maintenance window](../alerting/maintenance.md) covering that monitor. |
 | No data | Never probed yet, or disabled. |
 
 Uptime for probes (`http`, `tcp`, `dns`, `ping`, `tls`, heartbeats) is the
 share of successful checks, from `dumbmonit_probe_success`; a day's downtime is
-its failed checks times the probe interval. For other devices (SNMP, agent,
-Proxmox…) it is the share of five-minute slots in which the device reported at
-least once (`dumbmonit_up`), counted from the first measurement — a device
+its failed checks times the probe interval. For other monitors (SNMP, agent,
+Proxmox…) it is the share of five-minute slots in which the monitor reported at
+least once (`dumbmonit_up`), counted from the first measurement — a monitor
 added yesterday is not "down" for the 89 days before that — and a day's
 downtime is its silent slots.
 
@@ -156,10 +156,10 @@ On **Settings → Status pages**, under the list of pages, **Incidents and maint
   "Scheduled maintenance" and services that are down show as *Maintenance*.
 
 A [maintenance window scheduled in Alerts](../alerting/maintenance.md) does the
-same thing for the one device it covers, without an announcement: that service
+same thing for the one monitor it covers, without an announcement: that service
 reads *Maintenance* instead of red while the window is open, and the page's
 overall state says *Maintenance* when nothing else is down or degraded. Only
-windows that name a device surface this way; the window's name and comment stay
+windows that name a monitor surface this way; the window's name and comment stay
 private.
 
 An announcement is shown on one page or on **all pages**.

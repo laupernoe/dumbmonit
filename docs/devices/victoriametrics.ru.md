@@ -4,7 +4,7 @@
 сколько места на диске осталось до того, как они перестанут принимать что-либо,
 и что они отклоняют.
 
-На этой странице описаны два типа устройств, потому что у обоих продуктов общая
+На этой странице описаны два типа мониторов, потому что у обоих продуктов общая
 основа: `victoriametrics` для одиночного узла VictoriaMetrics и `victorialogs`
 для одиночного узла VictoriaLogs. Оба публикуют своё состояние на `/health` и
 `/metrics`, на порту своего API; DumbMonit читает только эти два адреса и ничего
@@ -62,9 +62,9 @@ VictoriaMetrics. После перезапуска кэши сервера хо�
 Применимые [встроенные правила](../alerting/rules.md#log-and-metrics-servers):
 Metrics or log storage read-only, Metrics or log storage almost read-only,
 Metrics or log server unhealthy, Metrics or log data refused, VictoriaMetrics
-slow inserts, а также Device unreachable.
+slow inserts, а также Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранил опрос; открытие страницы никогда не
 обращается к серверу. Она сообщает в таком порядке:

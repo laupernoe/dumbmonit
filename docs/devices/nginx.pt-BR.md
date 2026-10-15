@@ -32,7 +32,7 @@ atingido). As métricas `plus_*` só aparecem quando "Ler a API do NGINX Plus"
 está marcado e o NGINX Plus responde; a versão de código aberto não tem um
 "upstream" para reportar apenas com `stub_status`.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Nginx. Ele mostra conexões ativas, lendo, escrevendo e em

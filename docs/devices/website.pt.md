@@ -1,6 +1,6 @@
 # Saúde e SEO de sites {#website-health-seo}
 
-Vigie sites em massa, um dispositivo por site: seja avisado quando um site
+Vigie sites em massa, um monitor por site: seja avisado quando um site
 **avaria** (erro, inacessível, certificado inválido, ciclo de redirecionamento),
 quando a sua página **fica em branco**, quando **desaparece dos motores de
 pesquisa** (`noindex`, `robots.txt` a bloquear tudo) e quando os metadados que
@@ -16,7 +16,7 @@ Para o conteúdo de uma página em vez da sua saúde, veja
 1. No endereço, cole a página a verificar, normalmente a página inicial, com ou sem https://. Os redirecionamentos são seguidos: de http para https e de example.com para www.example.com são normais, só um ciclo de redirecionamento ou uma mudança para outro endereço é reportado.
 2. Opcionalmente preencha «Texto esperado» com uma frase que a página deve mostrar sempre, e ajuste «Página em branco abaixo de» se a página for curta de propósito.
 3. A primeira verificação regista a referência: endereço final, título, descrição, URL canónico, regras de indexação. São comparados de novo a cada 6 horas por predefinição («Verificar alterações a cada»), enquanto o estado ativo/inativo é verificado em cada intervalo de sondagem. Uma alteração só é reportada depois de duas verificações seguidas a terem visto, para que testes A/B e caches instáveis fiquem em silêncio.
-4. Para adicionar muitos sites de uma vez, importe um ficheiro CSV a partir da lista de dispositivos: cada site é arquivado em `Websites/<platform>` (WordPress, Shopify…) a menos que indique uma pasta.
+4. Para adicionar muitos sites de uma vez, importe um ficheiro CSV a partir da lista de monitores: cada site é arquivado em `Websites/<platform>` (WordPress, Shopify…) a menos que indique uma pasta.
 
 !!! warning
     Só é lido o que o servidor envia: uma página desenhada inteiramente por JavaScript parece em branco aqui. Baixe «Página em branco abaixo de» para 0 para um site assim.
@@ -73,7 +73,7 @@ ignorando espaçamento e maiúsculas; os endereços ignoram o esquema, um `www.`
 inicial, uma `/` final e, com **Ignorar query strings** (ativado por
 predefinição), parâmetros de URL como `?utm_source=…`.
 
-Uma alteração confirmada é guardada no histórico do dispositivo (campo, antes,
+Uma alteração confirmada é guardada no histórico do monitor (campo, antes,
 depois, data), e o seu indicador (`dumbmonit_website_title_changed`…) fica a 1
 durante 24 horas. A primeira verificação apenas regista a referência. Mudar o
 endereço ou **Ignorar query strings** inicia uma nova referência em vez de
@@ -114,7 +114,7 @@ dos sites não confunda o DumbMonit com um ataque:
 Um site cuja verificação anterior ainda espera a sua vez salta uma ronda em vez de
 entrar duas vezes na fila. Muitos sites num só domínio com um intervalo de
 sondagem curto são portanto verificados com menos frequência do que o pedido:
-aumente o intervalo, ou os limites por domínio, se a lista de dispositivos os
+aumente o intervalo, ou os limites por domínio, se a lista de monitores os
 mostrar atrasados. Veja [Configuração](../reference/configuration.md#server).
 
 ## Deteção da plataforma {#platform-detection}
@@ -131,15 +131,15 @@ de `dumbmonit_website_info`.
 
 ## Importar uma lista de sites (CSV) {#import-a-list-of-sites-csv}
 
-A partir da lista de dispositivos ou da página de adicionar dispositivo,
+A partir da lista de monitores ou da página de adicionar monitor,
 **Importar sites (CSV)** aceita um ficheiro ou texto colado com uma linha de
 cabeçalho e até 1000 linhas:
 
 | Coluna | Obrigatória | Significado |
 |---|---|---|
 | `url` | sim | Endereço do site. |
-| `name` | não | Nome do dispositivo; o anfitrião por predefinição. |
-| `folder` | não | Pasta do dispositivo; vazio: `Websites/<platform>`, detetada lendo o site uma vez. |
+| `name` | não | Nome do monitor; o anfitrião por predefinição. |
+| `folder` | não | Pasta do monitor; vazio: `Websites/<platform>`, detetada lendo o site uma vez. |
 | `tags` | não | `key=value;key=value`. |
 | `interval` | não | Intervalo de sondagem. |
 | `expect_text` | não | O mesmo que a opção. |
@@ -177,7 +177,7 @@ qualquer coisa; um site já monitorizado (mesmo endereço final) é ignorado.
 
 | Alerta | Quando | Gravidade |
 |---|---|---|
-| Device unreachable | Sem resposta, certificado recusado, ciclo de redirecionamento ou demasiados redirecionamentos | critical |
+| Monitor unreachable | Sem resposta, certificado recusado, ciclo de redirecionamento ou demasiados redirecionamentos | critical |
 | Website down | A resposta final é um erro 4xx ou 5xx, durante 3 minutos | critical |
 | Website page blank | Texto visível abaixo do limiar, durante 3 minutos | critical |
 | Website expected text missing | O texto esperado está em falta, durante 3 minutos | warning |

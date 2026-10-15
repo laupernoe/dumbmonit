@@ -16,7 +16,7 @@ store the same three levels under their engine names.
 |---|---|---|
 | Info | `info` | Worth knowing, no action expected. Used by the baseline rule. |
 | Advisory | `warning` | Needs attention soon: CPU high, disk almost full, slow service. |
-| Warning | `critical` | Needs you now: device unreachable, service down, backup verification failed, certificate expired. |
+| Warning | `critical` | Needs you now: monitor unreachable, service down, backup verification failed, certificate expired. |
 
 Escalation raises a rule's severity one rung after `escalate_after` if the
 alert keeps firing (Info → Advisory → Warning; Warning stays).
@@ -32,7 +32,7 @@ Every alert is a state machine, evaluated every 30 seconds
 | `pending` | Building up | The condition is true but the rule's hold (`for`) has not elapsed yet. Nothing is sent. |
 | `firing` | Firing | The condition has held long enough. The first notification goes out, then reminders every `repeat_interval` (6 hours by default for most built-in rules), then an escalation if configured. |
 | `resolved` | Resolved | Back to normal. A resolution notification is sent only if the firing had been announced. |
-| `suppressed` | Suppressed by parent | The alert is firing, but a parent device, or the device itself, is unreachable: see below. |
+| `suppressed` | Suppressed by parent | The alert is firing, but a parent monitor, or the monitor itself, is unreachable: see below. |
 
 `phase` is the engine's state; `effective_phase` is what you read. An alert
 whose `effective_phase` is `suppressed` keeps `phase = firing` underneath, so it
@@ -43,36 +43,36 @@ and `ack_note`): the phase does not move, reminders and escalations pause until
 `acked_until`, the resolution is still notified and clears the acknowledgement.
 **Snoozing** one alert works the same way under the hood but through a
 maintenance window scoped to that alert's exact labels (`silenced: true`),
-rather than the whole device: a sibling rule on the same device keeps talking.
+rather than the whole monitor: a sibling rule on the same monitor keeps talking.
 See [Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Dependency suppression
 
-Any device can declare a **parent device**. When a device is unreachable
-(the "Device unreachable" rule fires on it), every alert on its descendants is
+Any monitor can declare a **parent monitor**. When a monitor is unreachable
+(the "Monitor unreachable" rule fires on it), every alert on its descendants is
 marked *Suppressed by parent* instead of being sent: a switch going down
 produces one notification, not thirty. The nearest unreachable ancestor is
 named as the cause (`suppressed_by`), and the chain is followed up to 64
 levels.
 
-The same applies to the unreachable device itself: its other alerts (disk
+The same applies to the unreachable monitor itself: its other alerts (disk
 full, CPU, and so on) are suppressed by its own outage, with `suppressed_by`
-naming the device itself, since their readings are stale and they are only a
-symptom of the same failure. Its "Device unreachable" alert is the only one
+naming the monitor itself, since their readings are stale and they are only a
+symptom of the same failure. Its "Monitor unreachable" alert is the only one
 never hidden by its own outage, so you are still told once.
 
-Set the parent on the device form. On the Devices page, children stack under
+Set the parent on the monitor form. On the Monitors page, children stack under
 their parent and dim when it is unreachable.
 
-A [relay agent](../install/remote-site.md) counts as a parent of every device
-it probes (*Reached through* on the device form), in addition to the parent
-set explicitly: when the relay is unreachable, its devices are suppressed with
+A [relay agent](../install/remote-site.md) counts as a parent of every monitor
+it probes (*Reached through* on the monitor form), in addition to the parent
+set explicitly: when the relay is unreachable, its monitors are suppressed with
 the relay named as the cause. At equal distance, the explicit parent wins.
 
 A parent also counts as unreachable as soon as its own probe says so (the
-*Timed out* / *Device unreachable* status on its page), without waiting for
-its "Device unreachable" alert to fire: an agent that stops pushing takes
-its devices with it a minute or two before its own alert, and they would
+*Timed out* / *Monitor unreachable* status on its page), without waiting for
+its "Monitor unreachable" alert to fire: an agent that stops pushing takes
+its monitors with it a minute or two before its own alert, and they would
 otherwise each notify first.
 
 ## Grouping, deduplication, reminders
@@ -89,7 +89,7 @@ records every transition with whether it was notified and, if not, why
 
 A silence stops notifications without stopping evaluation: at the end of a
 window, an alert that is still active is notified once, rather than "born"
-after two hours of existence. Windows are one-off or weekly, per device or for
+after two hours of existence. Windows are one-off or weekly, per monitor or for
 the whole instance. See [Maintenance windows](maintenance.md).
 
 ## Baseline learning
@@ -128,17 +128,17 @@ gets spammed. The full path of one alert, in order:
 
 1. **Evaluate** — threshold, anomaly score or forecast, with the rule's
    hold (`for`) and, when set, its **clear threshold** (hysteresis: fire
-   above 90 %, clear only under 85 %) and any **per-device override**.
+   above 90 %, clear only under 85 %) and any **per-monitor override**.
 2. **Deduplicate** — one fingerprint per (rule, series), keyed on the
-   device id (`target`) rather than its name: renaming a device or editing
+   monitor id (`target`) rather than its name: renaming a monitor or editing
    its tags does not create a second alert, and a series that resolves to
-   the same key twice yields one alert. Series of a device that was deleted
+   the same key twice yields one alert. Series of a monitor that was deleted
    or paused are dropped: their alerts clear at once, without any
    notification, and the history records `device removed or disabled`.
-3. **Suppress by dependency** — descendants of an unreachable device stay
+3. **Suppress by dependency** — descendants of an unreachable monitor stay
    quiet.
 4. **Silence** — maintenance windows mute what they cover.
-5. **Group by device** — one message per device per cycle, reminders and
+5. **Group by monitor** — one message per monitor per cycle, reminders and
    escalation folded in.
 6. **Flap hold** — a fingerprint that fires and clears 4 times in 30 minutes
    sends a single "flapping" notice, then nothing for 30 minutes.
@@ -148,10 +148,10 @@ gets spammed. The full path of one alert, in order:
    the rest waits for a digest when quiet hours end (an alert that clears
    meanwhile is only mentioned as "resolved during quiet hours").
 9. **Batching** — alerts within the batch window (60 s by default) leave as
-   one message per channel: "3 alerts on 2 devices, 1 resolved".
+   one message per channel: "3 alerts on 2 monitors, 1 resolved".
 10. **Hourly cap** — past `max_per_hour` messages on a channel, alerts wait
     and arrive as one digest ("…and 7 more alerts").
-11. **Send** — with an "Open in DumbMonit" link per device when a public URL
+11. **Send** — with an "Open in DumbMonit" link per monitor when a public URL
     is known.
 
 Steps 6 to 10 are configured in Settings → Notifications & reports → Notification policy (global) and

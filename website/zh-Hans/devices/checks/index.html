@@ -5,7 +5,7 @@
 <script>document.documentElement.classList.add('js')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>网站、证书与检查 · 设备 · DumbMonit</title>
+<title>网站、证书与检查 · 监控项 · DumbMonit</title>
 <meta name="description" content="网页和 API、端口、DNS、ping、TLS 证书、时间服务器、域名到期、心跳以及网站变更。">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
@@ -29,7 +29,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
-<meta property="og:title" content="网站、证书与检查 · 设备 · DumbMonit">
+<meta property="og:title" content="网站、证书与检查 · 监控项 · DumbMonit">
 <meta property="og:description" content="网页和 API、端口、DNS、ping、TLS 证书、时间服务器、域名到期、心跳以及网站变更。">
 <meta property="og:url" content="https://dumbmonit.app/zh-Hans/devices/checks/">
 <meta property="og:locale" content="zh_CN">
@@ -38,11 +38,11 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="DumbMonit：一切正常吗？一秒钟就知道。一个容器里的自托管监控，旁边是吉祥物鸽子。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="网站、证书与检查 · 设备 · DumbMonit">
+<meta name="twitter:title" content="网站、证书与检查 · 监控项 · DumbMonit">
 <meta name="twitter:description" content="网页和 API、端口、DNS、ping、TLS 证书、时间服务器、域名到期、心跳以及网站变更。">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","name":"网站、证书与检查 · 设备 · DumbMonit","url":"https://dumbmonit.app/zh-Hans/devices/checks/","inLanguage":"zh-Hans","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+{"@context":"https://schema.org","@type":"WebPage","name":"网站、证书与检查 · 监控项 · DumbMonit","url":"https://dumbmonit.app/zh-Hans/devices/checks/","inLanguage":"zh-Hans","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
 </script>
 </head>
 <body>
@@ -53,7 +53,7 @@
 		<a class="brand" href="../../" aria-label="DumbMonit 首页"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="章节">
 			<a href="../../features/">功能</a>
-			<a href="../" aria-current="page">设备</a>
+			<a href="../" aria-current="page">监控项</a>
 			<a href="../../install/">安装</a>
 			<a href="../../community/">文档与社区</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">在线演示</a>
@@ -83,11 +83,11 @@
 <main id="main">
 <section class="page-head">
 	<div class="wrap">
-		<p class="crumbs"><a href="../">设备</a></p>
+		<p class="crumbs"><a href="../">监控项</a></p>
 		<h1 class="blur-in"><span class="w" style="--i:0">网</span><span class="w" style="--i:1">站</span><span class="w" style="--i:2">、</span><span class="w" style="--i:3">证</span><span class="w" style="--i:4">书</span><span class="w" style="--i:5">与</span><span class="w" style="--i:6">检</span><span class="w" style="--i:7">查</span></h1>
 		<p class="lede">网页和 API、端口、DNS、ping、TLS 证书、时间服务器、域名到期、心跳以及网站变更。</p>
-		<p class="code-note">设备描述和告警规则文本为英文，与产品一致。页面标签使用您的语言。</p>
-		<ul class="toc" aria-label="本页的设备类型">
+		<p class="code-note">监控项描述和告警规则文本为英文，与产品一致。页面标签使用您的语言。</p>
+		<ul class="toc" aria-label="本页的监控项类型">
 			<li><a href="#http">Website or web API (HTTP)</a></li>
 			<li><a href="#tcp">Network port (TCP)</a></li>
 			<li><a href="#dns">Domain name (DNS)</a></li>
@@ -198,7 +198,7 @@
 <p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>example.com</li><li>Your company&#x27;s domain</li><li>The domain of your mail server</li></ul>
 <div class="dev-grid">
 <section><h3>您需要准备</h3><p class="muted">无需账户。</p></section>
-<section><h3>内置告警规则 <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">提示</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">警告</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+<section><h3>内置告警规则 <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">提示</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">警告</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">警告</span><strong>Monitor unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
 </div>
 <details class="setup"><summary>设置步骤: Watch a domain&#x27;s registration</summary><ol class="setup-steps"><li><p>Enter the registered domain, for example &quot;example.com&quot;, not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.</p></li><li><p>DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.</p></li><li><p>A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.</p><pre><code>https://rdap.nic.ch/</code></pre></li><li><p>Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.</p></li></ol><p class="warn"><strong>注意.</strong> A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.</p></details>
 <p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/domain/">文档</a></p>
@@ -232,7 +232,7 @@
 		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">其他系列</h2>
 		<ul class="fam-chips" style="margin-top:20px">
 			<li><a href="../servers/">服务器与硬件</a></li>
-			<li><a href="../network/">网络设备</a></li>
+			<li><a href="../network/">网络监控项</a></li>
 			<li><a href="../firewalls/">防火墙</a></li>
 			<li><a href="../hypervisors/">虚拟化平台与集群</a></li>
 			<li><a href="../storage/">NAS 与备份</a></li>
@@ -251,7 +251,7 @@
 		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
 		<nav aria-label="页脚">
 			<a href="../../features/">功能</a>
-			<a href="../">设备</a>
+			<a href="../">监控项</a>
 			<a href="../../install/">安装</a>
 			<a href="../../community/">文档与社区</a>
 			<a href="https://demo.dumbmonit.app">在线演示</a>

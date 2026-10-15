@@ -64,7 +64,7 @@ The [built-in rules](../alerting/rules.md#pfsense) that apply:
   minutes (Advisory).
 - **pfSense disk nearly full**: more than 90 % for thirty minutes (Advisory).
 
-## The device page
+## The monitor page
 
 The Firewall panel says what is wrong in a sentence, shows CPU, memory, disk
 and temperature, then lists every gateway with its latency and loss, the

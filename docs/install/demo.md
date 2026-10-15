@@ -8,13 +8,13 @@ to put a showcase on your own site.
 !!! warning "Never on a real data volume"
     Demo mode **recreates the database at every start**. Give it a volume of its
     own, or none at all: pointed at the `/data` of a real instance, it would
-    replace your devices, rules and history with the fictional estate.
+    replace your monitors, rules and history with the fictional estate.
 
 ## What demo mode does
 
 - **Sign in with `demo` / `demo`.** The login page says so and fills the fields
   in one click. The account sees every screen an administrator sees.
-- **Read-only.** Every change — devices, rules, silences, acknowledgements,
+- **Read-only.** Every change — monitors, rules, silences, acknowledgements,
   channels, tokens, users, settings, backups and restores, discovery scans,
   agent enrollment, write tools of the assistant endpoint — is refused by the
   server with `403` and `{"error": "This is a read-only demo…", "demo": true}`.
@@ -24,9 +24,9 @@ to put a showcase on your own site.
   seeded with a small homelab under `*.home.arpa`: a Proxmox VE cluster, a
   Synology NAS, a Proxmox Backup Server, a TrueNAS, an OPNsense firewall, a
   Redfish server with a failing part, a few HTTP, TLS and ping checks, an agent
-  host and a status page. The devices are answered by fake responders inside
+  host and a status page. The monitors are answered by fake responders inside
   the server, bound to `127.0.0.1` and replaying recorded API responses, so the
-  real collectors and device panels run. Restarting gives the same estate.
+  real collectors and monitor panels run. Restarting gives the same estate.
 - **Seven days of history.** Synthetic metrics are written into
   VictoriaMetrics at startup, so charts, *Last 7 days*, forecasts and alert
   history are populated, and a few alerts are firing so *Needs you* has

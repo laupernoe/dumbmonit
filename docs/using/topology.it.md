@@ -9,7 +9,7 @@ si inserisce a mano: ogni collegamento viene da ciò che DumbMonit sa già.
 | Collegamento | Fonte | Tratto |
 |---|---|---|
 | Dipende da | Il **genitore** impostato su un monitor, lo stesso seguito dalla soppressione degli avvisi. | linea continua |
-| Raggiunto tramite un relay | L'**agente relay** che interroga un dispositivo in un sito remoto. | trattini lunghi |
+| Raggiunto tramite un relay | L'**agente relay** che interroga un monitor in un sito remoto. | trattini lunghi |
 | Ospitato da un hypervisor | I guest segnalati negli ultimi 30 minuti da Proxmox VE, XCP-ng, Nutanix, vSphere o dal modulo libvirt di un agente Linux. | trattini corti |
 | Cablato a (LLDP) | Un **vicino LLDP** visto da uno switch SNMP su una porta (profilo `ethernet-switch`). | puntini |
 
@@ -22,7 +22,7 @@ sconosciuto viene omesso. Un monitor senza collegamenti resta nella sua cartella
 ## Leggere la mappa
 
 - A monte a sinistra, ciò che ne dipende a destra; una sezione per cartella.
-- Ogni riquadro mostra icona del tipo, nome e stato a parole. Un dispositivo
+- Ogni riquadro mostra icona del tipo, nome e stato a parole. Un monitor
   **non raggiungibile** ha un bordo spesso e un badge `!`; ciò che sta dietro
   (genitore, relay o hypervisor) è segnato come **Coinvolto**, con bordo
   tratteggiato: i suoi avvisi sono soppressi.

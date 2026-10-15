@@ -16,7 +16,7 @@ nunca escribe en el directorio, nunca lee un atributo de contraseña (de
 LAPS lee la fecha de caducidad, nunca la contraseña) y nunca pide los
 derechos de replicación que expondrían secretos.
 
-Un dispositivo cubre todo el dominio: apúntalo a un controlador de
+Un monitor cubre todo el dominio: apúntalo a un controlador de
 dominio y DumbMonit encuentra los demás en la partición de
 configuración.
 
@@ -31,7 +31,7 @@ en él. En particular:
   active directory replication*. Sin él, el panel dice *replication
   status not readable* en lugar de adivinar. Solo se muestra la vista
   del controlador de dominio consultado: para ver los socios de otro,
-  añádelo como un segundo dispositivo.
+  añádelo como un segundo monitor.
 - **No visible por LDAP**: registros de eventos (inicios de sesión,
   bloqueos en el momento, cambios de grupo como eventos), contenido de
   Group Policy, SYSVOL, zonas DNS, y los propios hashes de contraseña.
@@ -106,7 +106,7 @@ Operators, Print Operators y Backup Operators.
 
 Los hallazgos son hechos en bruto — cuántos objetos, y cuáles — no una
 puntuación; la [puntuación de seguridad](../using/security-score.md)
-del dispositivo los pondera. Cada uno tiene un `id` estable, una
+del monitor los pondera. Cada uno tiene un `id` estable, una
 severidad en la escala de la puntuación (low, medium, high, critical,
 mostradas en la página como Info, Advisory y Warning), una categoría,
 un recuento y hasta veinte nombres de cuenta de ejemplo. Un hallazgo
@@ -154,7 +154,7 @@ aplican:
 
 - **Domain controller unreachable**: otro controlador de dominio del
   dominio deja de responder en su puerto LDAP durante cinco minutos
-  (Warning). El consultado está cubierto por *Device unreachable*.
+  (Warning). El consultado está cubierto por *Monitor unreachable*.
 - **Active Directory bind failed**: el controlador de dominio rechaza
   la cuenta de servicio — contraseña caducada, desactivada o bloqueada
   (Advisory).
@@ -166,7 +166,7 @@ aplican:
   legible.
 - **krbtgt password older than 180 days** (Info).
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel Active Directory muestra el dominio (niveles funcionales, el
 controlador de dominio consultado, desfase de reloj), los controladores

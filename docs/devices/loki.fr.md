@@ -47,9 +47,9 @@ série.
 Les [règles intégrées](../alerting/rules.md#log-and-metrics-servers) qui
 s'appliquent : Loki non prêt, Loki refuse des lignes de log, Loki ne peut pas
 écrire vers le stockage, disque du journal d'écriture anticipée de Loki
-plein, erreurs de requête Loki, plus Appareil inaccessible.
+plein, erreurs de requête Loki, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Loki. Il dit ce qui ne va pas en une phrase (état de

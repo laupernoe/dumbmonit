@@ -38,7 +38,7 @@ discendenti (`main p`) e gli altri combinatori non sono supportati.
 
 ## Pagina o sito
 
-**Page** (predefinito) legge l'indirizzo del dispositivo e nient'altro.
+**Page** (predefinito) legge l'indirizzo del monitor e nient'altro.
 Può anche essere un documento di testo semplice o JSON, confrontato riga
 per riga.
 
@@ -73,20 +73,20 @@ La scansione è educata: al massimo due richieste alla volta, mezzo secondo
 tra due lotti, lo `User-Agent` `DumbMonit/<version>`, un timeout di 15
 secondi per richiesta e al massimo 5 MB letti per pagina. Si ferma a
 **Max pages** (25 per impostazione predefinita, 200 al massimo) oppure
-dopo dieci minuti. Quando è **Max pages** a fermarla, la pagina del dispositivo
+dopo dieci minuti. Quando è **Max pages** a fermarla, la pagina del monitor
 dice quante pagine sono state trovate, così la parte non osservata del sito non
 è mai una sorpresa. **User agent** sostituisce `DumbMonit/<version>` per un sito
 che respinge i robot.
 
 ## Come funziona un controllo
 
-Il dispositivo viene sondato come qualsiasi altro (ogni minuto per
+Il monitor viene sondato come qualsiasi altro (ogni minuto per
 impostazione predefinita), ma le pagine vengono lette solo ogni
 **Check every** minuti (60 per impostazione predefinita, da 5 a 10080). Nel
 frattempo, la sonda riporta solo lo stato dell'ultimo controllo: il sito
 non viene colpito ogni minuto. Un controllo viene eseguito in background;
-due controlli dello stesso dispositivo non si sovrappongono mai, e
-**Check now** sulla pagina del dispositivo ne avvia uno all'istante.
+due controlli dello stesso monitor non si sovrappongono mai, e
+**Check now** sulla pagina del monitor ne avvia uno all'istante.
 
 Il primo controllo registra solo il **riferimento**: ogni pagina viene
 letta e conservata, nulla viene segnalato. Da quel momento in poi, per
@@ -108,7 +108,7 @@ pagina che aggiunge come nuova). Lo stesso accade una volta dopo un
 aggiornamento di DumbMonit che legge le pagine in modo diverso.
 
 Quando un controllo trova la **stessa modifica su più pagine** (le stesse righe
-rimosse e aggiunte, come un banner), la pagina del dispositivo la mostra una
+rimosse e aggiunte, come un banner), la pagina del monitor la mostra una
 sola volta, con le pagine su cui è avvenuta.
 
 ### Ignore lines
@@ -127,9 +127,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Pagina iniziale irraggiungibile
 
 Quando la pagina iniziale stessa non può essere letta (nessuna risposta,
-connessione rifiutata, timeout, HTTP 5xx), il dispositivo è
-**unreachable**: la sonda fallisce, e la regola "Device unreachable" si
-attiva come per qualsiasi dispositivo. La pagina iniziale viene allora
+connessione rifiutata, timeout, HTTP 5xx), il monitor è
+**unreachable**: la sonda fallisce, e la regola "Monitor unreachable" si
+attiva come per qualsiasi monitor. La pagina iniziale viene allora
 ritentata a ogni sonda, così il suo ritorno viene visto entro un minuto.
 Una pagina iniziale che rifiuta l'accesso (401, 403) viene segnalata come
 problema di configurazione, non come interruzione. Gli errori su altre
@@ -148,7 +148,7 @@ o removed page), e la notifica nomina le pagine: "/pricing, /contact e altre
 2". Finché è attiva, ogni ulteriore controllo che trova modifiche viene
 notificato di nuovo, con le sue pagine, anche se sono le stesse; l'avviso si
 risolve al primo controllo che non trova nulla di nuovo. Resta un solo avviso
-per dispositivo per tutto il tempo, quindi riconoscerlo o metterlo in snooze
+per monitor per tutto il tempo, quindi riconoscerlo o metterlo in snooze
 dall'avviso copre anche i controlli successivi. Legge
 `dumbmonit_webchange_last_check_changes`; collegala a un
 canale come qualsiasi altra regola, oppure alza la sua severità, in
@@ -192,10 +192,10 @@ l'indirizzo a cui risolve il nome host).
 Uno screenshot viene preso solo quando una pagina riceve un nuovo
 snapshot (il riferimento, e ogni modifica), mai su un controllo invariato:
 una finestra 1366 × 900, la pagina intera fino a 5000 pixel, come JPEG.
-L'opzione **Screenshots** li disattiva per un dispositivo. Senza un
+L'opzione **Screenshots** li disattiva per un monitor. Senza un
 browser, oppure quando non risponde, il confronto di testo funziona lo
 stesso e gli snapshot semplicemente non hanno un'immagine; la pagina del
-dispositivo lo dice.
+monitor lo dice.
 
 Il browser carica la pagina come farebbe un visitatore, con i suoi
 script: ciò che mostra può differire dal testo che DumbMonit ha
@@ -205,10 +205,10 @@ confrontato, che è l'HTML che il server ha inviato.
 
 Il testo di ogni snapshot viene conservato nel database (1 MB al massimo
 per pagina); gli screenshot sono file sotto `/data/webchange/<device
-id>/`. Per dispositivo, vengono conservate le ultime 500 modifiche; uno
+id>/`. Per monitor, vengono conservate le ultime 500 modifiche; uno
 snapshot viene conservato mentre è il più recente di una pagina o una
 modifica conservata lo referenzia, e tutto il resto, file inclusi, viene
-rimosso dopo ogni controllo. Eliminare il dispositivo rimuove tutto
+rimosso dopo ogni controllo. Eliminare il monitor rimuove tutto
 quanto.
 
 ## Osservare un sito web per modifiche
@@ -217,7 +217,7 @@ I passaggi seguenti sono quelli mostrati dalla nota accanto al modulo.
 
 1. Nell'indirizzo, incolla la pagina da osservare, con http:// o https://. Per osservare un intero sito o una delle sue sezioni, incolla la sua pagina iniziale e imposta "Scope" su "site": ogni pagina sotto la stessa cartella viene seguita, fino a "Max pages".
 2. Le righe che cambiano a ogni visita (un orologio, un contatore di visitatori, "aggiornato 5 minuti fa") verrebbero segnalate ogni volta: elencale in "Ignore lines" come espressioni regolari.
-3. Il primo controllo registra solo il riferimento, nulla viene segnalato. Da quel momento, ogni controllo confronta il testo visibile pagina per pagina e conserva una copia prima/dopo di ogni modifica, mostrata sulla pagina del dispositivo; l'avviso "Website changed" te lo dice.
+3. Il primo controllo registra solo il riferimento, nulla viene segnalato. Da quel momento, ogni controllo confronta il testo visibile pagina per pagina e conserva una copia prima/dopo di ogni modifica, mostrata sulla pagina del monitor; l'avviso "Website changed" te lo dice.
 4. Per uno screenshot di ogni versione, aggiungi un browser headless al tuo file Compose; le righe esatte sono nella documentazione (Advanced options, "Screenshots of website changes"). Vedi [Screenshots of website changes](../install/docker.md#website-screenshots).
 
 !!! warning

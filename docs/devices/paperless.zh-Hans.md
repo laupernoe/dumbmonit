@@ -38,9 +38,9 @@ Paperless 会将每个所有者的任务保密:专用用户能按名称看到计
 适用的[内置规则](../alerting/rules.md#self-hosted-applications):
 Paperless 任务队列宕机、Paperless 索引或健全性检查错误、Paperless
 迁移待处理、Paperless 任务失败、Paperless 存储空间即将用尽、
-Paperless 有可用更新,以及设备不可达。
+Paperless 有可用更新,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会调用 Paperless。
 它会先说明出了什么问题(某个组件出错、任务失败、迁移待处理),

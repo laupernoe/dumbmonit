@@ -8,9 +8,9 @@ temperatura, y una alerta cuando se sobrecalienta.
 Necesitas Docker, y o bien un enchufe Shelly en tu red o la respuesta
 capturada abajo.
 
-## 1. Mira qué responde el dispositivo {#1-look-at-what-the-device-answers}
+## 1. Mira qué responde el monitor {#1-look-at-what-the-device-answers}
 
-Los dispositivos de segunda generación de Shelly describen un relé con
+Los monitores de segunda generación de Shelly describen un relé con
 una llamada:
 
 ```bash
@@ -32,7 +32,7 @@ curl http://192.168.1.50/rpc/Switch.GetStatus?id=0
 
 Guarda esta respuesta como `shelly-plug/fixtures/status.json`: es el
 fixture contra el que se probará el pack, así que puedes trabajar sin el
-dispositivo a mano.
+monitor a mano.
 
 ## 2. La cabecera {#2-the-header}
 
@@ -50,13 +50,13 @@ default_port: 80
 credentials: [none]
 ```
 
-El `id` decide dos nombres: el tipo de dispositivo `pack.shelly-plug`, y
+El `id` decide dos nombres: el tipo de monitor `pack.shelly-plug`, y
 el prefijo de métrica `dumbmonit_shelly_plug_`.
 
 ## 3. Una fuente {#3-one-source}
 
 Una fuente es una petición, siempre a la propia dirección del
-dispositivo:
+monitor:
 
 ```yaml
 options:
@@ -73,7 +73,7 @@ sources:
 ```
 
 `{{option.switch_id}}` se sustituye por el propio ajuste del
-dispositivo, mostrado en el formulario de dispositivo como **Switch
+monitor, mostrado en el formulario de monitor como **Switch
 channel**. El nombre de archivo del fixture, `status.json`, coincide con
 el `id` de la fuente.
 

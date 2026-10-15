@@ -81,7 +81,7 @@ desligado fica em falta na tabela em vez de ser mostrado incorretamente. A
 conta do dispositivo, quando conhecida, vem de uma entidade `person.*` cujo
 atributo `device_trackers` o nomeia.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca consulta o Home Assistant. Diz primeiro o que está mal (modo de

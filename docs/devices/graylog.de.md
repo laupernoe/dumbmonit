@@ -23,7 +23,7 @@ Indizierungsfehler sagen es lange vorher.
 
 Alle Metriken haben das Präfix `dumbmonit_graylog_`. Journal, Puffer und
 Durchsatz sind die **des Knotens, mit dem DumbMonit spricht**: Fügen Sie
-in einem Graylog-Cluster jeden Knoten als eigenes Gerät hinzu.
+in einem Graylog-Cluster jeden Knoten als eigenen Monitor hinzu.
 
 | Metrik | Was | Labels |
 |---|---|---|
@@ -44,17 +44,17 @@ in einem Graylog-Cluster jeden Knoten als eigenes Gerät hinzu.
 | `cluster_nodes` | Knoten im Graylog-Cluster | |
 | `scrape_errors` | bei der letzten Abfrage fehlgeschlagene Aufrufe | |
 
-Der Suchcluster wird über Graylog gelesen, daher ist kein eigenes
-OpenSearch- oder Elasticsearch-Gerät nötig, um zu wissen, ob er grün
+Der Suchcluster wird über Graylog gelesen, daher ist kein eigener
+OpenSearch- oder Elasticsearch-Monitor nötig, um zu wissen, ob er grün
 ist; wenn Graylog ihn überhaupt nicht erreichen kann, liest sich
 `indexer_status` als 3.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#log-and-metrics-servers):
 Graylog not processing, Graylog search cluster down, Graylog search
 cluster yellow, Graylog journal filling, Graylog input failed, Graylog
-indexing failures, plus Device unreachable.
+indexing failures, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Graylog nie ab. Es sagt in einem Satz, was nicht

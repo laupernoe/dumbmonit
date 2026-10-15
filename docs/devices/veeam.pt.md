@@ -90,7 +90,7 @@ dispositivo mostra `last_connection` como «—» na tabela da página do
 dispositivo. O `type` do dispositivo é o nome de plataforma do próprio Veeam
 (`VSphere`, `WindowsPhysical`, `HyperV`…), mostrado tal como está.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Backups diz numa frase o que está errado, mostra as tarefas falhadas,
 as sessões falhadas das últimas 24 horas, as tarefas em execução e a licença,

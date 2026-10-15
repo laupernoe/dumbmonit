@@ -76,7 +76,7 @@ impl Teams {
                         },
                         {"type": "TextBlock", "wrap": true, "text": message.text},
                         {"type": "FactSet", "facts": [
-                            {"title": "Device", "value": message.target_name},
+                            {"title": "Monitor", "value": message.target_name},
                             {"title": "Severity", "value": message.severity_label()},
                             {"title": "Timestamp", "value": message.at.to_rfc3339()},
                         ]},
@@ -261,7 +261,7 @@ impl Mattermost {
                 "title": message.title,
                 "text": message.text,
                 "fields": [
-                    {"title": "Device", "value": message.target_name, "short": true},
+                    {"title": "Monitor", "value": message.target_name, "short": true},
                     {"title": "Severity", "value": message.severity_label(), "short": true},
                 ],
             }],
@@ -586,7 +586,7 @@ mod tests {
                             "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
                         },
                         {"type": "FactSet", "facts": [
-                            {"title": "Device", "value": "nas"},
+                            {"title": "Monitor", "value": "nas"},
                             {"title": "Severity", "value": "warning"},
                             {"title": "Timestamp", "value": "2025-09-01T14:12:05+00:00"},
                         ]},
@@ -691,7 +691,7 @@ mod tests {
                 "title": "nas — Disk full",
                 "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
                 "fields": [
-                    {"title": "Device", "value": "nas", "short": true},
+                    {"title": "Monitor", "value": "nas", "short": true},
                     {"title": "Severity", "value": "warning", "short": true},
                 ],
             }],

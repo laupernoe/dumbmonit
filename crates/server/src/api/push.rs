@@ -210,10 +210,10 @@ fn verdict_label(verdict: Verdict) -> &'static str {
 async fn load_push_target(state: &AppState, id: TargetId) -> ApiResult<dumbmonit_proto::Target> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != push::KIND {
         return Err(ApiError::BadRequest(format!(
-            "Device {id} is a \"{}\" device, not a heartbeat monitor.",
+            "Monitor {id} is a \"{}\" monitor, not a heartbeat monitor.",
             target.kind
         )));
     }

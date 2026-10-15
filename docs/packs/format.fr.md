@@ -17,22 +17,22 @@ my-pack/
 | Clé | Requis | Signification |
 |---|---|---|
 | `schema` | oui | Toujours `1`. |
-| `id` | oui | Lettres minuscules, chiffres et tirets simples, commençant par une lettre, jusqu'à 40 caractères : `shelly-plug`. Le type d'appareil devient `pack.<id>`, le préfixe de métrique `dumbmonit_<id avec underscores>_`. |
+| `id` | oui | Lettres minuscules, chiffres et tirets simples, commençant par une lettre, jusqu'à 40 caractères : `shelly-plug`. Le type de surveillance devient `pack.<id>`, le préfixe de métrique `dumbmonit_<id avec underscores>_`. |
 | `version` | oui | [Version sémantique](https://semver.org) du pack : `1.2.0`. |
 | `requires` | non | Versions de DumbMonit avec lesquelles le pack fonctionne, comme une exigence semver : `">=0.2"`. Un serveur hors de la plage refuse le pack. |
-| `label` | oui | Nom montré dans la liste des types d'appareil. |
+| `label` | oui | Nom montré dans la liste des types de surveillance. |
 | `summary` | non | Une phrase : ce que le pack surveille. |
 | `examples` | non | Produits auxquels il s'applique, montrés comme indices. |
 | `address_hint` | non | Placeholder du champ adresse : `192.168.1.50`. |
 | `default_port` | non | Port utilisé quand l'adresse n'en a pas. |
-| `scheme` | non | `http` (défaut) ou `https` ; l'appareil peut le surcharger. |
-| `setup` | non | L'avis montré à côté du formulaire d'appareil : `title`, `steps` (une liste ; ce qui suit un retour à la ligne dans une étape est montré comme une commande copiable), `warning`, `doc_url`. |
+| `scheme` | non | `http` (défaut) ou `https` ; la surveillance peut le surcharger. |
+| `setup` | non | L'avis montré à côté du formulaire de surveillance : `title`, `steps` (une liste ; ce qui suit un retour à la ligne dans une étape est montré comme une commande copiable), `warning`, `doc_url`. |
 | `credentials` | non | Types d'identifiant acceptés, par ordre de préférence : `none`, `api_token`, `username_password`. Défaut : `[none]`. Une entrée peut être `{kind, label, help}` pour reformuler le formulaire. |
-| `options` | non | Réglages montrés dans le formulaire d'appareil (ci-dessous). |
+| `options` | non | Réglages montrés dans le formulaire de surveillance (ci-dessous). |
 
 ## Options
 
-Les options sont stockées sur l'appareil et lues par `{{option.<key>}}`
+Les options sont stockées sur la surveillance et lues par `{{option.<key>}}`
 dans les chemins, en-têtes et corps, et par les seuils de règle.
 
 ```yaml
@@ -55,7 +55,7 @@ peut pas redéclarer : `scheme`, `port`, `insecure_tls`,
 ## Sources
 
 Une source est une requête par sonde, toujours envoyée à la propre
-adresse de l'appareil.
+adresse de la surveillance.
 
 ```yaml
 sources:
@@ -71,7 +71,7 @@ sources:
 ```
 
 - `path` doit commencer par un seul `/`. L'URL de requête est l'adresse
-  de l'appareil suivie du chemin ; après substitution elle doit garder le
+  de la surveillance suivie du chemin ; après substitution elle doit garder le
   même schéma, hôte et port, sinon la requête est refusée. Les valeurs
   d'option sont encodées en pourcentage dans les chemins, une valeur ne
   peut donc pas ajouter un segment ou changer l'hôte.
@@ -194,9 +194,9 @@ rules:
   le pack (`dumbmonit_up` excepté) : un pack ne peut pas alerter sur les
   séries d'un autre type.
 - Un `threshold` de `{{option.x}}` installe la valeur par défaut de
-  l'option, et la propre valeur de chaque appareil pour cette option
-  devient son seuil pour cette règle (une surcharge par appareil,
-  réécrite chaque fois que l'appareil est enregistré).
+  l'option, et la propre valeur de chaque surveillance pour cette option
+  devient son seuil pour cette règle (une surcharge par surveillance,
+  réécrite chaque fois que la surveillance est enregistrée).
 
 ## Profils SNMP
 
@@ -204,7 +204,7 @@ Un pack peut apporter des profils SNMP, écrits exactement comme les
 intégrés dans
 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles).
 Ils rejoignent le catalogue SNMP et sont appliqués par `sysObjectID`
-comme les autres ; ils ne créent pas de type d'appareil propre.
+comme les autres ; ils ne créent pas de type de surveillance propre.
 
 ```yaml
 snmp_profiles:
@@ -240,6 +240,6 @@ installé ou mis à jour un pack avec des profils SNMP.
 `dumbmonit pack test <dir>` lit `fixtures/<id de source>.json`, `.txt` ou
 `.prom`, lance la même extraction que le serveur, et compare le résultat
 avec `expected.prom` : le format texte Prometheus, trié, sans horodatages
-et sans les labels d'appareil (`target`, `host`, `tag_*`) que le serveur
+et sans les labels de surveillance (`target`, `host`, `tag_*`) que le serveur
 ajoute. `--update` écrit `expected.prom` depuis les fixtures ; vérifiez le
 diff avant de le commiter.

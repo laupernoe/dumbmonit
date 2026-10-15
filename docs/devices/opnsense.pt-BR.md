@@ -17,9 +17,9 @@ serviços, CARP e atualizações pendentes.
     código-fonte do OPNsense em vez de uma resposta observada. Avise-nos
     o que não funcionar.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Além dos gráficos genéricos, um dispositivo OPNsense mostra três painéis,
+Além dos gráficos genéricos, um monitor OPNsense mostra três painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
 próprio firewall:
 
@@ -91,7 +91,7 @@ Todas as métricas têm o prefixo `dumbmonit_opnsense_`.
 | Interfaces | `interface_up`, `interface_bytes_in/out`, `interface_packets_in/out`, `interface_errors_in/out`, `interface_drops`, `interface_collisions` (contadores, armazenados em bruto), `interface_address_info` (o endereço do momento, em um rótulo) | `interface`, `device`, e `address` para o último |
 | Firewall | `pf_states`, `pf_state_limit`, `pf_states_used_percent` | |
 | DHCP | `dhcp_leases`, `dhcp_leases_active` | `backend` (`kea`, `isc`, `dnsmasq`) |
-| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected` (WireGuard: handshake dentro de três minutos), `vpn_handshake_age_seconds` (WireGuard, o par mais recente; ausente enquanto nenhum par jamais se conectou), `vpn_bytes_in/out`, `vpn_tunnels_down` | `kind` (`wireguard`, `openvpn`, `ipsec`), `tunnel` (o dispositivo WireGuard, `wg0`, ou a descrição IPsec e OpenVPN) |
+| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected` (WireGuard: handshake dentro de três minutos), `vpn_handshake_age_seconds` (WireGuard, o par mais recente; ausente enquanto nenhum par jamais se conectou), `vpn_bytes_in/out`, `vpn_tunnels_down` | `kind` (`wireguard`, `openvpn`, `ipsec`), `tunnel` (o monitor WireGuard, `wg0`, ou a descrição IPsec e OpenVPN) |
 | Resolver | `unbound_running`, `unbound_queries` (um contador), `unbound_cache_hit_percent` | |
 | Serviços | `service_running` (1 ou 0, uma série por serviço que o firewall lista) | `service` |
 | CARP | `carp_enabled`, `carp_maintenance_mode`, `carp_vip_master` (todos ausentes em um firewall que não faz parte de um par) | `interface`, `vhid`, `address` |
@@ -117,7 +117,7 @@ WireGuard, OpenVPN, IPsec, Unbound e Kea são plugins. Um firewall que não
 tem um responde `404`, que não é nem um erro de coleta nem um erro de
 autenticação: uma métrica menos, e nada na interface.
 
-Regras integradas que se aplicam: Device unreachable, Internet gateway
+Regras integradas que se aplicam: Monitor unreachable, Internet gateway
 down, Gateway losing packets, Gateway slow, Firewall state table filling
 up, Firewall network buffers exhausted, VPN tunnel down, Firewall resolver
 stopped, Firewall core service stopped, Firewall too hot, Firewall left

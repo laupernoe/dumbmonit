@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании</title>
-<meta name="description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов устройств (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
+<meta name="description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов мониторов (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -30,7 +30,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании">
-<meta property="og:description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов устройств (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
+<meta property="og:description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов мониторов (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
 <meta property="og:url" content="https://dumbmonit.app/ru/">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -39,7 +39,7 @@
 <meta property="og:image:alt" content="DumbMonit: всё в порядке? Узнайте за одну секунду. Self-hosted мониторинг в одном контейнере, рядом с талисманом-голубем.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit: предельно простой мониторинг — от домашней лаборатории до небольшой компании">
-<meta name="twitter:description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов устройств (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
+<meta name="twitter:description" content="Мониторинг для самостоятельного хостинга в одном контейнере: 65 типов мониторов (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory и другие), агент, 23 каналов уведомлений, публичные страницы статуса, MCP-сервер и тихие оповещения. Открытый исходный код, Apache 2.0.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/ru/","inLanguage":"ru","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -53,7 +53,7 @@
 		<a class="brand" href="./" aria-label="Главная DumbMonit"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Разделы">
 			<a href="features/">Возможности</a>
-			<a href="devices/">Устройства</a>
+			<a href="devices/">Мониторы</a>
 			<a href="install/">Установка</a>
 			<a href="community/">Документация и сообщество</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Живое демо</a>
@@ -146,7 +146,7 @@
 <img src="../assets/shots/overview-light-1x.webp" srcset="../assets/shots/overview-light-1x.webp 1440w, ../assets/shots/overview-light.webp 2880w" sizes="(min-width: 1180px) 1100px, 100vw" alt="Обзор демо-версии: фраза «2 предупреждения, 1 уведомление, 1 недоступен, 5 назревают.» на фоне дождливого окна погоды, таблички состояния, что изменилось с прошлого визита, и оповещения, которым нужно ваше внимание" width="2880" height="1800" fetchpriority="high">
 </picture>
 			</div>
-			<figcaption>Обзор демо-версии с вымышленными устройствами и несколькими включёнными сбоями. В спокойный день фраза гласит «Ясное небо».</figcaption>
+			<figcaption>Обзор демо-версии с вымышленными мониторами и несколькими включёнными сбоями. В спокойный день фраза гласит «Ясное небо».</figcaption>
 		</figure>
 	</div>
 </section>
@@ -162,9 +162,9 @@
 <section class="block" id="why" style="border-top:0">
 	<div class="wrap">
 		<ul class="cards cards-4">
-			<li class="card"><h2 class="card-h">Один контейнер, одна минута</h2><p>Один контейнер с одним томом и без лишних capabilities. Откройте страницу, создайте учётную запись, добавьте устройство: графики и оповещения появятся сами.</p></li>
+			<li class="card"><h2 class="card-h">Один контейнер, одна минута</h2><p>Один контейнер с одним томом и без лишних capabilities. Откройте страницу, создайте учётную запись, добавьте монитор: графики и оповещения появятся сами.</p></li>
 			<li class="card"><h2 class="card-h">Оповещения без лишнего шума</h2><p>Полезные правила включены с самого начала. Зависимости, группировка и выученные базовые уровни превращают тридцать сообщений в одно.</p></li>
-			<li class="card"><h2 class="card-h"><span class="num" data-n="65">65</span> типов устройств</h2><p>Коммутаторы, межсетевые экраны, гипервизоры, NAS, сайты, базы данных и приложения для самостоятельного хостинга: каждое читается так, как задумал производитель.</p></li>
+			<li class="card"><h2 class="card-h"><span class="num" data-n="65">65</span> типов мониторов</h2><p>Коммутаторы, межсетевые экраны, гипервизоры, NAS, сайты, базы данных и приложения для самостоятельного хостинга: каждое читается так, как задумал производитель.</p></li>
 			<li class="card"><h2 class="card-h">Страницы статуса и настенный экран</h2><p>Поделитесь публичной страницей статуса с пользователями или выведите «сводку погоды» на экран в комнате.</p></li>
 		</ul>
 		<p style="margin-top:28px"><a class="more" href="features/">Все возможности</a></p>
@@ -178,16 +178,16 @@
 			<p>Выберите семейство, чтобы увидеть, что отслеживается, какие правила оповещений входят в комплект и что подготовить на устройстве.</p>
 		</div>
 		<ul class="cards cards-fam">
-			<li class="card"><h3><a href="devices/servers/">Серверы и оборудование</a></h3><p>Машины с Linux, Windows, macOS и FreeBSD через агент, серверное оборудование через контроллер управления, ИБП и Active Directory.</p><p class="label-tape">Типов устройств: <span class="num" data-n="4">4</span></p></li>
-			<li class="card"><h3><a href="devices/network/">Сетевое оборудование</a></h3><p>Коммутаторы, маршрутизаторы, точки доступа и VPN: любое устройство с SNMP, MikroTik, UniFi, Tailscale и OpenVPN.</p><p class="label-tape">Типов устройств: <span class="num" data-n="5">5</span></p></li>
-			<li class="card"><h3><a href="devices/firewalls/">Межсетевые экраны</a></h3><p>OPNsense, pfSense, FortiGate и Sophos: шлюзы, туннели, интерфейсы, высокая доступность и лицензии.</p><p class="label-tape">Типов устройств: <span class="num" data-n="4">4</span></p></li>
-			<li class="card"><h3><a href="devices/hypervisors/">Гипервизоры и кластеры</a></h3><p>Proxmox, vSphere, XCP-ng, Nutanix и Kubernetes: хосты, гостевые системы, хранилище и состояние кластера.</p><p class="label-tape">Типов устройств: <span class="num" data-n="6">6</span></p></li>
-			<li class="card"><h3><a href="devices/storage/">NAS и резервные копии</a></h3><p>Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.</p><p class="label-tape">Типов устройств: <span class="num" data-n="5">5</span></p></li>
-			<li class="card"><h3><a href="devices/checks/">Сайты, сертификаты и проверки</a></h3><p>Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.</p><p class="label-tape">Типов устройств: <span class="num" data-n="11">11</span></p></li>
-			<li class="card"><h3><a href="devices/proxies/">Веб-серверы и обратные прокси</a></h3><p>Traefik, Caddy, Nginx, Apache и Nginx Proxy Manager: бэкенды, сертификаты и доля ошибок.</p><p class="label-tape">Типов устройств: <span class="num" data-n="5">5</span></p></li>
-			<li class="card"><h3><a href="devices/apps/">Приложения для самостоятельного хостинга</a></h3><p>Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex, Home Assistant, GitLab и Forgejo.</p><p class="label-tape">Типов устройств: <span class="num" data-n="8">8</span></p></li>
-			<li class="card"><h3><a href="devices/mail/">DNS, почта и безопасность</a></h3><p>Pi-hole, AdGuard Home, CrowdSec, а также почтовые серверы и шлюзы: SMTP, MDaemon, SecurityGateway и Proxmox Mail Gateway.</p><p class="label-tape">Типов устройств: <span class="num" data-n="7">7</span></p></li>
-			<li class="card"><h3><a href="devices/data/">Базы данных и наблюдаемость</a></h3><p>PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT, а также серверы VictoriaMetrics, Loki и Graylog.</p><p class="label-tape">Типов устройств: <span class="num" data-n="10">10</span></p></li>
+			<li class="card"><h3><a href="devices/servers/">Серверы и оборудование</a></h3><p>Машины с Linux, Windows, macOS и FreeBSD через агент, серверное оборудование через контроллер управления, ИБП и Active Directory.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="4">4</span></p></li>
+			<li class="card"><h3><a href="devices/network/">Сетевое оборудование</a></h3><p>Коммутаторы, маршрутизаторы, точки доступа и VPN: любое устройство с SNMP, MikroTik, UniFi, Tailscale и OpenVPN.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="5">5</span></p></li>
+			<li class="card"><h3><a href="devices/firewalls/">Межсетевые экраны</a></h3><p>OPNsense, pfSense, FortiGate и Sophos: шлюзы, туннели, интерфейсы, высокая доступность и лицензии.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="4">4</span></p></li>
+			<li class="card"><h3><a href="devices/hypervisors/">Гипервизоры и кластеры</a></h3><p>Proxmox, vSphere, XCP-ng, Nutanix и Kubernetes: хосты, гостевые системы, хранилище и состояние кластера.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="6">6</span></p></li>
+			<li class="card"><h3><a href="devices/storage/">NAS и резервные копии</a></h3><p>Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="5">5</span></p></li>
+			<li class="card"><h3><a href="devices/checks/">Сайты, сертификаты и проверки</a></h3><p>Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="11">11</span></p></li>
+			<li class="card"><h3><a href="devices/proxies/">Веб-серверы и обратные прокси</a></h3><p>Traefik, Caddy, Nginx, Apache и Nginx Proxy Manager: бэкенды, сертификаты и доля ошибок.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="5">5</span></p></li>
+			<li class="card"><h3><a href="devices/apps/">Приложения для самостоятельного хостинга</a></h3><p>Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex, Home Assistant, GitLab и Forgejo.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="8">8</span></p></li>
+			<li class="card"><h3><a href="devices/mail/">DNS, почта и безопасность</a></h3><p>Pi-hole, AdGuard Home, CrowdSec, а также почтовые серверы и шлюзы: SMTP, MDaemon, SecurityGateway и Proxmox Mail Gateway.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="7">7</span></p></li>
+			<li class="card"><h3><a href="devices/data/">Базы данных и наблюдаемость</a></h3><p>PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT, а также серверы VictoriaMetrics, Loki и Graylog.</p><p class="label-tape">Типов мониторов: <span class="num" data-n="10">10</span></p></li>
 		</ul>
 		<figure class="home-device">
 			<div class="shot">
@@ -202,9 +202,9 @@
 <img src="../assets/shots/device-light-1x.webp" srcset="../assets/shots/device-light-1x.webp 1440w, ../assets/shots/device-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Монитор Proxmox VE: его состояние, оповещения и каждый узел с процессором, памятью, корневой файловой системой, ожидающими обновлениями, нужными перезагрузками и остановленными службами" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 			</div>
-			<figcaption>Одна страница на устройство: здесь кластер Proxmox, узел за узлом, с тем, что ждёт перезагрузки или обновления.</figcaption>
+			<figcaption>Одна страница на монитор: здесь кластер Proxmox, узел за узлом, с тем, что ждёт перезагрузки или обновления.</figcaption>
 		</figure>
-		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">Все 65 типов устройств</a></p>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">Все 65 типов мониторов</a></p>
 	</div>
 </section>
 
@@ -231,7 +231,7 @@
 		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
 		<nav aria-label="Подвал">
 			<a href="features/">Возможности</a>
-			<a href="devices/">Устройства</a>
+			<a href="devices/">Мониторы</a>
 			<a href="install/">Установка</a>
 			<a href="community/">Документация и сообщество</a>
 			<a href="https://demo.dumbmonit.app">Живое демо</a>

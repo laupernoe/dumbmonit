@@ -38,7 +38,7 @@ trabajo que falló se muestra en el propio registro de Immich.
 
 Las [reglas integradas](../alerting/rules.md#self-hosted-applications)
 que se aplican: Immich jobs stalled, Immich queue paused, Immich storage
-almost full, Immich update available, además de Device unreachable.
+almost full, Immich update available, además de Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -66,10 +66,10 @@ subiendo. Solo `last_seen_timestamp_seconds` — la última vez que la
 sesión de cada dispositivo estuvo activa — es genuinamente por
 dispositivo.
 
-La tabla de la página del dispositivo muestra estas cifras para cada
+La tabla de la página del monitor muestra estas cifras para cada
 dispositivo, con un estado de OK o Stale.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca llama a Immich. Indica primero qué va mal (colas atascadas, colas

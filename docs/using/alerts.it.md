@@ -60,16 +60,16 @@ può modificarlo):
   starci lavorando: 1 h, 8 h, 1 giorno oppure *until resolved*. A
   differenza di Ack, funziona aprendo una finestra di manutenzione
   limitata alle etichette esatte di quell'unico avviso — una regola
-  gemella sullo stesso dispositivo continua a parlare. La scheda si
+  gemella sullo stesso monitor continua a parlare. La scheda si
   sposta in un gruppo silenzioso *Snoozed* che mostra il tempo rimanente,
   e offre **Unsnooze**. I ricordi si fermano nello stesso modo di una
   conferma.
 - **Ignore** ("non avvisarmi più di questo") è per una regola che non
-  avrà mai senso su questo dispositivo: disattiva quella regola solo per
-  quel dispositivo (un override per dispositivo — vedi
-  [Override per dispositivo](../alerting/rules.md#per-device-overrides))
+  avrà mai senso su questo monitor: disattiva quella regola solo per
+  quel monitor (un override per monitor — vedi
+  [Override per monitor](../alerting/rules.md#per-device-overrides))
   e l'avviso scompare per sempre, immediatamente, non solo zittito. È
-  reversibile: **Stop ignoring** sulla pagina del dispositivo, oppure
+  reversibile: **Stop ignoring** sulla pagina del monitor, oppure
   dalla regola stessa in Alerts → Rules, dove legge *Ignored on N
   devices*.
 - **Clear** è per la cronologia, non per un avviso attivo: una volta che
@@ -100,12 +100,12 @@ digest).
 
 **Only some alerts.** Le stesse Delivery options contengono il **filtro
 di instradamento** del canale: quali avvisi vuole, per tag del
-dispositivo (`site=cellar`), per tipo di dispositivo (`proxmox`), oppure
+monitor (`site=cellar`), per tipo di monitor (`proxmox`), oppure
 per regola. Le condizioni sullo stesso campo si leggono come *or*, campi
 diversi come *and*, e una riga *Except* vince sempre. Sotto l'editor, un
-anteprima elenca quali dei tuoi dispositivi il filtro seleziona in questo
+anteprima elenca quali dei tuoi monitor il filtro seleziona in questo
 momento, e una frase te lo riassume — *questo canale riceve advisory e
-superiori dai dispositivi taggati site=cellar, eccetto i dispositivi
+superiori dai monitor taggati site=cellar, eccetto i monitor
 taggati role=lab*. Un canale senza filtro continua a ricevere tutto, che è
 ciò che fa ogni canale esistente.
 
@@ -131,14 +131,14 @@ I vecchi link (`/alerts#notifications`, `/alerts#notifications-policy`,
 ## Operatori e visualizzatori
 
 Un **operatore** gestisce gli avvisi senza toccare la configurazione:
-conferma, sospende, ignora una regola per un dispositivo, pianifica o
+conferma, sospende, ignora una regola per un monitor, pianifica o
 elimina finestre di manutenzione e pulisce la cronologia risolta. Regole,
 canali e la politica di notifica restano di sola lettura per loro,
 contrassegnati *Operator — config is admin only*. Ignorare è il solo
-override per dispositivo che un operatore può fare; le soglie restano una
+override per monitor che un operatore può fare; le soglie restano una
 decisione di un amministratore, e l'*Ignore* o lo *Stop ignoring* di un
 operatore mantiene qualsiasi soglia che un amministratore ha impostato
-per quel dispositivo.
+per quel monitor.
 
 Un visualizzatore vede ogni tab ma nessun controllo: la pagina mostra
 *Viewer — read only* dove un amministratore troverebbe i pulsanti.

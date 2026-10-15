@@ -1,6 +1,6 @@
-# Tipos de dispositivos
+# Tipos de monitores
 
-DumbMonit llama *dispositivo* (la API dice *objetivo*) a todo lo que vigila, incluso
+DumbMonit llama *monitor* (la API dice *objetivo*) a todo lo que vigila, incluso
 cuando es una página web o un nombre de DNS. Cada tipo es un recolector en el servidor; el
 servidor describe cada tipo a la interfaz (`GET /api/collectors`), por lo que el
 formulario siempre coincide con lo que esta versión puede monitorear.
@@ -72,29 +72,29 @@ formulario siempre coincide con lo que esta versión puede monitorear.
 | [Latido del corazón](push.md) | `push` | ninguno (URL secreta) | Trabajo cron, script de copia de seguridad, automatización que debe llamar |
 | [Cambios del sitio web](webchange.md) | `webchange` | ninguno | Una página o un sitio completo: cambios de texto, páginas nuevas y eliminadas, antes/después con capturas de pantalla |
 | [Salud y SEO del sitio web](website.md) | `website` | ninguno | Sitios en masa: abajo, página en blanco, redireccionamientos, noindex, robots.txt, cambios de título/descripción/canónica, plataforma (importación CSV) |
-| [Dispositivo de demostración](demo.md) | `dummy` | ninguno | Explora la interfaz de usuario sin hardware |
+| [Monitor de demostración](demo.md) | `dummy` | ninguno | Explora la interfaz de usuario sin hardware |
 
-## Cómo se lee un dispositivo
+## Cómo se lee un monitor
 
-El planificador ejecuta cada dispositivo habilitado en su propio intervalo (predeterminado 60 s,
+El planificador ejecuta cada monitor habilitado en su propio intervalo (predeterminado 60 s,
 mínimo 10 s) a través del recolector para su tipo, con como máximo
 `DUMBMONIT_MAX_CONCURRENT_PROBES` sondeos en vuelo y un tiempo de espera duro de
 `DUMBMONIT_PROBE_TIMEOUT_SECS` por sondeo. Cada sondeo exitoso escribe sus
 muestras más `dumbmonit_up = 1`; un sondeo fallido no escribe nada, y es el
-silencio de la serie lo que la regla "Dispositivo inalcanzable" detecta. La página del dispositivo
+silencio de la serie lo que la regla "Monitor inalcanzable" detecta. La página del monitor
 muestra el fallo en el siguiente sondeo, pero la alerta espera a propósito: se
 dispara aproximadamente cuatro minutos después del último sondeo exitoso (tres minutos de
 silencio, luego un minuto de retención), por lo que un único sondeo perdido nunca notifica a nadie.
 
-Los fallos se clasifican. Un dispositivo que no responde es *inalcanzable* y
+Los fallos se clasifican. Un monitor que no responde es *inalcanzable* y
 genera una alerta. Una comunidad incorrecta, un certificado rechazado o una
-capacidad faltante es un *error de configuración*: se muestra en la página del dispositivo, en rojo,
-con la razón, y no se notifica. La distinción es importante: un dispositivo mal configurado
+capacidad faltante es un *error de configuración*: se muestra en la página del monitor, en rojo,
+con la razón, y no se notifica. La distinción es importante: un monitor mal configurado
 no debe despertar a nadie por la noche.
 
 ## Opciones
 
-Algunos tipos leen opciones de las etiquetas del dispositivo: el puerto de API, si aceptar
+Algunos tipos leen opciones de las etiquetas del monitor: el puerto de API, si aceptar
 un certificado autofirmado, qué nodos monitorear. El formulario muestra un campo escrito
 por opción bajo **Más opciones**, con su predeterminado y texto de ayuda. Las páginas por tipo
 las enumeran textualmente. Las opciones son configuración, no etiquetas: no se copian
@@ -104,10 +104,10 @@ etiquetas `tag_<key>`, excepto claves que nombran un secreto (coincididas por pa
 pero `keyboard` no) y valores más largos que 256 caracteres. Nunca pongas un secreto en
 una etiqueta de todos modos: usa el campo de credencial, que está encriptado.
 
-## Dispositivos padres
+## Monitores padres
 
-Cualquier dispositivo puede declarar otro como su padre. Cuando el padre es
+Cualquier monitor puede declarar otro como su padre. Cuando el padre es
 inalcanzable, las alertas de sus descendientes se marcan *Suprimido por padre*
 en lugar de ser enviadas: un conmutador que cae produce una notificación, no
-treinta. En la página de Dispositivos, los hijos se apilan bajo su padre y se oscurecen cuando
+treinta. En la página de Monitores, los hijos se apilan bajo su padre y se oscurecen cuando
 es inalcanzable.

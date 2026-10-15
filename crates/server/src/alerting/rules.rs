@@ -33,7 +33,7 @@ const FS_USED_PERCENT: &str = "(\
      or dumbmonit_proxmox_node_rootfs_percent)";
 
 /// Âge du dernier échantillon de chaque cible, en secondes : la plus fraîche de
-/// ses séries `dumbmonit_up` (voir la règle « Device unreachable »).
+/// ses séries `dumbmonit_up` (voir la règle « Monitor unreachable »).
 pub const HOST_DOWN_QUERY: &str =
     "bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))";
 
@@ -117,7 +117,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             unit: "s".to_string(),
             ..base(
                 RULE_HOST_DOWN,
-                "Device unreachable",
+                "Monitor unreachable",
                 RuleKind::Threshold,
                 HOST_DOWN_QUERY,
             )
@@ -4936,7 +4936,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         // --- Santé et référencement d'un site (`website`) ---
         //
         // Un site injoignable (réseau, délai, certificat refusé, boucle de
-        // redirections) relève de « Device unreachable » : la sonde échoue.
+        // redirections) relève de « Monitor unreachable » : la sonde échoue.
         // `website_up` couvre le site qui répond, mais par une erreur.
         Rule {
             description: "The website answers with an error (4xx or 5xx) after following its redirects.".to_string(),
@@ -5059,7 +5059,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         // --- Active Directory (`collectors/activedirectory`) ---
         //
-        // Le contrôleur interrogé lui-même relève de « Device unreachable » ;
+        // Le contrôleur interrogé lui-même relève de « Monitor unreachable » ;
         // `ad_dc_reachable` couvre les autres contrôleurs du domaine. Un nom
         // qui ne se résout pas depuis DumbMonit ne produit pas de série.
         Rule {

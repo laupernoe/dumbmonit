@@ -44,9 +44,9 @@ de retard.
 Les [règles intégrées](../alerting/rules.md#databases-message-broker-and-security-engine)
 qui s'appliquent : alarme mémoire ou disque RabbitMQ, nœud RabbitMQ arrêté,
 partition réseau RabbitMQ, file RabbitMQ sans consommateur, file RabbitMQ
-indisponible, plus Appareil inaccessible.
+indisponible, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais RabbitMQ. Il dit ce qui ne va pas en une phrase

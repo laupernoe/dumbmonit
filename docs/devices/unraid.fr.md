@@ -71,7 +71,7 @@ Les [règles intégrées](../alerting/rules.md#unraid) qui s'appliquent :
 - **Conteneur Unraid arrêté** : un conteneur réglé pour démarrer avec
   l'array n'a pas tourné depuis dix minutes (Avis).
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Array dit ce qui ne va pas en une phrase, montre le remplissage de
 l'array, la dernière vérification de parité, les conteneurs et VM en cours,

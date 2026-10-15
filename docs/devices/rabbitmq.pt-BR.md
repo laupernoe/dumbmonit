@@ -42,9 +42,9 @@ vê imediatamente; as estatísticas do nó atrasam alguns segundos.
 As [regras integradas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: RabbitMQ memory or disk alarm, RabbitMQ node down, RabbitMQ
 network partition, RabbitMQ queue without consumer, RabbitMQ queue
-unavailable, além de Device unreachable.
+unavailable, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o RabbitMQ. Ele diz o que está errado em uma frase (alarmes,

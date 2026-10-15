@@ -117,8 +117,8 @@ silêncios) são testados no próprio local, sem rede.
 1. Implemente `Collector` de `crates/proto/src/collector.rs`: `kind()`,
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e opcionalmente
    `discover()` para deteção de perfil. Devolva as variantes de `ProbeError` com
-   verdade: `means_down()` decide se uma falha conta como «dispositivo em baixo»
-   (alertada) ou como erro de configuração (mostrado no dispositivo, não
+   verdade: `means_down()` decide se uma falha conta como «monitor em baixo»
+   (alertada) ou como erro de configuração (mostrado no monitor, não
    notificado).
 2. Leia as suas opções de `Target::tags` num `options.rs`, com predefinições.
 3. Registe-o em `crates/server/src/main.rs` com `registry.register(...)`. O

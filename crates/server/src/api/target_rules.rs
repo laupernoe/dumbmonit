@@ -63,7 +63,7 @@ pub async fn list(
 ) -> ApiResult<Json<TargetRules>> {
     let nodes = db::alerts::list_target_nodes(&state.pool).await?;
     let Some(node) = nodes.into_iter().find(|node| node.id == id) else {
-        return Err(ApiError::NotFound(format!("Device {id} not found.")));
+        return Err(ApiError::NotFound(format!("Monitor {id} not found.")));
     };
 
     let since = (Utc::now() - SEEN_WITHIN).timestamp();
