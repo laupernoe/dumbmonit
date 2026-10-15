@@ -11,6 +11,7 @@ import type { Alert, AlertRule, Target, TargetId } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
 import { displayState, formatFailureReason, type ProbeStatus, type TargetState } from '#lib/format.js';
 import { isForecast, severityRank, severityTone, severityWord } from '#lib/components/alerts/helpers.js';
+import { attentionCount } from '#lib/alerts-attention.js';
 import { m } from '#lib/paraglide/messages.js';
 
 export interface SkyInput {
@@ -305,12 +306,13 @@ export function readSky({ targets, probes, alerts, rules }: SkyInput): Sky {
 		sentence,
 		plates,
 		needsYou: rows,
-		attention:
-			counts.warnings +
-			counts.advisories +
-			counts.notices +
-			unreachableRows +
-			misconfiguredRows,
+		// Info alerts are listed, never counted as problems (see `alerts-attention`).
+		attention: attentionCount({
+			warnings: counts.warnings,
+			advisories: counts.advisories,
+			unreachable: unreachableRows,
+			misconfigured: misconfiguredRows
+		}),
 		forecasts,
 		quiet: rows.length === 0,
 		counts
