@@ -1370,6 +1370,21 @@
 	"devices_k8s_workloads_heading": "缺少副本的工作负载",
 	"devices_k8s_workloads_missing_one": "{count} 个工作负载缺少副本",
 	"devices_k8s_workloads_missing_other": "{count} 个工作负载缺少副本",
+	"devices_kuma_back": "选择其他文件",
+	"devices_kuma_choose": "选择备份文件 (.json)",
+	"devices_kuma_col_becomes": "将变为",
+	"devices_kuma_col_monitor": "监控项",
+	"devices_kuma_confirm": "导入 {count} 个监控项",
+	"devices_kuma_credentials": "密码、请求头和请求体同样不会被导入。",
+	"devices_kuma_description": "放入 Uptime Kuma 1.x 的备份文件(设置、备份、导出)。监控项会转换为 DumbMonit 的类型;保存前可以看到将创建哪些、跳过哪些。",
+	"devices_kuma_error_title": "无法读取该文件",
+	"devices_kuma_every": "每 {seconds} 秒",
+	"devices_kuma_not_json": "该文件不是有效的 JSON。",
+	"devices_kuma_notifications": "不会导入通知(文件中有 {count} 个):请在设置中配置通知渠道。",
+	"devices_kuma_open": "从 Uptime Kuma 导入",
+	"devices_kuma_title": "从 Uptime Kuma 导入",
+	"devices_kuma_too_large": "该文件超过 4 MB,不是 Uptime Kuma 备份。",
+	"devices_kuma_working": "正在读取备份…",
 	"devices_list_bulk_aria": "批量操作",
 	"devices_list_bulk_delete": "删除",
 	"devices_list_bulk_delete_confirm": "永久删除 {count} 项？",
@@ -1699,6 +1714,7 @@
 	"devices_targets_err_save": "无法保存新的顺序或文件夹",
 	"devices_targets_filter_kind": "按类型筛选",
 	"devices_targets_filter_state": "按状态筛选",
+	"devices_targets_filter_tags": "按标签筛选",
 	"devices_targets_folder_aria": "新文件夹名称",
 	"devices_targets_folder_create": "创建",
 	"devices_targets_folder_placeholder": "文件夹名称",
@@ -4166,6 +4182,20 @@
 	"overview_first_test_text": "在渠道里发送一条测试。消息真正发出后，此步骤会变绿。",
 	"overview_first_test_title": "确认能收到消息",
 	"overview_first_title": "最初的五分钟",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "还有 {count} 项"
+			}
+		}
+	],
 	"overview_page_checked": "检查于 {when}",
 	"overview_page_empty_text": "添加交换机、NAS、虚拟化主机或网站，一分钟内就会开始上报。",
 	"overview_page_empty_title": "还没有监控项",

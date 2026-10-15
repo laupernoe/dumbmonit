@@ -1412,6 +1412,21 @@
 	"devices_k8s_workloads_heading": "Рабочие нагрузки без реплик",
 	"devices_k8s_workloads_missing_one": "{count} рабочая нагрузка без реплик",
 	"devices_k8s_workloads_missing_other": "Рабочих нагрузок без реплик: {count}",
+	"devices_kuma_back": "Выбрать другой файл",
+	"devices_kuma_choose": "Выбрать файл резервной копии (.json)",
+	"devices_kuma_col_becomes": "Станет",
+	"devices_kuma_col_monitor": "Монитор",
+	"devices_kuma_confirm": "Импортировать мониторов: {count}",
+	"devices_kuma_credentials": "Пароли, заголовки и тела запросов тоже никогда не импортируются.",
+	"devices_kuma_description": "Перетащите файл резервной копии Uptime Kuma 1.x (Настройки, Резервная копия, Экспорт). Мониторы преобразуются в типы DumbMonit; до сохранения вы увидите, что будет создано, а что пропущено.",
+	"devices_kuma_error_title": "Не удалось прочитать файл",
+	"devices_kuma_every": "каждые {seconds} с",
+	"devices_kuma_not_json": "Этот файл не является корректным JSON.",
+	"devices_kuma_notifications": "Уведомления не импортируются (в файле: {count}): настройте каналы в настройках.",
+	"devices_kuma_open": "Импорт из Uptime Kuma",
+	"devices_kuma_title": "Импорт из Uptime Kuma",
+	"devices_kuma_too_large": "Файл больше 4 МБ, поэтому это не резервная копия Uptime Kuma.",
+	"devices_kuma_working": "Чтение резервной копии…",
 	"devices_list_bulk_aria": "Групповые действия",
 	"devices_list_bulk_delete": "Удалить",
 	"devices_list_bulk_delete_confirm": "Удалить безвозвратно ({count})?",
@@ -1741,6 +1756,7 @@
 	"devices_targets_err_save": "Не удалось сохранить новый порядок или папку",
 	"devices_targets_filter_kind": "Фильтр по типу",
 	"devices_targets_filter_state": "Фильтр по состоянию",
+	"devices_targets_filter_tags": "Фильтр по тегу",
 	"devices_targets_folder_aria": "Название новой папки",
 	"devices_targets_folder_create": "Создать",
 	"devices_targets_folder_placeholder": "Название папки",
@@ -4319,6 +4335,23 @@
 	"overview_first_test_text": "Отправьте тест из канала. Шаг станет зелёным, когда сообщение действительно уйдёт.",
 	"overview_first_test_title": "Проверьте, что сообщение доходит",
 	"overview_first_title": "Ваши первые пять минут",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ещё {count}",
+				"countPlural=few": "Ещё {count}",
+				"countPlural=many": "Ещё {count}",
+				"countPlural=other": "Ещё {count}"
+			}
+		}
+	],
 	"overview_page_checked": "Проверено {when}",
 	"overview_page_empty_text": "Добавьте коммутатор, NAS, гипервизор или сайт, и уже через минуту он начнёт присылать данные.",
 	"overview_page_empty_title": "Мониторов пока нет",

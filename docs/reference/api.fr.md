@@ -416,6 +416,7 @@ Session admin ou jeton d'API (portée `write` pour les changements). Voir
 |---|---|---|
 | `GET` | `/api/targets` | Liste chaque appareil. |
 | `POST` | `/api/targets` | En créer un. `201` avec l'appareil. La détection de profil démarre en arrière-plan pour SNMP. |
+| `POST` | `/api/targets/import/kuma` | Importe des moniteurs depuis une sauvegarde d'Uptime Kuma 1.x (le fichier JSON en corps, 4 Mio au plus). `?dry_run=true` pour un aperçu. Voir [Services](../devices/services.md#venir-duptime-kuma). |
 | `GET` | `/api/targets/{id}` | Un appareil. |
 | `PUT` | `/api/targets/{id}` | Le remplacer. Omettre `credential` garde celui enregistré ; omettre `profile_id` garde le profil détecté (`""` l'efface). Régler `enabled: false` efface les alertes de l'appareil sans notifier. |
 | `DELETE` | `/api/targets/{id}` | `204`. Efface les alertes de l'appareil sans notifier et supprime ses séries temporelles de VictoriaMetrics (au mieux). |

@@ -1398,6 +1398,21 @@
 	"devices_k8s_workloads_heading": "Charges de travail sans tous leurs réplicas",
 	"devices_k8s_workloads_missing_one": "{count} charge de travail sans tous ses réplicas",
 	"devices_k8s_workloads_missing_other": "{count} charges de travail sans tous leurs réplicas",
+	"devices_kuma_back": "Choisir un autre fichier",
+	"devices_kuma_choose": "Choisir le fichier de sauvegarde (.json)",
+	"devices_kuma_col_becomes": "Devient",
+	"devices_kuma_col_monitor": "Moniteur",
+	"devices_kuma_confirm": "Importer {count} moniteurs",
+	"devices_kuma_credentials": "Les mots de passe, en-têtes et corps de requête ne sont pas importés non plus.",
+	"devices_kuma_description": "Déposez le fichier de sauvegarde d'Uptime Kuma 1.x (Réglages, Sauvegarde, Exporter). Les moniteurs sont convertis en types DumbMonit ; vous voyez ce qui sera créé et ce qui est ignoré avant tout enregistrement.",
+	"devices_kuma_error_title": "Le fichier n'a pas pu être lu",
+	"devices_kuma_every": "toutes les {seconds} s",
+	"devices_kuma_not_json": "Ce fichier n'est pas du JSON valide.",
+	"devices_kuma_notifications": "Les notifications ne sont pas importées ({count} dans le fichier) : configurez vos canaux dans les réglages.",
+	"devices_kuma_open": "Importer depuis Uptime Kuma",
+	"devices_kuma_title": "Importer depuis Uptime Kuma",
+	"devices_kuma_too_large": "Ce fichier dépasse 4 Mo : ce n'est pas une sauvegarde d'Uptime Kuma.",
+	"devices_kuma_working": "Lecture de la sauvegarde…",
 	"devices_list_bulk_aria": "Actions groupées",
 	"devices_list_bulk_delete": "Supprimer",
 	"devices_list_bulk_delete_confirm": "Supprimer {count} définitivement ?",
@@ -1727,6 +1742,7 @@
 	"devices_targets_err_save": "Impossible d'enregistrer le nouvel ordre ou le dossier",
 	"devices_targets_filter_kind": "Filtrer par type",
 	"devices_targets_filter_state": "Filtrer par état",
+	"devices_targets_filter_tags": "Filtrer par étiquette",
 	"devices_targets_folder_aria": "Nom du nouveau dossier",
 	"devices_targets_folder_create": "Créer",
 	"devices_targets_folder_placeholder": "Nom du dossier",
@@ -4231,6 +4247,21 @@
 	"overview_first_test_text": "Envoyez un test depuis le canal. Cette étape passe au vert dès qu'un message part vraiment.",
 	"overview_first_test_title": "Vérifiez qu'un message arrive",
 	"overview_first_title": "Vos cinq premières minutes",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} autre",
+				"countPlural=other": "+{count} autres"
+			}
+		}
+	],
 	"overview_page_checked": "Vérifié {when}",
 	"overview_page_empty_text": "Ajoutez un switch, un NAS, un hyperviseur ou un site web : il commence à remonter des données en moins d'une minute.",
 	"overview_page_empty_title": "Aucune surveillance pour l'instant",

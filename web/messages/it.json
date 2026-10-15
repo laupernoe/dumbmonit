@@ -1398,6 +1398,21 @@
 	"devices_k8s_workloads_heading": "Workload con repliche mancanti",
 	"devices_k8s_workloads_missing_one": "{count} workload con repliche mancanti",
 	"devices_k8s_workloads_missing_other": "{count} workload con repliche mancanti",
+	"devices_kuma_back": "Scegli un altro file",
+	"devices_kuma_choose": "Scegli il file di backup (.json)",
+	"devices_kuma_col_becomes": "Diventa",
+	"devices_kuma_col_monitor": "Monitor",
+	"devices_kuma_confirm": "Importa {count} monitor",
+	"devices_kuma_credentials": "Anche password, intestazioni e corpi delle richieste non vengono mai importati.",
+	"devices_kuma_description": "Trascina il file di backup di Uptime Kuma 1.x (Impostazioni, Backup, Esporta). I monitor vengono convertiti nei tipi di DumbMonit; prima di salvare vedi cosa verrà creato e cosa viene saltato.",
+	"devices_kuma_error_title": "Impossibile leggere il file",
+	"devices_kuma_every": "ogni {seconds} s",
+	"devices_kuma_not_json": "Questo file non è un JSON valido.",
+	"devices_kuma_notifications": "Le notifiche non vengono importate ({count} nel file): configura i canali nelle impostazioni.",
+	"devices_kuma_open": "Importa da Uptime Kuma",
+	"devices_kuma_title": "Importa da Uptime Kuma",
+	"devices_kuma_too_large": "Questo file supera i 4 MB, quindi non è un backup di Uptime Kuma.",
+	"devices_kuma_working": "Lettura del backup…",
 	"devices_list_bulk_aria": "Azioni di gruppo",
 	"devices_list_bulk_delete": "Elimina",
 	"devices_list_bulk_delete_confirm": "Eliminare {count} definitivamente?",
@@ -1727,6 +1742,7 @@
 	"devices_targets_err_save": "Impossibile salvare il nuovo ordine o la cartella",
 	"devices_targets_filter_kind": "Filtra per tipo",
 	"devices_targets_filter_state": "Filtra per stato",
+	"devices_targets_filter_tags": "Filtra per tag",
 	"devices_targets_folder_aria": "Nome della nuova cartella",
 	"devices_targets_folder_create": "Crea",
 	"devices_targets_folder_placeholder": "Nome della cartella",
@@ -4231,6 +4247,21 @@
 	"overview_first_test_text": "Invia un test dal canale. Questo passaggio diventa verde appena un messaggio parte davvero.",
 	"overview_first_test_title": "Verifica che arrivi un messaggio",
 	"overview_first_title": "I tuoi primi cinque minuti",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} altro",
+				"countPlural=other": "+{count} altri"
+			}
+		}
+	],
 	"overview_page_checked": "Controllato {when}",
 	"overview_page_empty_text": "Aggiungi uno switch, un NAS, un hypervisor o un sito web e inizierà a riportare dati in meno di un minuto.",
 	"overview_page_empty_title": "Nessun monitor per ora",

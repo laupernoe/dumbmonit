@@ -555,6 +555,7 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 
 | Method | Route | Scope | Purpose |
 |---|---|---|---|
+| `POST` | `/api/targets/import/kuma` | write | Import monitors from an Uptime Kuma 1.x backup (the JSON file as the body, 4 MiB at most). `?dry_run=true` previews. See [Services](../devices/services.md#coming-from-uptime-kuma). |
 | `POST` | `/api/targets/reorder` | write | Reorder devices. |
 | `GET` | `/api/targets/{id}/security` | read | Security score, grade and checks of one device. |
 | `GET` | `/api/security/summary` | read | Security score of every rated device, worst first. |

@@ -3756,6 +3756,37 @@ export interface TargetImportReport {
 	rows: TargetImportRow[];
 }
 
+/** One monitor of an Uptime Kuma backup. Mirrors `crates/server/src/api/kuma_import.rs`. */
+export interface KumaImportRow {
+	/** Position of the monitor in the file, from 1. */
+	row: number;
+	name: string;
+	/** Uptime Kuma monitor type. */
+	source_type: string;
+	/** Device type created; null when the monitor is skipped. */
+	kind: string | null;
+	address: string;
+	folder: string;
+	interval_secs: number | null;
+	/** Uptime Kuma tags as `key=value`. */
+	tags: string[];
+	status: TargetImportStatus;
+	/** Why it was skipped, or what is not imported (English, as served). */
+	message: string | null;
+	id: number | null;
+}
+
+/** Answer to `POST /api/targets/import/kuma`. */
+export interface KumaImportReport {
+	dry_run: boolean;
+	total: number;
+	created: number;
+	skipped: number;
+	errors: number;
+	notifications_ignored: number;
+	rows: KumaImportRow[];
+}
+
 // --- Website health & SEO (kind `website`) ----------------------------------
 // Mirrors `crates/server/src/api/website.rs`.
 

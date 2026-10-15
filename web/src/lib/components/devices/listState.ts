@@ -1,6 +1,6 @@
 /**
  * The /targets list state that lives in the URL (search, state segment, kind,
- * sort, layout) so a filtered view can be linked and survives a reload, plus
+ * tags, sort, layout) so a filtered view can be linked and survives a reload, plus
  * the pure helpers behind sorting and the bulk actions. Defaults are never
  * written, so a pristine list keeps a clean `/targets`.
  */
@@ -22,13 +22,18 @@ export interface ListQuery {
 	search: string;
 	segment: Segment;
 	kind: string;
+	/** `key=value` free tags, all of which a device must carry. */
+	tags: string[];
 	sort: SortKey;
 	dir: SortDir;
 	/** `null`: not in the URL, the viewer's remembered layout applies. */
 	view: RackView | null;
 }
 
-export function parseListQuery(params: { get(name: string): string | null }): ListQuery {
+export function parseListQuery(params: {
+	get(name: string): string | null;
+	getAll(name: string): string[];
+}): ListQuery {
 	const segment = params.get('state');
 	const sort = params.get('sort');
 	const view = params.get('view');
@@ -36,6 +41,7 @@ export function parseListQuery(params: { get(name: string): string | null }): Li
 		search: params.get('q') ?? '',
 		segment: (SEGMENTS as readonly (string | null)[]).includes(segment) ? (segment as Segment) : 'all',
 		kind: params.get('kind') ?? '',
+		tags: params.getAll('tag').filter((t) => t.includes('=')),
 		sort: (SORT_KEYS as readonly (string | null)[]).includes(sort) ? (sort as SortKey) : 'default',
 		dir: params.get('dir') === 'desc' ? 'desc' : 'asc',
 		view: (RACK_VIEWS as readonly (string | null)[]).includes(view) ? (view as RackView) : null
@@ -48,6 +54,7 @@ export function serializeListQuery(query: ListQuery): string {
 	if (query.search.trim()) params.set('q', query.search.trim());
 	if (query.segment !== 'all') params.set('state', query.segment);
 	if (query.kind) params.set('kind', query.kind);
+	for (const tag of query.tags) params.append('tag', tag);
 	if (query.sort !== 'default') {
 		params.set('sort', query.sort);
 		if (query.dir === 'desc') params.set('dir', 'desc');
@@ -55,6 +62,41 @@ export function serializeListQuery(query: ListQuery): string {
 	if (query.view) params.set('view', query.view);
 	const text = params.toString();
 	return text ? `?${text}` : '';
+}
+
+/**
+ * A device's `tags` hold both the options of its type (`keyword`, `port`…) and
+ * the free tags the user added; only the latter are tags for filtering.
+ * Returned as `key=value`.
+ */
+export function freeTags(tags: Record<string, string>, optionKeys: ReadonlySet<string>): string[] {
+	return Object.entries(tags)
+		.filter(([key, value]) => !optionKeys.has(key) && value !== '')
+		.map(([key, value]) => `${key}=${value}`);
+}
+
+export function hasAllTags(
+	tags: Record<string, string>,
+	wanted: readonly string[],
+	optionKeys: ReadonlySet<string>
+): boolean {
+	if (wanted.length === 0) return true;
+	const own = new Set(freeTags(tags, optionKeys));
+	return wanted.every((tag) => own.has(tag));
+}
+
+/** Every free tag in use with its device count, most used first. */
+export function tagCounts(
+	devices: readonly { kind: string; tags: Record<string, string> }[],
+	optionKeysOf: (kind: string) => ReadonlySet<string>
+): [string, number][] {
+	const counts = new Map<string, number>();
+	for (const device of devices) {
+		for (const tag of freeTags(device.tags, optionKeysOf(device.kind))) {
+			counts.set(tag, (counts.get(tag) ?? 0) + 1);
+		}
+	}
+	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'en'));
 }
 
 const byName = (a: Target, b: Target) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });

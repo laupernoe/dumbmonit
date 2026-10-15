@@ -1398,6 +1398,21 @@
 	"devices_k8s_workloads_heading": "Cargas de trabajo sin todas sus réplicas",
 	"devices_k8s_workloads_missing_one": "{count} carga de trabajo sin todas sus réplicas",
 	"devices_k8s_workloads_missing_other": "{count} cargas de trabajo sin todas sus réplicas",
+	"devices_kuma_back": "Elegir otro archivo",
+	"devices_kuma_choose": "Elegir el archivo de copia (.json)",
+	"devices_kuma_col_becomes": "Se convierte en",
+	"devices_kuma_col_monitor": "Monitor",
+	"devices_kuma_confirm": "Importar {count} monitores",
+	"devices_kuma_credentials": "Tampoco se importan nunca las contraseñas, las cabeceras ni los cuerpos de petición.",
+	"devices_kuma_description": "Suelte el archivo de copia de seguridad de Uptime Kuma 1.x (Ajustes, Copia de seguridad, Exportar). Los monitores se convierten a tipos de DumbMonit; antes de guardar nada verá qué se creará y qué se omite.",
+	"devices_kuma_error_title": "No se pudo leer el archivo",
+	"devices_kuma_every": "cada {seconds} s",
+	"devices_kuma_not_json": "Este archivo no es un JSON válido.",
+	"devices_kuma_notifications": "Las notificaciones no se importan ({count} en el archivo): configure sus canales en los ajustes.",
+	"devices_kuma_open": "Importar desde Uptime Kuma",
+	"devices_kuma_title": "Importar desde Uptime Kuma",
+	"devices_kuma_too_large": "Este archivo supera los 4 MB, así que no es una copia de Uptime Kuma.",
+	"devices_kuma_working": "Leyendo la copia…",
 	"devices_list_bulk_aria": "Acciones en lote",
 	"devices_list_bulk_delete": "Eliminar",
 	"devices_list_bulk_delete_confirm": "¿Eliminar {count} definitivamente?",
@@ -1727,6 +1742,7 @@
 	"devices_targets_err_save": "No se pudo guardar el nuevo orden o la carpeta",
 	"devices_targets_filter_kind": "Filtrar por tipo",
 	"devices_targets_filter_state": "Filtrar por estado",
+	"devices_targets_filter_tags": "Filtrar por etiqueta",
 	"devices_targets_folder_aria": "Nombre de la nueva carpeta",
 	"devices_targets_folder_create": "Crear",
 	"devices_targets_folder_placeholder": "Nombre de la carpeta",
@@ -4231,6 +4247,21 @@
 	"overview_first_test_text": "Envía una prueba desde el canal. Este paso se pone en verde cuando sale un mensaje de verdad.",
 	"overview_first_test_title": "Comprueba que llega un mensaje",
 	"overview_first_title": "Tus primeros cinco minutos",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} más",
+				"countPlural=other": "+{count} más"
+			}
+		}
+	],
 	"overview_page_checked": "Comprobado {when}",
 	"overview_page_empty_text": "Añade un switch, un NAS, un hipervisor o un sitio web y empezará a reportar en un minuto.",
 	"overview_page_empty_title": "Aún no hay monitores",

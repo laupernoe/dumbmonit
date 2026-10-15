@@ -11,7 +11,7 @@
  "k018": "[[svg4]]Auf GitHub ansehen",
  "k019": "[[svg5]]Installationsanleitung lesen",
  "k020": "Das Bulletin auf dem Wall-Bildschirm einer Testinstanz mit eingeschalteten Störungen &mdash; das Wetterfenster ist ein lebendiges Pariser Hausdach mit den Tauben. An einem ruhigen Tag steht dort „Klarer Himmel“.",
- "k021": "<strong>Dies ist eine Alpha</strong> (aktuell ist 0.1.0-alpha.7). DumbMonit läuft täglich im eigenen Netz seines Autors, aber die HTTP-API ist nicht eingefroren, das Datenbankschema ändert sich noch, und über Schemaänderungen hinweg gibt es noch keine Update-Garantie. Mehrere Integrationen kennen bisher nur Testinstanzen, keine jahrealte Produktionshardware; sie sind unten gekennzeichnet. Probieren Sie es aus und <a href=\"https://github.com/laupernoe/dumbmonit/issues\">sagen Sie uns, was kaputtgeht</a>.",
+ "k021": "<strong>Dies ist eine Alpha</strong> (aktuell ist @@VERSION@@). DumbMonit läuft täglich im eigenen Netz seines Autors, aber die HTTP-API ist nicht eingefroren, das Datenbankschema ändert sich noch, und über Schemaänderungen hinweg gibt es noch keine Update-Garantie. Mehrere Integrationen kennen bisher nur Testinstanzen, keine jahrealte Produktionshardware; sie sind unten gekennzeichnet. Probieren Sie es aus und <a href=\"https://github.com/laupernoe/dumbmonit/issues\">sagen Sie uns, was kaputtgeht</a>.",
  "k055": "Alarme ohne Rauschen",
  "k056": "Nützliche Regeln sind direkt nach der Installation aktiv. Die Arbeit steckt darin, weniger und bessere Nachrichten zu senden.",
  "k057": "Abhängigkeiten",
