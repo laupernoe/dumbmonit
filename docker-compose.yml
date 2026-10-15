@@ -7,11 +7,18 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to its user, then drops to it for good.
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"

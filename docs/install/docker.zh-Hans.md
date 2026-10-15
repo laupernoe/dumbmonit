@@ -33,11 +33,18 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to its user, then drops to it for good.
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -53,8 +60,8 @@ volumes:
 docker compose up -d
 ```
 
-会拉取已发布的镜像；只读文件系统、被移除的 capability 以及 `ping_group_range`
-sysctl 的作用，参见[以非 root 用户运行](#runs-as-a-non-root-user)和
+会拉取已发布的镜像；只读文件系统、capability、`PUID`/`PGID` 以及 `ping_group_range`
+sysctl 的作用，参见[权限与数据目录](#permissions)和
 [无需 capability 的 ICMP ping](#icmp-ping-without-a-capability)。各项选项（端口、
 密钥、保留期、外部 VictoriaMetrics、截图）都是
 [由你自己添加的环境变量](#advanced-options)。
@@ -116,6 +123,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 | 变量 | 默认值 | 作用 |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | 容器内的监听地址。 |
+| `PUID` / `PGID` | `65532` | 服务器运行时使用的用户和组，也是 `/data` 中文件的所有者（[详情](#permissions)）。`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 同样有效。 |
 | `DUMBMONIT_DATA_DIR` | `/data` | SQLite 数据库（`dumbmonit.db`）、实例密钥（`secret.key`）以及内嵌 VictoriaMetrics 的数据（`vm/`）。 |
 | `DUMBMONIT_VM_URL` | *（未设置）* | 外部 VictoriaMetrics 的 URL。设置后不会启动内嵌的那个。 |
 | `DUMBMONIT_VM_RETENTION` | `12` | 内嵌 VictoriaMetrics 的保留期：以月为单位，或 `30d`、`2y`。 |
@@ -169,21 +177,23 @@ docker compose up -d
     如果升级出了问题，你就从它来恢复。参见
     [备份与恢复](backup.md)。
 
-### 从 0.1.0-alpha.1 升级 {#from-010-alpha1}
+### 使用 `cap_drop: [ALL]` 的 Compose 文件 {#from-cap-drop-all}
 
-自 0.1.0-alpha.2 起，容器以用户 65532 而不是 root 运行。由
-alpha.1 创建的卷仍然属于 root，服务器会拒绝
-启动（`/data is not writable by the server`）。请一次性移交该卷的所有权：
+直到 0.1.0-alpha.8，镜像一开始就以用户 65532 运行，Compose 文件会丢弃所有
+capability。现在服务器以 root 启动，把 `/data` 交给它的用户，随后永久放弃
+root；这最初的一瞬间需要四个 capability。如果你的 `docker-compose.yml` 中有
+`cap_drop: [ALL]` 而没有 `cap_add`，容器会立即停止，并显示 `its capabilities
+were all dropped`。加上一行：
 
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
+```yaml
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
 ```
 
-或者保持文件原样，让容器以其所有者身份运行，在 `docker-compose.yml`
-的服务下设置
-`user: "0:0"`（或绑定挂载所属的 uid）。
+或者在服务下使用 `user: "65532:65532"` 保持原来的行为：此时文件必须已经属于
+65532，就像由 DumbMonit 创建的卷那样。
+
+由 0.1.0-alpha.1 创建、属于 root 的卷不再需要任何操作：它会在首次启动时被移交。
 
 ### 从 EzyMonit 以及双容器部署升级 {#from-ezymonit-and-from-the-two-container-setup}
 
@@ -374,32 +384,65 @@ cookie 只通过 HTTPS 发送。纯 HTTP 部署中不要设置它：
     使用它：请确保 `/install.sh`、`/install.ps1`、`/download/…` 和 `/api/ingest`
     能通过反向代理。
 
-## 以非 root 用户运行 {#runs-as-a-non-root-user}
+## 权限与数据目录 {#permissions}
 
-容器以用户 `65532:65532` 运行服务器（使用数字形式：`scratch`
-镜像中没有 `/etc/passwd`），丢弃所有 capability，启用 `no-new-privileges`
-并使用只读的根文件系统；`/data`（卷）和 `/tmp`（tmpfs）
-是仅有的可写路径。这一切都已包含在上面的 Compose 文件中。
+容器以 root 启动，而服务器只在最初的一瞬间保持 root。在打开数据库、启动
+VictoriaMetrics 或监听网络之前，它会：
 
-由 Docker 在首次启动时创建的命名卷会从镜像继承 `/data` 的所有者：
-无需任何操作。有两种情况需要执行一条命令：
+1. 把 `/data` 交给用户 `65532:65532`，只修改属于其他人的条目，不跟随符号链接，
+   也不会离开 `/data`；
+2. 永久放弃 root（依次是附加组、组、用户），并确认自己无法再取回。随后启动的
+   VictoriaMetrics 以同一个无特权用户运行。
 
-- **由早期版本创建的卷**（服务器过去以 root 运行，
-  因此文件属于 root）。请在栈停止时一次性移交所有权：
+因此，命名卷、绑定挂载（`./dumbmonit:/data`）以及 Docker 刚以 root 创建的目录
+都可以直接使用。Compose 文件会丢弃所有 capability，只保留第一步需要的四个
+（`CHOWN`、`DAC_READ_SEARCH`、`SETUID`、`SETGID`；服务器以 65532 运行后一个都
+不会剩下），并启用 `no-new-privileges` 和只读的根文件系统：`/data` 和 `/tmp`
+（tmpfs）是仅有的可写路径。
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+**选择所有者：`PUID` 和 `PGID`。** 若要让绑定挂载中的文件归你自己的用户所有，
+请设置服务器运行时使用的 uid 和 gid；启动时文件会被移交给它们：
 
-  否则的症状是容器立即退出，并显示
-  `creating directory /data … Permission denied`（或 `unable to open database
-  file`）。
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-- **绑定挂载**（`./data:/data`）会保留主机目录的所有权。
-  要么执行 `chown -R 65532:65532 ./data`，要么让容器以该目录的
-  所有者身份运行：在服务下设置 `user: "1000:1000"`，任何 uid 都可以。
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 同样有效，且优先级更高。`0` 会被拒绝：服务器
+从不以 root 运行。在 Unraid 上，`PUID=99` 和 `PGID=100` 对应 `appdata` 的常见所有者。
+
+**使用 `user:`（`--user`）运行。** 此时容器直接以该用户启动，不会更改任何所有者；
+`PUID`/`PGID` 被忽略。`/data` 必须已经可由该用户写入，否则服务器会停止，并给出
+修复方法的提示：对绑定挂载，在主机上执行 `sudo chown -R 1000:1000 ./dumbmonit`；
+对命名卷则执行：
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 1000:1000 /data
+```
+
+### SELinux 与 Podman {#selinux-and-podman}
+
+在 SELinux 处于 enforcing 模式的主机上（Fedora、RHEL、CentOS Stream、
+AlmaLinux 等），绑定挂载在带有容器标签之前会被拒绝访问，即使容器内是 root 也
+一样。请在卷后加上 `:Z`；如果其他容器共用该目录，则加 `:z`：
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+否则服务器会停止，并显示 `the host enforces SELinux and the volume has
+no container label`。命名卷由 Docker 负责打标签，无需额外操作。
+
+无 root 的 Podman 的工作方式相同。容器内的 root 就是主机上你自己的用户，而绑定
+挂载中的文件归容器内的 uid 65532 所有，主机上显示为你的某个 sub-uid（按常见的
+`/etc/subuid` 为 `165531`）。可用 `podman unshare ls -l ./dumbmonit` 查看。若想让
+文件改为归你自己的 uid 所有，请以你自己的身份运行容器；这样不会更改任何所有者：
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## 无需 capability 的 ICMP ping {#icmp-ping-without-a-capability}
 

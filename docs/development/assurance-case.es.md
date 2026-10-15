@@ -76,9 +76,13 @@ El argumento sigue los principios de diseño de Saltzer y Schroeder.
   agente son credenciales distintas. Los tokens de API llevan un ámbito `read` o
   `write` (`auth/token.rs`) y los usuarios tienen un rol de lector, operador o
   administrador.
-- **Mínimo privilegio.** La imagen se ejecuta con el UID 65532 (`Dockerfile`); el
-  archivo Compose descarta todas las capabilities, establece un sistema de
-  archivos raíz de solo lectura y `no-new-privileges` (`docker-compose.yml`).
+- **Mínimo privilegio.** El servidor se ejecuta con el UID 65532 (o `PUID`):
+  arrancado como root, solo entrega el directorio de datos a ese usuario, sin
+  seguir enlaces, y luego abandona root de forma definitiva y comprueba que no
+  puede recuperarlo, antes de abrir ninguna otra cosa (`privileges.rs`). El
+  archivo Compose conserva únicamente las cuatro capabilities que necesita este
+  paso, establece un sistema de archivos raíz de solo lectura y
+  `no-new-privileges` (`docker-compose.yml`).
 - **Mínimo mecanismo común.** Los agentes se autentican con su propio token, de
   modo que revocar una máquina no afecta a ningún usuario ni a otros agentes.
 - **Aceptabilidad psicológica.** El comportamiento seguro es el predeterminado y

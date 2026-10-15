@@ -34,11 +34,18 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to its user, then drops to it for good.
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -54,9 +61,9 @@ Starten Sie es dann:
 docker compose up -d
 ```
 
-Das veröffentlichte Image wird geladen; das schreibgeschützte Dateisystem, die entfernten
-Capabilities und der sysctl `ping_group_range` sind unter
-[Läuft als Nicht-root-Benutzer](#runs-as-a-non-root-user) und
+Das veröffentlichte Image wird geladen; das schreibgeschützte Dateisystem, die
+Capabilities, `PUID`/`PGID` und der sysctl `ping_group_range` sind unter
+[Berechtigungen und Datenverzeichnis](#permissions) und
 [ICMP-Ping ohne Capability](#icmp-ping-without-a-capability) erklärt. Optionen
 (Port, Geheimnis, Aufbewahrung, externes VictoriaMetrics, Screenshots) sind
 [Umgebungsvariablen, die Sie selbst ergänzen](#advanced-options).
@@ -122,6 +129,7 @@ benötigten unter `environment:` des Dienstes, wie unter
 | Variable | Standard | Rolle |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Lauschadresse innerhalb des Containers. |
+| `PUID` / `PGID` | `65532` | Benutzer und Gruppe, als die der Server läuft, und Besitzer der Dateien in `/data` ([Details](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` funktionieren ebenfalls. |
 | `DUMBMONIT_DATA_DIR` | `/data` | SQLite-Datenbank (`dumbmonit.db`), Instanz-Geheimnis (`secret.key`) und die Daten des eingebetteten VictoriaMetrics (`vm/`). |
 | `DUMBMONIT_VM_URL` | *(nicht gesetzt)* | URL eines externen VictoriaMetrics. Wenn gesetzt, wird das eingebettete nicht gestartet. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Aufbewahrung des eingebetteten VictoriaMetrics: Monate, oder `30d`, `2y`. |
@@ -175,21 +183,27 @@ Datenbankmigrationen laufen beim Start. Die VictoriaMetrics-Daten bleiben unber�
     wieder her, falls das Upgrade schiefgeht. Siehe
     [Backup und Wiederherstellung](backup.md).
 
-### Von 0.1.0-alpha.1 {#from-010-alpha1}
+### Compose-Dateien mit `cap_drop: [ALL]` {#from-cap-drop-all}
 
-Seit 0.1.0-alpha.2 läuft der Container als Benutzer 65532 statt als root. Ein
-von alpha.1 angelegtes Volume gehört noch root, und der Server weigert sich zu
-starten (`/data is not writable by the server`). Übergeben Sie das Volume einmalig:
+Bis 0.1.0-alpha.8 lief das Image von Anfang an als Benutzer 65532, und die
+Compose-Datei entfernte alle Capabilities. Der Server startet jetzt als root,
+um `/data` an seinen Benutzer zu übergeben, und gibt root dann endgültig ab;
+für diesen allerersten Moment braucht er vier Capabilities. Enthält Ihre
+`docker-compose.yml` `cap_drop: [ALL]` ohne `cap_add`, beendet sich der
+Container sofort mit `its capabilities were all dropped`. Fügen Sie eine Zeile
+hinzu:
 
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
+```yaml
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
 ```
 
-Oder lassen Sie die Dateien unverändert und führen den Container als deren Besitzer aus, mit
-`user: "0:0"` (oder der uid eines Bind-Mounts) unter dem Service in
-`docker-compose.yml`.
+Oder behalten Sie das bisherige Verhalten mit `user: "65532:65532"` unter dem
+Service: Die Dateien müssen dann bereits 65532 gehören, wie in einem von
+DumbMonit angelegten Volume.
+
+Ein von 0.1.0-alpha.1 angelegtes Volume, das root gehört, braucht nichts mehr:
+Es wird beim ersten Start übergeben.
 
 ### Von EzyMonit und vom Setup mit zwei Containern {#from-ezymonit-and-from-the-two-container-setup}
 
@@ -386,32 +400,78 @@ Browser würde das Cookie nie zurücksenden, und eine Anmeldung wäre unmöglich
     ebenfalls: Stellen Sie sicher, dass `/install.sh`, `/install.ps1`, `/download/…` und `/api/ingest`
     den Proxy passieren.
 
-## Läuft als Nicht-root-Benutzer {#runs-as-a-non-root-user}
+## Berechtigungen und Datenverzeichnis {#permissions}
 
-Der Container führt den Server als Benutzer `65532:65532` aus (numerisch: Dem `scratch`-
-Image fehlt `/etc/passwd`), mit entfernten Capabilities, `no-new-privileges`
-und einem schreibgeschützten Root-Dateisystem; `/data` (das Volume) und `/tmp` (ein tmpfs)
-sind die einzigen beschreibbaren Pfade. All das steht in der obigen Compose-Datei.
+Der Container startet als root, und der Server bleibt nur für seinen ersten
+Moment root. Bevor er die Datenbank öffnet, VictoriaMetrics startet oder im
+Netzwerk lauscht, tut er Folgendes:
 
-Ein von Docker beim ersten Start angelegtes benanntes Volume erbt den Besitzer von `/data`
-aus dem Image: nichts zu tun. Zwei Fälle brauchen einen Befehl:
+1. Er übergibt `/data` an den Benutzer `65532:65532` und ändert nur Einträge,
+   die jemand anderem gehören, ohne symbolischen Links zu folgen und ohne
+   `/data` zu verlassen.
+2. Er gibt root endgültig ab (zusätzliche Gruppen, Gruppe, dann Benutzer) und
+   prüft, dass er es nicht zurückerlangen kann. VictoriaMetrics, das danach
+   gestartet wird, läuft als derselbe unprivilegierte Benutzer.
 
-- **Ein von einer früheren Version angelegtes Volume** (der Server lief früher als root,
-  die Dateien gehören also root). Übergeben Sie sie einmalig, bei gestopptem Stack:
+Ein benanntes Volume, ein Bind-Mount (`./dumbmonit:/data`) und ein Verzeichnis,
+das Docker gerade als root angelegt hat, funktionieren daher unverändert. Die
+Compose-Datei entfernt alle Capabilities bis auf die vier, die dieser erste
+Schritt braucht (`CHOWN`, `DAC_READ_SEARCH`, `SETUID`, `SETGID`; keine davon
+bleibt übrig, sobald der Server als 65532 läuft), und setzt `no-new-privileges`
+sowie ein schreibgeschütztes Root-Dateisystem: `/data` und `/tmp` (ein tmpfs)
+sind die einzigen beschreibbaren Pfade.
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+**Den Besitzer wählen: `PUID` und `PGID`.** Damit die Dateien eines Bind-Mounts
+Ihrem eigenen Benutzer gehören, legen Sie uid und gid fest, als die der Server
+läuft; die Dateien werden beim Start an sie übergeben:
 
-  Das Symptom ist sonst ein Container, der sofort mit
-  `creating directory /data … Permission denied` (oder `unable to open database
-  file`) beendet wird.
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-- **Ein Bind-Mount** (`./data:/data`) behält den Besitzer des Host-Verzeichnisses.
-  Entweder `chown -R 65532:65532 ./data`, oder den Container als Besitzer des Verzeichnisses ausführen:
-  `user: "1000:1000"` unter dem Service, jede uid funktioniert.
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` funktionieren ebenfalls und haben Vorrang.
+`0` wird abgelehnt: Der Server läuft nie als root. Unter Unraid entsprechen
+`PUID=99` und `PGID=100` dem üblichen Besitzer von `appdata`.
+
+**Betrieb mit `user:` (`--user`).** Der Container startet dann direkt als dieser
+Benutzer und ändert keinen Besitzer; `PUID`/`PGID` werden ignoriert. `/data`
+muss für diesen Benutzer bereits beschreibbar sein, sonst beendet sich der
+Server mit einer Meldung, die die Lösung nennt: `sudo chown -R 1000:1000
+./dumbmonit` auf dem Host bei einem Bind-Mount oder, bei einem benannten
+Volume:
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 1000:1000 /data
+```
+
+### SELinux und Podman {#selinux-and-podman}
+
+Auf einem Host, auf dem SELinux erzwungen wird (Fedora, RHEL, CentOS Stream,
+AlmaLinux …), wird dem Container ein Bind-Mount verweigert, auch als root,
+solange er kein Container-Label trägt. Hängen Sie `:Z` an das Volume an, oder
+`:z`, wenn andere Container das Verzeichnis teilen:
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+Ohne das beendet sich der Server mit `the host enforces SELinux and the volume has
+no container label`. Benannte Volumes werden von Docker mit Labels versehen und
+brauchen nichts.
+
+Rootless Podman funktioniert genauso. Root im Container ist Ihr eigener
+Benutzer auf dem Host, und die Dateien eines Bind-Mounts gehen an die uid 65532
+des Containers, die der Host als eine Ihrer Sub-uids anzeigt (`165531` bei der
+üblichen `/etc/subuid`). Lesen Sie sie mit `podman unshare ls -l ./dumbmonit`.
+Soll stattdessen Ihre eigene uid Besitzer bleiben, führen Sie den Container als
+sich selbst aus; dann ändert sich kein Besitzer:
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## ICMP-Ping ohne Capability {#icmp-ping-without-a-capability}
 

@@ -76,9 +76,13 @@ O argumento segue os princípios de design de Saltzer e Schroeder.
 - **Separação de privilégios.** Sessões, tokens de API e tokens de agente são
   credenciais diferentes. Os tokens de API têm escopo `read` ou `write`
   (`auth/token.rs`) e os usuários têm papel de visualizador, operador ou admin.
-- **Privilégio mínimo.** A imagem roda como UID 65532 (`Dockerfile`); o arquivo
-  Compose descarta todas as capabilities, define um sistema de arquivos raiz
-  somente leitura e `no-new-privileges` (`docker-compose.yml`).
+- **Privilégio mínimo.** O servidor roda com o UID 65532 (ou `PUID`): iniciado
+  como root, apenas entrega o diretório de dados a esse usuário, sem seguir
+  links, e depois abandona o root de vez e verifica que não consegue
+  recuperá-lo, antes de abrir qualquer outra coisa (`privileges.rs`). O arquivo
+  Compose mantém só as quatro capabilities de que este passo precisa, define um
+  sistema de arquivos raiz somente leitura e `no-new-privileges`
+  (`docker-compose.yml`).
 - **Mínimo de mecanismo comum.** Os agentes se autenticam com seu próprio token,
   então revogar uma máquina não afeta nenhum usuário nem outro agente.
 - **Aceitabilidade psicológica.** O comportamento seguro é o padrão e não exige

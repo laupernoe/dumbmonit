@@ -7,6 +7,7 @@ Tutto passa attraverso variabili di ambiente; nessuna è richiesta. Non c'è alc
 | Variabile | Predefinito | Ruolo |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Indirizzo di ascolto dell'API e dell'interfaccia web, dentro il contenitore. |
+| `PUID` / `PGID` | `65532` | Utente e gruppo con cui gira il server quando il container parte come root (l'impostazione predefinita dell'immagine): la directory dei dati viene ceduta a loro all'avvio, poi root viene abbandonato. `0` viene rifiutato. `DUMBMONIT_PUID` / `DUMBMONIT_PGID` hanno la precedenza. Ignorati se il container è avviato con `user:` / `--user`. Vedi [Permessi](../install/docker.md#permissions). |
 | `DUMBMONIT_DATA_DIR` | `/data` | Directory persistente: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (VictoriaMetrics incorporato) e `webchange/` (screenshot delle modifiche del sito web). |
 | `DUMBMONIT_VM_URL` | *(non impostato)* | URL di base di un'istanza VictoriaMetrics esterna (`http://host:8428`). Se impostato, quella incorporata non viene avviata; vedi [sotto](#embedded-victoriametrics). |
 | `DUMBMONIT_SECRET` | *(generato)* | Segreto dell'istanza. Se vuoto, leggi da `<data dir>/secret.key`, generato al primo avvio. Crittografa le credenziali del dispositivo, i segreti del canale e i token dell'agente con AES-256-GCM. |

@@ -34,11 +34,18 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to its user, then drops to it for good.
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -54,9 +61,9 @@ volumes:
 docker compose up -d
 ```
 
-Загружается опубликованный образ; файловая система только для чтения, снятые
-capabilities и sysctl `ping_group_range` объяснены в разделах
-[Работа от имени обычного пользователя](#runs-as-a-non-root-user) и
+Загружается опубликованный образ; файловая система только для чтения,
+capabilities, `PUID`/`PGID` и sysctl `ping_group_range` объяснены в разделах
+[Права доступа и каталог данных](#permissions) и
 [Ping ICMP без capability](#icmp-ping-without-a-capability). Параметры (порт,
 секрет, срок хранения, внешняя VictoriaMetrics, снимки экрана) —
 [переменные окружения, которые вы добавляете сами](#advanced-options).
@@ -121,6 +128,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 | Переменная | По умолчанию | Назначение |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Адрес прослушивания внутри контейнера. |
+| `PUID` / `PGID` | `65532` | Пользователь и группа, от имени которых работает сервер, и владелец файлов в `/data` ([подробности](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` тоже работают. |
 | `DUMBMONIT_DATA_DIR` | `/data` | База данных SQLite (`dumbmonit.db`), секрет экземпляра (`secret.key`) и данные встроенной VictoriaMetrics (`vm/`). |
 | `DUMBMONIT_VM_URL` | *(не задана)* | URL внешней VictoriaMetrics. Если задан, встроенная не запускается. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Срок хранения во встроенной VictoriaMetrics: месяцы или `30d`, `2y`. |
@@ -174,21 +182,26 @@ docker compose up -d
     восстанавливаетесь, если обновление пойдёт не так. См.
     [Резервное копирование и восстановление](backup.md).
 
-### С версии 0.1.0-alpha.1 {#from-010-alpha1}
+### Файлы Compose с `cap_drop: [ALL]` {#from-cap-drop-all}
 
-Начиная с 0.1.0-alpha.2 контейнер работает от пользователя 65532 вместо root. Том,
-созданный в alpha.1, по-прежнему принадлежит root, и сервер отказывается
-запускаться (`/data is not writable by the server`). Один раз передайте том новому владельцу:
+До 0.1.0-alpha.8 образ с самого начала работал от пользователя 65532, а файл
+Compose отбрасывал все capabilities. Теперь сервер стартует от root, чтобы
+передать `/data` своему пользователю, а затем навсегда отказывается от root; на
+этот первый момент ему нужны четыре capabilities. Если в вашем
+`docker-compose.yml` есть `cap_drop: [ALL]` и нет `cap_add`, контейнер сразу
+останавливается с сообщением `its capabilities were all dropped`. Добавьте одну
+строку:
 
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
+```yaml
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
 ```
 
-Или оставьте файлы как есть и запустите контейнер от их владельца, указав
-`user: "0:0"` (или uid привязанного каталога) в сервисе в
-`docker-compose.yml`.
+Либо сохраните прежнее поведение с помощью `user: "65532:65532"` в сервисе:
+тогда файлы уже должны принадлежать 65532, как в томе, созданном DumbMonit.
+
+Том, созданный версией 0.1.0-alpha.1 и принадлежащий root, больше ничего не
+требует: он передаётся при первом запуске.
 
 ### С EzyMonit и с конфигурации из двух контейнеров {#from-ezymonit-and-from-the-two-container-setup}
 
@@ -382,32 +395,75 @@ UI и API обслуживаются на одном порту по обычн�
     его тоже: убедитесь, что `/install.sh`, `/install.ps1`, `/download/…` и `/api/ingest`
     проходят через прокси.
 
-## Работа от имени обычного пользователя {#runs-as-a-non-root-user}
+## Права доступа и каталог данных {#permissions}
 
-Контейнер запускает сервер от пользователя `65532:65532` (числовой: в образе `scratch`
-нет `/etc/passwd`), со всеми отброшенными capabilities, `no-new-privileges`
-и корневой файловой системой только для чтения; `/data` (том) и `/tmp` (tmpfs)
-— единственные доступные для записи пути. Всё это есть в файле Compose выше.
+Контейнер стартует от root, а сервер остаётся root лишь в первый момент. Прежде
+чем открыть базу данных, запустить VictoriaMetrics или начать слушать сеть, он:
 
-Именованный том, созданный Docker при первом запуске, наследует владельца `/data`
-из образа: делать ничего не нужно. Два случая требуют одной команды:
+1. передаёт `/data` пользователю `65532:65532`, меняя только записи, которые
+   принадлежат кому-то другому, не переходя по символическим ссылкам и не
+   выходя за пределы `/data`;
+2. навсегда отказывается от root (дополнительные группы, группа, затем
+   пользователь) и проверяет, что вернуть его нельзя. VictoriaMetrics, запущенный
+   после этого, работает от того же непривилегированного пользователя.
 
-- **Том, созданный более ранней версией** (сервер раньше работал от root,
-  поэтому файлы принадлежат root). Передайте их один раз, с остановленным стеком:
+Поэтому именованный том, bind mount (`./dumbmonit:/data`) и каталог, который
+Docker только что создал от root, работают как есть. Файл Compose отбрасывает
+все capabilities, кроме четырёх, нужных этому первому шагу (`CHOWN`,
+`DAC_READ_SEARCH`, `SETUID`, `SETGID`; после перехода сервера на 65532 не
+остаётся ни одной), и задаёт `no-new-privileges` и корневую файловую систему
+только для чтения: `/data` и `/tmp` (tmpfs) — единственные доступные для записи
+пути.
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+**Выбор владельца: `PUID` и `PGID`.** Чтобы файлы bind mount оставались за вашим
+собственным пользователем, задайте uid и gid, от имени которых работает сервер;
+при запуске файлы передаются им:
 
-  Иначе симптом — контейнер, который сразу завершается с
-  `creating directory /data … Permission denied` (или `unable to open database
-  file`).
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-- **Привязанный каталог** (`./data:/data`) сохраняет владельца каталога хоста.
-  Либо `chown -R 65532:65532 ./data`, либо запустите контейнер от имени владельца
-  каталога: `user: "1000:1000"` в сервисе, подойдёт любой uid.
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` тоже работают и имеют приоритет. Значение
+`0` отклоняется: сервер никогда не работает от root. В Unraid `PUID=99` и
+`PGID=100` соответствуют обычному владельцу `appdata`.
+
+**Запуск с `user:` (`--user`).** Тогда контейнер сразу стартует от этого
+пользователя и ничего не меняет; `PUID`/`PGID` игнорируются. `/data` уже должен
+быть доступен этому пользователю для записи, иначе сервер останавливается с
+сообщением, в котором указано решение: `sudo chown -R 1000:1000 ./dumbmonit` на
+хосте для bind mount или, для именованного тома:
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 1000:1000 /data
+```
+
+### SELinux и Podman {#selinux-and-podman}
+
+На хосте, где SELinux работает в режиме enforcing (Fedora, RHEL, CentOS Stream,
+AlmaLinux…), контейнеру, включая root, отказывают в доступе к bind mount, пока у
+него нет метки контейнера. Добавьте `:Z` к тому или `:z`, если каталогом
+пользуются другие контейнеры:
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+Без этого сервер останавливается с сообщением `the host enforces SELinux and the volume has
+no container label`. Именованные тома Docker помечает сам, им ничего не нужно.
+
+Podman без root работает так же. Root в контейнере — это ваш собственный
+пользователь на хосте, а файлы bind mount получают uid 65532 контейнера, который
+хост показывает как один из ваших sub-uid (`165531` при обычном `/etc/subuid`).
+Просматривайте их командой `podman unshare ls -l ./dumbmonit`. Чтобы вместо этого
+файлы остались за вашим uid, запустите контейнер от своего имени; тогда ни один
+владелец не меняется:
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## Ping ICMP без capability {#icmp-ping-without-a-capability}
 

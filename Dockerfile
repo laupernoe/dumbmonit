@@ -243,15 +243,17 @@ COPY --from=victoriametrics /victoria-metrics-prod /victoria-metrics-prod
 # `DUMBMONIT_AGENT_DIR` permet d'en monter d'autres à la place.
 COPY --from=agent /agents /agents
 
-# Le serveur ne tourne pas en root. L'utilisateur est numérique — l'image n'a
-# pas de `/etc/passwd` — et `/data` est créé ici même, à son nom : Docker recopie
-# le propriétaire d'un répertoire de l'image dans un volume nommé qu'il crée à
-# la première utilisation, ce qui suffit au cas courant (`docker compose up`).
-# Un bind mount ou un volume existant, eux, doivent appartenir à 65532:65532
-# (voir docker-compose.yml). `/tmp` est là pour un système de fichiers racine
-# monté en lecture seule ; rien n'y est écrit en fonctionnement normal.
+# Le conteneur démarre en root, mais le serveur n'y reste pas : avant toute
+# autre chose, il remet `/data` au nom de 65532:65532 (ou de PUID/PGID) — seules
+# les entrées qui n'en ont pas le bon propriétaire, sans suivre de lien — puis
+# abandonne définitivement ses privilèges (voir crates/server/src/privileges.rs).
+# Un bind mount appartenant à l'hôte fonctionne ainsi sans manipulation. Lancé
+# avec `--user`, il ne touche à rien. L'image n'a pas de `/etc/passwd` : les
+# identités sont numériques. `/data` est créé ici à ce nom, pour qu'un volume
+# nommé neuf n'ait rien à corriger ; `/tmp` est ouvert à tous en écriture, quel que
+# soit l'utilisateur, pour un système de fichiers racine en lecture seule.
 COPY --from=builder --chown=65532:65532 /empty /data
-COPY --from=builder --chown=65532:65532 /empty /tmp
+COPY --from=builder --chmod=1777 /empty /tmp
 
 ENV DUMBMONIT_BIND=0.0.0.0:8080 \
     DUMBMONIT_DATA_DIR=/data \
@@ -261,5 +263,4 @@ ENV DUMBMONIT_BIND=0.0.0.0:8080 \
 VOLUME ["/data"]
 EXPOSE 8080
 
-USER 65532:65532
 ENTRYPOINT ["/dumbmonit"]

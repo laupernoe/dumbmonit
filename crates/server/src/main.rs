@@ -18,6 +18,16 @@ fn main() -> Result<()> {
     init_tracing();
 
     let config = Config::from_env().context("invalid configuration")?;
+
+    // Lancé en root (le défaut de l'image) : `/data` est remis au nom de
+    // l'utilisateur du serveur, puis les privilèges sont abandonnés pour de bon —
+    // avant la base, VictoriaMetrics et le réseau. Les sous-commandes ci-dessus
+    // (`pack`, `healthcheck`) ne passent jamais par ici.
+    #[cfg(unix)]
+    let startup = dumbmonit_server::privileges::prepare(&config.data_dir)?;
+    #[cfg(not(unix))]
+    let startup = ();
+
     info!(version = env!("CARGO_PKG_VERSION"), workers = config.workers, "starting DumbMonit");
 
     // Le runtime est construit à la main plutôt que par `#[tokio::main]` : c'est
@@ -31,14 +41,19 @@ fn main() -> Result<()> {
         .enable_all()
         .build()
         .context("building the async runtime")?;
-    runtime.block_on(run(config))
+    runtime.block_on(run(config, startup))
 }
 
-async fn run(mut config: Config) -> Result<()> {
+#[cfg(unix)]
+type Startup = dumbmonit_server::privileges::Startup;
+#[cfg(not(unix))]
+type Startup = ();
+
+async fn run(mut config: Config, startup: Startup) -> Result<()> {
     tokio::fs::create_dir_all(&config.data_dir)
         .await
         .with_context(|| format!("creating directory {}", config.data_dir.display()))?;
-    ensure_data_dir_writable(&config.data_dir).await?;
+    ensure_data_dir_writable(&config.data_dir, startup).await?;
 
     let secret = resolve_secret(&config).await?;
     if config.demo {
@@ -228,17 +243,11 @@ fn init_tracing() {
     let _ = dumbmonit_server::config::env_var("DUMBMONIT_LOG");
 }
 
-/// Détermine le secret d'instance : variable d'environnement si fournie, sinon
-/// fichier persistant, sinon génération au premier démarrage.
-///
-/// Le fichier permet à `docker compose up` de fonctionner sans configuration, tout
-/// en gardant les identifiants déchiffrables après un redémarrage.
 /// Vérifie tout de suite que le répertoire de données est accessible, avec un
-/// message qui dit quoi faire : depuis 0.1.0-alpha.2 le conteneur ne tourne plus
-/// en root, et un volume créé par une version antérieure (ou un bind mount)
-/// appartient encore à root. Sans ce contrôle, l'erreur arrive plus loin, sur
-/// `secret.key` ou sur la base, sous une forme qui n'explique rien.
-async fn ensure_data_dir_writable(data_dir: &std::path::Path) -> Result<()> {
+/// message qui dit quoi faire selon la cause probable (volume nommé, bind mount,
+/// SELinux…). Sans ce contrôle, l'erreur arrive plus loin, sur `secret.key` ou
+/// sur la base, sous une forme qui n'explique rien.
+async fn ensure_data_dir_writable(data_dir: &std::path::Path, startup: Startup) -> Result<()> {
     let probe = data_dir.join(".write-test");
     let outcome = match tokio::fs::write(&probe, b"").await {
         Ok(()) => tokio::fs::remove_file(&probe).await,
@@ -248,18 +257,16 @@ async fn ensure_data_dir_writable(data_dir: &std::path::Path) -> Result<()> {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
             #[cfg(unix)]
-            let uid = unsafe { libc::geteuid() };
+            {
+                use dumbmonit_server::privileges;
+                let diagnosis = privileges::diagnose(data_dir, startup);
+                anyhow::bail!("{}", privileges::explain_not_writable(data_dir, &diagnosis));
+            }
             #[cfg(not(unix))]
-            let uid = 0;
-            anyhow::bail!(
-                "{} is not writable by the server (running as uid {uid}). The container \
-                 runs as user 65532 since 0.1.0-alpha.2: a volume created by an older \
-                 version or a bind mount must be handed over once with\n  docker run --rm \
-                 -v dumbmonit-data:/data alpine chown -R 65532:65532 /data\nor start the \
-                 container as the owner of the files (`user: \"1000:1000\"` in \
-                 docker-compose.yml).",
-                data_dir.display()
-            );
+            {
+                let () = startup;
+                anyhow::bail!("{} is not writable by the server", data_dir.display());
+            }
         }
         Err(error) => {
             Err(anyhow::Error::from(error).context(format!("writing to {}", data_dir.display())))
@@ -267,6 +274,11 @@ async fn ensure_data_dir_writable(data_dir: &std::path::Path) -> Result<()> {
     }
 }
 
+/// Détermine le secret d'instance : variable d'environnement si fournie, sinon
+/// fichier persistant, sinon génération au premier démarrage.
+///
+/// Le fichier permet à `docker compose up` de fonctionner sans configuration, tout
+/// en gardant les identifiants déchiffrables après un redémarrage.
 async fn resolve_secret(config: &Config) -> Result<String> {
     if let Some(secret) = &config.secret {
         info!("instance secret provided by the environment");
