@@ -12,6 +12,7 @@ import type {
 	AgentToken,
 	AgentTokenPayload,
 	RebindWindow,
+	AgentModule,
 	AckPayload,
 	Alert,
 	AlertHistoryEntry,
@@ -624,6 +625,24 @@ export async function getAgentHost(id: TargetId, signal?: AbortSignal): Promise<
  */
 export function allowAgentRebind(id: TargetId): Promise<RebindWindow> {
 	return request<RebindWindow>(`/targets/${id}/agent/rebind`, { method: 'POST' });
+}
+
+/** The services the agent can detect on this machine, found or not. Empty on an older server. */
+export async function listAgentModules(id: TargetId, signal?: AbortSignal): Promise<AgentModule[]> {
+	try {
+		return await request<AgentModule[]>(`/targets/${id}/agent/modules`, { signal, anticipated: true });
+	} catch (cause) {
+		if (cause instanceof ApiError && cause.missing) return [];
+		throw cause;
+	}
+}
+
+/** Ticks (creates the service's device) or unticks (drops it) a module. */
+export function setAgentModule(id: TargetId, module: string, enabled: boolean): Promise<AgentModule> {
+	return request<AgentModule>(`/targets/${id}/agent/modules/${encodeURIComponent(module)}`, {
+		method: 'PUT',
+		body: { enabled }
+	});
 }
 
 // --- Notification policy and per-device overrides --------------------------

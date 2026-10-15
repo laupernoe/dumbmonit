@@ -10,6 +10,10 @@
 //!   mesures (Proxmox, XCP-ng, Nutanix, vSphere, libvirt de l'agent) ;
 //! - `lldp` : un voisin LLDP qu'un commutateur SNMP a vu sur un port.
 //!
+//! Un service trouvé par un agent (`agent_service`) est relié à sa machine par
+//! `parent` et prend son site ; il ne sert jamais de cible à un invité ou à un
+//! voisin, puisqu'il partage l'adresse de sa machine.
+//!
 //! Un invité ou un voisin n'est relié à un équipement surveillé que si son nom
 //! désigne une seule cible : un nom ambigu ne crée aucun lien plutôt qu'un lien
 //! faux. Un invité qui ne correspond à aucune cible devient un nœud à part,
@@ -75,7 +79,8 @@ pub struct NodeView {
     pub kind: String,
     /// Dossier de la cible ; pour un invité, celui de son hyperviseur.
     pub group_name: String,
-    /// Site déclaré par l'agent relais (le sien, ou celui qui relaie la cible).
+    /// Site déclaré par l'agent relais (le sien, celui qui relaie la cible, ou
+    /// celui de la machine d'un service d'agent).
     pub site: Option<String>,
     /// Invité seulement : la cible hyperviseur qui l'héberge.
     pub host_id: Option<TargetId>,
@@ -272,7 +277,9 @@ impl NameIndex {
     fn new(targets: &[TargetRow]) -> Self {
         let mut index =
             Self { exact: HashMap::new(), name_key: HashMap::new(), address_key: HashMap::new() };
-        for t in targets {
+        // Un service d'agent porte l'adresse de sa machine (`hôte#module`) :
+        // l'indexer rendrait la machine ambiguë pour chaque invité ou voisin.
+        for t in targets.iter().filter(|t| t.kind != agent::modules::SERVICE_KIND) {
             index.exact.entry(t.name.trim().to_lowercase()).or_default().push(t.id);
             if let Some(key) = host_key(&t.name) {
                 index.name_key.entry(key).or_default().push(t.id);
@@ -321,6 +328,16 @@ pub fn build(
     neighbors: &[Neighbor],
 ) -> (Vec<NodeView>, Vec<EdgeView>) {
     let by_id: HashMap<TargetId, &TargetRow> = targets.iter().map(|t| (t.id, t)).collect();
+    let site_of = |t: &TargetRow| -> Option<String> {
+        let own = |t: &TargetRow| {
+            sites.get(&t.id).or_else(|| t.via_agent.and_then(|relay| sites.get(&relay))).cloned()
+        };
+        own(t).or_else(|| {
+            (t.kind == agent::modules::SERVICE_KIND)
+                .then(|| t.parent_id.and_then(|p| by_id.get(&p)).and_then(|h| own(h)))
+                .flatten()
+        })
+    };
     let mut nodes: Vec<NodeView> = targets
         .iter()
         .map(|t| NodeView {
@@ -329,10 +346,7 @@ pub fn build(
             name: t.name.clone(),
             kind: t.kind.clone(),
             group_name: t.group_name.clone(),
-            site: sites
-                .get(&t.id)
-                .or_else(|| t.via_agent.and_then(|relay| sites.get(&relay)))
-                .cloned(),
+            site: site_of(t),
             host_id: None,
             running: None,
         })
@@ -380,7 +394,7 @@ pub fn build(
             name: guest.name.clone(),
             kind: if guest.container { "container" } else { "vm" }.to_string(),
             group_name: host.group_name.clone(),
-            site: sites.get(&host.id).cloned(),
+            site: site_of(host),
             host_id: Some(host.id),
             running: Some(guest.running),
         });
@@ -455,6 +469,34 @@ mod tests {
         );
         assert_eq!(nodes[2].site.as_deref(), Some("Annexe"), "le site du relais suit la cible");
         assert_eq!(nodes[0].group_name, "Bureau");
+    }
+
+    #[test]
+    fn un_service_dagent_suit_sa_machine_sans_la_rendre_ambigue() {
+        let pve = row(1, "pve1", "pve1", "proxmox");
+        let host = row(2, "web01", "web01", "agent");
+        let mut docker = row(3, "web01 · Docker", "web01#docker", "agent_service");
+        docker.parent_id = Some(2);
+        let mut libvirt = row(4, "web01 · libvirt", "web01#libvirt", "agent_service");
+        libvirt.parent_id = Some(2);
+        let guests = vec![
+            Guest { host: 1, name: "web01.lan".into(), container: false, running: true },
+            Guest { host: 4, name: "vm-test".into(), container: false, running: true },
+        ];
+        let sites = HashMap::from([(2, "Annexe".to_string())]);
+        let (nodes, edges) = build(&[pve, host, docker, libvirt], &sites, &guests, &[]);
+        assert_eq!(
+            sources(&edges),
+            vec![
+                ("t2", "t3", "parent"),
+                ("t2", "t4", "parent"),
+                ("t1", "t2", "hypervisor"),
+                ("t4", "g4:vm-test", "hypervisor"),
+            ]
+        );
+        let site = |id: &str| nodes.iter().find(|n| n.id == id).and_then(|n| n.site.clone());
+        assert_eq!(site("t3").as_deref(), Some("Annexe"), "le service prend le site de sa machine");
+        assert_eq!(site("g4:vm-test").as_deref(), Some("Annexe"));
     }
 
     #[test]

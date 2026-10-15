@@ -264,6 +264,7 @@ pub fn providers() -> &'static [&'static dyn SecurityProvider] {
         &checks::firewall::Opnsense,
         &checks::tls::Website,
         &checks::agent::Agent,
+        &checks::agent::AgentDocker,
         &checks::activedirectory::ActiveDirectory,
     ]
 }
@@ -543,6 +544,7 @@ mod tests {
             [
                 "activedirectory",
                 "agent",
+                "agent_service",
                 "http",
                 "opnsense",
                 "pbs",
@@ -567,6 +569,11 @@ mod tests {
     fn des_faits_vides_ne_donnent_que_des_inconnus() {
         // Le principe : sans donnée, rien n'est compté, ni en bien ni en mal.
         for provider in providers() {
+            // Un fournisseur qui ne s'applique qu'en présence de certaines
+            // séries (l'appareil Docker) n'a rien à noter sans elles.
+            if !provider.applies(&Facts::default()) {
+                continue;
+            }
             for kind in provider.kinds() {
                 let checks = provider.evaluate(kind, &Facts::default());
                 assert!(!checks.is_empty(), "{kind} : aucun contrôle");

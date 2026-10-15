@@ -19,6 +19,7 @@
 	import { toApiError } from '#lib/api/client.js';
 	import { commandContainer, commandLabel, type CommandStatus, type ContainerPolicy, type ContainerView } from './api';
 	import { fleetFor } from './fleet.svelte';
+	import { agentHostOf } from '#lib/components/devices/agent/services.js';
 
 	interface Props {
 		target: Target;
@@ -26,7 +27,7 @@
 
 	let { target }: Props = $props();
 
-	const fleet = $derived(fleetFor(target.id));
+	const fleet = $derived(fleetFor(target.id, agentHostOf(target)));
 
 	$effect(() => fleet.retain());
 	$effect(() => {

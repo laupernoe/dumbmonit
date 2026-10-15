@@ -2657,13 +2657,67 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/modules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listAgentModules
+      tags: [Agents]
+      summary: Services the agent can detect on this machine, found or not
+      description: "Each found service (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) is its own `agent_service` device under the machine. `404` when the device is not an `agent` device."
+      x-token-scope: read
+      responses:
+        "200":
+          description: Every known module, in a fixed order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentModule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/modules/{module}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: module
+        in: path
+        required: true
+        schema: { type: string }
+        description: Module id, such as `docker` or `zfs`.
+    put:
+      operationId: setAgentModule
+      tags: [Agents]
+      summary: Tick or untick a module
+      description: "Unticking deletes the service's device and drops its readings (the agent is told in its next acknowledgement and stops collecting it). Ticking creates the device, even before the agent finds the service."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: The module after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentModule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers:
     parameters:
       - $ref: "#/components/parameters/TargetId"
     get:
       operationId: listContainers
       tags: [Containers]
-      summary: Containers of an agent machine, from its last batch
+      summary: Containers of an agent machine (or its Docker device), from its last batch
       x-token-scope: read
       responses:
         "200":
@@ -6087,6 +6141,17 @@ components:
       properties:
         rebind_until: { type: string }
         minutes: { type: integer }
+    AgentModule:
+      type: object
+      required: [id, label, detected, enabled, automatic, target_id, last_seen_at]
+      properties:
+        id: { type: string, description: "`docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest`." }
+        label: { type: string }
+        detected: { type: boolean, description: The agent has reported this service on this machine. }
+        enabled: { type: boolean, description: "Ticked: a device exists (or will) for this service." }
+        automatic: { type: boolean, description: Nobody ticked or unticked it; the device follows detection. }
+        target_id: { type: [integer, "null"], description: The service's device. }
+        last_seen_at: { type: [string, "null"], description: Last batch with readings of this service (UTC). }
     ContainerPolicy:
       type: object
       required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]

@@ -66,6 +66,21 @@ fn base_labels(id: TargetId, name: &str) -> BTreeMap<String, String> {
     BTreeMap::from([("target".to_string(), id.to_string()), ("host".to_string(), name.to_string())])
 }
 
+/// Étiquettes des appareils de service d'une machine à agent, par module.
+async fn service_labels(
+    state: &AppState,
+    host: TargetId,
+) -> anyhow::Result<BTreeMap<String, BTreeMap<String, String>>> {
+    let mut labels = BTreeMap::new();
+    for (module, found) in crate::collectors::agent::modules::states(&state.pool, host).await? {
+        let Some(child) = found.target_id else { continue };
+        if let Some(target) = crate::db::targets::get(&state.pool, &state.cipher, child).await? {
+            labels.insert(module, base_labels(child, &target.name));
+        }
+    }
+    Ok(labels)
+}
+
 async fn write(state: &AppState, samples: &mut Vec<Sample>, force: bool) {
     if samples.len() < CHUNK && !force {
         return;
@@ -86,6 +101,9 @@ async fn synthetic_history(
     let down_since = chrono::Utc::now().timestamp_millis() - DOWN_FOR_MS;
     for (id, name, kind) in targets {
         let labels = base_labels(*id, name);
+        // Les services de l'agent (Docker…) ont leur propre appareil, créé par
+        // le premier lot : leur historique va sous lui, comme les mesures vives.
+        let services = service_labels(state, *id).await?;
         for ts in grid(SYNTHETIC_STEP_MS) {
             let samples = match kind.as_str() {
                 "agent" if name == AGENT_HOST => synthetic::agent_samples(ts),
@@ -103,7 +121,9 @@ async fn synthetic_history(
             };
             let up = Sample::new("up", 1.0, MetricKind::Gauge, ts);
             for mut sample in samples.into_iter().chain(std::iter::once(up)) {
-                sample.labels.extend(labels.clone());
+                let own = crate::collectors::agent::modules::module_of(&sample.metric)
+                    .and_then(|module| services.get(module.id));
+                sample.labels.extend(own.unwrap_or(&labels).clone());
                 buffer.push(sample);
             }
             written += 1;

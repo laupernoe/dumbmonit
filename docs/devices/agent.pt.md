@@ -137,7 +137,8 @@ um token.
     usermod -aG docker dumbmonit
     ```
 
-6. Cópias de segurança Plakar: detetadas automaticamente — o painel Backups aparece quando o binário plakar ou um kloset (~/.config/plakar/stores.yml de cada utilizador, ~/.plakar, /var/lib/plakar) é encontrado, e nada é mostrado caso contrário. Defina «plakar_klosets» em agent.yaml para vigiar uma lista fixa, ou «plakar: false» para excluir.
+6. Cópias de segurança Plakar: detetadas automaticamente — aparece um dispositivo Plakar sob a máquina quando o binário plakar ou um kloset (~/.config/plakar/stores.yml de cada utilizador, ~/.plakar, /var/lib/plakar) é encontrado, e nada é mostrado caso contrário. Defina «plakar_klosets» em agent.yaml para vigiar uma lista fixa, ou «plakar: false» para excluir.
+7. Os serviços que o agente encontra (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, teste de velocidade) tornam-se cada um o seu próprio dispositivo sob a máquina, com estado e alertas próprios. O painel «Serviços encontrados pelo agente» da máquina lista o que foi encontrado e o que não foi: desmarque um módulo para retirar o seu dispositivo, marque-o para o vigiar antes de aparecer. Consulte [Serviços encontrados pelo agente](#services-found-by-the-agent).
 
 !!! note
     O agente contacta o servidor, nunca o contrário: não é preciso abrir nenhuma
@@ -351,6 +352,52 @@ Windows. O instalador pára e remove o serviço antigo (`ezymonit-agent`, ou
 `dumbmonit-agent` no seu lugar. O antigo token `ezym_…` continua válido, pelo que
 o comando mostrado quando o token foi criado ainda funciona; nada tem de ser
 revogado primeiro.
+
+## Serviços encontrados pelo agente {#services-found-by-the-agent}
+
+O dispositivo da própria máquina mostra a máquina: CPU, memória, sistemas de ficheiros, rede, saúde dos discos (SMART), sensores, saúde do SO e os serviços que listar em `services`. Tudo o resto que o agente deteta é um **serviço**, e cada serviço que encontra torna-se um dispositivo próprio, do tipo `agent_service`, arquivado sob a máquina:
+
+| Serviço | As suas métricas | Nome do dispositivo |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Teste de velocidade da Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+A divisão faz-se no servidor, pelo nome da métrica, pelo que funciona com todas as versões do agente. Cada série é escrita uma só vez, com `target` definido para o dispositivo a que pertence: as séries de um serviço levam o id do dispositivo do serviço, as da máquina o id da máquina. Nada é contado duas vezes.
+
+Um dispositivo de serviço tem o seu próprio estado, alertas, regras, exceções de regras e silêncios. Fica **inacessível** quando o agente deixa de o reportar enquanto a máquina continua a reportar (daemon Docker parado, `wg` removido…), após os mesmos três períodos perdidos que a própria máquina. Quando a máquina fica em silêncio, os seus serviços são mostrados como ocultos atrás dela (`suppressed`) em vez de gerarem alertas próprios. Um novo dispositivo de serviço começa com as etiquetas da máquina, pelo que os silêncios e regras baseados em etiquetas continuam a aplicar-se.
+
+Não há nada a escolher antes da instalação. Após o primeiro relatório, a página da máquina lista cada módulo em **Serviços encontrados pelo agente**:
+
+- um serviço encontrado está marcado e liga ao seu dispositivo;
+- um serviço não encontrado está desmarcado; marque-o para criar mesmo assim o seu dispositivo (fica inacessível até o agente o reportar — útil para ser avisado quando falta um serviço de que depende);
+- desmarque um serviço encontrado para eliminar o seu dispositivo e descartar as suas leituras. O servidor informa o agente na sua próxima confirmação, e o agente deixa de o recolher (um agente antigo continua a recolher, e o servidor continua a descartar). Eliminar um dispositivo de serviço tem o mesmo efeito. Marque-o de novo para o repor.
+
+Eliminar a máquina elimina os seus dispositivos de serviço. As ações e políticas de contentores funcionam a partir da página do dispositivo Docker; os comandos continuam a ir para o agente da máquina.
+
+O mesmo que no aviso do dispositivo:
+
+1. Não há nada a acrescentar à mão: instale o agente na máquina, e cada serviço que encontra torna-se um dispositivo sob essa máquina no seu primeiro relatório.
+2. Para deixar de vigiar um serviço, desmarque-o no painel «Serviços encontrados pelo agente» da máquina, ou elimine o seu dispositivo: as leituras do agente para ele são então descartadas.
+
+!!! note
+    Se a máquina deixar de reportar, os seus serviços são mostrados como ocultos atrás dela em vez de gerarem alertas próprios.
+
+### Atualizar uma instalação existente {#upgrading-an-existing-installation}
+
+Nada a fazer. Da primeira vez que o agente reporta um serviço após a atualização, o servidor cria o seu dispositivo e move para ele o que dizia respeito a esse serviço na máquina:
+
+- as exceções das regras que leem as métricas do serviço são copiadas para o dispositivo do serviço;
+- as regras limitadas à máquina (seletor `ids`) que leem as métricas do serviço passam a selecionar também o dispositivo do serviço;
+- os silêncios (janelas de manutenção) da máquina são copiados para o dispositivo do serviço;
+- os alertas em curso nas séries do serviço são movidos para o dispositivo do serviço com a sua nova impressão digital, para não se resolverem e voltarem a disparar.
+
+O histórico fica onde foi escrito: o VictoriaMetrics não consegue reetiquetar séries existentes, pelo que as leituras anteriores à atualização permanecem sob a máquina (expiram com a retenção), e os gráficos do dispositivo do serviço começam na atualização. As linhas de base de anomalias das séries movidas voltam a começar a aprender. O histórico de alertas (alertas resolvidos) também fica com a máquina.
 
 ## Ficheiro de configuração {#configuration-file}
 

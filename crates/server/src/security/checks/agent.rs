@@ -164,6 +164,17 @@ pub const LINUX_GUIDE: Guide = Guide {
     ],
 };
 
+/// Par où commencer sur l'appareil Docker d'une machine : ses contrôles sont
+/// décrits avec ceux des machines Linux.
+pub const DOCKER_GUIDE: Guide = Guide {
+    product: "Docker",
+    anchor: "linux-hosts",
+    steps: &[
+        "Pull newer images and recreate the containers that have one waiting in the registry, or turn on auto-update for them on the device page.",
+        "Rebuild or replace images older than 180 days: their base layers no longer get security fixes.",
+    ],
+};
+
 /// Par où commencer sur une machine Windows.
 pub const WINDOWS_GUIDE: Guide = Guide {
     product: "Windows host",
@@ -218,23 +229,59 @@ impl SecurityProvider for Agent {
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
         let mut checks = if is_windows(facts) { windows(facts) } else { linux(facts) };
-        // Les contrôles Docker n'existent que sur une machine qui a des
-        // conteneurs : ailleurs ils ne sont pas « inconnus », ils sont sans objet.
-        if facts.has("container_update_available") {
-            checks.push(container_updates(facts));
-        }
-        if facts.has("container_image_age_seconds") {
-            let old = facts.names_where("container_image_age_seconds", "container", |age| {
-                age > MAX_IMAGE_AGE_DAYS * 86_400.0
-            });
-            checks.push(if old.is_empty() {
-                CONTAINER_AGE.pass("Every image is younger than 180 days")
-            } else {
-                CONTAINER_AGE.fail(list(&old))
-            });
-        }
+        // Historique d'avant la séparation des modules : les séries des
+        // conteneurs ont pu rester sous la machine.
+        checks.extend(container_checks(facts));
         checks
     }
+}
+
+/// Les conteneurs d'une machine, notés sur son appareil Docker
+/// (`agent_service`) depuis que les services de l'agent sont des équipements.
+pub struct AgentDocker;
+
+impl SecurityProvider for AgentDocker {
+    fn kinds(&self) -> &'static [&'static str] {
+        &["agent_service"]
+    }
+
+    fn metrics(&self) -> &'static [&'static str] {
+        &["container_update_available", "container_image_age_seconds"]
+    }
+
+    /// Seul l'appareil Docker a des conteneurs ; les autres services (ZFS,
+    /// tunnels…) n'ont pas de carte sécurité.
+    fn applies(&self, facts: &Facts) -> bool {
+        facts.has("container_update_available") || facts.has("container_image_age_seconds")
+    }
+
+    fn guide(&self, _kind: &str, _facts: &Facts) -> Guide {
+        DOCKER_GUIDE
+    }
+
+    fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
+        container_checks(facts)
+    }
+}
+
+/// Les contrôles Docker n'existent que là où il y a des conteneurs : ailleurs
+/// ils ne sont pas « inconnus », ils sont sans objet.
+fn container_checks(facts: &Facts) -> Vec<Check> {
+    let mut checks = Vec::new();
+    if facts.has("container_update_available") {
+        checks.push(container_updates(facts));
+    }
+    if facts.has("container_image_age_seconds") {
+        let old = facts.names_where("container_image_age_seconds", "container", |age| {
+            age > MAX_IMAGE_AGE_DAYS * 86_400.0
+        });
+        checks.push(if old.is_empty() {
+            CONTAINER_AGE.pass("Every image is younger than 180 days")
+        } else {
+            CONTAINER_AGE.fail(list(&old))
+        });
+    }
+    checks
 }
 
 fn reboot(facts: &Facts) -> Check {
@@ -344,6 +391,20 @@ mod tests {
 
     fn by_id<'a>(checks: &'a [Check], def: &CheckDef) -> Option<&'a Check> {
         checks.iter().find(|c| c.id == def.id)
+    }
+
+    #[test]
+    fn l_appareil_docker_ne_porte_que_les_controles_des_conteneurs() {
+        let facts = Facts::from_pairs(&[
+            ("container_update_available", &[("container", "web")], 1.0),
+            ("container_image_age_seconds", &[("container", "web")], 3.0 * 86_400.0),
+        ]);
+        assert!(AgentDocker.applies(&facts));
+        let checks = AgentDocker.evaluate("agent_service", &facts);
+        assert_eq!(checks.len(), 2);
+        assert!(by_id(&checks, &CONTAINER_UPDATES).is_some());
+        // Un service sans conteneur (ZFS, tunnel) n'a pas de carte sécurité.
+        assert!(!AgentDocker.applies(&Facts::default()));
     }
 
     #[test]
