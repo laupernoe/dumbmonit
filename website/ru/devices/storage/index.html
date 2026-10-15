@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAS и резервные копии · Устройства · DumbMonit</title>
+<meta name="description" content="Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/ru/devices/storage/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+<script src="../../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="NAS и резервные копии · Устройства · DumbMonit">
+<meta property="og:description" content="Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.">
+<meta property="og:url" content="https://dumbmonit.app/ru/devices/storage/">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: всё в порядке? Узнайте за одну секунду. Self-hosted мониторинг в одном контейнере, рядом с талисманом-голубем.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NAS и резервные копии · Устройства · DumbMonit">
+<meta name="twitter:description" content="Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"NAS и резервные копии · Устройства · DumbMonit","url":"https://dumbmonit.app/ru/devices/storage/","inLanguage":"ru","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Перейти к содержимому</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="Главная DumbMonit"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Разделы">
+			<a href="../../features/">Возможности</a>
+			<a href="../" aria-current="page">Устройства</a>
+			<a href="../../install/">Установка</a>
+			<a href="../../community/">Документация и сообщество</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Живое демо</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Язык"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>RU</span></summary>
+				<ul>
+				<li><a href="../../../devices/storage/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../../fr/devices/storage/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../../de/devices/storage/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../../es/devices/storage/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../../it/devices/storage/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../../pt/devices/storage/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/storage/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="./" hreflang="ru" lang="ru" aria-current="true">Русский</a></li>
+				<li><a href="../../../zh-Hans/devices/storage/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Живое демо</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Меню"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Устройства</a></p>
+		<h1 class="blur-in"><span class="w" style="--i:0">NAS</span> <span class="w" style="--i:1">и</span> <span class="w" style="--i:2">резервные</span> <span class="w" style="--i:3">копии</span></h1>
+		<p class="lede">Synology, TrueNAS, Unraid, Proxmox Backup Server и Veeam: диски, пулы и возраст последней успешной копии.</p>
+		<p class="code-note">Описания устройств и тексты правил оповещений на английском, как в самом продукте. Подписи на странице соответствуют вашему языку.</p>
+		<ul class="toc" aria-label="Типы устройств на этой странице">
+			<li><a href="#synology">Synology DSM</a></li>
+			<li><a href="#truenas">TrueNAS</a></li>
+			<li><a href="#unraid">Unraid</a></li>
+			<li><a href="#pbs">Proxmox Backup Server</a></li>
+			<li><a href="#veeam">Veeam Backup &amp; Replication</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="synology">
+<header><h2>Synology DSM</h2><span class="label-tape">synology</span></header>
+<p class="summary">Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs, Synology Drive and Photos.</p>
+<p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>DiskStation</li><li>RackStation</li></ul>
+<div class="dev-grid">
+<section><h3>Что понадобится</h3><ul class="needs"><li><strong>DSM account</strong></li></ul><p class="muted">Порт по умолчанию: <code>5001</code></p></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">15</span></h3><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology disk SMART warning</strong><span>DSM no longer reports this disk&#x27;s SMART status as normal.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Synology disk failed</strong><span>DSM reports the disk as crashed or failed.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Synology disk bad sectors</strong><span>The disk&#x27;s bad-sector count exceeds the threshold set in DSM.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology disk bad sectors growing</strong><span>New unreadable sectors appeared in the last 24 hours (delta(dumbmonit_synology_disk_unc_count[24h])).</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology SSD wearing out</strong><span>An SSD has less than 10 % of its rated life left; clears above 12 %.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Synology volume degraded</strong><span>A volume is degraded or crashed: its redundancy is gone.</span></li></ul><details class="more-rules"><summary>Показать ещё 9</summary><ul class="rules"><li><span class="plate plate-warning">Тревога</span><strong>Synology storage pool degraded</strong><span>A storage pool or SSD cache is degraded or crashed: a disk failed and the redundancy is gone or rebuilding.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology volume almost full</strong><span>A volume is 90 % full or more; clears below 88 %.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology temperature high</strong><span>A disk is above 55 °C, or DSM raised its own temperature warning; clears below 52 °C.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Synology memory high</strong><span>Memory usage of the NAS above 95 %; clears below 90 %.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Active Backup task failed</strong><span>The last run of an Active Backup for Business task failed, or backed up only part of its devices. The notification names the task.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Active Backup too old</strong><span>No successful Active Backup for Business run for this task for more than two days. The series does not exist for a task that has never succeeded; &quot;Active Backup task failed&quot; speaks then.</span></li><li><span class="plate plate-info">Инфо</span><strong>Active Backup task disabled</strong><span>The task has no schedule, or its continuous backup is paused: it will not back up anything until someone runs it.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Active Backup device overdue</strong><span>A device has gone longer without a successful Active Backup for Business run than its own rhythm allows, off-days excluded).</span></li><li><span class="plate plate-warning">Тревога</span><strong>Active Backup device failing</strong><span>The last two or more attempts of a device failed; a cancelled run counts as neither.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Шаги настройки: Create a monitoring account in DSM</summary><ol class="setup-steps"><li><p>In DSM, open Control Panel → User &amp; Group → User and click Create. Name the account as follows and give it a long password that is used nowhere else.</p><pre><code>dumbmonit</code></pre></li><li><p>Join groups: tick administrators. DSM only answers the storage, volume and disk SMART calls to that group; without it the NAS shows as alive but says nothing about its disks. The next two steps take back everything else.</p></li><li><p>Assign shared folder permissions: No access on every shared folder. Assign application permissions: Deny everything except DSM, plus Active Backup for Business if you want its tasks read. Skip the quota and speed limit pages.</p></li><li><p>Two-step verification must stay off for this account: no automated monitor can type a one-time code. If Control Panel → Security → Account enforces it, restrict the rule to groups this user is not in, or exempt it.</p></li><li><p>Backup packages are read only while they are installed and running: DSM does not advertise a stopped package&#x27;s API at all, so Hyper Backup tasks then go quiet instead of failing, and a NAS that only receives backups (Hyper Backup Vault) has no tasks of its own to show. Active Backup for Business additionally answers only an account allowed to use it (Active Backup for Business → Settings → Privileges); otherwise untick DumbMonit&#x27;s &quot;Watch Active Backup for Business&quot; option to stop asking.</p></li><li><p>In DumbMonit, enter the NAS address (HTTPS, port 5001 by default), then this account&#x27;s user name and password.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> The administrators group is required by DSM&#x27;s storage API, not by DumbMonit. That is why this account gets no shared folder, no application and a password used nowhere else: it can read the NAS, not touch your files.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/synology/">Документация</a></p>
+</article>
+<article class="dev" id="truenas">
+<header><h2>TrueNAS</h2><span class="label-tape">truenas</span></header>
+<p class="summary">Pool health, the failing disk, scrubs, snapshots, replication and TrueNAS&#x27;s own alerts.</p>
+<p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>TrueNAS SCALE</li><li>TrueNAS Community Edition</li></ul>
+<div class="dev-grid">
+<section><h3>Что понадобится</h3><ul class="needs"><li><strong>API key</strong><span>The key TrueNAS shows once when it is created, as &quot;3-AbCd…&quot;.</span></li></ul><p class="muted">Порт по умолчанию: <code>443</code></p></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">13</span></h3><ul class="rules"><li><span class="plate plate-warning">Тревога</span><strong>NAS pool degraded</strong><span>ZFS no longer calls a pool healthy. A degraded pool still serves its data, which is exactly why nobody notices until the next disk fails. The device page names the disk.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS disk errors</strong><span>Disks of a pool have reported read, write or checksum errors since the last zpool clear.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS pool almost full</strong><span>A pool is more than 85 % full. ZFS slows down well before it is full. Clears at 80 %.</span></li><li><span class="plate plate-warning">Тревога</span><strong>NAS scrub found errors</strong><span>The last scrub of a pool found damaged data.</span></li><li><span class="plate plate-info">Инфо</span><strong>NAS scrub overdue</strong><span>A pool has not completed a scrub in more than 45 days. Absent after a resilver, which erases the record of the last scrub.</span></li><li><span class="plate plate-warning">Тревога</span><strong>NAS disk failed its SMART test</strong><span>A SMART self-test in a disk&#x27;s log failed. A disk never tested has no series.</span></li></ul><details class="more-rules"><summary>Показать ещё 7</summary><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS disk too hot</strong><span>A disk is above 55 °C. Clears at 50 °C.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS dataset near its quota</strong><span>A dataset has used more than 90 % of its quota: at 100 % its writes fail while the pool still has room. No quota, no series.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS replication failed</strong><span>An enabled replication task is in error: the copy on the other side is getting older.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS snapshot task failed</strong><span>An enabled periodic snapshot task is in error.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS snapshots stale</strong><span>An enabled periodic snapshot task has not run for more than eight days: a task that stops running does not fail, it goes quiet.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>TrueNAS alert raised</strong><span>TrueNAS itself has raised an alert of level ERROR or above. Its own sentence is on the device page.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>NAS service stopped</strong><span>A service set to start with the NAS is stopped. A service switched off on purpose has no series.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Шаги настройки: Create an API key for DumbMonit in TrueNAS</summary><ol class="setup-steps"><li><p>In the web interface: Credentials → Groups → Add. Name the group as follows and give it the Local Administrator privilege.</p><pre><code>dumbmonit</code></pre></li><li><p>Why Local Administrator and not Read-Only Administrator: TrueNAS wired its read-only roles into its WebSocket API only. Over the REST API DumbMonit uses, a read-only key is refused on every single call. DumbMonit itself only ever reads: it never starts a scrub, a SMART test, an update or a replication.</p></li><li><p>Credentials → Users → Add. Name the account as follows, make dumbmonit its primary group, and leave shell access, sudo and SSH off: none of them is needed.</p><pre><code>dumbmonit</code></pre></li><li><p>Create the key: Credentials → Users → API Keys → Add, pick the dumbmonit user and give the key a name. TrueNAS shows the key only once: copy it. On TrueNAS 24.10 the path is the user menu at the top right → API Keys → Add, and a key belongs to no user.</p></li><li><p>In DumbMonit, enter the NAS address, for example &quot;nas.lan&quot;, and paste the key. Keep HTTPS: TrueNAS revokes a key it ever receives over plain HTTP from another machine.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> This key can change anything on the NAS: TrueNAS offers no read-only key over its REST API. Treat it like the password of an account that can erase your pools, keep it for DumbMonit alone, and revoke it from the same page if it leaks. TrueNAS also ships with a self-signed certificate: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/truenas/">Документация</a></p>
+</article>
+<article class="dev" id="unraid">
+<header><h2>Unraid</h2><span class="label-tape">unraid</span></header>
+<p class="summary">An Unraid server through its GraphQL API: array stopped, disks disabled or with errors, parity checks, cache pool usage, containers that should be running.</p>
+<p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>Unraid 7</li><li>Unraid 6.12 with Unraid Connect</li></ul>
+<div class="dev-grid">
+<section><h3>Что понадобится</h3><ul class="needs"><li><strong>API key</strong><span>A key with the Viewer role: it reads everything and can change nothing.</span></li></ul><p class="muted">Порт по умолчанию: <code>80</code></p></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">9</span></h3><ul class="rules"><li><span class="plate plate-warning">Тревога</span><strong>Unraid array stopped</strong><span>The Unraid array is not started: shares, containers and VMs that live on it are unavailable.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Unraid disk disabled or missing</strong><span>An Unraid disk is disabled, missing or invalid: the array runs degraded, and one more failure loses data.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid disk read errors</strong><span>An Unraid disk has reported read errors since the array started: it may be disabled at the next one.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid disk too hot</strong><span>An Unraid array or parity disk has stayed above 55 °C for fifteen minutes.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid parity check found errors</strong><span>The last Unraid parity check failed or found sync errors: parity no longer matches the data.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid parity check overdue</strong><span>The last Unraid parity check is more than 40 days old: a monthly check was missed.</span></li></ul><details class="more-rules"><summary>Показать ещё 3</summary><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid cache nearly full</strong><span>An Unraid cache pool is more than 90 % full: writes fall back to the slow array, or fail.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Unraid container stopped</strong><span>A Docker container set to start with the array is not running.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Шаги настройки: Create a read-only API key for DumbMonit</summary><ol class="setup-steps"><li><p>On Unraid 7.2 or later the API is built in. On Unraid 6.12 to 7.1, install the Unraid Connect plugin from the Apps tab first: it brings the same API, and no Unraid Connect sign-in is needed for local use.</p></li><li><p>Create an API key with the Viewer role, which reads everything and can change nothing: under Settings &gt; Management Access &gt; API Keys, or from the Unraid terminal.</p><pre><code>unraid-api apikey --create --name dumbmonit --roles VIEWER --description &quot;DumbMonit monitoring&quot; --json</code></pre></li><li><p>Copy the key. In DumbMonit, enter the address of the Unraid server, for example &quot;tower.lan&quot;, and paste the key as API key. If the web interface is served over HTTPS, choose https as protocol.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> Unraid reports no temperature for a disk that is spun down, and DumbMonit never wakes one: a sleeping disk simply has no temperature until it spins up.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/unraid/">Документация</a></p>
+</article>
+<article class="dev" id="pbs">
+<header><h2>Proxmox Backup Server</h2><span class="label-tape">pbs</span></header>
+<p class="summary">Backup freshness per machine, failed tasks, sync and verify jobs, datastore space.</p>
+<p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>Proxmox Backup Server</li></ul>
+<div class="dev-grid">
+<section><h3>Что понадобится</h3><ul class="needs"><li><strong>API token (recommended)</strong><span>No expiry and no session opened: the right choice for monitoring.</span></li><li><strong>Username / password</strong><span>Opens a two-hour session, renewed automatically. Use it only if tokens are not an option.</span></li></ul><p class="muted">Порт по умолчанию: <code>8007</code></p></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">21</span></h3><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS datastore almost full</strong><span>PBS datastore more than 90% full.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS datastore filling up</strong><span>At the current rate, PBS estimates the datastore full within seven days.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS datastore not mounted</strong><span>A removable datastore is not mounted: nothing can be written to it.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS backup too old</strong><span>No new snapshot for this backup group (one per machine) for more than two days. Edit the threshold for machines backed up weekly; the notification names the group and datastore.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS backup verification failed</strong><span>Verification of the latest snapshot for this machine failed.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS task failed</strong><span>At least one PBS task failed in the review window.</span></li></ul><details class="more-rules"><summary>Показать ещё 15</summary><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS garbage collection too old</strong><span>No successful garbage collection on this datastore for more than eight days.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS garbage collection failed</strong><span>The last garbage collection on a datastore failed.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS corrupt chunks found</strong><span>The garbage collection found unreadable chunks on a datastore: some backups can no longer be restored.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS prune job failed</strong><span>The last run of a PBS prune job failed: nothing is pruned and the datastore keeps filling up. The notification names the job and datastore.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS verification job failed</strong><span>The last run of a PBS verification job failed.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS sync job failed</strong><span>The last run of a PBS sync job failed.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS tape backup failed</strong><span>The last tape backup run failed: the offline copy is not being made.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS job never ran</strong><span>A job is enabled and scheduled but has never run.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS service down</strong><span>A service Proxmox Backup Server needs is not running; no backup can be taken in while it is down.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS disk SMART failure</strong><span>A disk of the backup server reports SMART health FAILED. The notification reads /dev/sdb.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS SSD worn out</strong><span>An SSD of the backup server has used more than 90 % of its rated endurance.</span></li><li><span class="plate plate-warning">Тревога</span><strong>PBS ZFS pool degraded</strong><span>A ZFS pool of the backup server is not ONLINE.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>PBS certificate expiring</strong><span>The certificate served by the backup server expires in less than three weeks. Needs the certificates option.</span></li><li><span class="plate plate-info">Инфо</span><strong>PBS restart pending after upgrade</strong><span>The package was upgraded but the running daemon is still the old one.</span></li><li><span class="plate plate-info">Инфо</span><strong>PBS updates pending</strong><span>More than twenty package updates are pending on the backup server.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Шаги настройки: Create a read-only user and token in Proxmox Backup Server</summary><ol class="setup-steps"><li><p>Open a shell on the backup server (in the web UI: Administration → Shell; or SSH) and create a user reserved for monitoring. It needs no password: the token is what logs in.</p><pre><code>proxmox-backup-manager user create dumbmonit@pbs --comment &quot;DumbMonit monitoring&quot;</code></pre></li><li><p>Create the user&#x27;s API token. The command prints the token id and its secret: copy both now, PBS never shows the secret again.</p><pre><code>proxmox-backup-manager user generate-token dumbmonit@pbs monitor</code></pre></li><li><p>Give the read-only minimum, per path — to the token and to the user that owns it. A token&#x27;s effective privileges are the intersection of its own ACL and its user&#x27;s: granted to the token alone, they amount to nothing at all, and PBS reports that nowhere. Every line is therefore written twice. DatastoreAudit on /datastore (Datastore.Audit) reads the datastores, snapshots, verify and prune jobs and GC; Audit on /system (Sys.Audit) reads the node status, the task list and task logs, the services, the traffic-control rules, the disks and ZFS pools.</p><pre><code>proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id &#x27;dumbmonit@pbs&#x27;
+proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id &#x27;dumbmonit@pbs!monitor&#x27;
+proxmox-backup-manager acl update /system Audit --auth-id &#x27;dumbmonit@pbs&#x27;
+proxmox-backup-manager acl update /system Audit --auth-id &#x27;dumbmonit@pbs!monitor&#x27;</code></pre></li><li><p>Optional, and twice as well. RemoteAudit on /remote (Remote.Audit) shows the sync jobs that pull from a remote: the built-in Audit role covers Sys.Audit and Datastore.Audit only, and without Remote.Audit such a job is not refused, it is simply absent from the job list. TapeAudit on /tape (Tape.Audit) reads the tape tier. Audit on / (Sys.Audit at the top level) lists pending package updates, and also covers /datastore and /system if you prefer fewer lines. Without them those items are silently skipped, nothing else changes. Nothing here can write: the collector only performs GETs.</p><pre><code>proxmox-backup-manager acl update /remote RemoteAudit --auth-id &#x27;dumbmonit@pbs&#x27;
+proxmox-backup-manager acl update /remote RemoteAudit --auth-id &#x27;dumbmonit@pbs!monitor&#x27;
+proxmox-backup-manager acl update /tape TapeAudit --auth-id &#x27;dumbmonit@pbs&#x27;
+proxmox-backup-manager acl update /tape TapeAudit --auth-id &#x27;dumbmonit@pbs!monitor&#x27;
+proxmox-backup-manager acl update / Audit --auth-id &#x27;dumbmonit@pbs&#x27;
+proxmox-backup-manager acl update / Audit --auth-id &#x27;dumbmonit@pbs!monitor&#x27;</code></pre></li><li><p>Copy the token id into DumbMonit&#x27;s Token ID field and the secret into its Secret field.</p><pre><code>dumbmonit@pbs!monitor</code></pre></li><li><p>Before leaving the shell, check what the token can actually read. The command prints its effective privileges, path by path; an empty result means the user is missing the ACL the token has — the case where the device looks perfectly alive and reports nothing.</p><pre><code>proxmox-backup-manager user permissions &#x27;dumbmonit@pbs!monitor&#x27;</code></pre></li><li><p>Prefer the web UI? Configuration → Access Control: Users → Add, then API Tokens → Add, then Permissions → Add. Add each permission twice, once as User Permission for dumbmonit@pbs and once as API Token Permission for dumbmonit@pbs!monitor: with path /datastore and role DatastoreAudit, then again with path /system and role Audit. A token permission on its own grants nothing.</p></li><li><p>In DumbMonit, enter the server address, for example &quot;pbs.lan&quot; or &quot;pbs.lan:8007&quot;.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> Do not reuse the account you log in with: a leaked token would then manage every backup. The Audit role can only read. PBS also uses a self-signed certificate by default: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/pbs/">Документация</a></p>
+</article>
+<article class="dev" id="veeam">
+<header><h2>Veeam Backup &amp; Replication</h2><span class="label-tape">veeam</span></header>
+<p class="summary">A Veeam backup server through its REST API: jobs whose last run failed, failed sessions of the last 24 hours, repositories filling up, license expiry.</p>
+<p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>Veeam Backup &amp; Replication 12</li><li>Veeam Backup &amp; Replication 13</li><li>Veeam Community Edition</li></ul>
+<div class="dev-grid">
+<section><h3>Что понадобится</h3><ul class="needs"><li><strong>User name and password</strong><span>The account given the Veeam Backup Viewer role, in the form HOST\user or DOMAIN\user.</span></li></ul><p class="muted">Порт по умолчанию: <code>9419</code></p></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">6</span></h3><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>Client device stale</strong><span>A device has not connected or not backed up within the staleness window configured for this target.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Veeam job failed</strong><span>The last run of an enabled Veeam job failed: what it protects has no new restore point.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Veeam job ended with a warning</strong><span>The last run of an enabled Veeam job ended with a warning: some objects may not be protected.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Veeam repository nearly full</strong><span>A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space.</span></li><li><span class="plate plate-advisory">Предупреждение</span><strong>Veeam license expiring</strong><span>The Veeam license expires in less than 30 days: jobs stop at the end of the grace period.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Шаги настройки: Give DumbMonit a Veeam Backup Viewer account</summary><ol class="setup-steps"><li><p>On the backup server, create a local Windows account for DumbMonit with a long random password and no other right on the machine (a domain account works too).</p><pre><code>net user dumbmonit * /add</code></pre></li><li><p>In the Veeam console, open the main menu &gt; Users and Roles &gt; Security, click Add, enter the account (for example VBR01\dumbmonit) and give it the Veeam Backup Viewer role only.</p></li><li><p>In DumbMonit, enter the address of the backup server, for example &quot;vbr.lan&quot;, and the account as HOST\dumbmonit or DOMAIN\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions, repositories and restore points, and shows the license as not readable: it never asks for more.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/veeam/">Документация</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Другие семейства</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">Серверы и оборудование</a></li>
+			<li><a href="../network/">Сетевое оборудование</a></li>
+			<li><a href="../firewalls/">Межсетевые экраны</a></li>
+			<li><a href="../hypervisors/">Гипервизоры и кластеры</a></li>
+			<li><a href="../checks/">Сайты, сертификаты и проверки</a></li>
+			<li><a href="../proxies/">Веб-серверы и обратные прокси</a></li>
+			<li><a href="../apps/">Приложения для самостоятельного хостинга</a></li>
+			<li><a href="../mail/">DNS, почта и безопасность</a></li>
+			<li><a href="../data/">Базы данных и наблюдаемость</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
+		<nav aria-label="Подвал">
+			<a href="../../features/">Возможности</a>
+			<a href="../">Устройства</a>
+			<a href="../../install/">Установка</a>
+			<a href="../../community/">Документация и сообщество</a>
+			<a href="https://demo.dumbmonit.app">Живое демо</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/ru/latest/">Документация</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Релизы</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Перевод</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Лицензия</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Безопасность</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>
