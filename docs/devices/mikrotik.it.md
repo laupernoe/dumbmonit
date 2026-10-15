@@ -61,7 +61,7 @@ high, power supply or fan failed, interface accumulating errors, link
 flapping, RouterOS update available e firmware upgrade pending, più Device
 unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non si connette mai al router. Mostra la versione RouterOS e se ne è

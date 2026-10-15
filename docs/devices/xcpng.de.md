@@ -16,7 +16,7 @@ Fügen Sie den Pool einmal hinzu, über die Adresse seines Koordinators: Er
 meldet alle Hosts, VMs und Storage Repositories. Ist die eingegebene Adresse
 die eines Pool-Mitglieds, antwortet es mit `HOST_IS_SLAVE` und der Adresse des
 Koordinators; DumbMonit folgt ihr einmal, mit demselben Protokoll und Port,
-sodass Sie das Gerät bei einem Koordinatorwechsel nicht bearbeiten müssen.
+sodass Sie den Monitor bei einem Koordinatorwechsel nicht bearbeiten müssen.
 
 !!! warning "Nur gegen die Herstellerdokumentation validiert — noch nicht an einem echten System getestet"
 

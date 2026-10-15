@@ -32,10 +32,10 @@ reconexão atrás de um NAT e multiplicaria as séries à toa. No máximo 256
 clientes recebem cada um uma série detalhada; `clients_connected` continua
 exato além disso.
 
-Regras integradas que se aplicam: **Device unreachable**, quando a própria
+Regras integradas que se aplicam: **Monitor unreachable**, quando a própria
 conexão de gerenciamento não pode ser feita ou a senha é recusada.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda armazenou; abrir a página nunca
 conecta à interface de gerenciamento. Ele mostra a versão do servidor e se

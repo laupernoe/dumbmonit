@@ -120,7 +120,7 @@ errati sono soggetti a rate limit. Per un deployment automatizzato, imposta
 
 ![La schermata di login](../assets/screenshots/login-light.png){ loading=lazy }
 
-Poi aggiungi il tuo primo dispositivo: vedi [Aggiungi il tuo primo dispositivo](first-device.md).
+Poi aggiungi il tuo primo monitor: vedi [Aggiungi il tuo primo monitor](first-device.md).
 
 ## Variabili d'ambiente {#environment-variables}
 
@@ -137,7 +137,7 @@ che ti servono sotto `environment:` del servizio, come mostrato in
 | `DUMBMONIT_VM_RETENTION` | `12` | Retention del VictoriaMetrics integrato: mesi, oppure `30d`, `2y`. |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | Budget di memoria delle cache del VictoriaMetrics integrato. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Indirizzo di ascolto del VictoriaMetrics integrato, dentro il container. |
-| `DUMBMONIT_SECRET` | *(generato)* | Segreto dell'istanza che cifra le credenziali dei dispositivi e i token. |
+| `DUMBMONIT_SECRET` | *(generato)* | Segreto dell'istanza che cifra le credenziali dei monitor e i token. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Sonde concorrenti, tutti i collector insieme. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Durata massima di una sonda. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Periodo di scrittura verso VictoriaMetrics. |
@@ -161,7 +161,7 @@ chiave derivata dal segreto dell'istanza. Al primo avvio, DumbMonit genera quest
 segreto in `/data/secret.key` (dentro il volume `dumbmonit-data`).
 
 !!! danger "Fai il backup di `secret.key` insieme al database"
-    Senza di essa, le credenziali dei dispositivi sono irrecuperabili: un database ripristinato
+    Senza di essa, le credenziali dei monitor sono irrecuperabili: un database ripristinato
     da solo dà un'istanza che non può comunicare con nulla. Il server rileva all'avvio una
     chiave mancante o modificata e rifiuta di continuare con un messaggio esplicito,
     invece di fallire in silenzio a ogni sonda. I backup pianificati
@@ -240,13 +240,13 @@ Un solo volume nominato, `dumbmonit-data`, contiene tutto:
 
 | Percorso | Contenuto |
 |---|---|
-| `dumbmonit.db` | Dispositivi, regole, canali, stato degli avvisi, sessioni. |
+| `dumbmonit.db` | Monitor, regole, canali, stato degli avvisi, sessioni. |
 | `secret.key` | Il segreto dell'istanza. |
 | `backups/` | I backup locali pianificati: una copia del database e del segreto, giornaliera per impostazione predefinita, sette conservate. |
 | `vm/` | Le serie temporali di VictoriaMetrics (12 mesi di retention per impostazione predefinita). |
 
 DumbMonit esegue il backup del proprio database in modo pianificato, ed esporta l'intera
-configurazione — dispositivi, credenziali, regole, canali — in un unico file
+configurazione — monitor, credenziali, regole, canali — in un unico file
 cifrato con una passphrase a tua scelta, che si ripristina su un'istanza nuova.
 Entrambi sono in **[Backup e ripristino](backup.md)**, insieme a cosa fare prima di
 un aggiornamento e all'unica regola su `secret.key` che vale la pena leggere due volte.
@@ -282,7 +282,7 @@ continua ad ascoltare sulla 8080:
 ```
 
 **Un segreto tuo**, al posto di quello generato in `/data/secret.key`. Cifra le
-credenziali dei dispositivi: perderlo significa reinserirle tutte.
+credenziali dei monitor: perderlo significa reinserirle tutte.
 
 ```yaml
     environment:
@@ -290,7 +290,7 @@ credenziali dei dispositivi: perderlo significa reinserirle tutte.
 ```
 
 **Retention e memoria** del VictoriaMetrics integrato (mesi, oppure `30d` /
-`2y`; un homelab di qualche decina di dispositivi sta in 256 MB):
+`2y`; un homelab di qualche decina di monitor sta in 256 MB):
 
 ```yaml
     environment:
@@ -306,7 +306,7 @@ credenziali dei dispositivi: perderlo significa reinserirle tutte.
 ```
 
 **Password dimenticata.** Aggiungi la riga qui sotto, esegui
-`docker compose up -d`, ricrea il primo amministratore nella UI (dispositivi,
+`docker compose up -d`, ricrea il primo amministratore nella UI (monitor,
 regole e canali restano), poi rimuovi la riga ed esegui ancora una volta
 `docker compose up -d`:
 
@@ -340,7 +340,7 @@ services:
 - `shm_size: 256m`: Chromium esegue il rendering in `/dev/shm`, e i 64 MB predefiniti di Docker sono troppo pochi per una pagina lunga.
 - Va bene qualsiasi Chromium avviato con `--remote-debugging-port`; qui si usa l'immagine `chromedp/headless-shell`.
 
-Senza browser, tutto il resto funziona come sempre (confronto del testo, avvisi, copie prima/dopo); le istantanee semplicemente non hanno immagine. Finché il server non raggiunge un browser, il modulo di un dispositivo di modifiche ai siti web mostra un avviso con queste righe.
+Senza browser, tutto il resto funziona come sempre (confronto del testo, avvisi, copie prima/dopo); le istantanee semplicemente non hanno immagine. Finché il server non raggiunge un browser, il modulo di un monitor di modifiche ai siti web mostra un avviso con queste righe.
 Se l'avviso resta dopo il riavvio, controlla `docker compose logs browser`, che il nome host di `DUMBMONIT_BROWSER_URL` sia il nome del servizio e che i due servizi siano nello stesso progetto Compose.
 
 ## Reverse proxy {#reverse-proxy}
@@ -468,12 +468,12 @@ services:
 Sull'host non cambia nulla. Docker 20.10 e successivi impostano da soli questo intervallo in ogni
 container; le righe esplicite lo garantiscono anche sui motori più vecchi e
 su Podman. Senza, il controllo segnala un errore di configurazione (mostrato sul
-dispositivo, non notificato), mai un falso "host down". Con `docker run`, passa
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Finché il server non riesce ad aprire un socket ICMP, il modulo di un dispositivo ping mostra un avviso con queste righe.
+monitor, non notificato), mai un falso "host down". Con `docker run`, passa
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Finché il server non riesce ad aprire un socket ICMP, il modulo di un monitor ping mostra un avviso con queste righe.
 
 ## Provare senza hardware {#testing-without-hardware}
 
-Aggiungi un [dispositivo demo](../devices/demo.md): produce misurazioni finte senza
+Aggiungi un [monitor demo](../devices/demo.md): produce misurazioni finte senza
 nulla da preparare, così grafici, regole e notifiche si possono provare subito.
 Per dati SNMP reali, spesso basta la macchina che esegue Docker — installaci
 `snmpd` (`apt install snmpd`, consenti la community `public` sul bridge Docker

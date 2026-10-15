@@ -4,7 +4,7 @@ Deux choses différentes, pour deux accidents différents.
 
 | | Paquet chiffré | Sauvegarde locale planifiée |
 |---|---|---|
-| Ce qu'il contient | La configuration : appareils et leurs identifiants, règles, canaux, pages d'état, comptes, jetons. | Toute la base de données, comme un fichier, plus `secret.key`. |
+| Ce qu'il contient | La configuration : surveillances et leurs identifiants, règles, canaux, pages d'état, comptes, jetons. | Toute la base de données, comme un fichier, plus `secret.key`. |
 | Où il va | Où vous le mettez — il est chiffré avec une phrase de passe que vous choisissez. | `/data/backups/`, dans le même volume. |
 | Ce dont il vous sauve | Un serveur perdu, un déménagement vers un nouveau matériel, une installation neuve. | Le changement que vous regrettez dix minutes plus tard, une mise à jour qui a mal tourné. |
 | Ce qu'il ne contient pas | Historique de métriques, état et historique d'alertes, le journal d'audit, les sessions. | Historique de métriques (`vm/`). |
@@ -12,7 +12,7 @@ Deux choses différentes, pour deux accidents différents.
 Ni l'un ni l'autre ne remplace une archive de tout le volume si vous
 voulez aussi récupérer les graphiques ; c'est en bas de cette page.
 
-!!! danger "`/data/secret.key` est ce qui déchiffre les identifiants de vos appareils"
+!!! danger "`/data/secret.key` est ce qui déchiffre les identifiants de vos surveillances"
     Communautés SNMP, jetons Proxmox, mots de passe SMTP et URL de
     battement de cœur sont stockés chiffrés avec une clé dérivée du
     secret de l'instance. Au premier démarrage, DumbMonit l'écrit dans
@@ -22,7 +22,7 @@ voulez aussi récupérer les graphiques ; c'est en bas de cette page.
     **Une copie de la base de données sans ce fichier restaure une
     instance qui ne peut parler à rien.** Le serveur le remarque et
     refuse de démarrer avec un message explicite plutôt que d'échouer à
-    chaque sonde — mais les identifiants ont disparu, et chaque appareil
+    chaque sonde — mais les identifiants ont disparu, et chaque surveillance
     doit être ressaisi.
 
     Le paquet chiffré est l'exception : ses secrets sont rechiffrés
@@ -57,16 +57,16 @@ récupération** : un paquet dont la phrase de passe est perdue est perdu.
 
 !!! warning "Le paquet porte chaque identifiant de cette instance"
     Quiconque a le fichier et la phrase de passe peut lire le mot de
-    passe de chaque appareil que vous surveillez. Gardez-le où vous
+    passe de chaque surveillance que vous surveillez. Gardez-le où vous
     gardez vos mots de passe.
 
 ### Ce qu'il contient
 
 | Section | Contenu |
 |---|---|
-| `targets` | Appareils : nom, type, adresse, intervalle, options, parent, agent relais, et l'identifiant. |
+| `targets` | Surveillances : nom, type, adresse, intervalle, options, parent, agent relais, et l'identifiant. |
 | `rules` | Règles d'alerte, y compris les intégrées que vous avez retouchées ou désactivées. |
-| `rule_overrides` | Seuils et exclusions par appareil. |
+| `rule_overrides` | Seuils et exclusions par surveillance. |
 | `channels` | Canaux de notification, leurs réglages, leur politique par canal et leurs secrets. |
 | `notify_policy` | La politique de notification globale (groupement, plafond horaire, flapping, URL publique). |
 | `silences` | Fenêtres de maintenance. |
@@ -77,7 +77,7 @@ récupération** : un paquet dont la phrase de passe est perdue est perdu.
 | `api_tokens` | Jetons d'API, comme des hashs. Les jetons existants continuent de fonctionner. |
 | `push_monitors` | Jetons de battement de cœur, pour que les URL que vos tâches cron appellent déjà restent les mêmes. |
 
-Les appareils sont retrouvés par **type + adresse**, qui est aussi la
+Les surveillances sont retrouvées par **type + adresse**, qui est aussi la
 clé unique de la table : importer le même paquet deux fois ne crée
 jamais une seconde copie de quoi que ce soit.
 
@@ -119,7 +119,7 @@ secrets rechiffrés sous votre phrase de passe précisément pour pouvoir
    **créé**, ce qui serait **mis à jour** parce que ça diffère de ce
    qui est déjà là, et ce qui est déjà identique — plus une note pour
    tout ce qu'il n'a pas pu placer, comme une règle qui pointait vers
-   un appareil que le paquet ne contient pas.
+   une surveillance que le paquet ne contient pas.
 4. Appuyez sur **Restaurer pour de vrai**.
 
 Trois règles que la restauration ne casse jamais :
@@ -127,7 +127,7 @@ Trois règles que la restauration ne casse jamais :
 - **Rien n'est jamais supprimé.** Une restauration fait exister ce que
   le paquet décrit ; tout ce que l'instance a en plus reste.
 - **Rien n'est jamais dupliqué.** Chaque élément est retrouvé par sa
-  clé naturelle — type + adresse pour un appareil, `uid` pour une
+  clé naturelle — type + adresse pour une surveillance, `uid` pour une
   règle, nom pour un canal, slug pour une page d'état. Restaurer le
   même paquet deux fois rapporte que tout est déjà identique et n'écrit
   rien.

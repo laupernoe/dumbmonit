@@ -14,7 +14,7 @@ be given. DumbMonit never writes to the directory, never reads a password
 attribute (of LAPS it reads the expiry date, never the password) and never
 asks for the replication rights that would expose secrets.
 
-One device covers the whole domain: point it at one domain controller and
+One monitor covers the whole domain: point it at one domain controller and
 DumbMonit finds the others in the configuration partition.
 
 ## What LDAP can and cannot tell
@@ -27,7 +27,7 @@ particular:
   error) only to an account holding the *Monitor active directory
   replication* right. Without it, the panel says *replication status not
   readable* rather than guessing. Only the queried domain controller's view is
-  shown: to see another one's partners, add it as a second device.
+  shown: to see another one's partners, add it as a second monitor.
 - **Not visible over LDAP**: event logs (logons, lockouts as they happen,
   group changes as events), Group Policy contents, SYSVOL, DNS zones, and the
   password hashes themselves.
@@ -96,7 +96,7 @@ Account Operators, Server Operators, Print Operators and Backup Operators.
 ## Findings
 
 Findings are raw facts — how many objects, and which — not a score; the
-device's [security score](../using/security-score.md) weighs them. Each has a
+monitor's [security score](../using/security-score.md) weighs them. Each has a
 stable `id`, a severity on the score's scale (low, medium, high, critical,
 shown on the page as Info, Advisory and Warning), a category, a count and up
 to twenty sample account names. A finding that was examined and found nothing
@@ -142,7 +142,7 @@ The [built-in rules](../alerting/rules.md#active-directory) that apply:
 
 - **Domain controller unreachable**: another domain controller of the domain
   stops answering on its LDAP port for five minutes (Warning). The queried one
-  is covered by *Device unreachable*.
+  is covered by *Monitor unreachable*.
 - **Active Directory bind failed**: the domain controller refuses the service
   account — expired password, disabled or locked out (Advisory).
 - **Privileged group membership changed**: someone joined or left a
@@ -151,7 +151,7 @@ The [built-in rules](../alerting/rules.md#active-directory) that apply:
   an hour (Advisory), when replication status is readable.
 - **krbtgt password older than 180 days** (Info).
 
-## The device page
+## The monitor page
 
 The Active Directory panel shows the domain (functional levels, the queried
 domain controller, clock skew), the domain controllers with their site, roles

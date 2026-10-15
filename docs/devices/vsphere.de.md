@@ -55,9 +55,9 @@ vSphere: 0 grün, 1 gelb, 2 rot, 3 grau (unbekannt).
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#vmware-vsphere): vSphere-Host
 antwortet nicht, vSphere-Host-Zustand rot, vSphere-Host im Wartungsmodus belassen,
 vSphere-Datastore fast voll, vSphere-Datastore unzugänglich, vSphere-VM-Tools laufen nicht,
-vSphere-Alarm rot, außerdem Gerät nicht erreichbar.
+vSphere-Alarm rot, außerdem Monitor nicht erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite fragt
 vSphere nie ab. Es nennt zuerst, was nicht stimmt (Hosts, die nicht antworten, rote Alarme,

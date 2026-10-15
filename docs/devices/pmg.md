@@ -11,9 +11,9 @@ antispam signature databases, services, certificates and cluster state.
     shapes come from a real mail gateway, but nobody has yet run it for weeks on a
     live mail gateway. Tell us what breaks.
 
-## The device page
+## The monitor page
 
-Beyond the generic charts, a Proxmox Mail Gateway device shows three panels,
+Beyond the generic charts, a Proxmox Mail Gateway monitor shows three panels,
 read from what the probe stored — opening the page never queries the gateway
 itself:
 
@@ -100,7 +100,7 @@ rather than wrong by fifty years. The same rule applies everywhere: a value the
 API does not return produces one metric fewer, never a zero pretending to be a
 measurement.
 
-Built-in rules that apply: Device unreachable, Mail queue growing, Mail stuck
+Built-in rules that apply: Monitor unreachable, Mail queue growing, Mail stuck
 in the queue, Mail gateway service stopped, Virus signatures out of date, Spam
 rules out of date, Quarantine filling up, Mail gateway cluster degraded, Mail
 gateway certificate expiring, Mail gateway updates pending. Notifications name

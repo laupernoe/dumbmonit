@@ -2,7 +2,7 @@
 
 时间序列数据库和日志数据库本身：它们是否接受发送给它们的内容、在停止接受任何内容之前剩余多少磁盘空间，以及它们拒绝什么。
 
-两个设备类型共享此页面，因为两个产品共享其基础：`victoriametrics`用于单节点VictoriaMetrics，`victorialogs`用于单节点VictoriaLogs。两者都在其API的端口上的`/health`和`/metrics`上发布自己的健康状态；DumbMonit读取这两个，仅此而已。它从不针对您的数据运行查询，也从不写入。
+两个监控项类型共享此页面，因为两个产品共享其基础：`victoriametrics`用于单节点VictoriaMetrics，`victorialogs`用于单节点VictoriaLogs。两者都在其API的端口上的`/health`和`/metrics`上发布自己的健康状态；DumbMonit读取这两个，仅此而已。它从不针对您的数据运行查询，也从不写入。
 
 这些服务器很少完全宕机。它们半途宕机：它们继续应答查询，仪表板仍然打开，而每个新样本或日志行都被拒绝，因为磁盘已越过只读限制或数据带有超出保留期的时间戳。推送给它们的任何内容（vmagent、Prometheus远程写入、Vector、Fluent Bit、Promtail）重试，然后丢弃。此页面是关于看到这种情况即将发生。
 
@@ -33,9 +33,9 @@
 
 **缓慢插入**是其序列VictoriaMetrics不得不在磁盘上查找而不是在其缓存中的样本。每个全新序列都是一个，所以部署会导致突发；保持在5%以上的份额意味着服务器缺乏其活跃序列的内存。这是VictoriaMetrics文档给出的阈值。重启后服务器的缓存是冷的，所以份额可能有一段时间保持高于这个阈值：规则在触发前等待半小时。计数器与服务器重启时重置为零；规则使用重置感知增量，所以重启不计为拒绝的数据。
 
-适用的[内置规则](../alerting/rules.md#log-and-metrics-servers)：指标或日志存储只读、指标或日志存储几乎只读、指标或日志服务器不健康、指标或日志数据拒绝、VictoriaMetrics缓慢插入，加上设备不可达。
+适用的[内置规则](../alerting/rules.md#log-and-metrics-servers)：指标或日志存储只读、指标或日志存储几乎只读、指标或日志服务器不健康、指标或日志数据拒绝、VictoriaMetrics缓慢插入，加上监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探针存储的内容；打开页面从不查询服务器。它按此顺序说明：
 

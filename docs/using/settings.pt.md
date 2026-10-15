@@ -79,7 +79,7 @@ que o servidor tem de alcançar. Guia completo:
 
 Apenas administradores. As contas que podem iniciar sessão, e o seu papel:
 
-| Papel | Lê tudo | Trata alertas (reconhecer, adiar, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (dispositivos, regras, canais, páginas de estado, definições, cópias de segurança, tokens, contas) |
+| Papel | Lê tudo | Trata alertas (reconhecer, adiar, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (monitores, regras, canais, páginas de estado, definições, cópias de segurança, tokens, contas) |
 |---|---|---|---|
 | **Viewer** | sim | não | não |
 | **Operator** | sim | sim | não |
@@ -88,7 +88,7 @@ Apenas administradores. As contas que podem iniciar sessão, e o seu papel:
 Um viewer vê todas as páginas com todos os controlos que alterariam algo
 ocultos. Algumas coisas continuam só para administradores até para leitura:
 tokens de API e de agente, emails de subscritores de páginas de estado, e
-opções de dispositivos que parecem segredos (uma opção cujo nome contém `key`,
+opções de monitores que parecem segredos (uma opção cujo nome contém `key`,
 `token`, `password`…, os cabeçalhos extra de uma verificação HTTP, a
 palavra-passe de um endereço `https://user:pass@host`), que os não
 administradores leem como `***`. Um operator é o papel de piquete: os controlos
@@ -185,7 +185,7 @@ para comparar à mão. A lista mostra o prefixo de cada token, a data de criaç�
 a última utilização e se foi revogado. **Revogar** pára todos os agentes que
 usam esse token no seu próximo envio.
 
-Um token pode registar várias máquinas. Revogá-lo não apaga os dispositivos. A
+Um token pode registar várias máquinas. Revogá-lo não apaga os monitores. A
 lista de tokens, a criação e a revogação são para administradores; viewers e
 operators veem a secção sem a lista.
 
@@ -194,8 +194,8 @@ operators veem a secção sem a lista.
 Um só tipo de token para ambos: clientes MCP e a
 [API REST](../reference/api.md). Dê um nome a um token, escolha o seu âmbito e
 crie-o — é mostrado uma só vez. Um token de **leitura** só pode olhar; um token
-de **leitura e escrita** também pode alterar coisas — silenciar um dispositivo,
-executar uma sonda, adicionar ou editar dispositivos, regras e canais — mas nunca
+de **leitura e escrita** também pode alterar coisas — silenciar um monitor,
+executar uma sonda, adicionar ou editar monitores, regras e canais — mas nunca
 contas, definições de início de sessão nem outros tokens.
 
 Em **Ligar**, três separadores contêm os excertos, preenchidos com o token
@@ -215,7 +215,7 @@ que um Prometheus ou um Grafana recolhem com ele. Veja
 Três coisas, pela ordem em que as encontra.
 
 Um **aviso que não pode falhar**: `/data/secret.key` é o que decifra as
-credenciais dos dispositivos, e uma cópia da base de dados sem ele restaura uma
+credenciais dos monitores, e uma cópia da base de dados sem ele restaura uma
 instância que não consegue falar com nada. O texto muda quando o segredo vem de
 `DUMBMONIT_SECRET` — não há então ficheiro a copiar, e é o seu gestor de
 palavras-passe que o tem de guardar.
@@ -276,7 +276,7 @@ partir de qualquer lado — veja [Modo parede](overview.md#wall-mode).
 ## Acerca de {#about}
 
 A versão do servidor e a saúde dos seus dois armazenamentos, a base de dados
-(configuração de dispositivos e histórico de alertas) e o VictoriaMetrics (todas
+(configuração de monitores e histórico de alertas) e o VictoriaMetrics (todas
 as medições dos gráficos), conforme reportado por `GET /api/health` e atualizado
 a cada 15 segundos. Um armazenamento que deixa de responder mostra um aviso com
 o erro e o que verificar. A secção também liga a esta documentação e nomeia a

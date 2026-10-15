@@ -1,6 +1,6 @@
-# Gerätetypen {#device-types}
+# Monitortypen {#device-types}
 
-DumbMonit nennt alles, was es überwacht, ein *Gerät* (die API sagt *target*), auch wenn es eine
+DumbMonit nennt alles, was es überwacht, einen *Monitor* (die API sagt *target*), auch wenn er eine
 Webseite oder ein DNS-Name ist. Jeder Typ ist ein Collector auf dem Server; der Server beschreibt
 der Oberfläche jeden Typ (`GET /api/collectors`), sodass das Formular immer dem entspricht, was
 diese Version überwachen kann.
@@ -72,29 +72,29 @@ diese Version überwachen kann.
 | [Heartbeat](push.md) | `push` | keine (geheime URL) | Cronjob, Backup-Skript, Automatisierung, die sich melden muss |
 | [Website-Änderungen](webchange.md) | `webchange` | keine | Eine Seite oder eine ganze Website: Textänderungen, neue und entfernte Seiten, Vorher/Nachher mit Screenshots |
 | [Website-Zustand & SEO](website.md) | `website` | keine | Websites in großer Zahl: Ausfall, leere Seite, Weiterleitungen, noindex, robots.txt, Änderungen von Titel/Beschreibung/Canonical, Plattform (CSV-Import) |
-| [Demo-Gerät](demo.md) | `dummy` | keine | Die Oberfläche ohne Hardware erkunden |
+| [Demo-Monitor](demo.md) | `dummy` | keine | Die Oberfläche ohne Hardware erkunden |
 
-## Wie ein Gerät gelesen wird {#how-a-device-is-read}
+## Wie ein Monitor gelesen wird {#how-a-device-is-read}
 
-Der Scheduler führt jedes aktivierte Gerät in seinem eigenen Intervall (standardmäßig 60 s,
+Der Scheduler führt jeden aktivierten Monitor in seinem eigenen Intervall (standardmäßig 60 s,
 mindestens 10 s) über den Collector seiner Art aus, mit höchstens
 `DUMBMONIT_MAX_CONCURRENT_PROBES` gleichzeitigen Prüfungen und einem harten Timeout von
 `DUMBMONIT_PROBE_TIMEOUT_SECS` pro Prüfung. Jede erfolgreiche Prüfung schreibt ihre Messwerte
 plus `dumbmonit_up = 1`; eine fehlgeschlagene Prüfung schreibt nichts, und es ist das Schweigen
-der Serie, das die Regel „Gerät nicht erreichbar“ erkennt. Die Geräteseite zeigt den Fehler bei
+der Serie, das die Regel „Monitor nicht erreichbar“ erkennt. Die Monitorseite zeigt den Fehler bei
 der nächsten Prüfung, aber der Alarm wartet absichtlich: Er löst etwa vier Minuten nach der
 letzten erfolgreichen Prüfung aus (drei Minuten Schweigen, dann eine Minute Haltezeit), sodass
 eine einzelne verlorene Prüfung nie jemanden alarmiert.
 
-Fehler werden klassifiziert. Ein Gerät, das nicht antwortet, ist *nicht erreichbar* und löst einen
+Fehler werden klassifiziert. Ein Monitor, der nicht antwortet, ist *nicht erreichbar* und löst einen
 Alarm aus. Eine falsche Community, ein abgelehntes Zertifikat oder eine fehlende Fähigkeit ist ein
-*Konfigurationsfehler*: Er wird auf der Geräteseite in Rot mit dem Grund angezeigt und nicht
-benachrichtigt. Der Unterschied ist wichtig: Ein falsch konfiguriertes Gerät sollte nachts
+*Konfigurationsfehler*: Er wird auf der Monitorseite in Rot mit dem Grund angezeigt und nicht
+benachrichtigt. Der Unterschied ist wichtig: Ein falsch konfigurierter Monitor sollte nachts
 niemanden wecken.
 
 ## Optionen {#options}
 
-Manche Typen lesen Optionen aus den Tags des Geräts: den API-Port, ob ein selbstsigniertes
+Manche Typen lesen Optionen aus den Tags des Monitors: den API-Port, ob ein selbstsigniertes
 Zertifikat akzeptiert wird, welche Knoten überwacht werden. Das Formular zeigt unter **Weitere
 Optionen** pro Option ein typisiertes Feld mit Standardwert und Hilfetext. Die Seiten der
 einzelnen Arten listen sie wörtlich auf. Optionen sind Einstellungen, keine Labels: Sie werden
@@ -105,10 +105,10 @@ Labels `tag_<key>` kopiert, außer Schlüsseln, die ein Geheimnis benennen (pro 
 trotzdem nie ein Geheimnis in einem Tag ab: Verwenden Sie das Zugangsdatenfeld, das verschlüsselt
 ist.
 
-## Übergeordnete Geräte {#parent-devices}
+## Übergeordnete Monitore {#parent-devices}
 
-Jedes Gerät kann ein anderes als sein Elternteil angeben. Ist das Elternteil nicht erreichbar,
+Jeder Monitor kann einen anderen als sein Elternteil angeben. Ist das Elternteil nicht erreichbar,
 werden Alarme seiner Nachkommen als *Vom Elternteil unterdrückt* markiert, statt gesendet zu
 werden: Ein ausgefallener Switch erzeugt eine Benachrichtigung, nicht dreißig. Auf der Seite
-Geräte stapeln sich Kinder unter ihrem Elternteil und werden gedimmt, wenn es nicht erreichbar
+Monitore stapeln sich Kinder unter ihrem Elternteil und werden gedimmt, wenn es nicht erreichbar
 ist.

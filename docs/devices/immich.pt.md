@@ -38,7 +38,7 @@ mostra-se no próprio registo do Immich.
 
 As [regras incorporadas](../alerting/rules.md#self-hosted-applications)
 que se aplicam: Immich jobs stalled, Immich queue paused, Immich storage
-almost full, Immich update available, mais Device unreachable.
+almost full, Immich update available, mais Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -65,10 +65,10 @@ silencioso enquanto outro continua a enviar. Só
 `last_seen_timestamp_seconds` — a última vez que a sessão de cada
 dispositivo esteve ativa — é genuinamente por dispositivo.
 
-A tabela da página do dispositivo mostra estes valores para cada
-dispositivo, com um estado OK ou Stale.
+A tabela da página do monitor mostra estes valores para cada
+monitor, com um estado OK ou Stale.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a
 página nunca chama o Immich. Diz primeiro o que está mal (filas
@@ -80,7 +80,7 @@ estado).
 
 ## Criar uma chave de API só de leitura no Immich {#create-a-read-only-api-key-in-immich}
 
-1. Inicie sessão no Immich com uma conta que pode abrir Administration: o Immich só deixa essas contas lerem contagens de fotos e filas de tarefas. Abra Account Settings → API Keys → New API Key, dê-lhe o seguinte nome, e marque estas oito permissões: as primeiras cinco para filas de tarefas, contagens e versão, as últimas três para listar os dispositivos da conta e a sua última ligação e cópia de segurança.
+1. Inicie sessão no Immich com uma conta que pode abrir Administration: o Immich só deixa essas contas lerem contagens de fotos e filas de tarefas. Abra Account Settings → API Keys → New API Key, dê-lhe o seguinte nome, e marque estas oito permissões: as primeiras cinco para filas de tarefas, contagens e versão, as últimas três para listar os monitores da conta e a sua última ligação e cópia de segurança.
 
     ```
     dumbmonit
@@ -89,12 +89,12 @@ estado).
 
 2. Copie a chave agora: o Immich mostra-a só uma vez. Lê essas oito páginas e nada mais: nenhuma foto, nenhum álbum, nenhuma definição. Se o seu Immich não oferecer queue.read, marque job.read em vez disso.
 
-3. Uma chave feita por uma conta comum também funciona: versão, atualizações, espaço em disco e dispositivos são lidos, contagens de fotos e filas de tarefas são ignoradas.
+3. Uma chave feita por uma conta comum também funciona: versão, atualizações, espaço em disco e monitores são lidos, contagens de fotos e filas de tarefas são ignoradas.
 
 4. No DumbMonit, introduza o endereço do Immich, por exemplo «immich.lan» (porta 2283) ou «https://photos.example.com» atrás de um proxy inverso, e cole a chave.
 
 !!! warning
-    Uma fila pausada é fácil de esquecer: as fotos novas não recebem miniatura, metadados nem rosto, e o Immich só o diz na sua página Jobs. O DumbMonit avisa quando tarefas esperam numa fila que não está pausada e não corre nada. session.read, asset.read e user.read listam todo dispositivo da conta que detém a chave — os seus telefones, tablets e navegadores — com a última ligação de cada um. A API do Immich não regista qual dispositivo enviou uma determinada foto, por isso «last backup» é o envio mais recente de toda a biblioteca, mostrado igual para cada dispositivo: se só um dispositivo deixar de fazer cópia de segurança enquanto os outros continuam, a sua ligação mostrar-se-á como obsoleta mas o valor de cópia de segurança partilhado continuará a parecer recente.
+    Uma fila pausada é fácil de esquecer: as fotos novas não recebem miniatura, metadados nem rosto, e o Immich só o diz na sua página Jobs. O DumbMonit avisa quando tarefas esperam numa fila que não está pausada e não corre nada. session.read, asset.read e user.read listam todo monitor da conta que detém a chave — os seus telefones, tablets e navegadores — com a última ligação de cada um. A API do Immich não regista qual monitor enviou uma determinada foto, por isso «last backup» é o envio mais recente de toda a biblioteca, mostrado igual para cada monitor: se só um monitor deixar de fazer cópia de segurança enquanto os outros continuam, a sua ligação mostrar-se-á como obsoleta mas o valor de cópia de segurança partilhado continuará a parecer recente.
 
 O que cada permissão abre: `server.about` a versão
 (`/api/server/about`), `server.versionCheck` a versão mais recente que o

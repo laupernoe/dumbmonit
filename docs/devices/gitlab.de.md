@@ -39,7 +39,7 @@ Alle Metriken haben das Präfix `dumbmonit_gitlab_`.
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#self-hosted-forges): GitLab-Runner
 alle offline, GitLab-Sidekiq-Rückstand hoch, GitLab-Migrationen ausstehend, GitLab-Lizenz läuft
-ab, außerdem Gerät nicht erreichbar. Ein Sicherheitswert prüft die Zwei-Faktor- und
+ab, außerdem Monitor nicht erreichbar. Ein Sicherheitswert prüft die Zwei-Faktor- und
 Registrierungseinstellungen sowie ausstehende Migrationen: siehe
 [Hersteller-Updates und weitere Prüfungen](../using/security-score.md).
 
@@ -55,7 +55,7 @@ Der CI-Pipeline-Zustand wird nur für die von Ihnen aufgeführten Projekte geles
 GitLab hat keinen instanzweiten Endpunkt „alle fehlschlagenden Pipelines“, nur einen pro
 Projekt.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite ruft
 GitLab nie auf. Es nennt zuerst, was nicht stimmt (eine Readiness-Komponente ausgefallen, alle

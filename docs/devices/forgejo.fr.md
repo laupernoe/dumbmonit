@@ -39,7 +39,7 @@ Toutes les métriques sont préfixées `dumbmonit_forgejo_`.
 
 Les [règles intégrées](../alerting/rules.md#self-hosted-forges) qui
 s'appliquent : runners Forgejo/Gitea tous hors ligne, tâche planifiée
-Forgejo/Gitea en retard, plus Appareil inaccessible. Un score de sécurité
+Forgejo/Gitea en retard, plus Surveillance inaccessible. Un score de sécurité
 vérifie les tâches planifiées : voir
 [Mises à jour fournisseur et autres contrôles](../using/security-score.md).
 
@@ -52,7 +52,7 @@ d'inscription ou de double authentification de GitLab, ni un indicateur
 « mise à jour disponible » auto-déclaré — comparez la version ci-dessus aux
 [notes de version](https://forgejo.org/releases/) du projet à la main.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Forgejo ou Gitea. Il dit d'abord ce qui ne va pas (le

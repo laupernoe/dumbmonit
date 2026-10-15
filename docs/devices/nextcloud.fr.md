@@ -42,12 +42,12 @@ Toutes les métriques sont préfixées `dumbmonit_nextcloud_`.
 
 Pendant que Nextcloud est en maintenance ou attend une mise à niveau, son
 API répond 503 : seuls `maintenance`, `needs_db_upgrade` et `version_info`
-sont alors écrits, et l'appareil n'est pas rapporté inaccessible.
+sont alors écrits, et la surveillance n'est pas rapportée inaccessible.
 
 Les [règles intégrées](../alerting/rules.md#self-hosted-applications) qui
 s'appliquent : Nextcloud bloqué en maintenance, mise à niveau de base de
 données Nextcloud en attente, mise à jour Nextcloud disponible, OPcache
-Nextcloud plein, espace libre Nextcloud faible, plus Appareil inaccessible.
+Nextcloud plein, espace libre Nextcloud faible, plus Surveillance inaccessible.
 
 ## Tâches de fond (cron)
 
@@ -89,7 +89,7 @@ DumbMonit suivra le même schéma
 [appareils clients](../alerting/rules.md) déjà utilisé pour Immich,
 Proxmox Backup Server et Veeam.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Nextcloud. Il dit d'abord ce qui ne va pas

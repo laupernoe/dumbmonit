@@ -74,7 +74,7 @@ this is unrelated to the **Devices to keep online** setting above, which only
 raises an alert for watched devices going offline. Raise **Device staleness**
 for a tailnet with devices that roam.
 
-## The device page
+## The monitor page
 
 The Tailnet panel says what is wrong in a sentence, shows the devices online,
 the watched devices offline, the available updates and the shared devices,

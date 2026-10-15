@@ -25,8 +25,8 @@ Zähler (Schnittstellen-Octets, gedruckte Seiten) werden roh gespeichert:
 Nutzen Sie `rate()` in einer Abfrage, um einen Durchsatz zu erhalten. Ein
 Geräte-Reboot zeigt sich als Zähler-Reset, nie als gefälschter Ausschlag.
 
-Die für SNMP-Geräte geltenden [eingebauten Regeln](../alerting/rules.md):
-Device unreachable, High CPU, Disk almost full, Filesystem almost full
+Die für SNMP-Monitore geltenden [eingebauten Regeln](../alerting/rules.md):
+Monitor unreachable, High CPU, Disk almost full, Filesystem almost full
 (Vorhersage), UPS on battery, UPS battery low, Port accumulating errors,
 Port flapping, Unusual CPU (Baseline).
 
@@ -99,5 +99,5 @@ werden auf jeder Zeitreihe als `tag_<key>` kopiert.
 | Kein Schnittstellen-Traffic | Das Gerät stellt die 64-Bit-Zähler der `ifXTable` nicht bereit. |
 | Leerer Scan | Der Scan versucht eine Community auf jeder Adresse; Geräte mit einer anderen Community oder nur SNMP v3 antworten nicht. |
 
-Nutzen Sie **Probe now** auf der Geräteseite: Es meldet die Anzahl der
+Nutzen Sie **Probe now** auf der Monitorseite: Es meldet die Anzahl der
 Samples und die von einer Abfrage erzeugten Zeitreihennamen.

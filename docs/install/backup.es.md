@@ -4,7 +4,7 @@ Dos cosas distintas, para dos accidentes distintos.
 
 | | Paquete cifrado | Copia de seguridad local programada |
 |---|---|---|
-| Qué contiene | La configuración: dispositivos y sus credenciales, reglas, canales, páginas de estado, cuentas, tokens. | Toda la base de datos, como un archivo, más `secret.key`. |
+| Qué contiene | La configuración: monitores y sus credenciales, reglas, canales, páginas de estado, cuentas, tokens. | Toda la base de datos, como un archivo, más `secret.key`. |
 | Dónde va | Donde tú lo pongas — está cifrado con una frase de paso que eliges. | `/data/backups/`, dentro del mismo volumen. |
 | De qué te salva | Un servidor perdido, un traslado a hardware nuevo, una instalación limpia. | El cambio que lamentas diez minutos después, una actualización que salió mal. |
 | Qué no contiene | Historial de métricas, estado e historial de alertas, el registro de auditoría, sesiones. | Historial de métricas (`vm/`). |
@@ -12,7 +12,7 @@ Dos cosas distintas, para dos accidentes distintos.
 Ninguno sustituye un archivo de todo el volumen si también quieres
 recuperar las gráficas; eso está al final de esta página.
 
-!!! danger "`/data/secret.key` es lo que descifra las credenciales de tus dispositivos"
+!!! danger "`/data/secret.key` es lo que descifra las credenciales de tus monitores"
     Las comunidades SNMP, los tokens de Proxmox, las contraseñas SMTP y
     las URL de heartbeat se guardan cifradas con una clave derivada del
     secreto de la instancia. En el primer arranque, DumbMonit la escribe
@@ -23,7 +23,7 @@ recuperar las gráficas; eso está al final de esta página.
     instancia que no puede hablar con nada.** El servidor se da cuenta y
     se niega a arrancar con un mensaje explícito en lugar de fallar en
     cada sonda — pero las credenciales han desaparecido, y cada
-    dispositivo hay que volver a introducirlo.
+    monitor hay que volver a introducirlo.
 
     El paquete cifrado es la única excepción: sus secretos se vuelven a
     cifrar con tu frase de paso, así que se restaura sobre una instancia
@@ -56,16 +56,16 @@ frase de paso se pierde se pierde.
 
 !!! warning "El paquete contiene cada credencial de esta instancia"
     Cualquiera con el archivo y la frase de paso puede leer la
-    contraseña de cada dispositivo que monitorizas. Guárdalo donde
+    contraseña de cada monitor que monitorizas. Guárdalo donde
     guardas las contraseñas.
 
 ### Qué contiene {#what-is-in-it}
 
 | Sección | Contenido |
 |---|---|
-| `targets` | Dispositivos: nombre, tipo, dirección, intervalo, opciones, padre, agente relay, y la credencial. |
+| `targets` | Monitores: nombre, tipo, dirección, intervalo, opciones, padre, agente relay, y la credencial. |
 | `rules` | Reglas de alerta, incluidas las integradas que hayas reajustado o desactivado. |
-| `rule_overrides` | Umbrales y exclusiones por dispositivo. |
+| `rule_overrides` | Umbrales y exclusiones por monitor. |
 | `channels` | Canales de notificación, sus ajustes, su política por canal y sus secretos. |
 | `notify_policy` | La política de notificación global (agrupamiento, límite por hora, flapping, URL pública). |
 | `silences` | Ventanas de mantenimiento. |
@@ -76,7 +76,7 @@ frase de paso se pierde se pierde.
 | `api_tokens` | Tokens de API, como hashes. Los tokens existentes siguen funcionando. |
 | `push_monitors` | Tokens de heartbeat, así las URL que ya llaman tus tareas cron siguen siendo las mismas. |
 
-Los dispositivos se emparejan por **tipo + dirección**, que es también
+Los monitores se emparejan por **tipo + dirección**, que es también
 la clave única de la tabla: importar el mismo paquete dos veces nunca
 crea una segunda copia de nada.
 
@@ -115,7 +115,7 @@ pueda restaurar en algún sitio que nunca ha visto `secret.key`.
 3. Lee el informe. Indica, sección por sección, qué se **crearía**, qué
    se **actualizaría** porque difiere de lo que ya hay, y qué ya es
    idéntico — más una nota para cualquier cosa que no pudo ubicar, como
-   una regla que apuntaba a un dispositivo que el paquete no contiene.
+   una regla que apuntaba a un monitor que el paquete no contiene.
 4. Pulsa **Restore for real**.
 
 Tres reglas que la restauración nunca rompe:
@@ -124,7 +124,7 @@ Tres reglas que la restauración nunca rompe:
   describe el paquete; cualquier cosa que la instancia tenga además
   permanece.
 - **Nada se duplica nunca.** Cada elemento se empareja por su clave
-  natural — tipo + dirección para un dispositivo, `uid` para una regla,
+  natural — tipo + dirección para un monitor, `uid` para una regla,
   nombre para un canal, slug para una página de estado. Restaurar el
   mismo paquete dos veces reporta todo como ya idéntico y no escribe
   nada.

@@ -66,9 +66,9 @@ disattivare questo.
 Le [regole integrate](../alerting/rules.md#adguard-home) che si applicano:
 AdGuard Home protection off, AdGuard Home DNS not running, AdGuard Home
 upstream failing, AdGuard Home filter lists stale, AdGuard Home update
-available, più Device unreachable.
+available, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non si connette mai a AdGuard Home. Indica se la protezione e il

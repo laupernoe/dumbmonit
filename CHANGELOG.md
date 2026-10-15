@@ -205,6 +205,17 @@ All notable changes to this project are documented here. The format follows
   regained. `PUID`/`PGID` (or `DUMBMONIT_PUID`/`DUMBMONIT_PGID`) choose another
   owner, for example your own user or Unraid's `99:100`. The image itself still
   runs as 65532, and the healthcheck drops root too when started as root.
+- **Devices are now Monitors.** What DumbMonit watches is called a monitor
+  throughout the interface and the documentation (navigation: Overview /
+  Monitors / Alerts / Settings). Nothing changes under the hood: API routes,
+  `target` labels, URLs and metric names are the same.
+- **A simpler Monitors page.** One toolbar: search, **Filter** (state, kind,
+  sort and tags fold behind it, with a count of those in use), Compact / Tiles,
+  **Select** and **Add a monitor**. The map, **Create folder** and the CSV and
+  Uptime Kuma imports moved to a **⋯** menu next to it. Folder headers are
+  plain lines that show a state only when something inside is not reporting;
+  security grades are quiet in the list, and monitors without a grade show none.
+  The type filter only lists the types you use.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and
@@ -266,6 +277,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Removed
 
+- **The Rows layout of the Monitors page.** Compact and Tiles remain; a
+  remembered Rows choice, and `?view=rows` links, open Compact.
 - **The Security page.** `/security` now opens the security score setting; the
   report moved to each device.
 
@@ -281,6 +294,10 @@ All notable changes to this project are documented here. The format follows
 - **SELinux hosts.** A bind mount without a container label (Fedora, RHEL) is
   refused even to root; the server now says so and asks for `:Z` on the volume,
   documented with rootless Podman in the install guide.
+- **Agent install on systemd hosts.** The Linux installer ran out of memory
+  while writing the systemd unit (shell killed, empty unit, agent never
+  started): a comment in the unit held `yes` between backticks, which the
+  shell ran. Re-run the install command after upgrading the server.
 - **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
   other overflow menu) now opens above the rest of the page, kept on screen
   and flipped upwards near the bottom, instead of hiding behind the next card

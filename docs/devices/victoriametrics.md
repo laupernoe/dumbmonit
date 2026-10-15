@@ -4,7 +4,7 @@ The time series database and the log database themselves: whether they accept
 what they are sent, how much disk is left before they stop accepting anything,
 and what they refuse.
 
-Two device types share this page, because the two products share their
+Two monitor types share this page, because the two products share their
 foundations: `victoriametrics` for a single-node VictoriaMetrics, and
 `victorialogs` for a single-node VictoriaLogs. Both publish their own health on
 `/health` and `/metrics`, on the port of their API; DumbMonit reads those two
@@ -63,9 +63,9 @@ counted as refused data.
 The [built-in rules](../alerting/rules.md#log-and-metrics-servers) that apply:
 Metrics or log storage read-only, Metrics or log storage almost read-only,
 Metrics or log server unhealthy, Metrics or log data refused, VictoriaMetrics
-slow inserts, plus Device unreachable.
+slow inserts, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries the server. It says, in this order:

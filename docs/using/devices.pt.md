@@ -1,10 +1,10 @@
-# A página de dispositivos {#the-devices-page}
+# A página de monitores {#the-devices-page}
 
-![O bastidor: uma placa frontal por dispositivo](../assets/screenshots/devices-light.png){ loading=lazy }
+![O bastidor: uma placa frontal por monitor](../assets/screenshots/devices-light.png){ loading=lazy }
 
 ## O bastidor {#the-rack}
 
-Cada dispositivo é uma placa frontal de rack 1U: um LED de estado, o nome, o
+Cada monitor é uma placa frontal de rack 1U: um LED de estado, o nome, o
 selo do tipo, o endereço, quando foi visto por último, e um sparkline de uma
 métrica representativa. Os filhos empilham-se sob o seu pai e esbatem-se
 quando o pai está inacessível.
@@ -12,7 +12,7 @@ quando o pai está inacessível.
 | Estado | Significado |
 |---|---|
 | Reporting | A última verificação teve sucesso, dentro de três períodos. |
-| Unreachable | O dispositivo não respondeu (tempo esgotado, ligação recusada), ou nenhuma verificação há mais de três períodos (pelo menos 90 s). |
+| Unreachable | O monitor não respondeu (tempo esgotado, ligação recusada), ou nenhuma verificação há mais de três períodos (pelo menos 90 s). |
 | Misconfigured | A última verificação falhou do nosso lado: credenciais erradas, endereço ou opção inválidos, resposta inesperada. Mostrado na cor de aviso com o erro; não gera nenhum alerta. |
 | Waiting | Adicionado, ainda não verificado. |
 | Disabled | Em pausa: não verificado, não gera nenhum alerta. |
@@ -21,26 +21,26 @@ Filtros: uma caixa de pesquisa, um segmento de estado (All, Needs attention,
 Reporting, Disabled) e um filtro por tipo. **Add a device** é a ação principal.
 
 O botão **Select** (operadores e administradores) ativa uma caixa de seleção por
-dispositivo e uma barra flutuante em baixo com as ações em lote; **Done** ou
+monitor e uma barra flutuante em baixo com as ações em lote; **Done** ou
 Escape sai do modo.
 
-## Um dispositivo {#a-device}
+## Um monitor {#a-device}
 
-![Página de um dispositivo: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
+![Página de um monitor: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
 
-A página do dispositivo mostra a sua placa de estado, endereço, tipo, perfil
+A página do monitor mostra a sua placa de estado, endereço, tipo, perfil
 detetado, etiquetas, última verificação, e para serviços o estado do
 certificado. Ações:
 
 | Ação | Efeito |
 |---|---|
-| Probe now | Executa uma verificação de imediato e informa quantas amostras e séries produziu. A primeira coisa a tentar quando um dispositivo não mostra dados. |
+| Probe now | Executa uma verificação de imediato e informa quantas amostras e séries produziu. A primeira coisa a tentar quando um monitor não mostra dados. |
 | Edit | Abre o mesmo formulário usado ao adicionar, pré-preenchido. Deixar a credencial vazia mantém a guardada. |
-| Silence 1 h / Silence until… | Uma janela de manutenção pontual neste dispositivo. |
-| Delete | Pergunta «Delete for good?» em linha durante cinco segundos, depois elimina o dispositivo. As suas séries permanecem na VictoriaMetrics até a retenção expirar. |
+| Silence 1 h / Silence until… | Uma janela de manutenção pontual neste monitor. |
+| Delete | Pergunta «Delete for good?» em linha durante cinco segundos, depois elimina o monitor. As suas séries permanecem na VictoriaMetrics até a retenção expirar. |
 
 Abaixo: **Alerts on this device** — cada alerta ativo oferece *Ack*, *Snooze*
-e *Ignore*, e uma regra ignorada neste dispositivo é listada em separado com
+e *Ignore*, e uma regra ignorada neste monitor é listada em separado com
 **Stop ignoring** — depois **Metrics** ao longo de um intervalo de tempo (1 h,
 6 h, 24 h, 7 dias), um gráfico por nome de métrica com uma linha por série.
 Ver [Livrar-se de um alerta](alerts.md#getting-rid-of-an-alert).
@@ -70,16 +70,16 @@ Cada interruptor guarda por si só. Detalhes e regras de segurança:
 
 ## Adicionar e editar {#adding-and-editing}
 
-Ver [Adicionar o primeiro dispositivo](../install/first-device.md) para o
-formulário e os [tipos de dispositivo](../devices/index.md) para o que cada
+Ver [Adicionar o primeiro monitor](../install/first-device.md) para o
+formulário e os [tipos de monitor](../devices/index.md) para o que cada
 tipo necessita. Ao editar, o formulário abre **More options** por si só se o
-dispositivo já usar uma.
+monitor já usar uma.
 
 ## Eliminar {#deleting}
 
-Eliminar um dispositivo remove-o da configuração, limpa os seus alertas na
+Eliminar um monitor remove-o da configuração, limpa os seus alertas na
 hora — nada é notificado, o histórico mantém uma linha `device removed or
 disabled` — e elimina as suas séries temporais da VictoriaMetrics incorporada
 alguns segundos depois (melhor esforço: uma falha é apenas registada, e as
-séries envelhecem depois com a retenção de 12 meses). Pausar um dispositivo
+séries envelhecem depois com a retenção de 12 meses). Pausar um monitor
 limpa os seus alertas da mesma forma; as suas séries permanecem.

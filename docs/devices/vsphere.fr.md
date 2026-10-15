@@ -60,9 +60,9 @@ Les [règles intégrées](../alerting/rules.md#vmware-vsphere) qui
 s'appliquent : hôte vSphere ne répond pas, santé d'hôte vSphere rouge, hôte
 vSphere laissé en maintenance, datastore vSphere presque plein, datastore
 vSphere inaccessible, VMware Tools vSphere non lancés, alarme rouge vSphere,
-plus Appareil inaccessible.
+plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais vSphere. Il dit d'abord ce qui ne va pas (hôtes qui

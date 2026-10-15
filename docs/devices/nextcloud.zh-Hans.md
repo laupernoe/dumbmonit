@@ -28,9 +28,9 @@ DumbMonit 使用**监控令牌**（`NC-Token`）读取公共 `status.php` 和**s
 | `opcache_memory_used_percent`, `opcache_interned_strings_used_percent`, `opcache_hit_rate_percent`, `opcache_oom_restarts` | OPcache 的饱满程度及其服务效果 | |
 | `fpm_active_processes`, `fpm_total_processes`, `fpm_listen_queue`, `fpm_max_children_reached`, `fpm_slow_requests` | PHP-FPM 池，当 Nextcloud 运行在 PHP-FPM 后面时（`-fpm` 镜像，AIO） | |
 
-当 Nextcloud 在维护或等待升级时，其 API 回答 503：仅 `maintenance`，`needs_db_upgrade` 和 `version_info` 被写入，设备不被报告为不可达。
+当 Nextcloud 在维护或等待升级时，其 API 回答 503：仅 `maintenance`，`needs_db_upgrade` 和 `version_info` 被写入，监控项不被报告为不可达。
 
-适用的[内置规则](../alerting/rules.md#self-hosted-applications)：Nextcloud 困在维护中、Nextcloud 数据库升级待处理、Nextcloud 更新可用、Nextcloud OPcache 已满、Nextcloud 可用空间低、加上设备不可达。
+适用的[内置规则](../alerting/rules.md#self-hosted-applications)：Nextcloud 困在维护中、Nextcloud 数据库升级待处理、Nextcloud 更新可用、Nextcloud OPcache 已满、Nextcloud 可用空间低、加上监控项不可达。
 
 ## 后台作业 (cron) {#background-jobs-cron}
 
@@ -46,9 +46,9 @@ Nextcloud 不告知监控令牌后台作业最后何时运行：只有对实例�
 
 Nextcloud 不通过任何 API 暴露管理员范围的同步客户端或移动设备列表。个人"设备和会话"页面（设置 → 安全）仅列出当前登录的账户，由浏览器会话而非 API 令牌支持，唯一管理员范围的等价物是命令行（`occ user:auth-tokens:list <user>`，一次一个账户）——监控令牌无法到达，DumbMonit 不要求管理员编写脚本到探针中。DumbMonit 读取的 `serverinfo` API 也没有设备列表：它只提供活跃用户的计数（上面的 `active_users`），从不是谁或他们是什么。
 
-这是一个有意的限制，不是缺失的功能：给 DumbMonit 设备列表意味着将监控令牌扩展到完整管理员账户，本页其余内容都在避免这种情况。如果 Nextcloud 曾经通过 OCS 暴露这个，DumbMonit 将遵循已用于 Immich、Proxmox Backup Server 和 Veeam 的相同[客户端设备](../alerting/rules.md)模式。
+这是一个有意的限制，不是缺失的功能：给 DumbMonit 监控项列表意味着将监控令牌扩展到完整管理员账户，本页其余内容都在避免这种情况。如果 Nextcloud 曾经通过 OCS 暴露这个，DumbMonit 将遵循已用于 Immich、Proxmox Backup Server 和 Veeam 的相同[客户端设备](../alerting/rules.md)模式。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板上方读取探针存储的内容；打开页面从不调用 Nextcloud。它首先说明问题所在（维护、升级等待、OPcache 已满或关闭），然后是更新、活跃用户、可用空间、数据库大小、用户、文件和 OPcache 数据，然后是需要更新的应用名称和平台（数据库、PHP）。
 

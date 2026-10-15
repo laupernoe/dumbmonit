@@ -1,16 +1,16 @@
 # Punteggio di sicurezza
 
 Il punteggio di sicurezza è un voto **facoltativo** da **A** a **F** (e un
-punteggio da 0 a 100) mostrato accanto ai dispositivi per i quali pochi
+punteggio da 0 a 100) mostrato accanto ai monitor per i quali pochi
 controlli dicono qualcosa di utile: host Linux e Windows con l'agente, Proxmox
 VE e Proxmox Backup Server, Synology, OPNsense, siti web e Active Directory. Gli
-altri dispositivi non mostrano nulla.
+altri monitor non mostrano nulla.
 
 !!! warning "Indicativo, non un audit"
     Il punteggio è **approssimativo e non esaustivo**. Legge soltanto ciò che
-    DumbMonit raccoglie già da un dispositivo e lo confronta con una manciata
+    DumbMonit raccoglie già da un monitor e lo confronta con una manciata
     di buone pratiche del produttore. Un voto A non significa che un
-    dispositivo sia sicuro, e un controllo mancante non significa che
+    monitor sia sicuro, e un controllo mancante non significa che
     l'impostazione sia a posto. Usalo come invito a guardare, poi, quando conta,
     usa un vero strumento di valutazione (PingCastle, Mozilla HTTP
     Observatory, Lynis, il security advisor del produttore stesso…).
@@ -21,12 +21,12 @@ Il punteggio è **disattivato per impostazione predefinita**. Un amministratore
 lo attiva in **Impostazioni → Account e sicurezza → Punteggio di sicurezza**.
 Una volta attivo:
 
-- ogni dispositivo valutato riceve un piccolo **badge a forma di scudo** con la
-  sua lettera nell'elenco dei dispositivi, e un badge **Security** con il
+- ogni monitor valutato riceve un piccolo **badge a forma di scudo** con la
+  sua lettera nell'elenco dei monitor, e un badge **Security** con il
   punteggio nella sua pagina;
-- facendo clic sul badge si apre il **report** del dispositivo: cosa fallisce,
+- facendo clic sul badge si apre il **report** del monitor: cosa fallisce,
   con l'evidenza e la correzione, cosa passa, i passaggi per migliorare il
-  punteggio su questo tipo di dispositivo e un link alla sezione corrispondente
+  punteggio su questo tipo di monitor e un link alla sezione corrispondente
   qui sotto.
 
 Disattivandolo si nascondono i badge, si ferma il calcolo periodico e le serie
@@ -34,17 +34,17 @@ Disattivandolo si nascondono i badge, si ferma il calcolo periodico e le serie
 
 !!! note "Aggiornamento da 0.1.0-alpha.8 o precedente"
     Il punteggio era prima sempre attivo, con una propria pagina **Security**.
-    Un'installazione che monitorava già un dispositivo valutabile mantiene il
+    Un'installazione che monitorava già un monitor valutabile mantiene il
     punteggio attivo dopo l'aggiornamento; una nuova installazione parte con il
     punteggio disattivato. Il vecchio indirizzo `/security` ora apre
     l'impostazione.
 
 ## Come viene calcolato il punteggio
 
-DumbMonit non chiede mai nulla di extra al dispositivo per calcolare il
+DumbMonit non chiede mai nulla di extra al monitor per calcolare il
 punteggio. I controlli leggono gli ultimi valori che i collector hanno già
 registrato (guardando indietro di 6 ore), quindi un punteggio non costa nulla
-al dispositivo.
+al monitor.
 
 Ogni controllo ha una categoria (esposizione, patching, autenticazione,
 cifratura, backup, configurazione), una **gravità** che è il suo peso
@@ -55,7 +55,7 @@ la correzione e un link alla pagina del produttore su cui si basa.
 **Punteggio** = 100 × (peso dei controlli superati) ÷ (peso dei superati +
 falliti). **I controlli sconosciuti sono mostrati ma mai contati**: un
 punteggio non deve scendere perché a un account di monitoraggio manca un
-privilegio, né salire perché non si sa nulla. Un dispositivo i cui controlli
+privilegio, né salire perché non si sa nulla. Un monitor i cui controlli
 sono tutti sconosciuti *non è valutato*.
 
 | Voto | Punteggio | Parola |
@@ -248,7 +248,7 @@ Fonti: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 
 ### Siti web { #websites }
 
-Per i monitor **HTTP(S)** e **TLS** che negoziano TLS, e per i dispositivi
+Per i monitor **HTTP(S)** e **TLS** che negoziano TLS, e per i monitor
 **Website health & SEO**. Un monitor HTTP in chiaro non ha punteggio.
 
 | Controllo | Gravità | Dato |

@@ -10,7 +10,7 @@ environ, puis laisse approfondir à la demande.
 La bande en haut est un bulletin météo pour votre réseau. Une phrase
 résume le ciel : « Ciel dégagé. » quand rien n'a besoin de vous, sinon un
 décompte de ce qui en a besoin (« 9 avis, 1 inaccessible. »). Dessous, des
-plaques comptent les appareils qui rapportent et ceux inaccessibles, avec
+plaques comptent les surveillances qui rapportent et celles inaccessibles, avec
 l'heure de la dernière vérification, et trois indicateurs : **Rapportent**,
 **Besoin de vous**, **Prévisions**.
 
@@ -19,43 +19,43 @@ tempête, selon le nombre d'alertes qui se déclenchent et leur gravité,
 avec le pigeon qui traverse en vol. Sous `prefers-reduced-motion`, tout
 reste immobile.
 
-L'action principale unique de la page est **Ajouter un appareil**.
+L'action principale unique de la page est **Ajouter une surveillance**.
 
 ## Le guide de premier lancement
 
 Sur une instance neuve, la page sous le bulletin n'est pas vide : c'est un
-guide en trois étapes — ajouter un appareil, connecter un moyen d'être
+guide en trois étapes — ajouter une surveillance, connecter un moyen d'être
 averti, vérifier qu'un message arrive. Chaque étape est un clic, chacune
 peut être écartée seule, et **Passer le guide** range les trois d'un coup.
 Le choix est stocké sur l'instance, un second navigateur ne relance donc
 pas le guide. Voir
-[Ajouter votre premier appareil](../install/first-device.md#the-three-first-steps).
+[Ajouter votre première surveillance](../install/first-device.md#the-three-first-steps).
 
 ## Besoin de vous
 
 La liste de ce qui a besoin de vous maintenant, du plus grave au moins
-grave : appareils inaccessibles, puis alertes déclenchées par gravité.
-Chaque ligne nomme la règle, l'appareil, la valeur actuelle, depuis
+grave : surveillances inaccessibles, puis alertes déclenchées par gravité.
+Chaque ligne nomme la règle, la surveillance, la valeur actuelle, depuis
 combien de temps ça dure, et si elle regroupe plusieurs séries (« ×4 »
-pour quatre systèmes de fichiers sur le même appareil). Quatre actions :
+pour quatre systèmes de fichiers sur la même surveillance). Quatre actions :
 **Acquitter** (acquitter cette alerte pour 1 h, 4 h, 24 h ou jusqu'à
 résolution — les rappels s'arrêtent, la résolution est quand même
 notifiée), **Reporter** (cacher juste cette alerte pour 1 h, 8 h, 1 jour
 ou jusqu'à résolution), **Ignorer** (empêcher cette règle de jamais
-alerter à nouveau sur cet appareil, de façon réversible), et **Ouvrir
-l'appareil**.
+alerter à nouveau sur cette surveillance, de façon réversible), et **Ouvrir
+la surveillance**.
 
 Les alertes acquittées et reportées rejoignent leur propre groupe plus
 discret sous la liste et quittent le compte *Besoin de vous*. Une alerte
 ignorée disparaît complètement — elle n'est pas « connue », elle est
-désactivée pour cet appareil. Voir
+désactivée pour cette surveillance. Voir
 [Se débarrasser d'une alerte](alerts.md#getting-rid-of-an-alert).
 
-## Résumé des appareils
+## Résumé des surveillances
 
-Une ligne : combien d'appareils, combien rapportent, combien sont
-inaccessibles, et un lien vers la page Appareils complète. L'aperçu ne
-liste jamais les appareils : le rack vit sur [Appareils](devices.md).
+Une ligne : combien de surveillances, combien rapportent, combien sont
+inaccessibles, et un lien vers la page Surveillances complète. L'aperçu ne
+liste jamais les surveillances : le rack vit sur [Surveillances](devices.md).
 
 ## Prévisions et dernières 24 heures
 
@@ -100,9 +100,9 @@ un champ de saisie, des résultats en trois groupes.
 
 | Groupe | Entrées |
 |---|---|
-| Pages | Aperçu, Appareils, Alertes, Notifications, Pages de statut, Réglages, Mode mur, Documentation |
-| Actions | Ajouter un appareil, Scanner mon réseau, Planifier une maintenance, Ajouter un canal de notification, Nouvelle page de statut, Annoncer un incident, Basculer le thème |
-| Appareils | Chaque appareil, avec sa LED d'état ; ++enter++ l'ouvre |
+| Pages | Aperçu, Surveillances, Alertes, Notifications, Pages de statut, Réglages, Mode mur, Documentation |
+| Actions | Ajouter une surveillance, Scanner mon réseau, Planifier une maintenance, Ajouter un canal de notification, Nouvelle page de statut, Annoncer un incident, Basculer le thème |
+| Surveillances | Chaque surveillance, avec sa LED d'état ; ++enter++ l'ouvre |
 
 ## Navigation
 
@@ -115,7 +115,7 @@ documentation.
 - **Aperçu** — le bulletin : est-ce que tout va bien, et qu'est-ce qui a
   besoin de vous.
 - **Surveillances** — le rack ; toutes les sources que vous surveillez. Voir
-  [Page Appareils](devices.md).
+  [Page Surveillances](devices.md).
 - **Alertes** — ce qui se déclenche, les fenêtres de maintenance,
   l'historique et les règles. Voir [Page Alertes](alerts.md).
 - **Réglages** — votre compte, les utilisateurs et l'authentification

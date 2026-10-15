@@ -30,7 +30,7 @@ contadores: os gráficos e as regras convertem-nas em taxas. Tudo abaixo de
 estados são waiting, open_slot, starting, reading, sending, keepalive,
 dns_lookup, closing, logging, finishing e idle_cleanup.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca consulta o Apache. Mostra trabalhadores ocupados e inativos, a

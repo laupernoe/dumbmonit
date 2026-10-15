@@ -114,8 +114,8 @@ without network.
 1. Implement `Collector` from `crates/proto/src/collector.rs`: `kind()`,
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` and optionally
    `discover()` for profile detection. Return `ProbeError` variants
-   truthfully: `means_down()` decides whether a failure counts as "device
-   down" (alerted) or as a configuration error (shown on the device, not
+   truthfully: `means_down()` decides whether a failure counts as "monitor
+   down" (alerted) or as a configuration error (shown on the monitor, not
    notified).
 2. Read your options from `Target::tags` in an `options.rs`, with defaults.
 3. Register it in `crates/server/src/main.rs` with `registry.register(...)`.

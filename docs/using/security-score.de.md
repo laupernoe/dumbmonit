@@ -1,16 +1,16 @@
 # Sicherheitsbewertung
 
 Die Sicherheitsbewertung ist eine **optionale** Note von **A** bis **F** (und
-ein Score von 0 bis 100), die neben den Geräten angezeigt wird, bei denen einige
+ein Score von 0 bis 100), die neben den Monitoren angezeigt wird, bei denen einige
 Prüfungen etwas Nützliches aussagen: Linux- und Windows-Hosts mit dem Agent,
 Proxmox VE und Proxmox Backup Server, Synology, OPNsense, Websites und Active
-Directory. Andere Geräte zeigen nichts an.
+Directory. Andere Monitore zeigen nichts an.
 
 !!! warning "Orientierungshilfe, kein Audit"
     Der Score ist **ungefähr und nicht erschöpfend**. Er liest nur, was
-    DumbMonit ohnehin von einem Gerät erfasst, und vergleicht es mit einer
+    DumbMonit ohnehin von einem Monitor erfasst, und vergleicht es mit einer
     Handvoll Best Practices des Herstellers. Eine Note A bedeutet nicht, dass
-    ein Gerät sicher ist, und eine fehlende Prüfung bedeutet nicht, dass die
+    ein Monitor sicher ist, und eine fehlende Prüfung bedeutet nicht, dass die
     Einstellung in Ordnung ist. Nutzen Sie ihn als Anstoß, genauer
     hinzusehen, und setzen Sie dann ein echtes Bewertungswerkzeug ein
     (PingCastle, Mozilla HTTP Observatory, Lynis, den Security Advisor des
@@ -22,12 +22,12 @@ Die Bewertung ist **standardmäßig ausgeschaltet**. Ein Administrator schaltet
 sie unter **Einstellungen → Konto und Sicherheit → Sicherheitsbewertung** ein.
 Danach gilt:
 
-- jedes bewertete Gerät erhält in der Geräteliste ein kleines
+- jeder bewertete Monitor erhält in der Monitorliste ein kleines
   **Schild-Abzeichen** mit seinem Buchstaben und auf seiner Seite ein
   **Security**-Abzeichen mit dem Score;
-- ein Klick auf das Abzeichen öffnet den **Bericht** des Geräts: was
+- ein Klick auf das Abzeichen öffnet den **Bericht** des Monitors: was
   fehlschlägt, mit Nachweis und Abhilfe, was besteht, die Schritte zur
-  Verbesserung des Scores für diese Geräteart und ein Link zum passenden
+  Verbesserung des Scores für diese Monitorart und ein Link zum passenden
   Abschnitt unten.
 
 Beim Ausschalten verschwinden die Abzeichen, die periodische Berechnung
@@ -36,16 +36,16 @@ geschrieben.
 
 !!! note "Update von 0.1.0-alpha.8 oder früher"
     Der Score war früher immer aktiv und hatte eine eigene Seite
-    **Security**. Eine Installation, die bereits ein bewertbares Gerät
+    **Security**. Eine Installation, die bereits einen bewertbaren Monitor
     überwachte, behält den Score nach dem Update eingeschaltet; eine neue
     Installation startet mit ausgeschaltetem Score. Die alte Adresse
     `/security` öffnet jetzt die Einstellung.
 
 ## Wie der Score berechnet wird
 
-DumbMonit fragt das Gerät für die Berechnung nie etwas Zusätzliches ab. Die
+DumbMonit fragt den Monitor für die Berechnung nie etwas Zusätzliches ab. Die
 Prüfungen lesen die letzten Werte, die die Collectors bereits aufgezeichnet
-haben (Rückblick 6 Stunden), ein Score kostet das Gerät also nichts.
+haben (Rückblick 6 Stunden), ein Score kostet den Monitor also nichts.
 
 Jede Prüfung hat eine Kategorie (Exposition, Patching, Authentifizierung,
 Verschlüsselung, Backup, Konfiguration), einen **Schweregrad**, der ihr
@@ -58,7 +58,7 @@ auf der sie beruht.
 bestandenen + fehlgeschlagenen Prüfungen). **Unbekannte Prüfungen werden
 angezeigt, aber nie mitgezählt**: Ein Score darf nicht sinken, weil einem
 Überwachungskonto ein Recht fehlt, und nicht steigen, weil nichts bekannt ist.
-Ein Gerät, dessen Prüfungen alle unbekannt sind, ist *nicht bewertet*.
+Ein Monitor, dessen Prüfungen alle unbekannt sind, ist *nicht bewertet*.
 
 | Note | Score | Wort |
 |---|---|---|
@@ -258,7 +258,7 @@ Quellen: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 ### Websites { #websites }
 
 Für **HTTP(S)**- und **TLS**-Monitore, die TLS aushandeln, und für **Website
-health & SEO**-Geräte. Ein reiner HTTP-Monitor hat keinen Score.
+health & SEO**-Monitore. Ein reiner HTTP-Monitor hat keinen Score.
 
 | Prüfung | Schweregrad | Daten |
 |---|---|---|

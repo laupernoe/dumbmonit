@@ -50,7 +50,7 @@ Per i contatori di traffico, aggiungi anche il firewall come
 [dispositivo SNMP](snmp.md): SFOS risponde alla MIB standard delle
 interfacce.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello Firewall indica se ogni interfaccia in una zona ha il suo link,
 poi elenca quelle interfacce e le connessioni IPsec con la loro attivazione

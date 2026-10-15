@@ -9,7 +9,7 @@
  * (`unifi_alarms`, `redis_memory_near_limit`) without the `dumbmonit_`
  * prefix, so it is scanned too.
  *
- * Some shipped rules are deliberately universal: "Device unreachable" names
+ * Some shipped rules are deliberately universal: "Monitor unreachable" names
  * no kind at all, and "High CPU" / "Disk almost full" `or`-combine a
  * Proxmox-specific metric with a fully generic one so the rule still fires
  * for every device type. Filing those under one collector kind would hide

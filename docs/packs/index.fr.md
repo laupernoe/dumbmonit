@@ -1,10 +1,10 @@
 # Packs d'intégration
 
-Un pack d'intégration ajoute un type d'appareil à DumbMonit sans nouvelle
+Un pack d'intégration ajoute un type de surveillance à DumbMonit sans nouvelle
 release. C'est un seul fichier YAML qui dit où lire (une API HTTP ou une
-page Prometheus `/metrics` sur l'appareil), quoi extraire, et quelles règles
+page Prometheus `/metrics` sur la surveillance), quoi extraire, et quelles règles
 d'alerte viennent avec. Une fois installé, le type du pack apparaît dans
-**Ajouter un appareil** à côté des types intégrés, et ses appareils sont
+**Ajouter une surveillance** à côté des types intégrés, et ses surveillances sont
 sondés, affichés en graphique et soumis aux alertes comme n'importe quel
 autre.
 
@@ -15,11 +15,11 @@ chaque requête lui-même, sous des règles que le pack ne peut pas changer.
 
 | Un pack peut | Un pack ne peut pas |
 |---|---|
-| Appeler des chemins `GET` ou `POST` sur la propre adresse de l'appareil | Appeler un autre hôte, suivre une redirection vers un autre hôte, ou utiliser une URL absolue |
+| Appeler des chemins `GET` ou `POST` sur la propre adresse de la surveillance | Appeler un autre hôte, suivre une redirection vers un autre hôte, ou utiliser une URL absolue |
 | Lire du JSON (JSONPath), du texte brut (expressions régulières) ou le format texte Prometheus | Exécuter du code, des commandes shell ou des templates au-delà de `{{option.x}}` et `{{credential.x}}` |
-| Envoyer l'identifiant de l'appareil dans un en-tête ou en authentification basique/bearer | Mettre un identifiant dans une URL ou un corps de requête |
-| Déclarer des options affichées dans le formulaire de l'appareil (un canal d'interrupteur, un seuil) | Écrire des métriques en dehors de son propre préfixe `dumbmonit_<pack>_` |
-| Fournir des règles d'alerte sur ses propres métriques | Changer un type d'appareil intégré ou une règle intégrée |
+| Envoyer l'identifiant de la surveillance dans un en-tête ou en authentification basique/bearer | Mettre un identifiant dans une URL ou un corps de requête |
+| Déclarer des options affichées dans le formulaire de la surveillance (un canal d'interrupteur, un seuil) | Écrire des métriques en dehors de son propre préfixe `dumbmonit_<pack>_` |
+| Fournir des règles d'alerte sur ses propres métriques | Changer un type de surveillance intégré ou une règle intégrée |
 | Apporter des profils SNMP, au format des intégrés | Lire plus de 4 Mio par réponse, faire plus de 16 requêtes par sonde, ou produire plus de 5 000 séries par sonde |
 
 Les adresses loopback et link-local (`127.0.0.1`, `169.254.x.x`) sont
@@ -47,7 +47,7 @@ d'intégration**. Collez le YAML du pack ou téléversez son `pack.yaml`, puis
 refusé avec la liste de ce qu'il faut corriger ; un qui passe est enregistré
 avec ses notes, s'il y en a. La même page active et désactive les packs et
 les désinstalle. Les types installés apparaissent sous **Packs
-communautaires** quand vous ajoutez un appareil, marqués *Pack*.
+communautaires** quand vous ajoutez une surveillance, marqués *Pack*.
 
 Via l'API HTTP, il vous faut une session d'administrateur ou un jeton d'API
 avec la portée `write` (Réglages → **API & assistants**).
@@ -68,19 +68,19 @@ complète des problèmes, un par ligne.
 
 | Appel | Fait |
 |---|---|
-| `GET /api/packs` | packs installés : version, type, métriques, règles, appareils qui l'utilisent |
+| `GET /api/packs` | packs installés : version, type, métriques, règles, surveillances qui l'utilisent |
 | `GET /api/packs/{id}` | un pack |
 | `POST /api/packs` | installer ou mettre à jour ; corps : le YAML (`application/yaml`), ou `{"yaml": "…"}` en JSON |
-| `PUT /api/packs/{id}/disable` | arrêter de sonder les appareils du pack, garder tout le reste |
+| `PUT /api/packs/{id}/disable` | arrêter de sonder les surveillances du pack, garder tout le reste |
 | `PUT /api/packs/{id}/enable` | les sonder à nouveau |
-| `DELETE /api/packs/{id}` | désinstaller, avec ses règles ; refusé (`409`) tant que des appareils l'utilisent encore |
+| `DELETE /api/packs/{id}` | désinstaller, avec ses règles ; refusé (`409`) tant que des surveillances l'utilisent encore |
 
 Avec un cookie de session plutôt qu'un jeton, ajoutez
 `X-Requested-With: DumbMonit` à chaque `POST`, `PUT` et `DELETE`, comme pour
 le reste de l'[API](../reference/api.md).
 
 Installer prend effet immédiatement : le nouveau type est disponible dans le
-formulaire d'appareil sans redémarrage. La seule exception est un pack qui
+formulaire de surveillance sans redémarrage. La seule exception est un pack qui
 apporte des profils SNMP ; la réponse dit alors `"restart_required": true`,
 parce que le catalogue SNMP est lu au démarrage.
 
@@ -91,16 +91,16 @@ et sa description. Ses règles d'alerte ne sont jamais que *ajoutées* : une
 règle que vous avez changée, désactivée ou supprimée n'est jamais réécrite
 par une mise à jour.
 
-Désactiver un pack retire son type d'appareil et garde tout le reste :
-appareils, historique, règles. Ses appareils ne sont plus sondés (chacun
-montre une erreur de configuration) et, comme tout appareil qui arrête de
-rapporter, déclenchent *Appareil inaccessible* après trois minutes : mettez-
+Désactiver un pack retire son type de surveillance et garde tout le reste :
+surveillances, historique, règles. Ses surveillances ne sont plus sondées (chacune
+montre une erreur de configuration) et, comme toute surveillance qui arrête de
+rapporter, déclenchent *Surveillance inaccessible* après trois minutes : mettez-
 les aussi en pause si vous désactivez le pack pour un moment.
 
 ### Sauvegardes
 
 Les packs installés voyagent dans les [sauvegardes](../install/backup.md)
-avec leur YAML, et sont restaurés avant les appareils qui les utilisent.
+avec leur YAML, et sont restaurés avant les surveillances qui les utilisent.
 
 ## Vérifier un pack avant de l'installer
 

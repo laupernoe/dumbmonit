@@ -17,22 +17,22 @@ my-pack/
 | Chiave | Richiesta | Significato |
 |---|---|---|
 | `schema` | sì | Sempre `1`. |
-| `id` | sì | Lettere minuscole, cifre e trattini singoli, che inizia con una lettera, fino a 40 caratteri: `shelly-plug`. Il tipo di dispositivo diventa `pack.<id>`, il prefisso di metrica `dumbmonit_<id con underscore>_`. |
+| `id` | sì | Lettere minuscole, cifre e trattini singoli, che inizia con una lettera, fino a 40 caratteri: `shelly-plug`. Il tipo di monitor diventa `pack.<id>`, il prefisso di metrica `dumbmonit_<id con underscore>_`. |
 | `version` | sì | [Versione semantica](https://semver.org) del pacchetto: `1.2.0`. |
 | `requires` | no | Versioni di DumbMonit con cui il pacchetto funziona, come requisito semver: `">=0.2"`. Un server fuori dall'intervallo rifiuta il pacchetto. |
-| `label` | sì | Nome mostrato nell'elenco dei tipi di dispositivo. |
+| `label` | sì | Nome mostrato nell'elenco dei tipi di monitor. |
 | `summary` | no | Una frase: cosa osserva il pacchetto. |
 | `examples` | no | Prodotti a cui si applica, mostrati come suggerimenti. |
 | `address_hint` | no | Segnaposto del campo indirizzo: `192.168.1.50`. |
 | `default_port` | no | Porta usata quando l'indirizzo non ne ha una. |
-| `scheme` | no | `http` (predefinito) oppure `https`; il dispositivo può sovrascriverlo. |
-| `setup` | no | La nota mostrata accanto al modulo del dispositivo: `title`, `steps` (un elenco; ciò che segue un'interruzione di riga in un passaggio viene mostrato come un comando copiabile), `warning`, `doc_url`. |
+| `scheme` | no | `http` (predefinito) oppure `https`; il monitor può sovrascriverlo. |
+| `setup` | no | La nota mostrata accanto al modulo del monitor: `title`, `steps` (un elenco; ciò che segue un'interruzione di riga in un passaggio viene mostrato come un comando copiabile), `warning`, `doc_url`. |
 | `credentials` | no | Tipi di credenziale accettati, in ordine di preferenza: `none`, `api_token`, `username_password`. Predefinito: `[none]`. Una voce può essere `{kind, label, help}` per riformulare il modulo. |
-| `options` | no | Impostazioni mostrate nel modulo del dispositivo (sotto). |
+| `options` | no | Impostazioni mostrate nel modulo del monitor (sotto). |
 
 ## Opzioni
 
-Le opzioni vengono memorizzate sul dispositivo e lette tramite
+Le opzioni vengono memorizzate sul monitor e lette tramite
 `{{option.<key>}}` in percorsi, header e corpi, e dalle soglie delle
 regole.
 
@@ -56,7 +56,7 @@ non può ridichiarare: `scheme`, `port`, `insecure_tls`,
 ## Fonti
 
 Una fonte è una richiesta per sondaggio, sempre inviata all'indirizzo
-proprio del dispositivo.
+proprio del monitor.
 
 ```yaml
 sources:
@@ -72,7 +72,7 @@ sources:
 ```
 
 - `path` deve iniziare con un singolo `/`. L'URL della richiesta è
-  l'indirizzo del dispositivo seguito dal percorso; dopo la
+  l'indirizzo del monitor seguito dal percorso; dopo la
   sostituzione deve mantenere lo stesso schema, host e porta, altrimenti
   la richiesta viene rifiutata. I valori delle opzioni sono
   percent-encoded nei percorsi, così un valore non può aggiungere un
@@ -198,9 +198,9 @@ rules:
   dal pacchetto (`dumbmonit_up` eccettuato): un pacchetto non può
   avvisare sulle serie di un altro tipo.
 - Una `threshold` di `{{option.x}}` installa il valore predefinito
-  dell'opzione, e il valore proprio di ogni dispositivo per quella
+  dell'opzione, e il valore proprio di ogni monitor per quella
   opzione diventa la sua soglia per questa regola (un override per
-  dispositivo, riscritto ogni volta che il dispositivo viene salvato).
+  monitor, riscritto ogni volta che il monitor viene salvato).
 
 ## Profili SNMP
 
@@ -208,7 +208,7 @@ Un pacchetto può portare profili SNMP, scritti esattamente come quelli
 integrati in
 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles).
 Si uniscono al catalogo SNMP e vengono applicati per `sysObjectID` come
-gli altri; non creano un proprio tipo di dispositivo.
+gli altri; non creano un proprio tipo di monitor.
 
 ```yaml
 snmp_profiles:
@@ -244,6 +244,6 @@ installato o aggiornato un pacchetto con profili SNMP.
 `dumbmonit pack test <dir>` legge `fixtures/<source id>.json`, `.txt` o
 `.prom`, esegue la stessa estrazione del server, e confronta il
 risultato con `expected.prom`: il formato testo Prometheus, ordinato,
-senza timestamp e senza le etichette del dispositivo (`target`, `host`,
+senza timestamp e senza le etichette del monitor (`target`, `host`,
 `tag_*`) che il server aggiunge. `--update` scrive `expected.prom` dalle
 fixture; rivedi il diff prima di fare il commit.

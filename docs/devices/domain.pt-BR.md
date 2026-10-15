@@ -46,7 +46,7 @@ se aplicam: Domain expiring (menos de 30 dias), Domain about to expire (menos
 de 7 dias ou expirado), Domain on hold, Domain in redemption, além de Device
 unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o registro. Ele mostra a data de expiração e os dias
@@ -95,6 +95,6 @@ Nenhuma: o RDAP é público.
 Endereço: o domínio registrado (`example.com`); uma URL colada é reduzida ao
 seu nome de host. Opções: Servidor RDAP (vazio: encontrado via IANA),
 intervalo de atualização (12 horas, de 1 a 168) e tempo limite da requisição
-(10 s). O intervalo de verificação do próprio dispositivo pode ficar no
+(10 s). O intervalo de verificação do próprio monitor pode ficar no
 padrão: ele apenas recalcula os dias restantes entre duas consultas ao
 registro.

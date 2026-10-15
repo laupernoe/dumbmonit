@@ -66,9 +66,9 @@ caído. Desmarca la opción Test upstream servers para desactivar esto.
 Las [reglas integradas](../alerting/rules.md#adguard-home) que se
 aplican: AdGuard Home protection off, AdGuard Home DNS not running,
 AdGuard Home upstream failing, AdGuard Home filter lists stale, AdGuard
-Home update available, además de Device unreachable.
+Home update available, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca se conecta a AdGuard Home. Indica si la protección y el servidor

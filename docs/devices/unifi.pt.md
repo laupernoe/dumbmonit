@@ -66,7 +66,7 @@ trazem `device` (o seu nome, ou o endereço MAC quando não tem nome), `mac`,
 As [regras incorporadas](../alerting/rules.md#unifi-network) que se aplicam:
 UniFi device offline, UniFi Internet down, UniFi WAN link down, UniFi gateway
 CPU high, UniFi device waiting for adoption, UniFi firmware update available,
-UniFi alarms, mais Device unreachable.
+UniFi alarms, mais Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -92,7 +92,7 @@ todas as integrações do DumbMonit que acompanham dispositivos de clientes —
 | `last_seen_timestamp_seconds` | Última ligação, como o `/rest/user` a reporta | `device`, `type` (`Wired`, `Wireless` ou `Unknown`), `os` (vazio), `user` (vazio), `kind` |
 | `stale_seconds` | Positivo quando um cliente acompanhado passou `device_stale_days` (3 por predefinição) sem se ligar; alimenta a regra [Client device stale](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (sempre `connection`: o UniFi não tem cópia de segurança a reportar) |
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o UniFi. Diz primeiro o que está errado (dispositivos offline,

@@ -56,7 +56,7 @@ WAN、互联网和告警状态仅存在于经典API中。使用密钥时，DumbM
 | `last_seen_timestamp_seconds` | 最后连接，如`/rest/user`报告 | `device`、`type`（`Wired`、`Wireless`或`Unknown`）、`os`（空）、`user`（空）、`kind` |
 | `stale_seconds` | 一旦被跟踪的客户端超过`device_stale_days`（默认3）而不连接就为正数；驱动[客户端设备陈旧](../alerting/rules.md#client-devices)规则 | `device`、`type`、`os`、`user`、`kind`、`signal`（始终为`connection`：UniFi没有备选方案） |
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探针存储的内容；打开页面从不查询UniFi。它首先说明有什么问题（离线设备、互联网或WAN链路宕机、告警），然后是按类型分类的设备及其状态、固件和负载，以及客户端，然后是被跟踪客户端的表，显示它们的最后连接。
 

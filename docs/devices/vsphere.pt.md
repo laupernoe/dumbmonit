@@ -58,9 +58,9 @@ seguem o `overallStatus` do vSphere: 0 verde, 1 amarelo, 2 vermelho, 3 cinzento
 As [regras incorporadas](../alerting/rules.md#vmware-vsphere) que se aplicam:
 vSphere host not responding, vSphere host health red, vSphere host left in
 maintenance, vSphere datastore almost full, vSphere datastore inaccessible,
-vSphere VM tools not running, vSphere red alarm, mais Device unreachable.
+vSphere VM tools not running, vSphere red alarm, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o vSphere. Diz primeiro o que está errado (anfitriões sem resposta,

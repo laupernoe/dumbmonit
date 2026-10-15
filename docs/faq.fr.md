@@ -19,33 +19,32 @@ docker compose up -d
 
 Chaque compte et chaque session est supprimé au démarrage et l'interface
 montre `/setup` à nouveau. Créez le premier administrateur, puis démarrez à
-nouveau sans la variable (retirez la ligne, puis `docker compose up -d`). Appareils, règles,
+nouveau sans la variable (retirez la ligne, puis `docker compose up -d`). Surveillances, règles,
 canaux et les réglages de connexion unique restent intacts.
 
-## Aucune donnée après l'ajout d'un appareil {#no-data-after-adding-a-device}
+## Aucune donnée après l'ajout d'une surveillance {#no-data-after-adding-a-device}
 
-Laissez une minute : la première sonde tourne à l'intervalle de l'appareil
+Laissez une minute : la première sonde tourne à l'intervalle de la surveillance
 (60 s par défaut) et les écritures atteignent VictoriaMetrics toutes les 5
 secondes (`DUMBMONIT_FLUSH_INTERVAL_SECS`). Ensuite :
 
-1. Ouvrez la page de l'appareil et cliquez sur **Sonder maintenant**. Elle
+1. Ouvrez la page de la surveillance et cliquez sur **Sonder maintenant**. Elle
    rapporte combien d'échantillons et de séries une sonde a produits, ou
    l'erreur exacte.
 2. *Mal configuré* avec une erreur sous l'adresse est un problème de
    configuration : mauvaise communauté ou mot de passe, certificat refusé
    (activez « Accepter un certificat non vérifiable »), fonctionnalité
    manquante. C'est affiché, pas notifié.
-3. *Inaccessible* sans erreur signifie que l'appareil n'a pas répondu du
-   tout. Pour SNMP, une mauvaise communauté ressemble exactement à un
-   appareil éteint, parce que l'appareil ne y répond jamais. Vérifiez la
+3. *Inaccessible* sans erreur signifie que la surveillance n'a pas répondu du
+   tout. Pour SNMP, une mauvaise communauté ressemble exactement à un appareil éteint, parce que l'appareil n'y répond jamais. Vérifiez la
    communauté, que SNMP est activé, et que l'appareil autorise l'adresse du
    serveur.
-4. Vérifiez que le conteneur peut atteindre l'appareil : les réseaux Docker
+4. Vérifiez que le conteneur peut atteindre la surveillance : les réseaux Docker
    et les pare-feu sont les coupables habituels.
 
 ## Ping dit « erreur de configuration »
 
-Le moniteur ping a besoin d'une socket d'écho ICMP. Le conteneur tourne sans
+La surveillance ping a besoin d'une socket d'écho ICMP. Le conteneur tourne sans
 aucune capacité, le fichier Compose autorise donc ces sockets avec le
 sysctl `net.ipv4.ping_group_range` sous le service `dumbmonit` : vérifiez
 que les lignes `sysctls:` sont toujours là, puis `docker compose up -d`.
@@ -91,7 +90,7 @@ affiche avec les mots du bulletin météo : Info, Avis, Avertissement. Voir
 
 ## Une alerte est « Supprimée par le parent »
 
-L'appareil a un appareil parent qui est inaccessible, ses propres alertes
+La surveillance a une surveillance parente qui est inaccessible, ses propres alertes
 sont donc retenues plutôt qu'envoyées. Corrigez le parent ; les alertes de
 l'enfant se résolvent ou se déclenchent ensuite d'elles-mêmes sans une
 seconde notification. Voir
@@ -114,7 +113,7 @@ changement fait.
 
 ## DumbMonit a-t-il besoin d'être accessible depuis l'internet ?
 
-Non. Il contacte les appareils et les services de notification ; rien ne
+Non. Il contacte les surveillances et les services de notification ; rien ne
 rappelle, sauf les agents, qui ont besoin d'atteindre l'URL du serveur.
 Gardez-le sur votre LAN ou derrière un VPN ; si vous l'exposez, utilisez un
 reverse proxy avec TLS et réglez `DUMBMONIT_COOKIE_SECURE=1`.

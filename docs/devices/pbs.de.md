@@ -6,11 +6,11 @@ Prune, Garbage Collection), Datastores, Platten und ZFS-Pools,
 ausstehende Updates, die Dienste und Paketversionen des Servers
 selbst, und die Tape-Stufe, falls vorhanden.
 
-## Die Geräteseite
+## Die Monitorseite
 
-![Ein PBS-Gerät: Fehlschläge, der 30-Tage-Backup-Kalender, Jobs und Gesundheit](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![Ein PBS-Monitor: Fehlschläge, der 30-Tage-Backup-Kalender, Jobs und Gesundheit](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Über die generischen Diagramme hinaus zeigt ein PBS-Gerät sechs
+Über die generischen Diagramme hinaus zeigt ein PBS-Monitor sechs
 Panels, aus dem gelesen, was die Abfrage gespeichert hat — das Öffnen
 der Seite fragt PBS selbst nie ab:
 
@@ -66,7 +66,7 @@ auf. Seine Historie kommt aus der Task-Liste: Die erste Abfrage nach
 einem Start liest die letzten 30 Tage
 (`/nodes/localhost/tasks?since=…&limit=5000`), spätere Abfragen nur
 das Task-Fenster, und der Server behält die Vereinigung in SQLite
-(`pbs_task_history`, 35 Tage, höchstens 10.000 Tasks pro Gerät),
+(`pbs_task_history`, 35 Tage, höchstens 10.000 Tasks pro Monitor),
 sodass der Kalender Neustarts überlebt.
 
 ## Was beobachtet wird
@@ -164,11 +164,11 @@ bedienen, die ein Gerät schützt.
 Maschine keine separate "Verbindung", nur Backups —
 `last_seen_timestamp_seconds` und das Signal `connection` werden hier
 nie veröffentlicht; ein Gerät zeigt `last_connection` als "—" in der
-Tabelle der Geräteseite. Das im Alarm benannte Gerät ist der
+Tabelle der Monitorseite. Das im Alarm benannte Gerät ist der
 Gastname aus den Snapshot-Notizen, wenn PVE einen schrieb, sonst
 `type/id`, wie im Backup-Kalender.
 
-Geltende eingebaute Regeln: Device unreachable, PBS datastore almost
+Geltende eingebaute Regeln: Monitor unreachable, PBS datastore almost
 full, PBS datastore filling up, PBS backup too old (pro
 Backup-Gruppe: kein neuer Snapshot seit zwei Tagen — bearbeiten Sie
 den Schwellenwert der Regel für ein längeres Fenster), PBS backup
@@ -247,7 +247,7 @@ sich einloggen.
 4. Prüfen Sie, bevor Sie die Shell verlassen, was das Token
    tatsächlich lesen kann. Der Befehl gibt seine effektiven Rechte
    aus, Pfad für Pfad; ein leeres Ergebnis bedeutet, dem Benutzer
-   fehlt die ACL, die das Token hat — der Fall, in dem das Gerät
+   fehlt die ACL, die das Token hat — der Fall, in dem der Monitor
    perfekt lebendig aussieht und nichts meldet.
 
     ```
@@ -355,7 +355,7 @@ hinzugefügt, falls fehlend.
 |---|---|
 | Zertifikatsfehler | Selbstsigniertes Zertifikat: installieren Sie ein vertrauenswürdiges (ACME ist in PBS eingebaut) oder aktivieren Sie `insecure_tls`. |
 | Authentifizierungsfehler | Secret in Token ID eingefügt (oder umgekehrt), oder das Token hat keine `Audit`-Berechtigung — meist weil die Rolle dem Token, aber nicht dem es besitzenden Benutzer gewährt wurde, was nicht fehlschlägt: Die Aufrufe gelingen und geben leere Listen zurück. Nur ein fehlschlagendes `GET /version` verurteilt die gesamte Abfrage; jeder andere fehlschlagende Aufruf wird in `scrape_errors` gezählt. |
-| Alles liest sich leer, aber das Gerät ist up | Dem Benutzer fehlt die ACL, die das Token hat, und PBS schneidet die beiden: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` gibt nichts aus. Gewähren Sie jede Rolle auch `dumbmonit@pbs`. |
+| Alles liest sich leer, aber der Monitor ist up | Dem Benutzer fehlt die ACL, die das Token hat, und PBS schneidet die beiden: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` gibt nichts aus. Gewähren Sie jede Rolle auch `dumbmonit@pbs`. |
 | Keine `node_updates_pending`-Zeitreihe | Dem Token fehlt `Sys.Audit` auf `/`: Geben Sie ihm die Rolle `Audit` auf `/`, oder setzen Sie `updates` auf `false`, um nicht mehr zu fragen. |
 | Ein Sync-Job fehlt | Dem Token fehlt `Remote.Audit` auf dem Remote des Jobs: Fügen Sie die Rolle `RemoteAudit` auf `/remote` hinzu. Der Job wird nicht abgelehnt, er fehlt einfach in der Liste. |
 | Kein Zertifikatsablauf | Die Option `certificates` ist aus, was der Standard ist: PBS verlangt `Sys.Modify` für diesen Aufruf, ein Schreibrecht. |

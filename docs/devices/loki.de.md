@@ -46,10 +46,10 @@ einfach keine Zeitreihe.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#log-and-metrics-servers):
 Loki not ready, Loki refusing log lines, Loki cannot flush to storage,
-Loki write-ahead log disk full, Loki request errors, plus Device
+Loki write-ahead log disk full, Loki request errors, plus Monitor
 unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Loki nie ab. Es sagt in einem Satz, was nicht

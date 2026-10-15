@@ -84,7 +84,7 @@ impl Pack {
             Ok(())
         } else {
             Err(ProbeError::Config(format!(
-                "This device type does not accept a credential of type \"{kind}\""
+                "This monitor type does not accept a credential of type \"{kind}\""
             )))
         }
     }

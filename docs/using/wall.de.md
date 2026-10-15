@@ -10,11 +10,11 @@ für diese Anzeige, ohne Ihre gespeicherte Präferenz zu berühren.
 
 ![Wall-Modus](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Jedes Problem links trägt das Produktsymbol seines Geräts (dieselben Zeichen wie
-in den Gerätelisten). Die Liste wächst nie über ihren Platz hinaus: Auf einem
+Jedes Problem links trägt das Produktsymbol seines Monitors (dieselben Zeichen wie
+in den Monitorlisten). Die Liste wächst nie über ihren Platz hinaus: Auf einem
 kleinen Bildschirm oder bei vielen Problemen schrumpfen die großen Kacheln auf
 je eine Zeile und fassen sich dann zu *Und N weitere* zusammen, statt die
-darunterliegenden Geräte zu überdecken.
+darunterliegenden Monitore zu überdecken.
 
 ## Nachrichten an der Wand
 

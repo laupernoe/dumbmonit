@@ -69,7 +69,7 @@ Le [regole integrate](../alerting/rules.md#pfsense) che si applicano:
   cinque minuti (Advisory).
 - **pfSense disk nearly full**: più del 90% per trenta minuti (Advisory).
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello Firewall indica cosa non va in una frase, mostra CPU, memoria,
 disco e temperatura, poi elenca ogni gateway con la sua latenza e perdita,

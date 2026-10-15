@@ -572,13 +572,13 @@ pub async fn set_items(
     for entry in payload {
         let Some(target) = targets.get(&entry.target_id) else {
             return Err(ApiError::BadRequest(format!(
-                "Device {} does not exist.",
+                "Monitor {} does not exist.",
                 entry.target_id
             )));
         };
         if !seen.insert(entry.target_id) {
             return Err(ApiError::BadRequest(format!(
-                "Device \"{}\" is listed twice.",
+                "Monitor \"{}\" is listed twice.",
                 target.name
             )));
         }
@@ -1205,10 +1205,38 @@ fn presence_query(sel: &str, window: &str) -> String {
 /// par des données : avant la première mesure, `default 0` compte des absences
 /// qui n'en sont pas.
 pub(crate) fn rescale(measured: f64, window_secs: f64, covered_secs: f64) -> Option<f64> {
-    if covered_secs <= 0.0 {
+    // Moins d'une tranche de présence (5 min) : la mesure ne repose que sur une
+    // ou deux tranches, le quotient n'est que du bruit de quantification. Mieux
+    // vaut « pas de données » qu'un pourcentage fantaisiste.
+    if covered_secs < MIN_COVERED_SECS || window_secs <= 0.0 {
         return None;
     }
-    Some((measured * window_secs / covered_secs).min(100.0))
+    Some((measured * window_secs / covered_secs).clamp(0.0, 100.0))
+}
+
+/// Durée minimale de données pour publier une disponibilité (une tranche).
+const MIN_COVERED_SECS: f64 = 300.0;
+
+/// Secondes de la fenêtre `[start, end]` réellement couvertes par des données.
+///
+/// La couverture commence à la première mesure et s'arrête à « maintenant ».
+/// Un appareil inactif (désactivé, ou jamais sondé) ne mesure plus rien : sa
+/// couverture s'arrête à sa dernière mesure (`inactive_last` = `Some(dernière
+/// mesure)`), sinon la pause serait comptée comme une panne. Un appareil actif
+/// injoignable garde l'absence de données comme panne.
+fn device_covered(
+    start: f64,
+    end: f64,
+    first: f64,
+    inactive_last: Option<Option<f64>>,
+    now: f64,
+) -> f64 {
+    let mut stop = end.min(now);
+    if let Some(last) = inactive_last {
+        // Sans aucune mesure connue, rien n'est couvert.
+        stop = stop.min(last.unwrap_or(f64::NEG_INFINITY));
+    }
+    stop - start.max(first)
 }
 
 /// Séries de temps de réponse (ms) des sondes, agrégées côté serveur : le public
@@ -1262,6 +1290,7 @@ async fn collect_metrics(
     history_days: i64,
     now: DateTime<Utc>,
     with_latency: bool,
+    inactive: &HashSet<TargetId>,
 ) -> Metrics {
     let probes: Vec<TargetId> =
         targets.iter().filter(|t| PROBE_KINDS.contains(&t.kind.as_str())).map(|t| t.id).collect();
@@ -1358,6 +1387,7 @@ async fn collect_metrics(
     if !devices.is_empty() {
         let sel = selector(&devices);
         let q_first = format!("tfirst_over_time(dumbmonit_up{{{sel}}}[90d])");
+        let q_last = format!("tlast_over_time(dumbmonit_up{{{sel}}}[90d])");
         let q_day = presence_query(&sel, "24h");
         let q_week = presence_query(&sel, "7d");
         let q_month = presence_query(&sel, "30d");
@@ -1366,6 +1396,7 @@ async fn collect_metrics(
         let q_daily = presence_query(&sel, "1d");
         let result = tokio::try_join!(
             victoria.query(&q_first),
+            victoria.query(&q_last),
             victoria.query(&q_day),
             victoria.query(&q_week),
             victoria.query(&q_month),
@@ -1374,8 +1405,9 @@ async fn collect_metrics(
             victoria.query_range(&q_daily, range_start_ms, range_end_ms, 86_400),
         );
         match result {
-            Ok((first, day, week, month, quarter, history, daily)) => {
+            Ok((first, last, day, week, month, quarter, history, daily)) => {
                 let first = instant_map(first);
+                let last = instant_map(last);
                 let windows: [(&str, Vec<InstantSeries>, f64); 5] = [
                     ("24h", day, 86_400.0),
                     ("7d", week, 7.0 * 86_400.0),
@@ -1386,7 +1418,13 @@ async fn collect_metrics(
                 for (name, series, window_secs) in windows {
                     for (id, measured) in instant_map(series) {
                         let Some(first_ts) = first.get(&id) else { continue };
-                        let covered = window_secs.min(now_secs as f64 - first_ts);
+                        let covered = device_covered(
+                            now_secs as f64 - window_secs,
+                            now_secs as f64,
+                            *first_ts,
+                            inactive.contains(&id).then(|| last.get(&id).copied()),
+                            now_secs as f64,
+                        );
                         let Some(value) = rescale(measured, window_secs, covered) else { continue };
                         let bucket = match name {
                             "24h" => &mut metrics.uptime_24h,
@@ -1406,8 +1444,13 @@ async fn collect_metrics(
                         let Ok(measured) = raw.parse::<f64>() else { continue };
                         let day_start = ts as i64 - 86_400;
                         let day_end = ts as i64;
-                        let covered =
-                            (day_end.min(now_secs) as f64) - (day_start as f64).max(first_ts);
+                        let covered = device_covered(
+                            day_start as f64,
+                            day_end as f64,
+                            first_ts,
+                            inactive.contains(&id).then(|| last.get(&id).copied()),
+                            now_secs as f64,
+                        );
                         if let Some(value) = rescale(measured, 86_400.0, covered) {
                             entry.insert(day_start, value);
                             // Tranches de cinq minutes muettes sur la part couverte.
@@ -1529,8 +1572,30 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         items.iter().filter_map(|item| targets.get(&item.target_id)).collect();
     // Le calendrier montre toujours 90 jours, quelle que soit la fenêtre des barres.
     let metrics_days = if page.show_calendar { MAX_HISTORY_DAYS } else { days };
-    let metrics =
-        collect_metrics(&state.victoria, &shown, metrics_days, days, now, page.show_latency).await;
+    // Appareils qui ne sondent plus : désactivés ou jamais sondés (état « inconnu »
+    // de `item_state`). Leur silence n'est pas une panne.
+    let inactive: HashSet<TargetId> = shown
+        .iter()
+        .filter(|t| {
+            !t.enabled
+                || statuses
+                    .get(&t.id)
+                    .and_then(|s| s.last_probe_at.as_deref())
+                    .and_then(parse_stored)
+                    .is_none()
+        })
+        .map(|t| t.id)
+        .collect();
+    let metrics = collect_metrics(
+        &state.victoria,
+        &shown,
+        metrics_days,
+        days,
+        now,
+        page.show_latency,
+        &inactive,
+    )
+    .await;
 
     // Maintenance planifiée : une fenêtre de maintenance posée dans l'alerting
     // vaut annonce publique. Sans cela, la page montre du rouge pendant que
@@ -1925,6 +1990,58 @@ mod tests {
         assert!((value - 96.0).abs() < 0.01);
         assert_eq!(rescale(100.0, 86_400.0, 86_400.0), Some(100.0));
         assert_eq!(rescale(50.0, 86_400.0, 0.0), None);
+    }
+
+    #[test]
+    fn disabled_device_stops_counting_at_last_sample() {
+        let day = 86_400.0;
+        let now = 10.0 * day + 3_600.0; // 01:00 le jour 10
+        let first = 0.0;
+        let last = 7.0 * day + 12.0 * 3_600.0; // pause à midi le jour 7
+        let inactive = Some(Some(last));
+        // Jour de la pause : seulement la demi-journée mesurée est couverte.
+        let paused = device_covered(7.0 * day, 8.0 * day, first, inactive, now);
+        assert_eq!(paused, 12.0 * 3_600.0);
+        // 12 h de présence sur 12 h couvertes = 100 %, pas 50 %.
+        assert_eq!(rescale(50.0, day, paused), Some(100.0));
+        // Les jours suivants : aucune couverture, donc aucune valeur (gris).
+        for d in 8..=10 {
+            let covered =
+                device_covered(d as f64 * day, (d + 1) as f64 * day, first, inactive, now);
+            assert!(covered <= 0.0);
+            assert_eq!(rescale(0.0, day, covered), None);
+        }
+        // Jamais mesuré et inactif : rien.
+        assert!(device_covered(0.0, day, first, Some(None), now) <= 0.0);
+    }
+
+    #[test]
+    fn active_unreachable_device_stays_down() {
+        let day = 86_400.0;
+        let now = 10.0 * day;
+        // Actif : la couverture va jusqu'à maintenant, l'absence de mesure vaut 0 %.
+        let covered = device_covered(9.0 * day, 10.0 * day, 0.0, None, now);
+        assert_eq!(covered, day);
+        assert_eq!(rescale(0.0, day, covered), Some(0.0));
+    }
+
+    #[test]
+    fn service_without_samples_has_no_percentage() {
+        // Aucune mesure : pas de couverture, donc ni barre rouge ni pourcentage.
+        assert_eq!(rescale(0.0, 86_400.0, 0.0), None);
+        assert_eq!(rescale(0.0, 90.0 * 86_400.0, -3_600.0), None);
+    }
+
+    #[test]
+    fn service_with_data_only_since_today_is_not_diluted() {
+        // Premier échantillon il y a 2 h sur une fenêtre de 90 j : deux heures
+        // de présence complète valent 100 %, pas 0,09 %.
+        let window = 90.0 * 86_400.0;
+        let measured = 24.0 / (window / 300.0) * 100.0;
+        let value = rescale(measured, window, 2.0 * 3_600.0).unwrap();
+        assert!((value - 100.0).abs() < 0.01, "{value}");
+        // Une seule tranche : trop peu pour un chiffre, donc « sans données ».
+        assert_eq!(rescale(0.0035, window, 60.0), None);
     }
 
     #[test]

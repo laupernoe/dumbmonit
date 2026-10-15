@@ -27,7 +27,7 @@ DumbMonit 使用 **个人访问令牌** 读取 `/api/v4/version`，这是唯一�
 | `pipelines_failed_recent`, `pipelines_pending` | 回看窗口中的失败管道，以及现在待处理或运行的管道 — 仅对"监视 CI 健康的项目"选项中列出的项目 | `project` |
 | `scrape_errors` | 最后一次探测中失败的仅管理员调用（使用普通令牌时为 0，因为从未尝试） | |
 
-适用的[内置规则](../alerting/rules.md#self-hosted-forges)：GitLab 运行器全部离线、GitLab Sidekiq 积压高、GitLab 迁移待处理、GitLab 许可证即将过期，加上设备不可达。安全评分检查双因素和注册设置，以及待处理迁移：参见[供应商更新和其他检查](../using/security-score.md)。
+适用的[内置规则](../alerting/rules.md#self-hosted-forges)：GitLab 运行器全部离线、GitLab Sidekiq 积压高、GitLab 迁移待处理、GitLab 许可证即将过期，加上监控项不可达。安全评分检查双因素和注册设置，以及待处理迁移：参见[供应商更新和其他检查](../using/security-score.md)。
 
 ## 它不监视什么 {#what-it-does-not-watch}
 
@@ -35,7 +35,7 @@ GitLab 自身的 REST API 没有端点说"有更新的 GitLab 版本可用"：�
 
 CI 管道健康仅为您列出的项目读取：GitLab 的 API 没有实例范围的"所有失败管道"端点，只有按项目的。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板上面的图表读取探测存储的内容；打开页面永远不会调用 GitLab。它首先说出什么是错的（就绪组件故障、运行器全部离线、较大的 Sidekiq 积压），然后是版本，然后是实例计数和从管理 API 读取的设置。
 

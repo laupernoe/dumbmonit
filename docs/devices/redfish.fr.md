@@ -66,12 +66,12 @@ sert sont Critical ou Warning.
 Les [règles intégrées](../alerting/rules.md#server-hardware-redfish) qui
 s'appliquent : ventilateur serveur en échec, température serveur
 au-dessus du critique, redondance d'alimentation perdue, alimentation en
-échec, échec de disque prédit, santé serveur critique, plus Appareil
+échec, échec de disque prédit, santé serveur critique, plus Surveillance
 inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Un appareil Redfish obtient son propre panneau sur sa page, au-dessus des
+Une surveillance Redfish obtient son propre panneau sur sa page, au-dessus des
 graphiques, lu depuis ce que la dernière sonde a stocké : ouvrir la page
 n'interroge jamais le contrôleur. Il répond, dans cet ordre :
 
@@ -132,7 +132,7 @@ une valeur inconnue lit « — », jamais 0.
 5. DumbMonit ne fait que lire : ventilateurs, températures, tensions, alimentations, disques, résumés de mémoire et de processeur, et combien d'entrées de journal il y a par gravité. Il n'allume ni n'éteint jamais le serveur, ne change jamais un réglage et ne lit jamais le texte des journaux.
 
 !!! warning
-    Ne réutilisez pas le compte d'usine du contrôleur : il peut éteindre le serveur, monter des médias et reflasher le firmware. Les contrôleurs de gestion livrent aussi un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Un contrôleur répond lentement et une lecture complète prend plusieurs requêtes : si l'appareil rapporte des délais dépassés, augmentez DUMBMONIT_PROBE_TIMEOUT_SECS sur le serveur.
+    Ne réutilisez pas le compte d'usine du contrôleur : il peut éteindre le serveur, monter des médias et reflasher le firmware. Les contrôleurs de gestion livrent aussi un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Un contrôleur répond lentement et une lecture complète prend plusieurs requêtes : si la surveillance rapporte des délais dépassés, augmentez DUMBMONIT_PROBE_TIMEOUT_SECS sur le serveur.
 
 Les noms de menu ci-dessus sont ceux du firmware actuel ; les générations
 plus anciennes les déplacent mais gardent les mêmes rôles. Sur Supermicro,

@@ -10,7 +10,7 @@
 ## 安全需求
 
 1. 只有已通过身份验证且角色允许的用户,才能读取或修改配置、告警或测量数据。
-2. DumbMonit 为您的设备存储的凭据,无法从数据库文件、没有口令的备份包或 API 中读取。
+2. DumbMonit 为您的监控项存储的凭据,无法从数据库文件、没有口令的备份包或 API 中读取。
 3. 只有持有有效令牌的机器才能写入测量数据,并且泄露的令牌可以单独撤销。
 4. DumbMonit 不能被变成访问不应访问的服务的途径,尤其是其自身不带身份验证的 VictoriaMetrics 子进程。
 5. 提供给浏览器的页面不能运行并非随其发布的脚本,第三方站点也无法让已登录的浏览器更改任何内容。
@@ -22,11 +22,11 @@
 | 匿名网络客户端 | 能访问 HTTP 端口 | 是 |
 | 低角色的已登录用户 | 有效会话或只读 API 令牌 | 是(权限提升) |
 | 恶意网页 | 在管理员的浏览器中运行 | 是(CSRF、XSS、点击劫持) |
-| 被攻破或恶意的被监控设备 | 以恶意内容响应探测 | 是(解析器、重定向) |
+| 被攻破或恶意的被监控监控项 | 以恶意内容响应探测 | 是(解析器、重定向) |
 | 恶意或被盗的代理 | 持有一个代理令牌 | 是(单个令牌的影响范围) |
-| 输入恶意 URL 的管理员 | 配置 webhook 或设备地址 | 是,针对服务器自身的地址 |
+| 输入恶意 URL 的管理员 | 配置 webhook 或监控项地址 | 是,针对服务器自身的地址 |
 | 掌控主机、`/data` 卷或容器运行时的人 | 完全控制 | 否:不在范围内,与安全策略一致 |
-| VictoriaMetrics 或被监控设备内部的漏洞 | 上游代码 | 否:请向上游报告 |
+| VictoriaMetrics 或被监控监控项内部的漏洞 | 上游代码 | 否:请向上游报告 |
 
 ## 信任边界
 
@@ -37,7 +37,7 @@
 | 身份提供商到服务器 | OpenID Connect 重定向和 ID 令牌 | State、nonce 和 PKCE(S256);本地账户关联是显式的 | `crates/server/src/auth/oidc/`;测试 `oidc_api.rs` |
 | 代理到 `/api/ingest` | 测量数据、命令结果 | 每个代理一个令牌,以 SHA-256 哈希存储(`dmon_` 前缀) | `crates/server/src/api/ingest.rs`、`crates/server/src/collectors/agent/token.rs`;测试 `agent_binding_api.rs` |
 | 中继代理到服务器 | 来自另一个网络的探测结果 | 相同的代理令牌检查(`agent_commands::authenticate`) | `crates/server/src/api/relay.rs`;测试 `relay_api.rs` |
-| 服务器到被监控设备 | 探测请求、恶意响应 | 仅跟随同一主机内的重定向、重定向次数有限、响应解析器带有单元测试、默认启用证书验证 | `crates/collectors/src/http.rs`(`same_host_redirects`) |
+| 服务器到被监控监控项 | 探测请求、恶意响应 | 仅跟随同一主机内的重定向、重定向次数有限、响应解析器带有单元测试、默认启用证书验证 | `crates/collectors/src/http.rs`(`same_host_redirects`) |
 | 服务器到通知渠道 | Webhook 和 SMTP 请求 | 相同的重定向策略,外加一道拒绝服务器自身地址的防护,在发送前、每次重定向时以及 DNS 解析时都会检查 | `crates/server/src/notify/guard.rs`;测试 `notify_guard_api.rs` |
 | 服务器到 VictoriaMetrics | 写入和读取查询 | 内置子进程默认监听 `127.0.0.1:8428`;兼容 Prometheus 的代理只转发读取路由(query、query_range、series、labels) | `crates/server/src/config.rs`(`DUMBMONIT_VM_LISTEN`)、`crates/server/src/api/prometheus.rs`(`readable_segments`) |
 | 服务器到 SQLite | 配置和状态 | 通过 `sqlx` 使用绑定参数 | `crates/server/src/db/` |
@@ -102,7 +102,7 @@
 | 软件和数据完整性,CWE-494 | 代理安装程序会校验所下载二进制文件的 SHA-256 | `crates/agent/install/install.sh`、`install.ps1` |
 | 日志记录和监控失败,CWE-778 | 登录和敏感变更的安全日志 | `auth/audit.rs`;测试 `security_audit_api.rs` |
 
-已知的剩余风险列在安全模型中(明文 HTTP 监听器、未加密的设备选项、不带身份验证的内置
+已知的剩余风险列在安全模型中(明文 HTTP 监听器、未加密的监控项选项、不带身份验证的内置
 VictoriaMetrics)。CSP 允许内联样式(`style-src 'unsafe-inline'`),这会削弱其对样式注入的防护,
 但不影响对脚本执行的防护。存在一条已接受的公告 `RUSTSEC-2023-0071`,在 `deny.toml` 中连同理由一起被
 忽略:`rsa` crate 使用提供商的公钥验证 RS256 签名,从不使用私钥。

@@ -130,7 +130,7 @@ fn credential(kind: &str, label: Option<&str>, help: Option<&str>) -> Credential
     let (default_label, default_help, fields) = match kind {
         "api_token" => (
             "API token",
-            "Stored encrypted, sent only to this device.",
+            "Stored encrypted, sent only to this monitor.",
             vec![CredentialFieldDescription {
                 key: "token".into(),
                 label: "Token".into(),
@@ -142,7 +142,7 @@ fn credential(kind: &str, label: Option<&str>, help: Option<&str>) -> Credential
         ),
         "username_password" => (
             "Username / password",
-            "Stored encrypted, sent only to this device.",
+            "Stored encrypted, sent only to this monitor.",
             vec![
                 CredentialFieldDescription {
                     key: "username".into(),
@@ -162,7 +162,7 @@ fn credential(kind: &str, label: Option<&str>, help: Option<&str>) -> Credential
         ),
         _ => (
             "No authentication",
-            "Nothing is sent: the device answers without credentials.",
+            "Nothing is sent: the monitor answers without credentials.",
             vec![],
         ),
     };

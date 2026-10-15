@@ -10,8 +10,8 @@ s'appliquent dès la sortie de boîte.
 ## Le pipeline, en une liste
 
 ```
-évaluer (hystérésis, surcharges par appareil)
-  → dédupliquer → supprimer par dépendance → réduire au silence → grouper par appareil
+évaluer (hystérésis, surcharges par surveillance)
+  → dédupliquer → supprimer par dépendance → réduire au silence → grouper par surveillance
     → maintien anti-flapping → filtre de gravité du canal → filtre de routage du canal
       → résolu activé/désactivé → délai de répit → heures calmes → fenêtre de regroupement
         → plafond horaire → envoyer (+ lien profond)
@@ -21,7 +21,7 @@ s'appliquent dès la sortie de boîte.
 | Étape | Où c'est réglé | Défaut |
 |---|---|---|
 | Seuil de résolution (hystérésis) | Éditeur de règle → *Se résout sous / au-dessus* | aucun (CPU : 85 %, disque : 88 % sur les règles fournies) |
-| Surcharges par appareil | Éditeur de règle → *Surcharges par appareil* | aucune |
+| Surcharges par surveillance | Éditeur de règle → *Surcharges par surveillance* | aucune |
 | Détection de flapping | Réglages → Notifications et rapports → Politique de notification → Plus d'options | 4 changements en 30 min, maintien 30 min |
 | Gravité minimale | Canal → Options de livraison → *Envoyer* | tout |
 | Me dire quand ça se résout | Canal → Options de livraison | activé |
@@ -34,7 +34,7 @@ s'appliquent dès la sortie de boîte.
 | URL publique (liens profonds) | Réglages → Notifications et rapports → Politique de notification, ou `DUMBMONIT_PUBLIC_URL` | vide |
 | Liens Acquitter / Pause dans les messages | Réglages → Notifications et rapports → Politique de notification | activés (si une URL publique est connue) |
 
-## Hystérésis et surcharges par appareil
+## Hystérésis et surcharges par surveillance
 
 Une règle qui se déclenche au-dessus de 90 % et se résout dès que la
 valeur descend sous 90 % se déclenchera et se résoudra toute la soirée
@@ -45,15 +45,15 @@ monte au-dessus (pour les règles « se déclenche en dessous »). Le champ
 d'API est `clear_threshold` sur la règle ; le serveur refuse un seuil de
 résolution du mauvais côté du seuil.
 
-Une **surcharge par appareil** change le seuil ou le seuil de résolution
-d'un appareil, ou désactive la règle pour cet appareil, sans dupliquer
+Une **surcharge par surveillance** change le seuil ou le seuil de résolution
+d'une surveillance, ou désactive la règle pour cette surveillance, sans dupliquer
 la règle :
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # ou { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # chaque surcharge d'un appareil
+GET /api/alerts/overrides?target_id=7           # chaque surcharge d'une surveillance
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -92,7 +92,7 @@ canal) :
   n'est mentionnée dans ce résumé que comme « résolue pendant les heures
   calmes ».
 - `matcher` — quelles alertes le canal veut, par étiquette, type
-  d'appareil ou règle. Vide (le défaut, et ce que chaque canal existant
+  de surveillance ou règle. Vide (le défaut, et ce que chaque canal existant
   garde) signifie tout.
 
 ```
@@ -110,7 +110,7 @@ de routage.
 
 ## Routage par étiquette
 
-Les appareils portent des étiquettes (`site=cellar`, `role=storage`) et
+Les surveillances portent des étiquettes (`site=cellar`, `role=storage`) et
 un type (`snmp`, `proxmox`, `synology`, `agent`…). Le **filtre de
 routage** d'un canal dit quelles alertes il veut :
 
@@ -126,8 +126,8 @@ régulières, pas de crochets :
 
 | `field` | Correspond à | Exemple |
 |---|---|---|
-| `tag` | Une étiquette de la propre page de l'appareil | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | Le collecteur qui sonde l'appareil | `{"field":"kind","value":"proxmox"}` |
+| `tag` | Une étiquette de la propre page de la surveillance | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | Le collecteur qui sonde la surveillance | `{"field":"kind","value":"proxmox"}` |
 | `rule` | L'`uid` de la règle | `{"field":"rule","value":"disk_full"}` |
 
 Comment les listes se lisent :
@@ -140,14 +140,14 @@ Comment les listes se lisent :
 - **`exclude` gagne toujours**, même sur un `include` qui a correspondu.
 
 L'exemple ci-dessus se lit donc, et l'UI vous le redit exactement en ces
-mots : *ce canal reçoit les avis et plus depuis les appareils étiquetés
-site=cellar, sauf les appareils étiquetés role=lab*.
+mots : *ce canal reçoit les avis et plus depuis les surveillances étiquetées
+site=cellar, sauf les surveillances étiquetées role=lab*.
 
-Sous l'éditeur, un **aperçu** liste lesquels de vos appareils actuels le
+Sous l'éditeur, un **aperçu** liste lesquelles de vos surveillances actuelles le
 filtre sélectionne. Ce n'est pas une approximation : le serveur lance le
 filtre même que le moteur d'alerte lance, réduit à la partie qui dépend
-de l'appareil seul. Les conditions de règle s'appliquent aux alertes
-plutôt qu'aux appareils, l'aperçu les nomme donc séparément plutôt que de
+de la surveillance seule. Les conditions de règle s'appliquent aux alertes
+plutôt qu'aux surveillances, l'aperçu les nomme donc séparément plutôt que de
 prétendre les compter.
 
 ```
@@ -210,8 +210,8 @@ correctement.
 ```
 
 - **Fenêtre de regroupement** — les alertes qui se déclenchent dans la
-  fenêtre partent comme *un* message par canal, groupé par appareil :
-  « 3 alertes sur 2 appareils » avec une section par appareil ; les
+  fenêtre partent comme *un* message par canal, groupé par surveillance :
+  « 3 alertes sur 2 surveillances » avec une section par surveillance ; les
   résolutions suivent (« 2 résolues »). `0` envoie au prochain cycle. Un
   résumé liste 12 lignes au plus, puis « …et N autres alertes ».
 - **Plafond horaire** — une fois qu'un canal a reçu `max_per_hour`
@@ -219,8 +219,8 @@ correctement.
   arrivent comme un résumé unique quand une place se libère. `0` retire
   le plafond.
 - **Canaux d'astreinte** (PagerDuty, Opsgenie) ne sont jamais regroupés
-  entre appareils : ils ouvrent et ferment un incident par appareil, ils
-  reçoivent donc un message par appareil sans attendre.
+  entre surveillances : ils ouvrent et ferment un incident par surveillance, ils
+  reçoivent donc un message par surveillance sans attendre.
 
 Les échecs de livraison gardent les lignes en file ; le prochain cycle
 retente.
@@ -242,14 +242,14 @@ Chaque alerte est une ligne, la même par mail, ntfy, chat et la variable
 - Une règle qui surveille plusieurs séries nomme celle qui s'est
   déclenchée : la VM et son id, le point de montage, l'interface, le
   groupe de sauvegarde, l'URL de la sonde. Les règles à l'échelle de
-  l'appareil (inaccessible) ne nomment rien de plus que l'appareil.
+  la surveillance (inaccessible) ne nomment rien de plus que la surveillance.
 - La valeur et le seuil sont montrés pour les règles mesurées ; une
   règle tout-ou-rien sur une métrique 0/1 (sur batterie, invité arrêté)
   ne répète pas « 1 (threshold > 0) ».
 
 ## Liens profonds
 
-Chaque message se termine par un lien vers l'appareil
+Chaque message se termine par un lien vers la surveillance
 (`{public_url}/targets/{id}`) quand une URL publique est connue — le
 `public_url` de la politique, ou `DUMBMONIT_PUBLIC_URL`. Les webhooks
 personnalisés l'obtiennent aussi comme variable `{{link}}` sauf si leur

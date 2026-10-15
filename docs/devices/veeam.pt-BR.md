@@ -88,11 +88,11 @@ recente por objeto já é "o último backup bem sucedido" — nada é filtrado
 pelo resultado aqui. O Veeam não expõe uma "última conexão" separada do
 próprio backup, então `last_seen_timestamp_seconds` e o sinal `connection`
 nunca são publicados; um dispositivo mostra `last_connection` como "—" na
-tabela da página do dispositivo. O `type` do dispositivo é o próprio nome
+tabela da página do monitor. O `type` do dispositivo é o próprio nome
 de plataforma do Veeam (`VSphere`, `WindowsPhysical`, `HyperV`…), mostrado
 como está.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Backups diz o que está errado em uma frase, mostra os jobs com
 falha, as sessões com falha das últimas 24 horas, os jobs em execução e a

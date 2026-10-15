@@ -12,39 +12,39 @@ task falliti ovunque, e lo stato di salute proprio della console.
     vero datacenter manager, ma nessuno l'ha ancora eseguito per settimane
     su un datacenter manager in funzione. Facci sapere cosa non funziona.
 
-## Un dispositivo per il patrimonio, o un dispositivo per cluster?
+## Un monitor per il patrimonio, o un monitor per cluster?
 
-Un dispositivo Datacenter Manager non sostituisce i dispositivi
+Un monitor Datacenter Manager non sostituisce i monitor
 [Proxmox VE](proxmox.md) e [Proxmox Backup Server](pbs.md). Risponde a una
 domanda diversa.
 
-| | Dispositivo Datacenter Manager | Un dispositivo per cluster e per backup server |
+| | Monitor Datacenter Manager | Un monitor per cluster e per backup server |
 |---|---|---|
-| Dispositivi da creare | uno | uno per cluster, uno per backup server |
+| Monitor da creare | uno | uno per cluster, uno per backup server |
 | Credenziali da gestire | un token, sulla console | un token per istanza |
 | Carico su ogni cluster | nessuno nostro: leggiamo la cache propria della console | una sonda per intervallo, per cluster |
 | Cosa ottieni | raggiungibilità, versione, conteggi guest e nodi, totali CPU, memoria e storage, task falliti | tutto questo più i guest uno per uno, snapshot, job di backup, HA, Ceph, replicazione, dischi e SMART, pool ZFS, il calendario backup su 30 giorni |
 | Cosa non puoi ottenere | serie per guest, dettaglio per datastore, dischi, snapshot, log dei task | un totale unico per l'intero patrimonio |
 | Guasto principale | la console non può raggiungere un'istanza | il cluster non ci risponde |
 
-**La nostra raccomandazione.** Aggiungi il dispositivo Datacenter Manager
+**La nostra raccomandazione.** Aggiungi il monitor Datacenter Manager
 quando esegui già una console e vuoi una pagina che dica se il patrimonio
 è intero — è il modo più economico per notare che un sito remoto è caduto,
-e non costa nulla ai cluster. Aggiungi un dispositivo dedicato per ogni
+e non costa nulla ai cluster. Aggiungi un monitor dedicato per ogni
 cluster e backup server che gestisci davvero: è lì che sta la profondità,
 ed è ciò che ti dice *quale* VM si è fermata o *quale* backup è fallito. I
 due si sovrappongono senza entrare in conflitto; un backup fallito genera
-allora un avviso dal dispositivo PBS (con il log del task) e uno dalla
+allora un avviso dal monitor PBS (con il log del task) e uno dalla
 console (che nomina l'istanza). Silenzia la regola dei task della console
 se la trovi ridondante, oppure limitala alle istanze per cui non hai un
-dispositivo dedicato.
+monitor dedicato.
 
 Se non esegui affatto una console, non installarne una solo per il
-monitoraggio: i dispositivi dedicati vedono strettamente di più.
+monitoraggio: i monitor dedicati vedono strettamente di più.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-Oltre ai grafici generici, un dispositivo Datacenter Manager mostra tre
+Oltre ai grafici generici, un monitor Datacenter Manager mostra tre
 pannelli, letti da ciò che la sonda ha memorizzato — aprire la pagina non
 interroga né la console né i cluster che gestisce:
 
@@ -63,7 +63,7 @@ interroga né la console né i cluster che gestisce:
   giorni, il più recente prima, con l'istanza su cui è stato eseguito, il
   tipo di task, quando è iniziato, quanto è durato e il messaggio di
   errore. Il log del task stesso resta sull'istanza: aprilo lì, oppure
-  aggiungi quel cluster come proprio dispositivo, dove *Show log* lo
+  aggiungi quel cluster come proprio monitor, dove *Show log* lo
   recupera.
 * **Console host** — la macchina che esegue la console: CPU, memoria,
   file system root, uptime e kernel, i suoi certificati con i giorni
@@ -73,7 +73,7 @@ interroga né la console né i cluster che gestisce:
   pannello lo dice, invece di mostrare zeri.
 
 La cronologia dei task viene mantenuta in SQLite (`pdm_task_history`, 19
-giorni, al massimo 5000 task per dispositivo) così l'elenco dei
+giorni, al massimo 5000 task per monitor) così l'elenco dei
 fallimenti sopravvive ai riavvii anche se ogni sonda guarda solo alla
 finestra dei task.
 
@@ -110,7 +110,7 @@ I totali di storage contano ogni nome di storage una volta per istanza:
 uno storage condiviso da cinque nodi di un cluster viene contato una
 volta, non cinque.
 
-Le regole integrate che si applicano: Device unreachable, Federated
+Le regole integrate che si applicano: Monitor unreachable, Federated
 instance unreachable, Federated instance behind, Task failed on a
 federated instance, Datacenter console disk almost full, Datacenter
 console certificate expiring, Datacenter console updates pending. Le
@@ -213,7 +213,7 @@ completo. Lo schema `https` e la porta 8443 vengono aggiunti se mancanti.
 proprio inventario, aggiornato dal proprio ciclo di raccolta. Chiedere
 dati freschi a ogni sonda fa chiamare di nuovo ogni cluster dalla console,
 oltre al suo ritmo normale — esattamente il carico che un unico
-dispositivo console dovrebbe evitare. Sessanta secondi sono comunque più
+monitor console dovrebbe evitare. Sessanta secondi sono comunque più
 freschi dell'intervallo di sonda predefinito.
 
 ## Errori comuni

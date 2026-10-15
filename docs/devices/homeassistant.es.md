@@ -57,7 +57,7 @@ Las [reglas integradas](../alerting/rules.md#home-assistant) que se
 aplican: Home Assistant in recovery mode, Home Assistant not running,
 Home Assistant entities went unavailable, Home Assistant battery low,
 Home Assistant update available, Home Assistant repair to address,
-además de Device unreachable.
+además de Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -85,7 +85,7 @@ tabla en lugar de mostrarse incorrectamente. La cuenta del dispositivo,
 cuando se conoce, viene de una entidad `person.*` cuyo atributo
 `device_trackers` lo nombra.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Home Assistant. Indica primero qué va mal (modo

@@ -1,15 +1,15 @@
 # Security score
 
 The security score is an **optional** grade from **A** to **F** (and a score
-from 0 to 100) shown next to the devices where a few checks say something
+from 0 to 100) shown next to the monitors where a few checks say something
 useful: Linux and Windows hosts with the agent, Proxmox VE and Proxmox Backup
-Server, Synology, OPNsense, websites and Active Directory. Other devices show
+Server, Synology, OPNsense, websites and Active Directory. Other monitors show
 nothing.
 
 !!! warning "Indicative, not an audit"
     The score is **approximate and not exhaustive**. It only reads what
-    DumbMonit already collects from a device and compares it with a handful of
-    the vendor's best practices. A grade A does not mean a device is secure,
+    DumbMonit already collects from a monitor and compares it with a handful of
+    the vendor's best practices. A grade A does not mean a monitor is secure,
     and a missing check does not mean the setting is fine. Use it as a prompt
     to look, then use a real assessment tool (PingCastle, Mozilla HTTP
     Observatory, Lynis, the vendor's own security advisor…) when it matters.
@@ -19,26 +19,26 @@ nothing.
 The score is **off by default**. An administrator turns it on in
 **Settings → Account & security → Security score**. Once on:
 
-- each rated device gets a small **shield badge** with its letter in the
-  device list, and a **Security** badge with the score on its page;
-- clicking the badge opens the device's **report**: what fails, with the
+- each rated monitor gets a small **shield badge** with its letter in the
+  monitor list, and a **Security** badge with the score on its page;
+- clicking the badge opens the monitor's **report**: what fails, with the
   evidence and the fix, what passes, the steps to improve the score on this
-  kind of device, and a link to the matching section below.
+  kind of monitor, and a link to the matching section below.
 
 Turning it off hides the badges, stops the periodic computation, and the
 `dumbmonit_security_score` series stop being written.
 
 !!! note "Upgrading from 0.1.0-alpha.8 or earlier"
     The score used to be always on, with its own **Security** page. An
-    installation that already monitored a rated device keeps the score on
+    installation that already monitored a rated monitor keeps the score on
     after the upgrade; a new installation starts with it off. The old
     `/security` address now opens the setting.
 
 ## How the score is computed
 
-DumbMonit never asks the device anything extra to compute the score. The
+DumbMonit never asks the monitor anything extra to compute the score. The
 checks read the last values the collectors already recorded (looking back
-6 hours), so a score costs nothing to the device.
+6 hours), so a score costs nothing to the monitor.
 
 Each check has a category (exposure, patching, authentication, encryption,
 backup, configuration), a **severity** that is its weight (critical 10,
@@ -49,7 +49,7 @@ page it is based on.
 **Score** = 100 × (weight of passing checks) ÷ (weight of passing + failing
 checks). **Unknown checks are shown but never counted**: a score must not
 drop because a monitoring account lacks a privilege, nor rise because nothing
-is known. A device whose checks are all unknown is *not rated*.
+is known. A monitor whose checks are all unknown is *not rated*.
 
 | Grade | Score | Word |
 |---|---|---|
@@ -233,7 +233,7 @@ Sources: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 ### Websites
 
 For **HTTP(S)** and **TLS** monitors that negotiate TLS, and for **Website
-health & SEO** devices. A plain-HTTP monitor has no score.
+health & SEO** monitors. A plain-HTTP monitor has no score.
 
 | Check | Severity | Data |
 |---|---|---|

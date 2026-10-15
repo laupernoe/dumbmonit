@@ -38,7 +38,7 @@ ne sont pas pris en charge.
 
 ## Page ou site
 
-**Page** (le défaut) lit l'adresse de l'appareil et rien d'autre. Ça peut
+**Page** (le défaut) lit l'adresse de la surveillance et rien d'autre. Ça peut
 aussi être un document texte brut ou JSON, comparé ligne par ligne.
 
 **Site** part de l'adresse et suit chaque page sous le même dossier
@@ -71,20 +71,19 @@ Le crawl est poli : deux requêtes à la fois au plus, une demi-seconde
 entre deux lots, le `User-Agent` `DumbMonit/<version>`, un délai de 15
 secondes par requête et 5 Mo lus au plus par page. Il s'arrête à
 **Pages maximum** (25 par défaut, 200 au plus) ou après dix minutes. Quand
-**Pages maximum** l'a arrêté, la page de l'appareil dit combien de pages ont
+**Pages maximum** l'a arrêté, la page de la surveillance dit combien de pages ont
 été trouvées : la partie du site non surveillée n'est jamais une surprise.
 **User agent** remplace `DumbMonit/<version>` pour un site qui refuse les
 robots.
 
 ## Comment une vérification fonctionne
 
-L'appareil est sondé comme n'importe quel autre (chaque minute par
+La surveillance est sondée comme n'importe quel autre (chaque minute par
 défaut), mais les pages ne sont lues que toutes les **Vérifier toutes les**
 minutes (60 par défaut, de 5 à 10080). Entre deux, la sonde ne rapporte que
 l'état de la dernière vérification : le site n'est pas touché chaque
-minute. Une vérification tourne en arrière-plan ; deux vérifications du
-même appareil ne se chevauchent jamais, et **Vérifier maintenant** sur la
-page de l'appareil en démarre une tout de suite.
+minute. Une vérification tourne en arrière-plan ; deux vérifications de la même surveillance ne se chevauchent jamais, et **Vérifier maintenant** sur la
+page de la surveillance en démarre une tout de suite.
 
 La première vérification n'enregistre que la **référence** : chaque page
 est lue et conservée, rien n'est rapporté. À partir de là, pour chaque
@@ -107,7 +106,7 @@ jour de DumbMonit qui lit les pages autrement fait de même, une fois.
 
 Quand une vérification trouve la **même modification sur plusieurs pages**
 (les mêmes lignes retirées et ajoutées, comme un bandeau), la page de
-l'appareil la montre une seule fois, avec les pages concernées.
+la surveillance la montre une seule fois, avec les pages concernées.
 
 Dans le diff, une ligne remplacée montre quels mots ont changé : soulignés côté
 ajout, barrés côté retrait.
@@ -128,9 +127,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Page de départ inaccessible
 
 Quand la page de départ elle-même ne peut pas être lue (pas de réponse,
-connexion refusée, délai dépassé, HTTP 5xx), l'appareil est
-**inaccessible** : la sonde échoue, et la règle « Appareil inaccessible »
-se déclenche comme pour tout appareil. La page de départ est alors
+connexion refusée, délai dépassé, HTTP 5xx), la surveillance est
+**inaccessible** : la sonde échoue, et la règle « Surveillance inaccessible »
+se déclenche comme pour toute surveillance. La page de départ est alors
 retentée à chaque sonde, son retour est donc vu dans la minute. Une page de
 départ qui refuse l'accès (401, 403) est rapportée comme un problème de
 configuration, pas comme une panne. Les erreurs sur d'autres pages du site
@@ -150,7 +149,7 @@ changée, nouvelle ou supprimée), et la notification nomme les pages :
 vérification qui trouve des changements est notifiée à nouveau, avec ses
 propres pages, même si ce sont les mêmes ; l'alerte se résout à la première
 vérification qui ne trouve rien de nouveau. Elle reste une seule alerte par
-appareil du début à la fin : l'acquitter ou la mettre en sourdine depuis
+surveillance du début à la fin : l'acquitter ou la mettre en sourdine depuis
 l'alerte couvre aussi les vérifications suivantes. Elle lit
 `dumbmonit_webchange_last_check_changes` ; attachez-la à un canal comme
 toute autre règle, ou augmentez sa gravité, dans **Alertes → Règles**. Voir
@@ -193,10 +192,9 @@ l'adresse que le nom d'hôte résout).
 Une capture n'est prise que quand une page obtient un nouvel instantané
 (la référence, et chaque changement), jamais sur une vérification sans
 changement : une fenêtre de 1366 × 900, la page complète jusqu'à 5000
-pixels, en JPEG. L'option **Captures d'écran** les désactive pour un
-appareil. Sans navigateur, ou quand il ne répond pas, la comparaison de
+pixels, en JPEG. L'option **Captures d'écran** les désactive pour une surveillance. Sans navigateur, ou quand il ne répond pas, la comparaison de
 texte fonctionne pareil et les instantanés n'ont simplement pas d'image ;
-la page de l'appareil le dit.
+la page de la surveillance le dit.
 
 Le navigateur charge la page comme le ferait un visiteur, avec ses
 scripts : ce qu'il montre peut différer du texte que DumbMonit a comparé,
@@ -206,11 +204,11 @@ qui est le HTML envoyé par le serveur.
 
 Le texte de chaque instantané est gardé dans la base de données (1 Mo au
 plus par page) ; les captures d'écran sont des fichiers sous
-`/data/webchange/<id de l'appareil>/`. Par appareil, les 500 derniers
+`/data/webchange/<id de la surveillance>/`. Par surveillance, les 500 derniers
 changements sont gardés ; un instantané est gardé tant qu'il est le plus
 récent d'une page ou qu'un changement gardé s'y réfère, et tout le reste,
 fichiers inclus, est supprimé après chaque vérification. Supprimer
-l'appareil retire tout cela.
+la surveillance retire tout cela.
 
 ## Surveiller un site web pour des changements
 
@@ -227,7 +225,7 @@ Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
 3. La première vérification n'enregistre que la référence, rien n'est
    rapporté. À partir de là, chaque vérification compare le texte visible
    page par page et garde une copie avant/après de chaque changement,
-   montrée sur la page de l'appareil ; l'alerte « Site web changé » vous
+   montrée sur la page de la surveillance ; l'alerte « Site web changé » vous
    le dit.
 4. Pour une capture d'écran de chaque version, ajoutez un service de
    navigateur headless à votre fichier Compose et pointez DumbMonit vers lui,

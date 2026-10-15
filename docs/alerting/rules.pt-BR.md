@@ -7,16 +7,16 @@ faltam. Regras integradas podem ser editadas e desativadas, não excluídas.
 ## Regras integradas {#built-in-rules}
 
 Severidades são mostradas com a palavra da interface; o valor da API está
-entre parênteses. Uma regra cuja métrica nenhum dispositivo produz não tem
+entre parênteses. Uma regra cuja métrica nenhum monitor produz não tem
 série e nunca dispara, então toda regra abaixo é entregue ativada em toda
 instância.
 
-### Todo dispositivo {#every-device}
+### Todo monitor {#every-device}
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Device unreachable | Nenhuma medição recebida por mais de três minutos. `time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 min | Alerta (`critical`) | 6 h |
-| High CPU | Carga de CPU sustentada acima de 90%, média por dispositivo entre fontes SNMP, Proxmox e agente; limpa abaixo de 85%. | > 90 % | 10 min | Aviso (`warning`), escala depois de 1 h | 6 h |
+| Monitor unreachable | Nenhuma medição recebida por mais de três minutos. `time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 min | Alerta (`critical`) | 6 h |
+| High CPU | Carga de CPU sustentada acima de 90%, média por monitor entre fontes SNMP, Proxmox e agente; limpa abaixo de 85%. | > 90 % | 10 min | Aviso (`warning`), escala depois de 1 h | 6 h |
 | Unusual CPU | Carga de CPU perceptivelmente diferente do usual nesse horário e dia da semana (linha de base sazonal). | score > 3.5 | 15 min | Info (`info`) | 6 h |
 | Disk almost full | Sistema de arquivos 90% cheio ou mais, por ponto de montagem (SNMP, storages Proxmox e sistemas de arquivos raiz); limpa abaixo de 88%. | ≥ 90 % | 15 min | Aviso (`warning`), escala depois de 24 h | 6 h |
 | Filesystem almost full | Nesse ritmo, o sistema de arquivos ficará cheio dentro de quatro dias (`predict_linear` sobre 6 h; apenas sistemas de arquivos crescendo). | ≥ 100 % | 30 min | Aviso (`warning`) | 6 h |
@@ -32,7 +32,7 @@ instância.
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Port accumulating errors | Uma porta de rede registrou mais de cinquenta erros na última hora: geralmente um cabo falhando, uma fibra suja ou um desencontro de duplex (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; nada dispara durante a primeira hora de um dispositivo novo, então erros contados antes dele ser adicionado não são reportados como novos). | > 50 | 15 min | Aviso (`warning`) | 24 h |
+| Port accumulating errors | Uma porta de rede registrou mais de cinquenta erros na última hora: geralmente um cabo falhando, uma fibra suja ou um desencontro de duplex (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; nada dispara durante a primeira hora de um monitor novo, então erros contados antes dele ser adicionado não são reportados como novos). | > 50 | 15 min | Aviso (`warning`) | 24 h |
 | Port flapping | Uma porta de rede caiu e subiu de novo mais de duas vezes em trinta minutos (`changes_prometheus(dumbmonit_if_oper_status[30m])`). Uma porta desativada de propósito não tem série e nunca dispara. | > 4 | 5 min | Aviso (`warning`) | 1 h |
 
 ### Hardware de servidor (Redfish) {#server-hardware-redfish}
@@ -55,7 +55,7 @@ fonte de alimentação de duas nunca dispara.
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
 | Service down | O serviço não respondeu corretamente por três minutos (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 min | Alerta (`critical`) | 30 min |
-| Heartbeat missed | O job não chamou dentro de seu intervalo esperado mais o período de tolerância, ou reportou uma falha ele mesmo (`dumbmonit_probe_success{probe="push"} == bool 0`; o prazo é definido por dispositivo, veja [Heartbeat](../devices/push.md)). | > 0 | 2 min | Aviso (`warning`) | 6 h |
+| Heartbeat missed | O job não chamou dentro de seu intervalo esperado mais o período de tolerância, ou reportou uma falha ele mesmo (`dumbmonit_probe_success{probe="push"} == bool 0`; o prazo é definido por monitor, veja [Heartbeat](../devices/push.md)). | > 0 | 2 min | Aviso (`warning`) | 6 h |
 | Service flapping | O serviço mudou de estado mais de seis vezes em trinta minutos (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 min | Aviso (`warning`) | 1 h |
 | Slow service | O serviço leva mais de três segundos para responder; verificações com falha ficam de fora (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 min | Aviso (`warning`) | 6 h |
 | Certificate expiring soon | O certificado expira em menos de quatorze dias. | < 14 d | 1 h | Aviso (`warning`) | 24 h |
@@ -233,13 +233,13 @@ Reportado pelo agente; veja [Agente](../devices/agent.md).
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| MDaemon mail service down | Um serviço de e-mail observado do servidor MDaemon não responde, ou saúda para recusar o serviço (`dumbmonit_mdaemon_service_up`). Só os serviços listados no dispositivo têm série. A notificação nomeia o serviço e sua porta. | < 1 | 5 min | Alerta (`critical`) | 6 h |
-| MDaemon XML API not answering | A API XML parou de responder enquanto os serviços de e-mail ainda respondem (`dumbmonit_mdaemon_api_up`): o Remote Administration provavelmente está parado. Só um dispositivo com uma conta tem a série. | < 1 | 15 min | Aviso (`warning`) | 12 h |
-| MDaemon mail queue growing | A fila inbound, local ou remote cresceu mais de cem mensagens em duas horas (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): o MDaemon parou de entregar a partir dela. Lido pelo [agente](../devices/agent.md#windows-performance-counters) no servidor MDaemon, então o alerta está no dispositivo do agente. | > 100 | 15 min | Aviso (`warning`) | 6 h |
+| MDaemon mail service down | Um serviço de e-mail observado do servidor MDaemon não responde, ou saúda para recusar o serviço (`dumbmonit_mdaemon_service_up`). Só os serviços listados no monitor têm série. A notificação nomeia o serviço e sua porta. | < 1 | 5 min | Alerta (`critical`) | 6 h |
+| MDaemon XML API not answering | A API XML parou de responder enquanto os serviços de e-mail ainda respondem (`dumbmonit_mdaemon_api_up`): o Remote Administration provavelmente está parado. Só um monitor com uma conta tem a série. | < 1 | 15 min | Aviso (`warning`) | 12 h |
+| MDaemon mail queue growing | A fila inbound, local ou remote cresceu mais de cem mensagens em duas horas (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): o MDaemon parou de entregar a partir dela. Lido pelo [agente](../devices/agent.md#windows-performance-counters) no servidor MDaemon, então o alerta está no monitor do agente. | > 100 | 15 min | Aviso (`warning`) | 6 h |
 | MDaemon Bad queue not empty | Mensagens estão esperando na fila Bad (`dumbmonit_mdaemon_queue_messages{queue="bad"}`): o MDaemon não conseguiu nem entregar nem devolver, e permanecem lá até um administrador liberar ou excluir. | > 0 | 30 min | Aviso (`warning`) | 24 h |
 | MDaemon Retry queue high | Mais de cinquenta mensagens esperam na fila Retry (`dumbmonit_mdaemon_queue_messages{queue="retry"}`): servidores remotos continuam recusando e-mail temporariamente. | > 50 | 1 h | Aviso (`warning`) | 6 h |
 | SecurityGateway service down | Um serviço observado do gateway não responde, ou saúda para recusar o serviço (`dumbmonit_securitygateway_service_up`). | < 1 | 5 min | Alerta (`critical`) | 6 h |
-| SecurityGateway API not answering | A API REST parou de responder enquanto os serviços ainda respondem (`dumbmonit_securitygateway_api_up`). Só um dispositivo com uma chave de API tem a série. | < 1 | 15 min | Aviso (`warning`) | 12 h |
+| SecurityGateway API not answering | A API REST parou de responder enquanto os serviços ainda respondem (`dumbmonit_securitygateway_api_up`). Só um monitor com uma chave de API tem a série. | < 1 | 15 min | Aviso (`warning`) | 12 h |
 | SecurityGateway delivery queue growing | A fila de entrega cresceu mais de cem mensagens em duas horas (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): o servidor de e-mail detrás do gateway provavelmente está recusando e-mail. Os nomes de contador vêm da API como estão; se sua versão nomeia a fila diferente, ajuste o matcher. | > 100 | 15 min | Aviso (`warning`) | 6 h |
 
 ### OPNsense {#opnsense}
@@ -263,7 +263,7 @@ Reportado pelo agente; veja [Agente](../devices/agent.md).
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| NAS pool degraded | O ZFS não chama mais um pool de saudável (`dumbmonit_truenas_pool_healthy`). Um pool degradado ainda serve seus dados, que é exatamente por que ninguém percebe até o próximo disco falhar. A página do dispositivo nomeia o disco. | < 1 | 5 min | Alerta (`critical`) | 6 h |
+| NAS pool degraded | O ZFS não chama mais um pool de saudável (`dumbmonit_truenas_pool_healthy`). Um pool degradado ainda serve seus dados, que é exatamente por que ninguém percebe até o próximo disco falhar. A página do monitor nomeia o disco. | < 1 | 5 min | Alerta (`critical`) | 6 h |
 | NAS disk errors | Discos de um pool reportaram erros de leitura, escrita ou checksum desde o último `zpool clear` (`dumbmonit_truenas_pool_device_errors`, uma série por tipo). | > 0 | 15 min | Aviso (`warning`) | 24 h |
 | NAS pool almost full | Um pool está mais de 85% cheio (`dumbmonit_truenas_pool_used_percent`). O ZFS desacelera bem antes de ficar cheio. Limpa a 80%. | > 85 % | 30 min | Aviso (`warning`), escala depois de 7 d | 24 h |
 | NAS scrub found errors | O último scrub de um pool encontrou dados corrompidos (`dumbmonit_truenas_pool_last_scrub_errors`). | > 0 | 5 min | Alerta (`critical`) | 24 h |
@@ -274,7 +274,7 @@ Reportado pelo agente; veja [Agente](../devices/agent.md).
 | NAS replication failed | Uma tarefa de replicação ativada está em erro (`dumbmonit_truenas_replication_error`): a cópia do outro lado está ficando mais antiga. | > 0 | 10 min | Aviso (`warning`) | 12 h |
 | NAS snapshot task failed | Uma tarefa de snapshot periódico ativada está em erro (`dumbmonit_truenas_snapshot_task_error`). | > 0 | 10 min | Aviso (`warning`) | 12 h |
 | NAS snapshots stale | Uma tarefa de snapshot periódico ativada não rodou por mais de oito dias (`dumbmonit_truenas_snapshot_task_last_run_age_seconds`): uma tarefa que para de rodar não falha, fica silenciosa. | > 8 d | 1 h | Aviso (`warning`) | 24 h |
-| TrueNAS alert raised | O próprio TrueNAS disparou um alerta de nível ERROR ou acima (`dumbmonit_truenas_alerts`). Sua própria frase está na página do dispositivo. | > 0 | 10 min | Aviso (`warning`) | 12 h |
+| TrueNAS alert raised | O próprio TrueNAS disparou um alerta de nível ERROR ou acima (`dumbmonit_truenas_alerts`). Sua própria frase está na página do monitor. | > 0 | 10 min | Aviso (`warning`) | 12 h |
 | NAS service stopped | Um serviço configurado para iniciar com o NAS está parado (`dumbmonit_truenas_service_running`). Um serviço desligado de propósito não tem série. | < 1 | 10 min | Aviso (`warning`) | 6 h |
 
 ### Synology DSM {#synology-dsm}
@@ -290,16 +290,16 @@ Reportado pelo agente; veja [Agente](../devices/agent.md).
 | Synology volume almost full | Um volume está 90% cheio ou mais (`dumbmonit_synology_volume_used_percent`); limpa abaixo de 88%. | ≥ 90 % | 15 min | Aviso (`warning`), escala depois de 24 h | 6 h |
 | Synology temperature high | Um disco está acima de 55 °C, ou o DSM disparou seu próprio aviso de temperatura (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); limpa abaixo de 52 °C. | > 55 °C | 15 min | Aviso (`warning`) | 6 h |
 | Synology memory high | Uso de memória do NAS acima de 95% (`dumbmonit_synology_memory_usage_percent`); limpa abaixo de 90%. | > 95 % | 15 min | Aviso (`warning`) | 6 h |
-| Active Backup task failed | A última execução de uma tarefa Active Backup for Business falhou, ou teve backup só de parte de seus dispositivos (`dumbmonit_abb_task_last_status == bool 0`). A notificação nomeia a tarefa. | > 0 | 10 min | Alerta (`critical`) | 24 h |
+| Active Backup task failed | A última execução de uma tarefa Active Backup for Business falhou, ou teve backup só de parte de seus monitores (`dumbmonit_abb_task_last_status == bool 0`). A notificação nomeia a tarefa. | > 0 | 10 min | Alerta (`critical`) | 24 h |
 | Active Backup too old | Nenhuma execução bem sucedida do Active Backup for Business para esta tarefa por mais de dois dias (`dumbmonit_abb_task_last_success_seconds`). A série não existe para uma tarefa que nunca teve sucesso; "Active Backup task failed" fala então. | > 2 d | 1 h | Aviso (`warning`) | 24 h |
 | Active Backup task disabled | A tarefa não tem programação, ou seu backup contínuo está pausado (`dumbmonit_abb_task_enabled == bool 0`): não fará backup de nada até alguém a executar. | > 0 | 1 h | Info (`info`) | 7 d |
-| Active Backup device overdue | Um dispositivo passou mais tempo sem uma execução bem sucedida do Active Backup for Business do que seu próprio ritmo permite, dias de descanso excluídos (`dumbmonit_abb_device_overdue`, veja [Synology](../devices/synology.md#how-overdue-is-judged)). | > 0 | 30 min | Aviso (`warning`) | 24 h |
-| Active Backup device failing | As duas últimas ou mais tentativas de um dispositivo falharam (`dumbmonit_abb_device_consecutive_failures`); uma execução cancelada não conta como nenhum dos dois. | ≥ 2 | 10 min | Alerta (`critical`) | 24 h |
+| Active Backup device overdue | Um monitor passou mais tempo sem uma execução bem sucedida do Active Backup for Business do que seu próprio ritmo permite, dias de descanso excluídos (`dumbmonit_abb_device_overdue`, veja [Synology](../devices/synology.md#how-overdue-is-judged)). | > 0 | 30 min | Aviso (`warning`) | 24 h |
+| Active Backup device failing | As duas últimas ou mais tentativas de um monitor falharam (`dumbmonit_abb_device_consecutive_failures`); uma execução cancelada não conta como nenhum dos dois. | ≥ 2 | 10 min | Alerta (`critical`) | 24 h |
 
 ### Servidores de logs e métricas {#log-and-metrics-servers}
 
 VictoriaMetrics, VictoriaLogs, Loki e Graylog
-([dispositivos](../devices/victoriametrics.md)). Contadores passam por
+([monitores](../devices/victoriametrics.md)). Contadores passam por
 `increase_prometheus`, então um servidor adicionado com um histórico de
 dados recusados não dispara em sua primeira medição.
 
@@ -325,7 +325,7 @@ dados recusados não dispara em sua primeira medição.
 ### Aplicações autoalojadas {#self-hosted-applications}
 
 Nextcloud, Immich, Paperless-ngx, Jellyfin e Plex
-([dispositivos](../devices/nextcloud.md)). Elas raramente caem
+([monitores](../devices/nextcloud.md)). Elas raramente caem
 completamente: a página abre enquanto sincronização, miniaturas,
 importações ou varreduras de biblioteca pararam. Essas regras observam
 esses estados; uma aplicação que não responde de forma alguma é Device
@@ -356,8 +356,8 @@ unreachable.
 ### Forges autoalojadas {#self-hosted-forges}
 
 GitLab (self-managed) e Forgejo/Gitea
-([dispositivos](../devices/gitlab.md)). Uma instância que não responde de
-forma alguma é Device unreachable; essas regras observam as partes que
+([monitores](../devices/gitlab.md)). Uma instância que não responde de
+forma alguma é Monitor unreachable; essas regras observam as partes que
 continuam servindo páginas enquanto silenciosamente ficam atrasadas —
 Sidekiq, executores de CI/CD, uma tarefa agendada que parou de rodar.
 
@@ -372,26 +372,26 @@ Sidekiq, executores de CI/CD, uma tarefa agendada que parou de rodar.
 
 ### Dispositivos clientes {#client-devices}
 
-Uma regra, compartilhada por toda integração que rastreia dispositivos se
+Uma regra, compartilhada por toda integração que rastreia monitores se
 conectando e fazendo backup — os celulares, tablets e desktops do Immich
-([dispositivos](../devices/immich.md)), as máquinas com backup do Proxmox
+([monitores](../devices/immich.md)), as máquinas com backup do Proxmox
 Backup Server, um por grupo de backup
-([dispositivos](../devices/pbs.md)), e os computadores e VMs protegidos do
+([monitores](../devices/pbs.md)), e os computadores e VMs protegidos do
 Veeam, um por objeto com um ponto de restauração
-([dispositivos](../devices/veeam.md)), hoje; mais a seguir. Cada integração
+([monitores](../devices/veeam.md)), hoje; mais a seguir. Cada integração
 calcula o intervalo contra a janela de desatualização do próprio alvo
 (`device_stale_days`, 3 dias por padrão) e o publica como
 `dumbmonit_client_device_stale_seconds`, rotulado `device`, `type`, `os`,
 `user`, `kind` e `signal` (`connection` ou `backup`); esta única regra então
-dispara para qualquer um deles, nomeando o dispositivo na notificação. O
-Synology Active Backup for Business rastreia seus próprios dispositivos
+dispara para qualquer um deles, nomeando o monitor na notificação. O
+Synology Active Backup for Business rastreia seus próprios monitores
 separadamente, através de um mecanismo consciente de ritmo
 (`synology_abb_device_*`) em vez desta família genérica — veja
 [Synology](../devices/synology.md).
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Client device stale | Um dispositivo não se conectou nem fez backup dentro da janela de desatualização configurada para este alvo (`dumbmonit_client_device_stale_seconds`). | > 0 | 1 h | Aviso (`warning`) | 24 h |
+| Client device stale | Um monitor não se conectou nem fez backup dentro da janela de desatualização configurada para este alvo (`dumbmonit_client_device_stale_seconds`). | > 0 | 1 h | Aviso (`warning`) | 24 h |
 
 ### Pi-hole {#pi-hole}
 
@@ -406,7 +406,7 @@ separadamente, através de um mecanismo consciente de ritmo
 
 ### AdGuard Home {#adguard-home}
 
-O filtro DNS ([dispositivo](../devices/adguard.md)). Números de consulta e
+O filtro DNS ([monitor](../devices/adguard.md)). Números de consulta e
 bloqueio são somas sobre a própria janela de estatísticas do AdGuard Home,
 não contadores: nenhuma regra é construída sobre eles.
 
@@ -438,7 +438,7 @@ lidos via SNMP são cobertos pelas regras [UPS](#ups) acima.
 ### MikroTik RouterOS {#mikrotik-routeros}
 
 Séries carregam o rótulo `interface` ou `sensor`, então uma notificação
-nomeia a porta ou o sensor ([dispositivo](../devices/mikrotik.md)).
+nomeia a porta ou o sensor ([monitor](../devices/mikrotik.md)).
 Contadores passam por `increase_prometheus`: um roteador adicionado com
 anos de erros atrás dele não dispara em sua primeira medição.
 
@@ -456,24 +456,24 @@ anos de erros atrás dele não dispara em sua primeira medição.
 
 ### UniFi Network {#unifi-network}
 
-[Página do dispositivo](../devices/unifi.md). Séries de dispositivo
-carregam o nome, modelo e tipo do dispositivo, então a notificação diz
-"Living room AP". Um dispositivo esperando adoção não tem série
+[Página do monitor](../devices/unifi.md). Séries de monitor
+carregam o nome, modelo e tipo do monitor, então a notificação diz
+"Living room AP". Um monitor esperando adoção não tem série
 `device_up` e nunca conta como offline.
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| UniFi device offline | Um dispositivo UniFi adotado pelo controlador está offline, isolado ou falhou ao adotar (`dumbmonit_unifi_device_up`). | < 1 | 5 min | Aviso (`warning`), escala depois de 1 h | 6 h |
+| UniFi device offline | Um monitor UniFi adotado pelo controlador está offline, isolado ou falhou ao adotar (`dumbmonit_unifi_device_up`). | < 1 | 5 min | Aviso (`warning`), escala depois de 1 h | 6 h |
 | UniFi Internet down | O gateway UniFi reporta nenhuma conexão de Internet (`dumbmonit_unifi_internet_up`). Sem um gateway UniFi a série não existe e a regra permanece silenciosa. | < 1 | 3 min | Alerta (`critical`) | 1 h |
 | UniFi WAN link down | Um link WAN do gateway UniFi está fora do ar (`dumbmonit_unifi_wan_link_up`): com dois links, a redundância se perde enquanto nada parece quebrado. Uma porta desativada não tem série. | < 1 | 5 min | Aviso (`warning`) | 6 h |
 | UniFi gateway CPU high | O processador do gateway UniFi está acima de 90% por quinze minutos (`dumbmonit_unifi_device_cpu_percent{type="gateway"}`); limpa abaixo de 80%. | > 90 % | 15 min | Aviso (`warning`) | 6 h |
-| UniFi device waiting for adoption | Um dispositivo apareceu na rede e espera ser adotado no UniFi (`dumbmonit_unifi_devices{state="pending"}`). | > 0 | 30 min | Info (`info`) | 24 h |
+| UniFi device waiting for adoption | Um monitor apareceu na rede e espera ser adotado no UniFi (`dumbmonit_unifi_devices{state="pending"}`). | > 0 | 30 min | Info (`info`) | 24 h |
 | UniFi firmware update available | Uma atualização de firmware está disponível para dispositivos UniFi (`dumbmonit_unifi_devices_upgradable`). | > 0 | 1 h | Info (`info`) | 7 d |
 | UniFi alarms | O UniFi registrou eventos críticos ou disparou alarmes nas últimas 24 horas (`dumbmonit_unifi_alarms`). Só lido com uma conta View Only. | > 0 | 5 min | Aviso (`warning`) | 24 h |
 
 ### Home Assistant {#home-assistant}
 
-[Página do dispositivo](../devices/homeassistant.md).
+[Página do monitor](../devices/homeassistant.md).
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -486,7 +486,7 @@ carregam o nome, modelo e tipo do dispositivo, então a notificação diz
 
 ### VMware vSphere {#vmware-vsphere}
 
-[Página do dispositivo](../devices/vsphere.md). Séries de host carregam
+[Página do monitor](../devices/vsphere.md). Séries de host carregam
 `host`, séries de VM `vm`, séries de datastore `datastore`, então a
 notificação nomeia o objeto.
 
@@ -506,7 +506,7 @@ Redis / Valkey, MongoDB, RabbitMQ e CrowdSec
 ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md),
 [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)).
 Contadores passam por `increase_prometheus` ou `changes_prometheus`, então
-nada dispara na primeira medição de um dispositivo.
+nada dispara na primeira medição de um monitor.
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
@@ -561,7 +561,7 @@ Séries carregam `router`, `service`, `server`, `upstream`, `host` ou
 
 ### Mudanças no site {#website-changes}
 
-Veja [Mudanças no site](../devices/webchange.md). A página do dispositivo
+Veja [Mudanças no site](../devices/webchange.md). A página do monitor
 mostra cada mudança antes e depois.
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
@@ -586,7 +586,7 @@ com o nó, ou o namespace e o pod, workload ou reivindicação envolvida.
 ### Active Directory {#active-directory}
 
 Veja [Active Directory](../devices/activedirectory.md). O controlador de
-domínio que o DumbMonit consulta é cobertor por *Device unreachable*; os
+domínio que o DumbMonit consulta é cobertor por *Monitor unreachable*; os
 outros controladores de domínio do domínio por *Domain controller
 unreachable* (rótulo `dc`).
 
@@ -642,15 +642,15 @@ Veja [Veeam Backup & Replication](../devices/veeam.md). Jobs são rotulados
 
 ### Tailscale {#tailscale}
 
-Veja [Tailscale](../devices/tailscale.md). Dispositivos são rotulados
+Veja [Tailscale](../devices/tailscale.md). Monitores são rotulados
 `device`, o primeiro rótulo de seu nome MagicDNS.
 
 | Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
 |---|---|---|---|---|---|
-| Tailscale device offline | Um dispositivo Tailscale que precisa permanecer online (um dispositivo marcado por padrão) está desconectado há mais de 15 minutos (`dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 15 min | 5 min | Aviso (`warning`) | 6 h |
-| Tailscale node key expiring | A chave de nó de um dispositivo Tailscale expira em menos de 14 dias: ele deixará a tailnet até alguém fazer login de novo (`dumbmonit_tailscale_device_key_expiry_seconds`). | < 14 d | 1 h | Aviso (`warning`) | 1 d |
-| Tailscale device awaiting approval | Um dispositivo entrou na tailnet e espera aprovação: aprove-o se é esperado, remova-o caso contrário (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Aviso (`warning`) | 1 d |
-| Tailscale client update | Um dispositivo Tailscale que precisa permanecer online roda um cliente com atualização disponível (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
+| Tailscale device offline | Um monitor Tailscale que precisa permanecer online (um monitor marcado por padrão) está desconectado há mais de 15 minutos (`dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 15 min | 5 min | Aviso (`warning`) | 6 h |
+| Tailscale node key expiring | A chave de nó de um monitor Tailscale expira em menos de 14 dias: ele deixará a tailnet até alguém fazer login de novo (`dumbmonit_tailscale_device_key_expiry_seconds`). | < 14 d | 1 h | Aviso (`warning`) | 1 d |
+| Tailscale device awaiting approval | Um monitor entrou na tailnet e espera aprovação: aprove-o se é esperado, remova-o caso contrário (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Aviso (`warning`) | 1 d |
+| Tailscale client update | Um monitor Tailscale que precisa permanecer online roda um cliente com atualização disponível (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
 
 ### FortiGate {#fortigate}
 
@@ -719,7 +719,7 @@ Reportado pelo agente Windows em um host Hyper-V; veja
 
 ### Pontuação de segurança {#security-score}
 
-Calculada pelo servidor a cada 15 minutos para todo dispositivo cujo tipo
+Calculada pelo servidor a cada 15 minutos para todo monitor cujo tipo
 tem verificações de segurança, e armazenada como `dumbmonit_security_score`
 (0–100), apenas enquanto a pontuação de segurança estiver ativada em
 Configurações (desativada por padrão). Veja [Pontuação de segurança](../using/security-score.md).
@@ -736,14 +736,14 @@ Configurações (desativada por padrão). Veja [Pontuação de segurança](../us
 | DumbMonit backup did not run | O backup local programado do banco de dados DumbMonit não rodou por mais de dois dias (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 d | 1 h | Aviso (`warning`) | 24 h |
 | DumbMonit data volume almost full | O volume que contém `/data` tem menos de 10% de espaço livre (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Aviso (`warning`) | 24 h |
 | DumbMonit metrics database restarting in a loop | O VictoriaMetrics embutido foi reiniciado três vezes ou mais em 30 minutos (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Alerta (`critical`) | 6 h |
-| DumbMonit scheduler stalled | Nenhuma rodada de agendamento há mais de dois minutos: os dispositivos não são mais consultados (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Alerta (`critical`) | 6 h |
-| DumbMonit polls running late | Dispositivos continuam atrasados após cada rodada (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Aviso (`warning`) | 24 h |
+| DumbMonit scheduler stalled | Nenhuma rodada de agendamento há mais de dois minutos: os monitores não são mais consultados (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Alerta (`critical`) | 6 h |
+| DumbMonit polls running late | Monitores continuam atrasados após cada rodada (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Aviso (`warning`) | 24 h |
 | DumbMonit metric writes failing | Lotes recusados pelo VictoriaMetrics ou medições descartadas nos últimos 15 minutos (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Aviso (`warning`) | 6 h |
 | DumbMonit database growing fast | O `dumbmonit.db` mais que dobrou em um dia e passa de 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Aviso (`warning`) | 24 h |
 
 Essas regras e o heartbeat de saída são explicados em [Watching DumbMonit itself](../install/self-monitoring.md).
 
-Toda regra integrada se aplica a todo dispositivo e a todo canal ativado.
+Toda regra integrada se aplica a todo monitor e a todo canal ativado.
 
 ## Editando uma regra na interface {#editing-a-rule-in-the-ui}
 
@@ -760,22 +760,22 @@ está disparando agora. Cada regra tem:
   somente leitura;
 - **Excluir**, apenas para suas próprias regras.
 
-## Substituições por dispositivo {#per-device-overrides}
+## Substituições por monitor {#per-device-overrides}
 
-Uma regra pode ser ajustada para um dispositivo sem tocar na própria regra:
+Uma regra pode ser ajustada para um monitor sem tocar na própria regra:
 um limite diferente, um limite de limpeza diferente, ou desligada apenas
-para esse dispositivo. O editor de cada regra tem um painel
-**Substituições por dispositivo** para adicionar ou remover uma
+para esse monitor. O editor de cada regra tem um painel
+**Substituições por monitor** para adicionar ou remover uma
 diretamente.
 
 A ação de um clique **Ignorar** em um alerta (na aba *Agora*
-ou na página do dispositivo do alerta) é o mesmo mecanismo, escrito com
-`enabled: false`: o dispositivo para de carregar essa regra,
-imediatamente, reversivelmente. A página do dispositivo lista o que
+ou na página do monitor do alerta) é o mesmo mecanismo, escrito com
+`enabled: false`: o monitor para de carregar essa regra,
+imediatamente, reversivelmente. A página do monitor lista o que
 ignora, com **Parar de ignorar**; a própria regra mostra *Ignorada em N
-dispositivos* em Alertas → Regras, onde o mesmo painel de substituições
-por dispositivo a remove. Veja
-[Substituições por dispositivo](../reference/api.md#per-device-overrides)
+monitores* em Alertas → Regras, onde o mesmo painel de substituições
+por monitor a remove. Veja
+[Substituições por monitor](../reference/api.md#per-device-overrides)
 para a API.
 
 ## Criando uma regra de limite {#creating-a-threshold-rule}
@@ -785,26 +785,26 @@ Clique em **Nova regra**. O formulário precisa de:
 | Campo | Significado |
 |---|---|
 | Nome | Mostrado em alertas e notificações. |
-| Consulta | Uma expressão MetricsQL, avaliada por dispositivo. Exemplo: `dumbmonit_cpu_usage_percent`. |
+| Consulta | Uma expressão MetricsQL, avaliada por monitor. Exemplo: `dumbmonit_cpu_usage_percent`. |
 | Operador | `>`, `>=`, `<` ou `<=`. |
 | Limite | O número com o qual o resultado da consulta é comparado. |
 | Severidade | Info, Aviso ou Alerta. |
 | Reter por | Segundos que a condição precisa durar antes de disparar. Uma retenção diferente de zero absorve uma amostra ruim isolada. |
 
 Toda série retornada pela consulta se torna um alerta potencial, conectado
-ao dispositivo nomeado por seu rótulo `target`. Agregue com
-`avg by (target, host) (…)` quando você quer um alerta por dispositivo em
+ao monitor nomeado por seu rótulo `target`. Agregue com
+`avg by (target, host) (…)` quando você quer um alerta por monitor em
 vez de um por núcleo ou por interface. A identidade do alerta ignora os
 rótulos `host` e `tag_*` sempre que `target` está presente, então renomear
-um dispositivo mantém seus alertas; uma série cujo `target` não corresponde
-a um dispositivo existente e ativado é ignorada.
+um monitor mantém seus alertas; uma série cujo `target` não corresponde
+a um monitor existente e ativado é ignorada.
 
 ## A linguagem de consulta {#the-query-language}
 
 Consultas são [MetricsQL](https://docs.victoriametrics.com/metricsql/), o
 superconjunto PromQL do VictoriaMetrics. As métricas são as séries
 `dumbmonit_*` descritas na [referência de métricas](../reference/metrics.md),
-e toda série carrega um rótulo `target` (o id do dispositivo) e um rótulo
+e toda série carrega um rótulo `target` (o id do monitor) e um rótulo
 `host` (seu nome).
 
 Alguns padrões usados pelas regras integradas:
@@ -813,7 +813,7 @@ Alguns padrões usados pelas regras integradas:
 # Idade da última amostra: o que "inacessível" significa
 time() - tlast_over_time(dumbmonit_up[7d])
 
-# Um valor por dispositivo, qualquer que seja a fonte
+# Um valor por monitor, qualquer que seja a fonte
 avg by (target, host) (dumbmonit_cpu_load_percent or dumbmonit_proxmox_node_cpu_percent or dumbmonit_cpu_usage_percent)
 
 # Uma porcentagem calculada a partir de dois gauges

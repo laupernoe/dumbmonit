@@ -14,7 +14,7 @@ Os caminhos de arquivo abaixo são relativos à raiz do repositório.
 
 1. Somente um usuário autenticado, com um papel que o permita, pode ler ou
    alterar a configuração, os alertas ou as medições.
-2. As credenciais que o DumbMonit armazena para os seus dispositivos não podem
+2. As credenciais que o DumbMonit armazena para os seus monitores não podem
    ser lidas a partir do arquivo do banco de dados, de um pacote de backup sem
    sua senha, nem pela API.
 3. Somente uma máquina com um token válido pode enviar medições, e um token
@@ -33,11 +33,11 @@ Os caminhos de arquivo abaixo são relativos à raiz do repositório.
 | Cliente de rede anônimo | Alcança a porta HTTP | Sim |
 | Usuário autenticado com papel baixo | Sessão válida ou token de API somente leitura | Sim (escalada de privilégios) |
 | Página web maliciosa | Executa no navegador de um admin | Sim (CSRF, XSS, clickjacking) |
-| Dispositivo monitorado comprometido ou malicioso | Responde às sondagens com conteúdo hostil | Sim (parsers, redirecionamentos) |
+| Monitor monitorado comprometido ou malicioso | Responde às sondagens com conteúdo hostil | Sim (parsers, redirecionamentos) |
 | Agente malicioso ou roubado | Possui um token de agente | Sim (alcance de um único token) |
-| Admin que insere uma URL hostil | Configura um webhook ou endereço de dispositivo | Sim, para os endereços do próprio servidor |
+| Admin que insere uma URL hostil | Configura um webhook ou endereço de monitor | Sim, para os endereços do próprio servidor |
 | Quem tem o host, o volume `/data` ou o runtime de contêineres | Controle total | Não: fora do escopo, como na política de segurança |
-| Vulnerabilidades no VictoriaMetrics ou nos dispositivos monitorados | Código de terceiros | Não: relate ao projeto original |
+| Vulnerabilidades no VictoriaMetrics ou nos monitores monitorados | Código de terceiros | Não: relate ao projeto original |
 
 ## Limites de confiança
 
@@ -48,7 +48,7 @@ Os caminhos de arquivo abaixo são relativos à raiz do repositório.
 | Provedor de identidade para o servidor | Redirecionamento OpenID Connect e ID token | State, nonce e PKCE (S256); a vinculação de contas locais é explícita | `crates/server/src/auth/oidc/`; teste `oidc_api.rs` |
 | Agente para `/api/ingest` | Medições, resultados de comandos | Token por agente, armazenado como hash SHA-256 (prefixo `dmon_`) | `crates/server/src/api/ingest.rs`, `crates/server/src/collectors/agent/token.rs`; teste `agent_binding_api.rs` |
 | Agente relay para o servidor | Resultados de sondagens de outra rede | Mesma verificação de token de agente (`agent_commands::authenticate`) | `crates/server/src/api/relay.rs`; teste `relay_api.rs` |
-| Servidor para dispositivos monitorados | Requisições de sondagem, respostas hostis | Redirecionamentos seguidos apenas no mesmo host, número de redirecionamentos limitado, parsers de resposta com testes unitários, verificação de certificado ativada por padrão | `crates/collectors/src/http.rs` (`same_host_redirects`) |
+| Servidor para monitores monitorados | Requisições de sondagem, respostas hostis | Redirecionamentos seguidos apenas no mesmo host, número de redirecionamentos limitado, parsers de resposta com testes unitários, verificação de certificado ativada por padrão | `crates/collectors/src/http.rs` (`same_host_redirects`) |
 | Servidor para canais de notificação | Requisições de webhook e SMTP | Mesma política de redirecionamento, mais uma proteção que recusa os endereços do próprio servidor, verificada antes do envio, a cada redirecionamento e na resolução DNS | `crates/server/src/notify/guard.rs`; teste `notify_guard_api.rs` |
 | Servidor para VictoriaMetrics | Escritas e consultas de leitura | O processo filho embutido escuta em `127.0.0.1:8428` por padrão; o proxy compatível com Prometheus repassa apenas as rotas de leitura (query, query_range, series, labels) | `crates/server/src/config.rs` (`DUMBMONIT_VM_LISTEN`), `crates/server/src/api/prometheus.rs` (`readable_segments`) |
 | Servidor para SQLite | Configuração e estado | Parâmetros vinculados através do `sqlx` | `crates/server/src/db/` |
@@ -133,7 +133,7 @@ O argumento segue os princípios de design de Saltzer e Schroeder.
 | Falhas de registro e monitoramento, CWE-778 | Log de segurança de logins e alterações sensíveis | `auth/audit.rs`; teste `security_audit_api.rs` |
 
 Os riscos residuais conhecidos estão listados no modelo de segurança (listener
-HTTP simples, opções de dispositivo sem criptografia, VictoriaMetrics embutido
+HTTP simples, opções de monitor sem criptografia, VictoriaMetrics embutido
 sem autenticação). A CSP permite estilos inline (`style-src 'unsafe-inline'`), o
 que a enfraquece contra injeção de estilo, mas não contra execução de script.
 Existe um aviso aceito, `RUSTSEC-2023-0071`, ignorado em `deny.toml` com o seu

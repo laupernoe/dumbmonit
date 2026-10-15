@@ -1,4 +1,4 @@
-# Ihr erstes Gerät hinzufügen
+# Ihren ersten Monitor hinzufügen
 
 Etwas hinzuzufügen funktioniert immer gleich: eine Art aus der Liste
 wählen, ein Hinweis rechts erklärt, was am Gerät vorzubereiten ist, und
@@ -7,7 +7,7 @@ das Formular zeigt nur die für diese Art relevanten Felder.
 ## Die drei ersten Schritte {#the-three-first-steps}
 
 Auf einer brandneuen Instanz zeigt die Übersicht kein leeres Bulletin:
-Sie zeigt eine kurze Anleitung — **Ihr erstes Gerät hinzufügen**, **eine
+Sie zeigt eine kurze Anleitung — **Ihren ersten Monitor hinzufügen**, **eine
 Art, benachrichtigt zu werden, verbinden**, **prüfen, dass eine
 Nachricht ankommt**. Jeder Schritt ist ein Klick, und jeder wird für
 sich grün. Der dritte zählt nur eine Nachricht, die einen Kanal
@@ -18,10 +18,10 @@ Die Anleitung wird auf der Instanz gehalten, nicht im Browser: Einen
 Schritt zu überspringen, oder die gesamte Anleitung, überspringt ihn in
 jedem Browser und für jeden Benutzer. Sie verschwindet endgültig, sobald
 die drei Schritte erledigt sind, und erscheint nie auf einer Instanz,
-die schon Geräte und einen Kanal hatte — ein Upgrade gibt einem
+die schon Monitore und einen Kanal hatte — ein Upgrade gibt einem
 etablierten Homelab kein Tutorial.
 
-## Ein SNMP-Gerät hinzufügen
+## Einen SNMP-Monitor hinzufügen {#add-an-snmp-device}
 
 SNMP ist die universellste Art: fast jede Netzwerk-Hardware spricht es.
 Switches, Router, NAS, USV und Drucker sind die üblichen Verdächtigen.
@@ -30,17 +30,17 @@ Switches, Router, NAS, USV und Drucker sind die üblichen Verdächtigen.
    nur-lesende Community (standardmäßig "public" bei vielen Geräten).
    Filtert das Gerät nach Adresse, erlauben Sie die Adresse des
    DumbMonit-Servers.
-2. Öffnen Sie in DumbMonit **Devices** und klicken Sie auf **Add a
-   device** (oder drücken Sie ++ctrl+k++ und tippen Sie "add").
+2. Öffnen Sie in DumbMonit **Monitors** und klicken Sie auf **Add a
+   monitor** (oder drücken Sie ++ctrl+k++ und tippen Sie "add").
 3. Wählen Sie **SNMP device**. Der Picker klappt sich zu einer Zeile
    zusammen, und das Formular zeigt die Felder für SNMP.
 4. Geben Sie einen **Namen**, die **Adresse** (IP oder Hostname) und
    die **Community** ein. Für SNMP v3 schalten Sie das Credential auf
    *SNMP v3* und füllen Benutzername und die Authentifizierungs- und
    Privacy-Passphrasen aus.
-5. Klicken Sie auf **Add device**.
+5. Klicken Sie auf **Add monitor**.
 
-![Ein SNMP-Gerät hinzufügen: das Formular links, der Einrichtungshinweis rechts](../assets/screenshots/add-device-light.png){ loading=lazy }
+![Einen SNMP-Monitor hinzufügen: das Formular links, der Einrichtungshinweis rechts](../assets/screenshots/add-device-light.png){ loading=lazy }
 
 Das Erfassungsprofil wird automatisch im Hintergrund aus der
 `sysObjectID` des Geräts erkannt, sodass das Formular nie auf ein
@@ -54,18 +54,18 @@ NAS die CPU, Speicher und Storage, erscheinen innerhalb einer Minute.
 
 ## Ein Netzwerk scannen
 
-Statt Geräte einzeln einzugeben, scannen Sie einen Bereich:
+Statt Monitore einzeln einzugeben, scannen Sie einen Bereich:
 
-1. Öffnen Sie bei **Add a device** das Panel **Scan my network**.
+1. Öffnen Sie bei **Add a monitor** das Panel **Scan my network**.
 2. Geben Sie ein Netzwerk in CIDR-Notation ein, zum Beispiel
    `192.168.1.0/24` (bis zu 4096 Adressen pro Scan), und die auf jeder
    Adresse zu versuchende Community (standardmäßig "public").
 3. Jede antwortende Adresse wird mit ihrem `sysName`, der Beschreibung
    und dem anzuwendenden Profil gelistet. Bereits in DumbMonit
-   vorhandene Geräte sind als *Already added* markiert, und alles Neue
+   vorhandene Monitore sind als *Already added* markiert, und alles Neue
    ist für Sie angekreuzt.
 4. Entfernen Sie das Häkchen bei dem, was Sie nicht wollen, klicken Sie
-   dann auf **Add *n* devices**. Sie werden einzeln erstellt, jede
+   dann auf **Add *n* monitors**. Sie werden einzeln erstellt, jede
    Zeile zeigt ihr eigenes Ergebnis, sodass ein Fehlschlag nie den Rest
    stoppt.
 
@@ -79,7 +79,7 @@ Derselbe Ablauf, mit einem Credential in zwei Feldern statt einem:
    einem Kopier-Button, und auf der [Proxmox-VE-Seite](../devices/proxmox.md).
    Nutzen Sie nie das Konto wiederverwendet, mit dem Sie sich
    einloggen.
-2. In DumbMonit, **Add a device** → **Proxmox VE**.
+2. In DumbMonit, **Add a monitor** → **Proxmox VE**.
 3. Geben Sie einen **Namen** und die **Adresse** eines beliebigen
    Knotens ein (standardmäßig Port 8006).
 4. Kopieren Sie die **full-tokenid** des Tokens
@@ -90,14 +90,14 @@ Derselbe Ablauf, mit einem Credential in zwei Feldern statt einem:
 5. Proxmox liefert ein selbstsigniertes Zertifikat: Kreuzen Sie
    **Accept an unverifiable certificate** unter *More options* an,
    falls sich die erste Abfrage darüber beschwert.
-6. Klicken Sie auf **Add device**.
+6. Klicken Sie auf **Add monitor**.
 
 [Proxmox Backup Server](../devices/pbs.md) funktioniert genauso mit
 `proxmox-backup-manager`; ein [Synology-NAS](../devices/synology.md)
 nimmt ein dediziertes DSM-Konto (Benutzername und Passwort); ein
 [Server mit dem Agent](../devices/agent.md) braucht überhaupt kein
 Credential, nur das Enrollment-Token, das nach dem Speichern des
-Geräts einmal angezeigt wird.
+Monitors einmal angezeigt wird.
 
 ## Der Einrichtungshinweis
 
@@ -124,26 +124,26 @@ Welche Art auch immer, das Formular hat:
 
 | Feld | Bedeutung |
 |---|---|
-| Name | Wie das Gerät in Listen und Alarmen erscheint. |
+| Name | Wie der Monitor in Listen und Alarmen erscheint. |
 | Address | IP, Hostname, `host:port` oder URL je nach Art; der Platzhalter zeigt die erwartete Form. |
 | Credential | Die von der Art akzeptierten Familien, jede mit eigenen Feldern: Community, SNMP-v3-Benutzer und Passphrasen, Proxmox-Token (Token ID + Secret), Benutzername und Passwort. Secrets haben ein Zeigen/Verbergen-Auge, und eingefügte Werte werden von Leerzeichen, Anführungszeichen und Zeilenumbrüchen bereinigt. Verschlüsselt gespeichert, nie von der API zurückgegeben: Beim Bearbeiten behalten leere Felder das Gespeicherte. |
-| Check interval | Wie oft DumbMonit das Gerät liest. Standard 60 s, Minimum 10 s. |
-| Parent device | Geht das übergeordnete Gerät down, werden Alarme dieses Geräts unterdrückt statt gesendet. Siehe [Abhängigkeitsunterdrückung](../alerting/index.md#dependency-suppression). |
-| Enabled | Ein pausiertes Gerät wird nicht geprüft und löst keine Alarme aus. |
+| Check interval | Wie oft DumbMonit den Monitor liest. Standard 60 s, Minimum 10 s. |
+| Parent monitor | Geht der übergeordnete Monitor down, werden Alarme dieses Monitors unterdrückt statt gesendet. Siehe [Abhängigkeitsunterdrückung](../alerting/index.md#dependency-suppression). |
+| Enabled | Ein pausierter Monitor wird nicht geprüft und löst keine Alarme aus. |
 | Tags | Freie Schlüssel/Wert-Labels, auf jeder Zeitreihe als `tag_<key>` kopiert. Artspezifische Optionen liegen hier auch, unter **More options**. |
 
 ## Was als Nächstes passiert
 
-- Das Gerät erscheint auf der **Devices**-Seite als Rack-Frontblende:
+- Der Monitor erscheint auf der **Monitors**-Seite als Rack-Frontblende:
   Status-LED, Name, Art, Adresse, zuletzt gesehen, und eine Sparkline.
 - Messwerte werden alle 5 Sekunden in VictoriaMetrics geschrieben
   (`DUMBMONIT_FLUSH_INTERVAL_SECS`), daher erscheint das erste
   Diagramm nach der ersten Abfrage plus ein paar Sekunden. **Probe
-  now** auf der Geräteseite erzwingt eine Abfrage und meldet, wie
+  now** auf der Monitorseite erzwingt eine Abfrage und meldet, wie
   viele Samples und Zeitreihen sie erzeugt hat: Es ist das wichtigste
   Diagnosewerkzeug.
 - Die [eingebauten Alarmregeln](../alerting/rules.md) gelten sofort:
-  Gerät nicht erreichbar, CPU gesättigt, Platte fast voll, und so
+  Monitor nicht erreichbar, CPU gesättigt, Platte fast voll, und so
   weiter. Nichts zu konfigurieren.
 - Um benachrichtigt zu werden, fügen Sie einen
   [Benachrichtigungskanal](../notifications.md) unter
@@ -151,7 +151,7 @@ Welche Art auch immer, das Formular hat:
   aktivierten Kanal.
 
 !!! tip "Keine Daten nach einer Minute?"
-    Öffnen Sie die Geräteseite: Ein Konfigurationsfehler (falsche
+    Öffnen Sie die Monitorseite: Ein Konfigurationsfehler (falsche
     Community, abgelehntes Zertifikat, fehlende Fähigkeit) wird rot
     unter der Adresse mit dem Grund angezeigt. Siehe die
     [FAQ](../faq.md#no-data-after-adding-a-device).

@@ -43,9 +43,9 @@ Caddy no publica su versión a través de la API de administración.
 
 Las [reglas integradas](../alerting/rules.md#reverse-proxies-and-domains)
 que se aplican: Caddy upstream unhealthy, Caddy configuration reload
-failed, Reverse proxy answering 5xx, además de Device unreachable.
+failed, Reverse proxy answering 5xx, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Caddy. Indica en una frase qué va mal (sin configuración,

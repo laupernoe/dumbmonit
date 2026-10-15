@@ -18,9 +18,9 @@ Resolver, Dienste, CARP und ausstehende Updates.
     Quellcode statt einer beobachteten Antwort. Sagen Sie uns, was
     kaputt ist.
 
-## Die Geräteseite
+## Die Monitorseite
 
-Über die generischen Diagramme hinaus zeigt ein OPNsense-Gerät drei
+Über die generischen Diagramme hinaus zeigt ein OPNsense-Monitor drei
 Panels, aus dem gelesen, was die Abfrage gespeichert hat — das Öffnen
 der Seite fragt die Firewall selbst nie ab:
 
@@ -122,7 +122,7 @@ Firewall, die eines nicht hat, antwortet mit `404`, was weder ein
 Sammlungsfehler noch ein Authentifizierungsfehler ist: eine Metrik
 weniger, und nichts in der Oberfläche.
 
-Geltende eingebaute Regeln: Device unreachable, Internet gateway
+Geltende eingebaute Regeln: Monitor unreachable, Internet gateway
 down, Gateway losing packets, Gateway slow, Firewall state table
 filling up, Firewall network buffers exhausted, VPN tunnel down,
 Firewall resolver stopped, Firewall core service stopped, Firewall

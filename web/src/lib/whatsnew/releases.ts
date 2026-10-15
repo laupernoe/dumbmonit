@@ -30,7 +30,7 @@ export const RELEASE_0_9_0_DRAFT: Release = {
 	date: '2026-10-15',
 	highlights: [
 		{
-			title: 'Each service is its own device',
+			title: 'Each service is its own monitor',
 			text: 'Docker, backups, ZFS, WireGuard, IPsec and more found by an agent get their own status, alerts and silences under the machine.'
 		},
 		{
@@ -42,12 +42,12 @@ export const RELEASE_0_9_0_DRAFT: Release = {
 			text: 'Acknowledge or snooze from a button or signed link in the message, and let an outside heartbeat tell you when DumbMonit itself goes quiet.'
 		},
 		{
-			title: 'More devices, and Uptime Kuma import',
+			title: 'More monitors, and Uptime Kuma import',
 			text: 'XCP-ng, Nutanix AHV and OpenVPN servers, KVM and IPsec in the agent, a speed test, and a one-step import of your Uptime Kuma monitors.'
 		},
 		{
 			title: 'Security score, only if you want it',
-			text: 'Off by default and shown next to each device, with new checks for Linux, Windows, websites and Synology and a how-to-fix report.'
+			text: 'Off by default and shown next to each monitor, with new checks for Linux, Windows, websites and Synology and a how-to-fix report.'
 		}
 	]
 };

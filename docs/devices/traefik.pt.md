@@ -57,9 +57,9 @@ reporta: só um router que está listado e desativado o faz.
 As [regras incorporadas](../alerting/rules.md#reverse-proxies-and-domains) que
 se aplicam: Traefik router disabled, Traefik backend server down, Traefik
 service without a server, Traefik certificate not obtained, Proxy certificate
-not renewed, Reverse proxy answering 5xx, mais Device unreachable.
+not renewed, Reverse proxy answering 5xx, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o Traefik. Diz numa frase o que está errado (routers desativados e o

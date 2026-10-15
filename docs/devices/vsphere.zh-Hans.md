@@ -39,9 +39,9 @@ DumbMonit与vSphere Web Services API（SOAP，`/sdk`）通信，而不是REST AP
 | `alarm` | 每个未确认告警一个序列，值=其健康代码，最多64个 | `alarm`（其名称）、`entity`、`entity_type`、`status` |
 | `scrape_errors` | 上次探针失败的调用 | |
 
-适用的[内置规则](../alerting/rules.md#vmware-vsphere)：vSphere主机无响应、vSphere主机健康红色、vSphere主机留在维护、vSphere数据存储几乎满、vSphere数据存储不可访问、vSphere VM Tools未运行、vSphere红色告警，加上设备不可达。
+适用的[内置规则](../alerting/rules.md#vmware-vsphere)：vSphere主机无响应、vSphere主机健康红色、vSphere主机留在维护、vSphere数据存储几乎满、vSphere数据存储不可访问、vSphere VM Tools未运行、vSphere红色告警，加上监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探针存储的内容；打开页面从不查询vSphere。它首先说明有什么问题（主机无响应、红色告警、数据存储几乎满或不可访问），然后是具有其负载的主机、具有其填充级别的数据存储，以及按电源状态的VM。
 

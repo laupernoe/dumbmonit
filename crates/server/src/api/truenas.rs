@@ -331,9 +331,9 @@ async fn health(
 async fn load(state: &AppState, id: TargetId) -> ApiResult<Target> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != "truenas" {
-        return Err(ApiError::BadRequest("This device is not a TrueNAS system.".into()));
+        return Err(ApiError::BadRequest("This monitor is not a TrueNAS system.".into()));
     }
     Ok(target)
 }

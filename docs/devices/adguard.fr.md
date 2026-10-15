@@ -67,9 +67,9 @@ désactiver cela.
 Les [règles intégrées](../alerting/rules.md#adguard-home) qui s'appliquent :
 protection AdGuard Home désactivée, DNS AdGuard Home ne tourne pas, serveur
 amont AdGuard Home en échec, listes de filtres AdGuard Home obsolètes, mise
-à jour AdGuard Home disponible, plus Appareil inaccessible.
+à jour AdGuard Home disponible, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page ne se connecte jamais à AdGuard Home. Il dit si la protection et le

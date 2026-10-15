@@ -42,9 +42,9 @@ através da API de administração.
 
 As [regras integradas](../alerting/rules.md#reverse-proxies-and-domains) que
 se aplicam: Caddy upstream unhealthy, Caddy configuration reload failed,
-Reverse proxy answering 5xx, além de Device unreachable.
+Reverse proxy answering 5xx, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Caddy. Ele diz o que está errado em uma frase (nenhuma

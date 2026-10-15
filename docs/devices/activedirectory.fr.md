@@ -17,7 +17,7 @@ attribut de mot de passe (de LAPS il lit la date d'expiration, jamais le
 mot de passe) et ne demande jamais les droits de réplication qui
 exposeraient des secrets.
 
-Un seul appareil couvre tout le domaine : pointez-le vers un contrôleur
+Une seule surveillance couvre tout le domaine : pointez-la vers un contrôleur
 de domaine et DumbMonit trouve les autres dans la partition de
 configuration.
 
@@ -32,7 +32,7 @@ passé. En particulier :
   *Monitor active directory replication*. Sans lui, le panneau dit
   *statut de réplication non lisible* plutôt que de deviner. Seule la
   vue du contrôleur de domaine interrogé est montrée : pour voir les
-  partenaires d'un autre, ajoutez-le comme un second appareil.
+  partenaires d'un autre, ajoutez-le comme une seconde surveillance.
 - **Pas visible via LDAP** : journaux d'événements (connexions,
   verrouillages au moment où ils arrivent, changements de groupe comme
   événements), contenu de la Group Policy, SYSVOL, zones DNS, et les
@@ -109,7 +109,7 @@ Operators, Print Operators et Backup Operators.
 
 Les constats sont des faits bruts — combien d'objets, et lesquels — pas
 un score ; le [score de sécurité](../using/security-score.md) de
-l'appareil les pèse. Chacun a un `id` stable, une gravité sur l'échelle
+la surveillance les pèse. Chacun a un `id` stable, une gravité sur l'échelle
 du score (low, medium, high, critical, montrée sur la page comme Info,
 Avis et Avertissement), une catégorie, un compteur et jusqu'à vingt noms
 de compte en exemple. Un constat qui a été examiné et n'a rien trouvé est
@@ -156,7 +156,7 @@ s'appliquent :
 
 - **Contrôleur de domaine inaccessible** : un autre contrôleur de
   domaine du domaine arrête de répondre sur son port LDAP depuis cinq
-  minutes (Avertissement). Celui interrogé est couvert par *Appareil
+  minutes (Avertissement). Celui interrogé est couvert par *Surveillance
   inaccessible*.
 - **Connexion Active Directory échouée** : le contrôleur de domaine
   refuse le compte de service — mot de passe expiré, désactivé ou
@@ -169,7 +169,7 @@ s'appliquent :
   est lisible.
 - **Mot de passe krbtgt plus ancien que 180 jours** (Info).
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Active Directory montre le domaine (niveaux fonctionnels, le
 contrôleur de domaine interrogé, décalage d'horloge), les contrôleurs de

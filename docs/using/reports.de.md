@@ -16,15 +16,15 @@ Empfänger aufführt.
 | Abschnitt | Inhalt |
 | --- | --- |
 | **Headline** | Gesamtverfügbarkeit für den Zeitraum, die Anzahl der Vorfälle, und die Veränderung gegenüber dem vorherigen Zeitraum. |
-| **Availability by group** | Eine Zeile pro Gruppe, dann pro Gerät (höchstens die 40 am wenigsten verfügbaren), berechnet genauso wie auf [Statusseiten](status-pages.md): Abfragen nach ihrer Erfolgsrate, Hosts und Geräte danach, wie oft sie sich gemeldet haben. Geräte ohne Historie werden als "no data" statt als 100 % gezeigt. |
-| **Incidents** | Wann jeder begann, wie lange er dauerte (oder dass er noch offen ist) und auf welchem Gerät. Bis zu 25. Informative Alarme werden ausgelassen. |
-| **Least stable devices** | Die fünf Geräte mit der niedrigsten Verfügbarkeit oder den meisten Vorfällen. |
+| **Availability by group** | Eine Zeile pro Gruppe, dann pro Monitor (höchstens die 40 am wenigsten verfügbaren), berechnet genauso wie auf [Statusseiten](status-pages.md): Abfragen nach ihrer Erfolgsrate, Hosts und Monitore danach, wie oft sie sich gemeldet haben. Monitore ohne Historie werden als "no data" statt als 100 % gezeigt. |
+| **Incidents** | Wann jeder begann, wie lange er dauerte (oder dass er noch offen ist) und auf welchem Monitor. Bis zu 25. Informative Alarme werden ausgelassen. |
+| **Least stable monitors** | Die fünf Monitore mit der niedrigsten Verfügbarkeit oder den meisten Vorfällen. |
 | **Comparison** | Verfügbarkeit und Vorfallanzahl gegenüber dem gleich langen Zeitraum direkt davor. |
 
 Die E-Mail besteht aus einfachen HTML-Tabellen mit Inline-Stilen und ohne
 externes Bild, sodass sie überall gleich dargestellt wird und beim Öffnen
 nichts nachgeladen wird. Eine Textversion wird mitgesendet. Jeder
-Gerätename und jede Meldung wird escaped.
+Monitorname und jede Meldung wird escaped.
 
 ## Einstellungen
 

@@ -41,9 +41,9 @@ do banco de dados; alguns deles só mudam uma vez por minuto.
 
 **Uma indisponibilidade parcial ainda é uma verificação bem sucedida.** Um
 serviço parado dá `service_up 0` para aquele serviço e os outros ainda são
-medidos. Só quando nenhum serviço e nenhuma API responde é que o dispositivo
+medidos. Só quando nenhum serviço e nenhuma API responde é que o monitor
 está *inacessível*. Uma chave recusada é um erro de configuração, mostrado
-na página do dispositivo e não notificado.
+na página do monitor e não notificado.
 
 **O que não é lido.** A licença e sua expiração, o espaço em disco e as
 estatísticas de mensagens do painel não são descritos pela documentação
@@ -56,9 +56,9 @@ se aplicam: SecurityGateway service down, SecurityGateway API not
 answering, SecurityGateway delivery queue growing, além de Device
 unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Um dispositivo SecurityGateway mostra um painel **Serviços de e-mail** acima
+Um monitor SecurityGateway mostra um painel **Serviços de e-mail** acima
 dos gráficos, lido da última medição armazenada: abrir a página nunca se
 conecta ao gateway. Ele lista todo serviço observado com sua porta, uma
 palavra e uma cor (Respondendo, Fora do ar) e seu tempo de resposta, a
@@ -80,7 +80,7 @@ mais recente.
    posterior é necessário. Crie uma conta dedicada nomeada como abaixo, com
    uma senha longa usada em nenhum outro lugar, e dê a ela o papel Domain
    Administrator. Se os contadores permanecerem vazios na página do
-   dispositivo, sua versão os reserva para o papel Global Administrator, e a
+   monitor, sua versão os reserva para o papel Global Administrator, e a
    conta precisa desse papel em vez disso.
 
     ```

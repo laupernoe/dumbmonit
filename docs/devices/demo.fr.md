@@ -1,6 +1,6 @@
-# Appareil de démonstration
+# Surveillance de démonstration
 
-Un appareil fictif produisant des mesures, pour découvrir l'outil sans
+Une surveillance fictive produisant des mesures, pour découvrir l'outil sans
 matériel. Aucun matériel requis.
 
 ## Configuration
@@ -9,7 +9,7 @@ matériel. Aucun matériel requis.
 2. De fausses mesures apparaissent tout de suite, assez pour parcourir l'interface.
 
 L'adresse est libre (le placeholder indique `demo`), il n'y a ni identifiant ni
-option. L'appareil de démonstration produit une série `cpu_usage_percent`, si bien
+option. La surveillance de démonstration produit une série `cpu_usage_percent`, si bien
 que les règles « CPU élevé » et « CPU inhabituel » s'appliquent à lui, et il
 peut servir de parent ou d'enfant dans une
 [chaîne de dépendance](../alerting/index.md#dependency-suppression) pour voir

@@ -78,7 +78,7 @@ completa: [Notifiche push (PWA)](push-notifications.md).
 
 Solo amministratori. Gli account che possono accedere, e il loro ruolo:
 
-| Ruolo | Legge tutto | Gestisce gli avvisi (presa in carico, posticipo, ignora, finestre di manutenzione, cancellazione dello storico) | Modifica la configurazione (dispositivi, regole, canali, pagine di stato, impostazioni, backup, token, account) |
+| Ruolo | Legge tutto | Gestisce gli avvisi (presa in carico, posticipo, ignora, finestre di manutenzione, cancellazione dello storico) | Modifica la configurazione (monitor, regole, canali, pagine di stato, impostazioni, backup, token, account) |
 |---|---|---|---|
 | **Osservatore** | sì | no | no |
 | **Operatore** | sì | sì | no |
@@ -87,7 +87,7 @@ Solo amministratori. Gli account che possono accedere, e il loro ruolo:
 Un osservatore vede ogni pagina con tutti i controlli che modificherebbero
 qualcosa nascosti. Alcune cose restano riservate agli amministratori anche in
 lettura: i token API e degli agent, le email degli iscritti alle pagine di
-stato, e le opzioni dei dispositivi che sembrano segreti (un'opzione il cui nome
+stato, e le opzioni dei monitor che sembrano segreti (un'opzione il cui nome
 contiene `key`, `token`, `password`…, le intestazioni aggiuntive di un controllo
 HTTP, la password di un indirizzo `https://user:pass@host`), che i non
 amministratori leggono come `***`. Un operatore è il ruolo di reperibilità: i
@@ -183,7 +183,7 @@ manuale. L'elenco mostra il prefisso di ogni token, la data di creazione, l'ulti
 utilizzo e se è stato revocato. **Revoca** ferma ogni agent che usa quel token al
 suo prossimo invio.
 
-Un token può registrare più macchine. Revocarlo non elimina i dispositivi.
+Un token può registrare più macchine. Revocarlo non elimina i monitor.
 L'elenco dei token, la creazione e la revoca sono per gli amministratori;
 osservatori e operatori vedono la sezione senza l'elenco.
 
@@ -192,8 +192,8 @@ osservatori e operatori vedono la sezione senza l'elenco.
 Un solo tipo di token per entrambi: client MCP e [API REST](../reference/api.md).
 Dai un nome a un token, scegli il suo ambito e crealo — viene mostrato una sola
 volta. Un token **lettura** può solo guardare; un token **lettura e scrittura**
-può anche modificare — silenziare un dispositivo, eseguire un probe, aggiungere o
-modificare dispositivi, regole e canali — ma mai account, impostazioni di accesso
+può anche modificare — silenziare un monitor, eseguire un probe, aggiungere o
+modificare monitor, regole e canali — ma mai account, impostazioni di accesso
 o altri token.
 
 Sotto **Collega**, tre schede contengono gli snippet, compilati con il token
@@ -213,7 +213,7 @@ Prometheus o un Grafana interroga con esso. Vedi
 Tre cose, nell'ordine in cui le incontri.
 
 Un **avviso che non puoi non vedere**: `/data/secret.key` è ciò che decifra le
-credenziali dei dispositivi, e una copia del database senza di esso ripristina
+credenziali dei monitor, e una copia del database senza di esso ripristina
 un'istanza che non può comunicare con nulla. La formulazione cambia quando il
 segreto proviene invece da `DUMBMONIT_SECRET` — in quel caso non c'è alcun file
 da copiare, ed è il tuo gestore di password a doverlo conservare.
@@ -275,7 +275,7 @@ palette dei comandi la apre da qualsiasi punto — vedi
 ## Informazioni
 
 Versione del server e stato di salute dei suoi due archivi, il database
-(configurazione dei dispositivi e storico degli avvisi) e VictoriaMetrics (ogni
+(configurazione dei monitor e storico degli avvisi) e VictoriaMetrics (ogni
 misura nei grafici), come riportato da `GET /api/health` e aggiornato ogni 15
 secondi. Un archivio che smette di rispondere mostra un avviso con l'errore e
 cosa controllare. La sezione rimanda anche a questa documentazione e indica la

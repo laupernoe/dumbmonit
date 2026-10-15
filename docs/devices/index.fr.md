@@ -1,6 +1,6 @@
-# Types d'appareil
+# Types de surveillance
 
-DumbMonit appelle tout ce qu'il surveille un *appareil* (l'API dit *target*),
+DumbMonit appelle tout ce qu'il surveille une *surveillance* (l'API dit *target*),
 même quand c'est une page web ou un nom DNS. Chaque type est un collecteur
 sur le serveur ; le serveur décrit chaque type à l'interface
 (`GET /api/collectors`), si bien que le formulaire correspond toujours à ce
@@ -67,28 +67,28 @@ que cette version peut surveiller.
 | [Serveur de temps NTP](services.md#ntp) | `ntp` | aucun | Routeur, NAS, serveur de temps interne, serveur de pool public |
 | [Battement de cœur](push.md) | `push` | aucun (URL secrète) | Tâche cron, script de sauvegarde, automatisation qui doit appeler |
 | [Changements de site web](webchange.md) | `webchange` | aucun | Une page ou tout un site : changements de texte, pages ajoutées et supprimées, avant/après avec captures d'écran |
-| [Appareil de démonstration](demo.md) | `dummy` | aucun | Explorer l'interface sans matériel |
+| [Surveillance de démonstration](demo.md) | `dummy` | aucun | Explorer l'interface sans matériel |
 
-## Comment un appareil est lu
+## Comment une surveillance est lue
 
-Le planificateur fait tourner chaque appareil activé sur son propre
+Le planificateur fait tourner chaque surveillance activée sur son propre
 intervalle (60 s par défaut, 10 s au minimum) via le collecteur de son type,
 avec au plus `DUMBMONIT_MAX_CONCURRENT_PROBES` sondes en vol et un délai
 maximal de `DUMBMONIT_PROBE_TIMEOUT_SECS` par sonde. Chaque sonde réussie
 écrit ses échantillons plus `dumbmonit_up = 1` ; une sonde en échec n'écrit
-rien, et c'est le silence de la série que la règle « Appareil inaccessible »
+rien, et c'est le silence de la série que la règle « Surveillance inaccessible »
 détecte.
 
-Les échecs sont classés. Un appareil qui ne répond pas est *inaccessible* et
+Les échecs sont classés. Une surveillance qui ne répond pas est *inaccessible* et
 déclenche une alerte. Une mauvaise communauté, un certificat refusé ou une
 fonctionnalité manquante est une *erreur de configuration* : elle est
-affichée sur la page de l'appareil, en rouge, avec la raison, et n'est pas
-notifiée. La distinction compte : un appareil mal configuré ne devrait
+affichée sur la page de la surveillance, en rouge, avec la raison, et n'est pas
+notifiée. La distinction compte : une surveillance mal configurée ne devrait
 réveiller personne la nuit.
 
 ## Options
 
-Certains types lisent des options depuis les étiquettes de l'appareil : le
+Certains types lisent des options depuis les étiquettes de la surveillance : le
 port de l'API, s'il faut accepter un certificat autosigné, quels nœuds
 surveiller. Le formulaire montre un champ typé par option sous
 **Plus d'options**, avec son défaut et son texte d'aide. Les pages par type
@@ -96,10 +96,10 @@ les listent mot pour mot. Les options sont copiées sur chaque série comme
 labels `tag_<key>`, ne mettez donc jamais un secret dans l'une d'elles :
 utilisez le champ identifiant, qui est chiffré.
 
-## Appareils parents
+## Surveillances parentes
 
-N'importe quel appareil peut déclarer un autre comme son parent. Quand le
+N'importe quelle surveillance peut déclarer une autre comme sa parente. Quand le
 parent est inaccessible, les alertes de ses descendants sont marquées
 *Supprimée par le parent* plutôt qu'envoyées : un commutateur qui tombe
-produit une notification, pas trente. Sur la page Appareils, les enfants
+produit une notification, pas trente. Sur la page Surveillances, les enfants
 s'empilent sous leur parent et s'atténuent quand il est inaccessible.

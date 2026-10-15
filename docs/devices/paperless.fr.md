@@ -42,9 +42,9 @@ Les [règles intégrées](../alerting/rules.md#self-hosted-applications) qui
 s'appliquent : file d'attente de tâches Paperless arrêtée, erreur d'index ou
 de contrôle de cohérence Paperless, migrations Paperless en attente, tâche
 Paperless en échec, stockage Paperless presque plein, mise à jour Paperless
-disponible, plus Appareil inaccessible.
+disponible, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Paperless. Il dit d'abord ce qui ne va pas (un composant

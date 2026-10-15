@@ -121,7 +121,7 @@ Versuche werden durch ein Rate-Limit begrenzt. Für eine automatisierte Bereitst
 
 ![Der Anmeldebildschirm](../assets/screenshots/login-light.png){ loading=lazy }
 
-Fügen Sie dann Ihr erstes Gerät hinzu: siehe [Erstes Gerät hinzufügen](first-device.md).
+Fügen Sie dann Ihren ersten Monitor hinzu: siehe [Ersten Monitor hinzufügen](first-device.md).
 
 ## Umgebungsvariablen {#environment-variables}
 
@@ -138,7 +138,7 @@ benötigten unter `environment:` des Dienstes, wie unter
 | `DUMBMONIT_VM_RETENTION` | `12` | Aufbewahrung des eingebetteten VictoriaMetrics: Monate, oder `30d`, `2y`. |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | Speicherbudget der Caches des eingebetteten VictoriaMetrics. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Lauschadresse des eingebetteten VictoriaMetrics, innerhalb des Containers. |
-| `DUMBMONIT_SECRET` | *(erzeugt)* | Instanz-Geheimnis, das Gerätezugangsdaten und Tokens verschlüsselt. |
+| `DUMBMONIT_SECRET` | *(erzeugt)* | Instanz-Geheimnis, das Monitor-Zugangsdaten und Tokens verschlüsselt. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Gleichzeitige Prüfungen, alle Collectors zusammen. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Maximale Dauer einer Prüfung. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Schreibintervall Richtung VictoriaMetrics. |
@@ -162,7 +162,7 @@ Schlüssel, der aus dem Instanz-Geheimnis abgeleitet wird. Beim ersten Start erz
 Geheimnis in `/data/secret.key` (im Volume `dumbmonit-data`).
 
 !!! danger "`secret.key` zusammen mit der Datenbank sichern"
-    Ohne ihn sind die Gerätezugangsdaten unwiederbringlich: Eine allein wiederhergestellte
+    Ohne ihn sind die Monitor-Zugangsdaten unwiederbringlich: Eine allein wiederhergestellte
     Datenbank ergibt eine Instanz, die mit nichts sprechen kann. Der Server erkennt beim Start einen
     fehlenden oder geänderten Schlüssel und weigert sich mit einer eindeutigen
     Meldung weiterzumachen, statt bei jeder Prüfung stillschweigend zu scheitern. Die geplanten Backups
@@ -242,13 +242,13 @@ Ein benanntes Volume, `dumbmonit-data`, enthält alles:
 
 | Pfad | Inhalt |
 |---|---|
-| `dumbmonit.db` | Geräte, Regeln, Kanäle, Alarmzustand, Sitzungen. |
+| `dumbmonit.db` | Monitore, Regeln, Kanäle, Alarmzustand, Sitzungen. |
 | `secret.key` | Das Instanz-Geheimnis. |
 | `backups/` | Die geplanten lokalen Backups: eine Kopie der Datenbank und des Geheimnisses, standardmäßig täglich, sieben werden behalten. |
 | `vm/` | VictoriaMetrics-Zeitreihen (standardmäßig 12 Monate Aufbewahrung). |
 
 DumbMonit sichert seine eigene Datenbank nach Zeitplan und exportiert die gesamte
-Konfiguration — Geräte, Zugangsdaten, Regeln, Kanäle — als einzelne Datei,
+Konfiguration — Monitore, Zugangsdaten, Regeln, Kanäle — als einzelne Datei,
 verschlüsselt mit einer Passphrase Ihrer Wahl, die sich auf einer frischen Instanz wiederherstellen lässt.
 Beides steht in **[Backup und Wiederherstellung](backup.md)**, zusammen mit dem, was vor
 einem Upgrade zu tun ist, und der einen Regel zu `secret.key`, die man zweimal lesen sollte.
@@ -285,7 +285,7 @@ lauscht weiterhin auf 8080:
 ```
 
 **Ihr eigenes Geheimnis** statt des in `/data/secret.key` erzeugten. Es
-verschlüsselt die Zugangsdaten der Geräte: Geht es verloren, müssen alle neu
+verschlüsselt die Zugangsdaten der Monitore: Geht es verloren, müssen alle neu
 eingegeben werden.
 
 ```yaml
@@ -294,7 +294,7 @@ eingegeben werden.
 ```
 
 **Aufbewahrung und Speicher** des eingebetteten VictoriaMetrics (Monate, oder
-`30d` / `2y`; ein Homelab mit einigen Dutzend Geräten passt in 256 MB):
+`30d` / `2y`; ein Homelab mit einigen Dutzend Monitoren passt in 256 MB):
 
 ```yaml
     environment:
@@ -311,7 +311,7 @@ eingegeben werden.
 
 **Passwort vergessen.** Fügen Sie die folgende Zeile hinzu, führen Sie
 `docker compose up -d` aus, legen Sie in der Oberfläche den ersten Administrator
-neu an (Geräte, Regeln und Kanäle bleiben), entfernen Sie die Zeile dann wieder
+neu an (Monitore, Regeln und Kanäle bleiben), entfernen Sie die Zeile dann wieder
 und führen Sie `docker compose up -d` noch einmal aus:
 
 ```yaml
@@ -344,7 +344,7 @@ services:
 - `shm_size: 256m`: Chromium rendert in `/dev/shm`, und Dockers Standard von 64 MB ist für eine lange Seite zu klein.
 - Jedes mit `--remote-debugging-port` gestartete Chromium funktioniert; hier wird das Image `chromedp/headless-shell` verwendet.
 
-Ohne Browser funktioniert alles andere wie gewohnt (Textvergleich, Alarme, Vorher/Nachher-Kopien); die Schnappschüsse haben nur kein Bild. Solange der Server keinen Browser erreicht, zeigt das Formular eines Website-Änderungsgeräts einen Hinweis mit diesen Zeilen.
+Ohne Browser funktioniert alles andere wie gewohnt (Textvergleich, Alarme, Vorher/Nachher-Kopien); die Schnappschüsse haben nur kein Bild. Solange der Server keinen Browser erreicht, zeigt das Formular eines Website-Änderungsmonitors einen Hinweis mit diesen Zeilen.
 Bleibt der Hinweis nach dem Neustart bestehen, prüfen Sie `docker compose logs browser`, ob der Hostname in `DUMBMONIT_BROWSER_URL` der Dienstname ist und ob beide Dienste im selben Compose-Projekt liegen.
 
 ## Reverse-Proxy {#reverse-proxy}
@@ -473,16 +473,16 @@ services:
 Auf dem Host ändert sich nichts. Docker 20.10 und neuer setzen diesen Bereich in jedem
 Container von selbst; die expliziten Zeilen sorgen dafür, dass er auch auf älteren Engines und
 bei Podman gilt. Ohne ihn meldet die Prüfung einen Konfigurationsfehler (am
-Gerät angezeigt, nicht benachrichtigt), nie ein falsches „Host down". Bei `docker run` übergeben Sie
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Solange der Server keinen ICMP-Socket öffnen kann, zeigt das Formular eines Ping-Geräts einen Hinweis mit diesen Zeilen.
+Monitor angezeigt, nicht benachrichtigt), nie ein falsches „Host down". Bei `docker run` übergeben Sie
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Solange der Server keinen ICMP-Socket öffnen kann, zeigt das Formular eines Ping-Monitors einen Hinweis mit diesen Zeilen.
 
 ## Testen ohne Hardware {#testing-without-hardware}
 
-Fügen Sie ein [Demo-Gerät](../devices/demo.md) hinzu: Es erzeugt Fake-Messwerte, ohne
+Fügen Sie ein [Demo-Monitor](../devices/demo.md) hinzu: Es erzeugt Fake-Messwerte, ohne
 dass etwas vorzubereiten ist, sodass Diagramme, Regeln und Benachrichtigungen sofort
 ausprobiert werden können. Für echte SNMP-Daten genügt oft der Rechner, auf dem Docker läuft — installieren Sie
 darauf `snmpd` (`apt install snmpd`, die Community `public` auf der Docker-
-Bridge in `/etc/snmp/snmpd.conf` erlauben) und fügen Sie ein SNMP-Gerät mit der
+Bridge in `/etc/snmp/snmpd.conf` erlauben) und fügen Sie ein SNMP-Monitor mit der
 Adresse des Hosts auf dieser Bridge hinzu (standardmäßig `172.17.0.1`): Das Profil wird
 automatisch erkannt, und Schnittstellen, Speicher und Prozesse erscheinen.
 

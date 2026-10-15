@@ -445,9 +445,9 @@
 			</div>
 
 			<div class="flex items-center gap-4 border-t border-line bg-canvas px-4 py-2 text-[0.75rem] text-ink-2">
-				<span><kbd class="palette-key">↑</kbd><kbd class="palette-key">↓</kbd> navigate</span>
-				<span><kbd class="palette-key">↵</kbd> open</span>
-				<span><kbd class="palette-key">esc</kbd> close</span>
+				<span><kbd class="palette-key">↑</kbd><kbd class="palette-key">↓</kbd> {m.misc_palette_hint_navigate()}</span>
+				<span><kbd class="palette-key">↵</kbd> {m.misc_palette_hint_open()}</span>
+				<span><kbd class="palette-key">esc</kbd> {m.misc_palette_hint_close()}</span>
 			</div>
 		</div>
 	</div>

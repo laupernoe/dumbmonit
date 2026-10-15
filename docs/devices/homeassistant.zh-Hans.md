@@ -2,7 +2,7 @@
 
 仪表盘背后的智能家居:Home Assistant 是否在运行,还是以恢复模式
 启动的、按域分类的不可用或未知实体、电池电量低、等待中的更新
-(核心、操作系统、附加组件、设备固件),以及待处理的修复项。
+(核心、操作系统、附加组件、监控项固件),以及待处理的修复项。
 
 DumbMonit 使用一个**没有管理员权限**的专用用户的长期访问令牌读取
 Home Assistant 的 REST API,并通过 WebSocket API 读取修复项列表。
@@ -39,7 +39,7 @@ Home Assistant 的 REST API,并通过 WebSocket API 读取修复项列表。
 事件、通知或语音服务。这些不会被计为未知:`button`、
 `input_button`、`event`、`scene`、`notify`、`tts`、`stt`、
 `conversation`、`wake_word`、`ai_task`、`person`。**排除的域**
-选项可以把更多域(例如经常处于关闭状态的设备所用的
+选项可以把更多域(例如经常处于关闭状态的监控项所用的
 `device_tracker` 或 `media_player`)从不可用和未知的计数中排除。
 
 修复项不在 REST API 中:DumbMonit 会打开 WebSocket API,发送
@@ -49,7 +49,7 @@ Home Assistant 的 REST API,并通过 WebSocket API 读取修复项列表。
 适用的[内置规则](../alerting/rules.md#home-assistant):Home
 Assistant 处于恢复模式、Home Assistant 未运行、Home Assistant
 实体变为不可用、Home Assistant 电池电量低、Home Assistant 有可用
-更新、Home Assistant 有待处理的修复项,以及设备不可达。
+更新、Home Assistant 有待处理的修复项,以及监控项不可达。
 
 ## 设备 {#devices}
 
@@ -73,12 +73,12 @@ Assistant 处于恢复模式、Home Assistant 未运行、Home Assistant
 如果已知,来自某个 `person.*` 实体,其 `device_trackers` 属性
 会指明它。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Home
 Assistant。它会先说明哪里出了问题(恢复模式、错误级别的修复项、
 不可用的实体),然后是按电量排列的低电量电池、附带版本号的待
-处理更新、按域划分的实体,再然后是配套应用设备及其上次连接时间
+处理更新、按域划分的实体,再然后是配套应用监控项及其上次连接时间
 的表格。
 
 ## 验证方式 {#how-it-was-validated}

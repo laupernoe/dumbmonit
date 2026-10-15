@@ -21,7 +21,7 @@ volta al minuto).
 
 !!! note "Cosa viene inviato"
     Una sola richiesta `GET` anonima con uno user agent `DumbMonit/<version>`.
-    Nulla riguardo la tua istanza, i tuoi dispositivi o la tua rete viene
+    Nulla riguardo la tua istanza, i tuoi monitor o la tua rete viene
     inviato, e l'indirizzo è fisso nel codice.
 
 ### Disattivare il controllo

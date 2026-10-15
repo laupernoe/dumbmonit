@@ -47,7 +47,7 @@ aplicam: Loki not ready, Loki refusing log lines, Loki cannot flush to
 storage, Loki write-ahead log disk full, Loki request errors, além de Device
 unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Loki. Ele diz o que está errado em uma frase (prontidão,

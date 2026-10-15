@@ -30,7 +30,7 @@ DumbMonit 读取 Nginx 内置的 `stub_status` 模块,这是一组纯文本
 才会出现;开源版本没有"upstream"的概念,单靠 `stub_status` 无法
 报告它。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Nginx。
 它显示活动、读取中、写入中和等待中的连接数,过去 24 小时的接受/

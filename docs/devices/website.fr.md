@@ -1,6 +1,6 @@
 # Santé des sites web et SEO
 
-Surveillez les sites web en masse, un appareil par site : soyez informé quand un site **casse**
+Surveillez les sites web en masse, une surveillance par site : soyez informé quand un site **casse**
 (erreur, inaccessible, certificat invalide, boucle de redirection), quand sa page **devient
 blanche**, quand elle **disparaît des moteurs de recherche** (`noindex`, `robots.txt`
 bloquant tout) et quand les métadonnées que Google affiche **changent** (titre,
@@ -15,7 +15,7 @@ Pour le contenu d'une page plutôt que sa santé, voir
 1. Dans l'adresse, collez la page à vérifier, généralement la page d'accueil, avec ou sans https://. Les redirections sont suivies : http vers https et example.com vers www.example.com sont normaux, seule une boucle de redirection ou un déplacement vers une autre adresse est signalé.
 2. Remplissez optionnellement « Texte attendu » avec une phrase que la page doit toujours afficher, et ajustez « Page vierge en dessous de » si la page est courte à dessein.
 3. La première vérification enregistre la référence : adresse finale, titre, description, URL canonique, règles d'indexation. Un changement n'est signalé qu'après **2 vérifications consécutives** (réglable) l'ayant vu, donc les tests A/B et les caches capricieux restent silencieux.
-4. Pour ajouter de nombreux sites à la fois, importez un fichier CSV à partir de la liste des appareils : chaque site est classé sous `Websites/<catégorie>` (E-commerce, Blog… ou la catégorie que vous donnez) ou, quand la page ne le dit pas, sous `Websites/<platform>` (WordPress, Shopify…), sauf si vous spécifiez un dossier.
+4. Pour ajouter de nombreux sites à la fois, importez un fichier CSV depuis le menu **⋯** de la page Surveillances : chaque site est classé sous `Websites/<catégorie>` (E-commerce, Blog… ou la catégorie que vous donnez) ou, quand la page ne le dit pas, sous `Websites/<platform>` (WordPress, Shopify…), sauf si vous spécifiez un dossier.
 
 !!! warning
     Seul ce que le serveur envoie est lu : une page dessinée entièrement par JavaScript semble vierge ici. Réduisez « Page vierge en dessous de » à 0 pour un tel site.
@@ -79,7 +79,7 @@ comparé, ni enregistré, et ne déclenche aucune alerte ; réactivé, il repart
 neuve. Tout est activé par défaut. Un champ qui disparaît de la page (valeur vide) est un
 changement comme un autre.
 
-Un changement confirmé est conservé dans l'historique de l'appareil (champ, avant, après,
+Un changement confirmé est conservé dans l'historique de la surveillance (champ, avant, après,
 date), et son jauge (`dumbmonit_website_title_changed`…) reste à 1 pendant 24
 heures. La première vérification enregistre seulement la référence. Changer l'adresse ou
 **Ignorer les paramètres de requête** démarre une nouvelle référence au lieu de signaler un changement.
@@ -126,18 +126,18 @@ Chaque site reçoit une catégorie, affichée sur sa page, dans l'étiquette `ca
 Une plateforme généraliste (WordPress, Drupal, Hugo…) sans autre signe n'est pas devinée : le site
 reste alors sous sa plateforme (`Websites/WordPress`), et ceux d'une plateforme inconnue sous
 `Websites/Other`. Rangez-les à la main avec les colonnes `folder` ou `category`, ou déplacez-les dans la
-liste des appareils.
+liste des surveillances.
 
 ## Importer une liste de sites (CSV)
 
-À partir de la liste des appareils ou de la page d'ajout d'appareil, **Importer des sites web (CSV)** prend
+À partir de la liste des surveillances ou de la page d'ajout de surveillance, **Importer des sites web (CSV)** prend
 un fichier ou du texte collé avec une ligne d'en-tête et jusqu'à 1000 lignes :
 
 | Colonne | Requis | Sens |
 |---|---|---|
 | `url` | oui | Adresse du site. |
-| `name` | non | Nom de l'appareil ; l'hôte par défaut. |
-| `folder` | non | Dossier de l'appareil ; vide : `Websites/<catégorie>` s'il y a une catégorie, sinon `Websites/<platform>`, détecté en lisant le site une fois. |
+| `name` | non | Nom de la surveillance ; l'hôte par défaut. |
+| `folder` | non | Dossier de la surveillance ; vide : `Websites/<catégorie>` s'il y a une catégorie, sinon `Websites/<platform>`, détecté en lisant le site une fois. |
 | `category` | non | Texte libre (60 caractères, sans `/`), enregistré comme l'option **Catégorie**. Vide : devinée depuis la page, voir [Catégories](#categories). |
 | `tags` | non | `key=value;key=value`. |
 | `interval` | non | Intervalle d'interrogation. |
@@ -179,7 +179,7 @@ déjà surveillé (même adresse finale) est ignoré.
 
 | Alerte | Quand | Sévérité |
 |---|---|---|
-| Appareil inaccessible | Pas de réponse, certificat refusé, boucle de redirection ou trop de redirections | critical |
+| Surveillance inaccessible | Pas de réponse, certificat refusé, boucle de redirection ou trop de redirections | critical |
 | Site web indisponible | La réponse finale est une erreur 4xx ou 5xx, pendant 3 minutes | critical |
 | Page du site web vierge | Texte visible en dessous du seuil, pendant 3 minutes | critical |
 | Texte attendu du site web manquant | Le texte attendu est manquant, pendant 3 minutes | warning |

@@ -69,11 +69,11 @@ Seite Critical oder Warning sind.
 Die geltenden [eingebauten Regeln](../alerting/rules.md#server-hardware-redfish):
 Server fan failed, Server temperature above critical, Power supply
 redundancy lost, Power supply failed, Drive failure predicted, Server
-health critical, plus Device unreachable.
+health critical, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
-Ein Redfish-Gerät erhält auf seiner Seite ein eigenes Panel, über den
+Ein Redfish-Monitor erhält auf seiner Seite ein eigenes Panel, über den
 Diagrammen, aus dem gelesen, was die letzte Abfrage gespeichert hat:
 Das Öffnen der Seite fragt den Controller nie ab. Es antwortet, in
 dieser Reihenfolge:
@@ -164,7 +164,7 @@ unbekannter Wert liest sich "—", nie 0.
     selbstsigniertes Zertifikat: Wird die Verbindung deshalb
     abgelehnt, kreuzen Sie "Accept an unverifiable certificate" in den
     Optionen an. Ein Controller antwortet langsam, und ein
-    vollständiges Lesen braucht mehrere Requests: Meldet das Gerät
+    vollständiges Lesen braucht mehrere Requests: Meldet der Monitor
     Timeouts, heben Sie DUMBMONIT_PROBE_TIMEOUT_SECS auf dem Server
     an.
 

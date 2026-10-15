@@ -29,9 +29,9 @@ Todas as métricas têm o prefixo `dumbmonit_plex_`.
 | `scrape_errors` | chamadas que falharam na última verificação | |
 
 A [regra incorporada](../alerting/rules.md#self-hosted-applications) que se
-aplica: Plex update available, mais Device unreachable.
+aplica: Plex update available, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca chama o Plex. Dá o estado da atualização e se o servidor está associado,

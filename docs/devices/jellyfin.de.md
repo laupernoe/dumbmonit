@@ -37,9 +37,9 @@ oder das Image), daher gibt es keine Update-Metrik.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#self-hosted-applications):
 Jellyfin scheduled task failed, Jellyfin plugin broken, Jellyfin restart
-pending, plus Device unreachable.
+pending, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite ruft Jellyfin nie auf. Es sagt zuerst, was nicht stimmt

@@ -49,9 +49,9 @@ os gráficos e as regras convertem-nos em taxas.
 As [regras incorporadas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: Redis memory near maxmemory, Redis refusing connections, Redis
 replication link down, Redis replica lagging, Redis snapshot failed, Redis
-append-only file write failed, mais Device unreachable.
+append-only file write failed, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o Redis. Diz numa frase o que está errado (replicação, memória contra
@@ -101,8 +101,8 @@ marque Aceitar um certificado não verificável.
 
 Uma palavra-passe recusada (`WRONGPASS`, `NOAUTH`, `NOPERM`) é mostrada como
 erro de credencial e ninguém é notificado sobre o erro em si, mas o DumbMonit
-não recolhe então nada: a regra Device unreachable continua a disparar,
-como para qualquer dispositivo que não consegue ler, até a credencial voltar a
+não recolhe então nada: a regra Monitor unreachable continua a disparar,
+como para qualquer monitor que não consegue ler, até a credencial voltar a
 funcionar. Um Redis que reinicia sem o seu utilizador ACL (utilizadores
 definidos com `ACL SETUSER` mas nunca guardados) causa exatamente isto.
 

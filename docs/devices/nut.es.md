@@ -9,7 +9,7 @@ funcionamiento restante, la carga de trabajo, la tensión de entrada y la
 antigüedad de la batería. Un servidor a menudo publica varios SAI; todos
 se leen en una conexión, y cada serie lleva el nombre de su SAI.
 
-Para un SAI con su propia tarjeta de red, el tipo [dispositivo
+Para un SAI con su propia tarjeta de red, el tipo [monitor
 SNMP](snmp.md) lee en su lugar el UPS-MIB estándar.
 
 ## Qué vigila {#what-it-watches}
@@ -46,7 +46,7 @@ aplican: UPS on battery, UPS battery low, UPS battery needs replacing,
 UPS load high, UPS runtime short, UPS data stale, además de Device
 unreachable cuando el propio servidor NUT deja de responder.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca se conecta al servidor NUT. Una tarjeta por SAI: su estado en
@@ -123,11 +123,11 @@ Dirección: un nombre de host o IP (`nas.lan`), `host:puerto`, o la forma
 puerto (3493), el SAI a vigilar (todos por defecto) y el tiempo de espera
 por intercambio (10 s).
 
-Una conexión rechazada o sin respuesta cuenta como el dispositivo
+Una conexión rechazada o sin respuesta cuenta como el monitor
 inaccesible. Cuando la máquina que ejecuta el servidor NUT se apaga en el
 corte que reporta (a menudo es su propio primario de upsmon), las alertas
-del SAI se ocultan como suprimidas mientras Device unreachable se activa para
-ese mismo dispositivo: lee la alerta Device unreachable como la señal de que
+del SAI se ocultan como suprimidas mientras Monitor unreachable se activa para
+ese mismo monitor: lee la alerta Monitor unreachable como la señal de que
 el corte de corriente ganó. Ejecuta el servidor NUT en una máquina que
 sobreviva a las demás, o vigila el SAI desde un segundo servidor NUT.
 `ACCESS-DENIED` se muestra como un error de credencial, y un

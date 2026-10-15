@@ -165,7 +165,7 @@ fn credential_value(credential: &Credential, field: CredentialField) -> Result<&
         (Credential::UsernamePassword { username, .. }, CredentialField::Username) => Ok(username),
         (Credential::UsernamePassword { password, .. }, CredentialField::Password) => Ok(password),
         _ => Err(ProbeError::Config(format!(
-            "This device type needs a credential providing \"{}\"",
+            "This monitor type needs a credential providing \"{}\"",
             field.name()
         ))),
     }

@@ -33,7 +33,7 @@ quand « Lire l'API NGINX Plus » est cochée et que NGINX Plus répond ; la
 version open source n'a pas d'« upstream » à rapporter avec `stub_status`
 seul.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Nginx. Il montre les connexions actives, en lecture,

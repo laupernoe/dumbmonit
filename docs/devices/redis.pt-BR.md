@@ -49,9 +49,9 @@ contadores: gráficos e regras os transformam em taxas.
 As [regras integradas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: Redis memory near maxmemory, Redis refusing connections,
 Redis replication link down, Redis replica lagging, Redis snapshot failed,
-Redis append-only file write failed, além de Device unreachable.
+Redis append-only file write failed, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Redis. Ele diz o que está errado em uma frase (replicação,

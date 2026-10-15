@@ -18,7 +18,7 @@ de mantenimiento son programadas.
 
 <div class="dm-links" markdown>
 <a href="install/docker/">Instalar<small>Docker Compose, primer inicio, copias de seguridad</small></a>
-<a href="install/first-device/">Añade tu primer dispositivo<small>SNMP, escaneo de red, qué ocurre después</small></a>
+<a href="install/first-device/">Añade tu primer monitor<small>SNMP, escaneo de red, qué ocurre después</small></a>
 <a href="alerting/">Alertas<small>Reglas integradas, silenciosas por diseño</small></a>
 </div>
 
@@ -26,20 +26,20 @@ de mantenimiento son programadas.
 
 | Fuente | Qué obtienes |
 |---|---|
-| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, routers, NAS, SAI, impresoras. Cinco perfiles se incluyen con el producto y se aplican automáticamente a partir del `sysObjectID` del dispositivo. Un escaneo de red añade de una vez todo lo que responde. |
+| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, routers, NAS, SAI, impresoras. Cinco perfiles se incluyen con el producto y se aplican automáticamente a partir del `sysObjectID` del monitor. Un escaneo de red añade de una vez todo lo que responde. |
 | [Proxmox VE](devices/proxmox.md) | Nodos, máquinas virtuales y contenedores, almacenamientos, quórum del clúster y antigüedad de la última copia de seguridad correcta de cada máquina. |
 | [Proxmox Backup Server](devices/pbs.md) | Uso del datastore y previsión de llenado, deduplicación, antigüedad y verificación del último snapshot de cada máquina, tareas fallidas, recolección de basura. |
 | [Synology DSM](devices/synology.md) | Volúmenes, discos y su estado SMART, temperatura, carga, a través de la API web del NAS. |
-| [Agente para Linux, macOS, FreeBSD y Windows](devices/agent.md) | CPU, memoria, discos, red, servicios, contenedores y tiempo de actividad de las máquinas que no hablan SNMP, además de temperaturas, salud de los discos (SMART) y pools ZFS cuando la máquina los expone. Un solo comando para instalarlo, o una imagen Docker; en [modo relay](install/remote-site.md) sondea los dispositivos propios de un sitio remoto usando únicamente conexiones salientes. |
+| [Agente para Linux, macOS, FreeBSD y Windows](devices/agent.md) | CPU, memoria, discos, red, servicios, contenedores y tiempo de actividad de las máquinas que no hablan SNMP, además de temperaturas, salud de los discos (SMART) y pools ZFS cuando la máquina los expone. Un solo comando para instalarlo, o una imagen Docker; en [modo relay](install/remote-site.md) sondea los monitores propios de un sitio remoto usando únicamente conexiones salientes. |
 | [Servicios](devices/services.md) | HTTP(S), puerto TCP, DNS, ping y caducidad de certificados TLS, al estilo Uptime Kuma, con barra de historial y porcentaje de disponibilidad. |
-| [Paquetes de integración](packs/index.md) | Un tipo de dispositivo declarado en un único archivo YAML — una API HTTP o una página Prometheus `/metrics` del dispositivo — con sus propias reglas de alerta, instalado sin esperar a una versión del servidor. |
+| [Paquetes de integración](packs/index.md) | Un tipo de monitor declarado en un único archivo YAML — una API HTTP o una página Prometheus `/metrics` del monitor — con sus propias reglas de alerta, instalado sin esperar a una versión del servidor. |
 
 ## Habla con él {#talk-to-it}
 
 - Un [asistente a través de MCP](using/assistant.md) — Claude Code, Claude Desktop,
   ChatGPT, VS Code, Cursor — con 27 herramientas: un token `read` solo consulta (estado,
-  dispositivos, alertas, métricas, agentes, contenedores…), un token `write` también puede actuar
-  (silenciar, reconocer, añadir un dispositivo, reiniciar un contenedor, publicar un
+  monitores, alertas, métricas, agentes, contenedores…), un token `write` también puede actuar
+  (silenciar, reconocer, añadir un monitor, reiniciar un contenedor, publicar un
   incidente en la página de estado). Los secretos nunca se devuelven.
 - La [API HTTP](reference/api.md) que hay detrás de todo lo que hace la interfaz, descrita en
   `/api/openapi.json` (OpenAPI 3.1). Los tokens (`dmt_…`) tienen alcance de lectura o

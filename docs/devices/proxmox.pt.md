@@ -3,12 +3,12 @@
 Hipervisor: nós com os seus daemons e rede, máquinas virtuais, contentores,
 storages, thin pools LVM, cópias de segurança, alta disponibilidade, snapshots,
 replicação, Ceph até ao OSD, discos físicos e pools ZFS, atualizações pendentes,
-alterações de pacotes, subscrição e certificados. Um dispositivo pode cobrir um
+alterações de pacotes, subscrição e certificados. Um monitor pode cobrir um
 cluster inteiro.
 
 ## O painel de nós {#the-nodes-panel}
 
-A página do dispositivo abre com um cartão por nó: CPU, memória e sistema de
+A página do monitor abre com um cartão por nó: CPU, memória e sistema de
 ficheiros raiz como três medidores, o tempo de atividade e a versão do
 `pve-manager` instalada nesse nó, depois apenas o que está errado — os daemons que
 não estão a correr, as interfaces declaradas no arranque que não estão ativas — e
@@ -132,7 +132,7 @@ séries ficam simplesmente ausentes; nada mais muda.
 
 ## O painel Ceph {#the-ceph-panel}
 
-Uma secção **Ceph** aparece na página do dispositivo apenas quando o cluster tem
+Uma secção **Ceph** aparece na página do monitor apenas quando o cluster tem
 realmente Ceph: saúde e as palavras por detrás dela, capacidade total e usada,
 quantos OSD estão up e in, uma tabela de OSD (anfitrião, classe de dispositivo,
 uso, latência de apply e commit) e uma tabela de pools (uso, size e min size,
@@ -230,7 +230,7 @@ saturam muitas vezes primeiro, com exatamente a mesma consequência — razão p
 qual os dois níveis de ocupação são séries separadas e regras separadas.
 
 As alterações de pacotes são detetadas pelo próprio coletor: lembra as versões
-instaladas da sonda anterior (por dispositivo e nó, em memória — um reinício do
+instaladas da sonda anterior (por monitor e nó, em memória — um reinício do
 servidor aprende de novo sem reportar). Só conta um pacote presente em ambas as
 sondas com uma versão diferente; um pacote recém-instalado ou removido não conta.
 
@@ -248,7 +248,7 @@ As temperaturas de placa não estão disponíveis: a API do Proxmox VE não exp�
 sensores, apenas a temperatura SMART dos próprios discos. Instale o agente
 DumbMonit no nó se precisar de mais.
 
-Regras incorporadas que se aplicam: Device unreachable, High CPU, Disk almost
+Regras incorporadas que se aplicam: Monitor unreachable, High CPU, Disk almost
 full, Filesystem almost full (forecast), Backup too old, Unusual CPU, VM or
 container stopped, VM or container CPU high, VM or container memory high, VM
 or container disk almost full, HA resource in error, Cluster lost quorum, Node
@@ -272,7 +272,7 @@ cluster, numa só chamada. Duas coisas fazem com que valha a pena tê-lo.
   memória. É o número que explica «está tudo lento» quando CPU e memória parecem
   ambos bem.
 * É lido com `history=1` a partir do último ponto já visto, pelo que cada ponto
-  entre duas sondas é ingerido com o seu próprio carimbo temporal. Um dispositivo
+  entre duas sondas é ingerido com o seu próprio carimbo temporal. Um monitor
   sondado de cinco em cinco minutos recebe os seus cinco pontos de um minuto em
   vez de um único valor atual.
 
@@ -447,13 +447,13 @@ faltarem.
 
 | Sintoma | Causa provável |
 |---|---|
-| Erro de certificado mostrado no dispositivo | Certificado autoassinado. Instale um certificado de confiança (o ACME está integrado no Proxmox) ou ative `insecure_tls`. A opção nunca é ativada implicitamente. |
+| Erro de certificado mostrado no monitor | Certificado autoassinado. Instale um certificado de confiança (o ACME está integrado no Proxmox) ou ative `insecure_tls`. A opção nunca é ativada implicitamente. |
 | Erro de autenticação | Segredo colado em Token ID (ou o contrário), «Privilege Separation» deixado marcado (o token fica então sem direitos), ou o papel `DumbMonit` não aplicado em `/`. |
 | Idade da cópia de segurança em falta para um convidado | Nenhuma tarefa `vzdump` na janela de retrospetiva e nenhum arquivo encontrado nos storages; ou `scan_backup_storage` desativado. |
 | Sondas lentas | Um storage de cópias de segurança que demora a listar, ou muitos convidados a inventariar para snapshots. Desative `scan_backup_storage` ou `scan_snapshots`, baixe `max_snapshot_guests`, ou aumente `request_timeout_seconds`. |
 | `node_updates_pending` em falta | O utilizador ou token não tem `Sys.Modify` em `/nodes`. Conceda o papel `DumbMonitUpdates` do passo 6, ou ignore: `node_pve_packages_upgradable` e `node_reboot_required` cobrem os pacotes Proxmox sem ele. |
 | Sem percentagem de memória para uma VM | O Proxmox VE 9 reporta, no inventário do cluster, a memória que a VM ocupa **no anfitrião** — sobrecarga incluída, portanto regularmente acima da sua atribuição. Uma percentagem calculada a partir dela ficaria acima de 100% para sempre. O valor honesto vem do driver balloon dentro do convidado; uma VM com ballooning desativado mostra por isso bytes e nenhuma percentagem. `guest_memory_host_bytes` é o valor do lado do anfitrião. |
-| Sem capacidade para o storage de cópias de segurança | Um datastore Proxmox Backup Server montado no PVE não reporta tamanho: o PVE não o lê. A página do próprio dispositivo do datastore tem-no. |
+| Sem capacidade para o storage de cópias de segurança | Um datastore Proxmox Backup Server montado no PVE não reporta tamanho: o PVE não o lê. A página do próprio monitor do datastore tem-no. |
 | Uso de disco vazio («size only») para uma VM | A VM não tem agente de convidado QEMU (não ativado nas suas opções, ou `qemu-guest-agent` não instalado no interior), ou o token não tem `VM.GuestAgent.Audit`. `guest_agent_enabled` e `guest_agent_running` dizem qual. Os contentores nunca precisam dele. |
 | Sem séries `node_disk_*` | O token não tem `Sys.Audit` em `/` (o papel `DumbMonit` concede-o), ou o nó corre atrás de um controlador RAID que esconde o SMART: `disks/list` reporta então `UNKNOWN` e nenhum `node_disk_smart_failed` é publicado. |
 | `node_packages_changed` dispara após um reinício do servidor | Não dispara: a primeira sonda após um reinício apenas aprende as versões. Uma alteração só é reportada entre duas sondas consecutivas do mesmo processo do servidor. |

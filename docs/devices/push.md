@@ -12,25 +12,25 @@ raises the alert.
 
 ## How it works
 
-Each heartbeat device gets a URL of the form
+Each heartbeat monitor gets a URL of the form
 `https://<your DumbMonit>/api/push/<token>`. The token is a 128-bit random
 value, stored hashed for lookup and encrypted for display: it is shown on the
-device page, with a copy button, for as long as the device exists. It is
+monitor page, with a copy button, for as long as the monitor exists. It is
 deliberately open — no session, no API token, no `X-Requested-With` header —
 because a `curl` line in a crontab has none of those. Holding the token only
 lets you say "the job ran".
 
-On every scheduler pass (the device's interval, 60 s by default) the collector
+On every scheduler pass (the monitor's interval, 60 s by default) the collector
 reads the time of the last call and writes:
 
 | Situation | `probe_success` | Effect |
 |---|---|---|
-| No call received yet | *(nothing written)* | The device shows **Waiting**. No alert: the job is not in place yet. |
+| No call received yet | *(nothing written)* | The monitor shows **Waiting**. No alert: the job is not in place yet. |
 | Last call within the expected interval + grace | `1` | **Reporting**. |
 | Last call older than the expected interval + grace | `0`, `reason="missed"` | **Down**; the "Heartbeat missed" rule fires after two minutes. |
 | Last call said `status=down` | `0`, `reason="reported_down"` | **Down** at once, whatever the clock says. |
 
-A call also re-evaluates the device immediately, so a job that resumes clears
+A call also re-evaluates the monitor immediately, so a job that resumes clears
 its alert without waiting for the next scheduler pass.
 
 The endpoint answers `204` with an empty body when the call is recorded,
@@ -43,7 +43,7 @@ for one token. Both `GET` and `POST` are accepted; `HEAD` works too.
 | Parameter | Meaning |
 |---|---|
 | `status` | `up` (default) or `down`: the job reports a failure itself. |
-| `msg` | A free word of explanation, kept (truncated to 500 characters) and shown on the device page. |
+| `msg` | A free word of explanation, kept (truncated to 500 characters) and shown on the monitor page. |
 
 These are the parameters of Uptime Kuma's push monitor: a script written for
 it works unchanged.
@@ -57,8 +57,8 @@ The steps below are the ones the notice next to the form shows.
    among your heartbeats.
 2. Set the expected interval to the job's schedule ("24h" for a nightly job,
    "1h" for an hourly one) and, if the schedule drifts, a wider grace period.
-   Save the device.
-3. The device page shows the URL to call. Add it at the end of the job, so it
+   Save the monitor.
+3. The monitor page shows the URL to call. Add it at the end of the job, so it
    is called only when the job succeeded:
 
     ```
@@ -67,8 +67,8 @@ The steps below are the ones the notice next to the form shows.
 
 4. A job that can tell when it failed may say so instead of staying silent:
    append ?status=down&msg=… to the URL, and the alert fires at once.
-5. Until the first call arrives the device shows "Waiting" and nothing is
-   alerted. Lost or leaked URL? "Regenerate" on the device page issues a new
+5. Until the first call arrives the monitor shows "Waiting" and nothing is
+   alerted. Lost or leaked URL? "Regenerate" on the monitor page issues a new
    one; the old one stops answering immediately.
 
 !!! warning
@@ -140,7 +140,7 @@ Availability over thirty days, as for any service monitor:
 `avg_over_time(dumbmonit_probe_success{probe="push"}[30d])`.
 
 Built-in rule that applies: **Heartbeat missed** (advisory, 2 minutes). The
-"Service down" and "Service flapping" rules skip heartbeats, and "Device
+"Service down" and "Service flapping" rules skip heartbeats, and "Monitor
 unreachable" never fires for them: the collector always runs, only its verdict
 changes.
 

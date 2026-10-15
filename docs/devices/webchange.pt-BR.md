@@ -37,7 +37,7 @@ id (`#content`), classes (`.cookie-banner`), atributos (`[role=alert]`,
 
 ## Página ou site {#page-or-site}
 
-**Página** (o padrão) lê o endereço do dispositivo e nada mais. Também
+**Página** (o padrão) lê o endereço do monitor e nada mais. Também
 pode ser um documento de texto simples ou JSON, comparado linha por
 linha.
 
@@ -72,19 +72,19 @@ A varredura é educada: duas requisições por vez no máximo, meio segundo
 entre dois lotes, o `User-Agent` `DumbMonit/<version>`, um tempo limite
 de 15 segundos por requisição e 5 MB lidos no máximo por página. Ela para
 em **Máximo de páginas** (25 por padrão, 200 no máximo) ou depois de dez
-minutos. Quando **Máximo de páginas** a interrompeu, a página do dispositivo
+minutos. Quando **Máximo de páginas** a interrompeu, a página do monitor
 diz quantas páginas foram encontradas, para que a parte não observada do
 site nunca seja uma surpresa. **User agent** substitui `DumbMonit/<version>`
 para um site que barra robôs.
 
 ## Como uma verificação funciona {#how-a-check-works}
 
-O dispositivo é sondado como qualquer outro (a cada minuto por padrão),
+O monitor é sondado como qualquer outro (a cada minuto por padrão),
 mas as páginas só são lidas a cada **Verificar cada** minutos (60 por
 padrão, 5 a 10080). No intervalo, a sondagem só reporta o estado da
 última verificação: o site não é atingido a cada minuto. Uma verificação
-roda em segundo plano; duas verificações do mesmo dispositivo nunca se
-sobrepõem, e **Verificar agora** na página do dispositivo inicia uma
+roda em segundo plano; duas verificações do mesmo monitor nunca se
+sobrepõem, e **Verificar agora** na página do monitor inicia uma
 imediatamente.
 
 A primeira verificação só registra a **referência**: toda página é lida
@@ -107,7 +107,7 @@ DumbMonit que lê as páginas de outro jeito faz o mesmo uma vez.
 
 Quando uma verificação encontra a **mesma mudança em várias páginas** (as
 mesmas linhas removidas e adicionadas, como um banner), a página do
-dispositivo a mostra uma só vez, com as páginas em que foi feita.
+monitor a mostra uma só vez, com as páginas em que foi feita.
 
 ### Ignorar linhas {#ignore-lines}
 
@@ -125,9 +125,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Página inicial inacessível {#unreachable-start-page}
 
 Quando a própria página inicial não pode ser lida (sem resposta, conexão
-recusada, tempo esgotado, HTTP 5xx), o dispositivo está **inacessível**:
-a sondagem falha, e a regra "Device unreachable" dispara como para
-qualquer dispositivo. A página inicial é então tentada de novo a cada
+recusada, tempo esgotado, HTTP 5xx), o monitor está **inacessível**:
+a sondagem falha, e a regra "Monitor unreachable" dispara como para
+qualquer monitor. A página inicial é então tentada de novo a cada
 sondagem, então seu retorno é visto dentro de um minuto. Uma página
 inicial que recusa acesso (401, 403) é reportada como um problema de
 configuração, não uma indisponibilidade. Erros em outras páginas do site
@@ -146,7 +146,7 @@ dispara depois de uma verificação que encontrou ao menos uma mudança
 "/pricing, /contact e mais 2". Enquanto está disparando, toda nova
 verificação que encontra mudanças é notificada de novo, com suas próprias
 páginas, mesmo nas mesmas páginas; o alerta resolve na primeira verificação
-que não encontra nada novo. Continua sendo um alerta por dispositivo o
+que não encontra nada novo. Continua sendo um alerta por monitor o
 tempo todo, então reconhecê-lo ou adiá-lo pelo alerta cobre também as
 verificações seguintes. Ela lê `dumbmonit_webchange_last_check_changes`;
 conecte-a a um canal como qualquer outra regra, ou aumente sua
@@ -189,10 +189,10 @@ endereço para o qual o nome de host resolve).
 Uma captura de tela é tirada apenas quando uma página recebe um novo
 snapshot (a referência, e toda mudança), nunca em uma verificação sem
 mudança: uma janela de 1366 × 900, a página completa até 5000 pixels,
-como JPEG. A opção **Capturas de tela** as desliga para um dispositivo.
+como JPEG. A opção **Capturas de tela** as desliga para um monitor.
 Sem um navegador, ou quando ele não responde, a comparação de texto
 funciona da mesma forma e os snapshots simplesmente não têm imagem; a
-página do dispositivo avisa isso.
+página do monitor avisa isso.
 
 O navegador carrega a página como um visitante faria, com seus scripts:
 o que mostra pode diferir do texto que o DumbMonit comparou, que é o
@@ -202,10 +202,10 @@ HTML que o servidor enviou.
 
 O texto de cada snapshot é mantido no banco de dados (1 MB no máximo por
 página); capturas de tela são arquivos sob
-`/data/webchange/<device id>/`. Por dispositivo, as últimas 500 mudanças
+`/data/webchange/<device id>/`. Por monitor, as últimas 500 mudanças
 são mantidas; um snapshot é mantido enquanto é o mais recente de uma
 página ou uma mudança mantida se refere a ele, e tudo mais, arquivos
-incluídos, é removido depois de cada verificação. Excluir o dispositivo
+incluídos, é removido depois de cada verificação. Excluir o monitor
 remove tudo isso.
 
 ## Observar um site para mudanças {#watch-a-website-for-changes}
@@ -222,7 +222,7 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra.
 3. A primeira verificação só registra a referência, nada é reportado. A
    partir de então, cada verificação compara o texto visível página por
    página e mantém uma cópia antes/depois de toda mudança, mostrada na
-   página do dispositivo; o alerta "Website changed" avisa você.
+   página do monitor; o alerta "Website changed" avisa você.
 4. Para uma captura de tela de cada versão, adicione um navegador headless ao
    seu arquivo Compose; as linhas exatas estão na documentação (Opções
    avançadas, "Capturas de tela das mudanças de sites").

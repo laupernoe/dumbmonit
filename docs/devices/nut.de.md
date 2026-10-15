@@ -41,10 +41,10 @@ Seriennummern kommen nie in ein Label. Pro Server werden höchstens 32 USV geles
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#ups-behind-nut): USV an der
 Batterie, USV-Batterie schwach, USV-Batterie muss ersetzt werden, USV-Last hoch, USV-Laufzeit
-kurz, USV-Daten veraltet, außerdem Gerät nicht erreichbar, wenn der NUT-Server selbst nicht
+kurz, USV-Daten veraltet, außerdem Monitor nicht erreichbar, wenn der NUT-Server selbst nicht
 mehr antwortet.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
 verbindet sich nie mit dem NUT-Server. Eine Karte pro USV: ihr Zustand in Worten (am Netz, an
@@ -94,10 +94,10 @@ Adresse: ein Hostname oder eine IP (`nas.lan`), `host:port` oder die Form `ups@h
 von der nur der Host behalten wird. Optionen: Port (3493), die zu überwachende USV (standardmäßig
 alle) und das Timeout pro Austausch (10 s).
 
-Eine abgelehnte Verbindung oder keine Antwort gilt als Gerät nicht erreichbar. Fährt der Rechner,
+Eine abgelehnte Verbindung oder keine Antwort gilt als Monitor nicht erreichbar. Fährt der Rechner,
 auf dem der NUT-Server läuft, bei dem von ihm gemeldeten Ausfall herunter (er ist oft sein
-eigener upsmon-Primary), werden die USV-Alarme als unterdrückt ausgeblendet, während Gerät nicht
-erreichbar für dasselbe Gerät auslöst: Lesen Sie den Alarm Gerät nicht erreichbar als Zeichen,
+eigener upsmon-Primary), werden die USV-Alarme als unterdrückt ausgeblendet, während Monitor nicht
+erreichbar für denselben Monitor auslöst: Lesen Sie den Alarm Monitor nicht erreichbar als Zeichen,
 dass der Stromausfall gewonnen hat. Betreiben Sie den NUT-Server auf einem Rechner, der die
 anderen überlebt, oder überwachen Sie die USV von einem zweiten NUT-Server aus. `ACCESS-DENIED`
 wird als Zugangsdatenfehler angezeigt und ein vom Server nicht veröffentlichter USV-Name als

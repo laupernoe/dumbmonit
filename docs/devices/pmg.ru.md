@@ -11,9 +11,9 @@
     чтение, и формы данных взяты у настоящего почтового шлюза, но никто ещё не
     запускал её неделями на живом почтовом шлюзе. Сообщите нам, что сломается.
 
-## Страница устройства
+## Страница монитора
 
-Помимо общих графиков, устройство Proxmox Mail Gateway показывает три панели,
+Помимо общих графиков, монитор Proxmox Mail Gateway показывает три панели,
 которые читаются из сохранённых опросом данных — открытие страницы никогда не
 обращается к самому шлюзу:
 
@@ -102,7 +102,7 @@ ClamAV записывает дату сборки в собственном фо
 правило действует везде: значение, которое API не вернул, даёт одной метрикой
 меньше, но никогда не ноль, выдающий себя за измерение.
 
-Применяемые встроенные правила: Device unreachable, Mail queue growing, Mail
+Применяемые встроенные правила: Monitor unreachable, Mail queue growing, Mail
 stuck in the queue, Mail gateway service stopped, Virus signatures out of date,
 Spam rules out of date, Quarantine filling up, Mail gateway cluster degraded,
 Mail gateway certificate expiring, Mail gateway updates pending. Уведомления

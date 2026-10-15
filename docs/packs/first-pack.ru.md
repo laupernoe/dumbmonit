@@ -48,12 +48,12 @@ default_port: 80
 credentials: [none]
 ```
 
-`id` определяет два имени: тип устройства `pack.shelly-plug` и префикс метрик
+`id` определяет два имени: тип монитора `pack.shelly-plug` и префикс метрик
 `dumbmonit_shelly_plug_`.
 
 ## 3. Один источник
 
-Источник — это один запрос, всегда на собственный адрес устройства:
+Источник — это один запрос, всегда на собственный адрес монитора:
 
 ```yaml
 options:
@@ -69,8 +69,8 @@ sources:
     path: /rpc/Switch.GetStatus?id={{option.switch_id}}
 ```
 
-`{{option.switch_id}}` заменяется собственной настройкой устройства, которая
-показывается в форме устройства как **Switch channel**. Имя файла фикстуры,
+`{{option.switch_id}}` заменяется собственной настройкой монитора, которая
+показывается в форме монитора как **Switch channel**. Имя файла фикстуры,
 `status.json`, совпадает с `id` источника.
 
 ## 4. Метрики
@@ -174,7 +174,7 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
   --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
 ```
 
-Откройте **Devices → Add device**: *Shelly plug (Gen2+)* есть в списке.
+Откройте **Monitors → Add monitor**: *Shelly plug (Gen2+)* есть в списке.
 Добавьте свою розетку по её адресу; первый опрос произойдёт в течение минуты, а
 правило *Shelly plug overheating* появится в **Alerts → Rules**.
 
