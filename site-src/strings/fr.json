@@ -11,7 +11,7 @@
  "k018": "[[svg4]]Voir sur GitHub",
  "k019": "[[svg5]]Lire le guide d’installation",
  "k020": "Le bulletin, sur l’écran mural d’une instance de test avec des pannes activées &mdash; la fenêtre météo est un toit parisien vivant avec ses pigeons. Un jour calme, on y lit « Ciel dégagé ».",
- "k021": "<strong>Ceci est une alpha</strong> (la version actuelle est la 0.1.0-alpha.7). DumbMonit tourne tous les jours sur le propre réseau de son auteur, mais l’API HTTP n’est pas figée, le schéma de la base évolue encore et aucune mise à jour n’est garantie d’un changement de schéma à l’autre. Plusieurs intégrations n’ont rencontré que des instances de test, pas du matériel de production vieux de plusieurs années ; elles sont signalées plus bas. Essayez-le et <a href=\"https://github.com/laupernoe/dumbmonit/issues\">dites-nous ce qui casse</a>.",
+ "k021": "<strong>Ceci est une alpha</strong> (la version actuelle est la @@VERSION@@). DumbMonit tourne tous les jours sur le propre réseau de son auteur, mais l’API HTTP n’est pas figée, le schéma de la base évolue encore et aucune mise à jour n’est garantie d’un changement de schéma à l’autre. Plusieurs intégrations n’ont rencontré que des instances de test, pas du matériel de production vieux de plusieurs années ; elles sont signalées plus bas. Essayez-le et <a href=\"https://github.com/laupernoe/dumbmonit/issues\">dites-nous ce qui casse</a>.",
  "k055": "Des alertes sans le bruit",
  "k056": "Des règles utiles sont actives dès l’installation. Tout l’effort porte sur l’envoi de messages moins nombreux et meilleurs.",
  "k057": "Dépendances",

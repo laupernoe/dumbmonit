@@ -5,6 +5,30 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Upgrading from 0.1.0-alpha.8
+
+- **Version numbers.** Releases are now plain `0.MINOR.PATCH`: this one is
+  **0.9.0**, the next 0.10.0. Nothing to do; `:latest` still follows releases
+  and `:edge` is built from the `dev` branch.
+- **Agent services become devices.** On its first report after the update, each
+  agent moves its rule overrides, machine-only rules, silences and open alerts
+  to the new per-service devices (Docker, Plakar, restic/Borg, ZFS, libvirt,
+  WireGuard, IPsec, speed test). Older history stays under the machine, so a
+  chart may show a break at the update. Review the machine's list of modules
+  found, and untick the ones you do not want as devices.
+- **Security score is opt-in.** The Security page is gone and `/security` opens
+  the setting. An installation that already monitored a rated device keeps the
+  score on; a new one starts with it off. Turn it on in **Settings → Account &
+  security → Security score**. A few products (pfSense, UniFi, NTP,
+  nginx/Apache, GitLab, Forgejo) are no longer rated.
+- **Agent with Docker Compose.** `docker-compose.agent.yml` is shorter and now
+  keeps the agent's binding in a volume. If you copied the old file, take the
+  new one (the options moved to the agent page) so that recreating the
+  container no longer unbinds it.
+- **New versions of the bundle.** VictoriaMetrics 1.154.0 and rustls 0.23.46
+  (see Security); the bundled VictoriaMetrics is replaced when you pull the
+  new image.
+
 ### Added
 
 - **Each service an agent finds is its own device.** Docker, Plakar,
@@ -15,10 +39,8 @@ All notable changes to this project are documented here. The format follows
   SMART, sensors and OS health; every series is written once, under the device
   it belongs to. The machine's page lists the modules found and not found:
   untick one to drop its device (the agent stops collecting it), tick one to
-  watch it before it shows up. Nothing to choose at install time. Existing
-  installations move rule overrides, machine-only rules, silences and open
-  alerts to the new device on its first report; older history stays under the
-  machine. See [Services found by the agent](docs/devices/agent.md#services-found-by-the-agent).
+  watch it before it shows up. Nothing to choose at install time. See
+  [Services found by the agent](docs/devices/agent.md#services-found-by-the-agent).
 - **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
   and an entry in the command palette) draws the whole infrastructure from the
   links DumbMonit already knows, nothing to type in: declared parents, relay
@@ -39,14 +61,14 @@ All notable changes to this project are documented here. The format follows
   (pc.2024.3 or later, Prism Viewer role): clusters, hosts degraded or in
   maintenance, AHV VMs, storage container fill level and unresolved alerts by
   severity. Three built-in rules. See [Nutanix AHV](docs/devices/nutanix.md).
+- **OpenVPN server** device kind: version, whether the server reports itself
+  connected, and every client in session with its addresses and traffic, read
+  through the management interface (read-only: `version`, `state`, `status 3`).
 - **KVM virtual machines on the Linux agent.** A new `libvirt` module reads
   `virsh -c qemu:///system` (domains, their state, vCPUs and memory; storage
   pools and their fill level), silent where `virsh` is absent. Two built-in
   rules: a crashed domain, a pool almost full. See
   [the agent page](docs/devices/agent.md#kvm-virtual-machines-through-libvirt).
-- **OpenVPN server** device kind: version, whether the server reports itself
-  connected, and every client in session with its addresses and traffic, read
-  through the management interface (read-only: `version`, `state`, `status 3`).
 - **IPsec tunnels** in the agent (module `ipsec`): every strongSwan tunnel
   configured, up or down, read with `swanctl --list-conns` / `--list-sas`, with
   traffic and time to the next rekey, an IPsec panel on the device page, and
@@ -56,27 +78,50 @@ All notable changes to this project are documented here. The format follows
   most once per period (6 h by default, 5 min minimum). Off by default since
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
+- **New security checks.** Linux hosts: SSH root login, SSH password
+  authentication, host firewall. Windows hosts: firewall profiles, pending
+  restart, Remote Desktop without Network Level Authentication, SMBv1.
+  Websites (HTTP(S) monitors and Website health): HTTPS and security headers
+  (HSTS, `nosniff`, clickjacking protection, CSP) besides the certificate.
+  Synology: pending DSM update, built-in `admin` account, Auto Block, DSM
+  firewall (administrator account only, read hourly). New series:
+  `agent_ssh_root_login`, `agent_ssh_password_auth` and `agent_firewall_active`
+  (Linux); `agent_firewall_profile_enabled`, `agent_reboot_required`,
+  `agent_rdp_enabled`, `agent_rdp_nla` and `agent_smb1_enabled` (Windows);
+  `probe_http_security_header` (HTTP(S) monitors); `website_https` and
+  `website_security_header` (Website health); `synology_update_available`,
+  `synology_admin_account_enabled`, `synology_autoblock_enabled` and
+  `synology_firewall_enabled`.
+- **Security report per device.** The grade badge opens a report: what fails
+  and how to fix it, what passes, concrete steps to improve the score on that
+  product, and a link to its documentation, under a visible "indicative, not a
+  full audit" notice. New `GET`/`PUT /api/security/settings`; both security
+  reads now carry `enabled`, and the device report a `guide`. See
+  [Security score](docs/using/security-score.md).
 
 ### Changed
 
+- **The security score is opt-in and lives next to each device.** Turn it on in
+  **Settings → Account & security → Security score**; rated devices then get a
+  grade badge in the device list and on their page. Off, the score is not
+  computed and `dumbmonit_security_score` is no longer written. New
+  installations start with it off; an installation that already monitored a
+  rated device keeps it on.
+- **Security score coverage narrowed** to the products where it means
+  something: hosts, websites, Synology, Proxmox VE, Proxmox Backup Server,
+  OPNsense and Active Directory. pfSense, UniFi, NTP, nginx/Apache, GitLab,
+  Forgejo and the vendor-update checks of other integrations are no longer
+  rated: one or two checks gave a grade that meant little.
 - **Simpler version numbers.** After 0.1.0-alpha.8 the next release is
   **0.9.0**, then 0.10.0, 0.11.0…; a fix-only release bumps the last number.
   `:latest` still follows releases; `:edge` is now built from the `dev` branch.
 - **Shorter `docker-compose.agent.yml`.** Only what most hosts need; the
   options moved to the agent page. It now keeps the agent's binding in a
   volume, so recreating the container no longer unbinds it.
-
 - **Adding a device starts from a short list.** Search first, then the common
   choices (website, ping, machine with the agent, SNMP device, hypervisor, NAS,
   network scan); every other type is grouped by category and folded. The agent
   appears once.
-- **Status page editor: compact scene choice.** The chosen scenes are shown as
-  thumbnails with a "Change" button that opens a searchable, paged grid, and
-  the list of services to add has a search box.
-- **Wall: each problem once, readable.** A device written out as a problem is
-  no longer repeated among the device tiles, long names and causes wrap instead
-  of being cut, and "And N more" became a clear counter linking to Alerts.
-
 - **Alert rules page: grouped, filtered, counted.** The 150+ rules are grouped by
   device kind and folded by default (kinds you own first, with how many are off
   or firing); quick filters (Active, Disabled, Changed by me, Fired lately)
@@ -86,53 +131,35 @@ All notable changes to this project are documented here. The format follows
   metric families that never moved over the period (the 0/1 checks of a
   website, for instance) are no longer drawn; they collapse into a "Steady
   checks (N)" line that lists their value. Only the series that change keep a chart.
+- **Status page editor: compact scene choice.** The chosen scenes are shown as
+  thumbnails with a "Change" button that opens a searchable, paged grid, and
+  the list of services to add has a search box.
+- **Wall: each problem once, readable.** A device written out as a problem is
+  no longer repeated among the device tiles, long names and causes wrap instead
+  of being cut, and "And N more" became a clear counter linking to Alerts.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
 
+### Removed
+
+- **The Security page.** `/security` now opens the security score setting; the
+  report moved to each device.
+
 ### Fixed
 
-- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or silence controls on a disabled monitor; an "Enable" button takes their place.
-- **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
-- **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
-- **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
-- Status pages: the uptime next to each bar and in the summary line now covers
-  the same days as the bar. On a page showing 8 to 29 days it was the 7-day
-  uptime, under a heading naming the longer window.
-
-- **The security score is now opt-in and lives next to each device.** The
-  Security page is gone (`/security` opens the setting): turn the score on in
-  **Settings → Account & security → Security score**, and rated devices get a
-  grade badge in the device list and on their page. The badge opens a report:
-  what fails and how to fix it, what passes, concrete steps to improve the
-  score on that product, and a link to its documentation, under a visible
-  "indicative, not a full audit" notice. New installations start with it off;
-  an installation that already monitored a rated device keeps it on. Off, the
-  score is not computed and `dumbmonit_security_score` is no longer written.
-  New `GET`/`PUT /api/security/settings`; both security reads now carry
-  `enabled`, and the device report a `guide`. See
-  [Security score](docs/using/security-score.md).
-- **Security score coverage narrowed to the products where it means
-  something, with new checks.** Linux hosts gain SSH root login, SSH password
-  authentication and host firewall checks; Windows hosts are rated on the
-  firewall profiles, a pending restart, Remote Desktop without Network Level
-  Authentication and SMBv1; websites (HTTP(S) monitors and Website health) on
-  HTTPS and security headers (HSTS, `nosniff`, clickjacking protection, CSP)
-  besides the certificate; Synology on a pending DSM update, the built-in
-  `admin` account, Auto Block and the DSM firewall (administrator account
-  only, read hourly). Proxmox VE, Proxmox Backup Server, OPNsense and Active
-  Directory keep their checks. pfSense, UniFi, NTP,
-  nginx/Apache, GitLab, Forgejo and the vendor-update checks of other
-  integrations are no longer rated: one or two checks gave a grade that meant
-  little.
-- The agent reports `agent_ssh_root_login`, `agent_ssh_password_auth` and
-  `agent_firewall_active` on Linux, and `agent_firewall_profile_enabled`,
-  `agent_reboot_required`, `agent_rdp_enabled`, `agent_rdp_nla` and
-  `agent_smb1_enabled` on Windows. HTTP(S) monitors report
-  `probe_http_security_header`, Website health devices `website_https` and
-  `website_security_header`, Synology `synology_update_available`,
-  `synology_admin_account_enabled`, `synology_autoblock_enabled` and
-  `synology_firewall_enabled`.
+- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
+  silence controls on a disabled monitor; an "Enable" button takes their place.
+- **Public status page no longer claims "All systems operational" without
+  data.** Services that are disabled or never measured are left out of the
+  banner and the tally, which reads "No data yet".
+- **Status page uptime.** The uptime next to each bar and in the summary line
+  now covers the same days as the bar. On a page showing 8 to 29 days it was
+  the 7-day uptime, under a heading naming the longer window.
+- **Info alerts are no longer counted as problems.** The nav badge and the wall
+  ("25 problems") count only warnings, criticals and unreachable devices.
+- **Unreachable agent message.** The duration is now readable ("no measurement
+  for 10 d 21 h (limit 90 s)") instead of raw seconds.
 
 ### Security
 

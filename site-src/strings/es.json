@@ -11,7 +11,7 @@
  "k018": "[[svg4]]Ver en GitHub",
  "k019": "[[svg5]]Leer la guía de instalación",
  "k020": "El boletín, en la pantalla de pared de una instancia de prueba con fallos activados &mdash; la ventana del tiempo es una azotea de París con sus palomas. En un día tranquilo dice «Cielos despejados».",
- "k021": "<strong>Esto es una alpha</strong> (la versión actual es la 0.1.0-alpha.7). DumbMonit funciona a diario en la red de su autor, pero la API HTTP no está congelada, el esquema de la base de datos aún cambia y todavía no hay garantía de actualización entre cambios de esquema. Varias integraciones solo han visto instancias de prueba, no hardware de producción con años encima; están marcadas más abajo. Pruébalo y <a href=\"https://github.com/laupernoe/dumbmonit/issues\">cuéntanos qué falla</a>.",
+ "k021": "<strong>Esto es una alpha</strong> (la versión actual es la @@VERSION@@). DumbMonit funciona a diario en la red de su autor, pero la API HTTP no está congelada, el esquema de la base de datos aún cambia y todavía no hay garantía de actualización entre cambios de esquema. Varias integraciones solo han visto instancias de prueba, no hardware de producción con años encima; están marcadas más abajo. Pruébalo y <a href=\"https://github.com/laupernoe/dumbmonit/issues\">cuéntanos qué falla</a>.",
  "k055": "Alertas sin ruido",
  "k056": "Las reglas útiles están activas nada más instalar. El esfuerzo se dedica a enviar menos mensajes, y mejores.",
  "k057": "Dependencias",
