@@ -495,6 +495,7 @@ pub fn parse_iptables_input_active(stdout: &str) -> bool {
 }
 
 /// Valeur `REG_DWORD` d'une sortie de `reg query <clé> /v <valeur>`.
+#[cfg(any(windows, test))]
 pub fn parse_reg_dword(stdout: &str, value: &str) -> Option<u32> {
     stdout.lines().find_map(|line| {
         let mut words = line.split_whitespace();
@@ -511,23 +512,27 @@ pub fn parse_reg_dword(stdout: &str, value: &str) -> Option<u32> {
 
 /// État du pare-feu d'un profil Windows : la stratégie de groupe, si elle
 /// existe, prime sur le réglage local.
+#[cfg(any(windows, test))]
 pub fn windows_firewall_enabled(policy: Option<u32>, local: Option<u32>) -> Option<bool> {
     policy.or(local).map(|value| value != 0)
 }
 
 /// RDP actif quand `fDenyTSConnections` vaut 0.
+#[cfg(any(windows, test))]
 pub fn windows_rdp_enabled(deny: Option<u32>) -> Option<bool> {
     deny.map(|value| value == 0)
 }
 
 /// SMB1 actif seulement si la valeur existe et vaut 1 (absente : désactivé
 /// depuis Windows 8.1 et Server 2012 R2).
+#[cfg(any(windows, test))]
 pub fn windows_smb1_enabled(value: Option<u32>) -> bool {
     value == Some(1)
 }
 
 /// Redémarrage Windows requis : l'une des clés existe. Chaque entrée est
 /// `Some(existe)`, ou `None` si illisible ; sans preuve, `None`.
+#[cfg(any(windows, test))]
 pub fn windows_reboot_required(keys: &[Option<bool>]) -> Option<bool> {
     if keys.contains(&Some(true)) {
         Some(true)
@@ -721,10 +726,10 @@ mod platform {
 
         /// Faits de sécurité (sshd, pare-feu), relus toutes les cinq minutes.
         async fn read_security(&mut self) -> SecurityFacts {
-            if let Some((at, facts)) = self.security {
-                if at.elapsed() < SECURITY_INTERVAL {
-                    return facts;
-                }
+            if let Some((at, facts)) = self.security
+                && at.elapsed() < SECURITY_INTERVAL
+            {
+                return facts;
             }
             let (root, password) = self.read_sshd().await;
             let facts = (root, password, self.read_firewall().await);

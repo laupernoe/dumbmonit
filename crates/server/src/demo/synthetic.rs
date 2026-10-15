@@ -122,7 +122,7 @@ pub fn probe_samples(kind: &str, name: &str, ts_ms: i64) -> Result<Vec<Sample>, 
                 .into_iter()
                 .enumerate()
                 {
-                    let ok = i < 2 || (seed >> i) % 3 != 0;
+                    let ok = i < 2 || !(seed >> i).is_multiple_of(3);
                     labelled(
                         gauge("probe_http_security_header", f64::from(u8::from(ok)), ts_ms)
                             .with_label("header", header),
