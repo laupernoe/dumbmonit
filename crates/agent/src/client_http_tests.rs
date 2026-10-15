@@ -97,13 +97,22 @@ async fn an_unreadable_ack_or_a_dead_server_is_a_transport_error() {
 }
 
 fn outcome() -> ProbeOutcome {
-    ProbeOutcome { duration_ms: 12, error: Some("timeout".into()), samples: Vec::new(), profile_id: None }
+    ProbeOutcome {
+        duration_ms: 12,
+        error: Some("timeout".into()),
+        samples: Vec::new(),
+        profile_id: None,
+    }
 }
 
 #[tokio::test]
 async fn commands_are_fetched_and_reported_with_the_machine_key() {
     let (url, calls) = fake_http(|req| match req.method.as_str() {
-        "GET" => (200, r#"[{"id":5,"kind":"container.restart","args":{"name":"web"},"created_at_ms":1}]"#.into()),
+        "GET" => (
+            200,
+            r#"[{"id":5,"kind":"container.restart","args":{"name":"web"},"created_at_ms":1}]"#
+                .into(),
+        ),
         _ => (204, String::new()),
     })
     .await;
@@ -129,8 +138,7 @@ async fn relay_probes_are_polled_with_a_wait_and_reported() {
     })
     .await;
     let client = client(&url, None);
-    let jobs =
-        client.fetch_probes("site-a", Duration::from_secs(25), Duration::from_secs(5)).await;
+    let jobs = client.fetch_probes("site-a", Duration::from_secs(25), Duration::from_secs(5)).await;
     assert!(jobs.expect("sondes").is_empty());
     assert_eq!(calls.all()[0].path, "/api/agent/relay?key=site-a&wait=25");
 

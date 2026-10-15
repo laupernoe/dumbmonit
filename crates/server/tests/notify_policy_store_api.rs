@@ -116,15 +116,14 @@ async fn les_surcharges_se_creent_se_listent_se_filtrent_et_s_effacent() {
     let a = target(&pool, "a.lan").await;
     let b = target(&pool, "b.lan").await;
 
-    let over = |rule: &str, target_id: i64, threshold: Option<f64>, enabled: Option<bool>| {
-        RuleOverride {
+    let over =
+        |rule: &str, target_id: i64, threshold: Option<f64>, enabled: Option<bool>| RuleOverride {
             rule_uid: rule.to_string(),
             target_id,
             threshold,
             clear_threshold: None,
             enabled,
-        }
-    };
+        };
     store::upsert_override(&pool, &over("cpu", a, Some(95.0), None)).await.unwrap();
     store::upsert_override(&pool, &over("cpu", b, None, Some(false))).await.unwrap();
     store::upsert_override(&pool, &over("disk", a, Some(80.0), Some(true))).await.unwrap();
@@ -195,7 +194,10 @@ async fn un_plan_s_applique_puis_se_recharge_comme_un_registre() {
     store::apply_plan(&pool, &Plan { enqueue: vec![again], ..Default::default() }).await.unwrap();
     let ledger = store::load_ledger(&pool, now, TimeDelta::hours(2)).await.unwrap();
     assert_eq!(ledger.queue.len(), 2);
-    assert_eq!(ledger.queue.iter().find(|q| q.item.fingerprint == "fp-1").unwrap().item.value, Some(99.0));
+    assert_eq!(
+        ledger.queue.iter().find(|q| q.item.fingerprint == "fp-1").unwrap().item.value,
+        Some(99.0)
+    );
 
     // Une ligne d'un format inconnu est abandonnée sans bloquer la file.
     sqlx::query(
@@ -273,7 +275,10 @@ async fn l_entretien_purge_le_registre_perime_et_les_retenues_echues() {
         .unwrap();
     store::apply_plan(
         &pool,
-        &Plan { flap_holds: vec![("echue".to_string(), now - TimeDelta::minutes(5))], ..Default::default() },
+        &Plan {
+            flap_holds: vec![("echue".to_string(), now - TimeDelta::minutes(5))],
+            ..Default::default()
+        },
     )
     .await
     .unwrap();

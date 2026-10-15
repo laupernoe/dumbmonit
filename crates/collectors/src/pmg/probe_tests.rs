@@ -221,7 +221,13 @@ async fn une_interrogation_complete_publie_tout_ce_que_la_passerelle_sait() {
 
     // Un seul ticket pour toute l'interrogation, présenté en cookie.
     assert_eq!(seen.tickets.load(Ordering::SeqCst), 1);
-    assert!(seen.calls.lock().unwrap().iter().all(|c| c.contains("cookie=true") || c.contains("access/ticket")));
+    assert!(
+        seen.calls
+            .lock()
+            .unwrap()
+            .iter()
+            .all(|c| c.contains("cookie=true") || c.contains("access/ticket"))
+    );
 
     // Deuxième interrogation : le ticket est en cache.
     collector.probe(&target).await.expect("seconde interrogation");
@@ -283,10 +289,8 @@ async fn sans_liste_de_noeuds_la_sonde_se_replie_sur_localhost() {
 #[tokio::test]
 async fn les_refus_et_les_pannes_sont_classes_comme_il_faut() {
     // Mauvais identifiants : le ticket est refusé.
-    let router = Router::new().route(
-        "/api2/json/access/ticket",
-        post(|| async { StatusCode::UNAUTHORIZED }),
-    );
+    let router = Router::new()
+        .route("/api2/json/access/ticket", post(|| async { StatusCode::UNAUTHORIZED }));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}", listener.local_addr().unwrap());
     tokio::spawn(async move {

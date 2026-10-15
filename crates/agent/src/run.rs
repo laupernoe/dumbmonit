@@ -577,7 +577,10 @@ mod tests {
 
         assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
         // Le secret est rangé sur disque, la période adoptée, le tampon vidé.
-        assert_eq!(std::fs::read_to_string(dir.path().join("agent-secret")).unwrap().trim(), "dmab_attribue");
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("agent-secret")).unwrap().trim(),
+            "dmab_attribue"
+        );
         assert_eq!(agent.interval, Duration::from_secs(60));
         assert!(agent.buffer.is_empty());
 

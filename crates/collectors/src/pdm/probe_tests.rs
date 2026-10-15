@@ -91,11 +91,15 @@ fn answer(path: &str, now: i64) -> Option<Value> {
     Some(json!({ "data": data }))
 }
 
-async fn fake_pdm(deny: &'static [&'static str]) -> (String, std::sync::Arc<StdMutex<Vec<String>>>) {
+async fn fake_pdm(
+    deny: &'static [&'static str],
+) -> (String, std::sync::Arc<StdMutex<Vec<String>>>) {
     let seen = std::sync::Arc::new(StdMutex::new(Vec::<String>::new()));
     let log = seen.clone();
     let router = Router::new().fallback(any(
-        move |uri: Uri, headers: axum::http::HeaderMap, Query(_): Query<HashMap<String, String>>| {
+        move |uri: Uri,
+              headers: axum::http::HeaderMap,
+              Query(_): Query<HashMap<String, String>>| {
             let log = log.clone();
             async move {
                 log.lock().unwrap().push(format!(
@@ -175,7 +179,10 @@ async fn une_interrogation_complete_decrit_le_parc_federe() {
     let view = &views[0];
     assert_eq!(view.version.as_deref(), Some("1.0.2"));
     let ids: Vec<&str> = view.remotes.iter().map(|r| r.id.as_str()).collect();
-    assert!(ids.contains(&"pve-main") && ids.contains(&"pve-old") && ids.contains(&"pbs-1"), "{ids:?}");
+    assert!(
+        ids.contains(&"pve-main") && ids.contains(&"pve-old") && ids.contains(&"pbs-1"),
+        "{ids:?}"
+    );
     let main = view.remotes.iter().find(|r| r.id == "pve-main").unwrap();
     assert!(main.reachable);
     assert_eq!(main.version.as_deref(), Some("8.4.1"));
@@ -191,7 +198,10 @@ async fn une_interrogation_complete_decrit_le_parc_federe() {
 
     // Le jeton voyage dans l'en-tête propre à PDM, jamais dans l'URL.
     let calls = seen.lock().unwrap().clone();
-    assert!(calls.iter().all(|c| c.contains("PDMAPIToken=monitoring@pdm!dumbmonit:0000-1111")), "{calls:?}");
+    assert!(
+        calls.iter().all(|c| c.contains("PDMAPIToken=monitoring@pdm!dumbmonit:0000-1111")),
+        "{calls:?}"
+    );
 }
 
 #[tokio::test]

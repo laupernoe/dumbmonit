@@ -164,7 +164,10 @@ fn full_bundle() -> Value {
     })
 }
 
-fn section<'a>(report: &'a RestoreReport, name: &str) -> &'a dumbmonit_server::backup::SectionReport {
+fn section<'a>(
+    report: &'a RestoreReport,
+    name: &str,
+) -> &'a dumbmonit_server::backup::SectionReport {
     report.sections.iter().find(|s| s.section == name).unwrap_or_else(|| panic!("section {name}"))
 }
 
@@ -184,7 +187,8 @@ fn notes(report: &RestoreReport, name: &str) -> String {
 #[tokio::test]
 async fn un_lot_complet_se_restaure_section_par_section() {
     let it = instance().await;
-    let report = restore(&it.pool, &it.cipher, &bundle(full_bundle()), true).await.expect("restauration");
+    let report =
+        restore(&it.pool, &it.cipher, &bundle(full_bundle()), true).await.expect("restauration");
     assert!(report.applied);
     assert_eq!(report.source_version, "9.9.9");
 
@@ -209,7 +213,10 @@ async fn un_lot_complet_se_restaure_section_par_section() {
     assert_eq!(counts(&report, "users"), (2, 0, 1));
     assert!(notes(&report, "users").contains("SSO identity"), "{}", notes(&report, "users"));
     assert_eq!(scalar(&it.pool, "SELECT COUNT(*) FROM totp_recovery_codes").await, 1);
-    assert_eq!(scalar(&it.pool, "SELECT totp_enabled FROM users WHERE username = 'marie'").await, 1);
+    assert_eq!(
+        scalar(&it.pool, "SELECT totp_enabled FROM users WHERE username = 'marie'").await,
+        1
+    );
 
     // Paquets : le valide s'installe, le cassé est écarté avec la raison.
     assert_eq!(counts(&report, "packs"), (1, 0, 1));
@@ -240,10 +247,11 @@ async fn un_lot_complet_se_restaure_section_par_section() {
     assert!(pages.contains("already used by \"maison\""), "{pages}");
     assert!(pages.contains("pas un/domaine"), "{pages}");
     assert!(pages.contains("dummy|absent"), "{pages}");
-    let scenes: String = sqlx::query_scalar("SELECT scenes FROM status_pages WHERE slug = 'maison'")
-        .fetch_one(&it.pool)
-        .await
-        .unwrap();
+    let scenes: String =
+        sqlx::query_scalar("SELECT scenes FROM status_pages WHERE slug = 'maison'")
+            .fetch_one(&it.pool)
+            .await
+            .unwrap();
     assert_eq!(scenes, "paris,tokyo");
     let domain: Option<String> =
         sqlx::query_scalar("SELECT domain FROM status_pages WHERE slug = 'maison'")
@@ -300,9 +308,19 @@ async fn relire_le_meme_lot_ne_change_rien() {
     let report = restore(&it.pool, &it.cipher, &lot, true).await.expect("seconde restauration");
 
     for name in [
-        "targets", "channels", "rules", "rule_overrides", "notify_policy", "silences",
-        "status_pages", "report_schedules", "incidents", "agent_tokens", "api_tokens",
-        "push_monitors", "packs",
+        "targets",
+        "channels",
+        "rules",
+        "rule_overrides",
+        "notify_policy",
+        "silences",
+        "status_pages",
+        "report_schedules",
+        "incidents",
+        "agent_tokens",
+        "api_tokens",
+        "push_monitors",
+        "packs",
     ] {
         let (created, updated, _) = counts(&report, name);
         assert_eq!((created, updated), (0, 0), "la section {name} a bougé : {report:#?}");
@@ -356,7 +374,8 @@ async fn un_lot_modifie_met_chaque_section_a_jour() {
 #[tokio::test]
 async fn la_simulation_n_ecrit_rien_mais_rend_le_meme_compte_rendu() {
     let it = instance().await;
-    let report = restore(&it.pool, &it.cipher, &bundle(full_bundle()), false).await.expect("simulation");
+    let report =
+        restore(&it.pool, &it.cipher, &bundle(full_bundle()), false).await.expect("simulation");
     assert!(!report.applied);
     assert_eq!(counts(&report, "targets").0, 4);
     assert_eq!(scalar(&it.pool, "SELECT COUNT(*) FROM targets").await, 0);

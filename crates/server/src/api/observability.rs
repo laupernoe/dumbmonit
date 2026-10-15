@@ -744,7 +744,8 @@ mod tests {
             serie(k, "rows_added_total", 100.0, &[]),
             serie(k, "rows_ingested_total", 450.0, &[]),
         ];
-        let day = [serie(k, "rows_rejected_total", 0.0, &[]), serie(k, "log_errors_total", 4.0, &[])];
+        let day =
+            [serie(k, "rows_rejected_total", 0.0, &[]), serie(k, "log_errors_total", 4.0, &[])];
         let view = build_view(k, &Series::new(k, &last, &rates, &day));
         assert_eq!(check_of(&view, "Health").state, "ok");
         // 6,5 % de marge : en dessous de 10 %, on prévient.
@@ -792,10 +793,8 @@ mod tests {
             serie(k, "ring_unhealthy_members", 2.0, &[]),
             serie(k, "memory_streams", 40.0, &[]),
         ];
-        let rates = [
-            serie(k, "request_errors_total", 1.0, &[]),
-            serie(k, "requests_total", 50.0, &[]),
-        ];
+        let rates =
+            [serie(k, "request_errors_total", 1.0, &[]), serie(k, "requests_total", 50.0, &[])];
         let day = [
             serie(k, "flush_failures_total", 3.0, &[]),
             serie(k, "wal_disk_full_failures_total", 1.0, &[]),
@@ -812,7 +811,8 @@ mod tests {
         assert_eq!(view.breakdowns[0].rows[0].label, "rate limited");
 
         // Aucune requête mesurée mais des erreurs : tout a échoué.
-        let rates = [serie(k, "request_errors_total", 1.0, &[]), serie(k, "requests_total", 0.0, &[])];
+        let rates =
+            [serie(k, "request_errors_total", 1.0, &[]), serie(k, "requests_total", 0.0, &[])];
         let view = build_view(k, &Series::new(k, &last, &rates, &[]));
         assert!(check_of(&view, "Requests").detail.starts_with("100.0%"));
     }
@@ -832,7 +832,12 @@ mod tests {
                 serie(k, "indexer_shards", 3.0, &[("state", "unassigned")]),
                 serie(k, "indexer_shards", 10.0, &[("state", "active")]),
                 serie(k, "notification", 1.0, &[("type", "es_open_files"), ("severity", "urgent")]),
-                serie(k, "notification", 1.0, &[("type", "deflector_exists"), ("severity", "normal")]),
+                serie(
+                    k,
+                    "notification",
+                    1.0,
+                    &[("type", "deflector_exists"), ("severity", "normal")],
+                ),
                 serie(k, "buffer_used_percent", 10.0, &[("buffer", "input")]),
             ]
         };

@@ -27,11 +27,7 @@ async fn une_instance_neuve_montre_le_guide_puis_se_souvient_de_ce_qui_est_ecart
 
     // Les étapes écartées sont rangées dans l'ordre des étapes, sans doublon.
     let reply = app
-        .put(
-            "/api/onboarding",
-            json!({ "dismissed": ["test", "device", "test"] }),
-            Some(&cookie),
-        )
+        .put("/api/onboarding", json!({ "dismissed": ["test", "device", "test"] }), Some(&cookie))
         .await;
     assert_eq!(reply.body["dismissed"], json!(["device", "test"]));
     // Un champ absent garde sa valeur.
@@ -44,8 +40,12 @@ async fn une_instance_neuve_montre_le_guide_puis_se_souvient_de_ce_qui_est_ecart
     assert!(reply.body["error"].as_str().unwrap().contains("Unknown step"), "{}", reply.body);
 
     // Toutes les étapes écartées : la lecture suivante verrouille le guide.
-    app.put("/api/onboarding", json!({ "dismissed": ["device", "channel", "test"] }), Some(&cookie))
-        .await;
+    app.put(
+        "/api/onboarding",
+        json!({ "dismissed": ["device", "channel", "test"] }),
+        Some(&cookie),
+    )
+    .await;
     let reply = app.get("/api/onboarding", Some(&cookie)).await;
     assert_eq!(reply.body["complete"], true);
     let locked_at = reply.body["completed_at"].clone();

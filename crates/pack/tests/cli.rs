@@ -18,7 +18,8 @@ struct Copy(PathBuf);
 
 impl Copy {
     fn new(name: &str) -> Self {
-        let root = std::env::temp_dir().join(format!("dumbmonit-pack-cli-{name}-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("dumbmonit-pack-cli-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         copy_dir(&reference(), &root);
         Self(root)
@@ -75,7 +76,8 @@ fn lint_refuse_un_chemin_absent_et_un_paquet_invalide() {
     assert_eq!(run(&args(&["lint", good.to_str().unwrap(), copy.path()])), 1);
 
     // Un répertoire sans pack.yaml.
-    let empty = std::env::temp_dir().join(format!("dumbmonit-pack-cli-vide-{}", std::process::id()));
+    let empty =
+        std::env::temp_dir().join(format!("dumbmonit-pack-cli-vide-{}", std::process::id()));
     std::fs::create_dir_all(&empty).unwrap();
     assert_eq!(run(&args(&["lint", empty.to_str().unwrap()])), 1);
     let _ = std::fs::remove_dir_all(&empty);

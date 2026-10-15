@@ -227,10 +227,8 @@ async fn a_failed_start_rolls_the_old_container_back_into_service() {
     // passe devant : on le laisse répondre pour l'aller comme pour le retour.
     let (socket, calls) = fake_docker(&dir, script(rules));
     let mut log = Log::default();
-    let error = update(&DockerClient::new(&socket), "web", true, &mut log)
-        .await
-        .unwrap_err()
-        .to_string();
+    let error =
+        update(&DockerClient::new(&socket), "web", true, &mut log).await.unwrap_err().to_string();
     assert!(error.contains("port already allocated"), "{error}");
 
     let text = log.excerpt();
@@ -313,7 +311,11 @@ async fn a_stale_previous_container_is_removed_only_when_it_is_ours() {
     let (socket, calls) = fake_docker(
         &dir,
         script(vec![
-            rule("GET /containers/web.previous/json", 200, container("stale", "web.previous", None)),
+            rule(
+                "GET /containers/web.previous/json",
+                200,
+                container("stale", "web.previous", None),
+            ),
             rule("DELETE /containers/stale", 204, ""),
         ]),
     );
@@ -327,15 +329,17 @@ async fn a_stale_previous_container_is_removed_only_when_it_is_ours() {
     let mut foreign = container("other", "web.previous", None);
     foreign["Config"]["Image"] = json!("postgres:16");
     let dir = tempfile::tempdir().unwrap();
-    let (socket, calls) = fake_docker(
-        &dir,
-        script(vec![rule("GET /containers/web.previous/json", 200, foreign)]),
-    );
-    let error =
-        remove_stale_previous(&DockerClient::new(&socket), "web.previous", &current, &mut Log::default())
-            .await
-            .unwrap_err()
-            .to_string();
+    let (socket, calls) =
+        fake_docker(&dir, script(vec![rule("GET /containers/web.previous/json", 200, foreign)]));
+    let error = remove_stale_previous(
+        &DockerClient::new(&socket),
+        "web.previous",
+        &current,
+        &mut Log::default(),
+    )
+    .await
+    .unwrap_err()
+    .to_string();
     assert!(error.contains("is not ours"), "{error}");
     assert_eq!(calls.count("DELETE", "/containers"), 0);
 }
@@ -353,10 +357,8 @@ async fn stopping_tolerates_an_already_stopped_container() {
     let docker = DockerClient::new(&socket);
     let mut log = Log::default();
     stop_container(&docker, "a", &mut log, "previous container").await.expect("déjà arrêté");
-    let error = stop_container(&docker, "b", &mut log, "previous container")
-        .await
-        .unwrap_err()
-        .to_string();
+    let error =
+        stop_container(&docker, "b", &mut log, "previous container").await.unwrap_err().to_string();
     assert!(error.contains("cannot stop the previous container: stuck"), "{error}");
 }
 
@@ -376,9 +378,17 @@ async fn extra_networks_are_connected_after_creation() {
     };
     let mut new_id = None;
     // Conteneur d'origine arrêté : le remplaçant est créé et laissé arrêté.
-    replace(&DockerClient::new(&socket), "web", "old", false, spec, &mut Log::default(), &mut new_id)
-        .await
-        .expect("remplacement");
+    replace(
+        &DockerClient::new(&socket),
+        "web",
+        "old",
+        false,
+        spec,
+        &mut Log::default(),
+        &mut new_id,
+    )
+    .await
+    .expect("remplacement");
     assert_eq!(new_id.as_deref(), Some(NEW));
     let bodies = calls.bodies("POST", "/networks/backend/connect");
     assert!(bodies[0].contains(NEW) && bodies[0].contains("Aliases"), "{bodies:?}");

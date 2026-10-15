@@ -142,7 +142,8 @@ async fn les_sources_proposees_et_la_lecture_d_essai() {
     assert!(countries.iter().all(|c| c["code"].is_string() && c["feeds"].is_array()));
 
     // Essai : adresse invalide refusée, adresse interne signalée sans lecture.
-    let reply = app.post("/api/wall/news/test", json!({ "url": "pas une adresse" }), Some(&admin)).await;
+    let reply =
+        app.post("/api/wall/news/test", json!({ "url": "pas une adresse" }), Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST);
     let reply = app
         .post("/api/wall/news/test", json!({ "url": "http://127.0.0.1:1/rss" }), Some(&admin))

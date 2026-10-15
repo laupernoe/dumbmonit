@@ -45,7 +45,13 @@ async fn lab() -> Lab {
     Lab { pool, state, _dir: dir }
 }
 
-async fn add_target(pool: &SqlitePool, name: &str, kind: &str, address: &str, enabled: bool) -> i64 {
+async fn add_target(
+    pool: &SqlitePool,
+    name: &str,
+    kind: &str,
+    address: &str,
+    enabled: bool,
+) -> i64 {
     sqlx::query_scalar(
         "INSERT INTO targets (name, address, kind, interval_secs, enabled, tags)
          VALUES (?, ?, ?, 10, ?, '{}') RETURNING id",
