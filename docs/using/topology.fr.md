@@ -1,6 +1,6 @@
 # Carte de topologie
 
-La page **Carte** (bouton **Carte** sur la page des sondes, ou *Carte* dans la
+La page **Carte** (**⋯ → Carte** sur la page Surveillances, ou *Carte* dans la
 palette de commandes, `/map`) dessine toute votre infrastructure en une image.
 Rien n'y est saisi à la main : chaque lien vient de ce que DumbMonit sait déjà.
 

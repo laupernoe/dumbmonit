@@ -19,9 +19,11 @@
 		/** Called after devices were created, so the page can reload its list. */
 		ondone?: () => void;
 		variant?: 'primary' | 'secondary' | 'ghost';
+		/** `false`: no button of its own; the caller opens the dialog with `show()` (a menu item). */
+		trigger?: boolean;
 		class?: string;
 	}
-	let { ondone, variant = 'secondary', class: className = '' }: Props = $props();
+	let { ondone, variant = 'secondary', trigger = true, class: className = '' }: Props = $props();
 
 	let open = $state(false);
 	let csv = $state('');
@@ -61,7 +63,7 @@
 		return match[1] ? m.devices_import_already_monitored({ url: match[1] }) : m.devices_import_already_monitored_plain();
 	}
 
-	function show() {
+	export function show() {
 		returnFocus = (document.activeElement as HTMLElement | null) ?? null;
 		csv = '';
 		preview = null;
@@ -133,10 +135,12 @@
 	}
 </script>
 
-<Button {variant} class={className} onclick={show} aria-haspopup="dialog">
-	<FileUp class="size-4" aria-hidden="true" />
-	{m.devices_import_open()}
-</Button>
+{#if trigger}
+	<Button {variant} class={className} onclick={show} aria-haspopup="dialog">
+		<FileUp class="size-4" aria-hidden="true" />
+		{m.devices_import_open()}
+	</Button>
+{/if}
 
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->

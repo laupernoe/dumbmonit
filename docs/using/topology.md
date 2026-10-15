@@ -1,6 +1,6 @@
 # Topology map
 
-The **Map** page (button **Map** on the Monitors page, or *Map* in the command
+The **Map** page (**⋯ → Map** on the Monitors page, or *Map* in the command
 palette, `/map`) draws your whole infrastructure in one picture. Nothing is
 typed in by hand: every link comes from what DumbMonit already knows.
 

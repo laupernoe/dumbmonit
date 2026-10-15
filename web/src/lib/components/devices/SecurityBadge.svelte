@@ -23,10 +23,12 @@
 		controls?: string;
 		/** `md` spells "Security" out and shows the score; `sm` keeps to the letter. */
 		size?: 'sm' | 'md';
+		/** Lists: a hairline plate in neutral ink, only the letter takes the tone. */
+		quiet?: boolean;
 		class?: string;
 	}
 
-	let { grade, score, href, onclick, expanded, controls, size = 'sm', class: className = '' }: Props = $props();
+	let { grade, score, href, onclick, expanded, controls, size = 'sm', quiet = false, class: className = '' }: Props = $props();
 
 	const TONE_CLASS = {
 		signal: 'bg-signal-soft text-signal-ink border-signal/30',
@@ -36,6 +38,13 @@
 	} as const;
 
 	const tone = $derived(grade ? (GRADE_TONE[grade] as keyof typeof TONE_CLASS) : 'ghost');
+	const QUIET_INK = {
+		signal: 'text-ink-2',
+		advisory: 'text-advisory-ink',
+		warning: 'text-warning-ink',
+		ghost: 'text-ink-3'
+	} as const;
+	const plateClass = $derived(quiet ? `border-line bg-transparent text-ink-3` : TONE_CLASS[tone]);
 	const label = $derived(
 		grade !== null && score !== null ? m.devices_security_badge_aria({ grade, score }) : m.devices_security_badge_unrated_aria()
 	);
@@ -44,14 +53,14 @@
 
 {#snippet plate()}
 	<span
-		class={`inline-flex items-center gap-1.5 rounded-[var(--radius-plate)] border font-semibold leading-none transition-colors group-hover:border-line-strong ${size === 'sm' ? 'h-6 px-1.5 text-[0.75rem]' : 'h-7 px-2.5 text-[0.8125rem]'} ${TONE_CLASS[tone]}`}
+		class={`inline-flex items-center gap-1.5 rounded-[var(--radius-plate)] border font-semibold leading-none transition-colors group-hover:border-line-strong ${size === 'sm' ? 'h-6 px-1.5 text-[0.75rem]' : 'h-7 px-2.5 text-[0.8125rem]'} ${plateClass}`}
 	>
 		<ShieldCheck class="size-3.5 shrink-0" aria-hidden="true" />
 		{#if size === 'md'}
 			<span>{grade !== null ? m.devices_security_badge_md({ grade }) : m.devices_security_badge_unrated()}</span>
 			{#if score !== null}<span class="tnum font-normal opacity-80">{score}/100</span>{/if}
 		{:else}
-			<span>{grade ?? '?'}</span>
+			<span class={quiet ? `font-semibold ${QUIET_INK[tone]}` : ''}>{grade ?? '?'}</span>
 		{/if}
 	</span>
 {/snippet}
