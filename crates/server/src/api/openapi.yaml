@@ -1052,6 +1052,52 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/targets/{id}/rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listTargetRules
+      tags: [Rules]
+      summary: Alert rules that watch a device
+      description: >-
+        The rules whose query reads a metric the device has written in the last
+        24 hours, with whether each is turned off for this device (a rule
+        override with `enabled: false`) and firing on it now.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device's rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, rules]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, no_data, unavailable]
+                    description: >-
+                      `no_data`: nothing written in the last 24 hours;
+                      `unavailable`: VictoriaMetrics did not answer.
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, uid, name, description, severity, enabled, ignored, custom_threshold, firing]
+                      properties:
+                        id: { type: integer, format: int64 }
+                        uid: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        severity: { type: string, enum: [info, warning, critical] }
+                        enabled: { type: boolean, description: Enabled for every device. }
+                        ignored: { type: boolean, description: Turned off for this device. }
+                        custom_threshold: { type: boolean, description: A threshold is set for this device. }
+                        firing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ---------------------------------------------------------------- mesures
   /api/metrics/query:
     get:
