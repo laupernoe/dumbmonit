@@ -4,9 +4,8 @@
 	 * Add a device — the one way to add anything.
 	 *
 	 * Three views, all in the URL so the browser's Back button walks them:
-	 * the picker (no parameter: three front doors — the agent on a machine, a
-	 * network scan, an agent watching another network — then every kind,
-	 * searchable),
+	 * the picker (no parameter: two front doors — the agent on a machine, a
+	 * network scan — then every kind, searchable),
 	 * a kind's form (`?kind=snmp`, `?kind=agent&via=docker`), the network scan
 	 * (`?scan=1`). The setup guide (`&guide=1`) opens only on request, beside
 	 * the form on a desktop, above it on a phone. Every type, notice and option
@@ -20,7 +19,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar, RadioTower } from 'lucide-svelte';
+	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
@@ -30,8 +29,7 @@
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
-	import RelayDiagram from '#lib/components/device-form/RelayDiagram.svelte';
-	import KindIcon from '#lib/components/KindIcon.svelte';
+		import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '#lib/components/device-form/kinds.js';
 
 	let collectors = $state<CollectorInfo[]>([]);
@@ -316,9 +314,8 @@
 			{/if}
 			{#if hasAgent || snmp}
 				<!--
-					The front doors: most of a homelab comes in through the first two. The
-					third is the one nobody guesses — an agent watching another network —
-					so it gets the width and a picture of how it works.
+					The two front doors: most of a homelab comes in through them. Everything
+					else, the remote-site relay included, is in the list below.
 				-->
 				<div class={`mb-6 grid gap-3 ${hasAgent && snmp ? 'md:grid-cols-2' : ''}`}>
 					{#if hasAgent}
@@ -347,35 +344,6 @@
 								</span>
 							</span>
 							<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-						</button>
-					{/if}
-					{#if hasAgent}
-						<button
-							type="button"
-							data-door="relay"
-							data-choice="agent:relay"
-							onclick={() => select(AGENT_KIND, 'relay')}
-							class={`${doorClass} border border-line-strong bg-surface ${snmp ? 'md:col-span-2' : ''}`}
-						>
-							<span class="grid min-w-0 flex-1 items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
-								<span class="flex min-w-0 items-start gap-3.5">
-									<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
-										<RadioTower class="size-5" aria-hidden="true" />
-									</span>
-									<span class="min-w-0 flex-1">
-										<span class="block font-semibold text-ink">
-											{m.deviceform_new_door_relay_title()}
-										</span>
-										<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-											{m.deviceform_new_door_relay_desc()}
-										</span>
-									</span>
-									<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-								</span>
-								<span class="block rounded-lg border border-line bg-canvas-deep px-2 py-2 sm:px-3">
-									<RelayDiagram decorative />
-								</span>
-							</span>
 						</button>
 					{/if}
 				</div>

@@ -11,7 +11,7 @@
 	 * grouping), which is how the Alerts page reads them; the Overview leaves
 	 * them as one flat stream. Acknowledged and snoozed alerts each leave the
 	 * stream for their own quieter group at the bottom, collapsed by default
-	 * ("Dismissed · N") so they stop crowding the list rather than sitting
+	 * ("Snoozed · N", "Dismissed · N") so they stop crowding the list rather than sitting
 	 * there faded. The empty state only appears when the sky says so — a
 	 * device that has stopped reporting is never "nothing".
 	 *
@@ -127,6 +127,7 @@
 	}
 
 	let dismissedOpen = $state(false);
+	let snoozedOpen = $state(false);
 
 	const rows = $derived(
 		fold(
@@ -205,17 +206,28 @@
 {#snippet snoozedSection()}
 	{#if snoozedRows.length > 0}
 		<div class={rows.length > 0 ? 'mt-6' : ''}>
-			<h3 class="label-tape mb-2 flex items-center gap-2">
+			<button
+				type="button"
+				class="label-tape mb-2 flex min-h-10 w-full items-center gap-2 text-left"
+				aria-expanded={snoozedOpen}
+				onclick={() => (snoozedOpen = !snoozedOpen)}
+			>
+				<ChevronRight
+					class={`size-3.5 shrink-0 transition-transform ${snoozedOpen ? 'rotate-90' : ''}`}
+					aria-hidden="true"
+				/>
 				{m.alerts_needs_snoozed()}
 				<span class="tnum font-normal text-ink-3">· {snoozedRows.length}</span>
-			</h3>
-			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-				{#each snoozedRows as folded, i (folded.row.key)}
-					<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
-						{@render rowView(folded)}
-					</div>
-				{/each}
-			</div>
+			</button>
+			{#if snoozedOpen}
+				<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+					{#each snoozedRows as folded, i (folded.row.key)}
+						<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
+							{@render rowView(folded)}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -225,7 +237,7 @@
 		<div class={rows.length > 0 || snoozedRows.length > 0 ? 'mt-6' : ''}>
 			<button
 				type="button"
-				class="label-tape mb-2 flex w-full items-center gap-2 text-left"
+				class="label-tape mb-2 flex min-h-10 w-full items-center gap-2 text-left"
 				aria-expanded={dismissedOpen}
 				onclick={() => (dismissedOpen = !dismissedOpen)}
 			>

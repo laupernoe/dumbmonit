@@ -368,10 +368,8 @@
 		<Skeleton class="h-10 w-3/4" />
 	</div>
 {:else if empty}
-	<p class="flex flex-wrap items-center gap-2 text-sm text-ink-2">
-		<Plate tone="signal" label={m.devices_timeline_reporting()} />
-		{m.devices_timeline_never()}
-	</p>
+	<!-- No state plate here: the header already says how the device is doing. -->
+	<p class="text-sm text-ink-2">{m.devices_timeline_never()}</p>
 {:else}
 	<ol class="relative ml-2 border-l border-line pl-5">
 		{#each visibleAlerts as alert, i (alert.fingerprint)}
