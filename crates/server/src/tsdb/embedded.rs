@@ -227,6 +227,9 @@ impl Shared {
             }
             delay = (delay * 2).min(MAX_RESTART_DELAY);
             started = Instant::now();
+            // Comptée avant la tentative : une relance qui échoue est justement
+            // ce que la règle « redémarre en boucle » doit voir (`selfmon`).
+            crate::stats::stats().vm_restarted();
             child = match shared.spawn_child() {
                 Ok(child) => child,
                 Err(error) => {

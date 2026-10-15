@@ -676,6 +676,14 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
 | DumbMonit backup did not run | Плановое локальное резервное копирование базы данных DumbMonit не запускалось более двух дней (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 дн | 1 ч | Advisory (`warning`) | 24 ч |
+| DumbMonit data volume almost full | На томе с `/data` свободно меньше 10 % (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 мин | Advisory (`warning`) | 24 ч |
+| DumbMonit metrics database restarting in a loop | Встроенный VictoriaMetrics перезапускался три раза или больше за 30 минут (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 мин | Warning (`critical`) | 6 ч |
+| DumbMonit scheduler stalled | Больше двух минут нет ни одного цикла планировщика: устройства не опрашиваются (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 с | 5 мин | Warning (`critical`) | 6 ч |
+| DumbMonit polls running late | Устройства остаются просроченными после каждого цикла (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
+| DumbMonit metric writes failing | За последние 15 минут VictoriaMetrics отклонял пакеты или измерения терялись (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 мин | Advisory (`warning`) | 6 ч |
+| DumbMonit database growing fast | `dumbmonit.db` за сутки вырос более чем вдвое и превышает 100 МБ (`dumbmonit_instance_database_bytes`). | > 2× | 1 ч | Advisory (`warning`) | 24 ч |
+
+Эти правила и исходящий heartbeat описаны в разделе [Watching DumbMonit itself](../install/self-monitoring.md).
 
 Каждое встроенное правило применяется ко всем устройствам и ко всем включённым каналам.
 

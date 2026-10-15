@@ -3527,6 +3527,63 @@ export interface SecuritySettings {
 	enabled: boolean;
 }
 
+/** One of the three conditions of a heartbeat. Mirrors `selfmon::Component`. */
+export interface SelfMonitoringComponent {
+	name: 'scheduler' | 'database' | 'victoria';
+	ok: boolean;
+	error?: string;
+}
+
+/** The last heartbeat attempted. Mirrors `selfmon::PingRecord`. */
+export interface HeartbeatPing {
+	/** UTC without suffix. */
+	at: string;
+	/** `withheld`: a component was down and nothing was sent. */
+	outcome: 'up' | 'fail' | 'withheld';
+	/** The call left and the service accepted it. */
+	ok: boolean;
+	error?: string;
+	failed: string[];
+}
+
+/** The outgoing heartbeat setting. The URL itself never comes back. Mirrors `HeartbeatView`. */
+export interface Heartbeat {
+	enabled: boolean;
+	interval_seconds: number;
+	send_fail: boolean;
+	has_url: boolean;
+	url_host: string | null;
+	last_ping: HeartbeatPing | null;
+}
+
+/** `PUT /api/self-monitoring/heartbeat`. `url` omitted keeps it, `''` clears it. */
+export interface HeartbeatUpdate {
+	enabled: boolean;
+	interval_seconds?: number;
+	send_fail?: boolean;
+	url?: string;
+}
+
+/** `POST /api/self-monitoring/heartbeat/test`. */
+export interface HeartbeatTestResult {
+	ok: boolean;
+	error: string | null;
+}
+
+/** `GET /api/self-monitoring`: health of DumbMonit itself. Mirrors `Overview`. */
+export interface SelfMonitoring {
+	status: 'ok' | 'degraded';
+	components: SelfMonitoringComponent[];
+	data_free_bytes: number | null;
+	data_total_bytes: number | null;
+	database_bytes: number;
+	vm_embedded: boolean;
+	vm_restarts: number;
+	scheduler_idle_seconds: number;
+	scheduler_backlog: number;
+	heartbeat: Heartbeat;
+}
+
 /**
  * A browser subscribed to Web Push for the signed-in account. Mirrors
  * `notify::webpush::store::Device`. Neither the full endpoint nor the

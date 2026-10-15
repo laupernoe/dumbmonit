@@ -66,6 +66,8 @@ pub struct Request<'a> {
     /// quand la configuration visée n'existe pas, et prendre cela pour un succès
     /// rendrait le canal silencieusement inutile.
     pub success: fn(u16) -> bool,
+    /// Délai maximal de l'envoi, [`SEND_TIMEOUT`] par défaut.
+    pub timeout: Duration,
 }
 
 impl<'a> Request<'a> {
@@ -80,6 +82,7 @@ impl<'a> Request<'a> {
             secrets: Vec::new(),
             explain: |_, _| None,
             success: |status| (200..300).contains(&status),
+            timeout: SEND_TIMEOUT,
         }
     }
 
@@ -164,6 +167,12 @@ impl<'a> Request<'a> {
         self.success = success;
         self
     }
+
+    /// Délai plus court que celui des notifications (battement de cœur sortant).
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = timeout.min(SEND_TIMEOUT);
+        self
+    }
 }
 
 /// Envoie une requête et transforme toute défaillance en [`NotifyError`] expurgée.
@@ -179,7 +188,7 @@ pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), No
         }
         Err(_) => None,
     };
-    let mut builder = http.request(request.method, request.url).timeout(SEND_TIMEOUT);
+    let mut builder = http.request(request.method, request.url).timeout(request.timeout);
 
     if !request.query.is_empty() {
         builder = builder.query(&request.query);
@@ -224,7 +233,7 @@ pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), No
         }
         let redacted = secret::redact(&raw, &request.secrets);
         NotifyError::Transport(if timed_out {
-            format!("no answer within {} s ({redacted})", SEND_TIMEOUT.as_secs())
+            format!("no answer within {} s ({redacted})", request.timeout.as_secs())
         } else {
             redacted
         })

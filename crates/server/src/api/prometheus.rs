@@ -135,7 +135,7 @@ async fn instance_metrics(State(state): State<AppState>) -> Response {
             (AlertCounts::default(), (0, 0), false)
         }
     };
-    let database_bytes = database_bytes(&state).await;
+    let database_bytes = crate::selfmon::database_bytes(&state.config.database_path()).await;
     let victoria = state.victoria.health().await.is_ok();
 
     let body = render(
@@ -236,25 +236,6 @@ async fn agent_counts(state: &AppState) -> anyhow::Result<(u64, u64)> {
     .fetch_one(&state.pool)
     .await?;
     Ok((read_u64(&row, "total")?, read_u64(&row, "stale")?))
-}
-
-/// Taille de la base, journal d'écriture compris : c'est ce qui occupe le volume.
-///
-/// Un fichier illisible vaut zéro plutôt qu'une erreur : la taille de la base
-/// n'est pas une raison de priver le collecteur de tout le reste.
-async fn database_bytes(state: &AppState) -> u64 {
-    let path = state.config.database_path();
-    let mut total = 0;
-    for suffix in ["", "-wal"] {
-        let candidate = match suffix.is_empty() {
-            true => path.clone(),
-            false => std::path::PathBuf::from(format!("{}{suffix}", path.display())),
-        };
-        if let Ok(meta) = tokio::fs::metadata(&candidate).await {
-            total += meta.len();
-        }
-    }
-    total
 }
 
 /// Met la photographie au format d'exposition.

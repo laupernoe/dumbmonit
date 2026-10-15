@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Who watches the watcher.** An optional **outgoing heartbeat**
+  (Settings → System → DumbMonit itself): DumbMonit calls a URL of yours —
+  Healthchecks.io, an Uptime Kuma push monitor, Better Stack… — every 60
+  seconds by default, only while the scheduler runs, SQLite answers and
+  VictoriaMetrics is reachable, so that an outside service alerts you when the
+  host, the container or the engine goes quiet. A **Test** button, an optional
+  failure signal (`/fail`, or `status=down` for Uptime Kuma), the URL stored
+  encrypted and never shown again, the same outbound guard as the notification
+  channels. Six new built-in rules on DumbMonit's own health, through the usual
+  channels: data volume almost full, embedded VictoriaMetrics restarting in a
+  loop, scheduler stalled, polls running late, metric writes failing, database
+  growing fast, from new `dumbmonit_instance_*` series written every minute.
+  New endpoints `GET /api/self-monitoring`, `PUT /api/self-monitoring/heartbeat`
+  and `POST /api/self-monitoring/heartbeat/test`. See
+  [Watching DumbMonit itself](docs/install/self-monitoring.md).
 - **Each service an agent finds is its own device.** Docker, Plakar,
   restic/Borg, ZFS, libvirt, WireGuard, IPsec and the speed test no longer pile
   up on the machine's page: each one becomes an `agent_service` device under
