@@ -132,7 +132,7 @@
 			<Panel id="pages" title={m.status_list_pages()} padded={false}>
 				{#if pages.length === 0}
 					<div class="px-5 py-4">
-						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()} />
+						<EmptyState icon={LayoutList} title={m.status_list_empty_title()} description={m.status_list_empty_description()} primary={auth.isAdmin ? { label: m.status_list_new_page(), href: '/status/new' } : undefined} />
 					</div>
 				{:else}
 					<ul class="divide-y divide-line" role="list">
