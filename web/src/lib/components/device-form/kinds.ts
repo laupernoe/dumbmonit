@@ -375,7 +375,7 @@ export interface KindChoice {
 }
 
 export interface KindGroup {
-	id: 'devices' | 'agent' | 'services' | 'packs' | 'other';
+	id: 'devices' | 'services' | 'packs' | 'other';
 	title: string;
 	/** One line under the title saying how this group is collected. */
 	hint: string;
@@ -405,11 +405,11 @@ function kindChoice(c: CollectorInfo, groupTitle: string): KindChoice {
 }
 
 /**
- * Splits the server's kinds into "Devices", "On a machine", "Services",
- * "Community packs" and "Other".
+ * Splits the server's kinds into "Devices" (the agent and the relay first),
+ * "Services", "Community packs" and "Other".
  *
  * Known device kinds keep a fixed order so the picker reads the same on every
- * instance; the agent opens its own group, followed by what it reports;
+ * instance;
  * services are recognised by `isUptimeKind`; kinds added by an integration
  * pack (`pack.<id>`) have their own group, by label; anything else (a demo collector,
  * a kind added by a newer server) lands in "Other" untouched.
@@ -425,21 +425,34 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 		.sort((a, b) => DEVICE_KINDS.indexOf(a.kind) - DEVICE_KINDS.indexOf(b.kind))
 		.map((c) => kindChoice(c, DEVICES));
 	const agent = collectors.find((c) => c.kind === AGENT_KIND);
+	// The agent is one choice: what it reports (Docker, disks, backups…) is found
+	// by search, then detected once it runs. Only the relay is a different thing.
 	const agentChoices: KindChoice[] = agent
 		? [
-				kindChoice(agent, AGENT),
-				...AGENT_FEATURES.map((f) => ({
-					id: `${AGENT_KIND}:${f.id}`,
-					kind: AGENT_KIND,
-					feature: f.id,
-					label: f.label,
-					summary: f.summary,
-					icon: f.icon,
-					pack: false,
-					haystack: fold([f.label, f.summary, f.keywords, 'agent', AGENT].join(' '))
-				}))
+				{
+					...kindChoice(agent, AGENT),
+					haystack: fold(
+						[agent.label, agent.kind, agent.summary, KIND_KEYWORDS.agent, AGENT_FEATURES.map((f) => `${f.label} ${f.keywords}`).join(' '), AGENT].join(' ')
+					)
+				}
 			]
 		: [];
+	const relay = AGENT_FEATURES.find((f) => f.id === 'relay');
+	const relayChoices: KindChoice[] =
+		agent && relay
+			? [
+					{
+						id: `${AGENT_KIND}:${relay.id}`,
+						kind: AGENT_KIND,
+						feature: relay.id,
+						label: relay.label,
+						summary: relay.summary,
+						icon: relay.icon,
+						pack: false,
+						haystack: fold([relay.label, relay.summary, relay.keywords, 'agent', DEVICES].join(' '))
+					}
+				]
+			: [];
 	// Heartbeats and domain registrations sit with the services: they watch
 	// a job or a name, not a machine.
 	const isService = (kind: string) => isUptimeKind(kind) || kind === PUSH_KIND || kind === DOMAIN_KIND;
@@ -460,14 +473,16 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && !isService(c.kind) && !isPackKind(c.kind))
 		.map((c) => kindChoice(c, OTHER));
 	const groups: KindGroup[] = [
-		{ id: 'devices', title: DEVICES, hint: m.deviceform_group_devices_hint(), choices: devices },
-		{ id: 'agent', title: AGENT, hint: m.deviceform_group_agent_hint(), choices: agentChoices },
+		{ id: 'devices', title: DEVICES, hint: m.deviceform_group_devices_hint(), choices: [...agentChoices, ...relayChoices, ...devices] },
 		{ id: 'services', title: SERVICES, hint: m.deviceform_group_services_hint(), choices: services },
 		{ id: 'packs', title: PACKS, hint: m.deviceform_group_packs_hint(), choices: packs },
 		{ id: 'other', title: OTHER, hint: '', choices: other }
 	];
 	return groups.filter((group) => group.choices.length > 0);
 }
+
+/** Choices promoted above the categories, in order; the ones this server lacks are skipped. */
+export const POPULAR_KINDS = ['http', 'ping', 'agent', 'snmp', 'proxmox', 'synology'];
 
 /**
  * Keeps the choices matching every word of `query`, dropping empty groups.
