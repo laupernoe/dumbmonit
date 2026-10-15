@@ -42,6 +42,9 @@ import type {
 	Target,
 	TargetId,
 	TargetPayload,
+	TargetTestRequest,
+	TargetTestReport,
+	LocalSubnet,
 	WebchangeChange,
 	WebchangeChangeDetail,
 	WebchangeChangeKind,
@@ -91,6 +94,23 @@ export function createTarget(payload: TargetPayload): Promise<Target> {
 
 export function updateTarget(id: TargetId, payload: TargetPayload): Promise<Target> {
 	return request<Target>(`/targets/${id}`, { method: 'PUT', body: payload });
+}
+
+/** Probes the entered address and credentials once; nothing is saved. */
+export function testTarget(
+	payload: TargetTestRequest,
+	signal?: AbortSignal
+): Promise<TargetTestReport> {
+	return request<TargetTestReport>('/targets/test', { method: 'POST', body: payload, signal });
+}
+
+/** Networks the server is directly connected to (default of the scan form). */
+export async function localSubnets(signal?: AbortSignal): Promise<LocalSubnet[]> {
+	const raw = await request<{ subnets?: LocalSubnet[] }>('/discovery/subnets', {
+		signal,
+		anticipated: true
+	});
+	return Array.isArray(raw?.subnets) ? raw.subnets : [];
 }
 
 export function deleteTarget(id: TargetId): Promise<void> {

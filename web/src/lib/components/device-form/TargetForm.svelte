@@ -10,13 +10,15 @@
 	 * from `target` and the pages re-mount it (`{#key}`) when the subject changes.
 	 */
 	import { untrack } from 'svelte';
-	import { ChevronDown } from 'lucide-svelte';
+	import { CheckCircle2, ChevronDown, PlugZap, XCircle } from 'lucide-svelte';
 	import {
 		createTarget,
 		deleteRuleOverride,
 		listRuleOverrides,
 		putRuleOverride,
+		testTarget,
 		updateTarget,
+		type TargetTestReport,
 		type CollectorInfo,
 		type CredentialView,
 		type Target,
@@ -44,7 +46,8 @@
 		type CredentialDraft,
 		type CredentialErrors
 	} from './credentials';
-	import { DEFAULT_INTERVAL, INTERVALS, suggestName } from './kinds';
+	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
+	import { firstReason, identitySummary, testBlocker } from './test-connection';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -259,6 +262,68 @@
 		}
 	}
 
+	// --- Test connection (SNMP) ----------------------------------------------
+	const canTest = $derived(collector.kind === SNMP_KIND);
+	const blocker = $derived(
+		testBlocker({ address, credentialErrors, viaRelay: canRelay && viaAgent !== null })
+	);
+	const blockerText = $derived(
+		blocker === 'address'
+			? m.deviceform_test_need_address()
+			: blocker === 'credential'
+				? m.deviceform_test_need_credential()
+				: blocker === 'relay'
+					? m.deviceform_test_relay()
+					: null
+	);
+	let testing = $state(false);
+	let testReport = $state<TargetTestReport | null>(null);
+	let testError = $state<unknown>(null);
+	let testController: AbortController | null = null;
+
+	// A result describes the settings it was run with: drop it when they change.
+	$effect(() => {
+		void [address, credential.kind, JSON.stringify(draft), JSON.stringify(tags), viaAgent];
+		untrack(() => {
+			testController?.abort();
+			testReport = null;
+			testError = null;
+		});
+	});
+
+	async function runTest() {
+		if (blocker || testing) return;
+		testController?.abort();
+		testController = new AbortController();
+		const signal = testController.signal;
+		testing = true;
+		testReport = null;
+		testError = null;
+		try {
+			const payload = buildPayload();
+			// The server wants a name; the test does not need the person to pick one.
+			payload.name = payload.name || suggestName(payload.address) || payload.address;
+			testReport = await testTarget({ ...payload, id: target?.id }, signal);
+		} catch (cause) {
+			if (cause instanceof DOMException && cause.name === 'AbortError') return;
+			testError = cause;
+		} finally {
+			testing = false;
+		}
+	}
+
+	/** Why Save is disabled, in plain words (the button alone says nothing). */
+	const submitBlocker = $derived(
+		valid
+			? null
+			: firstReason([
+					nameError,
+					addressError,
+					...Object.values(credentialErrors),
+					...Object.values(optionErrors)
+				])
+	);
+
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		attempted = true;
@@ -468,10 +533,63 @@
 
 	<div class="flex flex-wrap items-center gap-2 pt-1">
 		<ClickSpark>
-			<Button type="submit" variant="primary" loading={saving} disabled={!valid}>
+			<Button
+				type="submit"
+				variant="primary"
+				loading={saving}
+				disabled={!valid}
+				aria-describedby={submitBlocker ? 'target-submit-why' : undefined}
+			>
 				{editing ? m.deviceform_form_save() : m.deviceform_form_add()}
 			</Button>
 		</ClickSpark>
+		{#if canTest}
+			<Button
+				type="button"
+				variant="secondary"
+				loading={testing}
+				disabled={blocker !== null}
+				onclick={runTest}
+				aria-describedby={blockerText ? 'target-test-why' : undefined}
+			>
+				<PlugZap class="size-4" aria-hidden="true" />
+				{testing ? m.deviceform_test_running() : m.deviceform_test_button()}
+			</Button>
+		{/if}
 		<Button variant="ghost" href={cancelHref}>{m.deviceform_form_cancel()}</Button>
 	</div>
+	{#if submitBlocker}
+		<p id="target-submit-why" class="text-[0.8125rem] text-ink-2">
+			{m.deviceform_form_submit_blocked({ reason: submitBlocker })}
+		</p>
+	{/if}
+	{#if canTest && blockerText}
+		<p id="target-test-why" class="text-[0.8125rem] text-ink-2">{blockerText}</p>
+	{/if}
+	{#if canTest}
+		<div aria-live="polite" class="grid gap-1">
+			{#if testReport?.ok}
+				{@const identity = identitySummary(testReport.sysname, testReport.sysdescr)}
+				<p class="flex items-start gap-2 text-sm font-medium text-ink">
+					<CheckCircle2 class="mt-0.5 size-4 shrink-0 text-signal-ink" aria-hidden="true" />
+					<span>
+						{identity ? m.deviceform_test_ok_identity({ identity }) : m.deviceform_test_ok()}
+					</span>
+				</p>
+				{#if testReport.profile_id}
+					<p class="pl-6 text-[0.8125rem] text-ink-2">{m.deviceform_test_profile({ profile: testReport.profile_id })}</p>
+				{/if}
+			{:else if testReport}
+				<p class="flex items-start gap-2 text-sm font-medium text-warning-ink">
+					<XCircle class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+					<span>{m.deviceform_test_failed({ error: testReport.error ?? '' })}</span>
+				</p>
+				<p class="pl-6 text-[0.8125rem] text-ink-2">
+					{testReport.unreachable ? m.deviceform_test_hint_down() : m.deviceform_test_hint_config()}
+				</p>
+			{:else if testError}
+				<ErrorNotice error={testError} title={m.deviceform_test_error()} />
+			{/if}
+		</div>
+	{/if}
 </form>

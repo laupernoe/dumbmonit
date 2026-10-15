@@ -6,15 +6,20 @@
 	 * Adds are sequential so one failure never blocks the others; each row shows
 	 * its own outcome. Rows already monitored are greyed out.
 	 */
+	import { onMount } from 'svelte';
 	import { Radar } from 'lucide-svelte';
-	import { ApiError, createTarget, type DiscoveredDevice } from '#lib/api/index.js';
+	import { ApiError, createTarget, localSubnets, type DiscoveredDevice, type LocalSubnet } from '#lib/api/index.js';
 	import { Button, ClickSpark, EmptyState, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import { scanNetwork } from './discovery';
+	import { defaultSubnet, usableSubnets } from './test-connection';
 	import { DEFAULT_INTERVAL, SNMP_KIND } from './kinds';
 
 	type RowState = { status: 'idle' } | { status: 'adding' } | { status: 'added' } | { status: 'failed'; message: string };
 
 	let cidr = $state('');
+	/** Networks the server sits on: the first pre-fills the field, the rest are shortcuts. */
+	let subnets = $state<LocalSubnet[]>([]);
+	let prefilled = $state<LocalSubnet | null>(null);
 	let community = $state('public');
 	let scanning = $state(false);
 	let scanError = $state<unknown>(null);
@@ -26,6 +31,23 @@
 	let rows = $state<Record<string, RowState>>({});
 	let adding = $state(false);
 	let controller: AbortController | null = null;
+
+	onMount(() => {
+		const controller = new AbortController();
+		localSubnets(controller.signal)
+			.then((list) => {
+				subnets = usableSubnets(list);
+				// Only an empty field is filled: never overwrite what was typed meanwhile.
+				const fill = defaultSubnet(cidr, subnets);
+				if (fill) {
+					cidr = fill;
+					prefilled = subnets[0] ?? null;
+				}
+			})
+			// Optional hint: a refusal or an old server just leaves the field empty.
+			.catch(() => {});
+		return () => controller.abort();
+	});
 
 	const selectable = $derived(devices.filter((d) => !d.already_added && rows[d.address]?.status !== 'added'));
 	const selectedCount = $derived(selectable.filter((d) => selection.has(d.address)).length);
@@ -100,7 +122,9 @@
 
 <div class="grid gap-5">
 	<form onsubmit={scan} class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)_auto] sm:items-end">
-		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={m.deviceform_discovery_range_help()}>
+		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={prefilled && cidr.trim() === prefilled.cidr
+				? m.deviceform_discovery_range_prefilled({ interface: prefilled.interface || '—' })
+				: m.deviceform_discovery_range_help()}>
 			<input
 				id="scan-cidr"
 				class="input font-mono text-[0.8125rem]"
@@ -121,6 +145,17 @@
 			</Button>
 		</div>
 	</form>
+
+	{#if subnets.length > 1}
+		<div class="flex flex-wrap items-center gap-2" role="group" aria-label={m.deviceform_discovery_subnets_label()}>
+			<span class="text-[0.8125rem] text-ink-2">{m.deviceform_discovery_subnets_label()}</span>
+			{#each subnets as subnet (subnet.cidr)}
+				<Button size="sm" variant={cidr.trim() === subnet.cidr ? 'secondary' : 'ghost'} onclick={() => (cidr = subnet.cidr)}>
+					<span class="font-mono">{subnet.cidr}</span>
+				</Button>
+			{/each}
+		</div>
+	{/if}
 
 	<div aria-live="polite" class="grid gap-4">
 		{#if scanning}

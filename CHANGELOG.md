@@ -37,6 +37,11 @@ All notable changes to this project are documented here. The format follows
 - **Recoverable empty states and errors.** `EmptyState` takes `primary` and `secondary` actions;
   `ErrorNotice` adds a next step per failure type (offline, 403, 5xx) and a "Sign in again" link
   on 401. The Overview sky band is shorter on phones so content stays above the fold.
+- **Device form: Test connection, and a smarter network scan.** SNMP devices get a
+  "Test connection" button that probes the entered address and credential once
+  (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
+  the probe's error. A disabled Save or Test button now says why. The network scan
+  pre-fills the server's own subnet (`GET /api/discovery/subnets`), still editable.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
