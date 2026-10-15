@@ -1330,6 +1330,8 @@ export interface PublicStatusItem {
 	uptime_30d: number | null;
 	/** Only when the page shows 90 days of history. */
 	uptime_90d: number | null;
+	/** Over the page's `history_days`: the same days as `history`. */
+	uptime_history: number | null;
 	latency_ms: number | null;
 	/** Only when the page shows response times and the service has latency data. */
 	latency_series?: PublicLatencySeries;

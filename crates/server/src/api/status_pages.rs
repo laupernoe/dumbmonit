@@ -993,6 +993,9 @@ struct PublicItem {
     uptime_30d: Option<f64>,
     /// Seulement quand la page montre 90 jours d'historique.
     uptime_90d: Option<f64>,
+    /// Sur les `history_days` jours des barres : le chiffre affiché à côté
+    /// d'elles doit couvrir les mêmes jours.
+    uptime_history: Option<f64>,
     latency_ms: Option<f64>,
     /// Temps de réponse agrégés ; seulement si la page les montre et que le
     /// service en a.
@@ -1155,6 +1158,8 @@ struct Metrics {
     uptime_7d: HashMap<TargetId, f64>,
     uptime_30d: HashMap<TargetId, f64>,
     uptime_90d: HashMap<TargetId, f64>,
+    /// Disponibilité sur la fenêtre des barres (`history_days`).
+    uptime_history: HashMap<TargetId, f64>,
     /// Par cible, disponibilité de chaque jour indexée par début de jour (s).
     daily: HashMap<TargetId, HashMap<i64, f64>>,
     /// Par cible, minutes d'indisponibilité de chaque jour, même index.
@@ -1254,6 +1259,7 @@ async fn collect_metrics(
     victoria: &Victoria,
     targets: &[&Target],
     days: i64,
+    history_days: i64,
     now: DateTime<Utc>,
     with_latency: bool,
 ) -> Metrics {
@@ -1289,6 +1295,8 @@ async fn collect_metrics(
              - sum_over_time(dumbmonit_probe_success{{{sel}}}[1d])"
         );
         let q_quarter = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[90d]) * 100");
+        let q_history =
+            format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{history_days}d]) * 100");
         let q_latency =
             format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[1h]) * 1000");
         let q_daily = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[1d]) * 100");
@@ -1299,18 +1307,20 @@ async fn collect_metrics(
             victoria.query(&q_week),
             victoria.query(&q_month),
             victoria.query(&q_quarter),
+            victoria.query(&q_history),
             victoria.query(&q_latency),
             victoria.query_range(&q_daily, range_start_ms, range_end_ms, 86_400),
             victoria.query_range(&q_failed, range_start_ms, range_end_ms, 86_400),
         );
         match result {
-            Ok((last, recent, day, week, month, quarter, latency, daily, failed)) => {
+            Ok((last, recent, day, week, month, quarter, history, latency, daily, failed)) => {
                 metrics.probe_last = instant_map(last);
                 metrics.probe_recent = instant_map(recent);
                 metrics.uptime_24h = instant_map(day);
                 metrics.uptime_7d = instant_map(week);
                 metrics.uptime_30d = instant_map(month);
                 metrics.uptime_90d = instant_map(quarter);
+                metrics.uptime_history = instant_map(history);
                 // Une mesure manquée vaut l'intervalle de la sonde : c'est la
                 // durée pendant laquelle le service est resté réputé en panne.
                 let intervals: HashMap<TargetId, f64> =
@@ -1352,6 +1362,7 @@ async fn collect_metrics(
         let q_week = presence_query(&sel, "7d");
         let q_month = presence_query(&sel, "30d");
         let q_quarter = presence_query(&sel, "90d");
+        let q_history = presence_query(&sel, &format!("{history_days}d"));
         let q_daily = presence_query(&sel, "1d");
         let result = tokio::try_join!(
             victoria.query(&q_first),
@@ -1359,16 +1370,18 @@ async fn collect_metrics(
             victoria.query(&q_week),
             victoria.query(&q_month),
             victoria.query(&q_quarter),
+            victoria.query(&q_history),
             victoria.query_range(&q_daily, range_start_ms, range_end_ms, 86_400),
         );
         match result {
-            Ok((first, day, week, month, quarter, daily)) => {
+            Ok((first, day, week, month, quarter, history, daily)) => {
                 let first = instant_map(first);
-                let windows: [(&str, Vec<InstantSeries>, f64); 4] = [
+                let windows: [(&str, Vec<InstantSeries>, f64); 5] = [
                     ("24h", day, 86_400.0),
                     ("7d", week, 7.0 * 86_400.0),
                     ("30d", month, 30.0 * 86_400.0),
                     ("90d", quarter, 90.0 * 86_400.0),
+                    ("history", history, history_days as f64 * 86_400.0),
                 ];
                 for (name, series, window_secs) in windows {
                     for (id, measured) in instant_map(series) {
@@ -1379,7 +1392,8 @@ async fn collect_metrics(
                             "24h" => &mut metrics.uptime_24h,
                             "7d" => &mut metrics.uptime_7d,
                             "30d" => &mut metrics.uptime_30d,
-                            _ => &mut metrics.uptime_90d,
+                            "90d" => &mut metrics.uptime_90d,
+                            _ => &mut metrics.uptime_history,
                         };
                         bucket.insert(id, value);
                     }
@@ -1516,7 +1530,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
     // Le calendrier montre toujours 90 jours, quelle que soit la fenêtre des barres.
     let metrics_days = if page.show_calendar { MAX_HISTORY_DAYS } else { days };
     let metrics =
-        collect_metrics(&state.victoria, &shown, metrics_days, now, page.show_latency).await;
+        collect_metrics(&state.victoria, &shown, metrics_days, days, now, page.show_latency).await;
 
     // Maintenance planifiée : une fenêtre de maintenance posée dans l'alerting
     // vaut annonce publique. Sans cela, la page montre du rouge pendant que
@@ -1646,6 +1660,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             uptime_90d: (days >= 90)
                 .then(|| metrics.uptime_90d.get(&target.id).map(|v| round(*v)))
                 .flatten(),
+            uptime_history: metrics.uptime_history.get(&target.id).map(|v| round(*v)),
             latency_ms: metrics.latency_ms.get(&target.id).map(|v| round(*v)),
             latency_series: match (
                 metrics.latency_24h.get(&target.id),

@@ -29,7 +29,6 @@
 	}
 
 	// The window adapts to the data's age: 30 and 90 days are listed only once the page covers them.
-	const headline = $derived(days >= 90 ? 90 : days >= 30 ? 30 : 7);
 	const readouts = $derived([
 		{ label: m.status_service_row_24h(), value: item.uptime_24h },
 		{ label: m.status_service_row_7d(), value: item.uptime_7d },
@@ -43,8 +42,8 @@
 		<div class="flex items-center gap-3">
 			<Plate tone={state.tone} label={state.label} pulse={item.state === 'down'} />
 			<span class="min-w-0 flex-1 truncate font-semibold text-ink">{item.label}</span>
-			<span class="tnum shrink-0 text-sm text-ink-2" title={m.status_service_row_uptime_over({ days: headline })}>
-				{formatPercent(headline === 90 ? item.uptime_90d : headline === 30 ? item.uptime_30d : item.uptime_7d)}
+			<span class="tnum shrink-0 text-sm text-ink-2" title={m.status_service_row_uptime_over({ days })}>
+				{formatPercent(item.uptime_history)}
 			</span>
 		</div>
 		<div class="mt-2">

@@ -169,12 +169,11 @@
 	const labelHead = $derived(banner ? banner.label.slice(0, banner.label.lastIndexOf(' ') + 1) : '');
 	const labelTail = $derived(banner ? banner.label.slice(banner.label.lastIndexOf(' ') + 1) : '');
 
-	// One line above the services: counts by state and the mean uptime.
+	// One line above the services: counts by state and the mean uptime over the bars' days.
 	const tally = $derived.by(() => {
 		const items = status ? status.groups.flatMap((g) => g.items) : [];
 		const count = (state: string) => items.filter((i) => i.state === state).length;
-		const window = days >= 90 ? 90 : days >= 30 ? 30 : 7;
-		const values = items.map((i) => (window === 90 ? i.uptime_90d : window === 30 ? i.uptime_30d : i.uptime_7d)).filter((v): v is number => v !== null);
+		const values = items.map((i) => i.uptime_history).filter((v): v is number => v !== null);
 		const up = count('up');
 		const degraded = count('degraded');
 		const down = count('down');
@@ -196,7 +195,7 @@
 			total: items.length,
 			headline,
 			detail: values.length
-				? m.status_public_tally_detail_uptime({ up, down, uptime: formatPercent(values.reduce((a, b) => a + b, 0) / values.length), days: window })
+				? m.status_public_tally_detail_uptime({ up, down, uptime: formatPercent(values.reduce((a, b) => a + b, 0) / values.length), days })
 				: m.status_public_tally_detail({ up, down })
 		};
 	});
