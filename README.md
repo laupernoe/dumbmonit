@@ -16,7 +16,7 @@ One container, one IP address to type in, useful graphs and alerts in under a mi
 
 **[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)**
 
-<img src=".github/assets/screenshots/overview-dark.png" alt="DumbMonit overview: the bulletin sentence, counters, the weather window and the list of things that need you" width="900">
+<img src=".github/assets/screenshots/overview-light.png" alt="DumbMonit overview: the bulletin sentence, counters, the weather window and the list of things that need you" width="900">
 
 </div>
 
