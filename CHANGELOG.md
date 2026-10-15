@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
+  and an entry in the command palette) draws the whole infrastructure from the
+  links DumbMonit already knows, nothing to type in: declared parents, relay
+  agents, hypervisor guests (Proxmox, XCP-ng, Nutanix, vSphere, libvirt) and
+  LLDP neighbours of SNMP switches, matched to a monitor only when the name is
+  unambiguous. What is down and what sits behind it (impacted, alerts
+  suppressed) stand out, in words as well as colour. Zoom and pan, a folder or
+  relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
+  clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
+  [Topology map](docs/using/topology.md).
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
@@ -54,12 +64,26 @@ All notable changes to this project are documented here. The format follows
 - **Wall: each problem once, readable.** A device written out as a problem is
   no longer repeated among the device tiles, long names and causes wrap instead
   of being cut, and "And N more" became a clear counter linking to Alerts.
+
+- **Alert rules page: grouped, filtered, counted.** The 150+ rules are grouped by
+  device kind and folded by default (kinds you own first, with how many are off
+  or firing); quick filters (Active, Disabled, Changed by me, Fired lately)
+  join the search and the kind select, with a "N of M rules" counter. All the
+  editing, toggling and deleting is unchanged.
+- **Device page: flat charts fold into one line.** In "Everything else", the
+  metric families that never moved over the period (the 0/1 checks of a
+  website, for instance) are no longer drawn; they collapse into a "Steady
+  checks (N)" line that lists their value. Only the series that change keep a chart.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
 
 ### Fixed
 
+- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or silence controls on a disabled monitor; an "Enable" button takes their place.
+- **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
+- **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
+- **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.

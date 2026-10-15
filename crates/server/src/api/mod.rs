@@ -38,6 +38,7 @@ mod synology;
 mod targets;
 mod targets_import;
 mod tokens;
+mod topology;
 mod totp;
 mod truenas;
 mod update;
@@ -135,6 +136,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
         .merge(relay::ui_routes())
+        // Carte de topologie, construite à partir des liens connus (`topology.rs`).
+        .merge(topology::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
