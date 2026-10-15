@@ -4321,6 +4321,23 @@
 	"overview_first_test_text": "Отправьте тест из канала. Шаг станет зелёным, когда сообщение действительно уйдёт.",
 	"overview_first_test_title": "Проверьте, что сообщение доходит",
 	"overview_first_title": "Ваши первые пять минут",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ещё {count}",
+				"countPlural=few": "Ещё {count}",
+				"countPlural=many": "Ещё {count}",
+				"countPlural=other": "Ещё {count}"
+			}
+		}
+	],
 	"overview_page_checked": "Проверено {when}",
 	"overview_page_empty_text": "Добавьте коммутатор, NAS, гипервизор или сайт, и уже через минуту он начнёт присылать данные.",
 	"overview_page_empty_title": "Мониторов пока нет",

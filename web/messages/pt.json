@@ -4219,6 +4219,21 @@
 	"overview_first_test_text": "Envie um teste a partir do canal. Este passo fica verde quando uma mensagem sai mesmo.",
 	"overview_first_test_title": "Verifique se chega uma mensagem",
 	"overview_first_title": "Os seus primeiros cinco minutos",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} outro",
+				"countPlural=other": "+{count} outros"
+			}
+		}
+	],
 	"overview_page_checked": "Verificado {when}",
 	"overview_page_empty_text": "Adicione um switch, um NAS, um hipervisor ou um site e começa a reportar em um minuto.",
 	"overview_page_empty_title": "Ainda sem monitores",

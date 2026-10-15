@@ -3,8 +3,9 @@
 	 * Overview — a briefing from the pigeon, not a dashboard.
 	 *
 	 * The sky says how things are right now; "Since you last looked" tells
-	 * what happened while you were away, in sentences; "Needs you" lays out
-	 * what to act on as tiles; "Last 7 days" reads three figures off the week's alert history (how long
+	 * what happened while you were away, in sentences; "Needs you" lists what
+	 * to act on, one line each, as many as fit; "Last 7 days" reads three
+	 * figures off the week's alert history (how long
 	 * everything has been reporting, the quietest device, the one with the most
 	 * alert events). The last visit lives in the browser, so the story starts
 	 * where the reader left it.
@@ -22,14 +23,12 @@
 	import {
 		listAlertRules,
 		listAlertHistory,
-		listSilences,
 		listChannels,
 		listCollectors,
 		getOnboarding,
 		type AlertRule,
 		type AlertHistoryEntry,
-		type OnboardingState,
-		type Silence
+		type OnboardingState
 	} from '#lib/api/index.js';
 	import type { Alert } from '#lib/api/index.js';
 	import { displayState, formatRelative } from '#lib/format.js';
@@ -40,11 +39,11 @@
 	import Briefing from '#lib/components/overview/Briefing.svelte';
 	import Streaks from '#lib/components/overview/Streaks.svelte';
 	import FirstRun from '#lib/components/overview/FirstRun.svelte';
-	import { readSky, skyCondition } from '#lib/components/overview/sky.js';
+	import { isAckedRow, isSnoozedRow, readSky, skyCondition } from '#lib/components/overview/sky.js';
 	import { buildBriefing } from '#lib/components/overview/briefing.js';
 	import { computeStreaks } from '#lib/components/overview/streaks.js';
 	import { readLastVisit, writeLastVisit } from '#lib/components/overview/lastVisit.js';
-	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
+	import NeedsYouCompact from '#lib/components/overview/NeedsYouCompact.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
 	const DAY_MS = 24 * 3600 * 1000;
@@ -56,7 +55,6 @@
 
 	let rules = $state<AlertRule[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
-	let silences = $state<Silence[]>([]);
 	/** Enabled channel names; `undefined` until read (or when the read failed). */
 	let channels = $state<string[] | undefined>(undefined);
 	let hasDemoKind = $state(false);
@@ -75,7 +73,6 @@
 	let now = $state(new Date());
 	/** Start of the briefing window; `null` until read, and on a first visit. */
 	let lastVisit = $state<Date | null>(null);
-	let silenceError = $state<string | null>(null);
 
 	// `?demo=empty` shows the first-run screen on a populated server. Harmless, kept for review.
 	const demoEmpty = $derived(page.url.searchParams.get('demo') === 'empty');
@@ -189,7 +186,6 @@
 			listAlertHistory({ limit: 500, since: new Date(sinceMs).toISOString() }, signal).catch(
 				() => [] as AlertHistoryEntry[]
 			),
-			listSilences(signal).catch(() => [] as Silence[]),
 			channels === undefined
 				? listChannels(signal)
 						.then((list) => list.filter((channel) => channel.enabled).map((channel) => channel.name))
@@ -205,7 +201,7 @@
 		} finally {
 			loading = false;
 		}
-		[history, silences, channels] = await side;
+		[history, channels] = await side;
 		if (shownTargets.length === 0 || demoEmpty) {
 			hasDemoKind = await listCollectors(signal)
 				.then((kinds) => kinds.some((kind) => kind.kind === 'dummy'))
@@ -217,18 +213,6 @@
 		if (!watching && !armTimer) armTimer = setTimeout(() => (watching = true), 3000);
 	}
 	let armTimer: ReturnType<typeof setTimeout> | undefined;
-
-	/** A needs-you row changed (ack, snooze, ignore): refresh the alerts and,
-	 *  since a snooze is a silence, its "time left" too. */
-	async function onNeedsYouChanged() {
-		silenceError = null;
-		try {
-			const [, refreshedSilences] = await Promise.all([alertsStore.refresh(), listSilences()]);
-			silences = refreshedSilences;
-		} catch (cause) {
-			silenceError = cause instanceof Error ? cause.message : m.overview_page_error_refresh();
-		}
-	}
 
 	/** Resets the briefing window to now: the story restarts from here. */
 	function markRead() {
@@ -274,111 +258,168 @@
 	// failure on the shared store (targets, the badge's alerts) is this page's
 	// problem too, since the sky model needs both.
 	const pageError = $derived(error ?? (!alertsStore.available ? alertsStore.lastError : null));
+
+	// --- Fitting the window ------------------------------------------------------
+	// On a computer the page never scrolls: its root takes the height left under
+	// the top bar (minus the main area's bottom padding) and "Needs you" shows as
+	// many whole lines as its box holds, counting the rest. Phones keep the
+	// natural flow, with the list cut to a handful of lines.
+	const FIT_QUERY = '(min-width: 1024px) and (min-height: 560px)';
+	/** One compact line (h-14) and the gap between two. */
+	const ROW_PX = 56;
+	const GAP_PX = 6;
+	const PHONE_ROWS = 5;
+	/** Part of the main area's bottom padding the page takes back when it fits: the window is the frame. */
+	const RECLAIM_PX = 32;
+	let root = $state<HTMLDivElement | null>(null);
+	let fit = $state(false);
+	let fitHeight = $state(0);
+	let listHeight = $state(0);
+	const needsRows = $derived(
+		fit ? Math.max(1, Math.floor((listHeight + GAP_PX) / (ROW_PX + GAP_PX))) : PHONE_ROWS
+	);
+	/** Problems still open (known ones, acked or snoozed, left out), for the heading's count. */
+	const needsCount = $derived(
+		sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row)).length
+	);
+
+	function measure() {
+		if (!root) return;
+		fit = window.matchMedia(FIT_QUERY).matches;
+		if (!fit) return;
+		// Below the page: the main area's bottom padding and whatever the layout
+		// puts in the flow after it (the version tag).
+		// `main` is the layout column's flex-1, so the gap between their bottoms
+		// is exactly what follows it, margins included.
+		const main = root.closest('main');
+		const column = main?.parentElement;
+		const below =
+			main && column
+				? (parseFloat(getComputedStyle(main).paddingBottom) || 0) +
+					Math.max(0, column.getBoundingClientRect().bottom - main.getBoundingClientRect().bottom)
+				: 0;
+		const top = root.getBoundingClientRect().top + window.scrollY;
+		// One pixel spare: fractional heights (the version tag) round the document up.
+		fitHeight = Math.max(0, Math.floor(window.innerHeight - top - below + RECLAIM_PX) - 1);
+	}
+
+	$effect(() => {
+		if (!root) return;
+		measure();
+		// The bars above (demo banner, nav) can change height: the body follows them.
+		const observer = new ResizeObserver(() => measure());
+		observer.observe(document.body);
+		window.addEventListener('resize', measure);
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('resize', measure);
+		};
+	});
 </script>
 
 <svelte:head><title>{m.overview_page_title()} · DumbMonit</title></svelte:head>
 
-{#if pageError && targets.length === 0}
-	<ErrorNotice
-		error={pageError}
-		title={m.overview_page_error_load()}
-		onretry={() => {
-			loading = true;
-			void load();
-			void alertsStore.refresh();
-		}}
-	/>
-{:else if firstLoad}
-	<!-- Skeleton shaped like the page: the sky band, the briefing, the tiles, the figures. -->
-	<Skeleton class="h-[200px] w-full rounded-[var(--radius-card)] md:h-[260px]" />
-	<div class="mt-8 space-y-2.5">
-		<Skeleton class="h-5 w-44" />
-		<Skeleton class="h-5 w-3/4" />
-		<Skeleton class="h-4 w-2/3" />
-		<Skeleton class="h-4 w-1/2" />
-	</div>
-	<div class="mt-8">
-		<Skeleton class="mb-3 h-5 w-24" />
-		<div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-			{#each { length: 3 } as _, i (i)}
-				<Skeleton class="h-28 w-full" />
-			{/each}
-		</div>
-	</div>
-	<div class="mt-8 flex flex-wrap gap-x-10 gap-y-3">
-		{#each { length: 3 } as _, i (i)}
-			<Skeleton class="h-14 w-40" />
-		{/each}
-	</div>
-{:else}
-	<!-- The sky, full width. -->
-	<!--
-		The plate sits in the flow at the bottom of the band: on phones the band
-		grows with the sentence (a top margin keeps the sky in view), on desktop
-		it is a fixed 260px hero.
-	-->
-	<section
-		data-tour="weather"
-		class="rise-in relative flex min-h-[200px] max-sm:min-h-[140px] flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift md:h-[260px]"
-	>
-		<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
-
-		{#if !noDevices && !showGuide}
-			<!--
-				One primary per view; on phones it sits under the band instead. While
-				the first-run guide is up, its current step is the one thing to do.
-			-->
-			<div class="absolute top-4 right-4 hidden sm:block">
-				<ClickSpark>
-					<Button variant="primary" href="/targets/new">{m.overview_first_device_action()}</Button>
-				</ClickSpark>
+<!--
+	The whole page fits the window on a computer (≥ 1024 × 560): the sky band
+	on top, then "Needs you" (left, 7/12) beside "Since you last looked" and
+	"Last 7 days" (right, 5/12). The list is cut to the lines that fit and
+	counts the rest. On phones the same blocks stack in that order of urgency.
+-->
+<div
+	bind:this={root}
+	class="flex min-w-0 flex-col gap-5 lg:gap-4"
+	style:height={fit && fitHeight > 0 ? `${fitHeight}px` : null}
+	style:margin-bottom={fit && fitHeight > 0 ? `-${RECLAIM_PX}px` : null}
+>
+	{#if pageError && targets.length === 0}
+		<ErrorNotice
+			error={pageError}
+			title={m.overview_page_error_load()}
+			onretry={() => {
+				loading = true;
+				void load();
+				void alertsStore.refresh();
+			}}
+		/>
+	{:else if firstLoad}
+		<!-- Skeleton shaped like the page: the sky band, then the list beside the briefing. -->
+		<Skeleton class="h-[200px] w-full shrink-0 rounded-[var(--radius-card)] lg:h-[clamp(160px,25dvh,250px)]" />
+		<div class="grid min-h-0 flex-1 gap-5 lg:grid-cols-12 lg:overflow-hidden">
+			<div class="space-y-1.5 lg:col-span-7">
+				<Skeleton class="mb-3 h-5 w-24" />
+				{#each { length: 4 } as _, i (i)}
+					<Skeleton class="h-14 w-full" />
+				{/each}
 			</div>
-		{/if}
-
-		<div
-			class="relative m-3 mt-10 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-28 sm:max-w-[680px] sm:px-5 sm:py-4"
+			<div class="space-y-2.5 lg:col-span-5">
+				<Skeleton class="h-5 w-44" />
+				<Skeleton class="h-5 w-3/4" />
+				<Skeleton class="h-4 w-2/3" />
+			</div>
+		</div>
+	{:else}
+		<!-- The sky, full width; the plate sits at the bottom of the band. -->
+		<section
+			data-tour="weather"
+			class="rise-in relative flex min-h-[140px] shrink-0 flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift sm:min-h-[200px] lg:h-[clamp(160px,25dvh,250px)] lg:min-h-0"
 		>
-			<DecryptText
-				tag="h1"
-				text={sky.sentence}
-				speed={16}
-				hold={2}
-				class="display text-[1.75rem] leading-[1.05] text-ink sm:text-[2.5rem]"
-			/>
-			{#if !noDevices}
-				<div class="mt-2 flex flex-wrap items-center gap-2">
-					{#each sky.plates as plate (plate.label)}
-						<Plate tone={plate.tone} label={plate.label} bare={plate.bare} />
-					{/each}
-					{#if checkedLabel}
-						<span class="tnum text-[0.8125rem] text-ink-2">{m.overview_page_checked({ when: checkedLabel })}</span>
-					{/if}
+			<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
+
+			{#if !noDevices && !showGuide}
+				<!--
+					One primary per view; on phones it sits at the end of the page. While
+					the first-run guide is up, its current step is the one thing to do.
+				-->
+				<div class="absolute top-4 right-4 hidden sm:block">
+					<ClickSpark>
+						<Button variant="primary" href="/targets/new">{m.overview_first_device_action()}</Button>
+					</ClickSpark>
 				</div>
 			{/if}
-		</div>
-	</section>
 
-	{#if showGuide && onboarding}
-		<div class="mt-6">
-			<FirstRun
-				guide={onboarding}
-				hasDemo={hasDemoKind}
-				onchange={(next) => {
-					onboarding = next;
-					if (next.skipped) showGuide = false;
-				}}
-			/>
-		</div>
-	{/if}
+			<div
+				class="relative m-3 mt-10 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-20 sm:max-w-[680px] sm:px-5 sm:py-4 lg:mt-5"
+			>
+				<DecryptText
+					tag="h1"
+					text={sky.sentence}
+					speed={16}
+					hold={2}
+					class="sky-sentence display text-[1.75rem] leading-[1.05] text-ink sm:text-[2.25rem] xl:text-[2.5rem]"
+				/>
+				{#if !noDevices}
+					<div class="mt-2 flex flex-wrap items-center gap-2">
+						{#each sky.plates as plate (plate.label)}
+							<Plate tone={plate.tone} label={plate.label} bare={plate.bare} />
+						{/each}
+						{#if checkedLabel}
+							<span class="tnum text-[0.8125rem] text-ink-2">{m.overview_page_checked({ when: checkedLabel })}</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		</section>
 
-	{#if noDevices}
-		{#if !showGuide}
+		{#if showGuide && onboarding}
+			<!-- The guide replaces the lower blocks until it is done: one thing to do at a time. -->
+			<div class="min-h-0 flex-1 lg:overflow-y-auto">
+				<FirstRun
+					guide={onboarding}
+					hasDemo={hasDemoKind}
+					onchange={(next) => {
+						onboarding = next;
+						if (next.skipped) showGuide = false;
+					}}
+				/>
+			</div>
+		{:else if noDevices}
 			<!-- The sky above already says there is nothing to watch: one way in is enough. -->
-			<div class="mt-6">
+			<div class="min-h-0 flex-1">
 				<EmptyState
 					title={m.overview_page_empty_title()}
 					description={m.overview_page_empty_text()}
 					mascot="watch"
+					class="lg:h-full lg:!py-6"
 				>
 					{#snippet action()}
 						<ClickSpark>
@@ -392,49 +433,59 @@
 					{/snippet}
 				</EmptyState>
 			</div>
-		{/if}
-	{:else}
-		{#if !showGuide}
-			<div class="mt-3 sm:hidden">
-				<ClickSpark>
-					<Button variant="primary" href="/targets/new" class="w-full">{m.overview_first_device_action()}</Button>
-				</ClickSpark>
+		{:else}
+			<div class="grid min-h-0 flex-1 grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-12">
+				<!-- Needs you: what to act on comes first. -->
+				<section class="rise-in flex min-h-0 min-w-0 flex-col lg:col-span-7" style={`--rise-delay: ${STAGGER_MS}ms`}>
+					<h2 class="mb-2 flex min-h-8 items-center gap-2 text-base font-semibold tracking-tight text-ink">
+						{m.overview_page_needs_you()}
+						{#if needsCount > 0}
+							<span class="tnum rounded-[var(--radius-plate)] border border-line bg-surface-2 px-1.5 text-[0.75rem] font-semibold text-ink-2">{needsCount}</span>
+						{/if}
+					</h2>
+					<div class="min-h-0 flex-1" bind:clientHeight={listHeight}>
+						<NeedsYouCompact {sky} {checkedLabel} rows={needsRows} fill={fit} />
+					</div>
+				</section>
+
+				<div class="flex min-h-0 min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-4">
+					<!-- Since you last looked -->
+					<section class="rise-in min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
+						<div class="mb-2 flex min-h-8 items-center justify-between gap-3">
+							<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_since()}</h2>
+							<Button variant="ghost" size="sm" onclick={markRead} class="max-sm:!h-10">{m.overview_page_mark_read()}</Button>
+						</div>
+						<Briefing sentences={briefing} />
+					</section>
+
+					<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
+					{#if streaks.length > 0}
+						<section class="rise-in min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
+							<h2 class="mb-1 flex min-h-8 items-center text-base font-semibold tracking-tight text-ink">
+								{m.overview_page_last_days({ days: HISTORY_DAYS })}
+							</h2>
+							<Streaks {streaks} />
+						</section>
+					{/if}
+				</div>
 			</div>
-		{/if}
 
-
-		<!-- Since you last looked -->
-		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS}ms`}>
-			<div class="mb-3 flex items-center justify-between gap-3">
-				<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_since()}</h2>
-				<Button variant="ghost" size="sm" onclick={markRead} class="max-sm:!h-10">{m.overview_page_mark_read()}</Button>
-			</div>
-			<Briefing sentences={briefing} />
-		</section>
-
-		<!-- Needs you -->
-		<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
-			<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_needs_you()}</h2>
-			{#if silenceError}
-				<p class="mb-3 text-[0.8125rem] text-warning-ink" role="alert" aria-live="polite">
-					{silenceError}
-				</p>
+			{#if !showGuide}
+				<div class="sm:hidden">
+					<ClickSpark>
+						<Button variant="primary" href="/targets/new" class="w-full">{m.overview_first_device_action()}</Button>
+					</ClickSpark>
+				</div>
 			{/if}
-			<NeedsYouList
-				{sky}
-				{checkedLabel}
-				{silences}
-				mascot="happy"
-				onchanged={() => void onNeedsYouChanged()}
-			/>
-		</section>
-
-		<!-- Last 7 days: three figures, only once there is an alert history to read them from. -->
-		{#if streaks.length > 0}
-			<section class="rise-in mt-8 min-w-0" style={`--rise-delay: ${STAGGER_MS * 3}ms`}>
-				<h2 class="mb-3 text-base font-semibold tracking-tight text-ink">{m.overview_page_last_days({ days: HISTORY_DAYS })}</h2>
-				<Streaks {streaks} />
-			</section>
 		{/if}
 	{/if}
-{/if}
+</div>
+
+<style>
+	/* Short computer screens: a smaller sentence keeps the sky band low and leaves the room to the list. */
+	@media (min-width: 1024px) and (max-height: 800px) {
+		:global(.sky-sentence) {
+			font-size: 2rem;
+		}
+	}
+</style>
