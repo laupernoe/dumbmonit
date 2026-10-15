@@ -327,6 +327,7 @@
 		{rules}
 		{targets}
 		{collectors}
+		{history}
 		busyId={ruleBusyId}
 		ontoggle={toggleRule}
 		ondelete={removeRule}
