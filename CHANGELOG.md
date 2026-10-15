@@ -258,6 +258,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
+  other overflow menu) now opens above the rest of the page, kept on screen
+  and flipped upwards near the bottom, instead of hiding behind the next card
+  where its actions could not be tapped.
 - **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
   silence controls on a disabled monitor; an "Enable" button takes their place.
 - **Public status page no longer claims "All systems operational" without
