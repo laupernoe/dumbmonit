@@ -41,7 +41,10 @@ All notable changes to this project are documented here. The format follows
   "Test connection" button that probes the entered address and credential once
   (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
   the probe's error. A disabled Save or Test button now says why. The network scan
-  pre-fills the server's own subnet (`GET /api/discovery/subnets`), still editable.
+  pre-fills a suggested network (`GET /api/discovery/subnets`), still editable: the
+  `DUMBMONIT_SCAN_SUBNETS` setting, else the /24 networks of the devices already
+  monitored, else the server's own networks (Docker bridges excluded), else an
+  empty field with a hint.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs

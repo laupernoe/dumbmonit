@@ -104,7 +104,7 @@ export function testTarget(
 	return request<TargetTestReport>('/targets/test', { method: 'POST', body: payload, signal });
 }
 
-/** Networks the server is directly connected to (default of the scan form). */
+/** Suggested networks for the scan form (configured, from devices, from the server). */
 export async function localSubnets(signal?: AbortSignal): Promise<LocalSubnet[]> {
 	const raw = await request<{ subnets?: LocalSubnet[] }>('/discovery/subnets', {
 		signal,

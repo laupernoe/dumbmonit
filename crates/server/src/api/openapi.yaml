@@ -799,14 +799,16 @@ paths:
     get:
       operationId: localSubnets
       tags: [Discovery]
-      summary: Networks the server is directly connected to
+      summary: Suggested networks for the scan form
       description: >-
-        Default value for the scan form. Read from the kernel routing table, so
-        in Docker bridge mode this is the bridge network. Administrator session only.
+        In order, `DUMBMONIT_SCAN_SUBNETS`, /24 networks of the private IPv4
+        addresses of monitored devices (most devices first), then the server's
+        connected networks. Docker bridge ranges are excluded; the list is empty
+        when nothing reliable is known. Administrator session only.
       x-token-scope: read
       responses:
         "200":
-          description: Connected IPv4 networks.
+          description: Suggested IPv4 networks.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LocalSubnets" }
@@ -5095,13 +5097,16 @@ components:
       properties:
         subnets:
           type: array
-          description: Connected IPv4 networks, most likely LAN first.
+          description: Suggested IPv4 networks, most reliable source first.
           items:
             type: object
-            required: [cidr, interface]
+            required: [cidr, source]
             properties:
               cidr: { type: string, example: 192.168.1.0/24 }
-              interface: { type: string }
+              source:
+                type: string
+                enum: [config, devices, server]
+              interface: { type: string, description: Server interface; `server` source only. }
     TargetTestRequest:
       description: A `TargetPayload`, plus the id of the device being edited.
       allOf:

@@ -76,14 +76,23 @@ async fn stored_secret_is_not_sent_to_a_new_address() {
 }
 
 #[tokio::test]
-async fn local_subnets_are_admin_only_and_well_formed() {
+async fn subnets_come_from_monitored_devices_and_never_from_docker_bridges() {
     let (app, cookie) = app().await;
+    for address in ["192.168.77.10", "192.168.77.11:161", "10.5.5.5"] {
+        let created = app.post("/api/targets", snmp(address), Some(&cookie)).await;
+        assert_eq!(created.status, StatusCode::CREATED, "{}", created.body);
+    }
     let reply = app.get("/api/discovery/subnets", Some(&cookie)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    for subnet in reply.body["subnets"].as_array().expect("liste") {
+    let list = reply.body["subnets"].as_array().expect("liste");
+    assert_eq!(list[0]["cidr"], "192.168.77.0/24");
+    assert_eq!(list[0]["source"], "devices");
+    assert_eq!(list[1]["cidr"], "10.5.5.0/24");
+    for subnet in list {
         let cidr = subnet["cidr"].as_str().expect("cidr");
         assert!(cidr.parse::<ipnet::Ipv4Net>().is_ok(), "{cidr}");
-        assert!(subnet["interface"].is_string());
+        assert!(["config", "devices", "server"].contains(&subnet["source"].as_str().unwrap()));
+        assert!(!cidr.starts_with("172.17."), "pont Docker proposé : {cidr}");
     }
     let viewer = app.viewer_cookie(&cookie).await;
     let reply = app.get("/api/discovery/subnets", Some(&viewer)).await;
