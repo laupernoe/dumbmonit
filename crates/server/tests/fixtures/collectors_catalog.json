@@ -319,9 +319,43 @@
         "Run the install command on the machine to monitor, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads the agent, writes the token into agent.yaml and starts the service.",
         "The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this device. Lost the token? Settings → Agents lets you revoke it and create another.",
         "Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the \"docker\" group and restart it. Restart and auto-update policies are then set per container on the device page.\nusermod -aG docker dumbmonit",
-        "Plakar backups: detected automatically — the Backups panel appears when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out."
+        "Plakar backups: detected automatically — a Plakar device appears under the machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out.",
+        "Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) each become their own device under the machine, with their own status and alerts. The machine's \"Services found by the agent\" panel lists what was found and what was not: untick a module to drop its device, tick one to watch it before it shows up."
       ],
       "warning": "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
+      "doc_url": ""
+    },
+    "options": []
+  },
+  {
+    "kind": "agent_service",
+    "label": "Service found by an agent",
+    "summary": "Docker, backups, ZFS, VMs or tunnels found by the agent on a machine, each watched as its own device.",
+    "examples": [
+      "Docker",
+      "ZFS pools",
+      "WireGuard tunnels"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the device answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "created by the agent",
+    "default_port": 0,
+    "setup": {
+      "title": "Created by the agent",
+      "steps": [
+        "There is nothing to add by hand: install the agent on the machine, and each service it finds becomes a device under that machine on its first report.",
+        "To stop watching a service, untick it in the machine's \"Services found by the agent\" panel, or delete its device: the agent's readings for it are then dropped."
+      ],
+      "warning": "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
       "doc_url": ""
     },
     "options": []

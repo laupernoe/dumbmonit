@@ -5,10 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vite';
 
-// Pas de @types/node dans le projet : on ne déclare que ce qui sert ici.
-declare const process: { env: Record<string, string | undefined> };
-
-const PROXY = { target: process.env.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
+// Node's `process`, read through globalThis: the web project has no Node type definitions.
+const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env;
+const PROXY = { target: env?.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
 
 export default defineConfig({
 	plugins: [

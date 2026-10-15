@@ -1038,6 +1038,26 @@ export interface RebindWindow {
 	minutes: number;
 }
 
+/**
+ * A service the agent can detect on its machine (`GET /api/targets/{id}/agent/modules`).
+ * Each found one is its own `agent_service` device under the machine, with
+ * `profile_id` set to the module id.
+ */
+export interface AgentModule {
+	/** `docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest` — or one this build does not know. */
+	id: string;
+	/** Display name, for a module the UI has no translation for. */
+	label: string;
+	/** The agent has reported it on this machine. */
+	detected: boolean;
+	/** Ticked: a device exists (or will) for it. */
+	enabled: boolean;
+	/** Nobody ticked or unticked it: the device follows detection. */
+	automatic: boolean;
+	target_id: number | null;
+	last_seen_at: string | null;
+}
+
 // --- Notification policy ----------------------------------------------------
 
 /** Weekly quiet-hours window, same shape as a weekly maintenance schedule. */

@@ -4,6 +4,8 @@
 //! automatique, mise en forme des échantillons — pour que le gestionnaire HTTP ne
 //! soit qu'une façade et reste vérifiable d'un coup d'œil.
 
+use std::collections::BTreeMap;
+
 use dumbmonit_proto::{
     MAX_BATCH_SAMPLES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, Sample, Target,
 };
@@ -13,6 +15,7 @@ use crate::crypto::Cipher;
 use crate::db;
 use crate::tsdb::SampleSink;
 
+use super::modules::{self, Module};
 use super::store::RegisterError;
 use super::{store, token};
 
@@ -117,7 +120,35 @@ pub async fn ingest(
         })?;
 
     let received_at_ms = chrono::Utc::now().timestamp_millis();
-    let (samples, accepted) = prepare(&target, batch.samples, received_at_ms);
+    let (machine, services) = split_by_module(batch.samples);
+
+    // Les mesures de la machine restent sous l'hôte ; celles de chaque service
+    // détecté partent sous son propre appareil, créé au besoin.
+    let mut states = modules::states(pool, target.id).await?;
+    let (mut samples, mut accepted) = prepare(&target, machine, received_at_ms);
+    for (module, readings) in services.into_values() {
+        modules::mark_seen(pool, target.id, module.id, received_at_ms).await?;
+        let state = states.entry(module.id.to_string()).or_insert_with(|| modules::ModuleState {
+            module: module.id.to_string(),
+            enabled: None,
+            target_id: None,
+            last_seen_ms: None,
+        });
+        state.last_seen_ms = Some(received_at_ms);
+        if !state.wanted() {
+            // Décoché : rien n'est gardé, ni sous le service ni sous l'hôte.
+            continue;
+        }
+        let child = modules::ensure_device(pool, cipher, &target, module, state).await?;
+        state.target_id = Some(child);
+        let Some(child) = db::targets::get(pool, cipher, child).await? else {
+            continue;
+        };
+        let (prepared, count) = prepare(&child, readings, received_at_ms);
+        samples.extend(prepared);
+        accepted += count;
+        db::targets::record_probe(pool, child.id, None).await?;
+    }
 
     sink.send(samples).await;
     store::record_batch(pool, target.id, received_at_ms, accepted).await?;
@@ -135,7 +166,26 @@ pub async fn ingest(
         // l'empreinte, et ne saura jamais le redonner.
         agent_secret: registration.issued_secret,
         bound: registration.bound,
+        disabled_modules: modules::disabled(&states),
     })
+}
+
+/// Mesures d'un lot réparties par module, la machine à part.
+type Split = (Vec<Sample>, BTreeMap<&'static str, (&'static Module, Vec<Sample>)>);
+
+/// Sépare les mesures de la machine de celles de chacun de ses services.
+fn split_by_module(samples: Vec<Sample>) -> Split {
+    let mut machine = Vec::with_capacity(samples.len());
+    let mut services: BTreeMap<&'static str, (&'static Module, Vec<Sample>)> = BTreeMap::new();
+    for sample in samples {
+        match modules::module_of(&sample.metric) {
+            Some(module) => {
+                services.entry(module.id).or_insert((module, Vec::new())).1.push(sample)
+            }
+            None => machine.push(sample),
+        }
+    }
+    (machine, services)
 }
 
 /// Contrôles qui ne dépendent d'aucun accès à la base.
@@ -329,6 +379,24 @@ mod tests {
         // La borne elle-même reste acceptée.
         let sample = Sample::new("x", 1.0, MetricKind::Gauge, 0);
         assert!(validate(&batch(vec![sample; MAX_BATCH_SAMPLES])).is_ok());
+    }
+
+    #[test]
+    fn service_samples_are_split_from_the_machine_ones() {
+        let samples = vec![
+            Sample::new("cpu_usage_percent", 1.0, MetricKind::Gauge, 0),
+            Sample::new("container_up", 1.0, MetricKind::Gauge, 0).with_label("container", "a"),
+            Sample::new("container_up", 0.0, MetricKind::Gauge, 0).with_label("container", "b"),
+            Sample::new("agent_zfs_pool_health", 0.0, MetricKind::Gauge, 0),
+            Sample::new("agent_disk_smart_ok", 1.0, MetricKind::Gauge, 0),
+        ];
+        let (machine, services) = split_by_module(samples);
+        let names: Vec<_> = machine.iter().map(|s| s.metric.as_str()).collect();
+        assert_eq!(names, ["cpu_usage_percent", "agent_disk_smart_ok"]);
+        assert_eq!(services.keys().copied().collect::<Vec<_>>(), ["docker", "zfs"]);
+        assert_eq!(services["docker"].1.len(), 2);
+        // Chaque mesure n'est rangée qu'une fois : rien n'est compté deux fois.
+        assert_eq!(machine.len() + services.values().map(|(_, v)| v.len()).sum::<usize>(), 5);
     }
 
     #[test]

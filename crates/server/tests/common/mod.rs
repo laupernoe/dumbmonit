@@ -80,6 +80,7 @@ pub async fn build(dir: tempfile::TempDir, config: Config, pool: sqlx::SqlitePoo
     // le type `agent` y est le relais lui-même.
     registry.register(Arc::new(collectors::HttpCollector::new()));
     registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
+    registry.register(Arc::new(collectors::AgentServiceCollector::new(pool.clone())));
     build_with_registry(dir, config, pool, registry).await
 }
 

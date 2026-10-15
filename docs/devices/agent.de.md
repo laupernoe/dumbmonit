@@ -143,10 +143,17 @@ beim Erstellen eines Tokens treffen.
     usermod -aG docker dumbmonit
     ```
 
-6. Plakar-Backups: automatisch erkannt — das Panel Backups erscheint, wenn das Binary plakar oder
+6. Plakar-Backups: automatisch erkannt — unter dem Rechner erscheint ein Plakar-Gerät, wenn das Binary plakar oder
    ein Kloset (~/.config/plakar/stores.yml jedes Benutzers, ~/.plakar, /var/lib/plakar) gefunden
    wird, sonst wird nichts angezeigt. Setzen Sie „plakar_klosets“ in agent.yaml, um eine feste
    Liste zu überwachen, oder „plakar: false“, um sich abzumelden.
+7. Dienste, die der Agent findet (Docker, Plakar, restic/Borg, ZFS, libvirt,
+   WireGuard, IPsec, Speedtest), werden jeweils zu einem eigenen Gerät unter dem
+   Rechner, mit eigenem Status und eigenen Alarmen. Das Panel „Vom Agenten
+   gefundene Dienste“ des Rechners listet auf, was gefunden wurde und was nicht:
+   Entfernen Sie den Haken bei einem Modul, um sein Gerät zu entfernen, setzen Sie
+   ihn, um es zu überwachen, bevor es auftaucht. Siehe
+   [Vom Agenten gefundene Dienste](#services-found-by-the-agent).
 
 !!! note
     Der Agent kontaktiert den Server, nie umgekehrt: Auf dem überwachten Rechner muss kein Port
@@ -347,6 +354,94 @@ Windows. Der Installer stoppt und entfernt den alten Dienst (`ezymonit-agent`, o
 (`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yaml`) und installiert an seiner
 Stelle `dumbmonit-agent`. Das alte Token `ezym_…` bleibt gültig, der beim Erstellen des Tokens
 gezeigte Befehl funktioniert also weiterhin; es muss nichts zuvor widerrufen werden.
+
+## Vom Agenten gefundene Dienste {#services-found-by-the-agent}
+
+Das eigene Gerät des Rechners zeigt den Rechner: CPU, Speicher, Dateisysteme,
+Netzwerk, Datenträgergesundheit (SMART), Sensoren, OS-Zustand und die Dienste,
+die Sie unter `services` auflisten. Alles andere, was der Agent erkennt, ist ein
+**Dienst**, und jeder gefundene Dienst wird zu einem eigenen Gerät der Art
+`agent_service`, abgelegt unter dem Rechner:
+
+| Dienst | Seine Metriken | Gerätename |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Internet-Speedtest | `agent_speedtest_*` | `<machine> · Speed test` |
+
+Die Aufteilung erfolgt auf dem Server anhand des Metriknamens und funktioniert
+daher mit jeder Agent-Version. Jede Serie wird einmal geschrieben, wobei `target`
+auf das Gerät gesetzt ist, zu dem sie gehört: Die Serien eines Dienstes tragen
+die ID des Dienstgeräts, die des Rechners dessen ID. Nichts wird doppelt gezählt.
+
+Ein Dienstgerät hat einen eigenen Status, eigene Alarme, Regeln,
+Regel-Overrides und Stummschaltungen. Es ist **nicht erreichbar**, wenn der Agent
+aufhört, es zu melden, während der Rechner weiter meldet (Docker-Daemon
+gestoppt, `wg` entfernt …), und zwar nach denselben drei verpassten Perioden wie
+beim Rechner selbst. Wenn der Rechner verstummt, werden seine Dienste als dahinter
+verborgen (`suppressed`) angezeigt, statt eigene Alarme auszulösen. Ein neues
+Dienstgerät übernimmt die Tags des Rechners, sodass tagbasierte Stummschaltungen
+und Regeln weiter gelten.
+
+Vor der Installation ist nichts auszuwählen. Nach dem ersten Report listet die
+Seite des Rechners jedes Modul unter **Vom Agenten gefundene Dienste**:
+
+- ein gefundener Dienst ist angehakt und verlinkt auf sein Gerät;
+- ein nicht gefundener Dienst ist nicht angehakt; haken Sie ihn an, um sein Gerät
+  trotzdem anzulegen (es bleibt nicht erreichbar, bis der Agent es meldet —
+  nützlich, um benachrichtigt zu werden, wenn ein Dienst fehlt, auf den Sie sich
+  verlassen);
+- entfernen Sie den Haken bei einem gefundenen Dienst, um sein Gerät zu löschen
+  und seine Messwerte zu verwerfen. Der Server teilt es dem Agenten in seiner
+  nächsten Bestätigung mit, und der Agent hört auf, ihn zu erfassen (ein älterer
+  Agent erfasst weiter, und der Server verwirft weiter). Das Löschen eines
+  Dienstgeräts hat dieselbe Wirkung. Haken Sie ihn erneut an, um ihn
+  zurückzuholen.
+
+Das Löschen des Rechners löscht seine Dienstgeräte. Container-Aktionen und
+-Richtlinien funktionieren von der Seite des Docker-Geräts aus; die Befehle gehen
+weiterhin an den Agenten des Rechners.
+
+Dasselbe wie beim Gerätehinweis:
+
+1. Es muss nichts von Hand hinzugefügt werden: Installieren Sie den Agenten auf
+   dem Rechner, und jeder gefundene Dienst wird bei seinem ersten Report zu einem
+   Gerät unter diesem Rechner.
+2. Um einen Dienst nicht mehr zu überwachen, entfernen Sie den Haken im Panel
+   „Vom Agenten gefundene Dienste“ des Rechners oder löschen Sie sein Gerät: Die
+   Messwerte des Agenten dafür werden dann verworfen.
+
+!!! note
+    Wenn der Rechner nicht mehr meldet, werden seine Dienste als dahinter
+    verborgen angezeigt, statt eigene Alarme auszulösen.
+
+### Upgrade einer bestehenden Installation {#upgrading-an-existing-installation}
+
+Nichts zu tun. Wenn der Agent nach dem Upgrade zum ersten Mal einen Dienst
+meldet, legt der Server sein Gerät an und verschiebt darauf, was diesen Dienst
+auf dem Rechner betraf:
+
+- Regel-Overrides der Regeln, die die Metriken des Dienstes lesen, werden auf das
+  Dienstgerät kopiert;
+- auf den Rechner beschränkte Regeln (`ids`-Selektor), die die Metriken des
+  Dienstes lesen, wählen nun auch das Dienstgerät aus;
+- die Stummschaltungen (Wartungsfenster) des Rechners werden auf das Dienstgerät
+  kopiert;
+- laufende Alarme auf den Serien des Dienstes werden unter ihrem neuen
+  Fingerprint auf das Dienstgerät verschoben, sodass sie nicht beendet und
+  erneut ausgelöst werden.
+
+Die Historie bleibt dort, wo sie geschrieben wurde: VictoriaMetrics kann
+bestehende Serien nicht umlabeln, daher bleiben Messwerte von vor dem Upgrade
+beim Rechner (sie laufen mit der Aufbewahrung ab), und die Diagramme des
+Dienstgeräts beginnen beim Upgrade. Die Anomalie-Baselines der verschobenen
+Serien beginnen erneut zu lernen. Auch die Alarmhistorie (beendete Alarme)
+bleibt beim Rechner.
 
 ## Konfigurationsdatei {#configuration-file}
 

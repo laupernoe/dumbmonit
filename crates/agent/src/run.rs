@@ -1,5 +1,6 @@
 //! Boucle de vie de l'agent : collecter, envoyer, recommencer.
 
+use std::collections::BTreeSet;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -101,6 +102,12 @@ pub struct Agent {
     /// Vrai une fois le refus de liaison signalé, pour ne le dire qu'une fois
     /// par panne plutôt qu'à chaque tentative.
     binding_refused: bool,
+    /// Modules décochés dans l'interface, tels que le dernier accusé de
+    /// réception les nomme : leur collecte est sautée. Le serveur écarte de
+    /// toute façon leurs mesures ; ne pas les lire épargne la machine (un test
+    /// de débit consomme de la bande passante, une vérification d'images
+    /// interroge les registres).
+    disabled_modules: BTreeSet<String>,
 }
 
 impl Agent {
@@ -142,6 +149,7 @@ impl Agent {
             relay: None,
             binding,
             binding_refused: false,
+            disabled_modules: BTreeSet::new(),
             identity,
             client,
             config,
@@ -153,30 +161,49 @@ impl Agent {
         let started = Instant::now();
         let mut snapshot = self.probe.read();
         snapshot.services = services::probe(&self.config.services).await;
-        if self.config.docker {
+        if self.config.docker && self.wants("docker") {
             snapshot.containers = self.docker.read().await;
             if let Some(inventory) = snapshot.containers.as_mut() {
                 self.check_updates(&mut inventory.detailed);
             }
         }
         snapshot.system_health = self.health.read().await;
-        snapshot.backups = self.plakar.read().await;
-        snapshot.backup_repos = self.backup_repos.read().await;
-        snapshot.wireguard = self.wireguard.read().await;
-        snapshot.ipsec = self.ipsec.read().await;
-        snapshot.speedtest = self.speedtest.read().await;
+        if self.wants("plakar") {
+            snapshot.backups = self.plakar.read().await;
+        }
+        if self.wants("backup_repos") {
+            snapshot.backup_repos = self.backup_repos.read().await;
+        }
+        if self.wants("wireguard") {
+            snapshot.wireguard = self.wireguard.read().await;
+        }
+        if self.wants("ipsec") {
+            snapshot.ipsec = self.ipsec.read().await;
+        }
+        let speedtest = self.wants("speedtest");
+        if speedtest {
+            snapshot.speedtest = self.speedtest.read().await;
+        }
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
-        snapshot.zfs = self.zfs.read().await;
-        snapshot.libvirt = self.libvirt.read().await;
+        if self.wants("zfs") {
+            snapshot.zfs = self.zfs.read().await;
+        }
+        if self.wants("libvirt") {
+            snapshot.libvirt = self.libvirt.read().await;
+        }
         snapshot.perf_counters = self.perf_counters.read();
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
         let now_ms = chrono::Utc::now().timestamp_millis();
         let mut samples = snapshot.to_samples(now_ms);
-        samples
-            .extend(crate::collect::speedtest::threshold_samples(&self.config.speedtest, now_ms));
+        if speedtest {
+            samples.extend(crate::collect::speedtest::threshold_samples(
+                &self.config.speedtest,
+                now_ms,
+            ));
+        }
         samples.extend(agent_samples(
             started.elapsed(),
             self.buffer.len(),
@@ -184,6 +211,23 @@ impl Agent {
             now_ms,
         ));
         samples
+    }
+
+    /// Faux pour un module que l'utilisateur a décoché dans l'interface.
+    fn wants(&self, module: &str) -> bool {
+        !self.disabled_modules.contains(module)
+    }
+
+    /// Adopte la liste des modules décochés que le serveur vient de renvoyer.
+    fn adopt_disabled_modules(&mut self, disabled: Vec<String>) {
+        let disabled: BTreeSet<String> = disabled.into_iter().collect();
+        if disabled != self.disabled_modules {
+            info!(
+                modules = disabled.iter().map(String::as_str).collect::<Vec<_>>().join(","),
+                "modules switched off from the server"
+            );
+            self.disabled_modules = disabled;
+        }
     }
 
     /// Complète chaque conteneur avec le dernier verdict de mise à jour connu et
@@ -321,6 +365,7 @@ impl Agent {
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
+                self.adopt_disabled_modules(ack.disabled_modules);
                 FlushOutcome::Sent { count }
             }
             Err(PushError::Forbidden(message)) => {
@@ -481,6 +526,26 @@ mod tests {
         let mut agent = Agent::new(config()).expect("agent");
         agent.adopt_interval(0);
         assert_eq!(agent.interval, Duration::from_secs(MIN_INTERVAL_SECS));
+    }
+
+    #[tokio::test]
+    async fn a_module_unticked_on_the_server_is_no_longer_collected() {
+        let mut config = config();
+        config.speedtest.min_download_bytes_per_second = Some(1_000_000.0);
+        let mut agent = Agent::new(config).expect("agent");
+        let threshold = |samples: &[Sample]| {
+            samples.iter().any(|s| s.metric == "agent_speedtest_download_min_bytes_per_second")
+        };
+        assert!(threshold(&agent.collect().await), "le seuil est publié tant que le module vit");
+
+        agent.adopt_disabled_modules(vec!["speedtest".into()]);
+        assert!(!agent.wants("speedtest"));
+        assert!(agent.wants("docker"), "les autres modules continuent");
+        assert!(!threshold(&agent.collect().await));
+
+        // Recoché : l'accusé suivant ne le nomme plus, la collecte reprend.
+        agent.adopt_disabled_modules(Vec::new());
+        assert!(threshold(&agent.collect().await));
     }
 
     #[tokio::test]

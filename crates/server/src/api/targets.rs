@@ -453,20 +453,35 @@ pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<StatusCode> {
+    // Les services qu'un agent a trouvés partent avec leur machine (la base
+    // les supprime d'elle-même) : leurs alertes et leurs séries aussi.
+    let services: Vec<TargetId> = crate::collectors::agent::modules::states(&state.pool, id)
+        .await?
+        .into_values()
+        .filter_map(|module| module.target_id)
+        .collect();
     if !db::targets::delete(&state.pool, id).await? {
         return Err(not_found(id));
     }
-    forget_alerts(&state, id).await;
-    // Les captures d'écran d'une surveillance de site sont des fichiers : la
-    // cascade de la base ne les atteint pas.
-    crate::webchange::store::forget_files(&state.config.data_dir, id).await;
-    spawn_series_deletion(state, id);
+    for gone in std::iter::once(id).chain(services) {
+        forget(&state, gone).await;
+    }
     Ok(StatusCode::NO_CONTENT)
 }
 
 /// Éteint sans bruit les alertes d'une cible qui vient d'être supprimée ou
 /// mise en pause. Un échec ne fait pas échouer la requête : le moteur d'alerting
 /// écarte de toute façon ces alertes à son prochain cycle.
+/// Ce qui reste d'une cible supprimée hors de sa ligne : alertes, captures,
+/// séries.
+pub(crate) async fn forget(state: &AppState, id: TargetId) {
+    forget_alerts(state, id).await;
+    // Les captures d'écran d'une surveillance de site sont des fichiers : la
+    // cascade de la base ne les atteint pas.
+    crate::webchange::store::forget_files(&state.config.data_dir, id).await;
+    spawn_series_deletion(state.clone(), id);
+}
+
 async fn forget_alerts(state: &AppState, id: TargetId) {
     match db::alerts::forget_target(&state.pool, id, chrono::Utc::now()).await {
         Ok(0) => {}

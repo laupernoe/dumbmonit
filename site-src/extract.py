@@ -37,8 +37,9 @@ FAMILIES = [
     ("mail", ["pihole", "adguard", "crowdsec", "smtp", "mdaemon", "securitygateway", "pmg"]),
     ("data", ["postgres", "mysql", "mongodb", "redis", "rabbitmq", "mqtt", "victoriametrics", "victorialogs", "loki", "graylog"]),
 ]
-# Not shown: a test entry of the catalogue and the demo device.
-SKIP = {"zz-inconnu", "dummy"}
+# Not shown: a test entry of the catalogue, the demo device, and the services an agent
+# finds (created by the agent, never added by hand).
+SKIP = {"zz-inconnu", "dummy", "agent_service"}
 
 # Types whose doc has no "built-in rules" sentence: the sections of rules.md that apply.
 RULE_SECTIONS = {
