@@ -4,13 +4,13 @@
 	 * sliding pill that springs between items (the gooey nav, tamed). The
 	 * right-hand cluster holds the command palette, the documentation (Read the
 	 * Docs, new tab), the GitHub repository, wall mode, the theme and the
-	 * session. The version number lives in `VersionTag.svelte`, fixed at a
+	 * account menu (avatar). The version number lives in `VersionTag.svelte`, fixed at a
 	 * page corner, not here: a nav is not the place for a build hash.
 	 */
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Globe, Settings2, Search, LogOut, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Globe, Settings2, Search, BookOpen, Tv, ShieldCheck } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
@@ -18,6 +18,7 @@
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import Logo from './Logo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import UserMenu from './UserMenu.svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
@@ -169,24 +170,7 @@
 				<Tv class="size-[18px]" aria-hidden="true" />
 			</a>
 			<ThemeToggle />
-			{#if auth.user}
-				<!-- Who is signed in; the role still decides what the pages offer, it is just
-				     not spelled out here any more. -->
-				<div class="ml-1 hidden items-center pl-2 md:flex" title={m.misc_nav_signed_in({ name: auth.user.username, role: auth.isAdmin ? m.misc_role_admin() : auth.canOperate ? m.misc_role_operator() : m.misc_role_viewer() })}>
-					<span class="max-w-[10rem] truncate text-[0.8125rem] font-semibold text-ink-2">{auth.displayName}</span>
-				</div>
-			{/if}
-			{#if auth.canSignOut}
-				<button
-					type="button"
-					class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-					onclick={() => void auth.logout()}
-					aria-label={m.misc_nav_sign_out()}
-					title={m.misc_nav_sign_out()}
-				>
-					<LogOut class="size-[18px]" aria-hidden="true" />
-				</button>
-			{/if}
+			<UserMenu />
 		</div>
 	</div>
 </header>
