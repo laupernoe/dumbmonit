@@ -34,7 +34,6 @@
 	"alerts_ack_unack": "Retirer l'acquittement",
 	"alerts_ack_until_resolved": "Jusqu'à résolution",
 	"alerts_bulk_ack": "Acquitter",
-	"alerts_bulk_clear": "Effacer la sélection",
 	"alerts_bulk_done": "Terminé : {count}.",
 	"alerts_bulk_ignore": "Ignorer pour cet appareil",
 	"alerts_bulk_ignore_confirm": "Ignorer {count} ?",
@@ -145,6 +144,37 @@
 	"alerts_ignore_error_undo": "Impossible de ne plus ignorer cette règle.",
 	"alerts_ignore_stop": "Ne plus ignorer",
 	"alerts_ignore_undo": "Annuler",
+	"alerts_list_add_monitor": "Ajouter une surveillance",
+	"alerts_list_and_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{first} et {count} autre",
+				"countPlural=other": "{first} et {count} autres"
+			}
+		}
+	],
+	"alerts_list_detail_address": "Adresse",
+	"alerts_list_detail_affected": "Concernés ({count})",
+	"alerts_list_detail_cause": "Cause",
+	"alerts_list_detail_last_report": "Dernier signal",
+	"alerts_list_detail_since": "Depuis",
+	"alerts_list_detail_state": "État",
+	"alerts_list_group_by": "Regrouper par",
+	"alerts_list_group_device": "Surveillance",
+	"alerts_list_group_severity": "Gravité",
+	"alerts_list_known_only": "Rien de nouveau ne vous attend. Les problèmes connus sont plus bas.",
+	"alerts_list_open": "Ouvrir",
+	"alerts_list_open_named": "Ouvrir {name}",
+	"alerts_list_see_history": "Voir l’historique",
+	"alerts_list_select": "Sélectionner",
+	"alerts_list_select_done": "Terminé",
 	"alerts_matcher_except": ", sauf {items}",
 	"alerts_matcher_except_devices": "les surveillances {phrase}",
 	"alerts_matcher_except_rule": "la règle {rule}",
@@ -216,10 +246,9 @@
 	"alerts_page_error_remove_window": "Impossible de supprimer la fenêtre de maintenance.",
 	"alerts_page_sections": "Sections des alertes",
 	"alerts_page_tab_history": "Historique",
-	"alerts_page_tab_notifications": "Notifications",
+	"alerts_page_tab_maintenance": "Maintenance",
 	"alerts_page_tab_now": "Maintenant",
 	"alerts_page_tab_rules": "Règles",
-	"alerts_page_tab_scheduled": "Planifiées",
 	"alerts_page_title": "Alertes",
 	"alerts_row_acked": "Acquittée{by}{until}{note}. Rappels suspendus ; vous serez quand même prévenu à sa résolution.",
 	"alerts_row_acked_by": " par {name}",

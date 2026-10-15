@@ -34,7 +34,6 @@
 	"alerts_ack_unack": "Un-ack",
 	"alerts_ack_until_resolved": "Until resolved",
 	"alerts_bulk_ack": "Acknowledge",
-	"alerts_bulk_clear": "Clear selection",
 	"alerts_bulk_done": "Done: {count}.",
 	"alerts_bulk_ignore": "Ignore for this device",
 	"alerts_bulk_ignore_confirm": "Ignore {count}?",
@@ -145,6 +144,37 @@
 	"alerts_ignore_error_undo": "Could not stop ignoring this rule.",
 	"alerts_ignore_stop": "Stop ignoring",
 	"alerts_ignore_undo": "Undo",
+	"alerts_list_add_monitor": "Add a monitor",
+	"alerts_list_and_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{first} and {count} more",
+				"countPlural=other": "{first} and {count} more"
+			}
+		}
+	],
+	"alerts_list_detail_address": "Address",
+	"alerts_list_detail_affected": "Affected ({count})",
+	"alerts_list_detail_cause": "Cause",
+	"alerts_list_detail_last_report": "Last report",
+	"alerts_list_detail_since": "Since",
+	"alerts_list_detail_state": "State",
+	"alerts_list_group_by": "Group by",
+	"alerts_list_group_device": "Monitor",
+	"alerts_list_group_severity": "Severity",
+	"alerts_list_known_only": "Nothing new needs you. The known problems are below.",
+	"alerts_list_open": "Open",
+	"alerts_list_open_named": "Open {name}",
+	"alerts_list_see_history": "See the history",
+	"alerts_list_select": "Select",
+	"alerts_list_select_done": "Done",
 	"alerts_matcher_except": ", except {items}",
 	"alerts_matcher_except_devices": "monitors {phrase}",
 	"alerts_matcher_except_rule": "the rule {rule}",
@@ -216,10 +246,9 @@
 	"alerts_page_error_remove_window": "Could not remove the maintenance window.",
 	"alerts_page_sections": "Alert sections",
 	"alerts_page_tab_history": "History",
-	"alerts_page_tab_notifications": "Notifications",
+	"alerts_page_tab_maintenance": "Maintenance",
 	"alerts_page_tab_now": "Now",
 	"alerts_page_tab_rules": "Rules",
-	"alerts_page_tab_scheduled": "Scheduled",
 	"alerts_page_title": "Alerts",
 	"alerts_row_acked": "Acked{by}{until}{note}. Reminders paused; you will still hear when it resolves.",
 	"alerts_row_acked_by": " by {name}",

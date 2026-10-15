@@ -34,7 +34,6 @@
 	"alerts_ack_unack": "Annulla conferma",
 	"alerts_ack_until_resolved": "Fino alla risoluzione",
 	"alerts_bulk_ack": "Riconosci",
-	"alerts_bulk_clear": "Annulla selezione",
 	"alerts_bulk_done": "Fatto: {count}.",
 	"alerts_bulk_ignore": "Ignora per questo dispositivo",
 	"alerts_bulk_ignore_confirm": "Ignorare {count}?",
@@ -145,6 +144,37 @@
 	"alerts_ignore_error_undo": "Impossibile smettere di ignorare questa regola.",
 	"alerts_ignore_stop": "Smetti di ignorare",
 	"alerts_ignore_undo": "Annulla",
+	"alerts_list_add_monitor": "Aggiungi un monitor",
+	"alerts_list_and_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{first} e {count} altro",
+				"countPlural=other": "{first} e altri {count}"
+			}
+		}
+	],
+	"alerts_list_detail_address": "Indirizzo",
+	"alerts_list_detail_affected": "Coinvolti ({count})",
+	"alerts_list_detail_cause": "Causa",
+	"alerts_list_detail_last_report": "Ultimo segnale",
+	"alerts_list_detail_since": "Da",
+	"alerts_list_detail_state": "Stato",
+	"alerts_list_group_by": "Raggruppa per",
+	"alerts_list_group_device": "Monitor",
+	"alerts_list_group_severity": "Gravità",
+	"alerts_list_known_only": "Niente di nuovo richiede la tua attenzione. I problemi noti sono qui sotto.",
+	"alerts_list_open": "Apri",
+	"alerts_list_open_named": "Apri {name}",
+	"alerts_list_see_history": "Vedi la cronologia",
+	"alerts_list_select": "Seleziona",
+	"alerts_list_select_done": "Fatto",
 	"alerts_matcher_except": ", tranne {items}",
 	"alerts_matcher_except_devices": "i monitor {phrase}",
 	"alerts_matcher_except_rule": "la regola {rule}",
@@ -216,10 +246,9 @@
 	"alerts_page_error_remove_window": "Impossibile rimuovere la finestra di manutenzione.",
 	"alerts_page_sections": "Sezioni degli avvisi",
 	"alerts_page_tab_history": "Cronologia",
-	"alerts_page_tab_notifications": "Notifiche",
+	"alerts_page_tab_maintenance": "Manutenzione",
 	"alerts_page_tab_now": "Adesso",
 	"alerts_page_tab_rules": "Regole",
-	"alerts_page_tab_scheduled": "Pianificate",
 	"alerts_page_title": "Avvisi",
 	"alerts_row_acked": "Confermato{by}{until}{note}. Promemoria in pausa; riceverai comunque una notifica alla risoluzione.",
 	"alerts_row_acked_by": " da {name}",

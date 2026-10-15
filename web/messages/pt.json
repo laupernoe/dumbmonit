@@ -34,7 +34,6 @@
 	"alerts_ack_unack": "Remover reconhecimento",
 	"alerts_ack_until_resolved": "Até ser resolvido",
 	"alerts_bulk_ack": "Reconhecer",
-	"alerts_bulk_clear": "Limpar seleção",
 	"alerts_bulk_done": "Concluído: {count}.",
 	"alerts_bulk_ignore": "Ignorar para este dispositivo",
 	"alerts_bulk_ignore_confirm": "Ignorar {count}?",
@@ -145,6 +144,37 @@
 	"alerts_ignore_error_undo": "Não foi possível parar de ignorar esta regra.",
 	"alerts_ignore_stop": "Parar de ignorar",
 	"alerts_ignore_undo": "Desfazer",
+	"alerts_list_add_monitor": "Adicionar um monitor",
+	"alerts_list_and_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{first} e mais {count}",
+				"countPlural=other": "{first} e mais {count}"
+			}
+		}
+	],
+	"alerts_list_detail_address": "Endereço",
+	"alerts_list_detail_affected": "Afetados ({count})",
+	"alerts_list_detail_cause": "Causa",
+	"alerts_list_detail_last_report": "Último sinal",
+	"alerts_list_detail_since": "Desde",
+	"alerts_list_detail_state": "Estado",
+	"alerts_list_group_by": "Agrupar por",
+	"alerts_list_group_device": "Monitor",
+	"alerts_list_group_severity": "Gravidade",
+	"alerts_list_known_only": "Nada de novo precisa de si. Os problemas conhecidos estão abaixo.",
+	"alerts_list_open": "Abrir",
+	"alerts_list_open_named": "Abrir {name}",
+	"alerts_list_see_history": "Ver o histórico",
+	"alerts_list_select": "Selecionar",
+	"alerts_list_select_done": "Concluído",
 	"alerts_matcher_except": ", exceto {items}",
 	"alerts_matcher_except_devices": "os monitores {phrase}",
 	"alerts_matcher_except_rule": "a regra {rule}",
@@ -216,10 +246,9 @@
 	"alerts_page_error_remove_window": "Não foi possível remover a janela de manutenção.",
 	"alerts_page_sections": "Secções dos alertas",
 	"alerts_page_tab_history": "Histórico",
-	"alerts_page_tab_notifications": "Notificações",
+	"alerts_page_tab_maintenance": "Manutenção",
 	"alerts_page_tab_now": "Agora",
 	"alerts_page_tab_rules": "Regras",
-	"alerts_page_tab_scheduled": "Agendadas",
 	"alerts_page_title": "Alertas",
 	"alerts_row_acked": "Reconhecido{by}{until}{note}. Lembretes em pausa; continuará a ser avisado quando for resolvido.",
 	"alerts_row_acked_by": " por {name}",
