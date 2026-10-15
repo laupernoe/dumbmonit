@@ -92,6 +92,9 @@ const ROW = NODE_HEIGHT + 14;
 const SECTION_HEADER = 34;
 const SECTION_PAD = 16;
 const SECTION_GAP = 28;
+/** A parent with more leaves than this spreads them over several columns, up to `FAN_COLUMNS`. */
+const FAN_WRAP = 12;
+const FAN_COLUMNS = 4;
 /** Width over height the folder packing aims for: a landscape sheet. */
 const TARGET_RATIO = 1.5;
 
@@ -258,6 +261,19 @@ function layoutBlock(forest: Forest, group: string, roots: string[]): Block {
 		if (kids.length === 0) {
 			at = row;
 			row += 1;
+		} else if (kids.length > FAN_WRAP && kids.every((k) => (forest.children.get(k) ?? []).length === 0)) {
+			// A hub with dozens of leaves: a grid beside it, not one endless column
+			// (which fit-to-screen would shrink to illegible boxes).
+			const cols = Math.min(FAN_COLUMNS, Math.ceil(kids.length / FAN_WRAP));
+			const rows = Math.ceil(kids.length / cols);
+			kids.forEach((k, i) => {
+				seen.add(k);
+				const c = Math.floor(i / rows);
+				maxDepth = Math.max(maxDepth, depth + 1 + c);
+				places.push({ id: k, x: (depth + 1 + c) * COLUMN, y: (row + (i % rows)) * ROW, depth: depth + 1 });
+			});
+			at = row + (rows - 1) / 2;
+			row += rows;
 		} else {
 			const rows = kids.map((k) => place(k, depth + 1));
 			at = (rows[0] + rows[rows.length - 1]) / 2;

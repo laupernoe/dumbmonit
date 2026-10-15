@@ -102,6 +102,21 @@ test('the layout puts children to the right and never overlaps nodes', () => {
 	assert.ok(layout.width > 0 && layout.height > 0);
 });
 
+test('a hub with many leaves spreads them over columns instead of one tall strip', () => {
+	const nodes = [node('t1')];
+	const edges = [];
+	for (let i = 2; i <= 41; i++) {
+		nodes.push(node(`t${i}`));
+		edges.push({ from: 't1', to: `t${i}`, source: 'parent' });
+	}
+	const layout = layoutMap(buildForest(nodes, edges));
+	assert.ok(layout.height < layout.width * 2, `${layout.width}x${layout.height} is a strip`);
+	const places = layout.nodes.map((n) => `${n.x},${n.y}`);
+	assert.equal(new Set(places).size, nodes.length, 'no two boxes share a place');
+	const hub = layout.nodes.find((n) => n.node.id === 't1');
+	assert.ok(layout.nodes.every((n) => n === hub || n.x > hub.x));
+});
+
 test('an empty map has no size', () => {
 	const layout = layoutMap(buildForest([], []));
 	assert.equal(layout.width, 0);
