@@ -143,7 +143,8 @@ async fn seul_un_administrateur_change_le_reglage() {
     let (app, _ids) = setup_off().await;
     let admin = app.admin_cookie().await;
     let viewer = app.viewer_cookie(&admin).await;
-    let refused = app.put("/api/security/settings", json!({ "enabled": true }), Some(&viewer)).await;
+    let refused =
+        app.put("/api/security/settings", json!({ "enabled": true }), Some(&viewer)).await;
     assert_eq!(refused.status, StatusCode::FORBIDDEN, "{}", refused.body);
     // Lire le réglage reste permis à tous.
     let read = app.get("/api/security/settings", Some(&viewer)).await;

@@ -130,12 +130,12 @@ impl SecurityProvider for Synology {
     }
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
-        let flag = |def: &CheckDef, metric: &str, ok_when: f64, ok: &str, ko: &str| {
-            match facts.max(metric) {
-                None => def.unknown(ADMIN_ONLY),
-                Some(v) if v == ok_when => def.pass(ok),
-                Some(_) => def.fail(ko),
-            }
+        let flag = |def: &CheckDef, metric: &str, ok_when: f64, ok: &str, ko: &str| match facts
+            .max(metric)
+        {
+            None => def.unknown(ADMIN_ONLY),
+            Some(v) if v == ok_when => def.pass(ok),
+            Some(_) => def.fail(ko),
         };
         vec![
             dsm_version(facts),
