@@ -2,6 +2,7 @@
 <html lang="es" dir="ltr">
 <head>
 <meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dispositivos que puede monitorizar · DumbMonit</title>
@@ -24,6 +25,7 @@
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
 <link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
@@ -49,11 +51,12 @@
 <header class="topbar">
 	<div class="wrap">
 		<a class="brand" href="../" aria-label="Inicio de DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
-		<nav class="nav" aria-label="Secciones">
+		<nav class="nav" id="site-nav" aria-label="Secciones">
 			<a href="../features/">Funciones</a>
 			<a href="./" aria-current="page">Dispositivos</a>
 			<a href="../install/">Instalar</a>
 			<a href="../community/">Docs y comunidad</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Demo en vivo</a>
 		</nav>
 		<div class="actions">
 			<details class="lang">
@@ -72,6 +75,7 @@
 			</details>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo en vivo</a>
 			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menú"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
@@ -79,7 +83,7 @@
 <main id="main">
 <section class="page-head">
 	<div class="wrap">
-		<h1>Dispositivos que puede monitorizar</h1>
+		<h1 class="blur-in"><span class="w" style="--i:0">Dispositivos</span> <span class="w" style="--i:1">que</span> <span class="w" style="--i:2">puede</span> <span class="w" style="--i:3">monitorizar</span></h1>
 		<p class="lede">65 tipos de dispositivo en 10 familias. Cada uno se lee por su propia API, con una cuenta de solo lectura cuando el fabricante la ofrece. Elija una familia para ver el detalle.</p>
 		<p class="code-note">Las descripciones de dispositivos y los textos de las reglas de alerta están en inglés, como en el producto. Las etiquetas de la página siguen su idioma.</p>
 	</div>
@@ -203,20 +207,6 @@
 </footer>
 
 <script>
-document.querySelectorAll('[data-copy]').forEach(function (b) {
-	b.addEventListener('click', function () {
-		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
-		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
-	});
-});
-document.querySelectorAll('.lang a').forEach(function (a) {
-	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
-});
-document.addEventListener('click', function (e) {
-	var d = document.querySelector('.lang[open]');
-	if (d && !d.contains(e.target)) d.removeAttribute('open');
-});
 (function () {
 	var list = document.getElementById('dev-list');
 	if (!list) return;
@@ -225,18 +215,39 @@ document.addEventListener('click', function (e) {
 	var chips = [].slice.call(document.querySelectorAll('#dev-fams a'));
 	var count = document.getElementById('dev-count');
 	var none = document.getElementById('dev-none');
+	var still = window.matchMedia('(prefers-reduced-motion: reduce)');
+	var ease = 'cubic-bezier(0.16, 1, 0.3, 1)';
 	var fam = '';
 	document.getElementById('dev-search').hidden = false;
 	function apply() {
 		var term = q.value.trim().toLowerCase(), n = 0;
-		items.forEach(function (li) {
+		// FLIP: cards that stay glide from their old place, cards that arrive fade in.
+		var move = !still.matches && list.animate;
+		var before = move ? items.map(function (li) { return li.hidden ? null : li.getBoundingClientRect(); }) : [];
+		var arriving = [];
+		items.forEach(function (li, i) {
 			var ok = (!fam || li.dataset.family === fam) && (!term || li.dataset.q.indexOf(term) > -1);
+			if (ok && li.hidden) arriving.push(li);
 			li.hidden = !ok;
 			if (ok) n++;
 		});
 		none.hidden = n > 0;
 		count.hidden = false;
 		count.textContent = count.dataset.tpl.replace('{n}', n);
+		if (!move) return;
+		var vh = window.innerHeight;
+		items.forEach(function (li, i) {
+			var a = before[i];
+			if (li.hidden || !a) return;
+			var b = li.getBoundingClientRect();
+			var dx = a.left - b.left, dy = a.top - b.top;
+			if ((dx || dy) && b.top < vh && b.bottom > 0) {
+				li.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 360, easing: ease });
+			}
+		});
+		arriving.slice(0, 18).forEach(function (li, k) {
+			li.animate([{ opacity: 0, transform: 'translateY(10px) scale(0.97)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: 40 + k * 22, easing: ease, fill: 'backwards' });
+		});
 	}
 	chips.forEach(function (a) {
 		a.addEventListener('click', function (e) {

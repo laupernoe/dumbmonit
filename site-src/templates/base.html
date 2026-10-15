@@ -2,6 +2,7 @@
 <html lang="@@LANG@@" dir="ltr">
 <head>
 <meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
 @@DETECT@@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@@TITLE@@</title>
@@ -15,6 +16,7 @@
 <link rel="apple-touch-icon" href="@@ROOT@@apple-touch-icon.png">
 <link rel="preload" href="@@ROOT@@assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="@@ROOT@@assets/site.css">
+<script src="@@ROOT@@assets/site.js" defer></script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
@@ -40,13 +42,15 @@
 <header class="topbar">
 	<div class="wrap">
 		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="30" height="30">DumbMonit</a>
-		<nav class="nav" aria-label="{{k173}}">
+		<nav class="nav" id="site-nav" aria-label="{{k173}}">
 @@NAV@@
+			<a class="nav-extra" href="https://demo.dumbmonit.app">{{k008}}</a>
 		</nav>
 		<div class="actions">
 @@SWITCHER@@
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
 			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="{{nav_menu}}"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
@@ -75,20 +79,6 @@
 </footer>
 
 <script>
-document.querySelectorAll('[data-copy]').forEach(function (b) {
-	b.addEventListener('click', function () {
-		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
-		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
-	});
-});
-document.querySelectorAll('.lang a').forEach(function (a) {
-	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
-});
-document.addEventListener('click', function (e) {
-	var d = document.querySelector('.lang[open]');
-	if (d && !d.contains(e.target)) d.removeAttribute('open');
-});
 @@SCRIPT@@
 </script>
 </body>

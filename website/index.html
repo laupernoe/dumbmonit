@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
 <script>
 (function () {
 	try {
@@ -39,6 +40,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
@@ -64,11 +66,12 @@
 <header class="topbar">
 	<div class="wrap">
 		<a class="brand" href="./" aria-label="DumbMonit home"><img src="favicon.svg" alt="" width="30" height="30">DumbMonit</a>
-		<nav class="nav" aria-label="Sections">
+		<nav class="nav" id="site-nav" aria-label="Sections">
 			<a href="features/">Features</a>
 			<a href="devices/">Devices</a>
 			<a href="install/">Install</a>
 			<a href="community/">Docs and community</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Live demo</a>
 		</nav>
 		<div class="actions">
 			<details class="lang">
@@ -87,6 +90,7 @@
 			</details>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live demo</a>
 			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
@@ -117,7 +121,28 @@
 					<a class="btn btn-secondary" href="install/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>Read the install guide</a>
 				</div>
 			</div>
-			<img class="mascot" src="assets/mascot.svg" alt="The DumbMonit pigeon, slate blue with googly eyes and an orange beak" width="280" height="320">
+			<div class="sky" id="sky" role="img" aria-label="The DumbMonit pigeon, slate blue with googly eyes and an orange beak">
+				<svg viewBox="0 0 200 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+					<g class="stars"><circle cx="18" cy="28" r="1.2" style="--i:0"/><circle cx="46" cy="44" r="0.9" style="--i:1"/><circle cx="72" cy="24" r="1.1" style="--i:2"/><circle cx="104" cy="36" r="0.8" style="--i:3"/><circle cx="128" cy="22" r="1.3" style="--i:4"/><circle cx="168" cy="32" r="0.9" style="--i:5"/><circle cx="188" cy="56" r="1.1" style="--i:6"/><circle cx="150" cy="66" r="0.8" style="--i:7"/><circle cx="30" cy="72" r="0.9" style="--i:8"/><circle cx="92" cy="60" r="1" style="--i:9"/></g>
+					<g class="sun" transform="translate(152 46)"><circle r="19" class="halo"/><g class="rays"><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(22.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(67.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(112.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(157.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(202.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(247.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(292.5)"/><line x1="0" y1="-15.5" x2="0" y2="-19.5" transform="rotate(337.5)"/></g><circle r="11" class="sun-disc"/></g>
+					<g class="moon" transform="translate(152 46)"><circle r="19" class="halo"/><path d="M0-11A11 11 0 1 0 0 11A15 15 0 0 1 0-11Z" class="moon-disc"/><circle cx="-6" cy="-3" r="1.5" class="crater"/><circle cx="-4" cy="4" r="1" class="crater"/></g>
+					<g class="drift drift--slow"><path d="M8 22C1 22-1 12 7 10C7 2 18 0 23 6C27-1 40 1 40 10C47 10 48 22 40 22Z" class="cloud" transform="translate(20 28) scale(0.9)"/></g>
+					<g class="drift"><path d="M8 22C1 22-1 12 7 10C7 2 18 0 23 6C27-1 40 1 40 10C47 10 48 22 40 22Z" class="cloud" transform="translate(116 72) scale(1.1)"/></g>
+					<path d="M-10 142V120C20 110 46 108 74 113C104 118 130 106 160 109C182 111 200 115 214 118V142Z" class="hill"/>
+					<g class="mast" transform="translate(30 115)"><path d="M0 0V-26M-6 0L0-26L6 0M-4-9H4M-3-16H3" class="mast-frame"/><circle cy="-28" r="2.4" class="mast-led"/></g>
+					<g class="flight"><g class="bob"><g class="ruffle"><g class="pigeon">
+						<path d="M-9-4L-22-9L-19-3L-22 3L-10 3Z" class="body ink"/>
+						<path d="M0 0C-11 1-15 9-11 15C-4 13-1 7 0 0Z" transform="translate(-1 -3)" class="wing wing--down body ink"/>
+						<ellipse rx="13" ry="9" class="body ink"/>
+						<path d="M1 3C4 9 10 8 12.5 2C11 9 6 12 0 9.5Z" class="chest"/>
+						<circle cx="11" cy="-7" r="7" class="body ink"/>
+						<circle cx="13" cy="-8" r="3.4" class="eye ink-thin"/>
+						<circle cx="14.2" cy="-7.6" r="1.5" class="pupil"/>
+						<path d="M17.5-6.5L24-5L17.5-2.5Z" class="beak ink-thin"/>
+						<path d="M0 0C-10-4-10-14 1-16C5-11 5-4 0 0Z" transform="translate(-1 -3)" class="wing wing--up body ink"/>
+					</g></g></g></g>
+				</svg>
+			</div>
 		</div>
 
 		<figure class="hero-shot">
@@ -213,22 +238,6 @@
 	</div>
 </footer>
 
-<script>
-document.querySelectorAll('[data-copy]').forEach(function (b) {
-	b.addEventListener('click', function () {
-		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
-		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
-	});
-});
-document.querySelectorAll('.lang a').forEach(function (a) {
-	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
-});
-document.addEventListener('click', function (e) {
-	var d = document.querySelector('.lang[open]');
-	if (d && !d.contains(e.target)) d.removeAttribute('open');
-});
 
-</script>
 </body>
 </html>

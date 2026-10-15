@@ -86,6 +86,7 @@
  "nav_devices": "Dispositivos",
  "nav_install": "Instalar",
  "nav_community": "Docs y comunidad",
+ "nav_menu": "Menú",
  "t_features": "Funciones · DumbMonit",
  "d_features": "Alertas que entienden las dependencias, @@NCHANNELS@@ canales de notificación, páginas de estado públicas, pantalla mural, agentes para Linux, Windows, macOS y FreeBSD, informes por correo y un servidor MCP. Código abierto.",
  "t_devices": "Dispositivos que puede monitorizar · DumbMonit",

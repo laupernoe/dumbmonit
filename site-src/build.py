@@ -284,18 +284,39 @@ DEVICES_SCRIPT = """(function () {
 	var chips = [].slice.call(document.querySelectorAll('#dev-fams a'));
 	var count = document.getElementById('dev-count');
 	var none = document.getElementById('dev-none');
+	var still = window.matchMedia('(prefers-reduced-motion: reduce)');
+	var ease = 'cubic-bezier(0.16, 1, 0.3, 1)';
 	var fam = '';
 	document.getElementById('dev-search').hidden = false;
 	function apply() {
 		var term = q.value.trim().toLowerCase(), n = 0;
-		items.forEach(function (li) {
+		// FLIP: cards that stay glide from their old place, cards that arrive fade in.
+		var move = !still.matches && list.animate;
+		var before = move ? items.map(function (li) { return li.hidden ? null : li.getBoundingClientRect(); }) : [];
+		var arriving = [];
+		items.forEach(function (li, i) {
 			var ok = (!fam || li.dataset.family === fam) && (!term || li.dataset.q.indexOf(term) > -1);
+			if (ok && li.hidden) arriving.push(li);
 			li.hidden = !ok;
 			if (ok) n++;
 		});
 		none.hidden = n > 0;
 		count.hidden = false;
 		count.textContent = count.dataset.tpl.replace('{n}', n);
+		if (!move) return;
+		var vh = window.innerHeight;
+		items.forEach(function (li, i) {
+			var a = before[i];
+			if (li.hidden || !a) return;
+			var b = li.getBoundingClientRect();
+			var dx = a.left - b.left, dy = a.top - b.top;
+			if ((dx || dy) && b.top < vh && b.bottom > 0) {
+				li.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 360, easing: ease });
+			}
+		});
+		arriving.slice(0, 18).forEach(function (li, k) {
+			li.animate([{ opacity: 0, transform: 'translateY(10px) scale(0.97)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: 40 + k * 22, easing: ease, fill: 'backwards' });
+		});
 	}
 	chips.forEach(function (a) {
 		a.addEventListener('click', function (e) {
@@ -404,10 +425,20 @@ def build_page(templates, svgs, strings, data, page, code):
     t_full = re.sub(r"\[\[(svg\d+)\]\]", lambda m: svgs[m.group(1)], t_full)
     t_full = t_full.replace("@@DOCS@@", DOCS_HOST + docs_dir + "/latest/")
     t_full = re.sub(r"@@LINK:([^@]*)@@", lambda m: link(m.group(1)), t_full)
+    t_full = re.sub(r'<h1 class="blur-in">([^<]*)</h1>', lambda m: '<h1 class="blur-in">' + blur_words(m.group(1), code) + "</h1>", t_full)
     t_full = t_full.replace('<script>\n\n</script>', "")
     leftover = re.search(r"@@[A-Za-z:_]+@@|\{\{[^}]*\}\}", t_full)
     assert not leftover, f"unfilled placeholder {leftover.group(0)} in {code}/{path}"
     return t_full
+
+
+def blur_words(text, code):
+    """A title that arrives word by word out of a blur (CSS only, site.css .blur-in): each word
+    gets its own span and rank. Chinese has no spaces: one span per character. Spaces stay
+    outside the spans, so the title wraps and reads exactly as before."""
+    words = list(text) if code == "zh-Hans" else text.split(" ")
+    sep = "" if code == "zh-Hans" else " "
+    return sep.join(f'<span class="w" style="--i:{min(i, 12)}">{w}</span>' for i, w in enumerate(words) if w)
 
 
 def _link(code, path, target):

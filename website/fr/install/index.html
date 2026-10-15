@@ -2,6 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Installer · DumbMonit</title>
@@ -24,6 +25,7 @@
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
 <link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
@@ -49,11 +51,12 @@
 <header class="topbar">
 	<div class="wrap">
 		<a class="brand" href="../" aria-label="Accueil DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
-		<nav class="nav" aria-label="Sections">
+		<nav class="nav" id="site-nav" aria-label="Sections">
 			<a href="../features/">Fonctionnalités</a>
 			<a href="../devices/">Appareils</a>
 			<a href="./" aria-current="page">Installer</a>
 			<a href="../community/">Docs et communauté</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Démo en ligne</a>
 		</nav>
 		<div class="actions">
 			<details class="lang">
@@ -72,6 +75,7 @@
 			</details>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Démo en ligne</a>
 			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
@@ -183,22 +187,6 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	</div>
 </footer>
 
-<script>
-document.querySelectorAll('[data-copy]').forEach(function (b) {
-	b.addEventListener('click', function () {
-		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
-		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
-	});
-});
-document.querySelectorAll('.lang a').forEach(function (a) {
-	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
-});
-document.addEventListener('click', function (e) {
-	var d = document.querySelector('.lang[open]');
-	if (d && !d.contains(e.target)) d.removeAttribute('open');
-});
 
-</script>
 </body>
 </html>

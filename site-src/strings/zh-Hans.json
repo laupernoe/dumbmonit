@@ -86,6 +86,7 @@
  "nav_devices": "设备",
  "nav_install": "安装",
  "nav_community": "文档与社区",
+ "nav_menu": "菜单",
  "t_features": "功能 · DumbMonit",
  "d_features": "感知依赖关系的告警、@@NCHANNELS@@ 个通知渠道、公开状态页、墙面大屏、适用于 Linux、Windows、macOS 和 FreeBSD 的代理、邮件报告以及 MCP 服务器。开源。",
  "t_devices": "可监控的设备 · DumbMonit",

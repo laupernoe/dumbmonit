@@ -442,7 +442,7 @@ p {
 		padding: 88px 0 56px;
 	}
 	.hero-grid {
-		grid-template-columns: minmax(0, 1fr) 280px;
+		grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
 	}
 }
 .hero h1 {
@@ -469,28 +469,6 @@ p {
 	gap: 12px;
 	margin-top: 28px;
 }
-.mascot {
-	display: none;
-	justify-self: center;
-	width: 220px;
-	filter: drop-shadow(0 18px 24px rgb(22 33 58 / 0.18));
-}
-@media (min-width: 980px) {
-	.mascot {
-		display: block;
-	}
-}
-@media (prefers-reduced-motion: no-preference) {
-	.mascot {
-		animation: bob 5s ease-in-out infinite;
-	}
-	@keyframes bob {
-		50% {
-			transform: translateY(-8px) rotate(-2deg);
-		}
-	}
-}
-
 /* ---------- code block ---------- */
 .code {
 	position: relative;
@@ -1431,4 +1409,615 @@ footer nav a,
 }
 .brand {
 	min-height: 40px;
+}
+
+/* =====================================================================
+   Motion. Ported from the app's effects (web/src/lib/ui/effects: BlurText,
+   Tilt, Spotlight, SkyScene) to plain CSS and a small script (site.js).
+   Rules: transform and opacity only, nothing hides content without JS,
+   one signature per page (home: the sky; install: the steps lighting up;
+   the other pages: the title arriving out of a blur), and
+   prefers-reduced-motion stills everything that moves.
+   ===================================================================== */
+
+/* ---------- the sky (home): the app's weather window, clear weather ---------- */
+.sky {
+	--sky-top: #8fc3ea;
+	--sky-bottom: #dcebf6;
+	--sky-ink: #1e2640;
+	--cloud: #fbf9f4;
+	--sun: #f6c453;
+	--moon: #ebe6d2;
+	--hill: #b9d3a6;
+	--body: #6f83a3;
+	position: relative;
+	aspect-ratio: 2 / 1;
+	max-width: 640px;
+	border: 1px solid var(--c-line);
+	border-radius: var(--radius-card);
+	overflow: hidden;
+	background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+	box-shadow: var(--shadow-lift);
+	contain: paint;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 980px) {
+	.sky {
+		aspect-ratio: 10 / 7;
+		box-shadow: var(--shadow-float);
+	}
+}
+@media (prefers-color-scheme: dark) {
+	.sky {
+		--sky-top: #101a36;
+		--sky-bottom: #1b2a4d;
+		--sky-ink: #0a0f1f;
+		--cloud: #3d4a66;
+		--hill: #16233f;
+	}
+}
+.sky > svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.sky .ink {
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+	stroke-linejoin: round;
+}
+.sky .ink-thin {
+	stroke: var(--sky-ink);
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+.sky .body {
+	fill: var(--body);
+}
+.sky .chest {
+	fill: #4c9d6f;
+}
+.sky .eye {
+	fill: #fff;
+}
+.sky .pupil {
+	fill: var(--sky-ink);
+}
+.sky .beak {
+	fill: #e97b3a;
+}
+.sky .cloud {
+	fill: var(--cloud);
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+	stroke-linejoin: round;
+}
+.sky .hill {
+	fill: var(--hill);
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+}
+.sky .mast-frame {
+	fill: none;
+	stroke: var(--sky-ink);
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.sky .mast-led {
+	fill: var(--c-signal);
+	stroke: var(--sky-ink);
+	stroke-width: 1.2;
+}
+.sky .halo {
+	fill: var(--sun);
+	opacity: 0.22;
+}
+.sky .moon .halo {
+	fill: var(--moon);
+	opacity: 0.1;
+}
+.sky .sun-disc {
+	fill: var(--sun);
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+}
+.sky .rays line {
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+.sky .moon-disc {
+	fill: var(--moon);
+	stroke: var(--sky-ink);
+	stroke-width: 2;
+	stroke-linejoin: round;
+}
+.sky .crater {
+	fill: rgb(30 38 64 / 0.18);
+}
+.sky .stars circle {
+	fill: #fbf9f4;
+	opacity: 0.7;
+}
+.sky .moon,
+.sky .stars {
+	display: none;
+}
+@media (prefers-color-scheme: dark) {
+	.sky .sun {
+		display: none;
+	}
+	.sky .moon,
+	.sky .stars {
+		display: inline;
+	}
+}
+/* Resting pose (reduced motion): mid-sky, wings up. */
+.sky .flight {
+	transform: translate(96px, 64px);
+}
+.sky .wing--down {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.sky .flight {
+		animation: sky-fly 17s linear -6s infinite;
+	}
+	.sky .bob {
+		animation: sky-bob 2.3s ease-in-out infinite;
+	}
+	.sky .wing--up {
+		animation: sky-frame-a 0.38s steps(1, end) infinite;
+	}
+	.sky .wing--down {
+		animation: sky-frame-b 0.38s steps(1, end) infinite;
+	}
+	.sky .rays {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: sky-shimmer 6s ease-in-out infinite;
+	}
+	.sky .stars circle {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: sky-twinkle 4s ease-in-out infinite;
+		animation-delay: calc(var(--i) * -0.55s);
+	}
+	.sky .drift {
+		animation: sky-drift 13s ease-in-out infinite alternate;
+	}
+	.sky .drift--slow {
+		animation-duration: 18s;
+		animation-direction: alternate-reverse;
+	}
+	/* The mast's LED breathes, like a steady Led in the app. */
+	.sky .mast-led {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: sky-led 2.8s ease-in-out infinite;
+	}
+	/* A click on the sky pokes the pigeon: one barrel roll. */
+	.sky.poke .ruffle {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: sky-loop 640ms cubic-bezier(0.65, 0, 0.35, 1) 1;
+	}
+	/* Off screen or in a hidden tab: nothing to spend motion on. */
+	.sky.paused * {
+		animation-play-state: paused !important;
+	}
+}
+@keyframes sky-fly {
+	from {
+		transform: translate(-36px, 72px);
+	}
+	to {
+		transform: translate(236px, 54px);
+	}
+}
+@keyframes sky-bob {
+	50% {
+		transform: translateY(-5px);
+	}
+}
+@keyframes sky-frame-a {
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes sky-frame-b {
+	0%,
+	49.9% {
+		opacity: 0;
+	}
+	50%,
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes sky-shimmer {
+	50% {
+		transform: rotate(22deg);
+		opacity: 0.75;
+	}
+}
+@keyframes sky-twinkle {
+	50% {
+		opacity: 0.3;
+		transform: scale(0.8);
+	}
+}
+@keyframes sky-drift {
+	from {
+		transform: translateX(-8px);
+	}
+	to {
+		transform: translateX(10px);
+	}
+}
+@keyframes sky-led {
+	50% {
+		opacity: 0.45;
+		transform: scale(0.85);
+	}
+}
+@keyframes sky-loop {
+	to {
+		transform: rotate(-360deg);
+	}
+}
+
+/* ---------- titles that sharpen out of a blur (BlurText), CSS only ---------- */
+@media (prefers-reduced-motion: no-preference) {
+	.blur-in .w {
+		display: inline-block;
+		animation: blur-in 620ms var(--ease-out-expo) both;
+		animation-delay: calc(var(--i) * 45ms + 40ms);
+	}
+}
+@keyframes blur-in {
+	from {
+		opacity: 0;
+		filter: blur(10px);
+		transform: translateY(0.3em);
+	}
+}
+
+/* ---------- sections rise in on scroll (site.js marks only what is below the fold) ---------- */
+.reveal {
+	opacity: 0;
+	transform: translateY(18px);
+	transition:
+		opacity 700ms var(--ease-out-expo),
+		transform 700ms var(--ease-out-expo);
+	transition-delay: var(--rd, 0ms);
+}
+.reveal.in {
+	opacity: 1;
+	transform: none;
+}
+@media print {
+	.reveal {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ---------- cards and screenshots lean toward the pointer (Tilt + Spotlight) ---------- */
+.tilt {
+	transition:
+		transform 220ms var(--ease-out-expo),
+		box-shadow 220ms var(--ease-out-expo),
+		border-color 160ms;
+}
+.tilt:hover {
+	box-shadow: var(--shadow-float);
+}
+.tilt.reveal {
+	transition:
+		opacity 700ms var(--ease-out-expo),
+		transform 700ms var(--ease-out-expo);
+	transition-delay: var(--rd, 0ms);
+}
+.card.tilt:hover,
+.dev-card.tilt:hover {
+	background-image: radial-gradient(
+		340px circle at var(--mx, 50%) var(--my, 50%),
+		var(--c-signal-soft),
+		transparent 60%
+	);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+}
+.btn:active {
+	transform: translateY(0) scale(0.97);
+	transition-duration: 80ms;
+}
+/* The primary's light sweep, as in the app. */
+.btn-primary::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.3) 50%, transparent 70%);
+	transform: translateX(-120%);
+	pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.btn-primary:hover::after {
+		transform: translateX(120%);
+		transition: transform 700ms var(--ease-out-expo);
+	}
+	.copy.done {
+		animation: bump 360ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+}
+@keyframes bump {
+	35% {
+		transform: scale(1.08);
+	}
+}
+.copy {
+	transition:
+		color 160ms,
+		border-color 160ms,
+		background-color 160ms;
+}
+.copy.done {
+	color: var(--c-signal-ink);
+	border-color: var(--c-signal);
+}
+.nav a,
+.lang summary,
+.toc a,
+.fam-chips a,
+.badges a {
+	transition:
+		background-color 160ms,
+		color 160ms,
+		border-color 160ms,
+		transform 160ms var(--ease-out-expo);
+}
+.toc a:active,
+.fam-chips a:active,
+.badges a:active {
+	transform: scale(0.96);
+}
+
+/* ---------- language selector: the list unfolds from its corner ---------- */
+.lang summary svg {
+	transition: transform 500ms var(--ease-out-expo);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.lang[open] summary svg {
+		transform: rotate(-30deg);
+	}
+	.lang[open] ul {
+		transform-origin: top right;
+		animation: pop 220ms var(--ease-out-expo);
+	}
+}
+@keyframes pop {
+	from {
+		opacity: 0;
+		transform: translateY(-6px) scale(0.96);
+	}
+}
+
+/* ---------- mobile menu (only with JS: without it the links stay on a second row) ---------- */
+.nav-extra {
+	display: none !important;
+}
+@media (max-width: 599px) {
+	.js .nav .nav-extra {
+		display: flex !important;
+	}
+	.js .topbar .actions .btn-primary {
+		display: none;
+	}
+}
+.menu-btn {
+	display: none;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	flex: none;
+	padding: 0;
+	border: 1px solid var(--c-line-strong);
+	border-radius: 8px;
+	background: var(--c-surface);
+	color: var(--c-ink);
+	cursor: pointer;
+}
+.menu-btn span,
+.menu-btn span::before,
+.menu-btn span::after {
+	display: block;
+	width: 18px;
+	height: 2px;
+	border-radius: 2px;
+	background: currentColor;
+	transition:
+		transform 260ms var(--ease-out-expo),
+		background-color 120ms;
+}
+.menu-btn span {
+	position: relative;
+}
+.menu-btn span::before,
+.menu-btn span::after {
+	content: '';
+	position: absolute;
+	left: 0;
+}
+.menu-btn span::before {
+	top: -6px;
+}
+.menu-btn span::after {
+	top: 6px;
+}
+.menu-btn[aria-expanded='true'] span {
+	background-color: transparent;
+}
+.menu-btn[aria-expanded='true'] span::before {
+	transform: translateY(6px) rotate(45deg);
+}
+.menu-btn[aria-expanded='true'] span::after {
+	transform: translateY(-6px) rotate(-45deg);
+}
+@media (max-width: 899px) {
+	.js .menu-btn {
+		display: grid;
+	}
+	.js .topbar .wrap {
+		padding-top: 0;
+	}
+	.js .nav {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: 2px;
+		padding: 8px 16px 16px;
+		background: var(--c-canvas);
+		border-bottom: 1px solid var(--c-line);
+		box-shadow: var(--shadow-float);
+		opacity: 0;
+		transform: translateY(-8px);
+		visibility: hidden;
+		transition:
+			opacity 180ms,
+			transform 260ms var(--ease-out-expo),
+			visibility 0s 260ms;
+	}
+	.js.menu-open .nav {
+		opacity: 1;
+		transform: none;
+		visibility: visible;
+		transition-delay: 0s;
+	}
+	.js .nav a {
+		min-height: 48px;
+		font-size: 1.05rem;
+		padding: 0 12px;
+	}
+	.js .nav a[aria-current] {
+		box-shadow: inset 3px 0 0 var(--c-signal);
+		background: var(--c-surface-2);
+		border-radius: 8px;
+	}
+}
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+	.js .nav a {
+		opacity: 0;
+		transform: translateY(-6px);
+		transition:
+			opacity 200ms,
+			transform 320ms var(--ease-out-expo),
+			background-color 160ms;
+	}
+	.js.menu-open .nav a {
+		opacity: 1;
+		transform: none;
+	}
+	.js.menu-open .nav a:nth-child(2) {
+		transition-delay: 30ms;
+	}
+	.js.menu-open .nav a:nth-child(3) {
+		transition-delay: 60ms;
+	}
+	.js.menu-open .nav a:nth-child(4) {
+		transition-delay: 90ms;
+	}
+	.js.menu-open .nav a:nth-child(5) {
+		transition-delay: 120ms;
+	}
+}
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+	.js .nav {
+		transform: none;
+	}
+}
+
+/* ---------- install: the steps light up one after the other ---------- */
+.steps > li:not(:last-child)::after {
+	content: '';
+	position: absolute;
+	left: 19.5px;
+	top: 48px;
+	bottom: -32px;
+	width: 1px;
+	background:
+		linear-gradient(var(--c-signal), var(--c-signal)) no-repeat top / 100% 100%,
+		var(--c-line-strong);
+}
+.js .steps.lighting > li:not(.lit)::after {
+	background-size: 100% 0%, auto;
+}
+.steps > li.lit::before {
+	background: var(--c-signal-soft);
+	box-shadow: 0 0 0 5px var(--c-signal-soft);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.steps > li::before {
+		transition:
+			background-color 400ms,
+			box-shadow 400ms var(--ease-out-expo);
+	}
+	.steps > li.lit::before {
+		animation: bump 480ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.steps > li::after {
+		transition: background-size 900ms var(--ease-out-expo) 250ms;
+	}
+}
+
+/* ---------- page to page: a soft cross-fade, the top bar stays put ---------- */
+@media (prefers-reduced-motion: no-preference) {
+	@view-transition {
+		navigation: auto;
+	}
+	.topbar {
+		view-transition-name: topbar;
+	}
+	::view-transition-old(root) {
+		animation: vt-leave 140ms ease-in both;
+	}
+	::view-transition-new(root) {
+		animation: vt-enter 280ms var(--ease-out-expo) both;
+	}
+}
+@keyframes vt-leave {
+	to {
+		opacity: 0;
+	}
+}
+@keyframes vt-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.reveal {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+	.tilt,
+	.btn,
+	.btn:active {
+		transform: none !important;
+	}
 }

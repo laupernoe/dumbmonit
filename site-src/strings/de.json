@@ -86,6 +86,7 @@
  "nav_devices": "Geräte",
  "nav_install": "Installieren",
  "nav_community": "Doku und Community",
+ "nav_menu": "Menü",
  "t_features": "Funktionen · DumbMonit",
  "d_features": "Abhängigkeitsbewusste Alarme, @@NCHANNELS@@ Benachrichtigungskanäle, öffentliche Statusseiten, Wandanzeige, Agenten für Linux, Windows, macOS und FreeBSD, E-Mail-Berichte und ein MCP-Server. Open Source.",
  "t_devices": "Überwachbare Geräte · DumbMonit",

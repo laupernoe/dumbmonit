@@ -86,6 +86,7 @@
  "nav_devices": "Appareils",
  "nav_install": "Installer",
  "nav_community": "Docs et communauté",
+ "nav_menu": "Menu",
  "t_home": "DumbMonit : la supervision toute simple, du homelab à la petite entreprise",
  "t_features": "Fonctionnalités · DumbMonit",
  "d_features": "Alertes qui tiennent compte des dépendances, @@NCHANNELS@@ canaux de notification, pages de statut publiques, mur d'écran, agents Linux, Windows, macOS et FreeBSD, rapports par e-mail et serveur MCP. Open source.",
