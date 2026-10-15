@@ -36,13 +36,16 @@ export class ContainerFleet {
 	readonly autoUpdate = $derived(this.containers.filter((c) => c.policy.auto_update).length);
 
 	#id: TargetId;
+	/** The machine whose agent runs the commands: the parent of a Docker service device. */
+	#agentId: TargetId;
 	#subscribers = 0;
 	#controller: AbortController | null = null;
 	#timer: ReturnType<typeof setInterval> | null = null;
 	#period = 0;
 
-	constructor(id: TargetId) {
+	constructor(id: TargetId, agentId: TargetId = id) {
 		this.#id = id;
+		this.#agentId = agentId;
 	}
 
 	get id(): TargetId {
@@ -55,7 +58,7 @@ export class ContainerFleet {
 			const [list, history, agent] = await Promise.all([
 				listContainers(this.#id, signal),
 				listCommands(this.#id, signal),
-				getAgentHost(this.#id, signal)
+				getAgentHost(this.#agentId, signal)
 			]);
 			this.containers = list;
 			this.commands = history;
@@ -121,11 +124,14 @@ export class ContainerFleet {
 
 const fleets = new Map<TargetId, ContainerFleet>();
 
-/** The fleet of a device — the same instance for every component of the page. */
-export function fleetFor(id: TargetId): ContainerFleet {
+/**
+ * The fleet of a device — the same instance for every component of the page.
+ * `agentId` is the machine running the agent, when the device is its Docker service.
+ */
+export function fleetFor(id: TargetId, agentId: TargetId = id): ContainerFleet {
 	let fleet = fleets.get(id);
 	if (!fleet) {
-		fleet = new ContainerFleet(id);
+		fleet = new ContainerFleet(id, agentId);
 		fleets.set(id, fleet);
 	}
 	return fleet;

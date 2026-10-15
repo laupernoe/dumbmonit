@@ -74,7 +74,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
-	import PlakarPanel from '#lib/components/devices/docker/PlakarPanel.svelte';
+	import { isDockerDevice } from '#lib/components/devices/agent/services.js';
 	import {
 		Button,
 		Confirm,
@@ -648,8 +648,9 @@
 		{/if}
 	</section>
 
-	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics -->
-	{#if target.kind === 'agent'}
+	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics.
+	     Docker is a device of its own under the machine whose agent found it. -->
+	{#if isDockerDevice(target)}
 		<DockerStrip {target} />
 	{/if}
 
@@ -664,13 +665,6 @@
 		onackchange={() => void loadContext()}
 	/>
 	</section>
-
-	<!-- Backups the agent watches; the containers sit with the metrics below -->
-	{#if target.kind === 'agent'}
-		<section class="mt-6" aria-label={m.devices_target_backups()}>
-			<PlakarPanel {target} />
-		</section>
-	{/if}
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind)}
@@ -771,7 +765,7 @@
 				{/if}
 
 				<!-- Containers: the Docker panel folds, one row per container -->
-				{#if target.kind === 'agent'}
+				{#if isDockerDevice(target)}
 					<DockerPanel {target} metrics={sections.containers} {loadingMetrics} />
 				{/if}
 
