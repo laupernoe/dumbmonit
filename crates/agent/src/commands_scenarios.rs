@@ -227,8 +227,10 @@ async fn a_failed_start_rolls_the_old_container_back_into_service() {
     // passe devant : on le laisse répondre pour l'aller comme pour le retour.
     let (socket, calls) = fake_docker(&dir, script(rules));
     let mut log = Log::default();
-    let error =
-        update(&DockerClient::new(&socket), "web", true, &mut log).await.unwrap_err().to_string();
+    let error = format!(
+        "{:#}",
+        update(&DockerClient::new(&socket), "web", true, &mut log).await.unwrap_err()
+    );
     assert!(error.contains("port already allocated"), "{error}");
 
     let text = log.excerpt();

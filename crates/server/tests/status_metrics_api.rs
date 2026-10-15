@@ -127,7 +127,8 @@ async fn la_page_publique_porte_les_disponibilites_et_les_latences() {
     assert_eq!(web["uptime_24h"], 99.5);
     assert_eq!(web["uptime_7d"], 99.5);
     assert_eq!(web["uptime_30d"], 99.5);
-    assert_eq!(web["uptime_90d"], 99.5);
+    // Appareils tout neufs : la fenêtre adaptative reste à 7 jours, pas de chiffre sur 90.
+    assert!(web["uptime_90d"].is_null(), "{web}");
     assert_eq!(web["latency_ms"], 42.0);
     assert!(!web["latency_series"]["h24"].as_array().unwrap().is_empty(), "{web}");
     assert!(!web["latency_series"]["d7"].as_array().unwrap().is_empty());
@@ -136,7 +137,7 @@ async fn la_page_publique_porte_les_disponibilites_et_les_latences() {
     // Équipement sans sonde : sa disponibilité est ramenée à la part couverte.
     let nas = item("Stockage");
     assert!(nas["uptime_24h"].is_number(), "{nas}");
-    assert!(nas["uptime_90d"].is_number(), "{nas}");
+    assert!(nas["uptime_90d"].is_null(), "{nas}");
     assert!(nas["history"].is_array());
 
     // Le calendrier existe, les badges lisent les mêmes chiffres.
