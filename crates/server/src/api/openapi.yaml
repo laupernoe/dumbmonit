@@ -797,6 +797,27 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/discovery/subnets:
+    get:
+      operationId: localSubnets
+      tags: [Discovery]
+      summary: Suggested networks for the scan form
+      description: >-
+        In order, `DUMBMONIT_SCAN_SUBNETS`, /24 networks of the private IPv4
+        addresses of monitored devices (most devices first), then the server's
+        connected networks (not when the server runs in a container, where they
+        are the container's own networks). Docker bridge ranges are excluded; the
+        list is empty when nothing reliable is known. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Suggested IPv4 networks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocalSubnets" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -927,6 +948,33 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/test:
+    post:
+      operationId: testTargetConnection
+      tags: [Devices]
+      summary: Probe a device once without saving it
+      description: >-
+        Reads the identity of an SNMP device once with the submitted address and
+        credentials and reports the result; nothing is stored. The device answers
+        with its `sysName` / `sysDescr`. A failed probe is a `200` with `ok: false`
+        and the probe's message. SNMP only (other kinds are a `400`), and not
+        available through a relay.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TargetTestRequest" }
+      responses:
+        "200":
+          description: The outcome of the probe.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetTestReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/reorder:
     post:
       operationId: reorderTargets
@@ -1053,6 +1101,52 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listTargetRules
+      tags: [Rules]
+      summary: Alert rules that watch a device
+      description: >-
+        The rules whose query reads a metric the device has written in the last
+        24 hours, with whether each is turned off for this device (a rule
+        override with `enabled: false`) and firing on it now.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device's rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, rules]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, no_data, unavailable]
+                    description: >-
+                      `no_data`: nothing written in the last 24 hours;
+                      `unavailable`: VictoriaMetrics did not answer.
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, uid, name, description, severity, enabled, ignored, custom_threshold, firing]
+                      properties:
+                        id: { type: integer, format: int64 }
+                        uid: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        severity: { type: string, enum: [info, warning, critical] }
+                        enabled: { type: boolean, description: Enabled for every device. }
+                        ignored: { type: boolean, description: Turned off for this device. }
+                        custom_threshold: { type: boolean, description: A threshold is set for this device. }
+                        firing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   # ---------------------------------------------------------------- mesures
   /api/metrics/query:
@@ -5130,6 +5224,44 @@ components:
               sysobjectid: { type: [string, "null"] }
               suggested_profile: { type: [string, "null"] }
 
+    LocalSubnets:
+      type: object
+      required: [subnets]
+      properties:
+        subnets:
+          type: array
+          description: Suggested IPv4 networks, most reliable source first.
+          items:
+            type: object
+            required: [cidr, source]
+            properties:
+              cidr: { type: string, example: 192.168.1.0/24 }
+              source:
+                type: string
+                enum: [config, devices, server]
+              interface: { type: string, description: Server interface; `server` source only. }
+    TargetTestRequest:
+      description: A `TargetPayload`, plus the id of the device being edited.
+      allOf:
+        - $ref: "#/components/schemas/TargetPayload"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: >-
+                When editing, reuses the stored credential if `credential` is
+                omitted (refused if the address or connection settings changed).
+    TargetTestReport:
+      type: object
+      required: [ok, unreachable]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"], description: The probe error message. }
+        unreachable: { type: boolean, description: True when the failure means "device down". }
+        sysname: { type: [string, "null"] }
+        sysdescr: { type: [string, "null"] }
+        profile_id: { type: [string, "null"], description: Profile auto-detection would pick. }
     Onboarding:
       type: object
       required: [skipped, complete, dismissed, has_target, has_channel, notification_confirmed]

@@ -824,6 +824,10 @@ fn clean_endpoint(endpoint: &Value, short_id: &str) -> Value {
     Value::Object(out)
 }
 
+#[cfg(all(test, unix))]
+#[path = "commands_scenarios.rs"]
+mod scenarios;
+
 #[cfg(test)]
 mod tests {
     use super::*;

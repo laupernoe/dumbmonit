@@ -19,6 +19,8 @@ mod logfile;
 mod relay;
 mod run;
 mod shutdown;
+#[cfg(test)]
+mod testsupport;
 #[cfg(windows)]
 mod winsvc;
 

@@ -710,6 +710,13 @@ on N devices* in Alerts → Rules, where the same per-device overrides panel
 removes it. See [Per-device overrides](../reference/api.md#per-device-overrides)
 for the API.
 
+A monitor's **Edit** page also lists, under **Monitored alerts**, every rule
+that reads a metric the monitor has written in the last 24 hours: for an agent
+with Docker, the container rules; for a website monitor, the probe rules. Each
+has a switch, on by default. Turning one off writes the same `enabled: false`
+override when you save the form; the data is still collected and graphed. A
+monitor added a moment ago shows the list after its first checks.
+
 ## Creating a threshold rule
 
 Click **New rule**. The form needs:
