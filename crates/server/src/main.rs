@@ -15,6 +15,12 @@ fn main() -> Result<()> {
         std::process::exit(dumbmonit_pack::cli::run(&args[1..]));
     }
 
+    // `dumbmonit healthcheck` : sonde du HEALTHCHECK Docker (image sans shell ni
+    // curl). Ni base, ni VictoriaMetrics, ni logs : seulement un code de sortie.
+    if args.first().map(String::as_str) == Some("healthcheck") {
+        std::process::exit(dumbmonit_server::healthcheck::run());
+    }
+
     init_tracing();
 
     let config = Config::from_env().context("invalid configuration")?;

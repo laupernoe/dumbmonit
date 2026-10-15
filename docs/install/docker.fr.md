@@ -113,6 +113,15 @@ tentatives erronées sont limitées en débit. Pour un déploiement automatisé,
 
 Ajoutez ensuite votre premier appareil : voir [Ajouter votre premier appareil](first-device.md).
 
+## Santé du conteneur {#container-health}
+
+L'image définit son propre `HEALTHCHECK` Docker : Docker, Portainer et Unraid
+affichent donc le conteneur comme *healthy* sans réglage supplémentaire. Il
+exécute `dumbmonit healthcheck`, qui appelle `/api/health` depuis l'intérieur du
+conteneur, sur le port de `DUMBMONIT_BIND` (8080 par défaut). L'image n'a ni
+shell ni `curl` : ne la remplacez pas par un test à base de `curl` dans votre
+fichier Compose.
+
 ## Variables d'environnement {#environment-variables}
 
 Tout passe par des variables d'environnement ; aucune n'est obligatoire.
