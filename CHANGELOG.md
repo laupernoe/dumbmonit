@@ -51,6 +51,9 @@ All notable changes to this project are documented here. The format follows
 - **Status page editor: compact scene choice.** The chosen scenes are shown as
   thumbnails with a "Change" button that opens a searchable, paged grid, and
   the list of services to add has a search box.
+- **Wall: each problem once, readable.** A device written out as a problem is
+  no longer repeated among the device tiles, long names and causes wrap instead
+  of being cut, and "And N more" became a clear counter linking to Alerts.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).

@@ -6181,7 +6181,7 @@
 	"wall_city_zen": "Сад дзен",
 	"wall_city_zermatt": "Церматт",
 	"wall_devices_aria": "Мониторы",
-	"wall_devices_more": "Ещё {count}, все передают данные",
+	"wall_devices_more": "Ещё устройств: {count}, все на связи",
 	"wall_devices_reporting": "Передаёт данные",
 	"wall_dock_enable": "Коснитесь, чтобы включить звук",
 	"wall_dock_enable_hint": "Затем выберите «{name}» в разделе «Устройства» в Spotify",
@@ -6242,7 +6242,7 @@
 	"wall_player_stop_aria": "Остановить музыку на всех стенах",
 	"wall_player_title": "Плеер {label}",
 	"wall_problems_aria": "Проблемы",
-	"wall_problems_more": "Ещё {count} на странице оповещений.",
+	"wall_problems_more": "Ещё проблем: {count}, см. «Оповещения»",
 	"wall_problems_parent_down": "{rule} · {parent} недоступен",
 	"wall_refresh_failed": "Не удалось обновить данные, показано предыдущее состояние.",
 	"wall_scene_sign_problems": [

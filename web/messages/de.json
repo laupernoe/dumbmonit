@@ -5999,7 +5999,7 @@
 	"wall_city_zen": "Zen-Garten",
 	"wall_city_zermatt": "Zermatt",
 	"wall_devices_aria": "Monitore",
-	"wall_devices_more": "Und {count} weitere, alle melden",
+	"wall_devices_more": "{count} weitere Geräte, alle melden sich",
 	"wall_devices_reporting": "Meldet",
 	"wall_dock_enable": "Tippen, um den Ton zu aktivieren",
 	"wall_dock_enable_hint": "Wähle dann in Spotify unter Geräte „{name}“",
@@ -6060,7 +6060,7 @@
 	"wall_player_stop_aria": "Musik auf allen Wänden stoppen",
 	"wall_player_title": "{label}-Player",
 	"wall_problems_aria": "Probleme",
-	"wall_problems_more": "Und {count} weitere auf der Seite Warnungen.",
+	"wall_problems_more": "{count} weitere Probleme: siehe Warnungen",
 	"wall_problems_parent_down": "{rule} · {parent} ist ausgefallen",
 	"wall_refresh_failed": "Letzte Aktualisierung fehlgeschlagen, der vorherige Stand wird angezeigt.",
 	"wall_scene_sign_problems": [
