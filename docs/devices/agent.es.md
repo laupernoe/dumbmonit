@@ -308,7 +308,7 @@ su checksum al lado, `<archivo>.sha256`, en formato `sha256sum`. Cada
 lleva los seis binarios y sus checksums, para máquinas que no pueden
 alcanzar el `/download/` del servidor o para instalar con `--bin`.
 
-Desde 0.1.0-alpha.9, cada binario de una versión también está firmado sin
+Desde 0.9.0, cada binario de una versión también está firmado sin
 claves (keyless) con [Sigstore](https://www.sigstore.dev/)
 (`<archivo>.sigstore.json`) y lleva una atestación de procedencia SLSA. Para
 comprobar que un binario fue compilado por el flujo de trabajo de publicación de

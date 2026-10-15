@@ -112,6 +112,15 @@ attempts are rate-limited. For an automated deployment, set
 
 Then add your first monitor: see [Add your first monitor](first-device.md).
 
+## Container health
+
+The image defines its own Docker `HEALTHCHECK`, so Docker, Portainer and Unraid
+show the container as *healthy* without any extra setting. It runs
+`dumbmonit healthcheck`, which calls `/api/health` on the port set by
+`DUMBMONIT_BIND` (8080 by default) from inside the container. The image has no
+shell or `curl`, so do not replace it with a `curl`-based check in your Compose
+file.
+
 ## Environment variables
 
 Everything goes through environment variables; none is required. Add the ones

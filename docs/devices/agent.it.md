@@ -290,7 +290,7 @@ formato `sha256sum`. Ogni [release di GitHub](https://github.com/laupernoe/dumbm
 contiene tutti e sei i binari e i loro checksum, per le macchine che non possono
 raggiungere `/download/` del server o per installare con `--bin`.
 
-Dalla versione 0.1.0-alpha.9, ogni binario di una release è inoltre firmato
+Dalla versione 0.9.0, ogni binario di una release è inoltre firmato
 senza chiavi (keyless) con [Sigstore](https://www.sigstore.dev/)
 (`<file>.sigstore.json`) e accompagnato da un'attestazione di provenienza SLSA.
 Per verificare che un binario sia stato compilato dal workflow di rilascio di

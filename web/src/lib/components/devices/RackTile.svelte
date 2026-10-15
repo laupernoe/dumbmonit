@@ -5,7 +5,7 @@
 	 * last seen) folded into a card, the 24 h sparkline along the bottom.
 	 * A child names the unit it sits behind instead of being indented.
 	 * Opened through a stretched link on the name, so the security badge can
-	 * link to the report on its own (see `Faceplate`).
+	 * link to the report on its own.
 	 */
 	import type { Target } from '#lib/api/index.js';
 	import type { TargetState } from '#lib/format.js';
@@ -67,8 +67,8 @@
 
 	<div class="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 		<Plate {tone} label={STATE_LABEL[state]} pulse={blink} />
-		{#if security}
-			<SecurityBadge grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
+		{#if security?.grade}
+			<SecurityBadge quiet grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
 		{/if}
 		<p class="tnum min-w-0 flex-1 truncate text-[0.8125rem] text-ink-2" title={target.last_error ?? undefined}>
 			{#if target.last_error}

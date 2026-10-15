@@ -14,8 +14,8 @@ read the server's clock without a session.
 
 ## Coming from Uptime Kuma
 
-**Monitors > Add a monitor > Import from Uptime Kuma** (administrators) reads the
-backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
+**Monitors > ⋯ > Import from Uptime Kuma**, also on **Monitors > Add a
+monitor** (administrators), reads the backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
 at most 4 MB). Uptime Kuma 2.x no longer has a backup export, so there is no
 file to import from it. Nothing is created before you have seen the preview:
 what will be created, and what is skipped with the reason.

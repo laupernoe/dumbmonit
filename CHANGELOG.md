@@ -37,6 +37,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Docker health status.** The server image now carries a `HEALTHCHECK`
+  (`dumbmonit healthcheck`, a local call to `/api/health`), so Docker, Portainer
+  and Unraid show the container as healthy.
 - **Acknowledge or snooze an alert from the notification.** Alert messages
   carry **Acknowledge** (until it resolves) and **Snooze 1 h**: buttons on
   ntfy, Telegram and Web Push (operators and admins only), links on Discord,
@@ -193,6 +196,13 @@ All notable changes to this project are documented here. The format follows
   throughout the interface and the documentation (navigation: Overview /
   Monitors / Alerts / Settings). Nothing changes under the hood: API routes,
   `target` labels, URLs and metric names are the same.
+- **A simpler Monitors page.** One toolbar: search, **Filter** (state, kind,
+  sort and tags fold behind it, with a count of those in use), Compact / Tiles,
+  **Select** and **Add a monitor**. The map, **Create folder** and the CSV and
+  Uptime Kuma imports moved to a **⋯** menu next to it. Folder headers are
+  plain lines that show a state only when something inside is not reporting;
+  security grades are quiet in the list, and monitors without a grade show none.
+  The type filter only lists the types you use.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and
@@ -254,11 +264,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Removed
 
+- **The Rows layout of the Monitors page.** Compact and Tiles remain; a
+  remembered Rows choice, and `?view=rows` links, open Compact.
 - **The Security page.** `/security` now opens the security score setting; the
   report moved to each device.
 
 ### Fixed
 
+- **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
+  other overflow menu) now opens above the rest of the page, kept on screen
+  and flipped upwards near the bottom, instead of hiding behind the next card
+  where its actions could not be tapped.
 - **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
   silence controls on a disabled monitor; an "Enable" button takes their place.
 - **Public status page no longer claims "All systems operational" without

@@ -301,7 +301,7 @@ lado, `<file>.sha256`, no formato `sha256sum`. Todo
 carrega os seis binários e seus checksums, para máquinas que não podem
 alcançar o `/download/` do servidor ou para instalar com `--bin`.
 
-Desde a 0.1.0-alpha.9, todo binário de um lançamento também é assinado sem
+Desde a 0.9.0, todo binário de um lançamento também é assinado sem
 chave (keyless) com o [Sigstore](https://www.sigstore.dev/)
 (`<file>.sigstore.json`) e acompanha uma atestação de proveniência SLSA. Para
 verificar que um binário foi construído pelo workflow de lançamento deste

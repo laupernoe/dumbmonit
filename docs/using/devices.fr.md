@@ -2,12 +2,21 @@
 
 ![Le rack : une façade par surveillance](../assets/screenshots/devices-light.png){ loading=lazy }
 
-## Le rack
+## La liste
 
-Chaque surveillance est une façade de rack 1U : une LED d'état, le nom, l'étiquette
-du type, l'adresse, la dernière fois qu'il a été vu, et une sparkline d'une
-métrique représentative. Les enfants s'empilent sous leur parent et
-s'atténuent quand le parent est inaccessible.
+La page **Surveillances** montre chaque surveillance dans l'une de deux dispositions,
+mémorisée dans votre navigateur :
+
+- **Compact** (par défaut) : une ligne par surveillance — voyant d'état, nom,
+  type, adresse, dernière fois vu et état. Les enfants sont en retrait sous
+  leur parent et s'atténuent quand le parent est inaccessible.
+- **Tuiles** : une carte par surveillance, avec une sparkline d'une métrique
+  représentative. Un enfant nomme la surveillance derrière laquelle il se trouve.
+
+Les surveillances sont regroupées par dossier ; l'en-tête d'un dossier n'affiche
+son état que si quelque chose à l'intérieur n'est pas actif. Les
+administrateurs réordonnent les surveillances en les faisant glisser (disposition
+Compact, liste ni filtrée ni triée) ou au clavier (Espace, flèches, Espace).
 
 | État | Signification |
 |---|---|
@@ -17,13 +26,22 @@ s'atténuent quand le parent est inaccessible.
 | En attente | Ajouté, pas encore sondé. |
 | Désactivé | En pause : non vérifié, ne déclenche aucune alerte. |
 
-Filtres : une zone de recherche, un segment d'état (Tous, À traiter, Actifs,
-Désactivés) et un filtre de type. **Ajouter une surveillance** est l'action
-principale.
+Une seule barre d'outils regroupe tout :
 
-Le bouton **Sélectionner** (opérateurs et administrateurs) affiche une case à
-cocher par surveillance et une barre flottante en bas avec les actions groupées ;
-**Terminé** ou Échap quitte le mode.
+- la zone de **recherche** (nom, adresse ou type) ;
+- **Filtrer**, qui ouvre les filtres d'état (Tous, À traiter, Actifs,
+  Désactivés), de type, de tri et d'étiquettes — le nombre sur le bouton
+  compte ceux qui sont actifs, et **Effacer les filtres** les remet à zéro.
+  Les filtres vivent dans l'adresse : une liste filtrée se met en favori ou se
+  partage ;
+- **Compact** / **Tuiles** ;
+- **Sélectionner** (administrateurs), qui affiche une case à cocher par
+  surveillance et une barre flottante en bas avec les actions groupées (activer,
+  désactiver, déplacer dans un dossier, supprimer) ; **Terminé** ou Échap
+  quitte le mode ;
+- **⋯** (plus d'actions) : la **Carte** de topologie, **Créer un dossier**,
+  **Importer des sites (CSV)** et **Importer depuis Uptime Kuma** ;
+- **Ajouter une surveillance**, l’action principale.
 
 ## Une surveillance
 

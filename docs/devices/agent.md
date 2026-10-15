@@ -283,7 +283,7 @@ format. Every [GitHub release](https://github.com/laupernoe/dumbmonit/releases/l
 carries all six binaries and their checksums, for machines that cannot reach
 the server's `/download/` or for installing with `--bin`.
 
-Since 0.1.0-alpha.9, every binary of a release is also signed keylessly with
+Since 0.9.0, every binary of a release is also signed keylessly with
 [Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) and comes with
 a SLSA provenance attestation. To check that a binary was built by this
 repository's release workflow:
