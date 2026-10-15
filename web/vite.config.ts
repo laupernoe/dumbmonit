@@ -3,9 +3,12 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-const PROXY = { target: process.env.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
+// `loadEnv` lit aussi les variables d'environnement du processus (préfixe DUMBMONIT_) :
+// pas besoin de `process`, donc pas de dépendance à @types/node.
+const { DUMBMONIT_DEV_API } = loadEnv('', '.', 'DUMBMONIT_');
+const PROXY = { target: DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
 
 export default defineConfig({
 	plugins: [
