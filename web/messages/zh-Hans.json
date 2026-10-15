@@ -3658,6 +3658,9 @@
 	"misc_palette_group_devices": "监控项",
 	"misc_palette_group_pages": "页面",
 	"misc_palette_group_recent": "最近",
+	"misc_palette_hint_close": "关闭",
+	"misc_palette_hint_navigate": "导航",
+	"misc_palette_hint_open": "打开",
 	"misc_palette_incident": "发布事件公告",
 	"misc_palette_label": "命令面板",
 	"misc_palette_loading": "正在查找监控项…",
@@ -4438,7 +4441,7 @@
 			}
 		}
 	],
-	"overview_streaks_not_now": "当前不是",
+	"overview_streaks_not_now": "不完整",
 	"overview_streaks_one_unreachable": "{name} 无法访问",
 	"overview_streaks_over": "超过 {days} 天",
 	"overview_streaks_quietest": "最安静的监控项",

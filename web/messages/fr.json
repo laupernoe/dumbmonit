@@ -3705,6 +3705,9 @@
 	"misc_palette_group_devices": "Surveillances",
 	"misc_palette_group_pages": "Pages",
 	"misc_palette_group_recent": "Récents",
+	"misc_palette_hint_close": "fermer",
+	"misc_palette_hint_navigate": "naviguer",
+	"misc_palette_hint_open": "ouvrir",
 	"misc_palette_incident": "Annoncer un incident",
 	"misc_palette_label": "Palette de commandes",
 	"misc_palette_loading": "Recherche des surveillances…",
@@ -4519,7 +4522,7 @@
 			}
 		}
 	],
-	"overview_streaks_not_now": "Pas en ce moment",
+	"overview_streaks_not_now": "Incomplet",
 	"overview_streaks_one_unreachable": "{name} est injoignable",
 	"overview_streaks_over": "plus de {days} j",
 	"overview_streaks_quietest": "Surveillance la plus calme",
