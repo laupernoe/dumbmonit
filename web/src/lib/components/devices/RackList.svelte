@@ -18,7 +18,7 @@
 	 * draws the insertion line the page tells it to. The hit-testing is
 	 * vertical, so the page only passes `reorder` to the two list layouts.
 	 */
-	import type { TargetId } from '#lib/api/index.js';
+	import type { SecurityGrade, TargetId } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
 	import Faceplate from '#lib/components/Faceplate.svelte';
 	import CompactRow from './CompactRow.svelte';
@@ -57,9 +57,11 @@
 		layout?: RackView;
 		/** id → name, so a tile can say which unit it sits behind. */
 		names?: Map<TargetId, string>;
+		/** id → security grade, only for rated devices while the score is on. */
+		security?: Map<TargetId, { grade: SecurityGrade | null; score: number | null }>;
 	}
 
-	let { rows, sparklines, kindLabels, reorder = null, layout = 'rows', names = new Map() }: Props = $props();
+	let { rows, sparklines, kindLabels, reorder = null, layout = 'rows', names = new Map(), security = new Map() }: Props = $props();
 
 	const LIST_CLASS: Record<RackView, string> = {
 		rows: 'flex flex-col gap-2',
@@ -82,6 +84,7 @@
 					kindLabel={kindLabels.get(row.target.kind)}
 					depth={row.depth}
 					shadowed={row.shadowed}
+					security={security.get(row.target.id) ?? null}
 				/>
 			{:else if layout === 'tiles'}
 				<RackTile
@@ -91,6 +94,7 @@
 					sparkline={sparklines.get(row.target.id) ?? null}
 					parentName={row.target.parent_id !== null ? (names.get(row.target.parent_id) ?? null) : null}
 					shadowed={row.shadowed}
+					security={security.get(row.target.id) ?? null}
 				/>
 			{:else}
 				<Faceplate
@@ -101,6 +105,7 @@
 					depth={row.depth}
 					shadowed={row.shadowed}
 					bootDelay={Math.min(i, 14) * 30 + 220}
+					security={security.get(row.target.id) ?? null}
 				/>
 			{/if}
 		{/snippet}

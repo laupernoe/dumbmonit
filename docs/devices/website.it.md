@@ -115,6 +115,8 @@ già monitorato (stesso indirizzo finale) viene saltato.
 | `dumbmonit_website_status_code` | Stato HTTP della risposta finale. |
 | `dumbmonit_website_response_seconds` | Tempo totale, reindirizzamenti inclusi. |
 | `dumbmonit_website_redirect_hops` | Reindirizzamenti seguiti. |
+| `dumbmonit_website_https` | 1 quando l'indirizzo finale è https. |
+| `dumbmonit_website_security_header{header}` | 0/1 per etichetta `header` (solo https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Sempre 1; l'etichetta porta la piattaforma. |
 | `dumbmonit_website_text_chars` | Caratteri di testo visibile (risposte 2xx). |
 | `dumbmonit_website_blank` | 1 quando quel testo è sotto la soglia. |

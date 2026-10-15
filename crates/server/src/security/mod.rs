@@ -4,6 +4,14 @@
 //! ou reste inconnu, et la somme pondérée donne une note de 0 à 100 et une
 //! lettre de A à F.
 //!
+//! # Facultative
+//!
+//! La note est un réglage d'instance (`app_settings`, clé [`SETTING_KEY`]),
+//! coupé par défaut : sans lui, ni calcul périodique, ni série publiée, et
+//! l'API répond `enabled: false` sans interroger VictoriaMetrics. Une
+//! instance antérieure qui avait déjà des équipements notés l'a retrouvé
+//! allumé à la migration `0055` : rien ne disparaît sans qu'on l'ait demandé.
+//!
 //! # Principe
 //!
 //! Rien n'est redemandé à l'équipement : les contrôles ne lisent que ce que
@@ -11,19 +19,29 @@
 //! valeur de chaque série sur [`LOOKBACK`]). Un contrôle dont la donnée
 //! manque est `unknown` : il est montré, jamais compté — une note ne doit pas
 //! baisser parce qu'un jeton de supervision n'a pas le droit de lire la liste
-//! des mises à jour, ni monter parce qu'on ne sait rien.
+//! des mises à jour, ni monter parce qu'on ne sait rien. C'est une
+//! indication, pas un audit : la documentation le dit, l'interface aussi.
+//!
+//! # Couverture
+//!
+//! Volontairement restreinte aux produits où quelques contrôles disent
+//! quelque chose d'utile : machines sous agent (Linux, Windows), Proxmox VE
+//! et Backup Server, Synology, OPNsense, sites web (TLS et en-têtes) et
+//! Active Directory. Les autres types n'ont pas de note du tout.
 //!
 //! # Ajouter un type d'équipement
 //!
 //! 1. Écrire un [`SecurityProvider`] : les `kinds` qu'il couvre (tels que
 //!    `Target::kind`), les noms de métriques qu'il lit (sans le préfixe
-//!    `dumbmonit_`) et la fonction pure `evaluate(kind, &Facts) -> Vec<Check>`.
-//! 2. Le déclarer dans [`providers`].
+//!    `dumbmonit_`), la fonction pure `evaluate(kind, &Facts) -> Vec<Check>`
+//!    et le [`Guide`] qui dit comment améliorer la note.
+//! 2. Le déclarer dans [`providers`], et le documenter dans
+//!    `docs/using/security-score.md` sous l'ancre du guide.
 //!
-//! Le reste — l'API, la page, la série `dumbmonit_security_score`, les règles
-//! d'alerte livrées — ne connaît aucun type concret. Les constats Active
-//! Directory (voir [`checks::activedirectory`]) passent par le même chemin :
-//! une métrique conventionnelle par constat, convertie en contrôle.
+//! Le reste — l'API, l'interface, la série `dumbmonit_security_score`, les
+//! règles d'alerte livrées — ne connaît aucun type concret. Les constats
+//! Active Directory (voir [`checks::activedirectory`]) passent par le même
+//! chemin : une métrique conventionnelle par constat, convertie en contrôle.
 
 pub mod checks;
 mod facts;
@@ -37,6 +55,7 @@ use std::time::Duration;
 
 use dumbmonit_proto::{MetricKind, Sample, Target, TargetId};
 use serde::Serialize;
+use sqlx::SqlitePool;
 use tracing::{debug, warn};
 
 use crate::state::AppState;
@@ -49,6 +68,33 @@ pub const LOOKBACK: &str = "6h";
 
 /// Période de calcul de la série `dumbmonit_security_score`.
 pub const SCORE_INTERVAL: Duration = Duration::from_secs(15 * 60);
+
+/// Clé du réglage dans `app_settings` : `on` / `off`, absente = coupée.
+pub const SETTING_KEY: &str = "security_score";
+
+/// Page de documentation ; chaque [`Guide`] y ajoute son ancre.
+pub const DOCS_URL: &str = "https://dumbmonit.readthedocs.io/en/latest/using/security-score/";
+
+/// La note est-elle activée sur cette instance ?
+pub async fn setting_enabled(pool: &SqlitePool) -> sqlx::Result<bool> {
+    let value: Option<String> = sqlx::query_scalar("SELECT value FROM app_settings WHERE key = ?")
+        .bind(SETTING_KEY)
+        .fetch_optional(pool)
+        .await?;
+    Ok(value.as_deref() == Some("on"))
+}
+
+pub async fn set_setting_enabled(pool: &SqlitePool, enabled: bool) -> sqlx::Result<()> {
+    sqlx::query(
+        "INSERT INTO app_settings (key, value) VALUES (?, ?) \
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .bind(SETTING_KEY)
+    .bind(if enabled { "on" } else { "off" })
+    .execute(pool)
+    .await?;
+    Ok(())
+}
 
 /// Familles de contrôles, celles d'un rapport PingCastle ou d'un CIS
 /// Benchmark ramenées à l'échelle d'un homelab.
@@ -158,6 +204,37 @@ pub struct Check {
     pub reference: String,
 }
 
+/// Comment améliorer la note d'un type d'équipement : quelques étapes
+/// concrètes, dans l'ordre où les faire, et l'ancre de sa section dans la
+/// documentation. Les remédiations des contrôles disent quoi corriger ; le
+/// guide dit par où commencer sur ce produit-là.
+#[derive(Debug, Clone, Copy)]
+pub struct Guide {
+    /// Nom du produit tel que l'utilisateur le connaît.
+    pub product: &'static str,
+    pub steps: &'static [&'static str],
+    /// Ancre dans [`DOCS_URL`], sans le `#`.
+    pub anchor: &'static str,
+}
+
+/// Le guide tel que l'API le sert.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct GuideView {
+    pub product: String,
+    pub steps: Vec<String>,
+    pub doc_url: String,
+}
+
+impl From<Guide> for GuideView {
+    fn from(guide: Guide) -> Self {
+        Self {
+            product: guide.product.to_string(),
+            steps: guide.steps.iter().map(|s| (*s).to_string()).collect(),
+            doc_url: format!("{DOCS_URL}#{}", guide.anchor),
+        }
+    }
+}
+
 /// Un type d'équipement qui sait se noter.
 pub trait SecurityProvider: Send + Sync {
     /// Les `Target::kind` couverts.
@@ -167,6 +244,9 @@ pub trait SecurityProvider: Send + Sync {
     /// Les contrôles, à partir des dernières valeurs connues. Pure : tout le
     /// test d'un contrôle se fait sur des `Facts` construits à la main.
     fn evaluate(&self, kind: &str, facts: &Facts) -> Vec<Check>;
+    /// Les étapes d'amélioration ; les faits permettent de distinguer deux
+    /// variantes d'un même type (agent Linux ou Windows).
+    fn guide(&self, kind: &str, facts: &Facts) -> Guide;
     /// Ce type d'équipement est-il concerné, vu ses faits ? Par défaut oui.
     /// Un moniteur HTTP en clair n'a pas de certificat à noter : il n'a
     /// alors pas de carte sécurité du tout, plutôt qu'une note « inconnue ».
@@ -182,18 +262,10 @@ pub fn providers() -> &'static [&'static dyn SecurityProvider] {
         &checks::pbs::Pbs,
         &checks::synology::Synology,
         &checks::firewall::Opnsense,
-        &checks::firewall::Pfsense,
-        &checks::unifi::Unifi,
-        &checks::tls::TlsMonitor,
-        &checks::ntp::Ntp,
-        &checks::webserver::Nginx,
-        &checks::webserver::Apache,
+        &checks::tls::Website,
         &checks::agent::Agent,
         &checks::agent::AgentDocker,
-        &checks::updates::VendorUpdates,
         &checks::activedirectory::ActiveDirectory,
-        &checks::gitlab::Gitlab,
-        &checks::forgejo::Forgejo,
     ]
 }
 
@@ -209,6 +281,8 @@ pub fn supported_kinds() -> Vec<&'static str> {
 /// Rapport complet d'un équipement.
 #[derive(Debug, Clone, Serialize)]
 pub struct Report {
+    /// `false` : la note est coupée dans les réglages ; tout le reste est vide.
+    pub enabled: bool,
     pub target_id: TargetId,
     pub target_name: String,
     pub kind: String,
@@ -221,6 +295,8 @@ pub struct Report {
     pub evaluated_at: String,
     pub counts: Counts,
     pub checks: Vec<Check>,
+    /// Comment améliorer la note de ce type d'équipement.
+    pub guide: Option<GuideView>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
@@ -235,18 +311,7 @@ pub struct Counts {
 pub fn build_report(target_id: TargetId, name: &str, kind: &str, facts: &Facts) -> Report {
     let evaluated_at = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let Some(provider) = provider_for(kind).filter(|provider| provider.applies(facts)) else {
-        return Report {
-            target_id,
-            target_name: name.to_string(),
-            kind: kind.to_string(),
-            supported: false,
-            score: None,
-            grade: None,
-            capped: false,
-            evaluated_at,
-            counts: Counts::default(),
-            checks: Vec::new(),
-        };
+        return Report::empty(target_id, name, kind, true, evaluated_at);
     };
     let mut checks = provider.evaluate(kind, facts);
     sort_checks(&mut checks);
@@ -257,6 +322,7 @@ pub fn build_report(target_id: TargetId, name: &str, kind: &str, facts: &Facts) 
         unknown: checks.iter().filter(|c| c.result == Outcome::Unknown).count(),
     };
     Report {
+        enabled: true,
         target_id,
         target_name: name.to_string(),
         kind: kind.to_string(),
@@ -267,6 +333,33 @@ pub fn build_report(target_id: TargetId, name: &str, kind: &str, facts: &Facts) 
         evaluated_at,
         counts,
         checks,
+        guide: Some(provider.guide(kind, facts).into()),
+    }
+}
+
+impl Report {
+    /// Rapport sans contrôle : type non noté, ou note coupée (`enabled`).
+    pub fn empty(
+        target_id: TargetId,
+        name: &str,
+        kind: &str,
+        enabled: bool,
+        evaluated_at: String,
+    ) -> Self {
+        Self {
+            enabled,
+            target_id,
+            target_name: name.to_string(),
+            kind: kind.to_string(),
+            supported: false,
+            score: None,
+            grade: None,
+            capped: false,
+            evaluated_at,
+            counts: Counts::default(),
+            checks: Vec::new(),
+            guide: None,
+        }
     }
 }
 
@@ -371,7 +464,8 @@ pub fn report_samples(report: &Report, ts_ms: i64) -> Vec<Sample> {
 }
 
 /// Calcule la note de tout le parc toutes les [`SCORE_INTERVAL`] et la
-/// publie : c'est ce qui donne un historique, et de quoi alerter.
+/// publie : c'est ce qui donne un historique, et de quoi alerter. Note
+/// coupée : le tour passe sans rien lire ni publier, les séries s'éteignent.
 pub fn spawn(state: AppState) {
     tokio::spawn(async move {
         // Laisse aux collecteurs le temps d'une première passe.
@@ -380,6 +474,14 @@ pub fn spawn(state: AppState) {
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
             ticker.tick().await;
+            match setting_enabled(&state.pool).await {
+                Ok(true) => {}
+                Ok(false) => continue,
+                Err(error) => {
+                    warn!(?error, "security score setting not read");
+                    continue;
+                }
+            }
             match all_reports(&state).await {
                 Ok(reports) => {
                     let ts_ms = chrono::Utc::now().timestamp_millis();
@@ -417,6 +519,44 @@ mod tests {
     }
 
     #[test]
+    fn chaque_type_a_un_guide_avec_des_etapes_et_une_ancre() {
+        for provider in providers() {
+            for kind in provider.kinds() {
+                let guide = provider.guide(kind, &Facts::default());
+                assert!(!guide.steps.is_empty(), "{kind} : guide vide");
+                assert!(!guide.product.is_empty());
+                assert!(
+                    !guide.anchor.is_empty()
+                        && guide.anchor.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
+                    "{kind} : ancre {}",
+                    guide.anchor
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn la_couverture_se_limite_aux_produits_principaux() {
+        let mut kinds = supported_kinds();
+        kinds.sort_unstable();
+        assert_eq!(
+            kinds,
+            [
+                "activedirectory",
+                "agent",
+                "agent_service",
+                "http",
+                "opnsense",
+                "pbs",
+                "proxmox",
+                "synology",
+                "tls",
+                "website"
+            ]
+        );
+    }
+
+    #[test]
     fn chaque_type_n_a_qu_un_fournisseur() {
         let mut kinds = supported_kinds();
         let total = kinds.len();
@@ -450,7 +590,9 @@ mod tests {
             ("agent_reboot_required", &[], 1.0),
         ]);
         let report = build_report(7, "web", "agent", &facts);
-        assert!(report.supported);
+        assert!(report.supported && report.enabled);
+        let guide = report.guide.as_ref().unwrap();
+        assert!(guide.doc_url.starts_with(DOCS_URL) && guide.doc_url.contains('#'));
         let results: Vec<Outcome> = report.checks.iter().map(|c| c.result).collect();
         let first_pass = results.iter().position(|r| *r == Outcome::Pass).unwrap();
         let first_unknown = results.iter().position(|r| *r == Outcome::Unknown).unwrap();
@@ -467,6 +609,7 @@ mod tests {
     fn un_type_inconnu_n_est_pas_note() {
         let report = build_report(1, "x", "ping", &Facts::default());
         assert!(!report.supported);
+        assert!(report.guide.is_none());
         assert!(report.score.is_none() && report.grade.is_none());
         assert!(report_samples(&report, 0).is_empty());
     }

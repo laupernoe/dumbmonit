@@ -4,9 +4,8 @@
 	 * Add a device — the one way to add anything.
 	 *
 	 * Three views, all in the URL so the browser's Back button walks them:
-	 * the picker (no parameter: three front doors — the agent on a machine, a
-	 * network scan, an agent watching another network — then every kind,
-	 * searchable),
+	 * the picker (no parameter: two front doors — the agent on a machine, a
+	 * network scan — then every kind, searchable),
 	 * a kind's form (`?kind=snmp`, `?kind=agent&via=docker`), the network scan
 	 * (`?scan=1`). The setup guide (`&guide=1`) opens only on request, beside
 	 * the form on a desktop, above it on a phone. Every type, notice and option
@@ -214,8 +213,6 @@
 						: m.deviceform_new_desc_form()
 	);
 
-	const doorClass =
-		'group flex items-start gap-3.5 rounded-[var(--radius-card)] px-4 py-3.5 text-left transition-[transform,box-shadow] duration-200 ease-out-expo hover:-translate-y-px hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
 </script>
 
 <!-- Esc inside the open guide puts it away. -->

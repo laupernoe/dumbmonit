@@ -30,7 +30,7 @@
 use serde::Deserialize;
 
 use super::super::facts::list;
-use super::super::{Category, Check, CheckDef, Facts, Outcome, SecurityProvider, Severity};
+use super::super::{Category, Check, CheckDef, Facts, Guide, Outcome, SecurityProvider, Severity};
 
 pub const METRIC: &str = "ad_finding_count";
 
@@ -144,6 +144,18 @@ pub struct AdFinding {
     pub samples: Vec<String>,
 }
 
+/// Par où commencer pour améliorer la note.
+pub const AD_GUIDE: Guide = Guide {
+    product: "Active Directory",
+    anchor: "active-directory",
+    steps: &[
+        "Fix critical and high findings first: they are the usual paths to Domain Admins.",
+        "If the krbtgt password is old, reset it twice, a few hours apart, and remove unconstrained delegation from computers that are not domain controllers.",
+        "Move services that run under user accounts with SPNs to group managed service accounts (gMSA).",
+        "Run PingCastle for a complete assessment: this score only covers the findings the collector reports.",
+    ],
+};
+
 pub struct ActiveDirectory;
 
 impl SecurityProvider for ActiveDirectory {
@@ -153,6 +165,10 @@ impl SecurityProvider for ActiveDirectory {
 
     fn metrics(&self) -> &'static [&'static str] {
         &[METRIC]
+    }
+
+    fn guide(&self, _kind: &str, _facts: &Facts) -> Guide {
+        AD_GUIDE
     }
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {

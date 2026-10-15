@@ -663,7 +663,7 @@ Segnalati dall'agent Windows su un host Hyper-V; vedi [Agent](../devices/agent.m
 
 ### Punteggio di sicurezza {#security-score}
 
-Calcolato dal server ogni 15 minuti per ogni dispositivo il cui tipo prevede controlli di sicurezza, e memorizzato come `dumbmonit_security_score` (0–100). Vedi [Punteggio di sicurezza](../using/security-score.md).
+Calcolato dal server ogni 15 minuti per ogni dispositivo il cui tipo prevede controlli di sicurezza, e memorizzato come `dumbmonit_security_score` (0–100), solo finché il punteggio di sicurezza è attivo nelle Impostazioni (disattivato per impostazione predefinita). Vedi [Punteggio di sicurezza](../using/security-score.md).
 
 | Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
 |---|---|---|---|---|---|

@@ -71,6 +71,7 @@ mod model;
 mod options;
 mod photos;
 pub mod rhythm;
+mod security;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -134,6 +135,10 @@ const WANTED_APIS: &[&str] = &[
     drive::API_TEAM_FOLDERS,
     drive::API_CONNECTION,
     photos::API_PRESENCE,
+    security::API_UPGRADE,
+    security::API_USER,
+    security::API_AUTOBLOCK,
+    security::API_FIREWALL,
 ];
 
 pub struct SynologyCollector {
@@ -149,6 +154,8 @@ pub struct SynologyCollector {
     /// interrogations (voir [`devices`]). En mémoire par défaut ; le serveur y
     /// branche SQLite pour que l'historique survive à un redémarrage.
     abb_history: Arc<dyn AbbHistory>,
+    /// Réglages de sécurité lus lentement (voir [`security`]), une entrée par cible.
+    security: Mutex<HashMap<TargetId, security::Snapshot>>,
 }
 
 impl Default for SynologyCollector {
@@ -158,6 +165,7 @@ impl Default for SynologyCollector {
             http_unverified: OnceLock::new(),
             sessions: Mutex::new(HashMap::new()),
             abb_history: Arc::new(MemoryHistory::default()),
+            security: Mutex::new(HashMap::new()),
         }
     }
 }
@@ -387,6 +395,22 @@ impl Collector for SynologyCollector {
         if options.photos && dsm.supports(photos::API_PRESENCE) {
             outcome.samples.push(photos::installed_sample(ts_ms));
         }
+
+        // Réglages de sécurité : facultatifs, lus au plus une fois par heure, jamais
+        // une erreur comptée (voir [`security`]).
+        let previous = {
+            let cache = self.security.lock().unwrap_or_else(|poison| poison.into_inner());
+            cache.get(&target.id).cloned().unwrap_or_default()
+        };
+        let snapshot = if previous.is_fresh(std::time::Instant::now()) {
+            previous
+        } else {
+            let fresh = security::refresh(&dsm, previous).await;
+            let mut cache = self.security.lock().unwrap_or_else(|poison| poison.into_inner());
+            cache.insert(target.id, fresh.clone());
+            fresh
+        };
+        outcome.samples.extend(snapshot.samples(ts_ms));
 
         let mut samples = outcome.samples;
         samples.push(Sample::new(

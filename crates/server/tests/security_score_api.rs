@@ -1,5 +1,6 @@
-//! Tests d'intégration de la note de sécurité : rapport d'un équipement et
-//! vue d'ensemble du parc, contre un faux VictoriaMetrics.
+//! Tests d'intégration de la note de sécurité : réglage (coupé par défaut),
+//! rapport d'un équipement et vue d'ensemble du parc, contre un faux
+//! VictoriaMetrics.
 //!
 //! Le faux répond à toute requête instantanée avec deux machines sous agent :
 //! la cible 1 en retard de mises à jour de sécurité, la cible 2 à jour. Il
@@ -85,7 +86,8 @@ async fn create(
     .expect("cible")
 }
 
-async fn setup() -> (TestApp, Vec<i64>) {
+/// Instance avec trois équipements, note **coupée** (réglage par défaut).
+async fn setup_off() -> (TestApp, Vec<i64>) {
     let victoria = fake_victoria().await;
     let dir = tempfile::tempdir().expect("répertoire temporaire");
     let mut config = common::base_config(dir.path());
@@ -102,6 +104,57 @@ async fn setup() -> (TestApp, Vec<i64>) {
     (app, ids)
 }
 
+/// Même instance, note allumée par un administrateur.
+async fn setup() -> (TestApp, Vec<i64>) {
+    let (app, ids) = setup_off().await;
+    let admin = app.admin_cookie().await;
+    let reply = app.put("/api/security/settings", json!({ "enabled": true }), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["enabled"], true);
+    (app, ids)
+}
+
+#[tokio::test]
+async fn la_note_est_coupee_par_defaut_et_ne_lit_rien() {
+    let (app, ids) = setup_off().await;
+    let admin = app.admin_cookie().await;
+    let setting = app.get("/api/security/settings", Some(&admin)).await;
+    assert_eq!(setting.status, StatusCode::OK, "{}", setting.body);
+    assert_eq!(setting.body["enabled"], false);
+
+    let report = app.get(&format!("/api/targets/{}/security", ids[0]), Some(&admin)).await;
+    assert_eq!(report.status, StatusCode::OK, "{}", report.body);
+    assert_eq!(report.body["enabled"], false);
+    assert_eq!(report.body["supported"], false);
+    assert!(report.body["guide"].is_null());
+    assert_eq!(report.body["checks"], json!([]));
+
+    let summary = app.get("/api/security/summary", Some(&admin)).await;
+    assert_eq!(summary.body["enabled"], false);
+    assert_eq!(summary.body["devices"], json!([]));
+
+    // Un appareil inconnu reste un 404, réglage coupé ou non.
+    let missing = app.get("/api/targets/999/security", Some(&admin)).await;
+    assert_eq!(missing.status, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn seul_un_administrateur_change_le_reglage() {
+    let (app, _ids) = setup_off().await;
+    let admin = app.admin_cookie().await;
+    let viewer = app.viewer_cookie(&admin).await;
+    let refused =
+        app.put("/api/security/settings", json!({ "enabled": true }), Some(&viewer)).await;
+    assert_eq!(refused.status, StatusCode::FORBIDDEN, "{}", refused.body);
+    // Lire le réglage reste permis à tous.
+    let read = app.get("/api/security/settings", Some(&viewer)).await;
+    assert_eq!(read.status, StatusCode::OK);
+    assert_eq!(read.body["enabled"], false);
+
+    let off = app.put("/api/security/settings", json!({ "enabled": false }), Some(&admin)).await;
+    assert_eq!(off.body["enabled"], false);
+}
+
 #[tokio::test]
 async fn le_rapport_d_un_equipement_note_et_trie_ses_controles() {
     let (app, ids) = setup().await;
@@ -111,13 +164,18 @@ async fn le_rapport_d_un_equipement_note_et_trie_ses_controles() {
     let reply = app.get(&format!("/api/targets/{}/security", ids[0]), Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     let body = &reply.body;
+    assert_eq!(body["enabled"], true);
     assert_eq!(body["supported"], true);
     assert_eq!(body["kind"], "agent");
+    assert_eq!(body["guide"]["product"], "Linux host");
+    assert!(body["guide"]["doc_url"].as_str().unwrap().ends_with("#linux-hosts"));
+    assert!(!body["guide"]["steps"].as_array().unwrap().is_empty());
     assert_eq!(body["target_name"], "behind");
-    // Sécurité (6) + redémarrage (3) + mises à jour (1) en échec, SELinux inconnu.
+    // Sécurité (6) + redémarrage (3) + mises à jour (1) en échec ; SSH (2),
+    // pare-feu et SELinux non remontés, donc inconnus.
     assert_eq!(body["score"], 0);
     assert_eq!(body["grade"], "F");
-    assert_eq!(body["counts"], json!({ "pass": 0, "fail": 3, "unknown": 1 }));
+    assert_eq!(body["counts"], json!({ "pass": 0, "fail": 3, "unknown": 4 }));
     let checks = body["checks"].as_array().unwrap();
     assert_eq!(checks[0]["id"], "host.updates.security");
     assert_eq!(checks[0]["result"], "fail");
@@ -153,6 +211,7 @@ async fn la_vue_d_ensemble_va_du_pire_au_meilleur() {
     let admin = app.admin_cookie().await;
     let reply = app.get("/api/security/summary", Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["enabled"], true);
     let devices = reply.body["devices"].as_array().unwrap();
     // Le « ping » n'a pas de contrôle : il n'apparaît pas.
     assert_eq!(devices.len(), 2, "{devices:?}");
@@ -167,7 +226,11 @@ async fn la_vue_d_ensemble_va_du_pire_au_meilleur() {
 #[tokio::test]
 async fn la_note_exige_une_session() {
     let (app, ids) = setup().await;
-    for uri in [format!("/api/targets/{}/security", ids[0]), "/api/security/summary".to_string()] {
+    for uri in [
+        format!("/api/targets/{}/security", ids[0]),
+        "/api/security/summary".to_string(),
+        "/api/security/settings".to_string(),
+    ] {
         let reply = app.get(&uri, None).await;
         assert_eq!(reply.status, StatusCode::UNAUTHORIZED, "{uri}");
     }

@@ -76,6 +76,8 @@ https://shop.example.org,Shop,Customers/Acme,,300s,Add to cart
 | `dumbmonit_website_status_code` | 最终答案的HTTP状态。 |
 | `dumbmonit_website_response_seconds` | 总时间，包括重定向。 |
 | `dumbmonit_website_redirect_hops` | 跟随的重定向。 |
+| `dumbmonit_website_https` | 最终地址为 https 时为1。 |
+| `dumbmonit_website_security_header{header}` | 每个 `header` 标签为0/1（仅 https）：HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors。 |
 | `dumbmonit_website_info{platform}` | 总为1；标签携带平台。 |
 | `dumbmonit_website_text_chars` | 可见文本的字符数（2xx答案）。 |
 | `dumbmonit_website_blank` | 当文本低于阈值时为1。 |

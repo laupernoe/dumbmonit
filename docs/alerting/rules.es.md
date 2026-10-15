@@ -735,7 +735,8 @@ Reportado por el agente Windows en un host Hyper-V; consulta
 
 Calculada por el servidor cada 15 minutos para cada dispositivo cuyo
 tipo tiene comprobaciones de seguridad, y guardada como
-`dumbmonit_security_score` (0–100). Consulta [Puntuación de
+`dumbmonit_security_score` (0–100), solo mientras la puntuación de seguridad
+esté activada en Ajustes (desactivada por defecto). Consulta [Puntuación de
 seguridad](../using/security-score.md).
 
 | Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |

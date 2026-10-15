@@ -32,6 +32,7 @@
 | `probe_http_status_code` | http、websocket | 获得的状态代码。 |
 | `probe_http_first_byte_seconds` | http | 到响应标头的时间。 |
 | `probe_http_content_bytes` | http | 正文大小。 |
+| `probe_http_security_header{header}` | http | 每个 `header` 标签为0/1（仅 https）：HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors。 |
 | `probe_connect_seconds` | 全部除外 dns 和 ping | 连接建立（对于数据库包括登录）。 |
 | `probe_tls_handshake_seconds` | tls、http、smtp、mqtt、websocket | 仅 TLS 协商。 |
 | `probe_tls_version_info` | tls、http、smtp、mqtt、websocket | 存在；`version` 标签。 |

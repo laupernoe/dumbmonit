@@ -8,16 +8,10 @@
 pub mod activedirectory;
 pub mod agent;
 pub mod firewall;
-pub mod forgejo;
-pub mod gitlab;
-pub mod ntp;
 pub mod pbs;
 pub mod proxmox;
 pub mod synology;
 pub mod tls;
-pub mod unifi;
-pub mod updates;
-pub mod webserver;
 
 use super::facts::{list, plural};
 use super::{Check, CheckDef, Facts};
@@ -30,15 +24,9 @@ pub fn all_defs() -> Vec<&'static CheckDef> {
         pbs::DEFS,
         synology::DEFS,
         firewall::DEFS,
-        unifi::DEFS,
         tls::DEFS,
-        ntp::DEFS,
-        webserver::DEFS,
         agent::DEFS,
-        updates::DEFS,
         activedirectory::DEFS,
-        gitlab::DEFS,
-        forgejo::DEFS,
     ]
     .concat()
 }
