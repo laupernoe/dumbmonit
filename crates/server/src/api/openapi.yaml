@@ -3785,7 +3785,7 @@ paths:
       operationId: getSecuritySummary
       tags: [Security]
       summary: Security score of every rated device, worst first
-      description: While the score is turned off, answers `enabled: false` and no device.
+      description: "While the score is turned off, answers `enabled: false` and no device."
       x-token-scope: read
       responses:
         "200":
