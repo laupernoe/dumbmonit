@@ -267,6 +267,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Agent install on systemd hosts.** The Linux installer ran out of memory
+  while writing the systemd unit (shell killed, empty unit, agent never
+  started): a comment in the unit held `yes` between backticks, which the
+  shell ran. Re-run the install command after upgrading the server.
 - **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
   other overflow menu) now opens above the rest of the page, kept on screen
   and flipped upwards near the bottom, instead of hiding behind the next card

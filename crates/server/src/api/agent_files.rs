@@ -380,4 +380,30 @@ mod tests {
             assert!(INSTALL_SH.contains(platform), "install.sh never mentions {platform}");
         }
     }
+
+    /// Un heredoc non protégé (`<<FIN`) développe ce qu'il contient : un
+    /// commentaire `yes` entre accents graves lançait `yes` à l'installation et
+    /// le shell mourait d'un manque de mémoire en écrivant l'unité systemd.
+    #[test]
+    fn les_heredocs_du_script_n_executent_rien() {
+        for (name, script) in [("install.sh", INSTALL_SH)] {
+            let mut open = false;
+            for (index, line) in script.lines().enumerate() {
+                if open {
+                    if line == "FIN" {
+                        open = false;
+                        continue;
+                    }
+                    assert!(
+                        !line.contains('`') && !line.contains("$("),
+                        "{name}:{}: command substitution inside a heredoc: {line}",
+                        index + 1
+                    );
+                } else if line.trim_end().ends_with("<<FIN") {
+                    open = true;
+                }
+            }
+            assert!(!open, "{name}: unterminated heredoc");
+        }
+    }
 }
