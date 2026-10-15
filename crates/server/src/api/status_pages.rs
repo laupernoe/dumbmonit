@@ -2006,7 +2006,8 @@ mod tests {
         assert_eq!(rescale(50.0, day, paused), Some(100.0));
         // Les jours suivants : aucune couverture, donc aucune valeur (gris).
         for d in 8..=10 {
-            let covered = device_covered(d as f64 * day, (d + 1) as f64 * day, first, inactive, now);
+            let covered =
+                device_covered(d as f64 * day, (d + 1) as f64 * day, first, inactive, now);
             assert!(covered <= 0.0);
             assert_eq!(rescale(0.0, day, covered), None);
         }
