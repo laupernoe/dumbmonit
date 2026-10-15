@@ -17,6 +17,11 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
+- **Devices list: bulk actions, sorting, linkable filters.** Admins can tick devices (or select
+  all shown) and enable, disable, move to a folder or delete them in one go; a partial failure is
+  listed and the failed devices stay selected. Search, state, kind, sort (name, status, kind, last
+  check) and layout are kept in the URL. Disabled devices now sit in a collapsed "Disabled (N)"
+  section at the bottom.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
