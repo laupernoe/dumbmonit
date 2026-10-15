@@ -1,21 +1,33 @@
 <script lang="ts">
 	/**
-	 * Settings: what is administrative — your account, who can sign in and
-	 * how, the tokens that let agents and assistants in, the integration packs
-	 * installed, the theme, and the
-	 * server's health. Each section loads its own data; this page only lays
-	 * them out and offers a rail of anchors on wide screens, a strip of chips
-	 * on narrow ones.
+	 * Settings, in six tabs, each its own URL: My account (language, theme,
+	 * password, two-factor, push), Team & access (users, single sign-on),
+	 * Monitoring (agents, packs), Notifications & reports, Wall display and
+	 * System (backup, API & assistants, about). A rail on wide screens, a strip
+	 * of chips on narrow ones, and a search box over the section names.
 	 *
-	 * Notification channels and the policy moved to Alerts → Notifications,
-	 * status pages to their own Status page (September 2026): their old
-	 * `/settings#…` links are redirected below so a bookmark still lands.
+	 * Sections keep their old anchor ids: `/settings#agents` is sent to
+	 * `/settings/monitoring#agents`. Notification channels and status pages
+	 * moved out of Settings in September 2026; their old anchors still forward.
 	 */
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import type { Component } from 'svelte';
+	import { BellRing, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { PageHeader } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import {
+		DEFAULT_TAB,
+		MOVED,
+		SECTION_TAB,
+		TAB_IDS,
+		isTab,
+		searchIndex,
+		searchSettings,
+		tabLabel,
+		type SettingsTab
+	} from '#lib/components/settings/tabs.js';
 	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
@@ -27,80 +39,48 @@
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
 	import WallNewsSection from '#lib/components/settings/WallNewsSection.svelte';
+	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
+	import NotifyLinksSection from '#lib/components/settings/NotifyLinksSection.svelte';
 
-	/** Sections that used to live here, and where they went. */
-	const MOVED: Record<string, string> = {
-		notifications: '/alerts#notifications',
-		'notifications-channels': '/alerts#notifications',
-		'notifications-policy': '/alerts#notifications-policy',
-		'quiet-hours': '/alerts#notifications',
-		status: '/status',
-		'status-pages': '/status',
-		incidents: '/status#incidents'
-	};
-
-	// Accounts only exist once the instance is protected; viewers never see these two.
+	// Accounts only exist once the instance is protected; viewers never see that tab.
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
 
-	// Grouped so the rail reads as what it is: account/security/instance
-	// administration, set apart from the room-display options nobody needs
-	// admin judgement to touch. A `null` group label renders no heading — the
-	// first group stays unlabelled, as it did before grouping existed.
-	const GROUPS = $derived([
-		{
-			label: null,
-			items: [
-				{ id: 'security', label: m["settings.section.security"]() },
-				{ id: 'push', label: m.settings_nav_push() },
-				...(showAccounts
-					? [
-							{ id: 'users', label: m["settings.section.users"]() },
-							{ id: 'sso', label: m["settings.section.sso"]() }
-						]
-					: []),
-				{ id: 'agents', label: m["settings.section.agents"]() },
-				{ id: 'assistant', label: m["settings.section.assistant"]() },
-				{ id: 'packs', label: m["settings.section.packs"]() },
-				{ id: 'backup', label: m["settings.section.backup"]() },
-				...(auth.isAdmin ? [{ id: 'reports', label: m["settings.section.reports"]() }] : [])
-			]
-		},
-		{
-			label: m["settings.group.wall_display"](),
-			items: [
-				{ id: 'appearance', label: m["settings.section.appearance"]() },
-				{ id: 'music', label: m["settings.section.music"]() },
-				...(auth.isAdmin ? [{ id: 'news', label: m.settings_nav_news() }] : [])
-			]
-		},
-		{ label: null, items: [{ id: 'about', label: m["settings.section.about"]() }] }
-	]);
-	const SECTIONS = $derived(GROUPS.flatMap((group) => group.items));
+	const ICONS: Record<SettingsTab, typeof UserRound> = {
+		account: UserRound,
+		team: Users,
+		monitoring: Server,
+		notifications: BellRing,
+		wall: Tv,
+		system: HardDrive
+	};
 
-	// The rail follows the scroll: the topmost section in view is the current one.
-	let visible = $state<string>('security');
-	$effect(() => {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				const hits = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-				if (hits[0]) visible = hits[0].target.id;
-			},
-			{ rootMargin: '-25% 0px -60% 0px' }
-		);
-		for (const s of SECTIONS) {
-			const el = document.getElementById(s.id);
-			if (el) observer.observe(el);
-		}
-		return () => observer.disconnect();
+	const tabs = $derived(TAB_IDS.filter((id) => id !== 'team' || showAccounts));
+	const asked = $derived(page.params.tab);
+	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
+
+	/** The sections of each tab, top to bottom. */
+	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
+		account: [AppearanceSection, SecuritySection, PushSection],
+		team: [UsersSection, SsoSection],
+		monitoring: [AgentsSection, PacksSection],
+		notifications: [NotifyLinksSection, ...(auth.isAdmin ? [ReportsSection] : [])],
+		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection] : [])],
+		system: [BackupSection, AssistantSection, AboutSection]
 	});
 
-	// A deep link (`/settings#agents`) lands on its section after the sections
-	// rendered; a link to a section that moved goes where it lives now. The
-	// sections above the target grow as their data replaces the skeletons, so
-	// the landing is repeated on each growth for a few seconds — unless the
-	// reader has started scrolling.
+	// An unknown tab (or one this account cannot see) lands on the first one.
+	$effect(() => {
+		if (asked !== undefined && asked !== tab) void goto(`/settings/${tab}${page.url.search}${page.url.hash}`, { replace: true });
+	});
+
+	// A deep link (`/settings/system#about`) lands on its section after the
+	// sections rendered; an anchor from another tab, or from before tabs
+	// existed, goes to the tab that holds it; one that moved out of Settings
+	// goes where it lives now. Sections above the target grow as their data
+	// replaces the skeletons, so the landing is repeated on each growth for a
+	// few seconds — unless the reader has started scrolling.
 	let column = $state<HTMLDivElement | null>(null);
 	$effect(() => {
 		const hash = page.url.hash.slice(1);
@@ -108,6 +88,11 @@
 		const moved = MOVED[hash];
 		if (moved) {
 			void goto(moved, { replace: true });
+			return;
+		}
+		const home = SECTION_TAB[hash];
+		if (home && home !== tab && tabs.includes(home)) {
+			void goto(`/settings/${home}${page.url.search}#${hash}`, { replace: true });
 			return;
 		}
 		const land = () => document.getElementById(hash)?.scrollIntoView();
@@ -127,91 +112,131 @@
 		};
 	});
 
+	// --- Search over section names and a few words each ------------------------
+	let query = $state('');
+	const results = $derived(
+		searchSettings(searchIndex(), query).filter(
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news'))
+		)
+	);
+	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;
+
+	function onsearchkey(event: KeyboardEvent) {
+		if (event.key === 'Enter' && results[0]) {
+			event.preventDefault();
+			void goto(href(results[0]));
+			query = '';
+		} else if (event.key === 'Escape') {
+			query = '';
+		}
+	}
+
 	// Phones: keep the current chip in view inside the strip.
 	let strip = $state<HTMLUListElement | null>(null);
 	$effect(() => {
 		if (!strip) return;
-		const chip = strip.querySelector<HTMLElement>(`[href="#${visible}"]`);
+		const chip = strip.querySelector<HTMLElement>(`[data-tab="${tab}"]`);
 		if (!chip) return;
 		const left = chip.offsetLeft - 16;
 		const right = chip.offsetLeft + chip.offsetWidth + 16;
-		if (left < strip.scrollLeft) strip.scrollTo({ left, behavior: 'smooth' });
-		else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollTo({ left: right - strip.clientWidth, behavior: 'smooth' });
+		if (left < strip.scrollLeft) strip.scrollTo({ left });
+		else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollTo({ left: right - strip.clientWidth });
 	});
 </script>
 
-<svelte:head><title>{m["settings.page.title"]()} · DumbMonit</title></svelte:head>
+<svelte:head><title>{tabLabel(tab)} · {m['settings.page.title']()} · DumbMonit</title></svelte:head>
 
-<PageHeader title={m["settings.page.title"]()} description={m["settings.page.description"]()} />
+{#snippet searchBox(id: string)}
+	<div class="relative">
+		<label for={id} class="sr-only">{m.settings_search_label()}</label>
+		<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
+		<input
+			{id}
+			type="search"
+			class="input h-10 w-full pl-9"
+			placeholder={m.settings_search_placeholder()}
+			autocomplete="off"
+			bind:value={query}
+			onkeydown={onsearchkey}
+		/>
+	</div>
+	{#if query.trim()}
+		<div class="mt-2" aria-live="polite">
+			{#if results.length === 0}
+				<p class="px-1 text-[0.8125rem] text-ink-2">{m.settings_search_none()}</p>
+			{:else}
+				<ul class="space-y-0.5">
+					{#each results as entry (entry.id)}
+						<li>
+							<a
+								href={href(entry)}
+								class="flex min-h-10 flex-col justify-center rounded-md px-2.5 py-1.5 text-sm hover:bg-surface-2"
+								onclick={() => (query = '')}
+							>
+								<span class="font-semibold text-ink">{entry.label}</span>
+								<span class="text-[0.75rem] text-ink-2">{tabLabel(entry.tab)}</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
 
-<!-- Phones and tablets: a strip of chips under the title, one per section. -->
-<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m["settings.nav.aria_label"]()}>
+<PageHeader title={m['settings.page.title']()} />
+
+<!-- Phones and tablets: the search, then a strip of chips, one per tab. -->
+<div class="mb-5 lg:hidden">
+	{@render searchBox('settings-search-mobile')}
+</div>
+<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
 	<ul bind:this={strip} class="flex gap-1.5 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-		{#each SECTIONS as section (section.id)}
+		{#each tabs as id (id)}
 			<li class="shrink-0">
 				<a
-					href="#{section.id}"
-					class={`inline-flex h-10 items-center rounded-full sm:h-8 border px-3 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors ${visible === section.id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
-					aria-current={visible === section.id ? 'location' : undefined}
+					href="/settings/{id}"
+					data-tab={id}
+					class={`inline-flex h-10 items-center rounded-full border px-3.5 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors ${tab === id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
+					aria-current={tab === id ? 'page' : undefined}
 				>
-					{section.label}
+					{tabLabel(id)}
 				</a>
 			</li>
 		{/each}
 	</ul>
 </nav>
 
-<div class="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
+<div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-10">
 	<aside class="hidden lg:block">
-		<nav class="sticky top-20" aria-label={m["settings.nav.aria_label"]()}>
-			<ul class="space-y-0.5 text-sm">
-				{#each GROUPS as group, i (group.label ?? i)}
-					{#if group.label}
-						<li class={`px-2.5 ${i === 0 ? 'pb-1.5' : 'pt-3 pb-1.5'} text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase`}>
-							{group.label}
-						</li>
-					{/if}
-					{#each group.items as section (section.id)}
+		<div class="sticky top-20">
+			{@render searchBox('settings-search')}
+			<nav class="mt-4" aria-label={m['settings.nav.aria_label']()}>
+				<ul class="space-y-0.5 text-sm">
+					{#each tabs as id (id)}
+						{@const Icon = ICONS[id]}
 						<li>
 							<a
-								href="#{section.id}"
-								class={`block rounded-md px-2.5 py-1.5 transition-colors hover:bg-surface-2 hover:text-ink ${visible === section.id ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2'}`}
-								aria-current={visible === section.id ? 'location' : undefined}
+								href="/settings/{id}"
+								class={`flex h-10 items-center gap-2.5 rounded-md px-2.5 transition-colors hover:bg-surface-2 hover:text-ink ${tab === id ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2'}`}
+								aria-current={tab === id ? 'page' : undefined}
 							>
-								{section.label}
+								<Icon class="size-4 shrink-0" aria-hidden="true" />
+								{tabLabel(id)}
 							</a>
 						</li>
 					{/each}
-				{/each}
-			</ul>
-			<p class="mt-5 border-t border-line pt-4 text-[0.8125rem] leading-relaxed text-ink-2">
-				{m["settings.hint.notifications_lead"]()}
-				<a href="/alerts#notifications" class="font-semibold text-ink hover:underline">{m["settings.hint.notifications_link"]()}</a>.
-				{m["settings.hint.status_lead"]()}
-				<a href="/status" class="font-semibold text-ink hover:underline">{m["settings.hint.status_link"]()}</a>.
-			</p>
-		</nav>
+				</ul>
+			</nav>
+		</div>
 	</aside>
 
-	<div bind:this={column} class="grid min-w-0 gap-6 [&_section[id]]:scroll-mt-14 sm:[&_section[id]]:scroll-mt-28 lg:[&_section[id]]:scroll-mt-20">
-		<div class="min-w-0 rise-in" style="--rise-delay: 0ms"><SecuritySection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 20ms"><PushSection /></div>
-		{#if showAccounts}
-			<div class="min-w-0 rise-in" style="--rise-delay: 40ms"><UsersSection /></div>
-			<div class="min-w-0 rise-in" style="--rise-delay: 80ms"><SsoSection /></div>
-		{/if}
-		<div class="min-w-0 rise-in" style="--rise-delay: 120ms"><AgentsSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 160ms"><AssistantSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 200ms"><PacksSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 240ms"><BackupSection /></div>
-		{#if auth.isAdmin}
-			<div class="min-w-0 rise-in" style="--rise-delay: 260ms"><ReportsSection /></div>
-		{/if}
-		<div class="min-w-0 rise-in" style="--rise-delay: 280ms"><AppearanceSection /></div>
-		<div class="min-w-0 rise-in" style="--rise-delay: 300ms"><MusicSection /></div>
-		{#if auth.isAdmin}
-			<div class="min-w-0 rise-in" style="--rise-delay: 310ms"><WallNewsSection /></div>
-		{/if}
-		<div class="min-w-0 rise-in" style="--rise-delay: 320ms"><AboutSection /></div>
+	<div bind:this={column} class="grid min-w-0 content-start gap-6 [&_section[id]]:scroll-mt-20 sm:[&_section[id]]:scroll-mt-32 lg:[&_section[id]]:scroll-mt-20">
+		<h2 class="sr-only">{tabLabel(tab)}</h2>
+		{#key tab}
+			{#each SECTIONS[tab] as Section, i (i)}
+				<div class="min-w-0 rise-in" style={`--rise-delay: ${i * 40}ms`}><Section /></div>
+			{/each}
+		{/key}
 	</div>
 </div>
