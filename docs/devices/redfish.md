@@ -121,7 +121,7 @@ is a word as well as a colour, and an unknown value reads "—", never 0.
 5. DumbMonit only reads: fans, temperatures, voltages, power supplies, drives, memory and processor summaries, and how many log entries there are by severity. It never powers the server on or off, never changes a setting and never reads the text of the logs.
 
 !!! warning
-    Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. A controller answers slowly and a full read takes several requests: if the monitor reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.
+    Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. A controller answers slowly and a full read takes several requests: if the device reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.
 
 The menu names above are those of current firmware; older generations move
 them around but keep the same roles. On Supermicro, the account type shown
