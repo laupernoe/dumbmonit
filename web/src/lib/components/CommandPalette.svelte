@@ -31,7 +31,8 @@
 		Cpu,
 		RadioTower,
 		Bot,
-		KeyRound
+		KeyRound,
+		Network
 	} from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { listTargets, type Target, type TargetId } from '#lib/api/index.js';
@@ -73,6 +74,7 @@
 	const staticEntries = (): Entry[] => [
 		{ id: 'page:/', group: 'pages', label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: Gauge, run: go('/') },
 		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Server, run: go('/targets') },
+		{ id: 'page:/map', group: 'pages', label: m.topology_title(), detail: m.topology_palette_detail(), keywords: 'map topology graph diagram network tree print export pdf', icon: Network, run: go('/map') },
 		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, run: go('/alerts') },
 		{ id: 'page:/alerts#notifications', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, run: go('/alerts#notifications') },
 		{ id: 'page:/security', group: 'pages', label: m.misc_nav_security(), detail: m.misc_palette_security_detail(), keywords: 'security score grade pingcastle secure score checks', icon: ShieldCheck, run: go('/security') },

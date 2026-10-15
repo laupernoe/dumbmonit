@@ -2500,6 +2500,31 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/topology:
+    get:
+      operationId: getTopology
+      tags: [Devices]
+      summary: Topology map of the monitored infrastructure
+      description: |
+        Nodes and links derived from what the server already knows, never typed in by hand.
+        Each link carries its `source`: `parent` (declared dependency, the one alert
+        suppression follows), `relay` (the relay agent that polls the device), `hypervisor`
+        (a hypervisor and its guests, from the latest Proxmox, XCP-ng, Nutanix, vSphere or
+        libvirt metrics) and `lldp` (an LLDP neighbour seen by an SNMP switch). A pair of
+        nodes is linked once, by the surest source. A guest or neighbour is linked to a
+        monitored device only when its name designates exactly one device; a guest that
+        matches none becomes its own node (`target_id` null), an unknown LLDP neighbour is
+        left out. Addresses are not included. States are read from `GET /api/targets`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The map.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Topology" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}/agent:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -5887,6 +5912,38 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+    Topology:
+      type: object
+      required: [nodes, edges, metrics_available]
+      properties:
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyNode" }
+        edges:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyEdge" }
+        metrics_available:
+          type: boolean
+          description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
+    TopologyNode:
+      type: object
+      required: [id, name, kind, group_name]
+      properties:
+        id: { type: string, description: "`t<id>` for a device, `g<host>:<name>` for an unmonitored guest." }
+        target_id: { type: [integer, "null"], format: int64, description: The device; null for a guest. }
+        name: { type: string }
+        kind: { type: string, description: "The device type; `vm` or `container` for a guest." }
+        group_name: { type: string, description: Folder; a guest takes its hypervisor's. }
+        site: { type: [string, "null"], description: Site declared by the relay agent (its own, or the one that polls the device). }
+        host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
+        running: { type: [boolean, "null"], description: Guest only, running at the last measurement. }
+    TopologyEdge:
+      type: object
+      required: [from, to, source]
+      properties:
+        from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
+        to: { type: string }
+        source: { type: string, enum: [parent, relay, hypervisor, lldp] }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]

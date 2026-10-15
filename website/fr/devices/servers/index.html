@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serveurs et matériel · Appareils · DumbMonit</title>
+<meta name="description" content="Machines Linux, Windows, macOS et FreeBSD via l&#x27;agent, matériel serveur via son contrôleur de gestion, onduleurs et Active Directory.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/fr/devices/servers/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+<script src="../../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Serveurs et matériel · Appareils · DumbMonit">
+<meta property="og:description" content="Machines Linux, Windows, macOS et FreeBSD via l&#x27;agent, matériel serveur via son contrôleur de gestion, onduleurs et Active Directory.">
+<meta property="og:url" content="https://dumbmonit.app/fr/devices/servers/">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit : tout va bien ? Réponse en une seconde. Supervision auto-hébergée dans un conteneur, avec la mascotte pigeon.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Serveurs et matériel · Appareils · DumbMonit">
+<meta name="twitter:description" content="Machines Linux, Windows, macOS et FreeBSD via l&#x27;agent, matériel serveur via son contrôleur de gestion, onduleurs et Active Directory.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Serveurs et matériel · Appareils · DumbMonit","url":"https://dumbmonit.app/fr/devices/servers/","inLanguage":"fr","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="Accueil DumbMonit"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Sections">
+			<a href="../../features/">Fonctionnalités</a>
+			<a href="../" aria-current="page">Appareils</a>
+			<a href="../../install/">Installer</a>
+			<a href="../../community/">Docs et communauté</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Démo en ligne</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Langue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>FR</span></summary>
+				<ul>
+				<li><a href="../../../devices/servers/" hreflang="en" lang="en">English</a></li>
+				<li><a href="./" hreflang="fr" lang="fr" aria-current="true">Français</a></li>
+				<li><a href="../../../de/devices/servers/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../../es/devices/servers/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../../it/devices/servers/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../../pt/devices/servers/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/servers/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../../ru/devices/servers/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../../zh-Hans/devices/servers/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Démo en ligne</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Appareils</a></p>
+		<h1 class="blur-in"><span class="w" style="--i:0">Serveurs</span> <span class="w" style="--i:1">et</span> <span class="w" style="--i:2">matériel</span></h1>
+		<p class="lede">Machines Linux, Windows, macOS et FreeBSD via l&#x27;agent, matériel serveur via son contrôleur de gestion, onduleurs et Active Directory.</p>
+		<p class="code-note">Les descriptions des appareils et les textes des règles d'alerte sont en anglais, comme dans le produit. Les libellés de la page suivent votre langue.</p>
+		<ul class="toc" aria-label="Types d'appareils de cette page">
+			<li><a href="#agent">Server with agent</a></li>
+			<li><a href="#redfish">Server hardware (Redfish)</a></li>
+			<li><a href="#nut">UPS with NUT</a></li>
+			<li><a href="#activedirectory">Active Directory</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="agent">
+<header><h2>Server with agent</h2><span class="label-tape">agent</span></header>
+<p class="summary">Linux, Windows, macOS or FreeBSD: CPU, memory, disks, network, Docker, services, backups.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>Linux server</li><li>Windows server</li><li>Raspberry Pi</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><p class="muted">Aucun compte nécessaire.</p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">13</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li><li><span class="plate plate-advisory">Avis</span><strong>High CPU</strong><span>CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %.</span></li><li><span class="plate plate-info">Info</span><strong>Unusual CPU</strong><span>CPU load noticeably different from the usual at this time and day of the week (seasonal baseline).</span></li><li><span class="plate plate-advisory">Avis</span><strong>Disk almost full</strong><span>Filesystem 90% full or more, per mount point (SNMP, Proxmox storages and root filesystems); clears below 88 %.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Filesystem almost full</strong><span>At this rate, the filesystem will be full within four days.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Disk SMART failing</strong><span>The disk&#x27;s own SMART self-assessment reports it as failing. Replace it and check the backups.</span></li></ul><details class="more-rules"><summary>Afficher 7 de plus</summary><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>ZFS pool degraded</strong><span>A ZFS pool is no longer healthy: a device is missing, faulted or removed.</span></li><li><span class="plate plate-warning">Alerte</span><strong>ZFS scrub found errors</strong><span>The last ZFS scrub found errors on this pool, or files are permanently lost. The pool can stay ONLINE.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Temperature above critical</strong><span>A sensor is above the critical temperature its own hardware declares; no fixed value.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Container stopped</strong><span>The container has been stopped for two minutes. A container Docker would not restart is left out: a one-shot docker run that finished, a container never started, or one stopped by hand without a restart policy. A crash (any other exit code), an out-of-memory kill, or an always / unless-stopped container still counts.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Container unhealthy</strong><span>The container&#x27;s health check has been failing for three minutes. A stopped container is left out: Docker keeps its last verdict, which no longer means anything.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Container restarting</strong><span>The container restarted three times or more in fifteen minutes (increase(dumbmonit_container_restart_count[15m])): it is rarely stopped long enough for the previous rule.</span></li><li><span class="plate plate-info">Info</span><strong>Container update available</strong><span>A newer image is available in the registry for this container.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Install the agent on the machine</summary><ol class="setup-steps"><li><p>Save the device in DumbMonit: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.</p></li><li><p>That token is the agent&#x27;s key to push its measurements to DumbMonit. It is not an account on the machine: nothing to create there. A token created from the device form is single use: it enrols this one machine and nothing else. For a fleet, create a reusable token in Settings → Agents.</p></li><li><p>Run the install command on the machine to monitor, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads the agent, writes the token into agent.yaml and starts the service.</p></li><li><p>The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this device. Lost the token? Settings → Agents lets you revoke it and create another.</p></li><li><p>Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the &quot;docker&quot; group and restart it. Restart and auto-update policies are then set per container on the device page.</p><pre><code>usermod -aG docker dumbmonit</code></pre></li><li><p>Plakar backups: detected automatically — a Plakar device appears under the machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set &quot;plakar_klosets&quot; in agent.yaml to watch a fixed list, or &quot;plakar: false&quot; to opt out.</p></li><li><p>Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) each become their own device under the machine, with their own status and alerts. The machine&#x27;s &quot;Services found by the agent&quot; panel lists what was found and what was not: untick a module to drop its device, tick one to watch it before it shows up.</p></li></ol><p class="warn"><strong>À savoir.</strong> The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/agent/">Documentation</a></p>
+</article>
+<article class="dev" id="redfish">
+<header><h2>Server hardware (Redfish)</h2><span class="label-tape">redfish</span></header>
+<p class="summary">Fans, temperatures, power supplies, drives and memory, read from the BMC (iDRAC, iLO…).</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>Supermicro BMC</li><li>Dell iDRAC</li><li>HPE iLO</li><li>Lenovo XClarity Controller</li><li>ASRock Rack BMC</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>Management controller account</strong></li></ul><p class="muted">Port par défaut: <code>443</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">7</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Server fan failed</strong><span>The management controller reports a fan as failed.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Server temperature above critical</strong><span>A temperature sensor is above the critical threshold the controller itself declares.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Power supply redundancy lost</strong><span>The power supplies are no longer redundant: one more failure and the server goes down.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Power supply failed</strong><span>The controller reports a power supply as failed.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Drive failure predicted</strong><span>A drive reports a predicted failure: replace it while it still works.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Server health critical</strong><span>The controller reports the system&#x27;s own health as Critical.</span></li></ul><details class="more-rules"><summary>Afficher 1 de plus</summary><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Create a read-only account on the management controller</summary><ol class="setup-steps"><li><p>Open the web interface of the management controller (BMC), not the operating system of the server. Create a new local user named as follows, with a long password used nowhere else.</p><pre><code>dumbmonit</code></pre></li><li><p>Give it the lowest role that can read, and nothing more. Supermicro: Configuration → Users → Add User, privilege User, and tick Redfish in the account type. Dell iDRAC: iDRAC Settings → Users → Local Users → Add, role Read Only. HPE iLO: Administration → User Administration → New, untick every privilege except Login. Lenovo XClarity Controller: BMC Configuration → User/LDAP → Create, role Read-only. ASRock Rack: Settings → User Management, privilege User.</p></li><li><p>Check from any machine on the management network that the account can read Redfish. The command asks for the password and prints the server&#x27;s name and health.</p><pre><code>curl -k -u dumbmonit https://bmc.lan/redfish/v1/Systems</code></pre></li><li><p>In DumbMonit, enter the controller address, for example &quot;bmc.lan&quot; or &quot;10.0.0.50&quot;, then the user name and password of that account.</p></li><li><p>DumbMonit only reads: fans, temperatures, voltages, power supplies, drives, memory and processor summaries, and how many log entries there are by severity. It never powers the server on or off, never changes a setting and never reads the text of the logs.</p></li></ol><p class="warn"><strong>À savoir.</strong> Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options. A controller answers slowly and a full read takes several requests: if the device reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/redfish/">Documentation</a></p>
+</article>
+<article class="dev" id="nut">
+<header><h2>UPS with NUT</h2><span class="label-tape">nut</span></header>
+<p class="summary">UPS served by Network UPS Tools: on battery, low or worn-out battery, charge, runtime left, load and input voltage, for every UPS the server publishes.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>Synology or QNAP NAS with a USB UPS</li><li>Raspberry Pi running NUT</li><li>TrueNAS UPS service</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>upsd user name / password</strong><span>Sent with USERNAME and PASSWORD before reading. upsd does not check them to read; set them only if your setup asks for them.</span></li></ul><p class="muted">Aucun compte nécessaire.</p><p class="muted">Port par défaut: <code>3493</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>UPS on battery</strong><span>The UPS is powering the load from battery.</span></li><li><span class="plate plate-warning">Alerte</span><strong>UPS battery low</strong><span>The UPS battery is low or depleted.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Let DumbMonit read the NUT server</summary><ol class="setup-steps"><li><p>Find the NUT server: the machine the UPS is plugged into (a NAS, a Raspberry Pi, a server) runs upsd on TCP port 3493. From the DumbMonit host, check that it answers and note the names of its UPS.</p><pre><code>printf &#x27;LIST UPS\nLOGOUT\n&#x27; | nc nas.lan 3493</code></pre></li><li><p>On a plain NUT install, make upsd listen on an address the DumbMonit host can reach: add this line to upsd.conf, open TCP port 3493 in the firewall for the DumbMonit host, and restart upsd. Reading needs no account: upsd lets any host it accepts read the variables, and changes nothing without a user that has the right to.</p><pre><code>LISTEN 0.0.0.0 3493</code></pre></li><li><p>On a NAS, the same switch has another name. Synology DSM: Control Panel → Hardware &amp; Power → UPS, tick Enable network UPS server, and add the DumbMonit host under Permitted DiskStation Devices; the UPS is named ups. QNAP: the UPS page of the Control Panel, Enable network UPS master, with the DumbMonit host among the allowed addresses; the UPS is named qnapups. TrueNAS: the UPS service with Remote Monitor ticked.</p></li><li><p>Optional: DumbMonit sends a user name and password only if you enter one, and upsd does not ask for any to read. If your policy wants every client named, add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.</p><pre><code>[dumbmonit]
+password = a-long-random-password</code></pre></li><li><p>In DumbMonit, enter the address of the NUT server, for example &quot;nas.lan&quot;. Every UPS it publishes is watched; to watch only some, list their names in the UPS option.</p></li><li><p>DumbMonit only reads: it sends LIST UPS and LIST VAR, never LOGIN, SET, INSTCMD or FSD, so the server never counts it as a secondary to wait for before shutting down.</p></li></ol><p class="warn"><strong>À savoir.</strong> DumbMonit watches the UPS; it shuts nothing down. The machines the UPS powers still need their own NUT client (upsmon) to shut down cleanly when the battery runs low.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/nut/">Documentation</a></p>
+</article>
+<article class="dev" id="activedirectory">
+<header><h2>Active Directory</h2><span class="label-tape">activedirectory</span></header>
+<p class="summary">A Windows domain over LDAP, read-only: domain controllers and FSMO roles, privileged group members, password policy, and security findings such as Kerberos-roastable accounts, unconstrained delegation or an old krbtgt password.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>Windows Server domain controller</li><li>Samba AD domain controller</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>Service account</strong><span>A plain domain user created for DumbMonit, member of no group.</span></li></ul><p class="muted">Port par défaut: <code>636</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">6</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Domain controller unreachable</strong><span>A domain controller of the domain no longer answers on its LDAP port. A name that does not resolve from DumbMonit produces no series and never fires.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Active Directory bind failed</strong><span>The domain controller answers but refuses the service account: expired password, disabled or locked-out account.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Privileged group membership changed</strong><span>A member joined or left Domain Admins, Enterprise Admins, Schema Admins, Administrators or an operators group, nesting included (changes_prometheus(dumbmonit_ad_privileged_group_fingerprint[1h]), label group). Resolves by itself an hour later.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Active Directory replication failing</strong><span>The queried domain controller cannot replicate from a partner. Only when the account may read replication status.</span></li><li><span class="plate plate-info">Info</span><strong>krbtgt password older than 180 days</strong><span>The krbtgt password was last changed more than 180 days ago.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Create a read-only service account for DumbMonit</summary><ol class="setup-steps"><li><p>Create a dedicated user for DumbMonit, for example svc-dumbmonit, and add it to no group. A plain domain user is enough: every authenticated user can read what DumbMonit reads. In PowerShell, with the Active Directory module:</p><pre><code>New-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString &#x27;Password&#x27;) -Enabled $true</code></pre></li><li><p>Give it a long random password. If passwords expire in your domain, DumbMonit raises Active Directory bind failed the day this one does.</p></li><li><p>Optional: to see inbound replication status, grant the account the Monitor active directory replication right on the domain object itself. It reveals no password and no secret.</p><pre><code>dsacls &quot;DC=corp,DC=example,DC=com&quot; /G &quot;CORP\svc-dumbmonit:CA;Monitor active directory replication&quot;</code></pre></li><li><p>LDAPS needs a certificate on each domain controller; an enterprise certification authority (AD CS) issues one automatically. Export the certificate of that authority in Base-64 encoded X.509 format and paste it as CA certificate below.</p></li><li><p>In DumbMonit, enter the name of one domain controller as its certificate names it, for example &quot;dc1.corp.example.com&quot;, and log in as svc-dumbmonit@corp.example.com. DumbMonit finds the other domain controllers by itself and checks that each one answers.</p></li><li><p>DumbMonit only reads: it never writes to the directory, and of LAPS it reads the expiry date, never the password.</p></li></ol><p class="warn"><strong>À savoir.</strong> Plain LDAP on port 389 sends the service account&#x27;s password in clear text: DumbMonit refuses it unless you tick Allow plain LDAP, and a domain controller that requires LDAP signing refuses it too. Use LDAPS, or StartTLS on port 389.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/activedirectory/">Documentation</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Autres familles</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../network/">Équipements réseau</a></li>
+			<li><a href="../firewalls/">Pare-feux</a></li>
+			<li><a href="../hypervisors/">Hyperviseurs et clusters</a></li>
+			<li><a href="../storage/">NAS et sauvegarde</a></li>
+			<li><a href="../checks/">Sites web, certificats et tests</a></li>
+			<li><a href="../proxies/">Serveurs web et reverse proxies</a></li>
+			<li><a href="../apps/">Applications auto-hébergées</a></li>
+			<li><a href="../mail/">DNS, messagerie et sécurité</a></li>
+			<li><a href="../data/">Bases de données et observabilité</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. La mascotte est un pigeon.</p>
+		<nav aria-label="Pied de page">
+			<a href="../../features/">Fonctionnalités</a>
+			<a href="../">Appareils</a>
+			<a href="../../install/">Installer</a>
+			<a href="../../community/">Docs et communauté</a>
+			<a href="https://demo.dumbmonit.app">Démo en ligne</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/fr/latest/">Documentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Versions</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduire</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licence</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sécurité</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>

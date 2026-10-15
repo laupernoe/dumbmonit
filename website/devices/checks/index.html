@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+<script>
+(function () {
+	try {
+		if (localStorage.getItem('dm-lang')) return;
+		var known = {"en": "en", "fr": "fr", "de": "de", "es": "es", "it": "it", "pt": "pt", "pt-br": "pt-BR", "ru": "ru", "zh-hans": "zh-Hans"};
+		var prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+		for (var i = 0; i < prefs.length; i++) {
+			var l = String(prefs[i] || '').toLowerCase();
+			var code = known[l] || (l.indexOf('zh') === 0 ? 'zh-Hans' : known[l.split('-')[0]]);
+			if (!code) continue;
+			if (code !== 'en') location.replace('../../' + code + '/devices/checks/' + location.hash);
+			return;
+		}
+	} catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Websites, certificates and checks · Devices · DumbMonit</title>
+<meta name="description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/devices/checks/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Websites, certificates and checks · Devices · DumbMonit">
+<meta property="og:description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
+<meta property="og:url" content="https://dumbmonit.app/devices/checks/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Is everything fine? Know in one second. Self-hosted monitoring in one container, next to the pigeon mascot.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Websites, certificates and checks · Devices · DumbMonit">
+<meta name="twitter:description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Websites, certificates and checks · Devices · DumbMonit","url":"https://dumbmonit.app/devices/checks/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="DumbMonit home"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Sections">
+			<a href="../../features/">Features</a>
+			<a href="../" aria-current="page">Devices</a>
+			<a href="../../install/">Install</a>
+			<a href="../../community/">Docs and community</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Live demo</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>EN</span></summary>
+				<ul>
+				<li><a href="./" hreflang="en" lang="en" aria-current="true">English</a></li>
+				<li><a href="../../fr/devices/checks/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/devices/checks/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/devices/checks/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/devices/checks/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../pt/devices/checks/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../pt-BR/devices/checks/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../ru/devices/checks/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../zh-Hans/devices/checks/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live demo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Devices</a></p>
+		<h1 class="blur-in"><span class="w" style="--i:0">Websites,</span> <span class="w" style="--i:1">certificates</span> <span class="w" style="--i:2">and</span> <span class="w" style="--i:3">checks</span></h1>
+		<p class="lede">Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.</p>
+		<p class="code-note">Device descriptions and alert rule texts are in English, as in the product. The page labels follow your language.</p>
+		<ul class="toc" aria-label="Device types on this page">
+			<li><a href="#http">Website or web API (HTTP)</a></li>
+			<li><a href="#tcp">Network port (TCP)</a></li>
+			<li><a href="#dns">Domain name (DNS)</a></li>
+			<li><a href="#ping">Reachable host (ping)</a></li>
+			<li><a href="#tls">TLS certificate</a></li>
+			<li><a href="#ntp">NTP time server</a></li>
+			<li><a href="#websocket">WebSocket endpoint</a></li>
+			<li><a href="#push">Heartbeat (push)</a></li>
+			<li><a href="#domain">Domain expiry</a></li>
+			<li><a href="#website">Website health &amp; SEO</a></li>
+			<li><a href="#webchange">Website changes</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="http">
+<header><h2>Website or web API (HTTP)</h2><span class="label-tape">http</span></header>
+<p class="summary">A page or API answers with the right status and content, over a valid certificate.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Website</li><li>Application health page</li><li>REST API</li><li>Self-hosted service interface</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><ul class="needs"><li><strong>Username / password</strong><span>Sent as HTTP basic authentication.</span></li><li><strong>Bearer token</strong><span>Sent as &quot;Authorization: Bearer …&quot; on every request.</span></li></ul><p class="muted">No account needed.</p><p class="muted">Default port: <code>443</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Certificate expiring soon</strong><span>The certificate expires in less than fourteen days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Certificate expired</strong><span>The certificate has expired.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a web page</summary><ol class="setup-steps"><li><p>In the address, paste the full URL of the page to monitor. Without &quot;http://&quot; or &quot;https://&quot;, HTTPS is assumed.</p></li><li><p>Prefer a light page that needs no login, for example the application&#x27;s health page (&quot;/health&quot;, &quot;/status&quot;), rather than the home page.</p></li><li><p>If the page requires authentication, fill in the credential: a username and password give basic authentication, a token is sent as &quot;Bearer&quot;.</p></li><li><p>By default, any status code between 200 and 299 is fine. To go further, require a keyword in the page or a specific value in a JSON response.</p></li><li><p>Over HTTPS, the certificate is read automatically: you will be warned before it expires.</p></li></ol><p class="warn"><strong>Heads-up.</strong> Never write a password or a token in the options: they are copied in clear text on every measurement. Use the credential field, which is encrypted.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#http">Documentation</a></p>
+</article>
+<article class="dev" id="tcp">
+<header><h2>Network port (TCP)</h2><span class="label-tape">tcp</span></header>
+<p class="summary">A port accepts connections: SSH, a file share, a game server, anything without its own probe.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>SSH</li><li>SMB or NFS share</li><li>Database</li><li>Game server</li><li>Network printer</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p></section>
+<section><h3>Built-in alert rules <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a port</summary><ol class="setup-steps"><li><p>In the address, write the host followed by the port, separated by a colon: &quot;nas.home.lan:22&quot; or &quot;192.168.1.5:445&quot;.</p></li><li><p>For an IPv6 address, put it in brackets: &quot;[fd00::1]:445&quot;.</p></li><li><p>You can also leave the address without a port and enter it in the &quot;Port&quot; option: one of the two is required.</p></li><li><p>Only the connection opening is tested: no data is sent to the service, so it has no effect on it.</p></li></ol><p class="warn"><strong>Heads-up.</strong> An open port does not prove the application behind it works. For a web service, prefer the &quot;Website or web API&quot; type, which reads the response.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#tcp">Documentation</a></p>
+</article>
+<article class="dev" id="dns">
+<header><h2>Domain name (DNS)</h2><span class="label-tape">dns</span></header>
+<p class="summary">A name resolves, and points to the address you expect.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Your domain name</li><li>An internal name served by your Pi-hole or AdGuard</li><li>An MX record</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p><p class="muted">Default port: <code>53</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a DNS resolution</summary><ol class="setup-steps"><li><p>In the address, write the name to resolve, without &quot;http://&quot;: &quot;www.example.com&quot;.</p></li><li><p>By default, the check asks the system resolver for an IPv4 address (A record). Pick another record type in the options if needed.</p></li><li><p>To monitor your own DNS server, enter its IP address in &quot;DNS server to query&quot;: the check will fail if it stops answering.</p></li><li><p>To detect hijacking or a misconfiguration, list in &quot;Expected values&quot; the addresses the answer must contain.</p></li></ol><p class="warn"><strong>Heads-up.</strong> The DNS server is given by its IP address, not by a name: it would take a resolver to resolve the resolver.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#dns">Documentation</a></p>
+</article>
+<article class="dev" id="ping">
+<header><h2>Reachable host (ping)</h2><span class="label-tape">ping</span></header>
+<p class="summary">A host answers ICMP: response time and packet loss.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Home router or gateway</li><li>Wi-Fi access point</li><li>Printer</li><li>Machine without agent or SNMP</li><li>Remote host</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p></section>
+<section><h3>Built-in alert rules <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a host with ping</summary><ol class="setup-steps"><li><p>In the address, write the host name or IP address: &quot;192.168.1.1&quot; or &quot;router.home.lan&quot;.</p></li><li><p>On each poll, the check sends four echoes and measures the response time, along with the share of lost packets.</p></li><li><p>By default, only a total loss counts as down; partial loss stays visible in the charts. Lower &quot;Tolerated loss&quot; to be warned earlier.</p></li><li><p>If DumbMonit runs in Docker, keep the &quot;sysctls:&quot; lines of the shipped docker-compose.yml under the dumbmonit service: they allow the container&#x27;s unprivileged user to open ICMP echo sockets. No capability is needed.</p></li></ol><p class="warn"><strong>Heads-up.</strong> Without that sysctl, the check cannot open an ICMP socket: it reports this as a configuration error, not as a host failure. Some devices also ignore pings on purpose: check that before drawing conclusions.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#ping">Documentation</a></p>
+</article>
+<article class="dev" id="tls">
+<header><h2>TLS certificate</h2><span class="label-tape">tls</span></header>
+<p class="summary">A certificate is valid on any TLS port, with a warning well before it expires.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Mail server (IMAPS, SMTPS)</li><li>Reverse proxy</li><li>LDAPS directory</li><li>MQTT broker</li><li>Administration interface</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p><p class="muted">Default port: <code>443</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Certificate expiring soon</strong><span>The certificate expires in less than fourteen days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Certificate expired</strong><span>The certificate has expired.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a certificate</summary><ol class="setup-steps"><li><p>In the address, write the host and, if it is not 443, the port of the encrypted service: &quot;mail.example.com:993&quot;, &quot;ldap.home.lan:636&quot;.</p></li><li><p>The check opens an encrypted connection, reads the presented certificate and closes right away: no data is exchanged with the application.</p></li><li><p>It records the number of days before expiry, the issuer and the TLS version. The bundled alert rules warn at fourteen days, then at expiry.</p></li><li><p>If the service is reached by its IP address but the certificate carries a name, enter that name in &quot;Server name (SNI)&quot;.</p></li><li><p>For a certificate issued by your own authority, tick &quot;Accept an unverifiable certificate&quot;: the expiry date is still monitored.</p></li></ol><p class="warn"><strong>Heads-up.</strong> For a website, the &quot;Website or web API&quot; type already reads the certificate: this type is meant for services that do not speak HTTP, or whose application you do not want to hit.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#tls">Documentation</a></p>
+</article>
+<article class="dev" id="ntp">
+<header><h2>NTP time server</h2><span class="label-tape">ntp</span></header>
+<p class="summary">A time server answers SNTP with a sane clock: offset, delay, stratum and leap indicator.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>A router or NAS acting as a local time server</li><li>An internal NTP server (chrony, ntpd)</li><li>A public pool server used as a reference</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p><p class="muted">Default port: <code>123</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">3</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor an NTP server</summary><ol class="setup-steps"><li><p>In the address, write the server&#x27;s name or IP address: &quot;pool.ntp.org&quot; or &quot;192.168.1.1&quot;. UDP port 123 is used unless the &quot;Port&quot; option says otherwise.</p></li><li><p>The check sends a single SNTP request and reads the reply: no state is kept between polls, and nothing is written to the server.</p></li><li><p>It records the offset between the server&#x27;s clock and the DumbMonit host, the round-trip delay, the stratum and the leap indicator.</p></li><li><p>A server that answers stratum 16, or whose leap indicator reads &quot;unsynchronized&quot;, has never managed to synchronize: the check reports it down whatever the offset.</p></li><li><p>Lower &quot;Tolerated offset&quot; to be warned earlier than 100 ms; raise it for a server several hops from a reference clock.</p></li></ol><p class="warn"><strong>Heads-up.</strong> The offset is only as good as the DumbMonit host&#x27;s own clock: if that host is not itself kept in sync (NTP, a hypervisor&#x27;s time sync), the measured offset reflects its drift as much as the server&#x27;s.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#ntp">Documentation</a></p>
+</article>
+<article class="dev" id="websocket">
+<header><h2>WebSocket endpoint</h2><span class="label-tape">websocket</span></header>
+<p class="summary">Completes the upgrade handshake, and can exchange a frame.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>The Home Assistant API</li><li>A live dashboard</li><li>A log stream</li><li>An endpoint behind a reverse proxy</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><ul class="needs"><li><strong>Username / password</strong><span>Sent as HTTP basic authentication.</span></li><li><strong>Bearer token</strong><span>Sent as &quot;Authorization: Bearer …&quot; on every request.</span></li></ul><p class="muted">No account needed.</p><p class="muted">Default port: <code>443</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li><li><span class="plate plate-advisory">Advisory</span><strong>Certificate expiring soon</strong><span>The certificate expires in less than fourteen days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Certificate expired</strong><span>The certificate has expired.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Monitor a WebSocket endpoint</summary><ol class="setup-steps"><li><p>In the address, paste the full endpoint: &quot;wss://home.example.com/api/websocket&quot;. Without a scheme, wss is assumed.</p></li><li><p>The check runs the whole opening handshake and verifies the answer the server computes from the key it was sent: a reverse proxy that has lost the Upgrade header is caught here, where an HTTP check would still see a healthy 200.</p></li><li><p>Nothing else is needed for most endpoints. A status other than 101 is reported with its code, so a 401 from an expired token is not mistaken for an outage.</p></li><li><p>To go further, fill in &quot;Expected content&quot; with a fragment of the first frame the server sends by itself, for example the greeting of the Home Assistant API.</p></li><li><p>If the endpoint says nothing until it is spoken to, put a message in &quot;Frame to send&quot; and what its answer must contain in &quot;Expected content&quot;.</p></li></ol><p class="warn"><strong>Heads-up.</strong> The check opens and hangs up within a second. A connection that a firewall or a proxy timeout cuts after thirty seconds looks perfectly healthy here.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/services/#websocket">Documentation</a></p>
+</article>
+<article class="dev" id="push">
+<header><h2>Heartbeat (push)</h2><span class="label-tape">push</span></header>
+<p class="summary">Your cron job or backup script calls DumbMonit; when it goes quiet, you are told.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Nightly backup script</li><li>Cron job</li><li>Home Assistant automation</li><li>Certificate renewal</li><li>Database dump</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p></section>
+<section><h3>Built-in alert rules <span class="label-tape">1</span></h3><ul class="rules"><li><span class="plate plate-advisory">Advisory</span><strong>Heartbeat missed</strong><span>The job has not called in within its expected interval plus grace period, or reported a failure itself).</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Make the job call in</summary><ol class="setup-steps"><li><p>In the address, write a short label for the job (&quot;nightly-backup&quot;, &quot;certbot-renew&quot;): nothing is contacted, the label only has to be unique among your heartbeats.</p></li><li><p>Set the expected interval to the job&#x27;s schedule (&quot;24h&quot; for a nightly job, &quot;1h&quot; for an hourly one) and, if the schedule drifts, a wider grace period. Save the device.</p></li><li><p>The device page shows the URL to call. Add it at the end of the job, so it is called only when the job succeeded:</p><pre><code>curl -fsS -m 10 --retry 3 https://monit.example.com/api/push/&lt;token&gt;</code></pre></li><li><p>A job that can tell when it failed may say so instead of staying silent: append ?status=down&amp;msg=… to the URL, and the alert fires at once.</p></li><li><p>Until the first call arrives the device shows &quot;Waiting&quot; and nothing is alerted. Lost or leaked URL? &quot;Regenerate&quot; on the device page issues a new one; the old one stops answering immediately.</p></li></ol><p class="warn"><strong>Heads-up.</strong> Call the URL at the end of the job, after the part that matters. A call placed at the top would report a success even when the backup itself failed.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/push/">Documentation</a></p>
+</article>
+<article class="dev" id="domain">
+<header><h2>Domain expiry</h2><span class="label-tape">domain</span></header>
+<p class="summary">A registered domain, read from its registry over RDAP: days left before expiry, a hold that takes it out of the DNS, a redemption period, and its registrar.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>example.com</li><li>Your company&#x27;s domain</li><li>The domain of your mail server</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p></section>
+<section><h3>Built-in alert rules <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Advisory</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Watch a domain&#x27;s registration</summary><ol class="setup-steps"><li><p>Enter the registered domain, for example &quot;example.com&quot;, not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.</p></li><li><p>DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.</p></li><li><p>A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.</p><pre><code>https://rdap.nic.ch/</code></pre></li><li><p>Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.</p></li></ol><p class="warn"><strong>Heads-up.</strong> A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/domain/">Documentation</a></p>
+</article>
+<article class="dev" id="website">
+<header><h2>Website health &amp; SEO</h2><span class="label-tape">website</span></header>
+<p class="summary">Know when a website breaks, goes blank, drops out of search engines or changes its title, description or canonical address, for one site or hundreds.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Company website</li><li>Online shop</li><li>Customer sites you host</li><li>Landing pages</li><li>Blog or documentation</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p><p class="muted">Default port: <code>443</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">2</span></h3><ul class="rules"><li><span class="plate plate-warning">Warning</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-info">Info</span><strong>Website changed</strong><span>A check of a watched page or site found pages that changed, appeared or disappeared. Each such check is notified and names the pages, under the same alert while it fires; it resolves at the first check that finds nothing new.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Watch a website</summary><ol class="setup-steps"><li><p>In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.</p></li><li><p>Optionally fill in &quot;Expected text&quot; with a phrase the page must always show, and adjust &quot;Blank page below&quot; if the page is short on purpose.</p></li><li><p>The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (&quot;Check for changes every&quot;), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.</p></li><li><p>To add many sites at once, import a CSV file from the device list: each site is filed under Websites/&lt;category&gt; (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/&lt;platform&gt; (WordPress, Shopify…), unless you give a folder.</p></li></ol><p class="warn"><strong>Heads-up.</strong> Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower &quot;Blank page below&quot; to 0 for such a site.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/website/">Documentation</a></p>
+</article>
+<article class="dev" id="webchange">
+<header><h2>Website changes</h2><span class="label-tape">webchange</span></header>
+<p class="summary">Be told when the content of a page, or of a whole site, changes, with a before/after view of each change.</p>
+<p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>Pricing or terms page</li><li>Documentation site</li><li>Supplier&#x27;s status or maintenance notice</li><li>Public announcement page</li><li>Your own site after a deployment</li></ul>
+<div class="dev-grid">
+<section><h3>What you need</h3><p class="muted">No account needed.</p><p class="muted">Default port: <code>443</code></p></section>
+<section><h3>Built-in alert rules <span class="label-tape">1</span></h3><ul class="rules"><li><span class="plate plate-info">Info</span><strong>Website changed</strong><span>A check of a watched page or site found pages that changed, appeared or disappeared. Each such check is notified and names the pages, under the same alert while it fires; it resolves at the first check that finds nothing new.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Setup steps: Watch a website for changes</summary><ol class="setup-steps"><li><p>In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set &quot;Scope&quot; to &quot;site&quot;: every page under the same folder is followed, up to &quot;Max pages&quot;.</p></li><li><p>Lines that change at every visit (a clock, a visitor counter, &quot;updated 5 minutes ago&quot;) would be reported each time: list them in &quot;Ignore lines&quot; as regular expressions.</p></li><li><p>The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the &quot;Website changed&quot; alert tells you.</p></li><li><p>For a screenshot of each version, add a headless browser to your Compose file; the exact lines are in the documentation (Advanced options, &quot;Screenshots of website changes&quot;).</p></li></ol><p class="warn"><strong>Heads-up.</strong> Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/webchange/">Documentation</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Other families</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">Servers and hardware</a></li>
+			<li><a href="../network/">Network equipment</a></li>
+			<li><a href="../firewalls/">Firewalls</a></li>
+			<li><a href="../hypervisors/">Hypervisors and clusters</a></li>
+			<li><a href="../storage/">NAS and backup</a></li>
+			<li><a href="../proxies/">Web servers and reverse proxies</a></li>
+			<li><a href="../apps/">Self-hosted applications</a></li>
+			<li><a href="../mail/">DNS, mail and security</a></li>
+			<li><a href="../data/">Databases and observability</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. The mascot is a pigeon.</p>
+		<nav aria-label="Footer">
+			<a href="../../features/">Features</a>
+			<a href="../">Devices</a>
+			<a href="../../install/">Install</a>
+			<a href="../../community/">Docs and community</a>
+			<a href="https://demo.dumbmonit.app">Live demo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/en/latest/">Documentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Translate</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">License</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Security</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>

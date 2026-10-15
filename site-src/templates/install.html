@@ -1,0 +1,84 @@
+<section class="page-head">
+	<div class="wrap">
+		<h1>{{in_h1}}</h1>
+		<p class="lede">{{in_lede}}</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:24px">
+	<div class="wrap">
+		<ol class="steps">
+			<li>
+				<h2>{{in_s1_t}}</h2>
+				<p>{{in_s1_p}}</p>
+				<div class="code" style="max-width:none">
+					<pre id="s1"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="s1">{{k015}}</button>
+				</div>
+			</li>
+			<li>
+				<h2>{{in_s2_t}}</h2>
+				<p>{{in_s2_p}}</p>
+				<div class="code" style="max-width:none">
+					<pre id="s2"><code><span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="s2">{{k015}}</button>
+				</div>
+			</li>
+			<li>
+				<h2>{{in_s3_t}}</h2>
+				<p>{{in_s3_p}}</p>
+				<p class="code-note">{{k016}}</p>
+			</li>
+		</ol>
+
+		<div class="split" style="margin-top:72px">
+			<div>
+				<h2 class="h-sm">{{in_req_h}}</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li>{{in_req_1}}</li>
+					<li>{{in_req_2}}</li>
+					<li>{{in_req_3}}</li>
+					<li>{{in_req_4}}</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="h-sm">{{in_more_h}}</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li><a href="@@DOCS@@install/docker/">{{in_l_guide}}</a></li>
+					<li><a href="@@DOCS@@install/first-device/">{{in_l_first}}</a></li>
+					<li><a href="@@DOCS@@install/update/">{{in_l_update}}</a></li>
+					<li><a href="@@DOCS@@install/backup/">{{in_l_backup}}</a></li>
+					<li><a href="@@DOCS@@install/remote-site/">{{in_l_remote}}</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>{{in_agent_h}}</h2>
+					<p>{{k094}}</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># {{k170}}</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="agent-cmd">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k095}}</p>
+				<p style="margin-top:16px"><a href="@@DOCS@@devices/agent/">{{in_agent_doc}}</a></p>
+			</div>
+			<ul class="os-list">
+				<li><span class="os">{{k096}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k098}}</span></li>
+				<li><span class="os">{{k099}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k100}}</span></li>
+				<li><span class="os">{{k101}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k103}}</span></li>
+				<li><span class="os">{{k104}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k105}}</span></li>
+			</ul>
+		</div>
+	</div>
+</section>
