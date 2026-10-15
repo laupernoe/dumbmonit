@@ -142,6 +142,36 @@ export interface TargetPayload {
 	credential?: Credential;
 }
 
+/**
+ * `POST /targets/test`: the form's payload (plus the edited device's `id`, so a
+ * blank credential reuses the stored one). Mirrors `TestPayload` in
+ * `api/targets.rs`.
+ */
+export type TargetTestRequest = TargetPayload & { id?: TargetId };
+
+/** Outcome of a probe that saves nothing. Mirrors `TestReport` in `api/targets.rs`. */
+export interface TargetTestReport {
+	ok: boolean;
+	/** The probe's own error message when `ok` is false. */
+	error: string | null;
+	/** True when the failure means "device down" rather than a wrong setting. */
+	unreachable: boolean;
+	sysname: string | null;
+	sysdescr: string | null;
+	profile_id: string | null;
+}
+
+/** Where a suggested scan network comes from. Mirrors `SubnetSource` in `api/discovery.rs`. */
+export type SubnetSource = 'config' | 'devices' | 'server';
+
+/** One suggested scan network. Mirrors `LocalSubnet` in `api/discovery.rs`. */
+export interface LocalSubnet {
+	cidr: string;
+	source: SubnetSource;
+	/** Server interface, `server` source only. */
+	interface?: string;
+}
+
 /** Result of an immediate probe — the main diagnostic tool. */
 export interface ProbeReport {
 	sample_count: number;
@@ -1188,6 +1218,29 @@ export interface RuleOverride {
 	threshold: number | null;
 	clear_threshold: number | null;
 	enabled: boolean | null;
+}
+
+/** A rule that watches one device: it reads a metric the device has written. Mirrors `api/target_rules.rs`. */
+export interface TargetRule {
+	id: number;
+	uid: string;
+	name: string;
+	description: string;
+	severity: AlertSeverity;
+	/** Enabled for every device. */
+	enabled: boolean;
+	/** Turned off for this device (an override with `enabled: false`). */
+	ignored: boolean;
+	/** An administrator set a threshold for this device. */
+	custom_threshold: boolean;
+	/** Firing on this device right now. */
+	firing: boolean;
+}
+
+export interface TargetRules {
+	/** `no_data`: nothing written in the last 24 h; `unavailable`: the time-series store did not answer. */
+	status: 'ok' | 'no_data' | 'unavailable';
+	rules: TargetRule[];
 }
 
 export interface RuleOverridePayload {
@@ -3560,6 +3613,63 @@ export interface SecuritySummary {
 /** `GET`/`PUT /api/security/settings`: the opt-in switch (off by default). */
 export interface SecuritySettings {
 	enabled: boolean;
+}
+
+/** One of the three conditions of a heartbeat. Mirrors `selfmon::Component`. */
+export interface SelfMonitoringComponent {
+	name: 'scheduler' | 'database' | 'victoria';
+	ok: boolean;
+	error?: string;
+}
+
+/** The last heartbeat attempted. Mirrors `selfmon::PingRecord`. */
+export interface HeartbeatPing {
+	/** UTC without suffix. */
+	at: string;
+	/** `withheld`: a component was down and nothing was sent. */
+	outcome: 'up' | 'fail' | 'withheld';
+	/** The call left and the service accepted it. */
+	ok: boolean;
+	error?: string;
+	failed: string[];
+}
+
+/** The outgoing heartbeat setting. The URL itself never comes back. Mirrors `HeartbeatView`. */
+export interface Heartbeat {
+	enabled: boolean;
+	interval_seconds: number;
+	send_fail: boolean;
+	has_url: boolean;
+	url_host: string | null;
+	last_ping: HeartbeatPing | null;
+}
+
+/** `PUT /api/self-monitoring/heartbeat`. `url` omitted keeps it, `''` clears it. */
+export interface HeartbeatUpdate {
+	enabled: boolean;
+	interval_seconds?: number;
+	send_fail?: boolean;
+	url?: string;
+}
+
+/** `POST /api/self-monitoring/heartbeat/test`. */
+export interface HeartbeatTestResult {
+	ok: boolean;
+	error: string | null;
+}
+
+/** `GET /api/self-monitoring`: health of DumbMonit itself. Mirrors `Overview`. */
+export interface SelfMonitoring {
+	status: 'ok' | 'degraded';
+	components: SelfMonitoringComponent[];
+	data_free_bytes: number | null;
+	data_total_bytes: number | null;
+	database_bytes: number;
+	vm_embedded: boolean;
+	vm_restarts: number;
+	scheduler_idle_seconds: number;
+	scheduler_backlog: number;
+	heartbeat: Heartbeat;
 }
 
 /**

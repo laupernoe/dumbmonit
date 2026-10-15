@@ -310,6 +310,10 @@ fn sanitise(message: &str, token: &str) -> String {
 }
 
 #[cfg(test)]
+#[path = "client_http_tests.rs"]
+mod http_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

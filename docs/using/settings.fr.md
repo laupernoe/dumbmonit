@@ -260,6 +260,22 @@ la chose à faire avant une mise à jour.
 Tout ici est réservé aux administrateurs. Voir
 [Sauvegarde et restauration](../install/backup.md).
 
+## DumbMonit lui-même {#self-monitoring}
+
+L'état du moteur à l'instant — planificateur, base SQLite, base de métriques —
+avec l'espace libre du volume de données, la taille de la base et, pour le
+VictoriaMetrics embarqué, le nombre de fois où il a été relancé. Des règles
+intégrées vous préviennent déjà quand l'un d'eux va mal.
+
+En dessous, le **battement de cœur sortant** : une URL à vous (Healthchecks.io,
+un moniteur push d'Uptime Kuma, Better Stack…) que DumbMonit appelle à
+intervalle régulier, seulement tant qu'il va bien, pour que quelqu'un dehors
+remarque quand cet hôte se tait. **Tester** envoie un appel tout de suite ;
+**Signaler les pannes** appelle l'URL d'échec plutôt que de se taire. L'URL est
+rangée chiffrée et n'est plus jamais affichée, seul son hôte. La modifier est
+réservé aux administrateurs. Voir
+[Surveiller DumbMonit lui-même](../install/self-monitoring.md).
+
 ## Rapports
 
 Emails de disponibilité périodiques pour l'équipe : choisissez

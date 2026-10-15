@@ -691,6 +691,7 @@ Regel für jemand anderen zu deaktivieren.
 | `GET` | `/api/alerts/rules/{id}/overrides` | Die Überschreibungen einer Regel. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — jedes Feld optional; `null` bedeutet „wie die Regel“. Erstellt oder ersetzt. Ein Operator darf nur `{"enabled": false}` senden (ignorieren); die Schwellenüberschreibungen des Geräts, falls vorhanden, bleiben erhalten. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Für einen Operator hebt es nur das Ignorieren auf: Schwellenüberschreibungen bleiben. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Benachrichtigungsrichtlinie {#notification-policy}
 

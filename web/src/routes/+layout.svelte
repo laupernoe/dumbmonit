@@ -17,6 +17,8 @@
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 	import { reducedMotion } from '#lib/ui/index.js';
+	import { SHORTCUTS } from '#lib/palette/shortcuts.js';
+	import { createSequenceMatcher, isTypingTarget } from '#lib/palette/logic.js';
 	import { hostedStatusSlug } from '#lib/status-host.js';
 	import PublicStatusPage from '#lib/components/status/PublicStatusPage.svelte';
 
@@ -38,12 +40,37 @@
 			CommandPalette = mod.default;
 		});
 	});
+	let ShortcutHelp = $state<Component | null>(null);
+	$effect(() => {
+		if (statusHost || onWall || ShortcutHelp || !palette.helpOpen) return;
+		void import('#lib/components/ShortcutHelp.svelte').then((mod) => {
+			ShortcutHelp = mod.default;
+		});
+	});
+	// Letter shortcuts (`g o`, `?`): never inside a text field, never over a dialog.
+	const sequences = createSequenceMatcher(SHORTCUTS);
 	$effect(() => {
 		if (statusHost || onWall) return;
 		function onKeydown(event: KeyboardEvent) {
-			if (!palette.matches(event)) return;
+			if (palette.matches(event)) {
+				event.preventDefault();
+				palette.toggle();
+				return;
+			}
+			if (event.defaultPrevented || event.repeat || palette.isOpen || palette.helpOpen) return;
+			// Never under another dialog (a confirm, a drawer…): it would navigate away behind it.
+			if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
+			if (isTypingTarget(event.target as HTMLElement | null) || !auth.canUseApi) {
+				sequences.reset();
+				return;
+			}
+			const id = sequences.feed(event, Date.now());
+			const shortcut = SHORTCUTS.find((s) => s.id === id);
+			if (!shortcut || (shortcut.admin && !auth.isAdmin)) return;
 			event.preventDefault();
-			palette.toggle();
+			if (shortcut.href) void goto(shortcut.href);
+			else if (shortcut.id === 'theme') theme.toggle();
+			else if (shortcut.id === 'help') palette.openHelp();
 		}
 		window.addEventListener('keydown', onKeydown);
 		return () => window.removeEventListener('keydown', onKeydown);
@@ -165,6 +192,9 @@
 		</main>
 		{#if CommandPalette && !onWall}
 			<CommandPalette />
+		{/if}
+		{#if ShortcutHelp && !onWall}
+			<ShortcutHelp />
 		{/if}
 		{#if !onWall}
 			{#if !auth.demo}

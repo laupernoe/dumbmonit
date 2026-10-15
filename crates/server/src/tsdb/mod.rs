@@ -11,6 +11,8 @@ mod writer;
 pub use embedded::{EmbeddedConfig, EmbeddedVm};
 pub use writer::{DEFAULT_FLUSH_SIZE, SampleSink, spawn_writer, spawn_writer_with};
 
+use std::collections::BTreeMap;
+
 use anyhow::{Context, Result, bail};
 use dumbmonit_proto::Sample;
 use serde::Deserialize;
@@ -283,6 +285,35 @@ impl Victoria {
         }
     }
 
+    /// Étiquettes (nom compris, sous `__name__`) des séries qu'a écrites une
+    /// cible depuis `since_secs` (secondes Unix).
+    pub async fn target_series(
+        &self,
+        target_id: i64,
+        since_secs: i64,
+    ) -> Result<Vec<BTreeMap<String, String>>> {
+        let response = self
+            .http
+            .get(format!("{}/api/v1/series", self.base_url))
+            .query(&[
+                ("match[]", format!("{{target=\"{target_id}\"}}")),
+                ("start", since_secs.to_string()),
+            ])
+            .send()
+            .await
+            .context("interrogation de VictoriaMetrics")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let detail = response.text().await.unwrap_or_default();
+            bail!("query refused ({status}): {}", detail.trim());
+        }
+
+        let parsed: SeriesResponse =
+            response.json().await.context("unreadable VictoriaMetrics response")?;
+        Ok(parsed.data)
+    }
+
     /// Exécute une requête MetricsQL instantanée.
     pub async fn query(&self, query: &str) -> Result<Vec<InstantSeries>> {
         self.query_with(query, &[]).await
@@ -363,6 +394,11 @@ struct QueryResponse {
 #[derive(Debug, Deserialize)]
 struct QueryData {
     result: Vec<RangeSeries>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SeriesResponse {
+    data: Vec<BTreeMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]

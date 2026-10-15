@@ -23,6 +23,25 @@ All notable changes to this project are documented here. The format follows
   `POST /api/public/alert-action/inspect` and `POST /api/public/alert-action`,
   `action_links` in the notification policy, `actions` in `GET /api/notify/kinds`.
   See [Acknowledge or snooze from the notification](docs/notifications.md#acknowledge-or-snooze-from-the-notification).
+- **Who watches the watcher.** An optional **outgoing heartbeat**
+  (Settings → System → DumbMonit itself): DumbMonit calls a URL of yours —
+  Healthchecks.io, an Uptime Kuma push monitor, Better Stack… — every 60
+  seconds by default, only while the scheduler runs, SQLite answers and
+  VictoriaMetrics is reachable, so that an outside service alerts you when the
+  host, the container or the engine goes quiet. A **Test** button, an optional
+  failure signal (`/fail`, or `status=down` for Uptime Kuma), the URL stored
+  encrypted and never shown again, the same outbound guard as the notification
+  channels. Six new built-in rules on DumbMonit's own health, through the usual
+  channels: data volume almost full, embedded VictoriaMetrics restarting in a
+  loop, scheduler stalled, polls running late, metric writes failing, database
+  growing fast, from new `dumbmonit_instance_*` series written every minute.
+  New endpoints `GET /api/self-monitoring`, `PUT /api/self-monitoring/heartbeat`
+  and `POST /api/self-monitoring/heartbeat/test`. See
+  [Watching DumbMonit itself](docs/install/self-monitoring.md).
+- **Alerts: multi-select with bulk actions.** On the Alerts page, operators can
+  tick several alert tiles (or all of them) and acknowledge, unacknowledge or
+  ignore them for their device in one go; failures are reported and stay
+  selected.
 - **Each service an agent finds is its own device.** Docker, Plakar,
   restic/Borg, ZFS, libvirt, WireGuard, IPsec and the speed test no longer pile
   up on the machine's page: each one becomes an `agent_service` device under
@@ -45,6 +64,30 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
+- **Devices list: bulk actions, sorting, linkable filters.** Admins can tick devices (or select
+  all shown) and enable, disable, move to a folder or delete them in one go; a partial failure is
+  listed and the failed devices stay selected. Search, state, kind, sort (name, status, kind, last
+  check) and layout are kept in the URL. Disabled devices now sit in a collapsed "Disabled (N)"
+  section at the bottom.
+- **Command palette: recents, more actions, keyboard shortcuts.** Ctrl/⌘ K now lists the last
+  eight opened pages and devices first (kept per browser), offers more actions (silence alerts,
+  open a settings section, keyboard shortcuts, sign out) limited to what your role may do, and
+  shows each shortcut. New global shortcuts outside text fields: `g o` overview, `g d` devices,
+  `g a` alerts, `g s` status pages, `g n` add a monitor, `g t` theme, `?` for the help dialog.
+- **Unsaved-changes warning in Settings.** The SSO, Wall news and Reports forms
+  now show "Unsaved changes" next to Save and ask before you leave the page or
+  close the tab.
+- **Recoverable empty states and errors.** `EmptyState` takes `primary` and `secondary` actions;
+  `ErrorNotice` adds a next step per failure type (offline, 403, 5xx) and a "Sign in again" link
+  on 401. The Overview sky band is shorter on phones so content stays above the fold.
+- **Device form: Test connection, and a smarter network scan.** SNMP devices get a
+  "Test connection" button that probes the entered address and credential once
+  (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
+  the probe's error. A disabled Save or Test button now says why. The network scan
+  pre-fills a suggested network (`GET /api/discovery/subnets`), still editable: the
+  `DUMBMONIT_SCAN_SUBNETS` setting, else the /24 networks of the devices already
+  monitored, else the server's own networks (outside a container only), else an
+  empty field with a hint.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
@@ -72,6 +115,13 @@ All notable changes to this project are documented here. The format follows
   most once per period (6 h by default, 5 min minimum). Off by default since
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
+- **Monitored alerts on the edit form.** Editing a monitor lists every alert
+  rule that reads a metric it has written in the last 24 hours (for an agent
+  with Docker: container stopped, unhealthy, restarting, update available, and
+  so on), folded by default behind a summary. Turn a rule off to stop its
+  alerts for that monitor only; the data is still collected, and the switches
+  are saved with the form. Same per-device override as **Don't alert me
+  again**. New endpoint `GET /api/targets/{id}/rules`.
 
 ### Changed
 
@@ -112,6 +162,12 @@ All notable changes to this project are documented here. The format follows
 - **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
 - **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
 - **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
+- Notifications and status pages: a failed channel delivery shows the service's
+  message, HTTP status and a hint, with the raw text under "Details"; Remove and
+  Delete moved into a row "More actions" menu, and each status page row shows its
+  published or draft state and custom domain.
+- Accessibility: the Alerts tabs support Left/Right/Home/End with a roving tabindex, and
+  the muted text colour (`ink-3`) now meets WCAG AA contrast in light and dark.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
