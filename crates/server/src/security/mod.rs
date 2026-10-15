@@ -10,7 +10,7 @@
 //! coupé par défaut : sans lui, ni calcul périodique, ni série publiée, et
 //! l'API répond `enabled: false` sans interroger VictoriaMetrics. Une
 //! instance antérieure qui avait déjà des équipements notés l'a retrouvé
-//! allumé à la migration `0054` : rien ne disparaît sans qu'on l'ait demandé.
+//! allumé à la migration `0055` : rien ne disparaît sans qu'on l'ait demandé.
 //!
 //! # Principe
 //!
