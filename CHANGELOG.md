@@ -108,6 +108,10 @@ All notable changes to this project are documented here. The format follows
 - **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
 - **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
 - **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
+- Notifications and status pages: a failed channel delivery shows the service's
+  message, HTTP status and a hint, with the raw text under "Details"; Remove and
+  Delete moved into a row "More actions" menu, and each status page row shows its
+  published or draft state and custom domain.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
