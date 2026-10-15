@@ -5,7 +5,7 @@
 	 * all (it mounts/unmounts this); this component only owns its own clock
 	 * and calls `onclose` once, either on its own or when the action fires.
 	 */
-	import { toastText } from './toast.js';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		message: string;
@@ -13,15 +13,11 @@
 		onaction?: () => void;
 		onclose?: () => void;
 		durationMs?: number;
-		/** Identical toasts merged into this one: shown as "message ×3", timeout restarts. */
-		count?: number;
 	}
 
-	let { message, actionLabel, onaction, onclose, durationMs = 6000, count = 1 }: Props = $props();
+	let { message, actionLabel, onaction, onclose, durationMs = 6000 }: Props = $props();
 
-	// The clock restarts every time another identical toast merges in (`count` changes).
-	$effect(() => {
-		void count;
+	onMount(() => {
 		const timer = setTimeout(() => onclose?.(), durationMs);
 		return () => clearTimeout(timer);
 	});
@@ -38,7 +34,7 @@
 	aria-atomic="true"
 	class="fixed inset-x-4 bottom-4 z-40 flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface-2 px-4 py-2.5 shadow-float sm:inset-x-auto sm:right-4 sm:left-auto sm:max-w-sm"
 >
-	<span class="text-[0.8125rem] font-medium text-ink">{toastText(message, count)}</span>
+	<span class="text-[0.8125rem] font-medium text-ink">{message}</span>
 	{#if actionLabel}
 		<button
 			type="button"
