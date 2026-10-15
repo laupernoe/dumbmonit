@@ -70,6 +70,8 @@ pub async fn run(
     .context("demo account already exists in a fresh database")?;
 
     db::alerts::seed_builtin_rules(pool).await?;
+    // La note de sécurité est facultative ; la démonstration la montre.
+    crate::security::set_setting_enabled(pool, true).await?;
 
     let mut targets = Vec::new();
     for device in devices {

@@ -58,6 +58,7 @@
 
 mod check;
 pub(crate) mod options;
+pub mod security_headers;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -260,6 +261,16 @@ async fn request(
 
     let status = response.status();
     report.gauge("http_status_code", f64::from(status.as_u16()));
+    if url.scheme() == "https" {
+        for (header, present) in security_headers::security_headers(response.headers()) {
+            report.gauge_with(
+                "http_security_header",
+                f64::from(u8::from(present)),
+                "header",
+                header,
+            );
+        }
+    }
     if !options.accepted_status.accepts(status.as_u16()) {
         report.fail(
             Failure::Status,

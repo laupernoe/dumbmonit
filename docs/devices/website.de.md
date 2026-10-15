@@ -148,6 +148,8 @@ Eine Vorschau zeigt jede Zeile und ihre Fehler, bevor etwas erstellt wird; eine 
 | `dumbmonit_website_status_code` | HTTP-Status der endgültigen Antwort. |
 | `dumbmonit_website_response_seconds` | Gesamtzeit, Weiterleitungen eingeschlossen. |
 | `dumbmonit_website_redirect_hops` | Verfolgte Weiterleitungen. |
+| `dumbmonit_website_https` | 1, wenn die endgültige Adresse https ist. |
+| `dumbmonit_website_security_header{header}` | 0/1 je Label `header` (nur https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Immer 1; das Label trägt die Plattform. |
 | `dumbmonit_website_text_chars` | Zeichen sichtbaren Texts (2xx-Antworten). |
 | `dumbmonit_website_blank` | 1, wenn dieser Text unter dem Schwellenwert liegt. |

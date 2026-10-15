@@ -9,7 +9,7 @@
 	 * main diagnostic tool: it answers "why is this device silent?" without
 	 * leaving the page.
 	 */
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import {
@@ -58,7 +58,10 @@
 	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '#lib/components/devices/FoldSection.svelte';
-	import SecurityCard from '#lib/components/devices/SecurityCard.svelte';
+	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
+	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
+	import { getTargetSecurity } from '#lib/api/security.js';
+	import type { SecurityReport as SecurityReportData } from '#lib/api/index.js';
 	import { hasKindPanel, loadKindPanel, type KindPanel } from '#lib/components/devices/kinds.js';
 	import FoldRow from '#lib/components/devices/FoldRow.svelte';
 	import {
@@ -168,6 +171,45 @@
 		return target?.kind === 'agent' && /^[0-9a-f]{16,}$/i.test(address) ? `${address.slice(0, 8)}…` : address;
 	});
 
+	// --- Security score (opt-in in Settings) ---------------------------------
+	// A badge in the header when the score is on and this kind is rated; the
+	// report opens under the header, straight away when the link said so
+	// (`#security`, from the badge in the device list). A failed read only
+	// hides the badge: the score is secondary, the page has its own errors.
+
+	let security = $state<SecurityReportData | null>(null);
+	let securityOpen = $state(false);
+	const securityShown = $derived(security?.enabled && security.supported ? security : null);
+
+	$effect(() => {
+		const targetId = id;
+		security = null;
+		securityOpen = untrack(() => page.url.hash === '#security');
+		const controller = new AbortController();
+		const load = () =>
+			getTargetSecurity(targetId, controller.signal)
+				.then((report) => (security = report))
+				.catch(() => {});
+		void load();
+		const timer = setInterval(() => void load(), 60_000);
+		return () => {
+			controller.abort();
+			clearInterval(timer);
+		};
+	});
+
+	/** Scrolls the report into view once it is there (opened from a link or the badge). */
+	let securityScrolled = false;
+	$effect(() => {
+		if (!securityOpen || !securityShown) {
+			securityScrolled = false;
+			return;
+		}
+		if (securityScrolled) return;
+		securityScrolled = true;
+		void tick().then(() => document.getElementById('security-report')?.scrollIntoView({ block: 'nearest' }));
+	});
+
 	// --- Range (kept in the URL so a link carries the view) -----------------
 
 	function validRange(raw: string | null): RangeId {
@@ -261,6 +303,8 @@
 	let alerts = $state<Alert[]>([]);
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
 	let refreshKey = $state(0);
+	/** The alert story has nothing to tell (never fired, nothing ignored). */
+	let timelineEmpty = $state(false);
 
 	// --- Actions --------------------------------------------------------------
 
@@ -568,6 +612,17 @@
 						{#if certificate}
 							<Plate tone={certificate.tone} label={certificate.label} size="md" title={summary?.tlsVersion ?? undefined} />
 						{/if}
+						{#if securityShown}
+							<SecurityBadge
+								size="md"
+								grade={securityShown.grade}
+								score={securityShown.score}
+								expanded={securityOpen}
+								controls="security-report"
+								onclick={() => (securityOpen = !securityOpen)}
+								class="-my-2"
+							/>
+						{/if}
 						<p class="tnum min-w-0 text-sm text-ink-2" title={formatDateTime(target.last_probe_at)}>
 							{#if target.last_error}
 								<span class={`break-words ${target.error_kind === 'config' ? 'text-advisory-ink' : 'text-warning-ink'}`}>{target.last_error}</span>
@@ -595,13 +650,16 @@
 					</Button>
 				{/if}
 				{#if auth.isAdmin}
-					{#if target.enabled}
-						<SilenceControl {target} {refreshKey} />
-					{/if}
-					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
-						<Pencil class="size-4" aria-hidden="true" />
-						{m.devices_target_edit()}
-					</Button>
+					<!-- Phones keep one button and the menu: silence and edit move into it. -->
+					<div class="hidden sm:contents">
+						{#if target.enabled}
+							<SilenceControl {target} {refreshKey} />
+						{/if}
+						<Button variant="secondary" href={`/targets/${target.id}/edit`}>
+							<Pencil class="size-4" aria-hidden="true" />
+							{m.devices_target_edit()}
+						</Button>
+					</div>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
 					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
 						{#snippet trigger({ toggle, open })}
@@ -618,6 +676,13 @@
 							</button>
 						{/snippet}
 						{#snippet children()}
+							<div class="mb-1 flex flex-col items-stretch gap-1 border-b border-line pb-1.5 sm:hidden">
+								<Button variant="ghost" href={`/targets/${id}/edit`} class="justify-start">
+									<Pencil class="size-4" aria-hidden="true" />
+									{m.devices_target_edit()}
+								</Button>
+								{#if target?.enabled}<SilenceControl {target} {refreshKey} />{/if}
+							</div>
 							<div class="flex min-h-10 items-center gap-2 rounded-lg px-2 py-1.5">
 								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
@@ -664,21 +729,27 @@
 		{/if}
 	</section>
 
+	{#if securityShown && securityOpen}
+		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
+	{/if}
+
 	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics -->
 	{#if target.kind === 'agent'}
 		<DockerStrip {target} />
 	{/if}
 
 	<!-- The story of this device: what fires now, what fired before -->
-	<section class="mt-6" aria-labelledby="device-alerts">
+	<!-- Nothing ever fired: no section at all, the header already says how it is doing. -->
+	<section class={`mt-6 ${timelineEmpty ? 'hidden' : ''}`} aria-labelledby="device-alerts">
 		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">{m.devices_target_alerts_heading()}</h2>
 		<DeviceTimeline
-		targetId={id}
-		target={target ?? undefined}
-		{alerts}
-		{refreshKey}
-		onackchange={() => void loadContext()}
-	/>
+			targetId={id}
+			target={target ?? undefined}
+			{alerts}
+			{refreshKey}
+			bind:empty={timelineEmpty}
+			onackchange={() => void loadContext()}
+		/>
 	</section>
 
 	<!-- Backups the agent watches; the containers sit with the metrics below -->
@@ -905,7 +976,4 @@
 		{/if}
 	</section>
 {/if}
-
-	<!-- Security score: secondary, folded by default; renders nothing unless this kind has checks -->
-	<SecurityCard {target} />
 {/if}

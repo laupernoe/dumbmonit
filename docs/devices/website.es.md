@@ -186,6 +186,8 @@ ya supervisado (misma dirección final) se omite.
 | `dumbmonit_website_status_code` | Estado HTTP de la respuesta final. |
 | `dumbmonit_website_response_seconds` | Tiempo total, redireccionamientos incluidos. |
 | `dumbmonit_website_redirect_hops` | Redireccionamientos seguidos. |
+| `dumbmonit_website_https` | 1 cuando la dirección final es https. |
+| `dumbmonit_website_security_header{header}` | 0/1 por etiqueta `header` (solo https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform,category}` | Siempre 1; las etiquetas llevan la plataforma y, si se conoce, la categoría. |
 | `dumbmonit_website_text_chars` | Caracteres de texto visible (respuestas 2xx). |
 | `dumbmonit_website_blank` | 1 cuando ese texto está por debajo del umbral. |

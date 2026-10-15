@@ -11,21 +11,18 @@
 	 * grouping), which is how the Alerts page reads them; the Overview leaves
 	 * them as one flat stream. Acknowledged and snoozed alerts each leave the
 	 * stream for their own quieter group at the bottom, collapsed by default
-	 * ("Dismissed · N") so they stop crowding the list rather than sitting
+	 * ("Snoozed · N", "Dismissed · N") so they stop crowding the list rather than sitting
 	 * there faded. The empty state only appears when the sky says so — a
 	 * device that has stopped reporting is never "nothing".
 	 *
-	 * Each `AlertRow`'s one-click × (dismiss) is handled here: `dismissAlert`
-	 * acks until resolved and hides the row immediately (`dismissing`, before
-	 * the server answers), `undoDismiss` lifts that ack, and a `Toast` offers
-	 * the undo for a few seconds either way.
+	 * Every tile ends the same way: Ack (with its durations, "until resolved"
+	 * included) and Open device; Snooze and "Never for this device" sit in the
+	 * tile's ⋮ menu.
 	 */
 	import type { Alert, Silence, Target } from '#lib/api/index.js';
-	import { ackAlert, unackAlert } from '#lib/api/index.js';
-	import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from '#lib/components/overview/sky.js';
-	import { EmptyState, Toast } from '#lib/ui/index.js';
+		import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from '#lib/components/overview/sky.js';
+	import { EmptyState } from '#lib/ui/index.js';
 	import { CloudSun, ChevronRight } from 'lucide-svelte';
-	import { UNTIL_RESOLVED_SECS } from './helpers';
 	import { m } from '#lib/paraglide/messages.js';
 	import AlertRow from './AlertRow.svelte';
 	import DeviceRow from './DeviceRow.svelte';
@@ -35,7 +32,6 @@
 		/** Relative time of the last check, for the empty state's second line. */
 		checkedLabel?: string;
 		grouped?: boolean;
-		showOpen?: boolean;
 		/** Maintenance windows, passed through to `SnoozeControl` for "time left". */
 		silences?: Silence[];
 		/** The pigeon instead of the icon in the quiet state (the Overview smiles). */
@@ -48,7 +44,6 @@
 		sky,
 		checkedLabel,
 		grouped = false,
-		showOpen = false,
 		silences = [],
 		mascot,
 		onchanged
@@ -83,54 +78,12 @@
 		return out;
 	}
 
-	// --- Dismiss (one click, optimistic) ------------------------------------
-	//
-	// The × is an ack until resolved without the menu: the row leaves the main
-	// list the instant it is clicked (before the server answers), a toast
-	// offers "Undo" for a few seconds, and the alert only truly comes back to
-	// "needs you" if it resolves and fires again. `dismissing` hides a row
-	// locally while the request is in flight; once it resolves, `onchanged`
-	// refreshes the shared store and the alert (now acked) settles into the
-	// "Dismissed" section on its own — `dismissing` is cleared either way so
-	// it never masks the real state for long.
-
-	let dismissing = $state<Set<string>>(new Set());
-	let toast = $state<{ fingerprint: string } | { error: string } | null>(null);
-
-	function isDismissingRow(row: SkyRow): boolean {
-		return row.kind === 'alert' && dismissing.has(row.alert.fingerprint);
-	}
-
-	async function dismissAlert(alert: Alert) {
-		dismissing = new Set(dismissing).add(alert.fingerprint);
-		toast = { fingerprint: alert.fingerprint };
-		try {
-			await ackAlert(alert.fingerprint, { duration_secs: UNTIL_RESOLVED_SECS });
-			onchanged?.();
-		} catch (cause) {
-			dismissing = new Set(dismissing);
-			dismissing.delete(alert.fingerprint);
-			toast = { error: cause instanceof Error ? cause.message : m.alerts_needs_dismiss_error() };
-		}
-	}
-
-	async function undoDismiss(fingerprint: string) {
-		toast = null;
-		dismissing = new Set(dismissing);
-		dismissing.delete(fingerprint);
-		try {
-			await unackAlert(fingerprint);
-		} catch {
-			// Best effort: the next refresh shows the server's real state either way.
-		}
-		onchanged?.();
-	}
-
 	let dismissedOpen = $state(false);
+	let snoozedOpen = $state(false);
 
 	const rows = $derived(
 		fold(
-			sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row) && !isDismissingRow(row))
+			sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row))
 		)
 	);
 	const ackedRows = $derived(fold(sky.needsYou.filter(isAckedRow)));
@@ -190,32 +143,35 @@
 	{#if folded.row.kind === 'device'}
 		<DeviceRow row={folded.row} />
 	{:else}
-		{@const alert = folded.row.alert}
-		<AlertRow
-			row={folded.row}
-			extra={folded.extra}
-			{showOpen}
-			{silences}
-			{onchanged}
-			ondismiss={() => void dismissAlert(alert)}
-		/>
+		<AlertRow row={folded.row} extra={folded.extra} {silences} {onchanged} />
 	{/if}
 {/snippet}
 
 {#snippet snoozedSection()}
 	{#if snoozedRows.length > 0}
 		<div class={rows.length > 0 ? 'mt-6' : ''}>
-			<h3 class="label-tape mb-2 flex items-center gap-2">
+			<button
+				type="button"
+				class="label-tape mb-2 flex min-h-10 w-full items-center gap-2 text-left"
+				aria-expanded={snoozedOpen}
+				onclick={() => (snoozedOpen = !snoozedOpen)}
+			>
+				<ChevronRight
+					class={`size-3.5 shrink-0 transition-transform ${snoozedOpen ? 'rotate-90' : ''}`}
+					aria-hidden="true"
+				/>
 				{m.alerts_needs_snoozed()}
 				<span class="tnum font-normal text-ink-3">· {snoozedRows.length}</span>
-			</h3>
-			<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-				{#each snoozedRows as folded, i (folded.row.key)}
-					<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
-						{@render rowView(folded)}
-					</div>
-				{/each}
-			</div>
+			</button>
+			{#if snoozedOpen}
+				<div class="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+					{#each snoozedRows as folded, i (folded.row.key)}
+						<div class="rise-in min-w-0" style={`--rise-delay: ${i * 30}ms`}>
+							{@render rowView(folded)}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -225,7 +181,7 @@
 		<div class={rows.length > 0 || snoozedRows.length > 0 ? 'mt-6' : ''}>
 			<button
 				type="button"
-				class="label-tape mb-2 flex w-full items-center gap-2 text-left"
+				class="label-tape mb-2 flex min-h-10 w-full items-center gap-2 text-left"
 				aria-expanded={dismissedOpen}
 				onclick={() => (dismissedOpen = !dismissedOpen)}
 			>
@@ -297,18 +253,4 @@
 	</div>
 	{@render snoozedSection()}
 	{@render dismissedSection()}
-{/if}
-
-{#if toast}
-	{#if 'fingerprint' in toast}
-		{@const fingerprint = toast.fingerprint}
-		<Toast
-			message={m.alerts_needs_toast_dismissed()}
-			actionLabel={m.alerts_ignore_undo()}
-			onaction={() => void undoDismiss(fingerprint)}
-			onclose={() => (toast = null)}
-		/>
-	{:else}
-		<Toast message={toast.error} onclose={() => (toast = null)} />
-	{/if}
 {/if}

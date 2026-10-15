@@ -3439,12 +3439,24 @@ export interface SecurityCounts {
 	unknown: number;
 }
 
+/** How to raise the score on this kind of device. Mirrors `GuideView`. */
+export interface SecurityGuide {
+	/** Product name, e.g. "Proxmox VE", "Linux host". */
+	product: string;
+	/** Concrete steps, in the order to take them (English, server-provided). */
+	steps: string[];
+	/** The matching section of the "Security score" documentation page. */
+	doc_url: string;
+}
+
 /**
  * `GET /api/targets/{id}/security`: the security score of one device.
  * Mirrors `SecurityReport`. 404 only when the device itself does not exist;
  * a kind with no checks answers 200 with `supported: false`.
  */
 export interface SecurityReport {
+	/** `false`: the security score is turned off in Settings; nothing else is filled. */
+	enabled: boolean;
 	target_id: TargetId;
 	target_name: string;
 	kind: string;
@@ -3460,6 +3472,8 @@ export interface SecurityReport {
 	counts: SecurityCounts;
 	/** Sorted: fail (heaviest first), then pass, then unknown. */
 	checks: SecurityCheck[];
+	/** `null` when `supported` is false. */
+	guide: SecurityGuide | null;
 }
 
 /** One row of `GET /api/security/summary`. Mirrors `SecuritySummaryDevice`. */
@@ -3482,8 +3496,15 @@ export interface SecuritySummaryDevice {
  * worst first. Mirrors `SecuritySummary`.
  */
 export interface SecuritySummary {
+	/** `false`: the security score is turned off in Settings; `devices` is empty. */
+	enabled: boolean;
 	evaluated_at: string;
 	devices: SecuritySummaryDevice[];
+}
+
+/** `GET`/`PUT /api/security/settings`: the opt-in switch (off by default). */
+export interface SecuritySettings {
+	enabled: boolean;
 }
 
 /**

@@ -651,7 +651,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 ### 安全评分 {#security-score}
 
-服务器每 15 分钟为每个其类型带有安全检查的设备计算一次,并存储为 `dumbmonit_security_score`(0–100)。参见[安全评分](../using/security-score.md)。
+服务器每 15 分钟为每个其类型带有安全检查的设备计算一次,并存储为 `dumbmonit_security_score`(0–100),仅当在设置中启用了安全评分时(默认关闭)。参见[安全评分](../using/security-score.md)。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|

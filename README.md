@@ -57,7 +57,7 @@ Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost 
 - **Alerting that does not cry wolf**: parent/child suppression, maintenance windows, forecasts, a seasonal baseline.
 - **22 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
 - **Public status pages** with history, incidents, email subscribers, badges and city scenes.
-- **Wall mode** for a room monitor, and a **security score** per monitor.
+- **Wall mode** for a room monitor, and an optional **security score** next to the main products (hosts, Proxmox, Synology, OPNsense, websites, Active Directory).
 - **API and MCP server** (27 tools): ask Claude or ChatGPT "is everything fine?", or read it from Prometheus and Grafana.
 - **Encrypted backup**, accounts with TOTP and OIDC, and remote sites through an outbound-only relay agent.
 

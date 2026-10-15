@@ -50,6 +50,7 @@
 | `probe_http_status_code` | http, websocket | Полученный код статуса. |
 | `probe_http_first_byte_seconds` | http | Время до заголовков ответа. |
 | `probe_http_content_bytes` | http | Размер тела. |
+| `probe_http_security_header{header}` | http | 0/1 для каждой метки `header` (только https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | все, кроме dns и ping | Установление соединения (для баз данных включая вход). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Только согласование TLS. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Присутствие; метка `version`. |

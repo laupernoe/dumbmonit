@@ -1,13 +1,12 @@
-//! Pare-feu OPNsense et pfSense.
+//! Pare-feu OPNsense.
 //!
 //! OPNsense dit par son API si des mises à jour attendent, si une nouvelle
-//! série majeure existe, si un redémarrage est requis et si `pf` filtre. La
-//! REST API de pfSense ne dit rien des mises à jour du système lui-même —
-//! seulement du paquet REST API. L'exposition de l'interface
-//! d'administration sur le WAN n'est observable sur aucun des deux
-//! aujourd'hui : voir la documentation.
+//! série majeure existe, si un redémarrage est requis et si `pf` filtre.
+//! L'exposition de l'interface d'administration sur le WAN n'est pas
+//! observable aujourd'hui : voir la documentation. pfSense n'est pas noté :
+//! sa REST API ne dit rien des mises à jour du système lui-même.
 
-use super::super::{Category, Check, CheckDef, Facts, SecurityProvider, Severity};
+use super::super::{Category, Check, CheckDef, Facts, Guide, SecurityProvider, Severity};
 
 pub const OPN_UPDATES: CheckDef = CheckDef {
     id: "opnsense.firmware.updates",
@@ -49,17 +48,19 @@ pub const OPN_PF: CheckDef = CheckDef {
                   Firewall\"). With pf off, the firewall routes everything without filtering.",
 };
 
-pub const PFS_RESTAPI: CheckDef = CheckDef {
-    id: "pfsense.restapi",
-    title: "REST API package up to date",
-    category: Category::Patching,
-    severity: Severity::Low,
-    reference: "https://pfrest.org/",
-    remediation: "Update the REST API package (`pfsense-restapi update`, or System > Package \
-                  Manager). It runs with administrator rights on the firewall.",
-};
+pub const DEFS: &[&CheckDef] = &[&OPN_UPDATES, &OPN_UPGRADE, &OPN_REBOOT, &OPN_PF];
 
-pub const DEFS: &[&CheckDef] = &[&OPN_UPDATES, &OPN_UPGRADE, &OPN_REBOOT, &OPN_PF, &PFS_RESTAPI];
+/// Par où commencer pour améliorer la note.
+pub const OPNSENSE_GUIDE: Guide = Guide {
+    product: "OPNsense",
+    anchor: "opnsense",
+    steps: &[
+        "Check for updates in System > Firmware > Status, install them, and reboot when OPNsense asks.",
+        "Move to the new major release once it is out: only the current series receives fixes.",
+        "Keep the packet filter on (Firewall > Settings > Advanced, \"Disable firewall\" unchecked).",
+        "Allow the web GUI and SSH only from the LAN or a VPN, never from the WAN.",
+    ],
+};
 
 pub struct Opnsense;
 
@@ -76,6 +77,10 @@ impl SecurityProvider for Opnsense {
             "opnsense_firmware_reboot_required",
             "opnsense_pf_enabled",
         ]
+    }
+
+    fn guide(&self, _kind: &str, _facts: &Facts) -> Guide {
+        OPNSENSE_GUIDE
     }
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
@@ -121,28 +126,6 @@ impl SecurityProvider for Opnsense {
     }
 }
 
-pub struct Pfsense;
-
-impl SecurityProvider for Pfsense {
-    fn kinds(&self) -> &'static [&'static str] {
-        &["pfsense"]
-    }
-
-    fn metrics(&self) -> &'static [&'static str] {
-        &["pfsense_restapi_update_available"]
-    }
-
-    fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {
-        vec![match facts.max("pfsense_restapi_update_available") {
-            None => PFS_RESTAPI.unknown("REST API version not collected."),
-            Some(available) => PFS_RESTAPI.verdict(
-                available == 0.0,
-                if available == 0.0 { "Up to date" } else { "An update is available" },
-            ),
-        }]
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,13 +164,5 @@ mod tests {
         let checks = Opnsense.evaluate("", &facts);
         assert!(checks[..3].iter().all(|c| c.result == Outcome::Unknown));
         assert!(checks[0].evidence.contains("not checked"));
-    }
-
-    #[test]
-    fn pfsense_paquet_rest_api() {
-        let facts = Facts::from_pairs(&[("pfsense_restapi_update_available", &[], 1.0)]);
-        assert_eq!(Pfsense.evaluate("", &facts)[0].result, Outcome::Fail);
-        let facts = Facts::from_pairs(&[("pfsense_restapi_update_available", &[], 0.0)]);
-        assert_eq!(Pfsense.evaluate("", &facts)[0].result, Outcome::Pass);
     }
 }

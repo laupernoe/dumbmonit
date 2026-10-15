@@ -141,6 +141,13 @@ pub struct LastProbe {
     /// Absent sans `expect_text`.
     pub expect_text_found: Option<bool>,
     pub metadata: Option<Metadata>,
+    /// URL finale en https.
+    #[serde(default)]
+    pub https: bool,
+    /// Contrôles d'en-têtes de sécurité (https seulement), voir
+    /// `dumbmonit_collectors::uptime::security_headers`.
+    #[serde(default)]
+    pub security_headers: Vec<(String, bool)>,
 }
 
 pub struct WebsiteCollector {
@@ -319,7 +326,15 @@ fn read(options: &Options, followed: &fetch::Followed) -> Reading {
         blank: None,
         expect_text_found: None,
         metadata: None,
+        https: followed.final_url.scheme() == "https",
+        security_headers: Vec::new(),
     };
+    if probe.https {
+        probe.security_headers = dumbmonit_collectors::uptime::security_headers(&answer.headers)
+            .into_iter()
+            .map(|(name, ok)| (name.to_string(), ok))
+            .collect();
+    }
     if !success {
         return Reading { probe };
     }
@@ -429,6 +444,10 @@ fn samples(
             }
         },
     ];
+    samples.push(gauge("website_https", flag(probe.https)));
+    for (header, ok) in &probe.security_headers {
+        samples.push(gauge("website_security_header", flag(*ok)).with_label("header", header));
+    }
     if let Some(dropped) = text_dropped {
         samples.push(gauge("website_text_dropped", flag(dropped)));
     }

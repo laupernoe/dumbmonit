@@ -21,6 +21,7 @@ Synology Drive и Photos. Первая причина следить за NAS �
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | по задаче |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (см. ниже) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (см. ниже) | |
+| Настройки безопасности | `update_available`, `admin_account_enabled`, `autoblock_enabled`, `firewall_enabled` (`0`/`1`; читаются раз в час, только с учётной записью администратора, необязательны: отсутствуют, если DSM отказывает) | |
 | Сбор | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Метрики Active Backup for Business — исключение: они имеют префикс

@@ -67,7 +67,7 @@
 		{
 			title: m.demo_tour_s6_title(),
 			body: m.demo_tour_s6_body(),
-			href: '/settings#agents'
+			href: '/settings/monitoring#agents'
 		},
 		{
 			title: m.demo_tour_s7_title(),

@@ -58,6 +58,7 @@ plus de `target`, `host` et `tag_*`.
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_content_bytes` | http | Taille du corps. |
+| `probe_http_security_header{header}` | http | 0/1 par étiquette `header` (https seulement) : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | tous sauf dns et ping | Établissement de connexion (connexion incluse pour les bases de données). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Présence ; label `version`. |

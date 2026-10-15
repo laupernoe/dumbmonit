@@ -1,17 +1,21 @@
 //! Note de sécurité d'un équipement et vue d'ensemble du parc
 //! (`crate::security`).
 //!
-//! * `GET /targets/{id}/security` — note, lettre et contrôles d'un équipement.
-//!   Un type sans contrôle répond `supported: false`, pas 404 : la page d'un
-//!   équipement l'appelle quel que soit son type.
-//! * `GET /security/summary` — tous les équipements notés, du pire au meilleur.
+//! * `GET /targets/{id}/security` — note, lettre, contrôles et guide d'un
+//!   équipement. Un type sans contrôle répond `supported: false`, pas 404 : la
+//!   fiche d'un équipement l'appelle quel que soit son type.
+//! * `GET /security/summary` — tous les équipements notés, du pire au meilleur
+//!   (la liste des équipements y lit la pastille de chacun).
+//! * `GET` / `PUT /security/settings` — la note est facultative, coupée par
+//!   défaut. Coupée, les deux lectures ci-dessus répondent `enabled: false`
+//!   sans interroger VictoriaMetrics.
 
 use axum::Json;
 use axum::Router;
 use axum::extract::{Path, State};
 use axum::routing::get;
 use dumbmonit_proto::TargetId;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
 use crate::db;
@@ -22,6 +26,33 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/targets/{id}/security", get(target_security))
         .route("/security/summary", get(summary))
+        .route("/security/settings", get(settings).put(set_settings))
+}
+
+fn internal(error: sqlx::Error) -> ApiError {
+    ApiError::Internal(error.into())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SecuritySettings {
+    pub enabled: bool,
+}
+
+async fn settings(State(state): State<AppState>) -> ApiResult<Json<SecuritySettings>> {
+    let enabled = security::setting_enabled(&state.pool).await.map_err(internal)?;
+    Ok(Json(SecuritySettings { enabled }))
+}
+
+async fn set_settings(
+    State(state): State<AppState>,
+    Json(payload): Json<SecuritySettings>,
+) -> ApiResult<Json<SecuritySettings>> {
+    security::set_setting_enabled(&state.pool, payload.enabled).await.map_err(internal)?;
+    Ok(Json(SecuritySettings { enabled: payload.enabled }))
+}
+
+fn now() -> String {
+    chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 async fn target_security(
@@ -31,6 +62,9 @@ async fn target_security(
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
         .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+    if !security::setting_enabled(&state.pool).await.map_err(internal)? {
+        return Ok(Json(Report::empty(target.id, &target.name, &target.kind, false, now())));
+    }
     let facts = if security::provider_for(&target.kind).is_some() {
         security::facts_for(&state, &target).await?
     } else {
@@ -41,6 +75,8 @@ async fn target_security(
 
 #[derive(Debug, Serialize)]
 pub struct Summary {
+    /// `false` : la note est coupée dans les réglages, `devices` est vide.
+    pub enabled: bool,
     pub evaluated_at: String,
     pub devices: Vec<SummaryRow>,
 }
@@ -94,11 +130,11 @@ pub fn summarize(reports: Vec<Report>) -> Vec<SummaryRow> {
 }
 
 async fn summary(State(state): State<AppState>) -> ApiResult<Json<Summary>> {
+    if !security::setting_enabled(&state.pool).await.map_err(internal)? {
+        return Ok(Json(Summary { enabled: false, evaluated_at: now(), devices: Vec::new() }));
+    }
     let reports = security::all_reports(&state).await?;
-    Ok(Json(Summary {
-        evaluated_at: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-        devices: summarize(reports),
-    }))
+    Ok(Json(Summary { enabled: true, evaluated_at: now(), devices: summarize(reports) }))
 }
 
 #[cfg(test)]

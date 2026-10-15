@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", only for the rules {rules}",
 	"alerts_matcher_sentence": "This channel receives {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "tagged {tags}",
-	"alerts_needs_dismiss_error": "Could not dismiss this alert.",
 	"alerts_needs_dismissed": "Dismissed",
 	"alerts_needs_dismissed_hint": "Known problems: reminders are paused until the acknowledgement ends or the alert resolves.",
 	"alerts_needs_empty_no_devices": "Nothing to watch yet.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "No rule is firing. One monitor is still waiting for a first report.",
 	"alerts_needs_snoozed": "Snoozed",
-	"alerts_needs_snoozed_hint": "Hidden for a while: no reminder until the window ends or the alert resolves.",
-	"alerts_needs_toast_dismissed": "Dismissed.",
 	"alerts_nth_1": "1st {day}",
 	"alerts_nth_2": "2nd {day}",
 	"alerts_nth_3": "3rd {day}",
@@ -453,27 +450,6 @@
 	"app_change_text_desc": "Visible text only; markup and scripts are ignored.",
 	"app_layout_checking": "Checking your session…",
 	"app_layout_signing_in": "Taking you to sign in…",
-	"app_security_capped": "Capped",
-	"app_security_capped_title": "Capped by a failing critical check",
-	"app_security_desc": "A PingCastle-style security score for every monitor that supports one, worst first.",
-	"app_security_devices": "Monitors",
-	"app_security_empty_desc": "Security checks run on: {kinds}, and more as they are added.",
-	"app_security_empty_title": "No monitor has security checks yet.",
-	"app_security_evaluated": "evaluated {when}",
-	"app_security_failed": "{count} failed",
-	"app_security_grade": "Grade {grade} · {word}",
-	"app_security_load_error": "Could not load the security summary",
-	"app_security_loading": "Loading the security summary",
-	"app_security_not_evaluated": "{count} not evaluated",
-	"app_security_not_rated": "Not rated",
-	"app_security_not_rated_count": "Not rated · {count}",
-	"app_security_page_title": "Security — DumbMonit",
-	"app_security_passed": "{count} passed",
-	"app_security_title": "Security",
-	"app_security_top_failures": "Top failures:",
-	"app_security_view_device": "View monitor →",
-	"app_security_what": "What is this?",
-	"app_security_worst_first": "Worst score first.",
 	"app_ui_copied": "Copied",
 	"app_ui_copy": "Copy",
 	"app_ui_run_with_sudo": "Run with sudo",
@@ -874,8 +850,6 @@
 	"deviceform_new_devices": "Monitors",
 	"deviceform_new_door_agent_desc": "One command on Linux, Windows, macOS or FreeBSD: system, disks, services, Docker containers and backups.",
 	"deviceform_new_door_agent_title": "Monitor a machine with the agent",
-	"deviceform_new_door_relay_desc": "An agent at a second site, a client’s office or behind a NAT probes the switches, NAS and hypervisors there for this server, and only connects out — no VPN, no port to open.",
-	"deviceform_new_door_relay_title": "Watch another network (remote site)",
 	"deviceform_new_door_scan_desc": "Give a range like 192.168.1.0/24: every device answering SNMP is listed, ready to add.",
 	"deviceform_new_empty_lead": "Most things still fit one of these:",
 	"deviceform_new_guide_hide": "Hide setup guide",
@@ -1472,24 +1446,31 @@
 	"devices_repos_title": "Backup repositories",
 	"devices_repos_too_old": "Check the job that runs the backups: nothing new for more than 48 hours.",
 	"devices_repos_unreadable": "The agent could not open this repository. Its log says why (unreachable, password refused, binary missing):",
+	"devices_security_badge_aria": "Security score {grade}, {score}/100: open the report",
+	"devices_security_badge_md": "Security {grade}",
+	"devices_security_badge_unrated": "Security: not rated",
+	"devices_security_badge_unrated_aria": "Security score not rated yet: open the report",
 	"devices_security_capped": "Capped by a failing critical check",
+	"devices_security_close": "Close the security report",
 	"devices_security_counts": "{pass} passed · {fail} failed · {unknown} not evaluated",
-	"devices_security_details": "Details",
+	"devices_security_disclaimer": "This score is approximate and not exhaustive: it only reads what DumbMonit already collects from this device and compares it with a few of the vendor's best practices. A good grade does not prove the device is secure.",
+	"devices_security_disclaimer_title": "Indicative only, not a full audit.",
+	"devices_security_docs": "Read the full guide",
 	"devices_security_error": "Could not load the security score",
 	"devices_security_evaluated": "evaluated {when}",
 	"devices_security_failed": "Failed · {severity}",
-	"devices_security_grade_score": "Grade {grade} · {score}/100",
+	"devices_security_good": "What's good",
 	"devices_security_grade_word": "Grade {grade} · {word}",
 	"devices_security_guidance": "Vendor guidance",
-	"devices_security_hide": "Hide",
-	"devices_security_no_checks": "No check has run on this monitor yet.",
+	"devices_security_improve": "How to improve it on {product}",
+	"devices_security_missing": "What's missing",
+	"devices_security_no_failures": "No check fails among those that could run.",
 	"devices_security_none_evaluated": "No check could be evaluated yet.",
 	"devices_security_not_rated": "Not rated",
 	"devices_security_passed": "Passed",
 	"devices_security_title": "Security score",
 	"devices_security_unknown_one": "{count} check not evaluated — data not collected",
 	"devices_security_unknown_other": "{count} checks not evaluated — data not collected",
-	"devices_security_what": "What is this?",
 	"devices_severity_critical": "Critical",
 	"devices_severity_high": "High",
 	"devices_severity_low": "Low",
@@ -1633,9 +1614,6 @@
 	"devices_timeline_detail_all": "on {n}: {labels}",
 	"devices_timeline_detail_count": "on {n} instances",
 	"devices_timeline_detail_some": "on {n}, including {labels}",
-	"devices_timeline_dismiss": "Dismiss",
-	"devices_timeline_dismissed": "Dismissed.",
-	"devices_timeline_err_dismiss": "Could not dismiss this alert.",
 	"devices_timeline_err_load": "Could not load the alert history",
 	"devices_timeline_fired": "Fired",
 	"devices_timeline_first": "first {when}",
@@ -1645,27 +1623,24 @@
 	"devices_timeline_last_rows": "Last {count} rows.",
 	"devices_timeline_loading": "Loading alert history",
 	"devices_timeline_maintenance": "Quiet · maintenance window",
-	"devices_timeline_never": "No alert has ever fired on this monitor.",
 	"devices_timeline_not_sent": "Not sent · {reason}",
 	"devices_timeline_nothing_one": "Nothing has fired on this monitor. Rules built up {count} time and settled on their own.",
 	"devices_timeline_nothing_other": "Nothing has fired on this monitor. Rules built up {count} times and settled on their own.",
 	"devices_timeline_notified": "Notified",
 	"devices_timeline_notified_some": "Notified {sent} of {total}",
-	"devices_timeline_open_alerts": "Open alerts",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Firing",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "Building up",
 	"devices_timeline_phase_resolved": "Resolved",
 	"devices_timeline_quiet": "quiet",
-	"devices_timeline_reporting": "Reporting",
 	"devices_timeline_show_all": "Show all · {count} more",
+	"devices_timeline_show_each": "Show each ({count})",
 	"devices_timeline_show_fewer": "Show fewer",
 	"devices_timeline_show_quiet": "Show quiet transitions (building up and back) · {count}",
 	"devices_timeline_since": "since {when}",
 	"devices_timeline_stop_ignoring": "Stop ignoring",
 	"devices_timeline_suppressed": "Suppressed by parent",
-	"devices_timeline_undo": "Undo",
 	"devices_uptime_aria": "{up} slots up, {down} down, {none} without a check",
 	"devices_uptime_down": "Down",
 	"devices_uptime_none": "No check",
@@ -3570,13 +3545,12 @@
 	"misc_nav_github_title": "Source code on GitHub (opens in a new tab)",
 	"misc_nav_home": "DumbMonit, overview",
 	"misc_nav_main": "Main",
+	"misc_nav_more": "More",
 	"misc_nav_overview": "Overview",
 	"misc_nav_palette_open": "Open the command palette",
 	"misc_nav_palette_title": "Command palette ({shortcut})",
-	"misc_nav_security": "Security",
 	"misc_nav_settings": "Settings",
 	"misc_nav_sign_out": "Sign out",
-	"misc_nav_signed_in": "Signed in as {name} ({role})",
 	"misc_nav_status": "Status",
 	"misc_nav_wall": "Wall mode",
 	"misc_nav_wall_title": "Wall mode: the bulletin full screen, for a monitor in the room",
@@ -3605,7 +3579,8 @@
 	"misc_palette_relay_detail": "An agent probes another network for this server",
 	"misc_palette_results": "Results",
 	"misc_palette_scan": "Scan my network",
-	"misc_palette_security_detail": "Security score per monitor",
+	"misc_palette_security_score": "Security score",
+	"misc_palette_security_score_detail": "Turn the per-device security grade on or off",
 	"misc_palette_status_detail": "Public pages and announcements",
 	"misc_palette_status_page": "New status page",
 	"misc_palette_status_pages": "Status pages",
@@ -3658,6 +3633,8 @@
 	"misc_state_unknown": "Unknown",
 	"misc_update_available": "Update available: v{version}",
 	"misc_update_title": "A newer version is available. Open Settings → About for how to update.",
+	"misc_user_menu_account": "My account",
+	"misc_user_menu_label": "Account menu for {name}",
 	"notifications_channels_add": "Add channel",
 	"notifications_channels_description": "Where DumbMonit tells you when something needs attention.",
 	"notifications_channels_disabled": "Disabled",
@@ -3830,21 +3807,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} and {count} other",
-				"countPlural=other": "{names} and {count} others"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3876,21 +3838,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} has been unreachable the whole time.",
-				"countPlural=other": "{subject} have been unreachable the whole time."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3909,7 +3856,6 @@
 	"overview_brief_dropped_many": "{names} dropped out and came back.",
 	"overview_brief_head_first": "In the last 24 h",
 	"overview_brief_head_since": "Since {when}",
-	"overview_brief_intro": "First time here? Here is what the pigeon knows so far.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4096,25 +4042,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} resolved on its own",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} fired and is still firing",
-				"countPlural=other": "{name} fired {count} times and is still firing"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Nothing happened while you were away.",
 	"overview_brief_quiet_first": "Nothing happened in the last 24 h.",
 	"overview_brief_the_server": "the server",
-	"overview_brief_went_down": "{name} went unreachable {when} and still is.",
 	"overview_first_all_done": "All three done. This guide will not come back.",
 	"overview_first_channel_action": "Add a channel",
 	"overview_first_channel_text": "Email, ntfy, Discord, Telegram, PagerDuty — whatever you already read. Nothing is sent until something is wrong.",
@@ -4152,7 +4082,6 @@
 	"overview_page_or_relay": "watch a remote site",
 	"overview_page_since": "Since you last looked",
 	"overview_page_title": "Overview",
-	"overview_page_week": "The week ahead",
 	"overview_scene_asleep": "{label}, the pigeon is asleep",
 	"overview_scene_cloudy": "A few clouds",
 	"overview_scene_overcast": "Overcast",
@@ -4421,132 +4350,12 @@
 	"overview_streaks_reporting_for": "Everything reporting for",
 	"overview_streaks_since_outage": "no monitor unreachable since the last outage",
 	"overview_streaks_under_minute": "under a minute",
-	"overview_tip_agent_action": "Install an agent",
-	"overview_tip_agent_text": "Services, disk health, temperatures, updates waiting, Docker containers you can restart or update from here, Plakar, restic and Borg backups. One command on Linux, Windows, macOS or FreeBSD.",
-	"overview_tip_agent_title": "The agent sees inside a machine.",
-	"overview_tip_api_action": "Create an API token",
-	"overview_tip_api_text": "A scoped token (read, or read and write) opens it to your scripts, and a Prometheus or Grafana you already run can read the measurements with the same token.",
-	"overview_tip_api_title": "Everything here has an HTTP API.",
-	"overview_tip_mcp_action": "Connect an assistant",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor or any MCP client can ask DumbMonit how things are — and, with a write token, silence a monitor or run a probe.",
-	"overview_tip_mcp_title": "An AI assistant can read this bulletin.",
-	"overview_tip_packs_action": "Integration packs",
-	"overview_tip_packs_text": "An integration pack is a monitor type written in YAML: what to ask the monitor, which numbers to keep, when to alert.",
-	"overview_tip_packs_title": "DumbMonit can learn a new monitor.",
-	"overview_tip_palette_action": "Open the palette",
-	"overview_tip_palette_text": "The command palette jumps to any monitor, page or action without leaving the keyboard.",
-	"overview_tip_palette_title": "Every page and action is one shortcut away.",
-	"overview_tip_relay_action": "Watch a remote site",
-	"overview_tip_relay_text": "Put one on a machine at a second site, a client’s office or behind a NAT: it probes the switches, NAS and hypervisors there for this server. Outbound only — nothing to open on that side.",
-	"overview_tip_relay_title": "An agent can watch another network.",
-	"overview_tip_status_action": "Create a status page",
-	"overview_tip_status_text": "A public status page shows the services you pick, their uptime and your announcements — a link to share instead of answering “is it down?”.",
-	"overview_tip_status_title": "Tell people before they ask.",
-	"overview_tip_wall_action": "Open wall mode",
-	"overview_tip_wall_text": "Wall mode shows the sky and what needs you, full screen and readable across the room, and keeps the screen awake.",
-	"overview_tip_wall_title": "The bulletin fits a TV.",
 	"overview_tips_another": "Another tip",
 	"overview_tips_hide": "Hide these tips",
 	"overview_tips_hide_title": "Hide these tips (in this browser)",
 	"overview_tips_label": "Did you know?",
 	"overview_tips_prefix": "Did you know? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Certificate expired {count} day ago",
-				"countPlural=other": "Certificate expired {count} days ago"
-			}
-		}
-	],
-	"overview_week_cert_expires": "Certificate expires",
-	"overview_week_cert_expires_today": "Certificate expires today",
 	"overview_week_days_short": "{days} d",
-	"overview_week_filling": "Filling up at this rate",
-	"overview_week_filling_series": "Filling up at this rate: {series}",
-	"overview_week_from": "{scope}, from {time}",
-	"overview_week_full": "Full at this rate",
-	"overview_week_full_series": "Full at this rate: {series}",
-	"overview_week_later": "Later:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} certificate in {when}",
-				"countPlural=other": "{count} certificates in {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} disk filling up within {days} d",
-				"countPlural=other": "{count} disks filling up within {days} d"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} maintenance window within {days} d",
-				"countPlural=other": "{count} maintenance windows within {days} d"
-			}
-		}
-	],
-	"overview_week_maintenance": "Maintenance",
-	"overview_week_maintenance_all": "Maintenance on all monitors",
-	"overview_week_maintenance_device": "Maintenance on monitor {id}",
-	"overview_week_nothing_due": "Nothing due",
-	"overview_week_plate_certificate": "Certificate",
-	"overview_week_plate_forecast": "Forecast",
-	"overview_week_plate_scheduled": "Scheduled",
-	"overview_week_plate_warning": "Warning",
-	"overview_week_quiet": "A quiet week ahead: no certificate, disk or maintenance due.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} and {count} more",
-				"countPlural=other": "{names} and {count} more"
-			}
-		}
-	],
-	"overview_week_today": "Today",
-	"overview_week_tomorrow": "Tomorrow",
-	"overview_week_until": "{scope} until {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "yesterday {time}",
 	"scene_swiss_board_alerts": "Alerts {count}",
@@ -4558,13 +4367,7 @@
 	"scene_swiss_board_up": "Back online",
 	"scene_swiss_board_warn": "Delayed",
 	"settings.appearance.language_label": "Language",
-	"settings.group.wall_display": "Wall & display",
-	"settings.hint.notifications_lead": "Looking for channels and quiet hours? They live under",
-	"settings.hint.notifications_link": "Alerts → Notifications",
-	"settings.hint.status_lead": "Public pages are under",
-	"settings.hint.status_link": "Status",
 	"settings.nav.aria_label": "Settings sections",
-	"settings.page.description": "Your account, who can sign in, what may connect, and how DumbMonit looks.",
 	"settings.page.title": "Settings",
 	"settings.section.about": "About",
 	"settings.section.agents": "Agents",
@@ -4747,13 +4550,11 @@
 	"settings_agents_watches_own": "Watches its own machine",
 	"settings_appearance_day": "Day",
 	"settings_appearance_day_hint": "Chart paper, navy ink.",
-	"settings_appearance_description": "Both themes are first-class. System follows your device and switches with it.",
 	"settings_appearance_night": "Night",
 	"settings_appearance_night_hint": "Radar composite, cyan signal.",
 	"settings_appearance_system": "System",
 	"settings_appearance_system_hint": "Follows your device.",
 	"settings_appearance_theme": "Theme",
-	"settings_appearance_title": "Appearance",
 	"settings_appearance_wall_description": "The bulletin alone, full screen, for a monitor in the room. Press Esc to leave; ⌘K / Ctrl K opens it from anywhere.",
 	"settings_appearance_wall_open": "Open wall mode",
 	"settings_appearance_wall_title": "Wall mode",
@@ -4922,6 +4723,8 @@
 	"settings_backup_without_key": "Without the key",
 	"settings_backup_write_error": "Could not write the backup",
 	"settings_language_auto": "Automatic (browser language)",
+	"settings_language_theme_description": "Saved in this browser.",
+	"settings_language_theme_title": "Language & theme",
 	"settings_music_account": "Account",
 	"settings_music_admin_only": "An admin can connect a Spotify account here.",
 	"settings_music_app": "App (Client ID)",
@@ -5030,6 +4833,10 @@
 	"settings_news_video_hint": "A muted live channel in a tile. YouTube, Dailymotion or Twitch.",
 	"settings_news_video_url": "Video or channel link",
 	"settings_news_video_url_help": "Paste a normal YouTube, Dailymotion or Twitch address; it is converted for you.",
+	"settings_notify_links_channels": "Notification channels",
+	"settings_notify_links_description": "Channels, quiet hours and who is told live with the alerts; public pages under Status.",
+	"settings_notify_links_status": "Status pages",
+	"settings_notify_links_title": "Alert notifications",
 	"settings_packs_add_device": "Add a {label}",
 	"settings_packs_admin_only_description": "A pack decides what this server asks your monitors.",
 	"settings_packs_admin_only_title": "Only an administrator can manage integration packs.",
@@ -5289,6 +5096,24 @@
 	"settings_reports_read_more": "Read more",
 	"settings_reports_setup": "Set up a report",
 	"settings_reports_title": "Reports",
+	"settings_search_kw_about": "version update health database victoriametrics",
+	"settings_search_kw_agents": "agent token enrol install relay",
+	"settings_search_kw_appearance": "language theme dark light night day",
+	"settings_search_kw_assistant": "api token mcp ai assistant claude chatgpt",
+	"settings_search_kw_backup": "backup export restore configuration",
+	"settings_search_kw_music": "music spotify speaker wall",
+	"settings_search_kw_news": "news headlines rss feeds wall",
+	"settings_search_kw_notifications": "channels discord email ntfy telegram quiet hours status page",
+	"settings_search_kw_packs": "integration pack yaml community",
+	"settings_search_kw_push": "push phone browser notifications",
+	"settings_search_kw_reports": "report email weekly monthly summary",
+	"settings_search_kw_security": "password two-factor 2fa totp sign out session",
+	"settings_search_kw_sso": "openid oidc login provider authentik keycloak",
+	"settings_search_kw_users": "accounts people roles admin viewer operator",
+	"settings_search_kw_wall": "wall kiosk tv room monitor full screen",
+	"settings_search_label": "Search settings",
+	"settings_search_none": "No setting matches.",
+	"settings_search_placeholder": "Search settings…",
 	"settings_security_change": "Change password",
 	"settings_security_change_error": "Could not change the password",
 	"settings_security_changed": "Password changed — your other sessions were signed out",
@@ -5306,6 +5131,15 @@
 	"settings_security_new_label": "New password",
 	"settings_security_no_protection": "This instance has no password protection.",
 	"settings_security_oidc_note": "You sign in through the identity provider: there is no DumbMonit password to change.",
+	"settings_security_score_admin_only": "Only an administrator can change this setting.",
+	"settings_security_score_disclaimer": "Indicative only: an approximate, non-exhaustive reading of what DumbMonit already collects, not a full audit.",
+	"settings_security_score_docs": "How the score works",
+	"settings_security_score_error": "Could not change the security score setting",
+	"settings_security_score_hint": "Shows a security grade next to each supported device (Linux and Windows hosts with the agent, Proxmox VE and Backup Server, Synology, OPNsense, websites, Active Directory), with a report of what to improve. Other devices show nothing.",
+	"settings_security_score_off": "Off",
+	"settings_security_score_on": "On",
+	"settings_security_score_title": "Security score",
+	"settings_security_score_toggle": "Show the security score",
 	"settings_security_session_hint": "Sign out on this device. Other sessions stay open.",
 	"settings_security_session_title": "This session",
 	"settings_security_sign_out": "Sign out",
@@ -5407,6 +5241,12 @@
 	"settings_sso_title": "Single sign-on",
 	"settings_sso_turn_off": "Turn single sign-on off?",
 	"settings_sso_use_env": "Use environment values?",
+	"settings_tab_account": "My account",
+	"settings_tab_monitoring": "Monitoring",
+	"settings_tab_notifications": "Notifications & reports",
+	"settings_tab_system": "System",
+	"settings_tab_team": "Team & access",
+	"settings_tab_wall": "Wall display",
 	"settings_update_available": "Update available: v{version}",
 	"settings_update_backup_body": "Settings → Backup, and keep a copy of /data/secret.key (without it, stored passwords and tokens cannot be decrypted).",
 	"settings_update_backup_lead": "Back up first.",
@@ -5944,8 +5784,6 @@
 	"tips_general_palette_everywhere": "The keyboard shortcut for the command palette still works even with the hint gone from the nav — Ctrl K, or ⌘K on a Mac.",
 	"tips_general_palette_everywhere_action": "Open the palette",
 	"tips_general_quiet_option": "If I am more than you want, the × below puts me away for this visit — or tell me to stop for good and I will not bring it up again.",
-	"tips_general_security_score": "Every monitor gets a security score from what it actually exposes — not a guess, a reading.",
-	"tips_general_security_score_action": "Open Security",
 	"tips_overview_briefing": "This page is a briefing, not a dashboard: a sky, \"since you last looked\" in sentences, and \"needs you\" as tiles. No monitor list here on purpose — that lives on Monitors.",
 	"tips_overview_briefing_action": "See the monitors",
 	"tips_overview_last_7_days": "\"Last 7 days\" boils the week down to three numbers: how long everything stayed up, the quietest monitor, and the one that paged you the most. Petty, but fair.",

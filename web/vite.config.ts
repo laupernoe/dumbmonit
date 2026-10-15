@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vite';
 
-const PROXY = { target: 'http://localhost:8080', changeOrigin: true };
+const PROXY = { target: process.env.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
 
 export default defineConfig({
 	plugins: [

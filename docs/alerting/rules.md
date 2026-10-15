@@ -658,7 +658,7 @@ Reported by the Windows agent on a Hyper-V host; see [Agent](../devices/agent.md
 
 ### Security score
 
-Computed by the server every 15 minutes for every device whose kind has security checks, and stored as `dumbmonit_security_score` (0–100). See [Security score](../using/security-score.md).
+Computed by the server every 15 minutes for every device whose kind has security checks, and stored as `dumbmonit_security_score` (0–100), only while the security score is turned on in Settings (off by default). See [Security score](../using/security-score.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|

@@ -1,7 +1,7 @@
 import { m } from '#lib/paraglide/messages.js';
 /**
- * Shared words and tones for the security score (device card and the
- * `/security` overview): kept in one place so the two never drift.
+ * Shared words and tones for the security score (badge and report): kept in
+ * one place so the two never drift.
  */
 import type { SecurityCategory, SecurityGrade, SecuritySeverity } from '#lib/api/index.js';
 import type { Tone } from '#lib/ui/index.js';
@@ -33,8 +33,6 @@ export const GRADE_TONE: Record<SecurityGrade, Tone> = {
 	D: 'warning',
 	F: 'warning'
 };
-
-export const GRADES: SecurityGrade[] = ['A', 'B', 'C', 'D', 'F'];
 
 export const SEVERITY_WORD: Record<SecuritySeverity, string> = {
 	get critical() {
@@ -77,25 +75,3 @@ export function severityTone(severity: SecuritySeverity): Tone {
 	if (severity === 'medium') return 'advisory';
 	return 'ghost';
 }
-
-/** Kinds the server can score today, for the empty state of the overview page. */
-export const SUPPORTED_SECURITY_KINDS = [
-	'Proxmox VE',
-	'Proxmox Backup Server',
-	'Synology',
-	'OPNsense',
-	'pfSense',
-	'UniFi',
-	'TLS/HTTPS monitors',
-	'Agent hosts',
-	'FortiGate',
-	'MikroTik',
-	'Home Assistant',
-	'Nextcloud',
-	'AdGuard Home',
-	'Pi-hole',
-	'Plex',
-	'Paperless-ngx',
-	'Tailscale',
-	'Active Directory'
-];

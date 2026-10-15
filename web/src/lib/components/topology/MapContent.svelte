@@ -150,7 +150,7 @@
 						<Monitor class="size-5" size={20} aria-hidden="true" />
 					{/if}
 				{:else}
-					<KindIcon kind={p.node.kind} class="size-5" />
+					<KindIcon kind={p.node.kind} class="size-5" size={20} />
 				{/if}
 			</g>
 			<text x="42" y="19" class="fill-ink" font-size="13" font-weight="600">{short(p.node.name)}</text>
