@@ -30,6 +30,7 @@
 	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
 	import SceneBackdrop from '#lib/components/status/scenes/SceneBackdrop.svelte';
 	import { NIGHT_SCENES, knownScenes } from '#lib/components/status/scenes/registry.js';
+	import { tallyItems } from '#lib/components/status/tally.js';
 	import { accentClass, homepageHost, isClosed, overallBanner } from '#lib/components/status/words.js';
 
 	const REFRESH_MS = 60_000;
@@ -152,7 +153,8 @@
 		signal: 'text-signal-ink',
 		advisory: 'text-advisory-ink',
 		warning: 'text-warning-ink',
-		info: 'text-info-ink'
+		info: 'text-info-ink',
+		ghost: 'text-ink-2'
 	};
 	const TONE_VAR: Record<string, string> = {
 		signal: 'var(--c-signal)',
@@ -164,7 +166,8 @@
 		signal: 'border-signal/30 bg-signal-soft',
 		advisory: 'border-advisory/35 bg-advisory-soft',
 		warning: 'border-warning/35 bg-warning-soft',
-		info: 'border-info/30 bg-info-soft'
+		info: 'border-info/30 bg-info-soft',
+		ghost: 'border-line bg-surface-2'
 	};
 	const labelHead = $derived(banner ? banner.label.slice(0, banner.label.lastIndexOf(' ') + 1) : '');
 	const labelTail = $derived(banner ? banner.label.slice(banner.label.lastIndexOf(' ') + 1) : '');
@@ -172,17 +175,15 @@
 	// One line above the services: counts by state and the mean uptime over the bars' days.
 	const tally = $derived.by(() => {
 		const items = status ? status.groups.flatMap((g) => g.items) : [];
-		const count = (state: string) => items.filter((i) => i.state === state).length;
 		const values = items.map((i) => i.uptime_history).filter((v): v is number => v !== null);
-		const up = count('up');
-		const degraded = count('degraded');
-		const down = count('down');
-		const maintenance = count('maintenance');
+		const { up, degraded, down, maintenance, known } = tallyItems(items);
 		const affected = degraded + down + maintenance;
-		let headline = m.status_public_tally_all({ count: items.length });
-		if (items.length === 1 && affected === 0) headline = m.status_public_tally_one();
+		// "All N operational" counts only the services that were measured.
+		let headline = m.status_public_tally_all({ count: known });
+		if (known === 1 && affected === 0) headline = m.status_public_tally_one();
+		if (known === 0) headline = m.status_words_overall_no_data();
 		if (affected > 0) {
-			const args = { affected, total: items.length };
+			const args = { affected, total: known };
 			const only = [
 				[down, () => m.status_public_tally_down(args)],
 				[degraded, () => m.status_public_tally_degraded(args)],
@@ -194,7 +195,7 @@
 		return {
 			total: items.length,
 			headline,
-			detail: values.length
+			detail: values.length && known > 0
 				? m.status_public_tally_detail_uptime({ up, down, uptime: formatPercent(values.reduce((a, b) => a + b, 0) / values.length), days })
 				: m.status_public_tally_detail({ up, down })
 		};

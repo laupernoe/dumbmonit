@@ -12,6 +12,7 @@
 	 */
 	import type {
 		AlertRule,
+		AlertHistoryEntry,
 		AlertRulePayload,
 		RuleOperator,
 		AlertSeverity,
@@ -29,7 +30,8 @@
 	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { ruleKinds, isRelevant } from './rules-filter';
+	import { ruleKinds } from './rules-filter';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import RuleEditor from './rules/RuleEditor.svelte';
 	import { anomalySummary } from './rules/options';
 
@@ -39,6 +41,8 @@
 		targets?: Target[];
 		/** For kind labels, and for inferring which collector kind a rule's query is about. */
 		collectors?: CollectorInfo[];
+		/** Recent alert transitions, for the "fired recently" filter. */
+		history?: AlertHistoryEntry[];
 		busyId?: number | null;
 		ontoggle: (rule: AlertRule, enabled: boolean) => void;
 		ondelete: (id: number) => void;
@@ -49,6 +53,7 @@
 		rules,
 		targets = [],
 		collectors = [],
+		history = [],
 		busyId = null,
 		ontoggle,
 		ondelete,
@@ -68,18 +73,21 @@
 	});
 	const rows = $derived(rules.map((rule) => saved.get(rule.id) ?? rule));
 
-	// --- Search, kind filter and the relevance split --------------------------
+	// --- Search, filters and groups --------------------------------------------
 	//
-	// ~50 collector kinds ship a handful of rules each: a reader with a few
-	// devices otherwise sees rules for kinds they don't own. Default view:
-	// only "relevant" rules (see `rules-filter.ts`) plus universal ones, the
-	// rest behind "Show all", grouped by kind. Typing in the search box or
-	// choosing an explicit kind always searches/filters across every rule,
-	// bypassing that split immediately.
+	// ~50 collector kinds ship a handful of rules each: 150+ rules on one page.
+	// They are grouped by device kind, every group folded. Groups for kinds
+	// the instance owns come first. Typing, picking a kind or a quick filter
+	// unfolds the groups that still match.
+
+	type Quick = 'all' | 'active' | 'disabled' | 'changed' | 'fired';
+	/** "Fired recently" looks back this far in the history. */
+	const RECENT_MS = 7 * 24 * 3600 * 1000;
 
 	let search = $state('');
 	let kindFilter = $state('');
-	let showAll = $state(false);
+	let quick = $state<Quick>('all');
+	let openGroups = $state<Set<string>>(new Set());
 
 	const knownKinds = $derived(collectors.map((c) => c.kind));
 	const ownedKinds = $derived(new Set(targets.map((t) => t.kind)));
@@ -95,9 +103,43 @@
 		return [...seen].map((kind) => [kind, kindLabel(kind)] as const).sort((a, b) => a[1].localeCompare(b[1], getLocale()));
 	});
 
-	const searching = $derived(search.trim() !== '' || kindFilter !== '');
+	/** Rule uids that went firing in the last days, from the history. */
+	const recentlyFired = $derived.by(() => {
+		const since = Date.now() - RECENT_MS;
+		const uids = new Set<string>();
+		for (const entry of history) {
+			if (entry.to_phase !== 'firing') continue;
+			// Timestamps are UTC; tolerate a missing suffix.
+			const at = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(entry.at) ? entry.at : `${entry.at}Z`);
+			if (at >= since) uids.add(entry.rule_uid);
+		}
+		for (const alert of alertsStore.alerts) {
+			if (alert.effective_phase === 'firing') uids.add(alert.rule_uid);
+		}
+		return uids;
+	});
 
-	/** Every rule matching the search box and the kind select, ignoring relevance. */
+	/** Added by the operator, or a shipped rule tuned for some device. */
+	function isChanged(rule: AlertRule): boolean {
+		return !rule.builtin || rule.overrides.length > 0;
+	}
+
+	function matchesQuick(rule: AlertRule, mode: Quick): boolean {
+		switch (mode) {
+			case 'active':
+				return rule.enabled;
+			case 'disabled':
+				return !rule.enabled;
+			case 'changed':
+				return isChanged(rule);
+			case 'fired':
+				return recentlyFired.has(rule.uid);
+			default:
+				return true;
+		}
+	}
+
+	/** Rules matching the search box and the kind select. */
 	const searchResults = $derived.by(() => {
 		const term = search.trim().toLowerCase();
 		return rows.filter((rule) => {
@@ -111,21 +153,47 @@
 		});
 	});
 
-	/** Default view, no search/filter active: relevant rules, and the rest grouped by kind. */
-	const relevantRows = $derived(rows.filter((rule) => isRelevant(rule, ownedKinds, knownKinds)));
-	const hiddenGroups = $derived.by(() => {
-		const groups = new Map<string, AlertRule[]>();
-		for (const rule of rows) {
-			if (isRelevant(rule, ownedKinds, knownKinds)) continue;
-			// `isRelevant` false guarantees at least one kind; group under the first.
-			const kind = ruleKinds(rule, knownKinds).sort((a, b) => a.localeCompare(b, getLocale()))[0];
-			const list = groups.get(kind);
+	const quickOptions = $derived([
+		{ id: 'all' as const, label: m.alerts_rules_quick_all(), count: searchResults.length },
+		{ id: 'active' as const, label: m.alerts_rules_quick_active(), count: searchResults.filter((r) => r.enabled).length },
+		{ id: 'disabled' as const, label: m.alerts_rules_quick_disabled(), count: searchResults.filter((r) => !r.enabled).length },
+		{ id: 'changed' as const, label: m.alerts_rules_quick_changed(), count: searchResults.filter(isChanged).length },
+		{ id: 'fired' as const, label: m.alerts_rules_quick_fired(), count: searchResults.filter((r) => recentlyFired.has(r.uid)).length }
+	]);
+
+	const filtered = $derived(search.trim() !== '' || kindFilter !== '' || quick !== 'all');
+	const shown = $derived(searchResults.filter((rule) => matchesQuick(rule, quick)));
+
+	/** Shown rules by device kind (universal ones under ''), owned kinds first. */
+	const groups = $derived.by(() => {
+		const byKind = new Map<string, AlertRule[]>();
+		for (const rule of shown) {
+			const kind = [...ruleKinds(rule, knownKinds)].sort((a, b) => a.localeCompare(b, getLocale()))[0] ?? '';
+			const list = byKind.get(kind);
 			if (list) list.push(rule);
-			else groups.set(kind, [rule]);
+			else byKind.set(kind, [rule]);
 		}
-		return [...groups].sort((a, b) => kindLabel(a[0]).localeCompare(kindLabel(b[0]), getLocale()));
+		const rank = (kind: string) => (kind === '' ? 0 : ownedKinds.has(kind) ? 1 : 2);
+		return [...byKind].sort(
+			(a, b) => rank(a[0]) - rank(b[0]) || kindLabel(a[0]).localeCompare(kindLabel(b[0]), getLocale())
+		);
 	});
-	const hiddenCount = $derived(hiddenGroups.reduce((sum, [, list]) => sum + list.length, 0));
+
+	function groupLabel(kind: string): string {
+		return kind === '' ? m.alerts_rules_group_general() : kindLabel(kind);
+	}
+
+	function isOpen(kind: string): boolean {
+		return filtered || openGroups.has(kind);
+	}
+
+	function setOpen(kind: string, open: boolean) {
+		if (filtered || openGroups.has(kind) === open) return;
+		const next = new Set(openGroups);
+		if (open) next.add(kind);
+		else next.delete(kind);
+		openGroups = next;
+	}
 
 	let editingId = $state<number | null>(null);
 	let shownQueryIds = $state<Set<number>>(new Set());
@@ -509,47 +577,52 @@
 		</label>
 	</div>
 
-	{#if searching}
-		{#if searchResults.length === 0}
-			<EmptyState icon={Search} title={m.alerts_rules_nomatch_title()} description={m.alerts_rules_nomatch_description()} />
-		{:else}
-			<div class="space-y-2.5" aria-live="polite">
-				{#each searchResults as rule, i (rule.id)}
-					{@render row(rule, i)}
-				{/each}
-			</div>
-		{/if}
+	<Segmented
+		options={quickOptions}
+		value={quick}
+		onchange={(v) => (quick = v)}
+		label={m.alerts_rules_quick_label()}
+		size="sm"
+		class="mb-3 max-sm:w-full"
+	/>
+	<p class="tnum mb-3 text-[0.8125rem] text-ink-2" aria-live="polite">
+		{m.alerts_rules_count({ shown: shown.length, total: rows.length })}
+	</p>
+
+	{#if shown.length === 0}
+		<EmptyState icon={Search} title={m.alerts_rules_nomatch_title()} description={m.alerts_rules_nomatch_description()} />
 	{:else}
-		<div class="space-y-2.5" aria-live="polite">
-			{#each relevantRows as rule, i (rule.id)}
-				{@render row(rule, i)}
+		<div class="space-y-2">
+			{#each groups as [kind, groupRules] (kind)}
+				{@const off = groupRules.filter((r) => !r.enabled).length}
+				{@const firingHere = groupRules.reduce((sum, r) => sum + (firingByRule.get(r.uid) ?? 0), 0)}
+				<details
+					class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-2.5"
+					open={isOpen(kind)}
+					ontoggle={(e) => setOpen(kind, e.currentTarget.open)}
+				>
+					<summary class="flex min-h-10 cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-ink">
+						<span class="font-semibold">{groupLabel(kind)}</span>
+						<span class="tnum text-ink-2">({groupRules.length})</span>
+						{#if firingHere > 0}
+							<Plate tone="warning" label={m.alerts_rules_firing_now({ count: firingHere })} pulse />
+						{/if}
+						{#if off > 0}
+							<Plate tone="ghost" bare label={m.alerts_rules_group_off({ count: off })} />
+						{/if}
+						{#if kind !== '' && !ownedKinds.has(kind)}
+							<Plate tone="ghost" bare label={m.alerts_rules_group_no_device()} />
+						{/if}
+					</summary>
+					{#if isOpen(kind)}
+						<div class="mt-2.5 space-y-2.5">
+							{#each groupRules as rule, i (rule.id)}
+								{@render row(rule, i)}
+							{/each}
+						</div>
+					{/if}
+				</details>
 			{/each}
 		</div>
-
-		{#if hiddenGroups.length > 0}
-			<div class="mt-4">
-				{#if !showAll}
-					<Button variant="ghost" size="sm" onclick={() => (showAll = true)}>
-						{m.alerts_rules_show_all({ count: hiddenCount })}
-					</Button>
-				{:else}
-					<div class="space-y-2">
-						{#each hiddenGroups as [kind, groupRules] (kind)}
-							<details class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-2.5">
-								<summary class="cursor-pointer text-sm font-medium text-ink-2">
-									{kindLabel(kind)} ({groupRules.length})
-								</summary>
-								<div class="mt-2.5 space-y-2.5">
-									{#each groupRules as rule, i (rule.id)}
-										{@render row(rule, i)}
-									{/each}
-								</div>
-							</details>
-						{/each}
-					</div>
-					<Button variant="ghost" size="sm" class="mt-2" onclick={() => (showAll = false)}>{m.alerts_rules_show_fewer()}</Button>
-				{/if}
-			</div>
-		{/if}
 	{/if}
 {/if}
