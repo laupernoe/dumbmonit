@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="pt-BR" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funcionalidades · DumbMonit</title>
+<meta name="description" content="Alertas que respeitam as dependências, 23 canais de notificação, páginas de estado públicas, tela de parede, agentes para Linux, Windows, macOS e FreeBSD, relatórios por e-mail e um servidor MCP. Código aberto.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/pt-BR/features/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Funcionalidades · DumbMonit">
+<meta property="og:description" content="Alertas que respeitam as dependências, 23 canais de notificação, páginas de estado públicas, tela de parede, agentes para Linux, Windows, macOS e FreeBSD, relatórios por e-mail e um servidor MCP. Código aberto.">
+<meta property="og:url" content="https://dumbmonit.app/pt-BR/features/">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Está tudo bem? Saiba em um segundo. Monitoramento self-hosted num único contêiner, com o pombo como mascote.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Funcionalidades · DumbMonit">
+<meta name="twitter:description" content="Alertas que respeitam as dependências, 23 canais de notificação, páginas de estado públicas, tela de parede, agentes para Linux, Windows, macOS e FreeBSD, relatórios por e-mail e um servidor MCP. Código aberto.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Funcionalidades · DumbMonit","url":"https://dumbmonit.app/pt-BR/features/","inLanguage":"pt-BR","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Pular para o conteúdo</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="Página inicial do DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Seções">
+			<a href="./" aria-current="page">Funcionalidades</a>
+			<a href="../devices/">Dispositivos</a>
+			<a href="../install/">Instalar</a>
+			<a href="../community/">Docs e comunidade</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Demo ao vivo</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Idioma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>PT-BR</span></summary>
+				<ul>
+				<li><a href="../../features/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/features/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/features/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/features/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/features/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../pt/features/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="./" hreflang="pt-BR" lang="pt-BR" aria-current="true">Português (Brasil)</a></li>
+				<li><a href="../../ru/features/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../zh-Hans/features/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo ao vivo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1 class="blur-in"><span class="w" style="--i:0">Tudo</span> <span class="w" style="--i:1">o</span> <span class="w" style="--i:2">que</span> <span class="w" style="--i:3">faz</span></h1>
+		<p class="lede">Alertas, páginas de estado, agentes e o resto, num só contêiner. O que cada tipo de dispositivo reporta está nas páginas de Dispositivos.</p>
+		<ul class="toc" aria-label="Nesta página">
+			<li><a href="#alerting">Alertas sem ruído</a></li>
+			<li><a href="#notifications"><span class="num" data-n="23">23</span> canais de notificação</a></li>
+			<li><a href="#agent">Um agente para o que não fala SNMP</a></li>
+			<li><a href="#status">Páginas de status para as pessoas que você atende</a></li>
+			<li><a href="#wall">Modo parede</a></li>
+			<li><a href="#reports">Relatórios por e-mail</a></li>
+			<li><a href="#topology">Mapa de topologia</a></li>
+			<li><a href="#security">Pontuação de segurança</a></li>
+			<li><a href="#api">API e assistentes</a></li>
+			<li><a href="#languages">Nove idiomas</a></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="alerting">
+	<div class="wrap">
+		<div class="split">
+			<div>
+				<div class="section-head" style="margin-bottom:32px">
+					<h2>Alertas sem ruído</h2>
+					<p>As regras úteis já ficam ativas logo após a instalação. O esforço vai para enviar menos mensagens, e melhores.</p>
+				</div>
+				<ul class="points">
+					<li><strong>Dependências</strong><p>Declare um switch como pai de tudo o que está atrás dele. Quando ele cai, você recebe uma notificação, não trinta; as outras aparecem como “Suprimido pelo pai”.</p></li>
+					<li><strong>Agrupados por host</strong><p>Um NAS cujo array degrada envia uma mensagem por ciclo, não uma por disco. Lembretes, escalonamento, reconhecimento, soneca, ignorar por dispositivo e limpeza do histórico resolvido já vêm incluídos.</p></li>
+					<li><strong>Linhas de base que aprendem primeiro</strong><p>Detecção de anomalias sem limiar para ajustar: 168 faixas, uma por hora da semana. Ela fica em silêncio nos primeiros 14 dias e só mostra o que teria disparado.</p></li>
+					<li><strong>Previsões</strong><p>“Este sistema de arquivos vai encher em quatro dias” aparece como previsão, separada do que está quebrado agora.</p></li>
+					<li><strong>Manutenção e política de notificações</strong><p>Janelas pontuais ou semanais, histerese, retenção de oscilações, horário de silêncio, agrupamento e um teto por hora, para que uma noite ruim não vire duzentas notificações push.</p></li>
+				</ul>
+				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/pt-br/latest/alerting/">Como funcionam os alertas</a></p>
+			</div>
+			<figure>
+				<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.avif 1440w, ../../assets/shots/alerts-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/alerts-dark-1x.webp 1440w, ../../assets/shots/alerts-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Página de alertas: alertas em andamento agrupados por dispositivo, cada um com uma placa Inacessível, Aviso, Alerta ou Em formação, Confirmar e Abrir monitor" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+				</div>
+				<figcaption>Alertas, agrupados por host. As severidades se leem como um serviço de meteorologia: info, aviso, alerta.</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="notifications">
+	<div class="wrap">
+		<div class="section-head">
+			<h2><span class="num" data-n="23">23</span> canais de notificação</h2>
+			<p>Cada um tem um botão de teste e uma página de configuração na <a href="https://dumbmonit.readthedocs.io/pt-br/latest/notifications/">documentação</a>.</p>
+		</div>
+		<ul class="chips" aria-label="Canais de notificação" style="margin-top:0">
+			<li>Discord</li>
+			<li>Slack</li>
+			<li>Telegram</li>
+			<li>Microsoft Teams</li>
+			<li>Matrix</li>
+			<li>Mattermost</li>
+			<li>Rocket.Chat</li>
+			<li>Google Chat</li>
+			<li>Zulip</li>
+			<li>ntfy</li>
+			<li>Gotify</li>
+			<li>Pushover</li>
+			<li>Pushbullet</li>
+			<li>Bark (iOS)</li>
+			<li>Web Push (browser, PWA)</li>
+			<li>Apprise</li>
+			<li>Home Assistant</li>
+			<li>Email (SMTP)</li>
+			<li>Signal</li>
+			<li>SMS via Twilio</li>
+			<li>PagerDuty</li>
+			<li>Opsgenie</li>
+			<li>Custom webhook</li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>Um agente para o que não fala SNMP</h2>
+					<p>Um pequeno binário que envia ao servidor CPU, memória, discos, rede, serviços e tempo de atividade, além de temperaturas, ventoinhas, SMART e pools ZFS quando a máquina os expõe. Ele chama o servidor, nunca o contrário: nenhuma porta para abrir na máquina.</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># a interface preenche o token para você</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="Copiado" data-copy="agent-cmd">Copiar</button>
+				</div>
+				<p class="code-note">Para Windows, um script PowerShell é servido em <code>/install.ps1</code>. O agente também existe como imagem, <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
+			</div>
+			<div>
+				<ul class="os-list">
+					<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Suportado</span><span class="how">x86_64 e aarch64, systemd ou OpenRC. Contêineres Docker e saúde do SO (atualizações, reinicialização pendente, units com falha).</span></li>
+					<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Suportado</span><span class="how">x86_64, instalado como serviço do Windows. SMART via smartctl.</span></li>
+					<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Prévia</span><span class="how">launchd, Apple silicon e Intel; binários anexados a cada release. Ainda não testado em hardware real.</span></li>
+					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Prévia</span><span class="how">rc.d, x86_64, pools ZFS. Ainda não testado em hardware real.</span></li>
+				</ul>
+				<ul class="points" style="margin-top:32px">
+					<li><strong>Sites remotos, só conexões de saída</strong><p>No modo relay, um agente executa as sondas do servidor (SNMP, Proxmox, HTTP…) a partir da própria rede — um segundo site, a rede de um cliente ou uma VPS atrás de NAT — sem nada de entrada: sem VPN, sem porta para abrir. <a href="https://dumbmonit.readthedocs.io/pt-br/latest/install/remote-site/">Monitorar um site remoto</a></p></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="status">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Páginas de status para as pessoas que você atende</h2>
+				<p>Páginas públicas em <code>/s/&lt;nome&gt;</code>: grupos de serviços com 90 dias de histórico diário, disponibilidade em 30 e 90 dias, avisos de incidentes e de manutenção, assinantes por e-mail com confirmação dupla, RSS, selos para um README, um embed compacto para uma intranet, um calendário de 90 dias e gráficos de tempo de resposta opcionais, e uma cena opcional atrás do cabeçalho: cerca de cinquenta para escolher, de skylines de cidades (Veneza, Paris, Tóquio, Nova York&hellip;) e maravilhas do mundo a marcos suíços (o Matterhorn, o Jet d&rsquo;Eau, Lucerna, Berna, Chillon). O céu acompanha o estado dos seus serviços, e cada cena reage à sua maneira quando algo cai ou volta. As suíças trazem um relógio de estação no estilo SBB, um painel de alertas de palhetas, fogos de artifício em 1º de agosto, o caldeirão da Escalade e neve de inverno.</p>
+				<p>Só saem do servidor os rótulos que você escolher. Nomes de dispositivos, endereços e tipos nunca aparecem na página, num selo ou num e-mail.</p>
+				<p><a href="https://dumbmonit.readthedocs.io/pt-br/latest/using/status-pages/">Páginas de status na documentação</a></p>
+			</div>
+			<div>
+				<ul class="points">
+					<li><strong>No celular</strong><p>Veja o estado, reconheça um alerta, inicie uma janela de manutenção. Instalável na tela inicial, de propósito sem modo offline: nunca mostra o estado de ontem.</p></li>
+				</ul>
+				<figure style="margin-top:32px">
+					<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/status-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.avif 1440w, ../../assets/shots/status-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/status-dark-1x.webp 1440w, ../../assets/shots/status-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/status-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/status-light-1x.avif 1440w, ../../assets/shots/status-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/status-light-1x.webp" srcset="../../assets/shots/status-light-1x.webp 1440w, ../../assets/shots/status-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Uma página de status pública chamada Home services: todos os sistemas operacionais e, abaixo, cada serviço com sua barra de disponibilidade de 7 dias e o tempo de resposta" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+					</div>
+					<figcaption>Uma página de status pública: o que a família pode conferir antes de perguntar se a internet caiu.</figcaption>
+				</figure>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="wall">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>Modo parede</h2>
+			<p>Só o boletim, em tela cheia, para um monitor de sala: uma cena viva (um telhado de Paris com a Torre Eiffel e os pombos do DumbMonit por padrão, ou uma de muitas outras) cujo tempo acompanha seus alertas, um tema OLED para uma tela deixada ligada por dias e música de parede &mdash; o Spotify Connect transforma a tela numa caixa de som.</p>
+		</div>
+		<figure>
+			<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../../assets/shots/wall-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.avif 1440w, ../../assets/shots/wall-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../../assets/shots/wall-dark-1x.webp 1440w, ../../assets/shots/wall-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Modo parede: “4 problemas” em letra grande, a lista de alertas, os dispositivos que respondem, um relógio e um telhado de Paris na chuva com os pombos" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+			</div>
+			<figcaption>O modo parede numa tela de sala: o tempo sobre o telhado de Paris acompanha seus alertas.</figcaption>
+		</figure>
+	</div>
+</section>
+
+<section class="block" id="reports">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Relatórios por e-mail</h2>
+				<p>Um breve e-mail semanal (ou diário, ou mensal) com a disponibilidade por grupo, os incidentes do período e os dispositivos menos estáveis, enviado sem que ninguém abra o DumbMonit.</p>
+				<p><a href="https://dumbmonit.readthedocs.io/pt-br/latest/using/reports/">Saber mais na documentação</a></p>
+			</div>
+			<div class="section-head" id="topology" style="margin-bottom:0">
+				<h2>Mapa de topologia</h2>
+				<p>Uma só imagem de toda a infraestrutura, desenhada com o que o DumbMonit já sabe: dependências, relays, convidados dos hipervisores e vizinhos LLDP. Nada a digitar à mão.</p>
+				<p><a href="https://dumbmonit.readthedocs.io/pt-br/latest/using/topology/">Saber mais na documentação</a></p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="security">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Pontuação de segurança</h2>
+				<p>Cada dispositivo suportado recebe uma pontuação de 0 a 100 e uma nota de A a F, com base nas verificações de boas práticas do próprio fabricante, no estilo PingCastle: categoria, severidade, evidência, correção e uma página Segurança ordenada do pior para o melhor.</p>
+				<p>A pontuação é uma referência, não uma auditoria: só lê o que o DumbMonit já recolhe, por isso nunca substitui uma revisão de segurança.</p>
+				<p><a href="https://dumbmonit.readthedocs.io/pt-br/latest/using/security-score/">Saber mais na documentação</a></p>
+			</div>
+			<ul class="points">
+				<li><strong>Contas</strong><p>Papéis de administrador, operador (cuida dos alertas, não altera a configuração) e leitor, segundo fator TOTP opcional, log de auditoria e login único via OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), com a criação de contas desativada por padrão.</p></li>
+				<li><strong>Convive bem com o que você já roda</strong><p><code>/metrics</code>, <code>/federate</code> e um endpoint compatível com Prometheus permitem que um Grafana existente leia os dados do DumbMonit.</p></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="api">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>API e assistentes</h2>
+		</div>
+		<ul class="points" style="max-width:48em">
+			<li><strong>API aberta e documentada</strong><p>Todas as rotas em <code>/api/openapi.json</code> (OpenAPI 3.1): tokens com escopo (<code>dmt_…</code>, leitura ou escrita) que podem expirar, ser restritos a uma rede e têm limite de taxa. <a href="https://dumbmonit.readthedocs.io/pt-br/latest/reference/api/">Referência da API</a></p></li>
+			<li><strong>Um assistente via MCP</strong><p>27 ferramentas para ChatGPT, VS Code ou Cursor: ler status, dispositivos, alertas, métricas e agentes; um token de escrita também pode silenciar, reconhecer, adicionar um dispositivo ou reiniciar um contêiner. Os segredos nunca voltam. <a href="https://dumbmonit.readthedocs.io/pt-br/latest/using/assistant/">Conectar um assistente</a></p></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="languages">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Nove idiomas</h2>
+				<p>Inglês, francês, alemão, espanhol, italiano, português (Portugal e Brasil), russo e chinês simplificado: a interface, este site e a documentação. Algumas traduções ainda são parciais.</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="../devices/">Dispositivos</a>
+				<a class="btn btn-secondary" href="../install/">Instalar</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. O mascote é um pombo.</p>
+		<nav aria-label="Rodapé">
+			<a href="./">Funcionalidades</a>
+			<a href="../devices/">Dispositivos</a>
+			<a href="../install/">Instalar</a>
+			<a href="../community/">Docs e comunidade</a>
+			<a href="https://demo.dumbmonit.app">Demo ao vivo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/pt-br/latest/">Documentação</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduzir</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licença</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Segurança</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>

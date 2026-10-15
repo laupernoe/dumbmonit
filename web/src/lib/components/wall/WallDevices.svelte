@@ -17,9 +17,11 @@
 		targets: Target[];
 		probes: Map<TargetId, ProbeStatus>;
 		sky: Sky;
+		/** Devices already written out as problems: not repeated here. */
+		skip?: Set<TargetId>;
 	}
 
-	let { targets, probes, sky }: Props = $props();
+	let { targets, probes, sky, skip = new Set() }: Props = $props();
 
 	type ChipTone = 'warning' | 'advisory' | 'info' | 'ghost' | 'signal';
 	interface Chip {
@@ -44,7 +46,7 @@
 		const list: Chip[] = [];
 		for (const target of targets) {
 			const state: TargetState = displayState(target, probes.get(target.id));
-			if (state === 'disabled') continue;
+			if (state === 'disabled' || skip.has(target.id)) continue;
 			let tone: ChipTone =
 				state === 'online'
 					? 'signal'

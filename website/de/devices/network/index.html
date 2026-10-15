@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Netzwerkgeräte · Geräte · DumbMonit</title>
+<meta name="description" content="Switches, Router, Access Points und VPNs: jedes SNMP-Gerät, MikroTik, UniFi, Tailscale und OpenVPN.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/de/devices/network/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+<script src="../../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Netzwerkgeräte · Geräte · DumbMonit">
+<meta property="og:description" content="Switches, Router, Access Points und VPNs: jedes SNMP-Gerät, MikroTik, UniFi, Tailscale und OpenVPN.">
+<meta property="og:url" content="https://dumbmonit.app/de/devices/network/">
+<meta property="og:locale" content="de_DE">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Ist alles in Ordnung? Antwort in einer Sekunde. Selbst gehostetes Monitoring in einem Container, neben dem Taubenmaskottchen.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Netzwerkgeräte · Geräte · DumbMonit">
+<meta name="twitter:description" content="Switches, Router, Access Points und VPNs: jedes SNMP-Gerät, MikroTik, UniFi, Tailscale und OpenVPN.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Netzwerkgeräte · Geräte · DumbMonit","url":"https://dumbmonit.app/de/devices/network/","inLanguage":"de","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="DumbMonit Startseite"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Abschnitte">
+			<a href="../../features/">Funktionen</a>
+			<a href="../" aria-current="page">Geräte</a>
+			<a href="../../install/">Installieren</a>
+			<a href="../../community/">Doku und Community</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Live-Demo</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Sprache"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>DE</span></summary>
+				<ul>
+				<li><a href="../../../devices/network/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../../fr/devices/network/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="./" hreflang="de" lang="de" aria-current="true">Deutsch</a></li>
+				<li><a href="../../../es/devices/network/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../../it/devices/network/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../../pt/devices/network/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/network/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../../ru/devices/network/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../../zh-Hans/devices/network/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live-Demo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menü"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Geräte</a></p>
+		<h1 class="blur-in"><span class="w" style="--i:0">Netzwerkgeräte</span></h1>
+		<p class="lede">Switches, Router, Access Points und VPNs: jedes SNMP-Gerät, MikroTik, UniFi, Tailscale und OpenVPN.</p>
+		<p class="code-note">Gerätebeschreibungen und Texte der Alarmregeln sind wie im Produkt auf Englisch. Die Beschriftungen der Seite folgen Ihrer Sprache.</p>
+		<ul class="toc" aria-label="Gerätetypen auf dieser Seite">
+			<li><a href="#snmp">SNMP device</a></li>
+			<li><a href="#mikrotik">MikroTik RouterOS</a></li>
+			<li><a href="#unifi">UniFi Network</a></li>
+			<li><a href="#tailscale">Tailscale</a></li>
+			<li><a href="#openvpn">OpenVPN server</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="snmp">
+<header><h2>SNMP device</h2><span class="label-tape">snmp</span></header>
+<p class="summary">Switches, routers, UPS, printers, access points: anything that answers SNMP.</p>
+<p class="label-tape" style="margin-top:14px">Beispiele</p><ul class="chips" style="margin-top:6px"><li>Switch</li><li>Router</li><li>NAS</li><li>UPS</li><li>Printer</li></ul>
+<div class="dev-grid">
+<section><h3>Was Sie brauchen</h3><ul class="needs"><li><strong>SNMP v1 / v2c (community)</strong><span>The simplest form: one shared word, sent unencrypted.</span></li><li><strong>SNMP v3 (user, authentication, privacy)</strong><span>Authenticated and encrypted. Needs a USM user on the device.</span></li></ul><p class="muted">Standardport: <code>161</code></p></section>
+<section><h3>Mitgelieferte Alarmregeln <span class="label-tape">9</span></h3><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>High CPU</strong><span>CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %.</span></li><li><span class="plate plate-info">Info</span><strong>Unusual CPU</strong><span>CPU load noticeably different from the usual at this time and day of the week (seasonal baseline).</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>Disk almost full</strong><span>Filesystem 90% full or more, per mount point (SNMP, Proxmox storages and root filesystems); clears below 88 %.</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>Filesystem almost full</strong><span>At this rate, the filesystem will be full within four days.</span></li><li><span class="plate plate-warning">Warnung</span><strong>UPS on battery</strong><span>The UPS is powering the load from battery.</span></li><li><span class="plate plate-warning">Warnung</span><strong>UPS battery low</strong><span>The UPS battery is low or depleted.</span></li></ul><details class="more-rules"><summary>3 weitere anzeigen</summary><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>Port accumulating errors</strong><span>A network port logged more than fifty errors in the last hour: usually a failing cable, a dirty fibre or a duplex mismatch (increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h]); nothing fires during the first hour of a new device, so errors counted before it was added are not reported as new).</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>Port flapping</strong><span>A network port went down and up again more than twice in thirty minutes (changes_prometheus(dumbmonit_if_oper_status[30m])). A port disabled on purpose has no series and never fires.</span></li><li><span class="plate plate-warning">Warnung</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Einrichtungsschritte: Enable SNMP on the device</summary><ol class="setup-steps"><li><p>Open the device&#x27;s administration interface.</p></li><li><p>Look for the SNMP section, often under &quot;Network&quot;, &quot;Services&quot; or &quot;Administration&quot;.</p></li><li><p>Enable SNMP v2c and note the read-only community (&quot;public&quot; by default on many devices).</p></li><li><p>If the device filters by address, allow this server&#x27;s address.</p></li><li><p>Come back here, enter the address and the community: the rest is detected automatically.</p></li></ol><p class="warn"><strong>Hinweis.</strong> A community is not encrypted on the network. On a shared network, prefer SNMP v3, which authenticates and encrypts.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/de/latest/devices/snmp/">Dokumentation</a></p>
+</article>
+<article class="dev" id="mikrotik">
+<header><h2>MikroTik RouterOS</h2><span class="label-tape">mikrotik</span></header>
+<p class="summary">RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.</p>
+<p class="label-tape" style="margin-top:14px">Beispiele</p><ul class="chips" style="margin-top:6px"><li>hAP</li><li>RB5009</li><li>CCR</li><li>CRS switch</li><li>Cloud Hosted Router</li></ul>
+<div class="dev-grid">
+<section><h3>Was Sie brauchen</h3><ul class="needs"><li><strong>Read-only user</strong><span>The dumbmonit user created above, in the dumbmonit-read group. Sent as HTTP basic authentication.</span></li></ul><p class="muted">Standardport: <code>443</code></p></section>
+<section><h3>Mitgelieferte Alarmregeln <span class="label-tape">2</span></h3><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>MikroTik CPU high</strong><span>The router&#x27;s CPU has stayed above 90 %: routing, the firewall or a script is saturating it. Clears below 80 %.</span></li><li><span class="plate plate-warning">Warnung</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Einrichtungsschritte: Create a read-only user on the router</summary><ol class="setup-steps"><li><p>Open a terminal on the router (WinBox → New Terminal, or SSH with the default account) and create a group that can only read, through the REST API. RouterOS needs all three policies for a REST read: rest-api opens the API, api and read allow the read itself.</p><pre><code>/user group add name=dumbmonit-read policy=read,api,rest-api comment=DumbMonit</code></pre></li><li><p>Create the user in that group with a long random password of your own. To accept the account only from DumbMonit, add address= followed by the DumbMonit host&#x27;s address.</p><pre><code>/user add name=dumbmonit group=dumbmonit-read password=REPLACE-WITH-A-LONG-RANDOM-PASSWORD</code></pre></li><li><p>Turn on the HTTPS web service, which RouterOS ships disabled and without a certificate. Skip this if www-ssl already has one. Otherwise these commands make a certificate on the router itself; then tick &quot;Accept an unverifiable certificate&quot; in the options below.</p><pre><code>/certificate add name=local-ca common-name=local-ca key-usage=key-cert-sign,crl-sign days-valid=3650
+/certificate sign local-ca
+/certificate add name=https-cert common-name=router.lan days-valid=825
+/certificate sign https-cert ca=local-ca
+/ip service set www-ssl certificate=https-cert disabled=no</code></pre></li><li><p>Optional: to be told about new RouterOS versions, let the router check for them at startup and once a day. A read-only user may not start that check, so DumbMonit only reads its result.</p><pre><code>/system scheduler add name=check-for-updates interval=1d start-time=startup on-event=&quot;/system package update check-for-updates once&quot;</code></pre></li><li><p>In DumbMonit, enter the router&#x27;s address, for example &quot;192.168.88.1&quot;, with the dumbmonit user and its password. DumbMonit only sends GET requests to /rest: it never changes a setting, never starts an update and never reboots the router.</p></li></ol><p class="warn"><strong>Hinweis.</strong> RouterOS 7.1 or later is required: RouterOS 6 has no REST API. Do not use the default account: its full group can change everything, while dumbmonit-read has no write policy and every change is refused. The www service (plain HTTP) also answers the REST API, but it sends the password in clear with every request.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/de/latest/devices/mikrotik/">Dokumentation</a></p>
+</article>
+<article class="dev" id="unifi">
+<header><h2>UniFi Network</h2><span class="label-tape">unifi</span></header>
+<p class="summary">The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms, and the last connection of the clients you mark as worth watching.</p>
+<p class="label-tape" style="margin-top:14px">Beispiele</p><ul class="chips" style="margin-top:6px"><li>UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key)</li><li>UniFi Network Server (self-hosted)</li></ul>
+<div class="dev-grid">
+<section><h3>Was Sie brauchen</h3><ul class="needs"><li><strong>API key (UniFi OS console)</strong><span>Reads devices, their load and the client count through the official Integration API. Created in Settings → Control Plane → Integrations.</span></li><li><strong>View Only account</strong><span>A local account with the View Only role. Also reads the WAN, Internet and alarm status, and works on a self-hosted server.</span></li></ul><p class="muted">Standardport: <code>443</code></p></section>
+<section><h3>Mitgelieferte Alarmregeln <span class="label-tape">8</span></h3><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>UniFi device offline</strong><span>A UniFi device adopted by the controller is offline, isolated or failed to adopt.</span></li><li><span class="plate plate-warning">Warnung</span><strong>UniFi Internet down</strong><span>The UniFi gateway reports no Internet connection. Without a UniFi gateway the series does not exist and the rule stays silent.</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>UniFi WAN link down</strong><span>A WAN link of the UniFi gateway is down: with two links, redundancy is lost while nothing seems broken. A disabled port has no series.</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>UniFi gateway CPU high</strong><span>The UniFi gateway&#x27;s processor has been above 90% for fifteen minutes; clears below 80 %.</span></li><li><span class="plate plate-info">Info</span><strong>UniFi device waiting for adoption</strong><span>A device appeared on the network and waits to be adopted in UniFi.</span></li><li><span class="plate plate-info">Info</span><strong>UniFi firmware update available</strong><span>A firmware update is available for UniFi devices.</span></li></ul><details class="more-rules"><summary>2 weitere anzeigen</summary><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>UniFi alarms</strong><span>UniFi logged critical events or raised alarms in the last 24 hours. Only read with a View Only account.</span></li><li><span class="plate plate-warning">Warnung</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Einrichtungsschritte: Create a read-only access in UniFi Network</summary><ol class="setup-steps"><li><p>On a UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key), you can create an API key: in UniFi Network, Settings → Control Plane → Integrations → Create API Key. Name it after DumbMonit and copy it now: it is shown only once. The key reads devices, their load and the number of clients through the official Integration API.</p></li><li><p>For the WAN, Internet and alarm status, and on a self-hosted UniFi Network Server, use a local account with the View Only role instead: Settings → Admins &amp; Users → Create New. Name it as follows, give it a long random password, restrict it to local access, and set its UniFi Network role to View Only. View Only reads everything and can change nothing.</p><pre><code>dumbmonit</code></pre></li><li><p>In DumbMonit, enter the address of the console or server, for example &quot;unifi.lan&quot; (port 443 on a console) or &quot;unifi.lan:8443&quot; for a self-hosted server, and paste the key or the account. If the network is not the default site, set the Site option to the short name shown in the address bar after /manage/ or /network/.</p></li><li><p>DumbMonit only reads. It never restarts, adopts, upgrades or provisions a device, and never acknowledges an alarm.</p></li></ol><p class="warn"><strong>Hinweis.</strong> Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable &quot;Accept an unverifiable certificate&quot; unless you installed your own. UniFi knows every client that ever connected, most of them phones passing by: only those named, reserved on a fixed IP, or noted in UniFi are watched for staleness by default, to avoid an alert for every visitor&#x27;s phone. List more in the Clients to watch option, or enter all.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/de/latest/devices/unifi/">Dokumentation</a></p>
+</article>
+<article class="dev" id="tailscale">
+<header><h2>Tailscale</h2><span class="label-tape">tailscale</span></header>
+<p class="summary">The devices of a tailnet through the Tailscale API: servers offline, node keys about to expire, devices awaiting approval, clients to update, and each device&#x27;s last connection.</p>
+<p class="label-tape" style="margin-top:14px">Beispiele</p><ul class="chips" style="margin-top:6px"><li>Tailscale tailnet</li><li>Subnet routers</li><li>Exit nodes</li></ul>
+<div class="dev-grid">
+<section><h3>Was Sie brauchen</h3><ul class="needs"><li><strong>OAuth client</strong><span>Recommended: a client limited to the devices:core:read scope, which can change nothing.</span></li><li><strong>API access token</strong><span>Works too, but carries every right of the user who created it and expires after 90 days at most.</span></li></ul><p class="muted">Standardport: <code>443</code></p></section>
+<section><h3>Mitgelieferte Alarmregeln <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Hinweis</span><strong>Tailscale device offline</strong><span>A Tailscale device that must stay online (a tagged device by default) has been disconnected for more than 15 minutes (dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched &gt; 0).</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>Tailscale node key expiring</strong><span>A Tailscale device&#x27;s node key expires in less than 14 days: it will leave the tailnet until someone signs it in again.</span></li><li><span class="plate plate-advisory">Hinweis</span><strong>Tailscale device awaiting approval</strong><span>A device joined the tailnet and awaits approval: approve it if it is expected, remove it otherwise.</span></li><li><span class="plate plate-info">Info</span><strong>Tailscale client update</strong><span>A Tailscale device that must stay online runs a client with an update available (dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched &gt; 0).</span></li><li><span class="plate plate-warning">Warnung</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Einrichtungsschritte: Create a read-only OAuth client for DumbMonit</summary><ol class="setup-steps"><li><p>In the Tailscale console (login.tailscale.com), open Settings &gt; Trust credentials (formerly OAuth clients) and generate an OAuth client with only the devices:core:read scope. It lists the devices and can change nothing.</p></li><li><p>Copy the client ID and the client secret (tskey-client-…), shown once. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret. Leave the Tailnet option empty: the tailnet of the client is read.</p></li></ol><p class="warn"><strong>Hinweis.</strong> Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all. Every device of the tailnet appears in the Devices table below with its last connection, watched or not; a phone that travels can go days without one, so raise Device staleness for those.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/de/latest/devices/tailscale/">Dokumentation</a></p>
+</article>
+<article class="dev" id="openvpn">
+<header><h2>OpenVPN server</h2><span class="label-tape">openvpn</span></header>
+<p class="summary">An OpenVPN server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic.</p>
+<p class="label-tape" style="margin-top:14px">Beispiele</p><ul class="chips" style="margin-top:6px"><li>OpenVPN Access Server</li><li>A plain openvpn --server on Linux</li><li>pfSense or OPNsense OpenVPN (management enabled)</li></ul>
+<div class="dev-grid">
+<section><h3>Was Sie brauchen</h3><ul class="needs"><li><strong>Management password</strong><span>The shared password set by the third argument of the server&#x27;s &quot;management&quot; directive.</span></li></ul><p class="muted">Kein Konto nötig.</p><p class="muted">Standardport: <code>7505</code></p></section>
+<section><h3>Mitgelieferte Alarmregeln <span class="label-tape">1</span></h3><ul class="rules"><li><span class="plate plate-warning">Warnung</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Einrichtungsschritte: Turn on the management interface</summary><ol class="setup-steps"><li><p>The management interface is a separate listener, off by default: add this to the server&#x27;s configuration (server.conf, or the OpenVPN Access Server&#x27;s as.conf under a different name) and restart it. Bind it to an address the DumbMonit host can reach, or to 127.0.0.1 and reach it through an SSH tunnel or a relay agent on the same machine.</p><pre><code>management 0.0.0.0 7505</code></pre></li><li><p>Optional but recommended: the management interface has no account of its own, only a shared password. Put one in a file readable by the OpenVPN process alone and add it as a third argument.</p><pre><code>management 0.0.0.0 7505 /etc/openvpn/management-password</code></pre></li><li><p>In DumbMonit, enter the server&#x27;s address, for example &quot;vpn.lan&quot; (port 7505), and the management password if one is set.</p></li><li><p>DumbMonit only reads: it sends version, state and status 3, never signal, kill or client-kill. It cannot disconnect a client, change a setting or stop the server.</p></li></ol><p class="warn"><strong>Hinweis.</strong> Anyone who reaches the management port and knows the password can disconnect clients, read all of their real IP addresses, and reconfigure the running server: keep it off the public network, behind a firewall rule that allows only the DumbMonit host, with a password set.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/de/latest/devices/openvpn/">Dokumentation</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Weitere Familien</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">Server und Hardware</a></li>
+			<li><a href="../firewalls/">Firewalls</a></li>
+			<li><a href="../hypervisors/">Hypervisoren und Cluster</a></li>
+			<li><a href="../storage/">NAS und Backup</a></li>
+			<li><a href="../checks/">Websites, Zertifikate und Prüfungen</a></li>
+			<li><a href="../proxies/">Webserver und Reverse-Proxys</a></li>
+			<li><a href="../apps/">Selbst gehostete Anwendungen</a></li>
+			<li><a href="../mail/">DNS, Mail und Sicherheit</a></li>
+			<li><a href="../data/">Datenbanken und Observability</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. Das Maskottchen ist eine Taube.</p>
+		<nav aria-label="Fußzeile">
+			<a href="../../features/">Funktionen</a>
+			<a href="../">Geräte</a>
+			<a href="../../install/">Installieren</a>
+			<a href="../../community/">Doku und Community</a>
+			<a href="https://demo.dumbmonit.app">Live-Demo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/de/latest/">Dokumentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Übersetzen</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Lizenz</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sicherheit</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>

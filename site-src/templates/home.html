@@ -1,0 +1,115 @@
+<section class="hero">
+	<div class="wrap">
+		<div class="hero-grid">
+			<div>
+				<div class="status-row rise-in">
+					<span class="plate plate-advisory">{{k011}}</span>
+					<span class="plate plate-signal">{{k012}}</span>
+				</div>
+				<h1 class="rise-in">{{k013}}</h1>
+				<p class="lede rise-in">{{k014}}</p>
+
+				<div class="code rise-in">
+					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
+<span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="quickstart">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k016}}</p>
+
+				<div class="cta">
+					<a class="btn btn-primary" href="https://demo.dumbmonit.app">{{k017}}</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit">{{k018}}</a>
+					<a class="btn btn-secondary" href="@@LINK:install/@@">{{k019}}</a>
+				</div>
+			</div>
+			<div class="mascot" id="mascot" role="img" aria-label="{{k174}}">
+				<svg viewBox="-30 -40 340 360" aria-hidden="true" focusable="false">
+					<ellipse class="m-shadow" cx="140" cy="304" rx="92" ry="10"/>
+					<text class="m-bang" x="246" y="36">!</text>
+					<g class="m-drop"><g class="m-hop"><g class="m-sway"><g class="m-breathe">
+						<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" class="m-feet"/>
+						<path d="M140 46c70 0 118 54 118 128 0 62-44 104-118 104S22 236 22 174C22 100 70 46 140 46z" class="m-body"/>
+						<path class="m-wing m-wing-l" d="M40 150c-14 40-10 90 18 118"/>
+						<path class="m-wing m-wing-r" d="M240 150c14 40 10 90-18 118"/>
+						<path d="M78 190c20 22 46 34 78 34 26 0 44-8 54-20-6 30-34 52-70 52-34 0-56-26-62-66z" class="m-chest"/>
+						<path d="M110 232c30 2 52-8 64-26" class="m-line"/>
+						<g class="m-cheeks"><ellipse cx="50" cy="186" rx="15" ry="8"/><ellipse cx="226" cy="184" rx="13" ry="7"/></g>
+						<circle cx="96" cy="118" r="52" class="m-eye"/>
+						<circle cx="184" cy="120" r="42" class="m-eye"/>
+						<g class="m-look"><g class="m-glance"><g class="m-dizzy">
+							<g class="m-pl"><circle cx="82" cy="124" r="19" class="m-pupil"/><circle cx="90" cy="116" r="6" class="m-glint"/></g>
+							<g class="m-pr"><circle cx="190" cy="114" r="15" class="m-pupil"/></g>
+						</g></g></g>
+						<circle cx="96" cy="118" r="52" class="m-lid"/>
+						<circle cx="184" cy="120" r="42" class="m-lid m-lid-r"/>
+						<path d="M114 150c8-10 44-10 52 0l-26 46z" class="m-beak"/>
+						<path d="M120 152c6-6 34-6 40 0" class="m-shine"/>
+					</g></g></g></g>
+				</svg>
+			</div>
+		</div>
+
+		<figure class="hero-shot">
+			<div class="shot">
+@@SHOT:overview:sh_ov_alt:hero@@
+			</div>
+			<figcaption>{{sh_ov_cap}}</figcaption>
+		</figure>
+	</div>
+</section>
+
+<div class="wrap">
+	<div class="notice" role="note">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
+		<p>{{k021}}</p>
+	</div>
+</div>
+
+
+<section class="block" id="why" style="border-top:0">
+	<div class="wrap">
+		<ul class="cards cards-4">
+			<li class="card"><h2 class="card-h">{{hl1_t}}</h2><p>{{hl1_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl2_t}}</h2><p>{{hl2_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl3_t}}</h2><p>{{hl3_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl4_t}}</h2><p>{{hl4_p}}</p></li>
+		</ul>
+		<p style="margin-top:28px"><a class="more" href="@@LINK:features/@@">{{hl_more}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="devices">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{home_dev_h}}</h2>
+			<p>{{home_dev_p}}</p>
+		</div>
+		<ul class="cards cards-fam">
+@@FAMILY_CARDS@@
+		</ul>
+		<figure class="home-device">
+			<div class="shot">
+@@SHOT:device:sh_dev_alt:both@@
+			</div>
+			<figcaption>{{sh_dev_cap}}</figcaption>
+		</figure>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="@@LINK:devices/@@">{{home_dev_all}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="start">
+	<div class="wrap">
+		<div class="feedback">
+			<img src="@@ROOT@@assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+			<div>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">{{home_cta_h}}</h2>
+				<p>{{home_cta_p}}</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="@@LINK:install/@@">{{nav_install}}</a>
+				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">{{k008}}</a>
+			</div>
+		</div>
+	</div>
+</section>

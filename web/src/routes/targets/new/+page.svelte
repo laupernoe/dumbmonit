@@ -19,7 +19,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, ArrowRight, BookOpen, ChevronRight, Cpu, Globe, Plug, Radar } from 'lucide-svelte';
+	import { ArrowLeft, BookOpen, ChevronRight, Globe, Plug, Radar } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
@@ -29,7 +29,7 @@
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
-		import KindIcon from '#lib/components/KindIcon.svelte';
+	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '#lib/components/device-form/kinds.js';
 
 	let collectors = $state<CollectorInfo[]>([]);
@@ -76,7 +76,6 @@
 	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
 	const scanning = $derived(!requestedKind && params.get('scan') === '1');
 	const snmp = $derived(collectors.find((c) => c.kind === SNMP_KIND) ?? null);
-	const hasAgent = $derived(collectors.some((c) => c.kind === AGENT_KIND));
 	/** What the agent was picked for (Docker, Plakar…), when it was picked that way. */
 	const feature = $derived(selected?.kind === AGENT_KIND ? agentFeature(params.get('via')) : null);
 	const selectedId = $derived(selected ? (feature ? `${AGENT_KIND}:${feature.id}` : selected.kind) : null);
@@ -173,9 +172,7 @@
 			if (urlView !== from) {
 				if (urlView === 'picker') {
 					target =
-						(lastChoice === 'scan'
-							? document.querySelector<HTMLElement>('[data-door="scan"]')
-							: document.querySelector<HTMLElement>(`[data-choice="${lastChoice}"]`)) ??
+						document.querySelector<HTMLElement>(`[data-choice="${lastChoice}"]`) ??
 						document.getElementById('step-type');
 				} else {
 					target = document.getElementById('view-title');
@@ -216,8 +213,6 @@
 						: m.deviceform_new_desc_form()
 	);
 
-	const doorClass =
-		'group flex items-start gap-3.5 rounded-[var(--radius-card)] px-4 py-3.5 text-left transition-[transform,box-shadow] duration-200 ease-out-expo hover:-translate-y-px hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
 </script>
 
 <!-- Esc inside the open guide puts it away. -->
@@ -312,43 +307,7 @@
 					{m.deviceform_new_unknown_kind({ kind: requestedKind })}
 				</p>
 			{/if}
-			{#if hasAgent || snmp}
-				<!--
-					The two front doors: most of a homelab comes in through them. Everything
-					else, the remote-site relay included, is in the list below.
-				-->
-				<div class={`mb-6 grid gap-3 ${hasAgent && snmp ? 'md:grid-cols-2' : ''}`}>
-					{#if hasAgent}
-						<button type="button" data-door="agent" onclick={() => select(AGENT_KIND)} class={`${doorClass} border border-signal/40 bg-signal-soft`}>
-							<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-surface text-signal-ink">
-								<Cpu class="size-5" aria-hidden="true" />
-							</span>
-							<span class="min-w-0 flex-1">
-								<span class="block font-semibold text-ink">{m.deviceform_new_door_agent_title()}</span>
-								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-									{m.deviceform_new_door_agent_desc()}
-								</span>
-							</span>
-							<ArrowRight class="mt-1 size-4 shrink-0 text-signal-ink transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-						</button>
-					{/if}
-					{#if snmp}
-						<button type="button" data-door="scan" onclick={openScan} class={`${doorClass} border border-line-strong bg-surface`}>
-							<span class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
-								<Radar class="size-5" aria-hidden="true" />
-							</span>
-							<span class="min-w-0 flex-1">
-								<span class="block font-semibold text-ink">{m.deviceform_new_scan()}</span>
-								<span class="mt-0.5 block text-sm leading-snug text-ink-2">
-									{m.deviceform_new_door_scan_desc()}
-								</span>
-							</span>
-							<ArrowRight class="mt-1 size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-						</button>
-					{/if}
-				</div>
-			{/if}
-			<CollectorPicker {collectors} selected={lastChoice === 'scan' ? null : lastChoice} wide onselect={(kind, via) => select(kind, via)}>
+			<CollectorPicker {collectors} selected={lastChoice === 'scan' ? null : lastChoice} wide onscan={snmp ? openScan : undefined} onselect={(kind, via) => select(kind, via)}>
 				{#snippet empty()}
 					<p class="mt-1 text-sm text-ink-2">{m.deviceform_new_empty_lead()}</p>
 					<div class="mt-3 flex flex-wrap justify-center gap-2">
