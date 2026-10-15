@@ -5116,7 +5116,6 @@
 	"settings_report_default_name": "Team report",
 	"settings_report_delete": "Delete",
 	"settings_report_delete_confirm": "Delete for good?",
-	"settings_report_dirty": "Unsaved changes: save before sending a preview.",
 	"settings_report_freq_daily": "Daily",
 	"settings_report_freq_monthly": "Monthly",
 	"settings_report_freq_weekly": "Weekly",

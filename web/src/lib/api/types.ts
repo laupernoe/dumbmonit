@@ -159,8 +159,6 @@ export interface TargetTestReport {
 	sysname: string | null;
 	sysdescr: string | null;
 	profile_id: string | null;
-	/** Non-SNMP kinds: measurements a full probe returned. */
-	sample_count: number | null;
 }
 
 /** Where a suggested scan network comes from. Mirrors `SubnetSource` in `api/discovery.rs`. */

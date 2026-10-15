@@ -43,13 +43,11 @@ async fn unreachable_device_reports_the_probe_error_and_saves_nothing() {
 }
 
 #[tokio::test]
-async fn non_snmp_kind_runs_a_full_probe() {
+async fn only_snmp_devices_can_be_tested() {
     let (app, cookie) = app().await;
     let body = json!({ "name": "d", "address": "demo", "kind": "dummy" });
     let reply = app.post("/api/targets/test", body, Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(reply.body["ok"], true, "{}", reply.body);
-    assert!(reply.body["sample_count"].as_u64().unwrap_or(0) > 0);
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
 }
 
 #[tokio::test]

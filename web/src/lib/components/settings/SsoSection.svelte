@@ -39,7 +39,8 @@
 	});
 	let errors = $state<{ issuer?: string; client_id?: string; client_secret?: string; public_url?: string }>({});
 
-	const tracker = useDirtyTracker(() => form);
+	// The client secret is compared as typed or not: its text never goes into the snapshot.
+	const tracker = useDirtyTracker(() => ({ ...form, client_secret: form.client_secret !== '' }));
 
 	function fill(next: OidcConfig) {
 		config = next;

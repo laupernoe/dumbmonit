@@ -164,8 +164,14 @@ pub fn suggest_subnets(
     for cidr in subnets_from_addresses(addresses) {
         push(cidr, SubnetSource::Devices, None);
     }
-    for (cidr, interface) in subnets_from_route_table(route_table, in_container) {
-        push(cidr, SubnetSource::Server, Some(interface));
+    // Dans un conteneur, les routes connectées sont celles du réseau du conteneur
+    // (pont Compose en 10.x ou 192.168.x, réseau de pod…), pas le réseau local de
+    // l'utilisateur : rien n'est proposé d'après elles. Le réglage et les équipements
+    // connus restent les seules sources sûres.
+    if !in_container {
+        for (cidr, interface) in subnets_from_route_table(route_table, false) {
+            push(cidr, SubnetSource::Server, Some(interface));
+        }
     }
     out
 }
@@ -298,6 +304,12 @@ eth1\t0000140A\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
         // Seulement Docker : aucune suggestion.
         assert!(subnets_from_route_table(TABLE, true).len() == 1);
         assert!(suggest_subnets(&[], &[], &TABLE.replace("0000A8C0", "000011AC"), true).is_empty());
+        // Dans un conteneur, même un réseau 192.168.x vu par le serveur n'est pas proposé :
+        // c'est celui du conteneur, pas forcément celui de l'utilisateur.
+        assert!(suggest_subnets(&[], &[], TABLE, true).is_empty());
+        let known = suggest_subnets(&[], &["192.168.7.2"], TABLE, true);
+        assert_eq!(known.len(), 1);
+        assert_eq!(known[0].source, SubnetSource::Devices);
     }
 
     #[test]

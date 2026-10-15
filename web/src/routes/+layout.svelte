@@ -58,6 +58,8 @@
 				return;
 			}
 			if (event.defaultPrevented || event.repeat || palette.isOpen || palette.helpOpen) return;
+			// Never under another dialog (a confirm, a drawer…): it would navigate away behind it.
+			if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
 			if (isTypingTarget(event.target as HTMLElement | null) || !auth.canUseApi) {
 				sequences.reset();
 				return;

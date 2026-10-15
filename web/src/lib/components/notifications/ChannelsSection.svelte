@@ -207,7 +207,7 @@
 										<p class="mt-0.5 text-[0.8125rem] text-ink-2">{policySummary(channel)}</p>
 									{/if}
 									{#if channel.last_error}
-										<ChannelErrorDetail raw={channel.last_error} title={m.notifications_channels_last_error_title()} class="mt-2" />
+										<ChannelErrorDetail raw={channel.last_error} title={m.notifications_channels_last_error_title()} announce={false} class="mt-2" />
 									{/if}
 								</div>
 								{#if auth.isAdmin}
@@ -251,7 +251,8 @@
 								{/if}
 								{#if actionError?.id === channel.id}
 									{@const failure = toApiError(actionError.cause)}
-									<ChannelErrorDetail raw={failure.message} httpStatus={failure.status} title={m.notifications_channels_error_action()} class="mt-3" />
+									<!-- No httpStatus: it is DumbMonit's own answer, not the service's; the status is read from the message. -->
+									<ChannelErrorDetail raw={failure.message} title={m.notifications_channels_error_action()} class="mt-3" />
 								{/if}
 							</div>
 						</li>

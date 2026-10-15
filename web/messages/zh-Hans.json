@@ -5039,7 +5039,6 @@
 	"settings_report_default_name": "团队报告",
 	"settings_report_delete": "删除",
 	"settings_report_delete_confirm": "永久删除？",
-	"settings_report_dirty": "有未保存的更改：请先保存再发送预览。",
 	"settings_report_freq_daily": "每日",
 	"settings_report_freq_monthly": "每月",
 	"settings_report_freq_weekly": "每周",

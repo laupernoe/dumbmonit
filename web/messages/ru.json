@@ -5270,7 +5270,6 @@
 	"settings_report_default_name": "Отчёт для команды",
 	"settings_report_delete": "Удалить",
 	"settings_report_delete_confirm": "Удалить навсегда?",
-	"settings_report_dirty": "Есть несохранённые изменения: сохраните перед отправкой предпросмотра.",
 	"settings_report_freq_daily": "Ежедневно",
 	"settings_report_freq_monthly": "Ежемесячно",
 	"settings_report_freq_weekly": "Еженедельно",

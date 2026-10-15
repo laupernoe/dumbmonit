@@ -5116,7 +5116,6 @@
 	"settings_report_default_name": "Relatório da equipa",
 	"settings_report_delete": "Eliminar",
 	"settings_report_delete_confirm": "Eliminar definitivamente?",
-	"settings_report_dirty": "Alterações por guardar: guarde antes de enviar uma pré-visualização.",
 	"settings_report_freq_daily": "Diário",
 	"settings_report_freq_monthly": "Mensal",
 	"settings_report_freq_weekly": "Semanal",

@@ -45,7 +45,8 @@
 	let countries = $state<NewsCountry[]>([]);
 	let country = $state('INT');
 
-	// Unsaved edits: the form plus the chosen video channel (the draft feed fields are not saved state).
+	// Unsaved edits: the saved form (choosing a video channel writes `form.video_url`;
+	// the draft feed fields are not saved state).
 	const tracker = useDirtyTracker(() => form);
 
 	let customUrl = $state('');

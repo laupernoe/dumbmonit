@@ -14,10 +14,12 @@
 		/** HTTP status of the failed request, when the caller knows it (0: no answer). */
 		httpStatus?: number;
 		title?: string;
+		/** Announce it as an alert (a fresh failure); off for an error already on record. */
+		announce?: boolean;
 		class?: string;
 	}
 
-	let { raw, httpStatus, title, class: className = '' }: Props = $props();
+	let { raw, httpStatus, title, announce = true, class: className = '' }: Props = $props();
 
 	const error = $derived(readChannelError(raw, httpStatus));
 
@@ -34,7 +36,7 @@
 	const hint = $derived(HINTS[error.kind]());
 </script>
 
-<div role="alert" class={`flex gap-3 rounded-[var(--radius-card)] border border-warning/35 bg-warning-soft px-4 py-3 ${className}`}>
+<div role={announce ? 'alert' : undefined} class={`flex gap-3 rounded-[var(--radius-card)] border border-warning/35 bg-warning-soft px-4 py-3 ${className}`}>
 	<AlertTriangle class="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
 	<div class="min-w-0 flex-1">
 		{#if title}<p class="font-semibold text-warning-ink">{title}</p>{/if}

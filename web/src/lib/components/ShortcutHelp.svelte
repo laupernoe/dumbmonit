@@ -65,7 +65,7 @@
 				<button
 					bind:this={closeButton}
 					type="button"
-					class="rounded-lg border border-line px-2.5 py-1 text-[0.8125rem] font-semibold text-ink-2 hover:bg-surface-2 hover:text-ink"
+					class="min-h-10 rounded-lg border border-line px-3 text-[0.8125rem] font-semibold text-ink-2 hover:bg-surface-2 hover:text-ink"
 					onclick={() => palette.closeHelp()}
 				>
 					{m.misc_shortcuts_close()}

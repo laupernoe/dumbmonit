@@ -803,8 +803,9 @@ paths:
       description: >-
         In order, `DUMBMONIT_SCAN_SUBNETS`, /24 networks of the private IPv4
         addresses of monitored devices (most devices first), then the server's
-        connected networks. Docker bridge ranges are excluded; the list is empty
-        when nothing reliable is known. Administrator session only.
+        connected networks (not when the server runs in a container, where they
+        are the container's own networks). Docker bridge ranges are excluded; the
+        list is empty when nothing reliable is known. Administrators only.
       x-token-scope: read
       responses:
         "200":
@@ -951,10 +952,11 @@ paths:
       tags: [Devices]
       summary: Probe a device once without saving it
       description: >-
-        Runs the collector once with the submitted address and credentials and
-        reports the result; nothing is stored. SNMP devices answer with their
-        `sysName` / `sysDescr`. A failed probe is a `200` with `ok: false` and
-        the probe's message. Not available through a relay.
+        Reads the identity of an SNMP device once with the submitted address and
+        credentials and reports the result; nothing is stored. The device answers
+        with its `sysName` / `sysDescr`. A failed probe is a `200` with `ok: false`
+        and the probe's message. SNMP only (other kinds are a `400`), and not
+        available through a relay.
       x-token-scope: write
       requestBody:
         required: true
@@ -5129,7 +5131,6 @@ components:
         sysname: { type: [string, "null"] }
         sysdescr: { type: [string, "null"] }
         profile_id: { type: [string, "null"], description: Profile auto-detection would pick. }
-        sample_count: { type: [integer, "null"], description: Non-SNMP kinds only. }
     Onboarding:
       type: object
       required: [skipped, complete, dismissed, has_target, has_channel, notification_confirmed]
