@@ -112,6 +112,8 @@ All notable changes to this project are documented here. The format follows
   message, HTTP status and a hint, with the raw text under "Details"; Remove and
   Delete moved into a row "More actions" menu, and each status page row shows its
   published or draft state and custom domain.
+- Accessibility: the Alerts tabs support Left/Right/Home/End with a roving tabindex, and
+  the muted text colour (`ink-3`) now meets WCAG AA contrast in light and dark.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
