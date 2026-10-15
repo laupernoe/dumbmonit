@@ -1,13 +1,14 @@
 <script lang="ts">
 	/**
-	 * Settings → Appearance: the theme, as three faceplate tiles with a swatch.
+	 * Settings → My account → Appearance: the language, and the theme as three
+	 * faceplate tiles with a swatch.
 	 * The swatches use literal palette values on purpose: each tile previews
 	 * its own theme regardless of the one currently applied.
 	 */
 	import { Check, Moon, Sun, SunMoon } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
 	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
-	import { Button, Panel } from '#lib/ui/index.js';
+	import { Panel } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
 
@@ -56,7 +57,12 @@
 	</span>
 {/snippet}
 
-<Panel id="appearance" title={m.settings_appearance_title()} description={m.settings_appearance_description()}>
+<Panel id="appearance" title={m.settings_language_theme_title()} description={m.settings_language_theme_description()}>
+	<div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+		<label for="settings-language" class="text-sm font-semibold text-ink">{m["settings.appearance.language_label"]()}</label>
+		<LanguageSelect id="settings-language" class="w-full sm:w-auto sm:min-w-56" />
+	</div>
+	<p class="mb-2 text-sm font-semibold text-ink">{m.settings_appearance_theme()}</p>
 	<div class="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
 		{#each OPTIONS as option, i (option.value)}
 			{@const selected = theme.preference === option.value}
@@ -84,18 +90,5 @@
 		{/each}
 	</div>
 
-	<div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-		<label for="settings-language" class="text-sm font-semibold text-ink">{m["settings.appearance.language_label"]()}</label>
-		<LanguageSelect id="settings-language" class="w-full sm:w-auto sm:min-w-56" />
-	</div>
 
-	<div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-		<div class="min-w-0">
-			<p class="text-sm font-semibold text-ink">{m.settings_appearance_wall_title()}</p>
-			<p class="text-[0.8125rem] text-ink-2">
-				{m.settings_appearance_wall_description()}
-			</p>
-		</div>
-		<Button href="/wall" variant="secondary" size="sm">{m.settings_appearance_wall_open()}</Button>
-	</div>
 </Panel>

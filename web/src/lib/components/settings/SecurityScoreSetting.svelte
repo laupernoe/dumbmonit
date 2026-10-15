@@ -4,7 +4,7 @@
 	 * get a grade badge in the device list and on their page, opening a report
 	 * of what to improve. Self-contained (own load, own save, own errors) so it
 	 * can sit in any settings section; `/security` redirects here
-	 * (`#security-score`). Only administrators can flip it.
+	 * (the Monitoring tab, `#security-score`). Only administrators can flip it.
 	 */
 	import { ExternalLink } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -50,12 +50,10 @@
 	}
 </script>
 
-<section id="security-score" class="mt-6 border-t border-line pt-5" aria-labelledby="security-score-title">
+<div>
 	<div class="flex items-start justify-between gap-4">
 		<div class="min-w-0">
-			<h3 id="security-score-title" class="text-sm font-semibold text-ink">{m.settings_security_score_title()}</h3>
-			<p class="mt-0.5 max-w-prose text-[0.8125rem] text-ink-2">{m.settings_security_score_hint()}</p>
-			<p class="mt-1 max-w-prose text-[0.8125rem] text-ink-2">{m.settings_security_score_disclaimer()}</p>
+			<p class="max-w-prose text-[0.8125rem] text-ink-2">{m.settings_security_score_disclaimer()}</p>
 			<a
 				href={DOCS_URL}
 				target="_blank"
@@ -85,4 +83,4 @@
 	{#if error}
 		<ErrorNotice {error} title={m.settings_security_score_error()} class="mt-3" />
 	{/if}
-</section>
+</div>

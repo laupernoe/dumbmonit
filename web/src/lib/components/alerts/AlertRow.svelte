@@ -10,11 +10,10 @@
 	 * purpose and says so. An acknowledged alert wears "Acked" with who and
 	 * until when — still a problem, a known one.
 	 *
-	 * Top-right carries the one-click "×" (dismiss: ack until resolved, see
-	 * `NeedsYouList`'s optimistic handling and undo toast) next to a small
-	 * "⋯" menu for Snooze and "Never for this device" — kept out of the way
-	 * once an alert is already known. The footer keeps the full Ack control
-	 * (a chosen duration, a note) and, on the Alerts page, "Open device".
+	 * Top-right carries a small "⋯" menu for Snooze and "Never for this
+	 * device" — kept out of the way once an alert is already known. The footer
+	 * is the same on every tile: the Ack control (a chosen duration, "until
+	 * resolved", a note) and "Open device".
 	 */
 	import type { Alert, Silence, Target } from '#lib/api/index.js';
 	import type { SkyRow } from '#lib/components/overview/sky.js';
@@ -23,7 +22,7 @@
 	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { alertDetail, coveringSilence, severityTone, severityWord, TONE_BAR } from './helpers';
 	import { m } from '#lib/paraglide/messages.js';
-	import { X, EllipsisVertical } from 'lucide-svelte';
+	import { EllipsisVertical } from 'lucide-svelte';
 	import AckControl from './AckControl.svelte';
 	import SnoozeControl from './SnoozeControl.svelte';
 	import IgnoreControl from './IgnoreControl.svelte';
@@ -32,16 +31,13 @@
 		row: Extract<SkyRow, { kind: 'alert' }>;
 		/** Sibling alerts folded into this row (same device, rule and phase). */
 		extra?: Alert[];
-		showOpen?: boolean;
 		/** Maintenance windows, for `SnoozeControl`'s "time left" and already-snoozed state. */
 		silences?: Silence[];
 		/** An acknowledgement, a snooze or an ignore was made or lifted: refresh the alerts. */
 		onchanged?: () => void;
-		/** The × was clicked: dismiss this alert (ack until resolved), one click, optimistic. */
-		ondismiss?: () => void;
 	}
 
-	let { row, extra = [], showOpen = false, silences = [], onchanged, ondismiss }: Props = $props();
+	let { row, extra = [], silences = [], onchanged }: Props = $props();
 
 	const alert = $derived(row.alert);
 	const target = $derived(row.target);
@@ -146,16 +142,6 @@
 						</div>
 					{/snippet}
 				</Menu>
-				<Button
-					size="sm"
-					variant="ghost"
-					class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
-					aria-label={m.alerts_row_dismiss()}
-					title={m.alerts_row_dismiss()}
-					onclick={() => ondismiss?.()}
-				>
-					<X class="size-3.5" aria-hidden="true" />
-				</Button>
 			{/if}
 		</div>
 	</div>
@@ -214,7 +200,7 @@
 	<div class="mt-auto pt-3">
 		<div class="flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
 			<AckControl {alert} onchanged={onchanged} />
-			{#if showOpen && target}
+			{#if target}
 				<Button size="sm" variant="ghost" href={`/targets/${target.id}`} class="ml-auto">{m.alerts_row_open_device()}</Button>
 			{/if}
 		</div>

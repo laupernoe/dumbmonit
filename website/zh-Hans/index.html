@@ -2,10 +2,11 @@
 <html lang="zh-Hans" dir="ltr">
 <head>
 <meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit：从家庭实验室到小型企业，极简的监控</title>
-<meta name="description" content="一个容器里的自托管监控：50+ 集成（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory）、代理、22 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。Alpha 版。">
+<meta name="description" content="单个容器中的自托管监控：65 种设备类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -24,11 +25,12 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preload" href="../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit：从家庭实验室到小型企业，极简的监控">
-<meta property="og:description" content="一个容器，输入一个 IP 地址，不到一分钟就能看到有用的图表和告警。50+ 集成、22 个通知渠道、状态页。开源，Apache 2.0。Alpha 版。">
+<meta property="og:description" content="单个容器中的自托管监控：65 种设备类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
 <meta property="og:url" content="https://dumbmonit.app/zh-Hans/">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -37,7 +39,7 @@
 <meta property="og:image:alt" content="DumbMonit：一切正常吗？一秒钟就知道。一个容器里的自托管监控，旁边是吉祥物鸽子。">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit：从家庭实验室到小型企业，极简的监控">
-<meta name="twitter:description" content="一个容器，输入一个 IP 地址，不到一分钟就能看到有用的图表和告警。开源，Apache 2.0。Alpha 版。">
+<meta name="twitter:description" content="单个容器中的自托管监控：65 种设备类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/zh-Hans/","inLanguage":"zh-Hans","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -49,12 +51,12 @@
 <header class="topbar">
 	<div class="wrap">
 		<a class="brand" href="./" aria-label="DumbMonit 首页"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
-		<nav class="nav" aria-label="章节">
-			<a href="#watches">监控范围</a>
-			<a href="#alerting">告警</a>
-			<a href="#agent">代理</a>
-			<a href="#compare">对比</a>
-			<a href="#status">状态</a>
+		<nav class="nav" id="site-nav" aria-label="章节">
+			<a href="features/">功能</a>
+			<a href="devices/">设备</a>
+			<a href="install/">安装</a>
+			<a href="community/">文档与社区</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">在线演示</a>
 		</nav>
 		<div class="actions">
 			<details class="lang">
@@ -68,18 +70,17 @@
 				<li><a href="../pt/" hreflang="pt" lang="pt">Português</a></li>
 				<li><a href="../pt-BR/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
 				<li><a href="../ru/" hreflang="ru" lang="ru">Русский</a></li>
-				<li><a href="../zh-Hans/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">简体中文</a></li>
+				<li><a href="./" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">简体中文</a></li>
 				</ul>
 			</details>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">在线演示</a>
-			<a class="btn btn-ghost btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/">文档</a>
-			<a class="btn btn-secondary btn-sm" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="菜单"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
 
 <main id="main">
-
 <section class="hero">
 	<div class="wrap">
 		<div class="hero-grid">
@@ -102,22 +103,50 @@
 				<div class="cta">
 					<a class="btn btn-primary" href="https://demo.dumbmonit.app"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.9-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z"/></svg>试用在线演示</a>
 					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>在 GitHub 上查看</a>
-					<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/docker/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>阅读安装指南</a>
+					<a class="btn btn-secondary" href="install/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>阅读安装指南</a>
 				</div>
 			</div>
-			<img class="mascot" src="../assets/mascot.svg" alt="DumbMonit 鸽子，石板蓝色，瞪着大眼睛，橙色鸟喙" width="280" height="320">
+			<div class="mascot" id="mascot" role="img" aria-label="DumbMonit 鸽子，石板蓝色，瞪着大眼睛，橙色鸟喙">
+				<svg viewBox="-30 -40 340 360" aria-hidden="true" focusable="false">
+					<ellipse class="m-shadow" cx="140" cy="304" rx="92" ry="10"/>
+					<text class="m-bang" x="246" y="36">!</text>
+					<g class="m-drop"><g class="m-hop"><g class="m-sway"><g class="m-breathe">
+						<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" class="m-feet"/>
+						<path d="M140 46c70 0 118 54 118 128 0 62-44 104-118 104S22 236 22 174C22 100 70 46 140 46z" class="m-body"/>
+						<path class="m-wing m-wing-l" d="M40 150c-14 40-10 90 18 118"/>
+						<path class="m-wing m-wing-r" d="M240 150c14 40 10 90-18 118"/>
+						<path d="M78 190c20 22 46 34 78 34 26 0 44-8 54-20-6 30-34 52-70 52-34 0-56-26-62-66z" class="m-chest"/>
+						<path d="M110 232c30 2 52-8 64-26" class="m-line"/>
+						<g class="m-cheeks"><ellipse cx="50" cy="186" rx="15" ry="8"/><ellipse cx="226" cy="184" rx="13" ry="7"/></g>
+						<circle cx="96" cy="118" r="52" class="m-eye"/>
+						<circle cx="184" cy="120" r="42" class="m-eye"/>
+						<g class="m-look"><g class="m-glance"><g class="m-dizzy">
+							<g class="m-pl"><circle cx="82" cy="124" r="19" class="m-pupil"/><circle cx="90" cy="116" r="6" class="m-glint"/></g>
+							<g class="m-pr"><circle cx="190" cy="114" r="15" class="m-pupil"/></g>
+						</g></g></g>
+						<circle cx="96" cy="118" r="52" class="m-lid"/>
+						<circle cx="184" cy="120" r="42" class="m-lid m-lid-r"/>
+						<path d="M114 150c8-10 44-10 52 0l-26 46z" class="m-beak"/>
+						<path d="M120 152c6-6 34-6 40 0" class="m-shine"/>
+					</g></g></g></g>
+				</svg>
+			</div>
 		</div>
 
 		<figure class="hero-shot">
 			<div class="shot">
-				<picture>
-					<source srcset="../assets/shots/wall-phone-dark.webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" width="390" height="844">
-					<source srcset="../assets/shots/wall-phone-light.webp" media="(max-width: 599px)" width="390" height="844">
-					<source srcset="../assets/shots/wall-dark.webp" media="(prefers-color-scheme: dark)">
-					<img src="../assets/shots/wall-light.webp" alt="墙面模式：句子“9 warnings, 7 advisories, 2 info.”、上报设备、告警和预报的读数、带鸽子的风暴天气窗口，以及需要你处理的告警" width="1440" height="670" fetchpriority="high">
-				</picture>
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../assets/shots/overview-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../assets/shots/overview-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../assets/shots/overview-dark-1x.avif 1440w, ../assets/shots/overview-dark.avif 2880w" sizes="(min-width: 1180px) 1100px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../assets/shots/overview-dark-1x.webp 1440w, ../assets/shots/overview-dark.webp 2880w" sizes="(min-width: 1180px) 1100px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../assets/shots/overview-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../assets/shots/overview-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../assets/shots/overview-light-1x.avif 1440w, ../assets/shots/overview-light.avif 2880w" sizes="(min-width: 1180px) 1100px, 100vw" width="2880" height="1800">
+<img src="../assets/shots/overview-light-1x.webp" srcset="../assets/shots/overview-light-1x.webp 1440w, ../assets/shots/overview-light.webp 2880w" sizes="(min-width: 1180px) 1100px, 100vw" alt="演示实例的总览：在下雨的天气窗口上写着“2 个警告，1 个提醒，1 个不可达，5 个正在形成。”，下方是状态标牌、自上次查看以来的变化以及需要你处理的告警" width="2880" height="1800" fetchpriority="high">
+</picture>
 			</div>
-			<figcaption>开启故障模拟的测试实例墙面屏上的概览 &mdash; 天气窗口是一幅有鸽子的巴黎屋顶动态场景。平静的日子里，它显示“晴空万里”。</figcaption>
+			<figcaption>演示实例的总览，使用虚构设备并开启了几处故障。平静的日子里，这句话会写着“晴空万里”。</figcaption>
 		</figure>
 	</div>
 </section>
@@ -129,278 +158,67 @@
 	</div>
 </div>
 
-<section class="block" id="watches" style="border-top:0">
+
+<section class="block" id="why" style="border-top:0">
 	<div class="wrap">
-		<div class="section-head">
-			<h2>添加任何东西，只有一种方式</h2>
-			<p>设备列表（监控项）以行或磁贴形式显示，带有产品图标。从五十多种监控类型中选择一种，阅读其中说明需要在设备上做哪些准备的提示，只填写该类型需要的字段。SNMP 配置文件根据设备的 <code>sysObjectID</code> 自动选择，其余使用默认值。</p>
-		</div>
-
-		<div class="rack">
-			<div class="rack-group">
-				<h3>网络与防火墙</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">SNMP v1、v2c 和 v3</span><span class="what">交换机、路由器、NAS、UPS、打印机。接口与错误、主机资源、UPS 电池、打印机耗材；内置七个配置文件，自动应用。</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">OPNsense <span class="plate plate-advisory">仅测试实例</span></span><span class="what">网关的往返时间与丢包、pf 状态表、VPN 隧道、DHCP 租约、CARP、待处理更新。只读 API 密钥。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">网络发现</span><span class="what">扫描一个 CIDR 网段，一次性添加所有应答的设备。</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>服务器与虚拟化平台</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox VE</span><span class="what">节点、虚拟机与容器、存储、HA、Ceph、ZFS、集群法定人数，以及每个客户机最近一次备份的时间。</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Datacenter Manager <span class="plate plate-advisory">仅测试实例</span></span><span class="what">控制台仍能连到哪些集群和备份服务器，整个环境一页看全，各站点的失败任务。</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">服务器硬件（Redfish） <span class="plate plate-advisory">仅参考模拟数据</span></span><span class="what">风扇、对照硬件自身阈值的温度、电源与冗余、驱动器、内存、事件日志。已对照 DMTF 模拟数据验证，尚未在真实的 iDRAC、iLO 或 Supermicro 主板上测试。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">安装代理的机器</span><span class="what">Linux 和 Windows，macOS 与 FreeBSD 为预览版。<a href="#agent">详见下文。</a></span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Active Directory</span><span class="what">通过 LDAP 使用普通无特权账户监控 Windows 域：FSMO 角色、特权组，以及域审计最先查看的事项——可被 Kerberoast 的账户、过旧的 krbtgt 密码、未部署 LAPS 的计算机。</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>存储与备份</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox Backup Server</span><span class="what">每台机器 30 天的备份日历、附带日志的失败任务、验证与 GC 任务、数据存储填满预测。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Synology DSM</span><span class="what">卷、存储池、磁盘与 SMART、温度、Hyper Backup 和 Active Backup for Business（含最近一次成功的时间），以及 Drive 和 Photos 套件状态。</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">TrueNAS <span class="plate plate-advisory">仅测试实例</span></span><span class="what">丢了一块盘但仍在提供数据的存储池，并指明是哪块盘；scrub、配额、快照、复制、SMART。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Plakar 备份</span><span class="what">通过代理获取每个仓库最近一次快照的时间与结果。</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>服务与应用</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">可用性检查</span><span class="what">HTTP(S)（状态码、关键字、JSON 路径和证书）；TCP 端口；DNS 记录；ping；TLS 证书到期；NTP 偏移与层级。历史条、响应时间、可用率。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">应用会话</span><span class="what">SMTP、PostgreSQL、MySQL 和 MariaDB、MQTT 与 WebSocket：真实登录或握手，因此“在线但拒绝你”不会被报告为“在线”。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">心跳</span><span class="what">cron 任务或备份脚本调用一个保密 URL；一旦它不再调用，你就会收到通知。兼容 Uptime Kuma 的推送方式。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Docker 容器</span><span class="what">通过代理获取状态、健康、重启次数、镜像存在时间和可用更新。可选在维护窗口内重启与更新。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">网站健康与 SEO</span><span class="what">宕机、报错、空白页、缺少预期文本、<code>noindex</code>、屏蔽一切的 <code>robots.txt</code>、响应缓慢，以及标题、描述或规范 URL 的变化（连续两次检查确认）。会跟随重定向，因此 http 跳转到 https 不会误报。还能发现几乎变空的页面、语言标签和重定向的变化，每项检查都可单独开关，确认次数也可调整。网站可设置类别（电商、博客、Web 应用、展示站）和平台（WordPress、Shopify、Wix&hellip;）。为数百个网站而设计：探测会分散在检查间隔内，并对每个域名保持礼貌，CSV 导入会把网站归入文件夹。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">网站变更检测</span><span class="what">监视某个页面，或按 sitemap 爬取的整个网站，检测其可见文本的变化：变化前后的文本、逐行差异，以及（如有）截图。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">GitLab 与 Forgejo/Gitea</span><span class="what">自托管 Git 平台上的 Sidekiq 队列、CI/CD runner、计划任务和数据库迁移。一个普通的访问令牌即可确认实例在线。</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Nginx 与 Apache</span><span class="what">通过 <code>stub_status</code> 或 <code>mod_status</code> 获取活跃/空闲的 worker 或连接数、请求与字节速率。无需账户。</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Mail Gateway <span class="plate plate-advisory">仅测试实例</span></span><span class="what">Postfix 队列与最久的滞留邮件、今日已过滤的邮件、隔离区大小、杀毒和反垃圾邮件特征库的存在时间。</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="legend">
-			<span><span class="led" aria-hidden="true"></span>已在真实监控项上使用</span>
-			<span><span class="plate plate-advisory">仅测试实例</span>基于专门安装的真实软件副本构建和验证，尚未在生产环境中连续运行数周</span>
-		</div>
-		<p class="code-note" style="margin-top:14px">每种类型在<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/">监控项文档</a>中都有专门页面，说明它具体读取什么、需要做哪些准备。演示监控类型无需任何硬件即可生成数据。</p>
-
-		<div class="gallery" style="margin-top:56px">
-			<figure class="wide">
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/add-device-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/add-device-light.webp" alt="添加设备：类型网格（SNMP 设备、Proxmox VE、Proxmox Backup Server、Datacenter Manager、Mail Gateway、Synology DSM、TrueNAS、OPNsense），右侧是“What to prepare”面板" width="1440" height="820" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>添加监控项：选择类型，右侧的提示会告诉你需要准备什么。</figcaption>
-			</figure>
-			<figure>
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/proxmox-guests-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/proxmox-guests-light.webp" alt="Proxmox VE 的 Guests 面板：每个节点上的所有虚拟机和容器，含状态、CPU、内存、磁盘、网络、运行时间、最近备份和 HA 状态" width="1264" height="647" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Proxmox VE：每个客户机、它的磁盘和最近一次备份。</figcaption>
-			</figure>
-			<figure>
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/pbs-calendar-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/pbs-calendar-light.webp" alt="Proxmox Backup Server 备份日历：30 天内每台机器每天一个点，并显示最近一次备份的时间" width="1264" height="700" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Proxmox Backup Server：在恢复日之前就发现了已停止运行的备份。</figcaption>
-			</figure>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="alerting">
-	<div class="wrap">
-		<div class="split">
-			<div>
-				<div class="section-head" style="margin-bottom:32px">
-					<h2>没有噪音的告警</h2>
-					<p>安装后即启用有用的规则。工作重心在于发送更少、更有价值的消息。</p>
-				</div>
-				<ul class="points">
-					<li><strong>依赖关系</strong><p>把交换机声明为其下游设备的父级。它宕机时你只收到一条通知，而不是三十条；其余显示为“被上级抑制”。</p></li>
-					<li><strong>按主机分组</strong><p>阵列降级的 NAS 每个周期只发一条消息，而不是每块磁盘一条。提醒、升级、确认、暂停提醒、按设备忽略和清除已解决的历史，全部内置。</p></li>
-					<li><strong>先学习的基线</strong><p>无需调阈值的异常检测：168 个时段，对应一周中的每个小时。前 14 天保持静默，只显示它本来会触发什么。</p></li>
-					<li><strong>预报</strong><p>“该文件系统将在四天内写满”会作为预报列出，与当前已经出问题的内容分开。</p></li>
-					<li><strong>维护与通知策略</strong><p>一次性或每周的窗口、滞后、抖动保持、安静时段、批量发送和每小时上限，让糟糕的一夜不会变成两百条推送。</p></li>
-				</ul>
-				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/alerting/">告警如何工作</a></p>
-			</div>
-			<div>
-				<figure>
-					<div class="shot">
-						<picture>
-							<source srcset="../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-							<img src="../assets/shots/alerts-light.webp" alt="告警页面：按主机分组的触发中告警，每条带有 Warning 或 Advisory 标牌，以及 Ack、Silence 1 h 和 Open device" width="1440" height="760" loading="lazy">
-						</picture>
-					</div>
-					<figcaption>按主机分组的告警。严重程度的读法像天气预报：信息、提示、警告。</figcaption>
-				</figure>
-
-				<h3 style="margin-top:48px">22 个通知渠道</h3>
-				<p class="muted" style="margin-top:8px">每个渠道都有测试按钮，并在<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/notifications/">文档</a>中有配置页面。</p>
-				<ul class="chips" aria-label="通知渠道">
-					<li>Discord</li><li>Slack</li><li>Microsoft Teams</li><li>Telegram</li><li>Matrix</li><li>Mattermost</li><li>Rocket.Chat</li><li>Google Chat</li><li>Zulip</li><li>ntfy</li><li>Gotify</li><li>Pushover</li><li>Pushbullet</li><li>Bark</li><li>Apprise</li><li>Home Assistant</li><li>电子邮件 (SMTP)</li><li>Signal</li><li>Twilio SMS</li><li>PagerDuty</li><li>Opsgenie</li><li>Webhook</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="agent">
-	<div class="wrap">
-		<div class="split flip">
-			<div>
-				<div class="section-head" style="margin-bottom:24px">
-					<h2>为不支持 SNMP 的设备准备的代理</h2>
-					<p>一个小型二进制程序，把 CPU、内存、磁盘、网络、服务和运行时间推送到服务器，机器提供时还包括温度、风扇、SMART 和 ZFS 存储池。由它主动连接服务器，而不是反过来：机器上无需开放任何端口。</p>
-				</div>
-				<div class="code" style="max-width:none">
-					<pre id="agent-cmd"><code><span class="comment"># 界面会自动为你填入令牌</span>
-curl -sSL http://server:8080/install.sh | sh -s -- \
-  --token=dmon_xxx --url=http://server:8080</code></pre>
-					<button class="copy" type="button" data-copied="已复制" data-copy="agent-cmd">复制</button>
-				</div>
-				<p class="code-note">Windows 上可从 <code>/install.ps1</code> 获取 PowerShell 脚本。代理也提供镜像：<code>ghcr.io/laupernoe/dumbmonit-agent</code>。</p>
-			</div>
-			<div>
-				<ul class="os-list">
-					<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>已支持</span><span class="how">x86_64 和 aarch64，systemd 或 OpenRC。Docker 容器和操作系统健康状况（更新、待重启、失败的单元）。</span></li>
-					<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>已支持</span><span class="how">x86_64，作为 Windows 服务安装。通过 smartctl 获取 SMART。</span></li>
-					<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>预览版</span><span class="how">launchd，Apple silicon 和 Intel；二进制文件随每个版本发布。尚未在真实硬件上运行。</span></li>
-					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>预览版</span><span class="how">rc.d，x86_64，ZFS 存储池。尚未在真实硬件上运行。</span></li>
-				</ul>
-				<ul class="points" style="margin-top:32px">
-					<li><strong>远程站点，仅出站连接</strong><p>在中继模式下，代理从自己所在的网络——第二个站点、客户的网络或 NAT 后的 VPS——运行服务器的探测（SNMP、Proxmox、HTTP…），无需任何入站连接：不用 VPN，也不用开放端口。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/remote-site/">监控远程站点</a></p></li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="status">
-	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>面向你的服务对象的状态页</h2>
-				<p>公开页面位于 <code>/s/&lt;name&gt;</code>：服务分组，含 90 天的每日历史、30 天和 90 天可用率、事件与维护公告、采用双重确认的电子邮件订阅者、RSS、可用于 README 的徽章、适合内网的精简嵌入，以及可选的 90 天日历和响应时间图表，还有横幅后可选的场景：约五十种可选，从城市天际线（威尼斯、巴黎、东京、纽约&hellip;）和世界奇观，到瑞士地标（马特洪峰、日内瓦大喷泉、卢塞恩、伯尔尼、西庸城堡）。天空随服务状态变化，每个场景在服务宕机或恢复时都有各自的反应。瑞士场景配有 SBB 风格的车站时钟、翻页式告警牌、8 月 1 日的烟花、日内瓦的“Escalade”汤锅庆典和冬季雪景。</p>
-				<p>只有你选择的标签会离开服务器。设备名称、地址和类型绝不会出现在页面、徽章或邮件中。</p>
-				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/status-pages/">文档中的状态页</a></p>
-			</div>
-			<div>
-				<ul class="points">
-					<li><strong>墙面模式</strong><p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p></li>
-					<li><strong>安全评分</strong><p>可选：启用后，主机、Proxmox、Synology、OPNsense、网站和 Active Directory 旁边会显示 A–F 等级，并附有失败项的报告和具体的修复步骤。仅供参考，不是审计。</p></li>
-					<li><strong>账户</strong><p>管理员、操作员（处理告警，不改配置）和查看者角色，可选的 TOTP 二次验证，审计日志，以及基于 OpenID Connect 的单点登录（Authentik、Authelia、Keycloak、Pocket ID…），默认关闭账户注册。</p></li>
-					<li><strong>与你正在运行的系统和平共处</strong><p><code>/metrics</code>、<code>/federate</code> 和兼容 Prometheus 的端点，让现有的 Grafana 可以读取 DumbMonit 的数据。</p></li>
-					<li><strong>开放且有文档的 API</strong><p>所有路由都列在 <code>/api/openapi.json</code>（OpenAPI 3.1）中：带作用域的令牌（<code>dmt_…</code>，只读或可写），可设置过期、限制网络来源，并有速率限制。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/reference/api/">API 参考</a></p></li>
-					<li><strong>通过 MCP 使用的助手</strong><p>面向 Claude Code、Claude Desktop、ChatGPT、VS Code 或 Cursor 的 27 个工具：读取状态、设备、告警、指标和代理；具有写权限的令牌还可以静音、确认告警、添加设备或重启容器。密钥绝不会返回。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/assistant/">连接助手</a></p></li>
-					<li><strong>在手机上</strong><p>查看状态、确认告警、开启维护窗口。可安装到主屏幕，刻意不提供离线模式：它绝不会显示昨天的状态。</p></li>
-				</ul>
-			</div>
-		</div>
-		<figure class="phone-shot" style="margin-top:48px; max-width:360px">
-			<div class="shot">
-				<picture>
-					<source srcset="../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-					<img src="../assets/shots/wall-phone-light.webp" alt="手机上的概览：句子、读数、带鸽子的天气窗口，以及第一条需要你处理的告警" width="390" height="844" loading="lazy">
-				</picture>
-			</div>
-			<figcaption>同一份概览，手机宽度下的样子。</figcaption>
-		</figure>
-	</div>
-</section>
-
-<section class="block" id="footprint">
-	<div class="wrap">
-		<div class="section-head">
-			<h2>小到让你忘了它的存在</h2>
-			<p>一个内置 Web 界面的 Rust 二进制程序，由它在同一镜像内启动的 VictoriaMetrics 时序数据库，以及用于配置的 SQLite。没有数据库容器，没有消息队列。</p>
-		</div>
-		<div class="readouts">
-			<div class="readout"><span class="fig">1</span><span class="label-tape">一个容器，一个卷</span></div>
-			<div class="readout"><span class="fig">~130 MB</span><span class="label-tape">内存，在 15 台设备上实测</span></div>
-			<div class="readout"><span class="fig">1</span><span class="label-tape">架构：amd64（arm64 稍后提供）</span></div>
-			<div class="readout"><span class="fig">0</span><span class="label-tape">所需的 capability</span></div>
-		</div>
-		<ul class="facts">
-			<li><span>内存数字是整个容器（含时序数据库）在小型实例上的占用。数据库的缓存预算默认为 256 MB，面对数百台主机时可以调高。</span></li>
-			<li><span>以非 root 用户在只读文件系统上运行，并丢弃所有 capability。Ping 监控通过 sysctl 实现，不需要 <code>NET_RAW</code>。</span></li>
-			<li><span>探测和通知渠道跟随的重定向不会离开已配置的主机，渠道不能指向 DumbMonit 自身，webhook 请求头作为加密的密钥保存。</span></li>
-			<li><span>凭据静态加密（AES-256-GCM）。备份只有一个文件，使用你选择的口令加密，可先试运行，再恢复到全新实例上。</span></li>
-			<li><span>已经在运行 VictoriaMetrics？把 <code>DUMBMONIT_VM_URL</code> 指向它，内置的就不会启动。</span></li>
+		<ul class="cards cards-4">
+			<li class="card"><h2 class="card-h">一个容器，一分钟</h2><p>单个容器、一个卷，无需额外权限。打开页面，创建账户，添加设备：图表和告警随之而来。</p></li>
+			<li class="card"><h2 class="card-h">安静的告警</h2><p>实用规则从一开始就已启用。依赖关系、分组和学习得到的基线，把三十条消息变成一条。</p></li>
+			<li class="card"><h2 class="card-h"><span class="num" data-n="65">65</span> 种设备类型</h2><p>交换机、防火墙、虚拟化平台、NAS、网站、数据库和自托管应用，各自按厂商期望的方式读取。</p></li>
+			<li class="card"><h2 class="card-h">状态页与墙面大屏</h2><p>向用户分享公开状态页，或把“天气预报”视图放在房间的屏幕上。</p></li>
 		</ul>
+		<p style="margin-top:28px"><a class="more" href="features/">查看全部功能</a></p>
 	</div>
 </section>
 
-<section class="block" id="compare">
+<section class="block" id="devices">
 	<div class="wrap">
 		<div class="section-head">
-			<h2>与其他工具的比较</h2>
-			<p>DumbMonit 面向只需照看十台机器和三台交换机的人。成熟的工具各有所长，下面说明各自更适合的场景。</p>
+			<h2>它能监控什么？</h2>
+			<p>选择一个系列，查看监控内容、随附的告警规则，以及设备上需要准备的事项。</p>
 		</div>
-		<div class="compare">
-			<article>
-				<h3>Zabbix</h3>
-				<p>成熟，经受过数千台主机的检验，几乎什么都有模板，支持分布式代理和长期支持版本。但它也需要数据库服务器、Web 前端，以及学习监控项、触发器和模板的时间。</p>
-				<p class="pick">大型设备群，或者今天就需要这种深度时，选 Zabbix。想要一秒钟的答案，并能接受集成较少、项目还很年轻时，选 DumbMonit。</p>
-			</article>
-			<article>
-				<h3>Prometheus 与 Grafana</h3>
-				<p>指标领域的标准：庞大的 exporter 生态、PromQL，以及适用于任何东西（包括你自己的应用）的仪表盘。整套组件需要你自己组装和维护：Prometheus、Alertmanager、exporter、仪表盘和规则。</p>
-				<p class="pick">DumbMonit 已经把这套组装好，并提供 <code>/metrics</code>、<code>/federate</code> 和兼容 Prometheus 的端点，因此两者可以并存。</p>
-			</article>
-			<article>
-				<h3>Uptime Kuma</h3>
-				<p>一款精致、非常流行的可用性监控工具，监控类型、通知服务更多，社区也更大。它从外部检查服务；不会读取交换机的端口、虚拟化平台的客户机或 NAS 的磁盘。</p>
-				<p class="pick">DumbMonit 在设备指标之外，也包含 Kuma 风格的检查和兼容推送的心跳。如果你只需要可用性检查，Uptime Kuma 是更成熟的选择。</p>
-			</article>
-		</div>
+		<ul class="cards cards-fam">
+			<li class="card"><h3><a href="devices/servers/">服务器与硬件</a></h3><p>通过代理监控 Linux、Windows、macOS 和 FreeBSD 机器，通过管理控制器监控服务器硬件，以及 UPS 和 Active Directory。</p><p class="label-tape"><span class="num" data-n="4">4</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/network/">网络设备</a></h3><p>交换机、路由器、接入点和 VPN：任何 SNMP 设备、MikroTik、UniFi、Tailscale 和 OpenVPN。</p><p class="label-tape"><span class="num" data-n="5">5</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/firewalls/">防火墙</a></h3><p>OPNsense、pfSense、FortiGate 和 Sophos：网关、隧道、接口、高可用和许可证。</p><p class="label-tape"><span class="num" data-n="4">4</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/hypervisors/">虚拟化平台与集群</a></h3><p>Proxmox、vSphere、XCP-ng、Nutanix 和 Kubernetes：主机、客户机、存储和集群健康。</p><p class="label-tape"><span class="num" data-n="6">6</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/storage/">NAS 与备份</a></h3><p>Synology、TrueNAS、Unraid、Proxmox Backup Server 和 Veeam：磁盘、存储池，以及最近一次成功备份的时间。</p><p class="label-tape"><span class="num" data-n="5">5</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/checks/">网站、证书与检查</a></h3><p>网页和 API、端口、DNS、ping、TLS 证书、时间服务器、域名到期、心跳以及网站变更。</p><p class="label-tape"><span class="num" data-n="11">11</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/proxies/">Web 服务器与反向代理</a></h3><p>Traefik、Caddy、Nginx、Apache 和 Nginx Proxy Manager：后端、证书和错误率。</p><p class="label-tape"><span class="num" data-n="5">5</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/apps/">自托管应用</a></h3><p>Nextcloud、Immich、Paperless-ngx、Jellyfin、Plex、Home Assistant、GitLab 和 Forgejo。</p><p class="label-tape"><span class="num" data-n="8">8</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/mail/">DNS、邮件与安全</a></h3><p>Pi-hole、AdGuard Home、CrowdSec，以及邮件服务器和网关：SMTP、MDaemon、SecurityGateway 和 Proxmox Mail Gateway。</p><p class="label-tape"><span class="num" data-n="7">7</span> 种设备类型</p></li>
+			<li class="card"><h3><a href="devices/data/">数据库与可观测性</a></h3><p>PostgreSQL、MySQL、MongoDB、Redis、RabbitMQ、MQTT，以及 VictoriaMetrics、Loki 和 Graylog 服务器。</p><p class="label-tape"><span class="num" data-n="10">10</span> 种设备类型</p></li>
+		</ul>
+		<figure class="home-device">
+			<div class="shot">
+<picture>
+<source type="image/avif" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../assets/shots/device-phone-dark.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" srcset="../assets/shots/device-phone-dark.webp" width="780" height="1688">
+<source type="image/avif" media="(prefers-color-scheme: dark)" srcset="../assets/shots/device-dark-1x.avif 1440w, ../assets/shots/device-dark.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/webp" media="(prefers-color-scheme: dark)" srcset="../assets/shots/device-dark-1x.webp 1440w, ../assets/shots/device-dark.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<source type="image/avif" media="(max-width: 599px)" srcset="../assets/shots/device-phone-light.avif" width="780" height="1688">
+<source type="image/webp" media="(max-width: 599px)" srcset="../assets/shots/device-phone-light.webp" width="780" height="1688">
+<source type="image/avif" srcset="../assets/shots/device-light-1x.avif 1440w, ../assets/shots/device-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
+<img src="../assets/shots/device-light-1x.webp" srcset="../assets/shots/device-light-1x.webp 1440w, ../assets/shots/device-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="一个 Proxmox VE 监控：它的状态、相关告警，以及每个节点的 CPU、内存、根文件系统、待安装更新、需要重启和已停止的服务" width="2880" height="1800" loading="lazy" decoding="async">
+</picture>
+			</div>
+			<figcaption>每台设备一个页面：这里是一个 Proxmox 集群，逐个节点列出需要重启或更新的内容。</figcaption>
+		</figure>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">浏览全部 65 种设备类型</a></p>
 	</div>
 </section>
 
-<section class="block" id="open">
+<section class="block" id="start">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>全部开源</h2>
-				<p>Apache 2.0，包括依赖项：任何不在 OSI 认可许可证下的依赖，CI 都会失败。没有任何功能为付费版保留，因为根本没有付费版。</p>
-				<p>本网站没有统计分析，没有 cookie，也没有第三方请求。</p>
-			</div>
-			<div>
-				<h3>仍在变动的部分</h3>
-				<ul class="facts" style="margin-top:16px">
-					<li><span>HTTP API 尚未冻结，数据库结构在各个 Alpha 版本之间仍会变化。</span></li>
-					<li><span>OPNsense、TrueNAS、Proxmox Datacenter Manager 和 Mail Gateway 需要来自真实长期运行环境的反馈。Redfish 需要真实的管理控制器。</span></li>
-					<li><span>macOS 和 FreeBSD 代理需要有人在真实硬件上运行。</span></li>
-					<li><span>界面为英文；语言选择器已提供另外 8 种语言（德语、西班牙语、法语、意大利语、两种变体的葡萄牙语、俄语、简体中文），目前部分已翻译（文档提供相同的语言），并且<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">欢迎通过 pull request 提交翻译</a>。</span></li>
-					<li><span>接下来做什么由 <a href="https://github.com/laupernoe/dumbmonit/issues">GitHub issues</a> 决定，<a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">更新日志</a>记录了变更内容。</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feedback" style="margin-top:64px">
+		<div class="feedback">
 			<img src="../assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
 			<div>
-				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">告诉我们哪里出了问题</h2>
-				<p>读数不对的设备、无故把你吵醒的告警、让你困惑的页面：每一份反馈都会让下一个 Alpha 版更好。也欢迎提出设备支持请求。</p>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">一分钟即可就绪</h2>
+				<p>三条命令，或者先看看在线演示。</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">提交 issue</a>
+				<a class="btn btn-primary" href="install/">安装</a>
 				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">在线演示</a>
-				<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/zh-cn/latest/">文档</a>
 			</div>
 		</div>
 	</div>
@@ -412,6 +230,10 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
 		<nav aria-label="页脚">
+			<a href="features/">功能</a>
+			<a href="devices/">设备</a>
+			<a href="install/">安装</a>
+			<a href="community/">文档与社区</a>
 			<a href="https://demo.dumbmonit.app">在线演示</a>
 			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
 			<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/">文档</a>
@@ -423,21 +245,6 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	</div>
 </footer>
 
-<script>
-document.querySelectorAll('[data-copy]').forEach(function (b) {
-	b.addEventListener('click', function () {
-		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
-		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
-	});
-});
-document.querySelectorAll('.lang a').forEach(function (a) {
-	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
-});
-document.addEventListener('click', function (e) {
-	var d = document.querySelector('.lang[open]');
-	if (d && !d.contains(e.target)) d.removeAttribute('open');
-});
-</script>
+
 </body>
 </html>

@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", solo para las reglas {rules}",
 	"alerts_matcher_sentence": "Este canal recibe {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "con etiqueta {tags}",
-	"alerts_needs_dismiss_error": "No se pudo descartar esta alerta.",
 	"alerts_needs_dismissed": "Descartadas",
 	"alerts_needs_dismissed_hint": "Problemas conocidos: los recordatorios se pausan hasta que termine el reconocimiento o se resuelva la alerta.",
 	"alerts_needs_empty_no_devices": "Aún no hay nada que vigilar.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Ninguna regla está activa. Un monitor aún espera un primer informe.",
 	"alerts_needs_snoozed": "Pospuestas",
-	"alerts_needs_snoozed_hint": "Ocultas por un tiempo: sin recordatorio hasta que termine el plazo o se resuelva la alerta.",
-	"alerts_needs_toast_dismissed": "Descartada.",
 	"alerts_nth_1": "1.º {day}",
 	"alerts_nth_2": "2.º {day}",
 	"alerts_nth_3": "3.º {day}",
@@ -231,6 +228,7 @@
 	"alerts_rules_channel_id": "canal n.º {id}",
 	"alerts_rules_clear_above": "Se recupera por encima de",
 	"alerts_rules_clear_below": "Se recupera por debajo de",
+	"alerts_rules_count": "{shown} de {total} reglas",
 	"alerts_rules_create": "Crear regla",
 	"alerts_rules_current_value": "{value} (actual)",
 	"alerts_rules_delete": "Eliminar",
@@ -329,6 +327,9 @@
 		}
 	],
 	"alerts_rules_for": "durante {duration}",
+	"alerts_rules_group_general": "Todos los dispositivos",
+	"alerts_rules_group_no_device": "aún no hay dispositivo de este tipo",
+	"alerts_rules_group_off": "{count} desactivadas",
 	"alerts_rules_hide_query": "Ocultar consulta",
 	"alerts_rules_hold_for": "Mantener durante",
 	"alerts_rules_hold_for_help": "Segundos que debe durar la condición antes de activarse.",
@@ -364,6 +365,12 @@
 	"alerts_rules_operator": "Operador",
 	"alerts_rules_query": "Consulta",
 	"alerts_rules_query_help": "MetricsQL, p. ej. dumbmonit_cpu_usage_percent",
+	"alerts_rules_quick_active": "Activas",
+	"alerts_rules_quick_all": "Todas",
+	"alerts_rules_quick_changed": "Modificadas por mí",
+	"alerts_rules_quick_disabled": "Desactivadas",
+	"alerts_rules_quick_fired": "Disparadas hace poco",
+	"alerts_rules_quick_label": "Mostrar reglas",
 	"alerts_rules_repeats": "se repite cada {duration}",
 	"alerts_rules_saved": "Guardada",
 	"alerts_rules_search_label": "Buscar reglas",
@@ -797,8 +804,8 @@
 	"deviceform_form_save_error": "No se pudieron guardar los cambios",
 	"deviceform_group_agent": "En una máquina, con el agente",
 	"deviceform_group_agent_hint": "Un pequeño agente en la máquina informa de todo esto.",
-	"deviceform_group_devices": "Dispositivos en la red",
-	"deviceform_group_devices_hint": "Se leen por la red, nada que instalar.",
+	"deviceform_group_devices": "Dispositivos y aplicaciones",
+	"deviceform_group_devices_hint": "Se leen por la red, o con el agente en la máquina.",
 	"deviceform_group_other": "Otros",
 	"deviceform_group_packs": "Packs de la comunidad",
 	"deviceform_group_packs_hint": "Añadidos por packs de integración, gestionados en Settings.",
@@ -843,8 +850,6 @@
 	"deviceform_new_devices": "Monitores",
 	"deviceform_new_door_agent_desc": "Un comando en Linux, Windows, macOS o FreeBSD: sistema, discos, servicios, contenedores Docker y copias de seguridad.",
 	"deviceform_new_door_agent_title": "Vigilar una máquina con el agente",
-	"deviceform_new_door_relay_desc": "Un agente en un segundo sitio, en la oficina de un cliente o detrás de un NAT sondea allí los switches, NAS e hipervisores para este servidor, y solo hace conexiones salientes — sin VPN, sin puertos que abrir.",
-	"deviceform_new_door_relay_title": "Vigilar otra red (sitio remoto)",
 	"deviceform_new_door_scan_desc": "Indica un rango como 192.168.1.0/24: cada dispositivo que responda por SNMP aparece en la lista, listo para añadir.",
 	"deviceform_new_empty_lead": "La mayoría de las cosas siguen encajando en una de estas:",
 	"deviceform_new_guide_hide": "Ocultar la guía de configuración",
@@ -867,9 +872,11 @@
 	"deviceform_options_default_value": "Por defecto ({value})",
 	"deviceform_options_more_settings": "Más ajustes",
 	"deviceform_picker_group_label": "Qué vigilar",
+	"deviceform_picker_more": "Todo lo demás",
 	"deviceform_picker_no_match": "Nada coincide con «{query}».",
 	"deviceform_picker_pack": "Pack",
 	"deviceform_picker_pack_title": "Añadido por un pack de integración",
+	"deviceform_picker_popular": "Los más habituales",
 	"deviceform_picker_search_label": "Buscar qué vigilar",
 	"deviceform_picker_search_placeholder": "Buscar: switch, NAS, Docker, copia de seguridad, sitio web…",
 	"deviceform_picker_show_all": "Mostrar los {count}",
@@ -1511,7 +1518,9 @@
 	"devices_target_delete": "Eliminar",
 	"devices_target_delete_confirm": "¿Eliminar definitivamente?",
 	"devices_target_details": "Detalles del monitor",
+	"devices_target_disabled_empty": "Este monitor está desactivado. Actívalo para recopilar datos.",
 	"devices_target_edit": "Editar",
+	"devices_target_enable": "Activar",
 	"devices_target_enabled": "Activado",
 	"devices_target_err_availability": "No se pudo cargar la disponibilidad",
 	"devices_target_err_delete": "No se pudo eliminar este monitor",
@@ -1549,6 +1558,7 @@
 	"devices_target_response_time": "Tiempo de respuesta",
 	"devices_target_search_families": "Buscar familias de métricas",
 	"devices_target_setup_notes": "Notas de configuración de {kind}",
+	"devices_target_steady": "Comprobaciones estables ({count})",
 	"devices_target_time_range": "Intervalo de tiempo",
 	"devices_target_title_fallback": "Monitor",
 	"devices_target_via": "vía {name}",
@@ -1604,9 +1614,6 @@
 	"devices_timeline_detail_all": "en {n}: {labels}",
 	"devices_timeline_detail_count": "en {n} instancias",
 	"devices_timeline_detail_some": "en {n}, incluidos {labels}",
-	"devices_timeline_dismiss": "Descartar",
-	"devices_timeline_dismissed": "Descartada.",
-	"devices_timeline_err_dismiss": "No se pudo descartar esta alerta.",
 	"devices_timeline_err_load": "No se pudo cargar el historial de alertas",
 	"devices_timeline_fired": "Activada",
 	"devices_timeline_first": "primera {when}",
@@ -1616,27 +1623,24 @@
 	"devices_timeline_last_rows": "Últimas {count} filas.",
 	"devices_timeline_loading": "Cargando historial de alertas",
 	"devices_timeline_maintenance": "Silencio · ventana de mantenimiento",
-	"devices_timeline_never": "Nunca se ha disparado ninguna alerta en este monitor.",
 	"devices_timeline_not_sent": "No enviada · {reason}",
 	"devices_timeline_nothing_one": "Nada se ha disparado en este monitor. Las reglas subieron {count} vez y se calmaron solas.",
 	"devices_timeline_nothing_other": "Nada se ha disparado en este monitor. Las reglas subieron {count} veces y se calmaron solas.",
 	"devices_timeline_notified": "Notificada",
 	"devices_timeline_notified_some": "Notificada {sent} de {total}",
-	"devices_timeline_open_alerts": "Abrir alertas",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Activa",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "En aumento",
 	"devices_timeline_phase_resolved": "Resuelta",
 	"devices_timeline_quiet": "silenciosa",
-	"devices_timeline_reporting": "Reportando",
 	"devices_timeline_show_all": "Mostrar todo · {count} más",
+	"devices_timeline_show_each": "Ver cada una ({count})",
 	"devices_timeline_show_fewer": "Mostrar menos",
 	"devices_timeline_show_quiet": "Mostrar transiciones silenciosas (subida y vuelta) · {count}",
 	"devices_timeline_since": "desde {when}",
 	"devices_timeline_stop_ignoring": "Dejar de ignorar",
 	"devices_timeline_suppressed": "Suprimida por el padre",
-	"devices_timeline_undo": "Deshacer",
 	"devices_uptime_aria": "{up} intervalos en línea, {down} caídos, {none} sin comprobación",
 	"devices_uptime_down": "Caído",
 	"devices_uptime_none": "Sin comprobación",
@@ -3541,12 +3545,12 @@
 	"misc_nav_github_title": "Código fuente en GitHub (pestaña nueva)",
 	"misc_nav_home": "DumbMonit, resumen",
 	"misc_nav_main": "Principal",
+	"misc_nav_more": "Más",
 	"misc_nav_overview": "Resumen",
 	"misc_nav_palette_open": "Abrir la paleta de comandos",
 	"misc_nav_palette_title": "Paleta de comandos ({shortcut})",
 	"misc_nav_settings": "Ajustes",
 	"misc_nav_sign_out": "Cerrar sesión",
-	"misc_nav_signed_in": "Sesión iniciada como {name} ({role})",
 	"misc_nav_status": "Estado",
 	"misc_nav_wall": "Modo pared",
 	"misc_nav_wall_title": "Modo pared: el boletín a pantalla completa, para un monitor en la sala",
@@ -3629,6 +3633,8 @@
 	"misc_state_unknown": "Desconocido",
 	"misc_update_available": "Actualización disponible: v{version}",
 	"misc_update_title": "Hay una versión más reciente. Abre Ajustes → Acerca de para ver cómo actualizar.",
+	"misc_user_menu_account": "Mi cuenta",
+	"misc_user_menu_label": "Menú de la cuenta de {name}",
 	"notifications_channels_add": "Añadir canal",
 	"notifications_channels_description": "Dónde te avisa DumbMonit cuando algo requiere atención.",
 	"notifications_channels_disabled": "Desactivado",
@@ -3801,21 +3807,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} y {count} más",
-				"countPlural=other": "{names} y {count} más"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3847,21 +3838,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} ha estado inalcanzable todo el tiempo.",
-				"countPlural=other": "{subject} han estado inalcanzables todo el tiempo."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3880,7 +3856,6 @@
 	"overview_brief_dropped_many": "{names} se cayeron y volvieron.",
 	"overview_brief_head_first": "En las últimas 24 h",
 	"overview_brief_head_since": "Desde {when}",
-	"overview_brief_intro": "¿Primera vez por aquí? Esto es lo que sabe la paloma hasta ahora.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4067,25 +4042,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} se resolvió sola",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} se activó y sigue activa",
-				"countPlural=other": "{name} se activó {count} veces y sigue activa"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "No ha pasado nada mientras estabas fuera.",
 	"overview_brief_quiet_first": "No ha pasado nada en las últimas 24 h.",
 	"overview_brief_the_server": "el servidor",
-	"overview_brief_went_down": "{name} dejó de estar accesible {when} y sigue así.",
 	"overview_first_all_done": "Los tres hechos. Esta guía no volverá.",
 	"overview_first_channel_action": "Añadir un canal",
 	"overview_first_channel_text": "Correo, ntfy, Discord, Telegram, PagerDuty — lo que ya lees. No se envía nada hasta que algo falle.",
@@ -4123,7 +4082,6 @@
 	"overview_page_or_relay": "vigilar un sitio remoto",
 	"overview_page_since": "Desde la última vez que miraste",
 	"overview_page_title": "Resumen",
-	"overview_page_week": "La semana que viene",
 	"overview_scene_asleep": "{label}, la paloma duerme",
 	"overview_scene_cloudy": "Algunas nubes",
 	"overview_scene_overcast": "Nublado",
@@ -4392,132 +4350,12 @@
 	"overview_streaks_reporting_for": "Todo reportando desde hace",
 	"overview_streaks_since_outage": "ningún monitor inalcanzable desde la última caída",
 	"overview_streaks_under_minute": "menos de un minuto",
-	"overview_tip_agent_action": "Instalar un agente",
-	"overview_tip_agent_text": "Servicios, salud de los discos, temperaturas, actualizaciones pendientes, contenedores Docker que puedes reiniciar o actualizar desde aquí, copias de seguridad de Plakar, restic y Borg. Un solo comando en Linux, Windows, macOS o FreeBSD.",
-	"overview_tip_agent_title": "El agente ve dentro de una máquina.",
-	"overview_tip_api_action": "Crear un token de API",
-	"overview_tip_api_text": "Un token con alcance limitado (lectura, o lectura y escritura) la abre a tus scripts, y un Prometheus o Grafana que ya uses puede leer las mediciones con el mismo token.",
-	"overview_tip_api_title": "Todo lo de aquí tiene una API HTTP.",
-	"overview_tip_mcp_action": "Conectar un asistente",
-	"overview_tip_mcp_text": "Claude, ChatGPT, Cursor o cualquier cliente MCP puede preguntar a DumbMonit cómo van las cosas y, con un token de escritura, silenciar un monitor o lanzar una sonda.",
-	"overview_tip_mcp_title": "Un asistente de IA puede leer este boletín.",
-	"overview_tip_packs_action": "Paquetes de integración",
-	"overview_tip_packs_text": "Un paquete de integración es un tipo de monitor escrito en YAML: qué preguntarle al monitor, qué valores guardar y cuándo alertar.",
-	"overview_tip_packs_title": "DumbMonit puede aprender un monitor nuevo.",
-	"overview_tip_palette_action": "Abrir la paleta",
-	"overview_tip_palette_text": "La paleta de comandos salta a cualquier monitor, página o acción sin soltar el teclado.",
-	"overview_tip_palette_title": "Cada página y acción está a un atajo de distancia.",
-	"overview_tip_relay_action": "Vigilar un sitio remoto",
-	"overview_tip_relay_text": "Pon uno en una máquina de otra sede, de la oficina de un cliente o detrás de un NAT: sondea allí los switches, NAS e hipervisores para este servidor. Solo saliente: no hay nada que abrir en ese lado.",
-	"overview_tip_relay_title": "Un agente puede vigilar otra red.",
-	"overview_tip_status_action": "Crear una página de estado",
-	"overview_tip_status_text": "Una página de estado pública muestra los servicios que elijas, su disponibilidad y tus anuncios: un enlace para compartir en lugar de responder «¿está caído?».",
-	"overview_tip_status_title": "Avisa antes de que pregunten.",
-	"overview_tip_wall_action": "Abrir el modo pared",
-	"overview_tip_wall_text": "El modo pared muestra el cielo y lo que te necesita, a pantalla completa y legible desde el otro lado de la sala, y mantiene la pantalla encendida.",
-	"overview_tip_wall_title": "El boletín cabe en una tele.",
 	"overview_tips_another": "Otro consejo",
 	"overview_tips_hide": "Ocultar estos consejos",
 	"overview_tips_hide_title": "Ocultar estos consejos (en este navegador)",
 	"overview_tips_label": "¿Sabías que…?",
 	"overview_tips_prefix": "¿Sabías que…? {title}",
-	"overview_week_cert_expired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Certificado caducado hace {count} día",
-				"countPlural=other": "Certificado caducado hace {count} días"
-			}
-		}
-	],
-	"overview_week_cert_expires": "El certificado caduca",
-	"overview_week_cert_expires_today": "El certificado caduca hoy",
 	"overview_week_days_short": "{days} d",
-	"overview_week_filling": "Se llena a este ritmo",
-	"overview_week_filling_series": "Se llena a este ritmo: {series}",
-	"overview_week_from": "{scope}, desde las {time}",
-	"overview_week_full": "Lleno a este ritmo",
-	"overview_week_full_series": "Lleno a este ritmo: {series}",
-	"overview_week_later": "Más adelante:",
-	"overview_week_later_certs": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} certificado en {when}",
-				"countPlural=other": "{count} certificados en {when}"
-			}
-		}
-	],
-	"overview_week_later_disks": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} disco se llena en {days} d",
-				"countPlural=other": "{count} discos se llenan en {days} d"
-			}
-		}
-	],
-	"overview_week_later_windows": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} ventana de mantenimiento en {days} d",
-				"countPlural=other": "{count} ventanas de mantenimiento en {days} d"
-			}
-		}
-	],
-	"overview_week_maintenance": "Mantenimiento",
-	"overview_week_maintenance_all": "Mantenimiento en todos los monitores",
-	"overview_week_maintenance_device": "Mantenimiento en el monitor {id}",
-	"overview_week_nothing_due": "Nada pendiente",
-	"overview_week_plate_certificate": "Certificado",
-	"overview_week_plate_forecast": "Previsión",
-	"overview_week_plate_scheduled": "Programado",
-	"overview_week_plate_warning": "Advertencia",
-	"overview_week_quiet": "Una semana tranquila por delante: ningún certificado, disco ni mantenimiento pendiente.",
-	"overview_week_range": "{scope}, {start}–{end}",
-	"overview_week_series_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} y {count} más",
-				"countPlural=other": "{names} y {count} más"
-			}
-		}
-	],
-	"overview_week_today": "Hoy",
-	"overview_week_tomorrow": "Mañana",
-	"overview_week_until": "{scope} hasta {when}",
 	"overview_when_dated": "{date} {time}",
 	"overview_when_yesterday": "ayer {time}",
 	"scene_swiss_board_alerts": "Alertas {count}",
@@ -4529,13 +4367,7 @@
 	"scene_swiss_board_up": "De vuelta",
 	"scene_swiss_board_warn": "Retraso",
 	"settings.appearance.language_label": "Idioma",
-	"settings.group.wall_display": "Pared y pantalla",
-	"settings.hint.notifications_lead": "¿Buscas canales y horas de silencio? Están en",
-	"settings.hint.notifications_link": "Alertas → Notificaciones",
-	"settings.hint.status_lead": "Las páginas públicas están en",
-	"settings.hint.status_link": "Estado",
 	"settings.nav.aria_label": "Secciones de ajustes",
-	"settings.page.description": "Tu cuenta, quién puede iniciar sesión, qué puede conectarse y cómo se ve DumbMonit.",
 	"settings.page.title": "Ajustes",
 	"settings.section.about": "Acerca de",
 	"settings.section.agents": "Agentes",
@@ -4718,13 +4550,11 @@
 	"settings_agents_watches_own": "Vigila su propia máquina",
 	"settings_appearance_day": "Día",
 	"settings_appearance_day_hint": "Papel de gráfico, tinta azul marino.",
-	"settings_appearance_description": "Ambos temas son de primera clase. «Sistema» sigue tu dispositivo y cambia con él.",
 	"settings_appearance_night": "Noche",
 	"settings_appearance_night_hint": "Imagen de radar, señal cian.",
 	"settings_appearance_system": "Sistema",
 	"settings_appearance_system_hint": "Sigue tu dispositivo.",
 	"settings_appearance_theme": "Tema",
-	"settings_appearance_title": "Apariencia",
 	"settings_appearance_wall_description": "Solo el boletín, a pantalla completa, para un monitor en la sala. Esc para salir; ⌘K / Ctrl K lo abre desde cualquier sitio.",
 	"settings_appearance_wall_open": "Abrir modo pared",
 	"settings_appearance_wall_title": "Modo pared",
@@ -4893,6 +4723,8 @@
 	"settings_backup_without_key": "Sin la clave",
 	"settings_backup_write_error": "No se pudo escribir la copia de seguridad",
 	"settings_language_auto": "Automático (idioma del navegador)",
+	"settings_language_theme_description": "Se guardan en este navegador.",
+	"settings_language_theme_title": "Idioma y tema",
 	"settings_music_account": "Cuenta",
 	"settings_music_admin_only": "Un administrador puede conectar aquí una cuenta de Spotify.",
 	"settings_music_app": "App (Client ID)",
@@ -5001,6 +4833,10 @@
 	"settings_news_video_hint": "Un canal en directo sin sonido en un recuadro. YouTube, Dailymotion o Twitch.",
 	"settings_news_video_url": "Enlace del vídeo o del canal",
 	"settings_news_video_url_help": "Pegue una dirección normal de YouTube, Dailymotion o Twitch; se convierte automáticamente.",
+	"settings_notify_links_channels": "Canales de notificación",
+	"settings_notify_links_description": "Los canales, las horas de silencio y los destinatarios están en Alertas; las páginas públicas, en Estado.",
+	"settings_notify_links_status": "Páginas de estado",
+	"settings_notify_links_title": "Notificaciones de alertas",
 	"settings_packs_add_device": "Añadir: {label}",
 	"settings_packs_admin_only_description": "Un paquete decide qué pregunta este servidor a tus monitores.",
 	"settings_packs_admin_only_title": "Solo un administrador puede gestionar los paquetes de integración.",
@@ -5260,6 +5096,24 @@
 	"settings_reports_read_more": "Más información",
 	"settings_reports_setup": "Configurar un informe",
 	"settings_reports_title": "Informes",
+	"settings_search_kw_about": "versión actualización estado base de datos victoriametrics",
+	"settings_search_kw_agents": "agente token registro instalar relé",
+	"settings_search_kw_appearance": "idioma lengua tema oscuro claro noche día apariencia",
+	"settings_search_kw_assistant": "api token mcp ia asistente claude chatgpt",
+	"settings_search_kw_backup": "copia de seguridad exportar restaurar configuración",
+	"settings_search_kw_music": "música spotify altavoz mural",
+	"settings_search_kw_news": "noticias titulares rss fuentes mural",
+	"settings_search_kw_notifications": "canales discord correo ntfy telegram horas de silencio página de estado",
+	"settings_search_kw_packs": "integración paquete yaml comunidad",
+	"settings_search_kw_push": "push teléfono navegador notificaciones",
+	"settings_search_kw_reports": "informe correo semanal mensual resumen",
+	"settings_search_kw_security": "contraseña doble factor 2fa totp cerrar sesión seguridad",
+	"settings_search_kw_sso": "openid oidc inicio de sesión proveedor authentik keycloak",
+	"settings_search_kw_users": "cuentas usuarios personas roles admin lector operador",
+	"settings_search_kw_wall": "mural quiosco tv sala monitor pantalla completa",
+	"settings_search_label": "Buscar en los ajustes",
+	"settings_search_none": "Ningún ajuste coincide.",
+	"settings_search_placeholder": "Buscar un ajuste…",
 	"settings_security_change": "Cambiar contraseña",
 	"settings_security_change_error": "No se pudo cambiar la contraseña",
 	"settings_security_changed": "Contraseña cambiada: tus otras sesiones se han cerrado",
@@ -5387,6 +5241,12 @@
 	"settings_sso_title": "Inicio de sesión único",
 	"settings_sso_turn_off": "¿Desactivar el inicio de sesión único?",
 	"settings_sso_use_env": "¿Usar los valores del entorno?",
+	"settings_tab_account": "Mi cuenta",
+	"settings_tab_monitoring": "Supervisión",
+	"settings_tab_notifications": "Notificaciones e informes",
+	"settings_tab_system": "Sistema",
+	"settings_tab_team": "Equipo y acceso",
+	"settings_tab_wall": "Pantalla mural",
 	"settings_update_available": "Actualización disponible: v{version}",
 	"settings_update_backup_body": "Ajustes → Copia de seguridad, y conserve una copia de /data/secret.key (sin ella, las contraseñas y los tokens almacenados no se pueden descifrar).",
 	"settings_update_backup_lead": "Haga una copia de seguridad primero.",
@@ -5564,12 +5424,22 @@
 	"status_form_save": "Guardar cambios",
 	"status_form_save_error": "No se pudo guardar la página",
 	"status_form_scene": "Escena",
+	"status_form_scene_change": "Cambiar",
+	"status_form_scene_done": "Hecho",
 	"status_form_scene_help": "Una ciudad ilustrada opcional tras el título de la página pública. Las páginas nuevas empiezan con París; desmárcala para una página sencilla. Se ignora en modo simple. Marca varias para alternarlas.",
+	"status_form_scene_next": "Siguiente",
+	"status_form_scene_no_match": "Ninguna escena coincide.",
+	"status_form_scene_none": "Sin escena: página sobria",
+	"status_form_scene_page": "Página {page} de {pages}",
 	"status_form_scene_position": "Posición {position}",
+	"status_form_scene_prev": "Anterior",
+	"status_form_scene_search": "Buscar una escena",
 	"status_form_scene_selected": "Seleccionada",
 	"status_form_services": "Servicios",
 	"status_form_services_empty": "Aún no hay monitores. Añade uno primero en la página Monitores.",
 	"status_form_services_help": "Marca los monitores que mostrar. La etiqueta es lo que leen los visitantes; un grupo encabeza un bloque de servicios.",
+	"status_form_services_no_match": "Ningún servicio coincide.",
+	"status_form_services_search": "Buscar un servicio",
 	"status_form_simple": "Modo simple",
 	"status_form_simple_help": "Una página sencilla: sin escena, mascota ni animación. Claro u oscuro sigue el sistema del visitante, con un interruptor.",
 	"status_form_slug_rule": "De 2 a 40 caracteres: minúsculas, dígitos y guiones.",
@@ -5880,6 +5750,7 @@
 	"status_words_kind_maintenance": "Mantenimiento",
 	"status_words_overall_maintenance": "Mantenimiento programado",
 	"status_words_overall_major": "Interrupción grave",
+	"status_words_overall_no_data": "Aún no hay datos",
 	"status_words_overall_operational": "Todos los sistemas operativos",
 	"status_words_overall_partial": "Interrupción parcial",
 	"status_words_plate_outage": "Caída",
@@ -5944,6 +5815,57 @@
 	"tips_status_public_page_action": "Crear una página de estado",
 	"tips_status_subscribe": "Los visitantes pueden suscribirse a una página de estado para recibir actualizaciones por correo; el enlace para darse de baja en cada uno de esos correos funciona sin iniciar sesión en ningún sitio.",
 	"tips_status_theme_param": "Una página de estado acepta `?theme=light` o `?theme=dark` en su URL, para que una incrustación coincida con la página que la aloja en vez de adivinar.",
+	"topology_canvas_label": "Mapa de topología. Arrastra para mover, rueda o pellizco para hacer zoom, flechas para desplazarte. La vista de lista muestra el mismo árbol.",
+	"topology_description": "Toda tu infraestructura en una imagen, dibujada a partir de los enlaces que DumbMonit ya conoce.",
+	"topology_empty_body": "Añade un monitor: aparecerá aquí con sus enlaces.",
+	"topology_empty_title": "Aún no hay nada que mapear",
+	"topology_err_load": "No se pudo cargar el mapa.",
+	"topology_export": "Exportar",
+	"topology_export_error": "La exportación falló.",
+	"topology_export_png": "Imagen PNG",
+	"topology_export_svg": "Imagen SVG",
+	"topology_filter_all": "Todo",
+	"topology_filter_folder": "Carpeta: {name}",
+	"topology_filter_label": "Mostrar",
+	"topology_filter_site": "Sitio: {name}",
+	"topology_guest_container": "Contenedor",
+	"topology_guest_vm": "Máquina virtual",
+	"topology_guests_toggle": "Máquinas virtuales y contenedores",
+	"topology_legend_down": "Caído",
+	"topology_legend_hypervisor": "Alojado por un hipervisor",
+	"topology_legend_impacted": "Afectado: detrás de un equipo caído",
+	"topology_legend_lldp": "Cableado a (LLDP)",
+	"topology_legend_parent": "Depende de (padre declarado)",
+	"topology_legend_relay": "Alcanzado mediante un relé",
+	"topology_legend_title": "Leyenda",
+	"topology_list_label": "Monitores en árbol",
+	"topology_metrics_missing": "Las métricas no están disponibles: faltan los enlaces a máquinas virtuales y vecinos LLDP.",
+	"topology_no_links": "Aún no hay enlaces conocidos. Asigna un padre a un monitor, accede a él mediante un relé o supervisa un hipervisor, y el mapa los dibujará.",
+	"topology_open": "Mapa",
+	"topology_page_title": "Mapa — DumbMonit",
+	"topology_palette_detail": "Topología de todos los monitores, imprimible",
+	"topology_print_a3": "Imprimir / PDF (A3 horizontal)",
+	"topology_print_a4": "Imprimir / PDF (A4 horizontal)",
+	"topology_print_subtitle": "{scope} · {date}",
+	"topology_print_title": "Mapa de la infraestructura",
+	"topology_source_hypervisor": "Hipervisor",
+	"topology_source_lldp": "LLDP",
+	"topology_source_parent": "Padre",
+	"topology_source_relay": "Relé",
+	"topology_state_impacted": "Afectado",
+	"topology_state_running": "En ejecución",
+	"topology_state_stopped": "Detenida",
+	"topology_summary_devices": "Monitores: {count}",
+	"topology_summary_down": "Caídos: {count}",
+	"topology_summary_impacted": "Afectados: {count}",
+	"topology_summary_links": "Enlaces: {count}",
+	"topology_title": "Mapa",
+	"topology_view_label": "Vista",
+	"topology_view_list": "Lista",
+	"topology_view_map": "Mapa",
+	"topology_zoom_fit": "Ajustar a la pantalla",
+	"topology_zoom_in": "Acercar",
+	"topology_zoom_out": "Alejar",
 	"ui.confirm.default_label": "¿Seguro?",
 	"ui.error_notice.default_title": "Algo salió mal",
 	"ui.error_notice.retry": "Intentar de nuevo",
@@ -5980,7 +5902,7 @@
 	"wall_city_zen": "Jardín zen",
 	"wall_city_zermatt": "Zermatt",
 	"wall_devices_aria": "Monitores",
-	"wall_devices_more": "Y {count} más, todos reportando",
+	"wall_devices_more": "{count} dispositivos más, todos informando",
 	"wall_devices_reporting": "Reportando",
 	"wall_dock_enable": "Toca para activar el sonido",
 	"wall_dock_enable_hint": "Luego elige «{name}» en Dispositivos de Spotify",
@@ -6041,7 +5963,7 @@
 	"wall_player_stop_aria": "Detener la música en todas las paredes",
 	"wall_player_title": "Reproductor de {label}",
 	"wall_problems_aria": "Problemas",
-	"wall_problems_more": "Y {count} más en la página de Alertas.",
+	"wall_problems_more": "{count} problemas más: ver Alertas",
 	"wall_problems_parent_down": "{rule} · {parent} está caído",
 	"wall_refresh_failed": "Falló la última actualización; se muestra el estado anterior.",
 	"wall_scene_sign_problems": [

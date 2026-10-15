@@ -11,7 +11,6 @@
 	import { Button, ErrorNotice, Field, Panel, Plate } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import TwoFactorSection from './TwoFactorSection.svelte';
-	import SecurityScoreSetting from './SecurityScoreSetting.svelte';
 
 	let current = $state('');
 	let next = $state('');
@@ -116,9 +115,6 @@
 	{/if}
 
 	<TwoFactorSection />
-
-	<!-- Self-contained: can move to any other section as is. -->
-	<SecurityScoreSetting />
 
 	{#if auth.available}
 		<div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">

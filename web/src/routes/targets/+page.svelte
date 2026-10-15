@@ -42,7 +42,7 @@
 		rootOf,
 		worstState
 	} from '#lib/components/devices/folders.js';
-	import { FolderPlus, Plus, Search } from 'lucide-svelte';
+	import { FolderPlus, Network, Plus, Search } from 'lucide-svelte';
 
 	type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
 
@@ -638,6 +638,12 @@
 
 <PageHeader title={m.devices_targets_title()} description={m.devices_targets_description()}>
 	{#snippet actions()}
+		{#if targets.length > 0}
+			<Button variant="ghost" href="/map">
+				<Network class="size-4" aria-hidden="true" />
+				{m.topology_open()}
+			</Button>
+		{/if}
 		{#if auth.isAdmin && targets.length > 0}
 			<Menu label={m.devices_targets_create_folder_menu()} align="right">
 				{#snippet trigger({ toggle, open })}

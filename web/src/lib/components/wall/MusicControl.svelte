@@ -256,7 +256,7 @@
 					</Button>
 				{/if}
 				{#if isAdmin}
-					<p class="mt-2 text-[0.8125rem]"><a href="/settings#music" class="font-semibold text-ink hover:underline">{m.wall_music_settings()}</a></p>
+					<p class="mt-2 text-[0.8125rem]"><a href="/settings/wall#music" class="font-semibold text-ink hover:underline">{m.wall_music_settings()}</a></p>
 				{/if}
 			</div>
 		</div>

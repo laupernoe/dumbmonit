@@ -1744,6 +1744,45 @@ export interface RelayAgent {
 	relayed: number;
 }
 
+// --- Topology map -------------------------------------------------------------
+
+/** Where a link of the map comes from. */
+export type TopologySource = 'parent' | 'relay' | 'hypervisor' | 'lldp';
+
+/** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
+export interface TopologyNode {
+	/** `t<id>` for a device, `g<host>:<name>` for an unmonitored guest. */
+	id: string;
+	/** The device; `null` for a guest. */
+	target_id: TargetId | null;
+	name: string;
+	/** The device kind; `vm` or `container` for a guest. */
+	kind: string;
+	/** Folder; a guest takes its hypervisor's. */
+	group_name: string;
+	/** Site declared by the relay agent (its own, or the one that polls the device). */
+	site: string | null;
+	/** Guest only: the hypervisor device. */
+	host_id: TargetId | null;
+	/** Guest only: running at the last measurement. */
+	running: boolean | null;
+}
+
+/** A link: `from` is upstream (parent, relay, hypervisor, switch). Mirrors `EdgeView`. */
+export interface TopologyEdge {
+	from: string;
+	to: string;
+	source: TopologySource;
+}
+
+/** `GET /api/topology`. Mirrors `TopologyView`. */
+export interface Topology {
+	nodes: TopologyNode[];
+	edges: TopologyEdge[];
+	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
+	metrics_available: boolean;
+}
+
 // --- Two-factor authentication (TOTP) and audit log ---------------------------
 
 /** Outcome of `POST /auth/login`: either the session is open, or a second step is needed. */

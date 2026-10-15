@@ -66,7 +66,7 @@ One Rust binary with the UI embedded, VictoriaMetrics started by it, SQLite for 
 ## Contributing
 
 Bug reports, device profiles and integrations are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) (Docker only, no Rust toolchain needed).
-The web UI can be **translated by pull request** (see [Translating DumbMonit](CONTRIBUTING.md#translating-dumbmonit)) (8 languages besides English; only part of the interface is translated so far); the documentation is available in the same languages.
+The interface and the [documentation](https://dumbmonit.readthedocs.io/) come in English, French, German, Spanish, Italian, Portuguese (Portugal and Brazil), Russian and Simplified Chinese. To fix or add a translation, open a pull request: see [Translating DumbMonit](CONTRIBUTING.md#translating-dumbmonit).
 Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://github.com/users/laupernoe/projects/2).
 
 ## Status

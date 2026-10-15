@@ -70,6 +70,7 @@
 		lastValue,
 		loadDeviceMetrics,
 		sectionize,
+		steadyValue,
 		type DeviceMetricGroup,
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
@@ -92,7 +93,7 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -243,6 +244,11 @@
 		);
 	});
 
+	/** Flat families fold into one line; only the ones that move get a chart. */
+	let showSteady = $state(false);
+	const otherMoving = $derived(otherShown.filter((g) => steadyValue(g) === undefined));
+	const otherSteady = $derived(otherShown.filter((g) => steadyValue(g) !== undefined));
+
 	/** "↓ 13 kB/s · ↑ 505 kB/s" for the folded interface line. */
 	function interfaceLine(row: MetricRow): string {
 		const octets = row.charts.find((c) => c.name.endsWith('_octets'));
@@ -297,6 +303,8 @@
 	let alerts = $state<Alert[]>([]);
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
 	let refreshKey = $state(0);
+	/** The alert story has nothing to tell (never fired, nothing ignored). */
+	let timelineEmpty = $state(false);
 
 	// --- Actions --------------------------------------------------------------
 
@@ -305,6 +313,8 @@
 	let probeError = $state<unknown>(null);
 	let probeTimer: ReturnType<typeof setTimeout> | null = null;
 
+	/** False once the monitor is switched off: nothing to probe, nothing collected. */
+	const monitorOn = $derived(target?.enabled ?? true);
 	let enabledDraft = $state(true);
 	let savingEnabled = $state(false);
 	let enabledError = $state<unknown>(null);
@@ -629,16 +639,27 @@
 			</div>
 
 			<div class="flex min-w-0 max-w-full flex-wrap items-center gap-2 max-sm:[&_a]:h-auto max-sm:[&_a]:min-h-10 max-sm:[&_a]:whitespace-normal max-sm:[&_a]:py-1.5 lg:shrink-0 lg:justify-end">
-				<Button variant="secondary" onclick={probe} loading={probing}>
-					<Activity class="size-4" aria-hidden="true" />
-					{m.devices_target_probe_now()}
-				</Button>
-				{#if auth.isAdmin}
-					<SilenceControl {target} {refreshKey} />
-					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
-						<Pencil class="size-4" aria-hidden="true" />
-						{m.devices_target_edit()}
+				{#if target.enabled}
+					<Button variant="secondary" onclick={probe} loading={probing}>
+						<Activity class="size-4" aria-hidden="true" />
+						{m.devices_target_probe_now()}
 					</Button>
+				{:else if auth.isAdmin}
+					<Button variant="primary" onclick={() => void setEnabled(true)} loading={savingEnabled}>
+						{m.devices_target_enable()}
+					</Button>
+				{/if}
+				{#if auth.isAdmin}
+					<!-- Phones keep one button and the menu: silence and edit move into it. -->
+					<div class="hidden sm:contents">
+						{#if target.enabled}
+							<SilenceControl {target} {refreshKey} />
+						{/if}
+						<Button variant="secondary" href={`/targets/${target.id}/edit`}>
+							<Pencil class="size-4" aria-hidden="true" />
+							{m.devices_target_edit()}
+						</Button>
+					</div>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
 					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
 						{#snippet trigger({ toggle, open })}
@@ -655,6 +676,13 @@
 							</button>
 						{/snippet}
 						{#snippet children()}
+							<div class="mb-1 flex flex-col items-stretch gap-1 border-b border-line pb-1.5 sm:hidden">
+								<Button variant="ghost" href={`/targets/${id}/edit`} class="justify-start">
+									<Pencil class="size-4" aria-hidden="true" />
+									{m.devices_target_edit()}
+								</Button>
+								{#if target?.enabled}<SilenceControl {target} {refreshKey} />{/if}
+							</div>
 							<div class="flex min-h-10 items-center gap-2 rounded-lg px-2 py-1.5">
 								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
@@ -663,7 +691,7 @@
 						{/snippet}
 					</Menu>
 				{:else}
-					{#if auth.canOperate}
+					{#if auth.canOperate && target.enabled}
 						<SilenceControl {target} {refreshKey} />
 					{/if}
 					<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
@@ -711,15 +739,17 @@
 	{/if}
 
 	<!-- The story of this device: what fires now, what fired before -->
-	<section class="mt-6" aria-labelledby="device-alerts">
+	<!-- Nothing ever fired: no section at all, the header already says how it is doing. -->
+	<section class={`mt-6 ${timelineEmpty ? 'hidden' : ''}`} aria-labelledby="device-alerts">
 		<h2 id="device-alerts" class="mb-3 text-base font-semibold tracking-tight text-ink">{m.devices_target_alerts_heading()}</h2>
 		<DeviceTimeline
-		targetId={id}
-		target={target ?? undefined}
-		{alerts}
-		{refreshKey}
-		onackchange={() => void loadContext()}
-	/>
+			targetId={id}
+			target={target ?? undefined}
+			{alerts}
+			{refreshKey}
+			bind:empty={timelineEmpty}
+			onackchange={() => void loadContext()}
+		/>
 	</section>
 
 	<!-- Backups the agent watches; the containers sit with the metrics below -->
@@ -788,9 +818,11 @@
 					{#if responseTimes.length > 0}
 						<Chart series={responseTimes} unit="ms" height={220} />
 					{:else}
-						<EmptyState title={m.devices_target_no_check_title()} description={m.devices_target_no_check_desc()}>
+						<EmptyState title={m.devices_target_no_check_title()} description={target.enabled ? m.devices_target_no_check_desc() : m.devices_target_disabled_empty()}>
 							{#snippet action()}
-								<Button variant="secondary" size="sm" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+								{#if monitorOn}
+									<Button variant="secondary" size="sm" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+								{/if}
 							{/snippet}
 						</EmptyState>
 					{/if}
@@ -803,9 +835,11 @@
 				<Skeleton class="h-72 w-full rounded-[var(--radius-card)]" rows={2} />
 			</div>
 		{:else if groups.length === 0 && target.kind !== 'agent'}
-			<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
+			<EmptyState title={m.devices_target_no_data_title()} description={target.enabled ? m.devices_target_no_data_desc() : m.devices_target_disabled_empty()}>
 				{#snippet action()}
-					<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+					{#if monitorOn}
+						<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+					{/if}
 				{/snippet}
 			</EmptyState>
 		{:else}
@@ -888,25 +922,53 @@
 						{#if otherShown.length === 0}
 							<p class="px-5 py-4 text-sm text-ink-2">{m.devices_target_no_family({ query: otherQuery })}</p>
 						{:else}
-							<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
-								{#each otherShown as group (group.name)}
-									<div>
-										<div class="flex items-center justify-between gap-2 pb-1">
-											<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
-											{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
+							{#if otherMoving.length > 0}
+								<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
+									{#each otherMoving as group (group.name)}
+										<div>
+											<div class="flex items-center justify-between gap-2 pb-1">
+												<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
+												{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
+											</div>
+											<Chart series={group.series} unit={group.unit} height={180} />
 										</div>
-										<Chart series={group.series} unit={group.unit} height={180} />
-									</div>
-								{/each}
-							</div>
+									{/each}
+								</div>
+							{/if}
+							{#if otherSteady.length > 0}
+								<div class={otherMoving.length > 0 ? 'border-t border-line' : ''}>
+									<button
+										type="button"
+										class="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium text-ink-2 hover:text-ink sm:px-5"
+										aria-expanded={showSteady || otherQuery.trim() !== ''}
+										aria-controls="steady-families"
+										onclick={() => (showSteady = !showSteady)}
+									>
+										<ChevronDown class={`size-4 transition-transform ${showSteady || otherQuery.trim() ? 'rotate-180' : ''}`} aria-hidden="true" />
+										{m.devices_target_steady({ count: otherSteady.length })}
+									</button>
+									{#if showSteady || otherQuery.trim()}
+										<ul id="steady-families" class="grid gap-x-6 px-4 pb-3 sm:px-5 md:grid-cols-2 lg:grid-cols-3">
+											{#each otherSteady as group (group.name)}
+												<li class="flex items-baseline justify-between gap-3 border-t border-line py-1.5 text-[0.8125rem]" title={group.name}>
+													<span class="min-w-0 truncate text-ink-2">{group.title}</span>
+													<span class="tnum shrink-0 font-medium text-ink">{Number(Number(steadyValue(group)).toPrecision(4))}{group.unit && group.unit !== '0/1' ? ` ${group.unit}` : ''}</span>
+												</li>
+											{/each}
+										</ul>
+									{/if}
+								</div>
+							{/if}
 						{/if}
 					</FoldSection>
 				{/if}
 
 				{#if groups.length === 0}
-					<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
+					<EmptyState title={m.devices_target_no_data_title()} description={target.enabled ? m.devices_target_no_data_desc() : m.devices_target_disabled_empty()}>
 						{#snippet action()}
-							<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+							{#if monitorOn}
+								<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+							{/if}
 						{/snippet}
 					</EmptyState>
 				{/if}
