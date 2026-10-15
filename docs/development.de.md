@@ -70,31 +70,17 @@ nie `fetch` auf. Die Typen in `api/types.ts` spiegeln die Rust-Structs exakt und
 (Tokens) und `src/lib/ui/` (Primitive). Führen Sie nie zwei `vite build` gleichzeitig aus: Sie
 löschen `.svelte-kit/output`.
 
-## Übersetzungen (Weblate) {#translations-weblate}
+## Übersetzungen {#translations}
 
-Die Web-Oberfläche ist für Community-Übersetzungen vorbereitet, aber noch nichts ist übersetzt:
-Englisch ist die einzige ausgelieferte Sprache, in `web/messages/en.json` (flache Schlüssel mit
-Punkten, Platzhalter `{param}`, von [Paraglide JS](https://paraglidejs.com) in Tree-Shaking-fähige
-Nachrichtenfunktionen unter `web/src/lib/paraglide/` kompiliert, generiert und nicht
-versioniert). Die Übersetzung erfolgt auf
-[hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
-(Komponente `web-ui`), wie folgt konfiguriert:
+Die Weboberfläche wird wie jeder andere Beitrag per Pull Request übersetzt. Ausgangssprache ist Englisch (`web/messages/en.json`: flache Schlüssel, `{param}`-Platzhalter); jede weitere Sprache ist eine Datei, `web/messages/<locale>.json`, die [Paraglide JS](https://paraglidejs.com) zu Tree-Shaking-fähigen Nachrichtenfunktionen unter `web/src/lib/paraglide/` kompiliert (generiert, nicht versioniert).
 
-| Einstellung | Wert |
-| --- | --- |
-| Repository | dieses Repo, Unterverzeichnis `web/` |
-| Dateimaske | `web/messages/*.json` |
-| Monolinguale Basissprachdatei | `web/messages/en.json` |
-| Dateiformat | JSON-Datei (monolingual) |
-| Neue Sprache | neue Übersetzungsdatei anlegen (Weblate schreibt `web/messages/<locale>.json`) |
-| Versionskontrolle | GitHub, über die Weblate-GitHub-App: Übersetzungen kommen als Pull Requests auf `main` zurück |
+1. Bearbeiten Sie `web/messages/<locale>.json` (`fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans`) oder kopieren Sie `en.json`, um eine neue Sprache anzulegen.
+2. Behalten Sie alle Schlüssel und alle `{variables}` von `en.json` bei; übersetzen Sie nur die Werte. Kein HTML-Markup in Nachrichten.
+3. Plurale nutzen die Nachrichtensyntax, keine von Hand gebauten Zeichenketten: Behalten Sie die `match`/`plural`-Struktur der englischen Nachricht bei und übersetzen Sie jeden Zweig.
+4. Führen Sie `cd web && npm run i18n:check` aus: Es schlägt fehl, wenn einer Sprache ein Schlüssel fehlt oder ihre `{variables}` abweichen.
+5. Öffnen Sie einen Pull Request.
 
-Neue UI-Texte landen nur in `web/messages/en.json`; ein Übersetzer füllt anschließend die
-übrigen Sprachdateien über Weblate. Die Schlüssel werden schrittweise extrahiert — derzeit
-betrifft das die Einstellungsseiten (`web/src/routes/settings/`) und den eingebauten Text
-einiger Primitive in `web/src/lib/ui/` — der Rest der Oberfläche liest noch einfaches Englisch
-und wird extrahiert, sobald er angefasst wird. Die Konvention zum Verfassen von Texten steht in
-`CONTRIBUTING.md`.
+Neue UI-Texte kommen zuerst in `web/messages/en.json` (die einzige Datei, die ein Feature-Pull-Request braucht; `npm run i18n:merge` führt temporäre Fragmente zusammen). Eine Sprache erscheint in der Sprachauswahl (Einstellungen, Darstellung), sobald ihre Datei existiert. Die Namenskonvention für Schlüssel steht in `CONTRIBUTING.md`.
 
 `web/project.inlang/settings.json` verweist das einzige Plugin (message-format) auf
 `./node_modules/@inlang/plugin-message-format/dist/index.js` statt auf die jsdelivr-URL, die

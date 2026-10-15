@@ -70,31 +70,17 @@ cd web && npm run build      # static build into web/build, embedded by rust_emb
 系统生活在`src/app.css`(代币)和`src/lib/ui/`(原始)。永不运行两个`vite build`
 同时:它们擦拭`.svelte-kit/output`。
 
-## 翻译(Weblate) {#translations-weblate}
+## 翻译 {#translations}
 
-网络 UI 针对社区翻译传递但什么都不翻译:
-英语是唯一发布的区域设置,在`web/messages/en.json`(平坦,虚线
-键,`{param}`占位符,由
-[Paraglide JS](https://paraglidejs.com)编译成树摇晃消息函数
-在`web/src/lib/paraglide/`,生成且未追踪)。翻译发生
-在[hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
-(组件`web-ui`),配置如下:
+Web 界面与其他贡献一样，通过 pull request 翻译。源语言为英语（`web/messages/en.json`：扁平键、`{param}` 占位符）；其他每种语言对应一个文件 `web/messages/<locale>.json`，由 [Paraglide JS](https://paraglidejs.com) 编译为支持 tree-shaking 的消息函数，位于 `web/src/lib/paraglide/`（自动生成，不纳入版本控制）。
 
-| 设置 | 值 |
-| --- | --- |
-| 存储库 | 这个回购,`web/`子目录 |
-| 文件掩码 | `web/messages/*.json` |
-| 单语基础语言文件 | `web/messages/en.json` |
-| 文件格式 | JSON 文件(单语) |
-| 新语言 | 创建新翻译文件(Weblate 写`web/messages/<locale>.json`) |
-| 版本控制 | GitHub,通过 Weblate GitHub 应用:翻译回来作为`main`上的拉取请求 |
+1. 编辑 `web/messages/<locale>.json`（`fr`、`de`、`es`、`it`、`pt`、`pt-BR`、`ru`、`zh-Hans`），或复制 `en.json` 以添加新语言。
+2. 保留 `en.json` 中的所有键和所有 `{variables}`；只翻译值。消息中不要使用 HTML 标记。
+3. 复数使用消息语法，而不是手工拼接的字符串：保留英文消息的 `match`/`plural` 结构，并翻译每个分支。
+4. 运行 `cd web && npm run i18n:check`：如果某种语言缺少键或改动了 `{variables}`，检查会失败。
+5. 提交 pull request。
 
-新 UI 字符串仅落在`web/messages/en.json`;翻译者然后填充
-其他区域设置文件通过 Weblate。键递进提取 —
-今天覆盖设置页面(`web/src/routes/settings/`)和
-`web/src/lib/ui/`原始的内置副本的一对 — 剩余的 UI
-仍然读纯英语并随着被触及而被提取。见
-`CONTRIBUTING.md`用于字符串编写约定。
+新的界面文本先添加到 `web/messages/en.json`（功能 pull request 只需要这个文件；`npm run i18n:merge` 会合并临时片段）。语言文件一存在，该语言就会出现在语言选择器中（设置，外观）。键的命名约定见 `CONTRIBUTING.md`。
 
 `web/project.inlang/settings.json`指向其一个插件(message-format)在
 `./node_modules/@inlang/plugin-message-format/dist/index.js`而不是

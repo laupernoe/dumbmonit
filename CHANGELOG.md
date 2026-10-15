@@ -35,6 +35,12 @@ All notable changes to this project are documented here. The format follows
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
 
+### Changed
+
+- **Translations now go through pull requests.** The UI translations stay in
+  `web/messages/<locale>.json`; see "Translating DumbMonit" in
+  [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
+
 ### Fixed
 
 - Status pages: the uptime next to each bar and in the summary line now covers
@@ -613,7 +619,7 @@ All notable changes to this project are documented here. The format follows
   public demo mode.
 - **Pip the pigeon** gives tips across the interface, including setup tips on
   device pages, and the status page has a pigeon of its own.
-- **Ready for community translation.** The web UI is wired for Weblate,
+- **Ready for community translation.** The web UI is wired for community translation,
   starting with Settings, with a language picker that appears once a second
   language ships.
 - **A themed message on browsers too old to run the UI**, such as a TV,

@@ -71,31 +71,17 @@ exactly and must be kept in sync with `crates/server/src/api/*.rs`. The design
 system lives in `src/app.css` (tokens) and `src/lib/ui/` (primitives). Never run two `vite build`s
 at once: they wipe `.svelte-kit/output`.
 
-## Translations (Weblate)
+## Translations
 
-The web UI is wired for community translation but nothing is translated yet:
-English is the only locale shipped, in `web/messages/en.json` (flat, dotted
-keys, `{param}` placeholders, compiled by
-[Paraglide JS](https://paraglidejs.com) into tree-shaken message functions
-under `web/src/lib/paraglide/`, generated and untracked). Translation happens
-on [hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
-(component `web-ui`), configured as follows:
+The web UI is translated by pull request, like any other contribution. The source language is English (`web/messages/en.json`: flat keys, `{param}` placeholders); each other language is one file, `web/messages/<locale>.json`, compiled by [Paraglide JS](https://paraglidejs.com) into tree-shaken message functions under `web/src/lib/paraglide/` (generated, untracked).
 
-| Setting | Value |
-| --- | --- |
-| Repository | this repo, `web/` subdirectory |
-| File mask | `web/messages/*.json` |
-| Monolingual base language file | `web/messages/en.json` |
-| File format | JSON file (monolingual) |
-| New language | create a new translation file (Weblate writes `web/messages/<locale>.json`) |
-| Version control | GitHub, through the Weblate GitHub app: translations come back as pull requests on `main` |
+1. Edit `web/messages/<locale>.json` (`fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans`), or copy `en.json` to add a new locale.
+2. Keep every key and every `{variable}` of `en.json`; translate only the values. Never put HTML markup in a message.
+3. Plurals use the message syntax, not hand-built strings: keep the `match`/`plural` structure of the English message and translate each branch.
+4. Run `cd web && npm run i18n:check`: it fails when a locale lacks a key or changes its `{variables}`.
+5. Open a pull request.
 
-New UI strings land in `web/messages/en.json` only; a translator then fills in
-the other locale files through Weblate. Keys are extracted progressively —
-today that covers the Settings pages (`web/src/routes/settings/`) and the
-built-in copy of a couple of `web/src/lib/ui/` primitives — the rest of the UI
-still reads plain English and gets extracted as it is touched. See
-`CONTRIBUTING.md` for the string-authoring convention.
+New UI strings are added to `web/messages/en.json` first (that is the only file a feature pull request needs; `npm run i18n:merge` merges transient fragments). A locale appears in the language picker (Settings, Appearance) once its file exists. See `CONTRIBUTING.md` for the key naming convention.
 
 `web/project.inlang/settings.json` points its one plugin (message-format) at
 `./node_modules/@inlang/plugin-message-format/dist/index.js` rather than the

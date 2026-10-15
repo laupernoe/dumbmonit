@@ -76,33 +76,17 @@ com `crates/server/src/api/*.rs`. O design system (tokens em
 contexto de produto em `PRODUCT.md`. Nunca execute dois `vite build`s ao
 mesmo tempo: eles destroem `.svelte-kit/output`.
 
-## Traduções (Weblate) {#translations-weblate}
+## Traduções {#translations}
 
-A interface web está preparada para tradução comunitária mas nada foi
-traduzido ainda: inglês é a única localidade entregue, em
-`web/messages/en.json` (plano, chaves com pontos, placeholders `{param}`,
-compilado pelo [Paraglide JS](https://paraglidejs.com) em funções de
-mensagem tree-shaken sob `web/src/lib/paraglide/`, gerado e não
-rastreado). A tradução acontece em
-[hosted.weblate.org/projects/dumbmonit](https://hosted.weblate.org/projects/dumbmonit/)
-(componente `web-ui`), configurado assim:
+A interface web é traduzida por pull request, como qualquer outra contribuição. O idioma de origem é o inglês (`web/messages/en.json`: chaves planas, marcadores `{param}`); cada outro idioma é um arquivo, `web/messages/<locale>.json`, compilado pelo [Paraglide JS](https://paraglidejs.com) em funções de mensagem com tree-shaking em `web/src/lib/paraglide/` (gerado, não versionado).
 
-| Configuração | Valor |
-| --- | --- |
-| Repositório | este repositório, subdiretório `web/` |
-| Máscara de arquivo | `web/messages/*.json` |
-| Arquivo de idioma base monolíngue | `web/messages/en.json` |
-| Formato do arquivo | Arquivo JSON (monolíngue) |
-| Novo idioma | criar um novo arquivo de tradução (o Weblate escreve `web/messages/<locale>.json`) |
-| Controle de versão | GitHub, através do app GitHub do Weblate: traduções voltam como pull requests no `main` |
+1. Edite `web/messages/<locale>.json` (`fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans`), ou copie `en.json` para adicionar um novo idioma.
+2. Mantenha todas as chaves e todas as `{variables}` de `en.json`; traduza apenas os valores. Sem marcação HTML nas mensagens.
+3. Os plurais usam a sintaxe de mensagens, não strings montadas à mão: mantenha a estrutura `match`/`plural` da mensagem em inglês e traduza cada ramo.
+4. Execute `cd web && npm run i18n:check`: falha se um idioma não tiver uma chave ou mudar suas `{variables}`.
+5. Abra um pull request.
 
-Novas strings de interface chegam apenas em `web/messages/en.json`; um
-tradutor então preenche os outros arquivos de idioma via Weblate. Chaves
-são extraídas progressivamente — hoje isso cobre as páginas de
-Configurações (`web/src/routes/settings/`) e a cópia embutida de algumas
-primitivas de `web/src/lib/ui/` — o resto da interface ainda lê inglês
-simples e é extraído conforme é tocado. Veja `CONTRIBUTING.md` para a
-convenção de autoria de strings.
+As novas strings da interface são adicionadas primeiro a `web/messages/en.json` (o único arquivo de que um pull request de funcionalidade precisa; `npm run i18n:merge` junta fragmentos temporários). Um idioma aparece no seletor (Configurações, Aparência) assim que seu arquivo existe. A convenção de nomes de chaves está em `CONTRIBUTING.md`.
 
 `web/project.inlang/settings.json` aponta seu único plugin
 (message-format) para `./node_modules/@inlang/plugin-message-format/dist/index.js`

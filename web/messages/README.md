@@ -1,6 +1,7 @@
 # UI messages
 
-`{locale}.json` (en is the base) are the only files Weblate reads (`messages/*.json`, not recursive).
+`{locale}.json` (en is the base) are the only message files read (`messages/*.json`, not recursive).
+Translators edit `<locale>.json` and send a pull request (see CONTRIBUTING.md).
 Compiled by Paraglide into `m.<key>()`.
 
 ## Workflow
