@@ -28,6 +28,24 @@ class Palette {
 		if (target && target.isConnected) target.focus();
 	}
 
+	/** Keyboard shortcut help dialog (`?`). */
+	helpOpen = $state(false);
+
+	openHelp() {
+		if (browser && document.activeElement instanceof HTMLElement) {
+			this.returnTo = document.activeElement;
+		}
+		this.helpOpen = true;
+	}
+
+	closeHelp() {
+		if (!this.helpOpen) return;
+		this.helpOpen = false;
+		const target = this.returnTo;
+		this.returnTo = null;
+		if (target && target.isConnected) target.focus();
+	}
+
 	toggle() {
 		if (this.isOpen) this.close();
 		else this.open();
