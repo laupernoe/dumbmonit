@@ -49,6 +49,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
