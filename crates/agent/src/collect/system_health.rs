@@ -598,6 +598,26 @@ mod platform {
     /// Dernière lecture des faits de sécurité : (ssh root, ssh mot de passe, pare-feu).
     type SecurityFacts = (Option<u8>, Option<bool>, Option<bool>);
 
+    /// Attente tolérée au premier cycle pour les faits de sécurité : ils
+    /// tournent déjà en parallèle des vérifications lentes, ce délai ne couvre
+    /// que le reliquat. Au-delà, la tâche poursuit en arrière-plan.
+    const SECURITY_FIRST_WAIT: Duration = Duration::from_secs(3);
+
+    /// Outils constatés absents, transmis à la tâche de fond et rendus par elle.
+    #[derive(Debug, Clone, Copy, Default)]
+    struct SecurityFlags {
+        sshd_missing: bool,
+        nft_missing: bool,
+        iptables_missing: bool,
+    }
+
+    /// Résultat de la tâche de fond de sécurité.
+    #[derive(Debug, Clone, Copy)]
+    struct SecurityStat {
+        facts: SecurityFacts,
+        flags: SecurityFlags,
+    }
+
     /// `dnf` charge l'intégralité des métadonnées de dépôt avant de répondre :
     /// une à deux secondes à plein régime, dix fois plus sous quota processeur.
     const PACKAGE_MANAGER_TIMEOUT: Duration = Duration::from_secs(60);
@@ -663,10 +683,9 @@ mod platform {
         /// à chaque cycle, et le journal n'a besoin de l'apprendre qu'une fois.
         systemctl_missing: bool,
         getenforce_missing: bool,
-        sshd_missing: bool,
-        nft_missing: bool,
-        iptables_missing: bool,
+        security_flags: SecurityFlags,
         security: Option<(Instant, SecurityFacts)>,
+        security_task: Option<JoinHandle<SecurityStat>>,
     }
 
     impl SystemHealthProbe {
@@ -683,10 +702,9 @@ mod platform {
                 slow_task: None,
                 systemctl_missing: false,
                 getenforce_missing: false,
-                sshd_missing: false,
-                nft_missing: false,
-                iptables_missing: false,
+                security_flags: SecurityFlags::default(),
                 security: None,
+                security_task: None,
             }
         }
 
@@ -701,6 +719,8 @@ mod platform {
                     .clone()
                     .map(|os| SystemHealthStat { os: Some(os), ..SystemHealthStat::default() });
             }
+            // Lancée avant les vérifications lentes pour tourner en parallèle.
+            self.start_security_task();
             self.refresh_slow_checks().await;
 
             let failed_units = if self.config.check_failed_units && !self.systemctl_missing {
@@ -709,7 +729,8 @@ mod platform {
                 None
             };
             let selinux = self.read_selinux().await;
-            let (ssh_root_login, ssh_password_auth, firewall_active) = self.read_security().await;
+            let (ssh_root_login, ssh_password_auth, firewall_active) =
+                self.collect_security(SECURITY_FIRST_WAIT).await;
 
             Some(SystemHealthStat {
                 os: self.os.clone(),
@@ -724,66 +745,44 @@ mod platform {
             })
         }
 
-        /// Faits de sécurité (sshd, pare-feu), relus toutes les cinq minutes.
-        async fn read_security(&mut self) -> SecurityFacts {
-            if let Some((at, facts)) = self.security
-                && at.elapsed() < SECURITY_INTERVAL
-            {
-                return facts;
+        /// Lance la lecture des faits de sécurité en tâche de fond si elle a
+        /// vieilli (cinq minutes) et qu'aucune n'est en cours.
+        fn start_security_task(&mut self) {
+            if self.security_task.is_some() {
+                return;
             }
-            let (root, password) = self.read_sshd().await;
-            let facts = (root, password, self.read_firewall().await);
-            self.security = Some((Instant::now(), facts));
-            facts
+            let stale = self.security.is_none_or(|(at, _)| at.elapsed() >= SECURITY_INTERVAL);
+            if stale {
+                self.security_task = Some(tokio::spawn(security_checks(self.security_flags)));
+            }
         }
 
-        async fn read_sshd(&mut self) -> (Option<u8>, Option<bool>) {
-            if self.sshd_missing {
-                return (None, None);
-            }
-            for program in SSHD_CANDIDATES {
-                match run(program, &["-T"], QUICK_TIMEOUT).await {
-                    Ok(output) if output.code == Some(0) => {
-                        return parse_sshd_config(&output.stdout);
-                    }
-                    // Présent mais en erreur (clés d'hôte illisibles…) : pas de série.
-                    Ok(_) | Err(RunError::Failed) => return (None, None),
-                    Err(RunError::Missing) => {}
-                }
-            }
-            debug!("sshd not found, SSH settings not reported");
-            self.sshd_missing = true;
-            (None, None)
-        }
-
-        /// `nft` d'abord ; `iptables` s'il ne prouve pas un filtrage actif.
-        async fn read_firewall(&mut self) -> Option<bool> {
-            let mut verdict = None;
-            if !self.nft_missing {
-                match run("nft", &["list", "ruleset"], QUICK_TIMEOUT).await {
-                    Ok(output) if output.code == Some(0) => {
-                        verdict = Some(parse_nft_input_active(&output.stdout));
-                    }
-                    Ok(_) | Err(RunError::Failed) => {}
-                    Err(RunError::Missing) => {
-                        debug!("nft not found, falling back to iptables");
-                        self.nft_missing = true;
+        /// Faits de sécurité les plus récents. Une tâche terminée est récoltée ;
+        /// une tâche en cours n'est jamais attendue, sauf au tout premier cycle
+        /// (aucun fait connu) et alors au plus `first_wait`.
+        async fn collect_security(&mut self, first_wait: Duration) -> SecurityFacts {
+            if let Some(task) = self.security_task.as_mut() {
+                let first = self.security.is_none();
+                if task.is_finished() || first {
+                    let wait = if first { first_wait } else { Duration::ZERO };
+                    if let Ok(outcome) = tokio::time::timeout(wait, task).await {
+                        self.security_task = None;
+                        match outcome {
+                            Ok(stat) => {
+                                self.security_flags = stat.flags;
+                                self.security = Some((Instant::now(), stat.facts));
+                            }
+                            Err(error) => {
+                                debug!(%error, "security facts check aborted");
+                                // Anciens faits conservés ; nouvel essai à l'échéance normale.
+                                let facts = self.security.map(|(_, f)| f).unwrap_or_default();
+                                self.security = Some((Instant::now(), facts));
+                            }
+                        }
                     }
                 }
             }
-            if verdict == Some(true) || self.iptables_missing {
-                return verdict;
-            }
-            match run("iptables", &["-S", "INPUT"], QUICK_TIMEOUT).await {
-                Ok(output) if output.code == Some(0) => {
-                    Some(parse_iptables_input_active(&output.stdout))
-                }
-                Ok(_) | Err(RunError::Failed) => verdict,
-                Err(RunError::Missing) => {
-                    self.iptables_missing = true;
-                    verdict
-                }
-            }
+            self.security.map(|(_, facts)| facts).unwrap_or_default()
         }
 
         /// Relance la tâche de fond quand son résultat a vieilli, et récupère
@@ -870,6 +869,63 @@ mod platform {
     }
 
     /// Les vérifications qui passent par le gestionnaire de paquets.
+    /// Lit les faits de sécurité (sshd, pare-feu) : jusqu'à plusieurs processus
+    /// de dix secondes, donc toujours en tâche de fond.
+    async fn security_checks(mut flags: SecurityFlags) -> SecurityStat {
+        let (root, password) = read_sshd(&mut flags).await;
+        let firewall = read_firewall(&mut flags).await;
+        SecurityStat { facts: (root, password, firewall), flags }
+    }
+
+    async fn read_sshd(flags: &mut SecurityFlags) -> (Option<u8>, Option<bool>) {
+        if flags.sshd_missing {
+            return (None, None);
+        }
+        for program in SSHD_CANDIDATES {
+            match run(program, &["-T"], QUICK_TIMEOUT).await {
+                Ok(output) if output.code == Some(0) => {
+                    return parse_sshd_config(&output.stdout);
+                }
+                // Présent mais en erreur (clés d'hôte illisibles…) : pas de série.
+                Ok(_) | Err(RunError::Failed) => return (None, None),
+                Err(RunError::Missing) => {}
+            }
+        }
+        debug!("sshd not found, SSH settings not reported");
+        flags.sshd_missing = true;
+        (None, None)
+    }
+
+    /// `nft` d'abord ; `iptables` s'il ne prouve pas un filtrage actif.
+    async fn read_firewall(flags: &mut SecurityFlags) -> Option<bool> {
+        let mut verdict = None;
+        if !flags.nft_missing {
+            match run("nft", &["list", "ruleset"], QUICK_TIMEOUT).await {
+                Ok(output) if output.code == Some(0) => {
+                    verdict = Some(parse_nft_input_active(&output.stdout));
+                }
+                Ok(_) | Err(RunError::Failed) => {}
+                Err(RunError::Missing) => {
+                    debug!("nft not found, falling back to iptables");
+                    flags.nft_missing = true;
+                }
+            }
+        }
+        if verdict == Some(true) || flags.iptables_missing {
+            return verdict;
+        }
+        match run("iptables", &["-S", "INPUT"], QUICK_TIMEOUT).await {
+            Ok(output) if output.code == Some(0) => {
+                Some(parse_iptables_input_active(&output.stdout))
+            }
+            Ok(_) | Err(RunError::Failed) => verdict,
+            Err(RunError::Missing) => {
+                flags.iptables_missing = true;
+                verdict
+            }
+        }
+    }
+
     async fn slow_checks(config: SystemHealthConfig, package_manager: PackageManager) -> SlowStat {
         let mut stat = SlowStat::default();
         if config.check_updates {
@@ -1003,6 +1059,34 @@ mod platform {
             Err(_) => {
                 debug!(program, timeout_s = timeout.as_secs(), "command aborted, took too long");
                 Err(RunError::Failed)
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn a_slow_security_task_never_holds_a_cycle() {
+            let mut probe = SystemHealthProbe::new(&SystemHealthConfig::default());
+            // Tâche de sécurité bloquée : le premier cycle n'attend que le délai borné.
+            probe.security_task = Some(tokio::spawn(async {
+                tokio::time::sleep(Duration::from_secs(3600)).await;
+                unreachable!()
+            }));
+            let started = Instant::now();
+            let facts = probe.collect_security(Duration::from_millis(50)).await;
+            assert_eq!(facts, (None, None, None));
+            assert!(started.elapsed() < Duration::from_secs(2));
+            // Faits connus : une tâche encore en cours n'est plus attendue du tout.
+            probe.security = Some((Instant::now(), (Some(1), None, Some(true))));
+            let started = Instant::now();
+            let facts = probe.collect_security(Duration::from_secs(3600)).await;
+            assert_eq!(facts, (Some(1), None, Some(true)));
+            assert!(started.elapsed() < Duration::from_secs(2));
+            if let Some(task) = probe.security_task.take() {
+                task.abort();
             }
         }
     }
