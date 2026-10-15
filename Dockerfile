@@ -261,5 +261,10 @@ ENV DUMBMONIT_BIND=0.0.0.0:8080 \
 VOLUME ["/data"]
 EXPOSE 8080
 
+# Santé du conteneur (Docker, Portainer, Unraid) : l'image n'a ni shell ni curl,
+# le binaire se sonde lui-même sur DUMBMONIT_BIND (voir healthcheck.rs).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD ["/dumbmonit", "healthcheck"]
+
 USER 65532:65532
 ENTRYPOINT ["/dumbmonit"]

@@ -37,6 +37,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Docker health status.** The server image now carries a `HEALTHCHECK`
+  (`dumbmonit healthcheck`, a local call to `/api/health`), so Docker, Portainer
+  and Unraid show the container as healthy.
 - **Acknowledge or snooze an alert from the notification.** Alert messages
   carry **Acknowledge** (until it resolves) and **Snooze 1 h**: buttons on
   ntfy, Telegram and Web Push (operators and admins only), links on Discord,
