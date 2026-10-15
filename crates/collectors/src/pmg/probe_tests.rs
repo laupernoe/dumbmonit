@@ -218,6 +218,7 @@ async fn une_interrogation_complete_publie_tout_ce_que_la_passerelle_sait() {
     assert_eq!(quarantine.attachment_count, Some(2.0));
     assert!(view.mail.is_some() && !view.recent.is_empty());
     assert!(!view.spam_scores.is_empty() && !view.viruses.is_empty());
+    drop(views);
 
     // Un seul ticket pour toute l'interrogation, présenté en cookie.
     assert_eq!(seen.tickets.load(Ordering::SeqCst), 1);
