@@ -19,6 +19,7 @@
 //! à l'interface de traiter les deux mondes sans distinction.
 
 pub mod commands;
+pub mod modules;
 pub mod policy;
 mod receive;
 mod store;
@@ -30,6 +31,7 @@ use async_trait::async_trait;
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 use sqlx::SqlitePool;
 
+pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
 pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, ingest};
 pub use store::{
