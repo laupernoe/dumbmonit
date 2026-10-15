@@ -9,8 +9,13 @@
 //!
 //! Forme : `base64url(charge) "." base64url(étiquette)`, la charge étant
 //! `version (1) | geste (1) | échéance unix (8, gros-boutiste) | aléa (12) |
-//! empreintes séparées par '\n'`. L'aléa identifie le lien pour l'usage unique
-//! (table `alert_action_uses`).
+//! alertes séparées par '\n'`, chaque alerte écrite `empreinte '\t' épisode`.
+//! L'aléa identifie le lien pour l'usage unique (table `alert_action_uses`).
+//!
+//! L'épisode est l'instant de déclenchement (`firing_since`, en millisecondes) :
+//! une empreinte est stable d'un incident à l'autre, et sans lui un lien encore
+//! valide acquitterait l'incident suivant de la même alerte, que personne n'a
+//! encore vu.
 //!
 //! Le jeton voyage dans le *fragment* de l'URL (`/alert-action#<jeton>`) : un
 //! navigateur ne l'envoie jamais au serveur ni dans un `Referer`, si bien qu'il
@@ -106,19 +111,68 @@ impl Action {
     }
 }
 
+/// Une alerte visée par un lien : son empreinte et l'épisode annoncé.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AlertRef {
+    pub fingerprint: String,
+    /// Déclenchement de l'épisode (`firing_since`) en millisecondes ; `None`
+    /// pour une alerte annoncée sans déclenchement daté.
+    pub episode: Option<i64>,
+}
+
+impl AlertRef {
+    pub fn new(fingerprint: impl Into<String>, firing_since: Option<DateTime<Utc>>) -> Self {
+        Self {
+            fingerprint: fingerprint.into(),
+            episode: firing_since.map(|at| at.timestamp_millis()),
+        }
+    }
+
+    /// Vrai si `firing_since` désigne le même épisode que celui du lien.
+    pub fn same_episode(&self, firing_since: Option<DateTime<Utc>>) -> bool {
+        self.episode == firing_since.map(|at| at.timestamp_millis())
+    }
+
+    fn encode(&self) -> String {
+        match self.episode {
+            Some(millis) => format!("{}\t{millis}", self.fingerprint),
+            None => format!("{}\t", self.fingerprint),
+        }
+    }
+
+    fn decode(raw: &str) -> Option<Self> {
+        let (fingerprint, episode) = raw.split_once('\t')?;
+        if fingerprint.is_empty() {
+            return None;
+        }
+        let episode = match episode {
+            "" => None,
+            millis => Some(millis.parse().ok()?),
+        };
+        Some(Self { fingerprint: fingerprint.to_string(), episode })
+    }
+}
+
+/// Raccourci des tests : une empreinte sans épisode daté.
+impl From<&str> for AlertRef {
+    fn from(fingerprint: &str) -> Self {
+        Self { fingerprint: fingerprint.to_string(), episode: None }
+    }
+}
+
 /// Contenu d'un lien, une fois la signature vérifiée.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Claims {
     pub action: Action,
-    pub fingerprints: Vec<String>,
+    pub alerts: Vec<AlertRef>,
     pub expires_at: DateTime<Utc>,
     pub nonce: [u8; NONCE_LEN],
 }
 
 impl Claims {
     /// Un lien neuf, valable [`TTL`] à partir de `now`.
-    pub fn new(action: Action, fingerprints: Vec<String>, now: DateTime<Utc>) -> Self {
-        Self { action, fingerprints, expires_at: now + TTL, nonce: rand::random() }
+    pub fn new(action: Action, alerts: Vec<AlertRef>, now: DateTime<Utc>) -> Self {
+        Self { action, alerts, expires_at: now + TTL, nonce: rand::random() }
     }
 
     /// Identifiant d'usage unique, tel que stocké en base.
@@ -127,7 +181,7 @@ impl Claims {
     }
 
     fn encode(&self) -> Vec<u8> {
-        let joined = self.fingerprints.join("\n");
+        let joined = self.alerts.iter().map(AlertRef::encode).collect::<Vec<_>>().join("\n");
         let mut out = Vec::with_capacity(HEADER_LEN + joined.len());
         out.push(VERSION);
         out.push(self.action.code());
@@ -145,13 +199,14 @@ impl Claims {
         let expires = i64::from_be_bytes(payload[2..10].try_into().ok()?);
         let nonce: [u8; NONCE_LEN] = payload[10..HEADER_LEN].try_into().ok()?;
         let joined = std::str::from_utf8(&payload[HEADER_LEN..]).ok()?;
-        let fingerprints: Vec<String> = joined.split('\n').map(str::to_string).collect();
-        if fingerprints.len() > MAX_FINGERPRINTS || fingerprints.iter().any(String::is_empty) {
+        let alerts: Vec<AlertRef> =
+            joined.split('\n').map(AlertRef::decode).collect::<Option<_>>()?;
+        if alerts.len() > MAX_FINGERPRINTS {
             return None;
         }
         Some(Self {
             action,
-            fingerprints,
+            alerts,
             expires_at: DateTime::from_timestamp(expires, 0)?,
             nonce,
         })
@@ -248,13 +303,17 @@ pub struct MessageAction {
 pub fn build(
     key: &ActionKey,
     public_url: &str,
-    fingerprints: &[String],
+    alerts: &[AlertRef],
     now: DateTime<Utc>,
 ) -> Vec<MessageAction> {
-    let mut unique: Vec<String> = Vec::new();
-    for fingerprint in fingerprints {
-        if !fingerprint.is_empty() && !fingerprint.contains('\n') && !unique.contains(fingerprint) {
-            unique.push(fingerprint.clone());
+    let mut unique: Vec<AlertRef> = Vec::new();
+    for alert in alerts {
+        let fingerprint = &alert.fingerprint;
+        if !fingerprint.is_empty()
+            && !fingerprint.contains(['\n', '\t'])
+            && !unique.iter().any(|seen| &seen.fingerprint == fingerprint)
+        {
+            unique.push(alert.clone());
         }
     }
     if unique.is_empty() || unique.len() > MAX_FINGERPRINTS {
@@ -361,8 +420,7 @@ mod tests {
 
     #[test]
     fn every_link_has_its_own_nonce() {
-        let fps = vec!["a@1".to_string()];
-        let links = build(&key(), "https://monit.lan/", &fps, now());
+        let links = build(&key(), "https://monit.lan/", &["a@1".into()], now());
         assert_eq!(links.len(), 2);
         assert!(links[0].url.starts_with("https://monit.lan/alert-action#"));
         assert!(links[0].path.starts_with("/alert-action#"));
@@ -376,12 +434,26 @@ mod tests {
     #[test]
     fn no_buttons_without_alerts_or_for_an_avalanche() {
         assert!(build(&key(), "https://m", &[], now()).is_empty());
-        let many: Vec<String> = (0..=MAX_FINGERPRINTS).map(|i| format!("r@{i}")).collect();
+        let many: Vec<AlertRef> =
+            (0..=MAX_FINGERPRINTS).map(|i| AlertRef::from(format!("r@{i}").as_str())).collect();
         assert!(build(&key(), "https://m", &many, now()).is_empty());
-        let dup = vec!["a@1".to_string(), "a@1".to_string()];
+        let dup: Vec<AlertRef> = vec!["a@1".into(), "a@1".into()];
         let link = &build(&key(), "https://m", &dup, now())[0];
         let claims = key().verify(link.path.split_once('#').unwrap().1, now()).unwrap();
-        assert_eq!(claims.fingerprints, vec!["a@1"]);
+        assert_eq!(claims.alerts, vec![AlertRef::from("a@1")]);
+    }
+
+    #[test]
+    fn the_episode_is_signed_with_the_alert() {
+        let since = DateTime::from_timestamp_millis(1_799_999_000_123).unwrap();
+        let alert = AlertRef::new("cpu@1", Some(since));
+        let token = key().sign(&Claims::new(Action::Ack, vec![alert.clone()], now()));
+        let claims = key().verify(&token, now()).unwrap();
+        assert_eq!(claims.alerts, vec![alert.clone()]);
+        assert!(alert.same_episode(Some(since)));
+        assert!(!alert.same_episode(Some(since + TimeDelta::milliseconds(1))), "re-fired");
+        assert!(!alert.same_episode(None));
+        assert!(AlertRef::from("cpu@1").same_episode(None));
     }
 
     #[test]

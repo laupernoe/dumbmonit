@@ -18,7 +18,7 @@ use dumbmonit_server::alerting::machine::{AlertState, Phase};
 use dumbmonit_server::alerting::model::Severity;
 use dumbmonit_server::config::Config;
 use dumbmonit_server::crypto::Cipher;
-use dumbmonit_server::notify::action_link::{Action, ActionKey, Claims};
+use dumbmonit_server::notify::action_link::{Action, ActionKey, AlertRef, Claims};
 use dumbmonit_server::state::{AppState, Inner};
 use dumbmonit_server::{api, collectors, db, tsdb};
 use http_body_util::BodyExt;
@@ -164,9 +164,18 @@ impl TestApp {
             .await
     }
 
-    fn token(&self, action: Action, fingerprints: &[&str]) -> String {
-        let fps = fingerprints.iter().map(|fp| fp.to_string()).collect();
-        self.key.sign(&Claims::new(action, fps, Utc::now()))
+    /// Lien tel que le moteur l'aurait signé : chaque alerte avec l'épisode
+    /// en cours (un lien pour une alerte absente n'a pas d'épisode).
+    async fn token(&self, action: Action, fingerprints: &[&str]) -> String {
+        let mut alerts = Vec::new();
+        for fingerprint in fingerprints {
+            let since = db::alerts::get_active(&self.pool, fingerprint)
+                .await
+                .expect("read")
+                .and_then(|alert| alert.state.firing_since);
+            alerts.push(AlertRef::new(*fingerprint, since));
+        }
+        self.key.sign(&Claims::new(action, alerts, Utc::now()))
     }
 
     async fn create_target(&self, name: &str) -> i64 {
@@ -236,7 +245,7 @@ async fn an_ack_link_shows_then_acknowledges_once_without_a_session() {
     let app = setup().await;
     let nas = app.create_target("nas").await;
     app.fire("cpu_high@1", nas).await;
-    let token = app.token(Action::Ack, &["cpu_high@1"]);
+    let token = app.token(Action::Ack, &["cpu_high@1"]).await;
 
     // Afficher ne fait rien.
     let (status, view) = app.inspect(&token).await;
@@ -283,7 +292,7 @@ async fn a_snooze_link_pauses_for_an_hour_and_never_shortens_a_longer_ack() {
     app.fire("cpu_high@2", nas).await;
 
     let (status, done) =
-        app.execute(&app.token(Action::Snooze, &["cpu_high@1", "cpu_high@2"])).await;
+        app.execute(&app.token(Action::Snooze, &["cpu_high@1", "cpu_high@2"]).await).await;
     assert_eq!(status, StatusCode::OK, "{done}");
     assert_eq!(done["acked"], json!(2), "one link covers the whole message");
     let until: chrono::DateTime<Utc> =
@@ -291,8 +300,8 @@ async fn a_snooze_link_pauses_for_an_hour_and_never_shortens_a_longer_ack() {
     assert!((until - (Utc::now() + TimeDelta::hours(1))).abs() < TimeDelta::minutes(1));
 
     // Acquittée jusqu'à la résolution, puis « snooze » : l'acquittement long reste.
-    app.execute(&app.token(Action::Ack, &["cpu_high@2"])).await;
-    let (status, done) = app.execute(&app.token(Action::Snooze, &["cpu_high@2"])).await;
+    app.execute(&app.token(Action::Ack, &["cpu_high@2"]).await).await;
+    let (status, done) = app.execute(&app.token(Action::Snooze, &["cpu_high@2"]).await).await;
     assert_eq!(status, StatusCode::OK, "{done}");
     assert_eq!(done["acked"], json!(0));
     let until: chrono::DateTime<Utc> =
@@ -306,25 +315,26 @@ async fn refused_tokens_all_look_the_same() {
     let nas = app.create_target("nas").await;
     app.fire("cpu_high@1", nas).await;
 
-    let valid = app.token(Action::Ack, &["cpu_high@1"]);
+    let valid = app.token(Action::Ack, &["cpu_high@1"]).await;
     let other_secret = {
         let cipher =
             Cipher::derive("un-tout-autre-secret-assez-long", b"un-sel-quelconque").unwrap();
         ActionKey::from_cipher(&cipher).sign(&Claims::new(
             Action::Ack,
-            vec!["cpu_high@1".into()],
+            vec![AlertRef::from("cpu_high@1")],
             Utc::now(),
         ))
     };
     let expired = {
-        let mut claims = Claims::new(Action::Ack, vec!["cpu_high@1".into()], Utc::now());
+        let mut claims =
+            Claims::new(Action::Ack, vec![AlertRef::from("cpu_high@1")], Utc::now());
         claims.expires_at = Utc::now() - TimeDelta::seconds(1);
         app.key.sign(&claims)
     };
     let (payload, tag) = valid.split_once('.').unwrap();
     let flipped_tag = format!("{payload}.{}{}", &tag[..tag.len() - 2], "AA");
     // Un lien vers une autre alerte, forgé en recollant l'étiquette d'un vrai.
-    let other = app.token(Action::Ack, &["cpu_high@9"]);
+    let other = app.token(Action::Ack, &["cpu_high@9"]).await;
     let spliced = format!("{}.{tag}", other.split_once('.').unwrap().0);
 
     let mut messages = Vec::new();
@@ -344,7 +354,7 @@ async fn only_the_instance_page_may_call_and_never_with_a_cross_site_request() {
     let app = setup().await;
     let nas = app.create_target("nas").await;
     app.fire("cpu_high@1", nas).await;
-    let token = app.token(Action::Ack, &["cpu_high@1"]);
+    let token = app.token(Action::Ack, &["cpu_high@1"]).await;
     let body = json!({ "token": token });
 
     // Sans l'en-tête anti-CSRF : refusé (un formulaire tiers ne peut pas le poser).
@@ -384,7 +394,7 @@ async fn switching_links_off_revokes_those_already_sent() {
     let app = setup().await;
     let nas = app.create_target("nas").await;
     app.fire("cpu_high@1", nas).await;
-    let token = app.token(Action::Ack, &["cpu_high@1"]);
+    let token = app.token(Action::Ack, &["cpu_high@1"]).await;
 
     let (status, policy) = app
         .request(
@@ -413,9 +423,38 @@ async fn switching_links_off_revokes_those_already_sent() {
 }
 
 #[tokio::test]
+async fn a_link_never_acknowledges_a_later_episode_of_the_same_alert() {
+    let app = setup().await;
+    let nas = app.create_target("nas").await;
+    app.fire("cpu_high@1", nas).await;
+    let token = app.token(Action::Ack, &["cpu_high@1"]).await;
+
+    // Résolue puis redéclenchée : même empreinte, autre épisode.
+    let later =
+        (Utc::now() + TimeDelta::minutes(10)).to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+    sqlx::query("UPDATE alert_state SET firing_since = ? WHERE fingerprint = 'cpu_high@1'")
+        .bind(later)
+        .execute(&app.pool)
+        .await
+        .expect("re-fired");
+
+    let (status, view) = app.inspect(&token).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(view["alerts"], json!([]), "the new episode is not the link's");
+    let (status, body) = app.execute(&token).await;
+    assert_eq!(status, StatusCode::NOT_FOUND, "{body}");
+    assert_eq!(app.alert("cpu_high@1").await["acked"], json!(false));
+
+    // Le lien de l'épisode en cours, lui, fonctionne.
+    let (status, _) = app.execute(&app.token(Action::Ack, &["cpu_high@1"]).await).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(app.alert("cpu_high@1").await["acked"], json!(true));
+}
+
+#[tokio::test]
 async fn a_link_to_resolved_alerts_does_nothing_and_stays_usable() {
     let app = setup().await;
-    let token = app.token(Action::Ack, &["cpu_high@404"]);
+    let token = app.token(Action::Ack, &["cpu_high@404"]).await;
     let (status, view) = app.inspect(&token).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(view["alerts"], json!([]));

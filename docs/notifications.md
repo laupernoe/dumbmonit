@@ -122,7 +122,8 @@ the alert, not a way to silence it.
 A link opens a short confirmation page in DumbMonit: **nothing happens until you
 press the button**. Mail clients, chat apps and antivirus scanners open links to
 build previews; they only load the page. No sign-in is needed: the link itself is
-the permission, and only for that gesture, on the alerts of that message, once, for
+the permission, and only for that gesture, on the alerts of that message (that firing: if an alert
+resolves and fires again, the old link no longer covers it), once, for
 24 hours. The action is recorded in the audit log, and the alert shows
 "acknowledged by via notification link".
 

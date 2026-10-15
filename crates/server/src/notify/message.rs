@@ -12,7 +12,7 @@ use crate::alerting::group::{AlertGroup, GroupItem, NotifyReason};
 use crate::alerting::machine::EffectivePhase;
 use crate::alerting::model::Severity;
 use crate::alerting::notify_policy::{DIGEST_MAX_LINES, Digest, Hold};
-use crate::notify::action_link::Action;
+use crate::notify::action_link::{Action, AlertRef};
 pub use crate::notify::action_link::MessageAction;
 
 /// Message prêt à partir, indépendant du canal.
@@ -698,13 +698,15 @@ pub fn render_digest(digest: &Digest, public_url: Option<&str>) -> Message {
     message
 }
 
-/// Empreintes qu'un lien d'action de ce résumé peut acquitter : les alertes
-/// encore actives qu'il annonce, sans les résolutions.
-pub fn actionable_fingerprints(digest: &Digest) -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
+/// Alertes qu'un lien d'action de ce résumé peut acquitter : celles encore
+/// actives qu'il annonce, sans les résolutions, chacune avec son épisode.
+pub fn actionable_alerts(digest: &Digest) -> Vec<AlertRef> {
+    let mut out: Vec<AlertRef> = Vec::new();
     for item in digest.groups.iter().flat_map(|group| group.items.iter()) {
-        if item.reason != NotifyReason::Resolved && !out.contains(&item.fingerprint) {
-            out.push(item.fingerprint.clone());
+        if item.reason != NotifyReason::Resolved
+            && !out.iter().any(|seen| seen.fingerprint == item.fingerprint)
+        {
+            out.push(AlertRef::new(item.fingerprint.clone(), item.since));
         }
     }
     out
@@ -1118,7 +1120,9 @@ mod tests {
         resolved.fingerprint = "ram@1".into();
         let d =
             digest(vec![group(vec![firing, reminder.clone(), resolved]), group(vec![reminder])]);
-        assert_eq!(actionable_fingerprints(&d), vec!["disk@1", "cpu@1"]);
+        let fingerprints: Vec<String> =
+            actionable_alerts(&d).into_iter().map(|alert| alert.fingerprint).collect();
+        assert_eq!(fingerprints, vec!["disk@1", "cpu@1"]);
     }
 
     #[test]

@@ -15,7 +15,8 @@ All notable changes to this project are documented here. The format follows
   page that works without signing in; nothing happens until its button is
   pressed, so link previews and mail scanners act on nothing. Each link is
   signed with a key derived from the instance secret, covers one gesture on
-  the alerts of its message, works once and for 24 hours, and is recorded in
+  the alerts of its message (that firing only: a later re-fire is not
+  covered), works once and for 24 hours, and is recorded in
   the audit log as "via notification link". On by default when a public URL is
   set; **Acknowledge and snooze from notifications** in the notification policy
   turns it off and revokes the links already sent. New public endpoints

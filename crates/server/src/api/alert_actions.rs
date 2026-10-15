@@ -176,10 +176,15 @@ async fn linked_alerts(state: &AppState, claims: &Claims) -> ApiResult<Vec<(Stri
     let rules = db::alerts::list_rules(&state.pool).await?;
     let now = Utc::now();
     let mut out = Vec::new();
-    for fingerprint in &claims.fingerprints {
-        let Some(alert) = db::alerts::get_active(&state.pool, fingerprint).await? else {
+    for linked in &claims.alerts {
+        let Some(alert) = db::alerts::get_active(&state.pool, &linked.fingerprint).await? else {
             continue;
         };
+        // Résolue puis redéclenchée depuis l'envoi : c'est un autre incident,
+        // que le lien n'a pas annoncé. Il compte comme résolu.
+        if !linked.same_episode(alert.state.firing_since) {
+            continue;
+        }
         let rule = rules.iter().find(|rule| rule.uid == alert.rule_uid);
         let target_name = match alert.target_id {
             Some(id) => {

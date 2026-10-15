@@ -477,7 +477,7 @@ mod tests {
         message.actions = crate::notify::action_link::build(
             &key,
             "https://monit.example.org",
-            &["cpu@1".to_string()],
+            &["cpu@1".into()],
             chrono::Utc::now(),
         );
         assert!(payload_for(&message, false).get("actions").is_none());

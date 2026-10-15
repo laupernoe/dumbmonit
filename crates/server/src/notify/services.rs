@@ -577,7 +577,7 @@ mod tests {
         message.actions = crate::notify::action_link::build(
             &key,
             base,
-            &["cpu@0000000000000001".to_string()],
+            &["cpu@0000000000000001".into()],
             chrono::Utc::now(),
         );
         message

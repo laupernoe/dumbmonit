@@ -118,7 +118,8 @@ Un lien ouvre une courte page de confirmation dans DumbMonit : **rien ne se pass
 tant que vous n'appuyez pas sur le bouton**. Les messageries, applications de chat
 et antivirus ouvrent les liens pour construire un aperçu ; ils ne font que charger
 la page. Aucune connexion n'est nécessaire : le lien est l'autorisation, et
-seulement pour ce geste, sur les alertes de ce message, une seule fois, pendant
+seulement pour ce geste, sur les alertes de ce message (ce déclenchement-là : une
+alerte résolue puis redéclenchée n'est plus couverte par l'ancien lien), une seule fois, pendant
 24 heures. L'action est inscrite au journal d'audit, et l'alerte indique
 « acknowledged by via notification link ».
 

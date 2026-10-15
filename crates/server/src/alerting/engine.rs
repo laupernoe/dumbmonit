@@ -394,8 +394,8 @@ async fn send_outgoing(
         };
         let mut message = notify::render_digest(&out.digest, public_url);
         if let (Some(key), Some(base)) = (action_key, public_url) {
-            let fingerprints = notify::message::actionable_fingerprints(&out.digest);
-            message.actions = notify::action_link::build(key, base, &fingerprints, now);
+            let alerts = notify::message::actionable_alerts(&out.digest);
+            message.actions = notify::action_link::build(key, base, &alerts, now);
         }
         let delivery = notify::deliver_stored(store, http, config, &message).await;
 
