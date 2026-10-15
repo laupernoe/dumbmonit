@@ -52,6 +52,7 @@
 //! | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |
 //! | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Présence ; étiquette `version`. |
 //! | `probe_ssl_cert_expiry_days` | tls, http, smtp, mqtt, websocket | Jours avant expiration, négatif si périmé. |
+//! | `probe_http_security_header` | http (https seulement) | 0/1 par étiquette `header` : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 //! | `probe_ssl_cert_valid` | tls, http, smtp, mqtt, websocket | La chaîne remonte à une autorité connue. |
 //! | `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket | Présence ; étiquette `issuer`. |
 //! | `probe_dns_lookup_seconds` | dns | Temps de résolution. |
@@ -108,6 +109,7 @@ pub(crate) mod websocket;
 
 pub use dns::DnsCollector;
 pub use http::HttpCollector;
+pub use http::security_headers::security_headers;
 pub use mqtt::MqttCollector;
 pub use ntp::NtpCollector;
 pub use ping::{PingCollector, icmp_available};

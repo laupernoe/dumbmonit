@@ -6,7 +6,7 @@
 //! lus par le collecteur aujourd'hui : voir la documentation.
 
 use super::super::facts::list;
-use super::super::{Category, Check, CheckDef, Facts, SecurityProvider, Severity};
+use super::super::{Category, Check, CheckDef, Facts, Guide, SecurityProvider, Severity};
 use super::zero_everywhere;
 
 pub const SECURITY_UPDATES: CheckDef = CheckDef {
@@ -112,6 +112,18 @@ pub const DEFS: &[&CheckDef] = &[
     &BACKUP_JOBS,
 ];
 
+/// Par où commencer pour améliorer la note.
+pub const PROXMOX_GUIDE: Guide = Guide {
+    product: "Proxmox VE",
+    anchor: "proxmox-ve",
+    steps: &[
+        "Use a package repository you are entitled to: the enterprise repository with a subscription, otherwise pve-no-subscription. Never pvetest on a node that matters (node > Updates > Repositories).",
+        "Install updates from the node's Updates panel (or `apt update && apt full-upgrade`), then reboot so the new kernel actually runs.",
+        "Put every VM and container in a backup job (Datacenter > Backup), ideally to a Proxmox Backup Server, and fix any job that fails.",
+        "Replace the self-signed web certificate with an ACME one (node > System > Certificates) so it renews on its own.",
+    ],
+};
+
 pub struct Proxmox;
 
 impl SecurityProvider for Proxmox {
@@ -133,6 +145,10 @@ impl SecurityProvider for Proxmox {
             "proxmox_backup_jobs_total",
             "proxmox_backup_job_last_ok",
         ]
+    }
+
+    fn guide(&self, _kind: &str, _facts: &Facts) -> Guide {
+        PROXMOX_GUIDE
     }
 
     fn evaluate(&self, _kind: &str, facts: &Facts) -> Vec<Check> {

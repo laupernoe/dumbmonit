@@ -21,6 +21,7 @@ All metrics are prefixed `dumbmonit_synology_`.
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | per task |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (see below) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (see below) | |
+| Security settings | `update_available`, `admin_account_enabled`, `autoblock_enabled`, `firewall_enabled` (`0`/`1`; read hourly, administrator account only, optional: absent when DSM refuses) | |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Active Backup for Business metrics are the exception: they are prefixed

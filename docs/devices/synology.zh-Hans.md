@@ -17,6 +17,7 @@ Synology NAS 通过 DSM Web API：卷、存储池、磁盘健康、温度、Hype
 | Hyper Backup | `backup_tasks`、`backup_running`、`backup_last_result`、`backup_last_run_age_seconds`、`backup_last_success_age_seconds`、`backup_next_run_in_seconds` | 每个任务 |
 | Synology Drive | `drive_up`、`drive_team_folders`、`drive_team_folder_info`、`drive_connections`（见下面） | `drive_team_folder_info`：`name` |
 | Synology Photos | `photos_installed`（见下面） | |
+| 安全设置 | `update_available`、`admin_account_enabled`、`autoblock_enabled`、`firewall_enabled`（`0`/`1`；每小时读取一次，仅限管理员账户，可选：DSM 拒绝时缺失） | |
 | 收集 | `up`、`scrape_errors`、`scrape_duration_seconds` | |
 
 Active Backup for Business 指标是例外：它们以 `dumbmonit_abb_` 为前缀（见下面）。

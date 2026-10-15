@@ -29,6 +29,7 @@
 		type SettingsTab
 	} from '#lib/components/settings/tabs.js';
 	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
+	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
@@ -64,7 +65,7 @@
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
 		account: [AppearanceSection, SecuritySection, PushSection],
 		team: [UsersSection, SsoSection],
-		monitoring: [AgentsSection, PacksSection],
+		monitoring: [AgentsSection, PacksSection, SecurityScoreSection],
 		notifications: [NotifyLinksSection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection] : [])],
 		system: [BackupSection, AssistantSection, AboutSection]
