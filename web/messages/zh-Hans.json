@@ -5229,6 +5229,8 @@
 	"settings_tab_system": "系统",
 	"settings_tab_team": "团队与访问",
 	"settings_tab_wall": "墙面显示",
+	"settings_unsaved_badge": "有未保存的更改",
+	"settings_unsaved_confirm": "有未保存的更改。要离开此页面并放弃更改吗？",
 	"settings_update_available": "有可用更新：v{version}",
 	"settings_update_backup_body": "设置 → 备份，并保留 /data/secret.key 的副本（没有它，已存储的密码和令牌将无法解密）。",
 	"settings_update_backup_lead": "请先备份。",

@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "Sistema",
 	"settings_tab_team": "Equipe e acesso",
 	"settings_tab_wall": "Tela de parede",
+	"settings_unsaved_badge": "Alterações não salvas",
+	"settings_unsaved_confirm": "Há alterações não salvas. Sair desta página e descartá-las?",
 	"settings_update_available": "Atualização disponível: v{version}",
 	"settings_update_backup_body": "Configurações → Backup, e guarde uma cópia de /data/secret.key (sem ela, as senhas e os tokens armazenados não podem ser descriptografados).",
 	"settings_update_backup_lead": "Faça primeiro uma cópia de segurança.",

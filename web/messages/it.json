@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "Sistema",
 	"settings_tab_team": "Team e accesso",
 	"settings_tab_wall": "Schermo a parete",
+	"settings_unsaved_badge": "Modifiche non salvate",
+	"settings_unsaved_confirm": "Ci sono modifiche non salvate. Lasciare la pagina e scartarle?",
 	"settings_update_available": "Aggiornamento disponibile: v{version}",
 	"settings_update_backup_body": "Impostazioni → Backup, e conserva una copia di /data/secret.key (senza di essa, password e token memorizzati non possono essere decifrati).",
 	"settings_update_backup_lead": "Esegui prima un backup.",

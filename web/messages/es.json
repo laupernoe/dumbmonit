@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "Sistema",
 	"settings_tab_team": "Equipo y acceso",
 	"settings_tab_wall": "Pantalla mural",
+	"settings_unsaved_badge": "Cambios sin guardar",
+	"settings_unsaved_confirm": "Hay cambios sin guardar. ¿Salir de esta página y descartarlos?",
 	"settings_update_available": "Actualización disponible: v{version}",
 	"settings_update_backup_body": "Ajustes → Copia de seguridad, y conserve una copia de /data/secret.key (sin ella, las contraseñas y los tokens almacenados no se pueden descifrar).",
 	"settings_update_backup_lead": "Haga una copia de seguridad primero.",

@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "System",
 	"settings_tab_team": "Team & access",
 	"settings_tab_wall": "Wall display",
+	"settings_unsaved_badge": "Unsaved changes",
+	"settings_unsaved_confirm": "You have unsaved changes. Leave this page and discard them?",
 	"settings_update_available": "Update available: v{version}",
 	"settings_update_backup_body": "Settings → Backup, and keep a copy of /data/secret.key (without it, stored passwords and tokens cannot be decrypted).",
 	"settings_update_backup_lead": "Back up first.",

@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "Système",
 	"settings_tab_team": "Équipe et accès",
 	"settings_tab_wall": "Mur",
+	"settings_unsaved_badge": "Modifications non enregistrées",
+	"settings_unsaved_confirm": "Des modifications ne sont pas enregistrées. Quitter cette page et les perdre ?",
 	"settings_update_available": "Mise à jour disponible : v{version}",
 	"settings_update_backup_body": "Réglages → Sauvegarde, et gardez une copie de /data/secret.key (sans lui, les mots de passe et jetons stockés ne peuvent pas être déchiffrés).",
 	"settings_update_backup_lead": "Sauvegardez d'abord.",

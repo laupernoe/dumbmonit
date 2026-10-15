@@ -31,6 +31,9 @@ All notable changes to this project are documented here. The format follows
   open a settings section, keyboard shortcuts, sign out) limited to what your role may do, and
   shows each shortcut. New global shortcuts outside text fields: `g o` overview, `g d` devices,
   `g a` alerts, `g s` status pages, `g n` add a monitor, `g t` theme, `?` for the help dialog.
+- **Unsaved-changes warning in Settings.** The SSO, Wall news and Reports forms
+  now show "Unsaved changes" next to Save and ask before you leave the page or
+  close the tab.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs

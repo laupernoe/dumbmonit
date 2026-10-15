@@ -5308,6 +5308,8 @@
 	"settings_tab_system": "System",
 	"settings_tab_team": "Team & Zugang",
 	"settings_tab_wall": "Wandanzeige",
+	"settings_unsaved_badge": "Ungespeicherte Änderungen",
+	"settings_unsaved_confirm": "Es gibt ungespeicherte Änderungen. Seite verlassen und verwerfen?",
 	"settings_update_available": "Update verfügbar: v{version}",
 	"settings_update_backup_body": "Einstellungen → Sicherung, und bewahren Sie eine Kopie von /data/secret.key auf (ohne sie lassen sich gespeicherte Passwörter und Tokens nicht entschlüsseln).",
 	"settings_update_backup_lead": "Zuerst sichern.",

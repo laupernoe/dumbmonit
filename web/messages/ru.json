@@ -5466,6 +5466,8 @@
 	"settings_tab_system": "Система",
 	"settings_tab_team": "Команда и доступ",
 	"settings_tab_wall": "Настенный экран",
+	"settings_unsaved_badge": "Несохранённые изменения",
+	"settings_unsaved_confirm": "Есть несохранённые изменения. Покинуть страницу и отбросить их?",
 	"settings_update_available": "Доступно обновление: v{version}",
 	"settings_update_backup_body": "Настройки → Резервная копия, и сохраните копию /data/secret.key (без неё сохранённые пароли и токены не расшифровать).",
 	"settings_update_backup_lead": "Сначала сделайте резервную копию.",
