@@ -93,6 +93,7 @@
 	"alerts_history_count": "{shown} из {total}",
 	"alerts_history_deleted_device": "(удалённый монитор)",
 	"alerts_history_device": "Монитор",
+	"alerts_history_empty_action": "Просмотреть правила",
 	"alerts_history_empty_description": "Здесь появятся изменения состояния оповещений, когда правила начнут срабатывать и устраняться.",
 	"alerts_history_empty_title": "Истории пока нет.",
 	"alerts_history_error_clear": "Не удалось очистить эту запись.",

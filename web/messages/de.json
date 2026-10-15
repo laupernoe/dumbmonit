@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} von {total}",
 	"alerts_history_deleted_device": "(gelöschter Monitor)",
 	"alerts_history_device": "Monitor",
+	"alerts_history_empty_action": "Regeln ansehen",
 	"alerts_history_empty_description": "Statuswechsel von Warnungen erscheinen hier, sobald Regeln auslösen und sich lösen.",
 	"alerts_history_empty_title": "Noch kein Verlauf.",
 	"alerts_history_error_clear": "Dieser Eintrag konnte nicht gelöscht werden.",

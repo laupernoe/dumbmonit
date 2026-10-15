@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} sur {total}",
 	"alerts_history_deleted_device": "(surveillance supprimée)",
 	"alerts_history_device": "Surveillance",
+	"alerts_history_empty_action": "Consulter les règles",
 	"alerts_history_empty_description": "Les changements d'état des alertes apparaissent ici quand les règles se déclenchent et se résolvent.",
 	"alerts_history_empty_title": "Pas encore d'historique.",
 	"alerts_history_error_clear": "Impossible d'effacer cette entrée.",

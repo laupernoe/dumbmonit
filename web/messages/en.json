@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} of {total}",
 	"alerts_history_deleted_device": "(deleted monitor)",
 	"alerts_history_device": "Monitor",
+	"alerts_history_empty_action": "Review the rules",
 	"alerts_history_empty_description": "Alert transitions appear here as rules start firing and resolving.",
 	"alerts_history_empty_title": "No history yet.",
 	"alerts_history_error_clear": "Could not clear this entry.",

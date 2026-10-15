@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} de {total}",
 	"alerts_history_deleted_device": "(monitor eliminado)",
 	"alerts_history_device": "Monitor",
+	"alerts_history_empty_action": "Revisar las reglas",
 	"alerts_history_empty_description": "Los cambios de estado de las alertas aparecerán aquí cuando las reglas se activen y se resuelvan.",
 	"alerts_history_empty_title": "Aún no hay historial.",
 	"alerts_history_error_clear": "No se pudo borrar esta entrada.",

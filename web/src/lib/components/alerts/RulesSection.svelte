@@ -552,6 +552,7 @@
 		icon={SlidersHorizontal}
 		title={m.alerts_rules_empty_title()}
 		description={m.alerts_rules_empty_description()}
+		primary={auth.isAdmin && !creating ? { label: m.alerts_rules_new(), onclick: () => (creating = true) } : undefined}
 	/>
 {:else}
 	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -590,7 +591,12 @@
 	</p>
 
 	{#if shown.length === 0}
-		<EmptyState icon={Search} title={m.alerts_rules_nomatch_title()} description={m.alerts_rules_nomatch_description()} />
+		<EmptyState
+			icon={Search}
+			title={m.alerts_rules_nomatch_title()}
+			description={m.alerts_rules_nomatch_description()}
+			primary={{ label: m.devices_targets_clear_filters(), onclick: () => ((search = ''), (kindFilter = ''), (quick = 'all')) }}
+		/>
 	{:else}
 		<div class="space-y-2">
 			{#each groups as [kind, groupRules] (kind)}

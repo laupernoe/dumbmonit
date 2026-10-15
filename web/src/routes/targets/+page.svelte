@@ -952,6 +952,7 @@
 		mascot="watch"
 		title={m.devices_targets_empty_title()}
 		description={auth.isAdmin ? m.devices_targets_empty_admin() : m.devices_targets_empty_viewer()}
+		secondary={auth.isAdmin ? { label: m.deviceform_new_scan(), href: '/targets/new?scan=1' } : undefined}
 	>
 		{#snippet action()}
 			{#if auth.isAdmin}

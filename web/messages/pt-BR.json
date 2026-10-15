@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} de {total}",
 	"alerts_history_deleted_device": "(monitor excluído)",
 	"alerts_history_device": "Monitor",
+	"alerts_history_empty_action": "Ver as regras",
 	"alerts_history_empty_description": "As mudanças de estado dos alertas aparecem aqui quando as regras disparam e são resolvidas.",
 	"alerts_history_empty_title": "Ainda não há histórico.",
 	"alerts_history_error_clear": "Não foi possível limpar esta entrada.",

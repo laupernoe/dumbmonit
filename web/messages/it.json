@@ -91,6 +91,7 @@
 	"alerts_history_count": "{shown} di {total}",
 	"alerts_history_deleted_device": "(monitor eliminato)",
 	"alerts_history_device": "Monitor",
+	"alerts_history_empty_action": "Controlla le regole",
 	"alerts_history_empty_description": "Le transizioni degli avvisi compaiono qui quando le regole scattano e si risolvono.",
 	"alerts_history_empty_title": "Ancora nessuna cronologia.",
 	"alerts_history_error_clear": "Impossibile cancellare questa voce.",

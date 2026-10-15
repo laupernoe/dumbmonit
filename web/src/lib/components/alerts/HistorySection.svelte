@@ -158,6 +158,11 @@
 	let deviceFilter = $state('all');
 	let severityFilter = $state<SeverityFilter>('all');
 	let onlyNotified = $state(false);
+	function clearFilters() {
+		deviceFilter = 'all';
+		severityFilter = 'all';
+		onlyNotified = false;
+	}
 
 	/** Devices that appear in the log, so the select offers only useful choices. */
 	const deviceOptions = $derived.by(() => {
@@ -270,6 +275,7 @@
 		icon={History}
 		title={m.alerts_history_empty_title()}
 		description={m.alerts_history_empty_description()}
+		secondary={{ label: m.alerts_history_empty_action(), href: '/alerts#rules' }}
 	/>
 {:else}
 	<!-- Filter row -->
@@ -325,7 +331,7 @@
 	{/if}
 
 	{#if groups.length === 0}
-		<EmptyState icon={History} title={m.alerts_history_nomatch_title()} description={m.alerts_history_nomatch_description()} />
+		<EmptyState icon={History} title={m.alerts_history_nomatch_title()} description={m.alerts_history_nomatch_description()} primary={{ label: m.devices_targets_clear_filters(), onclick: clearFilters }} />
 	{:else}
 		<div class="space-y-6">
 			{#each groups as group, gi (group.key)}

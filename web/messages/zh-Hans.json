@@ -90,6 +90,7 @@
 	"alerts_history_count": "{shown} / {total}",
 	"alerts_history_deleted_device": "(已删除的监控项)",
 	"alerts_history_device": "监控项",
+	"alerts_history_empty_action": "查看规则",
 	"alerts_history_empty_description": "规则触发和恢复时,告警状态变化会显示在这里。",
 	"alerts_history_empty_title": "暂无历史记录。",
 	"alerts_history_error_clear": "无法清除此条目。",
