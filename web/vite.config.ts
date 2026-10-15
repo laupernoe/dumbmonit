@@ -5,6 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vite';
 
+// Pas de @types/node dans le projet : on ne déclare que ce qui sert ici.
+declare const process: { env: Record<string, string | undefined> };
+
 const PROXY = { target: process.env.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
 
 export default defineConfig({
