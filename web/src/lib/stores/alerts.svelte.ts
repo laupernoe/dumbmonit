@@ -11,6 +11,7 @@
  */
 import { browser } from '$app/env';
 import { listAlerts, listTargets, type Alert, type Target } from '#lib/api/index.js';
+import { countsAsProblem } from '#lib/alerts-attention.js';
 import { displayState, type ProbeStatus } from '#lib/format.js';
 import { loadProbeStatuses } from '#lib/metrics.js';
 
@@ -33,14 +34,12 @@ class AlertsStore {
 
 	/**
 	 * Alerts that actually need attention: firing right now, not suppressed
-	 * by an offline parent, and not acknowledged (someone already knows).
+	 * by an offline parent, and not acknowledged (someone already knows), and not merely informative.
 	 * Pending ("building up") and resolved ones are not counted — they are not
 	 * yet, or no longer, a problem.
 	 */
 	get activeCount(): number {
-		const firing = this.alerts.filter(
-			(alert) => alert.effective_phase === 'firing' && !alert.acked
-		);
+		const firing = this.alerts.filter(countsAsProblem);
 		const covered = new Set(
 			this.alerts
 				.filter((alert) => alert.effective_phase === 'firing')

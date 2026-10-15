@@ -263,6 +263,8 @@
 	let probeError = $state<unknown>(null);
 	let probeTimer: ReturnType<typeof setTimeout> | null = null;
 
+	/** False once the monitor is switched off: nothing to probe, nothing collected. */
+	const monitorOn = $derived(target?.enabled ?? true);
 	let enabledDraft = $state(true);
 	let savingEnabled = $state(false);
 	let enabledError = $state<unknown>(null);
@@ -576,12 +578,20 @@
 			</div>
 
 			<div class="flex min-w-0 max-w-full flex-wrap items-center gap-2 max-sm:[&_a]:h-auto max-sm:[&_a]:min-h-10 max-sm:[&_a]:whitespace-normal max-sm:[&_a]:py-1.5 lg:shrink-0 lg:justify-end">
-				<Button variant="secondary" onclick={probe} loading={probing}>
-					<Activity class="size-4" aria-hidden="true" />
-					{m.devices_target_probe_now()}
-				</Button>
+				{#if target.enabled}
+					<Button variant="secondary" onclick={probe} loading={probing}>
+						<Activity class="size-4" aria-hidden="true" />
+						{m.devices_target_probe_now()}
+					</Button>
+				{:else if auth.isAdmin}
+					<Button variant="primary" onclick={() => void setEnabled(true)} loading={savingEnabled}>
+						{m.devices_target_enable()}
+					</Button>
+				{/if}
 				{#if auth.isAdmin}
-					<SilenceControl {target} {refreshKey} />
+					{#if target.enabled}
+						<SilenceControl {target} {refreshKey} />
+					{/if}
 					<Button variant="secondary" href={`/targets/${target.id}/edit`}>
 						<Pencil class="size-4" aria-hidden="true" />
 						{m.devices_target_edit()}
@@ -610,7 +620,7 @@
 						{/snippet}
 					</Menu>
 				{:else}
-					{#if auth.canOperate}
+					{#if auth.canOperate && target.enabled}
 						<SilenceControl {target} {refreshKey} />
 					{/if}
 					<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
@@ -731,9 +741,11 @@
 					{#if responseTimes.length > 0}
 						<Chart series={responseTimes} unit="ms" height={220} />
 					{:else}
-						<EmptyState title={m.devices_target_no_check_title()} description={m.devices_target_no_check_desc()}>
+						<EmptyState title={m.devices_target_no_check_title()} description={target.enabled ? m.devices_target_no_check_desc() : m.devices_target_disabled_empty()}>
 							{#snippet action()}
-								<Button variant="secondary" size="sm" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+								{#if monitorOn}
+									<Button variant="secondary" size="sm" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+								{/if}
 							{/snippet}
 						</EmptyState>
 					{/if}
@@ -746,9 +758,11 @@
 				<Skeleton class="h-72 w-full rounded-[var(--radius-card)]" rows={2} />
 			</div>
 		{:else if groups.length === 0 && target.kind !== 'agent'}
-			<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
+			<EmptyState title={m.devices_target_no_data_title()} description={target.enabled ? m.devices_target_no_data_desc() : m.devices_target_disabled_empty()}>
 				{#snippet action()}
-					<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+					{#if monitorOn}
+						<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+					{/if}
 				{/snippet}
 			</EmptyState>
 		{:else}
@@ -847,9 +861,11 @@
 				{/if}
 
 				{#if groups.length === 0}
-					<EmptyState title={m.devices_target_no_data_title()} description={m.devices_target_no_data_desc()}>
+					<EmptyState title={m.devices_target_no_data_title()} description={target.enabled ? m.devices_target_no_data_desc() : m.devices_target_disabled_empty()}>
 						{#snippet action()}
-							<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+							{#if monitorOn}
+								<Button variant="secondary" onclick={probe} loading={probing}>{m.devices_target_probe_now()}</Button>
+							{/if}
 						{/snippet}
 					</EmptyState>
 				{/if}

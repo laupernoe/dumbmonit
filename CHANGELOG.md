@@ -49,6 +49,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or silence controls on a disabled monitor; an "Enable" button takes their place.
+- **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
+- **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
+- **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.

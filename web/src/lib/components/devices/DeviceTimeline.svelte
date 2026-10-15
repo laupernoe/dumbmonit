@@ -369,7 +369,11 @@
 	</div>
 {:else if empty}
 	<p class="flex flex-wrap items-center gap-2 text-sm text-ink-2">
-		<Plate tone="signal" label={m.devices_timeline_reporting()} />
+		{#if target && !target.enabled}
+			<Plate tone="ghost" label={m.misc_state_disabled()} />
+		{:else}
+			<Plate tone="signal" label={m.devices_timeline_reporting()} />
+		{/if}
 		{m.devices_timeline_never()}
 	</p>
 {:else}

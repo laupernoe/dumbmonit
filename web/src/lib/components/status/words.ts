@@ -3,6 +3,7 @@
  * settings section so both say the same thing about the same state.
  */
 import { m } from '#lib/paraglide/messages.js';
+import { tallyItems } from '#lib/components/status/tally.js';
 import type { Tone } from '#lib/ui/Plate.svelte';
 import type { IncidentKind, IncidentStatus, PublicItemState, PublicOverall, PublicStatus, StatusPageAccent } from '#lib/api/index.js';
 
@@ -36,6 +37,12 @@ export function overallBanner(status: PublicStatus): Banner {
 	if (down > 0 && down === items.length) return { plate: m.status_words_plate_outage(), ...OVERALL.major };
 	if (down > 0 || degraded > 0) return { plate: m.status_words_item_degraded(), ...OVERALL.degraded };
 	const open = status.incidents.filter((incident) => !isClosed(incident.status));
+	// Nothing measured yet (services disabled or never probed): "operational"
+	// would be a claim without evidence.
+	const tally = tallyItems(items);
+	if (tally.total > 0 && tally.known === 0 && open.length === 0) {
+		return { plate: m.status_words_item_no_data(), label: m.status_words_overall_no_data(), tone: 'ghost' };
+	}
 	if (open.length > 0) {
 		const major = open.some((incident) => incident.severity === 'major');
 		return { plate: m.status_words_kind_incident(), label: m.status_words_incident_in_progress(), tone: major ? 'warning' : 'advisory' };
