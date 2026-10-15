@@ -1,23 +1,33 @@
 # Réglages
 
-![Réglages : compte, utilisateurs, connexion unique, agents, assistant, apparence, à propos](../assets/screenshots/settings-light.png){ loading=lazy }
+![Réglages : sept onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Réglages contient ce qui est administratif : votre compte, qui peut se
-connecter et comment, les jetons qui laissent entrer agents et
-assistants, la sauvegarde de l'instance, le thème, et la santé du
-serveur. Une page, une section par sujet, avec un rail d'ancres sur un
-grand écran et une bande de puces sur un téléphone. Chaque section est
-partageable par lien (`/settings#agents`).
+Réglages contient ce qui est administratif : votre compte, qui peut se connecter et comment, les jetons qui laissent entrer agents et assistants, la sauvegarde de l'instance, le thème, et la santé du serveur. Il est découpé en sept onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
 
-Deux sections portent le côté public et sortant de DumbMonit :
-
-| Vous cherchez | Où | Lien |
+| Onglet | Adresse | Contenu |
 |---|---|---|
-| Canaux de notification, heures calmes, politique de notification, rapports | **Réglages → Notifications et rapports** ([Canaux de notification](../notifications.md)) | `/settings/notifications` |
-| Pages d'état et annonces | **Réglages → Pages de statut** ([Pages d'état](status-pages.md)) | `/settings/status` |
+| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push |
+| Équipe et accès | `/settings/team` | Utilisateurs, Authentification unique |
+| Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md) |
+| Notifications et rapports | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)), Rapports |
+| Pages de statut | `/settings/status` | Pages d'état et annonces ([Pages d'état](status-pages.md)) |
+| Mur | `/settings/wall` | Mode mural, Musique murale, Actualités murales ([Mode mural](overview.md#wall-mode)) |
+| Système | `/settings/system` | Sauvegarde, DumbMonit lui-même, API et assistants, À propos |
 
-Les anciens liens (`/alerts#notifications`, `/status`) redirigent vers le
-nouvel emplacement.
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`, `/status`) redirigent aussi vers le nouvel emplacement.
+
+## Apparence
+
+Trois tuiles, chacune prévisualisant son propre thème : **Système** (suit
+votre appareil et change avec lui), **Jour** (le thème « papier
+graphique ») et **Nuit** (le thème « radar »). Le choix est stocké dans
+le navigateur. L'interrupteur de l'en-tête et le *Basculer le thème* de
+la palette de commandes alternent entre jour et nuit.
+
+**Ouvrir le mode mur** se trouve en bas de la section : le bulletin
+seul, plein écran, pour un moniteur dans la pièce. ++esc++ le quitte, et
+la palette de commandes l'ouvre depuis n'importe où — voir
+[Mode mur](overview.md#wall-mode).
 
 ## Compte et sécurité
 
@@ -204,28 +214,18 @@ Un jeton peut enrôler plusieurs machines. Le révoquer ne supprime pas les
 surveillances. Les lecteurs voient la liste et la section lit *Lecteur —
 lecture seule* ; créer et révoquer sont réservés aux administrateurs.
 
-## API & assistants
+## Score de sécurité {#security-score}
 
-Un seul type de jeton pour les deux : clients MCP et
-[API REST](../reference/api.md). Nommez un jeton, choisissez sa portée et
-créez-le — il est montré une fois. Un jeton **read** ne peut que
-regarder ; un jeton **read and write** peut aussi changer des choses —
-mettre en silence une surveillance, lancer une sonde, ajouter ou modifier des
-surveillances, règles et canaux — mais jamais les comptes, les réglages de
-connexion ni d'autres jetons.
+Dans **Réglages → Supervision**, sous les agents : une note qui dit à quel point l'instance et les hôtes surveillés sont durcis. Voir [Score de sécurité](security-score.md).
 
-Sous **Connecter**, trois onglets contiennent les extraits, remplis avec
-le jeton tant qu'il est encore à l'écran : *Claude* (la commande
-`claude mcp add` et le bloc `claude_desktop_config.json`), *ChatGPT*
-(l'URL du serveur MCP et l'en-tête d'autorisation, avec un avertissement
-quand cette page n'est pas servie en HTTPS — ChatGPT se connecte depuis
-les serveurs d'OpenAI, l'adresse doit donc être accessible depuis
-l'internet) et *Cursor / autre*, la même forme pour tout client qui parle
-Streamable HTTP avec un en-tête bearer. **Accès API** montre le même
-jeton sur l'API REST comme un exemple `curl`, et pointe vers les routes
-qu'un Prometheus ou un Grafana sonde avec lui. Voir
-[Connecter un assistant](assistant.md) et
-[Sonder DumbMonit](../reference/metrics.md#scraping-dumbmonit).
+## Rapports
+
+Dans **Réglages → Notifications et rapports**, sous la politique : emails de
+disponibilité périodiques pour l'équipe. Choisissez
+hebdomadaire, quotidien ou mensuel, le jour, l'heure et le fuseau
+horaire, les destinataires et le canal email, puis **Envoyer un aperçu**
+pour voir le résultat. Réservé aux administrateurs. Voir
+[Rapports par email](reports.md).
 
 ## Sauvegarde
 
@@ -275,27 +275,28 @@ rangée chiffrée et n'est plus jamais affichée, seul son hôte. La modifier es
 réservé aux administrateurs. Voir
 [Surveiller DumbMonit lui-même](../install/self-monitoring.md).
 
-## Rapports
+## API & assistants
 
-Dans **Réglages → Notifications et rapports**, sous la politique : emails de
-disponibilité périodiques pour l'équipe. Choisissez
-hebdomadaire, quotidien ou mensuel, le jour, l'heure et le fuseau
-horaire, les destinataires et le canal email, puis **Envoyer un aperçu**
-pour voir le résultat. Réservé aux administrateurs. Voir
-[Rapports par email](reports.md).
+Un seul type de jeton pour les deux : clients MCP et
+[API REST](../reference/api.md). Nommez un jeton, choisissez sa portée et
+créez-le — il est montré une fois. Un jeton **read** ne peut que
+regarder ; un jeton **read and write** peut aussi changer des choses —
+mettre en silence une surveillance, lancer une sonde, ajouter ou modifier des
+surveillances, règles et canaux — mais jamais les comptes, les réglages de
+connexion ni d'autres jetons.
 
-## Apparence
-
-Trois tuiles, chacune prévisualisant son propre thème : **Système** (suit
-votre appareil et change avec lui), **Jour** (le thème « papier
-graphique ») et **Nuit** (le thème « radar »). Le choix est stocké dans
-le navigateur. L'interrupteur de l'en-tête et le *Basculer le thème* de
-la palette de commandes alternent entre jour et nuit.
-
-**Ouvrir le mode mur** se trouve en bas de la section : le bulletin
-seul, plein écran, pour un moniteur dans la pièce. ++esc++ le quitte, et
-la palette de commandes l'ouvre depuis n'importe où — voir
-[Mode mur](overview.md#wall-mode).
+Sous **Connecter**, trois onglets contiennent les extraits, remplis avec
+le jeton tant qu'il est encore à l'écran : *Claude* (la commande
+`claude mcp add` et le bloc `claude_desktop_config.json`), *ChatGPT*
+(l'URL du serveur MCP et l'en-tête d'autorisation, avec un avertissement
+quand cette page n'est pas servie en HTTPS — ChatGPT se connecte depuis
+les serveurs d'OpenAI, l'adresse doit donc être accessible depuis
+l'internet) et *Cursor / autre*, la même forme pour tout client qui parle
+Streamable HTTP avec un en-tête bearer. **Accès API** montre le même
+jeton sur l'API REST comme un exemple `curl`, et pointe vers les routes
+qu'un Prometheus ou un Grafana sonde avec lui. Voir
+[Connecter un assistant](assistant.md) et
+[Sonder DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
 ## À propos
 

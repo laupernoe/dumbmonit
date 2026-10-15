@@ -25,20 +25,20 @@ export const RELEASES: Release[] = [
 		date: '2026-10-16',
 		highlights: [
 			{
-				title: 'A calmer Alerts page',
-				text: 'One line per problem with Ack and Open on it, grouped by severity or monitor, and a Select mode for bulk actions. Notification channels and status pages now live in Settings.'
+				title: 'Simpler Alerts and Monitors',
+				text: 'Alerts is a calm list, one line per problem with Ack and Open on it. What you watch is now called a monitor, and the Monitors page has one toolbar and a Select mode for bulk actions.'
 			},
 			{
 				title: 'Act on alerts from the notification',
 				text: 'Acknowledge or snooze from a button or a signed link in the message, on ntfy, Telegram, Web Push, Discord, Slack, e-mail and more.'
 			},
 			{
-				title: 'A map, and a device per service',
-				text: 'The new Map page draws parents, relays, VMs and network neighbours by itself. Docker, backups, ZFS, WireGuard and the like found by an agent each get their own status and alerts.'
+				title: 'A monitor per service, and a map',
+				text: 'Docker, backups, ZFS, WireGuard and the like found by an agent each get their own status and alerts. The Map page draws parents, relays and VMs by itself.'
 			},
 			{
 				title: 'Who watches the watcher',
-				text: 'An outgoing heartbeat tells an outside service that DumbMonit is alive, new rules watch its own health, and the container now reports healthy to Docker.'
+				text: 'An outgoing heartbeat tells an outside service that DumbMonit is alive, new rules watch its own health, Docker shows the container as healthy, and a bind-mounted /data just works.'
 			},
 			{
 				title: 'Easier to start, more to monitor',

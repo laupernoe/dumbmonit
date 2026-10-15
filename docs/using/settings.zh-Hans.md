@@ -1,17 +1,26 @@
 # 设置 {#settings}
 
-![Settings: account, users, single sign-on, agents, assistant, appearance, about](../assets/screenshots/settings-light.png){ loading=lazy }
+![Settings：七个标签页，此处为“我的账户”，含外观、账户和安全与推送通知](../assets/screenshots/settings-light.png){ loading=lazy }
 
-设置页面存放与管理相关的内容：你的账户、谁可以登录以及如何登录、让代理和助手接入的令牌、实例备份、主题，以及服务器的健康状况。一个页面，每个主题一个分区，宽屏上有锚点导航栏，手机上则是一排标签条。每个分区都可以直接链接（`/settings#agents`）。
+设置页面存放与管理相关的内容：你的账户、谁可以登录以及如何登录、让代理和助手接入的令牌、实例备份、主题，以及服务器的健康状况。它分为七个标签页，每个都有自己的地址。宽屏上有侧边导航栏，手机上是一排标签条，还有一个可搜索分区名称的搜索框，帮助你找到所需分区。
 
-有两个分区承载 DumbMonit 面向外部和对外发送的部分：
-
-| 要找的内容 | 位置 | 链接 |
+| 标签页 | 地址 | 内容 |
 |---|---|---|
-| 通知渠道、静默时段、通知策略、报告 | **设置 → 通知与报告**（[通知渠道](../notifications.md)） | `/settings/notifications` |
-| 状态页面与公告 | **设置 → 状态页面**（[状态页面](status-pages.md)） | `/settings/status` |
+| 我的账户 | `/settings/account` | 外观、账户和安全（密码、双因素、安全日志）、推送通知 |
+| 团队与访问 | `/settings/team` | 用户、单点登录 |
+| 监控 | `/settings/monitoring` | 代理、集成包、[安全评分](security-score.md) |
+| 通知与报告 | `/settings/notifications` | 渠道、通知策略、静音时段（[通知渠道](../notifications.md)）、报告 |
+| 状态页 | `/settings/status` | 状态页面与公告（[状态页面](status-pages.md)） |
+| 墙屏显示 | `/settings/wall` | 墙屏模式、墙屏音乐、墙屏新闻（[墙屏模式](overview.md#wall-mode)） |
+| 系统 | `/settings/system` | 备份、DumbMonit 自身、API 和助手、关于 |
 
-旧链接（`/alerts#notifications`、`/status`）会跳转到新位置。
+每个分区都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`、`/status`）也会跳转到新位置。
+
+## 外观 {#appearance}
+
+三个图块，各自预览自己的主题：**系统**（跟随你的设备并随之切换）、**日间**（“图表纸”主题）和**夜间**（“雷达”主题）。选择保存在浏览器中。页眉的切换按钮和命令面板的*切换主题*在日间和夜间之间切换。
+
+**打开墙面模式**位于该分区底部：仅显示公告栏，全屏，适合放在房间里的显示器上。++esc++ 退出，命令面板可在任何地方打开它——参见[墙面模式](overview.md#wall-mode)。
 
 ## 账户与安全 {#account--security}
 
@@ -69,11 +78,13 @@
 
 一个令牌可以注册多台机器。吊销它不会删除监控项。令牌列表、创建和吊销仅限管理员；查看者和操作员看到的分区不含列表。
 
-## API 与助手 {#api--assistants}
+## 安全评分 {#security-score}
 
-两者使用同一种令牌：MCP 客户端和 [REST API](../reference/api.md)。为令牌命名、选择其范围并创建——它只显示一次。**只读**令牌只能查看；**读写**令牌还能更改内容——静默监控项、运行探测、添加或编辑监控项、规则和渠道——但绝不能更改账户、登录设置或其他令牌。
+在 **设置 → 监控** 中，代理下方：衡量实例及被监控主机加固程度的评分。参见[安全评分](security-score.md)。
 
-在**连接**下，三个标签页存放代码片段，并在令牌仍显示在屏幕上时已填入该令牌：*Claude*（`claude mcp add` 命令和 `claude_desktop_config.json` 代码块）、*ChatGPT*（MCP 服务器 URL 和授权头；当此页面不是通过 HTTPS 提供时会给出警告——ChatGPT 从 OpenAI 的服务器发起连接，因此地址必须能从互联网访问）以及 *Cursor / 其他*，适用于任何支持带 bearer 头的 Streamable HTTP 的客户端，格式相同。**API 访问**以 `curl` 示例展示同一令牌在 REST API 上的用法，并指出 Prometheus 或 Grafana 用它抓取的路由。参见[连接助手](assistant.md)和[抓取 DumbMonit](../reference/metrics.md#scraping-dumbmonit)。
+## 报告 {#reports}
+
+在**设置 → 通知与报告**中，位于策略下方：面向团队的定期可用性邮件。选择每周、每日或每月，指定日期、时间和时区、收件人及邮件渠道，然后**发送预览**查看结果。仅限管理员。参见[邮件报告](reports.md)。
 
 ## 备份 {#backup}
 
@@ -99,15 +110,11 @@ DumbMonit 仅在自身正常时定期调用，这样当这台主机沉默时，�
 **报告故障**会调用故障 URL 而不是保持沉默。URL 加密保存，不会再次显示，只显示其主机名。
 只有管理员可以修改。参见 [Watching DumbMonit itself](../install/self-monitoring.md)。
 
-## 报告 {#reports}
+## API 与助手 {#api--assistants}
 
-在**设置 → 通知与报告**中，位于策略下方：面向团队的定期可用性邮件。选择每周、每日或每月，指定日期、时间和时区、收件人及邮件渠道，然后**发送预览**查看结果。仅限管理员。参见[邮件报告](reports.md)。
+两者使用同一种令牌：MCP 客户端和 [REST API](../reference/api.md)。为令牌命名、选择其范围并创建——它只显示一次。**只读**令牌只能查看；**读写**令牌还能更改内容——静默监控项、运行探测、添加或编辑监控项、规则和渠道——但绝不能更改账户、登录设置或其他令牌。
 
-## 外观 {#appearance}
-
-三个图块，各自预览自己的主题：**系统**（跟随你的设备并随之切换）、**日间**（“图表纸”主题）和**夜间**（“雷达”主题）。选择保存在浏览器中。页眉的切换按钮和命令面板的*切换主题*在日间和夜间之间切换。
-
-**打开墙面模式**位于该分区底部：仅显示公告栏，全屏，适合放在房间里的显示器上。++esc++ 退出，命令面板可在任何地方打开它——参见[墙面模式](overview.md#wall-mode)。
+在**连接**下，三个标签页存放代码片段，并在令牌仍显示在屏幕上时已填入该令牌：*Claude*（`claude mcp add` 命令和 `claude_desktop_config.json` 代码块）、*ChatGPT*（MCP 服务器 URL 和授权头；当此页面不是通过 HTTPS 提供时会给出警告——ChatGPT 从 OpenAI 的服务器发起连接，因此地址必须能从互联网访问）以及 *Cursor / 其他*，适用于任何支持带 bearer 头的 Streamable HTTP 的客户端，格式相同。**API 访问**以 `curl` 示例展示同一令牌在 REST API 上的用法，并指出 Prometheus 或 Grafana 用它抓取的路由。参见[连接助手](assistant.md)和[抓取 DumbMonit](../reference/metrics.md#scraping-dumbmonit)。
 
 ## 关于 {#about}
 
