@@ -43,7 +43,6 @@
 	"alerts_bulk_select_row": "选择 {name}",
 	"alerts_bulk_selected": "已选 {count} 项",
 	"alerts_bulk_unack": "取消确认",
-	"alerts_device_last_report": "上次上报 {when}",
 	"alerts_device_never_reported": "从未上报",
 	"alerts_form_cancel": "取消",
 	"alerts_form_comment": "备注",
@@ -237,30 +236,12 @@
 	"alerts_row_acked": "已确认{by}{until}{note}。提醒已暂停，恢复时仍会通知你。",
 	"alerts_row_acked_by": " 由 {name}",
 	"alerts_row_acked_note": " — {note}",
-	"alerts_row_also": "另有 {list}",
-	"alerts_row_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "另有 {list} · 还有 {count} 项"
-			}
-		}
-	],
-	"alerts_row_aria": "{plate}：{rule}",
-	"alerts_row_aria_on": "{plate}：{device} 上的 {rule}",
 	"alerts_row_dismiss": "关闭",
 	"alerts_row_learning": "基线学习的前 {days} 天保持静默。",
 	"alerts_row_learning_suppressed": "学习正常形态期间保持静默。",
 	"alerts_row_more": "更多操作",
 	"alerts_row_more_menu": "此告警的更多操作",
 	"alerts_row_open_device": "打开监控项",
-	"alerts_row_since": "自 {when}",
 	"alerts_row_snoozed": "已暂停提醒{until}。在此之前或问题解决前保持安静。",
 	"alerts_row_suppressed_by": "已被 {parent} 抑制——很可能是连带影响，而非独立问题。",
 	"alerts_row_suppressed_self": "此监控项无法访问期间已隐藏：其数据已过时。",

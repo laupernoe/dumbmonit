@@ -43,7 +43,6 @@
 	"alerts_bulk_select_row": "{name} auswählen",
 	"alerts_bulk_selected": "{count} ausgewählt",
 	"alerts_bulk_unack": "Bestätigung aufheben",
-	"alerts_device_last_report": "letzter Bericht {when}",
 	"alerts_device_never_reported": "hat sich nie gemeldet",
 	"alerts_form_cancel": "Abbrechen",
 	"alerts_form_comment": "Kommentar",
@@ -253,31 +252,12 @@
 	"alerts_row_acked": "Bestätigt{by}{until}{note}. Erinnerungen pausiert; bei Behebung erhalten Sie trotzdem eine Meldung.",
 	"alerts_row_acked_by": " von {name}",
 	"alerts_row_acked_note": " — {note}",
-	"alerts_row_also": "Außerdem {list}",
-	"alerts_row_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Außerdem {list} · +{count} weitere",
-				"countPlural=other": "Außerdem {list} · +{count} weitere"
-			}
-		}
-	],
-	"alerts_row_aria": "{plate}: {rule}",
-	"alerts_row_aria_on": "{plate}: {rule} auf {device}",
 	"alerts_row_dismiss": "Schließen",
 	"alerts_row_learning": "In den ersten {days} Tagen der Basislinie stumm.",
 	"alerts_row_learning_suppressed": "Stumm, solange es das normale Verhalten lernt.",
 	"alerts_row_more": "Weitere Aktionen",
 	"alerts_row_more_menu": "Weitere Aktionen für diese Warnung",
 	"alerts_row_open_device": "Monitor öffnen",
-	"alerts_row_since": "seit {when}",
 	"alerts_row_snoozed": "Stummgeschaltet{until}. Bis dahin ruhig, oder bis es behoben ist.",
 	"alerts_row_suppressed_by": "Unterdrückt durch {parent} – vermutlich eine Folge, kein eigenes Problem.",
 	"alerts_row_suppressed_self": "Ausgeblendet, solange dieser Monitor nicht erreichbar ist: seine Werte sind veraltet.",

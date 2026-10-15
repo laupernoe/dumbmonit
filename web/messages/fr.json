@@ -43,7 +43,6 @@
 	"alerts_bulk_select_row": "Sélectionner {name}",
 	"alerts_bulk_selected": "{count} sélectionnée(s)",
 	"alerts_bulk_unack": "Lever l’acquittement",
-	"alerts_device_last_report": "dernier signal {when}",
 	"alerts_device_never_reported": "jamais signalé",
 	"alerts_form_cancel": "Annuler",
 	"alerts_form_comment": "Commentaire",
@@ -253,31 +252,12 @@
 	"alerts_row_acked": "Acquittée{by}{until}{note}. Rappels suspendus ; vous serez quand même prévenu à sa résolution.",
 	"alerts_row_acked_by": " par {name}",
 	"alerts_row_acked_note": " — {note}",
-	"alerts_row_also": "Aussi {list}",
-	"alerts_row_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Aussi {list} · +{count} de plus",
-				"countPlural=other": "Aussi {list} · +{count} de plus"
-			}
-		}
-	],
-	"alerts_row_aria": "{plate} : {rule}",
-	"alerts_row_aria_on": "{plate} : {rule} sur {device}",
 	"alerts_row_dismiss": "Fermer",
 	"alerts_row_learning": "Silencieuse pendant les {days} premiers jours de la référence.",
 	"alerts_row_learning_suppressed": "Silencieuse le temps de connaître le comportement normal.",
 	"alerts_row_more": "Plus d’actions",
 	"alerts_row_more_menu": "Plus d’actions pour cette alerte",
 	"alerts_row_open_device": "Ouvrir la surveillance",
-	"alerts_row_since": "depuis {when}",
 	"alerts_row_snoozed": "En sourdine{until}. Silence jusque-là, ou jusqu’à la résolution.",
 	"alerts_row_suppressed_by": "Masquée par {parent} — probablement une conséquence, pas un problème distinct.",
 	"alerts_row_suppressed_self": "Masquée tant que cette surveillance est injoignable : ses valeurs ne sont plus à jour.",

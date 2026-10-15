@@ -43,7 +43,6 @@
 	"alerts_bulk_select_row": "Select {name}",
 	"alerts_bulk_selected": "{count} selected",
 	"alerts_bulk_unack": "Unacknowledge",
-	"alerts_device_last_report": "last report {when}",
 	"alerts_device_never_reported": "never reported",
 	"alerts_form_cancel": "Cancel",
 	"alerts_form_comment": "Comment",
@@ -253,31 +252,12 @@
 	"alerts_row_acked": "Acked{by}{until}{note}. Reminders paused; you will still hear when it resolves.",
 	"alerts_row_acked_by": " by {name}",
 	"alerts_row_acked_note": " — {note}",
-	"alerts_row_also": "Also {list}",
-	"alerts_row_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Also {list} · +{count} more",
-				"countPlural=other": "Also {list} · +{count} more"
-			}
-		}
-	],
-	"alerts_row_aria": "{plate}: {rule}",
-	"alerts_row_aria_on": "{plate}: {rule} on {device}",
 	"alerts_row_dismiss": "Dismiss",
 	"alerts_row_learning": "Silent for its first {days} days of baseline.",
 	"alerts_row_learning_suppressed": "Silent while it learns the normal shape.",
 	"alerts_row_more": "More actions",
 	"alerts_row_more_menu": "More actions for this alert",
 	"alerts_row_open_device": "Open monitor",
-	"alerts_row_since": "since {when}",
 	"alerts_row_snoozed": "Snoozed{until}. Quiet until then, or until it resolves.",
 	"alerts_row_suppressed_by": "Suppressed by {parent} — probably a consequence, not a separate problem.",
 	"alerts_row_suppressed_self": "Hidden while this monitor is unreachable: its readings are stale.",

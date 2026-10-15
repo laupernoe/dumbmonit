@@ -43,7 +43,6 @@
 	"alerts_bulk_select_row": "Seleziona {name}",
 	"alerts_bulk_selected": "{count} selezionati",
 	"alerts_bulk_unack": "Annulla riconoscimento",
-	"alerts_device_last_report": "ultimo report {when}",
 	"alerts_device_never_reported": "mai segnalato",
 	"alerts_form_cancel": "Annulla",
 	"alerts_form_comment": "Commento",
@@ -253,31 +252,12 @@
 	"alerts_row_acked": "Confermato{by}{until}{note}. Promemoria in pausa; riceverai comunque una notifica alla risoluzione.",
 	"alerts_row_acked_by": " da {name}",
 	"alerts_row_acked_note": " — {note}",
-	"alerts_row_also": "Anche {list}",
-	"alerts_row_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Anche {list} · +{count} altri",
-				"countPlural=other": "Anche {list} · +{count} altri"
-			}
-		}
-	],
-	"alerts_row_aria": "{plate}: {rule}",
-	"alerts_row_aria_on": "{plate}: {rule} su {device}",
 	"alerts_row_dismiss": "Ignora",
 	"alerts_row_learning": "Silenziosa nei primi {days} giorni della linea di base.",
 	"alerts_row_learning_suppressed": "Silenziosa mentre impara il comportamento normale.",
 	"alerts_row_more": "Altre azioni",
 	"alerts_row_more_menu": "Altre azioni per questo avviso",
 	"alerts_row_open_device": "Apri monitor",
-	"alerts_row_since": "da {when}",
 	"alerts_row_snoozed": "Posticipato{until}. Silenzio fino ad allora, o finché non si risolve.",
 	"alerts_row_suppressed_by": "Soppresso da {parent}: probabilmente una conseguenza, non un problema separato.",
 	"alerts_row_suppressed_self": "Nascosta finché questo monitor non è raggiungibile: i suoi valori non sono aggiornati.",
