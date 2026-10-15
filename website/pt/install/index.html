@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instalar · DumbMonit</title>
+<meta name="description" content="Instale o DumbMonit com Docker Compose em três passos e depois adicione o agente aos seus servidores. Um contentor, um volume.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/pt/install/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Instalar · DumbMonit">
+<meta property="og:description" content="Instale o DumbMonit com Docker Compose em três passos e depois adicione o agente aos seus servidores. Um contentor, um volume.">
+<meta property="og:url" content="https://dumbmonit.app/pt/install/">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Está tudo bem? Fica a saber num segundo. Monitorização auto-alojada num só contentor, com a mascote pombo.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Instalar · DumbMonit">
+<meta name="twitter:description" content="Instale o DumbMonit com Docker Compose em três passos e depois adicione o agente aos seus servidores. Um contentor, um volume.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Instalar · DumbMonit","url":"https://dumbmonit.app/pt/install/","inLanguage":"pt","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Saltar para o conteúdo</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="Página inicial do DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Secções">
+			<a href="../features/">Funcionalidades</a>
+			<a href="../devices/">Dispositivos</a>
+			<a href="./" aria-current="page">Instalar</a>
+			<a href="../community/">Docs e comunidade</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Demo ao vivo</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Idioma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>PT</span></summary>
+				<ul>
+				<li><a href="../../install/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/install/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/install/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/install/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/install/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="./" hreflang="pt" lang="pt" aria-current="true">Português</a></li>
+				<li><a href="../../pt-BR/install/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../ru/install/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../zh-Hans/install/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo ao vivo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1>Instalar o DumbMonit</h1>
+		<p class="lede">Um contentor, três passos. Depois, adicione o agente aos seus servidores.</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:24px">
+	<div class="wrap">
+		<ol class="steps">
+			<li>
+				<h2>Descarregar o ficheiro Compose</h2>
+				<p>Crie uma pasta e obtenha o ficheiro. Ele já remove todas as capabilities e monta o sistema de ficheiros só de leitura.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s1"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml</code></pre>
+					<button class="copy" type="button" data-copied="Copiado" data-copy="s1">Copiar</button>
+				</div>
+			</li>
+			<li>
+				<h2>Iniciar</h2>
+				<p>O Docker descarrega a imagem e inicia o DumbMonit com a sua base de dados de séries temporais.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s2"><code><span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="Copiado" data-copy="s2">Copiar</button>
+				</div>
+			</li>
+			<li>
+				<h2>Criar a primeira conta</h2>
+				<p>Abra a página e crie o administrador. Depois adicione um dispositivo: o formulário indica o que preparar nele.</p>
+				<p class="code-note">Depois abre <code>http://localhost:8080</code> e cria a primeira conta. Imagem para amd64 (arm64 mais tarde): <code>ghcr.io/laupernoe/dumbmonit</code>.</p>
+			</li>
+		</ol>
+
+		<div class="split" style="margin-top:72px">
+			<div>
+				<h2 class="h-sm">O que precisa</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li>Docker Engine com o plugin Compose.</li>
+					<li>Uma máquina amd64; as imagens arm64 estão em pausa por agora.</li>
+					<li>A porta 8080 livre, ou outra porta à sua escolha.</li>
+					<li>Acesso de rede aos dispositivos monitorizados. Não precisam de alcançar o servidor, exceto os agentes.</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="h-sm">Para ir mais longe</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li><a href="https://dumbmonit.readthedocs.io/pt/latest/install/docker/">Guia de instalação completo</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/pt/latest/install/first-device/">Adicionar o primeiro dispositivo</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/pt/latest/install/update/">Atualizar</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/pt/latest/install/backup/">Cópia de segurança e restauro</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/pt/latest/install/remote-site/">Sites remotos</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>Depois, adicione o agente aos seus servidores</h2>
+					<p>Um pequeno binário que envia ao servidor CPU, memória, discos, rede, serviços e tempo de atividade, além de temperaturas, ventoinhas, SMART e pools ZFS quando a máquina os expõe. É ele que chama o servidor, nunca o contrário: nenhuma porta para abrir na máquina.</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># a interface preenche o token por ti</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="Copiado" data-copy="agent-cmd">Copiar</button>
+				</div>
+				<p class="code-note">Para Windows, é servido um script PowerShell em <code>/install.ps1</code>. O agente existe também como imagem, <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
+				<p style="margin-top:16px"><a href="https://dumbmonit.readthedocs.io/pt/latest/devices/agent/">Documentação do agente</a></p>
+			</div>
+			<ul class="os-list">
+				<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Suportado</span><span class="how">x86_64 e aarch64, systemd ou OpenRC. Contentores Docker e saúde do SO (atualizações, reinício pendente, unidades falhadas).</span></li>
+				<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Suportado</span><span class="how">x86_64, instalado como serviço do Windows. SMART através do smartctl.</span></li>
+				<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Pré-visualização</span><span class="how">launchd, Apple silicon e Intel; binários anexados a cada versão. Ainda não testado em hardware real.</span></li>
+				<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Pré-visualização</span><span class="how">rc.d, x86_64, pools ZFS. Ainda não testado em hardware real.</span></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. A mascote é um pombo.</p>
+		<nav aria-label="Rodapé">
+			<a href="../features/">Funcionalidades</a>
+			<a href="../devices/">Dispositivos</a>
+			<a href="./">Instalar</a>
+			<a href="../community/">Docs e comunidade</a>
+			<a href="https://demo.dumbmonit.app">Demo ao vivo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/pt/latest/">Documentação</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Versões</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduzir</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licença</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Segurança</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>

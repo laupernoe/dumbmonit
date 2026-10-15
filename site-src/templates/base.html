@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="@@LANG@@" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+@@DETECT@@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@@TITLE@@</title>
+<meta name="description" content="@@DESC@@">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="@@URL@@">
+@@ALTERNATES@@
+<link rel="icon" href="@@ROOT@@favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="@@ROOT@@apple-touch-icon.png">
+<link rel="preload" href="@@ROOT@@assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="@@ROOT@@assets/site.css">
+<script src="@@ROOT@@assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="@@TITLE@@">
+<meta property="og:description" content="@@DESC@@">
+<meta property="og:url" content="@@URL@@">
+<meta property="og:locale" content="@@OGLOCALE@@">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{k185}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="@@TITLE@@">
+<meta name="twitter:description" content="@@DESC@@">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+@@JSONLD@@
+</script>
+</head>
+<body>
+<a class="skip" href="#main">{{k002}}</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="{{k173}}">
+@@NAV@@
+			<a class="nav-extra" href="https://demo.dumbmonit.app">{{k008}}</a>
+		</nav>
+		<div class="actions">
+@@SWITCHER@@
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="{{nav_menu}}"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+@@BODY@@
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>{{k165}}</p>
+		<nav aria-label="{{k182}}">
+			<a href="@@LINK:features/@@">{{nav_features}}</a>
+			<a href="@@LINK:devices/@@">{{nav_devices}}</a>
+			<a href="@@LINK:install/@@">{{nav_install}}</a>
+			<a href="@@LINK:community/@@">{{nav_community}}</a>
+			<a href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<a href="@@DOCS@@">{{k164}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">{{k166}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">{{k167}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">{{k168}}</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{k169}}</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+@@SCRIPT@@
+</script>
+</body>
+</html>
