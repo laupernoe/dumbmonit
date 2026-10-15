@@ -191,6 +191,7 @@ async fn every_public_route_reveals_nothing_private() {
                 "uptime_7d",
                 "uptime_30d",
                 "uptime_90d",
+                "uptime_history",
                 "latency_ms",
                 "history"
             ]
@@ -540,6 +541,7 @@ async fn history_has_thirty_day_uptime_and_unknown_days() {
     let item = &doc["groups"][0]["items"][0];
     assert!(item.get("uptime_30d").is_some());
     assert!(item["uptime_90d"].is_null(), "a 30-day page does not show 90 days");
+    assert!(item.get("uptime_history").is_some(), "the uptime over the bars' days");
     let history = item["history"].as_array().unwrap();
     // Fenêtre adaptative : les données ont un jour, la page n'en montre que 7.
     assert_eq!(doc["page"]["show_uptime_days"], 30);

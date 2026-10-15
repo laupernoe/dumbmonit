@@ -35,6 +35,12 @@ All notable changes to this project are documented here. The format follows
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
 
+### Fixed
+
+- Status pages: the uptime next to each bar and in the summary line now covers
+  the same days as the bar. On a page showing 8 to 29 days it was the 7-day
+  uptime, under a heading naming the longer window.
+
 ### Security
 
 - **Bundled VictoriaMetrics 1.153.0 → 1.154.0.** Built with Go 1.27.2 and

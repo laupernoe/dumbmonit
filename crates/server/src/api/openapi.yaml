@@ -5779,6 +5779,9 @@ components:
                     uptime_7d: { type: [number, "null"] }
                     uptime_30d: { type: [number, "null"] }
                     uptime_90d: { type: [number, "null"] }
+                    uptime_history:
+                      type: [number, "null"]
+                      description: Uptime over the page's history_days, the days the bar shows.
                     latency_ms: { type: [number, "null"] }
                     latency_series:
                       type: object
