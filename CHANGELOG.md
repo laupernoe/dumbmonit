@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
+- **Recoverable empty states and errors.** `EmptyState` takes `primary` and `secondary` actions;
+  `ErrorNotice` adds a next step per failure type (offline, 403, 5xx) and a "Sign in again" link
+  on 401. The Overview sky band is shorter on phones so content stays above the fold.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs

@@ -21,6 +21,14 @@
 
 	let { error, title, onretry, hint, children, class: className = '' }: Props = $props();
 	const api = $derived(toApiError(error));
+	/** Contextual next step, derived from the failure type. */
+	const help = $derived.by(() => {
+		if (api.demo || api.missing) return null;
+		if (api.status === 0) return m.ui_error_notice_help_network();
+		if (api.status === 403) return m.ui_error_notice_help_forbidden();
+		if (api.status >= 500) return m.ui_error_notice_help_server();
+		return null;
+	});
 	const heading = $derived(title ?? m["ui.error_notice.default_title"]());
 </script>
 
@@ -30,6 +38,10 @@
 		<p class="font-semibold text-warning-ink">{heading}</p>
 		<p class="mt-0.5 text-sm text-ink">{api.message}</p>
 		<p class="mt-1 text-sm text-ink-2">{api.demo || !hint ? api.hint : hint}</p>
+		{#if help}<p class="mt-1 text-sm font-medium text-ink">{help}</p>{/if}
+		{#if api.status === 401 && !api.demo}
+			<Button size="sm" variant="secondary" href="/login" class="mt-2">{m.ui_error_notice_signin()}</Button>
+		{/if}
 		{#if children}<div class="mt-2">{@render children()}</div>{/if}
 	</div>
 	{#if onretry}
