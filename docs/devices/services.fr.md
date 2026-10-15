@@ -14,6 +14,37 @@ accepte toujours mon compte et répond à une requête ». NTP se trouve
 entre les deux : une seule requête et réponse, dans le propre protocole
 de NTP, assez pour lire l'horloge du serveur sans session.
 
+## Venir d'Uptime Kuma
+
+**Moniteurs > Ajouter un moniteur > Importer depuis Uptime Kuma**
+(administrateurs) lit le fichier de sauvegarde d'Uptime Kuma 1.x
+(**Réglages > Sauvegarde > Exporter**, un fichier `.json` de 4 Mo au plus).
+Uptime Kuma 2.x n'a plus d'export de sauvegarde : il n'y a donc rien à
+importer depuis cette version. Rien n'est créé avant que vous ayez vu l'aperçu :
+ce qui sera créé, et ce qui est ignoré avec la raison.
+
+| Uptime Kuma | DumbMonit |
+|---|---|
+| HTTP(s), HTTP(s) - Mot-clé, HTTP(s) - Requête JSON | [HTTP](#http) : codes acceptés, méthode, mot-clé (et son inverse), chemin JSON et valeur attendue, redirections, délai, erreurs TLS ignorées |
+| Ping | [Ping](#ping) |
+| Port TCP | [TCP](#tcp), sous la forme `hôte:port` |
+| DNS | [DNS](#dns) : type d'enregistrement et résolveur |
+| Push | [Battement de cœur](push.md), période attendue = l'intervalle du moniteur. Il reçoit une **nouvelle** URL : mettez à jour la tâche qui l'appelle |
+| Groupe | Un dossier (les groupes imbriqués donnent `Groupe/Sous-groupe`) |
+| Étiquettes | Étiquettes de l'appareil : `nom=valeur`, ou `nom=true` pour une étiquette sans valeur |
+| En pause | Créé désactivé |
+
+Le nom et l'intervalle sont conservés (10 s au minimum). Tout le reste est
+ignoré et listé : Docker et les autres types sans équivalent, et les moniteurs
+en mode inversé. Un appareil déjà suivi (même type, même adresse) est ignoré
+aussi : on peut donc importer deux fois le même fichier sans risque.
+
+**Non importés :** les notifications (configurez vos canaux dans
+[Notifications](../notifications.md) ; l'aperçu indique combien le fichier en
+contenait), ainsi que les identifiants, en-têtes personnalisés et corps de
+requête, qui ne sont jamais lus par DumbMonit. Si un site surveillé demande une
+connexion ou un en-tête, ajoutez-le ensuite sur l'appareil.
+
 ## Comment fonctionne l'état d'un service
 
 Un service peut répondre et être en panne quand même : un `500`, un mot-

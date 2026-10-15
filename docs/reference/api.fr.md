@@ -416,6 +416,7 @@ Session admin ou jeton d'API (portée `write` pour les changements). Voir
 |---|---|---|
 | `GET` | `/api/targets` | Liste chaque appareil. |
 | `POST` | `/api/targets` | En créer un. `201` avec l'appareil. La détection de profil démarre en arrière-plan pour SNMP. |
+| `POST` | `/api/targets/import/kuma` | Importe des moniteurs depuis une sauvegarde d'Uptime Kuma 1.x (le fichier JSON en corps, 4 Mio au plus). `?dry_run=true` pour un aperçu. Voir [Services](../devices/services.md#venir-duptime-kuma). |
 | `GET` | `/api/targets/{id}` | Un appareil. |
 | `PUT` | `/api/targets/{id}` | Le remplacer. Omettre `credential` garde celui enregistré ; omettre `profile_id` garde le profil détecté (`""` l'efface). Régler `enabled: false` efface les alertes de l'appareil sans notifier. |
 | `DELETE` | `/api/targets/{id}` | `204`. Efface les alertes de l'appareil sans notifier et supprime ses séries temporelles de VictoriaMetrics (au mieux). |
@@ -711,6 +712,7 @@ la règle pour personne d'autre.
 | `GET` | `/api/alerts/rules/{id}/overrides` | Les surcharges d'une règle. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — chaque champ optionnel ; `null` signifie « comme la règle ». Crée ou remplace. Un opérateur ne peut envoyer que `{"enabled": false}` (ignorer) ; les surcharges de seuil de l'appareil, s'il y en a, sont gardées. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Pour un opérateur, ne lève que l'ignorer : les surcharges de seuil restent. |
+| `GET` | `/api/targets/{id}/rules` | Les règles qui surveillent un appareil : celles dont la requête lit une métrique qu'il a écrite ces dernières 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Politique de notification
 

@@ -56,6 +56,7 @@ pub struct PolicyPayload {
     /// désérialiseur dédié est ce qui distingue `null` de l'absence.
     #[serde(deserialize_with = "present")]
     pub escalate_channel: Option<Value>,
+    pub action_links: Option<bool>,
 }
 
 fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
@@ -246,6 +247,7 @@ impl PolicyPayload {
                 MAX_ESCALATE_SECS,
             )?,
             escalate_channel,
+            action_links: self.action_links.unwrap_or(current.action_links),
         })
     }
 }

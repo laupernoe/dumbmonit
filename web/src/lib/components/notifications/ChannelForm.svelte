@@ -353,6 +353,13 @@
 								: m.notifications_form_new_title({ kind: info?.label ?? kind })}
 						</h3>
 						{#if info?.summary}<p class="mt-0.5 text-sm text-ink-2">{info.summary}</p>{/if}
+						{#if info?.actions === 'buttons'}
+							<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.notifications_form_actions_buttons()}</p>
+						{:else if info?.actions === 'links'}
+							<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.notifications_form_actions_links()}</p>
+						{:else if info?.actions === 'none'}
+							<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.notifications_form_actions_none()}</p>
+						{/if}
 					</div>
 				</div>
 				<div class="flex flex-wrap items-center gap-1">

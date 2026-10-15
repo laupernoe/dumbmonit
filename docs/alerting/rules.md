@@ -670,6 +670,14 @@ Computed by the server every 15 minutes for every device whose kind has security
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | DumbMonit backup did not run | The scheduled local backup of the DumbMonit database has not run for more than two days (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
+| DumbMonit data volume almost full | The volume that holds `/data` has less than 10% free space (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Advisory (`warning`) | 24 h |
+| DumbMonit metrics database restarting in a loop | The embedded VictoriaMetrics was restarted three times or more in 30 minutes (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Warning (`critical`) | 6 h |
+| DumbMonit scheduler stalled | No scheduling round for more than two minutes: devices are no longer polled (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Warning (`critical`) | 6 h |
+| DumbMonit polls running late | Devices stay overdue after every scheduling round (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| DumbMonit metric writes failing | Batches refused by VictoriaMetrics or samples dropped in the last 15 minutes (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| DumbMonit database growing fast | `dumbmonit.db` more than doubled in a day and is over 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Advisory (`warning`) | 24 h |
+
+These rules and the outgoing heartbeat are explained in [Watching DumbMonit itself](../install/self-monitoring.md).
 
 Every built-in rule applies to all devices and to every enabled channel.
 
@@ -701,6 +709,13 @@ lists what it ignores, with **Stop ignoring**; the rule itself shows *Ignored
 on N devices* in Alerts → Rules, where the same per-device overrides panel
 removes it. See [Per-device overrides](../reference/api.md#per-device-overrides)
 for the API.
+
+A monitor's **Edit** page also lists, under **Monitored alerts**, every rule
+that reads a metric the monitor has written in the last 24 hours: for an agent
+with Docker, the container rules; for a website monitor, the probe rules. Each
+has a switch, on by default. Turning one off writes the same `enabled: false`
+override when you save the form; the data is still collected and graphed. A
+monitor added a moment ago shows the list after its first checks.
 
 ## Creating a threshold rule
 

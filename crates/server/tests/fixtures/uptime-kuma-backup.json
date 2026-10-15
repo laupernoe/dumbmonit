@@ -1,0 +1,90 @@
+{
+    "version": "1.23.16",
+    "notificationList": [
+        {
+            "id": 1,
+            "name": "Telegram ops",
+            "config": "{\"name\":\"Telegram ops\",\"type\":\"telegram\",\"telegramBotToken\":\"s3cr3t-token\",\"telegramChatID\":\"-100123\"}",
+            "active": 1,
+            "isDefault": 1,
+            "userId": 1
+        },
+        {
+            "id": 2,
+            "name": "Mail",
+            "config": "{\"name\":\"Mail\",\"type\":\"smtp\",\"smtpPassword\":\"hunter2\"}",
+            "active": 1,
+            "isDefault": 0,
+            "userId": 1
+        }
+    ],
+    "monitorList": [
+        {
+            "id": 1, "name": "Clients", "type": "group", "parent": null, "active": true,
+            "interval": 60, "tags": []
+        },
+        {
+            "id": 2, "name": "Acme", "type": "group", "parent": 1, "active": true,
+            "interval": 60, "tags": []
+        },
+        {
+            "id": 3, "name": "Blog", "type": "http", "parent": 2, "active": true,
+            "url": "https://blog.example.com/", "method": "GET", "interval": 60, "timeout": 48,
+            "maxredirects": 10, "accepted_statuscodes": ["200-299", "301"], "ignoreTls": false,
+            "upsideDown": false,
+            "headers": "{\"Authorization\": \"Bearer abc123\"}",
+            "basic_auth_user": "admin", "basic_auth_pass": "hunter2",
+            "tags": [
+                { "tag_id": 1, "monitor_id": 3, "value": "prod", "name": "env", "color": "#059669" },
+                { "tag_id": 2, "monitor_id": 3, "value": "", "name": "Critical", "color": "#DC2626" }
+            ]
+        },
+        {
+            "id": 4, "name": "Status page", "type": "keyword", "parent": null, "active": true,
+            "url": "https://status.example.org", "method": "GET", "interval": 20,
+            "keyword": "All systems operational", "invertKeyword": true, "ignoreTls": true,
+            "maxredirects": 10, "accepted_statuscodes": ["200-299"], "tags": []
+        },
+        {
+            "id": 5, "name": "API health", "type": "json-query", "parent": null, "active": true,
+            "url": "https://api.example.com/health", "method": "POST", "interval": 120,
+            "jsonPath": "$.status", "expectedValue": "ok", "body": "{\"token\":\"s3cr3t-token\"}",
+            "maxredirects": 10, "accepted_statuscodes": ["200-299"], "tags": []
+        },
+        {
+            "id": 6, "name": "Router", "type": "ping", "parent": null, "active": true,
+            "hostname": "192.168.1.1", "interval": 30, "tags": []
+        },
+        {
+            "id": 7, "name": "NAS SSH", "type": "port", "parent": null, "active": true,
+            "hostname": "nas.lan", "port": 22, "interval": 60, "tags": []
+        },
+        {
+            "id": 8, "name": "IPv6 web", "type": "port", "parent": null, "active": true,
+            "hostname": "2001:db8::1", "port": 443, "interval": 60, "tags": []
+        },
+        {
+            "id": 9, "name": "MX example", "type": "dns", "parent": null, "active": true,
+            "hostname": "example.com", "dns_resolve_type": "MX", "dns_resolve_server": "1.1.1.1",
+            "port": 53, "interval": 300, "tags": []
+        },
+        {
+            "id": 10, "name": "Nightly backup", "type": "push", "parent": null, "active": false,
+            "pushToken": "pushtok-0123", "interval": 86400, "tags": []
+        },
+        {
+            "id": 11, "name": "Containers", "type": "docker", "parent": null, "active": true,
+            "docker_container": "web", "docker_host": 1, "interval": 60, "tags": []
+        },
+        {
+            "id": 12, "name": "Inverted", "type": "http", "parent": null, "active": true,
+            "url": "https://should-be-down.example.com", "interval": 60, "upsideDown": true,
+            "maxredirects": 10, "accepted_statuscodes": ["200-299"], "tags": []
+        },
+        {
+            "id": 13, "name": "Postgres", "type": "postgres", "parent": null, "active": true,
+            "databaseConnectionString": "postgres://app:s3cr3t-token@db.lan/app", "interval": 60,
+            "tags": []
+        }
+    ]
+}

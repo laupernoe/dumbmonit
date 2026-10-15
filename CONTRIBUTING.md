@@ -302,6 +302,16 @@ Releases are tagged from `main`, after `dev` has been merged into it.
 
 Before tagging `vX.Y.Z`:
 
+0. Check that the **Upgrade test** workflow is green on `main`. It starts the
+   last published release, creates a user, devices of several kinds, a rule, a
+   silence, a channel and a status page, waits for metrics, then starts the
+   candidate image on the same `/data` volume and checks that health, login,
+   every object and the VictoriaMetrics history survived. Run it by hand
+   against any image with `scripts/upgrade-test.sh [IMAGE]` (needs docker,
+   curl and python3; default image `ghcr.io/laupernoe/dumbmonit:edge`;
+   `OLD_IMAGE=…` picks another starting point). A failure means an existing
+   install would lose data when updating: fix it before tagging.
+
 1. Move the `Unreleased` section of `CHANGELOG.md` under the new version and date.
 2. Add the release to `web/src/lib/whatsnew/releases.ts` (newest first): the
    version exactly as the server reports it (`0.9.0`, no `v`), the date

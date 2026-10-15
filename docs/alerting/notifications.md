@@ -31,6 +31,7 @@ evaluate (hysteresis, per-device overrides)
 | Batch window | Alerts → Notifications → Notification policy | 60 s |
 | Messages per channel per hour | Alerts → Notifications → Notification policy | 20 |
 | Public URL (deep links) | Alerts → Notifications → Notification policy, or `DUMBMONIT_PUBLIC_URL` | empty |
+| Acknowledge / Snooze links in messages | Alerts → Notifications → Notification policy | on (needs a public URL) |
 
 ## Hysteresis and per-device overrides
 
@@ -230,10 +231,12 @@ when a public URL is known — the `public_url` of the policy, or
 `DUMBMONIT_PUBLIC_URL`. Custom webhooks also get it as the `{{link}}`
 variable unless their own `base_url` is set.
 
-There is deliberately no "silence for 1 h" link in messages: chat services
-fetch every link they display to build a preview, which would trigger the
-silence the moment the message is posted. Silence from the device page or the
-Alerts page instead.
+Messages also carry **Acknowledge** and **Snooze 1 h** links (buttons on
+ntfy, Telegram and Web Push). Chat services fetch every link they display to
+build a preview, so a link never acts by itself: it opens a confirmation page,
+and only the button on that page acknowledges. Each link is signed, works once
+and for 24 hours, without signing in. See
+[Acknowledge or snooze from the notification](../notifications.md#acknowledge-or-snooze-from-the-notification).
 
 ## What was borrowed from Pulse, and what was not
 

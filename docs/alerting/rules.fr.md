@@ -732,6 +732,14 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | La sauvegarde de DumbMonit n'a pas tourné | La sauvegarde locale planifiée de la base de données DumbMonit n'a pas tourné depuis plus de deux jours (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 j | 1 h | Avis (`warning`) | 24 h |
+| Volume de données de DumbMonit presque plein | Le volume qui porte `/data` a moins de 10 % d'espace libre (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Avis (`warning`) | 24 h |
+| Base de métriques de DumbMonit qui redémarre en boucle | Le VictoriaMetrics embarqué a été relancé trois fois ou plus en 30 minutes (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Avertissement (`critical`) | 6 h |
+| Planificateur de DumbMonit bloqué | Aucun tour de planification depuis plus de deux minutes : plus aucun équipement n'est interrogé (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Avertissement (`critical`) | 6 h |
+| Interrogations de DumbMonit en retard | Des équipements restent en retard après chaque tour (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| Écritures de métriques de DumbMonit en échec | Des lots refusés par VictoriaMetrics ou des mesures perdues dans les 15 dernières minutes (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Base de DumbMonit qui grossit vite | `dumbmonit.db` a plus que doublé en un jour et dépasse 100 Mo (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Avis (`warning`) | 24 h |
+
+Ces règles et le battement de cœur sortant sont expliqués dans [Surveiller DumbMonit lui-même](../install/self-monitoring.md).
 
 Chaque règle intégrée s'applique à tous les appareils et à chaque canal
 activé.
@@ -768,6 +776,15 @@ sur N appareils* dans Alertes → Règles, où le même panneau de
 surcharges par appareil la retire. Voir
 [Surcharges par appareil](../reference/api.md#per-device-overrides)
 pour l'API.
+
+La page **Modifier** d'une surveillance liste aussi, sous **Alertes
+surveillées**, chaque règle qui lit une métrique écrite par la
+surveillance ces dernières 24 heures : pour un agent avec Docker, les
+règles des conteneurs ; pour un site web, celles des sondes. Chacune a
+un interrupteur, activé par défaut. En couper un pose la même surcharge
+`enabled: false` à l'enregistrement du formulaire ; les données restent
+collectées et tracées. Une surveillance ajoutée à l'instant affiche la
+liste après ses premières vérifications.
 
 ## Créer une règle de seuil
 

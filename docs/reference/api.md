@@ -555,6 +555,7 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 
 | Method | Route | Scope | Purpose |
 |---|---|---|---|
+| `POST` | `/api/targets/import/kuma` | write | Import monitors from an Uptime Kuma 1.x backup (the JSON file as the body, 4 MiB at most). `?dry_run=true` previews. See [Services](../devices/services.md#coming-from-uptime-kuma). |
 | `POST` | `/api/targets/reorder` | write | Reorder devices. |
 | `GET` | `/api/targets/{id}/security` | read | Security score, grade and checks of one device. |
 | `GET` | `/api/security/summary` | read | Security score of every rated device, worst first. |
@@ -712,6 +713,7 @@ good, reversibly, without disabling the rule for anyone else.
 | `GET` | `/api/alerts/rules/{id}/overrides` | The overrides of one rule. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — each field optional; `null` means "as the rule". Creates or replaces. An operator may only send `{"enabled": false}` (ignore); the device's threshold overrides, if any, are kept. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. For an operator, only lifts the ignore: threshold overrides stay. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Notification policy
 

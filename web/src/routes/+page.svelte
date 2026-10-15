@@ -319,7 +319,7 @@
 	-->
 	<section
 		data-tour="weather"
-		class="rise-in relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift md:h-[260px]"
+		class="rise-in relative flex min-h-[200px] max-sm:min-h-[140px] flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift md:h-[260px]"
 	>
 		<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
 
@@ -336,7 +336,7 @@
 		{/if}
 
 		<div
-			class="relative m-4 mt-24 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-28 sm:max-w-[680px] sm:px-5 sm:py-4"
+			class="relative m-3 mt-10 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-28 sm:max-w-[680px] sm:px-5 sm:py-4"
 		>
 			<DecryptText
 				tag="h1"

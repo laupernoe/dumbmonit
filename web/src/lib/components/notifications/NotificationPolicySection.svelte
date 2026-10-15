@@ -39,6 +39,7 @@
 			flapWindow = current.flap_window_secs;
 			flapHold = current.flap_hold_secs;
 			publicUrl = current.public_url;
+			actionLinks = current.action_links;
 			escalateAfter = current.escalate_channel === null ? 0 : current.escalate_after_secs;
 			escalateChannel = current.escalate_channel === null ? '' : String(current.escalate_channel);
 		} catch (cause) {
@@ -78,6 +79,7 @@
 	let flapWindow = $state(1800);
 	let flapHold = $state(1800);
 	let publicUrl = $state('');
+	let actionLinks = $state(true);
 	let escalateAfter = $state(0);
 	let escalateChannel = $state('');
 	let showMore = $state(false);
@@ -121,6 +123,7 @@
 			flapWindow !== policy.flap_window_secs ||
 			flapHold !== policy.flap_hold_secs ||
 			publicUrl.trim() !== policy.public_url ||
+			actionLinks !== policy.action_links ||
 			escalateAfter !== (policy.escalate_channel === null ? 0 : policy.escalate_after_secs) ||
 			escalateChannel !== (policy.escalate_channel === null ? '' : String(policy.escalate_channel))
 		);
@@ -162,10 +165,12 @@
 				flap_window_secs: flapWindow,
 				flap_hold_secs: flapHold,
 				public_url: url,
+				action_links: actionLinks,
 				escalate_after_secs: escalating ? escalateAfter : 0,
 				escalate_channel: escalating ? Number(escalateChannel) : null
 			});
 			publicUrl = policy.public_url;
+			actionLinks = policy.action_links;
 			escalateAfter = policy.escalate_channel === null ? 0 : policy.escalate_after_secs;
 			escalateChannel = policy.escalate_channel === null ? '' : String(policy.escalate_channel);
 			saved = true;
@@ -248,6 +253,15 @@
 			<Field label={m.notifications_policy_url()} for="policy-url" help={m.notifications_policy_url_help()}>
 				<input id="policy-url" type="url" class="input" bind:value={publicUrl} placeholder="https://monit.example.lan" autocomplete="off" disabled={saving || !auth.isAdmin} />
 			</Field>
+
+			<div class="grid gap-1">
+				<Field label={m.notifications_policy_actions()} for="policy-actions" inline help={m.notifications_policy_actions_help()}>
+					<Toggle id="policy-actions" bind:checked={actionLinks} disabled={saving || !auth.isAdmin} label={m.notifications_policy_actions()} />
+				</Field>
+				{#if actionLinks && publicUrl.trim() === ''}
+					<p class="text-[0.8125rem] text-ink-2">{m.notifications_policy_actions_needs_url()}</p>
+				{/if}
+			</div>
 
 			<div class="grid gap-2">
 				<div class="grid gap-4 sm:grid-cols-2">

@@ -19,6 +19,39 @@ export interface Release {
 	highlights: Highlight[];
 }
 
+/**
+ * Entry prepared for 0.9.0, kept out of RELEASES until the release is cut: the
+ * `WHATSNEW_REQUIRE` check needs an entry only for the Cargo.toml version, and
+ * the display rules use RELEASES[0] as the current one. At the version bump,
+ * add this constant as the first element of RELEASES (and set the date).
+ */
+export const RELEASE_0_9_0_DRAFT: Release = {
+	version: '0.9.0',
+	date: '2026-10-15',
+	highlights: [
+		{
+			title: 'Each service is its own device',
+			text: 'Docker, backups, ZFS, WireGuard, IPsec and more found by an agent get their own status, alerts and silences under the machine.'
+		},
+		{
+			title: 'A map of your infrastructure',
+			text: 'The new Map page draws parents, relays, VMs and network neighbours by itself, shows what is down and what sits behind it, and exports to SVG, PNG or print.'
+		},
+		{
+			title: 'Act on alerts from the notification',
+			text: 'Acknowledge or snooze from a button or signed link in the message, and let an outside heartbeat tell you when DumbMonit itself goes quiet.'
+		},
+		{
+			title: 'More devices, and Uptime Kuma import',
+			text: 'XCP-ng, Nutanix AHV and OpenVPN servers, KVM and IPsec in the agent, a speed test, and a one-step import of your Uptime Kuma monitors.'
+		},
+		{
+			title: 'Security score, only if you want it',
+			text: 'Off by default and shown next to each device, with new checks for Linux, Windows, websites and Synology and a how-to-fix report.'
+		}
+	]
+};
+
 export const RELEASES: Release[] = [
 	{
 		version: '0.1.0-alpha.8',

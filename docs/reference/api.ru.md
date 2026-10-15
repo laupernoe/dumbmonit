@@ -717,6 +717,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET` | `/api/alerts/rules/{id}/overrides` | Переопределения одного правила. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — каждое поле необязательно; `null` означает «как в правиле». Создаёт или заменяет. Operator может отправлять только `{"enabled": false}` (ignore); пороговые переопределения устройства, если они есть, сохраняются. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Для operator только снимает ignore: пороговые переопределения остаются. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Политика уведомлений
 

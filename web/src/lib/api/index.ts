@@ -8,6 +8,8 @@
 import { request, ApiError } from './client';
 import { normalizeCollector } from './types';
 import type {
+	AlertLinkResult,
+	AlertLinkView,
 	AgentHost,
 	AgentToken,
 	AgentTokenPayload,
@@ -43,6 +45,9 @@ import type {
 	Target,
 	TargetId,
 	TargetPayload,
+	TargetTestRequest,
+	TargetTestReport,
+	LocalSubnet,
 	WebchangeChange,
 	WebchangeChangeDetail,
 	WebchangeChangeKind,
@@ -63,7 +68,8 @@ import type {
 	IncidentPayload,
 	IncidentUpdatePayload,
 	PublicStatus,
-	StatusSubscriber
+	StatusSubscriber,
+	TargetRules
 } from './types';
 
 export * from './types';
@@ -91,6 +97,23 @@ export function createTarget(payload: TargetPayload): Promise<Target> {
 
 export function updateTarget(id: TargetId, payload: TargetPayload): Promise<Target> {
 	return request<Target>(`/targets/${id}`, { method: 'PUT', body: payload });
+}
+
+/** Probes the entered address and credentials once; nothing is saved. */
+export function testTarget(
+	payload: TargetTestRequest,
+	signal?: AbortSignal
+): Promise<TargetTestReport> {
+	return request<TargetTestReport>('/targets/test', { method: 'POST', body: payload, signal });
+}
+
+/** Suggested networks for the scan form (configured, from devices, from the server). */
+export async function localSubnets(signal?: AbortSignal): Promise<LocalSubnet[]> {
+	const raw = await request<{ subnets?: LocalSubnet[] }>('/discovery/subnets', {
+		signal,
+		anticipated: true
+	});
+	return Array.isArray(raw?.subnets) ? raw.subnets : [];
 }
 
 export function deleteTarget(id: TargetId): Promise<void> {
@@ -666,6 +689,11 @@ export function putRuleOverride(
 	});
 }
 
+/** The alert rules that watch a device, from the metrics it has written. */
+export function getTargetRules(targetId: TargetId, signal?: AbortSignal): Promise<TargetRules> {
+	return request<TargetRules>(`/targets/${targetId}/rules`, { signal });
+}
+
 export function deleteRuleOverride(ruleId: number, targetId: TargetId): Promise<void> {
 	return request<void>(`/alerts/rules/${ruleId}/overrides/${targetId}`, { method: 'DELETE' });
 }
@@ -749,6 +777,19 @@ export function subscribeToStatus(slug: string, email: string): Promise<{ status
 }
 
 /** Public: confirms a subscription with the token from the email. */
+/**
+ * Public: what a notification action link would do. The token travels in the body,
+ * never in a URL, so it reaches no access log.
+ */
+export function inspectAlertLink(token: string): Promise<AlertLinkView> {
+	return request<AlertLinkView>('/public/alert-action/inspect', { method: 'POST', body: { token }, allowUnauthorized: true });
+}
+
+/** Public: runs a notification action link, once. */
+export function runAlertLink(token: string): Promise<AlertLinkResult> {
+	return request<AlertLinkResult>('/public/alert-action', { method: 'POST', body: { token }, allowUnauthorized: true });
+}
+
 export function confirmStatusSubscription(slug: string, token: string): Promise<{ status: string }> {
 	return request(`/public/status/${encodeURIComponent(slug)}/confirm`, { method: 'POST', query: { token } });
 }

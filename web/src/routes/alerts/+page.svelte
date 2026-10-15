@@ -43,6 +43,7 @@
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
+	import { rovingIndex } from '#lib/ui/roving.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	type Tab = 'now' | 'scheduled' | 'rules' | 'notifications' | 'history';
@@ -215,6 +216,15 @@
 			void tick().then(() => document.getElementById(raw)?.scrollIntoView({ block: 'start' }));
 		}
 	}
+	// Roving tabindex: Left/Right/Home/End move and activate the tab.
+	function onTabKey(event: KeyboardEvent) {
+		const next = rovingIndex(event.key, TABS.findIndex((t) => t.id === tab), TABS.length);
+		if (next === null) return;
+		event.preventDefault();
+		selectTab(TABS[next].id);
+		void tick().then(() => document.getElementById(`alerts-tab-${TABS[next].id}`)?.focus());
+	}
+
 	function selectTab(next: Tab) {
 		tab = next;
 		if (browser) window.location.hash = next;
@@ -267,7 +277,10 @@
 			<button
 				type="button"
 				role="tab"
+				id={`alerts-tab-${item.id}`}
 				aria-selected={tab === item.id}
+				tabindex={tab === item.id ? 0 : -1}
+				onkeydown={onTabKey}
 				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 				onclick={() => selectTab(item.id)}
 			>
@@ -313,7 +326,7 @@
 		{/each}
 	</div>
 {:else if tab === 'now'}
-	<NeedsYouList {sky} grouped {silences} onchanged={() => void onNeedsYouChanged()} />
+	<NeedsYouList {sky} grouped selectable {silences} onchanged={() => void onNeedsYouChanged()} />
 {:else if tab === 'scheduled'}
 	<SilencesSection
 		{silences}

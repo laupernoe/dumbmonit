@@ -17,6 +17,8 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
+	import UnsavedBadge from './UnsavedBadge.svelte';
+	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	let config = $state<OidcConfig | null>(null);
@@ -37,6 +39,9 @@
 	});
 	let errors = $state<{ issuer?: string; client_id?: string; client_secret?: string; public_url?: string }>({});
 
+	// The client secret is compared as typed or not: its text never goes into the snapshot.
+	const tracker = useDirtyTracker(() => ({ ...form, client_secret: form.client_secret !== '' }));
+
 	function fill(next: OidcConfig) {
 		config = next;
 		form = {
@@ -52,6 +57,7 @@
 			// Prefilled from the browser: it is the address people use to reach this page.
 			public_url: next.public_url || (typeof window !== 'undefined' ? window.location.origin : '')
 		};
+		tracker.markClean();
 	}
 
 	async function load(signal?: AbortSignal) {
@@ -253,6 +259,7 @@
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
 				<Button type="submit" variant="secondary" loading={saving}>{m.settings_sso_save()}</Button>
+				<UnsavedBadge dirty={tracker.dirty} />
 				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_sso_test()}
