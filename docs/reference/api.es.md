@@ -5,8 +5,8 @@ abierta a tus propios scripts, dashboards y asistentes: no hay ninguna
 mitad privada. Es JSON plano sobre HTTP, autenticado por una cookie de
 sesión (la interfaz web) o por un token de API (todo lo demás).
 
-!!! warning "Alpha"
-    DumbMonit es una alfa y también lo es su API: las rutas y campos
+!!! warning "Antes de la 1.0"
+    DumbMonit está en una versión previa a la 1.0 y también lo está su API: las rutas y campos
     todavía pueden cambiar. La versión de la API (abajo) cambia cada
     vez que se elimina o renombra una ruta o campo, para que un
     cliente lo note.

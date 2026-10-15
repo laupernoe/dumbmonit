@@ -6,9 +6,9 @@ binary ships in the image. Configuration and state live in an embedded SQLite
 database. One volume, `/data`, holds the database, the instance secret and the
 time series.
 
-!!! note "Alpha image"
-    `ghcr.io/laupernoe/dumbmonit:latest` is the last tagged alpha build (amd64;
-    arm64 images are paused for now); `:edge` follows the last commit on `main`. To run from source,
+!!! note "Image tags"
+    `ghcr.io/laupernoe/dumbmonit:latest` is the last tagged release (amd64;
+    arm64 images are paused for now); `:edge` follows the last commit on `dev`. To run from source,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` builds the same image locally (about ten minutes the first time;
     only Docker is needed).

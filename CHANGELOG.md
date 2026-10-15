@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.9.0 — 2026-10-16
+
 ### Upgrading from 0.1.0-alpha.8
 
 - **Version numbers.** Releases are now plain `0.MINOR.PATCH`: this one is

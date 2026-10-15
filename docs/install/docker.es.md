@@ -6,9 +6,9 @@ binario viene en la imagen. La configuración y el estado viven en una base de d
 integrada. Un volumen, `/data`, contiene la base de datos, el secreto de la instancia y las
 series temporales.
 
-!!! note "Imagen alfa"
-    `ghcr.io/laupernoe/dumbmonit:latest` es la última compilación alfa etiquetada (amd64;
-    las imágenes arm64 están en pausa por ahora); `:edge` sigue el último commit de `main`. Para ejecutar desde el código fuente,
+!!! note "Etiquetas de imagen"
+    `ghcr.io/laupernoe/dumbmonit:latest` es la última versión etiquetada (amd64;
+    las imágenes arm64 están en pausa por ahora); `:edge` sigue el último commit de `dev`. Para ejecutar desde el código fuente,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` compila la misma imagen en local (unos diez minutos la primera
     vez; solo hace falta Docker).

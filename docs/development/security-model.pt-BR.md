@@ -87,4 +87,4 @@ o argumento de design seguro e as evidências por trás de cada afirmação.
 - As opções dos dispositivos são armazenadas sem criptografia. Coloque segredos
   nos campos de credencial.
 - O VictoriaMetrics embutido não tem autenticação.
-- O DumbMonit está em alfa; rotas e campos ainda podem mudar.
+- O DumbMonit está antes da 1.0; rotas e campos ainda podem mudar.

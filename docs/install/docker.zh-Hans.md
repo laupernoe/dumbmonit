@@ -6,9 +6,9 @@ DumbMonit 以单个容器运行：`dumbmonit` 服务器（采集、API、
 数据库中。一个卷 `/data` 保存数据库、实例密钥和
 时间序列。
 
-!!! note "Alpha 镜像"
-    `ghcr.io/laupernoe/dumbmonit:latest` 是最近一次打标签的 alpha 构建（amd64；
-    arm64 镜像暂时停止发布）；`:edge` 跟随 `main` 上的最新提交。若要从源码运行，
+!!! note "镜像标签"
+    `ghcr.io/laupernoe/dumbmonit:latest` 是最近一次打标签的发布版本（amd64；
+    arm64 镜像暂时停止发布）；`:edge` 跟随 `dev` 上的最新提交。若要从源码运行，
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` 会在本地构建同一个镜像（第一次约需十分钟；只需要 Docker）。
 

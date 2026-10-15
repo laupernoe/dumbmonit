@@ -4,9 +4,7 @@ Simple monitoring from the homelab to the small business. One container, one IP 
 to type in, useful graphs and alerts in under a minute.
 
 !!! warning "Work in progress"
-    DumbMonit is under active development; the current image
-    (`ghcr.io/laupernoe/dumbmonit:latest`) is an alpha for early testers. Expect
-    rough edges and breaking changes until the first release.
+    DumbMonit is under active development; until 1.0 the HTTP API and the data model can still change between minor versions (0.x). The changelog lists every change.
 
 DumbMonit reads the network like a **weather bulletin**: the home page states
 the sky in one sentence ("Clear skies." or "2 advisories, 1 unreachable.") and

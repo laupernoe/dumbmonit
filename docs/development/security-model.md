@@ -83,4 +83,4 @@ design argument and the evidence behind each claim.
 - The built-in server speaks plain HTTP; put TLS in front of it.
 - Device options are stored unencrypted. Put secrets in credential fields.
 - The embedded VictoriaMetrics has no authentication.
-- DumbMonit is an alpha; routes and fields can still change.
+- DumbMonit is before 1.0; routes and fields can still change.

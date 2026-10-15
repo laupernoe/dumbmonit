@@ -5,8 +5,8 @@ tuoi script, dashboard e assistenti: non esiste una metà privata. È semplice J
 su HTTP, autenticato da un cookie di sessione (l'interfaccia web) o da un token
 API (tutto il resto).
 
-!!! warning "Alpha"
-    DumbMonit è in alpha e lo è anche la sua API: rotte e campi possono ancora
+!!! warning "Prima della 1.0"
+    DumbMonit è precedente alla 1.0 e lo è anche la sua API: rotte e campi possono ancora
     cambiare. La versione dell'API (più sotto) cambia ogni volta che una rotta o un
     campo viene rimosso o rinominato, così un client può accorgersene.
 

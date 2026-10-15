@@ -72,4 +72,4 @@ GHSA 编号。
 - 内置服务器使用明文 HTTP;请在前面放置 TLS。
 - 设备选项以未加密形式存储。请把机密放在凭据字段中。
 - 内置的 VictoriaMetrics 没有身份验证。
-- DumbMonit 处于 alpha 阶段;路由和字段仍可能变化。
+- DumbMonit 尚未到达 1.0;路由和字段仍可能变化。

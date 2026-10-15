@@ -89,4 +89,4 @@ affermazione.
 - Le opzioni dei dispositivi sono salvate non cifrate. Metti i segreti nei campi
   delle credenziali.
 - VictoriaMetrics incorporato non ha autenticazione.
-- DumbMonit è in versione alpha; rotte e campi possono ancora cambiare.
+- DumbMonit è precedente alla 1.0; rotte e campi possono ancora cambiare.

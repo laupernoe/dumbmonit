@@ -5,8 +5,8 @@ your own scripts, dashboards and assistants: there is no private half. It is
 plain JSON over HTTP, authenticated by a session cookie (the web UI) or by an
 API token (everything else).
 
-!!! warning "Alpha"
-    DumbMonit is an alpha and so is its API: routes and fields can still change.
+!!! warning "Before 1.0"
+    DumbMonit is before 1.0 and so is its API: routes and fields can still change.
     The API version (below) changes whenever a route or a field is removed or
     renamed, so a client can tell.
 

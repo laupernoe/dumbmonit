@@ -86,4 +86,4 @@ l'argument de conception sûre et les preuves de chaque affirmation.
 - Les options d'équipement sont stockées en clair. Mettez les secrets dans les
   champs d'identifiants.
 - Le VictoriaMetrics embarqué n'a pas d'authentification.
-- DumbMonit est en alpha ; les routes et les champs peuvent encore changer.
+- DumbMonit est avant la 1.0 ; les routes et les champs peuvent encore changer.

@@ -5,8 +5,8 @@ Skripten, Dashboards und Assistenten offen: Es gibt keine private Hälfte. Es is
 über HTTP, authentifiziert durch ein Sitzungscookie (die Web-Oberfläche) oder durch ein API-Token
 (alles andere).
 
-!!! warning "Alpha"
-    DumbMonit ist eine Alpha, und seine API ebenso: Routen und Felder können sich noch ändern.
+!!! warning "Vor 1.0"
+    DumbMonit befindet sich vor 1.0, und seine API ebenso: Routen und Felder können sich noch ändern.
     Die API-Version (unten) ändert sich, sobald eine Route oder ein Feld entfernt oder umbenannt
     wird, sodass ein Client es erkennen kann.
 
