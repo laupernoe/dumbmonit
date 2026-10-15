@@ -45,10 +45,10 @@ sont lus par serveur.
 Les [règles intégrées](../alerting/rules.md#ups-behind-nut) qui
 s'appliquent : onduleur sur batterie, batterie d'onduleur faible, batterie
 d'onduleur à remplacer, charge d'onduleur élevée, temps restant d'onduleur
-court, données d'onduleur périmées, plus Appareil inaccessible quand le
+court, données d'onduleur périmées, plus Surveillance inaccessible quand le
 serveur NUT lui-même arrête de répondre.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page ne se connecte jamais au serveur NUT. Une carte par onduleur : son état
@@ -99,7 +99,7 @@ Adresse : un nom d'hôte ou une IP (`nas.lan`), `host:port`, ou la forme
 `ups@host` de `upsc`, dont seul l'hôte est gardé. Options : port (3493),
 l'onduleur à surveiller (tous par défaut) et le délai par échange (10 s).
 
-Une connexion refusée ou aucune réponse compte comme l'appareil inaccessible.
+Une connexion refusée ou aucune réponse compte comme la surveillance inaccessible.
 `ACCESS-DENIED` est affiché comme une erreur d'identifiant, et un nom
 d'onduleur que le serveur ne publie pas comme une erreur de configuration ;
 aucun des deux ne réveille personne la nuit. La connexion est en TCP simple :

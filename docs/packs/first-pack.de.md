@@ -50,7 +50,7 @@ default_port: 80
 credentials: [none]
 ```
 
-Die `id` entscheidet über zwei Namen: die Geräteart
+Die `id` entscheidet über zwei Namen: die Monitorart
 `pack.shelly-plug`, und das Metrik-Präfix `dumbmonit_shelly_plug_`.
 
 ## 3. Eine Quelle
@@ -71,8 +71,8 @@ sources:
     path: /rpc/Switch.GetStatus?id={{option.switch_id}}
 ```
 
-`{{option.switch_id}}` wird durch die eigene Einstellung des Geräts
-ersetzt, im Gerätedialog als **Switch channel** angezeigt. Der
+`{{option.switch_id}}` wird durch die eigene Einstellung des Monitors
+ersetzt, im Monitordialog als **Switch channel** angezeigt. Der
 Dateiname der Fixture, `status.json`, passt zur Quellen-`id`.
 
 ## 4. Die Metriken
@@ -181,7 +181,7 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
   --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
 ```
 
-Öffnen Sie **Devices → Add device**: *Shelly plug (Gen2+)* steht in
+Öffnen Sie **Monitors → Add monitor**: *Shelly plug (Gen2+)* steht in
 der Liste. Fügen Sie Ihre Steckdose mit ihrer Adresse hinzu; die
 erste Abfrage kommt innerhalb einer Minute, und die Regel *Shelly
 plug overheating* steht unter **Alerts → Rules**.

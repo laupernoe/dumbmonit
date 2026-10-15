@@ -8,13 +8,13 @@ verdade, ou para colocar uma vitrine no seu próprio site.
 !!! warning "Nunca em um volume de dados real"
     O modo demo **recria o banco de dados a cada inicialização**. Dê a ele um
     volume próprio, ou nenhum: apontado para o `/data` de uma instância real,
-    ele substituiria seus dispositivos, regras e histórico pelo acervo fictício.
+    ele substituiria seus monitores, regras e histórico pelo acervo fictício.
 
 ## O que o modo demo faz {#what-demo-mode-does}
 
 - **Entre com `demo` / `demo`.** A página de login avisa isso e preenche os
   campos com um clique. A conta vê todas as telas que um administrador vê.
-- **Somente leitura.** Toda alteração — dispositivos, regras, silêncios,
+- **Somente leitura.** Toda alteração — monitores, regras, silêncios,
   reconhecimentos, canais, tokens, usuários, configurações, backups e
   restaurações, varreduras de descoberta, cadastro de agentes, ferramentas de
   escrita do endpoint do assistente — é recusada pelo servidor com `403` e
@@ -25,10 +25,10 @@ verdade, ou para colocar uma vitrine no seu próprio site.
   zero e populado com um pequeno homelab sob `*.home.arpa`: um cluster Proxmox
   VE, um NAS Synology, um Proxmox Backup Server, um TrueNAS, um firewall
   OPNsense, um servidor Redfish com uma peça falhando, algumas verificações
-  HTTP, TLS e ping, um host com agente e uma página de status. Os dispositivos
+  HTTP, TLS e ping, um host com agente e uma página de status. Os monitores
   são respondidos por simuladores falsos dentro do servidor, vinculados a
   `127.0.0.1` e reproduzindo respostas de API gravadas, então os coletores e
-  painéis de dispositivo reais são executados. Reiniciar entrega o mesmo
+  painéis de monitor reais são executados. Reiniciar entrega o mesmo
   acervo.
 - **Sete dias de histórico.** Métricas sintéticas são gravadas no
   VictoriaMetrics na inicialização, então gráficos, *Últimos 7 dias*,

@@ -651,7 +651,7 @@ pub async fn put_override(
         }
     }
     if !target_exists(&state, target_id).await? {
-        return Err(ApiError::BadRequest(format!("Device {target_id} does not exist.")));
+        return Err(ApiError::BadRequest(format!("Monitor {target_id} does not exist.")));
     }
     if let Some(threshold) = payload.threshold
         && !threshold.is_finite()
@@ -686,7 +686,7 @@ pub async fn delete_override(
     {
         if current.enabled.is_none() {
             return Err(ApiError::NotFound(format!(
-                "Rule {id} is not ignored for device {target_id}."
+                "Rule {id} is not ignored for monitor {target_id}."
             )));
         }
         policy_store::upsert_override(&state.pool, &RuleOverride { enabled: None, ..current })
@@ -696,7 +696,7 @@ pub async fn delete_override(
     if policy_store::delete_override(&state.pool, &rule.uid, target_id).await? {
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::NotFound(format!("No override of rule {id} for device {target_id}.")))
+        Err(ApiError::NotFound(format!("No override of rule {id} for monitor {target_id}.")))
     }
 }
 
@@ -892,7 +892,7 @@ fn parse_selector(raw: Option<Value>) -> ApiResult<TargetSelector> {
     // substitue les trois formes que l'utilisateur a effectivement le droit d'écrire.
     serde_json::from_value(value).map_err(|_| {
         ApiError::BadRequest(
-            "Invalid device selector. Accepted forms: {\"kind\":\"all\"}, \
+            "Invalid monitor selector. Accepted forms: {\"kind\":\"all\"}, \
              {\"kind\":\"ids\",\"ids\":[1,2]} or \
              {\"kind\":\"labels\",\"labels\":{\"role\":\"nas\"}}."
                 .into(),
@@ -1058,7 +1058,7 @@ fn check_uid_shape(uid: &str) -> ApiResult<()> {
     // couperait toutes les alertes des équipements situés derrière.
     if uid == RULE_HOST_DOWN {
         return Err(ApiError::BadRequest(format!(
-            "The identifier \"{RULE_HOST_DOWN}\" is reserved for the \"Device unreachable\" \
+            "The identifier \"{RULE_HOST_DOWN}\" is reserved for the \"Monitor unreachable\" \
              rule, on which dependency suppression relies."
         )));
     }
@@ -1401,7 +1401,7 @@ impl SilencePayload {
                 .map_err(anyhow::Error::from)?
                 .is_some();
             if !exists {
-                return Err(ApiError::BadRequest(format!("Device {target_id} does not exist.")));
+                return Err(ApiError::BadRequest(format!("Monitor {target_id} does not exist.")));
             }
         }
 

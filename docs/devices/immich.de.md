@@ -39,7 +39,7 @@ Immichs eigenem Log.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#self-hosted-applications):
 Immich jobs stalled, Immich queue paused, Immich storage almost full,
-Immich update available, plus Device unreachable.
+Immich update available, plus Monitor unreachable.
 
 ## Geräte
 
@@ -67,10 +67,10 @@ während ein anderes weiter hochlädt. Nur `last_seen_timestamp_seconds`
 — die letzte Aktivität der Sitzung jedes Geräts — ist wirklich pro
 Gerät.
 
-Die Tabelle der Geräteseite zeigt diese Werte für jedes Gerät, mit
+Die Tabelle der Monitorseite zeigt diese Werte für jedes Gerät, mit
 einem Status von OK oder Stale.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite ruft Immich nie auf. Es sagt zuerst, was nicht stimmt

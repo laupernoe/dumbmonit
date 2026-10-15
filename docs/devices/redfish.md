@@ -60,11 +60,11 @@ the first page the controller serves are Critical or Warning.
 The [built-in rules](../alerting/rules.md#server-hardware-redfish) that apply:
 Server fan failed, Server temperature above critical, Power supply redundancy
 lost, Power supply failed, Drive failure predicted, Server health critical,
-plus Device unreachable.
+plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
-A Redfish device gets its own panel on its page, above the charts, read from
+A Redfish monitor gets its own panel on its page, above the charts, read from
 what the last probe stored: opening the page never queries the controller.
 It answers, in this order:
 
@@ -121,7 +121,7 @@ is a word as well as a colour, and an unknown value reads "—", never 0.
 5. DumbMonit only reads: fans, temperatures, voltages, power supplies, drives, memory and processor summaries, and how many log entries there are by severity. It never powers the server on or off, never changes a setting and never reads the text of the logs.
 
 !!! warning
-    Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. A controller answers slowly and a full read takes several requests: if the device reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.
+    Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. A controller answers slowly and a full read takes several requests: if the monitor reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.
 
 The menu names above are those of current firmware; older generations move
 them around but keep the same roles. On Supermicro, the account type shown

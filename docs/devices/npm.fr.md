@@ -39,9 +39,9 @@ par un jusqu'à 500, et 100 certificats au plus sont lus par vérification.
 
 Les [règles intégrées](../alerting/rules.md#reverse-proxies-and-domains) qui
 s'appliquent : hôte Nginx Proxy Manager hors ligne, certificat de proxy non
-renouvelé, plus Appareil inaccessible.
+renouvelé, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Nginx Proxy Manager. Il dit ce qui ne va pas en une

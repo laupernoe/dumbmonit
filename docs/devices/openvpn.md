@@ -31,10 +31,10 @@ reconnection behind NAT and would multiply the series for nothing. At most 256
 clients get a detailed series each; `clients_connected` stays exact beyond
 that.
 
-Built-in rules that apply: **Device unreachable**, when the management
+Built-in rules that apply: **Monitor unreachable**, when the management
 connection itself cannot be made or the password is refused.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never connects to the management interface. It shows the server's version and

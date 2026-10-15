@@ -38,11 +38,11 @@ All metrics are prefixed `dumbmonit_nextcloud_`.
 
 While Nextcloud is in maintenance or waits for an upgrade, its API answers
 503: only `maintenance`, `needs_db_upgrade` and `version_info` are written then,
-and the device is not reported unreachable.
+and the monitor is not reported unreachable.
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Nextcloud stuck in maintenance, Nextcloud database upgrade pending, Nextcloud
-update available, Nextcloud OPcache full, Nextcloud free space low, plus Device
+update available, Nextcloud OPcache full, Nextcloud free space low, plus Monitor
 unreachable.
 
 ## Background jobs (cron)
@@ -80,7 +80,7 @@ Nextcloud ever exposes this over OCS, DumbMonit will follow the same
 [client devices](../alerting/rules.md) pattern already used for Immich,
 Proxmox Backup Server and Veeam.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 calls Nextcloud. It says what is wrong first (maintenance, upgrade waiting,

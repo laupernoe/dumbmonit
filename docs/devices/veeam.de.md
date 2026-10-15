@@ -80,11 +80,11 @@ Wiederherstellungspunkt erst, wenn ein Backup mindestens teilweise erfolgreich w
 der jüngste pro Objekt bereits „das letzte erfolgreiche Backup“ — hier wird nichts nach dem
 Ergebnis gefiltert. Veeam stellt keine vom Backup selbst getrennte „letzte Verbindung“ bereit,
 daher werden `last_seen_timestamp_seconds` und das Signal `connection` nie veröffentlicht; ein
-Gerät zeigt `last_connection` in der Tabelle der Geräteseite als „—“. Der `type` des Geräts ist
+Gerät zeigt `last_connection` in der Tabelle der Monitorseite als „—“. Der `type` des Geräts ist
 der eigene Plattformname von Veeam (`VSphere`, `WindowsPhysical`, `HyperV` …), unverändert
 angezeigt.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel Backups nennt in einem Satz, was nicht stimmt, zeigt die fehlgeschlagenen Jobs, die
 fehlgeschlagenen Sitzungen der letzten 24 Stunden, die laufenden Jobs und die Lizenz und listet

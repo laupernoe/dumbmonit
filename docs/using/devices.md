@@ -1,44 +1,44 @@
-# The devices page
+# The monitors page
 
-![The rack: one faceplate per device](../assets/screenshots/devices-light.png){ loading=lazy }
+![The rack: one faceplate per monitor](../assets/screenshots/devices-light.png){ loading=lazy }
 
 ## The rack
 
-Every device is a 1U rack faceplate: a status LED, the name, the kind stamp,
+Every monitor is a 1U rack faceplate: a status LED, the name, the kind stamp,
 the address, when it was last seen, and a sparkline of a representative metric.
 Children stack under their parent and dim when the parent is unreachable.
 
 | State | Meaning |
 |---|---|
 | Reporting | The last probe succeeded, within three periods. |
-| Unreachable | The device did not answer (timeout, connection refused), or no probe for more than three periods (at least 90 s). |
+| Unreachable | The monitor did not answer (timeout, connection refused), or no probe for more than three periods (at least 90 s). |
 | Misconfigured | The last probe failed on our side: wrong credentials, invalid address or option, unexpected answer. Shown in the advisory colour with the error; it raises no alert. |
 | Waiting | Added, not probed yet. |
 | Disabled | Paused: not checked, raises no alert. |
 
 Filters: a search box, a state segment (All, Needs attention, Reporting,
-Disabled) and a kind filter. **Add a device** is the primary action.
+Disabled) and a kind filter. **Add a monitor** is the primary action.
 
-The **Select** button (operators and admins) turns on a checkbox per device
+The **Select** button (operators and admins) turns on a checkbox per monitor
 and a floating bar at the bottom with the bulk actions; **Done** or Escape
 leaves the mode.
 
-## A device
+## A monitor
 
-![A device page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }
+![A monitor page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }
 
-The device page shows its state plate, address, kind, detected profile, tags,
+The monitor page shows its state plate, address, kind, detected profile, tags,
 last probe, and for services the certificate status. Actions:
 
 | Action | Effect |
 |---|---|
-| Probe now | Runs one probe immediately and reports how many samples and series it produced. The first thing to try when a device shows no data. |
+| Probe now | Runs one probe immediately and reports how many samples and series it produced. The first thing to try when a monitor shows no data. |
 | Edit | Opens the same form as when adding, prefilled. Leaving the credential empty keeps the stored one. |
-| Silence 1 h / Silence until… | A one-off maintenance window on this device. |
-| Delete | Asks "Delete for good?" inline for five seconds, then deletes the device. Its series stay in VictoriaMetrics until retention expires. |
+| Silence 1 h / Silence until… | A one-off maintenance window on this monitor. |
+| Delete | Asks "Delete for good?" inline for five seconds, then deletes the monitor. Its series stay in VictoriaMetrics until retention expires. |
 
-Below: **Alerts on this device** — each active alert offers *Ack*, *Snooze*
-and *Ignore*, and a rule ignored on this device is listed separately with
+Below: **Alerts on this monitor** — each active alert offers *Ack*, *Snooze*
+and *Ignore*, and a rule ignored on this monitor is listed separately with
 **Stop ignoring** — then **Metrics** over a time range (1 h, 6 h, 24 h,
 7 days), one chart per metric name with one line per series. See
 [Getting rid of an alert](alerts.md#getting-rid-of-an-alert).
@@ -66,15 +66,15 @@ containers](../devices/agent.md#docker-containers).
 
 ## Adding and editing
 
-See [Add your first device](../install/first-device.md) for the form and the
-[device types](../devices/index.md) for what each type needs. When editing, the
-form opens **More options** by itself if the device already uses one.
+See [Add your first monitor](../install/first-device.md) for the form and the
+[monitor types](../devices/index.md) for what each type needs. When editing, the
+form opens **More options** by itself if the monitor already uses one.
 
 ## Deleting
 
-Deleting a device removes it from the configuration, clears its alerts on the
+Deleting a monitor removes it from the configuration, clears its alerts on the
 spot — nothing is notified, the history keeps a `device removed or disabled`
 line — and deletes its time series from the embedded VictoriaMetrics a few
 seconds later (best effort: a failure is only logged, and the series then age
-out with the 12-month retention). Pausing a device clears its alerts the same
+out with the 12-month retention). Pausing a monitor clears its alerts the same
 way; its series stay.

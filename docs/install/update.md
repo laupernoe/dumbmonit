@@ -19,7 +19,7 @@ the steps below and **See what's new** reopens the *What's new* window.
 
 !!! note "What is sent"
     One anonymous `GET` request with a `DumbMonit/<version>` user agent.
-    Nothing about your instance, your devices or your network is sent, and the
+    Nothing about your instance, your monitors or your network is sent, and the
     address is fixed in the code.
 
 ### Turning the check off

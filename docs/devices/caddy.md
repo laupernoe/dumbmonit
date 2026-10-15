@@ -40,9 +40,9 @@ through the admin API.
 
 The [built-in rules](../alerting/rules.md#reverse-proxies-and-domains) that
 apply: Caddy upstream unhealthy, Caddy configuration reload failed, Reverse
-proxy answering 5xx, plus Device unreachable.
+proxy answering 5xx, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Caddy. It says what is wrong in a sentence (no configuration, a failed

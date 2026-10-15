@@ -1,6 +1,6 @@
 # 指标 {#metrics}
 
-DumbMonit 将每一次测量存储在 VictoriaMetrics 中，并通过服务器的[指标代理](api.md#metrics)用 MetricsQL 读回。本页介绍命名、标签和保留期。各类型的指标列表见[设备页面](../devices/index.md)。
+DumbMonit 将每一次测量存储在 VictoriaMetrics 中，并通过服务器的[指标代理](api.md#metrics)用 MetricsQL 读回。本页介绍命名、标签和保留期。各类型的指标列表见[监控项页面](../devices/index.md)。
 
 ## 命名 {#naming}
 
@@ -17,27 +17,27 @@ DumbMonit 将每一次测量存储在 VictoriaMetrics 中，并通过服务器�
 
 特定来源的指标族以来源作为第二个前缀：`dumbmonit_proxmox_*`、`dumbmonit_pbs_*`、`dumbmonit_synology_*`、`dumbmonit_probe_*`（服务）。SNMP 配置文件和代理使用普通名称（`dumbmonit_if_octets_in`、`dumbmonit_cpu_usage_percent`）。
 
-计数器（接口的字节数和包数、磁盘字节数、已打印页数）按设备上报的值**原样**存储：在你自己的查询中用 `rate()` 得到吞吐量。设备页面按存储的原样绘制该设备的每条 `dumbmonit_*` 序列，因此计数器显示为一条上升的线。重启表现为计数器重置，绝不会是虚假的尖峰。
+计数器（接口的字节数和包数、磁盘字节数、已打印页数）按监控项上报的值**原样**存储：在你自己的查询中用 `rate()` 得到吞吐量。监控项页面按存储的原样绘制该监控项的每条 `dumbmonit_*` 序列，因此计数器显示为一条上升的线。重启表现为计数器重置，绝不会是虚假的尖峰。
 
 ## `dumbmonit_up` {#dumbmonit_up}
 
-每次探测成功后，服务器为该设备写入 `dumbmonit_up = 1`。探测失败时不写入任何内容：序列直接停止，而“设备不可达”规则度量最后一个样本的年龄（`time() - tlast_over_time(dumbmonit_up[7d])`），并且只保留每个设备最新的序列（`bottomk by (target) (1, …)`）：在标签或标记变更后不再写入的序列会留在 7 天窗口内，不应被计入。
+每次探测成功后，服务器为该监控项写入 `dumbmonit_up = 1`。探测失败时不写入任何内容：序列直接停止，而“监控项不可达”规则度量最后一个样本的年龄（`time() - tlast_over_time(dumbmonit_up[7d])`），并且只保留每个监控项最新的序列（`bottomk by (target) (1, …)`）：在标签或标记变更后不再写入的序列会留在 7 天窗口内，不应被计入。
 
 对于服务（`http`、`tcp`、`dns`、`ping`、`tls`），`dumbmonit_up = 1` 表示“监控已运行”，而 `dumbmonit_probe_success` 表示服务是否正常。这两个信号被刻意分开：`probe_success` 为 0 表示服务宕机，`up` 中断则表示监控宕机。
 
 ## `dumbmonit_security_score` {#dumbmonit_security_score}
 
-服务器每 15 分钟为每个具有安全检查的设备类型计算[安全评分](../using/security-score.md)，并写入 `dumbmonit_security_score`（0–100，无法评级时不存在）和 `dumbmonit_security_checks_failed`，两者都带 `target` 标签。
+服务器每 15 分钟为每个具有安全检查的监控项类型计算[安全评分](../using/security-score.md)，并写入 `dumbmonit_security_score`（0–100，无法评级时不存在）和 `dumbmonit_security_checks_failed`，两者都带 `target` 标签。
 
 ## 标签 {#labels}
 
 | 标签 | 由谁设置 | 含义 |
 |---|---|---|
-| `target` | 服务器 | 设备 id，与 `/api/targets/{id}` 中一致。每条规则和每个图表都按它选择。 |
-| `host` | 服务器 | 设备名称。 |
-| `tag_<key>` | 服务器 | 设备的自由标签。类型选项（`insecure_tls`、`port`……）、键名看起来像机密的标签（按单词匹配：`key`、`pass`、`cert`、`private`、`pem`……）以及超过 256 个字符的值不会被复制。切勿把机密放进标签。 |
+| `target` | 服务器 | 监控项 id，与 `/api/targets/{id}` 中一致。每条规则和每个图表都按它选择。 |
+| `host` | 服务器 | 监控项名称。 |
+| `tag_<key>` | 服务器 | 监控项的自由标签。类型选项（`insecure_tls`、`port`……）、键名看起来像机密的标签（按单词匹配：`key`、`pass`、`cert`、`private`、`pem`……）以及超过 256 个字符的值不会被复制。切勿把机密放进标签。 |
 | `probe` | 服务 | `http`、`tcp`、`dns`、`ping` 或 `tls`。 |
-| 各序列自己的标签 | 采集器 | `ifname`、`mountpoint`、`device`、`fstype`、`core`、`service`、`container`、`node`、`vmid`、`name`、`storage`、`datastore`、`group`、`volume`、`disk`、`pool`、`repo`、`changes`、`reason`、`version`、`issuer`……详见各设备页面。 |
+| 各序列自己的标签 | 采集器 | `ifname`、`mountpoint`、`device`、`fstype`、`core`、`service`、`container`、`node`、`vmid`、`name`、`storage`、`datastore`、`group`、`volume`、`disk`、`pool`、`repo`、`changes`、`reason`、`version`、`issuer`……详见各监控项页面。 |
 
 身份标签始终优先于采集器标签，对代理而言，它们在接收时设置：一台机器无法写入另一台机器的序列。
 
@@ -46,7 +46,7 @@ DumbMonit 将每一次测量存储在 VictoriaMetrics 中，并通过服务器�
 
 ## 保留期与存储 {#retention-and-storage}
 
-内置的 VictoriaMetrics 保留 12 个月的数据（`DUMBMONIT_VM_RETENTION`），位于 `/data/vm`，即 `dumbmonit-data` 卷中。服务器批量写入，并每 5 秒刷新一次（`DUMBMONIT_FLUSH_INTERVAL_SECS`）。删除设备不会删除其序列；它们会自然过期。
+内置的 VictoriaMetrics 保留 12 个月的数据（`DUMBMONIT_VM_RETENTION`），位于 `/data/vm`，即 `dumbmonit-data` 卷中。服务器批量写入，并每 5 秒刷新一次（`DUMBMONIT_FLUSH_INTERVAL_SECS`）。删除监控项不会删除其序列；它们会自然过期。
 
 告警历史保留 90 天，消失超过 60 天的序列的基线也同样保留，二者都存放在 SQLite 中（参见[配置参考](configuration.md)）。
 
@@ -73,7 +73,7 @@ bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d])) > 300
 
 | 路由 | 返回内容 |
 |---|---|
-| `GET /metrics` | DumbMonit 实例自身的健康状况：调度器、探测、写入、告警、通知、代理、数据库。几十条序列，数量始终相同——绝不会每个设备一条。 |
+| `GET /metrics` | DumbMonit 实例自身的健康状况：调度器、探测、写入、告警、通知、代理、数据库。几十条序列，数量始终相同——绝不会每个监控项一条。 |
 | `GET /federate` | 由 `match[]` 选择的测量数据，与 Prometheus 联邦另一个 Prometheus 的方式完全相同：每条被选序列的最新点。 |
 | `GET /prometheus/api/v1/…` | Prometheus API 的读取部分，中继到存储：即 Grafana 数据源所调用的。 |
 
@@ -110,7 +110,7 @@ scrape_configs:
 
 `honor_labels: true` 会保留 DumbMonit 设置的 `target` 和 `host` 标签，而不是用抓取任务自己的标签覆盖它们。如果不想把令牌放在配置里，可把令牌放进文件并使用 `authorization: {type: Bearer, credentials_file: /etc/prometheus/dumbmonit.token}`。
 
-没有 `match[]` 时，`/federate` 选择 `{__name__=~"dumbmonit_.*"}`——即 DumbMonit 写入的每一条序列，并且不包含共用同一个 VictoriaMetrics 的其他工具的任何数据。可以缩小范围以保持联邦较小：对单个设备用 `{__name__=~"dumbmonit_.*",target="4"}`，只看可用性用 `{__name__="dumbmonit_up"}`。每个请求最多 10 个选择器，超过 8 MiB 的响应会被拒绝，并附带一条要求缩小范围的消息——请用范围更窄的选择器把大型设备群拆分成多个任务，而不是用一个任务请求全部。`max_lookback=15m` 会扩大查找最后一个点的时间窗口，适用于探测间隔超过五分钟的设备。
+没有 `match[]` 时，`/federate` 选择 `{__name__=~"dumbmonit_.*"}`——即 DumbMonit 写入的每一条序列，并且不包含共用同一个 VictoriaMetrics 的其他工具的任何数据。可以缩小范围以保持联邦较小：对单个监控项用 `{__name__=~"dumbmonit_.*",target="4"}`，只看可用性用 `{__name__="dumbmonit_up"}`。每个请求最多 10 个选择器，超过 8 MiB 的响应会被拒绝，并附带一条要求缩小范围的消息——请用范围更窄的选择器把大型监控项群拆分成多个任务，而不是用一个任务请求全部。`max_lookback=15m` 会扩大查找最后一个点的时间窗口，适用于探测间隔超过五分钟的监控项。
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
@@ -141,9 +141,9 @@ curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
 | `dumbmonit_uptime_seconds` | gauge | 自服务器进程启动以来的秒数。 |
 | `dumbmonit_scheduler_cycles_total` | counter | 已运行的调度周期数。循环每秒滴答一次，因此这也可作为存活信号。 |
 | `dumbmonit_scheduler_cycle_seconds` | gauge | 上一个周期的持续时间。通常不到一毫秒：周期只做分派，不等待探测。 |
-| `dumbmonit_scheduler_backlog` | gauge | 上一个周期结束时仍待探测的设备数。健康实例上为零；持续非零意味着 `DUMBMONIT_MAX_CONCURRENT_PROBES` 对设备数量及其间隔而言过低。 |
-| `dumbmonit_probes_total{kind}` | counter | 已运行的探测，按设备类型（`snmp`、`proxmox`、`http`……）。包括中继代理代表服务器运行的那些。 |
-| `dumbmonit_probes_failed_total{kind}` | counter | 失败的探测，按类型——设备不可达或配置错误。`rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` 即失败率。 |
+| `dumbmonit_scheduler_backlog` | gauge | 上一个周期结束时仍待探测的监控项数。健康实例上为零；持续非零意味着 `DUMBMONIT_MAX_CONCURRENT_PROBES` 对监控项数量及其间隔而言过低。 |
+| `dumbmonit_probes_total{kind}` | counter | 已运行的探测，按监控项类型（`snmp`、`proxmox`、`http`……）。包括中继代理代表服务器运行的那些。 |
+| `dumbmonit_probes_failed_total{kind}` | counter | 失败的探测，按类型——监控项不可达或配置错误。`rate(dumbmonit_probes_failed_total[15m]) / rate(dumbmonit_probes_total[15m])` 即失败率。 |
 | `dumbmonit_samples_written_total` | counter | VictoriaMetrics 接受的样本数。 |
 | `dumbmonit_sample_writes_failed_total` | counter | VictoriaMetrics 拒绝或未响应的批次数。该批次仍保留在缓冲区中并重试；该值上升且 `dumbmonit_samples_pending` 同时上升，意味着存储已宕机或已满。 |
 | `dumbmonit_samples_pending` | gauge | 上次刷新后仍留在写缓冲区中的样本数。通常为 0。 |
@@ -153,7 +153,7 @@ curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
 | `dumbmonit_alerting_rules_evaluated` | gauge | 上一个周期评估的规则数。 |
 | `dumbmonit_alerting_rules_failed` | gauge | 上一个周期中查询失败的规则数。它们的告警被冻结，而不是被解除。任何非 0 的值都值得查看日志。 |
 | `dumbmonit_alerts{phase}` | gauge | 引擎跟踪的告警，按阶段：`ok`、`pending`（条件为真，`for` 尚未满足）、`firing`、`resolved`。 |
-| `dumbmonit_alerts_suppressed` | gauge | 因父设备宕机而被隐藏的告警（有效阶段 `suppressed`）。 |
+| `dumbmonit_alerts_suppressed` | gauge | 因父监控项宕机而被隐藏的告警（有效阶段 `suppressed`）。 |
 | `dumbmonit_alerts_silenced` | gauge | 被维护窗口覆盖的告警。 |
 | `dumbmonit_alerts_learning` | gauge | 仍在学习、因而保持静默的基线告警。 |
 | `dumbmonit_notifications_total{kind}` | counter | 已发送的通知，按渠道类型（`email`、`discord`、`ntfy`……）。 |
@@ -165,7 +165,7 @@ curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
 | `dumbmonit_victoriametrics_up` | gauge | VictoriaMetrics 有响应时为 1——与 `/api/health` 的检查相同。内置子进程重启期间为 0。 |
 | `dumbmonit_victoriametrics_embedded` | gauge | 此服务器自行运行 VictoriaMetrics 时为 1，`DUMBMONIT_VM_URL` 指向外部实例时为 0。 |
 
-本页上的指标都不带每设备标签：一个设备和一千个设备的文档大小相同，也不会向任何能抓取它的人泄露设备名称。
+本页上的指标都不带每监控项标签：一个监控项和一千个监控项的文档大小相同，也不会向任何能抓取它的人泄露监控项名称。
 
 在 DumbMonit 被抓取之后，值得在你这边添加的两个告警：
 
@@ -179,4 +179,4 @@ dumbmonit_samples_pending > 0 and increase(dumbmonit_sample_writes_failed_total[
 
 ### 不使用令牌开放这些路由 {#opening-the-routes-without-a-token}
 
-`DUMBMONIT_METRICS_PUBLIC=true` 会向任何能访问该端口的人提供 `/metrics`、`/federate` 和 `/prometheus/api/v1/…`，适用于自行过滤端口的用户——**该网络上的任何人随后都可以读取每个设备的每条测量数据以及实例的状态，因此只有在已有其他手段限制谁能访问该端口时才设置它。**
+`DUMBMONIT_METRICS_PUBLIC=true` 会向任何能访问该端口的人提供 `/metrics`、`/federate` 和 `/prometheus/api/v1/…`，适用于自行过滤端口的用户——**该网络上的任何人随后都可以读取每个监控项的每条测量数据以及实例的状态，因此只有在已有其他手段限制谁能访问该端口时才设置它。**

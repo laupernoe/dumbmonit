@@ -3,7 +3,7 @@
 Die Zeitreihendatenbank und die Logdatenbank selbst: ob sie annehmen, was ihnen gesendet wird,
 wie viel Plattenplatz bleibt, bevor sie nichts mehr annehmen, und was sie ablehnen.
 
-Zwei Gerätetypen teilen sich diese Seite, weil die beiden Produkte dieselben Grundlagen haben:
+Zwei Monitortypen teilen sich diese Seite, weil die beiden Produkte dieselben Grundlagen haben:
 `victoriametrics` für ein Single-Node-VictoriaMetrics und `victorialogs` für ein
 Single-Node-VictoriaLogs. Beide veröffentlichen ihren eigenen Zustand auf `/health` und
 `/metrics`, auf dem Port ihrer API; DumbMonit liest diese beiden und sonst nichts. Es führt nie
@@ -59,9 +59,9 @@ abgelehnte Daten zählt.
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#log-and-metrics-servers):
 Metrik- oder Logspeicher schreibgeschützt, Metrik- oder Logspeicher fast schreibgeschützt, Metrik-
 oder Logserver fehlerhaft, Metrik- oder Logdaten abgelehnt, VictoriaMetrics Slow Inserts,
-außerdem Gerät nicht erreichbar.
+außerdem Monitor nicht erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite fragt
 den Server nie ab. Es nennt, in dieser Reihenfolge:

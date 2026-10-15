@@ -4,7 +4,7 @@ La base de séries temporelles et la base de logs elles-mêmes : si elles
 acceptent ce qu'on leur envoie, combien de disque reste avant qu'elles
 n'acceptent plus rien, et ce qu'elles refusent.
 
-Deux types d'appareil partagent cette page, parce que les deux produits
+Deux types de surveillance partagent cette page, parce que les deux produits
 partagent leurs fondations : `victoriametrics` pour un VictoriaMetrics
 mono-nœud, et `victorialogs` pour un VictoriaLogs mono-nœud. Les deux
 publient leur propre santé sur `/health` et `/metrics`, sur le port de leur
@@ -63,9 +63,9 @@ Les [règles intégrées](../alerting/rules.md#log-and-metrics-servers) qui
 s'appliquent : stockage de métriques ou de logs en lecture seule, stockage
 de métriques ou de logs presque en lecture seule, serveur de métriques ou
 de logs en mauvaise santé, données de métriques ou de logs refusées,
-insertions lentes VictoriaMetrics, plus Appareil inaccessible.
+insertions lentes VictoriaMetrics, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais le serveur. Il dit, dans cet ordre :

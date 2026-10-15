@@ -1,15 +1,15 @@
 # Score de sécurité
 
 Le score de sécurité est une note **facultative** de **A** à **F** (et un score
-de 0 à 100) affichée à côté des appareils pour lesquels quelques contrôles
+de 0 à 100) affichée à côté des surveillances pour lesquelles quelques contrôles
 disent quelque chose d'utile : hôtes Linux et Windows avec l'agent, Proxmox VE
 et Proxmox Backup Server, Synology, OPNsense, sites web et Active Directory.
-Les autres appareils n'affichent rien.
+Les autres surveillances n'affichent rien.
 
 !!! warning "Indicatif, pas un audit"
     Le score est **approximatif et non exhaustif**. Il lit uniquement ce que
-    DumbMonit collecte déjà sur un appareil et le compare à une poignée de
-    bonnes pratiques du fournisseur. Une note A ne signifie pas qu'un appareil
+    DumbMonit collecte déjà sur une surveillance et le compare à une poignée de
+    bonnes pratiques du fournisseur. Une note A ne signifie pas qu'une surveillance
     est sûr, et un contrôle absent ne signifie pas que le réglage est correct.
     Servez-vous-en comme d'une invitation à regarder, puis utilisez un vrai
     outil d'évaluation (PingCastle, Mozilla HTTP Observatory, Lynis, le
@@ -20,29 +20,29 @@ Les autres appareils n'affichent rien.
 Le score est **désactivé par défaut**. Un administrateur l'active dans
 **Paramètres → Compte et sécurité → Score de sécurité**. Une fois activé :
 
-- chaque appareil noté reçoit un petit **badge en forme de bouclier** avec sa
-  lettre dans la liste des appareils, et un badge **Security** avec le score
+- chaque surveillance notée reçoit un petit **badge en forme de bouclier** avec sa
+  lettre dans la liste des surveillances, et un badge **Security** avec le score
   sur sa page ;
-- un clic sur le badge ouvre le **rapport** de l'appareil : ce qui échoue, avec
+- un clic sur le badge ouvre le **rapport** de la surveillance : ce qui échoue, avec
   la preuve et le correctif, ce qui réussit, les étapes pour améliorer le score
-  sur ce type d'appareil, et un lien vers la section correspondante ci-dessous.
+  sur ce type de surveillance, et un lien vers la section correspondante ci-dessous.
 
 Le désactiver masque les badges, arrête le calcul périodique, et les séries
 `dumbmonit_security_score` ne sont plus écrites.
 
 !!! note "Mise à niveau depuis 0.1.0-alpha.8 ou antérieure"
     Le score était auparavant toujours actif, avec sa propre page
-    **Security**. Une installation qui surveillait déjà un appareil noté garde
+    **Security**. Une installation qui surveillait déjà une surveillance notée garde
     le score activé après la mise à niveau ; une nouvelle installation démarre
     avec le score désactivé. L'ancienne adresse `/security` ouvre désormais le
     réglage.
 
 ## Comment le score est calculé
 
-DumbMonit ne demande jamais rien de plus à l'appareil pour calculer le score.
+DumbMonit ne demande jamais rien de plus à la surveillance pour calculer le score.
 Les contrôles lisent les dernières valeurs que les collecteurs ont déjà
 enregistrées (en remontant sur 6 heures) : un score ne coûte donc rien à
-l'appareil.
+la surveillance.
 
 Chaque contrôle a une catégorie (exposition, correctifs, authentification,
 chiffrement, sauvegarde, configuration), une **gravité** qui est son poids
@@ -53,7 +53,7 @@ lien vers la page du fournisseur sur laquelle il se base.
 **Score** = 100 × (poids des contrôles réussis) ÷ (poids des contrôles réussis
 + échoués). **Les contrôles inconnus sont affichés mais jamais comptés** : un
 score ne doit pas baisser parce qu'un compte de supervision manque d'un
-privilège, ni monter parce que rien n'est connu. Un appareil dont tous les
+privilège, ni monter parce que rien n'est connu. Une surveillance dont tous les
 contrôles sont inconnus n'est *pas noté*.
 
 | Note | Score | Mot |
@@ -246,14 +246,14 @@ Sources : [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 
 ### Sites web { #websites }
 
-Pour les moniteurs **HTTP(S)** et **TLS** qui négocient TLS, et pour les
-appareils **Website health & SEO**. Un moniteur HTTP en clair n'a pas de score.
+Pour les surveillances **HTTP(S)** et **TLS** qui négocient TLS, et pour les
+surveillances **Website health & SEO**. Une surveillance HTTP en clair n'a pas de score.
 
 | Contrôle | Gravité | Donnée |
 |---|---|---|
-| Certificate valid for 14+ days | high | jours avant expiration (moniteurs HTTP(S) et TLS) |
-| Certificate chain trusted | high | vérification de la chaîne (moniteurs HTTP(S) et TLS) |
-| TLS 1.3 negotiated | low | version du protocole négocié (moniteurs HTTP(S) et TLS) |
+| Certificate valid for 14+ days | high | jours avant expiration (surveillances HTTP(S) et TLS) |
+| Certificate chain trusted | high | vérification de la chaîne (surveillances HTTP(S) et TLS) |
+| TLS 1.3 negotiated | low | version du protocole négocié (surveillances HTTP(S) et TLS) |
 | Served over HTTPS | high | adresse finale après redirections (Website health) |
 | Strict-Transport-Security header | medium | en-tête avec un `max-age` supérieur à 0 |
 | X-Content-Type-Options: nosniff | low | valeur de l'en-tête |

@@ -8,7 +8,7 @@ valer, ou para colocar uma vitrine no seu próprio site.
 !!! warning "Nunca num volume de dados real"
     O modo de demonstração **recria a base de dados a cada arranque**.
     Dê-lhe um volume próprio, ou nenhum: apontado para o `/data` de uma
-    instância real, substituiria os seus dispositivos, regras e histórico
+    instância real, substituiria os seus monitores, regras e histórico
     pelo património fictício.
 
 ## O que o modo de demonstração faz {#what-demo-mode-does}
@@ -16,7 +16,7 @@ valer, ou para colocar uma vitrine no seu próprio site.
 - **Iniciar sessão com `demo` / `demo`.** A página de início de sessão diz
   isso mesmo e preenche os campos com um clique. A conta vê todos os ecrãs que
   um administrador vê.
-- **Só leitura.** Todas as alterações — dispositivos, regras, silêncios,
+- **Só leitura.** Todas as alterações — monitores, regras, silêncios,
   confirmações, canais, tokens, utilizadores, definições, cópias de segurança
   e restauros, análises de descoberta, registo de agentes, ferramentas de
   escrita do endpoint do assistente — são recusadas pelo servidor com `403` e
@@ -28,9 +28,9 @@ valer, ou para colocar uma vitrine no seu próprio site.
   Proxmox VE, um NAS Synology, um Proxmox Backup Server, um TrueNAS, uma
   firewall OPNsense, um servidor Redfish com uma peça em falha, algumas
   verificações HTTP, TLS e ping, um anfitrião com agente e uma página de
-  estado. Os dispositivos são respondidos por simuladores falsos dentro do
+  estado. Os monitores são respondidos por simuladores falsos dentro do
   servidor, ligados a `127.0.0.1` e a reproduzir respostas de API gravadas,
-  pelo que os coletores reais e os painéis de dispositivo funcionam. Reiniciar
+  pelo que os coletores reais e os painéis de monitor funcionam. Reiniciar
   devolve o mesmo património.
 - **Sete dias de histórico.** Métricas sintéticas são escritas na
   VictoriaMetrics no arranque, para que os gráficos, *Últimos 7 dias*, as

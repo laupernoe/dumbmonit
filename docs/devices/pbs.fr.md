@@ -6,11 +6,11 @@ verify, prune, ramasse-miettes), datastores, disques et pools ZFS, mises
 à jour en attente, les services et versions de paquet du serveur
 lui-même, et le niveau bande quand il y en a un.
 
-## La page de l'appareil
+## La page de la surveillance
 
-![Un appareil PBS : échecs, le calendrier de sauvegarde sur 30 jours, jobs et santé](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![Une surveillance PBS : échecs, le calendrier de sauvegarde sur 30 jours, jobs et santé](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Au-delà des graphiques génériques, un appareil PBS montre six panneaux,
+Au-delà des graphiques génériques, une surveillance PBS montre six panneaux,
 lus depuis ce que la sonde a stocké — ouvrir la page n'interroge jamais
 PBS lui-même :
 
@@ -67,7 +67,7 @@ historique vient de la liste de tâches : la première sonde après un
 démarrage lit les 30 derniers jours
 (`/nodes/localhost/tasks?since=…&limit=5000`), les sondes suivantes
 seulement la fenêtre de tâches, et le serveur garde l'union dans SQLite
-(`pbs_task_history`, 35 jours, 10 000 tâches au plus par appareil) pour
+(`pbs_task_history`, 35 jours, 10 000 tâches au plus par surveillance) pour
 que le calendrier survive aux redémarrages.
 
 ## Ce qu'il surveille
@@ -163,11 +163,11 @@ intégration qui protège un appareil.
 pour une machine sauvegardée, seulement des sauvegardes —
 `last_seen_timestamp_seconds` et le signal `connection` ne sont jamais
 publiés ici ; un appareil montre `last_connection` comme « — » dans le
-tableau de la page de l'appareil. L'appareil nommé dans l'alerte est le
+tableau de la page de la surveillance. L'appareil nommé dans l'alerte est le
 nom de l'invité depuis les notes de snapshot quand PVE en a écrit une,
 sinon `type/id`, comme le calendrier de sauvegarde.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, datastore PBS
+Règles intégrées qui s'appliquent : Surveillance inaccessible, datastore PBS
 presque plein, datastore PBS qui se remplit, sauvegarde PBS trop
 ancienne (par groupe de sauvegarde : pas de nouveau snapshot depuis deux
 jours — modifiez le seuil de la règle pour une fenêtre plus longue),
@@ -322,7 +322,7 @@ complète. Le schéma `https` et le port 8007 sont ajoutés s'ils manquent.
 |---|---|
 | Erreur de certificat | Certificat autosigné : installez-en un de confiance (ACME est intégré à PBS) ou activez `insecure_tls`. |
 | Erreur d'authentification | Le secret collé dans Token ID (ou l'inverse), ou le jeton n'a pas de permission `Audit` — le plus souvent parce que le rôle a été accordé au jeton mais pas à l'utilisateur qui le possède, ce qui n'échoue pas : les appels réussissent et renvoient des listes vides. Seul l'échec de `GET /version` condamne toute la sonde ; tout autre appel en échec est compté dans `scrape_errors`. |
-| Tout se lit vide mais l'appareil est actif | L'utilisateur manque l'ACL que le jeton a, et PBS fait l'intersection des deux : `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` n'affiche rien. Accordez chaque rôle à `dumbmonit@pbs` aussi. |
+| Tout se lit vide mais la surveillance est active | L'utilisateur manque l'ACL que le jeton a, et PBS fait l'intersection des deux : `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` n'affiche rien. Accordez chaque rôle à `dumbmonit@pbs` aussi. |
 | Aucune série `node_updates_pending` | Le jeton manque `Sys.Audit` sur `/` : donnez-lui le rôle `Audit` sur `/`, ou réglez `updates` sur `false` pour arrêter de demander. |
 | Un job sync manque | Le jeton manque `Remote.Audit` sur le remote du job : ajoutez le rôle `RemoteAudit` sur `/remote`. Le job n'est pas refusé, il est simplement absent de la liste. |
 | Aucune expiration de certificat | L'option `certificates` est désactivée, ce qui est le défaut : PBS exige `Sys.Modify` pour cet appel, un privilège d'écriture. |

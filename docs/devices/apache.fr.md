@@ -30,7 +30,7 @@ qui est sous `workers_busy`/`workers_idle` et `scoreboard` demande
 les états sont waiting, open_slot, starting, reading, sending, keepalive,
 dns_lookup, closing, logging, finishing et idle_cleanup.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Apache. Il montre les workers occupés et au repos, la

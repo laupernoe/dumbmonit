@@ -7,15 +7,15 @@ und deaktivieren, nicht löschen.
 ## Integrierte Regeln {#built-in-rules}
 
 Schweregrade werden mit dem Wort der Oberfläche angezeigt; der API-Wert steht in Klammern. Eine
-Regel, deren Metrik kein Gerät erzeugt, hat keine Serie und löst nie aus, daher wird jede
+Regel, deren Metrik kein Monitor erzeugt, hat keine Serie und löst nie aus, daher wird jede
 untenstehende Regel auf jeder Instanz aktiviert ausgeliefert.
 
-### Jedes Gerät {#every-device}
+### Jeder Monitor {#every-device}
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| Gerät nicht erreichbar | Seit mehr als drei Minuten keine Messung empfangen. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 Min. | Warnung (`critical`) | 6 h |
-| CPU hoch | CPU-Last dauerhaft über 90 %, pro Gerät über SNMP-, Proxmox- und Agent-Quellen gemittelt; löst sich unter 85 %. | > 90 % | 10 Min. | Hinweis (`warning`), eskaliert nach 1 h | 6 h |
+| Monitor nicht erreichbar | Seit mehr als drei Minuten keine Messung empfangen. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 Min. | Warnung (`critical`) | 6 h |
+| CPU hoch | CPU-Last dauerhaft über 90 %, pro Monitor über SNMP-, Proxmox- und Agent-Quellen gemittelt; löst sich unter 85 %. | > 90 % | 10 Min. | Hinweis (`warning`), eskaliert nach 1 h | 6 h |
 | Ungewöhnliche CPU | CPU-Last spürbar anders als üblich zu dieser Uhrzeit und diesem Wochentag (saisonale Baseline). | Score > 3,5 | 15 Min. | Info (`info`) | 6 h |
 | Platte fast voll | Dateisystem zu 90 % oder mehr voll, pro Mountpunkt (SNMP, Proxmox-Storages und Root-Dateisysteme); löst sich unter 88 %. | ≥ 90 % | 15 Min. | Hinweis (`warning`), eskaliert nach 24 h | 6 h |
 | Dateisystem fast voll | Bei dieser Rate ist das Dateisystem innerhalb von vier Tagen voll (`predict_linear` über 6 h; nur wachsende Dateisysteme). | ≥ 100 % | 30 Min. | Hinweis (`warning`) | 6 h |
@@ -31,7 +31,7 @@ untenstehende Regel auf jeder Instanz aktiviert ausgeliefert.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| Port sammelt Fehler | Ein Netzwerkport hat in der letzten Stunde mehr als fünfzig Fehler protokolliert: meist ein defektes Kabel, eine verschmutzte Faser oder ein Duplex-Mismatch (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; in der ersten Stunde eines neuen Geräts löst nichts aus, sodass vor dem Hinzufügen gezählte Fehler nicht als neu gemeldet werden). | > 50 | 15 Min. | Hinweis (`warning`) | 24 h |
+| Port sammelt Fehler | Ein Netzwerkport hat in der letzten Stunde mehr als fünfzig Fehler protokolliert: meist ein defektes Kabel, eine verschmutzte Faser oder ein Duplex-Mismatch (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; in der ersten Stunde eines neuen Monitors löst nichts aus, sodass vor dem Hinzufügen gezählte Fehler nicht als neu gemeldet werden). | > 50 | 15 Min. | Hinweis (`warning`) | 24 h |
 | Port flattert | Ein Netzwerkport ist in dreißig Minuten mehr als zweimal ausgefallen und wieder hochgekommen (`changes_prometheus(dumbmonit_if_oper_status[30m])`). Ein absichtlich deaktivierter Port hat keine Serie und löst nie aus. | > 4 | 5 Min. | Hinweis (`warning`) | 1 h |
 
 ### Serverhardware (Redfish) {#server-hardware-redfish}
@@ -52,7 +52,7 @@ Zustandsserien sind 0 (OK), 1 (Warnung) oder 2 (Kritisch). Ein leerer Steckplatz
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
 | Dienst ausgefallen | Der Dienst hat drei Minuten lang nicht korrekt geantwortet (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 Min. | Warnung (`critical`) | 30 Min. |
-| Heartbeat verpasst | Der Job hat sich nicht innerhalb seines erwarteten Intervalls plus Karenzzeit gemeldet oder selbst einen Fehler gemeldet (`dumbmonit_probe_success{probe="push"} == bool 0`; die Verzögerung wird pro Gerät festgelegt, siehe [Heartbeat](../devices/push.md)). | > 0 | 2 Min. | Hinweis (`warning`) | 6 h |
+| Heartbeat verpasst | Der Job hat sich nicht innerhalb seines erwarteten Intervalls plus Karenzzeit gemeldet oder selbst einen Fehler gemeldet (`dumbmonit_probe_success{probe="push"} == bool 0`; die Verzögerung wird pro Monitor festgelegt, siehe [Heartbeat](../devices/push.md)). | > 0 | 2 Min. | Hinweis (`warning`) | 6 h |
 | Dienst flattert | Der Dienst hat in dreißig Minuten mehr als sechsmal den Zustand gewechselt (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 Min. | Hinweis (`warning`) | 1 h |
 | Langsamer Dienst | Der Dienst braucht mehr als drei Sekunden zum Antworten; fehlgeschlagene Prüfungen bleiben außen vor (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 Min. | Hinweis (`warning`) | 6 h |
 | Zertifikat läuft bald ab | Das Zertifikat läuft in weniger als vierzehn Tagen ab. | < 14 T. | 1 h | Hinweis (`warning`) | 24 h |
@@ -226,13 +226,13 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| MDaemon-Mail-Dienst ausgefallen | Ein überwachter Mail-Dienst des MDaemon-Servers antwortet nicht oder begrüßt mit Dienstverweigerung (`dumbmonit_mdaemon_service_up`). Nur die auf dem Gerät aufgeführten Dienste haben eine Serie. Die Benachrichtigung nennt den Dienst und seinen Port. | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
-| MDaemon-XML-API antwortet nicht | Die XML-API antwortet nicht mehr, während die Mail-Dienste es noch tun (`dumbmonit_mdaemon_api_up`): Remote Administration ist wahrscheinlich gestoppt. Nur ein Gerät mit einem Konto hat die Serie. | < 1 | 15 Min. | Hinweis (`warning`) | 12 h |
-| MDaemon-Mail-Queue wächst | Die Inbound-, Local- oder Remote-Queue ist in zwei Stunden um mehr als hundert Nachrichten gewachsen (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon hat aufgehört, daraus zuzustellen. Vom [Agenten](../devices/agent.md#windows-performance-counters) auf dem MDaemon-Server gelesen, der Alarm liegt also auf dem Gerät des Agenten. | > 100 | 15 Min. | Hinweis (`warning`) | 6 h |
+| MDaemon-Mail-Dienst ausgefallen | Ein überwachter Mail-Dienst des MDaemon-Servers antwortet nicht oder begrüßt mit Dienstverweigerung (`dumbmonit_mdaemon_service_up`). Nur die auf dem Monitor aufgeführten Dienste haben eine Serie. Die Benachrichtigung nennt den Dienst und seinen Port. | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
+| MDaemon-XML-API antwortet nicht | Die XML-API antwortet nicht mehr, während die Mail-Dienste es noch tun (`dumbmonit_mdaemon_api_up`): Remote Administration ist wahrscheinlich gestoppt. Nur ein Monitor mit einem Konto hat die Serie. | < 1 | 15 Min. | Hinweis (`warning`) | 12 h |
+| MDaemon-Mail-Queue wächst | Die Inbound-, Local- oder Remote-Queue ist in zwei Stunden um mehr als hundert Nachrichten gewachsen (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon hat aufgehört, daraus zuzustellen. Vom [Agenten](../devices/agent.md#windows-performance-counters) auf dem MDaemon-Server gelesen, der Alarm liegt also auf dem Monitor des Agenten. | > 100 | 15 Min. | Hinweis (`warning`) | 6 h |
 | MDaemon-Bad-Queue nicht leer | In der Bad-Queue warten Nachrichten (`dumbmonit_mdaemon_queue_messages{queue="bad"}`): MDaemon konnte sie weder zustellen noch zurückweisen, und sie bleiben dort, bis ein Administrator sie freigibt oder löscht. | > 0 | 30 Min. | Hinweis (`warning`) | 24 h |
 | MDaemon-Retry-Queue hoch | In der Retry-Queue warten mehr als fünfzig Nachrichten (`dumbmonit_mdaemon_queue_messages{queue="retry"}`): Entfernte Server lehnen Mail weiter vorübergehend ab. | > 50 | 1 h | Hinweis (`warning`) | 6 h |
 | SecurityGateway-Dienst ausgefallen | Ein überwachter Dienst des Gateways antwortet nicht oder begrüßt mit Dienstverweigerung (`dumbmonit_securitygateway_service_up`). | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
-| SecurityGateway-API antwortet nicht | Die REST-API antwortet nicht mehr, während die Dienste es noch tun (`dumbmonit_securitygateway_api_up`). Nur ein Gerät mit einem API-Schlüssel hat die Serie. | < 1 | 15 Min. | Hinweis (`warning`) | 12 h |
+| SecurityGateway-API antwortet nicht | Die REST-API antwortet nicht mehr, während die Dienste es noch tun (`dumbmonit_securitygateway_api_up`). Nur ein Monitor mit einem API-Schlüssel hat die Serie. | < 1 | 15 Min. | Hinweis (`warning`) | 12 h |
 | SecurityGateway-Zustellwarteschlange wächst | Die Zustellwarteschlange ist in zwei Stunden um mehr als hundert Nachrichten gewachsen (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): Der Mailserver hinter dem Gateway lehnt wahrscheinlich Mail ab. Die Zählernamen kommen unverändert aus der API; benennt Ihre Version die Queue anders, passen Sie den Matcher an. | > 100 | 15 Min. | Hinweis (`warning`) | 6 h |
 
 ### OPNsense {#opnsense}
@@ -256,7 +256,7 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
-| NAS-Pool degradiert | ZFS nennt einen Pool nicht mehr gesund (`dumbmonit_truenas_pool_healthy`). Ein degradierter Pool liefert seine Daten weiter aus, und genau deshalb merkt es niemand, bis die nächste Platte ausfällt. Die Geräteseite nennt die Platte. | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
+| NAS-Pool degradiert | ZFS nennt einen Pool nicht mehr gesund (`dumbmonit_truenas_pool_healthy`). Ein degradierter Pool liefert seine Daten weiter aus, und genau deshalb merkt es niemand, bis die nächste Platte ausfällt. Die Monitorseite nennt die Platte. | < 1 | 5 Min. | Warnung (`critical`) | 6 h |
 | NAS-Plattenfehler | Platten eines Pools haben seit dem letzten `zpool clear` Lese-, Schreib- oder Prüfsummenfehler gemeldet (`dumbmonit_truenas_pool_device_errors`, eine Serie pro Art). | > 0 | 15 Min. | Hinweis (`warning`) | 24 h |
 | NAS-Pool fast voll | Ein Pool ist zu mehr als 85 % voll (`dumbmonit_truenas_pool_used_percent`). ZFS wird lange vor dem Vollwerden langsam. Löst sich bei 80 %. | > 85 % | 30 Min. | Hinweis (`warning`), eskaliert nach 7 T. | 24 h |
 | NAS-Scrub hat Fehler gefunden | Der letzte Scrub eines Pools hat beschädigte Daten gefunden (`dumbmonit_truenas_pool_last_scrub_errors`). | > 0 | 5 Min. | Warnung (`critical`) | 24 h |
@@ -267,7 +267,7 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).
 | NAS-Replikation fehlgeschlagen | Ein aktivierter Replikations-Task ist im Fehler (`dumbmonit_truenas_replication_error`): Die Kopie auf der anderen Seite wird älter. | > 0 | 10 Min. | Hinweis (`warning`) | 12 h |
 | NAS-Snapshot-Task fehlgeschlagen | Ein aktivierter periodischer Snapshot-Task ist im Fehler (`dumbmonit_truenas_snapshot_task_error`). | > 0 | 10 Min. | Hinweis (`warning`) | 12 h |
 | NAS-Snapshots veraltet | Ein aktivierter periodischer Snapshot-Task ist seit mehr als acht Tagen nicht gelaufen (`dumbmonit_truenas_snapshot_task_last_run_age_seconds`): Ein Task, der aufhört zu laufen, schlägt nicht fehl, er wird still. | > 8 T. | 1 h | Hinweis (`warning`) | 24 h |
-| TrueNAS-Alarm ausgelöst | TrueNAS selbst hat einen Alarm der Stufe ERROR oder höher ausgelöst (`dumbmonit_truenas_alerts`). Sein eigener Satz steht auf der Geräteseite. | > 0 | 10 Min. | Hinweis (`warning`) | 12 h |
+| TrueNAS-Alarm ausgelöst | TrueNAS selbst hat einen Alarm der Stufe ERROR oder höher ausgelöst (`dumbmonit_truenas_alerts`). Sein eigener Satz steht auf der Monitorseite. | > 0 | 10 Min. | Hinweis (`warning`) | 12 h |
 | NAS-Dienst gestoppt | Ein Dienst, der mit dem NAS starten soll, ist gestoppt (`dumbmonit_truenas_service_running`). Ein absichtlich abgeschalteter Dienst hat keine Serie. | < 1 | 10 Min. | Hinweis (`warning`) | 6 h |
 
 ### Synology DSM {#synology-dsm}
@@ -292,7 +292,7 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).
 
 ### Log- und Metrikserver {#log-and-metrics-servers}
 
-VictoriaMetrics, VictoriaLogs, Loki und Graylog ([Geräte](../devices/victoriametrics.md)). Zähler laufen über `increase_prometheus`, sodass ein mit einer Historie abgelehnter Daten hinzugefügter Server bei seiner ersten Messung nicht auslöst.
+VictoriaMetrics, VictoriaLogs, Loki und Graylog ([Monitore](../devices/victoriametrics.md)). Zähler laufen über `increase_prometheus`, sodass ein mit einer Historie abgelehnter Daten hinzugefügter Server bei seiner ersten Messung nicht auslöst.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -315,7 +315,7 @@ VictoriaMetrics, VictoriaLogs, Loki und Graylog ([Geräte](../devices/victoriame
 
 ### Selbst gehostete Anwendungen {#self-hosted-applications}
 
-Nextcloud, Immich, Paperless-ngx, Jellyfin und Plex ([Geräte](../devices/nextcloud.md)). Sie fallen selten ganz aus: Die Seite öffnet sich, während Synchronisierung, Vorschaubilder, Importe oder Bibliotheksscans stehen geblieben sind. Diese Regeln überwachen diese Zustände; eine Anwendung, die gar nicht antwortet, ist Gerät nicht erreichbar.
+Nextcloud, Immich, Paperless-ngx, Jellyfin und Plex ([Monitore](../devices/nextcloud.md)). Sie fallen selten ganz aus: Die Seite öffnet sich, während Synchronisierung, Vorschaubilder, Importe oder Bibliotheksscans stehen geblieben sind. Diese Regeln überwachen diese Zustände; eine Anwendung, die gar nicht antwortet, ist Monitor nicht erreichbar.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -341,8 +341,8 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin und Plex ([Geräte](../devices/nextcl
 
 ### Selbst gehostete Forges {#self-hosted-forges}
 
-GitLab (selbst gehostet) und Forgejo/Gitea ([Geräte](../devices/gitlab.md)). Eine Instanz, die gar
-nichts antwortet, ist Gerät nicht erreichbar; diese Regeln überwachen die Teile, die weiter Seiten
+GitLab (selbst gehostet) und Forgejo/Gitea ([Monitore](../devices/gitlab.md)). Eine Instanz, die gar
+nichts antwortet, ist Monitor nicht erreichbar; diese Regeln überwachen die Teile, die weiter Seiten
 ausliefern, während sie still zurückfallen — Sidekiq, CI/CD-Runner, ein geplanter Task, der
 aufgehört hat zu laufen.
 
@@ -357,7 +357,7 @@ aufgehört hat zu laufen.
 
 ### Client-Geräte {#client-devices}
 
-Eine Regel, geteilt von jeder Integration, die Geräte verfolgt, die sich verbinden und sichern — heute die Smartphones, Tablets und Desktops von Immich ([Geräte](../devices/immich.md)), die gesicherten Maschinen des Proxmox Backup Servers, eine pro Backup-Gruppe ([Geräte](../devices/pbs.md)), und die geschützten Computer und VMs von Veeam, eines pro Objekt mit einem Wiederherstellungspunkt ([Geräte](../devices/veeam.md)); weitere folgen. Jede Integration berechnet den Abstand zum Veralterungsfenster ihres eigenen Ziels (`device_stale_days`, standardmäßig 3 Tage) und veröffentlicht ihn als `dumbmonit_client_device_stale_seconds`, mit den Labels `device`, `type`, `os`, `user`, `kind` und `signal` (`connection` oder `backup`); diese eine Regel löst dann für jedes davon aus und nennt das Gerät in der Benachrichtigung. Synology Active Backup for Business verfolgt seine eigenen Geräte getrennt, über einen rhythmusbewussten Mechanismus (`synology_abb_device_*`) statt dieser generischen Familie — siehe [Synology](../devices/synology.md).
+Eine Regel, geteilt von jeder Integration, die Geräte verfolgt, die sich verbinden und sichern — heute die Smartphones, Tablets und Desktops von Immich ([Monitore](../devices/immich.md)), die gesicherten Maschinen des Proxmox Backup Servers, eine pro Backup-Gruppe ([Monitore](../devices/pbs.md)), und die geschützten Computer und VMs von Veeam, eines pro Objekt mit einem Wiederherstellungspunkt ([Monitore](../devices/veeam.md)); weitere folgen. Jede Integration berechnet den Abstand zum Veralterungsfenster ihres eigenen Ziels (`device_stale_days`, standardmäßig 3 Tage) und veröffentlicht ihn als `dumbmonit_client_device_stale_seconds`, mit den Labels `device`, `type`, `os`, `user`, `kind` und `signal` (`connection` oder `backup`); diese eine Regel löst dann für jedes davon aus und nennt das Gerät in der Benachrichtigung. Synology Active Backup for Business verfolgt seine eigenen Geräte getrennt, über einen rhythmusbewussten Mechanismus (`synology_abb_device_*`) statt dieser generischen Familie — siehe [Synology](../devices/synology.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -376,7 +376,7 @@ Eine Regel, geteilt von jeder Integration, die Geräte verfolgt, die sich verbin
 
 ### AdGuard Home {#adguard-home}
 
-Der DNS-Filter ([Gerät](../devices/adguard.md)). Abfrage- und Blockierungszahlen sind Summen über das eigene Statistikfenster von AdGuard Home, keine Zähler: Auf ihnen ist keine Regel aufgebaut.
+Der DNS-Filter ([Monitor](../devices/adguard.md)). Abfrage- und Blockierungszahlen sind Summen über das eigene Statistikfenster von AdGuard Home, keine Zähler: Auf ihnen ist keine Regel aufgebaut.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -404,7 +404,7 @@ werden von den [USV](#ups)-Regeln oben abgedeckt.
 
 ### MikroTik RouterOS {#mikrotik-routeros}
 
-Serien tragen das Label `interface` oder `sensor`, sodass eine Benachrichtigung den Port oder den Sensor nennt ([Gerät](../devices/mikrotik.md)). Zähler laufen über `increase_prometheus`: Ein Router, der mit Jahren von Fehlern im Rücken hinzugefügt wird, löst bei seiner ersten Messung nicht aus.
+Serien tragen das Label `interface` oder `sensor`, sodass eine Benachrichtigung den Port oder den Sensor nennt ([Monitor](../devices/mikrotik.md)). Zähler laufen über `increase_prometheus`: Ein Router, der mit Jahren von Fehlern im Rücken hinzugefügt wird, löst bei seiner ersten Messung nicht aus.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -420,7 +420,7 @@ Serien tragen das Label `interface` oder `sensor`, sodass eine Benachrichtigung 
 
 ### UniFi Network {#unifi-network}
 
-[Geräteseite](../devices/unifi.md). Geräteserien tragen Name, Modell und Typ des Geräts, sodass die Benachrichtigung „Wohnzimmer-AP“ sagt. Ein auf Adoption wartendes Gerät hat keine Serie `device_up` und zählt nie als offline.
+[Monitorseite](../devices/unifi.md). Geräteserien tragen Name, Modell und Typ des Geräts, sodass die Benachrichtigung „Wohnzimmer-AP“ sagt. Ein auf Adoption wartendes Gerät hat keine Serie `device_up` und zählt nie als offline.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -434,20 +434,20 @@ Serien tragen das Label `interface` oder `sensor`, sodass eine Benachrichtigung 
 
 ### Home Assistant {#home-assistant}
 
-[Geräteseite](../devices/homeassistant.md).
+[Monitorseite](../devices/homeassistant.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
 | Home Assistant im Wiederherstellungsmodus | Home Assistant ist im Wiederherstellungsmodus gestartet: Seine Konfiguration konnte nicht geladen werden, und Automatisierungen laufen nicht (`dumbmonit_homeassistant_recovery_mode`). | > 0 | 2 Min. | Warnung (`critical`) | 1 h |
 | Home Assistant läuft nicht | Home Assistant antwortet, hat aber seit zehn Minuten den Start nicht abgeschlossen (`dumbmonit_homeassistant_running`). | < 1 | 10 Min. | Hinweis (`warning`) | 6 h |
 | Home-Assistant-Entitäten nicht verfügbar | Mindestens fünf Entitäten mehr als vor einer Stunde sind nicht verfügbar: Eine Integration, ein Hub oder ein Funkmodul ist ausgefallen (`sum by (target) (dumbmonit_homeassistant_entities_unavailable) - sum by (target) (dumbmonit_homeassistant_entities_unavailable offset 1h)`). Der Anstieg zählt, nicht die Summe, die in einer echten Installation nie bei null liegt. | ≥ 5 | 10 Min. | Hinweis (`warning`) | 6 h |
-| Home-Assistant-Batterie schwach | Eine von Home Assistant gemeldete Batterie ist schwach (`dumbmonit_homeassistant_battery_low`, eine Serie pro Batterie unter der Schwelle des Geräts, standardmäßig 20 %; ihr Wert ist der Ladestand). | ≥ 0 % | 30 Min. | Info (`info`) | 3 T. |
+| Home-Assistant-Batterie schwach | Eine von Home Assistant gemeldete Batterie ist schwach (`dumbmonit_homeassistant_battery_low`, eine Serie pro Batterie unter der Schwelle des Monitors, standardmäßig 20 %; ihr Wert ist der Ladestand). | ≥ 0 % | 30 Min. | Info (`info`) | 3 T. |
 | Home-Assistant-Update verfügbar | Bei Home Assistant warten Updates: Core, Betriebssystem, Add-ons oder Gerätefirmware (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 T. |
 | Home-Assistant-Reparatur erforderlich | Home Assistant hat eine offene Reparatur mit Schweregrad Fehler oder Kritisch (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 Min. | Hinweis (`warning`) | 24 h |
 
 ### VMware vSphere {#vmware-vsphere}
 
-[Geräteseite](../devices/vsphere.md). Host-Serien tragen `esxi`, VM-Serien `vm`, Datastore-Serien `datastore`, sodass die Benachrichtigung das Objekt nennt.
+[Monitorseite](../devices/vsphere.md). Host-Serien tragen `esxi`, VM-Serien `vm`, Datastore-Serien `datastore`, sodass die Benachrichtigung das Objekt nennt.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -461,7 +461,7 @@ Serien tragen das Label `interface` oder `sensor`, sodass eine Benachrichtigung 
 
 ### Datenbanken, Message Broker und Sicherheits-Engine {#databases-message-broker-and-security-engine}
 
-Redis / Valkey, MongoDB, RabbitMQ und CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Zähler laufen über `increase_prometheus` oder `changes_prometheus`, sodass bei der ersten Messung eines Geräts nichts auslöst.
+Redis / Valkey, MongoDB, RabbitMQ und CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Zähler laufen über `increase_prometheus` oder `changes_prometheus`, sodass bei der ersten Messung eines Monitors nichts auslöst.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -509,7 +509,7 @@ Traefik, Caddy, Nginx Proxy Manager und Domainregistrierungen ([Traefik](../devi
 
 ### Website-Änderungen {#website-changes}
 
-Siehe [Website-Änderungen](../devices/webchange.md). Die Geräteseite zeigt jede Änderung vorher und nachher.
+Siehe [Website-Änderungen](../devices/webchange.md). Die Monitorseite zeigt jede Änderung vorher und nachher.
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -533,7 +533,7 @@ Namespace und des betroffenen Pods, Workloads oder Claims.
 ### Active Directory {#active-directory}
 
 Siehe [Active Directory](../devices/activedirectory.md). Der von DumbMonit abgefragte
-Domänencontroller wird von *Gerät nicht erreichbar* abgedeckt; die übrigen Domänencontroller der
+Domänencontroller wird von *Monitor nicht erreichbar* abgedeckt; die übrigen Domänencontroller der
 Domäne von *Domänencontroller nicht erreichbar* (Label `dc`).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
@@ -659,7 +659,7 @@ Vom Windows-Agenten auf einem Hyper-V-Host gemeldet; siehe [Agent](../devices/ag
 
 ### Sicherheitswert {#security-score}
 
-Vom Server alle 15 Minuten für jedes Gerät berechnet, dessen Art Sicherheitsprüfungen hat, und als `dumbmonit_security_score` (0–100) gespeichert, nur solange die Sicherheitsbewertung in den Einstellungen eingeschaltet ist (standardmäßig aus). Siehe [Sicherheitswert](../using/security-score.md).
+Vom Server alle 15 Minuten für jeden Monitor berechnet, dessen Art Sicherheitsprüfungen hat, und als `dumbmonit_security_score` (0–100) gespeichert, nur solange die Sicherheitsbewertung in den Einstellungen eingeschaltet ist (standardmäßig aus). Siehe [Sicherheitswert](../using/security-score.md).
 
 | Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
 |---|---|---|---|---|---|
@@ -673,14 +673,14 @@ Vom Server alle 15 Minuten für jedes Gerät berechnet, dessen Art Sicherheitspr
 | DumbMonit-Backup lief nicht | Das geplante lokale Backup der DumbMonit-Datenbank ist seit mehr als zwei Tagen nicht gelaufen (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 T. | 1 h | Hinweis (`warning`) | 24 h |
 | DumbMonit-Datenvolume fast voll | Das Volume mit `/data` hat weniger als 10 % freien Platz (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Hinweis (`warning`) | 24 h |
 | DumbMonit-Metrikdatenbank startet in Schleife neu | Das eingebettete VictoriaMetrics wurde in 30 Minuten dreimal oder öfter neu gestartet (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Warnung (`critical`) | 6 h |
-| DumbMonit-Planer hängt | Seit mehr als zwei Minuten keine Planungsrunde: Geräte werden nicht mehr abgefragt (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Warnung (`critical`) | 6 h |
-| DumbMonit-Abfragen im Verzug | Geräte bleiben nach jeder Planungsrunde überfällig (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Hinweis (`warning`) | 24 h |
+| DumbMonit-Planer hängt | Seit mehr als zwei Minuten keine Planungsrunde: Monitore werden nicht mehr abgefragt (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Warnung (`critical`) | 6 h |
+| DumbMonit-Abfragen im Verzug | Monitore bleiben nach jeder Planungsrunde überfällig (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Hinweis (`warning`) | 24 h |
 | DumbMonit-Metrikschreibvorgänge schlagen fehl | Von VictoriaMetrics abgelehnte Batches oder verworfene Messwerte in den letzten 15 Minuten (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Hinweis (`warning`) | 6 h |
 | DumbMonit-Datenbank wächst schnell | `dumbmonit.db` hat sich an einem Tag mehr als verdoppelt und ist größer als 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Hinweis (`warning`) | 24 h |
 
 Diese Regeln und der ausgehende Heartbeat werden in [Watching DumbMonit itself](../install/self-monitoring.md) erklärt.
 
-Jede integrierte Regel gilt für alle Geräte und für jeden aktivierten Kanal.
+Jede integrierte Regel gilt für alle Monitore und für jeden aktivierten Kanal.
 
 ## Eine Regel in der Oberfläche bearbeiten {#editing-a-rule-in-the-ui}
 
@@ -694,19 +694,19 @@ Markierung *Integriert* und, wenn relevant, wie viele Alarme sie gerade auslöst
   eigenen Regeln schon. Baseline-Regeln zeigen ihre Erkennungsparameter schreibgeschützt;
 - **Löschen**, nur für Ihre eigenen Regeln.
 
-## Überschreibungen pro Gerät {#per-device-overrides}
+## Überschreibungen pro Monitor {#per-device-overrides}
 
-Eine Regel lässt sich für ein Gerät anpassen, ohne die Regel selbst anzufassen: eine andere
-Schwelle, eine andere Auflösungsschwelle, oder allein für dieses Gerät abgeschaltet. Der Editor
-jeder Regel hat ein Panel **Überschreibungen pro Gerät**, um direkt eine hinzuzufügen oder zu
+Eine Regel lässt sich für einen Monitor anpassen, ohne die Regel selbst anzufassen: eine andere
+Schwelle, eine andere Auflösungsschwelle, oder allein für diesen Monitor abgeschaltet. Der Editor
+jeder Regel hat ein Panel **Überschreibungen pro Monitor**, um direkt eine hinzuzufügen oder zu
 entfernen.
 
 Die Ein-Klick-Aktion **Ignorieren** bei einem Alarm (im Tab *Now* oder auf der
-Geräteseite des Alarms) ist derselbe Mechanismus, geschrieben mit `enabled: false`: Das Gerät
-trägt diese Regel nicht mehr, sofort und umkehrbar. Die Geräteseite listet auf, was sie ignoriert,
-mit **Nicht mehr ignorieren**; die Regel selbst zeigt unter Alarme → Regeln *Auf N Geräten
-ignoriert*, wo dasselbe Panel für Überschreibungen pro Gerät sie entfernt. Siehe
-[Überschreibungen pro Gerät](../reference/api.md#per-device-overrides) für die API.
+Monitorseite des Alarms) ist derselbe Mechanismus, geschrieben mit `enabled: false`: Der Monitor
+trägt diese Regel nicht mehr, sofort und umkehrbar. Die Monitorseite listet auf, was sie ignoriert,
+mit **Nicht mehr ignorieren**; die Regel selbst zeigt unter Alarme → Regeln *Auf N Monitoren
+ignoriert*, wo dasselbe Panel für Überschreibungen pro Monitor sie entfernt. Siehe
+[Überschreibungen pro Monitor](../reference/api.md#per-device-overrides) für die API.
 
 ## Eine Schwellenregel erstellen {#creating-a-threshold-rule}
 
@@ -715,24 +715,24 @@ Klicken Sie auf **Neue Regel**. Das Formular verlangt:
 | Feld | Bedeutung |
 |---|---|
 | Name | In Alarmen und Benachrichtigungen angezeigt. |
-| Abfrage | Ein MetricsQL-Ausdruck, pro Gerät ausgewertet. Beispiel: `dumbmonit_cpu_usage_percent`. |
+| Abfrage | Ein MetricsQL-Ausdruck, pro Monitor ausgewertet. Beispiel: `dumbmonit_cpu_usage_percent`. |
 | Operator | `>`, `>=`, `<` oder `<=`. |
 | Schwelle | Die Zahl, mit der das Abfrageergebnis verglichen wird. |
 | Schweregrad | Info, Hinweis oder Warnung. |
 | Halten für | Sekunden, die die Bedingung andauern muss, bevor sie auslöst. Eine Haltezeit ungleich null fängt einen einzelnen schlechten Messwert ab. |
 
-Jede von der Abfrage zurückgegebene Serie wird zu einem potenziellen Alarm, angehängt an das durch
-ihr Label `target` benannte Gerät. Aggregieren Sie mit `avg by (target, host) (…)`, wenn Sie einen
-Alarm pro Gerät statt einen pro Kern oder pro Schnittstelle wollen. Die Identität des Alarms
+Jede von der Abfrage zurückgegebene Serie wird zu einem potenziellen Alarm, angehängt an den durch
+ihr Label `target` benannten Monitor. Aggregieren Sie mit `avg by (target, host) (…)`, wenn Sie einen
+Alarm pro Monitor statt einen pro Kern oder pro Schnittstelle wollen. Die Identität des Alarms
 ignoriert die Labels `host` und `tag_*`, sobald `target` vorhanden ist, sodass das Umbenennen eines
-Geräts seine Alarme behält; eine Serie, deren `target` zu keinem existierenden, aktivierten Gerät
+Monitors seine Alarme behält; eine Serie, deren `target` zu keinem existierenden, aktivierten Monitor
 passt, wird ignoriert.
 
 ## Die Abfragesprache {#the-query-language}
 
 Abfragen sind [MetricsQL](https://docs.victoriametrics.com/metricsql/), die PromQL-Obermenge von
 VictoriaMetrics. Die Metriken sind die Serien `dumbmonit_*`, beschrieben in der
-[Metrikreferenz](../reference/metrics.md), und jede Serie trägt ein Label `target` (die Geräte-ID)
+[Metrikreferenz](../reference/metrics.md), und jede Serie trägt ein Label `target` (die Monitor-ID)
 und ein Label `host` (ihren Namen).
 
 Einige von den integrierten Regeln verwendete Muster:

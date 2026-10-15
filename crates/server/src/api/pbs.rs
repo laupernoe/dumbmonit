@@ -615,9 +615,9 @@ fn probe_error(error: dumbmonit_proto::ProbeError) -> ApiError {
 async fn load(state: &AppState, id: TargetId) -> ApiResult<Target> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != "pbs" {
-        return Err(ApiError::BadRequest("This device is not a Proxmox Backup Server.".into()));
+        return Err(ApiError::BadRequest("This monitor is not a Proxmox Backup Server.".into()));
     }
     Ok(target)
 }

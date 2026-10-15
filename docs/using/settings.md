@@ -74,7 +74,7 @@ push service domains the server must reach. Full guide:
 
 Admins only. The accounts that can sign in, and their role:
 
-| Role | Reads everything | Handles alerts (ack, snooze, ignore, maintenance windows, clear history) | Changes configuration (devices, rules, channels, status pages, settings, backups, tokens, accounts) |
+| Role | Reads everything | Handles alerts (ack, snooze, ignore, maintenance windows, clear history) | Changes configuration (monitors, rules, channels, status pages, settings, backups, tokens, accounts) |
 |---|---|---|---|
 | **Viewer** | yes | no | no |
 | **Operator** | yes | yes | no |
@@ -82,7 +82,7 @@ Admins only. The accounts that can sign in, and their role:
 
 A viewer sees every page with every control that would change something
 hidden. A few things stay admin only even to read: API and agent tokens,
-status page subscriber emails, and device options that look like secrets
+status page subscriber emails, and monitor options that look like secrets
 (an option whose name contains `key`, `token`, `password`…, the extra headers
 of an HTTP check, the password of a `https://user:pass@host` address), which
 non-admins read as `***`. An operator is the on-call role: the alert controls are there, the
@@ -169,7 +169,7 @@ listed below the commands, to compare by hand. The list shows each token's prefi
 and whether it was revoked. **Revoke** stops every agent using that token at
 its next push.
 
-One token can enrol several machines. Revoking it does not delete the devices.
+One token can enrol several machines. Revoking it does not delete the monitors.
 The token list, creating and revoking are for admins; viewers and operators
 see the section without the list.
 
@@ -178,7 +178,7 @@ see the section without the list.
 One kind of token for both: MCP clients and the
 [REST API](../reference/api.md). Name a token, pick its scope and create it —
 it is shown once. A **read** token can only look; a **read and write** token
-can also change things — silence a device, run a probe, add or edit devices,
+can also change things — silence a monitor, run a probe, add or edit monitors,
 rules and channels — but never accounts, sign-in settings or other tokens.
 
 Under **Connect**, three tabs hold the snippets, filled with the token while
@@ -196,7 +196,7 @@ Grafana scrapes with it. See [Connect an assistant](assistant.md) and
 
 Three things, in the order you meet them.
 
-A **warning you cannot miss**: `/data/secret.key` is what decrypts device
+A **warning you cannot miss**: `/data/secret.key` is what decrypts monitor
 credentials, and a copy of the database without it restores an instance that
 cannot talk to anything. The wording changes when the secret comes from
 `DUMBMONIT_SECRET` instead — there is then no file to copy, and it is your
@@ -253,7 +253,7 @@ opens it from anywhere — see [Wall mode](overview.md#wall-mode).
 
 ## About
 
-Version of the server and the health of its two stores, the database (device
+Version of the server and the health of its two stores, the database (monitor
 setup and alert history) and VictoriaMetrics (every measurement in the
 charts), as reported by `GET /api/health` and refreshed every 15 seconds. A
 store that stops answering shows a warning with the error and what to check.

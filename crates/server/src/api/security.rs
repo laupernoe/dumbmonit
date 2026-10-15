@@ -61,7 +61,7 @@ async fn target_security(
 ) -> ApiResult<Json<Report>> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if !security::setting_enabled(&state.pool).await.map_err(internal)? {
         return Ok(Json(Report::empty(target.id, &target.name, &target.kind, false, now())));
     }

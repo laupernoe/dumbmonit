@@ -1,6 +1,6 @@
 # Website health & SEO
 
-Watch websites in bulk, one device per site: be told when a site **breaks**
+Watch websites in bulk, one monitor per site: be told when a site **breaks**
 (error, unreachable, invalid certificate, redirect loop), when its page **goes
 blank**, when it **drops out of search engines** (`noindex`, `robots.txt`
 blocking everything) and when the metadata Google shows **changes** (title,
@@ -15,7 +15,7 @@ For the content of a page rather than its health, see
 1. In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.
 2. Optionally fill in "Expected text" with a phrase the page must always show, and adjust "Blank page below" if the page is short on purpose.
 3. The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default ("Check for changes every"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.
-4. To add many sites at once, import a CSV file from the device list: each site is filed under `Websites/<category>` (E-commerce, Blog… or the category you give) or, when the page does not say, `Websites/<platform>` (WordPress, Shopify…), unless you give a folder.
+4. To add many sites at once, import a CSV file from the monitor list: each site is filed under `Websites/<category>` (E-commerce, Blog… or the category you give) or, when the page does not say, `Websites/<platform>` (WordPress, Shopify…), unless you give a folder.
 
 !!! warning
     Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower "Blank page below" to 0 for such a site.
@@ -92,7 +92,7 @@ switched-off field is not compared, not recorded and raises no alert; switched
 on again, it starts from a fresh reference. All are on by default. A field that
 disappears from the page (an empty value) is a change like any other.
 
-A confirmed change is kept in the device's history (field, before, after,
+A confirmed change is kept in the monitor's history (field, before, after,
 date), and its gauge (`dumbmonit_website_title_changed`…) stays at 1 for 24
 hours. The first check only records the reference. Changing the address or
 **Ignore query strings** starts a new reference instead of reporting a change.
@@ -136,7 +136,7 @@ does not mistake DumbMonit for an attack:
 A site whose previous check is still waiting its turn skips a round rather
 than queueing twice. Many sites on one domain with a short polling interval
 are therefore checked less often than asked: raise the interval, or the
-per-domain limits, if the device list shows them late. See
+per-domain limits, if the monitor list shows them late. See
 [Configuration](../reference/configuration.md#server).
 
 ## Platform detection
@@ -168,18 +168,18 @@ from clear signs only:
 A general-purpose platform (WordPress, Drupal, Hugo…) with no other sign is
 not guessed: the site then stays under its platform (`Websites/WordPress`) and
 sites of an unknown platform under `Websites/Other`. Sort them by hand with the
-`folder` or `category` columns, or move them in the device list.
+`folder` or `category` columns, or move them in the monitor list.
 
 ## Import a list of sites (CSV)
 
-From the device list or the add-device page, **Import websites (CSV)** takes a
+From the monitor list or the add-monitor page, **Import websites (CSV)** takes a
 file or pasted text with a header row and up to 1000 rows:
 
 | Column | Required | Meaning |
 |---|---|---|
 | `url` | yes | Address of the site. |
-| `name` | no | Device name; the host by default. |
-| `folder` | no | Folder of the device; empty: `Websites/<category>` if there is a category, else `Websites/<platform>`, detected by reading the site once. |
+| `name` | no | Monitor name; the host by default. |
+| `folder` | no | Folder of the monitor; empty: `Websites/<category>` if there is a category, else `Websites/<platform>`, detected by reading the site once. |
 | `category` | no | Free text (60 characters, no `/`), stored as the **Category** option. Empty: guessed from the page, see [Categories](#categories). |
 | `tags` | no | `key=value;key=value`. |
 | `interval` | no | Polling interval. |
@@ -221,7 +221,7 @@ already monitored (same final address) is skipped.
 
 | Alert | When | Severity |
 |---|---|---|
-| Device unreachable | No answer, certificate refused, redirect loop or too many redirects | critical |
+| Monitor unreachable | No answer, certificate refused, redirect loop or too many redirects | critical |
 | Website down | The final answer is a 4xx or 5xx error, for 3 minutes | critical |
 | Website page blank | Visible text below the threshold, for 3 minutes | critical |
 | Website expected text missing | The expected text is missing, for 3 minutes | warning |

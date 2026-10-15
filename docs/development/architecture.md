@@ -12,8 +12,8 @@ SQLite.
 | Server | `crates/server` | The single Rust binary: HTTP API (axum), authentication, scheduler, alerting engine, notification channels, reports. |
 | Web UI | `web/` | SvelteKit single-page app (Svelte 5, Tailwind 4, uPlot). Built to static files and embedded in the server binary with `rust_embed`. |
 | Time series | `crates/server/src/tsdb/` | Batched writer and query proxy for VictoriaMetrics. `embedded.rs` starts and supervises the bundled VictoriaMetrics child process (data in `/data/vm`); `DUMBMONIT_VM_URL` points to an external instance instead. |
-| Config and state | `crates/server/src/db/` | SQLite with numbered migrations: devices, credentials, users, rules, alert state, silences, channels. |
-| Collectors | `crates/collectors`, `crates/server/src/collectors/` | One implementation of the `Collector` trait per kind of device or service, registered in a `Registry`. The scheduler only knows the trait. |
+| Config and state | `crates/server/src/db/` | SQLite with numbered migrations: monitors, credentials, users, rules, alert state, silences, channels. |
+| Collectors | `crates/collectors`, `crates/server/src/collectors/` | One implementation of the `Collector` trait per kind of monitor or service, registered in a `Registry`. The scheduler only knows the trait. |
 | Shared types | `crates/proto` | `Sample`, `Target`, `Credential`, the `Collector` trait and `ProbeError`, and the agent protocol. |
 | Agent | `crates/agent` | Linux, macOS, FreeBSD and Windows agent that pushes host metrics; it can also act as a relay that runs collectors for a remote site. |
 | Alerting | `crates/server/src/alerting/` | Rules, the alert state machine, suppression by parent, silences, learned baselines. |
@@ -38,14 +38,14 @@ SQLite.
  API, the scheduler and the alerting engine.
 ```
 
-1. The scheduler runs every enabled device on its interval through the
+1. The scheduler runs every enabled monitor on its interval through the
    collector registry. Agents and relays push their measurements to
    `/api/ingest` with a per-machine token.
 2. Collectors return samples named `dumbmonit_<kind>_*` with a `target` label
-   (the device id). The writer batches them into VictoriaMetrics.
+   (the monitor id). The writer batches them into VictoriaMetrics.
 3. The alerting engine evaluates rules against the stored series. `phase` is
    the engine's state; `effective_phase` is what users see (`suppressed` when
-   a parent device is down). An unreachable device raises an alert; a
+   a parent monitor is down). An unreachable monitor raises an alert; a
    configuration error is shown but not notified.
 4. Notifications leave through the channels configured in the notification
    policy.
@@ -54,7 +54,7 @@ SQLite.
 
 ## Extension points
 
-- A new kind of device is a `Collector` implementation plus one
+- A new kind of monitor is a `Collector` implementation plus one
   `Registry::register` call. The UI forms are generated from
   `GET /api/collectors`.
 - A new notification channel is a sender plus an entry in `notify/catalog.rs`;

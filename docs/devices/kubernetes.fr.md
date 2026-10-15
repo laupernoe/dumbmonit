@@ -10,7 +10,7 @@ DumbMonit lit l'API avec le jeton d'un compte de service dédié lié à un
 ClusterRole en lecture seule : `get` et `list` sur les nœuds, pods,
 workloads, demandes de volume persistant et événements, rien d'autre. Il
 n'écrit jamais, et le rôle ne donne aucun accès aux Secrets ni aux
-ConfigMaps. Un seul appareil couvre tout le cluster, quelle que soit la
+ConfigMaps. Une seule surveillance couvre tout le cluster, quelle que soit la
 distribution : k3s, kubeadm, k0s, MicroK8s, Talos, ou un cluster managé
 dont l'API DumbMonit peut atteindre.
 
@@ -77,9 +77,9 @@ Les [règles intégrées](../alerting/rules.md#kubernetes) qui s'appliquent :
 - **Demande de volume Kubernetes en attente** : une demande bloquée
   depuis quinze minutes (Avis).
 
-Plus Appareil inaccessible, quand le serveur d'API arrête de répondre.
+Plus Surveillance inaccessible, quand le serveur d'API arrête de répondre.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Cluster dit ce qui ne va pas en une phrase, puis liste les
 nœuds (Ready ou non, pression, en cordon, version kubelet), les pods qui
@@ -161,7 +161,7 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Pour vérifier le rôle avant d'ajouter l'appareil, demandez au serveur
+Pour vérifier le rôle avant d'ajouter la surveillance, demandez au serveur
 d'API ce que le compte peut faire ; la première commande doit répondre
 `yes`, la seconde `no` :
 
@@ -171,7 +171,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
 Un jeton fait avec `kubectl create token dumbmonit -n kube-system`
-fonctionne aussi, mais il expire (après une heure par défaut) : l'appareil
+fonctionne aussi, mais il expire (après une heure par défaut) : la surveillance
 échoue alors avec « The API server refused the token (401) ». Le Secret
 ci-dessus est la forme longue durée que Kubernetes documente pour cet
 usage. Pour révoquer l'accès de DumbMonit, supprimez le Secret, ou le

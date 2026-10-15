@@ -10,22 +10,22 @@ n'y a pas de fichier de configuration à monter.
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Adresse d'écoute de l'API et de l'interface web, à l'intérieur du conteneur. |
 | `DUMBMONIT_DATA_DIR` | `/data` | Répertoire persistant : `dumbmonit.db` (SQLite), `secret.key`, `vm/` (VictoriaMetrics embarqué) et `webchange/` (captures d'écran des changements de site). |
 | `DUMBMONIT_VM_URL` | *(non défini)* | URL de base d'un VictoriaMetrics externe (`http://host:8428`). Quand elle est définie, celui embarqué n'est pas démarré ; voir [ci-dessous](#embedded-victoriametrics). |
-| `DUMBMONIT_SECRET` | *(généré)* | Secret de l'instance. Si vide, lu depuis `<répertoire de données>/secret.key`, généré au premier démarrage. Chiffre les identifiants d'appareil, les secrets de canal et les jetons d'agent avec AES-256-GCM. |
+| `DUMBMONIT_SECRET` | *(généré)* | Secret de l'instance. Si vide, lu depuis `<répertoire de données>/secret.key`, généré au premier démarrage. Chiffre les identifiants de surveillance, les secrets de canal et les jetons d'agent avec AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Sondes simultanées maximum, tous collecteurs confondus. |
-| `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Délai maximal d'une sonde. Les moniteurs de service ont leur propre option `timeout_seconds`, plus courte. |
+| `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Délai maximal d'une sonde. Les surveillances de service ont leur propre option `timeout_seconds`, plus courte. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Période des écritures regroupées vers VictoriaMetrics. |
 | `DUMBMONIT_FLUSH_BATCH` | `5000` | Nombre d'échantillons en tampon qui déclenche une écriture avant que la période ne s'écoule. |
-| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads du runtime async. Le serveur passe son temps à attendre le réseau : quatre couvrent un homelab, augmentez seulement pour des centaines d'appareils. |
+| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads du runtime async. Le serveur passe son temps à attendre le réseau : quatre couvrent un homelab, augmentez seulement pour des centaines de surveillances. |
 | `DUMBMONIT_DB_POOL` | `4` | Connexions SQLite ouvertes maximum. Chacune coûte un thread et un cache de page de 2 Mo ; les connexions inactives se ferment après cinq minutes. |
 | `DUMBMONIT_LOG` | `info` | Filtre de journal, syntaxe `tracing` : `debug`, `warn`, `dumbmonit=debug,sqlx=warn`… |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Répertoire des binaires d'agent servis sous `/download/`. Vide ou manquant : la commande d'installation échoue avec `404`, le serveur tourne quand même. |
 | `DUMBMONIT_RESET_PASSWORD` | *(désactivé)* | `1`, `true`, `yes` ou `on` : efface le mot de passe et chaque session au démarrage. L'interface montre alors `/setup` à nouveau. Retirez-la ensuite. |
 | `DUMBMONIT_COOKIE_SECURE` | *(désactivé)* | `1` pour régler l'attribut `Secure` sur le cookie de session. Seulement derrière HTTPS : en HTTP simple le navigateur ne renverrait jamais le cookie. |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(vide)* | Reverse proxies dont le `X-Forwarded-For` est cru, comme adresses ou plages CIDR séparées par des virgules (`10.0.0.5, 172.16.0.0/12`). Le limiteur de débit de connexion et le journal de sécurité voient alors la vraie adresse client au lieu de celle du proxy ; sans cela, chaque visiteur derrière le proxy partage un seul compartiment. L'en-tête est ignoré depuis toute autre adresse, un client ne peut donc pas choisir son propre compartiment. |
-| `DUMBMONIT_SCAN_SUBNETS` | *(vide)* | Réseaux proposés par le balayage du formulaire d'équipement, comme plages CIDR IPv4 séparées par des virgules (`192.168.1.0/24, 10.0.5.0/24`). En mode pont Docker, le serveur ne voit que le réseau Docker, pas votre réseau local : renseignez-la pour pré-remplir le balayage avec le bon. Non définie : le balayage propose les réseaux /24 des équipements déjà surveillés, puis les réseaux du serveur (seulement hors conteneur), sinon laisse le champ vide. |
+| `DUMBMONIT_SCAN_SUBNETS` | *(vide)* | Réseaux proposés par le balayage du formulaire de surveillance, comme plages CIDR IPv4 séparées par des virgules (`192.168.1.0/24, 10.0.5.0/24`). En mode pont Docker, le serveur ne voit que le réseau Docker, pas votre réseau local : renseignez-la pour pré-remplir le balayage avec le bon. Non définie : le balayage propose les réseaux /24 des surveillances déjà surveillés, puis les réseaux du serveur (seulement hors conteneur), sinon laisse le champ vide. |
 | `DUMBMONIT_OIDC_AUTO_CREATE` | *(désactivé)* | `true` pour créer un compte pour une identité inconnue à sa première connexion unique. Désactivé, seuls les comptes existants (déjà liés, ou retrouvés par un email vérifié par le fournisseur) peuvent se connecter. Lu seulement tant qu'aucun réglage de connexion unique n'est enregistré dans l'interface. |
 | `DUMBMONIT_OIDC_ALLOW_HTTP` | *(désactivé)* | `1` pour accepter un émetteur OpenID Connect en `http://` simple. Désactivé, l'écran de réglages refuse tout sauf `https://` : un émetteur en clair livre le code d'autorisation et le secret client à qui écoute sur le réseau. Seulement pour un fournisseur de test sur le loopback. |
-| `DUMBMONIT_METRICS_PUBLIC` | *(désactivé)* | `1` pour servir `/metrics`, `/federate` et `/prometheus/api/v1/…` sans jeton d'API. Quiconque atteint le port lit alors chaque mesure de chaque appareil et l'état de l'instance ; ne le réglez que là où autre chose restreint déjà l'accès au port. Voir [Métriques](metrics.md#scraping-dumbmonit). |
+| `DUMBMONIT_METRICS_PUBLIC` | *(désactivé)* | `1` pour servir `/metrics`, `/federate` et `/prometheus/api/v1/…` sans jeton d'API. Quiconque atteint le port lit alors chaque mesure de chaque surveillance et l'état de l'instance ; ne le réglez que là où autre chose restreint déjà l'accès au port. Voir [Métriques](metrics.md#scraping-dumbmonit). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Période d'évaluation des alertes. Les valeurs sous 10 sont relevées à 10. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Rétention de l'historique d'alertes, en jours. |
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | Sauvegardes locales planifiées de la base de données. `0`, `false`, `no` ou `off` pour arrêter de les écrire. Voir [Sauvegarde et restauration](../install/backup.md#scheduled-local-backups). |
@@ -64,7 +64,7 @@ puis kill ; le `stop_grace_period` du fichier Compose laisse la place pour
 | `DUMBMONIT_VM_BINARY` | `/victoria-metrics-prod` | Chemin du binaire VictoriaMetrics à démarrer. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Adresse d'écoute, à l'intérieur du conteneur. Loopback par défaut : seul le serveur lui parle. La surcouche de développement règle `0.0.0.0:8428` et publie le port. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Rétention, dans la syntaxe de `-retentionPeriod` : un nombre de mois, ou une durée comme `30d` ou `2y`. |
-| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget pour les caches de VictoriaMetrics (`-memory.allowedBytes`). Sans budget, VM les dimensionne pour 60 % de la RAM de l'hôte et sa mémoire résidente grandit pendant des jours. Quelques dizaines d'appareils tiennent dans 256 Mo ; augmentez pour des centaines d'hôtes. |
+| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget pour les caches de VictoriaMetrics (`-memory.allowedBytes`). Sans budget, VM les dimensionne pour 60 % de la RAM de l'hôte et sa mémoire résidente grandit pendant des jours. Quelques dizaines de surveillances tiennent dans 256 Mo ; augmentez pour des centaines d'hôtes. |
 
 Ses données vivent dans `<répertoire de données>/vm`, sur le même volume
 que la base de données. Trois options sont fixées par le serveur et non
@@ -96,8 +96,8 @@ de l'hôte du VictoriaMetrics embarqué.
 | `8080/tcp` | `dumbmonit` | Interface web, API, installateurs et téléchargements d'agent, ingestion d'agent. Le seul port à publier. |
 | `8428/tcp` | `dumbmonit` | API HTTP du VictoriaMetrics embarqué, sur le loopback du conteneur. Publié seulement par la surcouche de développement. |
 
-Sortant : SNMP (UDP 161 par défaut) vers les appareils, HTTPS vers Proxmox,
-PBS, Synology et les services de notification, plus ce que vos moniteurs de
+Sortant : SNMP (UDP 161 par défaut) vers les surveillances, HTTPS vers Proxmox,
+PBS, Synology et les services de notification, plus ce que vos surveillances de
 service ciblent. Le ping ICMP a besoin du sysctl
 `net.ipv4.ping_group_range` réglé dans le fichier Compose (aucune
 capacité).
@@ -109,7 +109,7 @@ fichier Compose, quel que soit le nom du projet.
 
 | Chemin (dans le conteneur) | Volume | Contenu |
 |---|---|---|
-| `/data/dumbmonit.db` | `dumbmonit-data` | Appareils, identifiants (chiffrés), règles, état et historique des alertes, références, silences, canaux, jetons d'agent, hash de mot de passe, sessions. |
+| `/data/dumbmonit.db` | `dumbmonit-data` | Surveillances, identifiants (chiffrés), règles, état et historique des alertes, références, silences, canaux, jetons d'agent, hash de mot de passe, sessions. |
 | `/data/secret.key` | `dumbmonit-data` | Le secret de l'instance. **Sauvegardez-le.** Sans lui, les identifiants chiffrés sont irrécupérables et le serveur refuse de démarrer. |
 | `/data/backups/` | `dumbmonit-data` | Sauvegardes locales planifiées : `dumbmonit-<timestamp>.db` (une copie SQLite en ligne) et le `.key` correspondant. Quotidien par défaut, sept conservées. |
 | `/data/vm/` | `dumbmonit-data` | Séries temporelles de VictoriaMetrics embarqué, 12 mois par défaut. Vide quand `DUMBMONIT_VM_URL` est réglée. |
@@ -126,7 +126,7 @@ docker compose up -d
 docker compose up -d
 ```
 
-La réinitialisation efface le mot de passe et chaque session ; appareils,
+La réinitialisation efface le mot de passe et chaque session ; surveillances,
 règles et canaux restent intacts.
 
 ## Agent

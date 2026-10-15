@@ -39,9 +39,9 @@ até 500, e no máximo 100 certificados são lidos por verificação.
 
 As [regras integradas](../alerting/rules.md#reverse-proxies-and-domains) que
 se aplicam: Nginx Proxy Manager host offline, Proxy certificate not renewed,
-além de Device unreachable.
+além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Nginx Proxy Manager. Ele diz o que está errado em uma frase

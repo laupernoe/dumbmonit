@@ -87,7 +87,7 @@ per-rule thresholds in **Alerts → Rules**.
 | DumbMonit data volume almost full | Less than 10% free on the volume that holds `/data` | 15 min, warning |
 | DumbMonit metrics database restarting in a loop | The embedded VictoriaMetrics was restarted 3 times or more in 30 minutes | 1 min, critical |
 | DumbMonit scheduler stalled | No scheduling round for more than two minutes | 5 min, critical |
-| DumbMonit polls running late | Devices stay overdue after every round for 15 minutes | 15 min, warning |
+| DumbMonit polls running late | Monitors stay overdue after every round for 15 minutes | 15 min, warning |
 | DumbMonit metric writes failing | Batches refused by VictoriaMetrics, or samples dropped, in the last 15 minutes | 5 min, warning |
 | DumbMonit database growing fast | `dumbmonit.db` more than doubled in a day and is over 100 MB | 1 h, warning |
 | DumbMonit backup did not run | No successful local backup for two days ([details](backup.md#scheduled-local-backups)) | 1 h, warning |
@@ -104,13 +104,13 @@ heartbeat's job.
 | `dumbmonit_instance_data_size_bytes` | Size of that volume. |
 | `dumbmonit_instance_database_bytes` | Size of `dumbmonit.db` and its write-ahead log. |
 | `dumbmonit_instance_scheduler_lag_seconds` | Seconds since the scheduler last completed a round (normally under 2). |
-| `dumbmonit_instance_scheduler_backlog` | Devices still due for a probe after the last round. |
+| `dumbmonit_instance_scheduler_backlog` | Monitors still due for a probe after the last round. |
 | `dumbmonit_instance_sample_writes_failed_total` | Batches VictoriaMetrics refused or did not answer, since the server started. |
 | `dumbmonit_instance_samples_dropped_total` | Samples dropped before reaching the write buffer, since the server started. |
 | `dumbmonit_instance_vm_restarts_total` | Restarts of the embedded VictoriaMetrics since the server started (embedded only). |
 
 They carry no `target` label: the alerts they raise are not attached to a
-device. For a Prometheus of your own, `GET /metrics` exposes the same kind of
+monitor. For a Prometheus of your own, `GET /metrics` exposes the same kind of
 figures, see [Scraping DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
 ## API

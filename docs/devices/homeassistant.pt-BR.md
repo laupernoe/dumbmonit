@@ -82,7 +82,7 @@ com relato de bateria desligado fica faltando na tabela em vez de mostrado
 incorretamente. A conta do dispositivo, quando conhecida, vem de uma
 entidade `person.*` cujo atributo `device_trackers` o nomeia.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Home Assistant. Ele diz primeiro o que está errado (modo

@@ -66,11 +66,11 @@ l'appel de découverte d'API ou sur la connexion condamne toute la sonde.
       donc sur un NAS récent ces deux séries n'existent simplement pas —
       rien n'est inventé à leur place.
 
-## La page de l'appareil
+## La page de la surveillance
 
-![Un appareil Synology : vue d'ensemble, volumes, disques et Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![Une surveillance Synology : vue d'ensemble, volumes, disques et Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Un appareil Synology obtient son propre panneau au-dessus des
+Une surveillance Synology obtient son propre panneau au-dessus des
 graphiques :
 
 * **Vue d'ensemble** — CPU, mémoire (utilisée sur total), température et
@@ -227,7 +227,7 @@ déclenche rien ; le même portable encore silencieux mardi soir si.
 
 Jours et heures sont exprimés dans l'heure locale du serveur (`TZ` du
 conteneur), celle où vit la personne qui lit la page. La page de
-l'appareil montre, par appareil : l'état en un mot, le dernier succès et
+la surveillance montre, par appareil : l'état en un mot, le dernier succès et
 dernier résultat, le rythme en mots (« jours de semaine, vers 20h00 »,
 « tous les ~3 jours, lun, mer, ven, vers 03h00 », « encore en
 apprentissage (2 exécutions en 30 jours) ») et une bande de trente
@@ -378,6 +378,6 @@ est utilisé en HTTPS et 5000 en HTTP.
 | Erreur de certificat | Certificat autosigné : activez `insecure_tls`. C'est une erreur de configuration, jamais « inaccessible » : un NAS qui répond n'est pas montré comme éteint. |
 | Aucune métrique de disque ou de volume | Le compte n'est pas dans le groupe `administrators` (voir la note ci-dessus). |
 | Aucune métrique `dumbmonit_abb_*`, `scrape_errors` à 1 | Le compte ne peut pas utiliser Active Backup for Business : déléguez-lui le paquet, ou désactivez l'option `abb`. Sans le paquet installé il n'y a ni erreur ni métrique. |
-| Métriques de tâche mais pas de lignes d'appareil sur la page | Le NAS n'annonce pas `SYNO.ActiveBackup.Overview` (ABB plus ancien), ou l'appareil est sondé via un agent relais, qui garde l'historique en mémoire de son côté : les métriques existent, le calendrier non. |
+| Métriques de tâche mais pas de lignes d'appareil sur la page | Le NAS n'annonce pas `SYNO.ActiveBackup.Overview` (ABB plus ancien), ou la surveillance est sondée via un agent relais, qui garde l'historique en mémoire de son côté : les métriques existent, le calendrier non. |
 | Un portable montre « En retard » le jour après son ajout | Moins de trois succès : le modèle apprend encore et autorise 72 heures entre sauvegardes ; ça se stabilise une fois deux semaines d'habitudes connues. |
 | Les disques se réveillent à chaque sonde | L'inventaire de stockage réveille les disques endormis. Allongez l'intervalle de vérification. |

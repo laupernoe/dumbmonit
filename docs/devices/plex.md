@@ -29,9 +29,9 @@ All metrics are prefixed `dumbmonit_plex_`.
 | `scrape_errors` | calls that failed on the last probe | |
 
 The [built-in rule](../alerting/rules.md#self-hosted-applications) that applies:
-Plex update available, plus Device unreachable.
+Plex update available, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 calls Plex. It gives the update state and whether the server is claimed, then

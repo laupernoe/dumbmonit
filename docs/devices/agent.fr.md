@@ -86,8 +86,8 @@ le service que l'installateur enregistre tourne en root, un agent démarré
 Les compteurs sont envoyés bruts, pour qu'un redémarrage de l'agent ne
 produise jamais un faux débit ; appliquez `rate()` dans les requêtes.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, CPU élevé, CPU
-inhabituel. « Appareil inaccessible » fonctionne aussi sur les agents : le
+Règles intégrées qui s'appliquent : Surveillance inaccessible, CPU élevé, CPU
+inhabituel. « Surveillance inaccessible » fonctionne aussi sur les agents : le
 serveur vérifie l'ancienneté du dernier lot reçu et déclare la machine
 silencieuse après trois périodes manquées (90 secondes au moins).
 
@@ -130,15 +130,14 @@ Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
 Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est
 le seul secret.
 
-1. Enregistrez l'appareil dans DumbMonit : un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux et pour Windows. (Un jeton peut aussi être créé dans **Réglages → Agents**.)
-2. Ce jeton est la clé de l'agent pour envoyer ses mesures à DumbMonit. Ce n'est pas un compte sur la machine : rien à créer là. Un jeton créé depuis le formulaire d'appareil est à usage unique : il enrôle cette seule machine et rien d'autre. Pour un parc, créez un jeton réutilisable dans Réglages → Agents.
+1. Enregistrez la surveillance dans DumbMonit : un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux et pour Windows. (Un jeton peut aussi être créé dans **Réglages → Agents**.)
+2. Ce jeton est la clé de l'agent pour envoyer ses mesures à DumbMonit. Ce n'est pas un compte sur la machine : rien à créer là. Un jeton créé depuis le formulaire de surveillance est à usage unique : il enrôle cette seule machine et rien d'autre. Pour un parc, créez un jeton réutilisable dans Réglages → Agents.
 3. Lancez la commande d'installation sur la machine à surveiller, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows). Elle télécharge l'agent, écrit le jeton dans agent.yaml et démarre le service.
-4. La machine apparaît d'elle-même en quelques secondes, nommée d'après son nom d'hôte. À ce premier lot, le serveur donne à l'agent un secret qui lui est propre et le stocke dans `/etc/dumbmonit/agent-secret`, lisible par personne d'autre : à partir de là, cette machine est la seule qui peut rapporter sous cet appareil. Jeton perdu ? Réglages → Agents vous laisse le révoquer et en créer un autre.
-5. Docker : pour voir les conteneurs et laisser DumbMonit les redémarrer ou les mettre à jour, l'agent doit atteindre le socket Docker. Le service que l'installateur enregistre le peut déjà ; si vous faites tourner l'agent sous un utilisateur dédié à la place, ajoutez cet utilisateur au groupe « docker » et redémarrez-le. Les politiques de redémarrage et de mise à jour automatique se règlent alors par conteneur sur la page de l'appareil.
+4. La machine apparaît d'elle-même en quelques secondes, nommée d'après son nom d'hôte. À ce premier lot, le serveur donne à l'agent un secret qui lui est propre et le stocke dans `/etc/dumbmonit/agent-secret`, lisible par personne d'autre : à partir de là, cette machine est la seule qui peut rapporter sous cette surveillance. Jeton perdu ? Réglages → Agents vous laisse le révoquer et en créer un autre.
+5. Docker : pour voir les conteneurs et laisser DumbMonit les redémarrer ou les mettre à jour, l'agent doit atteindre le socket Docker. Le service que l'installateur enregistre le peut déjà ; si vous faites tourner l'agent sous un utilisateur dédié à la place, ajoutez cet utilisateur au groupe « docker » et redémarrez-le. Les politiques de redémarrage et de mise à jour automatique se règlent alors par conteneur sur la page de la surveillance.
 
 Deux choses valent d'être lues avant de déployer ça sur plus d'une
-machine : [Liaison](#binding-one-machine-one-agent), ce qui fait qu'un
-appareil appartient vraiment à une installation d'agent, et
+machine : [Liaison](#binding-one-machine-one-agent), ce qui fait qu'une surveillance appartient vraiment à une installation d'agent, et
 [Usage unique ou parc](#single-use-or-fleet), le choix que vous faites
 quand vous créez un jeton.
 
@@ -146,8 +145,8 @@ quand vous créez un jeton.
     usermod -aG docker dumbmonit
     ```
 
-6. Sauvegardes Plakar : détectées automatiquement — un équipement Plakar apparaît sous la machine quand le binaire plakar ou un kloset (~/.config/plakar/stores.yml de chaque utilisateur, ~/.plakar, /var/lib/plakar) est trouvé, et rien n'est montré sinon. Réglez "plakar_klosets" dans agent.yaml pour surveiller une liste fixe, ou "plakar: false" pour vous retirer.
-7. Les services que l'agent trouve (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, test de débit) deviennent chacun un équipement à part, rangé sous la machine, avec son propre état et ses alertes. Le panneau « Services trouvés par l'agent » de la machine liste ce qui a été trouvé et ce qui ne l'a pas été : décochez un module pour supprimer son équipement, cochez-en un pour le surveiller avant qu'il n'apparaisse. Voir [Services trouvés par l'agent](#services-found-by-the-agent).
+6. Sauvegardes Plakar : détectées automatiquement — une surveillance Plakar apparaît sous la machine quand le binaire plakar ou un kloset (~/.config/plakar/stores.yml de chaque utilisateur, ~/.plakar, /var/lib/plakar) est trouvé, et rien n'est montré sinon. Réglez "plakar_klosets" dans agent.yaml pour surveiller une liste fixe, ou "plakar: false" pour vous retirer.
+7. Les services que l'agent trouve (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, test de débit) deviennent chacun une surveillance à part, rangée sous la machine, avec son propre état et ses alertes. Le panneau « Services trouvés par l'agent » de la machine liste ce qui a été trouvé et ce qui ne l'a pas été : décochez un module pour supprimer sa surveillance, cochez-en un pour le surveiller avant qu'il n'apparaisse. Voir [Services trouvés par l'agent](#services-found-by-the-agent).
 
 !!! note
     L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin
@@ -372,13 +371,12 @@ toujours ; rien n'a besoin d'être révoqué d'abord.
 
 ## Services trouvés par l'agent {#services-found-by-the-agent}
 
-L'équipement de la machine montre la machine : processeur, mémoire,
+La surveillance de la machine montre la machine : processeur, mémoire,
 systèmes de fichiers, réseau, santé des disques (SMART), capteurs, santé du
 système et les services listés dans `services`. Tout le reste de ce que
-l'agent détecte est un **service**, et chaque service trouvé devient un
-équipement à part entière, de type `agent_service`, rangé sous la machine :
+l'agent détecte est un **service**, et chaque service trouvé devient une surveillance à part entière, de type `agent_service`, rangée sous la machine :
 
-| Service | Ses métriques | Nom de l'équipement |
+| Service | Ses métriques | Nom de la surveillance |
 |---|---|---|
 | Docker | `container_*` | `<machine> · Docker` |
 | Plakar | `backup_*` | `<machine> · Plakar` |
@@ -391,44 +389,42 @@ l'agent détecte est un **service**, et chaque service trouvé devient un
 
 Le découpage se fait sur le serveur, d'après le nom de la métrique : il
 fonctionne avec toutes les versions de l'agent. Chaque série est écrite une
-seule fois, avec `target` égal à l'équipement auquel elle appartient : les
-séries d'un service portent l'identifiant de l'équipement du service, celles
+seule fois, avec `target` égal à la surveillance à laquelle elle appartient : les
+séries d'un service portent l'identifiant de la surveillance du service, celles
 de la machine l'identifiant de la machine. Rien n'est compté deux fois.
 
-Un équipement de service a son propre état, ses alertes, ses règles, ses
+Une surveillance de service a son propre état, ses alertes, ses règles, ses
 surcharges de règles et ses silences. Il est **injoignable** quand l'agent
 cesse de le rapporter alors que la machine, elle, répond toujours (démon
 Docker arrêté, `wg` désinstallé…), après les mêmes trois périodes manquées
 que la machine. Quand la machine se tait, ses services sont montrés masqués
-derrière elle (`suppressed`) au lieu de lever leurs propres alertes. Un
-nouvel équipement de service reprend les étiquettes de la machine : les
+derrière elle (`suppressed`) au lieu de lever leurs propres alertes. Une nouvelle surveillance de service reprend les étiquettes de la machine : les
 silences et règles par étiquette continuent de s'appliquer.
 
 Il n'y a rien à choisir avant l'installation. Après le premier rapport, la
 page de la machine liste chaque module dans **Services trouvés par l'agent** :
 
-- un service trouvé est coché et mène à son équipement ;
-- un service non trouvé est décoché ; cochez-le pour créer son équipement
+- un service trouvé est coché et mène à sa surveillance ;
+- un service non trouvé est décoché ; cochez-le pour créer sa surveillance
   quand même (il reste injoignable tant que l'agent ne le rapporte pas —
   utile pour être prévenu quand un service dont vous dépendez manque) ;
-- décochez un service trouvé pour supprimer son équipement et écarter ses
+- décochez un service trouvé pour supprimer sa surveillance et écarter ses
   mesures. Le serveur le dit à l'agent dans son prochain accusé de
   réception, et l'agent cesse de le collecter (un agent plus ancien continue
-  de collecter, et le serveur continue d'écarter). Supprimer l'équipement
+  de collecter, et le serveur continue d'écarter). Supprimer la surveillance
   d'un service a le même effet. Recochez-le pour le faire revenir.
 
-Supprimer la machine supprime ses équipements de service. Les actions et
-politiques des conteneurs se règlent depuis la page de l'équipement Docker ;
+Supprimer la machine supprime ses surveillances de service. Les actions et
+politiques des conteneurs se règlent depuis la page de la surveillance Docker ;
 les commandes partent toujours vers l'agent de la machine.
 
-Comme dans la notice de l'équipement :
+Comme dans la notice de la surveillance :
 
 1. Il n'y a rien à ajouter à la main : installez l'agent sur la machine, et
-   chaque service qu'il trouve devient un équipement sous cette machine dès
+   chaque service qu'il trouve devient une surveillance sous cette machine dès
    son premier rapport.
 2. Pour ne plus surveiller un service, décochez-le dans le panneau
-   « Services trouvés par l'agent » de la machine, ou supprimez son
-   équipement : les mesures de l'agent pour ce service sont alors écartées.
+   « Services trouvés par l'agent » de la machine, ou supprimez sa surveillance : les mesures de l'agent pour ce service sont alors écartées.
 
 !!! note
     Si la machine cesse de rapporter, ses services sont montrés masqués
@@ -437,23 +433,23 @@ Comme dans la notice de l'équipement :
 ### Mettre à jour une installation existante {#upgrading-an-existing-installation}
 
 Rien à faire. La première fois que l'agent rapporte un service après la mise
-à jour, le serveur crée son équipement et y déplace ce qui concernait ce
+à jour, le serveur crée sa surveillance et y déplace ce qui concernait ce
 service sur la machine :
 
 - les surcharges des règles qui lisent les métriques du service sont
-  copiées sur l'équipement du service ;
+  copiées sur la surveillance du service ;
 - les règles limitées à la machine (sélecteur `ids`) qui lisent les
-  métriques du service sélectionnent aussi l'équipement du service ;
+  métriques du service sélectionnent aussi la surveillance du service ;
 - les silences de la machine (fenêtres de maintenance) sont copiés sur
-  l'équipement du service ;
-- les alertes en cours sur les séries du service passent sur l'équipement du
+  la surveillance du service ;
+- les alertes en cours sur les séries du service passent sur la surveillance du
   service sous leur nouvelle empreinte : elles ne se résolvent pas pour se
   redéclencher.
 
 L'historique reste là où il a été écrit : VictoriaMetrics ne sait pas
 réétiqueter des séries existantes, les mesures d'avant la mise à jour
 restent donc sous la machine (elles disparaissent avec la rétention), et les
-graphes de l'équipement du service commencent à la mise à jour. Les
+graphes de la surveillance du service commencent à la mise à jour. Les
 références des anomalies sur les séries déplacées réapprennent. L'historique
 des alertes (alertes résolues) reste lui aussi avec la machine.
 
@@ -590,7 +586,7 @@ utilisable dans un conteneur sans monter un fichier :
 | `DUMBMONIT_AGENT_PERF_COUNTERS` | Chemins de compteur de performance Windows, séparés par des **points-virgules** (une virgule peut faire partie d'un nom d'instance) ; remplace `perf_counters` |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Taille du tampon de rattrapage |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
-| `DUMBMONIT_AGENT_RELAY` | `true` pour faire tourner, pour le serveur, les sondes des appareils assignés à cet agent (voir [Faire tourner l'agent dans Docker / sur un autre réseau](#run-the-agent-in-docker--on-another-network)) |
+| `DUMBMONIT_AGENT_RELAY` | `true` pour faire tourner, pour le serveur, les sondes des surveillances assignées à cet agent (voir [Faire tourner l'agent dans Docker / sur un autre réseau](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Libellé de site montré à côté de l'agent quand il est proposé comme relais |
 
 ## Compteurs de performance Windows {#windows-performance-counters}
@@ -652,7 +648,7 @@ Pour voir les noms exacts sur la machine, lancez `typeperf -q MDaemon`
 Installé sur un hôte Hyper-V — Windows Server avec le rôle Hyper-V, ou
 Windows avec Hyper-V activé — l'agent trouve le service `vmms` et lit les
 propres compteurs de performance d'Hyper-V, sans rien à configurer. La
-page de l'appareil de l'agent montre alors un panneau Hyper-V : combien
+page de la surveillance de l'agent montre alors un panneau Hyper-V : combien
 de machines virtuelles rapportent une santé saine, la vraie charge CPU de
 l'hôte, la mémoire que chaque VM en cours détient, et le débit, la
 latence et les erreurs de chaque disque virtuel.
@@ -718,13 +714,13 @@ Ce que le conteneur voit, et quoi monter :
 | Besoin | Quoi faire | Pourquoi |
 |---|---|---|
 | CPU, mémoire, charge, E/S disque de l'hôte | Rien | `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` et `/proc/diskstats` sont à l'échelle de l'hôte dans tout conteneur. |
-| Nom d'hôte | `DUMBMONIT_AGENT_HOSTNAME` | Le nom d'hôte d'un conteneur est un id aléatoire ; l'appareil serait nommé d'après lui. |
+| Nom d'hôte | `DUMBMONIT_AGENT_HOSTNAME` | Le nom d'hôte d'un conteneur est un id aléatoire ; la surveillance serait nommée d'après lui. |
 | Conteneurs de l'hôte | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optionnel. Listes et inspections en lecture seule ; les actions Redémarrer/Mettre à jour demandent qu'il soit accessible en écriture et `DUMBMONIT_AGENT_COMMANDS=true`. Sans le socket, l'agent rapporte simplement aucun conteneur. |
 | Usage du système de fichiers | `- /:/host:ro` (ou les montages qui vous intéressent) | L'agent rapporte les montages visibles *à l'intérieur* du conteneur, sous leur chemin de conteneur. |
 | Compteurs réseau de l'hôte | `network_mode: host` | Les interfaces sont namespacées : sans ça l'agent voit un `veth`. |
-| Moniteurs ping relayés via cet agent | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP utilise une socket d'écho, autorisée par ce sysctl : aucune capacité requise. Voir [Ping ICMP sans capacité](../install/docker.md#icmp-ping-without-a-capability). |
+| Surveillances ping relayés via cet agent | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP utilise une socket d'écho, autorisée par ce sysctl : aucune capacité requise. Voir [Ping ICMP sans capacité](../install/docker.md#icmp-ping-without-a-capability). |
 | CA privée | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Serveur derrière un reverse proxy interne, appareils avec des certificats autosignés. |
-| Garder la liaison à travers les recréations | `- agent-state:/var/lib/dumbmonit-agent` et `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Le secret de liaison vit dans le système de fichiers du conteneur, qu'un `docker compose up --force-recreate` jette. Sans le volume, l'agent revient non lié et quelqu'un doit autoriser le réenrôlement depuis la page de l'appareil chaque fois. |
+| Garder la liaison à travers les recréations | `- agent-state:/var/lib/dumbmonit-agent` et `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | Le secret de liaison vit dans le système de fichiers du conteneur, qu'un `docker compose up --force-recreate` jette. Sans le volume, l'agent revient non lié et quelqu'un doit autoriser le réenrôlement depuis la page de la surveillance chaque fois. |
 
 `pid: host` et `privileged: true` ne sont jamais nécessaires : l'agent ne
 collecte aucune métrique par processus.
@@ -733,11 +729,11 @@ collecte aucune métrique par processus.
 
 Un agent peut faire plus que surveiller sa propre machine. Avec
 `relay: true` (ou `DUMBMONIT_AGENT_RELAY=true`), le serveur **délègue des
-sondes** à lui : les appareils dont le réglage *Atteint via* nomme cet
+sondes** à lui : les surveillances dont le réglage *Atteint via* nomme cet
 agent ne sont pas sondés par le serveur mais par l'agent, depuis son
 propre réseau, avec exactement les mêmes collecteurs — SNMP, Proxmox VE,
 Proxmox Backup Server, Synology, HTTP, TCP, DNS, ping, TLS. Les résultats
-atterrissent sous l'appareil comme si le serveur l'avait sondé : mêmes
+atterrissent sous la surveillance comme si le serveur l'avait sondé : mêmes
 métriques, même *dernière sonde*, mêmes alertes. Un bureau distant, un
 second homelab ou le réseau d'un client se montrent ainsi dans le seul
 DumbMonit que vous avez déjà, sans VPN et sans rien à ouvrir du côté
@@ -760,18 +756,18 @@ présente dans l'en-tête `X-DumbMonit-Agent-Secret` à chaque requête
 ensuite — mesures, commandes de conteneur et sondes relayées pareil. À
 partir de là :
 
-- aucune autre machine ne peut envoyer de mesures sous cet appareil, ni
+- aucune autre machine ne peut envoyer de mesures sous cette surveillance, ni
   réécrire son nom d'hôte et son système d'exploitation ;
 - aucune autre machine ne peut récupérer — et donc consommer — les
   commandes Redémarrer et Mettre à jour mises en file pour elle.
 
-La page de l'appareil montre où en est une machine, sous
+La page de la surveillance montre où en est une machine, sous
 **Agent → Liaison** :
 
 | État | Ce que ça signifie | Quoi faire |
 |---|---|---|
 | **Liée** | L'agent détient un secret qui lui est propre. | Rien. |
-| **Non liée — réenrôler cet hôte** | Un hôte enrôlé avant que la liaison n'existe, et jamais lié depuis. Le serveur refuse ses mesures, commandes de conteneur et sondes relayées. | Cliquez sur **Autoriser le réenrôlement** sur la page de l'appareil, puis redémarrez l'agent. Si l'agent est antérieur à la liaison, relancez d'abord la commande d'installation sur l'hôte. |
+| **Non liée — réenrôler cet hôte** | Un hôte enrôlé avant que la liaison n'existe, et jamais lié depuis. Le serveur refuse ses mesures, commandes de conteneur et sondes relayées. | Cliquez sur **Autoriser le réenrôlement** sur la page de la surveillance, puis redémarrez l'agent. Si l'agent est antérieur à la liaison, relancez d'abord la commande d'installation sur l'hôte. |
 
 ### Hôtes antérieurs à la liaison {#hosts-that-predate-binding}
 
@@ -795,7 +791,7 @@ Pour ramener un tel hôte :
 1. Si son agent est antérieur à la liaison, relancez la commande
    d'installation sur lui (le binaire d'agent doit pouvoir stocker un
    secret de liaison).
-2. Ouvrez sa page d'appareil et cliquez sur **Agent → Autoriser le
+2. Ouvrez sa page de surveillance et cliquez sur **Agent → Autoriser le
    réenrôlement**. Ça ouvre une fenêtre d'une heure.
 3. Redémarrez l'agent, ou attendez sa prochaine tentative : ce lot lie
    l'hôte avec un secret frais et ferme la fenêtre. Un jeton autre que
@@ -821,7 +817,7 @@ lui et le serveur refuse ses lots. Ce refus est délibéré : une machine
 qui est liée reste liée jusqu'à ce qu'un humain dise le contraire, sinon
 la liaison ne protégerait rien.
 
-Le chemin de retour est sur la page de l'appareil : **Agent → Autoriser le
+Le chemin de retour est sur la page de la surveillance : **Agent → Autoriser le
 réenrôlement**. Ça ouvre une fenêtre d'une heure pendant laquelle un agent
 présentant un jeton d'enrôlement valide lie à nouveau cette machine, avec
 un secret frais ; l'ancien secret arrête de fonctionner, et la fenêtre se
@@ -842,8 +838,7 @@ WARN this agent is not recognised for this machine
 
 ## Jetons d'enrôlement
 
-- Les jetons sont créés dans **Réglages → Agents** ou en ajoutant un
-  appareil de type agent. Le serveur ne garde qu'une empreinte : le jeton
+- Les jetons sont créés dans **Réglages → Agents** ou en ajoutant une surveillance de type agent. Le serveur ne garde qu'une empreinte : le jeton
   en clair est montré une fois, dans la réponse de création, avec les
   deux commandes d'installation.
 - L'agent l'envoie comme `Authorization: Bearer dmon_…` sur
@@ -854,7 +849,7 @@ WARN this agent is not recognised for this machine
   chaque agent qui utilise ce jeton à son prochain envoi ; les machines
   deviennent alors *inaccessibles* après trois périodes manquées.
   Relancez l'installateur avec un nouveau jeton pour les réenrôler.
-- Les machines sont des appareils séparés : révoquer un jeton ne les
+- Les machines sont des surveillances séparées : révoquer un jeton ne les
   supprime pas.
 
 ### Usage unique ou parc {#single-use-or-fleet}
@@ -904,9 +899,9 @@ tail -f /var/log/dumbmonit-agent.log   # journal du service (OpenRC)
 | L'installateur s'arrête avec « no expected checksum » | La commande n'a pas de `--sha256` pour cette plateforme : une ancienne commande, ou un binaire macOS (pas fourni par le serveur). Copiez une commande fraîche, ou passez `--sha256=<platform>-<arch>:<hex>` depuis le `.sha256` de la release. |
 | La machine n'apparaît jamais | L'envoi va vers `/api/ingest` sur l'URL de la commande d'installation ; derrière un reverse proxy, assurez-vous qu'il est transféré et que les corps jusqu'à 16 Mo sont autorisés. |
 | *Inaccessible* bien que l'agent tourne | Le jeton a été révoqué, ou les envois sont rejetés. Vérifiez `journalctl -u dumbmonit-agent` : l'erreur y est journalisée. |
-| Le journal dit « this agent is not recognised for this machine » | La machine est liée à une installation d'agent dont celui-ci n'a pas le secret — une réinstallation, ou un conteneur recréé sans son volume d'état. Ouvrez la page de l'appareil et cliquez sur **Autoriser le réenrôlement** ; voir [Réenrôlement après une réinstallation](#re-enrolment-after-a-reinstall). |
-| Le journal dit « this machine was enrolled before agent binding » | Un hôte qui ne s'est jamais lié à son agent. Cliquez sur **Autoriser le réenrôlement** sur sa page d'appareil, puis redémarrez l'agent ; voir [Hôtes antérieurs à la liaison](#hosts-that-predate-binding). |
-| Le journal dit « this agent is too old to be bound to its machine » | Le binaire d'agent ne peut pas stocker de secret de liaison. Relancez la commande d'installation sur l'hôte ; si l'appareil existe déjà, cliquez d'abord sur **Autoriser le réenrôlement**. |
+| Le journal dit « this agent is not recognised for this machine » | La machine est liée à une installation d'agent dont celui-ci n'a pas le secret — une réinstallation, ou un conteneur recréé sans son volume d'état. Ouvrez la page de la surveillance et cliquez sur **Autoriser le réenrôlement** ; voir [Réenrôlement après une réinstallation](#re-enrolment-after-a-reinstall). |
+| Le journal dit « this machine was enrolled before agent binding » | Un hôte qui ne s'est jamais lié à son agent. Cliquez sur **Autoriser le réenrôlement** sur sa page de surveillance, puis redémarrez l'agent ; voir [Hôtes antérieurs à la liaison](#hosts-that-predate-binding). |
+| Le journal dit « this agent is too old to be bound to its machine » | Le binaire d'agent ne peut pas stocker de secret de liaison. Relancez la commande d'installation sur l'hôte ; si la surveillance existe déjà, cliquez d'abord sur **Autoriser le réenrôlement**. |
 | Le journal dit « this enrollment token has already enrolled all the machines it was allowed to » | Un jeton à usage unique réutilisé. Créez-en un nouveau, ou un jeton réutilisable dans Réglages → Agents. |
 | Windows | Les parties du service Windows n'avaient pas été exercées dans l'image de build du projet au moment de l'écriture ; rapportez les problèmes sur GitHub. |
 
@@ -916,7 +911,7 @@ Quand l'agent peut lire le socket Docker (`docker: true`, le défaut, et
 un utilisateur dans le groupe `docker` ou root —
 `usermod -aG docker dumbmonit`, puis redémarrez l'agent), chaque
 conteneur devient une poignée de séries, étiquetées `container` et
-`image` (le `name:tag` que montre `docker ps`). Si la page de l'appareil
+`image` (le `name:tag` que montre `docker ps`). Si la page de la surveillance
 dit « No Docker on this machine » tandis que Docker est installé, c'est
 la première chose à vérifier.
 
@@ -945,7 +940,7 @@ répétée chaque jour). L'alerte nomme le conteneur.
 
 ### Actions
 
-Sur la page de l'appareil, chaque conteneur a deux actions et deux
+Sur la page de la surveillance, chaque conteneur a deux actions et deux
 interrupteurs. Les actions voyagent via un **canal de commande** : le
 serveur met la commande en file, l'agent la récupère après son prochain
 lot (`GET /api/agent/commands`, même jeton d'enrôlement), la lance, et
@@ -963,7 +958,7 @@ action sur ce conteneur.
 
 L'agent dit au serveur, à chaque lot, s'il accepte les commandes. Quand
 il ne le fait pas — un agent plus ancien que le canal de commande, ou
-installé avec `commands: false` — la page de l'appareil le dit plutôt que
+installé avec `commands: false` — la page de la surveillance le dit plutôt que
 de montrer Redémarrer et Mettre à jour, l'API refuse les commandes
 (`409`), et les politiques ne mettent rien en file. Réinstallez l'agent
 avec l'installateur actuel pour activer les actions.
@@ -999,14 +994,14 @@ minute :
 - **Mise à jour automatique dans les fenêtres de maintenance** — un
   conteneur avec une mise à jour disponible est mis à jour
   automatiquement, mais seulement tandis qu'une fenêtre de maintenance
-  (silence) couvre l'appareil, au plus une fois toutes les six heures.
-  Planifiez-en une sur la page Alertes, ou mettez l'appareil en silence
+  (silence) couvre la surveillance, au plus une fois toutes les six heures.
+  Planifiez-en une sur la page Alertes, ou mettez la surveillance en silence
   depuis sa page. Les politiques pruning l'ancienne image et les fenêtres
   de maintenance seulement par défaut.
 
 Deux endroits les règlent :
 
-- la **bande Docker** sous l'en-tête de l'appareil : « 28 conteneurs · 27
+- la **bande Docker** sous l'en-tête de la surveillance : « 28 conteneurs · 27
   en cours · 3 mises à jour disponibles · politiques : 2 auto-redémarrage,
   0 auto-mise à jour », la dernière action et son statut, **Gérer les
   conteneurs** (ouvre la liste ci-dessous) et **Politiques…**, un tableau
@@ -1059,7 +1054,7 @@ cycle jusqu'à ce qu'il trouve quelque chose, l'agent cherche le binaire
 emplacements standards. Quand il n'y a aucun binaire, aucun kloset et
 aucune trace de Plakar (`~/.cache/plakar`), l'agent n'émet aucune série
 `backup_*` du tout, le dit une fois au niveau `debug`, et la page de
-l'appareil ne montre aucun panneau Backups — rien à configurer sur les
+la surveillance ne montre aucun panneau Backups — rien à configurer sur les
 machines sans Plakar. Pour sauter la détection entièrement :
 
 ```yaml
@@ -1095,7 +1090,7 @@ Le résultat est journalisé une fois à `info` (et à nouveau seulement
 quand ça change). Deux jauges, émises seulement une fois Plakar détecté,
 laissent l'interface distinguer les cas restants :
 `backup_plakar_present` (1 quand le binaire tourne) et
-`backup_klosets_found` (nombre de klosets lus). La page de l'appareil dit
+`backup_klosets_found` (nombre de klosets lus). La page de la surveillance dit
 alors « Plakar est installé mais aucun kloset n'a été trouvé », ou liste
 les klosets. Quand des klosets existent mais que le binaire ne tourne
 pas (un `PATH` de service sans `plakar`, typiquement), ils sont listés
@@ -1145,7 +1140,7 @@ déclencher sur une machine sans Plakar.
 
 Règles intégrées : **Sauvegarde Plakar trop ancienne** (avis, aucun
 snapshot depuis plus de deux jours) et **Sauvegarde Plakar échouée**
-(avertissement). La page de l'appareil montre un bloc par kloset — âge
+(avertissement). La page de la surveillance montre un bloc par kloset — âge
 de la dernière sauvegarde, nombre de snapshots, taille, dernier statut —
 et une ligne par source, avec une indication « Sauvegarde trop ancienne »
 au-delà de deux jours.
@@ -1270,7 +1265,7 @@ dépôt partagé par plusieurs machines.
 
 Règles intégrées : **Sauvegarde restic/Borg trop ancienne** (aucun
 snapshot depuis plus de 48 heures) et **Dépôt restic/Borg inaccessible**
-(depuis 30 minutes). La page de l'appareil montre un panneau Dépôts de
+(depuis 30 minutes). La page de la surveillance montre un panneau Dépôts de
 sauvegarde, une ligne par dépôt.
 
 Pour vérifier une déclaration, lancez l'agent une fois au premier plan et
@@ -1325,7 +1320,7 @@ Réglez `PersistentKeepalive = 25` sur les tunnels qui doivent rester
 montés (liens site à site, passerelles distantes). N est le seuil de la
 règle : changez-le dans **Alertes → Règles**, ou retirez la partie
 `and on (…)` de sa requête pour surveiller chaque pair. La page de
-l'appareil montre un panneau WireGuard avec chaque pair, le temps depuis
+la surveillance montre un panneau WireGuard avec chaque pair, le temps depuis
 son dernier handshake, son trafic et son keepalive.
 
 ## Tunnels IPsec {#ipsec-tunnels}
@@ -1357,7 +1352,7 @@ ipsec_bin: swanctl          # défaut : dans le PATH
 
 La règle intégrée **Tunnel IPsec hors service** se déclenche quand un tunnel
 configuré n'a aucune CHILD_SA installée pendant dix minutes. La page de
-l'appareil montre un panneau IPsec avec chaque tunnel, monté ou non, son trafic
+la surveillance montre un panneau IPsec avec chaque tunnel, monté ou non, son trafic
 et le temps avant son prochain renouvellement de clé.
 
 ## Test de débit Internet {#internet-speed-test}
@@ -1412,15 +1407,14 @@ un, **Débit descendant Internet bas**, **Débit montant Internet bas** et
 **Latence Internet élevée** restent silencieuses, personne ne pouvant deviner ce
 que « lent » veut dire pour votre ligne. Chaque seuil est publié comme sa propre
 série (`agent_speedtest_download_min_bytes_per_second`, etc.) ; changez-le dans
-`agent.yaml`, pas dans **Alertes → Règles**. La page de l'appareil montre un
+`agent.yaml`, pas dans **Alertes → Règles**. La page de la surveillance montre un
 panneau avec les derniers débits, la latence, la gigue et l'âge du test.
 
 ## Certificats TLS (Certbot / Let's Encrypt)
 
 L'agent ne lit pas `/etc/letsencrypt` directement. Chaque certificat que
 Certbot renouvelle est servi quelque part — un serveur web, un serveur
-mail, un reverse proxy — et c'est là que DumbMonit le lit : ajoutez un
-moniteur [Certificat TLS](services.md#tls) (ou un
+mail, un reverse proxy — et c'est là que DumbMonit le lit : ajoutez une surveillance [Certificat TLS](services.md#tls) (ou un
 [Site web ou API web](services.md#http), pour un site déjà surveillé
 ainsi) pointé sur le port où le certificat est réellement présenté. Il
 lit le certificat en direct, pas un fichier sur disque, il attrape donc
@@ -1431,11 +1425,11 @@ exactement l'écart qui compte).
 
 Lire `/etc/letsencrypt/live/*/cert.pem`, la configuration de
 renouvellement et le journal de Certbot depuis l'agent a été envisagé et
-écarté : ça dupliquerait la date d'expiration que le moniteur TLS
+écarté : ça dupliquerait la date d'expiration que la surveillance TLS
 rapporte déjà, tout en ajoutant un second chemin, local à l'hôte, pour la
 même information — une chose de plus à garder synchronisée après qu'un
 certificat est déplacé ou un domaine renommé. Un hôte où Certbot tourne
 mais ne sert rien que DumbMonit peut atteindre directement (une étape de
 CA interne, un hook de validation DNS) est le seul cas que ça laisse non
-couvert ; c'est aussi le cas où un moniteur TLS ne pourrait pas aider non
+couvert ; c'est aussi le cas où une surveillance TLS ne pourrait pas aider non
 plus, puisque rien sur cet hôte ne parle TLS pour être sondé.

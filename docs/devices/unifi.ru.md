@@ -65,7 +65,7 @@ DumbMonit также запрашивает у классического API с
 Применяемые [встроенные правила](../alerting/rules.md#unifi-network): UniFi device
 offline, UniFi Internet down, UniFi WAN link down, UniFi gateway CPU high, UniFi
 device waiting for adoption, UniFi firmware update available, UniFi alarms, а
-также Device unreachable.
+также Monitor unreachable.
 
 ## Устройства
 
@@ -91,7 +91,7 @@ device waiting for adoption, UniFi firmware update available, UniFi alarms, а
 | `last_seen_timestamp_seconds` | Последнее подключение, как его сообщает `/rest/user` | `device`, `type` (`Wired`, `Wireless` или `Unknown`), `os` (пусто), `user` (пусто), `kind` |
 | `stale_seconds` | Положительна, когда отслеживаемый клиент превысил `device_stale_days` (по умолчанию 3) без подключения; запускает правило [Client device stale](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (всегда `connection`: у UniFi нет резервных копий, о которых можно сообщать) |
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранил опрос; открытие страницы никогда не
 обращается к UniFi. Сначала она говорит, что не так (отключённые устройства,

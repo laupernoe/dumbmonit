@@ -15,7 +15,7 @@ A cada minuto o DumbMonit envia duas requisições para
 `https://<firewall>:4444/webconsole/APIController` (campo de formulário
 `reqxml`, nunca na URL, onde a senha acabaria nos logs): `<Get><Interface>` e
 `<Get><IPSecConnection>`. Cada uma carrega o nome de usuário e senha de uma
-conta cujo perfil de acesso ao dispositivo é somente leitura em todo lugar: o
+conta cujo perfil de acesso ao monitor é somente leitura em todo lugar: o
 firewall aplica esse perfil também na API.
 
 !!! warning "Validado apenas contra a documentação do fornecedor — ainda não testado em um sistema real"
@@ -46,9 +46,9 @@ A [regra integrada](../alerting/rules.md#sophos-firewall) que se aplica:
   zona não teve link por cinco minutos (Advisory).
 
 Para contadores de tráfego, adicione o firewall também como um
-[dispositivo SNMP](snmp.md): o SFOS responde à MIB de interface padrão.
+[monitor SNMP](snmp.md): o SFOS responde à MIB de interface padrão.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Firewall diz se toda interface em uma zona tem seu link, depois
 lista essas interfaces e as conexões IPsec com sua ativação configurada,
@@ -82,7 +82,7 @@ rotulada como tal.
 
 | Credencial | Campos |
 |---|---|
-| Nome de usuário e senha | O usuário `dumbmonit` com o perfil de acesso ao dispositivo somente leitura. |
+| Nome de usuário e senha | O usuário `dumbmonit` com o perfil de acesso ao monitor somente leitura. |
 
 Endereço: o nome de host ou IP do firewall, `host:porta`, ou uma URL. Opções:
 

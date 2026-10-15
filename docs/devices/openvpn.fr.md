@@ -32,10 +32,10 @@ reconnexion derrière un NAT et multiplierait les séries pour rien. Au plus 256
 clients ont chacun une série détaillée ; `clients_connected` reste exact
 au-delà.
 
-Règle intégrée qui s'applique : **Appareil injoignable**, quand la connexion de
+Règle intégrée qui s'applique : **Surveillance injoignable**, quand la connexion de
 gestion elle-même ne peut pas être établie ou que le mot de passe est refusé.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a enregistré ; ouvrir la
 page ne se connecte jamais à l'interface de gestion. Il montre la version du

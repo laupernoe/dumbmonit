@@ -12,8 +12,8 @@ stato risiedono in SQLite.
 | Server | `crates/server` | L'unico binario Rust: API HTTP (axum), autenticazione, scheduler, motore di alerting, canali di notifica, report. |
 | Interfaccia web | `web/` | App SvelteKit a pagina singola (Svelte 5, Tailwind 4, uPlot). Compilata in file statici e incorporata nel binario del server con `rust_embed`. |
 | Serie temporali | `crates/server/src/tsdb/` | Writer a lotti e proxy di query per VictoriaMetrics. `embedded.rs` avvia e supervisiona il processo figlio VictoriaMetrics incluso (dati in `/data/vm`); `DUMBMONIT_VM_URL` punta invece a un'istanza esterna. |
-| Configurazione e stato | `crates/server/src/db/` | SQLite con migrazioni numerate: dispositivi, credenziali, utenti, regole, stato degli alert, silenziamenti, canali. |
-| Collector | `crates/collectors`, `crates/server/src/collectors/` | Un'implementazione del trait `Collector` per ogni tipo di dispositivo o servizio, registrata in un `Registry`. Lo scheduler conosce solo il trait. |
+| Configurazione e stato | `crates/server/src/db/` | SQLite con migrazioni numerate: monitor, credenziali, utenti, regole, stato degli alert, silenziamenti, canali. |
+| Collector | `crates/collectors`, `crates/server/src/collectors/` | Un'implementazione del trait `Collector` per ogni tipo di monitor o servizio, registrata in un `Registry`. Lo scheduler conosce solo il trait. |
 | Tipi condivisi | `crates/proto` | `Sample`, `Target`, `Credential`, il trait `Collector` e `ProbeError`, e il protocollo degli agent. |
 | Agent | `crates/agent` | Agent per Linux, macOS, FreeBSD e Windows che invia le metriche dell'host; può anche fare da relay, eseguendo i collector per un sito remoto. |
 | Alerting | `crates/server/src/alerting/` | Regole, macchina a stati degli alert, soppressione tramite genitore, silenziamenti, baseline apprese. |
@@ -38,15 +38,15 @@ stato risiedono in SQLite.
  API, the scheduler and the alerting engine.
 ```
 
-1. Lo scheduler esegue ogni dispositivo abilitato al proprio intervallo tramite
+1. Lo scheduler esegue ogni monitor abilitato al proprio intervallo tramite
    il registro dei collector. Agent e relay inviano le loro misurazioni a
    `/api/ingest` con un token per macchina.
 2. I collector restituiscono campioni chiamati `dumbmonit_<kind>_*` con
-   un'etichetta `target` (l'id del dispositivo). Il writer li raggruppa in
+   un'etichetta `target` (l'id del monitor). Il writer li raggruppa in
    lotti verso VictoriaMetrics.
 3. Il motore di alerting valuta le regole sulle serie memorizzate. `phase` è lo
    stato del motore; `effective_phase` è ciò che vedono gli utenti
-   (`suppressed` quando un dispositivo genitore è giù). Un dispositivo
+   (`suppressed` quando un monitor genitore è giù). Un monitor
    irraggiungibile genera un alert; un errore di configurazione viene mostrato
    ma non notificato.
 4. Le notifiche partono attraverso i canali configurati nella policy di
@@ -56,7 +56,7 @@ stato risiedono in SQLite.
 
 ## Punti di estensione
 
-- Un nuovo tipo di dispositivo è un'implementazione di `Collector` più una
+- Un nuovo tipo di monitor è un'implementazione di `Collector` più una
   chiamata a `Registry::register`. I moduli dell'interfaccia sono generati da
   `GET /api/collectors`.
 - Un nuovo canale di notifica è un sender più una voce in `notify/catalog.rs`;

@@ -91,7 +91,7 @@ silences, mêmes seuils réglables dans **Alertes → Règles**.
 | Volume de données de DumbMonit presque plein | Moins de 10 % d'espace libre sur le volume qui porte `/data` | 15 min, avis |
 | Base de métriques de DumbMonit qui redémarre en boucle | Le VictoriaMetrics embarqué a été relancé 3 fois ou plus en 30 minutes | 1 min, critique |
 | Planificateur de DumbMonit bloqué | Aucun tour de planification depuis plus de deux minutes | 5 min, critique |
-| Interrogations de DumbMonit en retard | Des équipements restent en retard après chaque tour pendant 15 minutes | 15 min, avis |
+| Interrogations de DumbMonit en retard | Des surveillances restent en retard après chaque tour pendant 15 minutes | 15 min, avis |
 | Écritures de métriques de DumbMonit en échec | Des lots refusés par VictoriaMetrics, ou des mesures perdues, dans les 15 dernières minutes | 5 min, avis |
 | Base de DumbMonit qui grossit vite | `dumbmonit.db` a plus que doublé en un jour et dépasse 100 Mo | 1 h, avis |
 | La sauvegarde de DumbMonit n'a pas tourné | Aucune sauvegarde locale réussie depuis deux jours ([détails](backup.md#scheduled-local-backups)) | 1 h, avis |
@@ -108,13 +108,13 @@ règle ne peut se déclencher : c'est le rôle du battement de cœur.
 | `dumbmonit_instance_data_size_bytes` | Taille de ce volume. |
 | `dumbmonit_instance_database_bytes` | Taille de `dumbmonit.db` et de son journal d'écriture. |
 | `dumbmonit_instance_scheduler_lag_seconds` | Secondes depuis la fin du dernier tour du planificateur (moins de 2 en temps normal). |
-| `dumbmonit_instance_scheduler_backlog` | Équipements encore dus après le dernier tour. |
+| `dumbmonit_instance_scheduler_backlog` | Surveillances encore dues après le dernier tour. |
 | `dumbmonit_instance_sample_writes_failed_total` | Lots refusés par VictoriaMetrics ou restés sans réponse, depuis le démarrage du serveur. |
 | `dumbmonit_instance_samples_dropped_total` | Mesures abandonnées avant d'atteindre le tampon d'écriture, depuis le démarrage du serveur. |
 | `dumbmonit_instance_vm_restarts_total` | Relances du VictoriaMetrics embarqué depuis le démarrage du serveur (embarqué seulement). |
 
 Elles ne portent pas d'étiquette `target` : les alertes qu'elles lèvent ne
-sont rattachées à aucun équipement. Pour votre propre Prometheus, `GET /metrics`
+sont rattachées à aucune surveillance. Pour votre propre Prometheus, `GET /metrics`
 expose le même genre de chiffres, voir
 [Collecter DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 

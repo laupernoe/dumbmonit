@@ -4,11 +4,11 @@ Hyperviseur : nœuds avec leurs démons et réseau, machines virtuelles,
 conteneurs, stockages, pools LVM thin, sauvegardes, haute disponibilité,
 snapshots, réplication, Ceph jusqu'à l'OSD, disques physiques et pools
 ZFS, mises à jour en attente, changements de paquet, abonnement et
-certificats. Un appareil peut couvrir tout un cluster.
+certificats. Une surveillance peut couvrir tout un cluster.
 
 ## Le panneau des nœuds
 
-La page de l'appareil s'ouvre sur une carte par nœud : CPU, mémoire et
+La page de la surveillance s'ouvre sur une carte par nœud : CPU, mémoire et
 système de fichiers racine comme trois jauges, l'uptime et la version
 `pve-manager` installée sur ce nœud, puis seulement ce qui ne va pas —
 les démons qui ne tournent pas, les interfaces déclarées au démarrage
@@ -146,7 +146,7 @@ rien d'autre ne change.
 
 ## Le panneau Ceph
 
-Une section **Ceph** apparaît sur la page de l'appareil seulement quand
+Une section **Ceph** apparaît sur la page de la surveillance seulement quand
 le cluster a réellement Ceph : santé et les mots derrière, capacité
 totale et utilisée, combien d'OSD sont up et in, un tableau d'OSD (hôte,
 classe de périphérique, usage, latence apply et commit) et un tableau de
@@ -251,7 +251,7 @@ même conséquence — c'est pourquoi les deux niveaux de remplissage sont
 des séries séparées et des règles séparées.
 
 Les changements de paquet sont détectés par le collecteur lui-même : il
-se souvient des versions installées de la sonde précédente (par appareil
+se souvient des versions installées de la sonde précédente (par surveillance
 et nœud, en mémoire — un redémarrage de serveur réapprend sans
 rapporter). Seul un paquet présent dans les deux sondes avec une version
 différente compte ; un paquet nouvellement installé ou retiré ne compte
@@ -273,7 +273,7 @@ n'expose pas de capteurs, seulement la propre température SMART des
 disques. Installez l'agent DumbMonit sur le nœud si vous en avez besoin
 de plus.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, CPU élevé,
+Règles intégrées qui s'appliquent : Surveillance inaccessible, CPU élevé,
 Disque presque plein, Système de fichiers presque plein (prévision),
 Sauvegarde trop ancienne, CPU inhabituel, VM ou conteneur arrêté, VM ou
 conteneur CPU élevé, VM ou conteneur mémoire élevée, VM ou conteneur
@@ -302,8 +302,7 @@ choses en font la peine.
   chiffre qui explique « tout est lent » quand CPU et mémoire ont tous
   les deux l'air bien.
 * Il est lu avec `history=1` depuis le dernier point déjà vu, chaque
-  point entre deux sondes est donc ingéré à son propre horodatage. Un
-  appareil sondé toutes les cinq minutes obtient ses cinq points d'une
+  point entre deux sondes est donc ingéré à son propre horodatage. Une surveillance sondée toutes les cinq minutes obtient ses cinq points d'une
   minute plutôt qu'une seule valeur actuelle.
 
 C'est **désactivé par défaut**, et c'est un compromis délibéré. Ces
@@ -468,13 +467,13 @@ sont ajoutés s'ils manquent.
 
 | Symptôme | Cause probable |
 |---|---|
-| Erreur de certificat montrée sur l'appareil | Certificat autosigné. Soit installez un certificat de confiance (ACME est intégré à Proxmox) soit activez `insecure_tls`. L'option n'est jamais activée implicitement. |
+| Erreur de certificat montrée sur la surveillance | Certificat autosigné. Soit installez un certificat de confiance (ACME est intégré à Proxmox) soit activez `insecure_tls`. L'option n'est jamais activée implicitement. |
 | Erreur d'authentification | Secret collé dans Token ID (ou l'inverse), « Privilege Separation » laissée cochée (le jeton n'a alors aucun droit), ou le rôle `DumbMonit` non appliqué sur `/`. |
 | Âge de sauvegarde manquant pour un invité | Aucune tâche `vzdump` dans la fenêtre d'historique et aucune archive trouvée sur les stockages ; ou `scan_backup_storage` désactivé. |
 | Sondes lentes | Un stockage de sauvegarde qui prend du temps à lister, ou beaucoup d'invités à inventorier pour les snapshots. Désactivez `scan_backup_storage` ou `scan_snapshots`, baissez `max_snapshot_guests`, ou augmentez `request_timeout_seconds`. |
 | `node_updates_pending` manquant | L'utilisateur ou le jeton manque `Sys.Modify` sur `/nodes`. Accordez le rôle `DumbMonitUpdates` de l'étape 6, ou ignorez : `node_pve_packages_upgradable` et `node_reboot_required` couvrent les paquets Proxmox sans ça. |
 | Aucun pourcentage de mémoire pour une VM | Proxmox VE 9 rapporte, dans l'inventaire du cluster, la mémoire que la VM prend **sur l'hôte** — coût inclus, donc régulièrement au-dessus de son allocation. Un pourcentage calculé depuis ça resterait au-dessus de 100 % pour toujours. Le chiffre honnête vient du pilote de ballon à l'intérieur de l'invité ; une VM avec le ballooning désactivé montre donc des octets et pas de pourcentage. `guest_memory_host_bytes` est le chiffre côté hôte. |
-| Aucune capacité pour le stockage de sauvegarde | Un datastore Proxmox Backup Server monté sur PVE ne rapporte aucune taille : PVE ne la lit pas. La propre page d'appareil du datastore l'a. |
+| Aucune capacité pour le stockage de sauvegarde | Un datastore Proxmox Backup Server monté sur PVE ne rapporte aucune taille : PVE ne la lit pas. La propre page de surveillance du datastore l'a. |
 | Usage disque vide (« taille seulement ») pour une VM | La VM n'a pas d'agent invité QEMU (pas activé dans ses options, ou `qemu-guest-agent` pas installé dedans), ou le jeton manque `VM.GuestAgent.Audit`. `guest_agent_enabled` et `guest_agent_running` disent lequel. Les conteneurs n'en ont jamais besoin. |
 | Aucune série `node_disk_*` | Le jeton manque `Sys.Audit` sur `/` (le rôle `DumbMonit` l'accorde), ou le nœud tourne derrière un contrôleur RAID qui cache SMART : `disks/list` rapporte alors `UNKNOWN` et aucun `node_disk_smart_failed` n'est publié. |
 | `node_packages_changed` se déclenche après un redémarrage de serveur | Non : la première sonde après un redémarrage n'apprend que les versions. Un changement n'est rapporté qu'entre deux sondes consécutives du même processus serveur. |

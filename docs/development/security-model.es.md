@@ -8,7 +8,7 @@ informar de una vulnerabilidad, sigue la
 ## Qué está en juego
 
 DumbMonit funciona dentro de tu red. Guarda las credenciales que necesita para
-leer cada dispositivo (comunidades SNMP, tokens de API, contraseñas), recibe
+leer cada monitor (comunidades SNMP, tokens de API, contraseñas), recibe
 mediciones de los agentes instalados en tus máquinas y envía peticiones a las
 direcciones que configuras. Una vulneración expondría esos secretos y daría a un
 atacante un punto de apoyo en la red monitorizada.
@@ -19,7 +19,7 @@ atacante un punto de apoyo en la red monitorizada.
 |---|---|---|
 | Navegador o script hacia `/api/*` | Administradores, operadores y lectores | Autenticados por una cookie de sesión o un token de API; tres roles limitan lo que cada uno puede hacer. |
 | Agente hacia `/api/ingest` | Máquinas en las que instalaste un agente | Un token por máquina; un token filtrado puede revocarse por separado. |
-| Servidor hacia dispositivos y servicios | Sistemas de terceros | Sin confianza: las respuestas se analizan de forma defensiva y las redirecciones se quedan en el mismo host. |
+| Servidor hacia monitores y servicios | Sistemas de terceros | Sin confianza: las respuestas se analizan de forma defensiva y las redirecciones se quedan en el mismo host. |
 | Servidor hacia canales de notificación | Servicios externos | Las credenciales se cifran en reposo y la API nunca las devuelve. |
 | Servidor hacia VictoriaMetrics | Un proceso hijo en loopback, o una instancia externa | La incluida no tiene autenticación y escucha en loopback; una externa es responsabilidad del operador. |
 | Volumen `/data` y host | El operador | De confianza. Un atacante que controle el host o el volumen queda fuera del alcance. |
@@ -38,7 +38,7 @@ atacante un punto de apoyo en la red monitorizada.
 - **Economía de mecanismo.** Un binario, un archivo SQLite, un proceso hijo en
   loopback y una sola entrada para todos los clientes: `/api/*`.
 - **Valores predeterminados a prueba de fallos.** Una comprobación de seguridad
-  sin datos es `unknown`, nunca un éxito; un dispositivo inaccesible y un error
+  sin datos es `unknown`, nunca un éxito; un monitor inaccesible y un error
   de configuración son estados distintos.
 - **Mediación completa.** Un único middleware de autenticación
   (`crates/server/src/auth/middleware.rs`) protege las rutas de la API.
@@ -69,7 +69,7 @@ atacante un punto de apoyo en la red monitorizada.
 | Fallos de identificación y autenticación | Límite de intentos de inicio de sesión por dirección de cliente y por cuenta (`auth/rate_limit.rs`), autenticación en dos factores opcional, OpenID Connect, un administrador puede restablecer el segundo factor de un usuario y cerrar sus sesiones. |
 | Fallos de integridad del software y de los datos | Los instaladores del agente verifican el SHA-256 del binario descargado; las imágenes de las versiones las construye la CI. |
 | Fallos de registro y monitorización | Un registro de seguridad con los inicios de sesión y los cambios sensibles (`auth/audit.rs`). |
-| Falsificación de peticiones del lado del servidor | Las integraciones y los canales de notificación siguen las redirecciones solo dentro del mismo host, de modo que un dispositivo no puede desviar una petición y su clave de API a otro lugar. |
+| Falsificación de peticiones del lado del servidor | Las integraciones y los canales de notificación siguen las redirecciones solo dentro del mismo host, de modo que un monitor no puede desviar una petición y su clave de API a otro lugar. |
 | Falsificación de petición en sitios cruzados | Las peticiones que modifican estado y dependen de la cookie deben llevar `X-Requested-With: DumbMonit` o metadatos de fetch del mismo origen; de lo contrario, `403`; las peticiones autenticadas con token no llevan cookie. |
 
 ## Verificación
@@ -88,7 +88,7 @@ afirmación.
 ## Límites conocidos
 
 - El servidor integrado habla HTTP sin cifrar; pon TLS delante.
-- Las opciones de los dispositivos se guardan sin cifrar. Pon los secretos en
+- Las opciones de los monitores se guardan sin cifrar. Pon los secretos en
   los campos de credenciales.
 - El VictoriaMetrics incluido no tiene autenticación.
 - DumbMonit es una alfa; las rutas y los campos aún pueden cambiar.

@@ -69,7 +69,7 @@ Les [règles intégrées](../alerting/rules.md#pfsense) qui s'appliquent :
 - **Disque pfSense presque plein** : plus de 90 % pendant trente minutes
   (Avis).
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Firewall dit ce qui ne va pas en une phrase, montre le CPU, la
 mémoire, le disque et la température, puis liste chaque passerelle avec sa

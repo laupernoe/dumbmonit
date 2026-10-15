@@ -29,7 +29,7 @@ counters: charts and rules turn them into rates. Everything below
 are waiting, open_slot, starting, reading, sending, keepalive, dns_lookup,
 closing, logging, finishing and idle_cleanup.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never queries Apache. It shows busy and idle workers, the scoreboard

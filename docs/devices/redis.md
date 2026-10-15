@@ -48,9 +48,9 @@ rules turn them into rates.
 The [built-in rules](../alerting/rules.md#databases-message-broker-and-security-engine)
 that apply: Redis memory near maxmemory, Redis refusing connections, Redis
 replication link down, Redis replica lagging, Redis snapshot failed, Redis
-append-only file write failed, plus Device unreachable.
+append-only file write failed, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Redis. It says what is wrong in a sentence (replication, memory
@@ -99,7 +99,7 @@ for a private authority, tick Accept an unverifiable certificate.
 
 A refused password (`WRONGPASS`, `NOAUTH`, `NOPERM`) is shown as a credential
 error and nobody is notified about the error itself, but DumbMonit then collects
-nothing: the Device unreachable rule keeps firing, as for any device it cannot
+nothing: the Monitor unreachable rule keeps firing, as for any monitor it cannot
 read, until the credential works again. Redis restarting without its ACL user
 (users defined with `ACL SETUSER` but never saved) causes exactly this.
 

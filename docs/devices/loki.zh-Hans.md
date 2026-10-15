@@ -43,9 +43,9 @@ WAL 在 ingester 上。添加你想要监控的组件;某个组件没有的指�
 
 适用的[内置规则](../alerting/rules.md#log-and-metrics-servers):
 Loki 未就绪、Loki 拒绝日志行、Loki 无法写入存储、Loki 预写日志磁盘
-已满、Loki 请求错误,以及设备不可达。
+已满、Loki 请求错误,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Loki。
 它会用一句话说明哪里出了问题(就绪状态、过去 24 小时内被拒绝的

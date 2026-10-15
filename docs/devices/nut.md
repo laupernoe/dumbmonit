@@ -41,10 +41,10 @@ Serial numbers are never put in a label. At most 32 UPS are read per server.
 
 The [built-in rules](../alerting/rules.md#ups-behind-nut) that apply: UPS on
 battery, UPS battery low, UPS battery needs replacing, UPS load high, UPS
-runtime short, UPS data stale, plus Device unreachable when the NUT server
+runtime short, UPS data stale, plus Monitor unreachable when the NUT server
 itself stops answering.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 connects to the NUT server. One card per UPS: its state in words (on mains, on
@@ -94,10 +94,10 @@ Address: a host name or IP (`nas.lan`), `host:port`, or the `ups@host` form of
 `upsc`, of which only the host is kept. Options: port (3493), the UPS to watch
 (all by default) and the timeout per exchange (10 s).
 
-A refused connection or no answer counts as the device being unreachable. When
+A refused connection or no answer counts as the monitor being unreachable. When
 the machine running the NUT server shuts down in the outage it reports (it is
 often its own upsmon primary), the UPS alerts are hidden as suppressed while
-Device unreachable fires for that same device: read the Device unreachable
+Monitor unreachable fires for that same monitor: read the Monitor unreachable
 alert as the sign that the power failure won. Run the NUT server on a machine
 that outlives the others, or watch the UPS from a second NUT server.
 `ACCESS-DENIED` is shown as a credential error, and a UPS name the server does

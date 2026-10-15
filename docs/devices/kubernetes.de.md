@@ -8,7 +8,7 @@ letzten Stunde.
 DumbMonit liest die API mit dem Token eines dedizierten Service Accounts, der an eine
 schreibgeschützte ClusterRole gebunden ist: `get` und `list` auf Knoten, Pods, Workloads,
 Persistent Volume Claims und Ereignisse, sonst nichts. Es schreibt nie, und die Rolle gibt keinen
-Zugriff auf Secrets oder ConfigMaps. Ein Gerät deckt den ganzen Cluster ab, gleich welche
+Zugriff auf Secrets oder ConfigMaps. Ein Monitor deckt den ganzen Cluster ab, gleich welche
 Distribution: k3s, kubeadm, k0s, MicroK8s, Talos oder ein verwalteter Cluster, dessen API
 DumbMonit erreichen kann.
 
@@ -70,9 +70,9 @@ Die zutreffenden [integrierten Regeln](../alerting/rules.md#kubernetes):
   Minuten decken das ab.
 - **Kubernetes-Volume-Claim ausstehend**: ein festhängender Claim fünfzehn Minuten lang (Hinweis).
 
-Dazu Gerät nicht erreichbar, wenn der API-Server nicht mehr antwortet.
+Dazu Monitor nicht erreichbar, wenn der API-Server nicht mehr antwortet.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Cluster-Panel nennt in einem Satz, was nicht stimmt, und listet dann die Knoten (Ready oder
 nicht, Druck, gesperrt, Kubelet-Version), die Pods, die Aufmerksamkeit brauchen (in
@@ -151,7 +151,7 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Um die Rolle vor dem Hinzufügen des Geräts zu prüfen, fragen Sie den API-Server, was das Konto
+Um die Rolle vor dem Hinzufügen des Monitors zu prüfen, fragen Sie den API-Server, was das Konto
 darf; der erste Befehl muss `yes` antworten, der zweite `no`:
 
 ```
@@ -160,7 +160,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
 Ein mit `kubectl create token dumbmonit -n kube-system` erstelltes Token funktioniert ebenfalls,
-läuft aber ab (standardmäßig nach einer Stunde): Das Gerät scheitert dann mit „Der API-Server hat
+läuft aber ab (standardmäßig nach einer Stunde): Der Monitor scheitert dann mit „Der API-Server hat
 das Token abgelehnt (401)“. Das obige Secret ist die langlebige Form, die Kubernetes für diesen
 Zweck dokumentiert. Um den Zugriff von DumbMonit zu widerrufen, löschen Sie das Secret oder den
 Service Account.

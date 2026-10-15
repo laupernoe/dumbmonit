@@ -33,11 +33,11 @@ Wiederverbindung hinter NAT und würde die Serien grundlos vervielfachen.
 Höchstens 256 Clients erhalten je eine detaillierte Serie; `clients_connected`
 bleibt darüber hinaus exakt.
 
-Integrierte Regeln, die gelten: **Gerät nicht erreichbar**, wenn die
+Integrierte Regeln, die gelten: **Monitor nicht erreichbar**, wenn die
 Management-Verbindung selbst nicht hergestellt werden kann oder das Passwort
 abgelehnt wird.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen zeigt, was die Sonde gespeichert hat; das
 Öffnen der Seite verbindet sich nie mit der Management-Schnittstelle. Es zeigt

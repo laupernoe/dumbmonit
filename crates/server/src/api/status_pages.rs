@@ -572,13 +572,13 @@ pub async fn set_items(
     for entry in payload {
         let Some(target) = targets.get(&entry.target_id) else {
             return Err(ApiError::BadRequest(format!(
-                "Device {} does not exist.",
+                "Monitor {} does not exist.",
                 entry.target_id
             )));
         };
         if !seen.insert(entry.target_id) {
             return Err(ApiError::BadRequest(format!(
-                "Device \"{}\" is listed twice.",
+                "Monitor \"{}\" is listed twice.",
                 target.name
             )));
         }

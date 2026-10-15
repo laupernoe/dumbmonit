@@ -285,7 +285,7 @@ async fn a_failed_relayed_probe_lands_in_last_error() {
     let id = command.id;
     let outcome = ProbeOutcome {
         duration_ms: 3,
-        error: Some("Device unreachable: connection refused".into()),
+        error: Some("Monitor unreachable: connection refused".into()),
         samples: Vec::new(),
         profile_id: None,
     };
@@ -301,7 +301,7 @@ async fn a_failed_relayed_probe_lands_in_last_error() {
     assert_eq!(probe.await.unwrap(), StatusCode::BAD_REQUEST);
 
     let view = app.get(&format!("/api/targets/{target_id}"), Some(&admin)).await;
-    assert_eq!(view.body["last_error"], json!("Device unreachable: connection refused"));
+    assert_eq!(view.body["last_error"], json!("Monitor unreachable: connection refused"));
     assert_eq!(view.body["error_kind"], json!("down"));
 }
 

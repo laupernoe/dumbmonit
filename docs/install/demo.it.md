@@ -8,7 +8,7 @@ installarlo per davvero, o per mettere una vetrina sul tuo stesso sito.
 !!! warning "Mai su un volume di dati reale"
     La modalità demo **ricrea il database a ogni avvio**. Dalle un volume
     tutto suo, oppure nessuno: puntata sul `/data` di un'istanza reale,
-    sostituirebbe i tuoi dispositivi, regole e cronologia con il patrimonio
+    sostituirebbe i tuoi monitor, regole e cronologia con il patrimonio
     fittizio.
 
 ## Cosa fa la modalità demo
@@ -16,7 +16,7 @@ installarlo per davvero, o per mettere una vetrina sul tuo stesso sito.
 - **Accedi con `demo` / `demo`.** La pagina di login lo indica e compila i
   campi con un clic. L'account vede ogni schermata che vede un
   amministratore.
-- **Solo lettura.** Ogni modifica — dispositivi, regole, silenzi, conferme,
+- **Solo lettura.** Ogni modifica — monitor, regole, silenzi, conferme,
   canali, token, utenti, impostazioni, backup e ripristini, scansioni di
   scoperta, iscrizione di agent, strumenti di scrittura dell'endpoint
   assistente — viene rifiutata dal server con `403` e
@@ -28,9 +28,9 @@ installarlo per davvero, o per mettere una vetrina sul tuo stesso sito.
   Proxmox VE, un NAS Synology, un Proxmox Backup Server, un TrueNAS, un
   firewall OPNsense, un server Redfish con un componente guasto, alcuni
   controlli HTTP, TLS e ping, un host agent e una pagina di stato. I
-  dispositivi vengono risposti da responder finti dentro il server, associati
+  monitor vengono risposti da responder finti dentro il server, associati
   a `127.0.0.1` e che riproducono risposte API registrate, così i collector e
-  i pannelli dei dispositivi reali funzionano. Riavviando si ottiene lo
+  i pannelli dei monitor reali funzionano. Riavviando si ottiene lo
   stesso patrimonio.
 - **Sette giorni di cronologia.** Metriche sintetiche vengono scritte in
   VictoriaMetrics all'avvio, così i grafici, *Last 7 days*, le previsioni e la

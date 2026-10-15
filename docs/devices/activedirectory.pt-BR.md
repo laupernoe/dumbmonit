@@ -15,7 +15,7 @@ DumbMonit nunca escreve no diretório, nunca lê um atributo de senha (do
 LAPS lê a data de expiração, nunca a senha) e nunca pede os direitos de
 replicação que exporiam segredos.
 
-Um dispositivo cobre todo o domínio: aponte-o para um controlador de
+Um monitor cobre todo o domínio: aponte-o para um controlador de
 domínio e o DumbMonit encontra os outros na partição de configuração.
 
 ## O que o LDAP pode e não pode dizer {#what-ldap-can-and-cannot-tell}
@@ -29,7 +29,7 @@ particular:
   *Monitor active directory replication*. Sem ele, o painel diz *status
   de replicação não legível* em vez de adivinhar. Só a visão do
   controlador de domínio consultado é mostrada: para ver os parceiros de
-  outro, adicione-o como um segundo dispositivo.
+  outro, adicione-o como um segundo monitor.
 - **Não visível via LDAP**: logs de eventos (logins, bloqueios conforme
   acontecem, mudanças de grupo como eventos), conteúdo de Group Policy,
   SYSVOL, zonas DNS, e os próprios hashes de senha.
@@ -100,7 +100,7 @@ Operators e Backup Operators.
 ## Achados {#findings}
 
 Achados são fatos brutos — quantos objetos, e quais — não um score; a
-[pontuação de segurança](../using/security-score.md) do dispositivo os
+[pontuação de segurança](../using/security-score.md) do monitor os
 pesa. Cada um tem um `id` estável, uma severidade na escala do score
 (low, medium, high, critical, mostrada na página como Info, Aviso e
 Alerta), uma categoria, uma contagem e até vinte nomes de conta de
@@ -148,7 +148,7 @@ aplicam:
 
 - **Domain controller unreachable**: outro controlador de domínio do
   domínio para de responder em sua porta LDAP por cinco minutos
-  (Warning). O consultado é cobertor por *Device unreachable*.
+  (Warning). O consultado é cobertor por *Monitor unreachable*.
 - **Active Directory bind failed**: o controlador de domínio recusa a
   conta de serviço — senha expirada, desativada ou bloqueada (Advisory).
 - **Privileged group membership changed**: alguém entrou ou saiu de um
@@ -158,7 +158,7 @@ aplicam:
   por meia hora (Advisory), quando o status de replicação é legível.
 - **krbtgt password older than 180 days** (Info).
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Active Directory mostra o domínio (níveis funcionais, o
 controlador de domínio consultado, desvio de relógio), os controladores

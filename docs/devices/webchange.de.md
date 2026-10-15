@@ -39,7 +39,7 @@ einfache Selektoren, durch Kommas getrennt: ein Tag (`main`), eine ID
 
 ## Seite oder Site
 
-**Page** (der Standard) liest nur die Adresse des Geräts. Es kann auch
+**Page** (der Standard) liest nur die Adresse des Monitors. Es kann auch
 ein einfaches Text- oder JSON-Dokument sein, Zeile für Zeile
 verglichen.
 
@@ -75,18 +75,18 @@ halbe Sekunde zwischen zwei Batches, der `User-Agent`
 `DumbMonit/<version>`, ein 15-Sekunden-Timeout pro Request und
 höchstens 5 MB pro Seite gelesen. Es stoppt bei **Max pages**
 (standardmäßig 25, höchstens 200) oder nach zehn Minuten. Hat **Max pages** es
-gestoppt, sagt die Geräteseite, wie viele Seiten gefunden wurden, damit der
+gestoppt, sagt die Monitorseite, wie viele Seiten gefunden wurden, damit der
 nicht beobachtete Teil der Site nie eine Überraschung ist. **User agent** ersetzt
 `DumbMonit/<version>` für eine Site, die Roboter abweist.
 
 ## Wie eine Prüfung funktioniert
 
-Das Gerät wird wie jedes andere abgefragt (standardmäßig jede Minute),
+Der Monitor wird wie jedes andere abgefragt (standardmäßig jede Minute),
 aber die Seiten werden nur alle **Check every**-Minuten gelesen
 (standardmäßig 60, von 5 bis 10080). Dazwischen meldet die Abfrage nur
 den Zustand der letzten Prüfung: Die Site wird nicht jede Minute
 getroffen. Eine Prüfung läuft im Hintergrund; zwei Prüfungen desselben
-Geräts überlappen sich nie, und **Check now** auf der Geräteseite
+Monitors überlappen sich nie, und **Check now** auf der Monitorseite
 startet sofort eine.
 
 Die erste Prüfung verzeichnet nur die **Referenz**: Jede Seite wird
@@ -108,7 +108,7 @@ pages**, jede neu hinzukommende Seite als neu). Ein Update von DumbMonit, das
 Seiten anders liest, bewirkt einmalig dasselbe.
 
 Findet eine Prüfung **dieselbe Änderung auf mehreren Seiten** (dieselben Zeilen
-entfernt und hinzugefügt, etwa ein Banner), zeigt die Geräteseite sie einmal,
+entfernt und hinzugefügt, etwa ein Banner), zeigt die Monitorseite sie einmal,
 mit den Seiten, auf denen sie vorgenommen wurde.
 
 ### Ignore lines
@@ -127,9 +127,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Nicht erreichbare Startseite
 
 Wenn die Startseite selbst nicht gelesen werden kann (keine Antwort,
-Verbindung abgelehnt, Timeout, HTTP 5xx), ist das Gerät
-**unreachable**: Die Abfrage schlägt fehl, und die Regel "Device
-unreachable" feuert wie für jedes Gerät. Die Startseite wird dann bei
+Verbindung abgelehnt, Timeout, HTTP 5xx), ist der Monitor
+**unreachable**: Die Abfrage schlägt fehl, und die Regel "Monitor
+unreachable" feuert wie für jeden Monitor. Die Startseite wird dann bei
 jeder Abfrage erneut versucht, sodass ihre Rückkehr innerhalb einer
 Minute gesehen wird. Eine Startseite, die den Zugriff verweigert (401,
 403), wird als Konfigurationsproblem gemeldet, kein Ausfall. Fehler
@@ -148,7 +148,7 @@ new oder removed page), und die Benachrichtigung nennt die Seiten: "/pricing,
 /contact und 2 weitere". Solange sie feuert, wird jede weitere Prüfung, die
 Änderungen findet, erneut gemeldet, mit ihren eigenen Seiten, auch auf denselben
 Seiten; der Alarm löst sich bei der ersten Prüfung, die nichts Neues findet. Es
-bleibt die ganze Zeit ein Alarm pro Gerät, sodass Bestätigen oder Snoozen am
+bleibt die ganze Zeit ein Alarm pro Monitor, sodass Bestätigen oder Snoozen am
 Alarm auch die folgenden Prüfungen abdeckt. Sie liest `dumbmonit_webchange_last_check_changes`;
 weisen Sie sie wie jede andere Regel einem Kanal zu, oder heben Sie
 ihren Schweregrad an, unter **Alerts → Rules**. Siehe
@@ -191,10 +191,10 @@ spricht mit der Adresse, zu der der Hostname aufgelöst wird).
 Ein Screenshot wird nur aufgenommen, wenn eine Seite einen neuen
 Snapshot erhält (die Referenz, und jede Änderung), nie bei einer
 unveränderten Prüfung: ein 1366 × 900-Fenster, die ganze Seite bis zu
-5000 Pixel, als JPEG. Die Option **Screenshots** schaltet sie für ein
-Gerät aus. Ohne Browser, oder wenn er nicht antwortet, funktioniert
+5000 Pixel, als JPEG. Die Option **Screenshots** schaltet sie für einen
+Monitor aus. Ohne Browser, oder wenn er nicht antwortet, funktioniert
 der Textvergleich genauso, und die Snapshots haben einfach kein Bild;
-die Geräteseite sagt das.
+die Monitorseite sagt das.
 
 Der Browser lädt die Seite, wie ein Besucher es täte, mit ihren
 Skripten: Was er zeigt, kann sich vom Text unterscheiden, den
@@ -204,11 +204,11 @@ DumbMonit verglichen hat, was das vom Server gesendete HTML ist.
 
 Der Text jedes Snapshots wird in der Datenbank gehalten (höchstens
 1 MB pro Seite); Screenshots sind Dateien unter
-`/data/webchange/<device id>/`. Pro Gerät werden die letzten 500
+`/data/webchange/<device id>/`. Pro Monitor werden die letzten 500
 Änderungen behalten; ein Snapshot wird behalten, während er der
 neueste einer Seite ist oder eine behaltene Änderung auf ihn verweist,
 und alles andere, Dateien eingeschlossen, wird nach jeder Prüfung
-entfernt. Das Löschen des Geräts entfernt alles davon.
+entfernt. Das Löschen des Monitors entfernt alles davon.
 
 ## Eine Website auf Änderungen beobachten
 
@@ -225,7 +225,7 @@ Die Schritte unten sind die, die der Hinweis neben dem Formular zeigt.
 3. Die erste Prüfung verzeichnet nur die Referenz, nichts wird
    gemeldet. Von da an vergleicht jede Prüfung den sichtbaren Text
    Seite für Seite und behält eine Vorher/Nachher-Kopie jeder
-   Änderung, auf der Geräteseite angezeigt; der Alarm "Website
+   Änderung, auf der Monitorseite angezeigt; der Alarm "Website
    changed" sagt es Ihnen.
 4. Für einen Screenshot jeder Version fügen Sie Ihrer Compose-Datei einen
    Headless-Browser-Dienst hinzu; die genauen Zeilen stehen in der Dokumentation

@@ -3,12 +3,12 @@
 Hypervisor: nodes with their daemons and networking, virtual machines,
 containers, storages, LVM thin pools, backups, high availability, snapshots,
 replication, Ceph down to the OSD, physical disks and ZFS pools, pending
-updates, package changes, subscription and certificates. One device can cover
+updates, package changes, subscription and certificates. One monitor can cover
 a whole cluster.
 
 ## The nodes panel
 
-The device page opens on one card per node: CPU, memory and root filesystem as
+The monitor page opens on one card per node: CPU, memory and root filesystem as
 three meters, the uptime and the `pve-manager` version installed on that node,
 then only what is wrong — the daemons that are not running, the interfaces
 declared at boot that are not up — and the fill of each LVM thin pool and
@@ -130,7 +130,7 @@ simply absent; nothing else changes.
 
 ## The Ceph panel
 
-A **Ceph** section appears on the device page only when the cluster actually
+A **Ceph** section appears on the monitor page only when the cluster actually
 has Ceph: health and the words behind it, total and used capacity, how many
 OSDs are up and in, a table of OSDs (host, device class, usage, apply and
 commit latency) and a table of pools (usage, size and min size, placement
@@ -224,7 +224,7 @@ the same consequence — which is why the two fill levels are separate series an
 separate rules.
 
 Package changes are detected by the collector itself: it remembers the
-installed versions from the previous probe (per device and node, in memory —
+installed versions from the previous probe (per monitor and node, in memory —
 a server restart learns again without reporting). Only a package present in
 both probes with a different version counts; a newly installed or removed
 package does not.
@@ -242,7 +242,7 @@ Board temperatures are not available: the Proxmox VE API does not expose
 sensors, only the disks' own SMART temperature. Install the DumbMonit agent on
 the node if you need more.
 
-Built-in rules that apply: Device unreachable, High CPU, Disk almost full,
+Built-in rules that apply: Monitor unreachable, High CPU, Disk almost full,
 Filesystem almost full (forecast), Backup too old, Unusual CPU, VM or
 container stopped, VM or container CPU high, VM or container memory high, VM
 or container disk almost full, HA resource in error, Cluster lost quorum, Node
@@ -266,7 +266,7 @@ cluster, in one call. Two things make it worth having.
   the disk or memory. That is the number that explains "everything is slow"
   when CPU and memory both look fine.
 * It is read with `history=1` from the last point already seen, so every point
-  between two probes is ingested at its own timestamp. A device probed every
+  between two probes is ingested at its own timestamp. A monitor probed every
   five minutes gets its five one-minute points instead of a single current
   value.
 
@@ -442,13 +442,13 @@ missing.
 
 | Symptom | Likely cause |
 |---|---|
-| Certificate error shown on the device | Self-signed certificate. Either install a trusted certificate (ACME is built into Proxmox) or enable `insecure_tls`. The option is never enabled implicitly. |
+| Certificate error shown on the monitor | Self-signed certificate. Either install a trusted certificate (ACME is built into Proxmox) or enable `insecure_tls`. The option is never enabled implicitly. |
 | Authentication error | Secret pasted into Token ID (or the other way round), "Privilege Separation" left ticked (the token then has no rights), or the `DumbMonit` role not applied on `/`. |
 | Backup age missing for a guest | No `vzdump` task in the lookback window and no archive found on the storages; or `scan_backup_storage` disabled. |
 | Slow probes | A backup storage that takes long to list, or many guests to inventory for snapshots. Disable `scan_backup_storage` or `scan_snapshots`, lower `max_snapshot_guests`, or raise `request_timeout_seconds`. |
 | `node_updates_pending` missing | The user or token lacks `Sys.Modify` on `/nodes`. Grant the `DumbMonitUpdates` role of step 6, or ignore: `node_pve_packages_upgradable` and `node_reboot_required` cover the Proxmox packages without it. |
 | No memory percentage for a VM | Proxmox VE 9 reports, in the cluster inventory, the memory the VM takes **on the host** — overhead included, so regularly above its allocation. A percentage computed from it would sit above 100% forever. The honest figure comes from the balloon driver inside the guest; a VM with ballooning disabled therefore shows bytes and no percentage. `guest_memory_host_bytes` is the host-side figure. |
-| No capacity for the backup storage | A Proxmox Backup Server datastore mounted on PVE reports no size: PVE does not read it. The datastore's own device page has it. |
+| No capacity for the backup storage | A Proxmox Backup Server datastore mounted on PVE reports no size: PVE does not read it. The datastore's own monitor page has it. |
 | Disk usage empty ("size only") for a VM | The VM has no QEMU guest agent (not enabled in its options, or `qemu-guest-agent` not installed inside), or the token lacks `VM.GuestAgent.Audit`. `guest_agent_enabled` and `guest_agent_running` tell which. Containers never need it. |
 | No `node_disk_*` series | The token lacks `Sys.Audit` on `/` (the `DumbMonit` role grants it), or the node runs behind a RAID controller that hides SMART: `disks/list` then reports `UNKNOWN` and no `node_disk_smart_failed` is published. |
 | `node_packages_changed` fires after a server restart | It does not: the first probe after a restart only learns the versions. A change is reported only between two consecutive probes of the same server process. |

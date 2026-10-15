@@ -19,7 +19,7 @@ search cluster health and the indexing failures say it long before.
 
 All metrics are prefixed `dumbmonit_graylog_`. The journal, buffers and
 throughput are those **of the node DumbMonit talks to**: in a Graylog cluster,
-add each node as its own device.
+add each node as its own monitor.
 
 | Metric | What | Labels |
 |---|---|---|
@@ -41,15 +41,15 @@ add each node as its own device.
 | `scrape_errors` | calls that failed on the last probe | |
 
 The search cluster is read through Graylog, so a separate OpenSearch or
-Elasticsearch device is not needed to know whether it is green; when Graylog
+Elasticsearch monitor is not needed to know whether it is green; when Graylog
 cannot reach it at all, `indexer_status` reads 3.
 
 The [built-in rules](../alerting/rules.md#log-and-metrics-servers) that apply:
 Graylog not processing, Graylog search cluster down, Graylog search cluster
 yellow, Graylog journal filling, Graylog input failed, Graylog indexing
-failures, plus Device unreachable.
+failures, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Graylog. It says what is wrong in a sentence (processing, search

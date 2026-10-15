@@ -4,7 +4,7 @@ Duas coisas diferentes, para dois acidentes diferentes.
 
 | | Pacote encriptado | Cópia de segurança local agendada |
 |---|---|---|
-| O que contém | A configuração: dispositivos e as suas credenciais, regras, canais, páginas de estado, contas, tokens. | A base de dados inteira, como um ficheiro, mais `secret.key`. |
+| O que contém | A configuração: monitores e as suas credenciais, regras, canais, páginas de estado, contas, tokens. | A base de dados inteira, como um ficheiro, mais `secret.key`. |
 | Onde vai | Onde quiser — é encriptado com uma frase-passe que escolhe. | `/data/backups/`, dentro do mesmo volume. |
 | Do que o salva | Um servidor perdido, uma mudança para hardware novo, uma instalação nova. | A alteração de que se arrepende dez minutos depois, uma atualização que correu mal. |
 | O que não contém | Histórico de métricas, estado e histórico de alertas, o registo de auditoria, sessões. | Histórico de métricas (`vm/`). |
@@ -12,7 +12,7 @@ Duas coisas diferentes, para dois acidentes diferentes.
 Nenhum substitui um arquivo de todo o volume se também quiser os
 gráficos de volta; isso está no fundo desta página.
 
-!!! danger "`/data/secret.key` é o que desencripta as credenciais dos seus dispositivos"
+!!! danger "`/data/secret.key` é o que desencripta as credenciais dos seus monitores"
     Comunidades SNMP, tokens Proxmox, senhas SMTP e URLs de heartbeat
     são guardados encriptados com uma chave derivada do segredo da
     instância. No primeiro arranque o DumbMonit escreve-o em
@@ -22,7 +22,7 @@ gráficos de volta; isso está no fundo desta página.
     instância que não consegue falar com nada.** O servidor nota isso
     e recusa arrancar com uma mensagem explícita em vez de falhar em
     cada verificação — mas as credenciais desapareceram, e todo
-    dispositivo tem de ser introduzido de novo.
+    monitor tem de ser introduzido de novo.
 
     O pacote encriptado é a única excepção: os seus segredos são
     reencriptados com a sua frase-passe, por isso restaura numa
@@ -55,15 +55,15 @@ frase-passe se perdeu está perdido.
 
 !!! warning "O pacote contém toda credencial desta instância"
     Quem tiver o ficheiro e a frase-passe pode ler a senha de todo
-    dispositivo que monitoriza. Mantenha-o onde guarda senhas.
+    monitor que monitoriza. Mantenha-o onde guarda senhas.
 
 ### O que contém {#what-is-in-it}
 
 | Secção | Conteúdo |
 |---|---|
-| `targets` | Dispositivos: nome, tipo, endereço, intervalo, opções, pai, agente relay, e a credencial. |
+| `targets` | Monitores: nome, tipo, endereço, intervalo, opções, pai, agente relay, e a credencial. |
 | `rules` | Regras de alerta, incluindo as incorporadas que reajustou ou desativou. |
-| `rule_overrides` | Limiares e exclusões por dispositivo. |
+| `rule_overrides` | Limiares e exclusões por monitor. |
 | `channels` | Canais de notificação, as suas definições, a sua política por canal e os seus segredos. |
 | `notify_policy` | A política de notificação global (agrupamento, limite horário, flapping, URL público). |
 | `silences` | Janelas de manutenção. |
@@ -74,7 +74,7 @@ frase-passe se perdeu está perdido.
 | `api_tokens` | Tokens de API, como hashes. Os tokens existentes continuam a funcionar. |
 | `push_monitors` | Tokens de heartbeat, para que os URLs que as suas tarefas cron já chamam permaneçam os mesmos. |
 
-Os dispositivos são associados por **tipo + endereço**, que é também a
+Os monitores são associados por **tipo + endereço**, que é também a
 chave única da tabela: importar o mesmo pacote duas vezes nunca cria
 uma segunda cópia de nada.
 
@@ -114,7 +114,7 @@ viu `secret.key`.
 3. Leia o relatório. Diz, secção por secção, o que seria **criado**, o
    que seria **atualizado** porque difere do que já está aqui, e o que
    já é idêntico — mais uma nota para qualquer coisa que não pôde
-   colocar, como uma regra que apontava para um dispositivo que o
+   colocar, como uma regra que apontava para um monitor que o
    pacote não contém.
 4. Pressione **Restore for real**.
 
@@ -124,7 +124,7 @@ Três regras que o restauro nunca quebra:
   pacote descreve; qualquer coisa que a instância tenha além disso
   permanece.
 - **Nada é alguma vez duplicado.** Todo item é associado pela sua
-  chave natural — tipo + endereço para um dispositivo, `uid` para uma
+  chave natural — tipo + endereço para um monitor, `uid` para uma
   regra, nome para um canal, slug para uma página de estado. Restaurar
   o mesmo pacote duas vezes reporta tudo como já idêntico e não
   escreve nada.

@@ -60,7 +60,7 @@ seine MAC-Adresse, wenn er keinen hat), `mac`, `model` und `type` (`gateway`, `s
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#unifi-network): UniFi-Gerät offline,
 UniFi-Internet ausgefallen, UniFi-WAN-Verbindung ausgefallen, UniFi-Gateway-CPU hoch,
-UniFi-Gerät wartet auf Adoption, UniFi-Firmware-Update verfügbar, UniFi-Alarme, außerdem Gerät
+UniFi-Gerät wartet auf Adoption, UniFi-Firmware-Update verfügbar, UniFi-Alarme, außerdem Monitor
 nicht erreichbar.
 
 ## Geräte {#devices}
@@ -84,7 +84,7 @@ Integration teilt, die Client-Geräte verfolgt — `dumbmonit_client_device_*`, 
 | `last_seen_timestamp_seconds` | Letzte Verbindung, wie `/rest/user` sie meldet | `device`, `type` (`Wired`, `Wireless` oder `Unknown`), `os` (leer), `user` (leer), `kind` |
 | `stale_seconds` | Positiv, sobald ein verfolgter Client `device_stale_days` (standardmäßig 3) ohne Verbindung überschritten hat; speist die Regel [Client-Gerät veraltet](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (immer `connection`: UniFi hat kein Backup zu melden) |
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite fragt
 UniFi nie ab. Es nennt zuerst, was nicht stimmt (Geräte offline, Internet oder eine

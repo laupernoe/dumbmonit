@@ -15,7 +15,7 @@ DumbMonit 以单个容器运行：`dumbmonit` 服务器（采集、API、
 ## 前提条件 {#prerequisites}
 
 - 带有 Compose 插件的 Docker Engine（`docker compose version` 可正常运行）。
-- 一台能够访问你要监控的设备的机器。设备不需要能访问
+- 一个能够访问你要监控的监控项的机器。监控项不需要能访问
   这台机器，[代理](../devices/agent.md)除外，它们会通过 HTTP 将
   测量数据推送到服务器。
 - 主机上的 `8080` 端口空闲，或者使用你选择的其他端口（[见下文](#advanced-options)）。
@@ -106,7 +106,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 
 ![登录界面](../assets/screenshots/login-light.png){ loading=lazy }
 
-然后添加你的第一台设备：参见[添加第一台设备](first-device.md)。
+然后添加你的第一个监控项：参见[添加第一个监控项](first-device.md)。
 
 ## 环境变量 {#environment-variables}
 
@@ -121,7 +121,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 | `DUMBMONIT_VM_RETENTION` | `12` | 内嵌 VictoriaMetrics 的保留期：以月为单位，或 `30d`、`2y`。 |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | 内嵌 VictoriaMetrics 缓存的内存预算。 |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | 内嵌 VictoriaMetrics 的监听地址，位于容器内部。 |
-| `DUMBMONIT_SECRET` | *（自动生成）* | 用于加密设备凭据和令牌的实例密钥。 |
+| `DUMBMONIT_SECRET` | *（自动生成）* | 用于加密监控项凭据和令牌的实例密钥。 |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | 并发探测数，所有采集器合计。 |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | 单次探测的最长持续时间。 |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | 写入 VictoriaMetrics 的周期。 |
@@ -145,8 +145,8 @@ SNMP 团体名、密码和 API 令牌使用 AES-256-GCM 加密，密钥
 （位于 `dumbmonit-data` 卷内）中生成该密钥。
 
 !!! danger "请将 `secret.key` 与数据库一起备份"
-    没有它，设备凭据将无法恢复：单独恢复数据库
-    得到的实例无法与任何设备通信。服务器会在启动时检测到
+    没有它，监控项凭据将无法恢复：单独恢复数据库
+    得到的实例无法与任何监控项通信。服务器会在启动时检测到
     密钥缺失或已更改，并给出明确的提示后拒绝继续运行，
     而不是在每次探测时悄悄失败。计划备份
     会为你复制它——参见[备份与恢复](backup.md)。
@@ -232,13 +232,13 @@ docker compose up -d
 
 | 路径 | 内容 |
 |---|---|
-| `dumbmonit.db` | 设备、规则、渠道、告警状态、会话。 |
+| `dumbmonit.db` | 监控项、规则、渠道、告警状态、会话。 |
 | `secret.key` | 实例密钥。 |
 | `backups/` | 计划的本地备份：数据库和密钥的副本，默认每天一次，保留七份。 |
 | `vm/` | VictoriaMetrics 时间序列（默认保留 12 个月）。 |
 
 DumbMonit 会按计划备份自己的数据库，也可以将整个
-配置——设备、凭据、规则、渠道——导出为一个用你自选的密码短语
+配置——监控项、凭据、规则、渠道——导出为一个用你自选的密码短语
 加密的文件，并可恢复到全新的实例上。
 两者都在**[备份与恢复](backup.md)**中介绍，其中还包括升级前该做什么，
 以及那条值得读两遍的关于 `secret.key` 的规则。
@@ -271,7 +271,7 @@ docker compose start
       - "8099:8080"
 ```
 
-**自己的密钥**，代替 `/data/secret.key` 中生成的那个。它用于加密设备凭据：
+**自己的密钥**，代替 `/data/secret.key` 中生成的那个。它用于加密监控项凭据：
 丢失它意味着要重新输入每一个凭据。
 
 ```yaml
@@ -279,7 +279,7 @@ docker compose start
       DUMBMONIT_SECRET: replace-me-with-32-random-characters
 ```
 
-内嵌 VictoriaMetrics 的**保留期与内存**（月数，或 `30d` / `2y`；几十台设备的
+内嵌 VictoriaMetrics 的**保留期与内存**（月数，或 `30d` / `2y`；几十个监控项的
 homelab 用 256 MB 就够）：
 
 ```yaml
@@ -296,7 +296,7 @@ homelab 用 256 MB 就够）：
 ```
 
 **忘记密码。** 添加下面这一行，运行 `docker compose up -d`，在界面中重新创建
-第一个管理员（设备、规则和渠道都会保留），然后删除这一行，再运行一次
+第一个管理员（监控项、规则和渠道都会保留），然后删除这一行，再运行一次
 `docker compose up -d`：
 
 ```yaml
@@ -329,7 +329,7 @@ services:
 - `shm_size: 256m`：Chromium 在 `/dev/shm` 中渲染，Docker 默认的 64 MB 对于长页面太小。
 - 任何以 `--remote-debugging-port` 启动的 Chromium 都可以；这里使用的镜像是 `chromedp/headless-shell`。
 
-没有浏览器时，其余功能照常工作（文本比较、告警、前后对照副本）；快照只是没有图像。只要服务器连不上浏览器，网站变更设备的表单就会显示一条包含这些行的提示。
+没有浏览器时，其余功能照常工作（文本比较、告警、前后对照副本）；快照只是没有图像。只要服务器连不上浏览器，网站变更监控项的表单就会显示一条包含这些行的提示。
 如果重启后提示仍然存在，请检查 `docker compose logs browser`，确认 `DUMBMONIT_BROWSER_URL` 中的主机名就是服务名，并且两个服务在同一个 Compose 项目中。
 
 ## 反向代理 {#reverse-proxy}
@@ -419,12 +419,12 @@ services:
 主机上不会有任何改变。Docker 20.10 及更高版本会自行在每个
 容器中设置此范围；显式写出这几行是为了让它在较旧的引擎和
 Podman 上同样生效。没有它时，检查会报告配置错误（显示在
-设备上，不会发送通知），而绝不会误报“主机宕机”。使用 `docker run` 时，请传入
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`。 只要服务器无法打开 ICMP 套接字，ping 设备的表单就会显示一条包含这些行的提示。
+监控项上，不会发送通知），而绝不会误报“主机宕机”。使用 `docker run` 时，请传入
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`。 只要服务器无法打开 ICMP 套接字，ping 监控项的表单就会显示一条包含这些行的提示。
 
 ## 无硬件测试 {#testing-without-hardware}
 
-添加一台[演示设备](../devices/demo.md)：它无需任何准备就能产生模拟
+添加一个[演示监控项](../devices/demo.md)：它无需任何准备就能产生模拟
 测量数据，因此可以立即试用图表、规则和通知。若要获得真实的 SNMP 数据，
 运行 Docker 的这台机器通常就足够了——在上面安装
 `snmpd`（`apt install snmpd`，在 `/etc/snmp/snmpd.conf` 中允许 Docker

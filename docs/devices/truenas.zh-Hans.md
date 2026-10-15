@@ -21,11 +21,11 @@ Edition):每个存储池的健康状况及故障的磁盘、校验和重新同�
 保持挂载,备份仍会继续运行,其他每个工具的网页界面都仍是绿色
 的——而这个池现在已经没有冗余了。第二块磁盘的故障就会导致该池
 彻底损坏。`truenas_pool_healthy` 会在第一块磁盘故障时就降到 0,
-**NAS 存储池降级**规则会触发,设备页面会指明是哪块磁盘。
+**NAS 存储池降级**规则会触发,监控项页面会指明是哪块磁盘。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
-除了通用图表之外,一台 TrueNAS 设备还会显示三个面板,读取自
+除了通用图表之外,一个 TrueNAS 监控项还会显示三个面板,读取自
 探测存储的数据——打开该页面从不会查询 NAS 本身:
 
 * **存储池与磁盘**——每个存储池及其文字状态、出问题时 ZFS 自身
@@ -51,7 +51,7 @@ Edition):每个存储池的健康状况及故障的磁盘、校验和重新同�
 | 身份 | `version_info`(版本号,不含较旧版本前面加的 `TrueNAS-SCALE-` 前缀) | `version` |
 | 机器 | `uptime_seconds`, `load1/5/15`, `memory_total_bytes`, `cpu_count` | |
 | 存储池 | `pool_healthy`(ZFS 自身的判定:`DEGRADED` 和 `FAULTED` 都为 0)、`pool_warning`(重新同步中、功能未启用)、`pool_status_info`、`pool_size/allocated/free_bytes`、`pool_used_percent`、`pool_fragmentation_percent` | `pool`,info 序列还带 `status` |
-| 存储池设备 | `pool_device_errors`(自上次 `zpool clear` 以来的累计值)、`pool_devices_unhealthy`(当该池无法打开时两者都不存在) | `pool`, `kind`(`read`、`write`、`checksum`) |
+| 存储池监控项 | `pool_device_errors`(自上次 `zpool clear` 以来的累计值)、`pool_devices_unhealthy`(当该池无法打开时两者都不存在) | `pool`, `kind`(`read`、`write`、`checksum`) |
 | 校验 | `pool_scan_running`, `pool_scan_percent`(仅运行期间)、`pool_last_scrub_age_seconds`, `pool_last_scrub_errors`, `pool_scrub_threshold_days` | `pool`, `function`(`SCRUB`、`RESILVER`) |
 | 数据集 | `dataset_used_bytes`, `dataset_available_bytes`, `dataset_quota_bytes` 和 `dataset_quota_used_percent`(没有配额时不存在)、`dataset_snapshots`、`dataset_snapshot_age_seconds`(覆盖该数据集的定期任务拍摄的最新快照的年龄;没有这样的任务时不存在)、`dataset_locked`(仅限加密数据集) | `dataset`, `pool` |
 | 快照 | `snapshots`(总数) | |
@@ -68,7 +68,7 @@ Edition):每个存储池的健康状况及故障的磁盘、校验和重新同�
   变为未知,直到下一次校验完成,此时
   `pool_last_scrub_age_seconds` 会不存在,而不是显示错误值。
 * **一个无法打开的存储池**——已导出,或缺失磁盘过多——仍会
-  出现,但没有布局和容量数据。其 `pool_healthy` 为 0;设备和
+  出现,但没有布局和容量数据。其 `pool_healthy` 为 0;监控项和
   容量相关序列会不存在,而不是显示为零。
 * **未设置的配额不是零配额。** 对于"无配额",TrueNAS 应答
   `parsed: null`,DumbMonit 不会为该数据集发布任何配额序列。
@@ -90,7 +90,7 @@ Edition):每个存储池的健康状况及故障的磁盘、校验和重新同�
   变成了 `pool/snapshot`,两者都会被尝试;`smart/test/results`
   在 25.10 中被移除,此时会被静默跳过。
 
-适用的内置规则:设备不可达、NAS 存储池降级、NAS 磁盘错误、
+适用的内置规则:监控项不可达、NAS 存储池降级、NAS 磁盘错误、
 NAS 存储池即将用尽、NAS 校验发现错误、NAS 校验逾期、NAS 磁盘
 SMART 自检失败、NAS 磁盘过热、NAS 数据集接近配额、NAS 复制失败、
 NAS 快照任务失败、NAS 快照陈旧、TrueNAS 告警已触发、NAS 服务

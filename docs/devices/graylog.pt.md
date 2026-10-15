@@ -21,7 +21,7 @@ de indexação dizem-o muito antes.
 
 Todas as métricas têm o prefixo `dumbmonit_graylog_`. O journal, os buffers
 e o caudal são os **do nó com que o DumbMonit fala**: num cluster Graylog,
-adicione cada nó como o seu próprio dispositivo.
+adicione cada nó como o seu próprio monitor.
 
 | Métrica | O quê | Etiquetas |
 |---|---|---|
@@ -43,16 +43,16 @@ adicione cada nó como o seu próprio dispositivo.
 | `scrape_errors` | chamadas que falharam na última verificação | |
 
 O cluster de pesquisa é lido através do Graylog, por isso não é necessário
-um dispositivo OpenSearch ou Elasticsearch separado para saber se está
+um monitor OpenSearch ou Elasticsearch separado para saber se está
 verde; quando o Graylog não o consegue alcançar de todo, `indexer_status`
 lê 3.
 
 As [regras incorporadas](../alerting/rules.md#log-and-metrics-servers) que
 se aplicam: Graylog not processing, Graylog search cluster down, Graylog
 search cluster yellow, Graylog journal filling, Graylog input failed,
-Graylog indexing failures, mais Device unreachable.
+Graylog indexing failures, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca consulta o Graylog. Diz o que está mal numa frase (processamento,

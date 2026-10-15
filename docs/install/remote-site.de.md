@@ -1,7 +1,7 @@
 # Einen entfernten Standort überwachen {#monitor-a-remote-site}
 
 Ein DumbMonit, mehrere Netzwerke. Ein am entfernten Standort installierter **Relay-Agent**
-führt im Auftrag des Servers die Prüfungen der ihm zugewiesenen Geräte aus und meldet die
+führt im Auftrag des Servers die Prüfungen der ihm zugewiesenen Monitore aus und meldet die
 Ergebnisse über dieselbe ausgehende Verbindung zurück, über die er bereits seine eigenen
 Metriken sendet. Am entfernten Standort muss nichts geöffnet werden, kein VPN, keine zweite
 Instanz, die man im Auge behalten müsste.
@@ -23,13 +23,13 @@ Dinge laufen über diese Verbindung:
 
 - das **Enrollment-Token** (`dmon_…`) im `Authorization`-Header jeder Anfrage, wie bei jedem
   Agenten;
-- die **Zugangsdaten der Geräte**, die das Relay prüft (SNMP-Community, Proxmox-API-Token …),
+- die **Zugangsdaten der Monitore**, die das Relay prüft (SNMP-Community, Proxmox-API-Token …),
   entschlüsselt, in jedem Prüfauftrag.
 
 Über unverschlüsseltes HTTP durch das Internet wären beide unterwegs lesbar: Stellen Sie den
 Server hinter HTTPS, bevor Sie etwas außerhalb Ihres eigenen Netzwerks weiterleiten. In einem
 LAN oder VPN ist HTTP akzeptabel, und das Token ist das einzige Geheimnis im Transit, bis Sie
-dem Relay Geräte zuweisen. Zugangsdaten werden auf keiner Seite auf die Festplatte
+dem Relay Monitore zuweisen. Zugangsdaten werden auf keiner Seite auf die Festplatte
 geschrieben: Ein Prüfauftrag lebt im Speicher des Servers, bis das Relay ihn meldet, und der
 Agent behält zwischen zwei Prüfungen nichts.
 
@@ -40,7 +40,7 @@ verbindungen mindestens 60 Sekunden offen halten: Der Server hält eine Relay-An
 
 ## 2. Ein Enrollment-Token erstellen {#2-create-an-enrollment-token}
 
-**Einstellungen → Agenten → Neues Token**, oder fügen Sie ein Gerät vom Typ *Agent* hinzu.
+**Einstellungen → Agenten → Neues Token**, oder fügen Sie einen Monitor vom Typ *Agent* hinzu.
 Kopieren Sie den Wert `dmon_…`: Er wird nur einmal angezeigt.
 
 ## 3. Das Relay am entfernten Standort starten {#3-start-the-relay-at-the-remote-site}
@@ -65,54 +65,54 @@ relay: true
 site: Lyon office
 ```
 
-Der Rechner erscheint innerhalb weniger Sekunden in DumbMonit als gewöhnliches Agent-Gerät,
-und seine Seite zeigt *Relay · Standort Lyon office · leitet 0 Geräte weiter*. Das Log des
+Der Rechner erscheint innerhalb weniger Sekunden in DumbMonit als gewöhnliches Agent-Monitor,
+und seine Seite zeigt *Relay · Standort Lyon office · leitet 0 Monitore weiter*. Das Log des
 Agenten meldet `relay mode enabled: waiting for probes from the server`, sobald sein erster
 Batch akzeptiert wurde.
 
 !!! note "Was das Relay erreichen muss"
-    Das Relay prüft Geräte aus seinem eigenen Netzwerk: Es braucht denselben Zugriff, den der
+    Das Relay prüft Monitore aus seinem eigenen Netzwerk: Es braucht denselben Zugriff, den der
     Server dort bräuchte — UDP 161 für SNMP, 8006 für Proxmox, 5001 für DSM usw. Für
     **Ping**-Monitore braucht der Container den Sysctl `net.ipv4.ping_group_range`, der in der
     Compose-Datei bereits gesetzt ist (siehe [ICMP-Ping ohne Capability](docker.md#icmp-ping-without-a-capability)).
-    Für Geräte in einem VLAN oder Link-Local-Netz oder für `localhost`-Ziele verwenden Sie
+    Für Monitore in einem VLAN oder Link-Local-Netz oder für `localhost`-Ziele verwenden Sie
     `network_mode: host`.
 
-## 4. Geräte dem Relay zuweisen {#4-assign-devices-to-the-relay}
+## 4. Monitore dem Relay zuweisen {#4-assign-devices-to-the-relay}
 
-Fügen Sie die entfernten Geräte wie gewohnt hinzu — SNMP-Switch, Proxmox-Knoten, HTTP-Check —
+Fügen Sie die entfernten Monitore wie gewohnt hinzu — SNMP-Switch, Proxmox-Knoten, HTTP-Check —
 mit ihrer Adresse **aus Sicht des entfernten Standorts** (`192.168.10.1`,
-`https://pve.lan:8006`). Stellen Sie im Gerätformular unter *Weitere Optionen* **Erreicht über**
-auf den Relay-Agenten statt auf *Direkt*. Bestehende Geräte lassen sich genauso umstellen;
+`https://pve.lan:8006`). Stellen Sie im Monitorformular unter *Weitere Optionen* **Erreicht über**
+auf den Relay-Agenten statt auf *Direkt*. Bestehende Monitore lassen sich genauso umstellen;
 das Zurückstellen auf *Direkt* lässt den Server sie wieder selbst abfragen.
 
 Von da an gilt:
 
-- Der Server stellt bei jedem Intervall eine Prüfung für das Gerät in die Warteschlange; das
+- Der Server stellt bei jedem Intervall eine Prüfung für den Monitor in die Warteschlange; das
   Relay nimmt sie innerhalb von Millisekunden auf (es wartet beim Server auf Arbeit), führt
   den Collector aus und meldet das Ergebnis;
-- **Jetzt prüfen** und die Profilerkennung auf der Geräteseite laufen ebenfalls über das
+- **Jetzt prüfen** und die Profilerkennung auf der Monitorseite laufen ebenfalls über das
   Relay;
-- *Letzte Prüfung* und Fehler des Geräts folgen dem Urteil des Relays. Nimmt das Relay eine
-  Prüfung nicht rechtzeitig auf, zeigt das Gerät *Zeitüberschreitung: Relay-Agent … hat die
+- *Letzte Prüfung* und Fehler des Monitors folgen dem Urteil des Relays. Nimmt das Relay eine
+  Prüfung nicht rechtzeitig auf, zeigt der Monitor *Zeitüberschreitung: Relay-Agent … hat die
   Prüfung nicht aufgenommen* — prüfen Sie, ob der Agent mit `relay: true` läuft;
-- die Seite des Agenten zeigt *Relay für N Geräte*, und `GET /api/relays` listet die Relays
+- die Seite des Agenten zeigt *Relay für N Monitore*, und `GET /api/relays` listet die Relays
   mit Standort und Anzahl auf.
 
 ## Alarmierung, wenn das Relay ausfällt {#alerting-when-the-relay-is-down}
 
-Ein Relay, das verstummt, reißt seine Geräte mit: Ihre Prüfungen stoppen, und alle würden auf
-einmal *nicht erreichbar*. Das Relay gilt als **Elternteil** aller Geräte, die es prüft (zusätzlich
+Ein Relay, das verstummt, reißt seine Monitore mit: Ihre Prüfungen stoppen, und alle würden auf
+einmal *nicht erreichbar*. Das Relay gilt als **Elternteil** aller Monitore, die es prüft (zusätzlich
 zu einem möglicherweise gesetzten Elternteil): Ist das Relay selbst *nicht erreichbar*, werden
-die Alarme seiner Geräte als `suppressed` mit `suppressed_by` = dem Relay angezeigt, und es
+die Alarme seiner Monitore als `suppressed` mit `suppressed_by` = dem Relay angezeigt, und es
 geht nur eine Benachrichtigung hinaus — für das Relay. Das ausdrücklich gesetzte Elternteil
 behält seine Rolle und hat Vorrang, wenn beide ausgefallen sind.
 
 ## Grenzen {#limits}
 
-- Ein Relay pro Gerät. Ein vom Relay geprüftes Gerät wird nicht zusätzlich vom Server
+- Ein Relay pro Monitor. Ein vom Relay geprüfter Monitor wird nicht zusätzlich vom Server
   geprüft.
-- Agent-Geräte selbst können nicht über ein Relay laufen: Sie senden ihre eigenen Metriken.
+- Agent-Monitore selbst können nicht über ein Relay laufen: Sie senden ihre eigenen Metriken.
 - Das Relay führt höchstens 8 Prüfungen gleichzeitig aus; eine Prüfung wird durch das
   Prüf-Timeout des Servers (`DUMBMONIT_PROBE_TIMEOUT_SECS`) begrenzt, auf dem Agenten auf
   120 s gedeckelt.

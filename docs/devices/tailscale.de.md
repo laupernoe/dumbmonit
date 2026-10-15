@@ -13,7 +13,7 @@ Geräte auflisten und nichts ändern. Ein API-Access-Token
 (`tskey-api-…`) funktioniert auch, trägt aber alle Rechte des
 Benutzers, der es erstellt hat, und läuft nach höchstens 90 Tagen ab.
 
-Dies ist eine Internet-API: Die Adresse des Geräts ist die der API,
+Dies ist eine Internet-API: Die Adresse des Monitors ist die der API,
 nicht die einer Maschine. DumbMonit braucht ausgehendes HTTPS zu
 `api.tailscale.com`; nichts im Tailnet wird kontaktiert.
 
@@ -78,7 +78,7 @@ Verbindung sein: Das ist unabhängig von der obigen Einstellung
 Geräte einen Alarm auslöst. Heben Sie **Device staleness** für ein
 Tailnet mit umherziehenden Geräten an.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Tailnet-Panel sagt in einem Satz, was nicht stimmt, zeigt die
 Online-Geräte, die offline gegangenen beobachteten Geräte, die

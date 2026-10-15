@@ -16,14 +16,14 @@ direcciones de los destinatarios.
 | Sección | Contenido |
 | --- | --- |
 | **Titular** | Disponibilidad global del período, número de incidentes y la variación respecto al período anterior. |
-| **Disponibilidad por grupo** | Una línea por grupo, luego por dispositivo (los 40 menos disponibles como máximo), calculada igual que en las [páginas de estado](status-pages.md): las sondas por su tasa de éxito, los hosts y dispositivos por la frecuencia con que reportaron. Los dispositivos sin historial se muestran como «sin datos» en lugar de como 100 %. |
-| **Incidentes** | Cuándo empezó cada uno, cuánto duró (o que todavía está abierto) y en qué dispositivo. Hasta 25. Las alertas informativas se excluyen. |
-| **Dispositivos menos estables** | Los cinco dispositivos con menor disponibilidad o más incidentes. |
+| **Disponibilidad por grupo** | Una línea por grupo, luego por monitor (los 40 menos disponibles como máximo), calculada igual que en las [páginas de estado](status-pages.md): las sondas por su tasa de éxito, los hosts y monitores por la frecuencia con que reportaron. Los monitores sin historial se muestran como «sin datos» en lugar de como 100 %. |
+| **Incidentes** | Cuándo empezó cada uno, cuánto duró (o que todavía está abierto) y en qué monitor. Hasta 25. Las alertas informativas se excluyen. |
+| **Monitores menos estables** | Los cinco monitores con menor disponibilidad o más incidentes. |
 | **Comparación** | Disponibilidad y número de incidentes frente al período de la misma duración justo anterior. |
 
 El correo son tablas HTML sencillas con estilos en línea y sin imágenes
 remotas, así que se ve igual en todas partes y no se obtiene nada al
-abrirlo. Se envía también una versión en texto. Cada nombre de dispositivo y
+abrirlo. Se envía también una versión en texto. Cada nombre de monitor y
 mensaje se escapa.
 
 ## Ajustes {#settings}

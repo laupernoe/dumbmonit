@@ -37,13 +37,13 @@ FAMILIES = [
     ("mail", ["pihole", "adguard", "crowdsec", "smtp", "mdaemon", "securitygateway", "pmg"]),
     ("data", ["postgres", "mysql", "mongodb", "redis", "rabbitmq", "mqtt", "victoriametrics", "victorialogs", "loki", "graylog"]),
 ]
-# Not shown: a test entry of the catalogue, the demo device, and the services an agent
+# Not shown: a test entry of the catalogue, the demo monitor, and the services an agent
 # finds (created by the agent, never added by hand).
 SKIP = {"zz-inconnu", "dummy", "agent_service"}
 
 # Types whose doc has no "built-in rules" sentence: the sections of rules.md that apply.
 RULE_SECTIONS = {
-    "snmp": ["Every device", "Network ports (SNMP)"],
+    "snmp": ["Every monitor", "Network ports (SNMP)"],
     "proxmox": ["Proxmox VE"],
     "pbs": ["Proxmox Backup Server"],
     "pdm": ["Proxmox Datacenter Manager"],
@@ -51,7 +51,7 @@ RULE_SECTIONS = {
     "opnsense": ["OPNsense"],
     "truenas": ["TrueNAS"],
     "synology": ["Synology DSM"],
-    "agent": ["Every device", "Agent disks, ZFS and sensors", "Docker containers"],
+    "agent": ["Every monitor", "Agent disks, ZFS and sensors", "Docker containers"],
     "redfish": ["Server hardware (Redfish)"],
     "webchange": ["Website changes"],
 }
@@ -125,15 +125,15 @@ def rules_for(kind, page, sections, by_name):
     if block:
         low = block.lower()
         for name in by_name:
-            if name != "Device unreachable" and listed(low, name.lower()):
+            if name != "Monitor unreachable" and listed(low, name.lower()):
                 chosen.append(by_name[name])
-        chosen.append(by_name["Device unreachable"])
+        chosen.append(by_name["Monitor unreachable"])
     for name in RULE_NAMES.get(kind, []):
         chosen.append(by_name[name])
     for title in RULE_SECTIONS.get(kind, []):
         chosen.extend(sections.get(title, []))
     if not chosen:
-        chosen.append(by_name["Device unreachable"])
+        chosen.append(by_name["Monitor unreachable"])
     seen, out = set(), []
     for r in chosen:
         if r["name"] not in seen:

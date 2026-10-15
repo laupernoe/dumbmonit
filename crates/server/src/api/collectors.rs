@@ -164,7 +164,7 @@ const fn cred_select(
 const NO_AUTH: CredentialView = CredentialView {
     kind: "none",
     label: "No authentication",
-    help: "Nothing is sent: the device answers without credentials.",
+    help: "Nothing is sent: the monitor answers without credentials.",
     fields: &[],
 };
 

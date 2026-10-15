@@ -34,7 +34,7 @@ supported.
 
 ## Page or site
 
-**Page** (the default) reads the address of the device and nothing else. It
+**Page** (the default) reads the address of the monitor and nothing else. It
 may also be a plain text or JSON document, compared line by line.
 
 **Site** starts from the address and follows every page under the same folder
@@ -65,17 +65,17 @@ The crawl is polite: two requests at a time at most, half a second between two
 batches, the `User-Agent` `DumbMonit/<version>`, a 15-second timeout per
 request and 5 MB read at most per page. It stops at **Max pages** (25 by
 default, 200 at most) or after ten minutes. When **Max pages** stopped it, the
-device page says how many pages were found, so that the unwatched part of the
+monitor page says how many pages were found, so that the unwatched part of the
 site is never a surprise. **User agent** replaces `DumbMonit/<version>` for a
 site that turns robots away.
 
 ## How a check works
 
-The device is polled like any other (every minute by default), but the pages
+The monitor is polled like any other (every minute by default), but the pages
 are only read every **Check every** minutes (60 by default, 5 to 10080). In
 between, the poll only reports the state of the last check: the site is not
 hit every minute. A check runs in the background; two checks of the same
-device never overlap, and **Check now** on the device page starts one at once.
+monitor never overlap, and **Check now** on the monitor page starts one at once.
 
 The first check only records the **reference**: every page is read and kept,
 nothing is reported. From then on, for each page:
@@ -95,7 +95,7 @@ page as changed (or, for a higher **Max pages**, every page it adds as new). An
 update of DumbMonit that reads pages differently does the same once.
 
 When one check finds the **same change on several pages** (the same lines
-removed and added, such as a banner), the device page shows it once, with the
+removed and added, such as a banner), the monitor page shows it once, with the
 pages it was made on.
 
 In the diff, a replaced line shows which words changed: underlined on the added
@@ -116,8 +116,8 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Unreachable start page
 
 When the start page itself cannot be read (no answer, connection refused,
-timeout, HTTP 5xx), the device is **unreachable**: the poll fails, and the
-"Device unreachable" rule fires as for any device. The start page is then
+timeout, HTTP 5xx), the monitor is **unreachable**: the poll fails, and the
+"Monitor unreachable" rule fires as for any monitor. The start page is then
 retried at every poll, so its return is seen within a minute. A start page that
 refuses access (401, 403) is reported as a configuration problem, not an
 outage. Errors on other pages of the site are only shown on those pages.
@@ -133,7 +133,7 @@ a check that found at least one change (changed, new or removed page), and the
 notification names the pages: "/pricing, /contact and 2 more". While it is
 firing, every further check that finds changes is notified again, with its own
 pages, even on the same pages; the alert resolves at the first check that finds
-nothing new. It stays one alert per device all along, so acknowledging it or
+nothing new. It stays one alert per monitor all along, so acknowledging it or
 snoozing it from the alert covers the following checks too. It reads
 `dumbmonit_webchange_last_check_changes`; attach it to a channel like any other
 rule, or raise its severity, in **Alerts → Rules**. See
@@ -175,8 +175,8 @@ to).
 A screenshot is taken only when a page gets a new snapshot (the reference, and
 every change), never on an unchanged check: a 1366 × 900 window, the full page
 down to 5000 pixels, as JPEG. The **Screenshots** option turns them off for one
-device. Without a browser, or when it does not answer, the text comparison
-works the same and the snapshots simply have no image; the device page says
+monitor. Without a browser, or when it does not answer, the text comparison
+works the same and the snapshots simply have no image; the monitor page says
 so.
 
 The browser loads the page the way a visitor would, with its scripts: what it
@@ -186,10 +186,10 @@ sent.
 ## Storage
 
 The text of each snapshot is kept in the database (1 MB at most per page);
-screenshots are files under `/data/webchange/<device id>/`. Per device, the
+screenshots are files under `/data/webchange/<device id>/`. Per monitor, the
 last 500 changes are kept; a snapshot is kept while it is the latest of a
 page or a kept change refers to it, and everything else, files included, is
-removed after each check. Deleting the device removes all of it.
+removed after each check. Deleting the monitor removes all of it.
 
 ## Watch a website for changes
 
@@ -203,7 +203,7 @@ The steps below are the ones the notice next to the form shows.
    regular expressions.
 3. The first check only records the reference, nothing is reported. From then
    on, each check compares the visible text page by page and keeps a
-   before/after copy of every change, shown on the device page; the "Website
+   before/after copy of every change, shown on the monitor page; the "Website
    changed" alert tells you.
 4. For a screenshot of each version, add a headless browser to your Compose
    file; the exact lines are in the documentation (Advanced options,

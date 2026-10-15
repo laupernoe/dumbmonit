@@ -117,7 +117,7 @@ fn parse_address(address: &str) -> Result<(String, Option<u16>), ProbeError> {
     let rest = rest.trim_end_matches('/');
     let rest = rest.rsplit_once('@').map_or(rest, |(_, host)| host);
     if rest.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if let Some(inner) = rest.strip_prefix('[') {
         let (name, after) = inner

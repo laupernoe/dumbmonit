@@ -1,10 +1,10 @@
-# La page des appareils
+# La page des surveillances
 
-![Le rack : une façade par appareil](../assets/screenshots/devices-light.png){ loading=lazy }
+![Le rack : une façade par surveillance](../assets/screenshots/devices-light.png){ loading=lazy }
 
 ## Le rack
 
-Chaque appareil est une façade de rack 1U : une LED d'état, le nom, l'étiquette
+Chaque surveillance est une façade de rack 1U : une LED d'état, le nom, l'étiquette
 du type, l'adresse, la dernière fois qu'il a été vu, et une sparkline d'une
 métrique représentative. Les enfants s'empilent sous leur parent et
 s'atténuent quand le parent est inaccessible.
@@ -12,36 +12,36 @@ s'atténuent quand le parent est inaccessible.
 | État | Signification |
 |---|---|
 | Actif | La dernière sonde a réussi, dans les trois dernières périodes. |
-| Inaccessible | L'appareil n'a pas répondu (délai dépassé, connexion refusée), ou aucune sonde depuis plus de trois périodes (90 s au moins). |
+| Inaccessible | La surveillance n'a pas répondu (délai dépassé, connexion refusée), ou aucune sonde depuis plus de trois périodes (90 s au moins). |
 | Mal configuré | La dernière sonde a échoué de notre côté : mauvais identifiants, adresse ou option invalide, réponse inattendue. Affiché dans la couleur avis avec l'erreur ; ne déclenche aucune alerte. |
 | En attente | Ajouté, pas encore sondé. |
 | Désactivé | En pause : non vérifié, ne déclenche aucune alerte. |
 
 Filtres : une zone de recherche, un segment d'état (Tous, À traiter, Actifs,
-Désactivés) et un filtre de type. **Ajouter un appareil** est l'action
+Désactivés) et un filtre de type. **Ajouter une surveillance** est l'action
 principale.
 
 Le bouton **Sélectionner** (opérateurs et administrateurs) affiche une case à
-cocher par appareil et une barre flottante en bas avec les actions groupées ;
+cocher par surveillance et une barre flottante en bas avec les actions groupées ;
 **Terminé** ou Échap quitte le mode.
 
-## Un appareil
+## Une surveillance
 
-![Page d'un appareil : état, actions, alertes, le panneau spécifique au type, métriques](../assets/screenshots/device-light.png){ loading=lazy }
+![Page d'une surveillance : état, actions, alertes, le panneau spécifique au type, métriques](../assets/screenshots/device-light.png){ loading=lazy }
 
-La page d'un appareil montre sa plaque d'état, son adresse, son type, le
+La page d'une surveillance montre sa plaque d'état, son adresse, son type, le
 profil détecté, les étiquettes, la dernière sonde, et pour les services
 l'état du certificat. Actions :
 
 | Action | Effet |
 |---|---|
-| Sonder maintenant | Lance une sonde immédiatement et indique combien d'échantillons et de séries elle a produits. La première chose à essayer quand un appareil n'affiche aucune donnée. |
+| Sonder maintenant | Lance une sonde immédiatement et indique combien d'échantillons et de séries elle a produits. La première chose à essayer quand une surveillance n'affiche aucune donnée. |
 | Modifier | Ouvre le même formulaire que pour l'ajout, prérempli. Laisser l'identifiant vide conserve celui enregistré. |
-| Silence 1 h / Silence jusqu'à… | Une fenêtre de maintenance ponctuelle sur cet appareil. |
-| Supprimer | Demande « Supprimer définitivement ? » en place pendant cinq secondes, puis supprime l'appareil. Ses séries restent dans VictoriaMetrics jusqu'à expiration de la rétention. |
+| Silence 1 h / Silence jusqu'à… | Une fenêtre de maintenance ponctuelle sur cette surveillance. |
+| Supprimer | Demande « Supprimer définitivement ? » en place pendant cinq secondes, puis supprime la surveillance. Ses séries restent dans VictoriaMetrics jusqu'à expiration de la rétention. |
 
-En dessous : **Alertes sur cet appareil** — chaque alerte active propose
-*Acquitter*, *Repousser* et *Ignorer*, et une règle ignorée sur cet appareil
+En dessous : **Alertes sur cette surveillance** — chaque alerte active propose
+*Acquitter*, *Repousser* et *Ignorer*, et une règle ignorée sur cette surveillance
 est listée séparément avec **Arrêter d'ignorer** — puis **Métriques** sur une
 plage de temps (1 h, 6 h, 24 h, 7 jours), un graphique par nom de métrique avec
 une ligne par série. Voir
@@ -72,17 +72,17 @@ Chaque interrupteur s'enregistre seul. Détails et règles de sécurité :
 
 ## Ajout et modification
 
-Voir [Ajouter votre premier appareil](../install/first-device.md) pour le
-formulaire et les [types d'appareil](../devices/index.md) pour ce que chaque
+Voir [Ajouter votre première surveillance](../install/first-device.md) pour le
+formulaire et les [types de surveillance](../devices/index.md) pour ce que chaque
 type demande. En modification, le formulaire ouvre **Plus d'options** de
-lui-même si l'appareil en utilise déjà une.
+lui-même si la surveillance en utilise déjà une.
 
 ## Suppression
 
-Supprimer un appareil le retire de la configuration, efface ses alertes sur le
+Supprimer une surveillance le retire de la configuration, efface ses alertes sur le
 champ — rien n'est notifié, l'historique garde une ligne
-`appareil supprimé ou désactivé` — et supprime ses séries temporelles du
+`surveillance supprimée ou désactivée` — et supprime ses séries temporelles du
 VictoriaMetrics embarqué quelques secondes plus tard (au mieux : un échec est
 seulement journalisé, et les séries vieillissent ensuite avec la rétention de
-12 mois). Mettre un appareil en pause efface ses alertes de la même façon ;
+12 mois). Mettre une surveillance en pause efface ses alertes de la même façon ;
 ses séries restent.

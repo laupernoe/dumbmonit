@@ -13,7 +13,7 @@ File paths below are relative to the repository root.
 
 1. Only an authenticated user, with a role that allows it, may read or change
    the configuration, the alerts or the measurements.
-2. The credentials DumbMonit stores for your devices are not readable from the
+2. The credentials DumbMonit stores for your monitors are not readable from the
    database file, from a backup bundle without its passphrase, or from the API.
 3. Only a machine holding a valid token may feed measurements in, and a leaked
    token can be revoked on its own.
@@ -29,11 +29,11 @@ File paths below are relative to the repository root.
 | Anonymous network client | Reaches the HTTP port | Yes |
 | Signed-in user with a low role | Valid session or read-only API token | Yes (privilege escalation) |
 | Malicious web page | Runs in an admin's browser | Yes (CSRF, XSS, clickjacking) |
-| Compromised or malicious monitored device | Answers probes with hostile content | Yes (parsers, redirects) |
+| Compromised or malicious monitored system | Answers probes with hostile content | Yes (parsers, redirects) |
 | Malicious or stolen agent | Holds one agent token | Yes (reach of a single token) |
-| Admin entering a hostile URL | Configures a webhook or device address | Yes, for the server's own addresses |
+| Admin entering a hostile URL | Configures a webhook or monitor address | Yes, for the server's own addresses |
 | Someone with the host, the `/data` volume or the container runtime | Full control | No: out of scope, as in the security policy |
-| Vulnerabilities inside VictoriaMetrics or the monitored devices | Upstream code | No: report upstream |
+| Vulnerabilities inside VictoriaMetrics or the monitored systems | Upstream code | No: report upstream |
 
 ## Trust boundaries
 
@@ -44,7 +44,7 @@ File paths below are relative to the repository root.
 | Identity provider to server | OpenID Connect redirect and ID token | State, nonce and PKCE (S256); local account linking is explicit | `crates/server/src/auth/oidc/`; test `oidc_api.rs` |
 | Agent to `/api/ingest` | Measurements, command results | Per-agent token, stored as a SHA-256 hash (`dmon_` prefix) | `crates/server/src/api/ingest.rs`, `crates/server/src/collectors/agent/token.rs`; test `agent_binding_api.rs` |
 | Relay agent to server | Probe results from another network | Same agent token check (`agent_commands::authenticate`) | `crates/server/src/api/relay.rs`; test `relay_api.rs` |
-| Server to monitored devices | Probe requests, hostile responses | Redirects followed on the same host only, bounded redirect count, response parsers with unit tests, certificate verification on by default | `crates/collectors/src/http.rs` (`same_host_redirects`) |
+| Server to monitored systems | Probe requests, hostile responses | Redirects followed on the same host only, bounded redirect count, response parsers with unit tests, certificate verification on by default | `crates/collectors/src/http.rs` (`same_host_redirects`) |
 | Server to notification channels | Webhook and SMTP requests | Same redirect policy plus a guard that refuses the server's own addresses, checked before sending, on each redirect and at DNS resolution | `crates/server/src/notify/guard.rs`; test `notify_guard_api.rs` |
 | Server to VictoriaMetrics | Writes and read queries | Embedded child listens on `127.0.0.1:8428` by default; the Prometheus-compatible proxy relays only the read routes (query, query_range, series, labels) | `crates/server/src/config.rs` (`DUMBMONIT_VM_LISTEN`), `crates/server/src/api/prometheus.rs` (`readable_segments`) |
 | Server to SQLite | Configuration and state | Bound parameters through `sqlx` | `crates/server/src/db/` |
@@ -120,7 +120,7 @@ The argument follows the design principles of Saltzer and Schroeder.
 | Logging and monitoring failures, CWE-778 | Security log of sign-ins and sensitive changes | `auth/audit.rs`; test `security_audit_api.rs` |
 
 Known residual risks are listed in the security model (plain HTTP listener,
-unencrypted device options, unauthenticated embedded VictoriaMetrics). The
+unencrypted monitor options, unauthenticated embedded VictoriaMetrics). The
 CSP allows inline styles (`style-src 'unsafe-inline'`), which weakens it against
 style injection but not against script execution. One accepted advisory
 exists, `RUSTSEC-2023-0071`, ignored in `deny.toml` with its reason: the `rsa`

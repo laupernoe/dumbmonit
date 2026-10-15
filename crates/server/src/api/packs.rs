@@ -192,7 +192,7 @@ pub async fn install(
     if state.collectors.get(pack.kind()).is_some()
         && !state.collectors.runtime_kinds().iter().any(|kind| &**kind == pack.kind())
     {
-        return Err(ApiError::Conflict(format!("\"{}\" is a built-in device type.", pack.kind())));
+        return Err(ApiError::Conflict(format!("\"{}\" is a built-in monitor type.", pack.kind())));
     }
 
     let outcome = packs::save(&state.pool, &pack).await?;

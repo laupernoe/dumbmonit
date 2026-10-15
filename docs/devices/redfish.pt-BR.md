@@ -66,11 +66,11 @@ Aviso.
 As [regras integradas](../alerting/rules.md#server-hardware-redfish) que
 se aplicam: Server fan failed, Server temperature above critical, Power
 supply redundancy lost, Power supply failed, Drive failure predicted,
-Server health critical, além de Device unreachable.
+Server health critical, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Um dispositivo Redfish recebe seu próprio painel em sua página, acima dos
+Um monitor Redfish recebe seu próprio painel em sua página, acima dos
 gráficos, lido do que a última sondagem armazenou: abrir a página nunca
 consulta o controlador. Responde, nesta ordem:
 
@@ -150,7 +150,7 @@ desconhecido lê "—", nunca 0.
     gerenciamento também vêm com um certificado autoassinado: se a
     conexão for recusada por esse motivo, marque "Aceitar um certificado
     não verificável" nas opções. Um controlador responde lentamente e uma
-    leitura completa leva várias requisições: se o dispositivo reporta
+    leitura completa leva várias requisições: se o monitor reporta
     tempos esgotados, aumente DUMBMONIT_PROBE_TIMEOUT_SECS no servidor.
 
 Os nomes de menu acima são os do firmware atual; gerações mais antigas os

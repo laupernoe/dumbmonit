@@ -56,9 +56,9 @@ Docker сразу убирает роутеры остановленного к�
 Применяемые [встроенные правила](../alerting/rules.md#reverse-proxies-and-domains):
 Traefik router disabled, Traefik backend server down, Traefik service without a
 server, Traefik certificate not obtained, Proxy certificate not renewed, Reverse
-proxy answering 5xx, а также Device unreachable.
+proxy answering 5xx, а также Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранил опрос; открытие страницы никогда не
 обращается к Traefik. Она одним предложением говорит, что не так (отключённые

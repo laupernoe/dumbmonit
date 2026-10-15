@@ -74,7 +74,7 @@ The [built-in rules](../alerting/rules.md#fortigate) that apply:
 - **FortiGate firmware update**: a patch release is offered (Info, reminded
   weekly).
 
-## The device page
+## The monitor page
 
 The Firewall panel says what is wrong in a sentence, shows CPU, memory,
 sessions and the HA state, then lists the IPsec tunnels (down first), the

@@ -189,6 +189,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Devices are now Monitors.** What DumbMonit watches is called a monitor
+  throughout the interface and the documentation (navigation: Overview /
+  Monitors / Alerts / Settings). Nothing changes under the hood: API routes,
+  `target` labels, URLs and metric names are the same.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and

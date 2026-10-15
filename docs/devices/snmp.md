@@ -91,5 +91,5 @@ every series as `tag_<key>`.
 | No interface traffic | The device does not expose the 64-bit `ifXTable` counters. |
 | Empty scan | The scan tries one community on every address; devices with another community or SNMP v3 only do not answer. |
 
-Use **Probe now** on the device page: it reports the number of samples and the
+Use **Probe now** on the monitor page: it reports the number of samples and the
 series names produced by one probe.

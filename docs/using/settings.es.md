@@ -85,7 +85,7 @@ dominios de servicio push que el servidor debe alcanzar. Guía completa:
 
 Solo administradores. Las cuentas que pueden iniciar sesión, y su rol:
 
-| Rol | Lee todo | Gestiona alertas (ack, snooze, ignore, ventanas de mantenimiento, limpiar historial) | Cambia la configuración (dispositivos, reglas, canales, páginas de estado, ajustes, copias de seguridad, tokens, cuentas) |
+| Rol | Lee todo | Gestiona alertas (ack, snooze, ignore, ventanas de mantenimiento, limpiar historial) | Cambia la configuración (monitores, reglas, canales, páginas de estado, ajustes, copias de seguridad, tokens, cuentas) |
 |---|---|---|---|
 | **Viewer** | sí | no | no |
 | **Operator** | sí | sí | no |
@@ -94,7 +94,7 @@ Solo administradores. Las cuentas que pueden iniciar sesión, y su rol:
 Un visor ve cada página con cada control que cambiaría algo oculto. Algunas cosas
 siguen siendo solo de administrador incluso para leerlas: los tokens de API y
 de agente, los correos de suscriptores de páginas de estado y las opciones de
-dispositivo que parecen secretos (una opción cuyo nombre contiene `key`,
+monitor que parecen secretos (una opción cuyo nombre contiene `key`,
 `token`, `password`…, las cabeceras extra de una comprobación HTTP, la
 contraseña de una dirección `https://user:pass@host`), que los no
 administradores leen como `***`. Un
@@ -200,7 +200,7 @@ si fue revocado. **Revoke** detiene cada agente que use ese token en su
 siguiente envío.
 
 Un token puede inscribir varias máquinas. Revocarlo no elimina los
-dispositivos. La lista de tokens, crear y revocar son para administradores;
+monitores. La lista de tokens, crear y revocar son para administradores;
 los visores y operadores ven la sección sin la lista.
 
 ## API & assistants
@@ -208,8 +208,8 @@ los visores y operadores ven la sección sin la lista.
 Un tipo de token para ambos: clientes MCP y la [API REST](../reference/api.md).
 Nombra un token, elige su alcance y créalo — se muestra una vez. Un
 token **read** solo puede mirar; un token **read and write** también
-puede cambiar cosas — silenciar un dispositivo, ejecutar una sonda,
-añadir o editar dispositivos, reglas y canales — pero nunca cuentas,
+puede cambiar cosas — silenciar un monitor, ejecutar una sonda,
+añadir o editar monitores, reglas y canales — pero nunca cuentas,
 ajustes de inicio de sesión u otros tokens.
 
 Bajo **Connect**, tres pestañas contienen los fragmentos, rellenados
@@ -230,7 +230,7 @@ DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 Tres cosas, en el orden en que las encuentras.
 
 Un **aviso que no puedes pasar por alto**: `/data/secret.key` es lo que
-descifra las credenciales de dispositivo, y una copia de la base de
+descifra las credenciales de monitor, y una copia de la base de
 datos sin él restaura una instancia que no puede hablar con nada. La
 redacción cambia cuando el secreto viene de `DUMBMONIT_SECRET` en su
 lugar — entonces no hay ningún archivo que copiar, y es tu gestor de
@@ -296,7 +296,7 @@ pared](overview.md#wall-mode).
 ## About
 
 Versión del servidor y la salud de sus dos almacenes, la base de datos
-(configuración de dispositivo e historial de alertas) y VictoriaMetrics
+(configuración de monitor e historial de alertas) y VictoriaMetrics
 (cada medición en las gráficas), tal como lo reporta `GET /api/health`
 y se refresca cada 15 segundos. Un almacén que deja de responder muestra
 un aviso con el error y qué comprobar. La sección también enlaza a esta

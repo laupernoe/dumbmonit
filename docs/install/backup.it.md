@@ -4,7 +4,7 @@ Due cose diverse, per due incidenti diversi.
 
 | | Bundle cifrato | Backup locale pianificato |
 |---|---|---|
-| Cosa contiene | La configurazione: dispositivi e le loro credenziali, regole, canali, pagine di stato, account, token. | L'intero database, come un singolo file, più `secret.key`. |
+| Cosa contiene | La configurazione: monitor e le loro credenziali, regole, canali, pagine di stato, account, token. | L'intero database, come un singolo file, più `secret.key`. |
 | Dove va | Dove lo metti tu — è cifrato con una passphrase che scegli. | `/data/backups/`, dentro lo stesso volume. |
 | Da cosa ti salva | Un server perso, un trasferimento su nuovo hardware, un'installazione nuova. | La modifica di cui ti penti dieci minuti dopo, un aggiornamento andato male. |
 | Cosa non contiene | Cronologia delle metriche, stato e cronologia degli avvisi, il log di audit, le sessioni. | Cronologia delle metriche (`vm/`). |
@@ -12,7 +12,7 @@ Due cose diverse, per due incidenti diversi.
 Nessuno dei due sostituisce un archivio dell'intero volume se vuoi
 riavere anche i grafici; quello è in fondo a questa pagina.
 
-!!! danger "`/data/secret.key` è ciò che decifra le credenziali dei tuoi dispositivi"
+!!! danger "`/data/secret.key` è ciò che decifra le credenziali dei tuoi monitor"
     Community SNMP, token Proxmox, password SMTP e URL heartbeat sono
     memorizzati cifrati con una chiave derivata dal segreto
     dell'istanza. Al primo avvio DumbMonit lo scrive in
@@ -22,7 +22,7 @@ riavere anche i grafici; quello è in fondo a questa pagina.
     **Una copia del database senza quel file ripristina un'istanza che
     non può parlare con nulla.** Il server se ne accorge e si rifiuta
     di avviarsi con un messaggio esplicito invece di fallire su ogni
-    sonda — ma le credenziali sono andate, e ogni dispositivo deve
+    sonda — ma le credenziali sono andate, e ogni monitor deve
     essere inserito di nuovo.
 
     Il bundle cifrato è l'unica eccezione: i suoi segreti vengono
@@ -56,16 +56,16 @@ passphrase è persa è perso.
 
 !!! warning "Il bundle contiene ogni credenziale di questa istanza"
     Chiunque abbia il file e la passphrase può leggere la password di
-    ogni dispositivo che monitori. Conservalo dove conservi le
+    ogni monitor che monitori. Conservalo dove conservi le
     password.
 
 ### Cosa contiene
 
 | Sezione | Contenuto |
 |---|---|
-| `targets` | Dispositivi: nome, tipo, indirizzo, intervallo, opzioni, genitore, agent relay, e la credenziale. |
+| `targets` | Monitor: nome, tipo, indirizzo, intervallo, opzioni, genitore, agent relay, e la credenziale. |
 | `rules` | Regole di avviso, incluse quelle integrate che hai modificato o disattivato. |
-| `rule_overrides` | Soglie per dispositivo ed esclusioni. |
+| `rule_overrides` | Soglie per monitor ed esclusioni. |
 | `channels` | Canali di notifica, le loro impostazioni, la loro politica per canale e i loro segreti. |
 | `notify_policy` | La politica di notifica globale (raggruppamento, limite orario, flapping, URL pubblico). |
 | `silences` | Finestre di manutenzione. |
@@ -76,7 +76,7 @@ passphrase è persa è perso.
 | `api_tokens` | Token API, come hash. I token esistenti continuano a funzionare. |
 | `push_monitors` | Token heartbeat, così gli URL che i tuoi job cron già chiamano restano gli stessi. |
 
-I dispositivi vengono associati su **tipo + indirizzo**, che è anche la
+I monitor vengono associati su **tipo + indirizzo**, che è anche la
 chiave unica della tabella: importare lo stesso bundle due volte non
 crea mai una seconda copia di nulla.
 
@@ -117,7 +117,7 @@ possa essere ripristinato da qualche parte che non ha mai visto
 3. Leggi il report. Dice, sezione per sezione, cosa verrebbe **creato**,
    cosa verrebbe **aggiornato** perché differisce da ciò che è già qui,
    e cosa è già identico — più una nota per qualsiasi cosa che non ha
-   potuto posizionare, come una regola che puntava a un dispositivo che
+   potuto posizionare, come una regola che puntava a un monitor che
    il bundle non contiene.
 4. Premi **Restore for real**.
 
@@ -126,7 +126,7 @@ Tre regole che il ripristino non rompe mai:
 - **Nulla viene mai eliminato.** Un ripristino fa esistere ciò che il
   bundle descrive; qualsiasi cosa l'istanza abbia in più resta.
 - **Nulla viene mai duplicato.** Ogni elemento viene associato sulla
-  sua chiave naturale — tipo + indirizzo per un dispositivo, `uid` per
+  sua chiave naturale — tipo + indirizzo per un monitor, `uid` per
   una regola, nome per un canale, slug per una pagina di stato.
   Ripristinare lo stesso bundle due volte riporta tutto come già
   identico e non scrive nulla.

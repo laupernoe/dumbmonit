@@ -50,7 +50,7 @@ La [regla integrada](../alerting/rules.md#sophos-firewall) que se aplica:
 Para contadores de tráfico, añade también el firewall como [dispositivo
 SNMP](snmp.md): SFOS responde al MIB de interfaz estándar.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel Firewall indica si cada interfaz de una zona tiene su enlace,
 luego lista esas interfaces y las conexiones IPsec con su activación

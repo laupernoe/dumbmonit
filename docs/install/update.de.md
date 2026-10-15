@@ -21,7 +21,7 @@ einmal pro Minute).
 
 !!! note "Was gesendet wird"
     Ein anonymer `GET`-Request mit einem `DumbMonit/<version>`-User-Agent.
-    Nichts über Ihre Instanz, Ihre Geräte oder Ihr Netzwerk wird gesendet,
+    Nichts über Ihre Instanz, Ihre Monitore oder Ihr Netzwerk wird gesendet,
     und die Adresse ist fest im Code verankert.
 
 ### Die Prüfung ausschalten

@@ -1,15 +1,15 @@
 # Pontuação de segurança
 
 A pontuação de segurança é uma nota **opcional** de **A** a **F** (e uma
-pontuação de 0 a 100) mostrada ao lado dos dispositivos em que algumas
+pontuação de 0 a 100) mostrada ao lado dos monitores em que algumas
 verificações dizem algo útil: hosts Linux e Windows com o agente, Proxmox VE e
 Proxmox Backup Server, Synology, OPNsense, sites e Active Directory. Os outros
-dispositivos não mostram nada.
+monitores não mostram nada.
 
 !!! warning "Indicativa, não é uma auditoria"
     A pontuação é **aproximada e não exaustiva**. Ela só lê o que o DumbMonit
-    já coleta de um dispositivo e compara com um punhado de boas práticas do
-    fabricante. Uma nota A não significa que um dispositivo seja seguro, e uma
+    já coleta de um monitor e compara com um punhado de boas práticas do
+    fabricante. Uma nota A não significa que um monitor seja seguro, e uma
     verificação ausente não significa que a configuração esteja correta. Use-a
     como um convite para olhar com atenção e, quando for importante, use uma
     ferramenta de avaliação de verdade (PingCastle, Mozilla HTTP Observatory,
@@ -21,28 +21,28 @@ A pontuação vem **desativada por padrão**. Um administrador a ativa em
 **Configurações → Conta e segurança → Pontuação de segurança**. Depois de
 ativada:
 
-- cada dispositivo pontuado recebe um pequeno **selo em forma de escudo** com
-  sua letra na lista de dispositivos, e um selo **Security** com a pontuação na
+- cada monitor pontuado recebe um pequeno **selo em forma de escudo** com
+  sua letra na lista de monitores, e um selo **Security** com a pontuação na
   sua página;
-- clicar no selo abre o **relatório** do dispositivo: o que falha, com a
+- clicar no selo abre o **relatório** do monitor: o que falha, com a
   evidência e a correção, o que passa, os passos para melhorar a pontuação
-  nesse tipo de dispositivo e um link para a seção correspondente abaixo.
+  nesse tipo de monitor e um link para a seção correspondente abaixo.
 
 Desativá-la oculta os selos, interrompe o cálculo periódico e as séries
 `dumbmonit_security_score` deixam de ser gravadas.
 
 !!! note "Atualização a partir da 0.1.0-alpha.8 ou anterior"
     A pontuação antes ficava sempre ativa, com uma página própria
-    **Security**. Uma instalação que já monitorava um dispositivo pontuável
+    **Security**. Uma instalação que já monitorava um monitor pontuável
     mantém a pontuação ativada após a atualização; uma instalação nova começa
     com ela desativada. O antigo endereço `/security` agora abre a
     configuração.
 
 ## Como a pontuação é calculada
 
-O DumbMonit nunca pede nada extra ao dispositivo para calcular a pontuação. As
+O DumbMonit nunca pede nada extra ao monitor para calcular a pontuação. As
 verificações leem os últimos valores que os coletores já registraram (olhando
-6 horas para trás), então uma pontuação não custa nada ao dispositivo.
+6 horas para trás), então uma pontuação não custa nada ao monitor.
 
 Cada verificação tem uma categoria (exposição, correções, autenticação,
 criptografia, backup, configuração), uma **severidade** que é o seu peso
@@ -53,7 +53,7 @@ link para a página do fabricante em que se baseia.
 **Pontuação** = 100 × (peso das verificações que passam) ÷ (peso das que
 passam + falham). **As verificações desconhecidas são mostradas, mas nunca
 contadas**: uma pontuação não deve cair porque uma conta de monitoramento não
-tem um privilégio, nem subir porque nada se sabe. Um dispositivo cujas
+tem um privilégio, nem subir porque nada se sabe. Um monitor cujas
 verificações são todas desconhecidas *não é pontuado*.
 
 | Nota | Pontuação | Palavra |
@@ -218,7 +218,7 @@ Para melhorá-la:
    protegido por verificação em duas etapas.
 3. Ative o Auto Block e o firewall (Painel de Controle → Segurança) e não
    encaminhe portas do DSM para a internet: use uma VPN.
-4. Faça backup com o Hyper Backup para outro dispositivo ou um destino na
+4. Faça backup com o Hyper Backup para outro monitor ou um destino na
    nuvem e corrija qualquer tarefa que falhe: RAID e snapshots não são
    backups.
 
@@ -249,7 +249,7 @@ Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 ### Sites { #websites }
 
 Para os monitores **HTTP(S)** e **TLS** que negociam TLS, e para os
-dispositivos **Website health & SEO**. Um monitor HTTP simples não tem
+monitores **Website health & SEO**. Um monitor HTTP simples não tem
 pontuação.
 
 | Verificação | Severidade | Dado |

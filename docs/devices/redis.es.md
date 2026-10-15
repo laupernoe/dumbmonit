@@ -54,7 +54,7 @@ Redis replication link down, Redis replica lagging, Redis snapshot
 failed, Redis append-only file write failed, además de Device
 unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Redis. Indica en una frase qué va mal (replicación, memoria
@@ -117,8 +117,8 @@ certificate.
 
 Una contraseña rechazada (`WRONGPASS`, `NOAUTH`, `NOPERM`) se muestra como un
 error de credencial y nadie recibe notificación del error en sí, pero entonces
-DumbMonit no recopila nada: la regla Device unreachable sigue activándose, como
-con cualquier dispositivo que no puede leer, hasta que la credencial funcione
+DumbMonit no recopila nada: la regla Monitor unreachable sigue activándose, como
+con cualquier monitor que no puede leer, hasta que la credencial funcione
 de nuevo. Redis reiniciándose sin su usuario ACL (usuarios definidos con
 `ACL SETUSER` pero nunca guardados) provoca exactamente esto.
 

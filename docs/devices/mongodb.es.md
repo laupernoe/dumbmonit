@@ -53,7 +53,7 @@ unreachable, MongoDB replication lag, MongoDB connections near the limit,
 MongoDB cache under pressure, MongoDB internal errors, además de Device
 unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta MongoDB. Indica en una frase qué va mal (replica set,

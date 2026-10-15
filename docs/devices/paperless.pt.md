@@ -41,9 +41,9 @@ tarefas.
 As [regras incorporadas](../alerting/rules.md#self-hosted-applications) que se
 aplicam: Paperless task queue down, Paperless index or sanity check error,
 Paperless migrations pending, Paperless task failed, Paperless storage almost
-full, Paperless update available, mais Device unreachable.
+full, Paperless update available, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca chama o Paperless. Diz primeiro o que está mal (um componente em erro,

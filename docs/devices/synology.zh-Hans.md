@@ -36,11 +36,11 @@ Active Backup for Business 指标是例外：它们以 `dumbmonit_abb_` 为前�
     * `disk_remaining_life_percent` 是一个纯数字在较旧 DSM 上，一个对象在 DSM 7.2 及更高版本上携带值和 DSM 是否信任它。DSM 标记为不可信的值不被发布；
     * `volume_used_warning_percent` 和 `volume_used_critical_percent` 重复在 DSM 中设置的阈值。DSM 7.4 不再返回它们，所以在最近的 NAS 那两个系列根本不存在 — 在它们的地方什么都不被发明。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
-![一个 Synology 设备：一目了然，卷、磁盘和 Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![一个 Synology 监控项：一目了然，卷、磁盘和 Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-一个 Synology 设备在图表上方获得它自己的面板：
+一个 Synology 监控项在图表上方获得它自己的面板：
 
 * **一目了然** — CPU、内存（已用的总共）、温度和正常运行时间，带 DSM 自己的存储判决作为板（健康、注意、崩溃、修复需要）；
 * **卷** — 每卷一行：使用条、已用的总共、RAID 类型和文件系统、卷在 DSM 的词中的状态（正常、降级、崩溃、修复…）；
@@ -118,7 +118,7 @@ Active Backup for Business（ABB）备份 PC、物理服务器、虚拟机和文
 
 仅 *overdue* 升高 `dumbmonit_abb_device_overdue`，仅 *failing* 供给失败规则。一个周日闲置的笔记本升高什么；同一笔记本在周二晚仍沉默做。
 
-天和小时以服务器的本地时间表示（容器的 `TZ`），这是读页面的人活着的地方。设备页面显示，每设备：状态在词中、最后成功和最后结果、词中的节奏（"工作日，大约 20:00"、"每 ~3 天，周一、周三、周五，大约 03:00"、"仍学习（30 天 2 次运行）"）以及三十天条 — 成功日为青绿色、失败为红色、取消运行为琥珀色、无运行为灰色。
+天和小时以服务器的本地时间表示（容器的 `TZ`），这是读页面的人活着的地方。监控项页面显示，每设备：状态在词中、最后成功和最后结果、词中的节奏（"工作日，大约 20:00"、"每 ~3 天，周一、周三、周五，大约 03:00"、"仍学习（30 天 2 次运行）"）以及三十天条 — 成功日为青绿色、失败为红色、取消运行为琥珀色、无运行为灰色。
 
 在设备上的内置规则：
 

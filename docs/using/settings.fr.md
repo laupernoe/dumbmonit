@@ -88,7 +88,7 @@ complet : [Notifications push (PWA)](push-notifications.md).
 Administrateurs seulement. Les comptes qui peuvent se connecter, et leur
 rôle :
 
-| Rôle | Lit tout | Traite les alertes (acquitter, repousser, ignorer, fenêtres de maintenance, effacer l'historique) | Change la configuration (appareils, règles, canaux, pages d'état, réglages, sauvegardes, jetons, comptes) |
+| Rôle | Lit tout | Traite les alertes (acquitter, repousser, ignorer, fenêtres de maintenance, effacer l'historique) | Change la configuration (surveillances, règles, canaux, pages d'état, réglages, sauvegardes, jetons, comptes) |
 |---|---|---|---|
 | **Lecteur** | oui | non | non |
 | **Opérateur** | oui | oui | non |
@@ -201,7 +201,7 @@ jeton, sa date de création, sa dernière utilisation et s'il a été révoqué.
 **Révoquer** arrête chaque agent utilisant ce jeton à son prochain push.
 
 Un jeton peut enrôler plusieurs machines. Le révoquer ne supprime pas les
-appareils. Les lecteurs voient la liste et la section lit *Lecteur —
+surveillances. Les lecteurs voient la liste et la section lit *Lecteur —
 lecture seule* ; créer et révoquer sont réservés aux administrateurs.
 
 ## API & assistants
@@ -210,8 +210,8 @@ Un seul type de jeton pour les deux : clients MCP et
 [API REST](../reference/api.md). Nommez un jeton, choisissez sa portée et
 créez-le — il est montré une fois. Un jeton **read** ne peut que
 regarder ; un jeton **read and write** peut aussi changer des choses —
-mettre en silence un appareil, lancer une sonde, ajouter ou modifier des
-appareils, règles et canaux — mais jamais les comptes, les réglages de
+mettre en silence une surveillance, lancer une sonde, ajouter ou modifier des
+surveillances, règles et canaux — mais jamais les comptes, les réglages de
 connexion ni d'autres jetons.
 
 Sous **Connecter**, trois onglets contiennent les extraits, remplis avec
@@ -232,7 +232,7 @@ qu'un Prometheus ou un Grafana sonde avec lui. Voir
 Trois choses, dans l'ordre où vous les rencontrez.
 
 Un **avertissement que vous ne pouvez pas manquer** : `/data/secret.key`
-est ce qui déchiffre les identifiants d'appareil, et une copie de la base
+est ce qui déchiffre les identifiants de surveillance, et une copie de la base
 de données sans lui restaure une instance qui ne peut parler à rien. Le
 texte change quand le secret vient de `DUMBMONIT_SECRET` à la place — il
 n'y a alors pas de fichier à copier, et c'est votre gestionnaire de mots
@@ -300,7 +300,7 @@ la palette de commandes l'ouvre depuis n'importe où — voir
 ## À propos
 
 Version du serveur et santé de ses deux magasins, la base de données
-(configuration d'appareil et historique d'alertes) et VictoriaMetrics
+(configuration des surveillances et historique d'alertes) et VictoriaMetrics
 (chaque mesure dans les graphiques), comme rapporté par `GET /api/health`
 et rafraîchi toutes les 15 secondes. Un magasin qui arrête de répondre
 montre un avertissement avec l'erreur et quoi vérifier. La section pointe

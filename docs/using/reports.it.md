@@ -16,15 +16,15 @@ destinatari.
 | Sezione | Contenuto |
 | --- | --- |
 | **Titolo** | Disponibilità complessiva per il periodo, numero di incidenti e variazione rispetto al periodo precedente. |
-| **Disponibilità per gruppo** | Una riga per gruppo, poi per dispositivo (al massimo i 40 meno disponibili), calcolata nello stesso modo delle [pagine di stato](status-pages.md): le sonde in base al tasso di successo, host e dispositivi in base alla frequenza con cui hanno riportato. I dispositivi senza cronologia sono mostrati come "no data" invece che come 100%. |
-| **Incidenti** | Quando ciascuno è iniziato, quanto è durato (o che è ancora aperto) e su quale dispositivo. Al massimo 25. Gli avvisi informativi sono esclusi. |
-| **Dispositivi meno stabili** | I cinque dispositivi con la disponibilità più bassa o il maggior numero di incidenti. |
+| **Disponibilità per gruppo** | Una riga per gruppo, poi per monitor (al massimo i 40 meno disponibili), calcolata nello stesso modo delle [pagine di stato](status-pages.md): le sonde in base al tasso di successo, host e monitor in base alla frequenza con cui hanno riportato. I monitor senza cronologia sono mostrati come "no data" invece che come 100%. |
+| **Incidenti** | Quando ciascuno è iniziato, quanto è durato (o che è ancora aperto) e su quale monitor. Al massimo 25. Gli avvisi informativi sono esclusi. |
+| **Monitor meno stabili** | I cinque monitor con la disponibilità più bassa o il maggior numero di incidenti. |
 | **Confronto** | Disponibilità e numero di incidenti rispetto al periodo della stessa durata immediatamente precedente. |
 
 L'email è composta da semplici tabelle HTML con stili inline e nessuna
 immagine remota, così viene visualizzata allo stesso modo ovunque e nulla
 viene recuperato quando viene aperta. Una versione testuale viene inviata
-insieme. Ogni nome di dispositivo e messaggio è sottoposto a escaping.
+insieme. Ogni nome di monitor e messaggio è sottoposto a escaping.
 
 ## Impostazioni
 

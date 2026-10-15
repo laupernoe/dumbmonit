@@ -6,11 +6,11 @@ prune, garbage collection), datastore, dischi e pool ZFS, aggiornamenti
 in attesa, i servizi e le versioni dei pacchetti del server stesso, e
 il livello tape quando presente.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-![Un dispositivo PBS: fallimenti, il calendario di backup su 30 giorni, job e stato di salute](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![Un monitor PBS: fallimenti, il calendario di backup su 30 giorni, job e stato di salute](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Oltre ai grafici generici, un dispositivo PBS mostra sei pannelli,
+Oltre ai grafici generici, un monitor PBS mostra sei pannelli,
 letti da ciò che la sonda ha memorizzato — aprire la pagina non
 interroga mai PBS stesso:
 
@@ -66,7 +66,7 @@ avvio legge gli ultimi 30 giorni
 (`/nodes/localhost/tasks?since=…&limit=5000`), le sonde successive
 leggono solo la finestra dei task, e il server mantiene l'unione in
 SQLite (`pbs_task_history`, 35 giorni, al massimo 10.000 task per
-dispositivo) così il calendario sopravvive ai riavvii.
+monitor) così il calendario sopravvive ai riavvii.
 
 ## Cosa controlla
 
@@ -160,11 +160,11 @@ insieme a ogni altra integrazione che protegge un dispositivo.
 per una macchina sottoposta a backup, solo i backup —
 `last_seen_timestamp_seconds` e il segnale `connection` non vengono mai
 pubblicati qui; un dispositivo mostra `last_connection` come "—" nella
-tabella della pagina del dispositivo. Il dispositivo nominato
+tabella della pagina del monitor. Il monitor nominato
 nell'avviso è il nome del guest dalle note dello snapshot quando PVE ne
 ha scritto uno, altrimenti `type/id`, come il calendario di backup.
 
-Le regole integrate che si applicano: Device unreachable, PBS
+Le regole integrate che si applicano: Monitor unreachable, PBS
 datastore almost full, PBS datastore filling up, PBS backup too old
 (per gruppo di backup: nessun nuovo snapshot per due giorni — modifica
 la soglia della regola per una finestra più lunga), PBS backup
@@ -215,7 +215,7 @@ ruolo di sola lettura — mai l'account con cui accedi.
     proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
     ```
 
-4. Prima di lasciare la shell, verifica cosa il token può effettivamente leggere. Il comando stampa i suoi privilegi effettivi, percorso per percorso; un risultato vuoto significa che all'utente manca l'ACL che ha il token — il caso in cui il dispositivo appare perfettamente vivo e non riporta nulla.
+4. Prima di lasciare la shell, verifica cosa il token può effettivamente leggere. Il comando stampa i suoi privilegi effettivi, percorso per percorso; un risultato vuoto significa che all'utente manca l'ACL che ha il token — il caso in cui il monitor appare perfettamente vivo e non riporta nulla.
 
     ```
     proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
@@ -308,7 +308,7 @@ mancanti.
 |---|---|
 | Errore di certificato | Certificato autofirmato: installane uno fidato (ACME è integrato in PBS) oppure abilita `insecure_tls`. |
 | Errore di autenticazione | Il secret è stato incollato in Token ID (o il contrario), oppure il token non ha permesso `Audit` — più spesso perché il ruolo è stato concesso al token ma non all'utente che lo possiede, cosa che non fallisce: le chiamate riescono e restituiscono elenchi vuoti. Solo il fallimento di `GET /version` condanna l'intera sonda; qualsiasi altra chiamata fallita viene contata in `scrape_errors`. |
-| Tutto si legge vuoto ma il dispositivo è attivo | All'utente manca l'ACL che ha il token, e PBS fa l'intersezione dei due: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` non stampa nulla. Concedi ogni ruolo anche a `dumbmonit@pbs`. |
+| Tutto si legge vuoto ma il monitor è attivo | All'utente manca l'ACL che ha il token, e PBS fa l'intersezione dei due: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` non stampa nulla. Concedi ogni ruolo anche a `dumbmonit@pbs`. |
 | Nessuna serie `node_updates_pending` | Al token manca `Sys.Audit` su `/`: dagli il ruolo `Audit` su `/`, oppure imposta `updates` su `false` per fermare la richiesta. |
 | Un job di sync manca | Al token manca `Remote.Audit` sul remote del job: aggiungi il ruolo `RemoteAudit` su `/remote`. Il job non viene rifiutato, è semplicemente assente dall'elenco. |
 | Nessuna scadenza di certificato | L'opzione `certificates` è disattivata, che è il predefinito: PBS richiede `Sys.Modify` per quella chiamata, un privilegio di scrittura. |

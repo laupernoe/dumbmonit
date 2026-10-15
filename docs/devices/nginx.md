@@ -31,7 +31,7 @@ The `plus_*` metrics only appear when "Read the NGINX Plus API" is ticked and
 NGINX Plus answers; the open-source build does not have an "upstream" to
 report on `stub_status` alone.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never queries Nginx. It shows active, reading, writing and waiting

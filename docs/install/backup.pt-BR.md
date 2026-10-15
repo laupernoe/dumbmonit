@@ -4,7 +4,7 @@ Duas coisas diferentes, para dois acidentes diferentes.
 
 | | Pacote criptografado | Backup local programado |
 |---|---|---|
-| O que contém | A configuração: dispositivos e suas credenciais, regras, canais, páginas de status, contas, tokens. | Todo o banco de dados, como um arquivo, mais `secret.key`. |
+| O que contém | A configuração: monitores e suas credenciais, regras, canais, páginas de status, contas, tokens. | Todo o banco de dados, como um arquivo, mais `secret.key`. |
 | Para onde vai | Onde você colocar — é criptografado com uma frase secreta que você escolhe. | `/data/backups/`, dentro do mesmo volume. |
 | Do que te salva | Um servidor perdido, uma mudança para hardware novo, uma instalação do zero. | A mudança que você se arrepende dez minutos depois, uma atualização que deu errado. |
 | O que não contém | Histórico de métricas, estado e histórico de alertas, o log de auditoria, sessões. | Histórico de métricas (`vm/`). |
@@ -12,7 +12,7 @@ Duas coisas diferentes, para dois acidentes diferentes.
 Nenhum dos dois substitui um arquivo de todo o volume se você quer os
 gráficos de volta também; isso está no final desta página.
 
-!!! danger "`/data/secret.key` é o que descriptografa suas credenciais de dispositivo"
+!!! danger "`/data/secret.key` é o que descriptografa suas credenciais de monitor"
     Comunidades SNMP, tokens Proxmox, senhas SMTP e URLs de heartbeat são
     armazenadas criptografadas com uma chave derivada do segredo da
     instância. Na primeira inicialização o DumbMonit a escreve em
@@ -22,7 +22,7 @@ gráficos de volta também; isso está no final desta página.
     **Uma cópia do banco de dados sem esse arquivo restaura uma instância
     que não consegue falar com nada.** O servidor percebe isso e recusa
     iniciar com uma mensagem explícita em vez de falhar em toda sondagem
-    — mas as credenciais se perdem, e todo dispositivo precisa ser
+    — mas as credenciais se perdem, e todo monitor precisa ser
     informado de novo.
 
     O pacote criptografado é a única exceção: seus segredos são
@@ -56,15 +56,15 @@ pacote cuja frase secreta se perde está perdido.
 
 !!! warning "O pacote contém toda credencial desta instância"
     Qualquer um com o arquivo e a frase secreta pode ler a senha de todo
-    dispositivo que você monitora. Mantenha-o onde você mantém senhas.
+    monitor que você monitora. Mantenha-o onde você mantém senhas.
 
 ### O que está nele {#what-is-in-it}
 
 | Seção | Conteúdo |
 |---|---|
-| `targets` | Dispositivos: nome, tipo, endereço, intervalo, opções, pai, agente relay, e a credencial. |
+| `targets` | Monitores: nome, tipo, endereço, intervalo, opções, pai, agente relay, e a credencial. |
 | `rules` | Regras de alerta, incluindo integradas que você reajustou ou desativou. |
-| `rule_overrides` | Limites e exclusões por dispositivo. |
+| `rule_overrides` | Limites e exclusões por monitor. |
 | `channels` | Canais de notificação, suas configurações, sua política por canal e seus segredos. |
 | `notify_policy` | A política de notificação global (agrupamento, limite por hora, oscilação, URL pública). |
 | `silences` | Janelas de manutenção. |
@@ -75,7 +75,7 @@ pacote cuja frase secreta se perde está perdido.
 | `api_tokens` | Tokens de API, como hashes. Tokens existentes continuam funcionando. |
 | `push_monitors` | Tokens de heartbeat, então as URLs que seus jobs cron já chamam permanecem as mesmas. |
 
-Dispositivos são correspondidos por **tipo + endereço**, que também é a
+Monitores são correspondidos por **tipo + endereço**, que também é a
 chave única da tabela: importar o mesmo pacote duas vezes nunca cria uma
 segunda cópia de nada.
 
@@ -114,7 +114,7 @@ possa ser restaurado em algum lugar que nunca viu `secret.key`.
 3. Leia o relatório. Ele diz, seção por seção, o que seria **criado**, o
    que seria **atualizado** porque difere do que já está aqui, e o que já
    é idêntico — mais uma nota para qualquer coisa que não pôde colocar,
-   como uma regra que apontava para um dispositivo que o pacote não
+   como uma regra que apontava para um monitor que o pacote não
    contém.
 4. Clique em **Restaurar de verdade**.
 
@@ -123,7 +123,7 @@ Três regras que a restauração nunca quebra:
 - **Nada é jamais excluído.** Uma restauração faz existir o que o pacote
   descreve; qualquer coisa que a instância tenha além disso permanece.
 - **Nada é jamais duplicado.** Todo item é correspondido por sua chave
-  natural — tipo + endereço para um dispositivo, `uid` para uma regra,
+  natural — tipo + endereço para um monitor, `uid` para uma regra,
   nome para um canal, slug para uma página de status. Restaurar o mesmo
   pacote duas vezes reporta tudo como já idêntico e não escreve nada.
 - **Contas existentes são deixadas intactas.** Uma conta cujo nome de

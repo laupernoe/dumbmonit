@@ -33,18 +33,18 @@ All metrics are prefixed `dumbmonit_mdaemon_`.
 
 **A partial outage is still a successful check.** One stopped service gives
 `service_up 0` for that service and the others are still measured. Only when
-no service and no API answers at all is the device *unreachable*.
+no service and no API answers at all is the monitor *unreachable*.
 
 **A refused account is a configuration error, not an outage.** A wrong
 password, an address the XML API does not allow, or a wrong port is shown on
-the device page with the reason and is not notified.
+the monitor page with the reason and is not notified.
 
-**Queues come from the agent, not from this device.** MDaemon publishes its
+**Queues come from the agent, not from this monitor.** MDaemon publishes its
 queue sizes (inbound, local, remote, retry, bad, holding, quarantine), its
 session counts, its message statistics and its uptime as Windows performance
 counters, in the object named MDaemon, and in its own Queue and Statistics
 Manager. None of MDaemon's published documentation describes an XML API call
-that returns them, so this device does not guess one: the
+that returns them, so this monitor does not guess one: the
 [agent](agent.md), installed on the MDaemon server, reads the performance
 counters instead. See [Mail queues through the agent](#mail-queues-through-the-agent).
 The license and the mail store disk space are not exposed through a
@@ -53,13 +53,13 @@ also watches the disk that holds the mail store; list the MDaemon service in
 its `services` setting to watch the Windows service itself.
 
 The [built-in rules](../alerting/rules.md#mdaemon-and-securitygateway) that
-apply: MDaemon mail service down, MDaemon XML API not answering, plus Device
+apply: MDaemon mail service down, MDaemon XML API not answering, plus Monitor
 unreachable; with the agent, MDaemon mail queue growing, MDaemon Bad queue not
 empty and MDaemon Retry queue high.
 
-## The device page
+## The monitor page
 
-An MDaemon device shows a **Mail services** panel above the charts, read from
+An MDaemon monitor shows a **Mail services** panel above the charts, read from
 the last stored measurement: opening the page never connects to the server.
 It lists every watched service with its port, a word and a colour (Answering,
 Down), and its response time; then the version and where it was read. Stopped
@@ -80,13 +80,13 @@ reports as inactive. The same panel appears on the agent's own page.
    every sampling period. To force it on or off, set `mdaemon: true` or
    `mdaemon: false` in `agent.yaml`.
 2. The queues appear on the agent's page. To also show them on this MDaemon
-   device, DumbMonit looks for the agent on the same machine: the agent set as
-   this device's parent, or the relay agent that probes it, or the agent whose
-   host name matches this device's address (`mail` for `mail.example.com`),
-   or, when there is one MDaemon device and one agent reporting MDaemon
-   counters, that agent. If none matches, edit this device and choose the
-   agent as its **Parent device**: the agent and MDaemon share the machine, so
-   when the agent goes silent this device's alerts are held back as well.
+   monitor, DumbMonit looks for the agent on the same machine: the agent set as
+   this monitor's parent, or the relay agent that probes it, or the agent whose
+   host name matches this monitor's address (`mail` for `mail.example.com`),
+   or, when there is one MDaemon monitor and one agent reporting MDaemon
+   counters, that agent. If none matches, edit this monitor and choose the
+   agent as its **Parent monitor**: the agent and MDaemon share the machine, so
+   when the agent goes silent this monitor's alerts are held back as well.
 
 The series belong to the agent, with its `target` label. All are prefixed
 `dumbmonit_mdaemon_`:
@@ -137,7 +137,7 @@ list it under `perf_counters` in `agent.yaml` (see
 5. In DumbMonit, enter the server address, for example "mail.example.com", then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default.
 
 !!! warning
-    MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. Mail queue sizes are not read by this device: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.
+    MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. Mail queue sizes are not read by this monitor: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.
 
 The XML API is served by the Remote Administration web server: port 1000 over
 HTTP and 444 over HTTPS by default, at `/MdMgmtWS/`, or by IIS when Remote
@@ -167,4 +167,4 @@ written in the address (`mail.example.com:8444`) is taken as the XML API port.
 
 The TLS ports (`smtps`, `pop3s`, `imaps`, `remote_admin_https`) are checked by
 connection only. To watch their certificates' expiry, add a
-[TLS certificate](services.md#tls) device for each.
+[TLS certificate](services.md#tls) monitor for each.

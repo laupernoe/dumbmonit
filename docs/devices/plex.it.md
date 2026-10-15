@@ -31,9 +31,9 @@ Tutte le metriche hanno il prefisso `dumbmonit_plex_`.
 | `scrape_errors` | chiamate fallite nell'ultima sonda | |
 
 La [regola integrata](../alerting/rules.md#self-hosted-applications) che si
-applica: Plex update available, più Device unreachable.
+applica: Plex update available, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non chiama mai Plex. Indica lo stato dell'aggiornamento e se il server

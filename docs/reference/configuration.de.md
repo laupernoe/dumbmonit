@@ -10,7 +10,7 @@ zum Einbinden.
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Lauschadresse der API und der Web-Oberfläche, innerhalb des Containers. |
 | `DUMBMONIT_DATA_DIR` | `/data` | Persistentes Verzeichnis: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (eingebettetes VictoriaMetrics) und `webchange/` (Screenshots von Website-Änderungen). |
 | `DUMBMONIT_VM_URL` | *(nicht gesetzt)* | Basis-URL eines externen VictoriaMetrics (`http://host:8428`). Ist sie gesetzt, wird das eingebettete nicht gestartet; siehe [unten](#embedded-victoriametrics). |
-| `DUMBMONIT_SECRET` | *(erzeugt)* | Instanzgeheimnis. Ist es leer, wird es aus `<data dir>/secret.key` gelesen, beim ersten Start erzeugt. Verschlüsselt Gerätezugangsdaten, Kanalgeheimnisse und Agent-Tokens mit AES-256-GCM. |
+| `DUMBMONIT_SECRET` | *(erzeugt)* | Instanzgeheimnis. Ist es leer, wird es aus `<data dir>/secret.key` gelesen, beim ersten Start erzeugt. Verschlüsselt Monitor-Zugangsdaten, Kanalgeheimnisse und Agent-Tokens mit AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Maximale gleichzeitige Prüfungen, alle Collectors zusammen. |
 | `DUMBMONIT_WEBSITE_MAX_CONCURRENT` | `10` | Maximale gleichzeitige [Website-Zustands](../devices/website.md#pacing-hundreds-of-sites)-Prüfungen, 1 bis 256, innerhalb des obigen Limits. |
 | `DUMBMONIT_WEBSITE_MAX_PER_HOST` | `1` | Maximale gleichzeitige Website-Prüfungen an eine Domain (`www.example.com` und `shop.example.com` zählen als eine), 1 bis 16. |
@@ -19,7 +19,7 @@ zum Einbinden.
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Hartes Timeout einer Prüfung. Dienstmonitore haben eine eigene, kürzere Option `timeout_seconds`. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Periode der gebündelten Schreibvorgänge Richtung VictoriaMetrics. |
 | `DUMBMONIT_FLUSH_BATCH` | `5000` | Anzahl gepufferter Messwerte, die einen Schreibvorgang auslöst, bevor die Periode abläuft. |
-| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads der asynchronen Runtime. Der Server verbringt seine Zeit mit Warten auf das Netzwerk: Vier genügen für ein Homelab, erhöhen Sie sie nur für Hunderte von Geräten. |
+| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads der asynchronen Runtime. Der Server verbringt seine Zeit mit Warten auf das Netzwerk: Vier genügen für ein Homelab, erhöhen Sie sie nur für Hunderte von Monitoren. |
 | `DUMBMONIT_DB_POOL` | `4` | Maximale offene SQLite-Verbindungen. Jede kostet einen Thread und einen 2-MB-Seitencache; Leerlaufverbindungen schließen nach fünf Minuten. |
 | `DUMBMONIT_LOG` | `info` | Logfilter, `tracing`-Syntax: `debug`, `warn`, `dumbmonit=debug,sqlx=warn` … |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Verzeichnis der Agent-Binaries, ausgeliefert unter `/download/`. Leer oder fehlend: Der Installationsbefehl scheitert mit `404`, der Server läuft weiter. |
@@ -39,7 +39,7 @@ zum Einbinden.
 | `DUMBMONIT_OIDC_GROUPS_CLAIM` | `groups` | Token-Claim, der die Gruppen des Benutzers auflistet. |
 | `DUMBMONIT_OIDC_ADMIN_GROUPS` | *(leer)* | Kommagetrennte Gruppen, deren Mitglieder Administratoren werden. |
 | `DUMBMONIT_OIDC_OPERATOR_GROUPS` | *(leer)* | Kommagetrennte Gruppen, deren übrige Mitglieder Operatoren werden. Siehe [Single Sign-On](../using/settings.md#single-sign-on). |
-| `DUMBMONIT_METRICS_PUBLIC` | *(aus)* | `1`, um `/metrics`, `/federate` und `/prometheus/api/v1/…` ohne API-Token auszuliefern. Jeder, der den Port erreicht, liest dann jede Messung jedes Geräts und den Zustand der Instanz; setzen Sie es nur dort, wo bereits etwas anderes den Zugriff auf den Port beschränkt. Siehe [Metriken](metrics.md#scraping-dumbmonit). |
+| `DUMBMONIT_METRICS_PUBLIC` | *(aus)* | `1`, um `/metrics`, `/federate` und `/prometheus/api/v1/…` ohne API-Token auszuliefern. Jeder, der den Port erreicht, liest dann jede Messung jedes Monitors und den Zustand der Instanz; setzen Sie es nur dort, wo bereits etwas anderes den Zugriff auf den Port beschränkt. Siehe [Metriken](metrics.md#scraping-dumbmonit). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Auswertungsperiode der Alarme. Werte unter 10 werden auf 10 angehoben. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Aufbewahrung des Alarmverlaufs in Tagen. |
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | Geplante lokale Sicherungen der Datenbank. `0`, `false`, `no` oder `off`, um sie nicht mehr zu schreiben. Siehe [Sicherung und Wiederherstellung](../install/backup.md#scheduled-local-backups). |
@@ -73,7 +73,7 @@ Gnadenfrist, dann Kill; das `stop_grace_period` der Compose-Datei lässt dafür 
 | `DUMBMONIT_VM_BINARY` | `/victoria-metrics-prod` | Pfad des zu startenden VictoriaMetrics-Binarys. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Lauschadresse, innerhalb des Containers. Standardmäßig Loopback: Nur der Server spricht damit. Das Entwicklungs-Overlay setzt `0.0.0.0:8428` und veröffentlicht den Port. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Aufbewahrung in der Syntax von `-retentionPeriod`: eine Zahl von Monaten oder eine Dauer wie `30d` oder `2y`. |
-| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget für die Caches von VictoriaMetrics (`-memory.allowedBytes`). Ohne Budget dimensioniert VM sie für 60 % des RAMs des Hosts, und sein residenter Speicher wächst tagelang. Einige Dutzend Geräte passen in 256 MB; erhöhen Sie es für Hunderte von Hosts. |
+| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget für die Caches von VictoriaMetrics (`-memory.allowedBytes`). Ohne Budget dimensioniert VM sie für 60 % des RAMs des Hosts, und sein residenter Speicher wächst tagelang. Einige Dutzend Monitore passen in 256 MB; erhöhen Sie es für Hunderte von Hosts. |
 
 Seine Daten liegen in `<data dir>/vm`, auf demselben Volume wie die Datenbank. Drei Flags sind vom
 Server fest vorgegeben und nicht konfigurierbar: `-search.maxUniqueTimeseries=100000` (eine
@@ -114,7 +114,7 @@ vorgegeben, wie auch immer das Projekt heißt.
 
 | Pfad (im Container) | Volume | Inhalt |
 |---|---|---|
-| `/data/dumbmonit.db` | `dumbmonit-data` | Geräte, Zugangsdaten (verschlüsselt), Regeln, Alarmzustand und -verlauf, Baselines, Stummschaltungen, Kanäle, Agent-Tokens, Passwort-Hash, Sitzungen. |
+| `/data/dumbmonit.db` | `dumbmonit-data` | Monitore, Zugangsdaten (verschlüsselt), Regeln, Alarmzustand und -verlauf, Baselines, Stummschaltungen, Kanäle, Agent-Tokens, Passwort-Hash, Sitzungen. |
 | `/data/secret.key` | `dumbmonit-data` | Das Instanzgeheimnis. **Sichern Sie es.** Ohne es sind verschlüsselte Zugangsdaten nicht wiederherstellbar, und der Server weigert sich zu starten. |
 | `/data/backups/` | `dumbmonit-data` | Geplante lokale Sicherungen: `dumbmonit-<timestamp>.db` (eine Online-SQLite-Kopie) und die zugehörige `.key`. Standardmäßig täglich, sieben aufbewahrt. |
 | `/data/vm/` | `dumbmonit-data` | Zeitreihen des eingebetteten VictoriaMetrics, standardmäßig 12 Monate. Leer, wenn `DUMBMONIT_VM_URL` gesetzt ist. |
@@ -131,7 +131,7 @@ docker compose up -d
 docker compose up -d
 ```
 
-Das Zurücksetzen löscht das Passwort und jede Sitzung; Geräte, Regeln und Kanäle bleiben
+Das Zurücksetzen löscht das Passwort und jede Sitzung; Monitore, Regeln und Kanäle bleiben
 unberührt.
 
 ## Agent {#agent}

@@ -16,22 +16,22 @@ my-pack/
 | Key | Required | Meaning |
 |---|---|---|
 | `schema` | yes | Always `1`. |
-| `id` | yes | Lowercase letters, digits and single dashes, starting with a letter, up to 40 characters: `shelly-plug`. The device type becomes `pack.<id>`, the metric prefix `dumbmonit_<id with underscores>_`. |
+| `id` | yes | Lowercase letters, digits and single dashes, starting with a letter, up to 40 characters: `shelly-plug`. The monitor type becomes `pack.<id>`, the metric prefix `dumbmonit_<id with underscores>_`. |
 | `version` | yes | [Semantic version](https://semver.org) of the pack: `1.2.0`. |
 | `requires` | no | DumbMonit versions the pack works with, as a semver requirement: `">=0.2"`. A server outside the range refuses the pack. |
-| `label` | yes | Name shown in the device type list. |
+| `label` | yes | Name shown in the monitor type list. |
 | `summary` | no | One sentence: what the pack watches. |
 | `examples` | no | Products it applies to, shown as hints. |
 | `address_hint` | no | Placeholder of the address field: `192.168.1.50`. |
 | `default_port` | no | Port used when the address has none. |
-| `scheme` | no | `http` (default) or `https`; the device can override it. |
-| `setup` | no | The notice shown next to the device form: `title`, `steps` (a list; what follows a line break in a step is shown as a copyable command), `warning`, `doc_url`. |
+| `scheme` | no | `http` (default) or `https`; the monitor can override it. |
+| `setup` | no | The notice shown next to the monitor form: `title`, `steps` (a list; what follows a line break in a step is shown as a copyable command), `warning`, `doc_url`. |
 | `credentials` | no | Accepted credential kinds, in order of preference: `none`, `api_token`, `username_password`. Default: `[none]`. An entry can be `{kind, label, help}` to reword the form. |
-| `options` | no | Settings shown in the device form (below). |
+| `options` | no | Settings shown in the monitor form (below). |
 
 ## Options
 
-Options are stored on the device and read by `{{option.<key>}}` in paths,
+Options are stored on the monitor and read by `{{option.<key>}}` in paths,
 headers and bodies, and by rule thresholds.
 
 ```yaml
@@ -67,7 +67,7 @@ sources:
     auth: auto              # auto (default), none, bearer or basic
 ```
 
-- `path` must start with a single `/`. The request URL is the device's address
+- `path` must start with a single `/`. The request URL is the monitor's address
   followed by the path; after substitution it must keep the same scheme, host
   and port, or the request is refused. Option values are percent-encoded in
   paths, so a value cannot add a segment or change the host.
@@ -183,15 +183,15 @@ rules:
   `dumbmonit_*` name it cites must be produced by the pack too
   (`dumbmonit_up` excepted): a pack cannot alert on another type's series.
 - A `threshold` of `{{option.x}}` installs the option's default value, and each
-  device's own value of that option becomes its threshold for this rule (a
-  per-device override, rewritten whenever the device is saved).
+  monitor's own value of that option becomes its threshold for this rule (a
+  per-monitor override, rewritten whenever the monitor is saved).
 
 ## SNMP profiles
 
 A pack can bring SNMP profiles, written exactly like the built-in ones in
 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles). They
 join the SNMP catalogue and are applied by `sysObjectID` like the others; they
-do not create a device type of their own.
+do not create a monitor type of their own.
 
 ```yaml
 snmp_profiles:
@@ -227,6 +227,6 @@ updating a pack with SNMP profiles.
 `dumbmonit pack test <dir>` reads `fixtures/<source id>.json`, `.txt` or
 `.prom`, runs the same extraction as the server, and compares the result with
 `expected.prom`: the Prometheus text format, sorted, without timestamps and
-without the device labels (`target`, `host`, `tag_*`) the server adds.
+without the monitor labels (`target`, `host`, `tag_*`) the server adds.
 `--update` writes `expected.prom` from the fixtures; review the diff before
 committing it.

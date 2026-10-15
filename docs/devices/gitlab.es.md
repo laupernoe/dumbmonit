@@ -61,7 +61,7 @@ El estado de los pipelines de CI solo se lee para los proyectos que
 listes: la API de GitLab no tiene ningún endpoint de «todos los pipelines
 fallidos» a nivel de instancia, solo uno por proyecto.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca llama a GitLab. Indica primero qué va mal (un componente de

@@ -14,7 +14,7 @@ Add the pool once, by the address of its coordinator: it reports every host,
 VM and storage repository. If the address you entered is a pool member, it
 answers `HOST_IS_SLAVE` with the coordinator's address; DumbMonit follows it
 once, same protocol and port, so a coordinator change does not need you to
-edit the device.
+edit the monitor.
 
 !!! warning "Validated against the vendor documentation only — not yet tested on a real system"
 

@@ -47,9 +47,9 @@ ambos.
 
 As [regras integradas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: CrowdSec Local API down, CrowdSec bouncer stopped pulling,
-CrowdSec reads no logs, além de Device unreachable.
+CrowdSec reads no logs, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o CrowdSec. Ele diz o que está errado em uma frase (Local API,

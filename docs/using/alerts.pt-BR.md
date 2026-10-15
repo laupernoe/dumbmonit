@@ -12,7 +12,7 @@ uma janela a partir de qualquer aba.
 | **Agora** | A lista ativa de problemas, uma linha cada. Veja [A lista Agora](#the-now-list). O selo na aba, e em Alertas na barra superior, é a contagem do que ainda precisa de você. |
 | **Manutenção** | Janelas de manutenção, *Ativa agora* ou *Programada*, pontual, semanal ou mensal, cada uma com a próxima ocorrência (`#scheduled`). Veja [Janelas de manutenção](../alerting/maintenance.md). |
 | **Histórico** | As últimas 200 transições, cada uma nomeando o monitor, a regra e o que aconteceu; as resolvidas podem ser limpas. |
-| **Regras** | Toda regra com sua severidade, uma marca *Integrada* e, se algum monitor a ignora, *Ignorada em N dispositivos*; ativar, editar embutido, excluir as suas próprias, criar uma regra de limite. Veja [Regras](../alerting/rules.md). |
+| **Regras** | Toda regra com sua severidade, uma marca *Integrada* e, se algum monitor a ignora, *Ignorada em N monitores*; ativar, editar embutido, excluir as suas próprias, criar uma regra de limite. Veja [Regras](../alerting/rules.md). |
 
 Os canais de notificação e a política de notificação ficam em
 **Configurações → Notificações e relatórios** (veja
@@ -38,7 +38,7 @@ quem a reconheceu, por que está suprimida, com **Abrir monitor**, **Soneca** e
 Selecionar várias linhas é um modo. O botão **Selecionar** (operadores e
 administradores) mostra uma caixa de seleção em cada linha e uma barra
 flutuante na parte inferior com **Selecionar tudo**, **Reconhecer**,
-**Desfazer reconhecimento**, **Ignorar para este dispositivo** e
+**Desfazer reconhecimento**, **Ignorar para este monitor** e
 **Concluir**. Escape sai do modo.
 
 ## Se livrando de um alerta {#getting-rid-of-an-alert}
@@ -61,17 +61,17 @@ alterá-lo):
 - **Soneca** é para "não agora, verifique depois" sem afirmar que você está
   fazendo algo sobre isso: 1 h, 8 h, 1 dia ou *até resolver*. Diferente do
   Reconhecer, funciona abrindo uma janela de manutenção restrita aos rótulos
-  exatos daquele alerta — uma regra irmã no mesmo dispositivo continua
+  exatos daquele alerta — uma regra irmã no mesmo monitor continua
   falando. O cartão se move para um grupo silencioso *Em soneca* mostrando
   o tempo restante, e oferece **Tirar da soneca**. Lembretes pausam da mesma
   forma que os de um reconhecimento.
 - **Ignorar** ("não me alerte sobre isso de novo") é para uma regra que
-  nunca fará sentido neste dispositivo: desativa essa regra apenas para esse
-  dispositivo (uma substituição por dispositivo — veja
-  [Substituições por dispositivo](../alerting/rules.md#per-device-overrides))
+  nunca fará sentido neste monitor: desativa essa regra apenas para esse
+  monitor (uma substituição por monitor — veja
+  [Substituições por monitor](../alerting/rules.md#per-device-overrides))
   e o alerta desaparece de vez, imediatamente, não apenas silenciado. É
-  reversível: **Parar de ignorar** na página do dispositivo, ou da própria
-  regra em Alertas → Regras, onde lê *Ignorada em N dispositivos*.
+  reversível: **Parar de ignorar** na página do monitor, ou da própria
+  regra em Alertas → Regras, onde lê *Ignorada em N monitores*.
 - **Limpar** é para o histórico, não para um alerta ativo: uma vez que uma
   transição resolveu, *Limpar* (ou *Limpar todas resolvidas*) a remove da
   visão padrão do Histórico. A linha permanece no banco de dados — nada é
@@ -98,13 +98,13 @@ mínima, se ele ouve resoluções, um intervalo mínimo por alerta, e suas
 nível Warning passam, o resto espera por um resumo).
 
 **Apenas alguns alertas.** As mesmas Opções de entrega mantêm o **filtro de
-roteamento** do canal: quais alertas ele quer, por tag de dispositivo
-(`site=cellar`), por tipo de dispositivo (`proxmox`), ou por regra.
+roteamento** do canal: quais alertas ele quer, por tag de monitor
+(`site=cellar`), por tipo de monitor (`proxmox`), ou por regra.
 Condições no mesmo campo leem como *ou*, campos diferentes como *e*, e uma
 linha *Exceto* sempre vence. Sob o editor, uma pré-visualização lista quais
-de seus dispositivos o filtro seleciona agora, e uma frase resume tudo de
-volta para você — *este canal recebe avisos e acima de dispositivos marcados
-site=cellar, exceto dispositivos marcados role=lab*. Um canal sem filtro
+de seus monitores o filtro seleciona agora, e uma frase resume tudo de
+volta para você — *este canal recebe avisos e acima de monitores marcados
+site=cellar, exceto monitores marcados role=lab*. Um canal sem filtro
 continua recebendo tudo, o que é o que todo canal existente faz.
 
 Editar um canal e deixar o segredo vazio mantém o armazenado. Tipos de canal
@@ -129,14 +129,14 @@ Os links antigos (`/alerts#notifications`, `/alerts#notifications-policy`,
 ## Operadores e visualizadores {#operators-and-viewers}
 
 Um **operador** lida com alertas sem tocar na configuração: eles
-reconhecem, colocam em soneca, ignoram uma regra para um dispositivo,
+reconhecem, colocam em soneca, ignoram uma regra para um monitor,
 programam ou excluem janelas de manutenção e limpam histórico resolvido.
 Regras, canais e a política de notificação permanecem somente leitura para
 eles, marcados *Operador — configuração é restrita a administradores*.
-Ignorar é a única substituição por dispositivo que um operador pode fazer;
+Ignorar é a única substituição por monitor que um operador pode fazer;
 limites permanecem uma decisão de administrador, e o *Ignorar* ou *Parar de
 ignorar* de um operador mantém qualquer limite que um administrador tenha
-definido para esse dispositivo.
+definido para esse monitor.
 
 Um visualizador vê toda aba mas nenhum controle: a página mostra
 *Visualizador — somente leitura* onde um administrador encontraria os

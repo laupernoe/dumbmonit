@@ -60,9 +60,9 @@ Las [reglas integradas](../alerting/rules.md#vmware-vsphere) que se
 aplican: vSphere host not responding, vSphere host health red, vSphere
 host left in maintenance, vSphere datastore almost full, vSphere
 datastore inaccessible, vSphere VM tools not running, vSphere red alarm,
-además de Device unreachable.
+además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta vSphere. Indica primero qué va mal (hosts sin respuesta,

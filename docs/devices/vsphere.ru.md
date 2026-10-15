@@ -55,9 +55,9 @@ REST API (`/api/vcenter/*`): у отдельного хоста ESXi нет REST
 Применяемые [встроенные правила](../alerting/rules.md#vmware-vsphere): vSphere
 host not responding, vSphere host health red, vSphere host left in
 maintenance, vSphere datastore almost full, vSphere datastore inaccessible,
-vSphere VM tools not running, vSphere red alarm, а также Device unreachable.
+vSphere VM tools not running, vSphere red alarm, а также Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками показывает то, что сохранил опрос; открытие страницы никогда не
 обращается к vSphere. Сначала она сообщает, что не так (хосты не отвечают, красные

@@ -14,9 +14,9 @@ tunnels, DHCP leases, the resolver, services, CARP and pending updates.
     pair and ran no OpenVPN or IPsec tunnel: those parts follow OPNsense's source
     code rather than an observed answer. Tell us what breaks.
 
-## The device page
+## The monitor page
 
-Beyond the generic charts, an OPNsense device shows three panels, read from what
+Beyond the generic charts, an OPNsense monitor shows three panels, read from what
 the probe stored — opening the page never queries the firewall itself:
 
 * **WAN and gateways** — the current public address of every interface that
@@ -103,7 +103,7 @@ WireGuard, OpenVPN, IPsec, Unbound and Kea are plugins. A firewall that does not
 have one answers `404`, which is neither a collection error nor an
 authentication error: one metric fewer, and nothing in the interface.
 
-Built-in rules that apply: Device unreachable, Internet gateway down, Gateway
+Built-in rules that apply: Monitor unreachable, Internet gateway down, Gateway
 losing packets, Gateway slow, Firewall state table filling up, Firewall network
 buffers exhausted, VPN tunnel down, Firewall resolver stopped, Firewall core
 service stopped, Firewall too hot, Firewall left in CARP maintenance mode,

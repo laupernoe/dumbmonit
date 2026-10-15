@@ -46,10 +46,10 @@ A [regra incorporada](../alerting/rules.md#sophos-firewall) que se aplica:
 - **Sophos interface without link**: uma interface ligada e associada a uma
   zona está sem ligação há cinco minutos (Advisory).
 
-Para contadores de tráfego, adicione também a firewall como um [dispositivo
+Para contadores de tráfego, adicione também a firewall como um [monitor
 SNMP](snmp.md): o SFOS responde à MIB de interface padrão.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Firewall diz se cada interface numa zona tem a sua ligação, depois
 lista essas interfaces e as ligações IPsec com a sua ativação configurada,

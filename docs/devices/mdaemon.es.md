@@ -37,21 +37,21 @@ Todas las métricas tienen el prefijo `dumbmonit_mdaemon_`.
 **Un fallo parcial sigue siendo una comprobación exitosa.** Un servicio
 detenido da `service_up 0` para ese servicio y los demás se siguen
 midiendo. Solo cuando ningún servicio ni ninguna API responde en
-absoluto, el dispositivo es *inaccesible*.
+absoluto, el monitor es *inaccesible*.
 
 **Una cuenta rechazada es un error de configuración, no una caída.** Una
 contraseña incorrecta, una dirección que la API XML no permite, o un
-puerto incorrecto se muestra en la página del dispositivo con el motivo
+puerto incorrecto se muestra en la página del monitor con el motivo
 y no se notifica.
 
-**Las colas vienen del agente, no de este dispositivo.** MDaemon publica
+**Las colas vienen del agente, no de este monitor.** MDaemon publica
 los tamaños de sus colas (entrante, local, remota, reintento, mala,
 retención, cuarentena), sus recuentos de sesión, sus estadísticas de
 mensajes y su tiempo de actividad como contadores de rendimiento de
 Windows, en el objeto llamado MDaemon, y en su propio Queue and
 Statistics Manager. Ninguna de la documentación publicada de MDaemon
 describe una llamada de API XML que los devuelva, así que este
-dispositivo no inventa una: el [agente](agent.md), instalado en el
+monitor no inventa una: el [agente](agent.md), instalado en el
 servidor MDaemon, lee los contadores de rendimiento en su lugar.
 Consulta [Colas de correo a través del agente](#mail-queues-through-the-agent).
 La licencia y el espacio en disco del almacén de correo no se exponen a
@@ -62,12 +62,12 @@ el propio servicio de Windows.
 
 Las [reglas integradas](../alerting/rules.md#mdaemon-and-securitygateway)
 que se aplican: MDaemon mail service down, MDaemon XML API not
-answering, además de Device unreachable; con el agente, MDaemon mail
+answering, además de Monitor unreachable; con el agente, MDaemon mail
 queue growing, MDaemon Bad queue not empty y MDaemon Retry queue high.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Un dispositivo MDaemon muestra un panel **Mail services** sobre las
+Un monitor MDaemon muestra un panel **Mail services** sobre las
 gráficas, leído de la última medición guardada: abrir la página nunca se
 conecta al servidor. Lista cada servicio vigilado con su puerto, una
 palabra y un color (Answering, Down), y su tiempo de respuesta; luego la
@@ -91,15 +91,15 @@ agente.
    activado o desactivado, define `mdaemon: true` o `mdaemon: false` en
    `agent.yaml`.
 2. Las colas aparecen en la página del agente. Para mostrarlas también
-   en este dispositivo MDaemon, DumbMonit busca el agente en la misma
-   máquina: el agente definido como padre de este dispositivo, o el
+   en este monitor MDaemon, DumbMonit busca el agente en la misma
+   máquina: el agente definido como padre de este monitor, o el
    agente relay que lo sondea, o el agente cuyo nombre de host coincide
-   con la dirección de este dispositivo (`mail` para
-   `mail.example.com`), o, cuando hay un dispositivo MDaemon y un agente
+   con la dirección de este monitor (`mail` para
+   `mail.example.com`), o, cuando hay un monitor MDaemon y un agente
    reportando los contadores de MDaemon, ese agente. Si ninguno
-   coincide, edita este dispositivo y elige el agente como su
+   coincide, edita este monitor y elige el agente como su
    **Parent device**: el agente y MDaemon comparten la máquina, así que
-   cuando el agente se queda en silencio las alertas de este dispositivo
+   cuando el agente se queda en silencio las alertas de este monitor
    también se retienen.
 
 Las series pertenecen al agente, con su etiqueta `target`. Todas tienen
@@ -177,7 +177,7 @@ no incluye, lístalo bajo `perf_counters` en `agent.yaml` (consulta
     Administration a menudo usa un certificado autofirmado: si la
     conexión se rechaza por ese motivo, marca «Accept an unverifiable
     certificate» en las opciones. Los tamaños de cola de correo no los
-    lee este dispositivo: MDaemon solo los publica como contadores de
+    lee este monitor: MDaemon solo los publica como contadores de
     rendimiento de Windows, que el agente de DumbMonit lee cuando está
     instalado en el servidor de correo.
 
@@ -210,4 +210,4 @@ Dirección: el nombre de host o IP del servidor, por ejemplo
 
 Los puertos TLS (`smtps`, `pop3s`, `imaps`, `remote_admin_https`) solo se
 comprueban por conexión. Para vigilar la caducidad de sus certificados,
-añade un dispositivo [certificado TLS](services.md#tls) para cada uno.
+añade un monitor [certificado TLS](services.md#tls) para cada uno.

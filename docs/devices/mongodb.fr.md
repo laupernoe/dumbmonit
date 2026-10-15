@@ -49,10 +49,10 @@ compteurs : graphiques et règles les transforment en débits.
 Les [règles intégrées](../alerting/rules.md#databases-message-broker-and-security-engine)
 qui s'appliquent : replica set MongoDB sans primaire, membre MongoDB
 inaccessible, retard de réplication MongoDB, connexions MongoDB proches de la
-limite, cache MongoDB sous pression, erreurs internes MongoDB, plus Appareil
+limite, cache MongoDB sous pression, erreurs internes MongoDB, plus Surveillance
 inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais MongoDB. Il dit ce qui ne va pas en une phrase

@@ -33,7 +33,7 @@ erscheinen nur, wenn "Read the NGINX Plus API" angekreuzt ist und NGINX
 Plus antwortet; der Open-Source-Build hat kein "Upstream", über das es
 allein mit `stub_status` berichten könnte.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Nginx nie ab. Es zeigt aktive, lesende, schreibende

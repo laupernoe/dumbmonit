@@ -32,9 +32,9 @@ Traefik自己的路由器和服务（`@internal`）被排除在外。路由器�
 
 一个Traefik不再列出的路由器、服务或服务器（Docker提供者会立即删除已停止容器的路由器）只是不再被报告：DumbMonit不为其保留"健康"值，其序列结束。图表和规则可能在指标存储删除陈旧序列的几分钟内仍然显示其最后值。Traefik对这样的路由返回404，没有规则报告：只有被列出且禁用的路由器才会被报告。
 
-适用的[内置规则](../alerting/rules.md#reverse-proxies-and-domains)：Traefik路由器禁用、Traefik后端服务器宕机、Traefik服务无服务器、Traefik证书未获取、代理证书未续期、反向代理返回5xx，加上设备不可达。
+适用的[内置规则](../alerting/rules.md#reverse-proxies-and-domains)：Traefik路由器禁用、Traefik后端服务器宕机、Traefik服务无服务器、Traefik证书未获取、代理证书未续期、反向代理返回5xx，加上监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探针存储的内容；打开页面从不查询Traefik。它用一句话说明有什么问题（禁用的路由器和Traefik的原因、无服务器的服务、未获取任何内容的解析器、即将过期的证书、5xx的高份额），然后是路由器、服务、请求速率和5xx份额，然后是每个服务的正常服务器、最即将过期的证书优先，以及24小时内每个路由器的5xx响应。
 

@@ -67,11 +67,11 @@ Critical ou Warning.
 As [regras incorporadas](../alerting/rules.md#server-hardware-redfish) que
 se aplicam: Server fan failed, Server temperature above critical, Power
 supply redundancy lost, Power supply failed, Drive failure predicted,
-Server health critical, mais Device unreachable.
+Server health critical, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Um dispositivo Redfish recebe o seu próprio painel na sua página, acima
+Um monitor Redfish recebe o seu próprio painel na sua página, acima
 dos gráficos, lido do que a última verificação guardou: abrir a página
 nunca consulta o controlador. Responde, por esta ordem:
 
@@ -133,7 +133,7 @@ desconhecido lê «—», nunca 0.
 5. O DumbMonit só lê: ventoinhas, temperaturas, tensões, fontes de alimentação, discos, resumos de memória e processador, e quantas entradas de registo há por severidade. Nunca liga ou desliga o servidor, nunca altera uma definição e nunca lê o texto dos registos.
 
 !!! warning
-    Não reutilize a conta de fábrica do controlador: pode desligar o servidor, montar media e reprogramar o firmware. Os controladores de gestão também vêm com um certificado autoassinado: se a ligação for recusada por esse motivo, marque «Accept an unverifiable certificate» nas opções. Um controlador responde lentamente e uma leitura completa demora vários pedidos: se o dispositivo reportar tempos limite, aumente DUMBMONIT_PROBE_TIMEOUT_SECS no servidor.
+    Não reutilize a conta de fábrica do controlador: pode desligar o servidor, montar media e reprogramar o firmware. Os controladores de gestão também vêm com um certificado autoassinado: se a ligação for recusada por esse motivo, marque «Accept an unverifiable certificate» nas opções. Um controlador responde lentamente e uma leitura completa demora vários pedidos: se o monitor reportar tempos limite, aumente DUMBMONIT_PROBE_TIMEOUT_SECS no servidor.
 
 Os nomes de menu acima são os do firmware atual; gerações mais antigas
 movem-nos mas mantêm as mesmas funções. No Supermicro, o tipo de conta

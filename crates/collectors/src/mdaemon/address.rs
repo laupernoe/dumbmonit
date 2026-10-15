@@ -39,7 +39,7 @@ pub fn parse_host(address: &str) -> Result<Host, ProbeError> {
     }
     let rest = rest.split('/').next().unwrap_or_default();
     if rest.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if let Some(inner) = rest.strip_prefix('[') {
         let (name, after) = inner
