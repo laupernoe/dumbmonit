@@ -33,6 +33,11 @@ pub struct Stats {
     scheduler_cycles: AtomicU64,
     scheduler_cycle_micros: AtomicU64,
     scheduler_backlog: AtomicU64,
+    /// Fin du dernier tour du planificateur, en millisecondes depuis `started`
+    /// (plus un, pour que zéro veuille dire « jamais »).
+    scheduler_last_cycle_ms: AtomicU64,
+    /// Relances du VictoriaMetrics embarqué depuis le démarrage.
+    vm_restarts: AtomicU64,
     probes: Mutex<BTreeMap<String, Counts>>,
     samples_written: AtomicU64,
     sample_writes_failed: AtomicU64,
@@ -66,6 +71,8 @@ impl Stats {
             scheduler_cycles: AtomicU64::new(0),
             scheduler_cycle_micros: AtomicU64::new(0),
             scheduler_backlog: AtomicU64::new(0),
+            scheduler_last_cycle_ms: AtomicU64::new(0),
+            vm_restarts: AtomicU64::new(0),
             probes: Mutex::new(BTreeMap::new()),
             samples_written: AtomicU64::new(0),
             sample_writes_failed: AtomicU64::new(0),
@@ -85,6 +92,29 @@ impl Stats {
         self.scheduler_cycles.fetch_add(1, Ordering::Relaxed);
         self.scheduler_cycle_micros.store(elapsed.as_micros() as u64, Ordering::Relaxed);
         self.scheduler_backlog.store(backlog as u64, Ordering::Relaxed);
+        let since_start = self.started.elapsed().as_millis() as u64;
+        self.scheduler_last_cycle_ms.store(since_start + 1, Ordering::Relaxed);
+    }
+
+    /// Temps écoulé depuis la fin du dernier tour du planificateur — depuis le
+    /// démarrage s'il n'en a encore fini aucun. La boucle tourne chaque seconde :
+    /// une valeur qui grimpe dit qu'elle est bloquée ou morte.
+    pub fn scheduler_idle(&self) -> Duration {
+        let uptime = self.started.elapsed();
+        match self.scheduler_last_cycle_ms.load(Ordering::Relaxed) {
+            0 => uptime,
+            last => uptime.saturating_sub(Duration::from_millis(last - 1)),
+        }
+    }
+
+    /// Le superviseur vient de relancer le VictoriaMetrics embarqué.
+    pub fn vm_restarted(&self) {
+        self.vm_restarts.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Relances du VictoriaMetrics embarqué depuis le démarrage du serveur.
+    pub fn vm_restarts(&self) -> u64 {
+        self.vm_restarts.load(Ordering::Relaxed)
     }
 
     /// Une interrogation terminée, réussie ou non, pour un type d'équipement.
@@ -232,6 +262,10 @@ mod tests {
         stats.samples_dropped(42);
         stats.alerting_cycle(Duration::from_millis(40), 9, 1);
         stats.notification("email", false);
+
+        assert!(stats.scheduler_idle() < Duration::from_secs(5), "un tour vient de finir");
+        stats.vm_restarted();
+        assert_eq!(stats.vm_restarts(), 1);
 
         let snapshot = stats.snapshot();
         assert_eq!(snapshot.scheduler_cycles, 1);

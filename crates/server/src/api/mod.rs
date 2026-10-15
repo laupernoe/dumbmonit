@@ -32,6 +32,7 @@ mod redfish;
 mod relay;
 mod reports;
 mod security;
+mod self_monitoring;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod synology;
@@ -174,6 +175,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
+        .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
         .merge(packs::routes())
         // Changements d'un site web : pages, diff et captures (`webchange.rs`).

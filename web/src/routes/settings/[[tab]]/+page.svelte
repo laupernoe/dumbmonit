@@ -3,7 +3,7 @@
 	 * Settings, in six tabs, each its own URL: My account (language, theme,
 	 * password, two-factor, push), Team & access (users, single sign-on),
 	 * Monitoring (agents, packs), Notifications & reports, Wall display and
-	 * System (backup, API & assistants, about). A rail on wide screens, a strip
+	 * System (backup, DumbMonit itself, API & assistants, about). A rail on wide screens, a strip
 	 * of chips on narrow ones, and a search box over the section names.
 	 *
 	 * Sections keep their old anchor ids: `/settings#agents` is sent to
@@ -36,6 +36,7 @@
 	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '#lib/components/settings/BackupSection.svelte';
+	import SelfMonitoringSection from '#lib/components/settings/SelfMonitoringSection.svelte';
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
@@ -68,7 +69,7 @@
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection],
 		notifications: [NotifyLinksSection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection] : [])],
-		system: [BackupSection, AssistantSection, AboutSection]
+		system: [BackupSection, SelfMonitoringSection, AssistantSection, AboutSection]
 	});
 
 	// An unknown tab (or one this account cannot see) lands on the first one.

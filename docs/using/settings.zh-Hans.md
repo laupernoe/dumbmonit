@@ -89,6 +89,16 @@
 
 这里的所有内容仅限管理员。参见[备份与恢复](../install/backup.md)。
 
+## DumbMonit 自身 {#self-monitoring}
+
+引擎当前的状态（调度器、SQLite 数据库、指标数据库），以及数据卷的可用空间、数据库大小，
+还有内置 VictoriaMetrics 的重启次数。出现问题时，内置规则已经会提醒您。
+
+下方是**外发心跳**：您提供的 URL（Healthchecks.io、Uptime Kuma 推送监控、Better Stack……），
+DumbMonit 仅在自身正常时定期调用，这样当这台主机沉默时，外部就会有人发现。**测试**会立即发送一次调用；
+**报告故障**会调用故障 URL 而不是保持沉默。URL 加密保存，不会再次显示，只显示其主机名。
+只有管理员可以修改。参见 [Watching DumbMonit itself](../install/self-monitoring.md)。
+
 ## 报告 {#reports}
 
 面向团队的定期可用性邮件：选择每周、每日或每月，指定日期、时间和时区、收件人及邮件渠道，然后**发送预览**查看结果。仅限管理员。参见[邮件报告](reports.md)。

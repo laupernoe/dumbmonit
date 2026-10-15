@@ -237,6 +237,21 @@ aggiornamento.
 Tutto qui è riservato agli amministratori. Vedi
 [Backup e ripristino](../install/backup.md).
 
+## DumbMonit stesso {#self-monitoring}
+
+Lo stato del motore in questo momento — pianificatore, database SQLite,
+database delle metriche — con lo spazio libero del volume dei dati, la
+dimensione del database e, per il VictoriaMetrics integrato, quante volte è
+stato riavviato. Regole integrate ti avvisano già quando qualcosa va storto.
+
+Sotto, l'**heartbeat in uscita**: un tuo URL (Healthchecks.io, un monitor push
+di Uptime Kuma, Better Stack…) che DumbMonit chiama a intervalli regolari, solo
+finché sta bene, perché qualcuno all'esterno si accorga quando questo host
+tace. **Prova** invia subito una chiamata; **Segnala i guasti** chiama l'URL di
+errore invece di tacere. L'URL viene salvato cifrato e non viene più mostrato,
+solo il suo host. Solo un amministratore può modificarlo. Vedi
+[Watching DumbMonit itself](../install/self-monitoring.md).
+
 ## Report
 
 Email periodiche di disponibilità per il team: scegli settimanale, giornaliero o

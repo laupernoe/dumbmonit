@@ -220,6 +220,21 @@ now** writes one immediately — the thing to do before an upgrade.
 
 Everything here is admin-only. See [Backup and restore](../install/backup.md).
 
+## DumbMonit itself {#self-monitoring}
+
+The state of the engine right now — scheduler, SQLite database, metrics
+database — with the free space on the data volume, the database size and, for
+the embedded VictoriaMetrics, how many times it was restarted. Built-in rules
+already warn you when any of these goes wrong.
+
+Below, the **outgoing heartbeat**: a URL of yours (Healthchecks.io, an Uptime
+Kuma push monitor, Better Stack…) that DumbMonit calls at a regular interval,
+only while it is healthy, so that someone outside notices when this host goes
+quiet. **Test** sends one call right away; **Signal failures** calls the
+failure URL instead of staying silent. The URL is stored encrypted and never
+shown again, only its host. Changing it is admin-only. See
+[Watching DumbMonit itself](../install/self-monitoring.md).
+
 ## Reports
 
 Periodic availability emails for the team: pick weekly, daily or monthly, the

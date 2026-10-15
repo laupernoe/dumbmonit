@@ -213,6 +213,21 @@ sofort eine — das, was man vor einem Upgrade tun sollte.
 
 Alles hier ist Admins vorbehalten. Siehe [Sicherung und Wiederherstellung](../install/backup.md).
 
+## DumbMonit selbst {#self-monitoring}
+
+Der aktuelle Zustand der Engine — Planer, SQLite-Datenbank, Metrikdatenbank —
+mit dem freien Platz auf dem Datenvolume, der Datenbankgröße und, beim
+eingebetteten VictoriaMetrics, der Zahl seiner Neustarts. Eingebaute Regeln
+warnen Sie bereits, wenn etwas davon schiefgeht.
+
+Darunter der **ausgehende Heartbeat**: eine URL von Ihnen (Healthchecks.io, ein
+Push-Monitor von Uptime Kuma, Better Stack…), die DumbMonit regelmäßig aufruft,
+nur solange es gesund ist, damit jemand von außen merkt, wenn dieser Host
+verstummt. **Testen** sendet sofort einen Aufruf; **Ausfälle melden** ruft die
+Fehler-URL auf, statt zu schweigen. Die URL wird verschlüsselt gespeichert und
+nie wieder angezeigt, nur ihr Host. Ändern dürfen nur Administratoren. Siehe
+[Watching DumbMonit itself](../install/self-monitoring.md).
+
 ## Berichte {#reports}
 
 Periodische Verfügbarkeits-E-Mails für das Team: Wählen Sie wöchentlich, täglich oder monatlich,
