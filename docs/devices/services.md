@@ -12,6 +12,36 @@ and "the database still accepts my account and answers a query". NTP sits
 between the two: a single request and reply, in NTP's own protocol, enough to
 read the server's clock without a session.
 
+## Coming from Uptime Kuma
+
+**Monitors > Add a monitor > Import from Uptime Kuma** (administrators) reads the
+backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
+at most 4 MB). Uptime Kuma 2.x no longer has a backup export, so there is no
+file to import from it. Nothing is created before you have seen the preview:
+what will be created, and what is skipped with the reason.
+
+| Uptime Kuma | DumbMonit |
+|---|---|
+| HTTP(s), HTTP(s) - Keyword, HTTP(s) - Json Query | [HTTP](#http): accepted status codes, method, keyword (and its inverse), JSON path and expected value, redirects, timeout, ignore TLS errors |
+| Ping | [Ping](#ping) |
+| TCP Port | [TCP](#tcp), as `host:port` |
+| DNS | [DNS](#dns): record type and resolver |
+| Push | [Heartbeat](push.md), expected interval = the monitor's interval. It gets a **new** push URL: update the job that calls it |
+| Group | A folder (nested groups become `Group/Subgroup`) |
+| Tags | Device tags: `name=value`, or `name=true` for a tag without a value |
+| Paused | Created disabled |
+
+The name and interval are kept (10 s minimum). Everything else is skipped and
+listed: Docker and the other types without an equivalent, and monitors in
+upside-down mode. A device already monitored (same type and address) is skipped
+too, so the same file can be imported twice safely.
+
+**Not imported:** notifications (set up your channels in
+[Notifications](../notifications.md); the preview tells you how many the file
+held), and credentials, custom headers and request bodies, which are never
+read into DumbMonit. If a monitored site needs a login or a header, add it on the
+device afterwards.
+
 ## How service state works
 
 A service can answer and still be down: a `500`, a missing keyword, an expired

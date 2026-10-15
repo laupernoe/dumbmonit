@@ -12,6 +12,7 @@ mod discovery;
 mod error;
 mod health;
 mod ingest;
+mod kuma_import;
 mod mcp;
 mod metrics;
 mod music;
@@ -112,6 +113,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets/test", post(targets::test_connection))
         .route("/targets/reorder", post(targets::reorder))
         .route("/targets/import", post(targets_import::import))
+        .route(
+            "/targets/import/kuma",
+            post(kuma_import::import).layer(DefaultBodyLimit::max(kuma_import::MAX_BODY_BYTES)),
+        )
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))

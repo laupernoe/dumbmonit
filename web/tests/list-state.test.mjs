@@ -3,11 +3,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+	freeTags,
+	hasAllTags,
 	parseListQuery,
 	runBulk,
 	serializeListQuery,
 	sortTargets,
-	splitDisabled
+	splitDisabled,
+	tagCounts
 } from '../src/lib/components/devices/listState.ts';
 
 const t = (id, name, extra = {}) => ({
@@ -26,14 +29,51 @@ test('a pristine state serializes to nothing', () => {
 });
 
 test('query round-trips and ignores junk values', () => {
-	const q = parseListQuery(new URLSearchParams('q=nas&state=attention&kind=snmp&sort=name&dir=desc&view=tiles'));
-	assert.deepEqual(q, { search: 'nas', segment: 'attention', kind: 'snmp', sort: 'name', dir: 'desc', view: 'tiles' });
-	assert.equal(serializeListQuery(q), '?q=nas&state=attention&kind=snmp&sort=name&dir=desc&view=tiles');
+	const q = parseListQuery(
+		new URLSearchParams('q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&sort=name&dir=desc&view=tiles')
+	);
+	assert.deepEqual(q, {
+		search: 'nas',
+		segment: 'attention',
+		kind: 'snmp',
+		tags: ['env=prod', 'team=a b'],
+		sort: 'name',
+		dir: 'desc',
+		view: 'tiles'
+	});
+	assert.equal(
+		serializeListQuery(q),
+		'?q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&sort=name&dir=desc&view=tiles'
+	);
 	const junk = parseListQuery(new URLSearchParams('state=x&sort=y&view=z&dir=up'));
 	assert.equal(junk.segment, 'all');
 	assert.equal(junk.sort, 'default');
 	assert.equal(junk.view, null);
 	assert.equal(junk.dir, 'asc');
+	assert.deepEqual(parseListQuery(new URLSearchParams('tag=nokey&tag=a%3Db')).tags, ['a=b']);
+});
+
+test('options of the device type are not tags', () => {
+	const tags = { keyword: 'ok', env: 'prod', empty: '' };
+	const keys = new Set(['keyword']);
+	assert.deepEqual(freeTags(tags, keys), ['env=prod']);
+	assert.equal(hasAllTags(tags, ['env=prod'], keys), true);
+	assert.equal(hasAllTags(tags, ['keyword=ok'], keys), false);
+	assert.equal(hasAllTags(tags, ['env=prod', 'team=x'], new Set()), false);
+	assert.equal(hasAllTags(tags, [], new Set()), true);
+});
+
+test('tag counts are sorted by use, then name', () => {
+	const devices = [
+		{ kind: 'http', tags: { env: 'prod' } },
+		{ kind: 'http', tags: { env: 'prod', team: 'web' } },
+		{ kind: 'ping', tags: { env: 'dev' } }
+	];
+	assert.deepEqual(tagCounts(devices, () => new Set()), [
+		['env=prod', 2],
+		['env=dev', 1],
+		['team=web', 1]
+	]);
 });
 
 test('direction is only written for an explicit sort', () => {

@@ -23,6 +23,7 @@
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
+	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
@@ -270,7 +271,7 @@
 
 <PageHeader title={m.deviceform_new_add()} {description}>
 	{#snippet actions()}
-		{#if view === 'picker' && auth.isAdmin}<ImportWebsites />{/if}
+		{#if view === 'picker' && auth.isAdmin}<ImportKuma /><ImportWebsites />{/if}
 	{/snippet}
 </PageHeader>
 
