@@ -48,6 +48,9 @@ All notable changes to this project are documented here. The format follows
   choices (website, ping, machine with the agent, SNMP device, hypervisor, NAS,
   network scan); every other type is grouped by category and folded. The agent
   appears once.
+- **Status page editor: compact scene choice.** The chosen scenes are shown as
+  thumbnails with a "Change" button that opens a searchable, paged grid, and
+  the list of services to add has a search box.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
