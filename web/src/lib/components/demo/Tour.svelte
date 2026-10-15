@@ -57,7 +57,7 @@
 		{
 			title: m.demo_tour_s4_title(),
 			body: m.demo_tour_s4_body(),
-			href: '/alerts#notifications'
+			href: '/settings/notifications#notifications-channels'
 		},
 		{
 			title: m.demo_tour_s5_title(),
@@ -72,8 +72,8 @@
 		{
 			title: m.demo_tour_s7_title(),
 			body: m.demo_tour_s7_body(),
-			href: '/status',
-			anchor: 'nav-status'
+			href: '/settings/status',
+			anchor: 'nav-settings'
 		},
 		{
 			title: m.demo_tour_s8_title(),

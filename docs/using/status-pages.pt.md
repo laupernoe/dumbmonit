@@ -1,6 +1,6 @@
 # Páginas de estado {#status-pages}
 
-![A página Status: as suas páginas, e os anúncios sob elas](../assets/screenshots/status-light.png){ loading=lazy }
+![A página Status pages: as suas páginas, e os anúncios sob elas](../assets/screenshots/status-light.png){ loading=lazy }
 
 Uma página de estado é a face pública da sua monitorização: uma página
 que qualquer um pode abrir — sem iniciar sessão, sem cookie — que diz
@@ -17,9 +17,9 @@ servidor — nem na página, nem num emblema, nem num email.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Status** na barra superior → **New page**. Essa página lista as suas
+**Settings → Status pages** → **New page**. Essa página lista as suas
 páginas de estado (abrir, editar, eliminar) com os anúncios sob elas;
-o editor abre na sua própria rota (`/status/new`, `/status/<id>`). A
+o editor abre na sua própria rota (`/settings/status/new`, `/settings/status/<id>`). A
 representação pública está em `/s/<address>`.
 
 | Campo | O que faz |
@@ -128,7 +128,7 @@ silenciosos.
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Na página **Status**, sob a lista de páginas, **Incidents and
+Em **Settings → Status pages**, sob a lista de páginas, **Incidents and
 maintenance** → **New announcement** (também ++ctrl+k++ → *Announce an
 incident*).
 

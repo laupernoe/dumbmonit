@@ -117,8 +117,8 @@ Qualquer que seja o tipo, o formulário tem:
   de imediato: dispositivo inacessível, CPU saturada, disco quase
   cheio, e assim por diante. Nada para configurar.
 - Para ser notificado, adicione um
-  [canal de notificação](../notifications.md) em **Alerts →
-  Notifications**. As regras incorporadas notificam todo canal
+  [canal de notificação](../notifications.md) em **Settings →
+  Notifications & reports**. As regras incorporadas notificam todo canal
   ativado.
 
 !!! tip "Sem dados depois de um minuto?"

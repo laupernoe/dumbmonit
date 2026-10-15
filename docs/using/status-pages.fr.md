@@ -16,10 +16,10 @@ serveur — ni dans la page, ni dans un badge, ni dans un email.
 
 ## 1. Créer une page
 
-**État** dans la barre du haut → **Nouvelle page**. Cette page liste vos
+**Réglages → Pages de statut** → **Nouvelle page**. Cette page liste vos
 pages d'état (ouvrir, modifier, supprimer) avec les annonces en
-dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
-`/status/<id>`). Le rendu public est à `/s/<adresse>`.
+dessous ; l'éditeur s'ouvre sur sa propre route (`/settings/status/new`,
+`/settings/status/<id>`). Le rendu public est à `/s/<adresse>`.
 
 | Champ | Ce qu'il fait |
 | --- | --- |
@@ -131,7 +131,7 @@ l'indisponibilité d'un jour est ses créneaux silencieux.
 
 ## 3. Annoncer des incidents et des maintenances
 
-Sur la page **État**, sous la liste des pages, **Incidents et
+Sur **Réglages → Pages de statut**, sous la liste des pages, **Incidents et
 maintenance** → **Nouvelle annonce** (aussi ++ctrl+k++ → *Annoncer un
 incident*).
 

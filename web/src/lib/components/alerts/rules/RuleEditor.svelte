@@ -288,7 +288,7 @@
 			</p>
 		{:else if channels.length === 0}
 			<p class="text-[0.8125rem] text-ink-2">
-				{noChannelParts[0]}<a href="/alerts#notifications" class="text-ink hover:underline">{noChannelParts[1]}</a>{noChannelParts[2]}
+				{noChannelParts[0]}<a href="/settings/notifications#notifications-channels" class="text-ink hover:underline">{noChannelParts[1]}</a>{noChannelParts[2]}
 			</p>
 		{:else}
 			<div class="flex flex-wrap gap-x-4 gap-y-1.5">

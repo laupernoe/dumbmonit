@@ -8,13 +8,13 @@ aufzutauchen.
 
 ## Wo
 
-- **Alerts → Scheduled maintenance**: die Liste der Fenster, mit *Active
+- **Alerts → Maintenance**: die Liste der Fenster, mit *Active
   now* oder *Scheduled*, und das Formular zum Anlegen eines neuen.
 - **Gerätedialog → Silence 1 h / Silence until…**: ein schnelles,
   einmaliges Fenster für das gesamte Gerät.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, auf einem Alarm in der Liste *Needs you* oder einer Geräteseite,
+**Snooze**, auf einem Alarm im Tab *Now* oder einer Geräteseite,
 ist eine kleinere Variante desselben Mechanismus: ein einmaliges Fenster,
 das genau auf die Labels dieses einen Alarms begrenzt ist statt auf das
 ganze Gerät, sodass eine Schwesterregel weiter spricht. Es taucht hier

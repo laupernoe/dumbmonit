@@ -60,7 +60,7 @@ Dans Safari sans installation, la section indique **Installer d'abord**.
 
 ## Choisir quelles alertes arrivent
 
-Dans **Alertes → Notifications**, ajoutez un canal de type **Web Push**. Sans
+Dans **Réglages → Notifications et rapports**, ajoutez un canal de type **Web Push**. Sans
 réglage, chaque appareil abonné de chaque compte le reçoit ; listez des noms
 de compte sous **Comptes** pour ne cibler que certaines personnes. La
 politique habituelle du canal s'applique (gravité minimale, heures calmes,

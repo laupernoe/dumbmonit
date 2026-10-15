@@ -8,15 +8,14 @@ the theme, and the server's health. One page, one section per topic, with a rail
 wide screen and a strip of chips on a phone. Each section is linkable
 (`/settings#agents`).
 
-Two things used to live here and moved out, because they are not
-administration:
+Two sections hold the public and outgoing side of DumbMonit:
 
-| Looking for | Now under | Old link |
+| Looking for | Where | Link |
 |---|---|---|
-| Notification channels, quiet hours, notification policy | **Alerts → Notifications** ([Alerts page](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Status pages and announcements | **Status** ([Status pages](status-pages.md)) | `/settings#status` |
+| Notification channels, quiet hours, notification policy, reports | **Settings → Notifications & reports** ([Notification channels](../notifications.md)) | `/settings/notifications` |
+| Status pages and announcements | **Settings → Status pages** ([Status pages](status-pages.md)) | `/settings/status` |
 
-The old links still work: they forward to the new place.
+The old links (`/alerts#notifications`, `/status`) forward to the new place.
 
 ## Account & security
 
@@ -66,7 +65,7 @@ address. It keeps the last 5 000 entries.
 Native notifications on this phone or computer, even with DumbMonit closed:
 **Enable on this device**, then **Send a test**. Every account manages its own
 devices here (viewers too); which alerts reach them is set by a **Web Push**
-channel in Alerts → Notifications. The **i** button sums up the requirements:
+channel in Settings → Notifications & reports. The **i** button sums up the requirements:
 HTTPS (or localhost), Home Screen installation on iPhone and iPad, and the
 push service domains the server must reach. Full guide:
 [Push notifications (PWA)](push-notifications.md).
@@ -237,7 +236,7 @@ shown again, only its host. Changing it is admin-only. See
 
 ## Reports
 
-Periodic availability emails for the team: pick weekly, daily or monthly, the
+In **Settings → Notifications & reports**, below the policy: periodic availability emails for the team. Pick weekly, daily or monthly, the
 day, hour and timezone, the recipients and the email channel, then **Send a
 preview** to see the result. Admin-only. See [Email reports](reports.md).
 

@@ -1,19 +1,21 @@
 <script lang="ts">
 	/**
-	 * Settings, in six tabs, each its own URL: My account (language, theme,
+	 * Settings, in seven tabs, each its own URL: My account (language, theme,
 	 * password, two-factor, push), Team & access (users, single sign-on),
-	 * Monitoring (agents, packs), Notifications & reports, Wall display and
-	 * System (backup, DumbMonit itself, API & assistants, about). A rail on wide screens, a strip
-	 * of chips on narrow ones, and a search box over the section names.
+	 * Monitoring (agents, packs), Notifications (channels, policy, reports),
+	 * Status pages (public pages and their announcements), Wall display and
+	 * System (backup, DumbMonit itself, API & assistants, about). A rail on
+	 * wide screens, a strip of chips on narrow ones, and a search box over the
+	 * section names.
 	 *
 	 * Sections keep their old anchor ids: `/settings#agents` is sent to
-	 * `/settings/monitoring#agents`. Notification channels and status pages
-	 * moved out of Settings in September 2026; their old anchors still forward.
+	 * `/settings/monitoring#agents`. The old `/alerts#notifications` and
+	 * `/status` links forward here too.
 	 */
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
-	import { BellRing, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
+	import { BellRing, Globe, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { PageHeader } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -44,7 +46,9 @@
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
-	import NotifyLinksSection from '#lib/components/settings/NotifyLinksSection.svelte';
+	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
+	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
+	import StatusPagesSection from '#lib/components/settings/StatusPagesSection.svelte';
 
 	// Accounts only exist once the instance is protected; viewers never see that tab.
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
@@ -54,6 +58,7 @@
 		team: Users,
 		monitoring: Server,
 		notifications: BellRing,
+		status: Globe,
 		wall: Tv,
 		system: HardDrive
 	};
@@ -67,7 +72,8 @@
 		account: [AppearanceSection, SecuritySection, PushSection],
 		team: [UsersSection, SsoSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection],
-		notifications: [NotifyLinksSection, ...(auth.isAdmin ? [ReportsSection] : [])],
+		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
+		status: [StatusPagesSection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection] : [])],
 		system: [BackupSection, SelfMonitoringSection, AssistantSection, AboutSection]
 	});

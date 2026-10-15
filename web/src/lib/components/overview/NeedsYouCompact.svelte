@@ -13,11 +13,12 @@
 	 * `rows` caps the visible lines; the Overview computes it from the height
 	 * it has (desktop) or passes a fixed number (phones).
 	 */
-	import type { Alert } from '#lib/api/index.js';
 	import { isAckedRow, isSnoozedRow, type Sky, type SkyRow } from './sky.js';
 	import { EmptyState, Plate } from '#lib/ui/index.js';
 	import { formatRelative, formatDateTime } from '#lib/format.js';
 	import { alertDetail, TONE_BAR } from '#lib/components/alerts/helpers';
+	// Several series of one rule on one device are one problem, as on the Alerts page.
+	import { fold, type Folded } from '#lib/components/alerts/list';
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
@@ -30,30 +31,6 @@
 		fill?: boolean;
 	}
 	let { sky, checkedLabel, rows, fill = false }: Props = $props();
-
-	/** Several series of one rule on one device are one problem (see NeedsYouList). */
-	interface Folded {
-		row: SkyRow;
-		extra: Alert[];
-	}
-	function fold(input: SkyRow[]): Folded[] {
-		const out: Folded[] = [];
-		for (const row of input) {
-			const last = out[out.length - 1];
-			if (
-				row.kind === 'alert' &&
-				last?.row.kind === 'alert' &&
-				last.row.alert.target_id === row.alert.target_id &&
-				last.row.alert.rule_uid === row.alert.rule_uid &&
-				last.row.alert.effective_phase === row.alert.effective_phase
-			) {
-				last.extra.push(row.alert);
-				continue;
-			}
-			out.push({ row, extra: [] });
-		}
-		return out;
-	}
 
 	const active = $derived(fold(sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row))));
 	const snoozed = $derived(fold(sky.needsYou.filter((row) => isSnoozedRow(row) && !isAckedRow(row))).length);

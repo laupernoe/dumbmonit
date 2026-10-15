@@ -15,9 +15,9 @@ an email.
 
 ## 1. Create a page
 
-**Status** in the top bar → **New page**. That page lists your status pages
+**Settings → Status pages** → **New page**. That page lists your status pages
 (open, edit, delete) with the announcements under them; the editor opens on
-its own route (`/status/new`, `/status/<id>`). The public rendering is at
+its own route (`/settings/status/new`, `/settings/status/<id>`). The public rendering is at
 `/s/<address>`.
 
 | Field | What it does |
@@ -142,7 +142,7 @@ downtime is its silent slots.
 
 ## 3. Announce incidents and maintenance
 
-On the **Status** page, under the list of pages, **Incidents and maintenance**
+On **Settings → Status pages**, under the list of pages, **Incidents and maintenance**
 → **New announcement** (also ++ctrl+k++ → *Announce an incident*).
 
 - An **incident** has a title, an impact (**minor** shows the page as

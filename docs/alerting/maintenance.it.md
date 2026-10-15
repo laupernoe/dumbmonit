@@ -8,13 +8,13 @@ ore.
 
 ## Dove {#where}
 
-- **Alerts → Scheduled maintenance**: l'elenco delle finestre, con *Active
+- **Alerts → Maintenance**: l'elenco delle finestre, con *Active
   now* o *Scheduled*, e il modulo per aggiungerne una.
 - **Pagina del dispositivo → Silence 1 h / Silence until…**: una finestra
   puntuale rapida per l'intero dispositivo.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, su un avviso nell'elenco *Needs you* o sulla pagina di un
+**Snooze**, su un avviso nella scheda *Now* o sulla pagina di un
 dispositivo, è una versione più piccola dello stesso meccanismo: una
 finestra puntuale limitata alle etichette esatte di quell'unico avviso
 invece che all'intero dispositivo, così una regola gemella continua a

@@ -5,7 +5,7 @@ réglé. Ce qui fait la différence à l'usage quotidien, c'est ce qui garde le
 bruit bas : suppression par dépendance, groupement par hôte, fenêtres de
 maintenance, et une référence qui apprend avant de parler.
 
-![La page Alertes : ce qui a besoin de vous, les règles, la maintenance planifiée et l'historique](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Gravités {#severities}
 
@@ -129,7 +129,7 @@ de PBS.
 
 Les règles intégrées n'ont aucun canal attaché, ce qui signifie **chaque
 canal activé**. Une règle que vous modifiez peut nommer des canaux
-spécifiques. Les canaux se configurent dans Alertes → Notifications ; voir
+spécifiques. Les canaux se configurent dans Réglages → Notifications et rapports ; voir
 [Canaux de notification](../notifications.md).
 
 ## Notifications intelligentes
@@ -174,6 +174,6 @@ personne ne soit spammé. Le chemin complet d'une alerte, dans l'ordre :
 11. **Envoyer** — avec un lien « Ouvrir dans DumbMonit » par appareil
     quand une URL publique est connue.
 
-Les étapes 6 à 10 se configurent dans Alertes → Notifications → Politique
+Les étapes 6 à 10 se configurent dans Réglages → Notifications et rapports → Politique
 de notification (globale) et sur chaque canal (Options de livraison). Voir
 [Politique de notification](notifications.md).

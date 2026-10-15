@@ -136,7 +136,7 @@
 				<li><span class="font-semibold text-ink">{m.settings_push_help_ios_lead()}</span> {m.settings_push_help_ios_body()}</li>
 				<li><span class="font-semibold text-ink">{m.settings_push_help_desktop_lead()}</span> {m.settings_push_help_desktop_body()}</li>
 				<li><span class="font-semibold text-ink">{m.settings_push_help_domains_lead()}</span> {m.settings_push_help_domains_body()}</li>
-				<li><a href="/alerts#notifications" class="font-semibold text-ink hover:underline">{m.settings_push_help_channel()}</a></li>
+				<li><a href="/settings/notifications#notifications-channels" class="font-semibold text-ink hover:underline">{m.settings_push_help_channel()}</a></li>
 			</ul>
 			<a href="https://dumbmonit.readthedocs.io/en/latest/using/push-notifications/" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-signal-ink hover:underline">{m.settings_push_help_guide()}</a>
 		</div>

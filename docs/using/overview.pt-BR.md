@@ -101,20 +101,19 @@ campo, resultados em três grupos.
 
 ## Navegação {#navigation}
 
-A barra superior tem Visão geral, Dispositivos, Alertas (com a contagem do
-que precisa de você), Status e Configurações, o atalho da paleta e o
-alternador de tema. Em um celular, ela se torna uma barra de abas inferior
-com as mesmas cinco entradas.
+A barra superior tem Visão geral, Monitores, Alertas (com a contagem do que
+precisa de você) e Configurações, o atalho da paleta e o alternador de tema.
+Em um celular, ela se torna uma barra de abas inferior com essas quatro abas
+e **Mais**, que guarda o modo parede e a documentação.
 
 - **Visão geral** — o boletim: tudo está bem, e o que precisa de você.
-- **Dispositivos** — o rack; toda fonte que você monitora. Veja
+- **Monitores** — o rack; toda fonte que você monitora. Veja
   [Página de dispositivos](devices.md).
-- **Alertas** — o que está disparando, manutenção programada, as regras, e
-  os canais e política de notificação. Veja [Página de alertas](alerts.md).
-- **Status** — as páginas de status públicas e seus anúncios. Veja
-  [Páginas de status](status-pages.md).
+- **Alertas** — o que está disparando, as janelas de manutenção, o histórico
+  e as regras. Veja [Página de alertas](alerts.md).
 - **Configurações** — sua conta, usuários e login único, tokens de agente e
-  assistente, aparência, sobre. Veja [Configurações](settings.md). Nada na
+  assistente, canais de notificação e relatórios, páginas de status públicas,
+  aparência, sobre. Veja [Configurações](settings.md). Nada na
   interface transmite status apenas por cor: uma placa ou um LED sempre vem
   com uma palavra (Reportando, Inacessível, Aviso, Alerta, Suprimido pelo
   pai, Acumulando).

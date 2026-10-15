@@ -27,9 +27,11 @@
 		alert: Alert;
 		/** Called once the server has answered, so the page can refresh. */
 		onchanged?: (alert: Alert) => void;
+		/** Float the menu over what follows (a list row) instead of opening it in flow. */
+		floating?: boolean;
 	}
 
-	let { alert, onchanged }: Props = $props();
+	let { alert, onchanged, floating = false }: Props = $props();
 
 	const DURATIONS: { label: string; secs: number }[] = $derived([
 		{ label: m.alerts_ack_hours({ hours: 1 }), secs: 3600 },
@@ -106,7 +108,7 @@
 </script>
 
 {#if auth.canOperate}
-	<div class="flex flex-col items-start gap-1 sm:items-end" bind:this={root} onkeydown={onkeydown} role="presentation">
+	<div class={floating ? 'relative' : 'flex flex-col items-start gap-1 sm:items-end'} bind:this={root} onkeydown={onkeydown} role="presentation">
 		{#if alert.acked}
 			<Button size="sm" variant="ghost" loading={busy} onclick={unack}>{m.alerts_ack_unack()}</Button>
 		{:else}
@@ -129,7 +131,7 @@
 				id={menuId}
 				role="menu"
 				aria-label={m.alerts_ack_menu_label()}
-				class="w-64 max-w-full rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left shadow-lift"
+				class={`w-64 rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left ${floating ? 'absolute top-full right-0 z-30 mt-1 max-w-[calc(100vw-2rem)] shadow-float' : 'max-w-full shadow-lift'}`}
 			>
 				<p class="px-1 pb-1 text-[0.6875rem] font-semibold tracking-wide text-ink-2 uppercase">
 					{m.alerts_ack_stop_reminding()}

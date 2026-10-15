@@ -8,14 +8,14 @@ dell'istanza, il tema e lo stato di salute del server. Una pagina, una sezione
 per argomento, con una colonna di ancore su schermo largo e una fila di chip su
 telefono. Ogni sezione ha un link diretto (`/settings#agents`).
 
-Due cose stavano qui e sono state spostate, perché non sono amministrazione:
+Due sezioni raccolgono il lato pubblico e in uscita di DumbMonit:
 
-| Cosa cerchi | Ora in | Vecchio link |
+| Cosa cerchi | Dove | Link |
 |---|---|---|
-| Canali di notifica, ore di silenzio, politica di notifica | **Avvisi → Notifiche** ([pagina Avvisi](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Pagine di stato e annunci | **Stato** ([Pagine di stato](status-pages.md)) | `/settings#status` |
+| Canali di notifica, ore di silenzio, politica di notifica | **Impostazioni → Notifiche e report** ([Canali di notifica](../notifications.md)) | `/settings/notifications` |
+| Pagine di stato e annunci | **Impostazioni → Pagine di stato** ([Pagine di stato](status-pages.md)) | `/settings/status` |
 
-I vecchi link funzionano ancora: reindirizzano al nuovo posto.
+I vecchi link (`/alerts#notifications`, `/status`) reindirizzano al nuovo posto.
 
 ## Account e sicurezza
 
@@ -69,7 +69,7 @@ token e account, con l'indirizzo del client. Conserva le ultime 5 000 voci.
 Notifiche native su questo telefono o computer, anche con DumbMonit chiuso:
 **Abilita su questo dispositivo**, poi **Invia un test**. Ogni account gestisce
 qui i propri dispositivi (anche gli osservatori); quali avvisi li raggiungono è
-stabilito da un canale **Web Push** in Avvisi → Notifiche. Il pulsante **i**
+stabilito da un canale **Web Push** in Impostazioni → Notifiche e report. Il pulsante **i**
 riassume i requisiti: HTTPS (o localhost), installazione nella schermata Home su
 iPhone e iPad, e i domini dei servizi push che il server deve raggiungere. Guida
 completa: [Notifiche push (PWA)](push-notifications.md).
@@ -254,7 +254,7 @@ solo il suo host. Solo un amministratore può modificarlo. Vedi
 
 ## Report
 
-Email periodiche di disponibilità per il team: scegli settimanale, giornaliero o
+In **Impostazioni → Notifiche e report**, sotto la politica: email periodiche di disponibilità per il team. Scegli settimanale, giornaliero o
 mensile, il giorno, l'ora e il fuso orario, i destinatari e il canale email, poi
 **Invia un'anteprima** per vedere il risultato. Solo amministratori. Vedi
 [Report via email](reports.md).

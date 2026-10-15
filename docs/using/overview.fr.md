@@ -106,22 +106,21 @@ un champ de saisie, des résultats en trois groupes.
 
 ## Navigation
 
-La barre du haut porte Aperçu, Appareils, Alertes (avec le compte de ce
-qui a besoin de vous), Statut et Réglages, le raccourci de la palette et
-le basculement de thème. Sur un téléphone, elle devient une barre
-d'onglets en bas avec les mêmes cinq entrées.
+La barre du haut porte Aperçu, Surveillances, Alertes (avec le compte de ce
+qui a besoin de vous) et Réglages, le raccourci de la palette et le
+basculement de thème. Sur un téléphone, elle devient une barre d'onglets en
+bas avec ces quatre onglets et **Plus**, qui contient le mode mur et la
+documentation.
 
 - **Aperçu** — le bulletin : est-ce que tout va bien, et qu'est-ce qui a
   besoin de vous.
-- **Appareils** — le rack ; toutes les sources que vous surveillez. Voir
+- **Surveillances** — le rack ; toutes les sources que vous surveillez. Voir
   [Page Appareils](devices.md).
-- **Alertes** — ce qui se déclenche, la maintenance planifiée, les
-  règles, et les canaux et la politique de notification. Voir
-  [Page Alertes](alerts.md).
-- **Statut** — les pages de statut publiques et leurs annonces. Voir
-  [Pages de statut](status-pages.md).
+- **Alertes** — ce qui se déclenche, les fenêtres de maintenance,
+  l'historique et les règles. Voir [Page Alertes](alerts.md).
 - **Réglages** — votre compte, les utilisateurs et l'authentification
-  unique, les jetons d'agent et d'assistant, l'apparence, à propos. Voir
+  unique, les jetons d'agent et d'assistant, les canaux de notification et les
+  rapports, les pages de statut publiques, l'apparence, à propos. Voir
   [Réglages](settings.md). Rien dans l'interface ne porte le statut par
 la couleur seule : une plaque ou une LED s'accompagne toujours d'un mot
 (Rapporte, Inaccessible, Avis, Avertissement, Supprimé par le parent, En

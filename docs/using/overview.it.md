@@ -105,21 +105,21 @@ input, risultati in tre gruppi.
 
 ## Navigazione {#navigation}
 
-La barra superiore ha Overview, Devices, Alerts (con il conteggio di ciò
-che richiede attenzione), Status e Settings, la scorciatoia della
-palette e l'interruttore del tema. Su un telefono, diventa una barra di
-tab in basso con le stesse cinque voci.
+La barra superiore ha Overview, Monitors, Alerts (con il conteggio di ciò
+che richiede attenzione) e Settings, la scorciatoia della palette e
+l'interruttore del tema. Su un telefono, diventa una barra di tab in
+basso con quei quattro tab e **More**, che contiene la modalità sala e la
+documentazione.
 
 - **Overview** — il bollettino: tutto va bene, e cosa richiede
   attenzione.
-- **Devices** — il rack; ogni fonte che monitori. Vedi
+- **Monitors** — il rack; ogni fonte che monitori. Vedi
   [Pagina dei dispositivi](devices.md).
-- **Alerts** — cosa è attivo, la manutenzione pianificata, le regole, e i
-  canali e la politica di notifica. Vedi [Pagina Alerts](alerts.md).
-- **Status** — le pagine di stato pubbliche e i loro annunci. Vedi
-  [Pagine di stato](status-pages.md).
+- **Alerts** — cosa è attivo, le finestre di manutenzione, la cronologia
+  e le regole. Vedi [Pagina Alerts](alerts.md).
 - **Settings** — il tuo account, utenti e single sign-on, token agent e
-  assistente, aspetto, informazioni. Vedi [Settings](settings.md). Nulla
+  assistente, canali di notifica e report, pagine di stato pubbliche,
+  aspetto, informazioni. Vedi [Settings](settings.md). Nulla
   sull'interfaccia trasmette lo stato solo tramite il colore: una
   targhetta o un LED è sempre accompagnato da una parola (Reporting,
   Unreachable, Advisory, Warning, Suppressed by parent, Building up).

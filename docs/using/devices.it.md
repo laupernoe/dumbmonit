@@ -21,6 +21,10 @@ Filtri: una casella di ricerca, un segmento di stato (All, Needs attention,
 Reporting, Disabled) e un filtro per tipo. **Add a device** è l'azione
 primaria.
 
+Il pulsante **Select** (operatori e amministratori) attiva una casella per
+dispositivo e una barra flottante in basso con le azioni di gruppo; **Done**
+o Escape escono dalla modalità.
+
 ## Un dispositivo {#a-device}
 
 ![Pagina di un dispositivo: stato, azioni, avvisi, il pannello specifico del tipo, metriche](../assets/screenshots/device-light.png){ loading=lazy }
@@ -60,7 +64,7 @@ una riga "Apply to all":
   suo arresto (al massimo una volta ogni dieci minuti);
 - **Auto-update in maintenance windows** — quando il registry ha un'immagine
   più recente per lo stesso tag, il container viene ricreato durante una
-  finestra di manutenzione pianificata (pagina Alerts → Scheduled) e
+  finestra di manutenzione pianificata (pagina Alerts → Maintenance) e
   ripristinato se il suo healthcheck fallisce.
 
 Ogni interruttore salva per proprio conto. Dettagli e regole di sicurezza:

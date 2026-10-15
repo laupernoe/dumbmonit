@@ -146,8 +146,8 @@ Welche Art auch immer, das Formular hat:
   Gerät nicht erreichbar, CPU gesättigt, Platte fast voll, und so
   weiter. Nichts zu konfigurieren.
 - Um benachrichtigt zu werden, fügen Sie einen
-  [Benachrichtigungskanal](../notifications.md) unter **Alerts →
-  Notifications** hinzu. Eingebaute Regeln benachrichtigen jeden
+  [Benachrichtigungskanal](../notifications.md) unter
+  **Settings → Notifications & reports** hinzu. Eingebaute Regeln benachrichtigen jeden
   aktivierten Kanal.
 
 !!! tip "Keine Daten nach einer Minute?"

@@ -21,16 +21,16 @@ avaliar (histerese, substituições por dispositivo)
 |---|---|---|
 | Limite de limpeza (histerese) | Editor de regra → *Limpa abaixo / acima* | nenhum (CPU: 85%, disco: 88% nas regras entregues) |
 | Substituições por dispositivo | Editor de regra → *Substituições por dispositivo* | nenhuma |
-| Detecção de oscilação | Alertas → Notificações → Política de notificação → Mais opções | 4 mudanças em 30 min, retém 30 min |
+| Detecção de oscilação | Configurações → Notificações e relatórios → Política de notificação → Mais opções | 4 mudanças em 30 min, retém 30 min |
 | Severidade mínima | Canal → Opções de entrega → *Enviar* | tudo |
 | Me diga quando limpar | Canal → Opções de entrega | ligado |
 | Intervalo mínimo por alerta | Canal → Opções de entrega | nenhum |
 | Horas de silêncio | Canal → Opções de entrega | desligado |
 | Filtro de roteamento (tags, tipo, regra) | Canal → Opções de entrega → *Apenas alguns alertas* | desligado (o canal ouve tudo) |
-| Escalonamento se ninguém reconhecer | Alertas → Notificações → Política de notificação | desligado |
-| Janela de lote | Alertas → Notificações → Política de notificação | 60 s |
-| Mensagens por canal por hora | Alertas → Notificações → Política de notificação | 20 |
-| URL pública (links profundos) | Alertas → Notificações → Política de notificação, ou `DUMBMONIT_PUBLIC_URL` | vazia |
+| Escalonamento se ninguém reconhecer | Configurações → Notificações e relatórios → Política de notificação | desligado |
+| Janela de lote | Configurações → Notificações e relatórios → Política de notificação | 60 s |
+| Mensagens por canal por hora | Configurações → Notificações e relatórios → Política de notificação | 20 |
+| URL pública (links profundos) | Configurações → Notificações e relatórios → Política de notificação, ou `DUMBMONIT_PUBLIC_URL` | vazia |
 
 ## Histerese e substituições por dispositivo {#hysteresis-and-per-device-overrides}
 
@@ -64,7 +64,7 @@ resolveu 4 vezes em 30 minutos está *oscilando*: um aviso sai
 ("oscilando: 4 mudanças em 30 min, notificações retidas por 30 min") e
 nada mais sobre esse alerta é enviado até a retenção terminar. Uma
 resolução depois da retenção ainda é anunciada. Ajuste ou desligue em
-Alertas → Notificações → Política de notificação → Mais opções
+Configurações → Notificações e relatórios → Política de notificação → Mais opções
 (`flap_events`, `flap_window_secs`, `flap_hold_secs`; `flap_events: 0` o
 desativa).
 

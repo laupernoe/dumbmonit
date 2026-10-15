@@ -10,7 +10,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Globe, Settings2, Search, BookOpen, Tv, Ellipsis } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Settings2, Search, BookOpen, Tv, Ellipsis } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
@@ -28,11 +28,11 @@
 		{ href: '/', label: m.misc_nav_overview(), icon: Gauge, exact: true, phone: true },
 		{ href: '/targets', label: m.misc_nav_devices(), icon: Server, exact: false, phone: true },
 		{ href: '/alerts', label: m.misc_nav_alerts(), icon: BellRing, exact: false, phone: true },
-		{ href: '/status', label: m.misc_nav_status(), icon: Globe, exact: false, phone: false },
 		{ href: '/settings', label: m.misc_nav_settings(), icon: Settings2, exact: false, phone: true }
 	];
 
-	// Phones: four tabs and "More" (the pages used less from a phone, wall mode, the docs).
+	// Phones: the four destinations as tabs, and "More" (wall mode, the docs).
+	// A link marked `phone: false` would go under "More" too.
 	let moreOpen = $state(false);
 	let moreRoot = $state<HTMLLIElement | null>(null);
 	const moreActive = $derived(links().some((link) => !link.phone && isActive(link.href, link.exact)));

@@ -1,23 +1,45 @@
 # Die Alerts-Seite
 
-![Die Alerts-Seite: was Ihre Aufmerksamkeit braucht, die Regeln, geplante Wartungen und die Historie](../assets/screenshots/alerts-light.png){ loading=lazy }
+![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Alles zur Alarmierung auf einer Seite, hinter fünf Tabs. Der Tab steht in
+Alles zur Alarmierung auf einer Seite, hinter vier Tabs. Der Tab steht in
 der URL (`/alerts#rules`), sodass eine Ansicht verlinkbar ist.
 **Schedule maintenance**, oben rechts, öffnet das Formular für ein
 Fenster von jedem Tab aus.
 
 | Tab | Was er enthält |
 |---|---|
-| **Now** | Die Live-Liste *Needs you*, nach Gerät gruppiert: Schweregrad-Anzeige, Grund, seit wann, und *Ack*, *Snooze*, *Ignore* und *Open device* bei jedem. Bestätigte und stummgeschaltete Alarme sitzen jeweils in ihrer eigenen ruhigen Gruppe am Ende. Das Badge auf dem Tab, und auf Alerts in der oberen Leiste, ist die Anzahl dessen, was noch Ihre Aufmerksamkeit braucht. |
-| **Scheduled** | Wartungsfenster, *Active now* oder *Scheduled*, einmalig, wöchentlich oder monatlich, jeweils mit dem nächsten Vorkommen. Siehe [Wartungsfenster](../alerting/maintenance.md). |
-| **Rules** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Gerät sie ignoriert, *Ignored on N devices*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
-| **Notifications** | Wohin Alarme Sie erreichen: die Kanäle und die Benachrichtigungsrichtlinie. Details unten. |
-| **History** | Die letzten 200 Übergänge, jeder mit Gerät, Regel und dem Geschehenen; behobene können gelöscht werden. |
+| **Now** | Die Live-Liste der Probleme, eine Zeile je Problem. Siehe [Die Now-Liste](#the-now-list). Das Badge auf dem Tab, und auf Alerts in der oberen Leiste, ist die Anzahl dessen, was noch Ihre Aufmerksamkeit braucht. |
+| **Maintenance** | Wartungsfenster, *Active now* oder *Scheduled*, einmalig, wöchentlich oder monatlich, jeweils mit dem nächsten Vorkommen (`#scheduled`). Siehe [Wartungsfenster](../alerting/maintenance.md). |
+| **History** | Die letzten 200 Übergänge, jeder mit Monitor, Regel und dem Geschehenen; behobene können gelöscht werden. |
+| **Rules** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Monitor sie ignoriert, *Ignored on N devices*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
+
+Benachrichtigungskanäle und die Benachrichtigungsrichtlinie finden Sie unter
+**Settings → Notifications & reports** (siehe [Notifications](#notifications)).
 
 Dasselbe Wahrheitsmodell füttert das Übersichts-Bulletin und diese
 Seite, daher sind sich beide immer einig, was Ihre Aufmerksamkeit
 braucht.
+
+## Die Now-Liste {#the-now-list}
+
+Eine Zeile je Problem: Statussymbol, was nicht stimmt, welcher Monitor, die
+Ursache in einer Zeile, wie lange her, mit **Ack** und **Open** in der Zeile.
+Die Zeilen sind nach Schweregrad gruppiert (Warning, Advisory, Info, Building
+up, Suppressed by parent) oder, mit dem Schalter **Severity | Monitor**, nach
+Monitor. Gruppen lassen sich einklappen; *Suppressed*, *Snoozed* und
+*Dismissed* (bestätigt) starten eingeklappt. Eine Regel, die auf mehreren
+Zeitreihen desselben Monitors feuert, ist eine einzige Zeile ("… and 7
+more").
+
+Ein Klick auf eine Zeile klappt ihre Details auf: jede betroffene Zeitreihe,
+seit wann, wer sie bestätigt hat, warum sie unterdrückt ist, mit **Open
+monitor**, **Snooze** und **Never for this monitor**.
+
+Mehrere Zeilen auszuwählen ist ein Modus. Die Schaltfläche **Select**
+(Operatoren und Admins) zeigt eine Checkbox an jeder Zeile und unten eine
+schwebende Leiste mit **Select all**, **Acknowledge**, **Unacknowledge**,
+**Ignore for this device** und **Done**. Escape verlässt den Modus.
 
 ## Einen Alarm loswerden {#getting-rid-of-an-alert}
 
@@ -67,11 +89,11 @@ nie einen Alarm erzeugt.
 
 ## Notifications
 
-Kanäle und die Richtlinie leben hier — unter Alerts, nicht Settings —
-weil sie entscheiden, wer einen Alarm hört, was eine Alarmierungsfrage
-ist. Zwei Panels:
+Kanäle und die Richtlinie leben unter **Settings → Notifications &
+reports** (`/settings/notifications`), gefolgt von den [Reports](reports.md).
+Zwei Panels:
 
-**Channels.** Die Liste der Kanäle, jeder mit seiner Art, *Enabled*
+**Notification channels.** Die Liste der Kanäle, jeder mit seiner Art, *Enabled*
 oder *Disabled*, wann er zuletzt etwas gesendet hat, und seinem letzten
 Fehler, falls vorhanden. **Add channel** öffnet ein aus der Beschreibung
 der gewählten Art durch den Server gebautes Formular: Settings
@@ -110,10 +132,9 @@ erste Nachricht tatsächlich rausging, und das Bestätigen des Alarms
 (oder sein Lösen) stoppt den Hop. Siehe
 [Benachrichtigungsrichtlinie](../alerting/notifications.md).
 
-Links: `/alerts#notifications` öffnet den Tab,
-`/alerts#notifications-policy` scrollt zum Richtlinien-Panel. Die
-früheren Settings-Links (`/settings#notifications`,
-`/settings#notifications-policy`) leiten hierher weiter.
+Die früheren Links (`/alerts#notifications`,
+`/alerts#notifications-policy`, `/settings#notifications`) leiten hierher
+weiter.
 
 ## Operatoren und Viewer {#operators-and-viewers}
 

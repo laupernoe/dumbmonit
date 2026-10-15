@@ -21,6 +21,10 @@ Filter: ein Suchfeld, ein Zustandssegment (All, Needs attention,
 Reporting, Disabled) und ein Art-Filter. **Add a device** ist die
 primäre Aktion.
 
+Die Schaltfläche **Select** (Operatoren und Admins) blendet eine Checkbox je
+Gerät und unten eine schwebende Leiste mit den Sammelaktionen ein; **Done**
+oder Escape verlässt den Modus.
+
 ## Ein Gerät {#a-device}
 
 ![Eine Geräteseite: Zustand, Aktionen, Alarme, das art-spezifische Panel, Metriken](../assets/screenshots/device-light.png){ loading=lazy }
@@ -60,7 +64,7 @@ zwei Schaltern pro Container und einer "Apply to all"-Zeile:
   Minute nach seinem Stopp neu (höchstens einmal alle zehn Minuten);
 - **Auto-update in maintenance windows** — wenn die Registry ein neueres
   Image für denselben Tag hat, wird der Container während eines
-  geplanten Wartungsfensters (Alerts-Seite → Scheduled) neu erstellt und
+  geplanten Wartungsfensters (Alerts-Seite → Maintenance) neu erstellt und
   zurückgerollt, falls er seinen Healthcheck nicht besteht.
 
 Jeder Schalter speichert für sich. Details und Sicherheitsregeln:

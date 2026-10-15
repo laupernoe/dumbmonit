@@ -1,21 +1,41 @@
 # Alerts page
 
-![The Alerts page: what needs you, the rules, scheduled maintenance and history](../assets/screenshots/alerts-light.png){ loading=lazy }
+![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Everything about alerting on one page, behind five tabs. The tab is in the
+Everything about alerting on one page, behind four tabs. The tab is in the
 URL (`/alerts#rules`), so a view is linkable. **Schedule maintenance**, top
 right, opens the form for a window from any tab.
 
 | Tab | What it holds |
 |---|---|
-| **Now** | The live *Needs you* list, grouped by device: severity plate, reason, since when, and *Ack*, *Snooze*, *Ignore* and *Open device* on each. Acknowledged and snoozed alerts each sit in their own quiet group at the bottom. The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
-| **Scheduled** | Maintenance windows, *Active now* or *Scheduled*, one-off, weekly or monthly, each with the next occurrence. See [Maintenance windows](../alerting/maintenance.md). |
-| **Rules** | Every rule with its severity, a *Built-in* mark and, if any device ignores it, *Ignored on N devices*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
-| **Notifications** | Where alerts reach you: the channels and the notification policy. Details below. |
-| **History** | The last 200 transitions, each naming the device, the rule and what happened; resolved ones can be cleared. |
+| **Now** | The live list of problems, one line each. See [The Now list](#the-now-list). The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
+| **Maintenance** | Maintenance windows, *Active now* or *Scheduled*, one-off, weekly or monthly, each with the next occurrence (`#scheduled`). See [Maintenance windows](../alerting/maintenance.md). |
+| **History** | The last 200 transitions, each naming the monitor, the rule and what happened; resolved ones can be cleared. |
+| **Rules** | Every rule with its severity, a *Built-in* mark and, if any monitor ignores it, *Ignored on N devices*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
+
+Notification channels and the notification policy are under
+**Settings → Notifications & reports** (see [Notifications](#notifications)).
 
 The same truth model feeds the overview bulletin and this page, so the two
 always agree on what needs you.
+
+## The Now list
+
+One line per problem: state icon, what is wrong, which monitor, the cause in
+one line, how long ago, and **Ack** and **Open** on the line. Lines are grouped
+by severity (Warning, Advisory, Info, Building up, Suppressed by parent) or,
+with the **Severity | Monitor** switch, by monitor. Groups fold; *Suppressed*,
+*Snoozed* and *Dismissed* (acknowledged) start folded. One rule firing on
+several series of the same monitor is a single line ("… and 7 more").
+
+Click a line to unfold its details: every affected series, since when, who
+acknowledged it, why it is suppressed, with **Open monitor**, **Snooze** and
+**Never for this monitor**.
+
+Selecting several lines is a mode. The **Select** button (operators and
+admins) shows a checkbox on each line and a floating bar at the bottom with
+**Select all**, **Acknowledge**, **Unacknowledge**, **Ignore for this device**
+and **Done**. Escape leaves the mode.
 
 ## Getting rid of an alert
 
@@ -56,10 +76,10 @@ hand, never produced an alert in the first place.
 
 ## Notifications
 
-Channels and the policy live here — under Alerts, not Settings — because they
-decide who hears an alert, which is an alerting concern. Two panels:
+Channels and the policy live in **Settings → Notifications & reports**
+(`/settings/notifications`), followed by the [Reports](reports.md). Two panels:
 
-**Channels.** The list of channels, each with its kind, *Enabled* or
+**Notification channels.** The list of channels, each with its kind, *Enabled* or
 *Disabled*, when it last sent something, and its last error if any. **Add
 channel** opens a form built from the server's description of the chosen kind:
 settings (visible) and secrets (write-only). **Send test** sends a test message
@@ -93,9 +113,8 @@ another channel, once. The delay counts from the moment the first message
 actually went out, and acknowledging the alert (or its clearing) stops the
 hop. See [Notification policy](../alerting/notifications.md).
 
-Links: `/alerts#notifications` opens the tab, `/alerts#notifications-policy`
-scrolls to the policy panel. The former Settings links
-(`/settings#notifications`, `/settings#notifications-policy`) forward here.
+The former links (`/alerts#notifications`, `/alerts#notifications-policy`,
+`/settings#notifications`) forward here.
 
 ## Operators and viewers
 

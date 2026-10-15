@@ -95,17 +95,17 @@ input, results in three groups.
 
 ## Navigation
 
-The top bar has Overview, Devices, Alerts (with the count of what needs you),
-Status and Settings, the palette shortcut and the theme toggle. On a phone, it
-becomes a bottom tab bar with the same five entries.
+The top bar has Overview, Monitors, Alerts (with the count of what needs you)
+and Settings, the palette shortcut and the theme toggle. On a phone, it
+becomes a bottom tab bar with those four tabs and **More**, which holds wall
+mode and the documentation.
 
 - **Overview** — the bulletin: is everything fine, and what needs you.
-- **Devices** — the rack; every source you monitor. See [Devices page](devices.md).
-- **Alerts** — what is firing, scheduled maintenance, the rules, and the
-  notification channels and policy. See [Alerts page](alerts.md).
-- **Status** — the public status pages and their announcements. See
-  [Status pages](status-pages.md).
+- **Monitors** — the rack; every source you monitor. See [Devices page](devices.md).
+- **Alerts** — what is firing, maintenance windows, history and the rules.
+  See [Alerts page](alerts.md).
 - **Settings** — your account, users and single sign-on, agent and assistant
-  tokens, appearance, about. See [Settings](settings.md). Nothing on the interface conveys status by colour alone: a
+  tokens, notification channels and reports, public status pages, appearance,
+  about. See [Settings](settings.md). Nothing on the interface conveys status by colour alone: a
 plate or an LED always comes with a word (Reporting, Unreachable, Advisory,
 Warning, Suppressed by parent, Building up).

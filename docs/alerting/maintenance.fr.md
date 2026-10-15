@@ -7,13 +7,13 @@ une fois, plutôt que d'apparaître de nulle part après deux heures.
 
 ## Où
 
-- **Alertes → Maintenance planifiée** : la liste des fenêtres, avec *Active
+- **Alertes → Maintenance** : la liste des fenêtres, avec *Active
   maintenant* ou *Planifiée*, et le formulaire pour en ajouter une.
 - **Page de l'appareil → Silence 1 h / Silence jusqu'à…** : une fenêtre
   ponctuelle rapide pour tout l'appareil.
 - ++ctrl+k++ → *Planifier une maintenance*.
 
-**Repousser**, sur une alerte dans la liste *À traiter* ou une page
+**Repousser**, sur une alerte dans l'onglet *Maintenant* ou une page
 d'appareil, est une version plus petite du même mécanisme : une fenêtre
 ponctuelle limitée aux labels exacts de cette seule alerte plutôt qu'à tout
 l'appareil, pour qu'une règle sœur continue de parler. Elle apparaît ici

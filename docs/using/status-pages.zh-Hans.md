@@ -8,7 +8,7 @@
 
 ## 1. 创建页面 {#1-create-a-page}
 
-顶部栏的**状态** → **新建页面**。该页面列出你的状态页面（打开、编辑、删除），其下是公告；编辑器在独立路由中打开（`/status/new`、`/status/<id>`）。公开渲染位于 `/s/<address>`。
+**设置 → 状态页面** → **新建页面**。该页面列出你的状态页面（打开、编辑、删除），其下是公告；编辑器在独立路由中打开（`/settings/status/new`、`/settings/status/<id>`）。公开渲染位于 `/s/<address>`。
 
 | 字段 | 作用 |
 | --- | --- |
@@ -67,7 +67,7 @@
 
 ## 3. 发布事故和维护公告 {#3-announce-incidents-and-maintenance}
 
-在**状态**页面的页面列表下方，点击**事故与维护** → **新建公告**（也可用 ++ctrl+k++ → *Announce an incident*）。
+在**设置 → 状态页面**的页面列表下方，点击**事故与维护** → **新建公告**（也可用 ++ctrl+k++ → *Announce an incident*）。
 
 - **事故**有标题、影响程度（**minor** 使页面显示为降级，**major** 显示为中断），并依次经过 *Investigating → Identified → Monitoring → Resolved*。随着进展发布更新：每条更新都带有状态和消息，并成为访客读到的最新一行。**解决**会以最终消息关闭它；之后它会在“过往事故”中保留 30 天。
 - **维护**窗口有开始和结束时间，并依次经过 *Scheduled → In progress → Completed*。进行中时，横幅显示“Scheduled maintenance”，已宕机的服务显示为 *Maintenance*。

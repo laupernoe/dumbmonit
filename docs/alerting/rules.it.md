@@ -707,8 +707,7 @@ stessa: una soglia diversa, una soglia di rientro diversa, oppure disattivata
 per quel solo dispositivo. L'editor di ogni regola ha un pannello **Override per
 dispositivo** per aggiungerne o rimuoverne uno direttamente.
 
-L'azione **Ignora** con un clic su un avviso (nell'elenco *Richiede il tuo
-intervento* o nella pagina del dispositivo dell'avviso) è lo stesso meccanismo,
+L'azione **Ignora** con un clic su un avviso (nella scheda *Now* o nella pagina del dispositivo dell'avviso) è lo stesso meccanismo,
 scritto con `enabled: false`: il dispositivo smette subito di applicare quella
 regola, in modo reversibile. La pagina del dispositivo elenca ciò che ignora,
 con **Smetti di ignorare**; la regola stessa mostra *Ignorata su N dispositivi*

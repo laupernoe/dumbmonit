@@ -45,7 +45,7 @@ Three principles apply to every channel:
 
 ## Creating and testing a channel
 
-1. Open **Alerts → Notifications → Add channel** (`/alerts#notifications`).
+1. Open **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
 2. Give it a meaningful name ("Discord — family", "SMS — on-call"). This is the
    name you will pick later in your alert rules.
 3. Choose the channel type, then fill in the fields described below.
@@ -97,7 +97,7 @@ certificate is the reason for a failure, the error shown for the channel names i
 
 ## Acknowledge or snooze from the notification
 
-When a public URL is set (**Alerts → Notifications → Notification policy**, or
+When a public URL is set (**Settings → Notifications & reports → Notification policy**, or
 `DUMBMONIT_PUBLIC_URL`), every alert message carries two actions:
 
 - **Acknowledge**: no more reminders until the alert resolves. The resolution is

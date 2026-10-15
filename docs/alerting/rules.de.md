@@ -701,7 +701,7 @@ Schwelle, eine andere Auflösungsschwelle, oder allein für dieses Gerät abgesc
 jeder Regel hat ein Panel **Überschreibungen pro Gerät**, um direkt eine hinzuzufügen oder zu
 entfernen.
 
-Die Ein-Klick-Aktion **Ignorieren** bei einem Alarm (in der Liste *Braucht Sie* oder auf der
+Die Ein-Klick-Aktion **Ignorieren** bei einem Alarm (im Tab *Now* oder auf der
 Geräteseite des Alarms) ist derselbe Mechanismus, geschrieben mit `enabled: false`: Das Gerät
 trägt diese Regel nicht mehr, sofort und umkehrbar. Die Geräteseite listet auf, was sie ignoriert,
 mit **Nicht mehr ignorieren**; die Regel selbst zeigt unter Alarme → Regeln *Auf N Geräten

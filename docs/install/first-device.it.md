@@ -121,7 +121,7 @@ Qualunque sia il tipo, il modulo ha:
   immediatamente: dispositivo irraggiungibile, CPU saturata, disco quasi
   pieno, e così via. Nulla da configurare.
 - Per essere avvisato, aggiungi un [canale di notifica](../notifications.md)
-  in **Alerts → Notifications**. Le regole integrate notificano ogni
+  in **Settings → Notifications & reports**. Le regole integrate notificano ogni
   canale abilitato.
 
 !!! tip "Nessun dato dopo un minuto?"

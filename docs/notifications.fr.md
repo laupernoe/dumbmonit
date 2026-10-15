@@ -48,8 +48,8 @@ Trois principes s'appliquent à chaque canal :
 
 ## Créer et tester un canal {#creating-and-testing-a-channel}
 
-1. Ouvrez **Alertes → Notifications → Ajouter un canal**
-   (`/alerts#notifications`).
+1. Ouvrez **Réglages → Notifications et rapports → Ajouter un canal**
+   (`/settings/notifications`).
 2. Donnez-lui un nom significatif (« Discord — famille », « SMS —
    astreinte »). C'est le nom que vous choisirez plus tard dans vos règles
    d'alerte.
@@ -90,7 +90,7 @@ disent, pour chaque canal, ce qui va où.
 
 ## Acquitter ou mettre en pause depuis la notification {#acknowledge-or-snooze-from-the-notification}
 
-Quand une URL publique est réglée (**Alertes → Notifications → Politique de
+Quand une URL publique est réglée (**Réglages → Notifications et rapports → Politique de
 notification**, ou `DUMBMONIT_PUBLIC_URL`), chaque message d'alerte porte deux
 actions :
 

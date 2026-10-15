@@ -9,15 +9,14 @@ servidor. Una página, una sección por tema, con una barra de anclas en
 pantalla ancha y una franja de chips en un teléfono. Cada sección se
 puede enlazar (`/settings#agents`).
 
-Dos cosas que solían vivir aquí se trasladaron, porque no son
-administración:
+Dos secciones contienen el lado público y saliente de DumbMonit:
 
-| Buscas | Ahora en | Enlace antiguo |
+| Buscas | Dónde | Enlace |
 |---|---|---|
-| Canales de notificación, horas de silencio, política de notificación | **Alerts → Notifications** ([Página de alertas](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Páginas de estado y anuncios | **Status** ([Páginas de estado](status-pages.md)) | `/settings#status` |
+| Canales de notificación, horas de silencio, política de notificación | **Settings → Notifications & reports** ([Canales de notificación](../notifications.md)) | `/settings/notifications` |
+| Páginas de estado y anuncios | **Settings → Status pages** ([Páginas de estado](status-pages.md)) | `/settings/status` |
 
-Los enlaces antiguos todavía funcionan: redirigen al nuevo lugar.
+Los enlaces antiguos (`/alerts#notifications`, `/status`) redirigen al nuevo lugar.
 
 ## Account & security {#account-security}
 
@@ -77,7 +76,7 @@ Notificaciones nativas en este teléfono u ordenador, incluso con
 DumbMonit cerrado: **Enable on this device**, luego **Send a test**.
 Cada cuenta gestiona sus propios dispositivos aquí (también los
 visores); qué alertas les llegan se define con un canal **Web Push** en
-Alerts → Notifications. El botón **i** resume los requisitos: HTTPS (o
+Settings → Notifications & reports. El botón **i** resume los requisitos: HTTPS (o
 localhost), instalación en pantalla de inicio en iPhone y iPad, y los
 dominios de servicio push que el servidor debe alcanzar. Guía completa:
 [Notificaciones push (PWA)](push-notifications.md).
@@ -275,7 +274,8 @@ Véase [Watching DumbMonit itself](../install/self-monitoring.md).
 
 ## Reports
 
-Correos periódicos de disponibilidad para el equipo: elige semanal,
+En **Settings → Notifications & reports**, bajo la política: correos
+periódicos de disponibilidad para el equipo. Elige semanal,
 diario o mensual, el día, hora y zona horaria, los destinatarios y el
 canal de correo, y luego **Send a preview** para ver el resultado. Solo
 administradores. Consulta [Informes por correo](reports.md).

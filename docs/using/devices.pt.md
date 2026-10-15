@@ -20,6 +20,10 @@ quando o pai está inacessível.
 Filtros: uma caixa de pesquisa, um segmento de estado (All, Needs attention,
 Reporting, Disabled) e um filtro por tipo. **Add a device** é a ação principal.
 
+O botão **Select** (operadores e administradores) ativa uma caixa de seleção por
+dispositivo e uma barra flutuante em baixo com as ações em lote; **Done** ou
+Escape sai do modo.
+
 ## Um dispositivo {#a-device}
 
 ![Página de um dispositivo: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
@@ -58,7 +62,7 @@ quantos contentores têm uma política. **Manage containers** abre a lista;
   após este parar (no máximo uma vez a cada dez minutos);
 - **Auto-update in maintenance windows** — quando o registo tem uma imagem
   mais recente para a mesma etiqueta, o contentor é recriado durante uma
-  janela de manutenção agendada (página Alerts → Scheduled) e revertido se
+  janela de manutenção agendada (página Alerts → Maintenance) e revertido se
   falhar a sua verificação de saúde.
 
 Cada interruptor guarda por si só. Detalhes e regras de segurança:

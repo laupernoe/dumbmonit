@@ -363,7 +363,7 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
       notice = {
         text: m.overview_brief_nothing_no_channel(),
         tone: "advisory",
-        href: "/alerts#notifications",
+        href: "/settings/notifications#notifications-channels",
       };
     } else if (channels.length === 1) {
       notice = {

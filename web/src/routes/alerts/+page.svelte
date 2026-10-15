@@ -1,18 +1,19 @@
 <script lang="ts">
 	/**
-	 * Alerts — what is firing now, what is scheduled to stay quiet, and the rules
-	 * behind it.
+	 * Alerts — what is firing now, what is scheduled to stay quiet, what
+	 * happened, and the rules behind it.
 	 *
-	 * Five sections behind a segmented control kept in the URL hash so a view is
-	 * linkable: Now (the live "Needs you" list, grouped by device), Scheduled
-	 * (maintenance windows), Rules, Notifications (channels and the policy that
-	 * keeps them quiet — they belong with alerting, not with administration),
-	 * and History. Active alerts, devices and probe states come from the
-	 * shared store (polled app-wide, see `alertsStore`); the rest is loaded
-	 * here and refreshed after each action. The notification sections load
-	 * their own data.
+	 * Four sections behind a segmented control kept in the URL hash so a view
+	 * is linkable, the daily ones first: Now (the live list, by severity or by
+	 * monitor), Maintenance (windows), History, then Rules. Notification
+	 * channels and their policy are set up once and live in Settings →
+	 * Notifications (October 2026); the old `#notifications…` links forward
+	 * there. Active alerts, devices and probe states come from the shared store
+	 * (polled app-wide, see `alertsStore`); the rest is loaded here and
+	 * refreshed after each action.
 	 */
 	import { browser } from '$app/env';
+	import { goto } from '$app/navigation';
 	import { tick, untrack } from 'svelte';
 	import {
 		listAlertRules,
@@ -35,28 +36,29 @@
 	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { readSky } from '#lib/components/overview/sky.js';
-	import NeedsYouList from '#lib/components/alerts/NeedsYouList.svelte';
+	import AlertList from '#lib/components/alerts/AlertList.svelte';
 	import ScheduleForm from '#lib/components/alerts/ScheduleForm.svelte';
 	import SilencesSection from '#lib/components/alerts/SilencesSection.svelte';
 	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
 	import HistorySection from '#lib/components/alerts/HistorySection.svelte';
-	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
-	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
 	import { rovingIndex } from '#lib/ui/roving.js';
 	import { m } from '#lib/paraglide/messages.js';
 
-	type Tab = 'now' | 'scheduled' | 'rules' | 'notifications' | 'history';
+	type Tab = 'now' | 'scheduled' | 'history' | 'rules';
+	const TAB_IDS: readonly Tab[] = ['now', 'scheduled', 'history', 'rules'];
 	const TABS: { id: Tab; label: string }[] = $derived([
 		{ id: 'now', label: m.alerts_page_tab_now() },
-		{ id: 'scheduled', label: m.alerts_page_tab_scheduled() },
-		{ id: 'rules', label: m.alerts_page_tab_rules() },
-		{ id: 'notifications', label: m.alerts_page_tab_notifications() },
-		{ id: 'history', label: m.alerts_page_tab_history() }
+		{ id: 'scheduled', label: m.alerts_page_tab_maintenance() },
+		{ id: 'history', label: m.alerts_page_tab_history() },
+		{ id: 'rules', label: m.alerts_page_tab_rules() }
 	]);
-	// Anchors inside the Notifications tab: `#notifications-policy` opens the
-	// tab and scrolls to that panel (the old Settings deep links land here).
-	const NOTIFICATION_ANCHORS = ['notifications-channels', 'notifications-policy'];
+	// The Notifications tab moved to Settings: its old anchors forward there.
+	const MOVED: Record<string, string> = {
+		notifications: '/settings/notifications#notifications-channels',
+		'notifications-channels': '/settings/notifications#notifications-channels',
+		'notifications-policy': '/settings/notifications#notifications-policy'
+	};
 
 	let tab = $state<Tab>('now');
 	// Devices and probe states: the shared store, polled app-wide (see H3 of
@@ -209,11 +211,10 @@
 	function readHash() {
 		if (!browser) return;
 		const raw = window.location.hash.replace('#', '');
-		if (['now', 'scheduled', 'rules', 'notifications', 'history'].includes(raw)) {
+		if ((TAB_IDS as readonly string[]).includes(raw)) {
 			tab = raw as Tab;
-		} else if (NOTIFICATION_ANCHORS.includes(raw)) {
-			tab = 'notifications';
-			void tick().then(() => document.getElementById(raw)?.scrollIntoView({ block: 'start' }));
+		} else if (MOVED[raw]) {
+			void goto(MOVED[raw], { replace: true });
 		}
 	}
 	// Roving tabindex: Left/Right/Home/End move and activate the tab.
@@ -319,14 +320,14 @@
 			void alertsStore.refresh();
 		}}
 	/>
-{:else if firstLoad && tab !== 'notifications'}
+{:else if firstLoad}
 	<div class="space-y-2.5">
 		{#each { length: 4 } as _, i (i)}
-			<Skeleton class="h-20 w-full" />
+			<Skeleton class="h-14 w-full" />
 		{/each}
 	</div>
 {:else if tab === 'now'}
-	<NeedsYouList {sky} grouped selectable {silences} onchanged={() => void onNeedsYouChanged()} />
+	<AlertList {sky} {silences} onchanged={() => void onNeedsYouChanged()} />
 {:else if tab === 'scheduled'}
 	<SilencesSection
 		{silences}
@@ -346,11 +347,6 @@
 		ondelete={removeRule}
 		oncreate={createRule}
 	/>
-{:else if tab === 'notifications'}
-	<div class="grid gap-6 [&_section[id]]:scroll-mt-4">
-		<div class="rise-in" style="--rise-delay: 0ms"><ChannelsSection /></div>
-		<div class="rise-in" style="--rise-delay: 40ms"><NotificationPolicySection /></div>
-	</div>
 {:else if tab === 'history'}
 	<HistorySection entries={history} targets={targetsMap} rules={rulesMap} />
 {/if}

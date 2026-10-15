@@ -28,7 +28,7 @@
 	import type { Serie } from '#lib/components/Chart.svelte';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
+	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -60,7 +60,7 @@
 		rootOf,
 		worstState
 	} from '#lib/components/devices/folders.js';
-	import { ArrowUpDown, ChevronRight, FolderInput, FolderPlus, Network, Plus, Power, PowerOff, Search, Trash2, X } from 'lucide-svelte';
+	import { ArrowUpDown, ChevronRight, FolderInput, FolderPlus, ListChecks, Network, Plus, Power, PowerOff, Search, Trash2 } from 'lucide-svelte';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -418,11 +418,18 @@
 		collapsedFolders = nextCollapsed;
 	}
 
-	// --- Bulk actions (admin only): a checkbox per row, then the existing
-	// per-device API looped one device at a time. Failures do not stop the
+	// --- Bulk actions (admin only). Selection is a mode, off by default:
+	// "Select" shows a checkbox per row and a floating action bar, so turning
+	// it on moves nothing; Escape or Done leaves it. The actions loop the
+	// existing per-device API one device at a time. Failures do not stop the
 	// run; they are reported together and stay selected for a retry. ---
 
+	let selecting = $state(false);
 	let selected = $state<Set<TargetId>>(new Set());
+	function stopSelecting() {
+		selecting = false;
+		selected = new Set();
+	}
 	let bulkBusy = $state(false);
 	let bulkReport = $state<{ failed: { name: string; error: unknown }[]; total: number } | null>(null);
 	let bulkFolderDraft = $state('');
@@ -442,7 +449,7 @@
 	const selectedTargets = $derived(effectiveTargets.filter((t) => selected.has(t.id) && shownSet.has(t.id)));
 	const allShownSelected = $derived(shownIds.length > 0 && shownIds.every((id) => selected.has(id)));
 	const selection = $derived<RowSelection | null>(
-		auth.isAdmin
+		auth.isAdmin && selecting
 			? {
 					selected,
 					toggle: (id) => {
@@ -948,7 +955,21 @@
 					</button>
 				{/if}
 			</div>
-			<div class="lg:ml-auto"><ViewSwitcher value={view} onchange={setView} /></div>
+			<div class="flex items-center gap-2 lg:ml-auto">
+				{#if auth.isAdmin}
+					<Button
+						size="sm"
+						variant="ghost"
+						aria-pressed={selecting}
+						class={`!h-10 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
+						onclick={() => (selecting ? stopSelecting() : (selecting = true))}
+					>
+						<ListChecks class="size-4" aria-hidden="true" />
+						{m.devices_list_select()}
+					</Button>
+				{/if}
+				<ViewSwitcher value={view} onchange={setView} />
+			</div>
 		</div>
 	</div>
 	{#if tagChips.length > 0 || tagFilter.length > 0}
@@ -1027,76 +1048,70 @@
 		<p class="mb-2 text-[0.8125rem] text-ink-3">{m.devices_list_sort_no_reorder()}</p>
 	{/if}
 	{#if selection}
-		<div class="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label={m.devices_list_bulk_aria()}>
-			<label class="-ml-1 flex min-h-10 cursor-pointer items-center gap-2 pr-2 pl-1 text-[0.8125rem] text-ink-2">
-				<input
-					type="checkbox"
-					class="size-5 shrink-0 accent-[var(--c-signal)]"
-					checked={allShownSelected}
-					indeterminate={selectedTargets.length > 0 && !allShownSelected}
-					onchange={toggleAllShown}
-				/>
-				{m.devices_list_select_all()}
-			</label>
-			{#if selectedTargets.length > 0}
-				<span class="tnum text-[0.8125rem] font-semibold text-ink" aria-live="polite">{m.devices_list_selected({ count: selectedTargets.length })}</span>
-				<Button size="sm" variant="secondary" disabled={bulkBusy} onclick={() => void bulkSetEnabled(true)}>
-					<Power class="size-4" aria-hidden="true" />
-					{m.devices_list_bulk_enable()}
-				</Button>
-				<Button size="sm" variant="secondary" disabled={bulkBusy} onclick={() => void bulkSetEnabled(false)}>
-					<PowerOff class="size-4" aria-hidden="true" />
-					{m.devices_list_bulk_disable()}
-				</Button>
-				<Menu label={m.devices_list_bulk_move()} align="left">
-					{#snippet trigger({ toggle, open })}
-						<Button size="sm" variant="secondary" disabled={bulkBusy} aria-haspopup="menu" aria-expanded={open} onclick={() => { bulkFolderDraft = ''; toggle(); }}>
-							<FolderInput class="size-4" aria-hidden="true" />
-							{m.devices_list_bulk_move()}
-						</Button>
-					{/snippet}
-					{#snippet children({ close })}
-						<ul class="flex min-w-48 flex-col gap-0.5">
+		<SelectionBar
+			label={m.devices_list_bulk_aria()}
+			countLabel={m.devices_list_selected({ count: selectedTargets.length })}
+			selectAllLabel={m.devices_list_select_all()}
+			exitLabel={m.devices_list_select_done()}
+			selection={selectedTargets.length === 0 ? 'none' : allShownSelected ? 'all' : 'some'}
+			empty={shownIds.length === 0}
+			onselectall={(on) => {
+				if (on !== allShownSelected) toggleAllShown();
+			}}
+			onexit={stopSelecting}
+		>
+			<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} onclick={() => void bulkSetEnabled(true)}>
+				<Power class="size-4" aria-hidden="true" />
+				{m.devices_list_bulk_enable()}
+			</Button>
+			<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} onclick={() => void bulkSetEnabled(false)}>
+				<PowerOff class="size-4" aria-hidden="true" />
+				{m.devices_list_bulk_disable()}
+			</Button>
+			<Menu label={m.devices_list_bulk_move()} align="left" placement="up">
+				{#snippet trigger({ toggle, open })}
+					<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} aria-haspopup="menu" aria-expanded={open} onclick={() => { bulkFolderDraft = ''; toggle(); }}>
+						<FolderInput class="size-4" aria-hidden="true" />
+						{m.devices_list_bulk_move()}
+					</Button>
+				{/snippet}
+				{#snippet children({ close })}
+					<ul class="flex min-w-48 flex-col gap-0.5">
+						<li>
+							<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(''); }}>
+								{m.devices_list_bulk_no_folder()}
+							</button>
+						</li>
+						{#each folderChoices as folder (folder)}
 							<li>
-								<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(''); }}>
-									{m.devices_list_bulk_no_folder()}
+								<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(folder); }}>
+									{folder}
 								</button>
 							</li>
-							{#each folderChoices as folder (folder)}
-								<li>
-									<button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkMove(folder); }}>
-										{folder}
-									</button>
-								</li>
-							{/each}
-						</ul>
-						<form
-							class="mt-1 flex items-center gap-1 border-t border-line p-0.5 pt-1.5"
-							onsubmit={(e) => {
-								e.preventDefault();
-								const name = bulkFolderDraft.trim();
-								if (!name) return;
-								close();
-								void bulkMove(name);
-							}}
-						>
-							<input class="input !h-10 min-w-0 flex-1 text-[0.8125rem]" bind:value={bulkFolderDraft} placeholder={m.devices_list_bulk_folder_placeholder()} aria-label={m.devices_list_bulk_folder_placeholder()} maxlength="80" />
-							<button type="submit" class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50" disabled={!bulkFolderDraft.trim()}>
-								{m.devices_list_bulk_folder_apply()}
-							</button>
-						</form>
-					{/snippet}
-				</Menu>
-				<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy} onconfirm={bulkDelete}>
-					<Trash2 class="size-4" aria-hidden="true" />
-					{m.devices_list_bulk_delete()}
-				</Confirm>
-				<Button size="sm" variant="ghost" disabled={bulkBusy} onclick={() => (selected = new Set())}>
-					<X class="size-4" aria-hidden="true" />
-					{m.devices_list_clear_selection()}
-				</Button>
-			{/if}
-		</div>
+						{/each}
+					</ul>
+					<form
+						class="mt-1 flex items-center gap-1 border-t border-line p-0.5 pt-1.5"
+						onsubmit={(e) => {
+							e.preventDefault();
+							const name = bulkFolderDraft.trim();
+							if (!name) return;
+							close();
+							void bulkMove(name);
+						}}
+					>
+						<input class="input !h-10 min-w-0 flex-1 text-[0.8125rem]" bind:value={bulkFolderDraft} placeholder={m.devices_list_bulk_folder_placeholder()} aria-label={m.devices_list_bulk_folder_placeholder()} maxlength="80" />
+						<button type="submit" class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50" disabled={!bulkFolderDraft.trim()}>
+							{m.devices_list_bulk_folder_apply()}
+						</button>
+					</form>
+				{/snippet}
+			</Menu>
+			<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy || selectedTargets.length === 0} onconfirm={bulkDelete}>
+				<Trash2 class="size-4" aria-hidden="true" />
+				{m.devices_list_bulk_delete()}
+			</Confirm>
+		</SelectionBar>
 	{/if}
 	{#if bulkReport}
 		<div class="mb-3">
@@ -1160,6 +1175,10 @@
 			</section>
 		{/if}
 	</div>
+	{#if selection}
+		<!-- Room under the last row, so the floating bar never covers it. -->
+		<div class="h-24" aria-hidden="true"></div>
+	{/if}
 {/if}
 
 {#if dragging !== null && pointerPos}
