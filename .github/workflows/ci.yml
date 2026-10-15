@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test --all-features
 
-  # Test coverage of the Rust workspace, on main only: the percentage goes to
+  # Test coverage of the Rust workspace, on pushes to main and dev only: the percentage goes to
   # the job summary, the lcov report to a workflow artifact. No third-party
   # service sees the code.
   coverage:

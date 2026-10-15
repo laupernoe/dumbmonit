@@ -37,6 +37,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Simpler version numbers.** After 0.1.0-alpha.8 the next release is
+  **0.9.0**, then 0.10.0, 0.11.0…; a fix-only release bumps the last number.
+  `:latest` still follows releases; `:edge` is now built from the `dev` branch.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).

@@ -67,9 +67,16 @@ To see a page as CI and users see it, use the headless browser skill in
 `web/tools/README.md` (Chromium + puppeteer in Docker,
 screenshots of every route in both themes and both viewports).
 
+## Branches
+
+- **`dev`** is where work lands: open pull requests against `dev`. Every push
+  to `dev` builds the `:edge` images.
+- **`main`** is the stable line. It only receives `dev` through a pull request
+  once it is checked, and releases are tagged from it.
+
 ## What CI checks
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request:
+`.github/workflows/ci.yml` runs on every push to `main` or `dev` and every pull request:
 
 1. `cargo fmt --all --check`
 2. `cargo clippy --all-targets --all-features -- -D warnings`
@@ -286,11 +293,18 @@ motion per page, `prefers-reduced-motion` respected.
 
 ## Releasing
 
+Versions are plain `0.MINOR.PATCH`: `0.9.0`, `0.10.0`, … A new release
+bumps the minor number, a fix-only release the patch number (`0.9.1`). The
+leading `0` says the project is not stable yet; `1.0.0` will mark that it is.
+(Up to 0.1.0-alpha.8, versions carried an `-alpha.N` suffix.)
+
+Releases are tagged from `main`, after `dev` has been merged into it.
+
 Before tagging `vX.Y.Z`:
 
 1. Move the `Unreleased` section of `CHANGELOG.md` under the new version and date.
 2. Add the release to `web/src/lib/whatsnew/releases.ts` (newest first): the
-   version exactly as the server reports it (`0.1.0-alpha.7`, no `v`), the date
+   version exactly as the server reports it (`0.9.0`, no `v`), the date
    and three to five short highlights in English. It feeds the "What's new in
    vX.Y.Z" window shown once after an update; a version missing from the file
    shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the

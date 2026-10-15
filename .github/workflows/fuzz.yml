@@ -4,7 +4,7 @@ name: Fuzzing
 # .clusterfuzzlite/build.sh) against the parsers that read outside input:
 #   - pull requests: every target, 5 minutes in all (picking only the targets
 #     a change touches would need coverage reports, which are not produced);
-#   - push to main and weekly: every target, 5 minutes in all, corpus kept
+#   - push to main or dev, and weekly: every target, 5 minutes in all, corpus kept
 #     between runs as a workflow artifact.
 # A crash fails the job and leaves the reproducer as an artifact.
 
@@ -17,7 +17,7 @@ on:
       - "Cargo.lock"
       - ".github/workflows/fuzz.yml"
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - "crates/**"
       - "fuzz/**"

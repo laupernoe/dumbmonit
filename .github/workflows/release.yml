@@ -3,14 +3,14 @@ name: Release
 # Builds the images (amd64 only for now; arm64 comes back later) with the repository Dockerfile and pushes them to
 # ghcr.io/laupernoe/dumbmonit (server) and ghcr.io/laupernoe/dumbmonit-agent (agent,
 # `--target agent-image`), with the same tags:
-#   - every push to main   -> :edge
+#   - every push to dev    -> :edge (development; main only gets dev through a PR)
 #   - every tag v*         -> :X.Y.Z, :X.Y, :X and :latest
 # CI (ci.yml) builds the same images without pushing, on every push and PR.
 #
 # It also delivers the agent as native binaries: Linux x86_64/aarch64 (static
 # musl), Windows x86_64 and FreeBSD x86_64 from the Dockerfile's `agent-dist`
 # stage, macOS arm64/x86_64 from a macOS runner, each with its `.sha256`.
-#   - every push to main   -> workflow artifacts `dumbmonit-agent-binaries`
+#   - every push to dev    -> workflow artifacts `dumbmonit-agent-binaries`
 #                             and `dumbmonit-agent-macos` (kept 30 days)
 #   - every tag v*         -> attached to the GitHub release of that tag, each
 #                             signed with Sigstore (keyless, `<file>.sigstore.json`)
@@ -20,7 +20,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
     tags: ["v*"]
 
 # Read-only by default; each job asks for the write scopes it needs.
@@ -31,11 +31,11 @@ env:
   IMAGE: ghcr.io/laupernoe/dumbmonit
   AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
 
-# Only the newest :edge matters: a newer push to main cancels the build in
+# Only the newest :edge matters: a newer push to dev cancels the build in
 # progress. Tags each get their own group and are never cancelled.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/dev' }}
 
 jobs:
   image:
@@ -65,11 +65,11 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=edge,branch=main
+            type=edge,branch=dev
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-          # `latest` follows tagged releases only, never main.
+          # `latest` follows tagged releases only, never dev.
           flavor: |
             latest=${{ startsWith(github.ref, 'refs/tags/v') }}
           labels: |
@@ -133,7 +133,7 @@ jobs:
         with:
           images: ${{ env.AGENT_IMAGE }}
           tags: |
-            type=edge,branch=main
+            type=edge,branch=dev
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
@@ -212,7 +212,7 @@ jobs:
           done
           ls -l
 
-      # Sur main, l'artefact garde l'agent macOS de la version de développement ;
+      # Sur dev, l'artefact garde l'agent macOS de la version de développement ;
       # sur une étiquette, c'est aussi ce que `github-release` attache.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
