@@ -319,7 +319,8 @@ Before tagging `vX.Y.Z`:
    vX.Y.Z" window shown once after an update; a version missing from the file
    shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the
    `Cargo.toml` version has no entry.
-3. Bump the version in `Cargo.toml`, then tag `vX.Y.Z`; `release.yml` publishes
+3. Bump the version in `Cargo.toml`, run `python3 site-src/build.py` (the website
+   reads the version from `Cargo.toml`), then tag `vX.Y.Z`; `release.yml` publishes
    the images and the GitHub release, whose notes are that version's CHANGELOG
    section; the window links to that release.
 

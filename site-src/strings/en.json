@@ -12,7 +12,7 @@
  "k018": "[[svg4]]View on GitHub",
  "k019": "[[svg5]]Read the install guide",
  "k020": "The bulletin, on the wall screen of a test instance with failures switched on &mdash; the weather window is a living Paris rooftop with the pigeons. On a quiet day it reads “Clear skies.”",
- "k021": "<strong>This is an alpha</strong> (0.1.0-alpha.7 is the current release). DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href=\"https://github.com/laupernoe/dumbmonit/issues\">tell us what breaks</a>.",
+ "k021": "<strong>This is an alpha</strong> (@@VERSION@@ is the current release). DumbMonit runs every day on its author's own network, but the HTTP API is not frozen, the database schema still moves and there is no upgrade guarantee across schema changes yet. Several integrations have only met test instances, not years-old production hardware; they are marked below. Try it, and <a href=\"https://github.com/laupernoe/dumbmonit/issues\">tell us what breaks</a>.",
  "k055": "Alerts without the noise",
  "k056": "Useful rules are on right after install. The work goes into sending fewer, better messages.",
  "k057": "Dependencies",

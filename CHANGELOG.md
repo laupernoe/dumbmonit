@@ -5,10 +5,40 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Upgrading from 0.1.0-alpha.8
+
+- **Version numbers.** Releases are now plain `0.MINOR.PATCH`: this one is
+  **0.9.0**, the next 0.10.0. Nothing to do; `:latest` still follows releases
+  and `:edge` is built from the `dev` branch.
+- **Agent services become devices.** On its first report after the update, each
+  agent moves its rule overrides, machine-only rules, silences and open alerts
+  to the new per-service devices (Docker, Plakar, restic/Borg, ZFS, libvirt,
+  WireGuard, IPsec, speed test). Older history stays under the machine, so a
+  chart may show a break at the update. Review the machine's list of modules
+  found, and untick the ones you do not want as devices.
+- **Security score is opt-in.** The Security page is gone and `/security` opens
+  the setting. An installation that already monitored a rated device keeps the
+  score on; a new one starts with it off. Turn it on in **Settings → Account &
+  security → Security score**. A few products (pfSense, UniFi, NTP,
+  nginx/Apache, GitLab, Forgejo) are no longer rated.
+- **Agent with Docker Compose.** `docker-compose.agent.yml` is shorter and now
+  keeps the agent's binding in a volume. If you copied the old file, take the
+  new one (the options moved to the agent page) so that recreating the
+  container no longer unbinds it.
+- **Notification links.** Acknowledge and snooze links in alert messages are
+  active as soon as a public URL is configured; turn **Acknowledge and snooze
+  from notifications** off in the notification policy if you do not want them.
+- **Heartbeat to set again after a restore.** The outgoing heartbeat URL is not
+  part of the encrypted configuration bundle: enter it again after restoring
+  onto a new instance (Settings → System → DumbMonit itself).
+- **New versions of the bundle.** VictoriaMetrics 1.154.0 and rustls 0.23.46
+  (see Security); the bundled VictoriaMetrics is replaced when you pull the
+  new image.
+
 ### Added
 
 - **Acknowledge or snooze an alert from the notification.** Alert messages
-  carry **Acknowledge** (until it resolves) and **Snooze 1 h** — buttons on
+  carry **Acknowledge** (until it resolves) and **Snooze 1 h**: buttons on
   ntfy, Telegram and Web Push (operators and admins only), links on Discord,
   Slack, email and the other channels, `{{ack_url}}` / `{{snooze_url}}` for
   custom webhooks; none on PagerDuty and Opsgenie. A link opens a confirmation
@@ -16,16 +46,20 @@ All notable changes to this project are documented here. The format follows
   pressed, so link previews and mail scanners act on nothing. Each link is
   signed with a key derived from the instance secret, covers one gesture on
   the alerts of its message (that firing only: a later re-fire is not
-  covered), works once and for 24 hours, and is recorded in
-  the audit log as "via notification link". On by default when a public URL is
-  set; **Acknowledge and snooze from notifications** in the notification policy
+  covered), works once and for 24 hours, and is recorded in the audit log as
+  "via notification link". On by default when a public URL is set;
+  **Acknowledge and snooze from notifications** in the notification policy
   turns it off and revokes the links already sent. New public endpoints
   `POST /api/public/alert-action/inspect` and `POST /api/public/alert-action`,
   `action_links` in the notification policy, `actions` in `GET /api/notify/kinds`.
   See [Acknowledge or snooze from the notification](docs/notifications.md#acknowledge-or-snooze-from-the-notification).
+- **Alerts: multi-select with bulk actions.** On the Alerts page, operators can
+  tick several alert tiles (or all of them) and acknowledge, unacknowledge or
+  ignore them for their device in one go; failures are reported and stay
+  selected.
 - **Who watches the watcher.** An optional **outgoing heartbeat**
-  (Settings → System → DumbMonit itself): DumbMonit calls a URL of yours —
-  Healthchecks.io, an Uptime Kuma push monitor, Better Stack… — every 60
+  (Settings → System → DumbMonit itself): DumbMonit calls a URL of yours
+  (Healthchecks.io, an Uptime Kuma push monitor, Better Stack…) every 60
   seconds by default, only while the scheduler runs, SQLite answers and
   VictoriaMetrics is reachable, so that an outside service alerts you when the
   host, the container or the engine goes quiet. A **Test** button, an optional
@@ -38,22 +72,6 @@ All notable changes to this project are documented here. The format follows
   New endpoints `GET /api/self-monitoring`, `PUT /api/self-monitoring/heartbeat`
   and `POST /api/self-monitoring/heartbeat/test`. See
   [Watching DumbMonit itself](docs/install/self-monitoring.md).
-- **Alerts: multi-select with bulk actions.** On the Alerts page, operators can
-  tick several alert tiles (or all of them) and acknowledge, unacknowledge or
-  ignore them for their device in one go; failures are reported and stay
-  selected.
-- **Import from Uptime Kuma.** On **Add a monitor**, drop the backup file of
-  Uptime Kuma 1.x (Settings, Backup, Export; version 2 has no export) and get a
-  preview of what will be created and what is skipped, and why: HTTP, keyword and
-  JSON-query monitors become `http`, ping, TCP port and DNS keep their type, push
-  monitors become heartbeats (with a new URL), groups become folders and tags
-  become device tags. Notifications, credentials, headers and request bodies are
-  never imported. New endpoint `POST /api/targets/import/kuma`. See
-  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
-- **Filter the Monitors list by tag.** Tags in use appear as chips above the
-  list (the options of a device type are not tags); pick one or several to keep
-  the devices that carry all of them. The selection is kept in the URL with the
-  other filters (`?tag=env=prod`).
 - **Each service an agent finds is its own device.** Docker, Plakar,
   restic/Borg, ZFS, libvirt, WireGuard, IPsec and the speed test no longer pile
   up on the machine's page: each one becomes an `agent_service` device under
@@ -62,10 +80,8 @@ All notable changes to this project are documented here. The format follows
   SMART, sensors and OS health; every series is written once, under the device
   it belongs to. The machine's page lists the modules found and not found:
   untick one to drop its device (the agent stops collecting it), tick one to
-  watch it before it shows up. Nothing to choose at install time. Existing
-  installations move rule overrides, machine-only rules, silences and open
-  alerts to the new device on its first report; older history stays under the
-  machine. See [Services found by the agent](docs/devices/agent.md#services-found-by-the-agent).
+  watch it before it shows up. Nothing to choose at install time. See
+  [Services found by the agent](docs/devices/agent.md#services-found-by-the-agent).
 - **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
   and an entry in the command palette) draws the whole infrastructure from the
   links DumbMonit already knows, nothing to type in: declared parents, relay
@@ -76,30 +92,6 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
-- **Devices list: bulk actions, sorting, linkable filters.** Admins can tick devices (or select
-  all shown) and enable, disable, move to a folder or delete them in one go; a partial failure is
-  listed and the failed devices stay selected. Search, state, kind, sort (name, status, kind, last
-  check) and layout are kept in the URL. Disabled devices now sit in a collapsed "Disabled (N)"
-  section at the bottom.
-- **Command palette: recents, more actions, keyboard shortcuts.** Ctrl/⌘ K now lists the last
-  eight opened pages and devices first (kept per browser), offers more actions (silence alerts,
-  open a settings section, keyboard shortcuts, sign out) limited to what your role may do, and
-  shows each shortcut. New global shortcuts outside text fields: `g o` overview, `g d` devices,
-  `g a` alerts, `g s` status pages, `g n` add a monitor, `g t` theme, `?` for the help dialog.
-- **Unsaved-changes warning in Settings.** The SSO, Wall news and Reports forms
-  now show "Unsaved changes" next to Save and ask before you leave the page or
-  close the tab.
-- **Recoverable empty states and errors.** `EmptyState` takes `primary` and `secondary` actions;
-  `ErrorNotice` adds a next step per failure type (offline, 403, 5xx) and a "Sign in again" link
-  on 401. The Overview sky band is shorter on phones so content stays above the fold.
-- **Device form: Test connection, and a smarter network scan.** SNMP devices get a
-  "Test connection" button that probes the entered address and credential once
-  (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
-  the probe's error. A disabled Save or Test button now says why. The network scan
-  pre-fills a suggested network (`GET /api/discovery/subnets`), still editable: the
-  `DUMBMONIT_SCAN_SUBNETS` setting, else the /24 networks of the devices already
-  monitored, else the server's own networks (outside a container only), else an
-  empty field with a hint.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs
@@ -110,14 +102,14 @@ All notable changes to this project are documented here. The format follows
   (pc.2024.3 or later, Prism Viewer role): clusters, hosts degraded or in
   maintenance, AHV VMs, storage container fill level and unresolved alerts by
   severity. Three built-in rules. See [Nutanix AHV](docs/devices/nutanix.md).
+- **OpenVPN server** device kind: version, whether the server reports itself
+  connected, and every client in session with its addresses and traffic, read
+  through the management interface (read-only: `version`, `state`, `status 3`).
 - **KVM virtual machines on the Linux agent.** A new `libvirt` module reads
   `virsh -c qemu:///system` (domains, their state, vCPUs and memory; storage
   pools and their fill level), silent where `virsh` is absent. Two built-in
   rules: a crashed domain, a pool almost full. See
   [the agent page](docs/devices/agent.md#kvm-virtual-machines-through-libvirt).
-- **OpenVPN server** device kind: version, whether the server reports itself
-  connected, and every client in session with its addresses and traffic, read
-  through the management interface (read-only: `version`, `state`, `status 3`).
 - **IPsec tunnels** in the agent (module `ipsec`): every strongSwan tunnel
   configured, up or down, read with `swanctl --list-conns` / `--list-sas`, with
   traffic and time to the next rekey, an IPsec panel on the device page, and
@@ -127,6 +119,34 @@ All notable changes to this project are documented here. The format follows
   most once per period (6 h by default, 5 min minimum). Off by default since
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
+- **New security checks.** Linux hosts: SSH root login, SSH password
+  authentication, host firewall. Windows hosts: firewall profiles, pending
+  restart, Remote Desktop without Network Level Authentication, SMBv1.
+  Websites (HTTP(S) monitors and Website health): HTTPS and security headers
+  (HSTS, `nosniff`, clickjacking protection, CSP) besides the certificate.
+  Synology: pending DSM update, built-in `admin` account, Auto Block, DSM
+  firewall (administrator account only, read hourly). New series:
+  `agent_ssh_root_login`, `agent_ssh_password_auth` and `agent_firewall_active`
+  (Linux); `agent_firewall_profile_enabled`, `agent_reboot_required`,
+  `agent_rdp_enabled`, `agent_rdp_nla` and `agent_smb1_enabled` (Windows);
+  `probe_http_security_header` (HTTP(S) monitors); `website_https` and
+  `website_security_header` (Website health); `synology_update_available`,
+  `synology_admin_account_enabled`, `synology_autoblock_enabled` and
+  `synology_firewall_enabled`.
+- **Security report per device.** The grade badge opens a report: what fails
+  and how to fix it, what passes, concrete steps to improve the score on that
+  product, and a link to its documentation, under a visible "indicative, not a
+  full audit" notice. New `GET`/`PUT /api/security/settings`; both security
+  reads now carry `enabled`, and the device report a `guide`. See
+  [Security score](docs/using/security-score.md).
+- **Import from Uptime Kuma.** On **Add a monitor**, drop the backup file of
+  Uptime Kuma 1.x (Settings, Backup, Export; version 2 has no export) and get a
+  preview of what will be created and what is skipped, and why: HTTP, keyword and
+  JSON-query monitors become `http`, ping, TCP port and DNS keep their type, push
+  monitors become heartbeats (with a new URL), groups become folders and tags
+  become device tags. Notifications, credentials, headers and request bodies are
+  never imported. New endpoint `POST /api/targets/import/kuma`. See
+  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
 - **Monitored alerts on the edit form.** Editing a monitor lists every alert
   rule that reads a metric it has written in the last 24 hours (for an agent
   with Docker: container stopped, unhealthy, restarting, update available, and
@@ -134,27 +154,62 @@ All notable changes to this project are documented here. The format follows
   alerts for that monitor only; the data is still collected, and the switches
   are saved with the form. Same per-device override as **Don't alert me
   again**. New endpoint `GET /api/targets/{id}/rules`.
+- **Device form: Test connection, and a smarter network scan.** SNMP devices get a
+  "Test connection" button that probes the entered address and credential once
+  (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
+  the probe's error. A disabled Save or Test button now says why. The network scan
+  pre-fills a suggested network (`GET /api/discovery/subnets`), still editable: the
+  `DUMBMONIT_SCAN_SUBNETS` setting, else the /24 networks of the devices already
+  monitored, else the server's own networks (outside a container only), else an
+  empty field with a hint.
+- **Devices list: bulk actions, sorting, linkable filters.** Admins can tick
+  devices (or select all shown) and enable, disable, move to a folder or delete
+  them in one go; a partial failure is listed and the failed devices stay
+  selected. Search, state, kind, sort (name, status, kind, last check) and
+  layout are kept in the URL. Disabled devices now sit in a collapsed
+  "Disabled (N)" section at the bottom.
+- **Filter the Monitors list by tag.** Tags in use appear as chips above the
+  list (the options of a device type are not tags); pick one or several to keep
+  the devices that carry all of them. The selection is kept in the URL with the
+  other filters (`?tag=env=prod`).
+- **Command palette: recents, more actions, keyboard shortcuts.** Ctrl/⌘ K now
+  lists the last eight opened pages and devices first (kept per browser),
+  offers more actions (silence alerts, open a settings section, keyboard
+  shortcuts, sign out) limited to what your role may do, and shows each
+  shortcut. New global shortcuts outside text fields: `g o` overview, `g d`
+  devices, `g a` alerts, `g s` status pages, `g n` add a monitor, `g t` theme,
+  `?` for the help dialog.
+- **Unsaved-changes warning in Settings.** The SSO, Wall news and Reports forms
+  now show "Unsaved changes" next to Save and ask before you leave the page or
+  close the tab.
+- **Recoverable empty states and errors.** `EmptyState` takes `primary` and
+  `secondary` actions; `ErrorNotice` adds a next step per failure type
+  (offline, 403, 5xx) and a "Sign in again" link on 401. The Overview sky band
+  is shorter on phones so content stays above the fold.
 
 ### Changed
 
+- **The security score is opt-in and lives next to each device.** Turn it on in
+  **Settings → Account & security → Security score**; rated devices then get a
+  grade badge in the device list and on their page. Off, the score is not
+  computed and `dumbmonit_security_score` is no longer written. New
+  installations start with it off; an installation that already monitored a
+  rated device keeps it on.
+- **Security score coverage narrowed** to the products where it means
+  something: hosts, websites, Synology, Proxmox VE, Proxmox Backup Server,
+  OPNsense and Active Directory. pfSense, UniFi, NTP, nginx/Apache, GitLab,
+  Forgejo and the vendor-update checks of other integrations are no longer
+  rated: one or two checks gave a grade that meant little.
 - **Simpler version numbers.** After 0.1.0-alpha.8 the next release is
   **0.9.0**, then 0.10.0, 0.11.0…; a fix-only release bumps the last number.
   `:latest` still follows releases; `:edge` is now built from the `dev` branch.
 - **Shorter `docker-compose.agent.yml`.** Only what most hosts need; the
   options moved to the agent page. It now keeps the agent's binding in a
   volume, so recreating the container no longer unbinds it.
-
 - **Adding a device starts from a short list.** Search first, then the common
   choices (website, ping, machine with the agent, SNMP device, hypervisor, NAS,
   network scan); every other type is grouped by category and folded. The agent
   appears once.
-- **Status page editor: compact scene choice.** The chosen scenes are shown as
-  thumbnails with a "Change" button that opens a searchable, paged grid, and
-  the list of services to add has a search box.
-- **Wall: each problem once, readable.** A device written out as a problem is
-  no longer repeated among the device tiles, long names and causes wrap instead
-  of being cut, and "And N more" became a clear counter linking to Alerts.
-
 - **Alert rules page: grouped, filtered, counted.** The 150+ rules are grouped by
   device kind and folded by default (kinds you own first, with how many are off
   or firing); quick filters (Active, Disabled, Changed by me, Fired lately)
@@ -164,59 +219,42 @@ All notable changes to this project are documented here. The format follows
   metric families that never moved over the period (the 0/1 checks of a
   website, for instance) are no longer drawn; they collapse into a "Steady
   checks (N)" line that lists their value. Only the series that change keep a chart.
+- **Status page editor: compact scene choice.** The chosen scenes are shown as
+  thumbnails with a "Change" button that opens a searchable, paged grid, and
+  the list of services to add has a search box.
+- **Wall: each problem once, readable.** A device written out as a problem is
+  no longer repeated among the device tiles, long names and causes wrap instead
+  of being cut, and "And N more" became a clear counter linking to Alerts.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
+- **Clearer failures on notifications and status pages.** A failed channel
+  delivery shows the service's message, HTTP status and a hint, with the raw
+  text under "Details"; Remove and Delete moved into a row "More actions" menu,
+  and each status page row shows its published or draft state and custom domain.
+
+### Removed
+
+- **The Security page.** `/security` now opens the security score setting; the
+  report moved to each device.
 
 ### Fixed
 
-- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or silence controls on a disabled monitor; an "Enable" button takes their place.
-- **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
-- **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
-- **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
-- Notifications and status pages: a failed channel delivery shows the service's
-  message, HTTP status and a hint, with the raw text under "Details"; Remove and
-  Delete moved into a row "More actions" menu, and each status page row shows its
-  published or draft state and custom domain.
-- Accessibility: the Alerts tabs support Left/Right/Home/End with a roving tabindex, and
-  the muted text colour (`ink-3`) now meets WCAG AA contrast in light and dark.
-- Status pages: the uptime next to each bar and in the summary line now covers
-  the same days as the bar. On a page showing 8 to 29 days it was the 7-day
-  uptime, under a heading naming the longer window.
-
-- **The security score is now opt-in and lives next to each device.** The
-  Security page is gone (`/security` opens the setting): turn the score on in
-  **Settings → Account & security → Security score**, and rated devices get a
-  grade badge in the device list and on their page. The badge opens a report:
-  what fails and how to fix it, what passes, concrete steps to improve the
-  score on that product, and a link to its documentation, under a visible
-  "indicative, not a full audit" notice. New installations start with it off;
-  an installation that already monitored a rated device keeps it on. Off, the
-  score is not computed and `dumbmonit_security_score` is no longer written.
-  New `GET`/`PUT /api/security/settings`; both security reads now carry
-  `enabled`, and the device report a `guide`. See
-  [Security score](docs/using/security-score.md).
-- **Security score coverage narrowed to the products where it means
-  something, with new checks.** Linux hosts gain SSH root login, SSH password
-  authentication and host firewall checks; Windows hosts are rated on the
-  firewall profiles, a pending restart, Remote Desktop without Network Level
-  Authentication and SMBv1; websites (HTTP(S) monitors and Website health) on
-  HTTPS and security headers (HSTS, `nosniff`, clickjacking protection, CSP)
-  besides the certificate; Synology on a pending DSM update, the built-in
-  `admin` account, Auto Block and the DSM firewall (administrator account
-  only, read hourly). Proxmox VE, Proxmox Backup Server, OPNsense and Active
-  Directory keep their checks. pfSense, UniFi, NTP,
-  nginx/Apache, GitLab, Forgejo and the vendor-update checks of other
-  integrations are no longer rated: one or two checks gave a grade that meant
-  little.
-- The agent reports `agent_ssh_root_login`, `agent_ssh_password_auth` and
-  `agent_firewall_active` on Linux, and `agent_firewall_profile_enabled`,
-  `agent_reboot_required`, `agent_rdp_enabled`, `agent_rdp_nla` and
-  `agent_smb1_enabled` on Windows. HTTP(S) monitors report
-  `probe_http_security_header`, Website health devices `website_https` and
-  `website_security_header`, Synology `synology_update_available`,
-  `synology_admin_account_enabled`, `synology_autoblock_enabled` and
-  `synology_firewall_enabled`.
+- **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
+  silence controls on a disabled monitor; an "Enable" button takes their place.
+- **Public status page no longer claims "All systems operational" without
+  data.** Services that are disabled or never measured are left out of the
+  banner and the tally, which reads "No data yet".
+- **Status page uptime.** The uptime next to each bar and in the summary line
+  now covers the same days as the bar. On a page showing 8 to 29 days it was
+  the 7-day uptime, under a heading naming the longer window.
+- **Info alerts are no longer counted as problems.** The nav badge and the wall
+  ("25 problems") count only warnings, criticals and unreachable devices.
+- **Unreachable agent message.** The duration is now readable ("no measurement
+  for 10 d 21 h (limit 90 s)") instead of raw seconds.
+- **Accessibility.** The Alerts tabs support Left/Right/Home/End with a roving
+  tabindex, and the muted text colour (`ink-3`) now meets WCAG AA contrast in
+  light and dark.
 
 ### Security
 
