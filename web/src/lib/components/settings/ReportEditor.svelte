@@ -21,6 +21,8 @@
 	} from '#lib/api/reports.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { Button, Confirm, ErrorNotice, Field, Plate, Toggle } from '#lib/ui/index.js';
+	import UnsavedBadge from './UnsavedBadge.svelte';
+	import { useUnsavedGuard } from '#lib/settings/unsaved.svelte.js';
 
 	interface Props {
 		schedule: ReportSchedule | null;
@@ -157,6 +159,9 @@
 				channelId !== (schedule.channel_id === null ? '' : String(schedule.channel_id)))
 	);
 
+	// Edits to a saved report warn before leaving; a brand-new draft does not.
+	useUnsavedGuard(() => dirty);
+
 	const idPrefix = $derived(`report-${schedule?.id ?? 'new'}`);
 </script>
 
@@ -261,7 +266,7 @@
 		{:else if oncancel}
 			<Button variant="ghost" onclick={oncancel}>{m.settings_report_cancel()}</Button>
 		{/if}
-		{#if dirty}<span class="text-sm text-ink-2">{m.settings_report_dirty()}</span>{/if}
+		<UnsavedBadge {dirty} />
 	</div>
 </form>
 

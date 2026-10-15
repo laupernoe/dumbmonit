@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+
 - **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
   and an entry in the command palette) draws the whole infrastructure from the
   links DumbMonit already knows, nothing to type in: declared parents, relay
@@ -17,6 +18,9 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
+- **Unsaved-changes warning in Settings.** The SSO, Wall news and Reports forms
+  show "Unsaved changes" next to Save and ask before you leave the page or
+  close the tab.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs

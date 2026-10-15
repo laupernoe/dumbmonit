@@ -28,6 +28,8 @@
 		type NewsSettings
 	} from '#lib/api/wallNews.js';
 	import { Button, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
+	import UnsavedBadge from './UnsavedBadge.svelte';
+	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 
 	const MAX_FEEDS = 8;
 	const CUSTOM = '__custom';
@@ -42,6 +44,9 @@
 	let form = $state<NewsSettings>({ ...DEFAULT_NEWS_SETTINGS, feeds: [] });
 	let countries = $state<NewsCountry[]>([]);
 	let country = $state('INT');
+
+	// Unsaved edits: the form plus the chosen video channel (the draft feed fields are not saved state).
+	const tracker = useDirtyTracker(() => form);
 
 	let customUrl = $state('');
 	let customName = $state('');
@@ -102,6 +107,7 @@
 			countries = presets;
 			country = guessCountry(new Set(presets.map((c) => c.code)));
 			channel = !saved.video_url ? '' : allVideos.some((v) => v.url === saved.video_url) ? saved.video_url : CUSTOM;
+			tracker.markClean();
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			if (cause instanceof ApiError && cause.missing) missing = true;
@@ -172,6 +178,7 @@
 		try {
 			const saved = await saveNewsSettings(form);
 			form = { ...saved, feeds: saved.feeds.map((feed) => ({ ...feed })) };
+			tracker.markClean();
 			notice = m.settings_news_saved();
 		} catch (cause) {
 			problem = cause instanceof Error ? cause.message : String(cause);
@@ -369,6 +376,7 @@
 
 				<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
 					<Button onclick={save} disabled={saving}>{m.settings_news_save()}</Button>
+					<UnsavedBadge dirty={tracker.dirty} />
 					<p class="min-h-5 text-sm" role="status" aria-live="polite">
 						{#if problem}<span class="text-warning-ink">{problem}</span>{:else if notice}<span class="text-signal-ink">{notice}</span>{/if}
 					</p>
