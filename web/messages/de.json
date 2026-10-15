@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", nur für die Regeln {rules}",
 	"alerts_matcher_sentence": "Dieser Kanal erhält {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "mit Tag {tags}",
-	"alerts_needs_dismiss_error": "Diese Warnung konnte nicht verworfen werden.",
 	"alerts_needs_dismissed": "Verworfen",
 	"alerts_needs_dismissed_hint": "Bekannte Probleme: Erinnerungen pausieren, bis die Bestätigung endet oder die Warnung gelöst ist.",
 	"alerts_needs_empty_no_devices": "Noch nichts zu überwachen.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Keine Regel löst aus. Ein Monitor wartet noch auf einen ersten Bericht.",
 	"alerts_needs_snoozed": "Zurückgestellt",
-	"alerts_needs_snoozed_hint": "Vorübergehend ausgeblendet: keine Erinnerung, bis der Zeitraum endet oder die Warnung gelöst ist.",
-	"alerts_needs_toast_dismissed": "Verworfen.",
 	"alerts_nth_1": "1. {day}",
 	"alerts_nth_2": "2. {day}",
 	"alerts_nth_3": "3. {day}",
@@ -1616,9 +1613,6 @@
 	"devices_timeline_detail_all": "auf {n}: {labels}",
 	"devices_timeline_detail_count": "auf {n} Instanzen",
 	"devices_timeline_detail_some": "auf {n}, darunter {labels}",
-	"devices_timeline_dismiss": "Verwerfen",
-	"devices_timeline_dismissed": "Verworfen.",
-	"devices_timeline_err_dismiss": "Die Warnung konnte nicht verworfen werden.",
 	"devices_timeline_err_load": "Der Warnungsverlauf konnte nicht geladen werden",
 	"devices_timeline_fired": "Ausgelöst",
 	"devices_timeline_first": "erste {when}",
@@ -1628,13 +1622,11 @@
 	"devices_timeline_last_rows": "Letzte {count} Zeilen.",
 	"devices_timeline_loading": "Warnungsverlauf wird geladen",
 	"devices_timeline_maintenance": "Ruhig · Wartungsfenster",
-	"devices_timeline_never": "Auf diesem Monitor wurde noch nie eine Warnung ausgelöst.",
 	"devices_timeline_not_sent": "Nicht gesendet · {reason}",
 	"devices_timeline_nothing_one": "Auf diesem Monitor wurde nichts ausgelöst. Regeln haben sich {count}-mal aufgebaut und sich von selbst beruhigt.",
 	"devices_timeline_nothing_other": "Auf diesem Monitor wurde nichts ausgelöst. Regeln haben sich {count}-mal aufgebaut und sich von selbst beruhigt.",
 	"devices_timeline_notified": "Benachrichtigt",
 	"devices_timeline_notified_some": "{sent} von {total} benachrichtigt",
-	"devices_timeline_open_alerts": "Warnungen öffnen",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Ausgelöst",
 	"devices_timeline_phase_ok": "OK",
@@ -1642,12 +1634,12 @@
 	"devices_timeline_phase_resolved": "Behoben",
 	"devices_timeline_quiet": "ruhig",
 	"devices_timeline_show_all": "Alle anzeigen · {count} weitere",
+	"devices_timeline_show_each": "Einzeln anzeigen ({count})",
 	"devices_timeline_show_fewer": "Weniger anzeigen",
 	"devices_timeline_show_quiet": "Ruhige Übergänge anzeigen (Aufbau und Rückgang) · {count}",
 	"devices_timeline_since": "seit {when}",
 	"devices_timeline_stop_ignoring": "Nicht mehr ignorieren",
 	"devices_timeline_suppressed": "Vom übergeordneten Gerät unterdrückt",
-	"devices_timeline_undo": "Rückgängig",
 	"devices_uptime_aria": "{up} Zeitfenster online, {down} offline, {none} ohne Prüfung",
 	"devices_uptime_down": "Offline",
 	"devices_uptime_none": "Keine Prüfung",
@@ -3552,6 +3544,7 @@
 	"misc_nav_github_title": "Quellcode auf GitHub (neuer Tab)",
 	"misc_nav_home": "DumbMonit, Übersicht",
 	"misc_nav_main": "Hauptmenü",
+	"misc_nav_more": "Mehr",
 	"misc_nav_overview": "Übersicht",
 	"misc_nav_palette_open": "Befehlspalette öffnen",
 	"misc_nav_palette_title": "Befehlspalette ({shortcut})",
@@ -3813,21 +3806,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} und {count} weiteres",
-				"countPlural=other": "{names} und {count} weitere"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3859,21 +3837,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} war die ganze Zeit nicht erreichbar.",
-				"countPlural=other": "{subject} waren die ganze Zeit nicht erreichbar."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3892,7 +3855,6 @@
 	"overview_brief_dropped_many": "{names} sind ausgefallen und wieder da.",
 	"overview_brief_head_first": "In den letzten 24 Std.",
 	"overview_brief_head_since": "Seit {when}",
-	"overview_brief_intro": "Zum ersten Mal hier? Das weiß die Taube bisher.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4079,25 +4041,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} hat sich von selbst erledigt",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} wurde ausgelöst und ist weiterhin aktiv",
-				"countPlural=other": "{name} wurde {count} Mal ausgelöst und ist weiterhin aktiv"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Während Ihrer Abwesenheit ist nichts passiert.",
 	"overview_brief_quiet_first": "In den letzten 24 Std. ist nichts passiert.",
 	"overview_brief_the_server": "dem Server",
-	"overview_brief_went_down": "{name} war ab {when} nicht erreichbar und ist es noch.",
 	"overview_first_all_done": "Alle drei erledigt. Diese Anleitung kommt nicht wieder.",
 	"overview_first_channel_action": "Kanal hinzufügen",
 	"overview_first_channel_text": "E-Mail, ntfy, Discord, Telegram, PagerDuty — was Sie ohnehin lesen. Es wird nichts gesendet, solange alles in Ordnung ist.",

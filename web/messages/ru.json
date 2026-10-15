@@ -126,7 +126,6 @@
 	"alerts_matcher_only_rules": ", только для правил {rules}",
 	"alerts_matcher_sentence": "Этот канал получает {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "с тегом {tags}",
-	"alerts_needs_dismiss_error": "Не удалось отклонить это оповещение.",
 	"alerts_needs_dismissed": "Отклонённые",
 	"alerts_needs_dismissed_hint": "Известные проблемы: напоминания приостановлены, пока не закончится подтверждение или оповещение не будет устранено.",
 	"alerts_needs_empty_no_devices": "Пока нечего отслеживать.",
@@ -154,8 +153,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Ни одно правило не срабатывает. Один монитор всё ещё ждёт первого отчёта.",
 	"alerts_needs_snoozed": "Отложенные",
-	"alerts_needs_snoozed_hint": "Скрыты на время: напоминаний не будет, пока не закончится срок или оповещение не будет устранено.",
-	"alerts_needs_toast_dismissed": "Отклонено.",
 	"alerts_nth_1": "1-й ({day})",
 	"alerts_nth_2": "2-й ({day})",
 	"alerts_nth_3": "3-й ({day})",
@@ -1644,9 +1641,6 @@
 	"devices_timeline_detail_all": "на {n}: {labels}",
 	"devices_timeline_detail_count": "на {n} экземплярах",
 	"devices_timeline_detail_some": "на {n}, включая {labels}",
-	"devices_timeline_dismiss": "Скрыть",
-	"devices_timeline_dismissed": "Скрыто.",
-	"devices_timeline_err_dismiss": "Не удалось скрыть это оповещение.",
 	"devices_timeline_err_load": "Не удалось загрузить историю оповещений",
 	"devices_timeline_fired": "Сработало",
 	"devices_timeline_first": "первое {when}",
@@ -1656,13 +1650,11 @@
 	"devices_timeline_last_rows": "Последние строки: {count}.",
 	"devices_timeline_loading": "Загрузка истории оповещений",
 	"devices_timeline_maintenance": "Тихо · окно обслуживания",
-	"devices_timeline_never": "На этом мониторе оповещений ещё не было.",
 	"devices_timeline_not_sent": "Не отправлено · {reason}",
 	"devices_timeline_nothing_one": "На этом мониторе ничего не срабатывало. Правила нарастали {count} раз и успокоились сами.",
 	"devices_timeline_nothing_other": "На этом мониторе ничего не срабатывало. Правила нарастали {count} раз и успокоились сами.",
 	"devices_timeline_notified": "Уведомление отправлено",
 	"devices_timeline_notified_some": "Уведомлено {sent} из {total}",
-	"devices_timeline_open_alerts": "Открыть оповещения",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Активна",
 	"devices_timeline_phase_ok": "ОК",
@@ -1670,12 +1662,12 @@
 	"devices_timeline_phase_resolved": "Решена",
 	"devices_timeline_quiet": "тихо",
 	"devices_timeline_show_all": "Показать все · ещё {count}",
+	"devices_timeline_show_each": "Показать все по отдельности ({count})",
 	"devices_timeline_show_fewer": "Показать меньше",
 	"devices_timeline_show_quiet": "Показать тихие переходы (нарастание и возврат) · {count}",
 	"devices_timeline_since": "с {when}",
 	"devices_timeline_stop_ignoring": "Перестать игнорировать",
 	"devices_timeline_suppressed": "Подавлено родителем",
-	"devices_timeline_undo": "Отменить",
 	"devices_uptime_aria": "{up} интервалов работало, {down} недоступно, {none} без проверки",
 	"devices_uptime_down": "Недоступно",
 	"devices_uptime_none": "Нет проверки",
@@ -3620,6 +3612,7 @@
 	"misc_nav_github_title": "Исходный код на GitHub (новая вкладка)",
 	"misc_nav_home": "DumbMonit, обзор",
 	"misc_nav_main": "Главное",
+	"misc_nav_more": "Ещё",
 	"misc_nav_overview": "Обзор",
 	"misc_nav_palette_open": "Открыть палитру команд",
 	"misc_nav_palette_title": "Палитра команд ({shortcut})",
@@ -3885,23 +3878,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} и ещё {count}",
-				"countPlural=few": "{names} и ещё {count}",
-				"countPlural=many": "{names} и ещё {count}",
-				"countPlural=other": "{names} и ещё {count}"
-			}
-		}
-	],
 	"overview_brief_device_n": "Монитор {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3937,23 +3913,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} недоступно всё это время.",
-				"countPlural=few": "{subject} недоступны всё это время.",
-				"countPlural=many": "{subject} недоступны всё это время.",
-				"countPlural=other": "{subject} недоступны всё это время."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3974,7 +3933,6 @@
 	"overview_brief_dropped_many": "{names} пропадали и вернулись.",
 	"overview_brief_head_first": "За последние 24 ч",
 	"overview_brief_head_since": "С {when}",
-	"overview_brief_intro": "Впервые здесь? Вот что голубь знает на данный момент.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4185,27 +4143,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} устранилось само",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} сработало и всё ещё активно",
-				"countPlural=few": "{name} сработало {count} раза и всё ещё активно",
-				"countPlural=many": "{name} сработало {count} раз и всё ещё активно",
-				"countPlural=other": "{name} сработало {count} раз и всё ещё активно"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Пока вас не было, ничего не произошло.",
 	"overview_brief_quiet_first": "За последние 24 ч ничего не произошло.",
 	"overview_brief_the_server": "сервер",
-	"overview_brief_went_down": "{name} стало недоступно {when} и остаётся таким.",
 	"overview_first_all_done": "Все три шага выполнены. Это руководство больше не появится.",
 	"overview_first_channel_action": "Добавить канал",
 	"overview_first_channel_text": "Почта, ntfy, Discord, Telegram, PagerDuty — то, что вы и так читаете. Пока всё в порядке, ничего не отправляется.",

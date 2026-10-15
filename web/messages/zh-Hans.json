@@ -123,7 +123,6 @@
 	"alerts_matcher_only_rules": ",仅限规则 {rules}",
 	"alerts_matcher_sentence": "此渠道接收 {floor} {scope}{rules}{exceptions}。",
 	"alerts_matcher_tagged": "标签为 {tags}",
-	"alerts_needs_dismiss_error": "无法忽略此告警。",
 	"alerts_needs_dismissed": "已忽略",
 	"alerts_needs_dismissed_hint": "已知问题:在确认结束或告警解决之前,提醒将暂停。",
 	"alerts_needs_empty_no_devices": "暂无可监控的内容。",
@@ -148,8 +147,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "没有规则被触发。有一个监控项仍在等待首次上报。",
 	"alerts_needs_snoozed": "已暂缓",
-	"alerts_needs_snoozed_hint": "暂时隐藏:在时段结束或告警解决之前不会提醒。",
-	"alerts_needs_toast_dismissed": "已忽略。",
 	"alerts_nth_1": "第一个{day}",
 	"alerts_nth_2": "第二个{day}",
 	"alerts_nth_3": "第三个{day}",
@@ -1602,9 +1599,6 @@
 	"devices_timeline_detail_all": "涉及 {n} 个：{labels}",
 	"devices_timeline_detail_count": "涉及 {n} 个实例",
 	"devices_timeline_detail_some": "涉及 {n} 个，包括 {labels}",
-	"devices_timeline_dismiss": "忽略",
-	"devices_timeline_dismissed": "已忽略。",
-	"devices_timeline_err_dismiss": "无法忽略此告警。",
 	"devices_timeline_err_load": "无法加载告警历史",
 	"devices_timeline_fired": "已触发",
 	"devices_timeline_first": "首次 {when}",
@@ -1614,13 +1608,11 @@
 	"devices_timeline_last_rows": "最近 {count} 行。",
 	"devices_timeline_loading": "正在加载告警历史",
 	"devices_timeline_maintenance": "静默 · 维护窗口",
-	"devices_timeline_never": "此监控项从未触发过告警。",
 	"devices_timeline_not_sent": "未发送 · {reason}",
 	"devices_timeline_nothing_one": "此监控项上没有触发任何告警。规则累积了 {count} 次后自行恢复。",
 	"devices_timeline_nothing_other": "此监控项上没有触发任何告警。规则累积了 {count} 次后自行恢复。",
 	"devices_timeline_notified": "已通知",
 	"devices_timeline_notified_some": "已通知 {sent}/{total}",
-	"devices_timeline_open_alerts": "打开告警",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "触发中",
 	"devices_timeline_phase_ok": "正常",
@@ -1628,12 +1620,12 @@
 	"devices_timeline_phase_resolved": "已解决",
 	"devices_timeline_quiet": "静默",
 	"devices_timeline_show_all": "显示全部 · 还有 {count} 条",
+	"devices_timeline_show_each": "逐条显示（{count}）",
 	"devices_timeline_show_fewer": "显示更少",
 	"devices_timeline_show_quiet": "显示静默转换（累积与恢复）· {count}",
 	"devices_timeline_since": "自 {when}",
 	"devices_timeline_stop_ignoring": "取消忽略",
 	"devices_timeline_suppressed": "被上级设备抑制",
-	"devices_timeline_undo": "撤销",
 	"devices_uptime_aria": "{up} 个时段在线，{down} 个离线，{none} 个无检查",
 	"devices_uptime_down": "离线",
 	"devices_uptime_none": "无检查",
@@ -3518,6 +3510,7 @@
 	"misc_nav_github_title": "GitHub 上的源代码（新标签页）",
 	"misc_nav_home": "DumbMonit，概览",
 	"misc_nav_main": "主导航",
+	"misc_nav_more": "更多",
 	"misc_nav_overview": "概览",
 	"misc_nav_palette_open": "打开命令面板",
 	"misc_nav_palette_title": "命令面板（{shortcut}）",
@@ -3777,20 +3770,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 等 {count} 台"
-			}
-		}
-	],
 	"overview_brief_device_n": "监控项 {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3820,7 +3799,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": "{subject} 一直无法访问。",
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3838,7 +3816,6 @@
 	"overview_brief_dropped_many": "{names} 掉线后已恢复。",
 	"overview_brief_head_first": "过去 24 小时内",
 	"overview_brief_head_since": "自 {when} 起",
-	"overview_brief_intro": "第一次来?这是鸽子目前掌握的情况。",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4013,24 +3990,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} 已自行恢复",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 触发了 {count} 次,目前仍在触发"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "你不在期间没有发生任何事件。",
 	"overview_brief_quiet_first": "过去 24 小时内没有发生任何事件。",
 	"overview_brief_the_server": "服务器",
-	"overview_brief_went_down": "{name} 自 {when} 起无法访问,目前仍未恢复。",
 	"overview_first_all_done": "三步全部完成，此向导不会再出现。",
 	"overview_first_channel_action": "添加通知渠道",
 	"overview_first_channel_text": "邮件、ntfy、Discord、Telegram、PagerDuty，用你平时看的就行。出问题之前不会发送任何内容。",

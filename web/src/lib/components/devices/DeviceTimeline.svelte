@@ -19,25 +19,22 @@
 	 */
 	import type { Alert, AlertHistoryEntry, AlertPhase, AlertRule, RuleOverride, Silence, Target } from '#lib/api/index.js';
 	import {
-		ackAlert,
 		deleteRuleOverride,
 		listAlertHistory,
 		listAlertRules,
 		listRuleOverrides,
-		listSilences,
-		unackAlert
+		listSilences
 	} from '#lib/api/index.js';
 	import type { Tone } from '#lib/ui/index.js';
-	import { Button, ErrorNotice, Plate, Skeleton, Toast } from '#lib/ui/index.js';
+	import { Button, ErrorNotice, Menu, Plate, Skeleton } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { X } from 'lucide-svelte';
+	import { EllipsisVertical } from 'lucide-svelte';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import {
 		alertDetail,
 		formatAlertValue,
 		severityTone,
-		severityWord,
-		UNTIL_RESOLVED_SECS
+		severityWord
 	} from '#lib/components/alerts/helpers.js';
 	import AckControl from '#lib/components/alerts/AckControl.svelte';
 	import SnoozeControl from '#lib/components/alerts/SnoozeControl.svelte';
@@ -52,9 +49,11 @@
 		refreshKey?: number;
 		/** An alert was acknowledged, snoozed, un-snoozed or ignored: refresh. */
 		onackchange?: (alert: Alert) => void;
+		/** Out: true once loaded with no alert, past or present — the page then hides the section. */
+		empty?: boolean;
 	}
 
-	let { targetId, target, alerts, refreshKey = 0, onackchange }: Props = $props();
+	let { targetId, target, alerts, refreshKey = 0, onackchange, empty = $bindable(false) }: Props = $props();
 
 	let silences = $state<Silence[]>([]);
 	async function loadSilences(signal?: AbortSignal) {
@@ -123,45 +122,32 @@
 	/** The history list collapses to its most recent rows until this is flipped. */
 	let showAll = $state(false);
 
-	// --- Dismiss (one click, optimistic) ------------------------------------
-	//
-	// The × is an ack until resolved without the menu — same mechanics and
-	// same "Dismissed · Undo" toast as the Overview/Alerts cards. The row
-	// leaves this device's active list immediately (`dismissing`); once the
-	// parent's refresh (`onackchange`) catches up, the alert shows "Acked"
-	// if it is still around, same as everywhere else.
-
-	let dismissing = $state<Set<string>>(new Set());
-	let dismissToast = $state<{ fingerprint: string } | { error: string } | null>(null);
-
-	async function dismissAlert(alert: Alert) {
-		dismissing = new Set(dismissing).add(alert.fingerprint);
-		dismissToast = { fingerprint: alert.fingerprint };
-		try {
-			const updated = await ackAlert(alert.fingerprint, { duration_secs: UNTIL_RESOLVED_SECS });
-			onackchange?.(updated);
-		} catch (cause) {
-			dismissing = new Set(dismissing);
-			dismissing.delete(alert.fingerprint);
-			dismissToast = {
-				error: cause instanceof Error ? cause.message : m.devices_timeline_err_dismiss()
-			};
-		}
+	/**
+	 * Active alerts of one rule fold into one row ("Container stopped ×9"):
+	 * the labels are listed, and each alert's own controls are one click
+	 * away. Acknowledged ones fold apart from the others.
+	 */
+	interface ActiveGroup {
+		key: string;
+		alerts: Alert[];
 	}
-
-	async function undoDismissAlert(fingerprint: string) {
-		dismissToast = null;
-		dismissing = new Set(dismissing);
-		dismissing.delete(fingerprint);
-		try {
-			const updated = await unackAlert(fingerprint);
-			onackchange?.(updated);
-		} catch {
-			// Best effort: the next refresh shows the server's real state either way.
+	const activeGroups = $derived.by(() => {
+		const map = new Map<string, ActiveGroup>();
+		for (const alert of alerts) {
+			const key = `${alert.rule_uid}|${alert.acked ? 'acked' : 'open'}|${alert.effective_phase}`;
+			let group = map.get(key);
+			if (!group) map.set(key, (group = { key, alerts: [] }));
+			group.alerts.push(alert);
 		}
+		return [...map.values()];
+	});
+	let expanded = $state<Set<string>>(new Set());
+	function toggleGroup(key: string) {
+		const next = new Set(expanded);
+		if (next.has(key)) next.delete(key);
+		else next.add(key);
+		expanded = next;
 	}
-
-	const visibleAlerts = $derived(alerts.filter((alert) => !dismissing.has(alert.fingerprint)));
 
 	async function load(signal?: AbortSignal) {
 		error = null;
@@ -333,7 +319,13 @@
 			.join(' · ');
 	}
 
-	const empty = $derived(!loading && !error && alerts.length === 0 && history.length === 0);
+	const isEmpty = $derived(
+		!loading && !error && alerts.length === 0 && history.length === 0 && ignoredRules.length === 0
+	);
+	// The page hides the whole section (heading included) when there is nothing to tell.
+	$effect(() => {
+		empty = isEmpty;
+	});
 </script>
 
 {#if ignoredRules.length > 0}
@@ -359,6 +351,36 @@
 	</div>
 {/if}
 
+{#snippet controls(alert: Alert)}
+	<span class="flex items-center gap-1">
+		<AckControl {alert} onchanged={onackchange} />
+		{#if auth.canOperate && !alert.acked}
+			<Menu label={m.alerts_row_more_menu()}>
+				{#snippet trigger({ toggle, open })}
+					<Button
+						size="sm"
+						variant="ghost"
+						class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+						aria-haspopup="menu"
+						aria-expanded={open}
+						aria-label={m.alerts_row_more()}
+						title={m.alerts_row_more()}
+						onclick={toggle}
+					>
+						<EllipsisVertical class="size-3.5" aria-hidden="true" />
+					</Button>
+				{/snippet}
+				{#snippet children({ close })}
+					<div class="flex flex-col items-stretch gap-1">
+						<SnoozeControl {alert} {target} {silences} onchanged={() => { onackchange?.(alert); close(); }} />
+						<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => { onackchange?.(alert); close(); }} />
+					</div>
+				{/snippet}
+			</Menu>
+		{/if}
+	</span>
+{/snippet}
+
 {#if error}
 	<ErrorNotice {error} title={m.devices_timeline_err_load()} onretry={() => void load()} />
 {:else if loading}
@@ -367,54 +389,64 @@
 		<Skeleton class="h-10 w-full" />
 		<Skeleton class="h-10 w-3/4" />
 	</div>
-{:else if empty}
-	<!-- No state plate here: the header already says how the device is doing. -->
-	<p class="text-sm text-ink-2">{m.devices_timeline_never()}</p>
-{:else}
+{:else if !isEmpty}
 	<ol class="relative ml-2 border-l border-line pl-5">
-		{#each visibleAlerts as alert, i (alert.fingerprint)}
-			{@const plate = activePlate(alert)}
-			{@const detail = alertDetail(alert, rules.get(alert.rule_uid))}
+		{#each activeGroups as group, i (group.key)}
+			{@const first = group.alerts[0]}
+			{@const plate = activePlate(first)}
+			{@const many = group.alerts.length > 1}
+			{@const open = expanded.has(group.key)}
+			{@const firing = first.effective_phase === 'firing' && !first.acked}
 			<li class="rise-in relative pb-3" style={`--rise-delay: ${Math.min(i, 8) * 30}ms`}>
 				<span
-					class={`absolute top-1.5 -left-[1.5625rem] size-2.5 rounded-full ring-4 ring-canvas ${DOT[plate.tone]} ${alert.effective_phase === 'firing' && !alert.acked ? 'animate-pulse' : ''}`}
+					class={`absolute top-1.5 -left-[1.5625rem] size-2.5 rounded-full ring-4 ring-canvas ${DOT[plate.tone]} ${firing ? 'animate-pulse' : ''}`}
 					aria-hidden="true"
 				></span>
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-					<Plate tone={plate.tone} label={plate.label} pulse={alert.effective_phase === 'firing' && !alert.acked} />
-					{#if alert.acked && alert.effective_phase === 'firing'}
-						<Plate tone={severityTone(alert.severity)} label={severityWord(alert.severity)} bare />
+					<Plate tone={plate.tone} label={plate.label} pulse={firing} />
+					{#if first.acked && first.effective_phase === 'firing'}
+						<Plate tone={severityTone(first.severity)} label={severityWord(first.severity)} bare />
 					{/if}
-					<span class="min-w-0 font-semibold text-ink">{ruleName(alert)}</span>
-					{#if detail}
-						<span class="tnum min-w-0 break-all text-ink-2">{detail}</span>
+					<span class="min-w-0 font-semibold text-ink">{ruleName(first)}</span>
+					{#if many}
+						<span class="tnum rounded-[var(--radius-plate)] border border-line bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-ink-2">×{group.alerts.length}</span>
+					{:else}
+						{@const detail = alertDetail(first, rules.get(first.rule_uid))}
+						{#if detail}<span class="tnum min-w-0 break-all text-ink-2">{detail}</span>{/if}
 					{/if}
-					{#if alert.silenced}
+					{#if first.silenced}
 						<Plate tone="ghost" bare label={m.devices_timeline_maintenance()} />
 					{/if}
-					<span class="tnum text-ink-2" title={formatDateTime(alert.firing_since ?? alert.condition_since)}>
-						{m.devices_timeline_since({ when: formatRelative(alert.firing_since ?? alert.condition_since) })}
+					<span class="tnum text-ink-2" title={formatDateTime(first.firing_since ?? first.condition_since)}>
+						{m.devices_timeline_since({ when: formatRelative(first.firing_since ?? first.condition_since) })}
 					</span>
-					<a href="/alerts" class="text-ink-2 hover:text-ink hover:underline">{m.devices_timeline_open_alerts()}</a>
-					<AckControl {alert} onchanged={onackchange} />
-					<SnoozeControl {alert} {target} {silences} onchanged={() => onackchange?.(alert)} />
-					<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => onackchange?.(alert)} />
-					{#if auth.canOperate && !alert.acked}
-						<Button
-							size="sm"
-							variant="ghost"
-							class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
-							aria-label={m.devices_timeline_dismiss()}
-							title={m.devices_timeline_dismiss()}
-							onclick={() => void dismissAlert(alert)}
-						>
-							<X class="size-3.5" aria-hidden="true" />
+					{#if many}
+						<Button size="sm" variant="ghost" onclick={() => toggleGroup(group.key)} aria-expanded={open}>
+							{open ? m.devices_timeline_show_fewer() : m.devices_timeline_show_each({ count: group.alerts.length })}
 						</Button>
+					{:else}
+						{@render controls(first)}
 					{/if}
 				</div>
-				{#if alert.acked}
-					<p class="mt-0.5 text-[0.8125rem] text-ink-2" title={formatDateTime(alert.acked_until)}>
-						{ackedLine(alert)}
+				{#if many && !open}
+					<p class="mt-0.5 line-clamp-2 text-[0.8125rem] break-words text-ink-2">
+						{group.alerts.map((a) => alertDetail(a, rules.get(a.rule_uid))).filter(Boolean).join(' · ')}
+					</p>
+				{/if}
+				{#if many && open}
+					<ul class="mt-1.5 grid gap-1">
+						{#each group.alerts as alert (alert.fingerprint)}
+							{@const detail = alertDetail(alert, rules.get(alert.rule_uid))}
+							<li class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-surface-2/60 px-2.5 py-1 text-sm">
+								<span class="tnum min-w-0 flex-1 break-all text-ink-2">{detail || ruleName(alert)}</span>
+								{@render controls(alert)}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+				{#if first.acked && !many}
+					<p class="mt-0.5 text-[0.8125rem] text-ink-2" title={formatDateTime(first.acked_until)}>
+						{ackedLine(first)}
 					</p>
 				{/if}
 			</li>
@@ -472,18 +504,4 @@
 			<span>{m.devices_timeline_last_rows({ count: SHOWN })} <a href="/alerts#history" class="text-ink hover:underline">{m.devices_timeline_full_history()}</a></span>
 		{/if}
 	</div>
-{/if}
-
-{#if dismissToast}
-	{#if 'fingerprint' in dismissToast}
-		{@const fingerprint = dismissToast.fingerprint}
-		<Toast
-			message={m.devices_timeline_dismissed()}
-			actionLabel={m.devices_timeline_undo()}
-			onaction={() => void undoDismissAlert(fingerprint)}
-			onclose={() => (dismissToast = null)}
-		/>
-	{:else}
-		<Toast message={dismissToast.error} onclose={() => (dismissToast = null)} />
-	{/if}
 {/if}

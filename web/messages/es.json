@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", solo para las reglas {rules}",
 	"alerts_matcher_sentence": "Este canal recibe {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "con etiqueta {tags}",
-	"alerts_needs_dismiss_error": "No se pudo descartar esta alerta.",
 	"alerts_needs_dismissed": "Descartadas",
 	"alerts_needs_dismissed_hint": "Problemas conocidos: los recordatorios se pausan hasta que termine el reconocimiento o se resuelva la alerta.",
 	"alerts_needs_empty_no_devices": "Aún no hay nada que vigilar.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Ninguna regla está activa. Un monitor aún espera un primer informe.",
 	"alerts_needs_snoozed": "Pospuestas",
-	"alerts_needs_snoozed_hint": "Ocultas por un tiempo: sin recordatorio hasta que termine el plazo o se resuelva la alerta.",
-	"alerts_needs_toast_dismissed": "Descartada.",
 	"alerts_nth_1": "1.º {day}",
 	"alerts_nth_2": "2.º {day}",
 	"alerts_nth_3": "3.º {day}",
@@ -1616,9 +1613,6 @@
 	"devices_timeline_detail_all": "en {n}: {labels}",
 	"devices_timeline_detail_count": "en {n} instancias",
 	"devices_timeline_detail_some": "en {n}, incluidos {labels}",
-	"devices_timeline_dismiss": "Descartar",
-	"devices_timeline_dismissed": "Descartada.",
-	"devices_timeline_err_dismiss": "No se pudo descartar esta alerta.",
 	"devices_timeline_err_load": "No se pudo cargar el historial de alertas",
 	"devices_timeline_fired": "Activada",
 	"devices_timeline_first": "primera {when}",
@@ -1628,13 +1622,11 @@
 	"devices_timeline_last_rows": "Últimas {count} filas.",
 	"devices_timeline_loading": "Cargando historial de alertas",
 	"devices_timeline_maintenance": "Silencio · ventana de mantenimiento",
-	"devices_timeline_never": "Nunca se ha disparado ninguna alerta en este monitor.",
 	"devices_timeline_not_sent": "No enviada · {reason}",
 	"devices_timeline_nothing_one": "Nada se ha disparado en este monitor. Las reglas subieron {count} vez y se calmaron solas.",
 	"devices_timeline_nothing_other": "Nada se ha disparado en este monitor. Las reglas subieron {count} veces y se calmaron solas.",
 	"devices_timeline_notified": "Notificada",
 	"devices_timeline_notified_some": "Notificada {sent} de {total}",
-	"devices_timeline_open_alerts": "Abrir alertas",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Activa",
 	"devices_timeline_phase_ok": "OK",
@@ -1642,12 +1634,12 @@
 	"devices_timeline_phase_resolved": "Resuelta",
 	"devices_timeline_quiet": "silenciosa",
 	"devices_timeline_show_all": "Mostrar todo · {count} más",
+	"devices_timeline_show_each": "Ver cada una ({count})",
 	"devices_timeline_show_fewer": "Mostrar menos",
 	"devices_timeline_show_quiet": "Mostrar transiciones silenciosas (subida y vuelta) · {count}",
 	"devices_timeline_since": "desde {when}",
 	"devices_timeline_stop_ignoring": "Dejar de ignorar",
 	"devices_timeline_suppressed": "Suprimida por el padre",
-	"devices_timeline_undo": "Deshacer",
 	"devices_uptime_aria": "{up} intervalos en línea, {down} caídos, {none} sin comprobación",
 	"devices_uptime_down": "Caído",
 	"devices_uptime_none": "Sin comprobación",
@@ -3552,6 +3544,7 @@
 	"misc_nav_github_title": "Código fuente en GitHub (pestaña nueva)",
 	"misc_nav_home": "DumbMonit, resumen",
 	"misc_nav_main": "Principal",
+	"misc_nav_more": "Más",
 	"misc_nav_overview": "Resumen",
 	"misc_nav_palette_open": "Abrir la paleta de comandos",
 	"misc_nav_palette_title": "Paleta de comandos ({shortcut})",
@@ -3813,21 +3806,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} y {count} más",
-				"countPlural=other": "{names} y {count} más"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3859,21 +3837,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} ha estado inalcanzable todo el tiempo.",
-				"countPlural=other": "{subject} han estado inalcanzables todo el tiempo."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3892,7 +3855,6 @@
 	"overview_brief_dropped_many": "{names} se cayeron y volvieron.",
 	"overview_brief_head_first": "En las últimas 24 h",
 	"overview_brief_head_since": "Desde {when}",
-	"overview_brief_intro": "¿Primera vez por aquí? Esto es lo que sabe la paloma hasta ahora.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4079,25 +4041,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} se resolvió sola",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} se activó y sigue activa",
-				"countPlural=other": "{name} se activó {count} veces y sigue activa"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "No ha pasado nada mientras estabas fuera.",
 	"overview_brief_quiet_first": "No ha pasado nada en las últimas 24 h.",
 	"overview_brief_the_server": "el servidor",
-	"overview_brief_went_down": "{name} dejó de estar accesible {when} y sigue así.",
 	"overview_first_all_done": "Los tres hechos. Esta guía no volverá.",
 	"overview_first_channel_action": "Añadir un canal",
 	"overview_first_channel_text": "Correo, ntfy, Discord, Telegram, PagerDuty — lo que ya lees. No se envía nada hasta que algo falle.",

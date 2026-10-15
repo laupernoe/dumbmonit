@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", only for the rules {rules}",
 	"alerts_matcher_sentence": "This channel receives {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "tagged {tags}",
-	"alerts_needs_dismiss_error": "Could not dismiss this alert.",
 	"alerts_needs_dismissed": "Dismissed",
 	"alerts_needs_dismissed_hint": "Known problems: reminders are paused until the acknowledgement ends or the alert resolves.",
 	"alerts_needs_empty_no_devices": "Nothing to watch yet.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "No rule is firing. One monitor is still waiting for a first report.",
 	"alerts_needs_snoozed": "Snoozed",
-	"alerts_needs_snoozed_hint": "Hidden for a while: no reminder until the window ends or the alert resolves.",
-	"alerts_needs_toast_dismissed": "Dismissed.",
 	"alerts_nth_1": "1st {day}",
 	"alerts_nth_2": "2nd {day}",
 	"alerts_nth_3": "3rd {day}",
@@ -1616,9 +1613,6 @@
 	"devices_timeline_detail_all": "on {n}: {labels}",
 	"devices_timeline_detail_count": "on {n} instances",
 	"devices_timeline_detail_some": "on {n}, including {labels}",
-	"devices_timeline_dismiss": "Dismiss",
-	"devices_timeline_dismissed": "Dismissed.",
-	"devices_timeline_err_dismiss": "Could not dismiss this alert.",
 	"devices_timeline_err_load": "Could not load the alert history",
 	"devices_timeline_fired": "Fired",
 	"devices_timeline_first": "first {when}",
@@ -1628,13 +1622,11 @@
 	"devices_timeline_last_rows": "Last {count} rows.",
 	"devices_timeline_loading": "Loading alert history",
 	"devices_timeline_maintenance": "Quiet · maintenance window",
-	"devices_timeline_never": "No alert has ever fired on this monitor.",
 	"devices_timeline_not_sent": "Not sent · {reason}",
 	"devices_timeline_nothing_one": "Nothing has fired on this monitor. Rules built up {count} time and settled on their own.",
 	"devices_timeline_nothing_other": "Nothing has fired on this monitor. Rules built up {count} times and settled on their own.",
 	"devices_timeline_notified": "Notified",
 	"devices_timeline_notified_some": "Notified {sent} of {total}",
-	"devices_timeline_open_alerts": "Open alerts",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Firing",
 	"devices_timeline_phase_ok": "OK",
@@ -1642,12 +1634,12 @@
 	"devices_timeline_phase_resolved": "Resolved",
 	"devices_timeline_quiet": "quiet",
 	"devices_timeline_show_all": "Show all · {count} more",
+	"devices_timeline_show_each": "Show each ({count})",
 	"devices_timeline_show_fewer": "Show fewer",
 	"devices_timeline_show_quiet": "Show quiet transitions (building up and back) · {count}",
 	"devices_timeline_since": "since {when}",
 	"devices_timeline_stop_ignoring": "Stop ignoring",
 	"devices_timeline_suppressed": "Suppressed by parent",
-	"devices_timeline_undo": "Undo",
 	"devices_uptime_aria": "{up} slots up, {down} down, {none} without a check",
 	"devices_uptime_down": "Down",
 	"devices_uptime_none": "No check",
@@ -3552,6 +3544,7 @@
 	"misc_nav_github_title": "Source code on GitHub (opens in a new tab)",
 	"misc_nav_home": "DumbMonit, overview",
 	"misc_nav_main": "Main",
+	"misc_nav_more": "More",
 	"misc_nav_overview": "Overview",
 	"misc_nav_palette_open": "Open the command palette",
 	"misc_nav_palette_title": "Command palette ({shortcut})",
@@ -3813,21 +3806,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} and {count} other",
-				"countPlural=other": "{names} and {count} others"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3859,21 +3837,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} has been unreachable the whole time.",
-				"countPlural=other": "{subject} have been unreachable the whole time."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3892,7 +3855,6 @@
 	"overview_brief_dropped_many": "{names} dropped out and came back.",
 	"overview_brief_head_first": "In the last 24 h",
 	"overview_brief_head_since": "Since {when}",
-	"overview_brief_intro": "First time here? Here is what the pigeon knows so far.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4079,25 +4041,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} resolved on its own",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} fired and is still firing",
-				"countPlural=other": "{name} fired {count} times and is still firing"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Nothing happened while you were away.",
 	"overview_brief_quiet_first": "Nothing happened in the last 24 h.",
 	"overview_brief_the_server": "the server",
-	"overview_brief_went_down": "{name} went unreachable {when} and still is.",
 	"overview_first_all_done": "All three done. This guide will not come back.",
 	"overview_first_channel_action": "Add a channel",
 	"overview_first_channel_text": "Email, ntfy, Discord, Telegram, PagerDuty — whatever you already read. Nothing is sent until something is wrong.",

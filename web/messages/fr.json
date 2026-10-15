@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", uniquement pour les règles {rules}",
 	"alerts_matcher_sentence": "Ce canal reçoit {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "étiquetés {tags}",
-	"alerts_needs_dismiss_error": "Impossible d'écarter cette alerte.",
 	"alerts_needs_dismissed": "Écartées",
 	"alerts_needs_dismissed_hint": "Problèmes connus : les rappels sont suspendus jusqu'à la fin de l'acquittement ou la résolution de l'alerte.",
 	"alerts_needs_empty_no_devices": "Rien à surveiller pour l'instant.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Aucune règle ne se déclenche. Une surveillance attend encore un premier rapport.",
 	"alerts_needs_snoozed": "En pause",
-	"alerts_needs_snoozed_hint": "Masquées pour un temps : aucun rappel avant la fin de la période ou la résolution de l'alerte.",
-	"alerts_needs_toast_dismissed": "Écartée.",
 	"alerts_nth_1": "1er {day}",
 	"alerts_nth_2": "2e {day}",
 	"alerts_nth_3": "3e {day}",
@@ -1616,9 +1613,6 @@
 	"devices_timeline_detail_all": "sur {n} : {labels}",
 	"devices_timeline_detail_count": "sur {n} instances",
 	"devices_timeline_detail_some": "sur {n}, dont {labels}",
-	"devices_timeline_dismiss": "Écarter",
-	"devices_timeline_dismissed": "Écartée.",
-	"devices_timeline_err_dismiss": "Impossible d'écarter cette alerte.",
 	"devices_timeline_err_load": "Impossible de charger l'historique des alertes",
 	"devices_timeline_fired": "Déclenchée",
 	"devices_timeline_first": "première {when}",
@@ -1628,13 +1622,11 @@
 	"devices_timeline_last_rows": "{count} dernières lignes.",
 	"devices_timeline_loading": "Chargement de l'historique des alertes",
 	"devices_timeline_maintenance": "Silencieux · fenêtre de maintenance",
-	"devices_timeline_never": "Aucune alerte ne s'est jamais déclenchée sur cette surveillance.",
 	"devices_timeline_not_sent": "Non envoyée · {reason}",
 	"devices_timeline_nothing_one": "Rien ne s'est déclenché sur cette surveillance. Des règles sont montées {count} fois puis se sont calmées d'elles-mêmes.",
 	"devices_timeline_nothing_other": "Rien ne s'est déclenché sur cette surveillance. Des règles sont montées {count} fois puis se sont calmées d'elles-mêmes.",
 	"devices_timeline_notified": "Notifiée",
 	"devices_timeline_notified_some": "Notifiée {sent} fois sur {total}",
-	"devices_timeline_open_alerts": "Ouvrir les alertes",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Déclenchée",
 	"devices_timeline_phase_ok": "OK",
@@ -1642,12 +1634,12 @@
 	"devices_timeline_phase_resolved": "Résolue",
 	"devices_timeline_quiet": "silencieuse",
 	"devices_timeline_show_all": "Tout afficher · {count} de plus",
+	"devices_timeline_show_each": "Voir chacune ({count})",
 	"devices_timeline_show_fewer": "Afficher moins",
 	"devices_timeline_show_quiet": "Afficher les transitions silencieuses (montée et retour) · {count}",
 	"devices_timeline_since": "depuis {when}",
 	"devices_timeline_stop_ignoring": "Ne plus ignorer",
 	"devices_timeline_suppressed": "Supprimée par le parent",
-	"devices_timeline_undo": "Annuler",
 	"devices_uptime_aria": "{up} créneaux en ligne, {down} hors ligne, {none} sans vérification",
 	"devices_uptime_down": "Hors ligne",
 	"devices_uptime_none": "Aucune vérification",
@@ -3552,6 +3544,7 @@
 	"misc_nav_github_title": "Code source sur GitHub (nouvel onglet)",
 	"misc_nav_home": "DumbMonit, vue d’ensemble",
 	"misc_nav_main": "Principale",
+	"misc_nav_more": "Plus",
 	"misc_nav_overview": "Vue d’ensemble",
 	"misc_nav_palette_open": "Ouvrir la palette de commandes",
 	"misc_nav_palette_title": "Palette de commandes ({shortcut})",
@@ -3813,21 +3806,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} et {count} autre",
-				"countPlural=other": "{names} et {count} autres"
-			}
-		}
-	],
 	"overview_brief_device_n": "Surveillance {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3859,21 +3837,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} est injoignable depuis le début.",
-				"countPlural=other": "{subject} sont injoignables depuis le début."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3892,7 +3855,6 @@
 	"overview_brief_dropped_many": "{names} ont décroché puis sont revenus.",
 	"overview_brief_head_first": "Ces dernières 24 h",
 	"overview_brief_head_since": "Depuis {when}",
-	"overview_brief_intro": "Première visite ? Voici ce que le pigeon sait pour l'instant.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4079,25 +4041,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} s'est résolue d'elle-même",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} s'est déclenchée et l'est toujours",
-				"countPlural=other": "{name} s'est déclenchée {count} fois et l'est toujours"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Rien ne s'est passé pendant votre absence.",
 	"overview_brief_quiet_first": "Rien ne s'est passé ces dernières 24 h.",
 	"overview_brief_the_server": "le serveur",
-	"overview_brief_went_down": "{name} est devenu injoignable {when} et l'est toujours.",
 	"overview_first_all_done": "Les trois sont faits. Ce guide ne reviendra pas.",
 	"overview_first_channel_action": "Ajouter un canal",
 	"overview_first_channel_text": "E-mail, ntfy, Discord, Telegram, PagerDuty — ce que vous lisez déjà. Rien n'est envoyé tant que tout va bien.",

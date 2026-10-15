@@ -124,7 +124,6 @@
 	"alerts_matcher_only_rules": ", apenas para as regras {rules}",
 	"alerts_matcher_sentence": "Este canal recebe {floor} {scope}{rules}{exceptions}.",
 	"alerts_matcher_tagged": "com tag {tags}",
-	"alerts_needs_dismiss_error": "Não foi possível dispensar este alerta.",
 	"alerts_needs_dismissed": "Dispensadas",
 	"alerts_needs_dismissed_hint": "Problemas conhecidos: os lembretes ficam em pausa até o reconhecimento terminar ou o alerta ser resolvido.",
 	"alerts_needs_empty_no_devices": "Ainda não há nada para monitorizar.",
@@ -150,8 +149,6 @@
 	],
 	"alerts_needs_quiet_waiting_one": "Nenhuma regra está disparada. Um monitor ainda aguarda um primeiro relatório.",
 	"alerts_needs_snoozed": "Adiadas",
-	"alerts_needs_snoozed_hint": "Ocultas por um tempo: sem lembrete até o período terminar ou o alerta ser resolvido.",
-	"alerts_needs_toast_dismissed": "Dispensado.",
 	"alerts_nth_1": "1.º {day}",
 	"alerts_nth_2": "2.º {day}",
 	"alerts_nth_3": "3.º {day}",
@@ -1616,9 +1613,6 @@
 	"devices_timeline_detail_all": "em {n}: {labels}",
 	"devices_timeline_detail_count": "em {n} instâncias",
 	"devices_timeline_detail_some": "em {n}, incluindo {labels}",
-	"devices_timeline_dismiss": "Dispensar",
-	"devices_timeline_dismissed": "Dispensado.",
-	"devices_timeline_err_dismiss": "Não foi possível dispensar este alerta.",
 	"devices_timeline_err_load": "Não foi possível carregar o histórico de alertas",
 	"devices_timeline_fired": "Disparado",
 	"devices_timeline_first": "primeira {when}",
@@ -1628,13 +1622,11 @@
 	"devices_timeline_last_rows": "Últimas {count} linhas.",
 	"devices_timeline_loading": "A carregar o histórico de alertas",
 	"devices_timeline_maintenance": "Silêncio · janela de manutenção",
-	"devices_timeline_never": "Nunca foi disparado nenhum alerta neste monitor.",
 	"devices_timeline_not_sent": "Não enviado · {reason}",
 	"devices_timeline_nothing_one": "Nada foi disparado neste monitor. As regras acumularam-se {count} vez e acalmaram sozinhas.",
 	"devices_timeline_nothing_other": "Nada foi disparado neste monitor. As regras acumularam-se {count} vezes e acalmaram sozinhas.",
 	"devices_timeline_notified": "Notificado",
 	"devices_timeline_notified_some": "Notificado {sent} de {total}",
-	"devices_timeline_open_alerts": "Abrir alertas",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Ativa",
 	"devices_timeline_phase_ok": "OK",
@@ -1642,12 +1634,12 @@
 	"devices_timeline_phase_resolved": "Resolvida",
 	"devices_timeline_quiet": "silencioso",
 	"devices_timeline_show_all": "Mostrar tudo · mais {count}",
+	"devices_timeline_show_each": "Ver cada um ({count})",
 	"devices_timeline_show_fewer": "Mostrar menos",
 	"devices_timeline_show_quiet": "Mostrar transições silenciosas (subida e regresso) · {count}",
 	"devices_timeline_since": "desde {when}",
 	"devices_timeline_stop_ignoring": "Deixar de ignorar",
 	"devices_timeline_suppressed": "Suprimido pelo pai",
-	"devices_timeline_undo": "Anular",
 	"devices_uptime_aria": "{up} intervalos ativos, {down} em baixo, {none} sem verificação",
 	"devices_uptime_down": "Em baixo",
 	"devices_uptime_none": "Sem verificação",
@@ -3552,6 +3544,7 @@
 	"misc_nav_github_title": "Código-fonte no GitHub (novo separador)",
 	"misc_nav_home": "DumbMonit, visão geral",
 	"misc_nav_main": "Principal",
+	"misc_nav_more": "Mais",
 	"misc_nav_overview": "Visão geral",
 	"misc_nav_palette_open": "Abrir a paleta de comandos",
 	"misc_nav_palette_title": "Paleta de comandos ({shortcut})",
@@ -3813,21 +3806,6 @@
 			}
 		}
 	],
-	"overview_brief_and_others": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} e mais {count}",
-				"countPlural=other": "{names} e mais {count}"
-			}
-		}
-	],
 	"overview_brief_device_n": "Monitor {id}",
 	"overview_brief_dissolved": [
 		{
@@ -3859,21 +3837,6 @@
 			}
 		}
 	],
-	"overview_brief_down_whole": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{subject} esteve inacessível o tempo todo.",
-				"countPlural=other": "{subject} estiveram inacessíveis o tempo todo."
-			}
-		}
-	],
 	"overview_brief_dropped": [
 		{
 			"declarations": [
@@ -3892,7 +3855,6 @@
 	"overview_brief_dropped_many": "{names} caíram e voltaram.",
 	"overview_brief_head_first": "Nas últimas 24 h",
 	"overview_brief_head_since": "Desde {when}",
-	"overview_brief_intro": "Primeira vez por aqui? Isto é o que o pombo sabe até agora.",
 	"overview_brief_kept_reporting": [
 		{
 			"declarations": [
@@ -4079,25 +4041,9 @@
 		}
 	],
 	"overview_brief_phrase_resolved": "{name} resolveu sozinho",
-	"overview_brief_phrase_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} disparou e continua ativo",
-				"countPlural=other": "{name} disparou {count} vezes e continua ativo"
-			}
-		}
-	],
 	"overview_brief_quiet_away": "Não aconteceu nada enquanto você estava fora.",
 	"overview_brief_quiet_first": "Não aconteceu nada nas últimas 24 h.",
 	"overview_brief_the_server": "o servidor",
-	"overview_brief_went_down": "{name} ficou inacessível {when} e continua assim.",
 	"overview_first_all_done": "Os três concluídos. Este guia não voltará.",
 	"overview_first_channel_action": "Adicionar um canal",
 	"overview_first_channel_text": "E-mail, ntfy, Discord, Telegram, PagerDuty — o que já lê. Nada é enviado até algo correr mal.",
