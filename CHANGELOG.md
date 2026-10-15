@@ -43,6 +43,11 @@ All notable changes to this project are documented here. The format follows
 - **Shorter `docker-compose.agent.yml`.** Only what most hosts need; the
   options moved to the agent page. It now keeps the agent's binding in a
   volume, so recreating the container no longer unbinds it.
+
+- **Adding a device starts from a short list.** Search first, then the common
+  choices (website, ping, machine with the agent, SNMP device, hypervisor, NAS,
+  network scan); every other type is grouped by category and folded. The agent
+  appears once.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).
