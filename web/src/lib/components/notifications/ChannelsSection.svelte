@@ -4,13 +4,14 @@
 	 * opens above it. The kind catalogue and the list load together: without
 	 * the catalogue we could neither name a kind nor build the form.
 	 */
-	import { BellRing, Plus } from 'lucide-svelte';
-	import { deleteChannel, listChannelKinds, listChannels, testChannel, type Channel } from '#lib/api/index.js';
+	import { BellRing, EllipsisVertical, Plus } from 'lucide-svelte';
+	import { deleteChannel, listChannelKinds, listChannels, testChannel, toApiError, type Channel } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import { kindIcon, normalizeKind, type KindInfo } from './kinds';
 	import ChannelForm from './ChannelForm.svelte';
+	import ChannelErrorDetail from './ChannelErrorDetail.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
 	let kinds = $state<KindInfo[]>([]);
@@ -206,7 +207,7 @@
 										<p class="mt-0.5 text-[0.8125rem] text-ink-2">{policySummary(channel)}</p>
 									{/if}
 									{#if channel.last_error}
-										<p class="mt-1 text-sm break-words text-warning-ink">{m.notifications_channels_last_error({ error: channel.last_error })}</p>
+										<ChannelErrorDetail raw={channel.last_error} title={m.notifications_channels_last_error_title()} class="mt-2" />
 									{/if}
 								</div>
 								{#if auth.isAdmin}
@@ -215,9 +216,28 @@
 											{m.notifications_channels_send_test()}
 										</Button>
 										<Button variant="ghost" size="sm" disabled={current !== null} onclick={() => (form = channel)}>{m.notifications_channels_edit()}</Button>
-										<Confirm confirmLabel={m.notifications_channels_remove_confirm()} loading={current === 'delete'} disabled={current !== null} onconfirm={() => remove(channel)}>
-											{m.notifications_channels_remove()}
-										</Confirm>
+										<Menu label={m.notifications_channels_more()}>
+											{#snippet trigger({ toggle, open })}
+												<Button
+													variant="ghost"
+													size="sm"
+													class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
+													aria-haspopup="menu"
+													aria-expanded={open}
+													aria-label={m.notifications_channels_more()}
+													title={m.notifications_channels_more()}
+													disabled={current !== null}
+													onclick={toggle}
+												>
+													<EllipsisVertical class="size-3.5" aria-hidden="true" />
+												</Button>
+											{/snippet}
+											{#snippet children()}
+												<Confirm confirmLabel={m.notifications_channels_remove_confirm()} loading={current === 'delete'} disabled={current !== null} onconfirm={() => remove(channel)}>
+													{m.notifications_channels_remove()}
+												</Confirm>
+											{/snippet}
+										</Menu>
 									</div>
 								{/if}
 							</div>
@@ -230,7 +250,8 @@
 									</div>
 								{/if}
 								{#if actionError?.id === channel.id}
-									<ErrorNotice error={actionError.cause} title={m.notifications_channels_error_action()} class="mt-3" />
+									{@const failure = toApiError(actionError.cause)}
+									<ChannelErrorDetail raw={failure.message} httpStatus={failure.status} title={m.notifications_channels_error_action()} class="mt-3" />
 								{/if}
 							</div>
 						</li>
