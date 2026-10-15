@@ -14,9 +14,15 @@
 		kind: string;
 		platform?: string | null;
 		class?: string;
+		/**
+		 * Pixel size, written as `width`/`height` attributes. Needed inside an SVG
+		 * (the topology map): a nested `<svg>` ignores a CSS size class and fills
+		 * its parent, so the mark would come out gigantic.
+		 */
+		size?: number;
 	}
 
-	let { kind, platform = null, class: className = 'size-4' }: Props = $props();
+	let { kind, platform = null, class: className = 'size-4', size }: Props = $props();
 
 	// Synology's mark is a very wide wordmark: inset into a square it is unreadable at icon size.
 	const WORDMARKS = new Set(['synology']);
@@ -25,9 +31,9 @@
 </script>
 
 {#if brand}
-	<svg viewBox="-1.5 -1.5 27 27" class={`shrink-0 ${className}`} fill="currentColor" aria-hidden="true" focusable="false">
+	<svg viewBox="-1.5 -1.5 27 27" width={size} height={size} class={`shrink-0 ${className}`} fill="currentColor" aria-hidden="true" focusable="false">
 		<path d={brand.path} />
 	</svg>
 {:else}
-	<Fallback class={`shrink-0 ${className}`} aria-hidden="true" />
+	<Fallback class={`shrink-0 ${className}`} {size} aria-hidden="true" />
 {/if}
