@@ -18,6 +18,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import type { TargetId } from '#lib/api/index.js';
 	import type { Sky, SkyRow } from '#lib/components/overview/sky.js';
 	import { formatRelative } from '#lib/format.js';
 	import { Plate } from '#lib/ui/index.js';
@@ -29,9 +30,11 @@
 		now: Date;
 		/** Height in px the problems may take; `Infinity` when the page simply scrolls. */
 		room?: number;
+		/** Devices written out above, so the device tiles below do not list them again. */
+		listed?: Set<TargetId>;
 	}
 
-	let { sky, now, room = Infinity }: Props = $props();
+	let { sky, now, room = Infinity, listed = $bindable(new Set()) }: Props = $props();
 
 	const BIG = 3;
 	const SMALL = 5;
@@ -46,6 +49,15 @@
 	const smallCap = $derived(level === 0 ? SMALL : Math.min(cut, level === 1 ? 12 : Infinity));
 	const shownSmall = $derived(small.slice(0, smallCap));
 	const hiddenCount = $derived(small.length - shownSmall.length);
+
+	$effect(() => {
+		const ids = new Set<TargetId>();
+		for (const row of [...big, ...shownSmall]) {
+			const id = row.kind === 'device' ? row.target.id : row.target?.id;
+			if (id !== undefined) ids.add(id);
+		}
+		listed = ids;
+	});
 
 	let box = $state<HTMLElement | null>(null);
 	const signature = $derived(sky.needsYou.map((row) => row.key).join('|') + `@${Math.round(room)}`);
@@ -131,9 +143,9 @@
 				</span>
 				<span class="mt-2.5 flex min-w-0 items-center gap-3">
 					{#if kind}<KindIcon {kind} class="tile-icon text-ink-2" />{/if}
-					<span class="tile-name display block min-w-0 flex-1 truncate text-ink" title={name(row)}>{name(row)}</span>
+					<span class="tile-name display min-w-0 flex-1 text-ink" title={name(row)}>{name(row)}</span>
 				</span>
-				<span class="tile-what mt-1 block truncate text-ink-2" title={what(row)}>{what(row)}</span>
+				<span class="tile-what mt-1 line-clamp-2 text-ink-2" title={what(row)}>{what(row)}</span>
 			</svelte:element>
 		{/each}
 
@@ -141,15 +153,17 @@
 			<ul class="flex flex-col gap-1.5">
 				{#each shownSmall as row (row.key)}
 					{@const kind = kindOf(row)}
-					<li class="flex min-w-0 shrink-0 items-center gap-3 rounded-[10px] bg-surface/90 px-4 py-2.5 shadow-lift" data-row>
+					<li class="flex min-w-0 shrink-0 items-start gap-3 rounded-[10px] bg-surface/90 px-4 py-2.5 shadow-lift" data-row>
 						<Plate tone={row.tone} label={row.plate} size="md" class="shrink-0" />
 						{#if kind}<KindIcon {kind} class="size-5 text-ink-2" />{/if}
-						<span class="row-name min-w-0 truncate text-[1.1875rem] font-semibold text-ink" title={name(row)}>{name(row)}</span>
-						<span class="min-w-0 flex-1 truncate text-[1.0625rem] text-ink-2" title={what(row)}>{what(row)}</span>
+						<span class="row-name min-w-0 text-[1.1875rem] font-semibold [overflow-wrap:anywhere] text-ink" title={name(row)}>{name(row)}</span>
+						<span class="line-clamp-2 min-w-0 flex-1 text-[1.0625rem] [overflow-wrap:anywhere] text-ink-2" title={what(row)}>{what(row)}</span>
 					</li>
 				{/each}
 				{#if hiddenCount > 0}
-					<li class="px-4 text-[1.0625rem] text-ink-2">{m.wall_problems_more({ count: hiddenCount })}</li>
+					<li class="px-4 text-[1.0625rem] font-semibold text-ink-2">
+						<a href="/alerts" class="underline decoration-line-strong underline-offset-4">{m.wall_problems_more({ count: hiddenCount })}</a>
+					</li>
 				{/if}
 			</ul>
 		{/if}
@@ -157,19 +171,19 @@
 {/if}
 
 <style>
+	/* A long name takes a second line rather than lose its end. */
 	.tile-name {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		overflow-wrap: anywhere;
 		font-size: 2.375rem;
-		white-space: nowrap;
+		line-height: 1.1;
 	}
-	/* A phone has the height: a long name takes two lines rather than lose its end. */
 	@media (max-width: 1023px) {
 		.tile-name {
-			display: -webkit-box;
-			-webkit-box-orient: vertical;
-			-webkit-line-clamp: 2;
-			line-clamp: 2;
-			white-space: normal;
-			overflow-wrap: anywhere;
 			font-size: 1.75rem;
 		}
 	}

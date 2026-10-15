@@ -54,6 +54,17 @@ All notable changes to this project are documented here. The format follows
   options moved to the agent page. It now keeps the agent's binding in a
   volume, so recreating the container no longer unbinds it.
 
+- **Adding a device starts from a short list.** Search first, then the common
+  choices (website, ping, machine with the agent, SNMP device, hypervisor, NAS,
+  network scan); every other type is grouped by category and folded. The agent
+  appears once.
+- **Status page editor: compact scene choice.** The chosen scenes are shown as
+  thumbnails with a "Change" button that opens a searchable, paged grid, and
+  the list of services to add has a search box.
+- **Wall: each problem once, readable.** A device written out as a problem is
+  no longer repeated among the device tiles, long names and causes wrap instead
+  of being cut, and "And N more" became a clear counter linking to Alerts.
+
 - **Alert rules page: grouped, filtered, counted.** The 150+ rules are grouped by
   device kind and folded by default (kinds you own first, with how many are off
   or firing); quick filters (Active, Disabled, Changed by me, Fired lately)
