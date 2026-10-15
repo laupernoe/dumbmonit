@@ -2,11 +2,21 @@
 
 ![The rack: one faceplate per device](../assets/screenshots/devices-light.png){ loading=lazy }
 
-## The rack
+## The list
 
-Every device is a 1U rack faceplate: a status LED, the name, the kind stamp,
-the address, when it was last seen, and a sparkline of a representative metric.
-Children stack under their parent and dim when the parent is unreachable.
+The **Monitors** page shows every device in one of two layouts, remembered in
+your browser:
+
+- **Compact** (the default): one line per device — status light, name, kind,
+  address, when it was last seen and the state. Children are indented under
+  their parent and dim when the parent is unreachable.
+- **Tiles**: one card per device, with a sparkline of a representative metric.
+  A child names the device it sits behind.
+
+Devices are grouped by folder; a folder header shows its state only when
+something inside is not reporting. Administrators reorder devices by dragging
+them (Compact layout, unfiltered and unsorted list) or with the keyboard
+(Space, arrows, Space).
 
 | State | Meaning |
 |---|---|
@@ -16,12 +26,20 @@ Children stack under their parent and dim when the parent is unreachable.
 | Waiting | Added, not probed yet. |
 | Disabled | Paused: not checked, raises no alert. |
 
-Filters: a search box, a state segment (All, Needs attention, Reporting,
-Disabled) and a kind filter. **Add a device** is the primary action.
+One toolbar holds everything:
 
-The **Select** button (operators and admins) turns on a checkbox per device
-and a floating bar at the bottom with the bulk actions; **Done** or Escape
-leaves the mode.
+- the **search** box (name, address or kind);
+- **Filter**, which opens the state (All, Needs attention, Reporting,
+  Disabled), kind, sort and tag filters — the number on the button counts the
+  ones in use, and **Clear filters** resets them. Filters live in the address,
+  so a filtered list can be bookmarked or shared;
+- **Compact** / **Tiles**;
+- **Select** (administrators), which turns on a checkbox per device and a
+  floating bar at the bottom with the bulk actions (enable, disable, move to a
+  folder, delete); **Done** or Escape leaves the mode;
+- **⋯** (more actions): the topology **Map**, **Create folder**, **Import
+  websites (CSV)** and **Import from Uptime Kuma**;
+- **Add a monitor**, the primary action.
 
 ## A device
 

@@ -189,6 +189,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **A simpler Monitors page.** One toolbar: search, **Filter** (state, kind,
+  sort and tags fold behind it, with a count of those in use), Compact / Tiles,
+  **Select** and **Add a monitor**. The map, **Create folder** and the CSV and
+  Uptime Kuma imports moved to a **⋯** menu next to it. Folder headers are
+  plain lines that show a state only when something inside is not reporting;
+  security grades are quiet in the list, and devices without a grade show none.
+  The type filter only lists the types you use.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and
@@ -250,6 +257,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Removed
 
+- **The Rows layout of the Monitors page.** Compact and Tiles remain; a
+  remembered Rows choice, and `?view=rows` links, open Compact.
 - **The Security page.** `/security` now opens the security score setting; the
   report moved to each device.
 

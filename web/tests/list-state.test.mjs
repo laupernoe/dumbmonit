@@ -49,6 +49,8 @@ test('query round-trips and ignores junk values', () => {
 	assert.equal(junk.segment, 'all');
 	assert.equal(junk.sort, 'default');
 	assert.equal(junk.view, null);
+	// The retired rows layout reads as compact, so old links keep working.
+	assert.equal(parseListQuery(new URLSearchParams('view=rows')).view, 'compact');
 	assert.equal(junk.dir, 'asc');
 	assert.deepEqual(parseListQuery(new URLSearchParams('tag=nokey&tag=a%3Db')).tags, ['a=b']);
 });
