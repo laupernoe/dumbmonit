@@ -724,4 +724,164 @@ mod tests {
         assert_eq!(view.state, "ok");
         assert_eq!(view.figures[0].value, Some(12.5));
     }
+
+    fn check_of<'a>(view: &'a ObservabilityView, label: &str) -> &'a Check {
+        view.checks.iter().find(|c| c.label == label).unwrap_or_else(|| panic!("check {label}"))
+    }
+
+    #[test]
+    fn victoriametrics_sain_mesure_les_insertions_lentes_et_la_marge_disque() {
+        let k = "victoriametrics";
+        let last = [
+            serie(k, "healthy", 1.0, &[]),
+            serie(k, "disk_headroom_percent", 6.5, &[("path", "/storage")]),
+            serie(k, "disk_free_bytes", 5e9, &[("path", "/storage")]),
+            serie(k, "disk_free_limit_bytes", 1e9, &[("path", "/storage")]),
+            serie(k, "active_series", 1200.0, &[]),
+        ];
+        let rates = [
+            serie(k, "slow_inserts_total", 8.0, &[]),
+            serie(k, "rows_added_total", 100.0, &[]),
+            serie(k, "rows_ingested_total", 450.0, &[]),
+        ];
+        let day =
+            [serie(k, "rows_rejected_total", 0.0, &[]), serie(k, "log_errors_total", 4.0, &[])];
+        let view = build_view(k, &Series::new(k, &last, &rates, &day));
+        assert_eq!(check_of(&view, "Health").state, "ok");
+        // 6,5 % de marge : en dessous de 10 %, on prévient.
+        assert_eq!(check_of(&view, "Storage").state, "advisory");
+        assert_eq!(check_of(&view, "Slow inserts").state, "advisory");
+        assert!(check_of(&view, "Slow inserts").detail.starts_with("8.0%"));
+        assert!(check_of(&view, "Error log").detail.starts_with("4 errors"));
+        assert_eq!(check_of(&view, "Refused data").detail, "Nothing refused in the last 24 hours.");
+        assert_eq!(view.figures[0].label, "Samples ingested");
+        assert_eq!(view.figures[1].value, Some(1200.0));
+        let disk = view.breakdowns.iter().find(|b| b.title == "Disk").unwrap();
+        assert_eq!(disk.rows.len(), 2);
+        assert_eq!(disk.rows[0].state, Some("ok"));
+        assert_eq!(view.state, "advisory");
+
+        // Sans compteur sur 24 h, la sonde explique ce qu'il lui manque.
+        let view = build_view(k, &Series::new(k, &last, &[], &[]));
+        assert!(check_of(&view, "Refused data").detail.contains("two measurements"));
+        let bad = [serie(k, "healthy", 0.0, &[])];
+        let view = build_view(k, &Series::new(k, &bad, &[], &[]));
+        assert_eq!(check_of(&view, "Health").state, "warning");
+    }
+
+    #[test]
+    fn victorialogs_parle_de_lignes_et_de_volume() {
+        let k = "victorialogs";
+        let last = [serie(k, "healthy", 1.0, &[]), serie(k, "data_size_bytes", 2e9, &[])];
+        let rates = [
+            serie(k, "rows_ingested_total", 80.0, &[]),
+            serie(k, "bytes_ingested_total", 9000.0, &[]),
+        ];
+        let day = [serie(k, "rows_rejected_total", 5.0, &[])];
+        let view = build_view(k, &Series::new(k, &last, &rates, &day));
+        assert_eq!(view.figures[0].label, "Log lines ingested");
+        assert_eq!(view.figures[1].label, "Ingested volume");
+        assert!(check_of(&view, "Refused data").detail.contains("log lines refused"));
+        assert!(view.checks.iter().all(|c| c.label != "Slow inserts"));
+    }
+
+    #[test]
+    fn loki_signale_ses_defaillances_d_ecriture_et_d_anneau() {
+        let k = "loki";
+        let last = [
+            serie(k, "ready", 0.0, &[]),
+            serie(k, "ring_unhealthy_members", 2.0, &[]),
+            serie(k, "memory_streams", 40.0, &[]),
+        ];
+        let rates =
+            [serie(k, "request_errors_total", 1.0, &[]), serie(k, "requests_total", 50.0, &[])];
+        let day = [
+            serie(k, "flush_failures_total", 3.0, &[]),
+            serie(k, "wal_disk_full_failures_total", 1.0, &[]),
+            serie(k, "discarded_lines_total", 7.0, &[]),
+            serie(k, "discarded_lines_reason_total", 7.0, &[("reason", "rate_limited")]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &rates, &day));
+        assert_eq!(view.state, "warning");
+        assert_eq!(check_of(&view, "Ready").state, "warning");
+        assert!(check_of(&view, "Flush to storage").detail.starts_with("3 chunks failed"));
+        assert!(check_of(&view, "Write-ahead log").detail.starts_with("1 write could not"));
+        assert!(check_of(&view, "Ring").detail.starts_with("2 unhealthy members"));
+        assert!(check_of(&view, "Requests").detail.starts_with("2.0%"));
+        assert_eq!(view.breakdowns[0].rows[0].label, "rate limited");
+
+        // Aucune requête mesurée mais des erreurs : tout a échoué.
+        let rates =
+            [serie(k, "request_errors_total", 1.0, &[]), serie(k, "requests_total", 0.0, &[])];
+        let view = build_view(k, &Series::new(k, &last, &rates, &[]));
+        assert!(check_of(&view, "Requests").detail.starts_with("100.0%"));
+    }
+
+    #[test]
+    fn graylog_couvre_chaque_etat_du_cluster_de_recherche_et_du_journal() {
+        let k = "graylog";
+        let base = |status: f64| {
+            vec![
+                serie(k, "processing", 0.0, &[]),
+                serie(k, "lb_alive", 0.0, &[]),
+                serie(k, "indexer_status", status, &[]),
+                serie(k, "journal_uncommitted_entries", 25_000.0, &[]),
+                serie(k, "journal_used_percent", 10.0, &[]),
+                serie(k, "inputs_failed", 0.0, &[]),
+                serie(k, "notifications_urgent", 2.0, &[]),
+                serie(k, "indexer_shards", 3.0, &[("state", "unassigned")]),
+                serie(k, "indexer_shards", 10.0, &[("state", "active")]),
+                serie(k, "notification", 1.0, &[("type", "es_open_files"), ("severity", "urgent")]),
+                serie(
+                    k,
+                    "notification",
+                    1.0,
+                    &[("type", "deflector_exists"), ("severity", "normal")],
+                ),
+                serie(k, "buffer_used_percent", 10.0, &[("buffer", "input")]),
+            ]
+        };
+        let day = [
+            serie(k, "output_failures_total", 2.0, &[]),
+            serie(k, "processing_failures_total", 1.0, &[]),
+        ];
+
+        let view = build_view(k, &Series::new(k, &base(1.0), &[], &day));
+        assert_eq!(check_of(&view, "Processing").state, "warning");
+        assert_eq!(check_of(&view, "Load balancer status").state, "advisory");
+        assert!(check_of(&view, "Search cluster").detail.contains("yellow"));
+        // 25 000 messages en attente mais le journal est loin d'être plein : avis.
+        assert_eq!(check_of(&view, "Journal").state, "advisory");
+        assert_eq!(check_of(&view, "Inputs").state, "ok");
+        assert!(check_of(&view, "Indexing failures").detail.starts_with("3 failures"));
+        assert!(check_of(&view, "Notifications").detail.contains("2 urgent notifications"));
+        let shards = view.breakdowns.iter().find(|b| b.title.starts_with("Search")).unwrap();
+        assert_eq!(shards.rows[0].state, Some("advisory"));
+        let notes = view.breakdowns.iter().find(|b| b.title.contains("notifications")).unwrap();
+        assert_eq!(notes.rows[0].label, "es open files");
+        assert_eq!(notes.rows[1].state, Some("ok"));
+
+        let view = build_view(k, &Series::new(k, &base(0.0), &[], &[]));
+        assert!(check_of(&view, "Search cluster").detail.contains("green"));
+        let view = build_view(k, &Series::new(k, &base(2.0), &[], &[]));
+        assert!(check_of(&view, "Search cluster").detail.contains("red"));
+
+        // Un journal à moitié plein est une alerte, même avec peu de messages.
+        let full = [
+            serie(k, "processing", 1.0, &[]),
+            serie(k, "journal_uncommitted_entries", 100.0, &[]),
+            serie(k, "journal_used_percent", 60.0, &[]),
+            serie(k, "inputs_failed", 2.0, &[]),
+        ];
+        let view = build_view(k, &Series::new(k, &full, &[], &[]));
+        assert_eq!(check_of(&view, "Journal").state, "warning");
+        assert_eq!(check_of(&view, "Inputs").detail, "2 inputs failed to start.");
+    }
+
+    #[test]
+    fn les_helpers_de_phrase_de_la_vue() {
+        assert_eq!(words("too_small_timestamp"), "too small timestamp");
+        assert_eq!(plural(1.0, "error", "errors"), "1 error");
+        assert_eq!(plural(0.0, "error", "errors"), "0 errors");
+    }
 }

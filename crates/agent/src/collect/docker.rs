@@ -636,6 +636,10 @@ impl DockerProbe {
     }
 }
 
+#[cfg(all(test, unix))]
+#[path = "docker_daemon_tests.rs"]
+mod daemon_tests;
+
 #[cfg(test)]
 mod tests {
     use super::*;

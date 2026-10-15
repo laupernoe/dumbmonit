@@ -606,6 +606,9 @@ fn settle_node<T>(
 }
 
 #[cfg(test)]
+mod probe_tests;
+
+#[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
     use std::time::Duration;
