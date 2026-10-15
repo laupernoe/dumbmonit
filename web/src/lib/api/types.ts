@@ -1135,6 +1135,29 @@ export interface RuleOverride {
 	enabled: boolean | null;
 }
 
+/** A rule that watches one device: it reads a metric the device has written. Mirrors `api/target_rules.rs`. */
+export interface TargetRule {
+	id: number;
+	uid: string;
+	name: string;
+	description: string;
+	severity: AlertSeverity;
+	/** Enabled for every device. */
+	enabled: boolean;
+	/** Turned off for this device (an override with `enabled: false`). */
+	ignored: boolean;
+	/** An administrator set a threshold for this device. */
+	custom_threshold: boolean;
+	/** Firing on this device right now. */
+	firing: boolean;
+}
+
+export interface TargetRules {
+	/** `no_data`: nothing written in the last 24 h; `unavailable`: the time-series store did not answer. */
+	status: 'ok' | 'no_data' | 'unavailable';
+	rules: TargetRule[];
+}
+
 export interface RuleOverridePayload {
 	threshold?: number | null;
 	clear_threshold?: number | null;

@@ -62,7 +62,8 @@ import type {
 	IncidentPayload,
 	IncidentUpdatePayload,
 	PublicStatus,
-	StatusSubscriber
+	StatusSubscriber,
+	TargetRules
 } from './types';
 
 export * from './types';
@@ -645,6 +646,11 @@ export function putRuleOverride(
 		method: 'PUT',
 		body: payload
 	});
+}
+
+/** The alert rules that watch a device, from the metrics it has written. */
+export function getTargetRules(targetId: TargetId, signal?: AbortSignal): Promise<TargetRules> {
+	return request<TargetRules>(`/targets/${targetId}/rules`, { signal });
 }
 
 export function deleteRuleOverride(ruleId: number, targetId: TargetId): Promise<void> {

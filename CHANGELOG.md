@@ -44,6 +44,13 @@ All notable changes to this project are documented here. The format follows
   most once per period (6 h by default, 5 min minimum). Off by default since
   it uses bandwidth; the **Internet download rate low**, **upload rate low**
   and **latency high** rules stay silent until a threshold is set.
+- **Monitored alerts on the edit form.** Editing a monitor lists every alert
+  rule that reads a metric it has written in the last 24 hours (for an agent
+  with Docker: container stopped, unhealthy, restarting, update available, and
+  so on), folded by default behind a summary. Turn a rule off to stop its
+  alerts for that monitor only; the data is still collected, and the switches
+  are saved with the form. Same per-device override as **Don't alert me
+  again**. New endpoint `GET /api/targets/{id}/rules`.
 
 ### Changed
 

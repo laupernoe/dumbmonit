@@ -754,6 +754,7 @@ desactivar la regla para nadie más.
 | `GET` | `/api/alerts/rules/{id}/overrides` | Las anulaciones de una regla. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — cada campo opcional; `null` significa «como la regla». Crea o sustituye. Un operador solo puede enviar `{"enabled": false}` (ignore); las anulaciones de umbral del dispositivo, si las hay, se conservan. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Para un operador, solo levanta el ignore: las anulaciones de umbral permanecen. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Política de notificación {#notification-policy}
 

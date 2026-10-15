@@ -744,6 +744,7 @@ desativar a regra para mais ninguém.
 | `GET` | `/api/alerts/rules/{id}/overrides` | As substituições de uma regra. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — cada campo opcional; `null` significa «como a regra». Cria ou substitui. Um operator só pode enviar `{"enabled": false}` (ignorar); as substituições de limiar do dispositivo, se existirem, são mantidas. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Para um operator, só levanta o ignorar: as substituições de limiar permanecem. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Política de notificação {#notification-policy}
 

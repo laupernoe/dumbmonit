@@ -541,6 +541,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET` | `/api/alerts/rules/{id}/overrides` | 一条规则的覆盖。 |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}`——每个字段可选；`null` 表示“与规则相同”。创建或替换。操作员只能发送 `{"enabled": false}`（忽略）；该设备的阈值覆盖（如果有）会保留。 |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`。对操作员而言，只解除忽略：阈值覆盖保留。 |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## 通知策略 {#notification-policy}
 

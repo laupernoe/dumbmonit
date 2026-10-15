@@ -769,6 +769,15 @@ surcharges par appareil la retire. Voir
 [Surcharges par appareil](../reference/api.md#per-device-overrides)
 pour l'API.
 
+La page **Modifier** d'une surveillance liste aussi, sous **Alertes
+surveillées**, chaque règle qui lit une métrique écrite par la
+surveillance ces dernières 24 heures : pour un agent avec Docker, les
+règles des conteneurs ; pour un site web, celles des sondes. Chacune a
+un interrupteur, activé par défaut. En couper un pose la même surcharge
+`enabled: false` à l'enregistrement du formulaire ; les données restent
+collectées et tracées. Une surveillance ajoutée à l'instant affiche la
+liste après ses premières vérifications.
+
 ## Créer une règle de seuil
 
 Cliquez sur **Nouvelle règle**. Le formulaire demande :

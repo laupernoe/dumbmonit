@@ -711,6 +711,7 @@ la regola per nessun altro.
 | `GET` | `/api/alerts/rules/{id}/overrides` | Gli override di una regola. |
 | `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — ogni campo è facoltativo; `null` significa "come la regola". Crea o sostituisce. Un operatore può inviare solo `{"enabled": false}` (ignora); gli override di soglia del dispositivo, se presenti, vengono mantenuti. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Per un operatore, annulla soltanto l'ignora: gli override di soglia restano. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Politica di notifica
 

@@ -13,12 +13,17 @@
 	import { ChevronDown } from 'lucide-svelte';
 	import {
 		createTarget,
+		deleteRuleOverride,
+		listRuleOverrides,
+		putRuleOverride,
 		updateTarget,
 		type CollectorInfo,
 		type CredentialView,
 		type Target,
-		type TargetPayload
+		type TargetPayload,
+		type TargetRule
 	} from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { knownFolders } from '#lib/components/devices/folders.js';
 	import { groupOptions } from './option-groups';
 	import { listRelays } from '#lib/api/relay.js';
@@ -28,6 +33,8 @@
 	import OptionsFields from './OptionsFields.svelte';
 	import TagsEditor from './TagsEditor.svelte';
 	import RequirementNotice from './RequirementNotice.svelte';
+	import MonitoredRules from './MonitoredRules.svelte';
+	import { overrideActions, pendingChanges } from './monitored-rules';
 	import {
 		draftTouched,
 		emptyDraft,
@@ -231,15 +238,46 @@
 		return payload;
 	}
 
+	// Monitored alerts (edit only): switches moved, saved after the device.
+	let ruleChoices = $state<Record<number, boolean>>({});
+	let monitoredRules = $state<TargetRule[]>([]);
+	let rulesError = $state<unknown>(null);
+
+	/** Saves the moved switches as overrides; each one that lands is folded into the loaded state. */
+	async function saveRuleChoices(targetId: number) {
+		const changes = pendingChanges(monitoredRules, ruleChoices);
+		if (changes.length === 0) return;
+		const needsCurrent = auth.isAdmin && changes.some(({ rule }) => rule.custom_threshold);
+		const current = needsCurrent ? await listRuleOverrides(targetId) : [];
+		for (const action of overrideActions(changes, current, auth.isAdmin)) {
+			if (action.method === 'PUT') await putRuleOverride(action.ruleId, targetId, action.payload);
+			else await deleteRuleOverride(action.ruleId, targetId);
+			const watched = ruleChoices[action.ruleId];
+			monitoredRules = monitoredRules.map((rule) => (rule.id === action.ruleId ? { ...rule, ignored: !watched } : rule));
+			const { [action.ruleId]: _, ...rest } = ruleChoices;
+			ruleChoices = rest;
+		}
+	}
+
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		attempted = true;
 		serverError = null;
+		rulesError = null;
 		if (!valid || saving) return;
 		saving = true;
 		try {
 			const payload = buildPayload();
 			const saved = target ? await updateTarget(target.id, payload) : await createTarget(payload);
+			if (target) {
+				try {
+					await saveRuleChoices(saved.id);
+				} catch (cause) {
+					// The device is saved; keep the form open with the switches still moved.
+					rulesError = cause;
+					return;
+				}
+			}
 			onsaved(saved);
 		} catch (cause) {
 			serverError = cause;
@@ -414,6 +452,14 @@
 				<Toggle id="target-enabled" bind:checked={enabled} label={m.deviceform_form_enabled_label()} />
 			</Field>
 		</div>
+	{/if}
+
+	{#if target}
+		<MonitoredRules targetId={target.id} bind:choices={ruleChoices} bind:rules={monitoredRules} />
+	{/if}
+
+	{#if rulesError}
+		<ErrorNotice error={rulesError} title={m.deviceform_rules_save_error()} />
 	{/if}
 
 	{#if serverError}

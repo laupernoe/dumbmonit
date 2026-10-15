@@ -35,6 +35,7 @@ mod security;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod synology;
+mod target_rules;
 mod targets;
 mod targets_import;
 mod tokens;
@@ -110,6 +111,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))
+        .route("/targets/{id}/rules", get(target_rules::list))
         .route("/metrics/query", get(metrics::query))
         .route("/metrics/query_range", get(metrics::query_range))
         .route("/alerts", get(alerts::list_active))
