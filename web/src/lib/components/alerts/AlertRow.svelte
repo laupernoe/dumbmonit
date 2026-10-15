@@ -35,9 +35,21 @@
 		silences?: Silence[];
 		/** An acknowledgement, a snooze or an ignore was made or lifted: refresh the alerts. */
 		onchanged?: () => void;
+		/** Show a checkbox for the bulk actions of the Alerts page (operators only). */
+		selectable?: boolean;
+		selected?: boolean;
+		onselect?: (on: boolean) => void;
 	}
 
-	let { row, extra = [], silences = [], onchanged }: Props = $props();
+	let {
+		row,
+		extra = [],
+		silences = [],
+		onchanged,
+		selectable = false,
+		selected = false,
+		onselect
+	}: Props = $props();
 
 	const alert = $derived(row.alert);
 	const target = $derived(row.target);
@@ -90,7 +102,7 @@
 </script>
 
 <article
-	class={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface py-3 pr-4 pl-5 shadow-lift transition ${suppressed || acked || snoozed ? 'opacity-60' : ''}`}
+	class={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] border bg-surface py-3 pr-4 pl-5 shadow-lift transition ${selected ? 'border-signal ring-1 ring-signal' : 'border-line'} ${(suppressed || acked || snoozed) && !selected ? 'opacity-60' : ''}`}
 	aria-label={target
 		? m.alerts_row_aria_on({
 				plate: row.plate,
@@ -103,6 +115,17 @@
 
 	<div class="flex items-start justify-between gap-2">
 		<div class="flex min-w-0 flex-wrap items-center gap-1.5">
+			{#if selectable}
+				<label class="-my-2 -ml-2 inline-flex size-10 shrink-0 cursor-pointer items-center justify-center sm:size-7">
+					<input
+						type="checkbox"
+						class="size-4 accent-[var(--c-signal)]"
+						checked={selected}
+						aria-label={m.alerts_bulk_select_row({ name: alert.rule_name || alert.rule_uid })}
+						onchange={(e) => onselect?.((e.currentTarget as HTMLInputElement).checked)}
+					/>
+				</label>
+			{/if}
 			<Plate tone={row.tone} label={row.plate} pulse={firing} />
 			{#if (acked || snoozed) && !alert.learning}
 				<Plate tone={severityTone(alert.severity)} label={severityWord(alert.severity)} bare />

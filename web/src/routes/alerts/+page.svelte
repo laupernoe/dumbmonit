@@ -313,7 +313,7 @@
 		{/each}
 	</div>
 {:else if tab === 'now'}
-	<NeedsYouList {sky} grouped {silences} onchanged={() => void onNeedsYouChanged()} />
+	<NeedsYouList {sky} grouped selectable {silences} onchanged={() => void onNeedsYouChanged()} />
 {:else if tab === 'scheduled'}
 	<SilencesSection
 		{silences}

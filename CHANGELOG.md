@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Alerts: multi-select with bulk actions.** On the Alerts page, operators can
+  tick several alert tiles (or all of them) and acknowledge, unacknowledge or
+  ignore them for their device in one go; failures are reported and stay
+  selected.
 - **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
   and an entry in the command palette) draws the whole infrastructure from the
   links DumbMonit already knows, nothing to type in: declared parents, relay
