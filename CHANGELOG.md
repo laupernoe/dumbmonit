@@ -43,6 +43,16 @@ All notable changes to this project are documented here. The format follows
 - **Shorter `docker-compose.agent.yml`.** Only what most hosts need; the
   options moved to the agent page. It now keeps the agent's binding in a
   volume, so recreating the container no longer unbinds it.
+
+- **Alert rules page: grouped, filtered, counted.** The 150+ rules are grouped by
+  device kind and folded by default (kinds you own first, with how many are off
+  or firing); quick filters (Active, Disabled, Changed by me, Fired lately)
+  join the search and the kind select, with a "N of M rules" counter. All the
+  editing, toggling and deleting is unchanged.
+- **Device page: flat charts fold into one line.** In "Everything else", the
+  metric families that never moved over the period (the 0/1 checks of a
+  website, for instance) are no longer drawn; they collapse into a "Steady
+  checks (N)" line that lists their value. Only the series that change keep a chart.
 - **Translations now go through pull requests.** The UI translations stay in
   `web/messages/<locale>.json`; see "Translating DumbMonit" in
   [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit).

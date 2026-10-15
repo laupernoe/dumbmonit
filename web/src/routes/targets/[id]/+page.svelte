@@ -67,6 +67,7 @@
 		lastValue,
 		loadDeviceMetrics,
 		sectionize,
+		steadyValue,
 		type DeviceMetricGroup,
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
@@ -89,7 +90,7 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -200,6 +201,11 @@
 			(g) => g.name.toLowerCase().includes(q) || g.title.toLowerCase().includes(q)
 		);
 	});
+
+	/** Flat families fold into one line; only the ones that move get a chart. */
+	let showSteady = $state(false);
+	const otherMoving = $derived(otherShown.filter((g) => steadyValue(g) === undefined));
+	const otherSteady = $derived(otherShown.filter((g) => steadyValue(g) !== undefined));
 
 	/** "↓ 13 kB/s · ↑ 505 kB/s" for the folded interface line. */
 	function interfaceLine(row: MetricRow): string {
@@ -845,17 +851,43 @@
 						{#if otherShown.length === 0}
 							<p class="px-5 py-4 text-sm text-ink-2">{m.devices_target_no_family({ query: otherQuery })}</p>
 						{:else}
-							<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
-								{#each otherShown as group (group.name)}
-									<div>
-										<div class="flex items-center justify-between gap-2 pb-1">
-											<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
-											{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
+							{#if otherMoving.length > 0}
+								<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
+									{#each otherMoving as group (group.name)}
+										<div>
+											<div class="flex items-center justify-between gap-2 pb-1">
+												<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
+												{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
+											</div>
+											<Chart series={group.series} unit={group.unit} height={180} />
 										</div>
-										<Chart series={group.series} unit={group.unit} height={180} />
-									</div>
-								{/each}
-							</div>
+									{/each}
+								</div>
+							{/if}
+							{#if otherSteady.length > 0}
+								<div class={otherMoving.length > 0 ? 'border-t border-line' : ''}>
+									<button
+										type="button"
+										class="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium text-ink-2 hover:text-ink sm:px-5"
+										aria-expanded={showSteady || otherQuery.trim() !== ''}
+										aria-controls="steady-families"
+										onclick={() => (showSteady = !showSteady)}
+									>
+										<ChevronDown class={`size-4 transition-transform ${showSteady || otherQuery.trim() ? 'rotate-180' : ''}`} aria-hidden="true" />
+										{m.devices_target_steady({ count: otherSteady.length })}
+									</button>
+									{#if showSteady || otherQuery.trim()}
+										<ul id="steady-families" class="grid gap-x-6 px-4 pb-3 sm:px-5 md:grid-cols-2 lg:grid-cols-3">
+											{#each otherSteady as group (group.name)}
+												<li class="flex items-baseline justify-between gap-3 border-t border-line py-1.5 text-[0.8125rem]" title={group.name}>
+													<span class="min-w-0 truncate text-ink-2">{group.title}</span>
+													<span class="tnum shrink-0 font-medium text-ink">{Number(Number(steadyValue(group)).toPrecision(4))}{group.unit && group.unit !== '0/1' ? ` ${group.unit}` : ''}</span>
+												</li>
+											{/each}
+										</ul>
+									{/if}
+								</div>
+							{/if}
 						{/if}
 					</FoldSection>
 				{/if}
