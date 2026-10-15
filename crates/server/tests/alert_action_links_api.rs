@@ -326,8 +326,7 @@ async fn refused_tokens_all_look_the_same() {
         ))
     };
     let expired = {
-        let mut claims =
-            Claims::new(Action::Ack, vec![AlertRef::from("cpu_high@1")], Utc::now());
+        let mut claims = Claims::new(Action::Ack, vec![AlertRef::from("cpu_high@1")], Utc::now());
         claims.expires_at = Utc::now() - TimeDelta::seconds(1);
         app.key.sign(&claims)
     };

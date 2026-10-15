@@ -12,8 +12,8 @@ use crate::alerting::group::{AlertGroup, GroupItem, NotifyReason};
 use crate::alerting::machine::EffectivePhase;
 use crate::alerting::model::Severity;
 use crate::alerting::notify_policy::{DIGEST_MAX_LINES, Digest, Hold};
-use crate::notify::action_link::{Action, AlertRef};
 pub use crate::notify::action_link::MessageAction;
+use crate::notify::action_link::{Action, AlertRef};
 
 /// Message prêt à partir, indépendant du canal.
 #[derive(Debug, Clone, PartialEq)]

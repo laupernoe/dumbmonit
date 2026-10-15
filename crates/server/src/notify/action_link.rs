@@ -204,12 +204,7 @@ impl Claims {
         if alerts.len() > MAX_FINGERPRINTS {
             return None;
         }
-        Some(Self {
-            action,
-            alerts,
-            expires_at: DateTime::from_timestamp(expires, 0)?,
-            nonce,
-        })
+        Some(Self { action, alerts, expires_at: DateTime::from_timestamp(expires, 0)?, nonce })
     }
 }
 
