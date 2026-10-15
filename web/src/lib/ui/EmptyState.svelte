@@ -5,6 +5,7 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
+	import Button from './Button.svelte';
 	import Mascot from '#lib/components/Mascot.svelte';
 
 	interface Props {
@@ -14,11 +15,14 @@
 		/** The pigeon instead of the icon: for the states worth a smile (first run, 404). */
 		mascot?: 'watch' | 'dizzy' | 'happy';
 		action?: Snippet;
+		/** Declarative way out: a link (`href`) or a handler (`onclick`). */
+		primary?: { label: string; href?: string; onclick?: () => void };
+		secondary?: { label: string; href?: string; onclick?: () => void };
 		tone?: 'signal' | 'ghost';
 		class?: string;
 	}
 
-	let { title, description, icon: Icon, mascot, action, tone = 'ghost', class: className = '' }: Props = $props();
+	let { title, description, icon: Icon, mascot, action, primary, secondary, tone = 'ghost', class: className = '' }: Props = $props();
 </script>
 
 <div class={`ghost-cell rise-in flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center ${className}`}>
@@ -32,4 +36,10 @@
 	<p class="text-base font-semibold text-ink">{title}</p>
 	{#if description}<p class="mt-1 max-w-sm text-sm text-ink-2">{description}</p>{/if}
 	{#if action}<div class="mt-5">{@render action()}</div>{/if}
+	{#if primary || secondary}
+		<div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+			{#if primary}<Button variant="primary" href={primary.href} onclick={primary.onclick}>{primary.label}</Button>{/if}
+			{#if secondary}<Button variant="secondary" href={secondary.href} onclick={secondary.onclick}>{secondary.label}</Button>{/if}
+		</div>
+	{/if}
 </div>
