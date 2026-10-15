@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::CurrentPrincipal;
 use crate::collectors::agent::commands::{self, CommandError, CommandRecord, ContainerPolicy};
+use crate::collectors::agent::modules::{self, ModuleState};
 use crate::collectors::agent::{self as agent};
 use crate::db;
 use crate::state::AppState;
@@ -178,6 +179,8 @@ pub fn ui_routes() -> Router<AppState> {
     Router::new()
         .route("/targets/{id}/agent", get(agent_host))
         .route("/targets/{id}/agent/rebind", post(allow_rebind))
+        .route("/targets/{id}/agent/modules", get(list_modules))
+        .route("/targets/{id}/agent/modules/{module}", put(set_module))
         .route("/targets/{id}/containers", get(list_containers))
         .route("/targets/{id}/containers/{name}/policy", put(set_policy))
         .route("/targets/{id}/containers/{name}/restart", post(restart))
@@ -380,6 +383,35 @@ async fn agent_target(state: &AppState, id: TargetId) -> ApiResult<dumbmonit_pro
     Ok(target)
 }
 
+/// Les deux cibles d'une demande sur les conteneurs, à partir de la machine ou
+/// de son appareil Docker : `host` reçoit les commandes et porte les
+/// politiques (c'est lui que l'agent interroge), `metrics` porte les séries des
+/// conteneurs. Avant la séparation des modules, les deux sont la machine.
+struct DockerTargets {
+    host: TargetId,
+    metrics: TargetId,
+}
+
+async fn docker_targets(state: &AppState, id: TargetId) -> ApiResult<DockerTargets> {
+    let target = db::targets::get(&state.pool, &state.cipher, id)
+        .await?
+        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+    match target.kind.as_str() {
+        "agent" => {
+            let child = modules::states(&state.pool, id)
+                .await?
+                .remove("docker")
+                .and_then(|docker| docker.target_id);
+            Ok(DockerTargets { host: id, metrics: child.unwrap_or(id) })
+        }
+        modules::SERVICE_KIND => match modules::owner(&state.pool, id).await? {
+            Some((host, module)) if module == "docker" => Ok(DockerTargets { host, metrics: id }),
+            _ => Err(ApiError::NotFound(format!("Device {id} is not a Docker service."))),
+        },
+        _ => Err(ApiError::NotFound(format!("Device {id} has no agent."))),
+    }
+}
+
 /// Un nom de conteneur tel que Docker les accepte, hors ceux du moniteur.
 pub fn validate_name(name: &str) -> Result<(), String> {
     let mut chars = name.chars();
@@ -404,16 +436,16 @@ pub(crate) async fn list_containers(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<Vec<ContainerView>>> {
-    agent_target(&state, id).await?;
+    let DockerTargets { host, metrics } = docker_targets(&state, id).await?;
     let query = format!(
-        r#"{{__name__=~"dumbmonit_container_(up|health|restart_count|started_seconds|image_age_seconds|update_available)", target="{id}"}}"#
+        r#"{{__name__=~"dumbmonit_container_(up|health|restart_count|started_seconds|image_age_seconds|update_available)", target="{metrics}"}}"#
     );
     let series = state.victoria.query(&query).await?;
     let readings = group_readings(
         series.iter().map(|s| (&s.metric, s.value.1.parse::<f64>().unwrap_or(f64::NAN))),
     );
-    let mut policies = commands::list_policies(&state.pool, id).await?;
-    let mut latest = commands::last_command_per_container(&state.pool, id).await?;
+    let mut policies = commands::list_policies(&state.pool, host).await?;
+    let mut latest = commands::last_command_per_container(&state.pool, host).await?;
 
     Ok(Json(
         readings
@@ -455,11 +487,11 @@ async fn set_policy(
     Path((id, name)): Path<(TargetId, String)>,
     Json(patch): Json<PolicyPatch>,
 ) -> ApiResult<Json<ContainerPolicy>> {
-    agent_target(&state, id).await?;
+    let host = docker_targets(&state, id).await?.host;
     let name = checked_name(&name)?;
-    let current = commands::get_policy(&state.pool, id, &name).await?;
+    let current = commands::get_policy(&state.pool, host, &name).await?;
     let policy = patch.apply(current);
-    commands::set_policy(&state.pool, id, &name, policy).await?;
+    commands::set_policy(&state.pool, host, &name, policy).await?;
     Ok(Json(policy))
 }
 
@@ -528,11 +560,11 @@ pub(crate) async fn restart(
     Path((id, name)): Path<(TargetId, String)>,
     who: Option<Extension<CurrentPrincipal>>,
 ) -> ApiResult<(StatusCode, Json<CommandView>)> {
-    agent_target(&state, id).await?;
-    ensure_commands_supported(&state, id).await?;
-    let name = checked_known_name(&state, id, &name).await?;
+    let DockerTargets { host, metrics } = docker_targets(&state, id).await?;
+    ensure_commands_supported(&state, host).await?;
+    let name = checked_known_name(&state, metrics, &name).await?;
     let by = requester(who.as_deref());
-    enqueue(&state, id, CMD_CONTAINER_RESTART, serde_json::json!({ "name": name }), &by).await
+    enqueue(&state, host, CMD_CONTAINER_RESTART, serde_json::json!({ "name": name }), &by).await
 }
 
 async fn update(
@@ -541,22 +573,22 @@ async fn update(
     who: Option<Extension<CurrentPrincipal>>,
     payload: Option<Json<UpdatePayload>>,
 ) -> ApiResult<(StatusCode, Json<CommandView>)> {
-    agent_target(&state, id).await?;
-    ensure_commands_supported(&state, id).await?;
-    let name = checked_known_name(&state, id, &name).await?;
-    let policy = commands::get_policy(&state.pool, id, &name).await?;
+    let DockerTargets { host, metrics } = docker_targets(&state, id).await?;
+    ensure_commands_supported(&state, host).await?;
+    let name = checked_known_name(&state, metrics, &name).await?;
+    let policy = commands::get_policy(&state.pool, host, &name).await?;
     let prune = payload.and_then(|Json(p)| p.prune).unwrap_or(policy.prune_old_image);
     let by = requester(who.as_deref());
     let args = serde_json::json!({ "name": name, "prune": prune });
-    enqueue(&state, id, CMD_CONTAINER_UPDATE, args, &by).await
+    enqueue(&state, host, CMD_CONTAINER_UPDATE, args, &by).await
 }
 
 async fn list_commands(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<Vec<CommandView>>> {
-    agent_target(&state, id).await?;
-    let records = commands::list_for_target(&state.pool, id, RECENT_COMMANDS).await?;
+    let host = docker_targets(&state, id).await?.host;
+    let records = commands::list_for_target(&state.pool, host, RECENT_COMMANDS).await?;
     Ok(Json(records.into_iter().map(CommandView::from).collect()))
 }
 
@@ -567,9 +599,9 @@ async fn cancel_command(
     Path((id, command_id)): Path<(TargetId, i64)>,
     who: Option<Extension<CurrentPrincipal>>,
 ) -> ApiResult<StatusCode> {
-    agent_target(&state, id).await?;
+    let host = docker_targets(&state, id).await?.host;
     let by = requester(who.as_deref());
-    match commands::cancel(&state.pool, id, command_id, &by).await {
+    match commands::cancel(&state.pool, host, command_id, &by).await {
         Ok(()) => Ok(StatusCode::NO_CONTENT),
         Err(CommandError::Conflict(why)) => Err(ApiError::Conflict(why)),
         Err(CommandError::NotFound) => {
@@ -619,6 +651,85 @@ async fn allow_rebind(
         .ok_or_else(|| ApiError::NotFound(format!("No agent has reported for device {id} yet.")))?;
     tracing::info!(cible = id, par = requester(who.as_deref()), "fenêtre de reliaison ouverte");
     Ok(Json(RebindWindow { rebind_until: until, minutes: agent::REBIND_WINDOW_MINUTES }))
+}
+
+/// Un module d'agent tel que le panneau de la machine le liste.
+#[derive(Debug, Serialize)]
+pub struct AgentModuleView {
+    /// Identifiant stable (`docker`, `zfs`…), clé des textes de l'interface.
+    pub id: &'static str,
+    /// Nom affiché quand l'interface ne connaît pas ce module.
+    pub label: &'static str,
+    /// Vrai si l'agent en a déjà rapporté des mesures sur cette machine.
+    pub detected: bool,
+    /// Case cochée : un appareil existe (ou existera) pour ce module.
+    pub enabled: bool,
+    /// Vrai tant que personne n'a coché ni décoché la case : l'appareil suit
+    /// la détection.
+    pub automatic: bool,
+    /// L'appareil du module, s'il existe.
+    pub target_id: Option<TargetId>,
+    /// Dernier lot qui en contenait des mesures, UTC sans suffixe.
+    pub last_seen_at: Option<String>,
+}
+
+impl AgentModuleView {
+    fn new(module: &'static modules::Module, state: Option<&ModuleState>) -> Self {
+        Self {
+            id: module.id,
+            label: module.label,
+            detected: state.is_some_and(|s| s.last_seen_ms.is_some()),
+            enabled: state.is_some_and(ModuleState::wanted),
+            automatic: state.is_none_or(|s| s.enabled.is_none()),
+            target_id: state.and_then(|s| s.target_id),
+            last_seen_at: state.and_then(|s| s.last_seen_ms).and_then(|ms| {
+                chrono::DateTime::from_timestamp_millis(ms)
+                    .map(|at| at.format("%Y-%m-%dT%H:%M:%S").to_string())
+            }),
+        }
+    }
+}
+
+/// `GET /api/targets/{id}/agent/modules` : les services que l'agent sait
+/// détecter, trouvés ou non sur cette machine, dans un ordre fixe.
+async fn list_modules(
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+) -> ApiResult<Json<Vec<AgentModuleView>>> {
+    agent_target(&state, id).await?;
+    let states = modules::states(&state.pool, id).await?;
+    Ok(Json(
+        modules::MODULES
+            .iter()
+            .map(|module| AgentModuleView::new(module, states.get(module.id)))
+            .collect(),
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ModuleChoice {
+    pub enabled: bool,
+}
+
+/// `PUT /api/targets/{id}/agent/modules/{module}` : coche ou décoche un module.
+///
+/// Décocher supprime l'appareil du service et fait écarter ses mesures (l'agent
+/// en est prévenu dans l'accusé de son prochain lot) ; cocher crée l'appareil,
+/// même avant que l'agent ait trouvé le service.
+async fn set_module(
+    State(state): State<AppState>,
+    Path((id, module)): Path<(TargetId, String)>,
+    Json(choice): Json<ModuleChoice>,
+) -> ApiResult<Json<AgentModuleView>> {
+    let host = agent_target(&state, id).await?;
+    let module = modules::find(&module)
+        .ok_or_else(|| ApiError::NotFound(format!("Unknown agent module '{module}'.")))?;
+    let (saved, removed) =
+        modules::set_enabled(&state.pool, &state.cipher, &host, module, choice.enabled).await?;
+    if let Some(removed) = removed {
+        crate::api::targets::forget(&state, removed).await;
+    }
+    Ok(Json(AgentModuleView::new(module, Some(&saved))))
 }
 
 #[cfg(test)]

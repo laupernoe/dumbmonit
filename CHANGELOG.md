@@ -7,6 +7,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Each service an agent finds is its own device.** Docker, Plakar,
+  restic/Borg, ZFS, libvirt, WireGuard, IPsec and the speed test no longer pile
+  up on the machine's page: each one becomes an `agent_service` device under
+  the machine, with its own status, alerts, rules and silences, hidden behind
+  the machine when it goes down. The machine keeps CPU, memory, disks, network,
+  SMART, sensors and OS health; every series is written once, under the device
+  it belongs to. The machine's page lists the modules found and not found:
+  untick one to drop its device (the agent stops collecting it), tick one to
+  watch it before it shows up. Nothing to choose at install time. Existing
+  installations move rule overrides, machine-only rules, silences and open
+  alerts to the new device on its first report; older history stays under the
+  machine. See [Services found by the agent](docs/devices/agent.md#services-found-by-the-agent).
 - **Topology map.** A new **Map** page (`/map`, a button on the Monitors page
   and an entry in the command palette) draws the whole infrastructure from the
   links DumbMonit already knows, nothing to type in: declared parents, relay

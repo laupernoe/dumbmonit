@@ -96,7 +96,8 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
     usermod -aG docker dumbmonit
 ```
 
-6. Plakar 备份：自动检测 — Backups 面板在发现 plakar 二进制或 kloset（每个用户的 ~/.config/plakar/stores.yml、~/.plakar、/var/lib/plakar）时出现，否则什么也不显示。在 agent.yaml 中设置"plakar_klosets"以监视固定列表，或"plakar: false"以选择退出。
+6. Plakar 备份：自动检测 — 发现 plakar 二进制或 kloset（每个用户的 ~/.config/plakar/stores.yml、~/.plakar、/var/lib/plakar）时，机器下会出现一个 Plakar 设备，否则什么也不显示。在 agent.yaml 中设置"plakar_klosets"以监视固定列表，或"plakar: false"以选择退出。
+7. 代理发现的服务（Docker、Plakar、restic/Borg、ZFS、libvirt、WireGuard、IPsec、速度测试）各自成为机器下的独立设备，拥有自己的状态和警报。机器的"代理发现的服务"面板列出已发现和未发现的内容：取消勾选某个模块以删除其设备，勾选则在其出现之前就监视它。参见[代理发现的服务](#services-found-by-the-agent)。
 
 !!! note
     代理接触服务器，从不是相反的方式：机器上不需要打开任何端口。
@@ -231,6 +232,52 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 两个脚本都是幂等的：用相同令牌和 URL 再次运行安装命令，用新的二进制文件、重写配置并重启服务。那是升级程序。从当前服务器取命令（"设置 → 代理"）：其 `--sha256` 必须匹配您升级到的服务器版本的二进制文件。
 
 相同命令迁移仍在运行 EzyMonit 代理的机器，在 Linux 和 Windows 上。安装程序停止并移除旧服务（`ezymonit-agent`，或 Windows 上的 `EzyMonitAgent`），将配置移动到新路径（`/etc/dumbmonit/agent.yaml`、`C:\ProgramData\DumbMonit\agent.yaml`）并在其位置安装 `dumbmonit-agent`。旧的 `ezym_…` 令牌保持有效，所以令牌创建时显示的命令仍然有效；什么都不需要首先被撤销。
+
+## 代理发现的服务 {#services-found-by-the-agent}
+
+机器自身的设备显示机器本身：CPU、内存、文件系统、网络、磁盘健康（SMART）、传感器、操作系统健康以及你在 `services` 中列出的服务。代理检测到的其他一切都是**服务**，它发现的每个服务都会成为一个独立的设备，类型为 `agent_service`，归档在机器之下：
+
+| 服务 | 其指标 | 设备名称 |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| 互联网速度测试 | `agent_speedtest_*` | `<machine> · Speed test` |
+
+拆分在服务器上按指标名称进行，因此适用于所有代理版本。每个序列只写入一次，`target` 设置为它所属的设备：服务的序列带有服务设备的 id，机器的序列带有机器的 id。不会重复计数。
+
+服务设备有自己的状态、警报、规则、规则覆盖和静默。当代理停止报告它而机器仍在报告时（Docker 守护进程已停止、`wg` 已移除……），它会在与机器本身相同的三个周期缺失之后变为**不可达**。当机器沉默时，它的服务显示为隐藏在其后（`suppressed`），而不是发出自己的警报。新的服务设备以机器的标签起步，因此基于标签的静默和规则继续适用。
+
+安装之前无需选择。首次报告之后，机器页面会在**代理发现的服务**中列出每个模块：
+
+- 已发现的服务处于勾选状态，并链接到其设备；
+- 未发现的服务处于未勾选状态；勾选它可仍然创建其设备（在代理报告它之前它保持不可达——适合在你依赖的服务缺失时收到通知）；
+- 取消勾选已发现的服务可删除其设备并丢弃其读数。服务器在下一次确认中告知代理，代理停止收集它（旧版代理会继续收集，服务器继续丢弃）。删除服务设备具有相同的效果。再次勾选即可恢复。
+
+删除机器会删除其服务设备。容器操作和策略从 Docker 设备页面进行；命令仍发送到机器的代理。
+
+与设备提示相同：
+
+1. 无需手动添加任何内容：在机器上安装代理，它发现的每个服务在首次报告时都会成为该机器下的设备。
+2. 要停止监视某个服务，请在机器的"代理发现的服务"面板中取消勾选，或删除其设备：代理针对它的读数随后会被丢弃。
+
+!!! note
+    如果机器停止报告，它的服务显示为隐藏在其后，而不是发出自己的警报。
+
+### 升级现有安装 {#upgrading-an-existing-installation}
+
+无需任何操作。升级后代理首次报告某个服务时，服务器会创建其设备，并把机器上与该服务有关的内容移到它上面：
+
+- 读取该服务指标的规则的规则覆盖会复制到服务设备；
+- 限定于该机器的规则（`ids` 选择器）若读取该服务的指标，现在也会选中服务设备；
+- 机器的静默（维护窗口）会复制到服务设备；
+- 该服务序列上正在进行的警报会以新的指纹移到服务设备，因此它们不会先解除再重新触发。
+
+历史保留在写入之处：VictoriaMetrics 无法对现有序列重新打标签，因此升级前的读数仍留在机器之下（随保留期过期），服务设备的图表从升级时开始。移动后的序列的异常基线重新开始学习。警报历史（已解除的警报）也留在机器处。
 
 ## 配置文件 {#configuration-file}
 

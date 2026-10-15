@@ -74,6 +74,7 @@ import {
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
 import { isUptimeKind, PUSH_KIND } from '#lib/format.js';
+import { AGENT_SERVICE_KIND } from '#lib/components/devices/agent/services.js';
 
 const KIND_ICON: Record<string, typeof LucideIcon> = {
 	snmp: Network,
@@ -81,6 +82,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pbs: Archive,
 	synology: HardDrive,
 	agent: Cpu,
+	agent_service: Layers,
 	http: Globe,
 	tcp: Plug,
 	dns: AtSign,
@@ -470,7 +472,8 @@ export function groupCollectors(collectors: CollectorInfo[]): KindGroup[] {
 		.sort((a, b) => a.label.localeCompare(b.label))
 		.map((c) => kindChoice(c, PACKS));
 	const other = collectors
-		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && !isService(c.kind) && !isPackKind(c.kind))
+		// A service an agent found is created by its agent, never from the form.
+		.filter((c) => !DEVICE_KINDS.includes(c.kind) && c.kind !== AGENT_KIND && c.kind !== AGENT_SERVICE_KIND && !isService(c.kind) && !isPackKind(c.kind))
 		.map((c) => kindChoice(c, OTHER));
 	const groups: KindGroup[] = [
 		{ id: 'devices', title: DEVICES, hint: m.deviceform_group_devices_hint(), choices: [...agentChoices, ...relayChoices, ...devices] },

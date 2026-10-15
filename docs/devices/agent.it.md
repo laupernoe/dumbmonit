@@ -157,11 +157,17 @@ token.
     usermod -aG docker dumbmonit
     ```
 
-6. Backup Plakar: rilevati automaticamente — il pannello Backup compare quando
+6. Backup Plakar: rilevati automaticamente — sotto la macchina compare un dispositivo Plakar quando
    viene trovato il binario plakar o un kloset (~/.config/plakar/stores.yml di
    ogni utente, ~/.plakar, /var/lib/plakar), e altrimenti non viene mostrato
    nulla. Imposta "plakar_klosets" in agent.yaml per sorvegliare un elenco fisso,
    o "plakar: false" per escluderli.
+7. I servizi che l'agent trova (Docker, Plakar, restic/Borg, ZFS, libvirt,
+   WireGuard, IPsec, speed test) diventano ciascuno un dispositivo a sé sotto la
+   macchina, con stato e avvisi propri. Il pannello "Servizi trovati dall'agente"
+   della macchina elenca ciò che è stato trovato e ciò che non lo è: deseleziona
+   un modulo per eliminarne il dispositivo, selezionalo per sorvegliarlo prima che
+   compaia. Vedi [Servizi trovati dall'agente](#services-found-by-the-agent).
 
 !!! note
     L'agent contatta il server, mai il contrario: non serve aprire alcuna porta
@@ -373,6 +379,93 @@ nuovo percorso (`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yam
 e installa al suo posto `dumbmonit-agent`. Il vecchio token `ezym_…` resta
 valido, quindi il comando mostrato alla creazione del token funziona ancora;
 non occorre revocare nulla prima.
+
+## Servizi trovati dall'agente {#services-found-by-the-agent}
+
+Il dispositivo della macchina mostra la macchina: CPU, memoria, filesystem, rete,
+salute dei dischi (SMART), sensori, salute del SO e i servizi che elenchi in
+`services`. Tutto il resto che l'agent rileva è un **servizio**, e ogni servizio
+che trova diventa un dispositivo a sé, di tipo `agent_service`, archiviato sotto
+la macchina:
+
+| Servizio | Le sue metriche | Nome del dispositivo |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Speed test di Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+La suddivisione avviene sul server, in base al nome della metrica, quindi
+funziona con ogni versione dell'agent. Ogni serie viene scritta una sola volta,
+con `target` impostato sul dispositivo a cui appartiene: le serie di un servizio
+portano l'id del dispositivo del servizio, quelle della macchina l'id della
+macchina. Nulla viene contato due volte.
+
+Un dispositivo di servizio ha stato, avvisi, regole, override delle regole e
+silenziamenti propri. È **irraggiungibile** quando l'agent smette di riportarlo
+mentre la macchina continua a riportare (daemon Docker fermato, `wg`
+rimosso…), dopo gli stessi tre periodi mancati della macchina stessa. Quando la
+macchina tace, i suoi servizi vengono mostrati come nascosti dietro di essa
+(`suppressed`) invece di generare avvisi propri. Un nuovo dispositivo di servizio
+parte con i tag della macchina, quindi silenziamenti e regole basati sui tag
+continuano ad applicarsi.
+
+Prima dell'installazione non c'è nulla da scegliere. Dopo il primo report, la
+pagina della macchina elenca ogni modulo in **Servizi trovati dall'agente**:
+
+- un servizio trovato è selezionato e rimanda al suo dispositivo;
+- un servizio non trovato è deselezionato; selezionalo per creare comunque il suo
+  dispositivo (resta irraggiungibile finché l'agent non lo riporta — utile per
+  essere avvisati quando manca un servizio su cui conti);
+- deseleziona un servizio trovato per eliminarne il dispositivo e scartarne le
+  letture. Il server lo comunica all'agent nel suo prossimo riscontro, e l'agent
+  smette di raccoglierlo (un agent più vecchio continua a raccogliere, e il
+  server continua a scartare). Eliminare un dispositivo di servizio ha lo stesso
+  effetto. Selezionalo di nuovo per ripristinarlo.
+
+Eliminare la macchina elimina i suoi dispositivi di servizio. Azioni e politiche
+dei container funzionano dalla pagina del dispositivo Docker; i comandi vanno
+sempre all'agent della macchina.
+
+Come nell'avviso del dispositivo:
+
+1. Non c'è nulla da aggiungere a mano: installa l'agent sulla macchina, e ogni
+   servizio che trova diventa un dispositivo sotto quella macchina al suo primo
+   report.
+2. Per smettere di sorvegliare un servizio, deselezionalo nel pannello "Servizi
+   trovati dall'agente" della macchina, oppure elimina il suo dispositivo: le
+   letture dell'agent per esso vengono allora scartate.
+
+!!! note
+    Se la macchina smette di riportare, i suoi servizi vengono mostrati come
+    nascosti dietro di essa invece di generare avvisi propri.
+
+### Aggiornare un'installazione esistente {#upgrading-an-existing-installation}
+
+Non c'è nulla da fare. La prima volta che l'agent riporta un servizio dopo
+l'aggiornamento, il server crea il suo dispositivo e vi sposta ciò che riguardava
+quel servizio sulla macchina:
+
+- gli override delle regole che leggono le metriche del servizio vengono copiati
+  sul dispositivo del servizio;
+- le regole limitate alla macchina (selettore `ids`) che leggono le metriche del
+  servizio ora selezionano anche il dispositivo del servizio;
+- i silenziamenti (finestre di manutenzione) della macchina vengono copiati sul
+  dispositivo del servizio;
+- gli avvisi in corso sulle serie del servizio vengono spostati sul dispositivo
+  del servizio con la loro nuova impronta, così non si risolvono per poi
+  scattare di nuovo.
+
+Lo storico resta dove è stato scritto: VictoriaMetrics non può rietichettare le
+serie esistenti, quindi le letture precedenti all'aggiornamento restano sotto la
+macchina (scadono con la retention), e i grafici del dispositivo del servizio
+partono dall'aggiornamento. Le baseline di anomalia delle serie spostate
+ricominciano ad apprendere. Anche lo storico degli avvisi (avvisi risolti) resta
+con la macchina.
 
 ## File di configurazione
 

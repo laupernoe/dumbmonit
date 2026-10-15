@@ -16,10 +16,7 @@
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
 	import MdaemonQueues from '#lib/components/devices/mdaemon/MdaemonQueues.svelte';
-	import BackupReposPanel from './BackupReposPanel.svelte';
-	import WireguardPanel from './WireguardPanel.svelte';
-	import IpsecPanel from './IpsecPanel.svelte';
-	import SpeedtestPanel from './SpeedtestPanel.svelte';
+	import AgentModulesPanel from './AgentModulesPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
 	interface Props {
@@ -148,14 +145,8 @@
 <!-- Shown only when this machine runs MDaemon and the agent reads its counters. -->
 <MdaemonQueues agent={target.id} />
 
-<!-- Each renders nothing unless the agent reports WireGuard tunnels or declared restic/Borg repositories. -->
-<BackupReposPanel {target} />
-
-<WireguardPanel {target} />
-
-<IpsecPanel {target} />
-
-<SpeedtestPanel {target} />
+<!-- Services the agent found (Docker, ZFS, tunnels…): each is a device of its own under this machine. -->
+<AgentModulesPanel {target} />
 
 <!-- Shown only on a Hyper-V host, where the agent reads Hyper-V's performance counters. -->
 <AppliancePanel {target} variant="hyperv" />

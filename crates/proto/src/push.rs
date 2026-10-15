@@ -167,6 +167,12 @@ pub struct PushAck {
     /// affiche sous « not bound yet ».
     #[serde(default)]
     pub bound: bool,
+    /// Modules que l'utilisateur a décochés pour cette machine (`docker`,
+    /// `zfs`…) : l'agent peut cesser de les collecter. Le serveur écarte de
+    /// toute façon leurs mesures — un agent antérieur qui ignore ce champ ne
+    /// change donc rien au résultat, il travaille seulement pour rien.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub disabled_modules: Vec<String>,
 }
 
 #[cfg(test)]
@@ -236,6 +242,7 @@ mod tests {
                 .expect("désérialisation");
         assert!(ack.agent_secret.is_none());
         assert!(!ack.bound);
+        assert!(ack.disabled_modules.is_empty(), "rien de décoché chez un serveur ancien");
 
         let issued = PushAck {
             target_id: 7,
@@ -244,6 +251,7 @@ mod tests {
             registered: true,
             agent_secret: Some(format!("{AGENT_SECRET_PREFIX}abcdef")),
             bound: true,
+            disabled_modules: Vec::new(),
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -289,6 +297,7 @@ mod tests {
             registered: true,
             agent_secret: None,
             bound: true,
+            disabled_modules: vec!["docker".into()],
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");
