@@ -157,7 +157,7 @@
  "k156": "<span>The HTTP API is not frozen and the database schema still changes between alphas.</span>",
  "k157": "<span>OPNsense, TrueNAS, Proxmox Datacenter Manager and Mail Gateway need reports from real, long-running installs. Redfish needs a real management controller.</span>",
  "k158": "<span>The macOS and FreeBSD agents need someone to run them on real hardware.</span>",
- "k159": "<span>The interface is in English; the language picker already offers 8 more (German, Spanish, French, Italian, Portuguese in two variants, Russian, Simplified Chinese), partly translated (the documentation is available in the same languages), and <a href=\"https://hosted.weblate.org/engage/dumbmonit/\">translations are open on Weblate</a>.</span>",
+ "k159": "<span>The interface is in English; the language picker already offers 8 more (German, Spanish, French, Italian, Portuguese in two variants, Russian, Simplified Chinese), partly translated (the documentation is available in the same languages), and <a href=\"https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit\">translations are welcome by pull request</a>.</span>",
  "k160": "<span>What gets built next is decided in the <a href=\"https://github.com/laupernoe/dumbmonit/issues\">GitHub issues</a>, and the <a href=\"https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md\">changelog</a> says what changed.</span>",
  "k161": "Tell us what breaks",
  "k162": "A device that reads wrong, an alert that woke you for nothing, a page that confused you: each report makes the next alpha better. Device support requests are welcome too.",

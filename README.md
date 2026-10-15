@@ -10,7 +10,6 @@ One container, one IP address to type in, useful graphs and alerts in under a mi
 
 [![CI](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml)
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
-[![Translation status](https://hosted.weblate.org/widget/dumbmonit/web-ui/svg-badge.svg)](https://hosted.weblate.org/engage/dumbmonit/)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15486/badge)](https://www.bestpractices.dev/projects/15486)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/laupernoe/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/laupernoe/dumbmonit)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -67,7 +66,7 @@ One Rust binary with the UI embedded, VictoriaMetrics started by it, SQLite for 
 ## Contributing
 
 Bug reports, device profiles and integrations are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) (Docker only, no Rust toolchain needed).
-The web UI can be **translated on [Weblate](https://hosted.weblate.org/engage/dumbmonit/)** (8 languages besides English; only part of the interface is translated so far); the documentation is available in the same languages.
+The web UI can be **translated by pull request** (see [Translating DumbMonit](CONTRIBUTING.md#translating-dumbmonit)) (8 languages besides English; only part of the interface is translated so far); the documentation is available in the same languages.
 Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://github.com/users/laupernoe/projects/2).
 
 ## Status

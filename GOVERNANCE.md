@@ -13,10 +13,8 @@ contribute.
 - **Contributors.** Anyone who opens an issue, sends a pull request, improves
   the documentation or adds a device profile or integration. See
   [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Translators.** Translate the web UI on
-  [Weblate](https://hosted.weblate.org/engage/dumbmonit/); Weblate opens pull
-  requests that a maintainer merges. Documentation translations come as pull
-  requests.
+- **Translators.** Translate the web UI and the documentation by pull
+  request (see [CONTRIBUTING.md](CONTRIBUTING.md#translating-dumbmonit)).
 
 ## How decisions are made
 
@@ -44,7 +42,7 @@ The project currently has one maintainer. That is a risk, and we state it
 plainly. Continuity requires at least one other trusted person who can, if the
 maintainer is unavailable, merge and release, rotate credentials, and publish
 security advisories: access to the GitHub repository and organisation settings,
-the container registry (GHCR), the Read the Docs project, the Weblate project
+the container registry (GHCR), the Read the Docs project
 and the domain names. No second person has that access yet. Finding one is part
 of the path described above; until then, the source code is Apache-2.0 licensed
 and can be forked by anyone if the project stops.

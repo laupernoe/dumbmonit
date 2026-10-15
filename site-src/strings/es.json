@@ -125,7 +125,7 @@
  "k156": "<span>La API HTTP no está congelada y el esquema de la base de datos sigue cambiando entre alphas.</span>",
  "k157": "<span>OPNsense, TrueNAS, Proxmox Datacenter Manager y Mail Gateway necesitan informes de instalaciones reales y de larga duración. Redfish necesita un controlador de gestión real.</span>",
  "k158": "<span>Los agentes de macOS y FreeBSD necesitan que alguien los ejecute en hardware real.</span>",
- "k159": "<span>La interfaz está en inglés; el selector de idioma ya ofrece otros 8 (alemán, español, francés, italiano, portugués en dos variantes, ruso, chino simplificado), traducidos en parte (la documentación está disponible en los mismos idiomas), y <a href=\"https://hosted.weblate.org/engage/dumbmonit/\">las traducciones están abiertas en Weblate</a>.</span>",
+ "k159": "<span>La interfaz está en inglés; el selector de idioma ya ofrece otros 8 (alemán, español, francés, italiano, portugués en dos variantes, ruso, chino simplificado), traducidos en parte (la documentación está disponible en los mismos idiomas), y <a href=\"https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit\">las traducciones son bienvenidas por pull request</a>.</span>",
  "k160": "<span>Lo que se construye después se decide en los <a href=\"https://github.com/laupernoe/dumbmonit/issues\">issues de GitHub</a>, y el <a href=\"https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md\">changelog</a> dice qué ha cambiado.</span>",
  "k161": "Cuéntanos qué falla",
  "k162": "Un dispositivo que lee mal, una alerta que te despertó sin motivo, una página que te confundió: cada informe mejora la siguiente alpha. Las peticiones de soporte para nuevos dispositivos también son bienvenidas.",
