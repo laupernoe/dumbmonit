@@ -47,6 +47,12 @@
 		registerRow: (id: TargetId, el: HTMLElement | null) => void;
 	}
 
+	/** Bulk-action selection: a checkbox per row, owned by the page. */
+	export interface RowSelection {
+		selected: Set<TargetId>;
+		toggle: (id: TargetId) => void;
+	}
+
 	interface Props {
 		rows: RackRow[];
 		sparklines: Map<TargetId, Serie[]>;
@@ -59,9 +65,11 @@
 		names?: Map<TargetId, string>;
 		/** id → security grade, only for rated devices while the score is on. */
 		security?: Map<TargetId, { grade: SecurityGrade | null; score: number | null }>;
+		/** When given (admins), every row carries a checkbox. */
+		selection?: RowSelection | null;
 	}
 
-	let { rows, sparklines, kindLabels, reorder = null, layout = 'rows', names = new Map(), security = new Map() }: Props = $props();
+	let { rows, sparklines, kindLabels, reorder = null, layout = 'rows', names = new Map(), security = new Map(), selection = null }: Props = $props();
 
 	const LIST_CLASS: Record<RackView, string> = {
 		rows: 'flex flex-col gap-2',
@@ -132,6 +140,21 @@
 				starts its own drag of the link a few pixels in, cancels the
 				pointer stream (`pointercancel`) and the row drag never begins.
 			-->
+			{#if selection}
+				<label
+					class={layout === 'tiles'
+						? 'absolute top-2 right-9 z-10 flex size-8 cursor-pointer items-center justify-center'
+						: 'flex w-9 shrink-0 cursor-pointer items-center justify-center'}
+				>
+					<input
+						type="checkbox"
+						class="size-5 shrink-0 accent-[var(--c-signal)]"
+						checked={selection.selected.has(id)}
+						onchange={() => selection.toggle(id)}
+						aria-label={m.devices_list_select_row({ name: row.target.name })}
+					/>
+				</label>
+			{/if}
 			{#if reorder}
 				<div
 					class={`min-w-0 flex-1 rounded-[inherit] ${isDragging ? 'opacity-40 cursor-grabbing [&_a]:cursor-grabbing' : 'cursor-grab [&_a]:cursor-grab'} ${isPicked ? 'ring-2 ring-signal ring-inset' : ''} ${layout === 'compact' ? '' : 'rounded-[var(--radius-card)]'}`}
