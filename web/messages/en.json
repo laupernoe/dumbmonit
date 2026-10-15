@@ -3715,7 +3715,6 @@
 	"notifications_channels_hint_rejected": "The service refused the message. Check the channel settings, then send a test.",
 	"notifications_channels_hint_server": "The service failed on its side. Try again later.",
 	"notifications_channels_hint_transport": "DumbMonit could not reach the service. Check the address, and that the server can reach the internet.",
-	"notifications_channels_last_error": "Last error: {error}",
 	"notifications_channels_last_error_title": "Last delivery failed",
 	"notifications_channels_last_sent": "Last sent {when}",
 	"notifications_channels_more": "More actions for this channel",

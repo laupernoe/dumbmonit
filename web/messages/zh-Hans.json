@@ -3681,7 +3681,6 @@
 	"notifications_channels_hint_rejected": "服务拒绝了该消息。请检查渠道设置，然后发送测试消息。",
 	"notifications_channels_hint_server": "服务端出现故障，请稍后再试。",
 	"notifications_channels_hint_transport": "DumbMonit 无法连接到该服务。请检查地址，以及服务器是否能访问互联网。",
-	"notifications_channels_last_error": "最近错误：{error}",
 	"notifications_channels_last_error_title": "上次发送失败",
 	"notifications_channels_last_sent": "上次发送 {when}",
 	"notifications_channels_more": "此渠道的更多操作",

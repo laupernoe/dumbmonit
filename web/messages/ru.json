@@ -3783,7 +3783,6 @@
 	"notifications_channels_hint_rejected": "Сервис отклонил сообщение. Проверьте настройки канала и отправьте тестовое сообщение.",
 	"notifications_channels_hint_server": "Сервис дал сбой на своей стороне. Повторите позже.",
 	"notifications_channels_hint_transport": "DumbMonit не смог связаться с сервисом. Проверьте адрес и доступ сервера в интернет.",
-	"notifications_channels_last_error": "Последняя ошибка: {error}",
 	"notifications_channels_last_error_title": "Последняя отправка не удалась",
 	"notifications_channels_last_sent": "Последняя отправка {when}",
 	"notifications_channels_more": "Другие действия для этого канала",

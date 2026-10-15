@@ -3715,7 +3715,6 @@
 	"notifications_channels_hint_rejected": "Der Dienst hat die Nachricht abgelehnt. Prüfen Sie die Kanaleinstellungen und senden Sie dann eine Testnachricht.",
 	"notifications_channels_hint_server": "Der Dienst hat auf seiner Seite einen Fehler. Versuchen Sie es später erneut.",
 	"notifications_channels_hint_transport": "DumbMonit konnte den Dienst nicht erreichen. Prüfen Sie die Adresse und ob der Server Internetzugang hat.",
-	"notifications_channels_last_error": "Letzter Fehler: {error}",
 	"notifications_channels_last_error_title": "Letzte Zustellung fehlgeschlagen",
 	"notifications_channels_last_sent": "Zuletzt gesendet {when}",
 	"notifications_channels_more": "Weitere Aktionen für diesen Kanal",

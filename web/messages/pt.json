@@ -3715,7 +3715,6 @@
 	"notifications_channels_hint_rejected": "O serviço recusou a mensagem. Verifique as definições do canal e depois envie um teste.",
 	"notifications_channels_hint_server": "O serviço falhou do lado dele. Tente mais tarde.",
 	"notifications_channels_hint_transport": "O DumbMonit não conseguiu contactar o serviço. Verifique o endereço e se o servidor tem acesso à internet.",
-	"notifications_channels_last_error": "Último erro: {error}",
 	"notifications_channels_last_error_title": "Último envio falhado",
 	"notifications_channels_last_sent": "Último envio {when}",
 	"notifications_channels_more": "Mais ações para este canal",
