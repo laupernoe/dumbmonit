@@ -12,6 +12,8 @@ use crate::alerting::group::{AlertGroup, GroupItem, NotifyReason};
 use crate::alerting::machine::EffectivePhase;
 use crate::alerting::model::Severity;
 use crate::alerting::notify_policy::{DIGEST_MAX_LINES, Digest, Hold};
+pub use crate::notify::action_link::MessageAction;
+use crate::notify::action_link::{Action, AlertRef};
 
 /// Message prêt à partir, indépendant du canal.
 #[derive(Debug, Clone, PartialEq)]
@@ -46,6 +48,11 @@ pub struct Message {
     /// Lien vers l'équipement (ou l'instance) dans DumbMonit, quand une URL
     /// publique est connue. Déjà inclus dans `text` et `markdown`.
     pub link: Option<String>,
+    /// Liens d'action signés (acquitter, mettre en pause), vides quand la
+    /// fonction est coupée ou sans URL publique. *Pas* inclus dans `text` :
+    /// chaque canal les rend à sa façon, ou reçoit
+    /// [`Message::with_action_links`] s'il ne sait pas faire de boutons.
+    pub actions: Vec<MessageAction>,
 }
 
 /// Variables utilisables dans un gabarit de canal personnalisé, avec leur
@@ -85,6 +92,11 @@ pub const TEMPLATE_VARIABLES: &[(&str, &str)] = &[
     ("link", "Link to DumbMonit, if \"base_url\" is set in the settings"),
     ("source", "Always \"dumbmonit\": identifies the sender"),
     ("token", "The channel's \"token\" secret, for services that expect it in the body"),
+    (
+        "ack_url",
+        "Signed link that acknowledges the alert until it resolves, empty if action links are off",
+    ),
+    ("snooze_url", "Signed link that snoozes the alert for one hour, empty if links are off"),
 ];
 
 impl Message {
@@ -128,7 +140,39 @@ impl Message {
             ("link", self.link.clone().unwrap_or_default()),
             ("source", "dumbmonit".to_string()),
             ("token", String::new()),
+            ("ack_url", self.action_url(Action::Ack)),
+            ("snooze_url", self.action_url(Action::Snooze)),
         ])
+    }
+
+    /// Adresse absolue du lien d'action `action`, vide s'il n'y en a pas.
+    pub fn action_url(&self, action: Action) -> String {
+        self.actions
+            .iter()
+            .find(|link| link.action == action)
+            .map(|link| link.url.clone())
+            .unwrap_or_default()
+    }
+
+    /// Le message tel qu'un canal sans boutons le reçoit : les liens d'action
+    /// ajoutés en fin de corps, en texte et en Markdown.
+    pub fn with_action_links(&self) -> Message {
+        let mut message = self.clone();
+        if message.actions.is_empty() {
+            return message;
+        }
+        for link in &self.actions {
+            message.text.push_str(&format!("\n{}: {}", link.label, link.url));
+        }
+        let md: Vec<String> =
+            self.actions.iter().map(|link| format!("[{}]({})", link.label, link.url)).collect();
+        message.markdown.push_str(&format!("\n{}", md.join(" · ")));
+        message
+    }
+
+    /// Le message sans ses liens d'action (canal qui n'en veut pas).
+    pub fn without_actions(&self) -> Message {
+        Message { actions: Vec::new(), ..self.clone() }
     }
 
     /// Ajoute le lien vers l'équipement, en fin de corps et dans `link`.
@@ -497,6 +541,7 @@ pub fn render(group: &AlertGroup) -> Message {
         operator: head.map(|item| item.operator.clone()).unwrap_or_default(),
         count,
         link: None,
+        actions: Vec::new(),
     }
 }
 
@@ -639,6 +684,7 @@ pub fn render_digest(digest: &Digest, public_url: Option<&str>) -> Message {
         operator: head.map(|item| item.operator.clone()).unwrap_or_default(),
         count: digest.item_count() + digest.resolved_meanwhile.len(),
         link: None,
+        actions: Vec::new(),
     };
     // Le lien global n'est ajouté que si aucun lien par équipement ne l'a été.
     if let Some(base) = public_url
@@ -650,6 +696,20 @@ pub fn render_digest(digest: &Digest, public_url: Option<&str>) -> Message {
             message.target_id.map(|id| format!("{}/targets/{id}", base.trim_end_matches('/')));
     }
     message
+}
+
+/// Alertes qu'un lien d'action de ce résumé peut acquitter : celles encore
+/// actives qu'il annonce, sans les résolutions, chacune avec son épisode.
+pub fn actionable_alerts(digest: &Digest) -> Vec<AlertRef> {
+    let mut out: Vec<AlertRef> = Vec::new();
+    for item in digest.groups.iter().flat_map(|group| group.items.iter()) {
+        if item.reason != NotifyReason::Resolved
+            && !out.iter().any(|seen| seen.fingerprint == item.fingerprint)
+        {
+            out.push(AlertRef::new(item.fingerprint.clone(), item.since));
+        }
+    }
+    out
 }
 
 /// Message envoyé par le bouton « Envoyer un message de test ».
@@ -681,6 +741,7 @@ pub fn test_message(channel_name: &str) -> Message {
         operator: String::new(),
         count: 1,
         link: None,
+        actions: Vec::new(),
     }
 }
 
@@ -720,6 +781,7 @@ pub fn sample_message(resolved: bool) -> Message {
         operator: ">".to_string(),
         count: 1,
         link: None,
+        actions: Vec::new(),
     }
 }
 
@@ -1046,6 +1108,40 @@ mod tests {
         assert!(message.title.contains("Home Discord"));
         assert!(message.text.contains("No alert"));
         assert_eq!(message.severity, Severity::Info);
+    }
+
+    #[test]
+    fn les_liens_d_action_visent_les_alertes_actives_seulement() {
+        let mut firing = item("Disk full", NotifyReason::Firing, Severity::Warning);
+        firing.fingerprint = "disk@1".into();
+        let mut reminder = item("CPU", NotifyReason::Reminder, Severity::Warning);
+        reminder.fingerprint = "cpu@1".into();
+        let mut resolved = item("RAM", NotifyReason::Resolved, Severity::Warning);
+        resolved.fingerprint = "ram@1".into();
+        let d =
+            digest(vec![group(vec![firing, reminder.clone(), resolved]), group(vec![reminder])]);
+        let fingerprints: Vec<String> =
+            actionable_alerts(&d).into_iter().map(|alert| alert.fingerprint).collect();
+        assert_eq!(fingerprints, vec!["disk@1", "cpu@1"]);
+    }
+
+    #[test]
+    fn un_canal_sans_boutons_recoit_les_liens_en_fin_de_texte() {
+        let mut message = sample_message(false);
+        let plain = message.with_action_links();
+        assert_eq!(plain, message, "nothing to add without actions");
+        let key = crate::notify::action_link::ActionKey::from_bytes([1; 32]);
+        message.actions =
+            crate::notify::action_link::build(&key, "https://m.lan", &["a@1".into()], at(0));
+        let linked = message.with_action_links();
+        assert!(linked.text.contains("\nAcknowledge: https://m.lan/alert-action#"));
+        assert!(linked.text.contains("\nSnooze 1 h: https://m.lan/alert-action#"));
+        assert!(linked.markdown.contains("[Acknowledge](https://m.lan/alert-action#"));
+        assert!(!message.text.contains("alert-action"), "the original is untouched");
+        let vars = message.variables();
+        assert!(vars["ack_url"].starts_with("https://m.lan/alert-action#"));
+        assert!(vars["snooze_url"].starts_with("https://m.lan/alert-action#"));
+        assert!(message.without_actions().actions.is_empty());
     }
 
     fn digest(groups: Vec<AlertGroup>) -> Digest {

@@ -326,12 +326,17 @@ pub async fn evaluate_once(
     let env_url = crate::config::env_var("DUMBMONIT_PUBLIC_URL");
     let public_url = global.public_url(env_url.as_deref());
     let window = TimeDelta::seconds(i64::from(global.batch_window_secs));
+    // Liens d'action : seulement avec une URL publique, et tant que la
+    // politique ne les coupe pas.
+    let action_key = (global.action_links && public_url.is_some())
+        .then(|| notify::action_link::ActionKey::from_cipher(cipher));
     send_outgoing(
         notify::webpush::Store { pool, cipher },
         http,
         &channels,
         &plan.outgoing,
         public_url.as_deref(),
+        action_key.as_ref(),
         window,
         now,
         &mut report,
@@ -377,6 +382,7 @@ async fn send_outgoing(
     channels: &[notify::ChannelConfig],
     outgoing: &[Outgoing],
     public_url: Option<&str>,
+    action_key: Option<&notify::action_link::ActionKey>,
     window: TimeDelta,
     now: DateTime<Utc>,
     report: &mut EvalReport,
@@ -386,7 +392,11 @@ async fn send_outgoing(
         let Some(config) = channels.iter().find(|channel| channel.id == out.channel_id) else {
             continue;
         };
-        let message = notify::render_digest(&out.digest, public_url);
+        let mut message = notify::render_digest(&out.digest, public_url);
+        if let (Some(key), Some(base)) = (action_key, public_url) {
+            let alerts = notify::message::actionable_alerts(&out.digest);
+            message.actions = notify::action_link::build(key, base, &alerts, now);
+        }
         let delivery = notify::deliver_stored(store, http, config, &message).await;
 
         stats().notification(&config.kind, !delivery.is_success());

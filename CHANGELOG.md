@@ -7,6 +7,22 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Acknowledge or snooze an alert from the notification.** Alert messages
+  carry **Acknowledge** (until it resolves) and **Snooze 1 h** — buttons on
+  ntfy, Telegram and Web Push (operators and admins only), links on Discord,
+  Slack, email and the other channels, `{{ack_url}}` / `{{snooze_url}}` for
+  custom webhooks; none on PagerDuty and Opsgenie. A link opens a confirmation
+  page that works without signing in; nothing happens until its button is
+  pressed, so link previews and mail scanners act on nothing. Each link is
+  signed with a key derived from the instance secret, covers one gesture on
+  the alerts of its message (that firing only: a later re-fire is not
+  covered), works once and for 24 hours, and is recorded in
+  the audit log as "via notification link". On by default when a public URL is
+  set; **Acknowledge and snooze from notifications** in the notification policy
+  turns it off and revokes the links already sent. New public endpoints
+  `POST /api/public/alert-action/inspect` and `POST /api/public/alert-action`,
+  `action_links` in the notification policy, `actions` in `GET /api/notify/kinds`.
+  See [Acknowledge or snooze from the notification](docs/notifications.md#acknowledge-or-snooze-from-the-notification).
 - **Who watches the watcher.** An optional **outgoing heartbeat**
   (Settings → System → DumbMonit itself): DumbMonit calls a URL of yours —
   Healthchecks.io, an Uptime Kuma push monitor, Better Stack… — every 60
