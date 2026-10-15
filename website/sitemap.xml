@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://dumbmonit.app/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -16,7 +16,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/fr/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -30,7 +30,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/de/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -44,7 +44,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/es/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -58,7 +58,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/it/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -72,7 +72,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/pt/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -86,7 +86,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/pt-BR/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -100,7 +100,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/ru/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -114,7 +114,7 @@
   </url>
   <url>
     <loc>https://dumbmonit.app/zh-Hans/</loc>
-    <lastmod>2026-10-13</lastmod>
+    <lastmod>2026-10-15</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/"/>
@@ -125,5 +125,1769 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/features/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/servers/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/servers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/servers/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/network/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/network/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/network/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/firewalls/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/hypervisors/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/storage/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/storage/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/storage/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/checks/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/checks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/checks/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/proxies/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/proxies/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/proxies/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/apps/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/apps/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/apps/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/mail/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/devices/data/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/data/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/install/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/fr/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/de/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/es/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/it/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/pt-BR/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/ru/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
+  </url>
+  <url>
+    <loc>https://dumbmonit.app/zh-Hans/community/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/"/>
   </url>
 </urlset>

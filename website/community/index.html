@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<script>document.documentElement.classList.add('js')</script>
+<script>
+(function () {
+	try {
+		if (localStorage.getItem('dm-lang')) return;
+		var known = {"en": "en", "fr": "fr", "de": "de", "es": "es", "it": "it", "pt": "pt", "pt-br": "pt-BR", "ru": "ru", "zh-hans": "zh-Hans"};
+		var prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+		for (var i = 0; i < prefs.length; i++) {
+			var l = String(prefs[i] || '').toLowerCase();
+			var code = known[l] || (l.indexOf('zh') === 0 ? 'zh-Hans' : known[l.split('-')[0]]);
+			if (!code) continue;
+			if (code !== 'en') location.replace('../' + code + '/community/' + location.hash);
+			return;
+		}
+	} catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs and community · DumbMonit</title>
+<meta name="description" content="Documentation on Read the Docs, source code on GitHub, how to contribute, report a security issue or translate. Open source under Apache 2.0.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/community/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/community/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/community/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/community/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/community/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/community/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/community/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/community/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/community/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/community/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/community/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Docs and community · DumbMonit">
+<meta property="og:description" content="Documentation on Read the Docs, source code on GitHub, how to contribute, report a security issue or translate. Open source under Apache 2.0.">
+<meta property="og:url" content="https://dumbmonit.app/community/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Is everything fine? Know in one second. Self-hosted monitoring in one container, next to the pigeon mascot.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Docs and community · DumbMonit">
+<meta name="twitter:description" content="Documentation on Read the Docs, source code on GitHub, how to contribute, report a security issue or translate. Open source under Apache 2.0.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Docs and community · DumbMonit","url":"https://dumbmonit.app/community/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="DumbMonit home"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" id="site-nav" aria-label="Sections">
+			<a href="../features/">Features</a>
+			<a href="../devices/">Devices</a>
+			<a href="../install/">Install</a>
+			<a href="./" aria-current="page">Docs and community</a>
+			<a class="nav-extra" href="https://demo.dumbmonit.app">Live demo</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>EN</span></summary>
+				<ul>
+				<li><a href="./" hreflang="en" lang="en" aria-current="true">English</a></li>
+				<li><a href="../fr/community/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../de/community/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../es/community/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../it/community/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../pt/community/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../pt-BR/community/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../ru/community/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../zh-Hans/community/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live demo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><span aria-hidden="true"></span></button>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1 class="blur-in"><span class="w" style="--i:0">Docs</span> <span class="w" style="--i:1">and</span> <span class="w" style="--i:2">community</span></h1>
+		<p class="lede">Everything is open: read the documentation, follow the code, report a problem or lend a hand.</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:24px">
+	<div class="wrap">
+		<ul class="cards cards-3">
+			<li class="card"><h2 class="card-h">Documentation</h2><p>Guides, one page per device type, alert rules and the API reference, in nine languages on Read the Docs.</p><p><a class="more" href="https://dumbmonit.readthedocs.io/en/latest/">Open the documentation</a></p></li>
+			<li class="card"><h2 class="card-h">Source code</h2><p>Apache 2.0 on GitHub: the code, the issues, the roadmap and the releases.</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit">GitHub</a></p></li>
+			<li class="card"><h2 class="card-h">Contribute</h2><p>Add a device type, fix a bug, improve a page: the contributing guide explains how to start.</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md">Contributing guide</a></p></li>
+			<li class="card"><h2 class="card-h">Security</h2><p>How to report a vulnerability privately, and what the project does to stay safe.</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Security policy</a></p></li>
+			<li class="card"><h2 class="card-h">Translate</h2><p>Translations are made by pull request, for the interface, the documentation and this site.</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Translating DumbMonit</a></p></li>
+			<li class="card"><h2 class="card-h">Releases</h2><p>Each release is tagged on GitHub, with its changelog.</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">Read the changelog</a></p></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Security checks, in the open</h2>
+				<p>The project is graded in public by the OpenSSF. These links open the live results.</p>
+				<ul class="badges">
+					<li><a href="https://www.bestpractices.dev/projects/15486">OpenSSF Best Practices</a></li>
+					<li><a href="https://scorecard.dev/viewer/?uri=github.com/laupernoe/dumbmonit">OpenSSF Scorecard</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/actions/workflows/ci.yml">CI</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Apache 2.0</a></li>
+				</ul>
+				<p class="code-note">This site has no analytics, no cookies and no third-party requests.</p>
+			</div>
+			<div class="section-head" style="margin-bottom:0">
+				<h2>Open source, all of it</h2>
+				<p>Apache 2.0, dependencies included: CI fails on any dependency that is not under an OSI-approved licence. No feature is held back for a paid edition, because there is none.</p>
+			</div>
+		</div>
+
+		<div class="feedback" style="margin-top:64px">
+			<img src="../assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+			<div>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">Tell us what breaks</h2>
+				<p>A device that reads wrong, an alert that woke you for nothing, a page that confused you: each report makes the next alpha better. Device support requests are welcome too.</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">Open an issue</a>
+				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">Live demo</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. The mascot is a pigeon.</p>
+		<nav aria-label="Footer">
+			<a href="../features/">Features</a>
+			<a href="../devices/">Devices</a>
+			<a href="../install/">Install</a>
+			<a href="./">Docs and community</a>
+			<a href="https://demo.dumbmonit.app">Live demo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/en/latest/">Documentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Translate</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">License</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Security</a>
+		</nav>
+	</div>
+</footer>
+
+
+</body>
+</html>
