@@ -52,6 +52,56 @@ static SYS_NAME: LazyLock<ObjectId> =
 /// requêtes, et il vaut mieux abandonner celle qui traîne que perdre le lot entier.
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 
+/// Lit l'identité (`sysDescr`, `sysName`, `sysObjectID`) d'un équipement sans rien
+/// enregistrer : c'est le « tester la connexion » du formulaire d'ajout.
+///
+/// Le profil proposé est celui que l'auto-détection choisirait. Comme `discover`,
+/// une seconde tentative en v1 est faite quand v2c reste muet avec une community.
+pub async fn identify(
+    target: &Target,
+    request_timeout: Duration,
+) -> Result<(Identity, Option<String>), ProbeError> {
+    let version = CommunityVersion::from_tags(&target.tags);
+    let first = async {
+        let mut session =
+            Session::open(&target.address, &target.credential, request_timeout, version).await?;
+        discovery::read_identity(&mut session).await
+    }
+    .await;
+    let identity = match first {
+        Err(error)
+            if error.means_down()
+                && matches!(
+                    target.credential,
+                    dumbmonit_proto::Credential::SnmpCommunity { .. }
+                )
+                && version == CommunityVersion::V2c =>
+        {
+            let mut session = Session::open(
+                &target.address,
+                &target.credential,
+                request_timeout,
+                CommunityVersion::V1,
+            )
+            .await?;
+            discovery::read_identity(&mut session).await?
+        }
+        other => other?,
+    };
+    if identity.sysdescr.is_none() && identity.sysobjectid.is_none() {
+        return Err(ProbeError::Config(
+            "the device answered but did not report its identity: check that the SNMP view \
+             grants access to the \"system\" group"
+                .to_string(),
+        ));
+    }
+    let sysobjectid = identity.sysobjectid.as_ref().and_then(|raw| raw.parse::<ObjectId>().ok());
+    let profile = profile::embedded()
+        .select(sysobjectid.as_ref(), identity.sysdescr.as_deref())
+        .map(|profile| profile.id.clone());
+    Ok((identity, profile))
+}
+
 /// Le collecteur SNMP, à enregistrer dans le registre au démarrage.
 pub struct SnmpCollector {
     catalog: Arc<Catalog>,

@@ -428,6 +428,114 @@ fn check_secret_destination(
     Ok(())
 }
 
+/// Corps de `POST /api/targets/test` : le formulaire tel qu'il serait enregistré,
+/// plus l'identifiant de la cible en cours de modification (pour réutiliser son
+/// secret enregistré quand le champ est laissé vide).
+#[derive(Debug, Deserialize)]
+pub struct TestPayload {
+    #[serde(default)]
+    pub id: Option<TargetId>,
+    #[serde(flatten)]
+    pub target: TargetPayload,
+}
+
+/// Résultat d'un test de connexion. Un échec de sonde n'est pas une erreur HTTP :
+/// c'est précisément la réponse attendue, que le formulaire affiche telle quelle.
+#[derive(Debug, Serialize)]
+pub struct TestReport {
+    pub ok: bool,
+    /// Message de l'erreur de sonde (`ProbeError`), absent en cas de succès.
+    pub error: Option<String>,
+    /// Vrai si l'échec signifie « équipement injoignable » plutôt qu'une erreur
+    /// de réglage (communauté refusée, vue SNMP trop restreinte…).
+    pub unreachable: bool,
+    pub sysname: Option<String>,
+    pub sysdescr: Option<String>,
+    pub profile_id: Option<String>,
+    /// Nombre de mesures d'une sonde complète, pour les types autres que SNMP.
+    pub sample_count: Option<usize>,
+}
+
+/// `POST /api/targets/test` — sonde une fois l'adresse et les identifiants saisis,
+/// sans rien enregistrer. Pour SNMP : lit l'identité de l'équipement ; pour les
+/// autres types : une sonde complète dont rien n'est écrit.
+pub async fn test_connection(
+    State(state): State<AppState>,
+    Json(payload): Json<TestPayload>,
+) -> ApiResult<Json<TestReport>> {
+    let TestPayload { id, target: payload } = payload;
+    let mut input = payload.validate(&state, id)?;
+    if input.via_agent.is_some() {
+        return Err(ApiError::BadRequest(
+            "A device behind a relay cannot be tested from the form: save it, then use Probe now."
+                .into(),
+        ));
+    }
+    // Secret laissé vide en modification : on réutilise celui qui est enregistré,
+    // sous la même garde que `update` (jamais vers une destination nouvelle).
+    let mut credential = input.credential.take();
+    if credential.is_none()
+        && let Some(id) = id
+    {
+        let before = load(&state, id).await?;
+        let relay_before = db::targets::relay_of(&state.pool, id).await?;
+        check_secret_destination(&before, relay_before, &input)?;
+        credential = Some(before.credential);
+    }
+    let target = Target {
+        id: id.unwrap_or(0),
+        name: input.name,
+        address: input.address,
+        kind: input.kind,
+        profile_id: input.profile_id,
+        parent_id: None,
+        interval: input.interval,
+        enabled: true,
+        tags: input.tags,
+        credential: credential.unwrap_or(Credential::None),
+        group_name: String::new(),
+        position: 0,
+    };
+    let timeout = state.config.probe_timeout;
+
+    let outcome = if target.kind == "snmp" {
+        match tokio::time::timeout(timeout, dumbmonit_collectors::snmp::identify(&target, timeout))
+            .await
+        {
+            Ok(Ok((identity, profile_id))) => Ok(TestReport {
+                ok: true,
+                error: None,
+                unreachable: false,
+                sysname: identity.sysname,
+                sysdescr: identity.sysdescr,
+                profile_id,
+                sample_count: None,
+            }),
+            Ok(Err(error)) => Err(error),
+            Err(_) => Err(dumbmonit_proto::ProbeError::Timeout(timeout)),
+        }
+    } else {
+        state.collectors.probe(&target, timeout).await.map(|samples| TestReport {
+            ok: true,
+            error: None,
+            unreachable: false,
+            sysname: None,
+            sysdescr: None,
+            profile_id: None,
+            sample_count: Some(samples.len()),
+        })
+    };
+    Ok(Json(outcome.unwrap_or_else(|error| TestReport {
+        ok: false,
+        unreachable: error.means_down(),
+        error: Some(error.to_string()),
+        sysname: None,
+        sysdescr: None,
+        profile_id: None,
+        sample_count: None,
+    })))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ReorderPayload {
     /// Identifiants dans l'ordre d'affichage voulu. Seules les cibles listées

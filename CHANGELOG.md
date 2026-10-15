@@ -17,6 +17,11 @@ All notable changes to this project are documented here. The format follows
   relay-site filter, a list view on phones, and **Export** to SVG, PNG or a
   clean A4/A3 landscape print. New endpoint `GET /api/topology`. See
   [Topology map](docs/using/topology.md).
+- **Device form: Test connection, and a smarter network scan.** SNMP devices get a
+  "Test connection" button that probes the entered address and credential once
+  (`POST /api/targets/test`, nothing is saved) and shows `sysName` / `sysDescr` or
+  the probe's error. A disabled Save or Test button now says why. The network scan
+  pre-fills the server's own subnet (`GET /api/discovery/subnets`), still editable.
 - **XCP-ng / XenServer.** A new `xcpng` device reads a whole pool through XAPI
   (JSON-RPC, read-only role): hosts disabled or offline, VMs and their power
   state, storage repositories filling up, and high availability (protected VMs

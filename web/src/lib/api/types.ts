@@ -142,6 +142,33 @@ export interface TargetPayload {
 	credential?: Credential;
 }
 
+/**
+ * `POST /targets/test`: the form's payload (plus the edited device's `id`, so a
+ * blank credential reuses the stored one). Mirrors `TestPayload` in
+ * `api/targets.rs`.
+ */
+export type TargetTestRequest = TargetPayload & { id?: TargetId };
+
+/** Outcome of a probe that saves nothing. Mirrors `TestReport` in `api/targets.rs`. */
+export interface TargetTestReport {
+	ok: boolean;
+	/** The probe's own error message when `ok` is false. */
+	error: string | null;
+	/** True when the failure means "device down" rather than a wrong setting. */
+	unreachable: boolean;
+	sysname: string | null;
+	sysdescr: string | null;
+	profile_id: string | null;
+	/** Non-SNMP kinds: measurements a full probe returned. */
+	sample_count: number | null;
+}
+
+/** One network the server is connected to. Mirrors `LocalSubnet` in `api/discovery.rs`. */
+export interface LocalSubnet {
+	cidr: string;
+	interface: string;
+}
+
 /** Result of an immediate probe — the main diagnostic tool. */
 export interface ProbeReport {
 	sample_count: number;
