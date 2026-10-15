@@ -165,12 +165,19 @@ elección que haces al crear un token.
     usermod -aG docker dumbmonit
     ```
 
-6. Copias de seguridad Plakar: detectadas automáticamente — el panel
-   Backups aparece cuando se encuentra el binario plakar o un kloset
+6. Copias de seguridad Plakar: detectadas automáticamente — aparece
+   un dispositivo Plakar bajo la máquina cuando se encuentra el binario plakar o un kloset
    (~/.config/plakar/stores.yml de cada usuario, ~/.plakar,
    /var/lib/plakar), y no se muestra nada en caso contrario. Define
    «plakar_klosets» en agent.yaml para vigilar una lista fija, o
    «plakar: false» para desactivarlo.
+7. Los servicios que el agente encuentra (Docker, Plakar, restic/Borg, ZFS,
+   libvirt, WireGuard, IPsec, prueba de velocidad) se convierten cada uno en su
+   propio dispositivo bajo la máquina, con su propio estado y sus propias
+   alertas. El panel «Servicios encontrados por el agente» de la máquina lista lo
+   que se encontró y lo que no: desmarca un módulo para quitar su dispositivo,
+   márcalo para vigilarlo antes de que aparezca. Consulta
+   [Servicios encontrados por el agente](#services-found-by-the-agent).
 
 !!! note
     El agente contacta al servidor, nunca al revés: no se necesita
@@ -394,6 +401,93 @@ mueve la configuración a la nueva ruta
 instala `dumbmonit-agent` en su lugar. El antiguo token `ezym_…` sigue
 siendo válido, así que el comando mostrado al crear el token sigue
 funcionando; no hay que revocar nada primero.
+
+## Servicios encontrados por el agente {#services-found-by-the-agent}
+
+El dispositivo propio de la máquina muestra la máquina: CPU, memoria, sistemas
+de archivos, red, salud de los discos (SMART), sensores, salud del SO y los
+servicios que listas en `services`. Todo lo demás que el agente detecta es un
+**servicio**, y cada servicio que encuentra se convierte en un dispositivo
+propio, de tipo `agent_service`, archivado bajo la máquina:
+
+| Servicio | Sus métricas | Nombre del dispositivo |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Prueba de velocidad de Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+El reparto se hace en el servidor, por nombre de métrica, así que funciona con
+cualquier versión del agente. Cada serie se escribe una sola vez, con `target`
+apuntando al dispositivo al que pertenece: las series de un servicio llevan el
+id del dispositivo del servicio, las de la máquina el id de la máquina. Nada se
+cuenta dos veces.
+
+Un dispositivo de servicio tiene su propio estado, alertas, reglas, excepciones
+de reglas y silencios. Está **inalcanzable** cuando el agente deja de reportarlo
+mientras la máquina sigue reportando (demonio Docker detenido, `wg` eliminado…),
+tras los mismos tres periodos perdidos que la propia máquina. Cuando la máquina
+se queda en silencio, sus servicios se muestran como ocultos detrás de ella
+(`suppressed`) en lugar de generar alertas propias. Un dispositivo de servicio
+nuevo empieza con las etiquetas de la máquina, así que los silencios y reglas
+basados en etiquetas siguen aplicándose.
+
+No hay nada que elegir antes de la instalación. Tras el primer reporte, la página
+de la máquina lista cada módulo en **Servicios encontrados por el agente**:
+
+- un servicio encontrado está marcado y enlaza a su dispositivo;
+- un servicio no encontrado está desmarcado; márcalo para crear igualmente su
+  dispositivo (permanece inalcanzable hasta que el agente lo reporte — útil para
+  que te avisen si falta un servicio del que dependes);
+- desmarca un servicio encontrado para eliminar su dispositivo y descartar sus
+  lecturas. El servidor se lo indica al agente en su siguiente confirmación, y el
+  agente deja de recolectarlo (un agente antiguo sigue recolectando, y el
+  servidor sigue descartando). Eliminar un dispositivo de servicio tiene el mismo
+  efecto. Márcalo de nuevo para recuperarlo.
+
+Eliminar la máquina elimina sus dispositivos de servicio. Las acciones y
+políticas de contenedores funcionan desde la página del dispositivo Docker; los
+comandos siguen yendo al agente de la máquina.
+
+Igual que en el aviso del dispositivo:
+
+1. No hay nada que añadir a mano: instala el agente en la máquina, y cada
+   servicio que encuentra se convierte en un dispositivo bajo esa máquina en su
+   primer reporte.
+2. Para dejar de vigilar un servicio, desmárcalo en el panel «Servicios
+   encontrados por el agente» de la máquina, o elimina su dispositivo: las
+   lecturas del agente para él se descartan entonces.
+
+!!! note
+    Si la máquina deja de reportar, sus servicios se muestran como ocultos detrás
+    de ella en lugar de generar alertas propias.
+
+### Actualizar una instalación existente {#upgrading-an-existing-installation}
+
+Nada que hacer. La primera vez que el agente reporta un servicio tras la
+actualización, el servidor crea su dispositivo y traslada a él lo que concernía a
+ese servicio en la máquina:
+
+- las excepciones de las reglas que leen las métricas del servicio se copian al
+  dispositivo del servicio;
+- las reglas limitadas a la máquina (selector `ids`) que leen las métricas del
+  servicio ahora seleccionan también el dispositivo del servicio;
+- los silencios (ventanas de mantenimiento) de la máquina se copian al
+  dispositivo del servicio;
+- las alertas en curso sobre las series del servicio se trasladan al dispositivo
+  del servicio con su nueva huella, para que no se resuelvan y vuelvan a
+  dispararse.
+
+El historial se queda donde se escribió: VictoriaMetrics no puede reetiquetar
+series existentes, así que las lecturas anteriores a la actualización permanecen
+bajo la máquina (caducan con la retención), y los gráficos del dispositivo del
+servicio empiezan en la actualización. Las líneas base de anomalías de las series
+trasladadas vuelven a empezar a aprender. El historial de alertas (alertas
+resueltas) también se queda con la máquina.
 
 ## Archivo de configuración {#configuration-file}
 

@@ -146,7 +146,8 @@ quand vous créez un jeton.
     usermod -aG docker dumbmonit
     ```
 
-6. Sauvegardes Plakar : détectées automatiquement — le panneau Backups apparaît quand le binaire plakar ou un kloset (~/.config/plakar/stores.yml de chaque utilisateur, ~/.plakar, /var/lib/plakar) est trouvé, et rien n'est montré sinon. Réglez "plakar_klosets" dans agent.yaml pour surveiller une liste fixe, ou "plakar: false" pour vous retirer.
+6. Sauvegardes Plakar : détectées automatiquement — un équipement Plakar apparaît sous la machine quand le binaire plakar ou un kloset (~/.config/plakar/stores.yml de chaque utilisateur, ~/.plakar, /var/lib/plakar) est trouvé, et rien n'est montré sinon. Réglez "plakar_klosets" dans agent.yaml pour surveiller une liste fixe, ou "plakar: false" pour vous retirer.
+7. Les services que l'agent trouve (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, test de débit) deviennent chacun un équipement à part, rangé sous la machine, avec son propre état et ses alertes. Le panneau « Services trouvés par l'agent » de la machine liste ce qui a été trouvé et ce qui ne l'a pas été : décochez un module pour supprimer son équipement, cochez-en un pour le surveiller avant qu'il n'apparaisse. Voir [Services trouvés par l'agent](#services-found-by-the-agent).
 
 !!! note
     L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin
@@ -368,6 +369,93 @@ déplace la configuration vers le nouveau chemin
 installe `dumbmonit-agent` à sa place. L'ancien jeton `ezym_…` reste
 valide, la commande montrée à la création du jeton fonctionne donc
 toujours ; rien n'a besoin d'être révoqué d'abord.
+
+## Services trouvés par l'agent {#services-found-by-the-agent}
+
+L'équipement de la machine montre la machine : processeur, mémoire,
+systèmes de fichiers, réseau, santé des disques (SMART), capteurs, santé du
+système et les services listés dans `services`. Tout le reste de ce que
+l'agent détecte est un **service**, et chaque service trouvé devient un
+équipement à part entière, de type `agent_service`, rangé sous la machine :
+
+| Service | Ses métriques | Nom de l'équipement |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Test de débit Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+Le découpage se fait sur le serveur, d'après le nom de la métrique : il
+fonctionne avec toutes les versions de l'agent. Chaque série est écrite une
+seule fois, avec `target` égal à l'équipement auquel elle appartient : les
+séries d'un service portent l'identifiant de l'équipement du service, celles
+de la machine l'identifiant de la machine. Rien n'est compté deux fois.
+
+Un équipement de service a son propre état, ses alertes, ses règles, ses
+surcharges de règles et ses silences. Il est **injoignable** quand l'agent
+cesse de le rapporter alors que la machine, elle, répond toujours (démon
+Docker arrêté, `wg` désinstallé…), après les mêmes trois périodes manquées
+que la machine. Quand la machine se tait, ses services sont montrés masqués
+derrière elle (`suppressed`) au lieu de lever leurs propres alertes. Un
+nouvel équipement de service reprend les étiquettes de la machine : les
+silences et règles par étiquette continuent de s'appliquer.
+
+Il n'y a rien à choisir avant l'installation. Après le premier rapport, la
+page de la machine liste chaque module dans **Services trouvés par l'agent** :
+
+- un service trouvé est coché et mène à son équipement ;
+- un service non trouvé est décoché ; cochez-le pour créer son équipement
+  quand même (il reste injoignable tant que l'agent ne le rapporte pas —
+  utile pour être prévenu quand un service dont vous dépendez manque) ;
+- décochez un service trouvé pour supprimer son équipement et écarter ses
+  mesures. Le serveur le dit à l'agent dans son prochain accusé de
+  réception, et l'agent cesse de le collecter (un agent plus ancien continue
+  de collecter, et le serveur continue d'écarter). Supprimer l'équipement
+  d'un service a le même effet. Recochez-le pour le faire revenir.
+
+Supprimer la machine supprime ses équipements de service. Les actions et
+politiques des conteneurs se règlent depuis la page de l'équipement Docker ;
+les commandes partent toujours vers l'agent de la machine.
+
+Comme dans la notice de l'équipement :
+
+1. Il n'y a rien à ajouter à la main : installez l'agent sur la machine, et
+   chaque service qu'il trouve devient un équipement sous cette machine dès
+   son premier rapport.
+2. Pour ne plus surveiller un service, décochez-le dans le panneau
+   « Services trouvés par l'agent » de la machine, ou supprimez son
+   équipement : les mesures de l'agent pour ce service sont alors écartées.
+
+!!! note
+    Si la machine cesse de rapporter, ses services sont montrés masqués
+    derrière elle plutôt que de lever leurs propres alertes.
+
+### Mettre à jour une installation existante {#upgrading-an-existing-installation}
+
+Rien à faire. La première fois que l'agent rapporte un service après la mise
+à jour, le serveur crée son équipement et y déplace ce qui concernait ce
+service sur la machine :
+
+- les surcharges des règles qui lisent les métriques du service sont
+  copiées sur l'équipement du service ;
+- les règles limitées à la machine (sélecteur `ids`) qui lisent les
+  métriques du service sélectionnent aussi l'équipement du service ;
+- les silences de la machine (fenêtres de maintenance) sont copiés sur
+  l'équipement du service ;
+- les alertes en cours sur les séries du service passent sur l'équipement du
+  service sous leur nouvelle empreinte : elles ne se résolvent pas pour se
+  redéclencher.
+
+L'historique reste là où il a été écrit : VictoriaMetrics ne sait pas
+réétiqueter des séries existantes, les mesures d'avant la mise à jour
+restent donc sous la machine (elles disparaissent avec la rétention), et les
+graphes de l'équipement du service commencent à la mise à jour. Les
+références des anomalies sur les séries déplacées réapprennent. L'historique
+des alertes (alertes résolues) reste lui aussi avec la machine.
 
 ## Fichier de configuration {#configuration-file}
 

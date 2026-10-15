@@ -150,11 +150,17 @@ you create a token.
     usermod -aG docker dumbmonit
     ```
 
-6. Plakar backups: detected automatically — the Backups panel appears when the
-   plakar binary or a kloset (~/.config/plakar/stores.yml of every user,
-   ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set
-   "plakar_klosets" in agent.yaml to watch a fixed list, or "plakar: false" to
-   opt out.
+6. Plakar backups: detected automatically — a Plakar device appears under the
+   machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of
+   every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown
+   otherwise. Set "plakar_klosets" in agent.yaml to watch a fixed list, or
+   "plakar: false" to opt out.
+7. Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt,
+   WireGuard, IPsec, speed test) each become their own device under the
+   machine, with their own status and alerts. The machine's "Services found by
+   the agent" panel lists what was found and what was not: untick a module to
+   drop its device, tick one to watch it before it shows up. See
+   [Services found by the agent](#services-found-by-the-agent).
 
 !!! note
     The agent contacts the server, never the other way round: no port needs to
@@ -366,6 +372,88 @@ and installs `dumbmonit-agent` in its place. The old `ezym_…` token stays
 valid, so the command shown when the token was created still works; nothing
 has to be revoked first.
 
+## Services found by the agent
+
+The machine's own device shows the machine: CPU, memory, filesystems, network,
+disk health (SMART), sensors, OS health and the services you list in
+`services`. Everything else the agent detects is a **service**, and each
+service it finds becomes a device of its own, of kind `agent_service`, filed
+under the machine:
+
+| Service | Its metrics | Device name |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Internet speed test | `agent_speedtest_*` | `<machine> · Speed test` |
+
+The split happens on the server, by metric name, so it works with every agent
+version. Each series is written once, with `target` set to the device it
+belongs to: the service's series carry the service device's id, the machine's
+series the machine's id. Nothing is counted twice.
+
+A service device has its own status, alerts, rules, rule overrides and
+silences. It is **unreachable** when the agent stops reporting it while the
+machine still reports (the Docker daemon stopped, `wg` removed…), after the
+same three missed periods as the machine itself. When the machine goes silent,
+its services are shown as hidden behind it (`suppressed`) instead of raising
+alerts of their own. A new service device starts with the machine's tags, so
+tag-based silences and rules keep applying.
+
+There is nothing to choose before the install. After the first report, the
+machine's page lists every module in **Services found by the agent**:
+
+- a found service is ticked and links to its device;
+- a service not found is unticked; tick it to create its device anyway (it
+  stays unreachable until the agent reports it — useful to be told when a
+  service you rely on is missing);
+- untick a found service to delete its device and drop its readings. The
+  server tells the agent in its next acknowledgement, and the agent stops
+  collecting it (an older agent keeps collecting, and the server keeps
+  dropping). Deleting a service device has the same effect. Tick it again to
+  bring it back.
+
+Deleting the machine deletes its service devices. Container actions and
+policies work from the Docker device page; the commands still go to the
+machine's agent.
+
+The same as the device notice:
+
+1. There is nothing to add by hand: install the agent on the machine, and each
+   service it finds becomes a device under that machine on its first report.
+2. To stop watching a service, untick it in the machine's "Services found by
+   the agent" panel, or delete its device: the agent's readings for it are then
+   dropped.
+
+!!! note
+    If the machine stops reporting, its services are shown as hidden behind it
+    rather than raising alerts of their own.
+
+### Upgrading an existing installation
+
+Nothing to do. The first time the agent reports a service after the upgrade,
+the server creates its device and moves onto it what concerned that service on
+the machine:
+
+- rule overrides of the rules that read the service's metrics are copied to
+  the service device;
+- rules limited to the machine (`ids` selector) that read the service's
+  metrics now also select the service device;
+- the machine's silences (maintenance windows) are copied to the service
+  device;
+- alerts in progress on the service's series are moved to the service device
+  under their new fingerprint, so they do not resolve and fire again.
+
+The history stays where it was written: VictoriaMetrics cannot relabel
+existing series, so readings from before the upgrade remain under the machine
+(they age out with the retention), and the service device's charts start at
+the upgrade. Anomaly baselines of the moved series start learning again. The
+alert history (resolved alerts) also stays with the machine.
+
 ## Choosing the modules
 
 By default every optional module detects itself and reports what it finds:
@@ -377,9 +465,13 @@ and Hyper-V counter sets. To watch only some of them, list them:
 modules: [docker, plakar]
 ```
 
-or pick them in the enrolment screen (**Choose the modules**), which adds
+or pick them in the enrolment screen (**Choose the modules**, an advanced
+option: by default the install command asks nothing), which adds
 `--modules=docker,plakar` to the install command. Only the listed modules run;
-the others send no series, so they show no panel and raise no alert. CPU,
+the others send no series, so they get no device and raise no alert. To stop
+watching a service on a machine already enrolled, untick it in
+[Services found by the agent](#services-found-by-the-agent) instead: no need to
+touch `agent.yaml`. CPU,
 memory, filesystems, network and the machine's OS identity are always
 collected. `modules: []` (or `--modules=none`) keeps those only.
 

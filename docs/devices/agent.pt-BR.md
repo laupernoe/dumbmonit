@@ -160,12 +160,19 @@ quando cria um token.
     usermod -aG docker dumbmonit
     ```
 
-6. Backups Plakar: detectados automaticamente — o painel Backups aparece
-   quando o binário plakar ou um kloset (~/.config/plakar/stores.yml de
+6. Backups Plakar: detectados automaticamente — um dispositivo Plakar aparece
+   sob a máquina quando o binário plakar ou um kloset (~/.config/plakar/stores.yml de
    todo usuário, ~/.plakar, /var/lib/plakar) é encontrado, e nada é
    mostrado caso contrário. Defina "plakar_klosets" em agent.yaml para
    observar uma lista fixa, ou "plakar: false" para optar por não
    participar.
+7. Os serviços que o agente encontra (Docker, Plakar, restic/Borg, ZFS,
+   libvirt, WireGuard, IPsec, teste de velocidade) viram cada um seu próprio
+   dispositivo sob a máquina, com status e alertas próprios. O painel "Serviços
+   encontrados pelo agente" da máquina lista o que foi encontrado e o que não
+   foi: desmarque um módulo para tirar seu dispositivo, marque-o para observá-lo
+   antes de ele aparecer. Veja
+   [Serviços encontrados pelo agente](#services-found-by-the-agent).
 
 !!! note
     O agente contata o servidor, nunca o contrário: nenhuma porta precisa
@@ -387,6 +394,91 @@ para o novo caminho (`/etc/dumbmonit/agent.yaml`,
 lugar. O antigo token `ezym_…` permanece válido, então o comando mostrado
 quando o token foi criado ainda funciona; nada precisa ser revogado
 primeiro.
+
+## Serviços encontrados pelo agente {#services-found-by-the-agent}
+
+O dispositivo da própria máquina mostra a máquina: CPU, memória, sistemas de
+arquivos, rede, saúde dos discos (SMART), sensores, saúde do SO e os serviços que
+você lista em `services`. Todo o resto que o agente detecta é um **serviço**, e
+cada serviço que ele encontra vira um dispositivo próprio, do tipo
+`agent_service`, arquivado sob a máquina:
+
+| Serviço | Suas métricas | Nome do dispositivo |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Teste de velocidade da Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+A divisão acontece no servidor, pelo nome da métrica, então funciona com todas as
+versões do agente. Cada série é gravada uma só vez, com `target` apontando para o
+dispositivo a que pertence: as séries de um serviço levam o id do dispositivo do
+serviço, as da máquina o id da máquina. Nada é contado duas vezes.
+
+Um dispositivo de serviço tem seu próprio status, alertas, regras, exceções de
+regras e silenciamentos. Ele fica **inacessível** quando o agente para de
+reportá-lo enquanto a máquina continua reportando (daemon Docker parado, `wg`
+removido…), após os mesmos três períodos perdidos da própria máquina. Quando a
+máquina fica em silêncio, seus serviços são mostrados como ocultos atrás dela
+(`suppressed`) em vez de gerar alertas próprios. Um novo dispositivo de serviço
+começa com as tags da máquina, então silenciamentos e regras baseados em tags
+continuam valendo.
+
+Não há nada a escolher antes da instalação. Depois do primeiro relatório, a
+página da máquina lista cada módulo em **Serviços encontrados pelo agente**:
+
+- um serviço encontrado fica marcado e leva ao seu dispositivo;
+- um serviço não encontrado fica desmarcado; marque-o para criar mesmo assim o
+  seu dispositivo (ele fica inacessível até o agente reportá-lo — útil para ser
+  avisado quando falta um serviço de que você depende);
+- desmarque um serviço encontrado para excluir seu dispositivo e descartar suas
+  leituras. O servidor avisa o agente na próxima confirmação, e o agente para de
+  coletá-lo (um agente antigo continua coletando, e o servidor continua
+  descartando). Excluir um dispositivo de serviço tem o mesmo efeito. Marque-o de
+  novo para trazê-lo de volta.
+
+Excluir a máquina exclui seus dispositivos de serviço. As ações e políticas de
+contêineres funcionam a partir da página do dispositivo Docker; os comandos
+continuam indo para o agente da máquina.
+
+O mesmo que no aviso do dispositivo:
+
+1. Não há nada a adicionar à mão: instale o agente na máquina, e cada serviço que
+   ele encontra vira um dispositivo sob essa máquina no primeiro relatório.
+2. Para parar de observar um serviço, desmarque-o no painel "Serviços encontrados
+   pelo agente" da máquina, ou exclua seu dispositivo: as leituras do agente para
+   ele são então descartadas.
+
+!!! note
+    Se a máquina parar de reportar, seus serviços são mostrados como ocultos
+    atrás dela em vez de gerar alertas próprios.
+
+### Atualizando uma instalação existente {#upgrading-an-existing-installation}
+
+Nada a fazer. Na primeira vez que o agente reporta um serviço depois da
+atualização, o servidor cria seu dispositivo e move para ele o que dizia respeito
+a esse serviço na máquina:
+
+- as exceções das regras que leem as métricas do serviço são copiadas para o
+  dispositivo do serviço;
+- as regras limitadas à máquina (seletor `ids`) que leem as métricas do serviço
+  passam a selecionar também o dispositivo do serviço;
+- os silenciamentos (janelas de manutenção) da máquina são copiados para o
+  dispositivo do serviço;
+- os alertas em andamento nas séries do serviço são movidos para o dispositivo do
+  serviço com a nova impressão digital, para não se resolverem e dispararem de
+  novo.
+
+O histórico fica onde foi gravado: o VictoriaMetrics não consegue reetiquetar
+séries existentes, então as leituras anteriores à atualização permanecem sob a
+máquina (expiram com a retenção), e os gráficos do dispositivo do serviço começam
+na atualização. As linhas de base de anomalia das séries movidas voltam a
+aprender do zero. O histórico de alertas (alertas resolvidos) também fica com a
+máquina.
 
 ## Arquivo de configuração {#configuration-file}
 
