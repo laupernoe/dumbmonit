@@ -84,6 +84,9 @@ All notable changes to this project are documented here. The format follows
 - **Public status page no longer claims "All systems operational" without data.** Services that are disabled or never measured are left out of the banner and the tally, which reads "No data yet". (Also adds the strings for the disabled-monitor page.)
 - **Info alerts are no longer counted as problems.** The nav badge and the wall ("25 problems") count only warnings, criticals and unreachable devices.
 - **Unreachable agent message.** The duration is now readable ("no measurement for 10 d 21 h (limit 90 s)") instead of raw seconds.
+- Accessibility: repeated identical toasts merge into one with a counter ("Dismissed ×3")
+  and restart their timeout, the Alerts tabs support Left/Right/Home/End with a roving
+  tabindex, and the muted text colour (`ink-3`) now meets WCAG AA contrast in light and dark.
 - Status pages: the uptime next to each bar and in the summary line now covers
   the same days as the bar. On a page showing 8 to 29 days it was the 7-day
   uptime, under a heading naming the longer window.
