@@ -1,8 +1,10 @@
 <script lang="ts">
 	/**
-	 * The Overview's "Last 7 days": three small figures on one graticule rule,
-	 * like the readouts — a value in display type over a label-tape, with a
-	 * one-line hint saying what the figure means. Not cards.
+	 * The Overview's "Last 7 days": three small readouts stacked on hairline
+	 * graticule rules — the label-tape on the left, the value in display type
+	 * on the right, and a one-line hint saying what the figure means (dropped
+	 * on short desktop screens, where the page has to fit without scrolling;
+	 * it stays as the value's tooltip). Not cards.
 	 */
 	import type { Streak } from './streaks';
 
@@ -22,20 +24,33 @@
 	};
 </script>
 
-<div class="graticule flex flex-wrap gap-x-10 gap-y-4">
+<dl class="flex flex-col">
 	{#each streaks as streak (streak.key)}
-		<svelte:element
-			this={streak.href ? 'a' : 'div'}
-			href={streak.href}
-			class={`group flex min-w-0 max-w-full flex-col gap-1 pb-2.5 ${streak.href ? 'rounded-md' : ''}`}
-		>
-			<span
-				class={`display tnum block max-w-[18rem] truncate text-2xl sm:text-[1.875rem] ${TONE[streak.tone]} ${
-					streak.href ? 'decoration-1 underline-offset-4 group-hover:underline' : ''
-				}`}>{streak.value}</span
-			>
-			<span class="label-tape">{streak.label}</span>
-			{#if streak.hint}<span class="tnum text-[0.8125rem] text-ink-2">{streak.hint}</span>{/if}
-		</svelte:element>
+		<div class="graticule min-w-0 py-1.5">
+			<div class="flex min-w-0 items-baseline justify-between gap-4">
+				<dt class="label-tape shrink-0">{streak.label}</dt>
+				<dd class="min-w-0">
+					<svelte:element
+						this={streak.href ? 'a' : 'span'}
+						href={streak.href}
+						title={streak.hint ? `${streak.value} — ${streak.hint}` : streak.value}
+						class={`display tnum block truncate text-right text-lg leading-tight ${TONE[streak.tone]} ${
+							streak.href ? 'decoration-1 underline-offset-4 hover:underline' : ''
+						}`}>{streak.value}</svelte:element
+					>
+				</dd>
+			</div>
+			{#if streak.hint}
+				<p class="hint tnum truncate text-[0.8125rem] text-ink-2" title={streak.hint}>{streak.hint}</p>
+			{/if}
+		</div>
 	{/each}
-</div>
+</dl>
+
+<style>
+	@media (min-width: 1024px) and (max-height: 760px) {
+		.hint {
+			display: none;
+		}
+	}
+</style>

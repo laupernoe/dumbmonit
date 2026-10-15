@@ -4152,6 +4152,20 @@
 	"overview_first_test_text": "在渠道里发送一条测试。消息真正发出后，此步骤会变绿。",
 	"overview_first_test_title": "确认能收到消息",
 	"overview_first_title": "最初的五分钟",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "还有 {count} 项"
+			}
+		}
+	],
 	"overview_page_checked": "检查于 {when}",
 	"overview_page_empty_text": "添加交换机、NAS、虚拟化主机或网站，一分钟内就会开始上报。",
 	"overview_page_empty_title": "还没有监控项",

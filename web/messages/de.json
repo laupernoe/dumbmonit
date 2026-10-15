@@ -4203,6 +4203,21 @@
 	"overview_first_test_text": "Senden Sie einen Test über den Kanal. Dieser Schritt wird grün, sobald wirklich eine Nachricht rausgeht.",
 	"overview_first_test_title": "Prüfen, ob eine Nachricht ankommt",
 	"overview_first_title": "Ihre ersten fünf Minuten",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} weiteres",
+				"countPlural=other": "+{count} weitere"
+			}
+		}
+	],
 	"overview_page_checked": "Geprüft {when}",
 	"overview_page_empty_text": "Fügen Sie einen Switch, ein NAS, einen Hypervisor oder eine Website hinzu, und innerhalb einer Minute kommen Daten.",
 	"overview_page_empty_title": "Noch kein Monitor",

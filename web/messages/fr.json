@@ -4203,6 +4203,21 @@
 	"overview_first_test_text": "Envoyez un test depuis le canal. Cette étape passe au vert dès qu'un message part vraiment.",
 	"overview_first_test_title": "Vérifiez qu'un message arrive",
 	"overview_first_title": "Vos cinq premières minutes",
+	"overview_needs_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} autre",
+				"countPlural=other": "+{count} autres"
+			}
+		}
+	],
 	"overview_page_checked": "Vérifié {when}",
 	"overview_page_empty_text": "Ajoutez un switch, un NAS, un hyperviseur ou un site web : il commence à remonter des données en moins d'une minute.",
 	"overview_page_empty_title": "Aucune surveillance pour l'instant",
