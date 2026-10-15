@@ -61,16 +61,16 @@ cambiarlo):
   haciendo algo al respecto: 1 h, 8 h, 1 día o *until resolved*. A
   diferencia de Ack, funciona abriendo una ventana de mantenimiento
   limitada a las etiquetas exactas de esa alerta en concreto — una regla
-  hermana en el mismo dispositivo sigue hablando. La tarjeta se mueve a
+  hermana en el mismo monitor sigue hablando. La tarjeta se mueve a
   un grupo tranquilo *Snoozed* mostrando el tiempo restante, y ofrece
   **Unsnooze**. Los recordatorios se pausan de la misma forma que con una
   confirmación.
 - **Ignore** («no me avises de esto otra vez») es para una regla que
-  nunca va a tener sentido en este dispositivo: desactiva esa regla solo
-  para ese dispositivo (una anulación por dispositivo — consulta
-  [Anulaciones por dispositivo](../alerting/rules.md#per-device-overrides))
+  nunca va a tener sentido en este monitor: desactiva esa regla solo
+  para ese monitor (una anulación por monitor — consulta
+  [Anulaciones por monitor](../alerting/rules.md#per-device-overrides))
   y la alerta desaparece para siempre, de inmediato, no solo se silencia.
-  Es reversible: **Stop ignoring** en la página del dispositivo, o desde
+  Es reversible: **Stop ignoring** en la página del monitor, o desde
   la propia regla en Alerts → Rules, donde dice *Ignored on N devices*.
 - **Clear** es para el historial, no para una alerta activa: una vez que
   una transición se ha resuelto, *Clear* (o *Clear all resolved*) la
@@ -101,12 +101,12 @@ resumen).
 
 **Solo algunas alertas.** Las mismas Delivery options contienen el
 **filtro de enrutado** del canal: qué alertas quiere, por etiqueta de
-dispositivo (`site=cellar`), por tipo de dispositivo (`proxmox`), o por
+monitor (`site=cellar`), por tipo de monitor (`proxmox`), o por
 regla. Las condiciones en el mismo campo se leen como *o*, campos
 distintos como *y*, y una fila *Except* siempre gana. Bajo el editor, una
-vista previa lista qué dispositivos tuyos selecciona el filtro ahora
+vista previa lista qué monitores tuyos selecciona el filtro ahora
 mismo, y una frase te lo resume todo — *este canal recibe avisos y
-superiores de dispositivos etiquetados site=cellar, excepto dispositivos
+superiores de monitores etiquetados site=cellar, excepto monitores
 etiquetados role=lab*. Un canal sin filtro sigue recibiendo todo, que es
 lo que hace cada canal existente.
 
@@ -133,14 +133,14 @@ aquí.
 ## Operadores y visores {#operators-and-viewers}
 
 Un **operador** gestiona las alertas sin tocar la configuración:
-confirma, aplaza, ignora una regla para un dispositivo, programa o
+confirma, aplaza, ignora una regla para un monitor, programa o
 elimina ventanas de mantenimiento y limpia el historial resuelto. Las
 reglas, canales y la política de notificación se mantienen de solo
 lectura para ellos, marcadas *Operator — config is admin only*. Ignorar es
-la única anulación por dispositivo que un operador puede hacer; los
+la única anulación por monitor que un operador puede hacer; los
 umbrales siguen siendo decisión de un administrador, y el *Ignore* o
 *Stop ignoring* de un operador conserva cualquier umbral que un
-administrador haya definido para ese dispositivo.
+administrador haya definido para ese monitor.
 
 Un visor ve todas las pestañas pero ningún control: la página muestra
 *Viewer — read only* donde un administrador encontraría los botones.

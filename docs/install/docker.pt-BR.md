@@ -16,7 +16,7 @@ séries temporais.
 ## Pré-requisitos {#prerequisites}
 
 - Docker Engine com o plugin Compose (`docker compose version` funciona).
-- Uma máquina que alcance os dispositivos que você quer monitorar. Ela não precisa
+- Uma máquina que alcance os monitores que você quer monitorar. Ela não precisa
   ser alcançável por eles, exceto no caso dos [agentes](../devices/agent.md), que enviam
   suas medições ao servidor por HTTP.
 - A porta `8080` livre no host, ou outra porta de sua escolha ([veja abaixo](#advanced-options)).
@@ -110,7 +110,7 @@ tentativas erradas têm limite de frequência. Para uma implantação automatiza
 
 ![A tela de login](../assets/screenshots/login-light.png){ loading=lazy }
 
-Depois adicione seu primeiro dispositivo: veja [Adicione seu primeiro dispositivo](first-device.md).
+Depois adicione seu primeiro monitor: veja [Adicione seu primeiro monitor](first-device.md).
 
 ## Variáveis de ambiente {#environment-variables}
 
@@ -126,7 +126,7 @@ precisar em `environment:` do serviço, como mostrado em
 | `DUMBMONIT_VM_RETENTION` | `12` | Retenção do VictoriaMetrics embutido: meses, ou `30d`, `2y`. |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | Orçamento de memória dos caches do VictoriaMetrics embutido. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Endereço de escuta do VictoriaMetrics embutido, dentro do contêiner. |
-| `DUMBMONIT_SECRET` | *(gerado)* | Segredo da instância que criptografa credenciais de dispositivos e tokens. |
+| `DUMBMONIT_SECRET` | *(gerado)* | Segredo da instância que criptografa credenciais de monitores e tokens. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Sondagens simultâneas, todos os coletores somados. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Duração máxima de uma sondagem. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Período de gravação para o VictoriaMetrics. |
@@ -150,7 +150,7 @@ chave derivada do segredo da instância. Na primeira inicialização, o DumbMoni
 segredo em `/data/secret.key` (dentro do volume `dumbmonit-data`).
 
 !!! danger "Faça backup de `secret.key` junto com o banco de dados"
-    Sem ela, as credenciais dos dispositivos são irrecuperáveis: um banco restaurado
+    Sem ela, as credenciais dos monitores são irrecuperáveis: um banco restaurado
     sozinho resulta em uma instância que não consegue falar com nada. O servidor detecta uma
     chave ausente ou alterada na inicialização e se recusa a continuar com uma mensagem
     explícita, em vez de falhar silenciosamente a cada sondagem. Os backups agendados
@@ -238,13 +238,13 @@ Um volume nomeado, `dumbmonit-data`, guarda tudo:
 
 | Caminho | Conteúdo |
 |---|---|
-| `dumbmonit.db` | Dispositivos, regras, canais, estado dos alertas, sessões. |
+| `dumbmonit.db` | Monitores, regras, canais, estado dos alertas, sessões. |
 | `secret.key` | O segredo da instância. |
 | `backups/` | Os backups locais agendados: uma cópia do banco e do segredo, diária por padrão, sete mantidas. |
 | `vm/` | Séries temporais do VictoriaMetrics (12 meses de retenção por padrão). |
 
 O DumbMonit faz backup do próprio banco em um agendamento, e exporta toda a
-configuração — dispositivos, credenciais, regras, canais — como um único arquivo
+configuração — monitores, credenciais, regras, canais — como um único arquivo
 criptografado com uma senha que você escolhe, que pode ser restaurado em uma instância nova.
 Ambos estão em **[Backup e restauração](backup.md)**, junto com o que fazer antes de
 uma atualização e a única regra sobre `secret.key` que vale a pena ler duas vezes.
@@ -280,7 +280,7 @@ escutando na 8080:
 ```
 
 **Seu próprio segredo**, em vez do gerado em `/data/secret.key`. Ele criptografa
-as credenciais dos dispositivos: perdê-lo significa digitar todas de novo.
+as credenciais dos monitores: perdê-lo significa digitar todas de novo.
 
 ```yaml
     environment:
@@ -288,7 +288,7 @@ as credenciais dos dispositivos: perdê-lo significa digitar todas de novo.
 ```
 
 **Retenção e memória** do VictoriaMetrics embutido (meses, ou `30d` / `2y`; um
-homelab de algumas dezenas de dispositivos cabe em 256 MB):
+homelab de algumas dezenas de monitores cabe em 256 MB):
 
 ```yaml
     environment:
@@ -304,7 +304,7 @@ homelab de algumas dezenas de dispositivos cabe em 256 MB):
 ```
 
 **Senha perdida.** Adicione a linha abaixo, execute `docker compose up -d`, crie
-o primeiro administrador de novo na interface (dispositivos, regras e canais
+o primeiro administrador de novo na interface (monitores, regras e canais
 permanecem), depois remova a linha e execute `docker compose up -d` mais uma vez:
 
 ```yaml
@@ -337,7 +337,7 @@ services:
 - `shm_size: 256m`: o Chromium renderiza em `/dev/shm`, e os 64 MB padrão do Docker são pouco para uma página longa.
 - Serve qualquer Chromium iniciado com `--remote-debugging-port`; aqui se usa a imagem `chromedp/headless-shell`.
 
-Sem navegador, todo o resto funciona como de costume (comparação de texto, alertas, cópias antes/depois); os instantâneos apenas não têm imagem. Enquanto o servidor não alcançar um navegador, o formulário de um dispositivo de mudanças de sites mostra um aviso com estas linhas.
+Sem navegador, todo o resto funciona como de costume (comparação de texto, alertas, cópias antes/depois); os instantâneos apenas não têm imagem. Enquanto o servidor não alcançar um navegador, o formulário de um monitor de mudanças de sites mostra um aviso com estas linhas.
 Se o aviso permanecer após a reinicialização, verifique `docker compose logs browser`, se o nome do host em `DUMBMONIT_BROWSER_URL` é o nome do serviço e se os dois serviços estão no mesmo projeto Compose.
 
 ## Proxy reverso {#reverse-proxy}
@@ -427,12 +427,12 @@ services:
 Nada muda no host. O Docker 20.10 e posteriores definem essa faixa em todo
 contêiner por conta própria; as linhas explícitas garantem que ela valha em engines mais antigos e
 no Podman. Sem ela, a verificação informa um erro de configuração (exibido no
-dispositivo, sem notificação), nunca um falso "host fora do ar". Com `docker run`, passe
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Enquanto o servidor não conseguir abrir um socket ICMP, o formulário de um dispositivo de ping mostra um aviso com estas linhas.
+monitor, sem notificação), nunca um falso "host fora do ar". Com `docker run`, passe
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Enquanto o servidor não conseguir abrir um socket ICMP, o formulário de um monitor de ping mostra um aviso com estas linhas.
 
 ## Testando sem hardware {#testing-without-hardware}
 
-Adicione um [dispositivo de demonstração](../devices/demo.md): ele produz medições falsas
+Adicione um [monitor de demonstração](../devices/demo.md): ele produz medições falsas
 sem nada a preparar, de modo que gráficos, regras e notificações podem ser testados
 imediatamente. Para dados SNMP reais, a máquina que executa o Docker muitas vezes basta —
 instale o `snmpd` nela (`apt install snmpd`, permita a comunidade `public` na bridge

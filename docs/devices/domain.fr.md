@@ -44,9 +44,9 @@ ne ressemble pas à un problème de domaine.
 Les [règles intégrées](../alerting/rules.md#reverse-proxies-and-domains) qui
 s'appliquent : Domaine arrivant à expiration (moins de 30 jours), Domaine
 proche de l'expiration (moins de 7 jours ou expiré), Domaine suspendu, Domaine
-en rachat, plus Appareil inaccessible.
+en rachat, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais le registre. Il indique la date d'expiration et les
@@ -83,6 +83,6 @@ Aucun : RDAP est public.
 Adresse : le domaine enregistré (`example.com`) ; une URL collée est réduite à
 son nom d'hôte. Options : serveur RDAP (vide : trouvé via l'IANA), intervalle
 de rafraîchissement (12 heures, de 1 à 168) et délai de requête (10 s).
-L'intervalle de vérification de l'appareil lui-même peut rester à sa valeur
+L'intervalle de vérification de la surveillance elle-même peut rester à sa valeur
 par défaut : il ne fait que recalculer les jours restants entre deux requêtes
 au registre.

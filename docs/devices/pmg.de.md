@@ -14,10 +14,10 @@ Signaturdatenbanken, Dienste, Zertifikate und Cluster-Zustand.
     wochenlang auf einem lebenden Mail-Gateway laufen lassen. Sagen
     Sie uns, was kaputt ist.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Über die generischen Diagramme hinaus zeigt ein
-Proxmox-Mail-Gateway-Gerät drei Panels, aus dem gelesen, was die
+Proxmox-Mail-Gateway-Monitor drei Panels, aus dem gelesen, was die
 Abfrage gespeichert hat — das Öffnen der Seite fragt das Gateway
 selbst nie ab:
 
@@ -119,7 +119,7 @@ fünfzig Jahre falsch zu sein. Dieselbe Regel gilt überall: Ein Wert,
 den die API nicht zurückgibt, erzeugt eine Metrik weniger, nie eine
 Null, die sich als Messwert ausgibt.
 
-Geltende eingebaute Regeln: Device unreachable, Mail queue growing,
+Geltende eingebaute Regeln: Monitor unreachable, Mail queue growing,
 Mail stuck in the queue, Mail gateway service stopped, Virus
 signatures out of date, Spam rules out of date, Quarantine filling up,
 Mail gateway cluster degraded, Mail gateway certificate expiring, Mail

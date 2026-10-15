@@ -32,7 +32,7 @@ create as many as you want, and your alert rules choose which ones to notify.
 
 Three principles apply to every channel:
 
-1. **Alerts are grouped.** One message per device and per cycle, even if five disks
+1. **Alerts are grouped.** One message per monitor and per cycle, even if five disks
    fill up at the same time. Without this, you would mute notifications within a
    week.
 2. **A broken channel never blocks another one.** The failure is recorded in the
@@ -167,9 +167,9 @@ payload that a script can use:
 }
 ```
 
-`link` points to the device page, built on the `public_url` of the
+`link` points to the monitor page, built on the `public_url` of the
 [notification policy](alerting/notifications.md) (or `DUMBMONIT_PUBLIC_URL`), or on the channel's
-`base_url`. A message about several devices, and the test message, link to
+`base_url`. A message about several monitors, and the test message, link to
 the instance itself. Without any public URL, `link` is `null`.
 
 ### Custom channel settings
@@ -210,8 +210,8 @@ write your JSON normally.
 | `{{message}}` | Plain-text body, one line per alert | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | The same body in Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Name of the alert rule | `Disk full` |
-| `{{target}}` | Name of the monitored device | `nas` |
-| `{{target_id}}` | Numeric identifier of the device | `42` |
+| `{{target}}` | Name of the monitor | `nas` |
+| `{{target_id}}` | Numeric identifier of the monitor | `42` |
 | `{{severity}}` | Technical severity | `info`, `warning` or `critical` |
 | `{{severity_fr}}` | Severity as a readable word | `information`, `avertissement`, `critique` |
 | `{{status}}` | Technical status | `firing` or `resolved` |
@@ -231,7 +231,7 @@ write your JSON normally.
 | `{{color}}` | Accent colour, without hash | `D98A00` |
 | `{{color_hex}}` | Accent colour, with hash | `#D98A00` |
 | `{{emoji}}` | Status pictogram | `🔴`, `⚠️`, `ℹ️` or `✅` |
-| `{{link}}` | Link to the device in DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Link to the monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Always `dumbmonit` | `dumbmonit` |
 | `{{token}}` | The channel's `token` secret | *(your token)* |
 | `{{ack_url}}` | Signed link that acknowledges the alert until it resolves, empty if [action links](#acknowledge-or-snooze-from-the-notification) are off | `https://dumbmonit.home/alert-action#…` |
@@ -652,7 +652,7 @@ DumbMonit, with no app to install and no third-party account: the browser
 - **Secrets** — none. The server's VAPID key pair is generated at first start
   and stored encrypted; the private key never leaves the server.
 
-The notification title is the severity and the device (`Critical · nas01`), the
+The notification title is the severity and the monitor (`Critical · nas01`), the
 body a short summary; a tap opens the **Alerts** page. DumbMonit needs outbound
 HTTPS to the push services (`fcm.googleapis.com`, `*.notify.windows.com`,
 `updates.push.services.mozilla.com`, `*.push.apple.com`); messages are

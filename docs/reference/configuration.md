@@ -10,7 +10,7 @@ configuration file to mount.
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address of the API and the web UI, inside the container. |
 | `DUMBMONIT_DATA_DIR` | `/data` | Persistent directory: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (embedded VictoriaMetrics) and `webchange/` (screenshots of website changes). |
 | `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics). |
-| `DUMBMONIT_SECRET` | *(generated)* | Instance secret. If empty, read from `<data dir>/secret.key`, generated on first start. Encrypts device credentials, channel secrets and agent tokens with AES-256-GCM. |
+| `DUMBMONIT_SECRET` | *(generated)* | Instance secret. If empty, read from `<data dir>/secret.key`, generated on first start. Encrypts monitor credentials, channel secrets and agent tokens with AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Maximum simultaneous probes, all collectors combined. |
 | `DUMBMONIT_WEBSITE_MAX_CONCURRENT` | `10` | Maximum simultaneous [website health](../devices/website.md#pacing-hundreds-of-sites) checks, 1 to 256, within the limit above. |
 | `DUMBMONIT_WEBSITE_MAX_PER_HOST` | `1` | Maximum simultaneous website checks towards one domain (`www.example.com` and `shop.example.com` count as one), 1 to 16. |
@@ -19,14 +19,14 @@ configuration file to mount.
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Hard timeout of one probe. Service monitors have their own, shorter `timeout_seconds` option. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Period of the batched writes towards VictoriaMetrics. |
 | `DUMBMONIT_FLUSH_BATCH` | `5000` | Number of buffered samples that triggers a write before the period elapses. |
-| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads of the async runtime. The server spends its time waiting on the network: four cover a homelab, raise it only for hundreds of devices. |
+| `DUMBMONIT_WORKERS` | `min(4, CPUs)` | Threads of the async runtime. The server spends its time waiting on the network: four cover a homelab, raise it only for hundreds of monitors. |
 | `DUMBMONIT_DB_POOL` | `4` | Maximum open SQLite connections. Each one costs a thread and a 2 MB page cache; idle connections close after five minutes. |
 | `DUMBMONIT_LOG` | `info` | Log filter, `tracing` syntax: `debug`, `warn`, `dumbmonit=debug,sqlx=warn`… |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Directory of the agent binaries served under `/download/`. Empty or missing: the install command fails with `404`, the server still runs. |
 | `DUMBMONIT_RESET_PASSWORD` | *(off)* | `1`, `true`, `yes` or `on`: clear the password and every session at startup. The UI then shows `/setup` again. Remove it afterwards. |
 | `DUMBMONIT_COOKIE_SECURE` | *(off)* | `1` to always set the `Secure` attribute on the session cookie. Only behind HTTPS: over plain HTTP the browser would never send the cookie back. Without it, the attribute is still added whenever the browser is on an `https://` page (its `Origin` says so, or a trusted proxy sends `X-Forwarded-Proto: https`), so plain HTTP on the LAN keeps working. |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(empty)* | Reverse proxies whose `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` are believed, as addresses or CIDR ranges separated by commas (`10.0.0.5, 172.16.0.0/12`). The login rate limiter and the security log then see the real client address instead of the proxy's; without it, every visitor behind the proxy shares one bucket. Status page links (RSS feed, subscription emails) and the single sign-on return address also use the forwarded host only from these proxies. The headers are ignored from any other address, so a client cannot pick its own bucket or the address of a link. |
-| `DUMBMONIT_SCAN_SUBNETS` | *(empty)* | Networks offered by the device form's network scan, as IPv4 CIDR ranges separated by commas (`192.168.1.0/24, 10.0.5.0/24`). In Docker bridge mode the server only sees the Docker network, not your LAN, so set this to pre-fill the scan with the right one. Unset: the scan suggests the /24 networks of the devices you already monitor, then the server's own networks (only when it does not run in a container), and otherwise leaves the field empty. |
+| `DUMBMONIT_SCAN_SUBNETS` | *(empty)* | Networks offered by the monitor form's network scan, as IPv4 CIDR ranges separated by commas (`192.168.1.0/24, 10.0.5.0/24`). In Docker bridge mode the server only sees the Docker network, not your LAN, so set this to pre-fill the scan with the right one. Unset: the scan suggests the /24 networks of the monitors you already monitor, then the server's own networks (only when it does not run in a container), and otherwise leaves the field empty. |
 | `DUMBMONIT_OIDC_AUTO_CREATE` | *(off)* | `true` to create an account for an unknown identity at its first single sign-on. Off, only existing accounts (already linked, or matched by a provider-verified email) can sign in. Like the other `DUMBMONIT_OIDC_*` variables, read only while no single sign-on settings are saved in the interface. |
 | `DUMBMONIT_OIDC_ALLOW_HTTP` | *(off)* | `1` to accept an OpenID Connect issuer in plain `http://`. Off, the settings screen refuses anything but `https://`: a clear-text issuer hands the authorization code and client secret to whoever listens on the network. Only for a test provider on the loopback. |
 | `DUMBMONIT_SETUP_CODE` | *(generated)* | Code `/setup` asks for while no administrator exists. Unset, a random one is printed in the server log at each start; set it for an automated deployment. See [Install with Docker](../install/docker.md). |
@@ -40,7 +40,7 @@ configuration file to mount.
 | `DUMBMONIT_OIDC_GROUPS_CLAIM` | `groups` | Token claim listing the user's groups. |
 | `DUMBMONIT_OIDC_ADMIN_GROUPS` | *(empty)* | Comma-separated groups whose members become administrators. |
 | `DUMBMONIT_OIDC_OPERATOR_GROUPS` | *(empty)* | Comma-separated groups whose other members become operators. See [Single sign-on](../using/settings.md#single-sign-on). |
-| `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` to serve `/metrics`, `/federate` and `/prometheus/api/v1/…` without an API token. Anyone who can reach the port then reads every measurement of every device and the state of the instance; only set it where something else already restricts access to the port. See [Metrics](metrics.md#scraping-dumbmonit). |
+| `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` to serve `/metrics`, `/federate` and `/prometheus/api/v1/…` without an API token. Anyone who can reach the port then reads every measurement of every monitor and the state of the instance; only set it where something else already restricts access to the port. See [Metrics](metrics.md#scraping-dumbmonit). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period. Values below 10 are raised to 10. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Retention of alert history, in days. |
 | `DUMBMONIT_BACKUP_ENABLED` | `1` | Scheduled local backups of the database. `0`, `false`, `no` or `off` to stop writing them. See [Backup and restore](../install/backup.md#scheduled-local-backups). |
@@ -77,7 +77,7 @@ leaves room for that).
 | `DUMBMONIT_VM_BINARY` | `/victoria-metrics-prod` | Path of the VictoriaMetrics binary to start. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Listen address, inside the container. Loopback by default: only the server talks to it. The development overlay sets `0.0.0.0:8428` and publishes the port. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Retention, in the syntax of `-retentionPeriod`: a number of months, or a duration such as `30d` or `2y`. |
-| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget for VictoriaMetrics' caches (`-memory.allowedBytes`). Without a budget VM sizes them for 60 % of the host's RAM and its resident memory grows for days. A few dozen devices fit in 256 MB; raise it for hundreds of hosts. |
+| `DUMBMONIT_VM_MEMORY` | `256MB` | Budget for VictoriaMetrics' caches (`-memory.allowedBytes`). Without a budget VM sizes them for 60 % of the host's RAM and its resident memory grows for days. A few dozen monitors fit in 256 MB; raise it for hundreds of hosts. |
 
 Its data lives in `<data dir>/vm`, on the same volume as the database. Three
 flags are fixed by the server and not configurable:
@@ -106,7 +106,7 @@ The development overlay `docker-compose.dev.yml` reads `DUMBMONIT_VM_PORT`
 | `8080/tcp` | `dumbmonit` | Web UI, API, agent installers and downloads, agent ingest. The only port to publish. |
 | `8428/tcp` | `dumbmonit` | Embedded VictoriaMetrics HTTP API, on the container's loopback. Published only by the development overlay. |
 
-Outbound: SNMP (UDP 161 by default) towards devices, HTTPS towards Proxmox,
+Outbound: SNMP (UDP 161 by default) towards monitors, HTTPS towards Proxmox,
 PBS, Synology and notification services, plus whatever your service monitors
 target. ICMP ping needs the `net.ipv4.ping_group_range` sysctl set in the
 Compose file (no capability).
@@ -118,7 +118,7 @@ Compose file, whatever the project is called.
 
 | Path (in the container) | Volume | Contents |
 |---|---|---|
-| `/data/dumbmonit.db` | `dumbmonit-data` | Devices, credentials (encrypted), rules, alert state and history, baselines, silences, channels, agent tokens, password hash, sessions. |
+| `/data/dumbmonit.db` | `dumbmonit-data` | Monitors, credentials (encrypted), rules, alert state and history, baselines, silences, channels, agent tokens, password hash, sessions. |
 | `/data/secret.key` | `dumbmonit-data` | The instance secret. **Back it up.** Without it, encrypted credentials are unrecoverable and the server refuses to start. |
 | `/data/backups/` | `dumbmonit-data` | Scheduled local backups: `dumbmonit-<timestamp>.db` (an online SQLite copy) and the matching `.key`. Daily by default, seven kept. |
 | `/data/vm/` | `dumbmonit-data` | Embedded VictoriaMetrics time series, 12 months by default. Empty when `DUMBMONIT_VM_URL` is set. |
@@ -135,7 +135,7 @@ docker compose up -d
 docker compose up -d
 ```
 
-The reset clears the password and every session; devices, rules and channels
+The reset clears the password and every session; monitors, rules and channels
 are untouched.
 
 ## Agent

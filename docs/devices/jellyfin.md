@@ -35,9 +35,9 @@ there is no update metric.
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Jellyfin scheduled task failed, Jellyfin plugin broken, Jellyfin restart
-pending, plus Device unreachable.
+pending, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 calls Jellyfin. It says what is wrong first (failed tasks, broken plugins, a

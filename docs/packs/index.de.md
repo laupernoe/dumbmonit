@@ -1,11 +1,11 @@
 # Integrationspakete
 
-Ein Integrationspaket (Pack) fügt DumbMonit eine Geräteart hinzu, ohne
+Ein Integrationspaket (Pack) fügt DumbMonit einen Monitortyp hinzu, ohne
 ein neues Release. Es ist eine einzige YAML-Datei, die sagt, wo
 gelesen wird (eine HTTP-API oder eine Prometheus-`/metrics`-Seite auf
-dem Gerät), was extrahiert wird, und welche Alarmregeln mitkommen.
-Einmal installiert, zeigt sich die Art des Pakets in **Add device**
-neben den eingebauten, und seine Geräte werden abgefragt, geplottet und
+dem Monitor), was extrahiert wird, und welche Alarmregeln mitkommen.
+Einmal installiert, zeigt sich die Art des Pakets in **Add monitor**
+neben den eingebauten, und seine Monitore werden abgefragt, geplottet und
 alarmiert wie jede andere.
 
 Ein Pack ist deklarativ: kein Code, keine Skripte. DumbMonit führt
@@ -16,16 +16,16 @@ kann.
 
 | Ein Pack kann | Ein Pack kann nicht |
 |---|---|
-| `GET`- oder `POST`-Pfade auf der eigenen Adresse des Geräts aufrufen | Einen anderen Host aufrufen, einer Weiterleitung zu einem anderen Host folgen, oder eine absolute URL nutzen |
+| `GET`- oder `POST`-Pfade auf der eigenen Adresse des Monitors aufrufen | Einen anderen Host aufrufen, einer Weiterleitung zu einem anderen Host folgen, oder eine absolute URL nutzen |
 | JSON (JSONPath), Klartext (reguläre Ausdrücke) oder das Prometheus-Textformat lesen | Code, Shell-Befehle oder Templates jenseits von `{{option.x}}` und `{{credential.x}}` ausführen |
-| Das Credential des Geräts in einem Header oder als Basic-/Bearer-Authentifizierung senden | Ein Credential in eine URL oder einen Request-Body legen |
-| Im Gerätedialog angezeigte Optionen deklarieren (ein Schaltkanal, ein Schwellenwert) | Metriken außerhalb des eigenen `dumbmonit_<pack>_`-Präfixes schreiben |
-| Alarmregeln auf seinen eigenen Metriken mitbringen | Eine eingebaute Geräteart oder eingebaute Regel ändern |
+| Das Credential des Monitors in einem Header oder als Basic-/Bearer-Authentifizierung senden | Ein Credential in eine URL oder einen Request-Body legen |
+| Im Monitordialog angezeigte Optionen deklarieren (ein Schaltkanal, ein Schwellenwert) | Metriken außerhalb des eigenen `dumbmonit_<pack>_`-Präfixes schreiben |
+| Alarmregeln auf seinen eigenen Metriken mitbringen | Einen eingebauten Monitortyp oder eingebaute Regel ändern |
 | SNMP-Profile mitbringen, im Format der eingebauten | Mehr als 4 MiB pro Antwort lesen, mehr als 16 Requests pro Abfrage senden, oder mehr als 5.000 Zeitreihen pro Abfrage erzeugen |
 
 Loopback- und Link-Local-Adressen (`127.0.0.1`, `169.254.x.x`) werden
 abgelehnt, sofern die Option **Allow loopback and link-local targets**
-des Geräts nicht an ist, genau wie bei den HTTP-Checks. Private
+des Monitors nicht an ist, genau wie bei den HTTP-Checks. Private
 LAN-Adressen sind immer erlaubt.
 
 ## Referenzpakete
@@ -49,7 +49,7 @@ wird mit der Liste der zu behebenden Punkte abgelehnt; eines, das
 bestanden hat, wird mit seinen Hinweisen, falls vorhanden, gespeichert.
 Dieselbe Seite schaltet Pakete ein und aus und deinstalliert sie.
 Installierte Arten erscheinen unter **Community packs**, wenn Sie ein
-Gerät hinzufügen, markiert als *Pack*.
+Monitor hinzufügen, markiert als *Pack*.
 
 Über die HTTP-API brauchen Sie eine Administrator-Sitzung oder ein
 API-Token mit dem Scope `write` (Settings → **API & assistants**).
@@ -70,18 +70,18 @@ mit der vollständigen Liste der Probleme abgelehnt, eines pro Zeile.
 
 | Aufruf | Tut |
 |---|---|
-| `GET /api/packs` | installierte Pakete: Version, Art, Metriken, Regeln, Geräte, die es nutzen |
+| `GET /api/packs` | installierte Pakete: Version, Art, Metriken, Regeln, Monitore, die es nutzen |
 | `GET /api/packs/{id}` | ein Pack |
 | `POST /api/packs` | installieren oder aktualisieren; Body: das YAML (`application/yaml`), oder `{"yaml": "…"}` in JSON |
-| `PUT /api/packs/{id}/disable` | die Geräte des Pakets nicht mehr abfragen, alles andere behalten |
+| `PUT /api/packs/{id}/disable` | die Monitore des Pakets nicht mehr abfragen, alles andere behalten |
 | `PUT /api/packs/{id}/enable` | sie wieder abfragen |
-| `DELETE /api/packs/{id}` | deinstallieren, mit seinen Regeln; abgelehnt (`409`), solange Geräte es noch nutzen |
+| `DELETE /api/packs/{id}` | deinstallieren, mit seinen Regeln; abgelehnt (`409`), solange Monitore es noch nutzen |
 
 Mit einem Session-Cookie statt einem Token fügen Sie jedem `POST`,
 `PUT` und `DELETE` `X-Requested-With: DumbMonit` hinzu, wie für den
 Rest der [API](../reference/api.md).
 
-Die Installation wirkt sofort: Die neue Art ist im Gerätedialog ohne
+Die Installation wirkt sofort: Die neue Art ist im Monitordialog ohne
 Neustart verfügbar. Die einzige Ausnahme ist ein Pack, das
 SNMP-Profile mitbringt; die Antwort sagt dann
 `"restart_required": true`, weil der SNMP-Katalog beim Start gelesen
@@ -94,17 +94,17 @@ seine Extraktion und seine Beschreibung. Seine Alarmregeln werden nur
 jemals *hinzugefügt*: eine von Ihnen geänderte, deaktivierte oder
 gelöschte Regel wird von einem Update nie überschrieben.
 
-Das Deaktivieren eines Pakets zieht seine Geräteart zurück und behält
-alles andere: Geräte, Historie, Regeln. Seine Geräte werden nicht
-mehr abgefragt (jedes zeigt einen Konfigurationsfehler) und, wie jedes
-Gerät, das aufhört zu melden, lösen sie nach drei Minuten *Device
+Das Deaktivieren eines Pakets zieht seinen Monitortyp zurück und behält
+alles andere: Monitore, Historie, Regeln. Seine Monitore werden nicht
+mehr abgefragt (jedes zeigt einen Konfigurationsfehler) und, wie jeder
+Monitor, der aufhört zu melden, lösen sie nach drei Minuten *Monitor
 unreachable* aus: Pausieren Sie sie auch, wenn Sie das Pack für eine
 Weile deaktivieren.
 
 ### Backups
 
 Installierte Pakete reisen in [Backups](../install/backup.md) mit
-ihrem YAML, und werden vor den sie nutzenden Geräten wiederhergestellt.
+ihrem YAML, und werden vor den sie nutzenden Monitoren wiederhergestellt.
 
 ## Ein Pack vor der Installation prüfen
 

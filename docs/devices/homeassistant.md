@@ -53,7 +53,7 @@ list them. The **Read the repairs** option turns this off.
 The [built-in rules](../alerting/rules.md#home-assistant) that apply: Home
 Assistant in recovery mode, Home Assistant not running, Home Assistant entities
 went unavailable, Home Assistant battery low, Home Assistant update available,
-Home Assistant repair to address, plus Device unreachable.
+Home Assistant repair to address, plus Monitor unreachable.
 
 ## Devices
 
@@ -79,7 +79,7 @@ battery reporting turned off is missing from the table rather than shown
 wrongly. The device's account, when known, comes from a `person.*` entity
 whose `device_trackers` attribute names it.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Home Assistant. It says what is wrong first (recovery mode, repairs of

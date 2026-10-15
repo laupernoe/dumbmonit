@@ -17,7 +17,7 @@ liest nie ein Passwort-Attribut (von LAPS liest es das Ablaufdatum,
 nie das Passwort) und fragt nie nach den Replikationsrechten, die
 Secrets exponieren würden.
 
-Ein Gerät deckt die gesamte Domäne ab: Richten Sie es auf einen
+Ein Monitor deckt die gesamte Domäne ab: Richten Sie ihn auf einen
 Domänencontroller, und DumbMonit findet die anderen in der
 Konfigurationspartition.
 
@@ -33,7 +33,7 @@ geschah. Insbesondere:
   es sagt das Panel *replication status not readable*, statt zu
   raten. Nur die Sicht des abgefragten Domänencontrollers wird
   gezeigt: Um die Partner eines anderen zu sehen, fügen Sie ihn als
-  zweites Gerät hinzu.
+  zweiten Monitor hinzu.
 - **Über LDAP nicht sichtbar**: Ereignisprotokolle (Logons,
   Sperrungen, wenn sie passieren, Gruppenänderungen als Ereignisse),
   Group-Policy-Inhalte, SYSVOL, DNS-Zonen, und die Passwort-Hashes
@@ -109,7 +109,7 @@ Operators.
 ## Befunde
 
 Befunde sind rohe Fakten — wie viele Objekte, und welche — kein
-Score; der [Security Score](../using/security-score.md) des Geräts
+Score; der [Security Score](../using/security-score.md) des Monitors
 gewichtet sie. Jeder hat eine stabile `id`, einen Schweregrad auf der
 Skala des Scores (low, medium, high, critical, auf der Seite als
 Info, Advisory und Warning angezeigt), eine Kategorie, eine Zählung
@@ -157,7 +157,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#active-directory):
 
 - **Domain controller unreachable**: ein anderer Domänencontroller
   der Domäne hört seit fünf Minuten auf, auf seinem LDAP-Port zu
-  antworten (Warning). Der abgefragte ist von *Device unreachable*
+  antworten (Warning). Der abgefragte ist von *Monitor unreachable*
   abgedeckt.
 - **Active Directory bind failed**: der Domänencontroller lehnt das
   Dienstkonto ab — abgelaufenes Passwort, deaktiviert oder gesperrt
@@ -171,7 +171,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#active-directory):
   Replikationsstatus lesbar ist.
 - **krbtgt password older than 180 days** (Info).
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Active-Directory-Panel zeigt die Domäne (Funktionsebenen, der
 abgefragte Domänencontroller, Uhrenabweichung), die

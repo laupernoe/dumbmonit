@@ -226,7 +226,7 @@ async fn restore_targets(
             Ok(outcome) => {
                 outcomes.insert(target_ref(&target.kind, &target.address), outcome);
             }
-            Err(error) => report.refused(&format!("Device \"{}\"", target.name), &error),
+            Err(error) => report.refused(&format!("Monitor \"{}\"", target.name), &error),
         }
     }
 
@@ -284,7 +284,7 @@ fn resolve(
         Some(id) => Some(*id),
         None => {
             report.notes.push(format!(
-                "Device \"{owner}\": its {role} ({reference}) is not in this backup and does not \
+                "Monitor \"{owner}\": its {role} ({reference}) is not in this backup and does not \
                  exist here; the link was left empty."
             ));
             None
@@ -634,7 +634,7 @@ async fn restore_overrides(
         let Some(target_id) = refs.get(&over.target).copied() else {
             report.skipped += 1;
             report.notes.push(format!(
-                "Per-device setting of rule \"{}\": its device ({}) is not in this backup.",
+                "Per-monitor setting of rule \"{}\": its monitor ({}) is not in this backup.",
                 over.rule_uid, over.target
             ));
             continue;
@@ -1062,7 +1062,7 @@ async fn restore_status_pages(
         for item in &page.items {
             let Some(target_id) = refs.get(&item.target).copied() else {
                 report.notes.push(format!(
-                    "Status page \"{}\": the device {} it listed is not in this backup.",
+                    "Status page \"{}\": the monitor {} it listed is not in this backup.",
                     page.slug, item.target
                 ));
                 continue;
@@ -1363,7 +1363,7 @@ async fn restore_push_monitors(
         let Some(target_id) = refs.get(&monitor.target).copied() else {
             report.skipped += 1;
             report.notes.push(format!(
-                "Heartbeat token: its device ({}) is not in this backup.",
+                "Heartbeat token: its monitor ({}) is not in this backup.",
                 monitor.target
             ));
             continue;

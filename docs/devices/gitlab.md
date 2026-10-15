@@ -41,7 +41,7 @@ All metrics are prefixed `dumbmonit_gitlab_`.
 
 The [built-in rules](../alerting/rules.md#self-hosted-forges) that apply:
 GitLab runners all offline, GitLab Sidekiq backlog high, GitLab migrations
-pending, GitLab license expiring, plus Device unreachable. A security score
+pending, GitLab license expiring, plus Monitor unreachable. A security score
 checks the two-factor and sign-up settings, and pending migrations: see
 [Vendor updates and other checks](../using/security-score.md).
 
@@ -56,7 +56,7 @@ hand, or watch GitLab's own update-check notice in the admin area.
 CI pipeline health is read only for the projects you list: GitLab's API has
 no instance-wide "all failing pipelines" endpoint, only a per-project one.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never calls GitLab. It says what is wrong first (a readiness component

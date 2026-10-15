@@ -1,6 +1,6 @@
-# Tipos de dispositivo {#device-types}
+# Tipos de monitor {#device-types}
 
-O DumbMonit chama tudo que observa de *dispositivo* (a API diz *target*),
+O DumbMonit chama tudo que observa de *monitor* (a API diz *target*),
 mesmo quando é uma página web ou um nome DNS. Cada tipo é um coletor no
 servidor; o servidor descreve cada tipo para a interface
 (`GET /api/collectors`), então o formulário sempre corresponde ao que esta
@@ -8,7 +8,7 @@ versão pode monitorar.
 
 | Tipo | `kind` | Credencial | Uso típico |
 |---|---|---|---|
-| [Dispositivo SNMP](snmp.md) | `snmp` | comunidade ou SNMP v3 | Switch, roteador, NAS, nobreak, impressora |
+| [Monitor SNMP](snmp.md) | `snmp` | comunidade ou SNMP v3 | Switch, roteador, NAS, nobreak, impressora |
 | [Proxmox VE](proxmox.md) | `proxmox` | token de API ou usuário/senha | Hipervisor, cluster |
 | [Proxmox Backup Server](pbs.md) | `pbs` | token de API ou usuário/senha | Servidor de backup |
 | [Proxmox Datacenter Manager](pdm.md) | `pdm` | token de API | Console federando vários clusters PVE e instâncias PBS |
@@ -22,7 +22,7 @@ versão pode monitorar.
 | [FortiGate](fortigate.md) | `fortigate` | token da API REST (perfil somente leitura, host confiável) | Firewall: túneis IPsec, links, sincronização HA, modo de conservação, licenças FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | usuário/senha (perfil somente leitura) | Firewall: apenas links de interface (a API XML não expõe estado de túnel, HA ou licença) |
 | [Servidor OpenVPN](openvpn.md) | `openvpn` | nenhuma, ou senha de gerenciamento | Servidor OpenVPN pela interface de gerenciamento: versão, estado, clientes conectados |
-| [UniFi Network](unifi.md) | `unifi` | chave de API ou usuário/senha | Console UniFi ou servidor autoalojado: dispositivos, WAN, clientes |
+| [UniFi Network](unifi.md) | `unifi` | chave de API ou usuário/senha | Console UniFi ou servidor autoalojado: monitores, WAN, clientes |
 | [Home Assistant](homeassistant.md) | `homeassistant` | token de acesso de longa duração | Casa inteligente: entidades indisponíveis, baterias baixas, atualizações, reparos |
 | [TrueNAS](truenas.md) | `truenas` | chave de API | Servidor de armazenamento ZFS (SCALE, Community Edition) |
 | [Unraid](unraid.md) | `unraid` | chave de API (papel Viewer) | NAS: array, discos, verificações de paridade, pools de cache, contêineres, VMs |
@@ -50,7 +50,7 @@ versão pode monitorar.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | token de conta de serviço (ClusterRole somente leitura) | Cluster: nós não prontos, pods em crash loop ou pendentes, workloads sem réplicas, reivindicações de volume travadas |
 | [Active Directory](activedirectory.md) | `activedirectory` | usuário/senha (usuário de domínio simples) | Domínio Windows via LDAPS: controladores de domínio e papéis FSMO, membros de grupos privilegiados, política de senha, achados de segurança |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | usuário/senha (Veeam Backup Viewer) | Servidor de backup: jobs com falha, sessões com falha, repositórios enchendo, licença |
-| [Tailscale](tailscale.md) | `tailscale` | cliente OAuth (devices:core:read) ou token de acesso à API | Tailnet: servidores offline, chaves de nó expirando, dispositivos aguardando aprovação |
+| [Tailscale](tailscale.md) | `tailscale` | cliente OAuth (devices:core:read) ou token de acesso à API | Tailnet: servidores offline, chaves de nó expirando, monitores aguardando aprovação |
 | [Nextcloud](nextcloud.md) | `nextcloud` | token de monitoramento (NC-Token) | Sincronização de arquivos: modo de manutenção, atualização pendente, atualizações, usuários ativos, OPcache |
 | [Immich](immich.md) | `immich` | chave de API | Biblioteca de fotos: filas de jobs, atualizações, disco, contagens de fotos |
 | [Paperless-ngx](paperless.md) | `paperless` | token de API ou usuário/senha | Documentos: Redis, Celery, índice, importações com falha, atualizações |
@@ -67,37 +67,37 @@ versão pode monitorar.
 | [Servidor de hora NTP](services.md#ntp) | `ntp` | nenhuma | Roteador, NAS, servidor de hora interno, servidor de pool público |
 | [Heartbeat](push.md) | `push` | nenhuma (URL secreta) | Job cron, script de backup, automação que precisa dar sinal |
 | [Mudanças no site](webchange.md) | `webchange` | nenhuma | Uma página ou um site inteiro: mudanças de texto, páginas novas e removidas, antes/depois com capturas de tela |
-| [Dispositivo de demonstração](demo.md) | `dummy` | nenhuma | Explorar a interface sem hardware |
+| [Monitor de demonstração](demo.md) | `dummy` | nenhuma | Explorar a interface sem hardware |
 
-## Como um dispositivo é lido {#how-a-device-is-read}
+## Como um monitor é lido {#how-a-device-is-read}
 
-O agendador executa todo dispositivo ativado em seu próprio intervalo (60 s
+O agendador executa todo monitor ativado em seu próprio intervalo (60 s
 por padrão, mínimo de 10 s) através do coletor de seu tipo, com no máximo
 `DUMBMONIT_MAX_CONCURRENT_PROBES` sondagens simultâneas e um tempo limite
 rígido de `DUMBMONIT_PROBE_TIMEOUT_SECS` por sondagem. Cada sondagem bem
 sucedida grava suas amostras mais `dumbmonit_up = 1`; uma sondagem com falha
-não grava nada, e é o silêncio da série que a regra "Device unreachable"
+não grava nada, e é o silêncio da série que a regra "Monitor unreachable"
 detecta.
 
-Falhas são classificadas. Um dispositivo que não responde está *inacessível*
+Falhas são classificadas. Um monitor que não responde está *inacessível*
 e gera um alerta. Uma comunidade errada, um certificado recusado ou uma
 capacidade faltando é um *erro de configuração*: é mostrado na página do
-dispositivo, em vermelho, com o motivo, e não é notificado. A distinção
-importa: um dispositivo mal configurado não deveria acordar ninguém à noite.
+monitor, em vermelho, com o motivo, e não é notificado. A distinção
+importa: um monitor mal configurado não deveria acordar ninguém à noite.
 
 ## Opções {#options}
 
-Alguns tipos leem opções das tags do dispositivo: a porta da API, se deve
+Alguns tipos leem opções das tags do monitor: a porta da API, se deve
 aceitar um certificado autoassinado, quais nós monitorar. O formulário mostra
 um campo tipado por opção sob **Mais opções**, com seu padrão e texto de
 ajuda. As páginas de cada tipo as listam literalmente. Opções são copiadas em
 toda série como rótulos `tag_<key>`, então nunca coloque um segredo em uma:
 use o campo de credencial, que é criptografado.
 
-## Dispositivos pai {#parent-devices}
+## Monitores pai {#parent-devices}
 
-Qualquer dispositivo pode declarar outro como seu pai. Quando o pai está
+Qualquer monitor pode declarar outro como seu pai. Quando o pai está
 inacessível, alertas de seus descendentes são marcados como *Suprimido pelo
 pai* em vez de serem enviados: um switch que cai produz uma notificação, não
-trinta. Na página Dispositivos, os filhos se agrupam sob seu pai e escurecem
+trinta. Na página Monitores, os filhos se agrupam sob seu pai e escurecem
 quando ele está inacessível.

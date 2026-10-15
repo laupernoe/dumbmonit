@@ -44,9 +44,9 @@ nodo tienen un retraso de unos segundos.
 Las [reglas integradas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplican: RabbitMQ memory or disk alarm, RabbitMQ node down,
 RabbitMQ network partition, RabbitMQ queue without consumer, RabbitMQ
-queue unavailable, además de Device unreachable.
+queue unavailable, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta RabbitMQ. Indica en una frase qué va mal (alarmas, nodos y

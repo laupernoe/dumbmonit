@@ -36,9 +36,9 @@ qui le fait), il n'y a donc pas de métrique de mise à jour.
 
 Les [règles intégrées](../alerting/rules.md#self-hosted-applications) qui
 s'appliquent : échec d'une tâche planifiée Jellyfin, extension Jellyfin
-cassée, redémarrage Jellyfin en attente, plus Appareil inaccessible.
+cassée, redémarrage Jellyfin en attente, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Jellyfin. Il dit d'abord ce qui ne va pas (tâches en

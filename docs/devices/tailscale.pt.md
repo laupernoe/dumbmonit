@@ -13,7 +13,7 @@ Um token de acesso de API (`tskey-api-…`) também funciona, mas transporta
 todos os direitos do utilizador que o criou e expira no máximo após 90
 dias.
 
-Esta é uma API da Internet: o endereço do dispositivo é o da API, não de
+Esta é uma API da Internet: o endereço do monitor é o da API, não de
 uma máquina. O DumbMonit precisa de HTTPS de saída para `api.tailscale.com`;
 nada na tailnet é contactado.
 
@@ -77,7 +77,7 @@ isto não está relacionado com a definição **Devices to keep online** acima,
 que só gera um alerta para dispositivos monitorizados a ficar offline. Suba
 **Device staleness** para uma tailnet com dispositivos que circulam.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Tailnet diz o que está mal numa frase, mostra os dispositivos
 online, os dispositivos monitorizados offline, as atualizações disponíveis

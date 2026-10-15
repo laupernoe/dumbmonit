@@ -46,8 +46,8 @@ minuto.
 **Un'interruzione parziale è comunque un controllo riuscito.** Un
 servizio fermo dà `service_up 0` per quel servizio e gli altri vengono
 comunque misurati. Solo quando nessun servizio e nessuna API risponde
-affatto il dispositivo è *unreachable*. Una chiave rifiutata è un errore
-di configurazione, mostrato sulla pagina del dispositivo e non notificato.
+affatto il monitor è *unreachable*. Una chiave rifiutata è un errore
+di configurazione, mostrato sulla pagina del monitor e non notificato.
 
 **Cosa non viene letto.** La licenza e la sua scadenza, lo spazio su
 disco e le statistiche dei messaggi della dashboard non sono descritti
@@ -61,9 +61,9 @@ che si applicano: SecurityGateway service down, SecurityGateway API not
 answering, SecurityGateway delivery queue growing, più Device
 unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-Un dispositivo SecurityGateway mostra un pannello **Mail services** sopra
+Un monitor SecurityGateway mostra un pannello **Mail services** sopra
 i grafici, letto dall'ultima misurazione memorizzata: aprire la pagina non
 si connette mai al gateway. Elenca ogni servizio osservato con la sua
 porta, una parola e un colore (Answering, Down) e il suo tempo di
@@ -78,7 +78,7 @@ con il suo valore più recente.
     smtp,web_https
     ```
 
-2. Per leggere anche i contatori di prestazioni, è richiesto SecurityGateway 12.5 o successivo. Crea un account dedicato nominato come segue, con una password lunga usata in nessun altro posto, e dagli il ruolo Domain Administrator. Se i contatori restano vuoti sulla pagina del dispositivo, la tua versione li riserva al ruolo Global Administrator, e l'account ha bisogno di quel ruolo invece.
+2. Per leggere anche i contatori di prestazioni, è richiesto SecurityGateway 12.5 o successivo. Crea un account dedicato nominato come segue, con una password lunga usata in nessun altro posto, e dagli il ruolo Domain Administrator. Se i contatori restano vuoti sulla pagina del monitor, la tua versione li riserva al ruolo Global Administrator, e l'account ha bisogno di quel ruolo invece.
 
     ```
     dumbmonit

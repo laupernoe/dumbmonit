@@ -2,7 +2,7 @@
 
 通过其 API 服务器的集群：不是 Ready 或处于压力下的节点、Pod 崩溃循环或卡住的 Pending、缺少副本的 Deployment、StatefulSet 和 DaemonSet、永远不会绑定的卷声明，以及最后一小时的警告事件。
 
-DumbMonit 使用专用服务账户的令牌读取 API，该令牌绑定到只读 ClusterRole：对节点、Pod、工作负载、持久卷声明和事件只有 `get` 和 `list`，别的没有。它永远不写，该角色不提供对 Secrets 或 ConfigMaps 的访问。一个设备覆盖整个集群，无论分发版本如何：k3s、kubeadm、k0s、MicroK8s、Talos 或 DumbMonit 可以到达其 API 的托管集群。
+DumbMonit 使用专用服务账户的令牌读取 API，该令牌绑定到只读 ClusterRole：对节点、Pod、工作负载、持久卷声明和事件只有 `get` 和 `list`，别的没有。它永远不写，该角色不提供对 Secrets 或 ConfigMaps 的访问。一个监控项覆盖整个集群，无论分发版本如何：k3s、kubeadm、k0s、MicroK8s、Talos 或 DumbMonit 可以到达其 API 的托管集群。
 
 DumbMonit 每分钟平行读取八个集合：版本、节点、Pod、Deployment、StatefulSet 和 DaemonSet、持久卷声明和 `Warning` 类型的事件（由 API 服务器过滤）。长列表在 500 页面上读取。
 
@@ -43,9 +43,9 @@ DumbMonit 每分钟平行读取八个集合：版本、节点、Pod、Deployment
 - **Kubernetes 工作负载缺少副本**：Deployment、StatefulSet 或 DaemonSet 可用副本少于它要求的，十分钟（通知，一小时后升级）。滚动更新在启动另一个时移除一个副本；十分钟涵盖它。
 - **Kubernetes 卷声明待处理**：卡住的声明十五分钟（通知）。
 
-加上设备不可达，当 API 服务器停止回答时。
+加上监控项不可达，当 API 服务器停止回答时。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 集群面板用一句话说出什么是错的，然后列出节点（就绪或不，压力，隔离，kubelet 版本）、需要注意的 Pod（崩溃循环、待处理、受阻、未就绪、及其重启）、缺少副本的工作负载、卡住的卷声明，以及最后一小时按原因的警告事件。健康的集群显示其计数及别的什么也不。
 
@@ -118,14 +118,14 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-在添加设备之前检查该角色，询问 API 服务器该账户可以做什么；第一个命令必须回答 `yes`，第二个 `no`：
+在添加监控项之前检查该角色，询问 API 服务器该账户可以做什么；第一个命令必须回答 `yes`，第二个 `no`：
 
 ```
 kubectl auth can-i list pods --as=system:serviceaccount:kube-system:dumbmonit
 kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
-一个令牌使用 `kubectl create token dumbmonit -n kube-system` 制作的也有效，但它过期（默认一小时后）：设备随后失败，"API 服务器拒绝了令牌（401）"。上面的 Secret 是长期形式 Kubernetes 为此使用文档。要撤销 DumbMonit 的访问，删除 Secret 或服务账户。
+一个令牌使用 `kubectl create token dumbmonit -n kube-system` 制作的也有效，但它过期（默认一小时后）：监控项随后失败，"API 服务器拒绝了令牌（401）"。上面的 Secret 是长期形式 Kubernetes 为此使用文档。要撤销 DumbMonit 的访问，删除 Secret 或服务账户。
 
 ## 凭证 {#credentials}
 

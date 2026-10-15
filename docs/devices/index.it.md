@@ -1,6 +1,6 @@
-# Tipi di dispositivo
+# Tipi di monitor
 
-DumbMonit chiama tutto quello che controlla un *dispositivo* (l'API dice *target*), anche quando è una pagina web o un nome DNS. Ogni tipo è un collector sul server; il server descrive ogni tipo all'interfaccia (`GET /api/collectors`), quindi il modulo corrisponde sempre a quello che questa versione può monitorare.
+DumbMonit chiama tutto quello che controlla un *monitor* (l'API dice *target*), anche quando è una pagina web o un nome DNS. Ogni tipo è un collector sul server; il server descrive ogni tipo all'interfaccia (`GET /api/collectors`), quindi il modulo corrisponde sempre a quello che questa versione può monitorare.
 
 | Tipo | `kind` | Credenziale | Uso tipico |
 |---|---|---|---|
@@ -69,18 +69,18 @@ DumbMonit chiama tutto quello che controlla un *dispositivo* (l'API dice *target
 | [Heartbeat](push.md) | `push` | nessuno (URL segreto) | Lavoro cron, script di backup, automazione che deve richiamare |
 | [Modifiche del sito web](webchange.md) | `webchange` | nessuno | Una pagina o un intero sito: modifiche di testo, pagine nuove e rimosse, prima/dopo con screenshot |
 | [Salute e SEO del sito web](website.md) | `website` | nessuno | Siti in massa: giù, pagina vuota, reindirizzamenti, noindex, robots.txt, modifiche di titolo/descrizione/canonico, piattaforma (importazione CSV) |
-| [Dispositivo demo](demo.md) | `dummy` | nessuno | Esplora l'interfaccia web senza hardware |
+| [Monitor demo](demo.md) | `dummy` | nessuno | Esplora l'interfaccia web senza hardware |
 
-## Come viene letto un dispositivo
+## Come viene letto un monitor
 
-Lo scheduler esegue ogni dispositivo abilitato al suo intervallo (60 s di default, minimo 10 s) attraverso il collector per il suo tipo, con al massimo `DUMBMONIT_MAX_CONCURRENT_PROBES` sonde in volo e un timeout fisso di `DUMBMONIT_PROBE_TIMEOUT_SECS` per sonda. Ogni sonda riuscita scrive i suoi campioni più `dumbmonit_up = 1`; una sonda fallita non scrive nulla, ed è il silenzio della serie che la regola "Dispositivo irraggiungibile" rileva. La pagina del dispositivo mostra il fallimento alla prossima sonda, ma l'avviso attende di proposito: si attiva circa quattro minuti dopo l'ultima sonda riuscita (tre minuti di silenzio, poi un mantenimento di un minuto), quindi una singola sonda persa non sveglia mai nessuno.
+Lo scheduler esegue ogni monitor abilitato al suo intervallo (60 s di default, minimo 10 s) attraverso il collector per il suo tipo, con al massimo `DUMBMONIT_MAX_CONCURRENT_PROBES` sonde in volo e un timeout fisso di `DUMBMONIT_PROBE_TIMEOUT_SECS` per sonda. Ogni sonda riuscita scrive i suoi campioni più `dumbmonit_up = 1`; una sonda fallita non scrive nulla, ed è il silenzio della serie che la regola "Monitor irraggiungibile" rileva. La pagina del monitor mostra il fallimento alla prossima sonda, ma l'avviso attende di proposito: si attiva circa quattro minuti dopo l'ultima sonda riuscita (tre minuti di silenzio, poi un mantenimento di un minuto), quindi una singola sonda persa non sveglia mai nessuno.
 
-I fallimenti vengono classificati. Un dispositivo che non risponde è *irraggiungibile* e solleva un avviso. Una comunità sbagliata, un certificato rifiutato o una capacità mancante è un *errore di configurazione*: è mostrato sulla pagina del dispositivo, in rosso, con il motivo, ed è non notificato. La distinzione è importante: un dispositivo configurato erroneamente non dovrebbe svegliare nessuno di notte.
+I fallimenti vengono classificati. Un monitor che non risponde è *irraggiungibile* e solleva un avviso. Una comunità sbagliata, un certificato rifiutato o una capacità mancante è un *errore di configurazione*: è mostrato sulla pagina del monitor, in rosso, con il motivo, ed è non notificato. La distinzione è importante: un monitor configurato erroneamente non dovrebbe svegliare nessuno di notte.
 
 ## Opzioni
 
-Alcuni tipi leggono opzioni dai tag del dispositivo: la porta API, se accettare un certificato auto-firmato, quali nodi monitorare. Il modulo mostra un campo tipizzato per opzione sotto **Altre opzioni**, con il suo default e il testo di aiuto. Le pagine per tipo le elencano verbatim. Le opzioni sono impostazioni, non etichette: non vengono copiate sulla serie. I tag liberi (qualsiasi altra chiave) vengono copiati su ogni serie come etichette `tag_<key>`, eccetto chiavi che nominano un secret (abbinate per parola: `password`, `token`, `key`, `cert`, `secret`, `pass`, `private`, `pem`…, quindi `primary_key` è saltato ma `keyboard` no) e valori più lunghi di 256 caratteri. Non mettere mai un secret in un tag comunque: usa il campo di credenziale, che è crittografato.
+Alcuni tipi leggono opzioni dai tag del monitor: la porta API, se accettare un certificato auto-firmato, quali nodi monitorare. Il modulo mostra un campo tipizzato per opzione sotto **Altre opzioni**, con il suo default e il testo di aiuto. Le pagine per tipo le elencano verbatim. Le opzioni sono impostazioni, non etichette: non vengono copiate sulla serie. I tag liberi (qualsiasi altra chiave) vengono copiati su ogni serie come etichette `tag_<key>`, eccetto chiavi che nominano un secret (abbinate per parola: `password`, `token`, `key`, `cert`, `secret`, `pass`, `private`, `pem`…, quindi `primary_key` è saltato ma `keyboard` no) e valori più lunghi di 256 caratteri. Non mettere mai un secret in un tag comunque: usa il campo di credenziale, che è crittografato.
 
-## Dispositivi genitore
+## Monitor genitore
 
-Qualsiasi dispositivo può dichiarare un altro come suo genitore. Quando il genitore è irraggiungibile, gli avvisi dai suoi discendenti sono marcati *Soppresso da genitore* invece di essere inviati: uno switch che scende produce una notifica, non trenta. Sulla pagina Dispositivi, i figli si impilano sotto il genitore e si oscurano quando è irraggiungibile.
+Qualsiasi monitor può dichiarare un altro come suo genitore. Quando il genitore è irraggiungibile, gli avvisi dai suoi discendenti sono marcati *Soppresso da genitore* invece di essere inviati: uno switch che scende produce una notifica, non trenta. Sulla pagina Monitor, i figli si impilano sotto il genitore e si oscurano quando è irraggiungibile.

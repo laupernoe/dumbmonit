@@ -1,16 +1,16 @@
 # 服务：HTTP、TCP、DNS、ping、TLS、NTP、SMTP、SQL、MQTT、WebSocket {#services-http-tcp-dns-ping-tls-ntp-smtp-sql-mqtt-websocket}
 
-十一个监视器观看**服务**而不是设备，Uptime Kuma 风格：一个网页、一个端口、一个 DNS 名称、一个主机、一个证书、一个时间服务器、一个邮件中继、一个数据库、一个 MQTT 代理、一个 WebSocket 端点。每个服务获得一个历史条、一个响应时间和在其设备页面上的可用百分比。
+十一个监视器观看**服务**而不是监控项，Uptime Kuma 风格：一个网页、一个端口、一个 DNS 名称、一个主机、一个证书、一个时间服务器、一个邮件中继、一个数据库、一个 MQTT 代理、一个 WebSocket 端点。每个服务获得一个历史条、一个响应时间和在其监控项页面上的可用百分比。
 
 最后五个进一步比打开连接：它们在服务自己的协议中开始一个真实会话。这是"端口 5432 打开"和"数据库仍然接受我的账户并答复查询"之间的区别。NTP 介于两者之间：一个单一请求和回复，在 NTP 自己的协议中，足以读取服务器的时钟而不需要会话。
 
 ## 服务状态如何工作 {#how-service-state-works}
 
-服务可以答复并仍然关闭：一个 `500`、一个缺失关键词、一个过期证书。所以这些监视器在每个检查写一个点，`probe_success` 是 1 或 0，而不是像硬件设备那样沉默。那是使可用百分比成为可能的东西：`avg_over_time(dumbmonit_probe_success[30d])`。
+服务可以答复并仍然关闭：一个 `500`、一个缺失关键词、一个过期证书。所以这些监视器在每个检查写一个点，`probe_success` 是 1 或 0，而不是像硬件监控项那样沉默。那是使可用百分比成为可能的东西：`avg_over_time(dumbmonit_probe_success[30d])`。
 
 | 情况 | 发生什么 |
 |---|---|
-| 无效选项或地址，ICMP 套接字不允许（见 Ping） | 配置错误：没有写入任何东西，设备页面显示错误，没有"关闭"警报。 |
+| 无效选项或地址，ICMP 套接字不允许（见 Ping） | 配置错误：没有写入任何东西，监控项页面显示错误，没有"关闭"警报。 |
 | 连接拒绝、超时、TLS 拒绝、`500`、关键词缺失、总包丢失、密码拒绝、查询失败 | `probe_success = 0`：中断被记录、日期和计数。 |
 | 一切正常 | `probe_success = 1`。 |
 
@@ -180,7 +180,7 @@
 4. 如果 DumbMonit 在 Docker 中运行，保持 DumbMonit 服务的 `sysctls:` 行的运送 docker-compose.yml：它们允许容器的非特权用户打开 ICMP 回应套接字。不需要能力。
 
 !!! warning
-    没有那个 sysctl，检查无法打开 ICMP 套接字：它将这作为配置错误报告，而不是主机失败。一些设备也故意忽略 ping：在得出结论之前检查那个。
+    没有那个 sysctl，检查无法打开 ICMP 套接字：它将这作为配置错误报告，而不是主机失败。一些监控项也故意忽略 ping：在得出结论之前检查那个。
 
 ```yaml
 services:
@@ -373,7 +373,7 @@ Docker 外，`sysctl -w net.ipv4.ping_group_range="0 2147483647"` 在主机上�
 | `topic` | 主题 | *（空）* | 检查订阅的主题。空：它仅连接，它已经告诉您代理活着并接受您的账户。 |
 | `expect_message` | 期望保留消息 | `false` | 消息必须在超时前到达那个主题。仅保留消息立即到达：一个仅从时间与然后发布的主题对刚连接的客户端看静。 |
 | `expect` | 期望的内容 | *（空）* | 那个消息必须包含的文本。填写它意味着期望消息。 |
-| `client_id` | 客户标识符 | *（派生）* | 宣布到代理的名称。默认派生自设备，所以两个检查从不互相断开连接。 |
+| `client_id` | 客户标识符 | *（派生）* | 宣布到代理的名称。默认派生自监控项，所以两个检查从不互相断开连接。 |
 | `server_name` | 服务器名称（SNI） | *（主机）* | 宣布到代理并在证书中检查的域名。当地址是 IP 时设置。 |
 | `insecure_tls` | 接受不可验证的证书 | `false` | 不可验证的链不再计为失败：过期日期仍被记录。 |
 | `allow_private_targets` | 允许环回和链接本地目标 | `false` | 见下面的 "Addresses the checks refuse"。 |
@@ -490,7 +490,7 @@ Docker 外，`sysctl -w net.ipv4.ping_group_range="0 2147483647"` 在主机上�
 | 检查显示命名 `allow_private_targets` 的配置错误 | 地址是环回或链接本地。见上面的 "Addresses the checks refuse"。 |
 | TCP 关闭，虽然 `telnet host port` 从您的笔记本工作 | DumbMonit 容器无法到达主机（Docker 网络、防火墙）。从容器的网络内测试。 |
 | DNS 关闭，`reason="record"` | 答案不包含 `expect` 中列出的每个值。 |
-| Ping 关闭，`reason="packet_loss"` | 损失在 `loss_threshold_percent` 上方；一些设备速率限制 ICMP。 |
+| Ping 关闭，`reason="packet_loss"` | 损失在 `loss_threshold_percent` 上方；一些监控项速率限制 ICMP。 |
 | DNS 关闭，`reason="record"`，虽然 `expect` 匹配 | `expect_mode` 是 `exact` 并且答案保留额外值，或 `forbid` 匹配。 |
 | SMTP 关闭，`reason="protocol"` 在 `security = starttls` | 中继不在这个端口广告 STARTTLS。对 465 使用 `tls`，对纯本地中继使用 `none`。 |
 | 数据库检查关闭，`reason="auth"` | 账户存在但可能不从 DumbMonit 机器连接：检查 `pg_hba.conf` 或 MySQL 用户的主机部分。 |

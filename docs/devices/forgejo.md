@@ -38,7 +38,7 @@ All metrics are prefixed `dumbmonit_forgejo_`.
 
 The [built-in rules](../alerting/rules.md#self-hosted-forges) that apply:
 Forgejo/Gitea runners all offline, Forgejo/Gitea scheduled task overdue, plus
-Device unreachable. A security score checks the scheduled tasks: see
+Monitor unreachable. A security score checks the scheduled tasks: see
 [Vendor updates and other checks](../using/security-score.md).
 
 ## What it does not watch
@@ -49,7 +49,7 @@ Their API also has no equivalent of GitLab's sign-up or two-factor settings,
 nor a self-reported "update available" flag — compare the version above
 against the project's [release notes](https://forgejo.org/releases/) by hand.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never calls Forgejo or Gitea. It says what is wrong first (the health check

@@ -36,7 +36,7 @@ Alle Metriken haben das Präfix `dumbmonit_forgejo_`.
 | `scrape_errors` | nur für Administratoren verfügbare Aufrufe, die bei der letzten Prüfung fehlschlugen (0 bei einem gewöhnlichen Token, dessen Aufrufe nie versucht werden) | |
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#self-hosted-forges): Forgejo/Gitea-
-Runner alle offline, Forgejo/Gitea geplante Aufgabe überfällig, außerdem Gerät nicht erreichbar.
+Runner alle offline, Forgejo/Gitea geplante Aufgabe überfällig, außerdem Monitor nicht erreichbar.
 Ein Sicherheitswert prüft die geplanten Aufgaben: siehe
 [Hersteller-Updates und weitere Prüfungen](../using/security-score.md).
 
@@ -49,7 +49,7 @@ Zwei-Faktor-Einstellungen von GitLab und auch keine selbst gemeldete Markierung 
 verfügbar“ — vergleichen Sie die obige Version von Hand mit den
 [Release-Notes](https://forgejo.org/releases/) des Projekts.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite ruft
 Forgejo oder Gitea nie auf. Es nennt zuerst, was nicht stimmt (Health-Check schlägt fehl, alle

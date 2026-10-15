@@ -49,9 +49,9 @@ Die geltende [eingebaute Regel](../alerting/rules.md#sophos-firewall):
   (Advisory).
 
 Für Traffic-Zähler fügen Sie die Firewall zusätzlich als
-[SNMP-Gerät](snmp.md) hinzu: SFOS beantwortet die Standard-Interface-MIB.
+[SNMP-Monitor](snmp.md) hinzu: SFOS beantwortet die Standard-Interface-MIB.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Firewall-Panel sagt, ob jede Schnittstelle in einer Zone ihren Link
 hat, und listet dann diese Schnittstellen und die IPsec-Verbindungen mit

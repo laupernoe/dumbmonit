@@ -13,26 +13,26 @@ la **ausencia** de una llamada la que genera la alerta.
 
 ## Cómo funciona {#how-it-works}
 
-Cada dispositivo heartbeat obtiene una URL de la forma
+Cada monitor heartbeat obtiene una URL de la forma
 `https://<tu DumbMonit>/api/push/<token>`. El token es un valor
 aleatorio de 128 bits, guardado con hash para la búsqueda y cifrado para
-mostrarlo: se muestra en la página del dispositivo, con un botón de
-copiar, durante todo el tiempo que exista el dispositivo. Es
+mostrarlo: se muestra en la página del monitor, con un botón de
+copiar, durante todo el tiempo que exista el monitor. Es
 deliberadamente abierto — sin sesión, sin token de API, sin cabecera
 `X-Requested-With` — porque una línea `curl` en un crontab no tiene nada
 de eso. Tener el token solo te permite decir «el trabajo se ejecutó».
 
-En cada pasada del scheduler (el intervalo del dispositivo, 60 s por
+En cada pasada del scheduler (el intervalo del monitor, 60 s por
 defecto) el recolector lee la hora de la última llamada y escribe:
 
 | Situación | `probe_success` | Efecto |
 |---|---|---|
-| Ninguna llamada recibida todavía | *(nada escrito)* | El dispositivo muestra **Waiting**. Sin alerta: el trabajo aún no está en su sitio. |
+| Ninguna llamada recibida todavía | *(nada escrito)* | El monitor muestra **Waiting**. Sin alerta: el trabajo aún no está en su sitio. |
 | Última llamada dentro del intervalo esperado + gracia | `1` | **Reporting**. |
 | Última llamada más antigua que el intervalo esperado + gracia | `0`, `reason="missed"` | **Down**; la regla «Heartbeat missed» se activa tras dos minutos. |
 | La última llamada dijo `status=down` | `0`, `reason="reported_down"` | **Down** de inmediato, sea lo que sea que diga el reloj. |
 
-Una llamada también reevalúa el dispositivo de inmediato, así que un
+Una llamada también reevalúa el monitor de inmediato, así que un
 trabajo que se reanuda limpia su alerta sin esperar a la siguiente
 pasada del scheduler.
 
@@ -47,7 +47,7 @@ allá de sesenta llamadas por minuto para un token. Se aceptan tanto
 | Parámetro | Significado |
 |---|---|
 | `status` | `up` (por defecto) o `down`: el trabajo reporta un fallo él mismo. |
-| `msg` | Una palabra libre de explicación, conservada (truncada a 500 caracteres) y mostrada en la página del dispositivo. |
+| `msg` | Una palabra libre de explicación, conservada (truncada a 500 caracteres) y mostrada en la página del monitor. |
 
 Estos son los parámetros del monitor push de Uptime Kuma: un script
 escrito para él funciona sin cambios.
@@ -62,8 +62,8 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
 2. Define el intervalo esperado según la programación del trabajo
    («24h» para un trabajo nocturno, «1h» para uno por hora) y, si la
    programación se desvía, un período de gracia más amplio. Guarda el
-   dispositivo.
-3. La página del dispositivo muestra la URL a llamar. Añádela al final
+   monitor.
+3. La página del monitor muestra la URL a llamar. Añádela al final
    del trabajo, para que solo se llame cuando el trabajo tuvo éxito:
 
     ```
@@ -73,9 +73,9 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
 4. Un trabajo que puede saber cuándo falló puede decirlo en lugar de
    quedarse en silencio: añade ?status=down&msg=… a la URL, y la alerta
    se activa de inmediato.
-5. Hasta que llega la primera llamada el dispositivo muestra «Waiting»
+5. Hasta que llega la primera llamada el monitor muestra «Waiting»
    y nada se alerta. ¿URL perdida o filtrada? «Regenerate» en la página
-   del dispositivo emite una nueva; la antigua deja de responder de
+   del monitor emite una nueva; la antigua deja de responder de
    inmediato.
 
 !!! warning
@@ -150,7 +150,7 @@ de servicio: `avg_over_time(dumbmonit_probe_success{probe="push"}[30d])`.
 
 Regla integrada que se aplica: **Heartbeat missed** (advisory, 2
 minutos). Las reglas «Service down» y «Service flapping» omiten los
-heartbeats, y «Device unreachable» nunca se activa para ellos: el
+heartbeats, y «Monitor unreachable» nunca se activa para ellos: el
 recolector siempre se ejecuta, solo cambia su veredicto.
 
 ## API {#api}

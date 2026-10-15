@@ -59,9 +59,9 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#mikrotik-routeros):
 MikroTik CPU high, memory high, storage almost full, temperature high,
 power supply or fan failed, interface accumulating errors, link
 flapping, RouterOS update available und firmware upgrade pending, plus
-Device unreachable.
+Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite verbindet sich nie mit dem Router. Es zeigt die

@@ -70,7 +70,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#pfsense):
 - **pfSense disk nearly full**: mehr als 90 % seit dreißig Minuten
   (Advisory).
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Firewall-Panel sagt in einem Satz, was nicht stimmt, zeigt CPU,
 Speicher, Platte und Temperatur, listet dann jedes Gateway mit seiner

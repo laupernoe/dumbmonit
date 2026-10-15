@@ -201,7 +201,7 @@ pub async fn delete(pool: &SqlitePool, id: TargetId) -> Result<bool> {
 /// `ProbeError`, dont `means_down` fait la même distinction, et du message des
 /// sondes relayées restées sans réponse.
 pub fn error_means_down(message: &str) -> bool {
-    message.starts_with("Timed out") || message.starts_with("Device unreachable")
+    message.starts_with("Timed out") || message.starts_with("Monitor unreachable")
 }
 
 /// Préfixe du verdict d'une sonde de disponibilité en échec (voir

@@ -11,7 +11,7 @@ aufrufen. Verbinden Sie einen, und fragen Sie dann Dinge wie:
 - "Wie voll ist der Backup-Server, und wird es schlimmer?"
 - "Poste ein Update auf der Statusseite: der Mailserver ist zurück."
 
-Der Assistant sieht, was die Oberfläche sieht — Geräte, Alarme,
+Der Assistant sieht, was die Oberfläche sieht — Monitore, Alarme,
 Historie, Metriken, Agents, Statusseiten — und nutzt dieselben
 Worte: *reporting*, *unreachable*, *waiting*, *advisory*, *warning*,
 *suppressed by parent*. Er läuft innerhalb des Servers: nichts neben
@@ -26,7 +26,7 @@ das Token nach dem Assistant oder der Maschine, auf der er läuft
 
 | Einstellung | Wahlmöglichkeiten |
 | --- | --- |
-| **Scope** | **Read**: nachsehen — Status, Geräte, Alarme, Historie, Metriken, Regeln, Agents, Statusseiten. Kann nie etwas ändern. **Read and write**: auch handeln — stummschalten, bestätigen, abfragen, ein Gerät hinzufügen, einen Container neu starten, einen Vorfall posten… (die [Schreibwerkzeuge](#what-the-assistant-can-call)). |
+| **Scope** | **Read**: nachsehen — Status, Monitore, Alarme, Historie, Metriken, Regeln, Agents, Statusseiten. Kann nie etwas ändern. **Read and write**: auch handeln — stummschalten, bestätigen, abfragen, einen Monitor hinzufügen, einen Container neu starten, einen Vorfall posten… (die [Schreibwerkzeuge](#what-the-assistant-can-call)). |
 | **Expires** | 30 Tage, 90 Tage (der Standard), 1 Jahr oder nie. Ein abgelaufenes Token funktioniert nicht mehr; erstellen Sie ein neues. |
 | **Allowed networks** | Optional. Adressen oder CIDR-Bereiche, aus denen das Token genutzt werden darf (`192.168.1.0/24, 10.8.0.5`). Leer: überall. |
 
@@ -168,29 +168,29 @@ er die anderen ausführt.
 
 | Werkzeug | Scope | Tut |
 | --- | --- | --- |
-| `get_status` | read | Das Bulletin, die Antwort auf "ist alles in Ordnung?": Gerätezahlen, feuernde und sich aufbauende Alarme, ein Satz ("2 advisories, 1 unreachable."). |
-| `list_devices` | read | Geräte und Services mit Zustand, übergeordnetem Gerät und Tags; filterbar nach Teilstring oder Zustand. |
-| `get_device` | read | Ein Gerät: Konfiguration, Zustand, aktive Alarme, 24-Stunden-Zusammenfassung CPU/Speicher/vollste Platte (Verfügbarkeit und Latenz für einen Service-Check). |
+| `get_status` | read | Das Bulletin, die Antwort auf "ist alles in Ordnung?": Monitorzahlen, feuernde und sich aufbauende Alarme, ein Satz ("2 advisories, 1 unreachable."). |
+| `list_devices` | read | Monitore und Services mit Zustand, übergeordnetem Monitor und Tags; filterbar nach Teilstring oder Zustand. |
+| `get_device` | read | Ein Monitor: Konfiguration, Zustand, aktive Alarme, 24-Stunden-Zusammenfassung CPU/Speicher/vollste Platte (Verfügbarkeit und Latenz für einen Service-Check). |
 | `list_alerts` | read | Aktive Alarme mit Schweregrad-Worten, seit wann, Wert, Unterdrückung, Bestätigung. |
-| `alert_history` | read | Alarm-Übergänge, neueste zuerst (`since` oder `hours`, optionales Gerät, Limit). |
+| `alert_history` | read | Alarm-Übergänge, neueste zuerst (`since` oder `hours`, optionaler Monitor, Limit). |
 | `query_metrics` | read | Eine MetricsQL-Range-Abfrage, höchstens 60 Punkte pro Zeitreihe. |
 | `list_silences` | read | Wartungsfenster und ob sie jetzt aktiv sind. |
 | `list_rules` | read | Alarmregeln mit Art, Schweregrad, Schwellenwert, aktiviert. |
-| `list_device_types` | read | Die Gerätearten, die dieser Server überwachen kann, mit den Optionen und Credentials, die jede erwartet — was `add_device` braucht. |
-| `list_agents` | read | Maschinen mit laufendem Agent: OS, Agent-Version, Relay-Modus, Site, relayte Geräte, letzter Kontakt, Bindung. |
+| `list_device_types` | read | Die Monitorarten, die dieser Server überwachen kann, mit den Optionen und Credentials, die jede erwartet — was `add_device` braucht. |
+| `list_agents` | read | Maschinen mit laufendem Agent: OS, Agent-Version, Relay-Modus, Site, relayte Monitore, letzter Kontakt, Bindung. |
 | `list_containers` | read | Die Docker-Container einer Maschine mit laufendem Agent: Zustand, Gesundheit, Neustarts, verfügbares Update, letzter Befehl. |
 | `list_heartbeats` | read | Heartbeat-Monitore: erwartetes Intervall, letzter Aufruf, Urteil (waiting, on time, missed, reported down). Die geheime URL wird nie angezeigt. |
-| `list_status_pages` | read | Statusseiten, veröffentlicht oder nicht, mit ihrem öffentlichen Pfad (`/s/<slug>`), den gezeigten Geräten und ihren offenen Vorfällen. |
+| `list_status_pages` | read | Statusseiten, veröffentlicht oder nicht, mit ihrem öffentlichen Pfad (`/s/<slug>`), den gezeigten Monitoren und ihren offenen Vorfällen. |
 | `list_channels` | read | Benachrichtigungskanäle: Art, aktiviert, letzter Fehler, letzte gesendete Nachricht. Nie ihre Secrets. |
-| `list_packs` | read | Installierte Integrationspakete: Version, Geräteart, aktiviert, nutzende Geräte, Fehler. |
-| `silence_device` | write | Ein einmaliges Wartungsfenster auf einem Gerät, jetzt beginnend (standardmäßig 1 Stunde, höchstens eine Woche). |
+| `list_packs` | read | Installierte Integrationspakete: Version, Monitorart, aktiviert, nutzende Monitore, Fehler. |
+| `silence_device` | write | Ein einmaliges Wartungsfenster auf einem Monitor, jetzt beginnend (standardmäßig 1 Stunde, höchstens eine Woche). |
 | `remove_silence` | write | Entfernt ein Wartungsfenster. |
-| `schedule_maintenance` | write | Ein einmaliges Wartungsfenster zu einem gegebenen Datum, auf einem Gerät oder der gesamten Instanz, höchstens eine Woche. |
+| `schedule_maintenance` | write | Ein einmaliges Wartungsfenster zu einem gegebenen Datum, auf einem Monitor oder der gesamten Instanz, höchstens eine Woche. |
 | `acknowledge_alert` | write | Bestätigt einen Alarm per Fingerprint für eine Anzahl Stunden (standardmäßig 4): Erinnerungen pausieren, die Behebung wird trotzdem gemeldet. `hours: 0` hebt es auf. |
-| `probe_device` | write | Fragt ein Gerät sofort ab und meldet, was gemessen wurde. |
-| `set_device_enabled` | write | Aktiviert oder deaktiviert die Überwachung eines Geräts. |
+| `probe_device` | write | Fragt einen Monitor sofort ab und meldet, was gemessen wurde. |
+| `set_device_enabled` | write | Aktiviert oder deaktiviert die Überwachung eines Monitors. |
 | `set_rule_enabled` | write | Aktiviert oder deaktiviert eine Alarmregel. |
-| `add_device` | write | Fügt ein Gerät hinzu: Name, Art, Adresse, Intervall, übergeordnetes Gerät, Optionen, Credentials, Relay-Agent. |
+| `add_device` | write | Fügt einen Monitor hinzu: Name, Art, Adresse, Intervall, übergeordneter Monitor, Optionen, Credentials, Relay-Agent. |
 | `discover_network` | write | Scannt ein Netzwerk (CIDR, höchstens 4096 Adressen) nach SNMP-Geräten und schlägt für jedes ein Profil vor. |
 | `restart_container` | write | Bittet den Agent einer Maschine, einen ihrer Container neu zu starten. |
 | `test_channel` | write | Sendet eine Testnachricht über einen Benachrichtigungskanal. |
@@ -199,7 +199,7 @@ er die anderen ausführt.
 Ein Read-Token, das ein Write-Werkzeug aufruft, erhält eine klare
 Ablehnung als Werkzeugergebnis (`isError: true`); der Assistant
 erklärt es, und nichts ändert sich. Dasselbe gilt für alles, was das
-Werkzeug nicht kann — ein unbekanntes Gerät, ein mehrdeutiger Name,
+Werkzeug nicht kann — ein unbekannter Monitor, ein mehrdeutiger Name,
 ein Fenster länger als eine Woche: die Meldung sagt, was zu beheben
 ist.
 
@@ -235,14 +235,14 @@ die vor jedem JSON-RPC kommen:
 | `202` | — | Eine Notification: akzeptiert, kein Body. |
 
 Ein Werkzeug, das läuft, aber fehlschlägt — fehlender Scope,
-unbekanntes Gerät — ist kein Protokollfehler: Es antwortet normal mit
+unbekannter Monitor — ist kein Protokollfehler: Es antwortet normal mit
 `isError: true` und einem Satz, den der Assistant weitergeben kann.
 
 ## Sicherheitshinweise {#security-notes}
 
 - **Ein Token ist ein Passwort.** Wer es besitzt, liest alles, was
   die Oberfläche zeigt — und, mit einem Write-Token, ändert alles,
-  was ein Administrator über die REST-API ändern kann (Geräte,
+  was ein Administrator über die REST-API ändern kann (Monitore,
   Regeln, Kanäle), Konten, Tokens und Backups ausgenommen. Halten
   Sie es aus geteilten Chats, Screenshots und Repositories fern.
   Widerrufen Sie ein Token, bei dem Sie unsicher sind; erstellen Sie
@@ -265,10 +265,10 @@ unbekanntes Gerät — ist kein Protokollfehler: Es antwortet normal mit
   verliert seine Schreibkraft, wenn dieses Konto kein Admin mehr ist,
   und wird widerrufen, wenn dieses Konto gelöscht wird.
 - **Nichts Geheimes kommt zurück.** Die Werkzeuge geben nie
-  Gerätezugangsdaten zurück (nur ihre Art), Kanal-Secrets,
+  Monitor-Zugangsdaten zurück (nur ihre Art), Kanal-Secrets,
   Heartbeat-URLs oder Tokens. `add_device` nimmt zwar Zugangsdaten
   entgegen: Sie reisen durch die Konversation Ihres Assistants, und
-  so durch dessen Anbieter. Für ein Gerät mit sensiblen Zugangsdaten
+  so durch dessen Anbieter. Für einen Monitor mit sensiblen Zugangsdaten
   bevorzugen Sie die Web-Oberfläche.
 - **Browser und `Origin`.** Ein Request mit einem `Origin`-Header
   (ein browserbasierter Client) wird mit `403` abgelehnt, sofern

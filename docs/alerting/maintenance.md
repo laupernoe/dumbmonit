@@ -1,6 +1,6 @@
 # Maintenance windows
 
-A maintenance window (a *silence* in the API) stops notifications for a device,
+A maintenance window (a *silence* in the API) stops notifications for a monitor,
 or for everything, during a period. Evaluation continues underneath: when the
 window ends, an alert that is still active is notified once, rather than
 appearing out of nowhere after two hours.
@@ -9,13 +9,13 @@ appearing out of nowhere after two hours.
 
 - **Alerts → Maintenance**: the list of windows, with *Active now*
   or *Scheduled*, and the form to add one.
-- **Device page → Silence 1 h / Silence until…**: a quick one-off window for
-  the whole device.
+- **Monitor page → Silence 1 h / Silence until…**: a quick one-off window for
+  the whole monitor.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, on one alert in the *Now* tab or a device page, is a
+**Snooze**, on one alert in the *Now* tab or a monitor page, is a
 smaller version of the same mechanism: a one-off window scoped to that one
-alert's exact labels rather than the whole device, so a sibling rule keeps
+alert's exact labels rather than the whole monitor, so a sibling rule keeps
 talking. It shows up here too, named `Snooze · …`. See
 [Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
@@ -24,7 +24,7 @@ talking. It shows up here too, named `Snooze · …`. See
 | Field | Meaning |
 |---|---|
 | Name | Shown in the list and in history. |
-| Device | Leave empty to cover every device. |
+| Monitor | Leave empty to cover every monitor. |
 | Start, End | Absolute times. The window includes the start and excludes the end. |
 | Comment | Optional. Why the window exists. |
 
@@ -78,7 +78,7 @@ A zone name the server does not know is refused when you save, with an example.
 
 A window can also be limited by exact label matches (`matchers` in the API):
 all of them must match the alert's labels, for example `tag_role = lab` and
-`__name__ = dumbmonit_up`. A window with no device and no matcher silences the
+`__name__ = dumbmonit_up`. A window with no monitor and no matcher silences the
 whole instance. Overlapping windows are fine; the first one that covers the
 moment explains the silence.
 
@@ -90,9 +90,9 @@ transition with `notified: false` and the reason. Disabling a window
 
 ## On a public status page
 
-A device covered by a maintenance window is shown as **Maintenance** on any
+A monitor covered by a maintenance window is shown as **Maintenance** on any
 [status page](../using/status-pages.md) that lists it, instead of red. If nothing
 else on the page is down or degraded, the page's overall state reads
-*Maintenance* as well. Only windows that name a device — or whose matchers are
-device-level labels — surface this way; a window limited to one metric stays an
+*Maintenance* as well. Only windows that name a monitor — or whose matchers are
+monitor-level labels — surface this way; a window limited to one metric stays an
 alerting matter.

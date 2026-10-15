@@ -1,6 +1,6 @@
-# Dispositivo de demonstração {#demo-device}
+# Monitor de demonstração {#demo-device}
 
-Um dispositivo fictício produzindo medições, para explorar a ferramenta sem
+Um monitor fictício produzindo medições, para explorar a ferramenta sem
 hardware. Nenhum hardware necessário.
 
 ## Configuração {#setup}
@@ -10,7 +10,7 @@ hardware. Nenhum hardware necessário.
    interface.
 
 O endereço é livre (o placeholder diz `demo`), não há credencial e nenhuma
-opção. O dispositivo de demonstração produz uma série `cpu_usage_percent`,
+opção. O monitor de demonstração produz uma série `cpu_usage_percent`,
 então as regras "High CPU" e "Unusual CPU" se aplicam a ele, e pode ser
 usado como pai ou filho em uma
 [cadeia de dependência](../alerting/index.md#dependency-suppression) para

@@ -44,9 +44,9 @@ an agent reads logs; the official image and a standard install run both.
 
 The [built-in rules](../alerting/rules.md#databases-message-broker-and-security-engine)
 that apply: CrowdSec Local API down, CrowdSec bouncer stopped pulling,
-CrowdSec reads no logs, plus Device unreachable.
+CrowdSec reads no logs, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries CrowdSec. It says what is wrong in a sentence (Local API, bouncers,

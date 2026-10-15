@@ -122,8 +122,8 @@ silêncios) são testados no lugar, sem rede.
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e opcionalmente
    `discover()` para detecção de perfil. Retorne variantes `ProbeError`
    com veracidade: `means_down()` decide se uma falha conta como
-   "dispositivo fora do ar" (alertado) ou como um erro de configuração
-   (mostrado no dispositivo, não notificado).
+   "monitor fora do ar" (alertado) ou como um erro de configuração
+   (mostrado no monitor, não notificado).
 2. Leia suas opções de `Target::tags` em um `options.rs`, com padrões.
 3. Registre-o em `crates/server/src/main.rs` com `registry.register(...)`.
    O agendador e a API nunca conhecem tipos concretos.

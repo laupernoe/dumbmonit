@@ -69,7 +69,7 @@ tiene uno), `mac`, `model` y `type` (`gateway`, `switch`,
 Las [reglas integradas](../alerting/rules.md#unifi-network) que se
 aplican: UniFi device offline, UniFi Internet down, UniFi WAN link
 down, UniFi gateway CPU high, UniFi device waiting for adoption, UniFi
-firmware update available, UniFi alarms, además de Device unreachable.
+firmware update available, UniFi alarms, además de Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -96,7 +96,7 @@ completo en [Dispositivos cliente](../alerting/rules.md#client-devices):
 | `last_seen_timestamp_seconds` | Última conexión, tal como la reporta `/rest/user` | `device`, `type` (`Wired`, `Wireless` o `Unknown`), `os` (vacío), `user` (vacío), `kind` |
 | `stale_seconds` | Positivo una vez que un cliente rastreado ha superado `device_stale_days` (3 por defecto) sin conectarse; impulsa la regla [Client device stale](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (siempre `connection`: UniFi no tiene copia de seguridad que reportar) |
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta UniFi. Indica primero qué va mal (dispositivos fuera de

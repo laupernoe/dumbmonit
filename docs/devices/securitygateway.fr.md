@@ -45,8 +45,8 @@ certains ne changent qu'une fois par minute.
 **Une panne partielle reste une vérification réussie.** Un service arrêté
 donne `service_up 0` pour ce service et les autres sont toujours mesurés.
 C'est seulement quand aucun service et aucune API ne répondent du tout que
-l'appareil est *inaccessible*. Une clé refusée est une erreur de
-configuration, affichée sur la page de l'appareil et non notifiée.
+la surveillance est *inaccessible*. Une clé refusée est une erreur de
+configuration, affichée sur la page de la surveillance et non notifiée.
 
 **Ce qui n'est pas lu.** La licence et son expiration, l'espace disque et les
 statistiques de messages du tableau de bord ne sont pas décrits par la
@@ -56,12 +56,12 @@ sur le serveur et listez le service dans son réglage `services`.
 
 Les [règles intégrées](../alerting/rules.md#mdaemon-and-securitygateway) qui
 s'appliquent : service SecurityGateway arrêté, API SecurityGateway ne répond
-pas, file de livraison SecurityGateway qui grandit, plus Appareil
+pas, file de livraison SecurityGateway qui grandit, plus Surveillance
 inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Un appareil SecurityGateway montre un panneau **Services mail** au-dessus
+Une surveillance SecurityGateway montre un panneau **Services mail** au-dessus
 des graphiques, lu depuis la dernière mesure stockée : ouvrir la page ne se
 connecte jamais à la passerelle. Il liste chaque service surveillé avec son
 port, un mot et une couleur (Répond, Arrêté) et son temps de réponse, la
@@ -76,7 +76,7 @@ dernière valeur.
     smtp,web_https
     ```
 
-2. Pour aussi lire les compteurs de performance, SecurityGateway 12.5 ou plus récent est nécessaire. Créez un compte dédié nommé comme suit, avec un mot de passe long utilisé nulle part ailleurs, et donnez-lui le rôle Domain Administrator. Si les compteurs restent vides sur la page de l'appareil, votre version les réserve au rôle Global Administrator, et le compte a besoin de ce rôle à la place.
+2. Pour aussi lire les compteurs de performance, SecurityGateway 12.5 ou plus récent est nécessaire. Créez un compte dédié nommé comme suit, avec un mot de passe long utilisé nulle part ailleurs, et donnez-lui le rôle Domain Administrator. Si les compteurs restent vides sur la page de la surveillance, votre version les réserve au rôle Global Administrator, et le compte a besoin de ce rôle à la place.
 
     ```
     dumbmonit

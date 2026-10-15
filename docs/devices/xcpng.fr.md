@@ -16,7 +16,7 @@ rapporte tous les hôtes, VM et référentiels de stockage. Si l'adresse saisie
 est celle d'un membre du pool, il répond `HOST_IS_SLAVE` avec l'adresse du
 coordinateur ; DumbMonit la suit une fois, même protocole et même port, de
 sorte qu'un changement de coordinateur ne vous oblige pas à modifier
-l'appareil.
+la surveillance.
 
 !!! warning "Validé contre la documentation du fournisseur seulement — pas encore testé sur un système réel"
 

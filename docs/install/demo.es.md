@@ -8,7 +8,7 @@ instalarlo de verdad, o para poner una vitrina en tu propio sitio.
 !!! warning "Nunca sobre un volumen de datos real"
     El modo demo **recrea la base de datos en cada inicio**. Dale un volumen
     propio, o ninguno: apuntado al `/data` de una instancia real,
-    sustituiría tus dispositivos, reglas e historial por el patrimonio
+    sustituiría tus monitores, reglas e historial por el patrimonio
     ficticio.
 
 ## Qué hace el modo demo {#what-demo-mode-does}
@@ -16,7 +16,7 @@ instalarlo de verdad, o para poner una vitrina en tu propio sitio.
 - **Inicia sesión con `demo` / `demo`.** La página de inicio de sesión lo
   indica y rellena los campos con un clic. La cuenta ve todas las pantallas
   que ve un administrador.
-- **Solo lectura.** Todo cambio — dispositivos, reglas, silencios,
+- **Solo lectura.** Todo cambio — monitores, reglas, silencios,
   confirmaciones, canales, tokens, usuarios, ajustes, copias de seguridad y
   restauraciones, escaneos de descubrimiento, inscripción de agentes,
   herramientas de escritura del endpoint del asistente — es rechazado por
@@ -28,10 +28,10 @@ instalarlo de verdad, o para poner una vitrina en tu propio sitio.
   clúster Proxmox VE, un NAS Synology, un Proxmox Backup Server, un
   TrueNAS, un cortafuegos OPNsense, un servidor Redfish con una pieza
   fallando, algunas comprobaciones HTTP, TLS y ping, un host con agente y
-  una página de estado. Los dispositivos son respondidos por respondedores
+  una página de estado. Los monitores son respondidos por respondedores
   falsos dentro del servidor, ligados a `127.0.0.1` y que reproducen
   respuestas de API grabadas, así que los recolectores y paneles de
-  dispositivo reales se ejecutan de verdad. Reiniciar da el mismo
+  monitor reales se ejecutan de verdad. Reiniciar da el mismo
   patrimonio.
 - **Siete días de historial.** Se escriben métricas sintéticas en
   VictoriaMetrics al iniciar, así que las gráficas, *Last 7 days*, los

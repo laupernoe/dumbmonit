@@ -10,7 +10,7 @@ DumbMonit lee la API con el token de una cuenta de servicio dedicada
 vinculada a un ClusterRole de solo lectura: `get` y `list` sobre nodos,
 pods, workloads, reclamaciones de volumen persistente y eventos, nada
 más. Nunca escribe, y el rol no da acceso a Secrets ni ConfigMaps. Un
-dispositivo cubre todo el clúster, sea la distribución que sea: k3s,
+monitor cubre todo el clúster, sea la distribución que sea: k3s,
 kubeadm, k0s, MicroK8s, Talos, o un clúster gestionado cuya API
 DumbMonit pueda alcanzar.
 
@@ -87,10 +87,10 @@ aplican:
 - **Kubernetes volume claim pending**: una reclamación atascada durante
   quince minutos (Advisory).
 
-Además de Device unreachable, cuando el servidor de API deja de
+Además de Monitor unreachable, cuando el servidor de API deja de
 responder.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel Cluster indica en una frase qué va mal, luego lista los nodos
 (Ready o no, presión, cordoned, versión de kubelet), los pods que
@@ -182,7 +182,7 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Para comprobar el rol antes de añadir el dispositivo, pregunta al
+Para comprobar el rol antes de añadir el monitor, pregunta al
 servidor de API qué puede hacer la cuenta; el primer comando debe
 responder `yes`, el segundo `no`:
 
@@ -193,7 +193,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 
 Un token hecho con `kubectl create token dumbmonit -n kube-system`
 también funciona, pero caduca (tras una hora por defecto): el
-dispositivo entonces falla con «The API server refused the token
+monitor entonces falla con «The API server refused the token
 (401)». El Secret de arriba es la forma de larga duración que
 Kubernetes documenta para este uso. Para revocar el acceso de
 DumbMonit, elimina el Secret, o la cuenta de servicio.

@@ -69,11 +69,11 @@ Verbindung verurteilt die gesamte Abfrage.
       auf einem aktuellen NAS einfach nicht — nichts wird an ihrer
       Stelle erfunden.
 
-## Die Geräteseite
+## Die Monitorseite
 
-![Ein Synology-Gerät: auf einen Blick, Volumes, Platten und Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![Ein Synology-Monitor: auf einen Blick, Volumes, Platten und Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Ein Synology-Gerät erhält sein eigenes Panel über den Diagrammen:
+Ein Synology-Monitor erhält sein eigenes Panel über den Diagrammen:
 
 * **At a glance** — CPU, Speicher (genutzt vom Total), Temperatur und
   Uptime, mit DSMs eigenem Storage-Urteil als Anzeige (healthy,
@@ -231,7 +231,7 @@ hebt nichts; derselbe Laptop, am Dienstagabend noch still, tut es.
 
 Tage und Stunden werden in der lokalen Zeit des Servers ausgedrückt
 (`TZ` des Containers), wo die die Seite lesende Person lebt. Die
-Geräteseite zeigt, pro Gerät: den Zustand als Wort, den letzten
+Monitorseite zeigt, pro Gerät: den Zustand als Wort, den letzten
 Erfolg und das letzte Ergebnis, den Rhythmus in Worten ("weekdays,
 around 20:00", "every ~3 days, on Mon, Wed, Fri, around 03:00",
 "still learning (2 runs in 30 days)") und einen Dreißig-Tage-Streifen
@@ -408,6 +408,6 @@ wird 5001 über HTTPS und 5000 über HTTP genutzt.
 | Zertifikatsfehler | Selbstsigniertes Zertifikat: aktivieren Sie `insecure_tls`. Das ist ein Konfigurationsfehler, nie "unreachable": Ein antwortendes NAS wird nicht als aus gezeigt. |
 | Keine Platten- oder Volume-Metriken | Das Konto ist nicht in der Gruppe `administrators` (siehe die Notiz oben). |
 | Keine `dumbmonit_abb_*`-Metriken, `scrape_errors` bei 1 | Das Konto kann Active Backup for Business nicht nutzen: delegieren Sie ihm das Paket, oder deaktivieren Sie die Option `abb`. Ohne installiertes Paket gibt es keinen Fehler und keine Metrik. |
-| Task-Metriken, aber keine Gerätezeilen auf der Seite | Das NAS kündigt `SYNO.ActiveBackup.Overview` nicht an (älteres ABB), oder das Gerät wird über einen Relay-Agent abgefragt, der die Historie auf seiner Seite im Speicher hält: Die Metriken existieren, der Kalender nicht. |
+| Task-Metriken, aber keine Gerätezeilen auf der Seite | Das NAS kündigt `SYNO.ActiveBackup.Overview` nicht an (älteres ABB), oder der Monitor wird über einen Relay-Agent abgefragt, der die Historie auf seiner Seite im Speicher hält: Die Metriken existieren, der Kalender nicht. |
 | Ein Laptop zeigt "Overdue" am Tag nach dem Hinzufügen | Weniger als drei Erfolge: Das Modell lernt noch und erlaubt 72 Stunden zwischen Backups; es stabilisiert sich, sobald zwei Wochen Gewohnheiten bekannt sind. |
 | Platten drehen bei jeder Abfrage hoch | Das Storage-Inventar weckt schlafende Platten. Verlängern Sie das Prüfintervall. |

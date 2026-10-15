@@ -13,9 +13,9 @@ certificados e estado do cluster.
     mas ainda ninguém o executou durante semanas num gateway de email em
     produção. Diga-nos o que falha.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Além dos gráficos genéricos, um dispositivo Proxmox Mail Gateway mostra
+Além dos gráficos genéricos, um monitor Proxmox Mail Gateway mostra
 três painéis, lidos do que a verificação guardou — abrir a página nunca
 consulta o próprio gateway:
 
@@ -111,7 +111,7 @@ cinquenta anos. A mesma regra aplica-se em todo lado: um valor que a API
 não devolve produz uma métrica a menos, nunca um zero a fingir ser uma
 medição.
 
-As regras incorporadas que se aplicam: Device unreachable, Mail queue
+As regras incorporadas que se aplicam: Monitor unreachable, Mail queue
 growing, Mail stuck in the queue, Mail gateway service stopped, Virus
 signatures out of date, Spam rules out of date, Quarantine filling up,
 Mail gateway cluster degraded, Mail gateway certificate expiring, Mail

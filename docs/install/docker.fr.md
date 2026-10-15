@@ -16,7 +16,7 @@ séries temporelles.
 ## Prérequis {#prerequisites}
 
 - Docker Engine avec le plugin Compose (`docker compose version` fonctionne).
-- Une machine qui peut joindre les appareils à surveiller. Elle n'a pas besoin d'être
+- Une machine qui peut joindre les surveillances à surveiller. Elle n'a pas besoin d'être
   joignable depuis eux, sauf pour les [agents](../devices/agent.md), qui poussent
   leurs mesures vers le serveur en HTTP.
 - Le port `8080` libre sur l'hôte, ou un autre port de votre choix ([voir plus bas](#advanced-options)).
@@ -111,7 +111,7 @@ tentatives erronées sont limitées en débit. Pour un déploiement automatisé,
 
 ![L'écran de connexion](../assets/screenshots/login-light.png){ loading=lazy }
 
-Ajoutez ensuite votre premier appareil : voir [Ajouter votre premier appareil](first-device.md).
+Ajoutez ensuite votre première surveillance : voir [Ajouter votre première surveillance](first-device.md).
 
 ## Santé du conteneur {#container-health}
 
@@ -134,7 +134,7 @@ Tout passe par des variables d'environnement ; aucune n'est obligatoire.
 | `DUMBMONIT_VM_RETENTION` | `12` | Rétention du VictoriaMetrics embarqué : mois, ou `30d`, `2y`. |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | Budget mémoire des caches du VictoriaMetrics embarqué. |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | Adresse d'écoute du VictoriaMetrics embarqué, à l'intérieur du conteneur. |
-| `DUMBMONIT_SECRET` | *(généré)* | Secret de l'instance qui chiffre les identifiants des appareils et les jetons. |
+| `DUMBMONIT_SECRET` | *(généré)* | Secret de l'instance qui chiffre les identifiants des surveillances et les jetons. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Sondes simultanées, tous collecteurs confondus. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Durée maximale d'une sonde. |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | Période d'écriture vers VictoriaMetrics. |
@@ -158,7 +158,7 @@ clé dérivée du secret de l'instance. Au premier démarrage, DumbMonit génèr
 secret dans `/data/secret.key` (dans le volume `dumbmonit-data`).
 
 !!! danger "Sauvegardez `secret.key` avec la base de données"
-    Sans elle, les identifiants des appareils sont irrécupérables : une base restaurée
+    Sans elle, les identifiants des surveillances sont irrécupérables : une base restaurée
     seule donne une instance incapable de parler à quoi que ce soit. Le serveur détecte une clé
     manquante ou modifiée au démarrage et refuse de continuer avec un message explicite,
     plutôt que d'échouer silencieusement à chaque sonde. Les sauvegardes planifiées
@@ -246,13 +246,13 @@ Un seul volume nommé, `dumbmonit-data`, contient tout :
 
 | Chemin | Contenu |
 |---|---|
-| `dumbmonit.db` | Appareils, règles, canaux, état des alertes, sessions. |
+| `dumbmonit.db` | Surveillances, règles, canaux, état des alertes, sessions. |
 | `secret.key` | Le secret de l'instance. |
 | `backups/` | Les sauvegardes locales planifiées : une copie de la base et du secret, quotidienne par défaut, sept conservées. |
 | `vm/` | Séries temporelles de VictoriaMetrics (12 mois de rétention par défaut). |
 
 DumbMonit sauvegarde lui-même sa base selon un calendrier, et exporte toute la
-configuration — appareils, identifiants, règles, canaux — dans un seul fichier
+configuration — surveillances, identifiants, règles, canaux — dans un seul fichier
 chiffré avec une phrase secrète de votre choix, qui se restaure sur une instance vierge.
 Les deux sont décrits dans **[Sauvegarde et restauration](backup.md)**, avec ce qu'il faut faire avant
 une mise à jour et l'unique règle sur `secret.key` qui mérite d'être lue deux fois.
@@ -289,7 +289,7 @@ toujours sur 8080 :
 ```
 
 **Votre propre secret**, à la place de celui généré dans `/data/secret.key`. Il
-chiffre les identifiants des appareils : le perdre oblige à les ressaisir tous.
+chiffre les identifiants des surveillances : le perdre oblige à les ressaisir tous.
 
 ```yaml
     environment:
@@ -297,7 +297,7 @@ chiffre les identifiants des appareils : le perdre oblige à les ressaisir tous.
 ```
 
 **Rétention et mémoire** du VictoriaMetrics embarqué (mois, ou `30d` / `2y` ;
-un homelab de quelques dizaines d'appareils tient dans 256 Mo) :
+un homelab de quelques dizaines de surveillances tient dans 256 Mo) :
 
 ```yaml
     environment:
@@ -314,7 +314,7 @@ un homelab de quelques dizaines d'appareils tient dans 256 Mo) :
 
 **Mot de passe perdu.** Ajoutez la ligne ci-dessous, lancez
 `docker compose up -d`, recréez le premier administrateur dans l'interface
-(appareils, règles et canaux restent), puis retirez la ligne et relancez
+(surveillances, règles et canaux restent), puis retirez la ligne et relancez
 `docker compose up -d` une fois de plus :
 
 ```yaml
@@ -328,7 +328,7 @@ Plus de variables : [référence de configuration](../reference/configuration.md
 
 ## Captures d'écran des changements de site web {#website-screenshots}
 
-Le [moniteur de changements de site web](../devices/webchange.md) compare toujours le texte visible des pages. Conserver une capture d'écran de chaque nouvelle version demande un navigateur, que l'image DumbMonit n'embarque pas : un Chromium headless tourne comme second service, et `DUMBMONIT_BROWSER_URL` indique au serveur où le trouver.
+La [surveillance de changements de site web](../devices/webchange.md) compare toujours le texte visible des pages. Conserver une capture d'écran de chaque nouvelle version demande un navigateur, que l'image DumbMonit n'embarque pas : un Chromium headless tourne comme second service, et `DUMBMONIT_BROWSER_URL` indique au serveur où le trouver.
 
 Ajoutez ces lignes à votre `docker-compose.yml`, puis lancez `docker compose up -d` :
 
@@ -347,7 +347,7 @@ services:
 - `shm_size: 256m` : Chromium rend dans `/dev/shm`, et les 64 Mo par défaut de Docker sont trop peu pour une longue page.
 - N'importe quel Chromium lancé avec `--remote-debugging-port` convient ; `chromedp/headless-shell` est l'image utilisée ici.
 
-Sans navigateur, tout le reste fonctionne comme d'habitude (comparaison du texte, alertes, copies avant/après) ; les instantanés n'ont simplement pas d'image. Tant que le serveur n'atteint aucun navigateur, le formulaire d'un appareil de changements de site web affiche un encart avec ces lignes.
+Sans navigateur, tout le reste fonctionne comme d'habitude (comparaison du texte, alertes, copies avant/après) ; les instantanés n'ont simplement pas d'image. Tant que le serveur n'atteint aucun navigateur, le formulaire d'une surveillance de changements de site web affiche un encart avec ces lignes.
 Si l'encart reste après le redémarrage, vérifiez `docker compose logs browser`, que le nom d'hôte de `DUMBMONIT_BROWSER_URL` est le nom du service, et que les deux services sont dans le même projet Compose.
 
 ## Reverse proxy {#reverse-proxy}
@@ -421,7 +421,7 @@ depuis l'image : rien à faire. Deux cas demandent une commande :
 
 ## Ping ICMP sans capability {#icmp-ping-without-a-capability}
 
-Le [moniteur ping](../devices/services.md#ping) envoie des ICMP echo. Plutôt qu'un
+La [surveillance ping](../devices/services.md#ping) envoie des ICMP echo. Plutôt qu'un
 socket brut — qui demande `NET_RAW`, et une capability accordée à un utilisateur non root
 du conteneur n'est de toute façon pas utilisable — il emploie un socket ICMP echo, que Linux
 autorise pour les groupes listés dans `net.ipv4.ping_group_range`. Le fichier Compose
@@ -437,12 +437,12 @@ services:
 Rien ne change sur l'hôte. Docker 20.10 et les versions ultérieures définissent d'eux-mêmes cette plage dans chaque
 conteneur ; les lignes explicites la garantissent sur les moteurs plus anciens et
 sur Podman. Sans elle, la vérification signale une erreur de configuration (affichée sur
-l'appareil, sans notification), jamais un faux « hôte hors service ». Avec `docker run`, passez
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Tant que le serveur ne peut pas ouvrir de socket ICMP, le formulaire d'un appareil ping affiche un encart avec ces lignes.
+la surveillance, sans notification), jamais un faux « hôte hors service ». Avec `docker run`, passez
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`. Tant que le serveur ne peut pas ouvrir de socket ICMP, le formulaire d'une surveillance ping affiche un encart avec ces lignes.
 
 ## Tester sans matériel {#testing-without-hardware}
 
-Ajoutez un [appareil de démonstration](../devices/demo.md) : il produit de fausses mesures sans
+Ajoutez une [surveillance de démonstration](../devices/demo.md) : elle produit de fausses mesures sans
 rien à préparer, de sorte que les graphiques, règles et notifications peuvent être essayés
 immédiatement. Pour de vraies données SNMP, la machine qui fait tourner Docker suffit souvent — installez
 `snmpd` dessus (`apt install snmpd`, autorisez la communauté `public` sur le pont Docker

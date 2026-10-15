@@ -1,6 +1,6 @@
 # Salute e SEO del sito web
 
-Monitora i siti web in massa, un dispositivo per sito: sii avvisato quando un sito **si rompe**
+Monitora i siti web in massa, un monitor per sito: sii avvisato quando un sito **si rompe**
 (errore, irraggiungibile, certificato non valido, loop di reindirizzamento), quando la sua pagina **diventa vuota**, quando **esce dai motori di ricerca** (`noindex`, `robots.txt`
 che blocca tutto) e quando i metadati che Google mostra **cambiano** (titolo,
 descrizione, URL canonico, indirizzo finale). Ogni sito è anche ordinato per la
@@ -14,7 +14,7 @@ Per il contenuto di una pagina piuttosto che la sua salute, vedi
 1. Nell'indirizzo, incolla la pagina da controllare, di solito la home page, con o senza https://. I reindirizzamenti vengono seguiti: da http a https e da example.com a www.example.com sono normali, solo un loop di reindirizzamento o uno spostamento a un altro indirizzo viene segnalato.
 2. Facoltativamente compila "Testo previsto" con una frase che la pagina deve sempre mostrare, e regola "Pagina vuota sotto" se la pagina è volutamente breve.
 3. Il primo controllo registra il riferimento: indirizzo finale, titolo, descrizione, URL canonico, regole di indicizzazione. Una modifica viene segnalata solo una volta che due controlli di fila l'hanno vista, quindi i test A/B e le cache instabili rimangono silenziosi.
-4. Per aggiungere molti siti contemporaneamente, importa un file CSV dall'elenco dei dispositivi: ogni sito viene archiviato sotto `Websites/<platform>` (WordPress, Shopify…) a meno che non dai una cartella.
+4. Per aggiungere molti siti contemporaneamente, importa un file CSV dall'elenco dei monitor: ogni sito viene archiviato sotto `Websites/<platform>` (WordPress, Shopify…) a meno che non dai una cartella.
 
 !!! warning
     Solo quello che il server invia viene letto: una pagina disegnata interamente da JavaScript appare vuota qui. Abbassa "Pagina vuota sotto" a 0 per un sito così.
@@ -57,7 +57,7 @@ spaziatura e maiuscole ignorate; gli indirizzi ignorano lo schema, un `www.` ini
 finale `/` e, con **Ignora stringhe di query** (attivo per impostazione predefinita), parametri URL
 come `?utm_source=…`.
 
-Una modifica confermata viene conservata nella cronologia del dispositivo (campo, prima, dopo,
+Una modifica confermata viene conservata nella cronologia del monitor (campo, prima, dopo,
 data), e il suo misuratore (`dumbmonit_website_title_changed`…) rimane a 1 per 24
 ore. Il primo controllo registra solo il riferimento. Cambiare l'indirizzo o
 **Ignora stringhe di query** avvia un nuovo riferimento invece di segnalare una modifica.
@@ -86,14 +86,14 @@ Next.js, Nuxt, Gatsby, Hugo, Jekyll; qualsiasi altro è **Other**. La piattaform
 
 ## Importa un elenco di siti (CSV)
 
-Dall'elenco dei dispositivi o dalla pagina aggiungi dispositivo, **Importa siti web (CSV)** prende un
+Dall'elenco dei monitor o dalla pagina aggiungi monitor, **Importa siti web (CSV)** prende un
 file o testo incollato con una riga di intestazione e fino a 1000 righe:
 
 | Colonna | Obbligatoria | Significato |
 |---|---|---|
 | `url` | sì | Indirizzo del sito. |
-| `name` | no | Nome del dispositivo; l'host per impostazione predefinita. |
-| `folder` | no | Cartella del dispositivo; vuota: `Websites/<platform>`, rilevata leggendo il sito una volta. |
+| `name` | no | Nome del monitor; l'host per impostazione predefinita. |
+| `folder` | no | Cartella del monitor; vuota: `Websites/<platform>`, rilevata leggendo il sito una volta. |
 | `tags` | no | `key=value;key=value`. |
 | `interval` | no | Intervallo di polling. |
 | `expect_text` | no | Stesso dell'opzione. |
@@ -131,7 +131,7 @@ già monitorato (stesso indirizzo finale) viene saltato.
 
 | Allarme | Quando | Severità |
 |---|---|---|
-| Dispositivo irraggiungibile | Nessuna risposta, certificato rifiutato, loop di reindirizzamento o troppi reindirizzamenti | critico |
+| Monitor irraggiungibile | Nessuna risposta, certificato rifiutato, loop di reindirizzamento o troppi reindirizzamenti | critico |
 | Sito web inattivo | La risposta finale è un errore 4xx o 5xx, per 3 minuti | critico |
 | Pagina sito web vuota | Testo visibile sotto la soglia, per 3 minuti | critico |
 | Testo previsto del sito web mancante | Il testo previsto è mancante, per 3 minuti | avvertimento |

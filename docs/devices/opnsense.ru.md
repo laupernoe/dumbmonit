@@ -16,9 +16,9 @@
     исходному коду OPNsense, а не по наблюдаемому ответу. Сообщите нам, если что-то
     сломается.
 
-## Страница устройства
+## Страница монитора
 
-Помимо общих графиков, устройство OPNsense показывает три панели, построенные по
+Помимо общих графиков, монитор OPNsense показывает три панели, построенные по
 тому, что сохранил опрос: открытие страницы никогда не обращается к самому
 межсетевому экрану.
 
@@ -109,7 +109,7 @@ WireGuard, OpenVPN, IPsec, Unbound и Kea — это плагины. Межсе�
 котором плагина нет, отвечает `404`, что не является ни ошибкой сбора, ни ошибкой
 аутентификации: одной метрикой меньше, и ничего в интерфейсе.
 
-Применяемые встроенные правила: Device unreachable, Internet gateway down, Gateway
+Применяемые встроенные правила: Monitor unreachable, Internet gateway down, Gateway
 losing packets, Gateway slow, Firewall state table filling up, Firewall network
 buffers exhausted, VPN tunnel down, Firewall resolver stopped, Firewall core
 service stopped, Firewall too hot, Firewall left in CARP maintenance mode,

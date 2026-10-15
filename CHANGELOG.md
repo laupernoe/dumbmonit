@@ -192,12 +192,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Devices are now Monitors.** What DumbMonit watches is called a monitor
+  throughout the interface and the documentation (navigation: Overview /
+  Monitors / Alerts / Settings). Nothing changes under the hood: API routes,
+  `target` labels, URLs and metric names are the same.
 - **A simpler Monitors page.** One toolbar: search, **Filter** (state, kind,
   sort and tags fold behind it, with a count of those in use), Compact / Tiles,
   **Select** and **Add a monitor**. The map, **Create folder** and the CSV and
   Uptime Kuma imports moved to a **⋯** menu next to it. Folder headers are
   plain lines that show a state only when something inside is not reporting;
-  security grades are quiet in the list, and devices without a grade show none.
+  security grades are quiet in the list, and monitors without a grade show none.
   The type filter only lists the types you use.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,

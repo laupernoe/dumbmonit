@@ -49,10 +49,10 @@ chacun ; les totaux couvrent toujours tout.
 Les [règles intégrées](../alerting/rules.md#reverse-proxies-and-domains) qui
 s'appliquent : routeur Traefik désactivé, serveur backend Traefik en panne,
 service Traefik sans serveur, certificat Traefik non obtenu, certificat de
-proxy non renouvelé, reverse proxy répondant en 5xx, plus Appareil
+proxy non renouvelé, reverse proxy répondant en 5xx, plus Surveillance
 inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir
 la page n'interroge jamais Traefik. Il dit ce qui ne va pas en une phrase

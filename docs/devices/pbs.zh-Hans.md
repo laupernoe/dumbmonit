@@ -2,11 +2,11 @@
 
 备份服务器：每台机器的三十天备份日历、失败的任务及其日志、计划的作业（同步、验证、修剪、垃圾回收），数据存储、磁盘和 ZFS 池，待处理的更新、服务器本身的服务和包版本，以及磁带层（如果存在）。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
-![PBS 设备：故障、30 天备份日历、作业和健康](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![PBS 监控项：故障、30 天备份日历、作业和健康](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-超越通用图表，PBS 设备显示六个面板，从探针存储的内容读取——打开页面从不查询 PBS 本身：
+超越通用图表，PBS 监控项显示六个面板，从探针存储的内容读取——打开页面从不查询 PBS 本身：
 
 * **故障** — 过去 30 天内失败的每个任务（备份、同步、验证、修剪、GC），最新在前，及其类型、其所针对的内容、何时启动以及 PBS 自己的错误消息。*显示日志*从 PBS 按需获取任务日志的最后行（`/nodes/localhost/tasks/{upid}/log`）。
 * **备份日历** — 每个备份的机器一行（数据存储、命名空间、`type/id` 和当 PVE 在快照注释中写入时的来宾名称），每天一个点：当该天备份成功（任务结束 `OK` 或快照存在——同步的组没有本地任务）时为青绿色，当备份任务失败且无成功时为红色，备份存在但其验证失败时为琥珀色，一个正在运行时为蓝色，无任何事发生时为灰色。每个点的工具提示给出时间、大小、持续时间和错误摘录；该行说明最后成功和最后失败何时、快照计数、最新快照的大小和应用的修剪作业的保留。备份全部失败的机器没有快照但仍然出现——从其任务。
@@ -15,7 +15,7 @@
 * **数据存储和磁盘** — 使用条，PBS 自有的填满预报，重复数据消除因子，最后 GC；ZFS 池及其健康；物理磁盘及 SMART 判定和 SSD 磨损，完整 SMART 表按需（`/nodes/localhost/disks/smart`）。每个数据存储它还显示维护或"未挂载"平板、"忙碌：n 写，n 读"平板、每天测量的增长以及多少天的历史、它容纳的每种类型的机器数、最后 GC 花费了多长时间，以及当该 GC 发现无法读取的块时的警告行。
 * **服务器** — systemd 单元，其中服务器离不开的被指出；Proxmox 包版本（已安装、可用、运行），当守护进程落后其包时带"重启待处理"平板；证书及其过期；以及流量控制规则及其限制和它们正在执行的操作。
 
-日历在浏览器的本地午夜拆分天。其历史来自任务列表：启动后的第一个探针读取最后 30 天（`/nodes/localhost/tasks?since=…&limit=5000`），后来的探针仅任务窗口，服务器在 SQLite（`pbs_task_history`，35 天，每个设备最多 10,000 个任务）中保留联合，所以日历在重启后存活。
+日历在浏览器的本地午夜拆分天。其历史来自任务列表：启动后的第一个探针读取最后 30 天（`/nodes/localhost/tasks?since=…&limit=5000`），后来的探针仅任务窗口，服务器在 SQLite（`pbs_task_history`，35 天，每个监控项最多 10,000 个任务）中保留联合，所以日历在重启后存活。
 
 ## 它监控什么 {#what-it-watches}
 
@@ -59,7 +59,7 @@
 | `last_backup_timestamp_seconds` | 与该组的 `backup_last_timestamp_seconds` 相同的时刻 | `device`, `type`, `os`, `user`, `kind` |
 | `stale_seconds` | 一旦组超过 `device_stale_days`（默认 3）没有新快照就为正数；驱动[客户端设备陈旧](../alerting/rules.md#client-devices)规则 | `device`, `type`, `os`, `user`, `kind`, `signal`（总是 `backup`） |
 
-**值得知道的限制**：PBS 不为备份的机器记录单独的"连接"，仅备份——`last_seen_timestamp_seconds` 和 `connection` 信号从不发布在这里；设备在设备页面的表上将 `last_connection` 显示为"——"。警报中命名的设备是当 PVE 写入一个时快照注释中的来宾名称，否则 `type/id`，与备份日历相同。
+**值得知道的限制**：PBS 不为备份的机器记录单独的"连接"，仅备份——`last_seen_timestamp_seconds` 和 `connection` 信号从不发布在这里；设备在监控项页面的表上将 `last_connection` 显示为"——"。警报中命名的设备是当 PVE 写入一个时快照注释中的来宾名称，否则 `type/id`，与备份日历相同。
 
 适用的内置规则：设备不可达、PBS 数据存储几乎已满、PBS 数据存储填满、PBS 备份过旧（每个备份组：两天内无新快照——编辑规则的阈值以获得更长的窗口）、PBS 备份验证失败、PBS 任务失败、PBS 垃圾回收过旧、PBS 垃圾回收失败、PBS 发现腐败块、PBS 同步作业失败、PBS 修剪作业失败、PBS 验证作业失败、PBS 作业从不运行、PBS 数据存储未挂载、PBS 服务故障、PBS 升级后重启待处理、PBS 证书过期、PBS 磁带备份失败、PBS 磁盘 SMART 故障、PBS SSD 磨损、PBS ZFS 池降级、PBS 更新待处理、客户端设备陈旧。通知命名有关的作业、数据存储或备份组。
 
@@ -99,7 +99,7 @@
     proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
     ```
 
-4. 在离开 shell 前，检查令牌可以实际读取什么。命令打印其有效特权，路径至路径；空结果意味着用户缺失令牌拥有的 ACL——令牌令牌拥有的情况，设备看起来完全活跃并报告无东西。
+4. 在离开 shell 前，检查令牌可以实际读取什么。命令打印其有效特权，路径至路径；空结果意味着用户缺失令牌拥有的 ACL——令牌令牌拥有的情况，监控项看起来完全活跃并报告无东西。
 
     ```
     proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
@@ -173,7 +173,7 @@ API 接受令牌在两件（`token_id` + `secret`）或如较旧的版本所做�
 |---|---|
 | 证书错误 | 自签名证书：安装受信任的一个（ACME 内置到 PBS 中）或启用 `insecure_tls`。 |
 | 认证错误 | 秘密粘贴到令牌 ID（或反过来），或令牌没有 `Audit` 权限——最常见原因是角色被授予令牌但不被授予拥有它的用户，这不失败：调用成功并返回空列表。仅 `GET /version` 失败谴责整个探针；任何其他调用失败被计数在 `scrape_errors` 中。 |
-| 一切读为空但设备向上 | 用户缺失令牌拥有的 ACL，PBS 交集两个：`proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` 打印无东西。也给 `dumbmonit@pbs` 授予每个角色。 |
+| 一切读为空但监控项向上 | 用户缺失令牌拥有的 ACL，PBS 交集两个：`proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` 打印无东西。也给 `dumbmonit@pbs` 授予每个角色。 |
 | 无 `node_updates_pending` 系列 | 令牌缺失 `/` 上的 `Sys.Audit`：给它 `/` 上的 `Audit` 角色，或设置 `updates` 为 `false` 停止询问。 |
 | 同步作业丢失 | 令牌缺失该作业的远程上的 `Remote.Audit`：在 `/remote` 上添加 `RemoteAudit` 角色。作业不被拒绝，它根本从列表中不存在。 |
 | 无证书过期 | `certificates` 选项关闭，这是默认：PBS 需要该调用的 `Sys.Modify`，写特权。 |

@@ -48,9 +48,9 @@ rules turn them into rates.
 The [built-in rules](../alerting/rules.md#databases-message-broker-and-security-engine)
 that apply: MongoDB replica set without primary, MongoDB member unreachable,
 MongoDB replication lag, MongoDB connections near the limit, MongoDB cache
-under pressure, MongoDB internal errors, plus Device unreachable.
+under pressure, MongoDB internal errors, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries MongoDB. It says what is wrong in a sentence (replica set, connections,

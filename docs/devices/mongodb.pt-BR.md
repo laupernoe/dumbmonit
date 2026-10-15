@@ -52,7 +52,7 @@ unreachable, MongoDB replication lag, MongoDB connections near the limit,
 MongoDB cache under pressure, MongoDB internal errors, além de Device
 unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o MongoDB. Ele diz o que está errado em uma frase (replica

@@ -25,11 +25,11 @@ Le partage reste monté, les sauvegardes continuent de tourner, l'interface
 web de chaque autre outil reste verte — et le pool n'a maintenant plus de
 redondance. Le second disque emporte le pool. `truenas_pool_healthy` tombe
 à 0 sur le premier, la règle **pool NAS dégradé** se déclenche, et la page
-de l'appareil nomme le disque.
+de la surveillance nomme le disque.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Au-delà des graphiques génériques, un appareil TrueNAS montre trois
+Au-delà des graphiques génériques, une surveillance TrueNAS montre trois
 panneaux, lus depuis ce que la sonde a stocké — ouvrir la page n'interroge
 jamais le NAS lui-même :
 
@@ -105,7 +105,7 @@ Quelques choses que fait TrueNAS qui valent d'être connues :
   essayés ; `smart/test/results` a disparu en 25.10 et est alors ignoré en
   silence.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, pool NAS
+Règles intégrées qui s'appliquent : Surveillance inaccessible, pool NAS
 dégradé, erreurs de disque NAS, pool NAS presque plein, scrub NAS a trouvé
 des erreurs, scrub NAS en retard, disque NAS a échoué son test SMART,
 disque NAS trop chaud, dataset NAS proche de son quota, réplication NAS

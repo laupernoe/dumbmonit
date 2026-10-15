@@ -1118,7 +1118,7 @@ mod tests {
         let paused = crate::db::targets::create(&pool, &cipher, &input("paused")).await.unwrap();
         let fine = crate::db::targets::create(&pool, &cipher, &input("fine")).await.unwrap();
 
-        let down = "Device unreachable: no measurement for 120 s (limit 90 s)";
+        let down = "Monitor unreachable: no measurement for 120 s (limit 90 s)";
         crate::db::targets::record_probe(&pool, silent, Some(down)).await.unwrap();
         crate::db::targets::record_probe(&pool, broken, Some("Bad credentials")).await.unwrap();
         crate::db::targets::record_probe(&pool, paused, Some(down)).await.unwrap();

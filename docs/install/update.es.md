@@ -21,7 +21,7 @@ máximo una vez por minuto).
 
 !!! note "Qué se envía"
     Una única petición `GET` anónima con un user agent `DumbMonit/<version>`.
-    No se envía nada sobre tu instancia, tus dispositivos ni tu red, y la
+    No se envía nada sobre tu instancia, tus monitores ni tu red, y la
     dirección está fija en el código.
 
 ### Desactivar la comprobación {#turning-the-check-off}

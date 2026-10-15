@@ -47,9 +47,9 @@ wandeln sie in Raten um.
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#databases-message-broker-and-security-engine):
 MongoDB-Replica-Set ohne Primary, MongoDB-Mitglied nicht erreichbar, MongoDB-Replikationsverzug,
 MongoDB-Verbindungen nahe am Limit, MongoDB-Cache unter Druck, MongoDB-interne Fehler, außerdem
-Gerät nicht erreichbar.
+Monitor nicht erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
 fragt MongoDB nie ab. Es nennt in einem Satz, was nicht stimmt (Replica Set, Verbindungen,

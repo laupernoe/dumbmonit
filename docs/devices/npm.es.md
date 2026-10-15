@@ -40,9 +40,9 @@ comprobación.
 
 Las [reglas integradas](../alerting/rules.md#reverse-proxies-and-domains)
 que se aplican: Nginx Proxy Manager host offline, Proxy certificate not
-renewed, además de Device unreachable.
+renewed, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Nginx Proxy Manager. Indica en una frase qué va mal (hosts

@@ -21,7 +21,7 @@ por minuto).
 
 !!! note "O que é enviado"
     Um pedido `GET` anónimo com um agente de utilizador `DumbMonit/<versão>`.
-    Nada sobre a sua instância, os seus dispositivos ou a sua rede é enviado,
+    Nada sobre a sua instância, os seus monitores ou a sua rede é enviado,
     e o endereço está fixo no código.
 
 ### Desativar a verificação {#turning-the-check-off}

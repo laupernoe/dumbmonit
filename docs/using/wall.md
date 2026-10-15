@@ -9,10 +9,10 @@ display without touching your saved preference.
 
 ![Wall mode](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Every problem on the left wears the product icon of its device (the same marks
-as the device lists). The list never outgrows its space: on a small screen, or
+Every problem on the left wears the product icon of its monitor (the same marks
+as the monitor lists). The list never outgrows its space: on a small screen, or
 with many problems, the big tiles shrink to one line each, then fold into
-*And N more*, instead of overlapping the devices below.
+*And N more*, instead of overlapping the monitors below.
 
 ## News on the wall
 

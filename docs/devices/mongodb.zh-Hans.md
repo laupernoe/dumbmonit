@@ -33,9 +33,9 @@ DumbMonit 使用只具有内置 `clusterMonitor` 角色的账户登录，运行 
 | `replset_member_health` | 成员可达时为 1，不可达时为 0 | `member` |
 | `replset_member_lag_seconds` | 副本节点落后于主节点的时间 | `member` |
 
-适用的[内置规则](../alerting/rules.md#databases-message-broker-and-security-engine)：MongoDB 副本集无主节点、MongoDB 成员不可达、MongoDB 复制延迟、MongoDB 连接接近限制、MongoDB 缓存压力大、MongoDB 内部错误，加上设备不可达。
+适用的[内置规则](../alerting/rules.md#databases-message-broker-and-security-engine)：MongoDB 副本集无主节点、MongoDB 成员不可达、MongoDB 复制延迟、MongoDB 连接接近限制、MongoDB 缓存压力大、MongoDB 内部错误，加上监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板上方读取探针存储的内容；打开页面从不查询 MongoDB。它用一句话说明问题所在（副本集、连接、缓存、内部错误），然后是连接数、每秒操作数、缓存使用情况、驻留内存、排队操作和运行时间，然后是每个副本集成员的状态和延迟以及按类型的每秒操作数。
 

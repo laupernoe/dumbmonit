@@ -52,7 +52,7 @@ Traefik service without a server, Traefik certificate not obtained, Proxy
 certificate not renewed, Reverse proxy answering 5xx, além de Device
 unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o Traefik. Ele diz o que está errado em uma frase

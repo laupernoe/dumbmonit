@@ -1,11 +1,11 @@
 # Packs de integración {#integration-packs}
 
-Un pack de integración añade un tipo de dispositivo a DumbMonit sin una
+Un pack de integración añade un tipo de monitor a DumbMonit sin una
 versión nueva. Es un único archivo YAML que dice dónde leer (una API
-HTTP o una página Prometheus `/metrics` en el dispositivo), qué extraer,
+HTTP o una página Prometheus `/metrics` en el monitor), qué extraer,
 y qué reglas de alerta vienen con él. Una vez instalado, el tipo del
 pack aparece en **Add device** junto a los integrados, y sus
-dispositivos se sondean, grafican y alertan como cualquier otro.
+monitores se sondean, grafican y alertan como cualquier otro.
 
 Un pack es declarativo: sin código, sin scripts. DumbMonit ejecuta cada
 petición él mismo, bajo reglas que el pack no puede cambiar.
@@ -14,16 +14,16 @@ petición él mismo, bajo reglas que el pack no puede cambiar.
 
 | Un pack puede | Un pack no puede |
 |---|---|
-| Llamar a rutas `GET` o `POST` en la propia dirección del dispositivo | Llamar a ningún otro host, seguir una redirección a otro host, o usar una URL absoluta |
+| Llamar a rutas `GET` o `POST` en la propia dirección del monitor | Llamar a ningún otro host, seguir una redirección a otro host, o usar una URL absoluta |
 | Leer JSON (JSONPath), texto plano (expresiones regulares) o el formato de texto de Prometheus | Ejecutar código, comandos de shell o plantillas más allá de `{{option.x}}` y `{{credential.x}}` |
-| Enviar la credencial del dispositivo en una cabecera o como autenticación basic/bearer | Poner una credencial en una URL o un cuerpo de petición |
-| Declarar opciones mostradas en el formulario de dispositivo (un canal de switch, un umbral) | Escribir métricas fuera de su propio prefijo `dumbmonit_<pack>_` |
-| Incluir reglas de alerta sobre sus propias métricas | Cambiar un tipo de dispositivo integrado o una regla integrada |
+| Enviar la credencial del monitor en una cabecera o como autenticación basic/bearer | Poner una credencial en una URL o un cuerpo de petición |
+| Declarar opciones mostradas en el formulario de monitor (un canal de switch, un umbral) | Escribir métricas fuera de su propio prefijo `dumbmonit_<pack>_` |
+| Incluir reglas de alerta sobre sus propias métricas | Cambiar un tipo de monitor integrado o una regla integrada |
 | Traer perfiles SNMP, en el formato de los integrados | Leer más de 4 MiB por respuesta, hacer más de 16 peticiones por sondeo, o producir más de 5000 series por sondeo |
 
 Las direcciones loopback y link-local (`127.0.0.1`, `169.254.x.x`) se
 rechazan a menos que la opción **Allow loopback and link-local
-targets** del dispositivo esté activada, exactamente como las
+targets** del monitor esté activada, exactamente como las
 comprobaciones HTTP. Las direcciones de LAN privada siempre se
 permiten.
 
@@ -46,7 +46,7 @@ Pega el YAML del pack o sube su `pack.yaml`, y luego **Install the
 pack**. Un pack que no pasa las comprobaciones se rechaza con la lista
 de qué corregir; uno que pasa se guarda con sus notas, si las hay. La
 misma página activa y desactiva packs y los desinstala. Los tipos
-instalados aparecen bajo **Community packs** al añadir un dispositivo,
+instalados aparecen bajo **Community packs** al añadir un monitor,
 marcados *Pack*.
 
 A través de la API HTTP, necesitas una sesión de administrador o un
@@ -68,19 +68,19 @@ completa de problemas, uno por línea.
 
 | Llamada | Hace |
 |---|---|
-| `GET /api/packs` | packs instalados: versión, tipo, métricas, reglas, dispositivos que lo usan |
+| `GET /api/packs` | packs instalados: versión, tipo, métricas, reglas, monitores que lo usan |
 | `GET /api/packs/{id}` | un pack |
 | `POST /api/packs` | instala o actualiza; cuerpo: el YAML (`application/yaml`), o `{"yaml": "…"}` en JSON |
-| `PUT /api/packs/{id}/disable` | detiene el sondeo de los dispositivos del pack, conserva todo lo demás |
+| `PUT /api/packs/{id}/disable` | detiene el sondeo de los monitores del pack, conserva todo lo demás |
 | `PUT /api/packs/{id}/enable` | vuelve a sondearlos |
-| `DELETE /api/packs/{id}` | desinstala, con sus reglas; rechazado (`409`) mientras dispositivos todavía lo usen |
+| `DELETE /api/packs/{id}` | desinstala, con sus reglas; rechazado (`409`) mientras monitores todavía lo usen |
 
 Con una cookie de sesión en lugar de un token, añade `X-Requested-With:
 DumbMonit` a cada `POST`, `PUT` y `DELETE`, como para el resto de la
 [API](../reference/api.md).
 
 Instalar surte efecto de inmediato: el tipo nuevo está disponible en el
-formulario de dispositivo sin reiniciar. La única excepción es un pack
+formulario de monitor sin reiniciar. La única excepción es un pack
 que trae perfiles SNMP; la respuesta entonces dice
 `"restart_required": true`, porque el catálogo SNMP se lee al arrancar.
 
@@ -91,18 +91,18 @@ y su descripción. Sus reglas de alerta solo se *añaden*: una regla que
 cambiaste, desactivaste o eliminaste nunca se reescribe por una
 actualización.
 
-Desactivar un pack retira su tipo de dispositivo y conserva todo lo
-demás: dispositivos, historial, reglas. Sus dispositivos ya no se
+Desactivar un pack retira su tipo de monitor y conserva todo lo
+demás: monitores, historial, reglas. Sus monitores ya no se
 sondean (cada uno muestra un error de configuración) y, como cualquier
-dispositivo que deja de reportar, generan *Device unreachable* tras
-tres minutos: pon también en pausa esos dispositivos si desactivas el
+monitor que deja de reportar, generan *Monitor unreachable* tras
+tres minutos: pon también en pausa esos monitores si desactivas el
 pack por un tiempo.
 
 ### Copias de seguridad {#backups}
 
 Los packs instalados viajan en las [copias de
 seguridad](../install/backup.md) con su YAML, y se restauran antes que
-los dispositivos que los usan.
+los monitores que los usan.
 
 ## Comprobar un pack antes de instalarlo {#check-a-pack-before-installing-it}
 

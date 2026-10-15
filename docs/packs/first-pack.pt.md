@@ -50,7 +50,7 @@ default_port: 80
 credentials: [none]
 ```
 
-O `id` decide dois nomes: o tipo de dispositivo `pack.shelly-plug`, e
+O `id` decide dois nomes: o tipo de monitor `pack.shelly-plug`, e
 o prefixo de métrica `dumbmonit_shelly_plug_`.
 
 ## 3. Uma fonte {#3-one-source}
@@ -72,7 +72,7 @@ sources:
 ```
 
 `{{option.switch_id}}` é substituído pela própria definição do
-dispositivo, mostrada no formulário de dispositivo como **Switch
+monitor, mostrada no formulário de monitor como **Switch
 channel**. O nome de ficheiro do fixture, `status.json`, corresponde
 ao `id` da fonte.
 

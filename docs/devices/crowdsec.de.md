@@ -48,9 +48,9 @@ Standardinstallation laufen beide.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#databases-message-broker-and-security-engine):
 CrowdSec Local API down, CrowdSec bouncer stopped pulling, CrowdSec
-reads no logs, plus Device unreachable.
+reads no logs, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt CrowdSec nie ab. Es sagt in einem Satz, was nicht

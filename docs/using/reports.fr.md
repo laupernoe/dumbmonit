@@ -16,15 +16,15 @@ destinataires.
 | Section | Contenu |
 | --- | --- |
 | **En-tête** | Disponibilité globale sur la période, nombre d'incidents, et évolution par rapport à la période précédente. |
-| **Disponibilité par groupe** | Une ligne par groupe, puis par appareil (les 40 moins disponibles au plus), calculée de la même façon que sur les [pages d'état](status-pages.md) : les sondes par leur taux de réussite, les hôtes et appareils par leur fréquence de remontée. Les appareils sans historique sont montrés comme « aucune donnée » plutôt que 100 %. |
-| **Incidents** | Quand chacun a commencé, combien de temps il a duré (ou qu'il est toujours ouvert) et sur quel appareil. 25 au plus. Les alertes informatives sont laissées de côté. |
-| **Appareils les moins stables** | Les cinq appareils avec la disponibilité la plus faible ou le plus d'incidents. |
+| **Disponibilité par groupe** | Une ligne par groupe, puis par surveillance (les 40 moins disponibles au plus), calculée de la même façon que sur les [pages d'état](status-pages.md) : les sondes par leur taux de réussite, les hôtes et surveillances par leur fréquence de remontée. Les surveillances sans historique sont montrés comme « aucune donnée » plutôt que 100 %. |
+| **Incidents** | Quand chacun a commencé, combien de temps il a duré (ou qu'il est toujours ouvert) et sur quelle surveillance. 25 au plus. Les alertes informatives sont laissées de côté. |
+| **Surveillances les moins stables** | Les cinq surveillances avec la disponibilité la plus faible ou le plus d'incidents. |
 | **Comparaison** | Disponibilité et nombre d'incidents comparés à la période de même durée juste avant. |
 
 L'email est composé de simples tableaux HTML avec des styles en ligne et aucune
 image distante, si bien qu'il s'affiche pareil partout et que rien n'est
 récupéré à son ouverture. Une version texte est envoyée en complément. Chaque
-nom d'appareil et chaque message est échappé.
+nom de surveillance et chaque message est échappé.
 
 ## Réglages
 

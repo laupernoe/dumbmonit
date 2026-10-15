@@ -9,8 +9,8 @@ out of the box.
 ## The pipeline, in one list
 
 ```
-evaluate (hysteresis, per-device overrides)
-  → deduplicate → suppress by dependency → silence → group by device
+evaluate (hysteresis, per-monitor overrides)
+  → deduplicate → suppress by dependency → silence → group by monitor
     → flap hold → channel severity filter → channel routing filter
       → resolved on/off → cooldown → quiet hours → batch window
         → hourly cap → send (+ deep link)
@@ -20,7 +20,7 @@ evaluate (hysteresis, per-device overrides)
 | Stage | Where it is set | Default |
 |---|---|---|
 | Clear threshold (hysteresis) | Rule editor → *Clear below / above* | none (CPU: 85 %, disk: 88 % on the shipped rules) |
-| Per-device overrides | Rule editor → *Per-device overrides* | none |
+| Per-monitor overrides | Rule editor → *Per-monitor overrides* | none |
 | Flap detection | Settings → Notifications & reports → Notification policy → More options | 4 changes in 30 min, hold 30 min |
 | Minimum severity | Channel → Delivery options → *Send* | everything |
 | Tell me when it clears | Channel → Delivery options | on |
@@ -33,7 +33,7 @@ evaluate (hysteresis, per-device overrides)
 | Public URL (deep links) | Settings → Notifications & reports → Notification policy, or `DUMBMONIT_PUBLIC_URL` | empty |
 | Acknowledge / Snooze links in messages | Settings → Notifications & reports → Notification policy | on (needs a public URL) |
 
-## Hysteresis and per-device overrides
+## Hysteresis and per-monitor overrides
 
 A rule that fires above 90 % and clears the moment the value drops under 90 %
 will fire and clear all evening on a CPU hovering at 89–91 %. Give it a
@@ -42,14 +42,14 @@ under it (for "fires above" rules) or over it (for "fires below" rules). The
 API field is `clear_threshold` on the rule; the server refuses a clear
 threshold on the wrong side of the threshold.
 
-A **per-device override** changes one device's threshold or clear threshold,
-or turns the rule off for that device, without duplicating the rule:
+A **per-monitor override** changes one monitor's threshold or clear threshold,
+or turns the rule off for that monitor, without duplicating the rule:
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # or { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # every override of one device
+GET /api/alerts/overrides?target_id=7           # every override of one monitor
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -82,7 +82,7 @@ Each channel decides what it hears (`policy` in the channel payload):
   the rest waits and arrives as one digest when they end, titled "Quiet hours
   over — …". An alert that fires and clears during quiet hours is only
   mentioned in that digest as "resolved during quiet hours".
-- `matcher` — which alerts the channel wants, by tag, device kind or rule.
+- `matcher` — which alerts the channel wants, by tag, monitor kind or rule.
   Empty (the default, and what every existing channel keeps) means everything.
 
 ```
@@ -99,7 +99,7 @@ clears them, and `"matcher": null` clears the routing filter.
 
 ## Routing by tag
 
-Devices carry tags (`site=cellar`, `role=storage`) and a kind (`snmp`,
+Monitors carry tags (`site=cellar`, `role=storage`) and a kind (`snmp`,
 `proxmox`, `synology`, `agent`…). A channel's **routing filter** says which
 alerts it wants:
 
@@ -114,8 +114,8 @@ Three fields, and exact equality only — no regular expressions, no brackets:
 
 | `field` | Matches on | Example |
 |---|---|---|
-| `tag` | A tag of the device's own page | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | The collector that polls the device | `{"field":"kind","value":"proxmox"}` |
+| `tag` | A tag of the monitor's own page | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | The collector that polls the monitor | `{"field":"kind","value":"proxmox"}` |
 | `rule` | The rule's `uid` | `{"field":"rule","value":"disk_full"}` |
 
 How the lists read:
@@ -127,13 +127,13 @@ How the lists read:
 - **`exclude` always wins**, even over an `include` that matched.
 
 So the example above reads, and the UI says it back in exactly these words:
-*this channel receives advisories and above from devices tagged site=cellar,
-except devices tagged role=lab*.
+*this channel receives advisories and above from monitors tagged site=cellar,
+except monitors tagged role=lab*.
 
-Under the editor, a **preview** lists which of your current devices the filter
+Under the editor, a **preview** lists which of your current monitors the filter
 selects. It is not an approximation: the server runs the very filter the
-alerting engine runs, reduced to the part that depends on the device alone.
-Rule conditions apply to alerts rather than devices, so the preview names them
+alerting engine runs, reduced to the part that depends on the monitor alone.
+Rule conditions apply to alerts rather than monitors, so the preview names them
 separately instead of pretending to count them.
 
 ```
@@ -192,15 +192,15 @@ or Opsgenie, which do it properly.
 ```
 
 - **Batch window** — alerts that fire within the window leave as *one*
-  message per channel, grouped by device: "3 alerts on 2 devices" with a
-  section per device; resolutions ride along ("2 resolved"). `0` sends at
+  message per channel, grouped by monitor: "3 alerts on 2 monitors" with a
+  section per monitor; resolutions ride along ("2 resolved"). `0` sends at
   the next cycle. A digest lists at most 12 lines, then "…and N more alerts".
 - **Hourly cap** — once a channel has received `max_per_hour` messages in the
   last hour, further alerts wait and arrive as one digest when a slot frees.
   `0` removes the cap.
 - **On-call channels** (PagerDuty, Opsgenie) are never batched across
-  devices: they open and close one incident per device, so they receive one
-  message per device without waiting.
+  monitors: they open and close one incident per monitor, so they receive one
+  message per monitor without waiting.
 
 Delivery failures keep the lines queued; the next cycle retries.
 
@@ -219,14 +219,14 @@ variable of a custom webhook:
   Resolved, Flapping), so the severity is readable without colour or emoji.
 - A rule that watches several series names the one that fired: the VM and
   its id, the mount point, the interface, the backup group, the URL of the
-  probe. Device-wide rules (unreachable) name nothing more than the device.
+  probe. Monitor-wide rules (unreachable) name nothing more than the monitor.
 - The value and threshold are shown for measured rules; an all-or-nothing
   rule on a 0/1 metric (on battery, guest stopped) does not repeat "1
   (threshold > 0)".
 
 ## Deep links
 
-Every message ends with a link to the device (`{public_url}/targets/{id}`)
+Every message ends with a link to the monitor (`{public_url}/targets/{id}`)
 when a public URL is known — the `public_url` of the policy, or
 `DUMBMONIT_PUBLIC_URL`. Custom webhooks also get it as the `{{link}}`
 variable unless their own `base_url` is set.

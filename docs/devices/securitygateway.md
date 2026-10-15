@@ -41,8 +41,8 @@ only change once a minute.
 
 **A partial outage is still a successful check.** One stopped service gives
 `service_up 0` for that service and the others are still measured. Only when
-no service and no API answers at all is the device *unreachable*. A refused
-key is a configuration error, shown on the device page and not notified.
+no service and no API answers at all is the monitor *unreachable*. A refused
+key is a configuration error, shown on the monitor page and not notified.
 
 **What is not read.** The license and its expiry, the disk space and the
 message statistics of the dashboard are not described by the published
@@ -52,11 +52,11 @@ and list the service in its `services` setting.
 
 The [built-in rules](../alerting/rules.md#mdaemon-and-securitygateway) that
 apply: SecurityGateway service down, SecurityGateway API not answering,
-SecurityGateway delivery queue growing, plus Device unreachable.
+SecurityGateway delivery queue growing, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
-A SecurityGateway device shows a **Mail services** panel above the charts,
+A SecurityGateway monitor shows a **Mail services** panel above the charts,
 read from the last stored measurement: opening the page never connects to the
 gateway. It lists every watched service with its port, a word and a colour
 (Answering, Down) and its response time, the version, and with an API key,
@@ -70,7 +70,7 @@ every performance counter with its latest value.
     smtp,web_https
     ```
 
-2. To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the device page, your version keeps them for the Global Administrator role, and the account needs that role instead.
+2. To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the monitor page, your version keeps them for the Global Administrator role, and the account needs that role instead.
 
     ```
     dumbmonit

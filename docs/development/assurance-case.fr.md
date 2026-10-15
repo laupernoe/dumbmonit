@@ -14,7 +14,7 @@ Les chemins ci-dessous sont relatifs à la racine du dépôt.
 
 1. Seul un utilisateur authentifié, dont le rôle l'autorise, peut lire ou
    modifier la configuration, les alertes ou les mesures.
-2. Les identifiants que DumbMonit conserve pour vos équipements ne sont lisibles
+2. Les identifiants que DumbMonit conserve pour vos surveillances ne sont lisibles
    ni dans le fichier de base, ni dans une sauvegarde sans sa phrase de passe,
    ni par l'API.
 3. Seule une machine munie d'un jeton valide peut envoyer des mesures, et un
@@ -32,11 +32,11 @@ Les chemins ci-dessous sont relatifs à la racine du dépôt.
 | Client réseau anonyme | Atteint le port HTTP | Oui |
 | Utilisateur connecté à faible rôle | Session valide ou jeton d'API en lecture | Oui (élévation de privilèges) |
 | Page web malveillante | S'exécute dans le navigateur d'un admin | Oui (CSRF, XSS, clickjacking) |
-| Équipement surveillé compromis ou malveillant | Répond aux sondes avec du contenu hostile | Oui (analyseurs, redirections) |
+| Cible surveillée compromise ou malveillante | Répond aux sondes avec du contenu hostile | Oui (analyseurs, redirections) |
 | Agent malveillant ou volé | Détient un jeton d'agent | Oui (portée d'un seul jeton) |
-| Admin saisissant une URL hostile | Configure un webhook ou une adresse d'équipement | Oui, pour les adresses du serveur lui-même |
+| Admin saisissant une URL hostile | Configure un webhook ou une adresse de surveillance | Oui, pour les adresses du serveur lui-même |
 | Qui contrôle l'hôte, le volume `/data` ou le moteur de conteneurs | Contrôle total | Non : hors périmètre, comme dans la politique de sécurité |
-| Failles de VictoriaMetrics ou des équipements surveillés | Code tiers | Non : à signaler en amont |
+| Failles de VictoriaMetrics ou des surveillances | Code tiers | Non : à signaler en amont |
 
 ## Frontières de confiance
 
@@ -47,7 +47,7 @@ Les chemins ci-dessous sont relatifs à la racine du dépôt.
 | Fournisseur d'identité vers le serveur | Redirection OpenID Connect et jeton d'identité | State, nonce et PKCE (S256) ; le rattachement à un compte local est explicite | `crates/server/src/auth/oidc/` ; test `oidc_api.rs` |
 | Agent vers `/api/ingest` | Mesures, résultats de commandes | Jeton par agent, conservé sous forme d'empreinte SHA-256 (préfixe `dmon_`) | `crates/server/src/api/ingest.rs`, `crates/server/src/collectors/agent/token.rs` ; test `agent_binding_api.rs` |
 | Agent relais vers le serveur | Résultats de sondes d'un autre réseau | Même vérification de jeton d'agent (`agent_commands::authenticate`) | `crates/server/src/api/relay.rs` ; test `relay_api.rs` |
-| Serveur vers les équipements | Requêtes de sonde, réponses hostiles | Redirections suivies sur le même hôte seulement, nombre borné, analyseurs testés, vérification des certificats par défaut | `crates/collectors/src/http.rs` (`same_host_redirects`) |
+| Serveur vers les surveillances | Requêtes de sonde, réponses hostiles | Redirections suivies sur le même hôte seulement, nombre borné, analyseurs testés, vérification des certificats par défaut | `crates/collectors/src/http.rs` (`same_host_redirects`) |
 | Serveur vers les canaux de notification | Requêtes webhook et SMTP | Même politique de redirection, plus une garde qui refuse les adresses du serveur lui-même, vérifiée avant l'envoi, à chaque redirection et à la résolution DNS | `crates/server/src/notify/guard.rs` ; test `notify_guard_api.rs` |
 | Serveur vers VictoriaMetrics | Écritures et requêtes de lecture | L'enfant embarqué écoute sur `127.0.0.1:8428` par défaut ; le relais compatible Prometheus ne transmet que les routes de lecture (query, query_range, series, labels) | `crates/server/src/config.rs` (`DUMBMONIT_VM_LISTEN`), `crates/server/src/api/prometheus.rs` (`readable_segments`) |
 | Serveur vers SQLite | Configuration et état | Paramètres liés via `sqlx` | `crates/server/src/db/` |
@@ -130,7 +130,7 @@ L'argument suit les principes de conception de Saltzer et Schroeder.
 | Journalisation insuffisante, CWE-778 | Journal de sécurité des connexions et des changements sensibles | `auth/audit.rs` ; test `security_audit_api.rs` |
 
 Les risques résiduels connus figurent dans le modèle de sécurité (serveur en
-HTTP clair, options d'équipement non chiffrées, VictoriaMetrics embarqué sans
+HTTP clair, options de surveillance non chiffrées, VictoriaMetrics embarqué sans
 authentification). La CSP autorise les styles en ligne (`style-src
 'unsafe-inline'`), ce qui l'affaiblit contre l'injection de style mais pas
 contre l'exécution de script. Un avis est accepté, `RUSTSEC-2023-0071`, ignoré

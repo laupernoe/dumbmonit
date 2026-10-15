@@ -9,7 +9,7 @@ Rien n'y est saisi à la main : chaque lien vient de ce que DumbMonit sait déj�
 | Lien | Source | Tracé |
 |---|---|---|
 | Dépend de | Le **parent** défini sur une sonde, celui que suit la suppression des alertes. | trait plein |
-| Joint via un relais | L'**agent relais** qui interroge un appareil sur un site distant. | tirets longs |
+| Joint via un relais | L'**agent relais** qui interroge une surveillance sur un site distant. | tirets longs |
 | Hébergé par un hyperviseur | Les invités signalés dans les 30 dernières minutes par Proxmox VE, XCP-ng, Nutanix, vSphere ou le module libvirt d'un agent Linux. | tirets courts |
 | Câblé à (LLDP) | Un **voisin LLDP** vu par un commutateur SNMP sur l'un de ses ports (profil `ethernet-switch`). | pointillés |
 
@@ -27,8 +27,7 @@ tracés plus légèrement.
 ## Lire la carte
 
 - L'amont à gauche, ce qui en dépend à droite ; une section par dossier.
-- Chaque case montre l'icône du type, le nom et l'état en toutes lettres. Un
-  appareil **en panne** a un contour épais et un badge `!` ; ce qui se trouve
+- Chaque case montre l'icône du type, le nom et l'état en toutes lettres. Une surveillance **en panne** a un contour épais et un badge `!` ; ce qui se trouve
   derrière lui (par un parent, un relais ou un hyperviseur) est marqué
   **Impacté**, avec un contour en tirets : ses alertes sont supprimées. Les
   liens LLDP ne propagent pas une panne.

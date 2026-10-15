@@ -24,13 +24,13 @@ Forgejo 和 Gitea 共享相同的 REST API，因此 DumbMonit 使用一个收集
 | `runner_offline` | 每个离线运行器的值为 1（最多 32 个） | `runner` |
 | `scrape_errors` | 最后一次探测中失败的仅管理员调用（使用普通令牌时为 0，因为从未尝试） | |
 
-适用的[内置规则](../alerting/rules.md#self-hosted-forges)：Forgejo/Gitea 运行器全部离线、Forgejo/Gitea 计划任务逾期，加上设备不可达。安全评分检查计划任务：参见[供应商更新和其他检查](../using/security-score.md)。
+适用的[内置规则](../alerting/rules.md#self-hosted-forges)：Forgejo/Gitea 运行器全部离线、Forgejo/Gitea 计划任务逾期，加上监控项不可达。安全评分检查计划任务：参见[供应商更新和其他检查](../using/security-score.md)。
 
 ## 它不监视什么 {#what-it-does-not-watch}
 
 Forgejo 和 Gitea 没有只读管理员角色：每个保留给"管理员"的调用都需要一个拥有完全权限的账户，而不是作用域受限的委托。它们的 API 也没有相当于 GitLab 注册或双因素设置的东西，也没有自报"可用更新"标志 — 手动对比上面的版本与项目的[发布说明](https://forgejo.org/releases/)。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板上面的图表读取探测存储的内容；打开页面永远不会调用 Forgejo 或 Gitea。它首先说出什么是错的（健康检查失败、运行器全部离线、计划任务逾期），然后是版本，然后是存储库、账户和组织计数。
 

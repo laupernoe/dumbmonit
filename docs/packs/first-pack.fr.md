@@ -50,12 +50,12 @@ default_port: 80
 credentials: [none]
 ```
 
-L'`id` décide deux noms : le type d'appareil `pack.shelly-plug`, et le
+L'`id` décide deux noms : le type de surveillance `pack.shelly-plug`, et le
 préfixe de métrique `dumbmonit_shelly_plug_`.
 
 ## 3. Une source
 
-Une source est une requête, toujours vers la propre adresse de l'appareil :
+Une source est une requête, toujours vers la propre adresse de la surveillance :
 
 ```yaml
 options:
@@ -71,8 +71,8 @@ sources:
     path: /rpc/Switch.GetStatus?id={{option.switch_id}}
 ```
 
-`{{option.switch_id}}` est remplacé par le propre réglage de l'appareil,
-montré dans le formulaire d'appareil comme **Switch channel**. Le nom de
+`{{option.switch_id}}` est remplacé par le propre réglage de la surveillance,
+montré dans le formulaire de surveillance comme **Switch channel**. Le nom de
 fichier de la fixture, `status.json`, correspond à l'`id` de la source.
 
 ## 4. Les métriques
@@ -179,7 +179,7 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
   --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
 ```
 
-Ouvrez **Appareils → Ajouter un appareil** : *Shelly plug (Gen2+)* est
+Ouvrez **Surveillances → Ajouter une surveillance** : *Shelly plug (Gen2+)* est
 dans la liste. Ajoutez votre prise avec son adresse ; le premier sondage
 arrive dans la minute, et la règle *Shelly plug overheating* est dans
 **Alertes → Règles**.

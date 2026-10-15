@@ -198,9 +198,9 @@ async fn overview(
 ) -> ApiResult<Json<RedfishView>> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != "redfish" {
-        return Err(ApiError::NotFound(format!("Device {id} is not a Redfish server.")));
+        return Err(ApiError::NotFound(format!("Monitor {id} is not a Redfish server.")));
     }
     let query = format!(
         r#"last_over_time({{__name__=~"dumbmonit_redfish_.*", target="{id}"}}[{LOOKBACK}]) keep_metric_names"#

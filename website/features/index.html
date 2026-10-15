@@ -68,7 +68,7 @@
 		<a class="brand" href="../" aria-label="DumbMonit home"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Sections">
 			<a href="./" aria-current="page">Features</a>
-			<a href="../devices/">Devices</a>
+			<a href="../devices/">Monitors</a>
 			<a href="../install/">Install</a>
 			<a href="../community/">Docs and community</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Live demo</a>
@@ -99,7 +99,7 @@
 <section class="page-head">
 	<div class="wrap">
 		<h1 class="blur-in"><span class="w" style="--i:0">Everything</span> <span class="w" style="--i:1">it</span> <span class="w" style="--i:2">does</span></h1>
-		<p class="lede">Alerting, status pages, agents and the rest, in one container. What each kind of device reports is on the Devices pages.</p>
+		<p class="lede">Alerting, status pages, agents and the rest, in one container. What each kind of monitor reports is on the Monitors pages.</p>
 		<ul class="toc" aria-label="On this page">
 			<li><a href="#alerting">Alerts without the noise</a></li>
 			<li><a href="#notifications"><span class="num" data-n="23">23</span> notification channels</a></li>
@@ -125,7 +125,7 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dependencies</strong><p>Declare a switch as the parent of what sits behind it. When it goes down you get one notification, not thirty; the others read “Suppressed by parent”.</p></li>
-					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation, acknowledgement, snooze, per-device ignore and clearing resolved history are all built in.</p></li>
+					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation, acknowledgement, snooze, per-monitor ignore and clearing resolved history are all built in.</p></li>
 					<li><strong>Baselines that learn first</strong><p>Anomaly detection with no threshold to tune: 168 buckets, one per hour of the week. It stays silent for its first 14 days and only shows what it would have fired.</p></li>
 					<li><strong>Forecasts</strong><p>“This filesystem will be full within four days” is listed as a forecast, apart from what is broken right now.</p></li>
 					<li><strong>Maintenance and a notification policy</strong><p>One-off or weekly windows, hysteresis, flap hold, quiet hours, batching and an hourly cap, so a bad night does not become two hundred pushes.</p></li>
@@ -142,7 +142,7 @@
 <source type="image/avif" media="(max-width: 599px)" srcset="../assets/shots/alerts-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../assets/shots/alerts-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../assets/shots/alerts-light-1x.avif 1440w, ../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../assets/shots/alerts-light-1x.webp" srcset="../assets/shots/alerts-light-1x.webp 1440w, ../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Alerts page: current alerts grouped by device, each with an Unreachable, Warning, Advisory or Building up plate, Ack and Open monitor" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../assets/shots/alerts-light-1x.webp" srcset="../assets/shots/alerts-light-1x.webp 1440w, ../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Alerts page: current alerts grouped by monitor, each with an Unreachable, Warning, Advisory or Building up plate, Ack and Open monitor" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 				</div>
 				<figcaption>Alerts, grouped by host. Severities read like a weather service: info, advisory, warning.</figcaption>
@@ -222,7 +222,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Status pages for the people you serve</h2>
 				<p>Public pages at <code>/s/&lt;name&gt;</code>: groups of services with 90 days of daily history, 30- and 90-day uptime, incident and maintenance announcements, email subscribers with double opt-in, RSS, badges for a README, a compact embed for an intranet, an optional 90-day calendar and response-time graphs, and an optional scene behind the banner: about fifty to pick from, from city skylines (Venice, Paris, Tokyo, New York&hellip;) and wonders of the world to Swiss landmarks (the Matterhorn, the Jet d&rsquo;Eau, Lucerne, Bern, Chillon). The sky follows the state of your services, and each scene reacts in its own way when something goes down or comes back. The Swiss ones carry an SBB-style station clock, a split-flap alert board, fireworks on 1 August, the Escalade cauldron and winter snow.</p>
-				<p>Only the labels you choose leave the server. Device names, addresses and types never appear on the page, in a badge or in an email.</p>
+				<p>Only the labels you choose leave the server. Monitor names, addresses and types never appear on the page, in a badge or in an email.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/en/latest/using/status-pages/">Status pages in the documentation</a></p>
 			</div>
 			<div>
@@ -265,7 +265,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 <source type="image/avif" media="(max-width: 599px)" srcset="../assets/shots/wall-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../assets/shots/wall-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../assets/shots/wall-light-1x.avif 1440w, ../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../assets/shots/wall-light-1x.webp" srcset="../assets/shots/wall-light-1x.webp 1440w, ../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Wall mode: “4 problems” in large type, the list of alerts, the devices that report, a clock, and a rainy Paris rooftop with the pigeons" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../assets/shots/wall-light-1x.webp" srcset="../assets/shots/wall-light-1x.webp 1440w, ../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Wall mode: “4 problems” in large type, the list of alerts, the monitors that report, a clock, and a rainy Paris rooftop with the pigeons" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 			</div>
 			<figcaption>Wall mode on a room monitor: the weather over the Paris rooftop follows your alerts.</figcaption>
@@ -278,7 +278,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Email reports</h2>
-				<p>A short weekly email (or daily, or monthly) with availability by group, the incidents of the period and the least stable devices, sent without anyone opening DumbMonit.</p>
+				<p>A short weekly email (or daily, or monthly) with availability by group, the incidents of the period and the least stable monitors, sent without anyone opening DumbMonit.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/en/latest/using/reports/">Read more in the documentation</a></p>
 			</div>
 			<div class="section-head" id="topology" style="margin-bottom:0">
@@ -295,7 +295,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Security score</h2>
-				<p>Every supported device gets a 0–100 score and an A–F grade from the vendor’s own best-practice checks, PingCastle-style: category, severity, evidence, remediation, and a worst-first Security page.</p>
+				<p>Every supported monitor gets a 0–100 score and an A–F grade from the vendor’s own best-practice checks, PingCastle-style: category, severity, evidence, remediation, and a worst-first Security page.</p>
 				<p>The score is a guide, not an audit: it only reads what DumbMonit already collects, so it never replaces a security review.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/en/latest/using/security-score/">Read more in the documentation</a></p>
 			</div>
@@ -314,7 +314,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		</div>
 		<ul class="points" style="max-width:48em">
 			<li><strong>Open, documented API</strong><p>Every route behind <code>/api/openapi.json</code> (OpenAPI 3.1): scoped tokens (<code>dmt_…</code>, read or write) that can expire, be restricted to a network, and are rate-limited. <a href="https://dumbmonit.readthedocs.io/en/latest/reference/api/">API reference</a></p></li>
-			<li><strong>An assistant over MCP</strong><p>27 tools for ChatGPT, VS Code or Cursor: read status, devices, alerts, metrics and agents; a write token can also silence, acknowledge, add a device or restart a container. Secrets never come back. <a href="https://dumbmonit.readthedocs.io/en/latest/using/assistant/">Connect an assistant</a></p></li>
+			<li><strong>An assistant over MCP</strong><p>27 tools for ChatGPT, VS Code or Cursor: read status, monitors, alerts, metrics and agents; a write token can also silence, acknowledge, add a monitor or restart a container. Secrets never come back. <a href="https://dumbmonit.readthedocs.io/en/latest/using/assistant/">Connect an assistant</a></p></li>
 		</ul>
 	</div>
 </section>
@@ -327,7 +327,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>English, French, German, Spanish, Italian, Portuguese (Portugal and Brazil), Russian and Simplified Chinese: the interface, this site and the documentation. Some translations are still partial.</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="../devices/">Devices</a>
+				<a class="btn btn-primary" href="../devices/">Monitors</a>
 				<a class="btn btn-secondary" href="../install/">Install</a>
 			</div>
 		</div>
@@ -341,7 +341,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<p>DumbMonit, Apache 2.0. The mascot is a pigeon.</p>
 		<nav aria-label="Footer">
 			<a href="./">Features</a>
-			<a href="../devices/">Devices</a>
+			<a href="../devices/">Monitors</a>
 			<a href="../install/">Install</a>
 			<a href="../community/">Docs and community</a>
 			<a href="https://demo.dumbmonit.app">Live demo</a>

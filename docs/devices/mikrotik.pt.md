@@ -56,9 +56,9 @@ As [regras incorporadas](../alerting/rules.md#mikrotik-routeros) que se
 aplicam: MikroTik CPU high, memory high, storage almost full, temperature
 high, power supply or fan failed, interface accumulating errors, link
 flapping, RouterOS update available e firmware upgrade pending, mais
-Device unreachable.
+Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca liga ao router. Mostra a versão do RouterOS e se uma mais recente

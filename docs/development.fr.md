@@ -115,8 +115,8 @@ sont testés en place sans réseau.
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` et optionnellement
    `discover()` pour la détection de profil. Retournez les variantes
    `ProbeError` véridiquement : `means_down()` décide si une défaillance
-   compte comme "appareil arrêté" (alerte) ou comme erreur de configuration
-   (affichée sur l'appareil, non notifiée).
+   compte comme "surveillance arrêtée" (alerte) ou comme erreur de configuration
+   (affichée sur la surveillance, non notifiée).
 2. Lisez vos options de `Target::tags` dans un `options.rs`, avec des défauts.
 3. Enregistrez-le dans `crates/server/src/main.rs` avec
    `registry.register(...)`. L'ordonnanceur et l'API ne connaissent jamais

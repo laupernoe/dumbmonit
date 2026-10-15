@@ -38,9 +38,9 @@ users are counted in `tasks_failed_window`, which covers every task.
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Paperless task queue down, Paperless index or sanity check error, Paperless
 migrations pending, Paperless task failed, Paperless storage almost full,
-Paperless update available, plus Device unreachable.
+Paperless update available, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 calls Paperless. It says what is wrong first (a component in error, failed

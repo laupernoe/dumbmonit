@@ -14,42 +14,42 @@ irgendwo fehlschlugen, und die eigene Gesundheit der Konsole.
     es wochenlang auf einem lebenden Datacenter Manager laufen lassen.
     Sagen Sie uns, was kaputt ist.
 
-## Ein Gerät für den Bestand, oder ein Gerät pro Cluster?
+## Ein Monitor für den Bestand, oder ein Monitor pro Cluster?
 
-Ein Datacenter-Manager-Gerät ist kein Ersatz für [Proxmox-VE](proxmox.md)-
-und [Proxmox-Backup-Server](pbs.md)-Geräte. Es beantwortet eine
+Ein Datacenter-Manager-Monitor ist kein Ersatz für [Proxmox-VE](proxmox.md)-
+und [Proxmox-Backup-Server](pbs.md)-Monitore. Er beantwortet eine
 andere Frage.
 
-| | Datacenter-Manager-Gerät | Ein Gerät pro Cluster und pro Backup-Server |
+| | Datacenter-Manager-Monitor | Ein Monitor pro Cluster und pro Backup-Server |
 |---|---|---|
-| Zu erstellende Geräte | eines | eines pro Cluster, eines pro Backup-Server |
+| Zu erstellende Monitore | eines | eines pro Cluster, eines pro Backup-Server |
 | Zu verwaltende Zugangsdaten | ein Token, auf der Konsole | ein Token pro Instanz |
 | Last auf jedem Cluster | keine von uns: Wir lesen den eigenen Cache der Konsole | eine Abfrage pro Intervall, pro Cluster |
 | Was Sie bekommen | Erreichbarkeit, Version, Gast- und Knotenzahlen, CPU-, Speicher- und Storage-Totals, fehlgeschlagene Tasks | all das plus Gäste einzeln, Snapshots, Backup-Jobs, HA, Ceph, Replikation, Platten und SMART, ZFS-Pools, der 30-Tage-Backup-Kalender |
 | Was Sie nicht bekommen | Pro-Gast-Zeitreihen, Pro-Datastore-Details, Platten, Snapshots, Task-Logs | ein einziges bestandsweites Total |
 | Hauptfehler | die Konsole kann eine Instanz nicht erreichen | der Cluster antwortet uns nicht |
 
-**Unsere Empfehlung.** Fügen Sie das Datacenter-Manager-Gerät hinzu,
+**Unsere Empfehlung.** Fügen Sie den Datacenter-Manager-Monitor hinzu,
 wenn Sie bereits eine Konsole betreiben und eine Seite wollen, die
 sagt, ob der Bestand vollständig ist — es ist der günstigste Weg zu
 bemerken, dass ein entfernter Standort weggefallen ist, und es kostet
-die Cluster nichts. Fügen Sie ein dediziertes Gerät für jeden Cluster
+die Cluster nichts. Fügen Sie einen dedizierten Monitor für jeden Cluster
 und Backup-Server hinzu, den Sie tatsächlich betreiben: Dort liegt
 die Tiefe, und das sagt Ihnen, *welche* VM stoppte oder *welches*
 Backup fehlschlug. Die beiden überlappen, ohne zu kollidieren; ein
-fehlgeschlagenes Backup hebt dann einen Alarm vom PBS-Gerät (mit dem
+fehlgeschlagenes Backup hebt dann einen Alarm vom PBS-Monitor (mit dem
 Task-Log) und einen von der Konsole (die die Instanz benennt). Schalten
 Sie die Task-Regel der Konsole stumm, wenn Sie das redundant finden,
-oder begrenzen Sie sie auf die Instanzen, für die Sie kein dediziertes
-Gerät haben.
+oder begrenzen Sie sie auf die Instanzen, für die Sie keinen dedizierten
+Monitor haben.
 
 Betreiben Sie überhaupt keine Konsole, installieren Sie keine nur
-zur Überwachung: dedizierte Geräte sehen strikt mehr.
+zur Überwachung: dedizierte Monitore sehen strikt mehr.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Über die generischen Diagramme hinaus zeigt ein Datacenter-Manager-
-Gerät drei Panels, aus dem gelesen, was die Abfrage gespeichert hat —
+Monitor drei Panels, aus dem gelesen, was die Abfrage gespeichert hat —
 das Öffnen der Seite fragt weder die Konsole noch die von ihr
 verwalteten Cluster ab:
 
@@ -68,7 +68,7 @@ verwalteten Cluster ab:
   fehlgeschlagene Task, neueste zuerst, mit der Instanz, auf der er
   lief, der Art des Tasks, wann er begann, wie lange er dauerte und
   der Fehlermeldung. Das Task-Log selbst bleibt auf der Instanz: Öffnen
-  Sie es dort, oder fügen Sie diesen Cluster als eigenes Gerät hinzu,
+  Sie es dort, oder fügen Sie diesen Cluster als eigenen Monitor hinzu,
   wo *Show log* es abruft.
 * **Console host** — die Maschine, die die Konsole betreibt: CPU,
   Speicher, Root-Dateisystem, Uptime und Kernel, seine Zertifikate mit
@@ -78,7 +78,7 @@ verwalteten Cluster ab:
   nichts davon, und das Panel sagt das, statt Nullen zu zeigen.
 
 Die Task-Historie wird in SQLite gehalten (`pdm_task_history`, 19
-Tage, höchstens 5000 Tasks pro Gerät), sodass die Fehlerliste
+Tage, höchstens 5000 Tasks pro Monitor), sodass die Fehlerliste
 Neustarts überlebt, obwohl jede Abfrage nur das Task-Fenster betrachtet.
 
 ## Was beobachtet wird
@@ -115,7 +115,7 @@ Storage-Totals zählen jeden Storage-Namen einmal pro Instanz: Ein von
 fünf Knoten eines Clusters geteilter Storage wird einmal gezählt,
 nicht fünfmal.
 
-Geltende eingebaute Regeln: Device unreachable, Federated instance
+Geltende eingebaute Regeln: Monitor unreachable, Federated instance
 unreachable, Federated instance behind, Task failed on a federated
 instance, Datacenter console disk almost full, Datacenter console
 certificate expiring, Datacenter console updates pending.
@@ -235,7 +235,7 @@ hinzugefügt, falls fehlend.
 hält ihr eigenes Inventar, von ihrer eigenen Sammelschleife
 aktualisiert. Bei jeder Abfrage nach frischen Daten zu fragen lässt
 die Konsole jeden Cluster erneut aufrufen, zusätzlich zu ihrem
-normalen Rhythmus — genau die Last, die ein einziges Konsolen-Gerät
+normalen Rhythmus — genau die Last, die ein einziges Konsolen-Monitor
 vermeiden soll. Sechzig Sekunden sind immer noch frischer als das
 Standard-Abfrageintervall.
 

@@ -72,7 +72,7 @@ Push-Dienste, die der Server erreichen muss. Vollständige Anleitung:
 
 Nur Admins. Die Konten, die sich anmelden können, und ihre Rolle:
 
-| Rolle | Liest alles | Bearbeitet Alarme (bestätigen, zurückstellen, ignorieren, Wartungsfenster, Verlauf löschen) | Ändert die Konfiguration (Geräte, Regeln, Kanäle, Statusseiten, Einstellungen, Sicherungen, Tokens, Konten) |
+| Rolle | Liest alles | Bearbeitet Alarme (bestätigen, zurückstellen, ignorieren, Wartungsfenster, Verlauf löschen) | Ändert die Konfiguration (Monitore, Regeln, Kanäle, Statusseiten, Einstellungen, Sicherungen, Tokens, Konten) |
 |---|---|---|---|
 | **Betrachter** | ja | nein | nein |
 | **Operator** | ja | ja | nein |
@@ -80,7 +80,7 @@ Nur Admins. Die Konten, die sich anmelden können, und ihre Rolle:
 
 Ein Betrachter sieht jede Seite, wobei jedes Bedienelement, das etwas ändern würde, verborgen ist.
 Einiges bleibt selbst zum Lesen Admins vorbehalten: API- und Agent-Tokens, E-Mail-Adressen der
-Abonnenten von Statusseiten und Geräteoptionen, die wie Geheimnisse aussehen (eine Option, deren
+Abonnenten von Statusseiten und Monitoroptionen, die wie Geheimnisse aussehen (eine Option, deren
 Name `key`, `token`, `password` … enthält, die zusätzlichen Header einer HTTP-Prüfung, das
 Passwort einer Adresse `https://user:pass@host`), die Nicht-Admins als `***` lesen. Ein Operator
 ist die Bereitschaftsrolle: Die Alarmsteuerung ist da, die Konfigurationsbildschirme lesen
@@ -164,7 +164,7 @@ Befehlen. Die Liste zeigt für jedes Token sein Präfix, Erstellungsdatum, letzt
 es widerrufen wurde. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem
 nächsten Push.
 
-Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Geräte nicht. Die Tokenliste,
+Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Monitore nicht. Die Tokenliste,
 Erstellen und Widerrufen sind Admins vorbehalten; Betrachter und Operatoren sehen den Abschnitt
 ohne die Liste.
 
@@ -172,8 +172,8 @@ ohne die Liste.
 
 Eine Art Token für beides: MCP-Clients und die [REST-API](../reference/api.md). Benennen Sie ein
 Token, wählen Sie seinen Umfang und erstellen Sie es — es wird einmalig angezeigt. Ein
-**Lese**-Token kann nur ansehen; ein **Lese- und Schreib**-Token kann auch etwas ändern — ein
-Gerät stummschalten, eine Prüfung ausführen, Geräte, Regeln und Kanäle hinzufügen oder bearbeiten
+**Lese**-Token kann nur ansehen; ein **Lese- und Schreib**-Token kann auch etwas ändern — einen
+Monitor stummschalten, eine Prüfung ausführen, Monitore, Regeln und Kanäle hinzufügen oder bearbeiten
 —, aber nie Konten, Anmeldeeinstellungen oder andere Tokens.
 
 Unter **Verbinden** enthalten drei Tabs die Snippets, mit dem Token befüllt, solange es noch auf
@@ -191,7 +191,7 @@ verbinden](assistant.md) und [DumbMonit abfragen](../reference/metrics.md#scrapi
 Drei Dinge, in der Reihenfolge, in der Sie ihnen begegnen.
 
 Eine **Warnung, die Sie nicht übersehen können**: `/data/secret.key` entschlüsselt die
-Gerätezugangsdaten, und eine Kopie der Datenbank ohne sie stellt eine Instanz wieder her, die mit
+Monitor-Zugangsdaten, und eine Kopie der Datenbank ohne sie stellt eine Instanz wieder her, die mit
 nichts sprechen kann. Der Wortlaut ändert sich, wenn das Geheimnis stattdessen aus
 `DUMBMONIT_SECRET` kommt — dann gibt es keine Datei zu kopieren, und Ihr Passwortmanager muss es
 halten.
@@ -247,7 +247,7 @@ Monitor im Raum. ++esc++ verlässt ihn, und die Befehlspalette öffnet ihn von �
 
 ## Info {#about}
 
-Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Geräteeinrichtung und
+Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Monitoreinrichtung und
 Alarmverlauf) und VictoriaMetrics (jede Messung in den Diagrammen), wie von `GET /api/health`
 gemeldet und alle 15 Sekunden aktualisiert. Ein Speicher, der nicht mehr antwortet, zeigt eine
 Warnung mit dem Fehler und dem, was zu prüfen ist. Der Abschnitt verlinkt außerdem diese

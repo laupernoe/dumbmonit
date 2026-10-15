@@ -69,7 +69,7 @@ As [regras incorporadas](../alerting/rules.md#pfsense) que se aplicam:
 - **pfSense disk nearly full**: mais de 90% durante trinta minutos
   (Advisory).
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Firewall diz o que está mal numa frase, mostra CPU, memória, disco
 e temperatura, depois lista cada gateway com a sua latência e perda, as

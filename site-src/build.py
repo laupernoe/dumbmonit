@@ -536,7 +536,7 @@ NOT_FOUND = """<!doctype html>
 	<p class="muted">Nothing lives at this address.</p>
 	<p style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
 		<a class="btn btn-primary" href="/">Back to DumbMonit</a>
-		<a class="btn btn-secondary" href="/devices/">Devices</a>
+		<a class="btn btn-secondary" href="/devices/">Monitors</a>
 		<a class="btn btn-secondary" href="/install/">Install</a>
 	</p>
 </main>

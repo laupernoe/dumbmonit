@@ -113,8 +113,8 @@ jsdelivr URL inlang 自己的工具默认:相对的,非`http`路径是
 1. 从`crates/proto/src/collector.rs`实现`Collector`:
    `kind()`、`probe(&Target) -> Result<Vec<Sample>, ProbeError>`和可选
    `discover()`用于配置文件检测。返回`ProbeError`变体
-   真实:` means_down()`决定失败是否计为"设备
-   关闭"(告警)或作为配置错误(显示在设备,不
+   真实:` means_down()`决定失败是否计为"监控项
+   关闭"(告警)或作为配置错误(显示在监控项,不
    通知)。
 2. 从`Target::tags`在`options.rs`中读取你的选项,带默认。
 3. 在`crates/server/src/main.rs`中用`registry.register(...)`注册它。

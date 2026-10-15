@@ -15,7 +15,7 @@ todos os anfitriões, VM e repositórios de armazenamento. Se o endereço que
 introduziu for o de um membro do pool, este responde `HOST_IS_SLAVE` com o
 endereço do coordenador; o DumbMonit segue-o uma vez, com o mesmo protocolo e
 porta, pelo que uma mudança de coordenador não o obriga a editar o
-dispositivo.
+monitor.
 
 !!! warning "Validado apenas contra a documentação do fornecedor — ainda não testado num sistema real"
 

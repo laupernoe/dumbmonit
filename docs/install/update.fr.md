@@ -21,7 +21,7 @@ immédiatement (au plus une fois par minute).
 
 !!! note "Ce qui est envoyé"
     Une seule requête `GET` anonyme avec un user agent `DumbMonit/<version>`.
-    Rien sur votre instance, vos appareils ou votre réseau n'est envoyé, et
+    Rien sur votre instance, vos surveillances ou votre réseau n'est envoyé, et
     l'adresse est fixée dans le code.
 
 ### Désactiver la vérification

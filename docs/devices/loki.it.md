@@ -47,7 +47,7 @@ applicano: Loki not ready, Loki refusing log lines, Loki cannot flush to
 storage, Loki write-ahead log disk full, Loki request errors, più Device
 unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non interroga mai Loki. Indica cosa non va in una frase (readiness,

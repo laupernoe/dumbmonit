@@ -15,7 +15,7 @@ dato. DumbMonit non scrive mai nella directory, non legge mai un
 attributo password (di LAPS legge la data di scadenza, mai la password)
 e non chiede mai i diritti di replicazione che esporrebbero segreti.
 
-Un dispositivo copre l'intero dominio: puntalo su un controller di
+Un monitor copre l'intero dominio: puntalo su un controller di
 dominio e DumbMonit trova gli altri nella partizione di configurazione.
 
 ## Cosa LDAP può e non può dire
@@ -30,7 +30,7 @@ In particolare:
   pannello dice *replication status not readable* invece di indovinare.
   Viene mostrata solo la vista del controller di dominio interrogato:
   per vedere i partner di un altro, aggiungilo come un secondo
-  dispositivo.
+  monitor.
 - **Non visibile tramite LDAP**: log degli eventi (accessi, blocchi
   mentre avvengono, cambi di gruppo come eventi), contenuti delle Group
   Policy, SYSVOL, zone DNS, e gli hash delle password stessi.
@@ -105,7 +105,7 @@ Print Operators e Backup Operators integrati.
 
 I risultati sono fatti grezzi — quanti oggetti, e quali — non un
 punteggio; il [punteggio di sicurezza](../using/security-score.md) del
-dispositivo li pesa. Ciascuno ha un `id` stabile, una severità sulla
+monitor li pesa. Ciascuno ha un `id` stabile, una severità sulla
 scala del punteggio (low, medium, high, critical, mostrata sulla pagina
 come Info, Advisory e Warning), una categoria, un conteggio e fino a
 venti nomi di account di esempio. Un risultato che è stato esaminato e
@@ -153,7 +153,7 @@ applicano:
 
 - **Domain controller unreachable**: un altro controller di dominio del
   dominio smette di rispondere sulla sua porta LDAP per cinque minuti
-  (Warning). Quello interrogato è coperto da *Device unreachable*.
+  (Warning). Quello interrogato è coperto da *Monitor unreachable*.
 - **Active Directory bind failed**: il controller di dominio rifiuta
   l'account di servizio — password scaduta, disattivato o bloccato
   (Advisory).
@@ -165,7 +165,7 @@ applicano:
   leggibile.
 - **krbtgt password older than 180 days** (Info).
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello Active Directory mostra il dominio (livelli funzionali, il
 controller di dominio interrogato, lo scarto dell'orologio), i

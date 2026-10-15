@@ -17,9 +17,9 @@ resolutor, servicios, CARP y actualizaciones pendientes.
     partes siguen el código fuente de OPNsense en lugar de una respuesta
     observada. Dinos qué falla.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Más allá de las gráficas genéricas, un dispositivo OPNsense muestra tres
+Más allá de las gráficas genéricas, un monitor OPNsense muestra tres
 paneles, leídos de lo que guardó la sonda — abrir la página nunca
 consulta al propio cortafuegos:
 
@@ -92,7 +92,7 @@ Todas las métricas tienen el prefijo `dumbmonit_opnsense_`.
 | Interfaces | `interface_up`, `interface_bytes_in/out`, `interface_packets_in/out`, `interface_errors_in/out`, `interface_drops`, `interface_collisions` (contadores, guardados en bruto), `interface_address_info` (la dirección del momento, en una etiqueta) | `interface`, `device`, y `address` para la última |
 | Firewall | `pf_states`, `pf_state_limit`, `pf_states_used_percent` | |
 | DHCP | `dhcp_leases`, `dhcp_leases_active` | `backend` (`kea`, `isc`, `dnsmasq`) |
-| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected` (WireGuard: handshake dentro de tres minutos), `vpn_handshake_age_seconds` (WireGuard, el par más reciente; ausente mientras ningún par se haya conectado nunca), `vpn_bytes_in/out`, `vpn_tunnels_down` | `kind` (`wireguard`, `openvpn`, `ipsec`), `tunnel` (el dispositivo WireGuard, `wg0`, o la descripción de IPsec y OpenVPN) |
+| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected` (WireGuard: handshake dentro de tres minutos), `vpn_handshake_age_seconds` (WireGuard, el par más reciente; ausente mientras ningún par se haya conectado nunca), `vpn_bytes_in/out`, `vpn_tunnels_down` | `kind` (`wireguard`, `openvpn`, `ipsec`), `tunnel` (el monitor WireGuard, `wg0`, o la descripción de IPsec y OpenVPN) |
 | Resolutor | `unbound_running`, `unbound_queries` (un contador), `unbound_cache_hit_percent` | |
 | Servicios | `service_running` (1 o 0, una serie por servicio que lista el cortafuegos) | `service` |
 | CARP | `carp_enabled`, `carp_maintenance_mode`, `carp_vip_master` (todos ausentes en un cortafuegos que no forma parte de un par) | `interface`, `vhid`, `address` |
@@ -118,7 +118,7 @@ WireGuard, OpenVPN, IPsec, Unbound y Kea son plugins. Un cortafuegos que
 no tiene uno responde `404`, que no es ni un error de recolección ni un
 error de autenticación: una métrica menos, y nada en la interfaz.
 
-Las reglas integradas que se aplican: Device unreachable, Internet
+Las reglas integradas que se aplican: Monitor unreachable, Internet
 gateway down, Gateway losing packets, Gateway slow, Firewall state
 table filling up, Firewall network buffers exhausted, VPN tunnel down,
 Firewall resolver stopped, Firewall core service stopped, Firewall too

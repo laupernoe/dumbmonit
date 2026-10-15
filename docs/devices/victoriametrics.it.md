@@ -4,7 +4,7 @@ Il database delle serie temporali e il database dei log stessi: se accettano
 quello che viene loro inviato, quanto spazio su disco rimane prima che smettano di accettare qualsiasi cosa,
 e cosa rifiutano.
 
-Due tipi di dispositivi condividono questa pagina, perché i due prodotti condividono i loro
+Due tipi di monitor condividono questa pagina, perché i due prodotti condividono i loro
 fondamenti: `victoriametrics` per un singolo nodo VictoriaMetrics, e
 `victorialogs` per un singolo nodo VictoriaLogs. Entrambi pubblicano la loro salute su
 `/health` e `/metrics`, sulla porta della loro API; DumbMonit legge quei due
@@ -62,9 +62,9 @@ conteggiato come dati rifiutati.
 Le [regole integrate](../alerting/rules.md#log-and-metrics-servers) che si applicano:
 Archivio metriche o log di sola lettura, Archivio metriche o log quasi di sola lettura,
 Server metriche o log non sano, Dati metriche o log rifiutati, Inserimenti lenti VictoriaMetrics,
-più dispositivo irraggiungibile.
+più monitor irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge quello che la sonda ha memorizzato; aprire la pagina non
 interroga mai il server. Dice, in questo ordine:

@@ -67,7 +67,7 @@ carregam `device` (seu nome, ou seu endereço MAC quando não tem nenhum),
 As [regras integradas](../alerting/rules.md#unifi-network) que se aplicam:
 UniFi device offline, UniFi Internet down, UniFi WAN link down, UniFi
 gateway CPU high, UniFi device waiting for adoption, UniFi firmware update
-available, UniFi alarms, além de Device unreachable.
+available, UniFi alarms, além de Monitor unreachable.
 
 ## Dispositivos {#devices}
 
@@ -92,7 +92,7 @@ completamente em [Dispositivos clientes](../alerting/rules.md#client-devices):
 | `last_seen_timestamp_seconds` | Última conexão, como `/rest/user` a reporta | `device`, `type` (`Wired`, `Wireless` ou `Unknown`), `os` (vazio), `user` (vazio), `kind` |
 | `stale_seconds` | Positivo uma vez que um cliente rastreado passou `device_stale_days` (3 por padrão) sem se conectar; aciona a regra [Dispositivo cliente desatualizado](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (sempre `connection`: o UniFi não tem backup para reportar) |
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o UniFi. Ele diz primeiro o que está errado (dispositivos

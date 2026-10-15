@@ -45,8 +45,8 @@ datos; algunos de ellos solo cambian una vez por minuto.
 **Un fallo parcial sigue siendo una comprobación exitosa.** Un servicio
 detenido da `service_up 0` para ese servicio y los demás se siguen
 midiendo. Solo cuando ningún servicio ni ninguna API responde en
-absoluto, el dispositivo es *inaccesible*. Una clave rechazada es un
-error de configuración, mostrado en la página del dispositivo y no
+absoluto, el monitor es *inaccesible*. Una clave rechazada es un
+error de configuración, mostrado en la página del monitor y no
 notificado.
 
 **Qué no se lee.** La licencia y su caducidad, el espacio en disco y las
@@ -61,9 +61,9 @@ que se aplican: SecurityGateway service down, SecurityGateway API not
 answering, SecurityGateway delivery queue growing, además de Device
 unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Un dispositivo SecurityGateway muestra un panel **Mail services** sobre
+Un monitor SecurityGateway muestra un panel **Mail services** sobre
 las gráficas, leído de la última medición guardada: abrir la página nunca
 se conecta a la pasarela. Lista cada servicio vigilado con su puerto, una
 palabra y un color (Answering, Down) y su tiempo de respuesta, la
@@ -85,7 +85,7 @@ versión, y, con una clave de API, cada contador de rendimiento con su
    SecurityGateway 12.5 o posterior. Crea una cuenta dedicada con el
    nombre siguiente, con una contraseña larga usada en ningún otro
    sitio, y dale el rol Domain Administrator. Si los contadores siguen
-   vacíos en la página del dispositivo, tu versión los reserva para el
+   vacíos en la página del monitor, tu versión los reserva para el
    rol Global Administrator, y la cuenta necesita ese rol en su lugar.
 
     ```

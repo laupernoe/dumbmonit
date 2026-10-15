@@ -4,7 +4,7 @@ La propia base de datos de series temporales y la base de datos de logs:
 si aceptan lo que se les envía, cuánto disco queda antes de que dejen de
 aceptar nada, y qué rechazan.
 
-Dos tipos de dispositivo comparten esta página, porque los dos productos
+Dos tipos de monitor comparten esta página, porque los dos productos
 comparten sus fundamentos: `victoriametrics` para una VictoriaMetrics de
 un solo nodo, y `victorialogs` para una VictoriaLogs de un solo nodo.
 Ambas publican su propia salud en `/health` y `/metrics`, en el puerto de
@@ -68,9 +68,9 @@ reinicio no se cuenta como datos rechazados.
 Las [reglas integradas](../alerting/rules.md#log-and-metrics-servers) que
 se aplican: Metrics or log storage read-only, Metrics or log storage
 almost read-only, Metrics or log server unhealthy, Metrics or log data
-refused, VictoriaMetrics slow inserts, además de Device unreachable.
+refused, VictoriaMetrics slow inserts, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta el servidor. Indica, en este orden:

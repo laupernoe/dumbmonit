@@ -29,7 +29,7 @@ HTML 页面。
 waiting、open_slot、starting、reading、sending、keepalive、
 dns_lookup、closing、logging、finishing 和 idle_cleanup。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Apache。
 它显示忙碌和空闲的工作进程数、记分板明细,以及在开启

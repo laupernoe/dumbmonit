@@ -894,10 +894,10 @@ mod tests {
         assert!(render(&group(vec![service])).text.contains("Service down — http://host/x6 —"));
 
         // Une série sans autre étiquette que celles de l'équipement n'ajoute rien.
-        let mut host = item("Device unreachable", NotifyReason::Firing, Severity::Critical);
+        let mut host = item("Monitor unreachable", NotifyReason::Firing, Severity::Critical);
         host.series_key = r#"dumbmonit_up{host="nas",tag_site="cellar",target="1"}"#.to_string();
         assert!(
-            render(&group(vec![host])).text.starts_with("🔴 Critical · Device unreachable — 95 %")
+            render(&group(vec![host])).text.starts_with("🔴 Critical · Monitor unreachable — 95 %")
         );
     }
 

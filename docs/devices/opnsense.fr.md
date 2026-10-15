@@ -18,9 +18,9 @@ résolveur, les services, CARP et les mises à jour en attente.
     source d'OPNsense plutôt qu'une réponse observée. Dites-nous ce qui
     casse.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Au-delà des graphiques génériques, un appareil OPNsense montre trois
+Au-delà des graphiques génériques, une surveillance OPNsense montre trois
 panneaux, lus depuis ce que la sonde a stocké — ouvrir la page n'interroge
 jamais le pare-feu lui-même :
 
@@ -117,7 +117,7 @@ qui n'en a pas un répond `404`, qui n'est ni une erreur de collection ni
 une erreur d'authentification : une métrique de moins, et rien dans
 l'interface.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, passerelle
+Règles intégrées qui s'appliquent : Surveillance inaccessible, passerelle
 Internet en panne, passerelle qui perd des paquets, passerelle lente,
 table d'états du pare-feu qui se remplit, buffers réseau du pare-feu
 épuisés, tunnel VPN en panne, résolveur du pare-feu arrêté, service

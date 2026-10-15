@@ -10,7 +10,7 @@ deixa-o explorar em detalhe quando quiser.
 A faixa no topo é um boletim meteorológico para a sua rede. Uma frase diz o
 estado do céu: «Clear skies.» quando nada precisa de si, caso contrário uma
 contagem do que precisa («9 advisories, 1 unreachable.»). Abaixo, placas
-contam dispositivos a reportar e inacessíveis, com a hora da última
+contam monitores a reportar e inacessíveis, com a hora da última
 verificação, e três leituras: **Reporting**, **Needs you**, **Forecasts**.
 
 A janela meteorológica à direita acompanha a rede: céu limpo, nublado,
@@ -23,34 +23,34 @@ A única ação principal da página é **Add a device**.
 ## O guia de primeira utilização {#the-first-run-guide}
 
 Numa instância nova, a página sob o boletim não está vazia: é um guia em
-três passos — adicionar um dispositivo, ligar uma forma de ser avisado,
+três passos — adicionar um monitor, ligar uma forma de ser avisado,
 verificar que chega uma mensagem. Cada passo é um clique, cada um pode ser
 dispensado por si só, e **Skip the guide** arreda os três. A escolha é
 guardada na instância, por isso um segundo navegador não recomeça o guia.
-Ver [Adicionar o primeiro dispositivo](../install/first-device.md#the-three-first-steps).
+Ver [Adicionar o primeiro monitor](../install/first-device.md#the-three-first-steps).
 
 ## Needs you {#needs-you}
 
-A lista do que precisa de si agora, o mais severo primeiro: dispositivos
+A lista do que precisa de si agora, o mais severo primeiro: monitores
 inacessíveis, depois alertas ativos por severidade. Cada linha nomeia a
-regra, o dispositivo, o valor atual, há quanto tempo dura, e se agrupa
-várias séries («×4» para quatro sistemas de ficheiros no mesmo dispositivo).
+regra, o monitor, o valor atual, há quanto tempo dura, e se agrupa
+várias séries («×4» para quatro sistemas de ficheiros no mesmo monitor).
 Quatro ações: **Ack** (confirmar este alerta por 1 h, 4 h, 24 h ou até
 resolver — os lembretes pausam, a resolução continua a ser notificada),
 **Snooze** (ocultar só este alerta por 1 h, 8 h, 1 dia ou até resolver),
-**Ignore** (parar esta regra de alguma vez alertar neste dispositivo de
+**Ignore** (parar esta regra de alguma vez alertar neste monitor de
 novo, reversivelmente), e **Open device**.
 
 Os alertas confirmados e adiados movem-se para o seu próprio grupo mais
 silencioso sob a lista e saem da contagem *Needs you*. Um alerta ignorado
 desaparece completamente — não é «conhecido», está desligado para esse
-dispositivo. Ver [Livrar-se de um alerta](alerts.md#getting-rid-of-an-alert).
+monitor. Ver [Livrar-se de um alerta](alerts.md#getting-rid-of-an-alert).
 
-## Resumo de dispositivos {#devices-summary}
+## Resumo de monitores {#devices-summary}
 
-Uma linha: quantos dispositivos, quantos a reportar, quantos inacessíveis,
+Uma linha: quantos monitores, quantos a reportar, quantos inacessíveis,
 e uma ligação para a página completa Devices. A visão geral nunca lista
-dispositivos: o bastidor vive em [Devices](devices.md).
+monitores: o bastidor vive em [Devices](devices.md).
 
 ## Previsões e últimas 24 horas {#forecasts-and-last-24-hours}
 
@@ -95,7 +95,7 @@ campo, resultados em três grupos.
 |---|---|
 | Pages | Overview, Devices, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
 | Actions | Add a device, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
-| Devices | Todos os dispositivos, com o seu LED de estado; ++enter++ abre-o |
+| Devices | Todos os monitores, com o seu LED de estado; ++enter++ abre-o |
 
 ## Navegação {#navigation}
 
@@ -105,7 +105,7 @@ telefone, torna-se uma barra de separadores inferior com esses quatro
 separadores e **More**, que contém o modo parede e a documentação.
 
 - **Overview** — o boletim: está tudo bem, e o que precisa de si.
-- **Monitors** — o bastidor; cada fonte que monitoriza. Ver [Página de dispositivos](devices.md).
+- **Monitors** — o bastidor; cada fonte que monitoriza. Ver [Página de monitores](devices.md).
 - **Alerts** — o que está ativo, as janelas de manutenção, o histórico e as
   regras. Ver [Página de alertas](alerts.md).
 - **Settings** — a sua conta, utilizadores e sign-on único, tokens de

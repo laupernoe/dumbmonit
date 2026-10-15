@@ -37,20 +37,20 @@ Tutte le metriche hanno il prefisso `dumbmonit_mdaemon_`.
 **Un'interruzione parziale è comunque un controllo riuscito.** Un
 servizio fermo dà `service_up 0` per quel servizio e gli altri vengono
 comunque misurati. Solo quando nessun servizio e nessuna API risponde
-affatto il dispositivo è *unreachable*.
+affatto il monitor è *unreachable*.
 
 **Un account rifiutato è un errore di configurazione, non
 un'interruzione.** Una password errata, un indirizzo che l'API XML non
-consente, o una porta errata viene mostrata sulla pagina del dispositivo
+consente, o una porta errata viene mostrata sulla pagina del monitor
 con il motivo e non viene notificata.
 
-**Le code provengono dall'agent, non da questo dispositivo.** MDaemon
+**Le code provengono dall'agent, non da questo monitor.** MDaemon
 pubblica le dimensioni delle sue code (inbound, local, remote, retry,
 bad, holding, quarantine), i suoi conteggi di sessioni, le sue statistiche
 dei messaggi e il suo uptime come contatori di prestazioni Windows,
 nell'oggetto chiamato MDaemon, e nel suo proprio Queue and Statistics
 Manager. Nessuna documentazione pubblicata da MDaemon descrive una
-chiamata API XML che li restituisca, quindi questo dispositivo non ne
+chiamata API XML che li restituisca, quindi questo monitor non ne
 indovina una: l'[agent](agent.md), installato sul server MDaemon, legge
 invece i contatori di prestazioni. Vedi
 [Code di posta tramite l'agent](#mail-queues-through-the-agent). La
@@ -62,12 +62,12 @@ servizio Windows stesso.
 
 Le [regole integrate](../alerting/rules.md#mdaemon-and-securitygateway)
 che si applicano: MDaemon mail service down, MDaemon XML API not
-answering, più Device unreachable; con l'agent, MDaemon mail queue
+answering, più Monitor unreachable; con l'agent, MDaemon mail queue
 growing, MDaemon Bad queue not empty e MDaemon Retry queue high.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-Un dispositivo MDaemon mostra un pannello **Mail services** sopra i
+Un monitor MDaemon mostra un pannello **Mail services** sopra i
 grafici, letto dall'ultima misurazione memorizzata: aprire la pagina non
 si connette mai al server. Elenca ogni servizio osservato con la sua
 porta, una parola e un colore (Answering, Down), e il suo tempo di
@@ -90,15 +90,15 @@ pagina propria dell'agent.
    a ogni periodo di campionamento. Per forzarlo attivo o disattivo,
    imposta `mdaemon: true` o `mdaemon: false` in `agent.yaml`.
 2. Le code appaiono nella pagina dell'agent. Per mostrarle anche su
-   questo dispositivo MDaemon, DumbMonit cerca l'agent sulla stessa
-   macchina: l'agent impostato come genitore di questo dispositivo,
+   questo monitor MDaemon, DumbMonit cerca l'agent sulla stessa
+   macchina: l'agent impostato come genitore di questo monitor,
    oppure l'agent relay che lo sonda, oppure l'agent il cui nome host
-   corrisponde all'indirizzo di questo dispositivo (`mail` per
-   `mail.example.com`), oppure, quando c'è un dispositivo MDaemon e un
+   corrisponde all'indirizzo di questo monitor (`mail` per
+   `mail.example.com`), oppure, quando c'è un monitor MDaemon e un
    agent che riporta i contatori MDaemon, quell'agent. Se nessuno
-   corrisponde, modifica questo dispositivo e scegli l'agent come suo
+   corrisponde, modifica questo monitor e scegli l'agent come suo
    **Parent device**: l'agent e MDaemon condividono la macchina, così
-   quando l'agent diventa silenzioso gli avvisi di questo dispositivo
+   quando l'agent diventa silenzioso gli avvisi di questo monitor
    vengono anch'essi trattenuti.
 
 Le serie appartengono all'agent, con la sua etichetta `target`. Tutte con
@@ -151,7 +151,7 @@ elencalo sotto `perf_counters` in `agent.yaml` (vedi
 5. In DumbMonit, inserisci l'indirizzo del server, per esempio "mail.example.com", poi l'indirizzo email completo dell'account come nome utente, e la sua password. L'API XML viene raggiunta sulla porta HTTPS di Remote Administration, 444 per impostazione predefinita.
 
 !!! warning
-    MDaemon non ha un ruolo di sola lettura per l'API XML: non riutilizzare mai il tuo account, e tieni questa password fuori da qualsiasi altro strumento. Dynamic Screening può bloccare un indirizzo dopo login falliti ripetuti, quindi una password errata qui può far bloccare l'host DumbMonit: testa prima con il comando sopra. Remote Administration usa spesso un certificato autofirmato: se la connessione viene rifiutata per questo motivo, spunta "Accept an unverifiable certificate" nelle opzioni. Le dimensioni delle code di posta non vengono lette da questo dispositivo: MDaemon le pubblica solo come contatori di prestazioni Windows, che l'agent DumbMonit legge quando è installato sul server di posta.
+    MDaemon non ha un ruolo di sola lettura per l'API XML: non riutilizzare mai il tuo account, e tieni questa password fuori da qualsiasi altro strumento. Dynamic Screening può bloccare un indirizzo dopo login falliti ripetuti, quindi una password errata qui può far bloccare l'host DumbMonit: testa prima con il comando sopra. Remote Administration usa spesso un certificato autofirmato: se la connessione viene rifiutata per questo motivo, spunta "Accept an unverifiable certificate" nelle opzioni. Le dimensioni delle code di posta non vengono lette da questo monitor: MDaemon le pubblica solo come contatori di prestazioni Windows, che l'agent DumbMonit legge quando è installato sul server di posta.
 
 L'API XML è servita dal server web Remote Administration: porta 1000 su
 HTTP e 444 su HTTPS per impostazione predefinita, su `/MdMgmtWS/`, oppure
@@ -183,5 +183,5 @@ come porta dell'API XML.
 
 Le porte TLS (`smtps`, `pop3s`, `imaps`, `remote_admin_https`) vengono
 controllate solo per connessione. Per osservare la scadenza dei loro
-certificati, aggiungi un dispositivo [Certificato TLS](services.md#tls)
+certificati, aggiungi un monitor [Certificato TLS](services.md#tls)
 per ciascuna.

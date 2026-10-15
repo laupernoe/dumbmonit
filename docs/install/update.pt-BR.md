@@ -20,7 +20,7 @@ uma vez por minuto).
 
 !!! note "O que é enviado"
     Uma requisição `GET` anônima com um user agent `DumbMonit/<version>`. Nada
-    sobre sua instância, seus dispositivos ou sua rede é enviado, e o endereço
+    sobre sua instância, seus monitores ou sua rede é enviado, e o endereço
     é fixo no código.
 
 ### Desativando a verificação {#turning-the-check-off}

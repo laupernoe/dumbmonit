@@ -4,7 +4,7 @@ A base de dados de séries temporais e a base de dados de registos em si: se
 aceitam o que lhes é enviado, quanto disco resta antes de deixarem de aceitar
 o que quer que seja, e o que recusam.
 
-Dois tipos de dispositivo partilham esta página, porque os dois produtos
+Dois tipos de monitor partilham esta página, porque os dois produtos
 partilham as suas bases: `victoriametrics` para um VictoriaMetrics de nó único,
 e `victorialogs` para um VictoriaLogs de nó único. Ambos publicam a sua própria
 saúde em `/health` e `/metrics`, na porta da sua API; o DumbMonit lê esses dois
@@ -63,9 +63,9 @@ não conta como dados recusados.
 As [regras incorporadas](../alerting/rules.md#log-and-metrics-servers) que se
 aplicam: Metrics or log storage read-only, Metrics or log storage almost
 read-only, Metrics or log server unhealthy, Metrics or log data refused,
-VictoriaMetrics slow inserts, mais Device unreachable.
+VictoriaMetrics slow inserts, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 consulta o servidor. Diz, por esta ordem:
