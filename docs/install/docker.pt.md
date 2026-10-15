@@ -34,11 +34,21 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to user 65532 (or PUID/PGID), then
+    # drops root for good: a host directory works as it is. Remove `user` and
+    # `cap_add` to run as 65532 from the start (the files must belong to it).
+    user: "0:0"
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -55,8 +65,8 @@ docker compose up -d
 ```
 
 A imagem publicada é obtida; o sistema de ficheiros só de leitura, as
-capabilities retiradas e o sysctl `ping_group_range` são explicados em
-[Corre como utilizador sem privilégios](#runs-as-a-non-root-user) e
+capabilities, `PUID`/`PGID` e o sysctl `ping_group_range` são explicados em
+[Permissões e diretoria de dados](#permissions) e
 [Ping ICMP sem capability](#icmp-ping-without-a-capability). As opções
 (porta, segredo, retenção, VictoriaMetrics externo, capturas de ecrã) são
 [variáveis de ambiente que você mesmo acrescenta](#advanced-options).
@@ -121,6 +131,7 @@ precisar em `environment:` do serviço, como mostrado em
 | Variável | Valor por omissão | Função |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Endereço de escuta dentro do contentor. |
+| `PUID` / `PGID` | `65532` | Com `user: "0:0"`: utilizador e grupo com que o servidor corre, e dono dos ficheiros em `/data` ([detalhes](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` também funcionam. |
 | `DUMBMONIT_DATA_DIR` | `/data` | Base de dados SQLite (`dumbmonit.db`), segredo da instância (`secret.key`) e dados do VictoriaMetrics integrado (`vm/`). |
 | `DUMBMONIT_VM_URL` | *(não definida)* | URL de um VictoriaMetrics externo. Quando definida, o integrado não é iniciado. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Retenção do VictoriaMetrics integrado: meses, ou `30d`, `2y`. |
@@ -174,21 +185,13 @@ As migrações da base de dados correm no arranque. Os dados do VictoriaMetrics 
     restaura se a atualização correr mal. Veja
     [Cópia de segurança e restauro](backup.md).
 
-### A partir da 0.1.0-alpha.1 {#from-010-alpha1}
+### Bind mounts {#from-cap-drop-all}
 
-Desde a 0.1.0-alpha.2 o contentor corre como utilizador 65532 em vez de root. Um
-volume criado pela alpha.1 ainda pertence ao root, e o servidor recusa-se a
-arrancar (`/data is not writable by the server`). Entregue o volume uma vez:
-
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
-```
-
-Ou mantenha os ficheiros como estão e execute o contentor como o respetivo dono, com
-`user: "0:0"` (ou o uid de um bind mount) no serviço, em
-`docker-compose.yml`.
+Um `docker-compose.yml` existente continua a funcionar tal como está: a imagem
+continua a correr com o utilizador 65532. O ficheiro novo acrescenta `user: "0:0"`
+e uma linha `cap_add` para que uma diretoria do anfitrião funcione sem preparação
+([Permissões](#permissions)); copie estas duas linhas se quiser passar a um bind
+mount.
 
 ### A partir do EzyMonit e da configuração de dois contentores {#from-ezymonit-and-from-the-two-container-setup}
 
@@ -384,32 +387,71 @@ navegador nunca devolveria o cookie e o início de sessão seria impossível.
     também: certifique-se de que `/install.sh`, `/install.ps1`, `/download/…` e `/api/ingest`
     passam pelo proxy.
 
-## Corre como utilizador sem privilégios {#runs-as-a-non-root-user}
+## Permissões e diretoria de dados {#permissions}
 
-O contentor corre o servidor como utilizador `65532:65532` (numérico: a imagem `scratch`
-não tem `/etc/passwd`), com todas as capabilities retiradas, `no-new-privileges`
-e um sistema de ficheiros raiz só de leitura; `/data` (o volume) e `/tmp` (um tmpfs)
-são os únicos caminhos graváveis. Tudo isto está no ficheiro Compose acima.
+O servidor nunca corre como root. Por predefinição, a imagem corre com o
+utilizador `65532:65532`, a quem um volume com nome criado pelo Docker já pertence.
 
-Um volume nomeado criado pelo Docker no primeiro arranque herda o dono de `/data`
-da imagem: nada a fazer. Dois casos precisam de um comando:
+Um bind mount (`./dumbmonit:/data`), pelo contrário, mantém o dono da diretoria
+do anfitrião, muitas vezes root quando foi o Docker a criá-la. É por isso que o
+ficheiro Compose acima arranca o contentor como root (`user: "0:0"`). O servidor
+só fica root por um instante: antes de abrir a base de dados, arrancar o
+VictoriaMetrics ou escutar na rede, entrega `/data` a `65532:65532` (só as
+entradas que pertencem a outra pessoa, sem seguir ligações simbólicas), abandona o
+root de vez e verifica que não o consegue recuperar. As quatro capabilities de
+`cap_add` servem só este passo; nenhuma fica depois. `no-new-privileges` e o
+sistema de ficheiros raiz só de leitura mantêm-se: `/data` e `/tmp` são os únicos
+caminhos graváveis.
 
-- **Um volume criado por uma versão anterior** (o servidor corria como root,
-  pelo que os ficheiros pertencem ao root). Entregue-os uma vez, com a stack parada:
+**Escolher o dono: `PUID` e `PGID`.** Com `user: "0:0"`, indique o uid e o gid com
+que o servidor corre; os ficheiros são-lhes entregues no arranque:
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-  O sintoma, caso contrário, é um contentor que termina logo com
-  `creating directory /data … Permission denied` (ou `unable to open database
-  file`).
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` também funcionam e têm prioridade. O `0` é
+recusado. No Unraid, `PUID=99` e `PGID=100` correspondem ao dono habitual de
+`appdata`. Sem `user: "0:0"`, `PUID`/`PGID` são ignorados.
 
-- **Um bind mount** (`./data:/data`) mantém o dono da pasta do anfitrião.
-  Ou `chown -R 65532:65532 ./data`, ou execute o contentor como o dono
-  da pasta: `user: "1000:1000"` no serviço, qualquer uid serve.
+**Sem `user: "0:0"`** (um simples `docker run -v ./data:/data`, ou `--user
+1000:1000`), nenhum dono muda e `/data` já tem de ser gravável. Se não for, o
+servidor para e sugere primeiro `--user 0:0`, depois
+`sudo chown -R 65532:65532 ./data` no anfitrião para um bind mount ou, para um
+volume com nome:
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
+```
+
+### SELinux e Podman {#selinux-and-podman}
+
+Num anfitrião onde o SELinux está em modo enforcing (Fedora, RHEL, CentOS
+Stream, AlmaLinux…), um bind mount é recusado ao contentor, mesmo ao root,
+enquanto não tiver uma etiqueta de contentor. Acrescente `:Z` ao volume, ou `:z`
+se outros contentores partilham a pasta:
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+Sem isso, o servidor termina com `the host enforces SELinux and the volume has
+no container label`. Os volumes nomeados são etiquetados pelo Docker e não
+precisam de nada.
+
+O Podman sem root funciona da mesma forma, com `--user 0:0`. O root no contentor é o seu próprio
+utilizador no anfitrião, e os ficheiros de um bind mount vão para o uid 65532 do
+contentor, que o anfitrião mostra como um dos seus sub-uids (`165531` com o
+`/etc/subuid` habitual). Leia-os com `podman unshare ls -l ./dumbmonit`. Para os
+manter antes sob o seu próprio uid, execute o contentor como você; nenhum dono
+muda então:
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## Ping ICMP sem capability {#icmp-ping-without-a-capability}
 

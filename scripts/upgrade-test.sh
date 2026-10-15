@@ -10,7 +10,8 @@
 #   KEEP=1      garde le volume et les conteneurs après coup (débogage)
 #
 # Prérequis : docker, curl, python3. Les images sont lancées comme en production
-# (uid 65532, système de fichiers en lecture seule, capacités retirées).
+# (uid 65532, système de fichiers en lecture seule, capacités retirées) : c'est le
+# docker-compose.yml d'alpha.8 tel quel, qui doit continuer de démarrer sans retouche.
 set -euo pipefail
 
 REPO=laupernoe/dumbmonit

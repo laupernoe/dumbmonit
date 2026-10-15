@@ -105,6 +105,9 @@ p256 = { version = "0.13", features = ["ecdsa"] }
 [target.'cfg(unix)'.dependencies]
 # SIGTERM vers le VictoriaMetrics embarqué : tokio ne sait envoyer que SIGKILL.
 libc = "0.2"
+# Démarrage en root dans l'image : parcours de /data relatif à des descripteurs
+# (openat/fchownat sans suivre les liens) avant d'abandonner les privilèges.
+rustix = { version = "1.1.5", features = ["fs"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }

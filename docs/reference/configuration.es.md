@@ -8,6 +8,7 @@ archivo de configuración que montar.
 | Variable | Por defecto | Rol |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Dirección de escucha de la API y la interfaz web, dentro del contenedor. |
+| `PUID` / `PGID` | `65532` | Usuario y grupo con los que se ejecuta el servidor cuando el contenedor arranca como root (`user: "0:0"`, como en el `docker-compose.yml` incluido): el directorio de datos se les entrega al arrancar y después se abandona root. Se rechaza `0`. `DUMBMONIT_PUID` / `DUMBMONIT_PGID` tienen prioridad. En otro caso se ignoran. Véase [Permisos](../install/docker.md#permissions). |
 | `DUMBMONIT_DATA_DIR` | `/data` | Directorio persistente: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (VictoriaMetrics integrada) y `webchange/` (capturas de cambios de sitio web). |
 | `DUMBMONIT_VM_URL` | *(sin definir)* | URL base de una VictoriaMetrics externa (`http://host:8428`). Si se define, la integrada no se inicia; consulta [abajo](#embedded-victoriametrics). |
 | `DUMBMONIT_SECRET` | *(generado)* | Secreto de la instancia. Si está vacío, se lee de `<directorio de datos>/secret.key`, generado en el primer arranque. Cifra las credenciales de monitor, los secretos de canal y los tokens de agente con AES-256-GCM. |
