@@ -10,8 +10,8 @@
 #   KEEP=1      garde le volume et les conteneurs après coup (débogage)
 #
 # Prérequis : docker, curl, python3. Les images sont lancées comme en production
-# (système de fichiers en lecture seule, capacités retirées sauf celles qu'il faut
-# pour remettre /data à 65532 avant d'abandonner root, comme docker-compose.yml).
+# (uid 65532, système de fichiers en lecture seule, capacités retirées) : c'est le
+# docker-compose.yml d'alpha.8 tel quel, qui doit continuer de démarrer sans retouche.
 set -euo pipefail
 
 REPO=laupernoe/dumbmonit
@@ -91,9 +91,7 @@ start() { # start IMAGE : lance le conteneur sur le volume, attend /api/health
   docker rm -f "$NAME" >/dev/null 2>&1 || true
   docker run -d --name "$NAME" -p 127.0.0.1::8080 -v "$VOLUME:/data" \
     -e DUMBMONIT_SETUP_CODE="$SETUP_CODE" \
-    --read-only --tmpfs /tmp --cap-drop ALL \
-    --cap-add CHOWN --cap-add DAC_READ_SEARCH --cap-add SETUID --cap-add SETGID \
-    --security-opt no-new-privileges:true \
+    --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true \
     --sysctl net.ipv4.ping_group_range="0 2147483647" "$image" >/dev/null \
     || fail "docker run $image"
   PORT=$(docker port "$NAME" 8080/tcp | head -1 | sed 's/.*://')

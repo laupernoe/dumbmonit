@@ -43,7 +43,10 @@ services:
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
-    # Starts as root only to give /data to its user, then drops to it for good.
+    # Starts as root only to give /data to user 65532 (or PUID/PGID), then
+    # drops root for good: a host directory works as it is. Remove `user` and
+    # `cap_add` to run as 65532 from the start (the files must belong to it).
+    user: "0:0"
     cap_drop: [ALL]
     cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
@@ -119,6 +122,15 @@ attempts are rate-limited. For an automated deployment, set
 
 Then add your first device: see [Add your first device](first-device.md).
 
+## Container health
+
+The image defines its own Docker `HEALTHCHECK`, so Docker, Portainer and Unraid
+show the container as *healthy* without any extra setting. It runs
+`dumbmonit healthcheck`, which calls `/api/health` on the port set by
+`DUMBMONIT_BIND` (8080 by default) from inside the container. The image has no
+shell or `curl`, so do not replace it with a `curl`-based check in your Compose
+file.
+
 ## Environment variables
 
 Everything goes through environment variables; none is required. Add the ones
@@ -128,7 +140,7 @@ you need under `environment:` of the service, as shown in
 | Variable | Default | Role |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address inside the container. |
-| `PUID` / `PGID` | `65532` | User and group the server runs as, and owner of the files in `/data` ([details](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` work too. |
+| `PUID` / `PGID` | `65532` | With `user: "0:0"`: user and group the server runs as, and owner of the files in `/data` ([details](#permissions)). `DUMBMONIT_PUID` / `DUMBMONIT_PGID` work too. |
 | `DUMBMONIT_DATA_DIR` | `/data` | SQLite database (`dumbmonit.db`), instance secret (`secret.key`) and the embedded VictoriaMetrics data (`vm/`). |
 | `DUMBMONIT_VM_URL` | *(unset)* | URL of an external VictoriaMetrics. When set, the embedded one is not started. |
 | `DUMBMONIT_VM_RETENTION` | `12` | Retention of the embedded VictoriaMetrics: months, or `30d`, `2y`. |
@@ -182,26 +194,12 @@ Database migrations run at startup. VictoriaMetrics data is untouched.
     you restore from if the upgrade goes wrong. See
     [Backup and restore](backup.md).
 
-### Compose files with `cap_drop: [ALL]` {#from-cap-drop-all}
+### Bind mounts {#from-cap-drop-all}
 
-Up to 0.1.0-alpha.8 the image ran as user 65532 from the start, and the
-Compose file dropped every capability. The server now starts as root to give
-`/data` to its user, then drops root for good, and needs four capabilities for
-that first instant. If your `docker-compose.yml` has `cap_drop: [ALL]` and no
-`cap_add`, the container stops at once with `its capabilities were all
-dropped`. Add one line:
-
-```yaml
-    cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
-```
-
-Or keep the previous behaviour with `user: "65532:65532"` under the service:
-the files must then already belong to 65532, as they do in a volume created by
-DumbMonit.
-
-A volume created by 0.1.0-alpha.1, which belongs to root, needs nothing any
-more: it is handed over at the first start.
+An existing `docker-compose.yml` keeps working as it is: the image still runs
+as user 65532. The new file adds `user: "0:0"` and a `cap_add` line so that a
+host directory works without preparation ([Permissions](#permissions)); copy
+these two lines if you want to move to a bind mount.
 
 ### From EzyMonit, and from the two-container setup
 
@@ -397,26 +395,22 @@ browser would never send the cookie back and login would be impossible.
 
 ## Permissions and the data directory {#permissions}
 
-The container starts as root, and the server stays root only for its first
-instant. Before it opens the database, starts VictoriaMetrics or listens on the
-network, it:
+The server never runs as root. By default the image runs as user
+`65532:65532`, and a named volume created by Docker already belongs to it.
 
-1. gives `/data` to user `65532:65532`, changing only the entries that belong
-   to someone else, without following symbolic links or leaving `/data`;
-2. drops root for good (supplementary groups, group, then user) and checks that
-   it cannot get it back. VictoriaMetrics, started afterwards, runs as the same
-   unprivileged user.
+A bind mount (`./dumbmonit:/data`), on the other hand, keeps the owner of the
+host directory, often root when Docker created it. That is why the Compose file
+above starts the container as root (`user: "0:0"`). The server then stays root
+only for an instant: before it opens the database, starts VictoriaMetrics or
+listens on the network, it gives `/data` to `65532:65532` (only the entries
+that belong to someone else, without following symbolic links), drops root for
+good and checks that it cannot get it back. The four capabilities in `cap_add`
+are only for this step; none is left afterwards. `no-new-privileges` and a
+read-only root file system stay on: `/data` and `/tmp` are the only writable
+paths.
 
-A named volume, a bind mount (`./dumbmonit:/data`) and a directory that Docker
-has just created as root therefore all work as they are. The Compose file drops
-every capability except the four this first step needs (`CHOWN`,
-`DAC_READ_SEARCH`, `SETUID`, `SETGID`; none of them is left once the server runs
-as 65532), and sets `no-new-privileges` and a read-only root file system: `/data`
-and `/tmp` (a tmpfs) are the only writable paths.
-
-**Choosing the owner: `PUID` and `PGID`.** To keep the files of a bind mount
-under your own user, set the uid and gid the server runs as; the files are
-handed to them at startup:
+**Choosing the owner: `PUID` and `PGID`.** With `user: "0:0"`, set the uid and
+gid the server runs as; the files are handed to them at startup:
 
 ```yaml
     environment:
@@ -425,17 +419,17 @@ handed to them at startup:
 ```
 
 `DUMBMONIT_PUID` / `DUMBMONIT_PGID` work too and take precedence. `0` is
-refused: the server never runs as root. On Unraid, `PUID=99` and `PGID=100`
-match the usual owner of `appdata`.
+refused. On Unraid, `PUID=99` and `PGID=100` match the usual owner of
+`appdata`. Without `user: "0:0"`, `PUID`/`PGID` are ignored.
 
-**Running with `user:` (`--user`).** The container then starts as that user and
-changes nothing; `PUID`/`PGID` are ignored. `/data` must already be writable by
-that user, otherwise the server stops with a message that gives the fix:
-`sudo chown -R 1000:1000 ./dumbmonit` on the host for a bind mount, or, for a
-named volume:
+**Without `user: "0:0"`** (a plain `docker run -v ./data:/data`, or `--user
+1000:1000`), nothing changes owner and `/data` must already be writable. If it
+is not, the server stops and suggests `--user 0:0` first, then
+`sudo chown -R 65532:65532 ./data` on the host for a bind mount, or for a named
+volume:
 
 ```bash
-docker run --rm -v dumbmonit-data:/data alpine chown -R 1000:1000 /data
+docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
 ```
 
 ### SELinux and Podman {#selinux-and-podman}
@@ -453,7 +447,7 @@ directory:
 Without it, the server stops with `the host enforces SELinux and the volume has
 no container label`. Named volumes are labelled by Docker and need nothing.
 
-Rootless Podman works the same way. Root in the container is your own user on
+Rootless Podman works the same way, with `--user 0:0`. Root in the container is your own user on
 the host, and the files of a bind mount go to uid 65532 of the container, which
 the host shows as one of your sub-uids (`165531` with the usual
 `/etc/subuid`). Read them with `podman unshare ls -l ./dumbmonit`. To keep them

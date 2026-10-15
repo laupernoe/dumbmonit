@@ -31,18 +31,20 @@ All notable changes to this project are documented here. The format follows
 - **Heartbeat to set again after a restore.** The outgoing heartbeat URL is not
   part of the encrypted configuration bundle: enter it again after restoring
   onto a new instance (Settings → System → DumbMonit itself).
-- **Compose files with `cap_drop: [ALL]` need one more line.** The server
-  now starts as root to fix the owner of `/data`, then drops root for good. Add
-  `cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]` under `cap_drop: [ALL]`
-  (as in the new `docker-compose.yml`), or set `user: "65532:65532"` to keep
-  the previous behaviour; otherwise the container stops with a message saying
-  so.
+- **Bind mounts and file ownership.** Nothing to do: the image still runs as
+  65532 and an existing `docker-compose.yml` keeps working as it is. The new
+  `docker-compose.yml` starts the container as root (`user: "0:0"`, with four
+  capabilities) so that a host directory works without preparation; take it
+  if you want that, see Changed.
 - **New versions of the bundle.** VictoriaMetrics 1.154.0 and rustls 0.23.46
   (see Security); the bundled VictoriaMetrics is replaced when you pull the
   new image.
 
 ### Added
 
+- **Docker health status.** The server image now carries a `HEALTHCHECK`
+  (`dumbmonit healthcheck`, a local call to `/api/health`), so Docker, Portainer
+  and Unraid show the container as healthy.
 - **Acknowledge or snooze an alert from the notification.** Alert messages
   carry **Acknowledge** (until it resolves) and **Snooze 1 h**: buttons on
   ntfy, Telegram and Web Push (operators and admins only), links on Discord,
@@ -195,14 +197,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **The container starts as root, the server does not stay root.** Before
-  anything else (database, VictoriaMetrics, network), it gives `/data` to
-  `65532:65532` — only the entries that belong to someone else, without
-  following symbolic links — then drops its groups, group and user for good and
-  checks that root cannot be regained. `PUID`/`PGID` (or
-  `DUMBMONIT_PUID`/`DUMBMONIT_PGID`) choose another owner, for example to keep a
-  bind mount under your own user or Unraid's `99:100`. Started with `user:`
-  (`--user`), it changes nothing, as before.
+- **Started as root, the server does not stay root.** With `user: "0:0"`
+  (now in `docker-compose.yml`), before anything else (database,
+  VictoriaMetrics, network) it gives `/data` to `65532:65532` — only the
+  entries that belong to someone else, without following symbolic links — then
+  drops its groups, group and user for good and checks that root cannot be
+  regained. `PUID`/`PGID` (or `DUMBMONIT_PUID`/`DUMBMONIT_PGID`) choose another
+  owner, for example your own user or Unraid's `99:100`. The image itself still
+  runs as 65532, and the healthcheck drops root too when started as root.
 - **Alerts → Now is a calm list.** One line per problem — what, which monitor,
   the cause in one line, since when — with **Ack** and **Open** on the line,
   grouped by severity or by monitor; groups fold, and suppressed, snoozed and
@@ -269,16 +271,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **Bind mounts work without preparation.** `-v ./dumbmonit:/data`,
-  `/mnt/user/appdata/dumbmonit` on Unraid or a directory Docker has just created
-  as `root:root` used to leave the container restarting on "not writable"; the
-  ownership is now fixed at startup. When `/data` still cannot be written, the
-  message tells a named volume (the `docker run … chown` command for that
-  volume) from a bind mount (`sudo chown -R` on the host, or `PUID`/`PGID`),
-  instead of always suggesting the volume command.
+- **Bind mounts.** `-v ./dumbmonit:/data`, `/mnt/user/appdata/dumbmonit` on
+  Unraid or a directory Docker has just created as `root:root` left the
+  container restarting on "not writable", with a hint that only fitted named
+  volumes. With the new `docker-compose.yml` (or `--user 0:0`) the ownership is
+  fixed at startup. Otherwise the message now suggests `--user 0:0` first, then
+  the right command for a bind mount (`sudo chown -R` on the host path) or a
+  named volume.
 - **SELinux hosts.** A bind mount without a container label (Fedora, RHEL) is
   refused even to root; the server now says so and asks for `:Z` on the volume,
   documented with rootless Podman in the install guide.
+- **Overflow menus on phones.** The "⋮" menu on a monitor's page (and every
+  other overflow menu) now opens above the rest of the page, kept on screen
+  and flipped upwards near the bottom, instead of hiding behind the next card
+  where its actions could not be tapped.
 - **Disabled monitor page.** No more false "Reporting" plate, "Probe now" or
   silence controls on a disabled monitor; an "Enable" button takes their place.
 - **Public status page no longer claims "All systems operational" without

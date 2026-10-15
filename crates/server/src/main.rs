@@ -15,14 +15,28 @@ fn main() -> Result<()> {
         std::process::exit(dumbmonit_pack::cli::run(&args[1..]));
     }
 
+    // `dumbmonit healthcheck` : sonde du HEALTHCHECK Docker (image sans shell ni
+    // curl). Ni base, ni VictoriaMetrics, ni logs : seulement un code de sortie.
+    if args.first().map(String::as_str) == Some("healthcheck") {
+        // Conteneur lancé en `user: "0:0"` : la sonde tourne en root elle aussi.
+        // Elle abandonne root avant tout, sans rien toucher sur disque.
+        #[cfg(unix)]
+        if let Err(error) = dumbmonit_server::privileges::drop_if_root() {
+            eprintln!("healthcheck: cannot drop root: {error}");
+            std::process::exit(1);
+        }
+        std::process::exit(dumbmonit_server::healthcheck::run());
+    }
+
     init_tracing();
 
     let config = Config::from_env().context("invalid configuration")?;
 
-    // Lancé en root (le défaut de l'image) : `/data` est remis au nom de
-    // l'utilisateur du serveur, puis les privilèges sont abandonnés pour de bon —
-    // avant la base, VictoriaMetrics et le réseau. Les sous-commandes ci-dessus
-    // (`pack`, `healthcheck`) ne passent jamais par ici.
+    // Lancé en root (`user: "0:0"`, comme dans docker-compose.yml) : `/data` est
+    // remis au nom de l'utilisateur du serveur, puis les privilèges sont
+    // abandonnés pour de bon — avant la base, VictoriaMetrics et le réseau. Les
+    // sous-commandes ci-dessus ne font jamais de chown (`healthcheck` abandonne
+    // root sans rien toucher).
     #[cfg(unix)]
     let startup = dumbmonit_server::privileges::prepare(&config.data_dir)?;
     #[cfg(not(unix))]

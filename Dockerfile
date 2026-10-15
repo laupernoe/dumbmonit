@@ -243,15 +243,14 @@ COPY --from=victoriametrics /victoria-metrics-prod /victoria-metrics-prod
 # `DUMBMONIT_AGENT_DIR` permet d'en monter d'autres à la place.
 COPY --from=agent /agents /agents
 
-# Le conteneur démarre en root, mais le serveur n'y reste pas : avant toute
-# autre chose, il remet `/data` au nom de 65532:65532 (ou de PUID/PGID) — seules
-# les entrées qui n'en ont pas le bon propriétaire, sans suivre de lien — puis
-# abandonne définitivement ses privilèges (voir crates/server/src/privileges.rs).
-# Un bind mount appartenant à l'hôte fonctionne ainsi sans manipulation. Lancé
-# avec `--user`, il ne touche à rien. L'image n'a pas de `/etc/passwd` : les
-# identités sont numériques. `/data` est créé ici à ce nom, pour qu'un volume
-# nommé neuf n'ait rien à corriger ; `/tmp` est ouvert à tous en écriture, quel que
-# soit l'utilisateur, pour un système de fichiers racine en lecture seule.
+# Le serveur ne tourne pas en root : l'image est en 65532:65532 (numérique,
+# pas de `/etc/passwd`), et `/data` est créé ici à ce nom — Docker recopie le
+# propriétaire dans un volume nommé neuf, rien à corriger. Pour un bind mount
+# qui appartient à l'hôte, lancer le conteneur en `user: "0:0"` (c'est ce que
+# fait docker-compose.yml) : le serveur remet alors `/data` à 65532 (ou à
+# PUID/PGID), sans suivre de lien, puis abandonne root pour de bon avant toute
+# autre chose (crates/server/src/privileges.rs). `/tmp` est ouvert à tous en
+# écriture, quel que soit l'utilisateur, pour une racine en lecture seule.
 COPY --from=builder --chown=65532:65532 /empty /data
 COPY --from=builder --chmod=1777 /empty /tmp
 
@@ -263,4 +262,10 @@ ENV DUMBMONIT_BIND=0.0.0.0:8080 \
 VOLUME ["/data"]
 EXPOSE 8080
 
+# Santé du conteneur (Docker, Portainer, Unraid) : l'image n'a ni shell ni curl,
+# le binaire se sonde lui-même sur DUMBMONIT_BIND (voir healthcheck.rs).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD ["/dumbmonit", "healthcheck"]
+
+USER 65532:65532
 ENTRYPOINT ["/dumbmonit"]

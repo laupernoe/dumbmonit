@@ -1,11 +1,11 @@
-//! Démarrage en root dans l'image : remise en ordre du répertoire de données,
-//! puis abandon définitif des privilèges.
+//! Démarrage en root : remise en ordre du répertoire de données, puis abandon
+//! définitif des privilèges.
 //!
-//! L'image démarre en root pour une seule raison : un bind mount (`./data:/data`,
-//! `/mnt/user/appdata/…` sur Unraid) garde le propriétaire de l'hôte — souvent
-//! root, quand Docker crée lui-même le dossier — et un serveur qui tournerait
-//! d'emblée en 65532 ne pourrait rien y écrire. Le binaire fait donc, tant qu'il
-//! est uid 0 et avant toute autre chose (base, VictoriaMetrics, réseau) :
+//! L'image tourne en 65532:65532, ce qui suffit à un volume nommé. Un bind mount
+//! (`./data:/data`, `/mnt/user/appdata/…` sur Unraid) garde, lui, le
+//! propriétaire de l'hôte — souvent root, quand Docker crée lui-même le dossier.
+//! Lancé en root (`user: "0:0"`, ce que fait docker-compose.yml), le binaire
+//! fait alors, avant toute autre chose (base, VictoriaMetrics, réseau) :
 //!
 //! 1. le choix de l'identité cible : 65532:65532, ou `PUID`/`PGID` ;
 //! 2. la correction de la propriété du répertoire de données, entrée par entrée,
@@ -16,8 +16,9 @@
 //! 3. `setgroups([])`, `setgid`, `setuid`, dans cet ordre, puis la preuve que le
 //!    retour à root est impossible.
 //!
-//! Lancé sous un autre uid (`--user 1000:1000`), il ne touche à rien. Les
-//! sous-commandes (`pack`, `healthcheck`) ne passent jamais par ici.
+//! Sous un autre uid (le défaut de l'image, ou `--user 1000:1000`), il ne touche
+//! à rien. Les sous-commandes ne font jamais de chown ; `healthcheck` abandonne
+//! seulement root (`drop_if_root`).
 
 use std::ffi::OsStr;
 use std::io;
@@ -130,8 +131,8 @@ pub fn prepare(data_dir: &Path) -> anyhow::Result<Startup> {
         if overrides_present(env) {
             warn!(
                 uid = euid,
-                "PUID/PGID ignored: the container was started as a non-root user (`user:` or \
-                 `--user`), which already decides who the server runs as"
+                "PUID/PGID ignored: they only apply when the container starts as root \
+                 (`user: \"0:0\"`); it runs as the image or `user:` says"
             );
         }
         return Ok(Startup::default());
@@ -143,12 +144,12 @@ pub fn prepare(data_dir: &Path) -> anyhow::Result<Startup> {
         && !(has_cap(caps, CAP_SETUID) && has_cap(caps, CAP_SETGID))
     {
         anyhow::bail!(
-            "the container starts as root to fix the ownership of {dir}, then runs as {uid}:{gid}, \
-             but its capabilities were all dropped (`cap_drop: [ALL]`), so it cannot switch user. \
-             Either give these back under the service in docker-compose.yml:\n  \
-             cap_add: [{REQUIRED_CAPS}]\n\
-             (--cap-add for each with `docker run`), or run it as before with \
-             `user: \"65532:65532\"` (the files must then already belong to 65532).",
+            "the container runs as root (`user: \"0:0\"`) so that DumbMonit gives {dir} to \
+             {uid}:{gid} and then drops root, but its capabilities were all dropped \
+             (`cap_drop: [ALL]`), so it cannot switch user. Either give these back under the \
+             service in docker-compose.yml:\n  cap_add: [{REQUIRED_CAPS}]\n(--cap-add for each \
+             with `docker run`), or remove `user: \"0:0\"` to run as 65532 directly (the files \
+             must then already belong to 65532).",
             dir = data_dir.display(),
             uid = target.uid,
             gid = target.gid,
@@ -536,42 +537,36 @@ pub fn explain_not_writable(dir: &Path, d: &Diagnosis) -> String {
     }
     text.push('.');
     if d.startup.started_as_root {
-        text.push_str(" Changing its owner at startup failed (see the warnings above).");
+        text.push_str(" Changing its owner at startup failed (see the warnings above). Or:");
+    } else {
+        text.push_str(&format!(
+            "\nEasiest: start the container as root, with `--user 0:0` (`user: \"0:0\"` in \
+             docker-compose.yml, plus `cap_add: [{REQUIRED_CAPS}]` if it drops all \
+             capabilities). DumbMonit then gives {dir_shown} to 65532 (or PUID/PGID) and drops \
+             root for good before doing anything else.\nOr:"
+        ));
     }
     match &d.mount {
-        MountKind::NamedVolume(name) => {
-            text.push_str(&format!(
-                " It is the Docker volume `{name}`. Hand it over once:\n  \
-                 docker run --rm -v {name}:/data alpine chown -R {uid}:{gid} /data\n"
-            ));
-            if !d.startup.started_as_root {
-                text.push_str(
-                    "or remove `user:` (`--user`): the container then starts as root, fixes the \
-                     ownership itself and runs as 65532 (or PUID/PGID).",
-                );
-            }
-        }
+        MountKind::NamedVolume(name) => text.push_str(&format!(
+            "\n  docker run --rm -v {name}:/data alpine chown -R {uid}:{gid} /data\n\
+             to hand the Docker volume `{name}` over once."
+        )),
         MountKind::Bind(source) => {
             text.push_str(&format!(
-                " It is a host directory mounted on {dir_shown}. On the host, run:\n  \
-                 sudo chown -R {uid}:{gid} {source}\n(the path as its file system sees it; \
-                 if it differs on the host, use the left-hand side of your `-v …:{dir_shown}`)\n"
+                "\n  sudo chown -R {uid}:{gid} {source}\n\
+                 on the host, for this bind mount (if the path differs on the host, use the \
+                 left-hand side of your `-v …:{dir_shown}`)."
             ));
-            match (d.startup.started_as_root, d.owner) {
-                (false, Some((owner, group, _))) if owner != 0 => text.push_str(&format!(
-                    "or start the container as the owner of the files: `user: \"{owner}:{group}\"`, \
-                     or remove `user:` and set PUID={owner} and PGID={group}."
-                )),
-                (false, _) => text.push_str(
-                    "or remove `user:` (`--user`): the container then starts as root, fixes the \
-                     ownership itself and runs as 65532 (or PUID/PGID).",
-                ),
-                (true, Some((owner, group, _))) if owner != 0 => text.push_str(&format!(
-                    "or set PUID={owner} and PGID={group} so the server runs as the owner of the \
-                     files."
-                )),
-                (true, _) => {}
+            if let Some((owner, group, _)) = d.owner
+                && owner != 0
+            {
+                text.push_str(&if d.startup.started_as_root {
+                    format!(" Or set PUID={owner} and PGID={group} to run as the owner of the files.")
+                } else {
+                    format!(" Or run as the owner of the files: `--user {owner}:{group}`.")
+                });
             }
+            text.push_str(" On a SELinux host (Fedora, RHEL), also add `:Z` to the volume.");
         }
         MountKind::NotAMount => text.push_str(&format!(
             " {dir_shown} is not a volume, so its content would be lost with the container: \
@@ -782,14 +777,23 @@ mod tests {
         let dir = Path::new("/data");
         let bind = MountKind::Bind("/home/noe/dumbmonit".into());
 
-        // Bind mount à root, conteneur lancé en --user : chown sur l'hôte.
+        // Bind mount à root, image en 65532 : d'abord `--user 0:0`, puis chown sur l'hôte.
         let text = explain_not_writable(dir, &diagnosis(Some((0, 0, 0o755)), bind.clone()));
-        assert!(text.contains("sudo chown -R 65532:65532"), "{text}");
+        assert!(text.contains("--user 0:0"), "{text}");
+        assert!(text.find("--user 0:0") < text.find("sudo chown"), "{text}");
+        assert!(text.contains("sudo chown -R 65532:65532 /home/noe/dumbmonit"), "{text}");
+        assert!(text.contains(":Z"), "{text}");
         assert!(!text.contains("docker run --rm -v"), "{text}");
 
-        // Bind mount à 1000 : proposer de tourner en 1000.
+        // Bind mount à 1000 : proposer aussi de tourner en 1000.
         let text = explain_not_writable(dir, &diagnosis(Some((1000, 1000, 0o755)), bind.clone()));
-        assert!(text.contains("PUID=1000") && text.contains("user: \"1000:1000\""), "{text}");
+        assert!(text.contains("--user 1000:1000"), "{text}");
+
+        // Démarré en root, correction échouée : pas de `--user 0:0`, PUID proposé.
+        let mut d = diagnosis(Some((1000, 1000, 0o755)), bind.clone());
+        d.startup = Startup { started_as_root: true, denied_as_root: false };
+        let text = explain_not_writable(dir, &d);
+        assert!(!text.contains("--user 0:0") && text.contains("PUID=1000"), "{text}");
 
         // Volume nommé : la commande vise le volume par son nom.
         let named = MountKind::NamedVolume("dumbmonit-data".into());

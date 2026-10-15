@@ -70,10 +70,11 @@ The argument follows the design principles of Saltzer and Schroeder.
 - **Separation of privilege.** Sessions, API tokens and agent tokens are
   different credentials. API tokens carry a `read` or `write` scope
   (`auth/token.rs`) and users have a viewer, operator or admin role.
-- **Least privilege.** The server runs as UID 65532 (or `PUID`): started as
-  root, it only hands the data directory over to that user, without following
-  links, then drops root for good and checks it cannot regain it, before
-  opening anything else (`privileges.rs`). The Compose file keeps only the four
+- **Least privilege.** The image runs as UID 65532 (`Dockerfile`). Started
+  as root (`user: "0:0"`, for bind mounts), the server only hands the data
+  directory over to that user, without following links, then drops root for
+  good and checks it cannot regain it, before opening anything else
+  (`privileges.rs`). The Compose file keeps only the four
   capabilities this step needs, sets a read-only root file system and
   `no-new-privileges` (`docker-compose.yml`).
 - **Least common mechanism.** Agents authenticate with their own token, so
