@@ -153,7 +153,7 @@
 		<input
 			{id}
 			type="search"
-			class="input h-10 w-full pl-9"
+			class="input h-10 w-full !pl-9"
 			placeholder={m.settings_search_placeholder()}
 			autocomplete="off"
 			bind:value={query}
